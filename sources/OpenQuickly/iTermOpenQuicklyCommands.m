@@ -18,11 +18,11 @@
 }
 + (NSString *)tipTitle {
 
-    return [NSString stringWithFormat:@"Tip: Start your query with “/%@”", [self command]];
+    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.TipTitle", nil, [NSBundle mainBundle], @"Tip: Start your query with “/%@”", @"Open Quickly tip title; %@ is a command letter"), [self command]];
 }
 
 + (NSString *)tipDetail {
-    return [NSString stringWithFormat:@"Restricts results to %@", [self restrictionDescription]];
+    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.TipDetail", nil, [NSBundle mainBundle], @"Restricts results to %@", @"Open Quickly tip detail; %@ is a restriction description"), [self restrictionDescription]];
 }
 
 + (NSString *)command {
@@ -90,7 +90,7 @@
 @implementation iTermOpenQuicklyInTabsWindowArrangementCommand
 
 + (NSString *)restrictionDescription {
-    return @"window arrangements that open in tabs";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionWindowArrangementsInTabs", nil, [NSBundle mainBundle], @"window arrangements that open in tabs", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {
@@ -107,7 +107,7 @@
 @implementation iTermOpenQuicklyWindowArrangementCommand
 
 + (NSString *)restrictionDescription {
-    return @"window arrangements";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionWindowArrangements", nil, [NSBundle mainBundle], @"window arrangements", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {
@@ -124,7 +124,7 @@
 @implementation iTermOpenQuicklySearchSessionsCommand
 
 + (NSString *)restrictionDescription {
-    return @"existing sessions";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionExistingSessions", nil, [NSBundle mainBundle], @"existing sessions", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {
@@ -140,7 +140,7 @@
 @implementation iTermOpenQuicklySearchWindowsCommand
 
 + (NSString *)restrictionDescription {
-    return @"existing windows";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionExistingWindows", nil, [NSBundle mainBundle], @"existing windows", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {
@@ -156,7 +156,7 @@
 @implementation iTermOpenQuicklySwitchProfileCommand
 
 + (NSString *)restrictionDescription {
-    return @"switch profiles";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionSwitchProfiles", nil, [NSBundle mainBundle], @"switch profiles", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {
@@ -172,7 +172,7 @@
 @implementation iTermOpenQuicklyCreateTabCommand
 
 + (NSString *)restrictionDescription {
-    return @"create tab";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionCreateTab", nil, [NSBundle mainBundle], @"create tab", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {
@@ -188,7 +188,7 @@
 @implementation iTermOpenQuicklyScriptCommand
 
 + (NSString *)restrictionDescription {
-    return @"run script";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionScript", nil, [NSBundle mainBundle], @"run script", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {
@@ -204,7 +204,7 @@
 @implementation iTermOpenQuicklyColorPresetCommand
 
 + (NSString *)restrictionDescription {
-    return @"load color preset";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionColorPreset", nil, [NSBundle mainBundle], @"load color preset", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {
@@ -277,7 +277,7 @@
 @implementation iTermOpenQuicklyActionCommand
 
 + (NSString *)restrictionDescription {
-    return @"perform action";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionAction", nil, [NSBundle mainBundle], @"perform action", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {
@@ -293,7 +293,7 @@
 @implementation iTermOpenQuicklySnippetCommand
 
 + (NSString *)restrictionDescription {
-    return @"send snippet";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionSnippet", nil, [NSBundle mainBundle], @"send snippet", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {
@@ -309,7 +309,7 @@
 @implementation iTermOpenQuicklyBookmarkCommand
 
 + (NSString *)restrictionDescription {
-    return @"open bookmark";
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionBookmark", nil, [NSBundle mainBundle], @"open bookmark", @"Open Quickly restriction description");
 }
 
 + (NSString *)command {

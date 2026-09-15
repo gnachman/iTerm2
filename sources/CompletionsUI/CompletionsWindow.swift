@@ -28,13 +28,27 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
                 .foregroundColor: NSColor.textColor,
                 .paragraphStyle: paragraphStyle]
     }
+    // The return glyph shown in place of an embedded newline in a completion row.
+    private static let returnGlyph = "\u{21A9}"
+
+    // Command-history entries and file names can contain newlines. A raw newline in a
+    // single-line completion row spills across adjacent rows, so collapse each line break
+    // into a return glyph and keep the whole entry on one line. This is display-only; the
+    // item’s unmodified value is what gets inserted when the row is accepted.
+    static func singleLineForDisplay(_ string: String) -> String {
+        return string
+            .replacingOccurrences(of: "\r\n", with: returnGlyph)
+            .replacingOccurrences(of: "\n", with: returnGlyph)
+            .replacingOccurrences(of: "\r", with: returnGlyph)
+    }
+
     static func attributedString(font: NSFont,
                                  prefix: String,
                                  suffix string: String) -> NSAttributedString {
-        let attributedPrefix = NSAttributedString(string: prefix,
+        let attributedPrefix = NSAttributedString(string: singleLineForDisplay(prefix),
                                                   attributes: boldAttributes(font: font))
         let attributedString: NSMutableAttributedString = attributedPrefix.mutableCopy() as! NSMutableAttributedString
-        attributedString.append(NSAttributedString(string: string,
+        attributedString.append(NSAttributedString(string: singleLineForDisplay(string),
                                                    attributes: regularAttributes(font: font)))
         return attributedString
     }
@@ -183,7 +197,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
     // MARK: - Initializer
 
     // location is in screen coordinates and gives the location of the text field this is attached to.
-    init(parent: NSWindow, location: NSRect, mode: Mode, placeholder: String = "Thinking…", allowKey: Bool = false) {
+    init(parent: NSWindow, location: NSRect, mode: Mode, placeholder: String = String(localized: "CompletionsWindow.ThinkingPlaceholder", defaultValue: "Thinking…", comment: "Placeholder shown while completions are loading"), allowKey: Bool = false) {
         self.allowKeyWindow = allowKey
         self.placeholder = placeholder
         self.mode = mode
@@ -413,7 +427,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         if searchField == nil {
             let searchField = NSSearchField(frame: .zero)
             searchField.focusRingType = .none
-            searchField.placeholderString = "Search"
+            searchField.placeholderString = String(localized: "CompletionsWindow.SearchPlaceholder", defaultValue: "Search", comment: "Placeholder text for the completions search field")
             searchField.delegate = self
             self.searchField = searchField
             contentView?.addSubview(searchField)
@@ -570,48 +584,48 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
         case .file:
             if #available(macOS 15, *) {
                 return NSImage.it_image(forSymbolName: SFSymbol.document.rawValue,
-                                        accessibilityDescription: "File",
+                                        accessibilityDescription: String(localized: "CompletionsWindow.File", defaultValue: "File", comment: "Accessibility label for the file completion icon"),
                                         fallbackImageName: "document",
                                         for: CompletionsWindow.self)!
             } else {
                 return NSImage.it_image(forSymbolName: SFSymbol.doc.rawValue,
-                                        accessibilityDescription: "File",
+                                        accessibilityDescription: String(localized: "CompletionsWindow.File", defaultValue: "File", comment: "Accessibility label for the file completion icon"),
                                         fallbackImageName: "document",
                                         for: CompletionsWindow.self)!
             }
         case .aiSuggestion, .aiReplacement:
             return NSImage.it_image(forSymbolName: SFSymbol.sparkles.rawValue,
-                                    accessibilityDescription: "AI",
+                                    accessibilityDescription: String(localized: "CompletionsWindow.AI", defaultValue: "AI", comment: "Accessibility label for the AI suggestion completion icon"),
                                     fallbackImageName: "sparkles",
                                     for: CompletionsWindow.self)!
         case .history:
             return NSImage.it_image(forSymbolName: SFSymbol.clock.rawValue,
-                                    accessibilityDescription: "History",
+                                    accessibilityDescription: String(localized: "CompletionsWindow.History", defaultValue: "History", comment: "Accessibility label for the history completion icon"),
                                     fallbackImageName: "clock",
                                     for: CompletionsWindow.self)!
         case .command:
             return NSImage.it_image(forSymbolName: SFSymbol.command.rawValue,
-                                    accessibilityDescription: "Command",
+                                    accessibilityDescription: String(localized: "CompletionsWindow.Command", defaultValue: "Command", comment: "Accessibility label for the command completion icon"),
                                     fallbackImageName: "command",
                                     for: CompletionsWindow.self)!
         case .folder:
             return NSImage.it_image(forSymbolName: SFSymbol.folder.rawValue,
-                                    accessibilityDescription: "Folder",
+                                    accessibilityDescription: String(localized: "CompletionsWindow.Folder", defaultValue: "Folder", comment: "Accessibility label for the folder completion icon"),
                                     fallbackImageName: "folder",
                                     for: CompletionsWindow.self)!
         case .webSearch:
             return NSImage.it_image(forSymbolName: SFSymbol.magnifyingglass.rawValue,
-                                    accessibilityDescription: "Web Search",
+                                    accessibilityDescription: String(localized: "CompletionsWindow.WebSearch", defaultValue: "Web Search", comment: "Accessibility label for the web search completion icon"),
                                     fallbackImageName: "magnifyingglass",
                                     for: CompletionsWindow.self)!
         case .navigation:
             return NSImage.it_image(forSymbolName: SFSymbol.safari.rawValue,
-                                    accessibilityDescription: "Navigate",
+                                    accessibilityDescription: String(localized: "CompletionsWindow.Navigate", defaultValue: "Navigate", comment: "Accessibility label for the navigation completion icon"),
                                     fallbackImageName: "safari",
                                     for: CompletionsWindow.self)!
         case .bookmark:
             return NSImage.it_image(forSymbolName: SFSymbol.bookmark.rawValue,
-                                    accessibilityDescription: "Bookmark",
+                                    accessibilityDescription: String(localized: "CompletionsWindow.Bookmark", defaultValue: "Bookmark", comment: "Accessibility label for the bookmark completion icon"),
                                     fallbackImageName: "bookmark",
                                     for: CompletionsWindow.self)!
         }

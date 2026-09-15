@@ -77,6 +77,7 @@ static NSString *const kDirectoryEntryIsStarred = @"starred";
 
     // Compute the prefix of the result.
     NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
+    // Localization unneeded
     NSString *prefix = self.starred.boolValue ? @"★ /" : @"/";
     [result iterm_appendString:prefix withAttributes:attributes];
     NSAttributedString *attributedSlash =

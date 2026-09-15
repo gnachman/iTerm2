@@ -29,6 +29,7 @@ class iTermUndoCloseShortcutChangeWarning: NSObject {
     // Title and identifier of the Show Tabs in Fullscreen menu item in
     // MainMenu.xib. Used to build the KEY_ACTION_SELECT_MENU_ITEM parameter
     // (title\nidentifier).
+    // Localization unneeded
     private static let showTabsMenuItemTitle = "Show Tabs in Fullscreen"
 
     // Call right after Undo Close runs. If `event` is a ⌘⇧T key-down,
@@ -99,20 +100,20 @@ class iTermUndoCloseShortcutChangeWarning: NSObject {
     }
 
     private static func showWarning(offeringBindingFor keystroke: iTermKeystroke) {
-        let ok = iTermWarningAction(label: "Keep New Shortcut")
-        let restore = iTermWarningAction(label: "Restore ⌘⇧T to Show Tabs") { _ in
+        let ok = iTermWarningAction(label: String(localized: "UndoCloseShortcutChange.KeepNewShortcut", defaultValue: "Keep New Shortcut", comment: "Button to keep the new keyboard shortcut"))
+        let restore = iTermWarningAction(label: String(localized: "UndoCloseShortcutChange.RestoreShowTabs", defaultValue: "Restore ⌘⇧T to Show Tabs", comment: "Button to restore ⌘⇧T to Show Tabs")) { _ in
             addGlobalShowTabsBinding(for: keystroke)
         }
 
         let warning = iTermWarning()
-        warning.heading = "Keyboard Shortcut Changed"
-        warning.title = """
+        warning.heading = String(localized: "UndoCloseShortcutChange.Heading", defaultValue: "Keyboard Shortcut Changed", comment: "Heading of warning shown when the ⌘⇧T shortcut changed")
+        warning.title = String(localized: "UndoCloseShortcutChange.Body", defaultValue: """
             ⌘⇧T now restores recently closed tabs (Undo Close). The Show Tabs in \
             Fullscreen shortcut has moved to ⌘⇧U.
 
             Would you like to keep ⌘⇧T as the shortcut for Show Tabs in Fullscreen \
             by adding a key binding?
-            """
+            """, comment: "Body of warning shown when the ⌘⇧T shortcut changed")
         warning.warningActions = [ok, restore]
         warning.warningType = .kiTermWarningTypePersistent
         warning.window = iTermController.sharedInstance().currentTerminal?.window()

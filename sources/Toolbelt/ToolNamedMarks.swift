@@ -53,19 +53,19 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
         _tableView!.backgroundColor = .clear
 
         addButton = makeToolbeltButton(imageName: SFSymbol.plus.rawValue,
-                                       title: "Add",
+                                       title: iTermLocalizedAdd(),
                                        target: self,
                                        selector: #selector(add(_:)),
                                        frame: frameRect)
         addSubview(addButton!)
         removeButton = makeToolbeltButton(imageName: SFSymbol.minus.rawValue,
-                                          title: "Remove",
+                                          title: iTermLocalizedRemove(),
                                           target: self,
                                           selector: #selector(remove(_:)),
                                           frame: frameRect)
         addSubview(removeButton!)
         editButton = makeToolbeltButton(imageName: SFSymbol.pencil.rawValue,
-                                        title: "Edit",
+                                        title: iTermLocalizedEdit(),
                                         target: self,
                                         selector: #selector(edit(_:)),
                                         frame: frameRect)
@@ -161,7 +161,7 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         let cell = tableView.newTableCellViewWithTextField(usingIdentifier: "ToolNamedMarks",
                                                            font: NSFont.it_toolbelt(),
-                                                           string: marks[row].name ?? "(Unnamed)")
+                                                           string: marks[row].name ?? String(localized: "ToolNamedMarks.Unnamed", defaultValue: "(Unnamed)", comment: "Placeholder shown for a named mark that has no name"))
         cell.textField?.isEditable = true
         cell.textField?.delegate = self
         return cell

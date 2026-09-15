@@ -189,9 +189,9 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             } outputTransformer: { output, completion in
                 if output.timedOut {
                     let alert = NSAlert()
-                    alert.messageText = "Timeout"
-                    alert.informativeText = "1Password took too long to respond."
-                    alert.addButton(withTitle: "OK")
+                    alert.messageText = String(localized: "OnePasswordDataSource.TimeoutTitle", defaultValue: "Timeout", comment: "Alert title when 1Password times out")
+                    alert.informativeText = String(localized: "OnePasswordDataSource.TimeoutMessage", defaultValue: "1Password took too long to respond.", comment: "Alert body when 1Password times out")
+                    alert.addButton(withTitle: iTermLocalizedOK())
                     alert.runModal()
                     completion(.failure(OPError.timeout))
                     return

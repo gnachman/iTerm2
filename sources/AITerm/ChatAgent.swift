@@ -825,15 +825,13 @@ class ChatAgent {
         return nil
     }
 
-    /// Resolve a turn's model name the same way request routing does
-    /// (AIConversation.complete: manual models first, then the built-in
-    /// catalog, so a manual config wins over a built-in that shares its name).
-    /// nil for an unknown or absent name; the caller falls back to the global
-    /// default, keeping capability gating and routing in agreement.
+    /// Resolve a turn's model name the same way request routing does, through the
+    /// shared LLMMetadata.model(named:) resolver (manual/custom models, the built-in
+    /// catalog, AND discovered built-in Ollama tags), so capability gating and
+    /// routing agree with the UI. nil for an unknown or absent name; the caller falls
+    /// back to the global default.
     static func resolvedModel(named name: String?) -> AIMetadata.Model? {
-        guard let name else { return nil }
-        return LLMMetadata.manualModels().first { $0.name == name }
-            ?? AIMetadata.instance.models.first { $0.name == name }
+        return LLMMetadata.model(named: name)
     }
 
     /// Hosted-tool enablement for a turn, pure over the effective model's
@@ -911,6 +909,7 @@ class ChatAgent {
                       : kPreferenceKeyAIPromptAIChatReadOnlyTerminal
         }
         parts.append(iTermPreferences.string(forKey: key))
+        // Localization unneeded
         parts.append("If a zip file is provided (this is rare), you should extract it and analyze the contents in the context of the accompanying messages.")
 
         // When the chat is linked to a terminal session and the model can call
@@ -1128,12 +1127,12 @@ class ChatAgent {
             // resolved consent while this was queued.
             guard iTermUserDefaults.autoProvideConsent == .unknown else { return }
             let selection = iTermWarning.show(
-                withTitle: "iTerm2 can include this session’s visible screen and terminal state with every message you send in AI chats where you’ve allowed it, so the assistant sees what you see. You can turn this off any time from a chat’s permission settings.",
-                actions: ["Turn On", "Not Now"],
+                withTitle: String(localized: "ChatAgent.AutoProvideBody", defaultValue: "iTerm2 can include this session’s visible screen and terminal state with every message you send in AI chats where you’ve allowed it, so the assistant sees what you see. You can turn this off any time from a chat’s permission settings.", comment: "Body text of the dialog asking whether to automatically share terminal contents with AI chats"),
+                actions: [String(localized: "ChatAgent.TurnOn", defaultValue: "Turn On", comment: "Button to enable automatic sharing of terminal contents with AI chats"), String(localized: "ChatAgent.NotNow", defaultValue: "Not Now", comment: "Button to decline automatic sharing of terminal contents with AI chats")],
                 accessory: nil,
                 identifier: nil,
                 silenceable: .kiTermWarningTypePersistent,
-                heading: "Share Terminal Contents Automatically?",
+                heading: String(localized: "ChatAgent.AutoProvideHeading", defaultValue: "Share Terminal Contents Automatically?", comment: "Heading of the dialog asking whether to automatically share terminal contents with AI chats"),
                 window: nil)
             iTermUserDefaults.autoProvideConsent = (selection == .kiTermWarningSelection0) ? .granted : .denied
         }
@@ -1842,7 +1841,13 @@ class ChatAgent {
                                       database: ChatDatabase) -> Int {
         let existing = database.blobCount(inChat: chatID)
         let sameProtocol = existing == 0 || database.storedBlobProtocol(inChat: chatID) == Int(api.rawValue)
-        if existing > 0, sameProtocol, !Self.historyUsesExplainFeature(display),
+        // The incremental append path must not run when the stored blobs are a
+        // stale wire-FORMAT version: appending current-version rounds onto them
+        // makes a permanent mixed-version chat that replay refuses forever. Fall
+        // through to captureTurn, whose gate re-freezes the whole history.
+        let sameVersion = existing == 0 ||
+            database.minStoredBlobWireFormatVersion(inChat: chatID) == ChatBlob.currentWireFormatVersion(for: api)
+        if existing > 0, sameProtocol, sameVersion, !Self.historyUsesExplainFeature(display),
            let tail = Self.displayTailForNewRounds(display, existing: existing) {
             let tailMessages = translate(messages: tail)
             // The tail must begin at a clean round boundary (a user turn). It does by
@@ -1865,6 +1870,7 @@ class ChatAgent {
     }
 
     private func requestRenaming() {
+        // Localization unneeded
         let prompt = "Please assign a short, specific name to this chat, less than 30 characters in length, but descriptive. It will be shown in a chat list UI. Respond with only the name of the chat."
         var history = conversation.messages + [AITermController.Message(role: .user, content: prompt)]
         // Remove response IDs so we don't pollute the conversation's history
@@ -1964,7 +1970,7 @@ class ChatAgent {
                 nserror.code == iTermAIError.ErrorType.requestTooLarge.rawValue {
                 return Message(chatID: userMessage.chatID,
                                author: .agent,
-                               content: .plainText("🛑 The text to analyze was too long. Select a portion of it and try again.",
+                               content: .plainText(String(localized: "ChatAgent.TextTooLong", defaultValue: "🛑 The text to analyze was too long. Select a portion of it and try again.", comment: "Chat message shown when the text to analyze exceeds the AI request size limit"),
                                                    context: nil),
                                sentDate: Date(),
                                uniqueID: UUID())
@@ -1976,7 +1982,7 @@ class ChatAgent {
                 .joined(separator: "\n")
             return Message(chatID: userMessage.chatID,
                            author: .agent,
-                           content: .markdown("**Request failed**\n\n\(details)"),
+                           content: .markdown(String(localized: "ChatAgent.RequestFailed", defaultValue: "**Request failed**\n\n\(details)", comment: "Chat message shown when an AI request fails; placeholder is the error details")),
                            sentDate: Date(),
                            uniqueID: UUID())
         }
@@ -2074,7 +2080,7 @@ extension LLM.Message.Attachment {
         case .statusUpdate(let statusUpdate): statusUpdate.displayString
         case .file(let file):
             file.content.lossyString
-        case .fileID: "[Attached file]"
+        case .fileID: String(localized: "ChatAgent.AttachedFile", defaultValue: "[Attached file]", comment: "Placeholder text representing an attached file in a chat message")
         }
     }
 }

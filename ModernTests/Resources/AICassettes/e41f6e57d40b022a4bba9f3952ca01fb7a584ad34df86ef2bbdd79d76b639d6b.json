@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttp:\/\/localhost:11434\/api\/chat\ncontent-type: application\/json\n\n{\"keep_alive\":\"30m\",\"messages\":[{\"content\":\"Quote the value of the \\\"magic\\\" field shown.\\n<iterm2:attachment file=\\\"magic.json\\\" type=\\\"application\\\/json\\\">\\n{\\\"magic\\\":\\\"pinecone-42\\\"}\\n<\\\/iterm2:attachment>\",\"role\":\"user\"}],\"model\":\"qwen3.5:4b\",\"options\":{\"num_ctx\":16384,\"num_predict\":16244},\"stream\":false}",
+  "key" : "e41f6e57d40b022a4bba9f3952ca01fb7a584ad34df86ef2bbdd79d76b639d6b",
+  "response" : {
+    "data" : "{\"model\":\"qwen3.5:4b\",\"created_at\":\"2026-09-14T00:08:36.080929Z\",\"message\":{\"role\":\"assistant\",\"content\":\"pinecone-42\",\"thinking\":\"Thinking Process:\\n\\n1.  **Analyze the Request:** The user is asking for the value of a specific field (\\\"magic\\\") from a provided JSON snippet enclosed within an `iterm2` XML-like tag structure.\\n\\n2.  **Examine the Input:**\\n    *   Tag: `\\u003citerm2:attachment file=\\\"magic.json\\\" type=\\\"application\/json\\\"\\u003e`\\n    *   Content: `{\\\"magic\\\":\\\"pinecone-42\\\"}`\\n    *   Closing Tag: `\\u003c\/iterm2:attachment\\u003e`\\n\\n3.  **Identify the Target Data:** Inside the JSON object `{\\\"magic\\\":\\\"pinecone-42\\\"}`, I need to find the key \\\"magic\\\" and retrieve its associated value.\\n\\n4.  **Extract the Value:** The value associated with `\\\"magic\\\"` is `\\\"pinecone-42\\\"`.\\n\\n5.  **Formulate the Output:** The user asked to \\\"Quote the value\\\". I should provide just the value or a clear statement indicating the value. Usually, for this type of query, providing the raw string value is best.\\n\\n6.  **Final Verification:**\\n    *   Key: `magic`\\n    *   Value: `pinecone-42`\\n    *   Context: JSON inside an attachment tag.\\n    *   Constraint: None specified regarding formatting beyond \\\"Quote the value\\\".\\n\\n7.  **Construct Response:** pinecone-42.cw\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":7272838208,\"load_duration\":2902639667,\"prompt_eval_count\":56,\"prompt_eval_duration\":374638000,\"eval_count\":307,\"eval_duration\":3991798000}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

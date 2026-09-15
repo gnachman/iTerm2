@@ -28,26 +28,26 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             case .runtime(let message):
                 return message
             case .loginFailed(let message):
-                return "Could not log in: \(message)"
+                return String(localized: "AdapterPassword.LoginFailed", defaultValue: "Could not log in: \(message)", comment: "Error shown when login fails; placeholder is the underlying failure message")
             case .needsAuthentication:
-                return "Not authenticated."
+                return String(localized: "AdapterPassword.NotAuthenticated", defaultValue: "Not authenticated.", comment: "Error shown when the user is not authenticated")
             case .badOutput:
-                return "Invalid output."
+                return String(localized: "AdapterPassword.InvalidOutput", defaultValue: "Invalid output.", comment: "Error shown when the adapter produces invalid output")
             case .canceledByUser:
                 return nil
             case .handshakeFailed:
-                return "Handshake failed."
+                return String(localized: "AdapterPassword.HandshakeFailed", defaultValue: "Handshake failed.", comment: "Error shown when the initial handshake with the adapter fails")
             case .incompatibleProtocol:
-                return "Incompatible protocol. Please update iTerm2."
+                return String(localized: "AdapterPassword.IncompatibleProtocol", defaultValue: "Incompatible protocol. Please update iTerm2.", comment: "Error shown when the adapter speaks an incompatible protocol version")
             case .adapterNotFound:
-                return "Adapter not found."
+                return String(localized: "AdapterPassword.AdapterNotFound", defaultValue: "Adapter not found.", comment: "Error shown when the password manager adapter cannot be found")
             case .invalidToken:
-                return "Authentication failed. Log in again."
+                return String(localized: "AdapterPassword.InvalidToken", defaultValue: "Authentication failed. Log in again.", comment: "Error shown when the stored authentication token is invalid")
             }
         }
 
         var errorDescription: String? {
-            reason ?? "Unknown error"
+            reason ?? String(localized: "AdapterPassword.UnknownError", defaultValue: "Unknown error", comment: "Fallback error description when no reason is available")
         }
 
         // Classifies an adapter error response. A response flagged needsAuthentication becomes
@@ -224,7 +224,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         openPanel.canChooseDirectories = false
         openPanel.canChooseFiles = true
         openPanel.allowsMultipleSelection = false
-        openPanel.message = handshakeInfo?.pathToDatabasePrompt ?? "Select a database file for \(identifier)"
+        openPanel.message = handshakeInfo?.pathToDatabasePrompt ?? String(localized: "AdapterPassword.SelectDatabaseFile", defaultValue: "Select a database file for \(identifier)", comment: "Open panel prompt asking the user to select a database file; placeholder is the adapter identifier")
 
         if let ext = handshake.databaseExtension {
             openPanel.allowedContentTypes = [UTType(filenameExtension: ext) ?? .data]
@@ -242,9 +242,9 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
     private func requestPathToDatabaseViaTextField(handshake: HandshakeResponse) -> Bool {
         let alert = NSAlert()
-        alert.messageText = handshake.pathToDatabasePrompt ?? "Enter database URL for \(identifier)"
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = handshake.pathToDatabasePrompt ?? String(localized: "AdapterPassword.EnterDatabaseURL", defaultValue: "Enter database URL for \(identifier)", comment: "Prompt asking the user to enter a database URL; placeholder is the adapter identifier")
+        alert.addButton(withTitle: iTermLocalizedOK())
+        alert.addButton(withTitle: iTermLocalizedCancel())
 
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         textField.placeholderString = handshake.pathToDatabasePlaceholder ?? "https://\u{2026}"
@@ -295,7 +295,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         openPanel.canChooseDirectories = false
         openPanel.canChooseFiles = true
         openPanel.allowsMultipleSelection = false
-        openPanel.message = "Locate the CLI for \(identifier) named \(name)"
+        openPanel.message = String(localized: "AdapterPassword.LocateCLI", defaultValue: "Locate the CLI for \(identifier) named \(name)", comment: "Open panel prompt to locate a password manager CLI; first placeholder is the adapter identifier, second is the CLI name")
 
         let delegate = AdapterCLIFinderOpenPanelDelegate(name: name)
         return withExtendedLifetime(delegate) {
@@ -595,11 +595,11 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 if case let .runtime(description) = error as? AdapterError {
                     let loginFailed = AdapterError.loginFailed(description)
                     let selection = iTermWarning.show(withTitle: loginFailed.reason ?? description,
-                                                      actions: ["Try Again", "Cancel"],
+                                                      actions: [String(localized: "AdapterPassword.TryAgain", defaultValue: "Try Again", comment: "Button that retries authentication"), iTermLocalizedCancel()],
                                                       accessory: nil,
                                                       identifier: nil,
                                                       silenceable: .kiTermWarningTypePersistent,
-                                                      heading: "Authentication Problem",
+                                                      heading: String(localized: "AdapterPassword.AuthProblemHeading", defaultValue: "Authentication Problem", comment: "Heading of an alert shown when password manager authentication fails"),
                                                       window: loginInputs.window)
                     if selection == .kiTermWarningSelection0 {
                         DispatchQueue.main.async {
@@ -690,11 +690,11 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 if let warning = response.warning?.trimmingCharacters(in: .whitespacesAndNewlines), !warning.isEmpty {
                     DispatchQueue.main.async {
                         iTermWarning.show(withTitle: warning,
-                                            actions: ["OK"],
+                                            actions: [iTermLocalizedOK()],
                                             accessory: nil,
                                             identifier: listWarningIdentifier,
                                             silenceable: .kiTermWarningTypePermanentlySilenceable,
-                                            heading: "Password Manager",
+                                            heading: String(localized: "AdapterPassword.PasswordManagerHeading", defaultValue: "Password Manager", comment: "Heading of a password manager warning alert"),
                                             window: nil)
                     }
                 }
@@ -992,11 +992,11 @@ extension AdapterPasswordDataSource {
         }
         DispatchQueue.main.async {
             iTermWarning.show(withTitle: reason,
-                              actions: ["OK"],
+                              actions: [iTermLocalizedOK()],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Password Manager Error",
+                              heading: String(localized: "AdapterPassword.PasswordManagerErrorHeading", defaultValue: "Password Manager Error", comment: "Heading of an alert reporting a password manager error"),
                               window: window)
         }
     }

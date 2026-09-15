@@ -96,25 +96,32 @@ static id gAltOpenAllRepresentedObject;
 + (void)addOpenAllToMenu:(NSMenu *)menu params:(iTermProfileModelJournalParams *)params identifier:(NSString *)identifier {
     // Add separator + open all menu items
     [menu addItem:[NSMenuItem separatorItem]];
-    NSMenuItem *openAll = [menu addItemWithTitle:@"Open All" action:params.openAllSelector keyEquivalent:@""];
+    NSMenuItem *openAll = [menu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAll", nil, [NSBundle mainBundle], @"Open All", @"Menu item to open all profiles") action:params.openAllSelector keyEquivalent:@""];
     if (@available(macOS 26, *)) {
         if (iTermMainMenuMangler.menuActionImagesEnabled) {
             openAll.image = [NSImage imageWithSystemSymbolName:@"person.3.sequence"
                                       accessibilityDescription:nil];
         }
     }
+    // Localization unneeded
     openAll.identifier = identifier ?: @"Open All";
+    // The title is localized; hold the stable English label as the accessibility identifier
+    // so a legacy title-only "Select Menu Item" binding still resolves after translation.
+    [openAll setAccessibilityIdentifier:@"Open All"];
     [openAll setTarget:params.target];
 
     // Add alternate open all menu
-    NSMenuItem *altOpenAll = [[NSMenuItem alloc] initWithTitle:@"Open All in New Window"
+    NSMenuItem *altOpenAll = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAllInNewWindow", nil, [NSBundle mainBundle], @"Open All in New Window", @"Menu item to open all profiles in a new window")
                                                         action:params.alternateOpenAllSelector
                                                  keyEquivalent:@""];
     [altOpenAll setTarget:params.target];
     [altOpenAll setKeyEquivalentModifierMask:NSEventModifierFlagOption];
     [altOpenAll setAlternate:YES];
     [altOpenAll setRepresentedObject:gAltOpenAllRepresentedObject];
+    // Localization unneeded
     altOpenAll.identifier = [identifier stringByAppendingString:@" (Alt)"] ?: @"Open All In New Window";
+    // English anchor for a translated title, as above.
+    [altOpenAll setAccessibilityIdentifier:@"Open All (Alt)"];
     [menu addItem:altOpenAll];
 }
 

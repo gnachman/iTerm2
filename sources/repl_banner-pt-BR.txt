@@ -1,0 +1,12 @@
+[1mBem-vindo ao REPL Python do iTerm2![m
+
+Este é um interpretador Python interativo onde você pode experimentar
+scripts. Diferente dos interpretadores Python padrão, você pode usar
+“await” fora de uma função assíncrona. Veja um exemplo de script para testar:
+
+import iterm2
+connection=await iterm2.Connection.async_create()
+await iterm2.Window.async_create(connection)
+
+]8;;https://iterm2.com/python-api⌘-clique aqui para a documentação da API Python do iTerm2]8;;
+

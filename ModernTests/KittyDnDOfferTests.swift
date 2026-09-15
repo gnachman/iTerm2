@@ -374,10 +374,13 @@ final class KittyDnDOfferTests: XCTestCase {
         started.assertForOverFulfill = false
         recorder.onReport = { msg in
             if msg.type == "e", msg.metadata["x"] == "5", let y = msg.metadata["y"] {
-                // The program answers the lazy data request for the deferred index.
+                // The program answers the lazy data request for the deferred index:
+                // a data message followed by the empty terminator.
                 c.handleInboundSequence(
                     KittyDnDMessage(metadata: ["t": "e", "y": y],
                                     dataPayload: Data("deferred".utf8)).serializedContent())
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "e", "y": y]).serializedContent())
             } else if msg.type == "E" {
                 started.fulfill()
             }
@@ -456,10 +459,12 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(recorder.last?.intValue("x"), 5)
         XCTAssertEqual(recorder.last?.intValue("y"), 0)
 
-        // Program replies with the bytes.
+        // Program replies with the bytes, then the empty terminator.
         c.handleInboundSequence(
             KittyDnDMessage(metadata: ["t": "e", "y": "0"],
                             dataPayload: Data("lazy".utf8)).serializedContent())
+        c.handleInboundSequence(
+            KittyDnDMessage(metadata: ["t": "e", "y": "0"]).serializedContent())
         XCTAssertEqual(delivered, Data("lazy".utf8))
     }
 
@@ -473,6 +478,83 @@ final class KittyDnDOfferTests: XCTestCase {
         c.handleInboundSequence("t=E:y=0;ENOENT:missing")
         XCTAssertTrue(called)
         XCTAssertNil(delivered)
+    }
+
+    // MARK: - kitty zero-key omission (issue 12961)
+
+    // Real kitty's DnD serializer omits any protocol key whose integer value is
+    // 0 (its `add` helper only emits `key=val` when val != 0). So the reply to a
+    // data request for MIME index 0 arrives with the `y` key ABSENT, as a single
+    // `t=e ; <base64>` chunk followed by an empty `t=e` EOF terminator. iTerm2
+    // must read an absent `y` as index 0 and deliver the accumulated bytes.
+    // (Our own test harness in tests/kitty-dnd never reproduces this because it
+    // emits every key verbatim, including y=0.)
+    func testLazyDataReplyForIndexZeroOmitsYKey() {
+        let recorder = Recorder()
+        let c = startedController(host: FakeDragHost(), recorder: recorder)
+
+        var called = false
+        var delivered: Data?
+        c.requestDragData(mimeIndex: 0) { called = true; delivered = $0 }
+
+        // Data chunk with y omitted (because y == 0), then the empty terminator.
+        c.handleInboundSequence(
+            KittyDnDMessage(metadata: ["t": "e", "m": "0"],
+                            dataPayload: Data("lazy".utf8)).serializedContent())
+        c.handleInboundSequence(
+            KittyDnDMessage(metadata: ["t": "e"]).serializedContent())
+
+        XCTAssertTrue(called)
+        XCTAssertEqual(delivered, Data("lazy".utf8))
+    }
+
+    // End-to-end reproduction of `kitten dnd <file>` (issue 12961). kitty offers
+    // one text/uri-list at index 0, pre-sends it, and starts the drag. Because
+    // its serializer omits zero-valued keys, the pre-send carries NO `x` key and
+    // the lazy reply carries NO `y` key. iTerm2 dropped the pre-send (its guard
+    // required `x`), pulled the data lazily, then rejected the reply as
+    // "EINVAL:unexpected t=e" and never started the drag.
+    func testKittenDndSingleFileDragOut() async throws {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=3;text/uri-list")
+
+        let uris = Data("file:///tmp/a.txt\r\n".utf8)
+
+        // Pre-send index 0 the way kitty does: the `x` key is OMITTED (x == 0),
+        // followed by kitty's empty pre-send terminator (also x-less).
+        c.handleInboundSequence(
+            KittyDnDMessage(metadata: ["t": "p", "o": "3", "m": "0"],
+                            dataPayload: uris).serializedContent())
+        c.handleInboundSequence("t=p:o=3")
+
+        let done = expectation(description: "drag started or rejected")
+        done.assertForOverFulfill = false
+        recorder.onReport = { msg in
+            if msg.type == "e", msg.metadata["x"] == "5" {
+                // Answer the lazy pull as kitty does: y omitted (y == 0), plus an
+                // empty t=e EOF terminator.
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "e", "m": "0"],
+                                    dataPayload: uris).serializedContent())
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "e"]).serializedContent())
+            } else if msg.type == "E" {
+                done.fulfill()
+            }
+        }
+        c.handleInboundSequence("t=P:x=-1")
+        await fulfillment(of: [done], timeout: 5)
+
+        // The drag must have begun with the uri-list, and no EINVAL error sent.
+        XCTAssertEqual(host.begun.count, 1)
+        XCTAssertEqual(host.begun.first?.data[0], uris)
+        XCTAssertFalse(recorder.messages.contains {
+            $0.type == "E" && ($0.textPayload?.hasPrefix("EINVAL") ?? false)
+        })
     }
 
     // MARK: - Cancel
@@ -716,10 +798,12 @@ final class KittyDnDOfferTests: XCTestCase {
         started.assertForOverFulfill = false
         recorder.onReport = { msg in
             if msg.type == "e", msg.metadata["x"] == "5", let y = msg.metadata["y"] {
-                // Terminal pulls the deferred uri-list; answer it.
+                // Terminal pulls the deferred uri-list; answer it, then terminate.
                 c.handleInboundSequence(
                     KittyDnDMessage(metadata: ["t": "e", "y": y],
                                     dataPayload: Data("file:///remote/a.txt".utf8)).serializedContent())
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "e", "y": y]).serializedContent())
             } else if msg.type == "k", let x = msg.metadata["x"], msg.metadata["Y"] == nil {
                 c.handleInboundSequence(
                     KittyDnDMessage(metadata: ["t": "k", "x": x],

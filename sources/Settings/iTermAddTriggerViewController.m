@@ -27,6 +27,13 @@
 
 static const CGFloat kLabelWidth = 124;
 
+// Identifies a field row so dispatch does not depend on the (localizable) label text.
+typedef NS_ENUM(NSInteger, iTermAddTriggerField) {
+    iTermAddTriggerFieldRegex,
+    iTermAddTriggerFieldName,
+    iTermAddTriggerFieldJob
+};
+
 @interface iTermAddTriggerViewController()<iTermTriggerParameterController>
 @end
 
@@ -338,7 +345,7 @@ static const CGFloat kLabelWidth = 124;
     [stackView addArrangedSubview:matchTypeRow];
 
     // Regular Expression row
-    _regexRow = [self createRowWithLabelText:@"Regular Expression:" hasVisualizationButton:YES];
+    _regexRow = [self createRowWithLabelText:NSLocalizedStringWithDefaultValue(@"AddTrigger.RegexLabel", nil, [NSBundle mainBundle], @"Regular Expression:", @"Label for the regular expression text field") field:iTermAddTriggerFieldRegex hasVisualizationButton:YES];
     [stackView addArrangedSubview:_regexRow];
 
     // Event parameter row (hidden by default)
@@ -353,11 +360,11 @@ static const CGFloat kLabelWidth = 124;
     }
     
     // Name row
-    NSView *nameRow = [self createRowWithLabelText:@"Name:" hasVisualizationButton:NO];
+    NSView *nameRow = [self createRowWithLabelText:NSLocalizedStringWithDefaultValue(@"AddTrigger.NameLabel", nil, [NSBundle mainBundle], @"Name:", @"Label for the trigger name text field") field:iTermAddTriggerFieldName hasVisualizationButton:NO];
     [stackView addArrangedSubview:nameRow];
 
     // Job row
-    NSView *jobRow = [self createRowWithLabelText:@"Job:" hasVisualizationButton:NO];
+    NSView *jobRow = [self createRowWithLabelText:NSLocalizedStringWithDefaultValue(@"AddTrigger.JobLabel", nil, [NSBundle mainBundle], @"Job:", @"Label for the job text field") field:iTermAddTriggerFieldJob hasVisualizationButton:NO];
     [stackView addArrangedSubview:jobRow];
 
     // Buttons row
@@ -421,7 +428,7 @@ static const CGFloat kLabelWidth = 124;
     performanceRow.hidden = YES;
     
     // Create help button
-    NSString *helpText = @"This histogram shows how much CPU time was used evaluating the regular expression for this trigger over the lifetime of the current terminal session. The X axis gives time in microseconds while the Y axis gives the number of samples which fell in that duration bucket. The vertical red line indicates the mean duration. You can use this to diagnose triggers that cause performance problems.";
+    NSString *helpText = NSLocalizedStringWithDefaultValue(@"AddTrigger.PerformanceHelp", nil, [NSBundle mainBundle], @"This histogram shows how much CPU time was used evaluating the regular expression for this trigger over the lifetime of the current terminal session. The X axis gives time in microseconds while the Y axis gives the number of samples which fell in that duration bucket. The vertical red line indicates the mean duration. You can use this to diagnose triggers that cause performance problems.", @"Help text explaining the trigger performance histogram");
     iTermPopoverHelpButton *helpButton = [[iTermPopoverHelpButton alloc] initWithHelpText:helpText];
     helpButton.translatesAutoresizingMaskIntoConstraints = NO;
     [performanceRow addSubview:helpButton];
@@ -429,7 +436,7 @@ static const CGFloat kLabelWidth = 124;
     // Create label
     NSTextField *performanceLabel = [[NSTextField alloc] init];
     performanceLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    performanceLabel.stringValue = @"CPU Time:";
+    performanceLabel.stringValue = NSLocalizedStringWithDefaultValue(@"AddTrigger.CPUTimeLabel", nil, [NSBundle mainBundle], @"CPU Time:", @"Label for the performance CPU time histogram");
     performanceLabel.editable = NO;
     performanceLabel.bordered = NO;
     performanceLabel.backgroundColor = [NSColor clearColor];
@@ -573,7 +580,7 @@ static const CGFloat kLabelWidth = 124;
                                                           constant:-20]];
 }
 
-- (NSView *)createRowWithLabelText:(NSString *)labelText hasVisualizationButton:(BOOL)hasVisualizationButton {
+- (NSView *)createRowWithLabelText:(NSString *)labelText field:(iTermAddTriggerField)field hasVisualizationButton:(BOOL)hasVisualizationButton {
     NSView *row = [[NSView alloc] init];
     row.translatesAutoresizingMaskIntoConstraints = NO;
     
@@ -597,14 +604,18 @@ static const CGFloat kLabelWidth = 124;
     textField.delegate = self;
     [row addSubview:textField];
     
-    if ([labelText isEqualToString:@"Regular Expression:"]) {
-        _regexTextField = textField;
-        _regexLabel = label;
-    } else if ([labelText isEqualToString:@"Name:"]) {
-        _nameTextField = textField;
-    } else if ([labelText isEqualToString:@"Job:"]) {
-        _jobTextField = textField;
-        _jobTextField.placeholderString = @"Trigger enabled only for this job (e.g., emacs)";
+    switch (field) {
+        case iTermAddTriggerFieldRegex:
+            _regexTextField = textField;
+            _regexLabel = label;
+            break;
+        case iTermAddTriggerFieldName:
+            _nameTextField = textField;
+            break;
+        case iTermAddTriggerFieldJob:
+            _jobTextField = textField;
+            _jobTextField.placeholderString = NSLocalizedStringWithDefaultValue(@"AddTrigger.JobPlaceholder", nil, [NSBundle mainBundle], @"Trigger enabled only for this job (e.g., emacs)", @"Placeholder for the job text field");
+            break;
     }
     
     // Add visualization button if needed
@@ -614,7 +625,7 @@ static const CGFloat kLabelWidth = 124;
         _toggleVisualizationButton.bezelStyle = NSBezelStyleRounded;
         _toggleVisualizationButton.bordered = YES;
         _toggleVisualizationButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
-                                                  accessibilityDescription:@"Show visualization"
+                                                  accessibilityDescription:NSLocalizedStringWithDefaultValue(@"AddTrigger.ShowVisualization", nil, [NSBundle mainBundle], @"Show visualization", @"Accessibility label for the button that shows the regex visualization")
                                                          fallbackImageName:@"flowchart"
                                                                   forClass:[self class]];
         _toggleVisualizationButton.target = self;
@@ -781,7 +792,7 @@ static const CGFloat kLabelWidth = 124;
     // Create label
     NSTextField *label = [[NSTextField alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.stringValue = @"Match Against:";
+    label.stringValue = NSLocalizedStringWithDefaultValue(@"AddTrigger.MatchAgainstLabel", nil, [NSBundle mainBundle], @"Match Against:", @"Label for the match type popup");
     label.editable = NO;
     label.bordered = NO;
     label.backgroundColor = [NSColor clearColor];
@@ -793,12 +804,12 @@ static const CGFloat kLabelWidth = 124;
     // Create popup button for match type
     _matchTypeButton = [[NSPopUpButton alloc] init];
     _matchTypeButton.translatesAutoresizingMaskIntoConstraints = NO;
-    [_matchTypeButton it_addItemWithTitle:@"Regular Expression" tag:iTermTriggerMatchTypeRegex];
+    [_matchTypeButton it_addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AddTrigger.MatchTypeRegex", nil, [NSBundle mainBundle], @"Regular Expression", @"Match type menu item for matching a regular expression") tag:iTermTriggerMatchTypeRegex];
 
     if (_browserMode) {
         // Browser-specific match types
-        [_matchTypeButton it_addItemWithTitle:@"URL" tag:iTermTriggerMatchTypeURLRegex];
-        [_matchTypeButton it_addItemWithTitle:@"Page Content" tag:iTermTriggerMatchTypePageContentRegex];
+        [_matchTypeButton it_addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AddTrigger.MatchTypeURL", nil, [NSBundle mainBundle], @"URL", @"Match type menu item for matching the URL") tag:iTermTriggerMatchTypeURLRegex];
+        [_matchTypeButton it_addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AddTrigger.MatchTypePageContent", nil, [NSBundle mainBundle], @"Page Content", @"Match type menu item for matching page content") tag:iTermTriggerMatchTypePageContentRegex];
     } else {
         // Terminal-specific event types, sorted alphabetically by display name
         [[_matchTypeButton menu] addItem:[NSMenuItem separatorItem]];
@@ -881,7 +892,7 @@ static const CGFloat kLabelWidth = 124;
     // Create label
     NSTextField *label = [[NSTextField alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.stringValue = @"Content Regex:";
+    label.stringValue = NSLocalizedStringWithDefaultValue(@"AddTrigger.ContentRegexLabel", nil, [NSBundle mainBundle], @"Content Regex:", @"Label for the content regex text field");
     label.editable = NO;
     label.bordered = NO;
     label.backgroundColor = [NSColor clearColor];
@@ -904,7 +915,7 @@ static const CGFloat kLabelWidth = 124;
     _contentRegexVisualizationButton.bezelStyle = NSBezelStyleRounded;
     _contentRegexVisualizationButton.bordered = YES;
     _contentRegexVisualizationButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
-                                                    accessibilityDescription:@"Show content regex visualization"
+                                                    accessibilityDescription:NSLocalizedStringWithDefaultValue(@"AddTrigger.ShowContentRegexVisualization", nil, [NSBundle mainBundle], @"Show content regex visualization", @"Accessibility label for the button that shows the content regex visualization")
                                                            fallbackImageName:@"flowchart"
                                                                     forClass:[self class]];
     _contentRegexVisualizationButton.target = self;
@@ -1010,7 +1021,7 @@ static const CGFloat kLabelWidth = 124;
     // Create label
     NSTextField *label = [[NSTextField alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.stringValue = @"Parameters:";
+    label.stringValue = NSLocalizedStringWithDefaultValue(@"AddTrigger.ParametersLabel", nil, [NSBundle mainBundle], @"Parameters:", @"Label for the event parameters row");
     label.editable = NO;
     label.bordered = NO;
     label.backgroundColor = [NSColor clearColor];
@@ -1093,7 +1104,7 @@ static const CGFloat kLabelWidth = 124;
     _instantButton = [[NSButton alloc] init];
     _instantButton.translatesAutoresizingMaskIntoConstraints = NO;
     _instantButton.buttonType = NSButtonTypeSwitch;
-    _instantButton.title = @"Instant";
+    _instantButton.title = NSLocalizedStringWithDefaultValue(@"AddTrigger.Instant", nil, [NSBundle mainBundle], @"Instant", @"Checkbox title for the instant trigger option");
     _instantButton.target = self;
     _instantButton.action = @selector(instantDidChange:);
     [row addSubview:_instantButton];
@@ -1101,7 +1112,7 @@ static const CGFloat kLabelWidth = 124;
     _enabledButton = [[NSButton alloc] init];
     _enabledButton.translatesAutoresizingMaskIntoConstraints = NO;
     _enabledButton.buttonType = NSButtonTypeSwitch;
-    _enabledButton.title = @"Enabled";
+    _enabledButton.title = NSLocalizedStringWithDefaultValue(@"AddTrigger.Enabled", nil, [NSBundle mainBundle], @"Enabled", @"Checkbox title for enabling the trigger");
     _enabledButton.target = self;
     _enabledButton.action = @selector(enabledDidChange:);
     [row addSubview:_enabledButton];
@@ -1109,7 +1120,7 @@ static const CGFloat kLabelWidth = 124;
     _updateProfileButton = [[NSButton alloc] init];
     _updateProfileButton.translatesAutoresizingMaskIntoConstraints = NO;
     _updateProfileButton.buttonType = NSButtonTypeSwitch;
-    _updateProfileButton.title = @"Update Profile";
+    _updateProfileButton.title = NSLocalizedStringWithDefaultValue(@"AddTrigger.UpdateProfile", nil, [NSBundle mainBundle], @"Update Profile", @"Checkbox title for updating the profile");
     [row addSubview:_updateProfileButton];
     
     // Add leading spacer to align with text fields
@@ -1195,8 +1206,8 @@ static const CGFloat kLabelWidth = 124;
     _leaderOnlyButton = [[NSButton alloc] init];
     _leaderOnlyButton.translatesAutoresizingMaskIntoConstraints = NO;
     _leaderOnlyButton.buttonType = NSButtonTypeSwitch;
-    _leaderOnlyButton.title = @"Only on the workgroup leader";
-    _leaderOnlyButton.toolTip = @"When set, the trigger fires only for the workgroup leader (the session that originally entered the workgroup). Peers such as the Code Review and Diff sessions do not, so reloading or quitting one keeps the workgroup open.";
+    _leaderOnlyButton.title = NSLocalizedStringWithDefaultValue(@"AddTrigger.LeaderOnlyTitle", nil, [NSBundle mainBundle], @"Only on the workgroup leader", @"Checkbox title for firing the trigger only on the workgroup leader");
+    _leaderOnlyButton.toolTip = NSLocalizedStringWithDefaultValue(@"AddTrigger.LeaderOnlyTooltip", nil, [NSBundle mainBundle], @"When set, the trigger fires only for the workgroup leader (the session that originally entered the workgroup). Peers such as the Code Review and Diff sessions do not, so reloading or quitting one keeps the workgroup open.", @"Tooltip explaining the leader-only trigger option");
     _leaderOnlyButton.target = self;
     _leaderOnlyButton.action = @selector(leaderOnlyDidChange:);
     [row addSubview:_leaderOnlyButton];
@@ -1258,7 +1269,7 @@ static const CGFloat kLabelWidth = 124;
     // Create label
     NSTextField *label = [[NSTextField alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.stringValue = @"Action:";
+    label.stringValue = NSLocalizedStringWithDefaultValue(@"AddTrigger.ActionLabel", nil, [NSBundle mainBundle], @"Action:", @"Label for the trigger action popup");
     label.editable = NO;
     label.bordered = NO;
     label.backgroundColor = [NSColor clearColor];
@@ -1337,7 +1348,7 @@ static const CGFloat kLabelWidth = 124;
     _cancelButton = [[NSButton alloc] init];
     _cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
     _cancelButton.bezelStyle = NSBezelStyleRounded;
-    _cancelButton.title = @"Cancel";
+    _cancelButton.title = iTermLocalizedCancel();
     _cancelButton.target = self;
     _cancelButton.action = @selector(cancel:);
     _cancelButton.keyEquivalent = @"\e"; // Escape key
@@ -1346,7 +1357,7 @@ static const CGFloat kLabelWidth = 124;
     _okButton = [[NSButton alloc] init];
     _okButton.translatesAutoresizingMaskIntoConstraints = NO;
     _okButton.bezelStyle = NSBezelStyleRounded;
-    _okButton.title = @"OK";
+    _okButton.title = iTermLocalizedOK();
     _okButton.target = self;
     _okButton.action = @selector(ok:);
     _okButton.keyEquivalent = @"\r"; // Return key
@@ -1473,14 +1484,14 @@ static const CGFloat kLabelWidth = 124;
         _popover = popover;
 
         button.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchartFill)
-                             accessibilityDescription:@"Hide visualization"
+                             accessibilityDescription:NSLocalizedStringWithDefaultValue(@"AddTrigger.HideVisualization", nil, [NSBundle mainBundle], @"Hide visualization", @"Accessibility label for the button that hides the regex visualization")
                                     fallbackImageName:@"flowchart.fill"
                                              forClass:[self class]];
     } else {
         [_popover close];
         _popover = nil;
         button.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
-              accessibilityDescription:@"Show visualization"
+              accessibilityDescription:NSLocalizedStringWithDefaultValue(@"AddTrigger.ShowVisualization", nil, [NSBundle mainBundle], @"Show visualization", @"Accessibility label for the button that shows the regex visualization")
                      fallbackImageName:@"flowchart"
                               forClass:[self class]];
     }
@@ -1596,7 +1607,7 @@ static const CGFloat kLabelWidth = 124;
                               _matchType == iTermTriggerMatchTypeEventJobEnded);
     _jobTextField.enabled = !jobFieldRedundant;
     if (jobFieldRedundant) {
-        _jobTextField.placeholderString = @"Set job above";
+        _jobTextField.placeholderString = NSLocalizedStringWithDefaultValue(@"AddTrigger.SetJobAbove", nil, [NSBundle mainBundle], @"Set job above", @"Placeholder for the job field when the job is set by the match type above");
         // Clear so we don't serialize a stale trigger.job from a
         // previously-selected match type. The job-started/ended
         // evaluator ignores trigger.job entirely (it reads from
@@ -1604,7 +1615,7 @@ static const CGFloat kLabelWidth = 124;
         // would confuse future callers.
         _jobTextField.stringValue = @"";
     } else {
-        _jobTextField.placeholderString = @"Trigger enabled only for this job (e.g., emacs)";
+        _jobTextField.placeholderString = NSLocalizedStringWithDefaultValue(@"AddTrigger.JobPlaceholder", nil, [NSBundle mainBundle], @"Trigger enabled only for this job (e.g., emacs)", @"Placeholder for the job text field");
     }
 }
 
@@ -1618,7 +1629,7 @@ static const CGFloat kLabelWidth = 124;
     [_matchTypeButton removeAllItems];
 
     // Always add regex
-    [_matchTypeButton it_addItemWithTitle:@"Regular Expression" tag:iTermTriggerMatchTypeRegex];
+    [_matchTypeButton it_addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AddTrigger.MatchTypeRegex", nil, [NSBundle mainBundle], @"Regular Expression", @"Match type menu item for matching a regular expression") tag:iTermTriggerMatchTypeRegex];
 
     // Add all event types, sorted alphabetically by display name
     NSArray<NSNumber *> *sortedEventTypes = [[iTermEventTriggerMatchTypeHelper allEventTypes] sortedArrayUsingComparator:^NSComparisonResult(NSNumber *a, NSNumber *b) {
@@ -1841,7 +1852,7 @@ static const CGFloat kLabelWidth = 124;
     _popover = nil;
     _visualizationViewController = nil;
     _toggleVisualizationButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
-                                             accessibilityDescription:@"Show visualization"
+                                             accessibilityDescription:NSLocalizedStringWithDefaultValue(@"AddTrigger.ShowVisualization", nil, [NSBundle mainBundle], @"Show visualization", @"Accessibility label for the button that shows the regex visualization")
                                                     fallbackImageName:@"flowchart"
                                                              forClass:[self class]];
     
@@ -1850,7 +1861,7 @@ static const CGFloat kLabelWidth = 124;
     _contentRegexVisualizationViewController = nil;
     if (_contentRegexVisualizationButton) {
         _contentRegexVisualizationButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
-                                                         accessibilityDescription:@"Show content regex visualization"
+                                                         accessibilityDescription:NSLocalizedStringWithDefaultValue(@"AddTrigger.ShowContentRegexVisualization", nil, [NSBundle mainBundle], @"Show content regex visualization", @"Accessibility label for the button that shows the content regex visualization")
                                                                 fallbackImageName:@"flowchart"
                                                                          forClass:[self class]];
     }
@@ -1867,9 +1878,9 @@ static const CGFloat kLabelWidth = 124;
     // Update the regex label text based on match type
     if (_regexLabel) {
         if (_matchType == iTermTriggerMatchTypePageContentRegex) {
-            _regexLabel.stringValue = @"URL Regex:";
+            _regexLabel.stringValue = NSLocalizedStringWithDefaultValue(@"AddTrigger.URLRegexLabel", nil, [NSBundle mainBundle], @"URL Regex:", @"Label for the URL regex text field in browser mode");
         } else {
-            _regexLabel.stringValue = @"Regular Expression:";
+            _regexLabel.stringValue = NSLocalizedStringWithDefaultValue(@"AddTrigger.RegexLabel", nil, [NSBundle mainBundle], @"Regular Expression:", @"Label for the regular expression text field");
         }
     }
 }
@@ -1886,14 +1897,14 @@ static const CGFloat kLabelWidth = 124;
         _contentRegexPopover = popover;
 
         button.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchartFill)
-                             accessibilityDescription:@"Hide content regex visualization"
+                             accessibilityDescription:NSLocalizedStringWithDefaultValue(@"AddTrigger.HideContentRegexVisualization", nil, [NSBundle mainBundle], @"Hide content regex visualization", @"Accessibility label for the button that hides the content regex visualization")
                                     fallbackImageName:@"flowchart.fill"
                                              forClass:[self class]];
     } else {
         [_contentRegexPopover close];
         _contentRegexPopover = nil;
         button.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolFlowchart)
-              accessibilityDescription:@"Show content regex visualization"
+              accessibilityDescription:NSLocalizedStringWithDefaultValue(@"AddTrigger.ShowContentRegexVisualization", nil, [NSBundle mainBundle], @"Show content regex visualization", @"Accessibility label for the button that shows the content regex visualization")
                      fallbackImageName:@"flowchart"
                               forClass:[self class]];
     }

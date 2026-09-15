@@ -29,7 +29,7 @@
 
 + (NSString *)title
 {
-    return @"Run Command…";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Script.Title", nil, [NSBundle mainBundle], @"Run Command…", @"Trigger action name: run a shell command");
 }
 
 - (NSString *)description {

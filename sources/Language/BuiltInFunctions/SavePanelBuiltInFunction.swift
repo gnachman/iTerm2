@@ -62,6 +62,7 @@ class SavePanelBuiltInFunction: NSObject, iTermBuiltInFunctionProtocol {
                                     defaultFilenameArgName]),
             defaultValues: [:],
             context: .app,
+            // Localization unneeded
             sideEffectsPlaceholder: "[save_panel]") { parameters, completion in
                 let panel = NSSavePanel()
 

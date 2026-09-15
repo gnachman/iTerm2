@@ -82,6 +82,7 @@
 
 // WindowControllerInterface protocol
 - (void)windowSetFrameTopLeftPoint:(NSPoint)point;
+- (void)windowSetFrame:(NSRect)frame;
 - (void)windowPerformMiniaturize:(id)sender;
 - (void)windowDeminiaturize:(id)sender;
 - (void)windowOrderFront:(id)sender;

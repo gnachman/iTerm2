@@ -24,13 +24,14 @@ extension ArchiveClippingsBuiltInFunction: iTermBuiltInFunctionProtocol {
             optionalArguments: Set(),
             defaultValues: [argSession: iTermVariableKeySessionID],
             context: .session,
+            // Localization unneeded
             sideEffectsPlaceholder: "[archive_clippings]") { parameters, completion in
                 guard let sessionID = parameters[argSession] as? String else {
-                    completion(nil, error(message: "Missing session_id. This shouldn't happen so please report a bug."))
+                    completion(nil, error(message: String(localized: "BuiltInFunction.MissingSessionID", defaultValue: "Missing session_id. This shouldn’t happen so please report a bug.", comment: "Error shown when the session_id argument is unexpectedly missing (should not happen)")))
                     return
                 }
                 guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, error(message: "No such session"))
+                    completion(nil, error(message: String(localized: "BuiltInFunction.NoSuchSession", defaultValue: "No such session", comment: "Error shown when a function is called with a session ID that does not exist")))
                     return
                 }
                 // Mirror add_clipping's routing: a code-review workgroup peer

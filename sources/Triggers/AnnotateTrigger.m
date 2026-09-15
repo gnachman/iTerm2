@@ -13,7 +13,7 @@
 
 + (NSString *)title
 {
-    return @"Annotate…";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Annotate.Title", nil, [NSBundle mainBundle], @"Annotate…", @"Trigger action name: attach an annotation to the matching text");
 }
 
 - (NSString *)description {

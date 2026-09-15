@@ -743,6 +743,71 @@ enum WorkgroupIntrospection {
         return stripTrailingBlankLines(raw)
     }
 
+    // Strips the agent-oriented screen markup so the text can be reused where plain
+    // visible content is wanted - specifically AI tab titling, which must not see the
+    // markup tokens as literal screen content nor let them perturb its change digest.
+    //
+    // Removes the ⟨cursor⟩ and ⟨image⟩ tokens outright. For faint (⟨dim⟩…⟨/dim⟩) runs:
+    // removes the run IMMEDIATELY AFTER the cursor INCLUDING its content - that is a
+    // shell autosuggestion (zsh-autosuggestions / fish), a not-yet-run command that
+    // must not name the tab. Every OTHER faint run keeps its content (only the markers
+    // are dropped): faint is used for real content too - diff/git context lines, pager
+    // line numbers, dimmed inactive TUI rows - which must not be deleted from the
+    // title input.
+    static func plainTitleText(_ text: String) -> String {
+        var result = text
+        // The autosuggestion: a faint run right after the cursor that runs to the end
+        // of the cursor's line, WITH typed (non-whitespace, non-faint) text before the
+        // cursor on that line. Both conditions matter:
+        //  - Bounding the removal to the cursor's line means an unbalanced (clipped)
+        //    open can never consume later lines of real content.
+        //  - Requiring typed text before the cursor distinguishes a shell ghost
+        //    suggestion (partial command typed, then faint suggestion) from the cursor
+        //    merely resting on the first cell of a genuine dim region - a dimmed TUI
+        //    row or a faint diff/context line - which has nothing typed before it and
+        //    must NOT be deleted.
+        if let cursor = result.range(of: cursorMarkup) {
+            let lineStart = result[..<cursor.lowerBound].lastIndex(of: "\n")
+                .map { result.index(after: $0) } ?? result.startIndex
+            let lineEnd = result[cursor.upperBound...].firstIndex(of: "\n") ?? result.endIndex
+            let typedBeforeCursor = result[lineStart..<cursor.lowerBound].contains { !$0.isWhitespace }
+            if typedBeforeCursor, result[cursor.upperBound..<lineEnd].hasPrefix(dimOpenMarkup) {
+                let afterOpen = result.index(cursor.upperBound, offsetBy: dimOpenMarkup.count)
+                if let close = result.range(of: dimCloseMarkup, range: afterOpen..<lineEnd) {
+                    // Closed on this line: only a TRAILING run (nothing but whitespace
+                    // after the close) is the suggestion; otherwise it's mid-line
+                    // content, left for the marker-only strip below.
+                    if result[close.upperBound..<lineEnd].allSatisfy({ $0.isWhitespace }) {
+                        result.removeSubrange(cursor.upperBound..<close.upperBound)
+                    }
+                } else {
+                    // Unbalanced open on this line (clipped): the suggestion runs to
+                    // end of THIS line, never across the newline.
+                    //
+                    // Accepted false-positive: a GENUINE multi-line faint region
+                    // (a dimmed TUI block, a faint diff/context run) that happens to
+                    // begin exactly at the cursor with typed text before it on the same
+                    // line is indistinguishable from a wrapping autosuggestion, so its
+                    // cursor-line tail is stripped here. The damage is bounded - only
+                    // this one line's post-cursor tail is lost; later lines of the region
+                    // survive (the removal never crosses the newline), and the input
+                    // feeds a cosmetic title. Tightening on the autosuggestion signature
+                    // (post-cursor run lacks a leading space / continues the typed prefix)
+                    // is unreliable - shell suggestions do not consistently have either -
+                    // and risks leaving real ghost text in the title, so the simpler
+                    // cursor-line bound is kept.
+                    result.removeSubrange(cursor.upperBound..<lineEnd)
+                }
+            }
+        }
+        // Remaining faint runs are real content: drop only the markers.
+        result = result.replacingOccurrences(of: dimOpenMarkup, with: "")
+        result = result.replacingOccurrences(of: dimCloseMarkup, with: "")
+        result = result.replacingOccurrences(of: cursorMarkup, with: "")
+        result = result.replacingOccurrences(of: imagePlaceholder, with: "")
+        return result
+    }
+
     // Returns the index into the attributed string where a ⟨cursor⟩
     // marker should be spliced, or nil if the cursor is outside the
     // extracted range. `coords` is the extractor's per-character grid

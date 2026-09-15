@@ -230,7 +230,7 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
             }
 
             // Label above swatches
-            let label = NSTextField(labelWithString: "Recent Tab Colors")
+            let label = NSTextField(labelWithString: String(localized: "PseudoTerminal.RecentTabColors", defaultValue: "Recent Tab Colors", comment: "Label above the recently used tab colors"))
             label.font = NSFont.systemFont(ofSize: 10, weight: .medium)
             label.textColor = .secondaryLabelColor
             label.sizeToFit()
@@ -248,7 +248,7 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         let button = NSButton(frame: NSMakeRect(0, buttonY, 0, 0))
         button.isBordered = false
         button.image = image
-        button.title = "Default Picker"
+        button.title = String(localized: "PseudoTerminal.DefaultPicker", defaultValue: "Default Picker", comment: "Button to switch to the custom color picker")
         button.imagePosition = .imageAbove
         button.target = self
         button.action = #selector(switchToCustomPicker(_:))

@@ -10,7 +10,7 @@
 		</data>
 		<key>Resources/SUStatus.nib</key>
 		<data>
-		rA03ci2cgx4+etyjxcyAStQfT+A=
+		E1VDYDTJRhizIMUpwRc6C3hHoDk=
 		</data>
 		<key>Resources/ar.lproj/Sparkle.strings</key>
 		<dict>
@@ -307,10 +307,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			tGi5S+JDBiQnY7wfAIf/29XC9Jk=
+			/sXDjOUcZXTPU0VnKbTrV1LZxAU=
 			</data>
 			<key>requirement</key>
-			<string>anchor apple generic and identifier fileop and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D)</string>
+			<string>identifier fileop and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D</string>
 		</dict>
 		<key>Resources/AppIcon.icns</key>
 		<dict>
@@ -323,7 +323,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			SoZ40TF6fs0r7UTjhB0xiSgmnZnWv/qCS6/Ljh+VXV8=
+			PiukmhFVykhu2hFVtcz5TcxXR3evf+fPj3IpGtokVHM=
 			</data>
 		</dict>
 		<key>Resources/ar.lproj/Sparkle.strings</key>

@@ -274,6 +274,10 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // tab information
 - (NSMutableArray *)representedTabViewItems;
 - (int)numberOfVisibleTabs;
+// The bar's cells, including group chips and pinned cells. Exposed so a test can
+// populate a window-free bar without going through the KVO binding that
+// -addTabViewItem: sets up.
+- (NSMutableArray *)cells;
 
 // special effects
 - (void)hideTabBar:(BOOL)hide animate:(BOOL)animate;
@@ -323,6 +327,11 @@ extern const CGFloat PSMTabBarProgressBarHeight;
                                                                        NSInteger memberCount,
                                                                        NSString *groupID))block
     NS_SWIFT_NAME(enumerateCollapsedTabGroupChips(block:));
+
+// The id of the collapsed group the in-flight drag would join if dropped now, or
+// nil. Styles highlight that group's chip as the drop target (a collapsed group
+// draws no member cells, so the opening-slot affordance is invisible).
+- (nullable NSString *)collapsedTabGroupDropTargetIdentifier;
 
 // Pure helpers for making group chips first-class cells (window-free, so
 // they're unit-tested directly).
@@ -392,6 +401,16 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // on-drop size rather than the dragged unit's size in its source bar.
 - (CGFloat)expectedDropExtentForIncomingTabCount:(NSInteger)tabCount
                                        chipWidth:(CGFloat)chipWidth;
+
+// The largest insets.left at which the cell area still fits every cell at its
+// minimum width, for a bar `width` points wide holding its current cells. Below
+// it the bar degrades: tail cells move into the overflow menu, or the bar
+// scrolls when the scrollable tab bar is on.
+//
+// Takes the width rather than reading self.frame because the caller that needs
+// this computes insets before -setTabBarFrame: runs, when the frame still holds
+// the previous layout pass's width.
+- (CGFloat)maximumLeftInsetFittingAllCellsMinimallyForWidth:(CGFloat)width;
 
 // The style's tab-group run outset when any chip cell is present, else 0.
 // The scrollable bar widens its trailing clip by this so a group's enclosing
@@ -472,6 +491,23 @@ extern const CGFloat PSMTabBarProgressBarHeight;
                   cellFrame:(nullable NSRectPointer)outFrame;
 - (void)dragWillExitTabBar;
 - (void)dragDidFinish;
+// See the implementation: keeps a collapsed group collapsed after a BACKGROUND tab
+// is dropped into it. `sourceBar` is the bar the tab was dragged FROM (== self for
+// a same-window drag); its pre-drag active tab tells whether the dragged tab was a
+// background tab. `destinationPreDropSelection` is THIS bar's active tab from just
+// before the drop completed (the drop machinery has since selected the dropped tab),
+// used to restore the right tab in the cross-window case. YES if the group should
+// stay collapsed (this method has restored the correct selection and the caller must
+// NOT select the dropped tab); NO if the caller should select the dropped tab as
+// usual (it did not land in a collapsed group, or the dragged tab was the active
+// one).
+- (BOOL)keepCollapsedAfterInBarDropOf:(NSTabViewItem *)droppedItem
+                        draggedFromBar:(nullable PSMTabBarControl *)sourceBar
+           destinationPreDropSelection:(nullable NSTabViewItem *)destinationPreDropSelection
+    NS_SWIFT_NAME(keepCollapsed(afterInBarDropOf:draggedFromBar:destinationPreDropSelection:));
+// The tab that was active when a drag began on this bar (recorded in -mouseDown:),
+// or nil if the active tab itself was clicked/dragged. Consulted by keep-collapsed.
+- (nullable NSTabViewItem *)preDragSelectedTabViewItem;
 - (void)syncTabProgressBars;
 
 @end

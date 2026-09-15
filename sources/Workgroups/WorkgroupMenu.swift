@@ -73,9 +73,13 @@ final class WorkgroupMenu: NSObject, NSMenuDelegate {
     // NSMenu also routes validation through the action target's
     // validateMenuItem:. Without this, items show as enabled
     // (greyed-out flag from menuNeedsUpdate gets overridden) when
-    // there's no current terminal window.
+    // there's no current terminal window. This is the seam AppKit
+    // reliably drives (menu(_:update:...) only fires for lazy menus
+    // that implement numberOfItemsInMenu:), so the current-workgroup
+    // checkmark is set here as a side effect.
     @objc
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        menuItem.state = isCurrentWorkgroup(item: menuItem) ? .on : .off
         return shouldEnable(item: menuItem)
     }
 
@@ -91,6 +95,19 @@ final class WorkgroupMenu: NSObject, NSMenuDelegate {
         // itself from drifting as refusal predicates evolve.
         return iTermWorkgroupController.instance.canEnterFromUI(
             workgroupUniqueIdentifier: id, on: session)
+    }
+
+    // True when `item` is the per-workgroup entry for the workgroup the
+    // current session belongs to. Resolved through the controller's
+    // registered instance so a stale back-pointer on a session that
+    // outlived its workgroup can't show a false checkmark.
+    private func isCurrentWorkgroup(item: NSMenuItem) -> Bool {
+        guard let id = item.representedObject as? String,
+              let session = currentSession(),
+              let instance = iTermWorkgroupController.instance.workgroupInstance(on: session) else {
+            return false
+        }
+        return instance.workgroupUniqueIdentifier == id
     }
 
     // MARK: - Action

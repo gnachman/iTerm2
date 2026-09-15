@@ -636,6 +636,13 @@ final class AppModel {
     /// The mac's advertised protocol revision (0 until the handshake).
     private(set) var macRevision = 0
 
+    /// Whether the paired Mac has AI available (from its hello, updated live by the
+    /// aiAvailabilityChanged event). Defaults to true so a pre-13 Mac - which only
+    /// ever paired with AI on - shows chats exactly as before. When false, the chat
+    /// surfaces are disabled with an explanation and only session browsing/video/
+    /// keyboard remain.
+    private(set) var aiAvailable = true
+
     #if DEBUG
     /// Test override for this phone build's own revision, so a test can simulate a
     /// future (turnLifecycleRevision) build while `current` is still below it.
@@ -856,9 +863,6 @@ final class AppModel {
         // and UserDefaults (legacy location).
         PhoneIdentity.deleteRegisteredRoomName()
         UserDefaults.standard.removeObject(forKey: Self.registeredRoomDefault)
-        // Drop any pending migration notice: with no pairing there is no peer to
-        // tell the user to update, so a leaked flag must not nag after unpair.
-        UserDefaults.standard.removeObject(forKey: Self.migrationNoticePendingKey)
         // Drop the per-chat push watermarks (shared with the NSE): they are keyed
         // by the old room secret and meaningless once unpaired. reset() clears by
         // prefix, so it does not need the (possibly already-deleted) room secret.
@@ -903,107 +907,16 @@ final class AppModel {
         // crash-safe), before any reconnect reads them.
         PhoneIdentity.migrateSharedItemsToAppGroup()
         migratePairingCodeToKeychain()
-        // Revision-11 relay migration: rewrite a legacy direct-relay pairing to the
-        // resolver BEFORE the reconnect below reads storedPairingCode, so the first
-        // reconnect already targets the resolver.
-        migrateDirectRelayToResolver()
-        // If a migration notice is pending (this or a prior launch), give the
-        // reconnect a grace period to succeed before nagging: a Mac that already
-        // updated connects fine and needs no "update your Mac" notice. If the flag
-        // leaked past an unpair (no stored pairing), clear it instead of nagging an
-        // unpaired phone.
-        if UserDefaults.standard.bool(forKey: Self.migrationNoticePendingKey) {
-            if storedPairingCode != nil {
-                scheduleMigrationNoticeTimeout()
-            } else {
-                UserDefaults.standard.set(false, forKey: Self.migrationNoticePendingKey)
-            }
-        }
+        // Scrub the beta-era revision-11 relay migration flags. The code that
+        // read and cleared them is gone (see git history), so without this a
+        // phone that ran those builds keeps the stale values forever, including
+        // a possibly stuck NoticePending=true from an upgrade mid-grace-period.
+        UserDefaults.standard.removeObject(forKey: "NoSyncCompanionRelayResolverMigrationDone")
+        UserDefaults.standard.removeObject(forKey: "NoSyncCompanionRelayMigrationNoticePending")
         guard phase == .launch, pairingTask == nil else { return }
         guard let code = storedPairingCode else { return }
         companionLog("Reconnecting to stored pairing (pid \(code.pairingID))")
         pair(with: code, isReconnect: true)
-    }
-
-    /// True while the one-time "your Mac needs to update" notice should be shown.
-    /// Armed only after the revision-11 migration fails to reconnect within a grace
-    /// period (see scheduleMigrationNoticeTimeout); RootView binds an alert to it.
-    var showRelayMigrationNotice = false
-
-    /// Set once the revision-11 relay migration has run, so it does not repeat on
-    /// every launch. NoSync: local device state, not a setting.
-    private static let relayResolverMigrationDoneKey = "NoSyncCompanionRelayResolverMigrationDone"
-
-    /// True from when the migration rewrites the pairing until either a reconnect
-    /// succeeds (cleared, notice suppressed) or the grace period lapses without one
-    /// (notice shown). Persisted so a relaunch mid-grace still resolves it.
-    private static let migrationNoticePendingKey = "NoSyncCompanionRelayMigrationNoticePending"
-
-    /// How long to let the post-migration reconnect try before showing the notice.
-    /// Long enough for a healthy connect (a ready Mac lands in a few seconds), short
-    /// enough that a genuinely un-upgraded Mac is flagged promptly.
-    private static let migrationNoticeGraceSeconds: TimeInterval = 20
-
-    /// Revision-11 migration (CompanionRelayMigration). Runs once (NoSync flag). Two
-    /// parts, deliberately independent:
-    ///   1. ENDPOINT REWRITE, conditional: only a pairing still on the legacy direct
-    ///      relay is rewritten to the default resolver. A pairing already on a
-    ///      resolver (or a custom relay) is left as-is. The rewrite preserves the
-    ///      pairing identity (room name/bucket derive from rs+pid), so it only swaps
-    ///      the transport endpoint.
-    ///   2. UPDATE NOTICE, for ANY paired phone: whichever side is upgraded first,
-    ///      the peer that has not updated cannot connect (it stays on the old relay,
-    ///      and the raised minimumPeer refuses it), so it never reaches the version
-    ///      handshake's upgrade wall. We therefore ARM the notice for every paired
-    ///      phone, not only ones that needed a rewrite, and let a successful connect
-    ///      cancel it. Without this, a phone that was already on a resolver but whose
-    ///      Mac is still old would sit "broken" with no explanation.
-    /// The notice is only ARMED here, never shown immediately: scheduleMigrationNotice
-    /// Timeout shows it only if no connection lands within the grace period, and a
-    /// Mac that already updated connects fine and clears the pending flag.
-    private func migrateDirectRelayToResolver() {
-        let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: Self.relayResolverMigrationDoneKey) else { return }
-        // Only act (and only mark done) once PAIRED. A fresh phone's first rev-11
-        // launch is unpaired; marking done there would skip the notice for the
-        // pairing it forms later, leaving it silently unable to reach an old Mac.
-        guard let code = storedPairingCode else { return }
-        defaults.set(true, forKey: Self.relayResolverMigrationDoneKey)
-        if CompanionRelayMigration.isLegacyDirectRelay(code) {
-            companionLog("Relay migration: rewriting the direct relay pairing to the default resolver")
-            storePairing(CompanionRelayMigration.migrated(code))
-        } else {
-            companionLog("Relay migration: pairing already uses a resolver/custom relay; no endpoint rewrite")
-        }
-        companionLog("Relay migration: arming the update-your-Mac notice (cancelled if the reconnect lands)")
-        defaults.set(true, forKey: Self.migrationNoticePendingKey)
-    }
-
-    /// A post-migration reconnect succeeded: the Mac is already up to date, so
-    /// suppress the pending "update your Mac" notice. Idempotent; a no-op when no
-    /// notice is pending.
-    private func clearPendingMigrationNotice() {
-        guard UserDefaults.standard.bool(forKey: Self.migrationNoticePendingKey) else { return }
-        UserDefaults.standard.set(false, forKey: Self.migrationNoticePendingKey)
-        companionLog("Relay migration: connected OK; the Mac is up to date, suppressing the update notice")
-    }
-
-    /// After the grace period, if the post-migration reconnect still has not landed
-    /// (the pending flag survived clearPendingMigrationNotice), show the notice once.
-    private func scheduleMigrationNoticeTimeout() {
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: UInt64(Self.migrationNoticeGraceSeconds * 1_000_000_000))
-            guard UserDefaults.standard.bool(forKey: Self.migrationNoticePendingKey) else { return }
-            UserDefaults.standard.set(false, forKey: Self.migrationNoticePendingKey)
-            // Unpaired during the grace window (e.g. the user disconnected): the
-            // notice is meaningless without a pairing, so drop it.
-            guard storedPairingCode != nil else {
-                companionLog("Relay migration: grace elapsed but no pairing; dropping the update notice")
-                return
-            }
-            companionLog("Relay migration: no connection within the grace period; showing the update-your-Mac notice")
-            showRelayMigrationNotice = true
-        }
     }
 
     // MARK: Navigation
@@ -1258,7 +1171,6 @@ final class AppModel {
                     companionLog("Home loaded")
                     storePairing(code)
                     reportPushStatus()
-                    clearPendingMigrationNotice()
                 } catch is CancellationError {
                     companionLog("Pairing cancelled")
                 } catch {
@@ -1742,6 +1654,12 @@ final class AppModel {
     /// timeout is distinguishable from a transport drop or a teardown (see loadHome).
     private struct HelloHandshakeTimedOut: Error {}
 
+    /// Thrown when the reconnect handshake fails after its retries. It routes into
+    /// the reconnect loop's generic-error path so the whole connection is torn down
+    /// and re-established, rather than proceeding on a live socket whose aiAvailable
+    /// we could not confirm (which would leave the chat UI wrongly enabled/disabled).
+    private struct ReconnectHandshakeUnconfirmed: Error {}
+
     func loadHome() async throws {
         // Version handshake FIRST: if the apps are incompatible, show the blocking
         // upgrade panel instead of the home screen. Pairing itself succeeded, so
@@ -1809,9 +1727,7 @@ final class AppModel {
             phase = .needsUpgrade(.mac)
             return
         }
-        macSupportsStreaming = handshake.supportsStreaming
-        macRevision = handshake.peerRevision
-        companionLog("Version handshake: macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
+        applyHandshake(handshake, reconnect: false)
         // The mac says the user opted into phone alerts: ask iOS for notification
         // permission if we haven't yet (deferring to foreground if backgrounded).
         if handshake.wantsNotificationPermission {
@@ -1829,14 +1745,40 @@ final class AppModel {
         try await refreshLists()
         navigationPath = []
         if phase != .home {
-            // Arriving from pairing (not a pull-to-refresh): start clean.
+            // Arriving from pairing (not a pull-to-refresh): start clean. Land on
+            // Sessions rather than Chats when AI is off, so the user opens on a
+            // useful tab instead of the disabled chat surface.
             sessionsPath = []
-            selectedTab = .chats
+            selectedTab = aiAvailable ? .chats : .sessions
         }
         phase = .home
         // A reply-notification tap during launch was deferred (the nav paths
         // were just reset and no stack was mounted before now); replay it.
         applyPendingSessionChatNav()
+    }
+
+    /// Apply the state a version handshake carries. Shared by the initial and
+    /// reconnect paths so a new handshake field is wired up once and the two can't
+    /// drift. Callers still handle notification-permission themselves (the initial
+    /// path has an extra fresh-pairing opt-in branch). Does NOT choose a landing tab
+    /// (that is the initial path's job); it only rescues the user off a now-disabled
+    /// Chats tab, the one rule all three availability sites share.
+    private func applyHandshake(_ handshake: CompanionClient.HandshakeResult, reconnect: Bool) {
+        macSupportsStreaming = handshake.supportsStreaming
+        macRevision = handshake.peerRevision
+        aiAvailable = handshake.aiAvailable
+        moveOffChatsTabIfAIUnavailable()
+        companionLog("Version handshake\(reconnect ? " (reconnect)" : ""): macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) aiAvailable=\(aiAvailable) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
+    }
+
+    /// Move the user off the Chats tab when AI is unavailable, so they are never left
+    /// staring at the disabled AIUnavailablePanel. The single copy of this rule,
+    /// shared by the initial handshake, the reconnect handshake, and the live
+    /// aiAvailabilityChanged event.
+    private func moveOffChatsTabIfAIUnavailable() {
+        if !aiAvailable && selectedTab == .chats {
+            selectedTab = .sessions
+        }
     }
 
     private func refreshLists() async throws {
@@ -1961,7 +1903,6 @@ final class AppModel {
                     try await establish(code: code,
                                         handshakeTimeout: Self.reconnectHandshakeTimeout)
                     companionLog("Reconnected (attempt \(attempt))")
-                    clearPendingMigrationNotice()
                     // Reachable again: leave any quota state so the banner clears.
                     quotaBackoffUntil = nil
                     // The Mac is reachable again: reopen the retry gate so the
@@ -1970,19 +1911,50 @@ final class AppModel {
                     retryUnresolvedMentions()
                     // Re-run the version handshake on every reconnect so the mac's
                     // "user wants alerts" signal (carried in the .hello reply) is
-                    // honored on each connect, not just the initial pairing. A
-                    // failure here must not abort the reconnect, so it's best-effort.
+                    // honored on each connect, not just the initial pairing. This is
+                    // confirmed-or-reconnect, NOT best-effort: the handshake also
+                    // carries aiAvailable, which gates the chat UI, so a persistent
+                    // failure throws ReconnectHandshakeUnconfirmed to tear down and
+                    // re-establish (routed through the generic catch's forceReResolve +
+                    // reconnectDelayNanos backoff) rather than proceed on a socket whose
+                    // availability we could not verify.
                     if let client {
-                        do {
-                            let handshake = try await client.handshakeVersion()
-                            macSupportsStreaming = handshake.supportsStreaming
-                            macRevision = handshake.peerRevision
-                            companionLog("Version handshake (reconnect): macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
-                            if handshake.wantsNotificationPermission {
-                                ensureNotificationPermission(replyTo: nil)
+                        // Retry a few times: the handshake carries aiAvailable, which
+                        // gates the chat UI, so a single transient failure must not
+                        // leave availability unverified (and the chat surfaces shown
+                        // as enabled on a connection we couldn't confirm). Only the
+                        // failure path sleeps, so a healthy reconnect is not delayed.
+                        var handshake: CompanionClient.HandshakeResult?
+                        for attempt in 0..<3 {
+                            do {
+                                handshake = try await client.handshakeVersion()
+                                break
+                            } catch is CancellationError {
+                                // Teardown (unpair, connection reset) cancelled us:
+                                // stop hitting a dead client and let cancellation
+                                // propagate to the reconnect loop.
+                                throw CancellationError()
+                            } catch {
+                                companionLog("Reconnect version handshake attempt \(attempt) failed: \(String(describing: error))")
+                                // Only back off BETWEEN attempts, not after the last.
+                                if attempt < 2 {
+                                    try await Task.sleep(nanoseconds: 500_000_000)
+                                }
                             }
-                        } catch {
-                            companionLog("Reconnect version handshake failed: \(String(describing: error))")
+                        }
+                        guard let handshake else {
+                            // All attempts failed. Don't proceed on this socket with an
+                            // unconfirmed aiAvailable (it would leave the chat UI in a
+                            // stale state - e.g. wrongly disabled if the user turned AI
+                            // ON during the outage, which no aiAvailabilityChanged push
+                            // corrects). Throw so the loop tears down and re-establishes,
+                            // re-running the handshake on a fresh connection.
+                            companionLog("Reconnect version handshake failed after retries; forcing a fresh reconnect")
+                            throw ReconnectHandshakeUnconfirmed()
+                        }
+                        applyHandshake(handshake, reconnect: true)
+                        if handshake.wantsNotificationPermission {
+                            ensureNotificationPermission(replyTo: nil)
                         }
                     }
                     reportPushStatus()
@@ -2018,25 +1990,12 @@ final class AppModel {
                     // there by a reply-notification tap, then handed off from the
                     // watch) is neither, and would otherwise silently drop live
                     // deliveries until the user switched to its tab.
-                    if let client {
-                        // Include openChatID: the conversationDidAppear above is
-                        // skipped while a load is parked, and if that load already
-                        // failed on the dead client (isLoadingConversation flipped
-                        // false), nothing else re-subscribes the open chat.
-                        // Every id here is mounted by construction, so no filter is
-                        // needed (shouldRemainSubscribed would always be true);
-                        // resubscribeVerifyingOwnership re-checks ownership after its
-                        // await regardless.
-                        for chatID in mountedConversationIDs {
-                            await resubscribeVerifyingOwnership(chatID, client: client)
-                        }
-                        // The watch's chat may not be mounted as a conversation; make
-                        // sure it too is re-subscribed (same ownership-verified idiom).
-                        if let watched = watchState.watch, watched.chatID != openChatID,
-                           !isConversationMounted(watched.chatID) {
-                            await resubscribeVerifyingOwnership(watched.chatID, client: client)
-                        }
-                    }
+                    // Include openChatID: the conversationDidAppear above is skipped
+                    // while a load is parked, and if that load already failed on the
+                    // dead client (isLoadingConversation flipped false), nothing else
+                    // re-subscribes the open chat. Every id is mounted by construction
+                    // and resubscribeVerifyingOwnership re-checks ownership regardless.
+                    await resubscribeMountedConversations()
                     // Reset the reply trigger for a live watch: a typingStatus that
                     // arrived during the drop is not replayed, so stale turn state
                     // must not carry across. NOTE this is broader than "completed
@@ -2661,6 +2620,22 @@ final class AppModel {
         _ = try? await client.subscribe(chatID: chatID)
         if !shouldRemainSubscribed(chatID) {
             _ = try? await client.unsubscribe(chatID: chatID)
+        }
+    }
+
+    /// Re-issue `.subscribe` for every mounted conversation (both tabs' stacks) plus
+    /// the live watch's chat. Subscriptions are per-connection, and the Mac drops
+    /// them all when AI is turned off; this re-establishes them without waiting for
+    /// the socket to drop. Used by the reconnect path and the AI off->on transition.
+    private func resubscribeMountedConversations() async {
+        guard let client else { return }
+        for chatID in mountedConversationIDs {
+            await resubscribeVerifyingOwnership(chatID, client: client)
+        }
+        // The watch's chat may not be mounted as a conversation; re-subscribe it too.
+        if let watched = watchState.watch, watched.chatID != openChatID,
+           !isConversationMounted(watched.chatID) {
+            await resubscribeVerifyingOwnership(watched.chatID, client: client)
         }
     }
 
@@ -3992,10 +3967,51 @@ final class AppModel {
                 liveWatchGuid = nil
                 onStreamEnded?(reason)
             }
+        case .sessionTree(let tree):
+            // Unsolicited: the Mac pushed a fresh session tree because a session,
+            // tab, or window changed. Update in place so the Sessions tab reflects
+            // it live (a solicited fetch is correlated by requestID and resolved by
+            // the client's waiter, so it never reaches here). Clear any prior load
+            // error since we now have a good tree. Skip the assignment when the tree
+            // is unchanged so an identical push doesn't invalidate the SwiftUI view.
+            if sessionTree != tree {
+                sessionTree = tree
+            }
+            sessionTreeError = nil
+        case .aiAvailabilityChanged(let available):
+            // The user toggled AI on the paired Mac while we were connected. Flip
+            // the flag live so the chat surfaces enable/disable without a reconnect.
+            let wasAvailable = aiAvailable
+            aiAvailable = available
+            if !available && selectedTab == .chats {
+                // AI just went off while on the Chats tab: don't strand the user on
+                // the now-disabled surface.
+                selectedTab = .sessions
+            } else if available && !wasAvailable {
+                // AI just came back on. We connected while it was off, so (1) the chat
+                // list is empty - refetch it so the Chats tab shows the Mac's real
+                // chats instead of "no chats yet"; and (2) the Mac dropped every chat
+                // subscription when AI went off and does NOT re-establish them on the
+                // way back, so an already-open conversation would stay silent until a
+                // full reconnect. Re-subscribe the mounted conversations here.
+                Task { [weak self] in
+                    guard let self else { return }
+                    try? await self.refreshLists()
+                    await self.resubscribeMountedConversations()
+                }
+            }
         default:
             break
         }
     }
+
+    #if DEBUG
+    /// Test hook: drive a host event through the same path the live connection uses,
+    /// so tests can exercise event handling (e.g. aiAvailabilityChanged) directly.
+    func testHandleHostEvent(_ event: CompanionHostMessage) {
+        handle(event: event)
+    }
+    #endif
 
     // MARK: Live session streaming
 

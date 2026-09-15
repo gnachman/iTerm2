@@ -210,12 +210,12 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             Task {
                 let message: String
                 if await BrowserDatabase.instance(for: user)?.erase() == true {
-                    message = "All website data has been cleared successfully!"
+                    message = String(localized: "BrowserSettings.DataCleared", defaultValue: "All website data has been cleared successfully!", comment: "Status shown when all website data has been cleared")
                 } else {
                     if let url = BrowserDatabaseCollection.url(for: user) {
-                        message = "The browser database could not be deleted. It is in \(url.path)"
+                        message = String(localized: "BrowserSettings.DatabaseDeleteFailedPath", defaultValue: "The browser database could not be deleted. It is in \(url.path)", comment: "Error shown when the browser database cannot be deleted, giving its path")
                     } else {
-                        message = "The browser database could not be deleted. Your application support folder could not be found."
+                        message = String(localized: "BrowserSettings.DatabaseDeleteFailedNoFolder", defaultValue: "The browser database could not be deleted. Your application support folder could not be found.", comment: "Error shown when the browser database cannot be deleted because the support folder is missing")
                     }
                 }
                 DispatchQueue.main.async {
@@ -236,7 +236,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         
         RLog("Ad blocking \(enabled ? "enabled" : "disabled")")
         
-        let message = enabled ? "Ad blocking enabled" : "Ad blocking disabled"
+        let message = enabled ? String(localized: "BrowserSettings.AdBlockingEnabled", defaultValue: "Ad blocking enabled", comment: "Status shown when ad blocking is enabled") : String(localized: "BrowserSettings.AdBlockingDisabled", defaultValue: "Ad blocking disabled", comment: "Status shown when ad blocking is disabled")
         showStatusMessage(message, type: "success", in: webView)
     }
     
@@ -247,7 +247,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         delegate?.settingsHandlerDidUpdateAdblockSettings(self)
         
         DLog("Ad block URL updated to: \(url)")
-        showStatusMessage("Filter list URL updated", type: "success", in: webView)
+        showStatusMessage(String(localized: "BrowserSettings.FilterListURLUpdated", defaultValue: "Filter list URL updated", comment: "Status shown when the ad block filter list URL is updated"), type: "success", in: webView)
     }
     
     private func forceAdblockUpdate(webView: iTermBrowserWebView) {
@@ -308,38 +308,38 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     }
     
     @objc func showAdblockUpdateSuccess(in webView: iTermBrowserWebView) {
-        showStatusMessage("Ad block rules updated successfully", type: "success", in: webView)
+        showStatusMessage(String(localized: "BrowserSettings.AdBlockRulesUpdated", defaultValue: "Ad block rules updated successfully", comment: "Status shown when ad block rules update successfully"), type: "success", in: webView)
     }
     
     @objc func showAdblockUpdateError(_ error: String, in webView: iTermBrowserWebView) {
-        showStatusMessage("Failed to update ad block rules: \(error)", type: "error", in: webView)
+        showStatusMessage(String(localized: "BrowserSettings.AdBlockRulesUpdateFailed", defaultValue: "Failed to update ad block rules: \(error)", comment: "Error shown when ad block rules fail to update, with error details"), type: "error", in: webView)
     }
     
     // MARK: - Search Settings
     
     private func setSearchCommand(_ url: String, webView: iTermBrowserWebView) {
         guard !url.isEmpty, url.contains("%@") else {
-            showStatusMessage("Invalid search URL: must contain %@ placeholder", type: "error", in: webView)
+            showStatusMessage(String(localized: "BrowserSettings.InvalidSearchURL", defaultValue: "Invalid search URL: must contain %@ placeholder", comment: "Error shown when the search URL lacks the %@ placeholder token"), type: "error", in: webView)
             return
         }
         
         iTermAdvancedSettingsModel.setSearchCommand(url)
         DLog("Search command updated to: \(url)")
-        showStatusMessage("Search engine updated", type: "success", in: webView)
+        showStatusMessage(String(localized: "BrowserSettings.SearchEngineUpdated", defaultValue: "Search engine updated", comment: "Status shown when the search engine URL is updated"), type: "success", in: webView)
     }
     
     private func setSearchSuggestURL(_ url: String, webView: iTermBrowserWebView) {
         if !url.isEmpty && !url.contains("%@") {
-            showStatusMessage("Invalid suggestion URL: must contain %@ placeholder", type: "error", in: webView)
+            showStatusMessage(String(localized: "BrowserSettings.InvalidSuggestionURL", defaultValue: "Invalid suggestion URL: must contain %@ placeholder", comment: "Error shown when the search suggestion URL lacks the %@ placeholder token"), type: "error", in: webView)
             return
         }
         
         iTermAdvancedSettingsModel.setSearchSuggestURL(url)
         DLog("Search suggestion URL updated to: \(url.isEmpty ? "disabled" : url)")
         if url.isEmpty {
-            showStatusMessage("Search suggestions disabled", type: "success", in: webView)
+            showStatusMessage(String(localized: "BrowserSettings.SearchSuggestionsDisabled", defaultValue: "Search suggestions disabled", comment: "Status shown when search suggestions are disabled"), type: "success", in: webView)
         } else {
-            showStatusMessage("Search suggestions updated", type: "success", in: webView)
+            showStatusMessage(String(localized: "BrowserSettings.SearchSuggestionsUpdated", defaultValue: "Search suggestions updated", comment: "Status shown when the search suggestion URL is updated"), type: "success", in: webView)
         }
     }
     
@@ -372,7 +372,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         
         RLog("Browser proxy \(enabled ? "enabled" : "disabled")")
         
-        let message = enabled ? "Proxy enabled" : "Proxy disabled"
+        let message = enabled ? String(localized: "BrowserSettings.ProxyEnabled", defaultValue: "Proxy enabled", comment: "Status shown when the proxy is enabled") : String(localized: "BrowserSettings.ProxyDisabled", defaultValue: "Proxy disabled", comment: "Status shown when the proxy is disabled")
         showStatusMessage(message, type: "success", in: webView)
         
         // Notify delegate to reconfigure webview if needed
@@ -385,7 +385,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         iTermAdvancedSettingsModel.setBrowserProxyHost(host)
         
         DLog("Browser proxy host updated to: \(host)")
-        showStatusMessage("Proxy host updated", type: "success", in: webView)
+        showStatusMessage(String(localized: "BrowserSettings.ProxyHostUpdated", defaultValue: "Proxy host updated", comment: "Status shown when the proxy host is updated"), type: "success", in: webView)
         
         // Notify delegate to reconfigure webview if needed
         delegate?.settingsHandlerDidUpdateAdblockSettings(self)
@@ -393,14 +393,14 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     private func setProxyPort(_ port: Int, webView: iTermBrowserWebView) {
         guard port >= 1 && port <= 65535 else {
-            showStatusMessage("Invalid port number", type: "error", in: webView)
+            showStatusMessage(String(localized: "BrowserSettings.InvalidPortNumber", defaultValue: "Invalid port number", comment: "Error shown when the proxy port is out of range"), type: "error", in: webView)
             return
         }
         
         iTermAdvancedSettingsModel.setBrowserProxyPort(Int32(port))
         
         DLog("Browser proxy port updated to: \(port)")
-        showStatusMessage("Proxy port updated", type: "success", in: webView)
+        showStatusMessage(String(localized: "BrowserSettings.ProxyPortUpdated", defaultValue: "Proxy port updated", comment: "Status shown when the proxy port is updated"), type: "success", in: webView)
         
         // Notify delegate to reconfigure webview if needed
         delegate?.settingsHandlerDidUpdateAdblockSettings(self)
@@ -462,6 +462,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             return [
                 "id": browserExtension.id.stringValue,
                 "name": manifest.name,
+                // Localization unneeded
                 "description": manifest.description ?? "No description available",
                 "version": manifest.version,
                 "permissions": manifest.permissions ?? [],
@@ -491,6 +492,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         if #available(macOS 14, *) {
             setExtensionEnabledForMacOS14(extensionIdString, enabled: enabled, webView: webView)
         } else {
+            // Localization unneeded
             showStatusMessage("Extensions not supported on this macOS version", type: "error", in: webView)
         }
     }
@@ -498,6 +500,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     @available(macOS 14, *)
     private func setExtensionEnabledForMacOS14(_ extensionIdString: String, enabled: Bool, webView: iTermBrowserWebView) {
         guard let extensionManager = delegate?.settingsHandlerExtensionManager(self) else {
+            // Localization unneeded
             showStatusMessage("Extension management not available", type: "error", in: webView)
             return
         }
@@ -507,6 +510,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         
         RLog("Extension \(extensionIdString) \(enabled ? "enabled" : "disabled")")
         
+        // Localization unneeded
         let message = enabled ? "Extension enabled" : "Extension disabled"
         showStatusMessage(message, type: "success", in: webView)
         
@@ -518,6 +522,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         if #available(macOS 14, *) {
             revealExtensionsDirectoryForMacOS14(webView: webView)
         } else {
+            // Localization unneeded
             showStatusMessage("Extensions not supported on this macOS version", type: "error", in: webView)
         }
     }
@@ -525,12 +530,14 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     @available(macOS 14, *)
     private func revealExtensionsDirectoryForMacOS14(webView: iTermBrowserWebView) {
         guard let extensionManager = delegate?.settingsHandlerExtensionManager(self) else {
+            // Localization unneeded
             showStatusMessage("Extension management not available", type: "error", in: webView)
             return
         }
         
         // Get the extensions directory from the extension manager
         guard let extensionsURL = extensionManager.extensionsDirectory else {
+            // Localization unneeded
             showStatusMessage("Extensions directory not configured in profile preferences", type: "error", in: webView)
             return
         }
@@ -544,10 +551,12 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             NSWorkspace.shared.activateFileViewerSelecting([extensionsURL])
             
             DLog("Revealed extensions directory in Finder: \(extensionsURL.path)")
+            // Localization unneeded
             showStatusMessage("Extensions directory revealed in Finder", type: "success", in: webView)
             
         } catch {
             DLog("Failed to create or reveal extensions directory: \(error)")
+            // Localization unneeded
             showStatusMessage("Failed to create extensions directory: \(error.localizedDescription)", type: "error", in: webView)
         }
     }
@@ -561,20 +570,20 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         case "ask":
             // Unsilence the warning to allow the prompt to show again
             iTermWarning.unsilenceIdentifier(identifier)
-            showStatusMessage("Link opening preference set to always ask", type: "success", in: webView)
+            showStatusMessage(String(localized: "BrowserSettings.LinkPrefAsk", defaultValue: "Link opening preference set to always ask", comment: "Status shown when the browser will always ask how to open links"), type: "success", in: webView)
 
         case "builtin":
             // Set permanent selection to "Open in iTerm2" (selection 1)
             iTermWarning.setIdentifier(identifier, permanentSelection: .kiTermWarningSelection1)
-            showStatusMessage("Links will always open in built-in browser", type: "success", in: webView)
+            showStatusMessage(String(localized: "BrowserSettings.LinkPrefBuiltin", defaultValue: "Links will always open in built-in browser", comment: "Status shown when links will open in the built-in browser"), type: "success", in: webView)
 
         case "default":
             // Set permanent selection to "Use Default Browser" (selection 0)
             iTermWarning.setIdentifier(identifier, permanentSelection: .kiTermWarningSelection0)
-            showStatusMessage("Links will always open in default browser", type: "success", in: webView)
+            showStatusMessage(String(localized: "BrowserSettings.LinkPrefDefault", defaultValue: "Links will always open in default browser", comment: "Status shown when links will open in the default browser"), type: "success", in: webView)
 
         default:
-            showStatusMessage("Invalid link opening preference", type: "error", in: webView)
+            showStatusMessage(String(localized: "BrowserSettings.InvalidLinkPref", defaultValue: "Invalid link opening preference", comment: "Error shown when an unknown link opening preference is chosen"), type: "error", in: webView)
             return
         }
 

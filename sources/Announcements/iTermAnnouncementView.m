@@ -177,7 +177,7 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
         [pullDown setTarget:self];
         [pullDown setAction:@selector(pullDownItemSelected:)];
         [_internalView addSubview:pullDown];
-        [pullDown addItemWithTitle:@"More Actions…"];
+        [pullDown addItemWithTitle:NSLocalizedStringWithDefaultValue(@"Announcement.MoreActions", nil, [NSBundle mainBundle], @"More Actions…", @"Title of the pull-down menu holding additional announcement actions")];
         for (int i = limit; i < actions.count; i++) {
             NSString *action = actions[i];
             [pullDown addItemWithTitle:[self stringByAddingShortcutInString:action]];
@@ -222,7 +222,7 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
     } else {
         NSString *shortcut = [NSString stringWithLongCharacter:[original characterAtIndex:index + 1]];
         NSString *modifiedOriginal = [original stringByReplacingCharactersInRange:NSMakeRange(index, 1) withString:@""];
-        return [NSString stringWithFormat:@"%@ (⌥%@)", modifiedOriginal, shortcut];
+        return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Announcement.ActionWithShortcut", nil, [NSBundle mainBundle], @"%1$@ (⌥%2$@)", @"Action button title with its keyboard shortcut; first placeholder is the action name, second is the shortcut key"), modifiedOriginal, shortcut];
     }
 }
 
@@ -243,10 +243,10 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
     NSImage *image;
     switch (_style) {
         case kiTermAnnouncementViewStyleWarning:
-            image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolExclamationmarkTriangle) accessibilityDescription:@"Warning icon"];
+            image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolExclamationmarkTriangle) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"Announcement.WarningIcon", nil, [NSBundle mainBundle], @"Warning icon", @"Accessibility description for the warning announcement icon")];
             break;
         case kiTermAnnouncementViewStyleQuestion:
-            image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolQuestionmarkCircle) accessibilityDescription:@"Question icon"];
+            image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolQuestionmarkCircle) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"Announcement.QuestionIcon", nil, [NSBundle mainBundle], @"Question icon", @"Accessibility description for the question announcement icon")];
             break;
     }
     NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:22.0 weight:NSFontWeightRegular];
@@ -439,7 +439,7 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
     NSMutableAttributedString *string = [_textView.originalAttributedString mutableCopy];
     NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
                                   NSForegroundColorAttributeName: [NSColor textColor] };
-    NSAttributedString *notice = [[NSAttributedString alloc] initWithString:@"\nPress any key to dismiss this message."
+    NSAttributedString *notice = [[NSAttributedString alloc] initWithString:NSLocalizedStringWithDefaultValue(@"Announcement.PressAnyKeyToDismiss", nil, [NSBundle mainBundle], @"\nPress any key to dismiss this message.", @"Notice appended to an announcement telling the user to press any key to dismiss it")
                                                                  attributes:attributes];
     [string appendAttributedString:notice];
     _textView.textStorage.attributedString = string;

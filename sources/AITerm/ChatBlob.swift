@@ -51,6 +51,24 @@ struct ChatBlob: iTermDatabaseInitializable {
     // truncator falls back to the byte estimate for this blob. Stored as TEXT so
     // nil (unknown) stays distinct from 0, which the integer accessor cannot.
     var tokenCount: Int?
+    // The wire-FORMAT version these bytes were frozen under. blobProtocol alone is
+    // NOT sufficient: a protocol's frozen wire shape can change without the enum
+    // changing (e.g. .llama moving to Ollama's native tool-message shape), and
+    // splicing stale bytes into a request built under the new shape breaks it
+    // (native /api/chat ignores the old tool-result shape and 400s on a
+    // string `arguments`). safeBlobsForReplay refuses a blob whose version !=
+    // currentWireFormatVersion(for:), so a format change forces a re-freeze
+    // instead of silently replaying incompatible bytes. Legacy rows (captured
+    // before this column existed) migrate to 0.
+    var wireFormatVersion: Int
+
+    // Bump the entry for a protocol whenever its FROZEN wire shape changes. Only
+    // .llama has changed (Ollama native tool messages: role:tool/tool_name, idless
+    // tool_calls, object `arguments`); every other protocol is still on its
+    // original format, version 0, so their existing blobs need no re-freeze.
+    static func currentWireFormatVersion(for blobProtocol: iTermAIAPI) -> Int {
+        return blobProtocol == .llama ? 1 : 0
+    }
 
     // The wire role of a fragment. Distinct from Message's Participant: these are
     // request-message roles, and an assistant turn's tool call rides in the same
@@ -71,6 +89,7 @@ struct ChatBlob: iTermDatabaseInitializable {
         case payload
         case responseID
         case tokenCount
+        case wireFormatVersion
     }
 
     init(blobID: UUID = UUID(),
@@ -80,6 +99,7 @@ struct ChatBlob: iTermDatabaseInitializable {
          payload: Data,
          responseID: String? = nil,
          tokenCount: Int? = nil,
+         wireFormatVersion: Int? = nil,
          seq: Int64 = 0) {
         self.seq = seq
         self.blobID = blobID
@@ -89,6 +109,12 @@ struct ChatBlob: iTermDatabaseInitializable {
         self.payload = payload
         self.responseID = responseID
         self.tokenCount = tokenCount
+        // Default to the CURRENT wire-format version for this protocol, not a
+        // literal 0: a caller that omits the version (a new/future construction
+        // site) must not mint a stale-on-arrival blob that safeBlobsForReplay
+        // then refuses forever. An explicit value still wins (e.g. a test
+        // simulating a pre-migration v0 blob, or a fork copying its source).
+        self.wireFormatVersion = wireFormatVersion ?? Self.currentWireFormatVersion(for: blobProtocol)
     }
 
     static func schema() -> String {
@@ -101,7 +127,8 @@ struct ChatBlob: iTermDatabaseInitializable {
              \(Columns.role.rawValue) text not null,
              \(Columns.payload.rawValue) blob not null,
              \(Columns.responseID.rawValue) text,
-             \(Columns.tokenCount.rawValue) text)
+             \(Columns.tokenCount.rawValue) text,
+             \(Columns.wireFormatVersion.rawValue) integer not null default 0)
         """
     }
 
@@ -113,6 +140,13 @@ struct ChatBlob: iTermDatabaseInitializable {
         var result = [Migration]()
         if !existingColumns.contains(Columns.tokenCount.rawValue) {
             result.append(.init(query: "ALTER TABLE ChatBlob ADD COLUMN \(Columns.tokenCount.rawValue) text", args: []))
+        }
+        // Legacy rows predate wire-format versioning; default them to 0 (the
+        // original format). A .llama row written before the native-shape change is
+        // therefore 0 and will be refused by safeBlobsForReplay (current .llama
+        // version is 1), forcing a safe re-freeze instead of replaying stale bytes.
+        if !existingColumns.contains(Columns.wireFormatVersion.rawValue) {
+            result.append(.init(query: "ALTER TABLE ChatBlob ADD COLUMN \(Columns.wireFormatVersion.rawValue) integer not null default 0", args: []))
         }
         return result
     }
@@ -128,8 +162,8 @@ struct ChatBlob: iTermDatabaseInitializable {
              (\(Columns.blobID.rawValue), \(Columns.chatID.rawValue),
               \(Columns.blobProtocol.rawValue), \(Columns.role.rawValue),
               \(Columns.payload.rawValue), \(Columns.responseID.rawValue),
-              \(Columns.tokenCount.rawValue))
-         values (?, ?, ?, ?, ?, ?, ?)
+              \(Columns.tokenCount.rawValue), \(Columns.wireFormatVersion.rawValue))
+         values (?, ?, ?, ?, ?, ?, ?, ?)
          """,
          [blobID.uuidString,
           chatID,
@@ -137,7 +171,8 @@ struct ChatBlob: iTermDatabaseInitializable {
           role.rawValue,
           payload,
           responseID as Any?,
-          tokenCount.map { String($0) } as Any?])
+          tokenCount.map { String($0) } as Any?,
+          wireFormatVersion])
     }
 
     /// A chat's blobs oldest-first (splice order). seq is the ordinal, so ASC
@@ -169,6 +204,18 @@ struct ChatBlob: iTermDatabaseInitializable {
         ("""
          select \(Columns.blobProtocol.rawValue) from ChatBlob
          where \(Columns.chatID.rawValue)=? order by \(Columns.seq.rawValue) asc limit 1
+         """,
+         [chatID])
+    }
+
+    // The LOWEST wire-format version among a chat's blobs. If it is below the
+    // current version for the protocol, at least one blob is stale-format and the
+    // whole chat needs a re-freeze (a mixed v0+v1 chat can never satisfy the
+    // all-equal-version replay guard).
+    static func minWireFormatVersionQuery(forChatID chatID: String) -> (String, [Any?]) {
+        ("""
+         select min(\(Columns.wireFormatVersion.rawValue)) as minversion from ChatBlob
+         where \(Columns.chatID.rawValue)=?
          """,
          [chatID])
     }
@@ -221,5 +268,8 @@ struct ChatBlob: iTermDatabaseInitializable {
         self.responseID = result.string(forColumn: Columns.responseID.rawValue)
         // TEXT column: nil (no usage / legacy) stays distinct from a real 0.
         self.tokenCount = result.string(forColumn: Columns.tokenCount.rawValue).flatMap { Int($0) }
+        // Legacy rows (added by migration with default 0) and freshly written rows
+        // both read as an integer; absent/NULL reads as 0, the original format.
+        self.wireFormatVersion = Int(result.longLongInt(forColumn: Columns.wireFormatVersion.rawValue))
     }
 }

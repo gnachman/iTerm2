@@ -349,6 +349,10 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
             KEY_SMART_CURSOR_COLOR COLORS_DARK_MODE_SUFFIX,
             KEY_SMART_CURSOR_COLOR,
 
+            KEY_HDR_CURSOR COLORS_LIGHT_MODE_SUFFIX,
+            KEY_HDR_CURSOR COLORS_DARK_MODE_SUFFIX,
+            KEY_HDR_CURSOR,
+
             KEY_USE_BOLD_COLOR,
             KEY_USE_BOLD_COLOR COLORS_LIGHT_MODE_SUFFIX,
             KEY_USE_BOLD_COLOR COLORS_DARK_MODE_SUFFIX,
@@ -688,6 +692,8 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
             KEY_USE_ACTIVE_PANE_BORDER COLORS_DARK_MODE_SUFFIX:     @"Whether to show a border around the active pane in dark mode",
             KEY_SMART_CURSOR_COLOR COLORS_LIGHT_MODE_SUFFIX:        @"Whether cursor color is based on underlying text in light mode",
             KEY_SMART_CURSOR_COLOR COLORS_DARK_MODE_SUFFIX:         @"Whether cursor color is based on underlying text in dark mode",
+            KEY_HDR_CURSOR COLORS_LIGHT_MODE_SUFFIX:                @"Whether to draw the cursor as bright HDR white on capable displays in light mode",
+            KEY_HDR_CURSOR COLORS_DARK_MODE_SUFFIX:                 @"Whether to draw the cursor as bright HDR white on capable displays in dark mode",
             KEY_MINIMUM_CONTRAST COLORS_LIGHT_MODE_SUFFIX:          @"Minimum contrast ratio between text and background in light mode",
             KEY_MINIMUM_CONTRAST COLORS_DARK_MODE_SUFFIX:           @"Minimum contrast ratio between text and background in dark mode",
             KEY_FAINT_TEXT_ALPHA COLORS_LIGHT_MODE_SUFFIX:          @"Opacity of faint (dim) text in light mode",
@@ -753,6 +759,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
             KEY_ACTIVE_PANE_BORDER_COLOR:                           @"Border color for active pane",
             KEY_USE_ACTIVE_PANE_BORDER:                             @"Whether to show a border around the active pane",
             KEY_SMART_CURSOR_COLOR:                                 @"Whether cursor color is based on underlying text",
+            KEY_HDR_CURSOR:                                         @"Whether to draw the cursor as bright HDR white on capable displays",
             KEY_MINIMUM_CONTRAST:                                   @"Minimum contrast ratio between text and background",
             KEY_FAINT_TEXT_ALPHA:                                   @"Opacity of faint (dim) text",
             KEY_CURSOR_BOOST:                                       @"Amount to dim non-cursor text to highlight cursor",
@@ -1092,6 +1099,10 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
                   KEY_CURSOR_BOOST: @0.0,
                   KEY_CURSOR_BOOST COLORS_LIGHT_MODE_SUFFIX: @0.0,
                   KEY_CURSOR_BOOST COLORS_DARK_MODE_SUFFIX: @0.0,
+
+                  KEY_HDR_CURSOR: @NO,
+                  KEY_HDR_CURSOR COLORS_LIGHT_MODE_SUFFIX: @NO,
+                  KEY_HDR_CURSOR COLORS_DARK_MODE_SUFFIX: @NO,
 
                   KEY_CURSOR_TYPE: @(CURSOR_BOX),
                   KEY_BLINKING_CURSOR: @NO,

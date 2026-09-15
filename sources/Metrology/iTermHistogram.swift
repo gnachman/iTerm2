@@ -9,13 +9,21 @@ extension iTermHistogram {
     @objc
     static var tabularFormatterTime: TabularFormatter {
         let formatter = TabularFormatter()
+        // Localization unneeded
         formatter.defineColumn(label: "Min Time", leftAligned: false)
+        // Localization unneeded
         formatter.defineColumn(label: "Distribution", leftAligned: true)
+        // Localization unneeded
         formatter.defineColumn(label: "Max Time", leftAligned: false)
+        // Localization unneeded
         formatter.defineColumn(label: "# Samples", leftAligned: false)
+        // Localization unneeded
         formatter.defineColumn(label: "Mean Time", leftAligned: false)
+        // Localization unneeded
         formatter.defineColumn(label: "P50", leftAligned: false)
+        // Localization unneeded
         formatter.defineColumn(label: "P95", leftAligned: false)
+        // Localization unneeded
         formatter.defineColumn(label: "Total Time", leftAligned: false)
         formatter.defineColumn(label: "", leftAligned: true)
         return formatter

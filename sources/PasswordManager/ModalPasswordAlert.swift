@@ -159,16 +159,16 @@ class ModalPasswordAlert {
     private func makeAlert() -> Views {
         let alert = NSAlert()
         alert.messageText = prompt
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: iTermLocalizedOK())
+        alert.addButton(withTitle: iTermLocalizedCancel())
         if showPasswordManagerButton {
-            alert.addButton(withTitle: "Password Manager")
+            alert.addButton(withTitle: String(localized: "ModalPasswordAlert.PasswordManagerButton", defaultValue: "Password Manager", comment: "Button to open the password manager"))
         }
 
         let newPassword = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 22))
         newPassword.isEditable = true
         newPassword.isSelectable = true
-        newPassword.placeholderString = "Password"
+        newPassword.placeholderString = String(localized: "ModalPasswordAlert.PasswordPlaceholder", defaultValue: "Password", comment: "Placeholder for the password field")
         if let initialPassword {
             newPassword.stringValue = initialPassword
         }
@@ -193,7 +193,7 @@ class ModalPasswordAlert {
             field.isEditable = true
             field.isSelectable = true
             field.stringValue = username
-            field.placeholderString = "User name"
+            field.placeholderString = String(localized: "ModalPasswordAlert.UserNamePlaceholder", defaultValue: "User name", comment: "Placeholder for the user name field")
 
             wrapper.addArrangedSubview(field)
             field.nextKeyView = newPassword
@@ -206,7 +206,7 @@ class ModalPasswordAlert {
 
         let rememberCheckbox: NSButton?
         if showRememberCheckbox {
-            let checkbox = NSButton(checkboxWithTitle: "Remember this password", target: nil, action: nil)
+            let checkbox = NSButton(checkboxWithTitle: String(localized: "ModalPasswordAlert.RememberPassword", defaultValue: "Remember this password", comment: "Checkbox to remember the entered password"), target: nil, action: nil)
             checkbox.state = rememberByDefault ? .on : .off
             rememberCheckbox = checkbox
             wrapper.addArrangedSubview(checkbox)

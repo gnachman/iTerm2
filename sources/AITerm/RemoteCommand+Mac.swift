@@ -39,12 +39,12 @@ extension RemoteCommand {
                     if iTermUserDefaults.userDefaults().object(forKey: kPreferenceKeyAISafetyCheck) == nil &&
                         !iTermUserDefaults.userDefaults().bool(forKey: nagKey) {
                         let selection = iTermWarning.show(
-                            withTitle: "iTerm2 can use AI to check the safety of commands suggested by your AI agent. Would you like to enable safety checking?\n\nWhen enabled, each proposed command will be sent to your configured AI provider for a safety check.",
-                            actions: ["OK", "Cancel"],
+                            withTitle: String(localized: "AISafetyCheck.EnablePromptBody", defaultValue: "iTerm2 can use AI to check the safety of commands suggested by your AI agent. Would you like to enable safety checking?\n\nWhen enabled, each proposed command will be sent to your configured AI provider for a safety check.", comment: "Body of the prompt asking whether to enable command safety checking"),
+                            actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                             accessory: nil,
                             identifier: nil,
                             silenceable: .kiTermWarningTypePersistent,
-                            heading: "Enable Command Safety Checking?",
+                            heading: String(localized: "AISafetyCheck.EnablePromptHeading", defaultValue: "Enable Command Safety Checking?", comment: "Heading of the prompt asking whether to enable command safety checking"),
                             window: nil)
                         iTermPreferences.setBool(true, forKey: nagKey)
                         if selection == .kiTermWarningSelection0 {
@@ -85,12 +85,12 @@ extension RemoteCommand {
         }
         defaults.set(false, forKey: kPreferenceKeyAISafetyCheckProviderSwitchPending)
         let selection = iTermWarning.show(
-            withTitle: "Until now, iTerm2 checked the safety of AI-suggested commands on your Mac using Apple Intelligence, at no cost. It can now use your configured AI model instead, which is more accurate but sends each checked command to your AI provider and may incur charges.\n\nSwitch to your configured model? If you decline, iTerm2 keeps using Apple Intelligence.",
-            actions: ["Switch to My Model", "Keep Apple Intelligence"],
+            withTitle: String(localized: "AISafetyCheck.SwitchProviderBody", defaultValue: "Until now, iTerm2 checked the safety of AI-suggested commands on your Mac using Apple Intelligence, at no cost. It can now use your configured AI model instead, which is more accurate but sends each checked command to your AI provider and may incur charges.\n\nSwitch to your configured model? If you decline, iTerm2 keeps using Apple Intelligence.", comment: "Body of the prompt asking whether to switch the safety check provider"),
+            actions: [String(localized: "AISafetyCheck.SwitchToMyModel", defaultValue: "Switch to My Model", comment: "Button to switch the safety check to the configured model"), String(localized: "AISafetyCheck.KeepAppleIntelligence", defaultValue: "Keep Apple Intelligence", comment: "Button to keep using Apple Intelligence for safety checks")],
             accessory: nil,
             identifier: nil,
             silenceable: .kiTermWarningTypePersistent,
-            heading: "Command Safety Checking Has Changed",
+            heading: String(localized: "AISafetyCheck.SwitchProviderHeading", defaultValue: "Command Safety Checking Has Changed", comment: "Heading of the prompt asking whether to switch the safety check provider"),
             window: nil)
         // Selection 0 == switch to the configured model; 1 == keep Apple.
         defaults.set(selection != .kiTermWarningSelection0,

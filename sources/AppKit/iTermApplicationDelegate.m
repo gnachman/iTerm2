@@ -40,6 +40,7 @@
 #import "NSDateFormatterExtras.h"
 #import "NSFileManager+iTerm.h"
 #import "NSFont+iTerm.h"
+#import "NSMenu+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSResponder+iTerm.h"
 #import "NSStringITerm.h"
@@ -163,6 +164,8 @@ static NSString *const kSessionActivityCounterKey = @"kSessionActivityCounter"; 
 
 static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
 NSString *const iTermApplicationWillTerminate = @"iTermApplicationWillTerminate";
+NSString *const iTermDownloadsMenuAXIdentifier = @"iTerm.DownloadsMenu";
+NSString *const iTermUploadsMenuAXIdentifier = @"iTerm.UploadsMenu";
 
 static BOOL gStartupActivitiesPerformed = NO;
 // Generation for app state delta encoding. Initialized from database on restore.
@@ -218,6 +221,10 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *_enterFullScreenMenuItem;
     IBOutlet NSMenu *_iterm2Menu;
     IBOutlet NSMenuItem *_captureGPUFrameMenuItem;
+    // Debug-only "Check Settings Control Truncation" item. Declared in all builds
+    // so the XIB outlet always resolves; removed at nib-load time when ITERM_DEBUG
+    // is not defined (see -awakeFromNib).
+    IBOutlet NSMenuItem *_checkSettingsTruncationMenuItem;
     IBOutlet NSMenuItem *_namedMarksMenuItem;
     IBOutlet NSMenuItem *_toolbeltMenuItem;
     IBOutlet NSMenuItem *_webMenuItem;
@@ -370,22 +377,26 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 - (void)awakeFromNib {
     [ArchivesMenuBuilder setShared:[[ArchivesMenuBuilder alloc] initWithMenuItem:_archivesMenuItem]];
 
-    NSMenu *viewMenu = [self topLevelViewNamed:@"View"];
+    NSMenu *viewMenu = [self topLevelViewWithIdentifier:@"View"];
     [viewMenu addItem:[NSMenuItem separatorItem]];
 
     NSSize tabColorViewSize = [ColorsMenuItemView preferredSize];
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
                                            initWithFrame:NSMakeRect(0, 0, tabColorViewSize.width, tabColorViewSize.height)] autorelease];
-    [self addMenuItemView:labelTrackView toMenu:viewMenu title:@"Current Tab Color"];
+    [self addMenuItemView:labelTrackView toMenu:viewMenu title:NSLocalizedStringWithDefaultValue(@"ViewMenu.CurrentTabColor", nil, [NSBundle mainBundle], @"Current Tab Color", @"View menu item label for the current tab color picker")];
 
     if (![iTermTipController sharedInstance]) {
         [_showTipOfTheDay.menu removeItem:_showTipOfTheDay];
     }
 
     if ([iTermAdvancedSettingsModel showHintsInSplitPaneMenuItems]) {
+        // Localization unneeded
         _splitHorizontally.title = [@"─⃞ " stringByAppendingString:_splitHorizontally.title];
+        // Localization unneeded
         _splitHorizontallyWithCurrentProfile.title = [@"─⃞ " stringByAppendingString:_splitHorizontallyWithCurrentProfile.title];
+        // Localization unneeded
         _splitVertically.title = [@"│⃞ " stringByAppendingString:_splitVertically.title];
+        // Localization unneeded
         _splitVerticallyWithCurrentProfile.title = [@"│⃞ " stringByAppendingString:_splitVerticallyWithCurrentProfile.title];
     }
 
@@ -403,6 +414,11 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     if (isReleaseBuild) {
         [_iterm2Menu removeItem:_captureGPUFrameMenuItem];
     }
+#if !ITERM_DEBUG
+    // "Check Settings Control Truncation" is a Development-only diagnostic; drop it
+    // from the menu in every build that doesn't define ITERM_DEBUG.
+    [_iterm2Menu removeItem:_checkSettingsTruncationMenuItem];
+#endif
 
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
     _triggers.submenu.delegate = self;
@@ -450,13 +466,9 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     } else if ([menuItem action] == @selector(undoCloseSession:)) {
         return [[iTermController sharedInstance] hasRestorableSession];
     } else if ([menuItem action] == @selector(undo:)) {
-        NSResponder *undoResponder = [self responderForMenuItem:menuItem];
-        if (undoResponder) {
-            return YES;
-        } else {
-            menuItem.title = @"Undo Close Session";
-            return [[iTermController sharedInstance] hasRestorableSession];
-        }
+        return [self validateUndoRedoMenuItem:menuItem selector:@selector(undo:) allowMigration:YES];
+    } else if ([menuItem action] == @selector(redo:)) {
+        return [self validateUndoRedoMenuItem:menuItem selector:@selector(redo:) allowMigration:NO];
     } else if ([menuItem action] == @selector(enableMarkAlertShowsModalAlert:)) {
         [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionModalAlert] ? NSControlStateValueOn : NSControlStateValueOff];
         return YES;
@@ -539,14 +551,14 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         NSArray<iTermSuppressedAlert *> *suppressed = [[iTermSuppressedAlerts sharedInstance] currentlySuppressedAlerts];
         const NSInteger n = suppressed.count;
         if (n == 0) {
-            menuItem.title = @"Suppressed Alerts…";
+            menuItem.title = NSLocalizedStringWithDefaultValue(@"SuppressedAlertsMenu.Title", nil, [NSBundle mainBundle], @"Suppressed Alerts…", @"Menu item to open the suppressed-alerts panel when none are suppressed");
             return YES;
         }
-        NSString *countPart = (n == 1) ? @"1 Alert Suppressed" : [NSString stringWithFormat:@"%@ Alerts Suppressed", @(n)];
+        NSString *countPart = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"SuppressedAlertsMenu.AlertsSuppressed", nil, [NSBundle mainBundle], @"%ld Alerts Suppressed", @"Menu title; %ld is the number of suppressed alerts"), (long)n];
         NSDate *recent = suppressed.firstObject.lastSuppressed;
         if (recent) {
             NSString *rel = [NSDateFormatter compactDateDifferenceStringFromDate:recent];
-            menuItem.title = [NSString stringWithFormat:@"%@ (%@ ago)…", countPart, rel];
+            menuItem.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"SuppressedAlertsMenu.CountWithTime", nil, [NSBundle mainBundle], @"%1$@ (%2$@ ago)…", @"Suppressed-alerts menu title; first %@ is the count phrase, second %@ is a relative time"), countPart, rel];
         } else {
             menuItem.title = [NSString stringWithFormat:@"%@…", countPart];
         }
@@ -597,7 +609,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         }
         return !!(menuItem.tag & profileType);
     } else if (menuItem.action == @selector(newSessionAlternate:)) {
-        menuItem.title = [self alternateNewSessionShouldOpenAtEnd] ? @"New Tab At End" : @"New Tab Next to Current Tab";
+        menuItem.title = [self alternateNewSessionShouldOpenAtEnd] ? NSLocalizedStringWithDefaultValue(@"NewSessionMenu.NewTabAtEnd", nil, [NSBundle mainBundle], @"New Tab At End", @"Menu item to open a new tab at the end of the tab bar") : NSLocalizedStringWithDefaultValue(@"NewSessionMenu.NewTabNextToCurrent", nil, [NSBundle mainBundle], @"New Tab Next to Current Tab", @"Menu item to open a new tab next to the current tab");
         return YES;
     } else {
         return YES;
@@ -713,13 +725,14 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 - (NSMenu *)downloadsMenu {
     if (!downloadsMenu_) {
         downloadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
-        downloadsMenu_.title = @"Downloads";
+        downloadsMenu_.title = NSLocalizedStringWithDefaultValue(@"DownloadsMenu.Title", nil, [NSBundle mainBundle], @"Downloads", @"Title of the Downloads menu");
+        [downloadsMenu_ setAccessibilityIdentifier:iTermDownloadsMenuAXIdentifier];
         NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
         [mainMenu insertItem:downloadsMenu_
                      atIndex:mainMenu.itemArray.count - 1];
         [downloadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:@"Downloads"] autorelease]];
 
-        NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:@"Clear All" action:@selector(clearAllDownloads:) keyEquivalent:@""] autorelease];
+        NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"Menu.ClearAll", nil, [NSBundle mainBundle], @"Clear All", @"Menu item to clear all items") action:@selector(clearAllDownloads:) keyEquivalent:@""] autorelease];
         [downloadsMenu_.submenu addItem:clearAll];
         [downloadsMenu_.submenu addItem:[NSMenuItem separatorItem]];
     }
@@ -729,13 +742,14 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 - (NSMenu *)uploadsMenu {
     if (!uploadsMenu_) {
         uploadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
-        uploadsMenu_.title = @"Uploads";
+        uploadsMenu_.title = NSLocalizedStringWithDefaultValue(@"UploadsMenu.Title", nil, [NSBundle mainBundle], @"Uploads", @"Title of the Uploads menu");
+        [uploadsMenu_ setAccessibilityIdentifier:iTermUploadsMenuAXIdentifier];
         NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
         [mainMenu insertItem:uploadsMenu_
                      atIndex:mainMenu.itemArray.count - 1];
         [uploadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:@"Uploads"] autorelease]];
 
-        NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:@"Clear All" action:@selector(clearAllUploads:) keyEquivalent:@""] autorelease];
+        NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"Menu.ClearAll", nil, [NSBundle mainBundle], @"Clear All", @"Menu item to clear all items") action:@selector(clearAllUploads:) keyEquivalent:@""] autorelease];
         [uploadsMenu_.submenu addItem:clearAll];
         [uploadsMenu_.submenu addItem:[NSMenuItem separatorItem]];
     }
@@ -789,8 +803,8 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         RLog(@"Importing color presets from %@", filename);
         if ([iTermColorPresets importColorPresetFromFile:filename]) {
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = @"Colors Scheme Imported";
-            alert.informativeText = @"The color scheme was imported and added to presets. You can find it under Settings > Profiles > Colors > Load Presets….";
+            alert.messageText = NSLocalizedStringWithDefaultValue(@"ColorPreset.ImportedTitle", nil, [NSBundle mainBundle], @"Colors Scheme Imported", @"Title when a color scheme was imported");
+            alert.informativeText = NSLocalizedStringWithDefaultValue(@"ColorPreset.ImportedMessage", nil, [NSBundle mainBundle], @"The color scheme was imported and added to presets. You can find it under Settings > Profiles > Colors > Load Presets….", @"Message telling the user where to find the imported color scheme");
             [alert runModal];
         }
         return YES;
@@ -834,8 +848,8 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
                 }
 
                 const iTermWarningSelection selection =
-                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"OK to run “%@”?", filename]
-                                               actions:@[ @"OK", @"Cancel" ]
+                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenFile.ConfirmRun", nil, [NSBundle mainBundle], @"OK to run “%@”?", @"Confirmation prompt before running an opened file; %@ is the filename"), filename]
+                                               actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
                                             identifier:@"NoSyncConfirmRunOpenFile"
                                            silenceable:kiTermWarningTypePermanentlySilenceable
                                                 window:nil];
@@ -1027,19 +1041,19 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         RLog(@"Showing quit alert");
         NSString *message;
         if ([[iTermController sharedInstance] shouldLeaveSessionsRunningOnQuit]) {
-            message = @"Sessions will be restored automatically when iTerm2 is relaunched.";
+            message = NSLocalizedStringWithDefaultValue(@"QuitAlert.SessionsRestored", nil, [NSBundle mainBundle], @"Sessions will be restored automatically when iTerm2 is relaunched.", @"Quit-confirmation message when sessions will be restored on relaunch");
         } else {
-            message = @"All sessions will be closed.";
+            message = NSLocalizedStringWithDefaultValue(@"QuitAlert.AllClosed", nil, [NSBundle mainBundle], @"All sessions will be closed.", @"Quit-confirmation message when all sessions will be closed");
         }
         [NSApp activateIgnoringOtherApps:YES];
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = @"Quit iTerm2?";
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"QuitAlert.Title", nil, [NSBundle mainBundle], @"Quit iTerm2?", @"Title of the quit-confirmation alert");
         alert.informativeText = message;
-        [alert addButtonWithTitle:@"OK"];
-        [alert addButtonWithTitle:@"Cancel"];
+        [alert addButtonWithTitle:iTermLocalizedOK()];
+        [alert addButtonWithTitle:iTermLocalizedCancel()];
         iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
-                                                                               prompt:@"Why am I being prompted?"
-                                                                              message:[NSString stringWithFormat:@"You are being prompted because:\n\n%@",
+                                                                               prompt:NSLocalizedStringWithDefaultValue(@"QuitAlert.WhyPrompt", nil, [NSBundle mainBundle], @"Why am I being prompted?", @"Disclosure prompt asking why the quit confirmation appears")
+                                                                              message:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"QuitAlert.PromptReason", nil, [NSBundle mainBundle], @"You are being prompted because:\n\n%@", @"Explains why the quit confirmation is shown; %@ is the reason"),
                                                                                        reason.message]];
         iTermAccessoryViewUnfucker *unfucker = [[iTermAccessoryViewUnfucker alloc] initWithView:accessory];
         accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
@@ -1148,16 +1162,16 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender {
     NSMenu* aMenu = [[NSMenu alloc] initWithTitle: @"Dock Menu"];
 
-    [aMenu addItemWithTitle:@"New Window (Default Profile)"
+    [aMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"DockMenu.NewWindowDefaultProfile", nil, [NSBundle mainBundle], @"New Window (Default Profile)", @"Dock menu item to open a new window with the default profile")
                      action:@selector(newWindow:)
               keyEquivalent:@""];
     [aMenu addItem:[NSMenuItem separatorItem]];
     [self newSessionMenu:aMenu
-                   title:@"New Window…"
+                   title:NSLocalizedStringWithDefaultValue(@"DockMenu.NewWindow", nil, [NSBundle mainBundle], @"New Window…", @"Dock menu item to open a new window")
                 selector:@selector(newSessionInWindowAtIndex:)
          openAllSelector:@selector(newSessionsInNewWindow:)];
     [self newSessionMenu:aMenu
-                   title:@"New Tab…"
+                   title:NSLocalizedStringWithDefaultValue(@"DockMenu.NewTab", nil, [NSBundle mainBundle], @"New Tab…", @"Dock menu item to open a new tab")
                 selector:@selector(newSessionInTabAtIndex:)
          openAllSelector:@selector(newSessionsInWindow:)];
     [self addArrangementsToDockMenu:aMenu];
@@ -1300,11 +1314,11 @@ void TurnOnDebugLoggingAutomatically(void) {
             TurnOffDebugLoggingSilently();
             [[iTermUserDefaults userDefaults] setBool:NO forKey:@"StartDebugLoggingAutomatically"];
         }];
-      [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Debug logging turned on"
-                                                                       detail:@"You may notice worse performance while debug logging is on."
+      [[iTermNotificationController sharedInstance] postNotificationWithTitle:NSLocalizedStringWithDefaultValue(@"DebugLogging.OnTitle", nil, [NSBundle mainBundle], @"Debug logging turned on", @"Notification title when debug logging is enabled")
+                                                                       detail:NSLocalizedStringWithDefaultValue(@"DebugLogging.OnDetail", nil, [NSBundle mainBundle], @"You may notice worse performance while debug logging is on.", @"Notification detail warning of reduced performance while debug logging is on")
                                                      callbackNotificationName:iTermDisableDebugLoggingNotificationName
                                                  callbackNotificationUserInfo:@{}
-                                                            actionButtonTitle:@"Disable"];
+                                                            actionButtonTitle:NSLocalizedStringWithDefaultValue(@"DebugLogging.Disable", nil, [NSBundle mainBundle], @"Disable", @"Notification action button to disable debug logging")];
       TurnOnDebugLoggingSilently();
   });
 }
@@ -1508,16 +1522,20 @@ void TurnOnDebugLoggingAutomatically(void) {
     if (@available(macOS 12, *)) {
         // ok
     } else {
-        [iTermWarning showWarningWithTitle:@"This is the last nightly build that will support macOS 11 and older. Sorry for the inconvenience!"
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"MacOS11Deprecation.Message", nil, [NSBundle mainBundle], @"This is the last nightly build that will support macOS 11 and older. Sorry for the inconvenience!", @"Warning that this is the last nightly build supporting macOS 11 and older")
+                                   actions:@[ iTermLocalizedOK() ]
                                  accessory:nil
                                 identifier:@"NoSyncMacOS11Deprecation"
                                silenceable:kiTermWarningTypePermanentlySilenceable
-                                   heading:@"Deprecation Notice"
+                                   heading:NSLocalizedStringWithDefaultValue(@"MacOS11Deprecation.Heading", nil, [NSBundle mainBundle], @"Deprecation Notice", @"Heading of the macOS 11 deprecation warning")
                                     window:nil];
     }
     [iTermMacOS13RequirementNotice maybeShow];
     DLog(@"didFinishLaunching");
+
+    // When running an isolated instance via -suite, overlay the suite name on
+    // the dock icon so it's obvious which instance this dock icon belongs to.
+    [iTermSuiteDockTileView configureDockTileIfNeeded];
 
     // Record whether the previous shutdown ran to completion. +lastShutdownWasClean
     // returns NO if the process was killed (e.g. SIGKILL by the logout/reboot
@@ -1538,6 +1556,10 @@ void TurnOnDebugLoggingAutomatically(void) {
 #endif
 
     [iTermLaunchExperienceController applicationDidFinishLaunching];
+    // Seed the dynamic Ollama model cache from disk so a chat pinned to a
+    // discovered tag resolves synchronously at launch instead of falling through
+    // to the global default provider while /api/tags is fetched.
+    [[iTermOllamaModelCache shared] loadPersistedModels];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     // Once a day at most, check for a newer uv (silently replace it) and refresh the
     // iterm2 module in provisioned basic-script venvs. A no-op until uv is installed.
@@ -1553,10 +1575,13 @@ void TurnOnDebugLoggingAutomatically(void) {
     // run ("test runner hung before establishing connection"). A test host has
     // no paired device, so none of this is needed there.
     if (![NSApp isRunningUnitTests]) {
+        // Re-arm any AI-chat timers persisted before this launch so a timer whose
+        // deadline passed while iTerm2 was quit (e.g. across a Sparkle upgrade)
+        // still fires without the user reopening the chat. A no-op when no chat
+        // has a timer.
+        [iTermChatTimerLaunch rearmPersistedTimers];
         // If a companion device is paired, quietly listen so it can reconnect.
         [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
-        // If the pairing predates the push relay host move, ask the user to re-pair.
-        [[iTermCompanionPairingController shared] promptToRepairAfterRelayMoveIfNeeded];
         // If the pairing is half-present (pid persisted but keychain credentials
         // missing, e.g. after a rebuild/reinstall), tell the user to re-pair instead
         // of failing every relay park silently.
@@ -1764,13 +1789,21 @@ void TurnOnDebugLoggingAutomatically(void) {
     NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
     [appMenu addItem:[NSMenuItem separatorItem]];
 
+    // Localization unneeded
     NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@"Toggle Key Recording" action:@selector(toggleKeyRecording:) keyEquivalent:@""] autorelease];
     [appMenu addItem:item];
 
+    // Localization unneeded
     item = [[[NSMenuItem alloc] initWithTitle:@"Replay Recorded Keys" action:@selector(replayRecordedKeys:) keyEquivalent:@""] autorelease];
     [appMenu addItem:item];
 #endif
 }
+
+#if ITERM_DEBUG
+- (IBAction)debugCheckSettingsControlTruncation:(id)sender {
+    [[PreferencePanel sharedInstance] debugCheckControlTruncation];
+}
+#endif
 
 #if DEBUG
 - (IBAction)toggleKeyRecording:(id)sender {
@@ -1781,6 +1814,7 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)replayRecordedKeys:(id)sender {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
+    // Localization unneeded
     panel.title = @"Choose a JSON File";
     panel.allowedContentTypes = @[ UTTypeJSON ];
     panel.canChooseFiles = YES;
@@ -1813,12 +1847,12 @@ static iTermKeyEventReplayer *gReplayer;
     NSMenu *menu = [[[NSMenu alloc] init] autorelease];
     NSMenuItem *item;
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Settings"
+    item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusMenu.Settings", nil, [NSBundle mainBundle], @"Settings", @"Status-icon menu item to open Settings")
                                        action:@selector(showAndOrderFrontRegardlessPrefWindow:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Bring All Windows to Front"
+    item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusMenu.BringAllToFront", nil, [NSBundle mainBundle], @"Bring All Windows to Front", @"Status-icon menu item to bring all windows to front")
                                        action:@selector(arrangeInFront:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
@@ -1826,21 +1860,21 @@ static iTermKeyEventReplayer *gReplayer;
     item = [[[NSMenuItem alloc] init] autorelease];
     _statusIconBuriedSessions = [[[NSMenu alloc] init] autorelease];
     item.submenu = _statusIconBuriedSessions;
-    item.title = @"Buried Sessions";
+    item.title = NSLocalizedStringWithDefaultValue(@"StatusMenu.BuriedSessions", nil, [NSBundle mainBundle], @"Buried Sessions", @"Status-icon submenu title for buried sessions");
     [menu addItem:item];
 
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Check For Updates"
+    item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusMenu.CheckForUpdates", nil, [NSBundle mainBundle], @"Check For Updates", @"Status-icon menu item to check for updates")
                                        action:@selector(checkForUpdatesFromMenu:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
 
-    NSMenuItem *mainMenuItem = [[[NSMenuItem alloc] initWithTitle:@"Main Menu" action:nil keyEquivalent:@""] autorelease];
+    NSMenuItem *mainMenuItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusMenu.MainMenu", nil, [NSBundle mainBundle], @"Main Menu", @"Status-icon submenu title mirroring the main menu") action:nil keyEquivalent:@""] autorelease];
     mainMenuItem.submenu = [[NSApp mainMenu] it_deepCopy];
     [menu addItem:mainMenuItem];
     
-    item = [[[NSMenuItem alloc] initWithTitle:@"Quit iTerm2"
+    item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusMenu.QuitiTerm2", nil, [NSBundle mainBundle], @"Quit iTerm2", @"Status-icon menu item to quit iTerm2")
                                        action:@selector(terminate:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
@@ -1901,7 +1935,9 @@ static iTermKeyEventReplayer *gReplayer;
         [[term toolbelt] toggleToolWithName:theName];
         [term refreshTools];
     }
-    NSMenuItem *menuItem = [toolbeltMenu itemWithTitle:theName];
+    // Look up by identifier ("Toolbelt.<name>", set in +addToolsToMenu:), not title,
+    // since titles are localized but identifiers are not.
+    NSMenuItem *menuItem = [toolbeltMenu it_itemWithIdentifier:[@"Toolbelt." stringByAppendingString:theName]];
 
     NSInteger newState = ([menuItem state] == NSControlStateValueOn) ? NSControlStateValueOff : NSControlStateValueOn;
     [menuItem setState:newState];
@@ -2314,17 +2350,25 @@ static iTermKeyEventReplayer *gReplayer;
 - (void)updateAddressBookMenu:(NSNotification *)aNotification {
     DLog(@"Updating Profile menu");
     iTermProfileModelJournalParams *params = [[[iTermProfileModelJournalParams alloc] init] autorelease];
-    if ([iTermAdvancedSettingsModel openProfilesInNewWindow]) {
+    const BOOL openInWindow = [iTermAdvancedSettingsModel openProfilesInNewWindow];
+    if (openInWindow) {
         params.selector = @selector(newSessionInWindowAtIndex:);
         params.alternateSelector = @selector(newSessionInTabAtIndex:);
-        [bookmarkMenu itemAtIndex:2].title = [[bookmarkMenu itemAtIndex:2].title stringByReplacingOccurrencesOfString:@"Window" withString:@"Tab"];
-        [bookmarkMenu itemAtIndex:3].title = [[bookmarkMenu itemAtIndex:3].title stringByReplacingOccurrencesOfString:@"Window" withString:@"Tab"];
     } else {
         params.selector = @selector(newSessionInTabAtIndex:);
         params.alternateSelector = @selector(newSessionInWindowAtIndex:);
-        [bookmarkMenu itemAtIndex:2].title = [[bookmarkMenu itemAtIndex:2].title stringByReplacingOccurrencesOfString:@"Tab" withString:@"Window"];
-        [bookmarkMenu itemAtIndex:3].title = [[bookmarkMenu itemAtIndex:3].title stringByReplacingOccurrencesOfString:@"Tab" withString:@"Window"];
     }
+    // Profiles-menu items 2 and 3 are a normal/Option-alternate pair whose wording flips with
+    // openProfilesInNewWindow: when new profiles open in a window by default, Option opens a tab
+    // (and vice versa). Assign the full localized title for the current mode rather than string-
+    // replacing "Window"<->"Tab" on the live title, which silently no-ops once the titles are
+    // localized. The items keep their identifiers, so MainMenuMangler's icon lookup is unaffected.
+    [bookmarkMenu itemAtIndex:2].title = openInWindow
+        ? NSLocalizedStringWithDefaultValue(@"ProfilesMenu.PressOptionForNewTab", nil, [NSBundle mainBundle], @"Press Option for New Tab", @"Profiles menu item shown when new profiles open in a window by default; holding Option opens a new tab instead.")
+        : NSLocalizedStringWithDefaultValue(@"ProfilesMenu.PressOptionForNewWindow", nil, [NSBundle mainBundle], @"Press Option for New Window", @"Profiles menu item shown when new profiles open in a tab by default; holding Option opens a new window instead.");
+    [bookmarkMenu itemAtIndex:3].title = openInWindow
+        ? NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenInNewTab", nil, [NSBundle mainBundle], @"Open In New Tab", @"Profiles menu item (shown while Option is held) that opens the selected profile in a new tab.")
+        : NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenInNewWindow", nil, [NSBundle mainBundle], @"Open In New Window", @"Profiles menu item (shown while Option is held) that opens the selected profile in a new window.");
     params.openAllSelector = @selector(newSessionsInWindow:);
     params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
     params.target = [iTermController sharedInstance];
@@ -2359,8 +2403,8 @@ static iTermKeyEventReplayer *gReplayer;
     NSTimeInterval age = -[[NSBundle it_buildDate] timeIntervalSinceNow];
     if (age > 30 * 24 * 60 * 60) {
         iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:@"This nightly build is over 30 days old. Consider updating soon: you may be suffering from awful bugs in blissful ignorance."
-                                   actions:@[ @"I’ll Take My Chances", @"Update Now" ]
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"NightlyBuild.OldWarning", nil, [NSBundle mainBundle], @"This nightly build is over 30 days old. Consider updating soon: you may be suffering from awful bugs in blissful ignorance.", @"Warning that the nightly build is over 30 days old")
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"NightlyBuild.TakeMyChances", nil, [NSBundle mainBundle], @"I’ll Take My Chances", @"Button to dismiss the old-nightly-build warning without updating"), NSLocalizedStringWithDefaultValue(@"NightlyBuild.UpdateNow", nil, [NSBundle mainBundle], @"Update Now", @"Button to update now") ]
                                 identifier:@"NoSyncVeryOldNightlyBuildWarning"
                                silenceable:kiTermWarningTypeSilenceableForOneMonth
                                     window:nil];
@@ -2539,7 +2583,7 @@ static iTermKeyEventReplayer *gReplayer;
     NSMenuItem *companionItem = [self menuItemWithAction:@selector(pairCompanionDevice:)
                                                  inMenu:[NSApp mainMenu]];
     companionItem.image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolLaptopcomputerAndIphone)
-                                  accessibilityDescription:@"Companion Device Settings"];
+                                  accessibilityDescription:NSLocalizedStringWithDefaultValue(@"Companion.DeviceSettingsAXDescription", nil, [NSBundle mainBundle], @"Companion Device Settings", @"Accessibility description for the companion device settings menu item glyph")];
     companionItem.hidden = ![iTermAdvancedSettingsModel companionPairingAllowed];
 }
 
@@ -2585,9 +2629,10 @@ static iTermKeyEventReplayer *gReplayer;
                                             identifier:asTabs ? @"Restore Window Arrangement as Tabs" : @"Restore Window Arrangement"];
 }
 
-- (NSMenu *)topLevelViewNamed:(NSString *)menuName {
+- (NSMenu *)topLevelViewWithIdentifier:(NSString *)identifier {
     NSMenu *appMenu = [NSApp mainMenu];
-    NSMenuItem *topLevelMenuItem = [appMenu itemWithTitle:menuName];
+    // Look up by identifier, not title: titles are localized but identifiers are not.
+    NSMenuItem *topLevelMenuItem = [appMenu it_itemWithIdentifier:identifier];
     NSMenu *menu = [topLevelMenuItem submenu];
     return menu;
 }
@@ -2631,7 +2676,7 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (void)addArrangementsToDockMenu:(NSMenu *)theMenu {
-    NSMenuItem *container = [theMenu addItemWithTitle:@"Restore Arrangement"
+    NSMenuItem *container = [theMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"DockMenu.RestoreArrangement", nil, [NSBundle mainBundle], @"Restore Arrangement", @"Dock menu item to restore a window arrangement")
                                                action:nil
                                         keyEquivalent:@""];
     NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
@@ -2779,7 +2824,11 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem {
-    [iTermToolbeltView toggleShouldShowTool:[menuItem title]];
+    // The tool name is the identifier's suffix ("Toolbelt.<name>", set in +addToolsToMenu:).
+    // Use it rather than the title, which is localized.
+    NSString *toolbeltPrefix = @"Toolbelt.";
+    NSString *name = [menuItem.identifier hasPrefix:toolbeltPrefix] ? [menuItem.identifier substringFromIndex:toolbeltPrefix.length] : menuItem.title;
+    [iTermToolbeltView toggleShouldShowTool:name];
 }
 
 - (IBAction)toggleFullScreenTabBar:(id)sender {
@@ -3021,16 +3070,128 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (IBAction)undo:(id)sender {
-    NSResponder *undoResponder = [self responderForMenuItem:sender];
-    if (undoResponder) {
+    // ⌘Z is idiomatic text undo: it undoes the focused editor. Undo Close moved to
+    // Shell > Undo Close (⌘⇧T). The first time the user presses ⌘Z while a session
+    // they just closed is still restorable, show a one-time notice explaining the
+    // change and let them pick what they meant this time.
+    __weak __typeof(self) weakSelf = self;
+    if ([iTermUndoCloseMigrationWarning maybeShowWithUndoClose:^{ [weakSelf undoCloseSession:nil]; }
+                                                   regularUndo:^{ [weakSelf performUndo:sender]; }]) {
+        return;
+    }
+    [self performUndo:sender];
+}
+
+- (IBAction)redo:(id)sender {
+    [self performRedo:sender];
+}
+
+- (void)performUndo:(id)sender {
+    [self performUndoRedoSelector:@selector(undo:) sender:sender];
+}
+
+- (void)performRedo:(id)sender {
+    [self performUndoRedoSelector:@selector(redo:) sender:sender];
+}
+
+// Shared Undo/Redo dispatch. A focused text editor owns its own undo stack, so
+// drive it directly (NSTextView doesn't respond to undo:/redo:). When the focused
+// editor has nothing to do -- or the first responder isn't a text editor -- fall
+// through to the key window's responder chain, forwarding to a settings
+// controller, a WebKit editing view, or the window's own undo manager. This
+// mirrors the First-Responder menu routing this used to rely on (so ⌘Z can still
+// undo a settings-table edit while a text field is focused, and ⌘⇧Z still redoes
+// in editable web content), while keeping text editors on their private stacks.
+- (void)performUndoRedoSelector:(SEL)selector sender:(id)sender {
+    const BOOL isUndo = (selector == @selector(undo:));
+    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    if ([firstResponder isKindOfClass:[NSText class]]) {
+        NSUndoManager *undoManager = firstResponder.undoManager;
+        if (isUndo ? undoManager.canUndo : undoManager.canRedo) {
+            // Guard against a throwing undo target / NSUndoManager inconsistency.
+            // (This never caught the dangling-target EXC_BAD_ACCESS -- the swizzle
+            // handles that -- but it does stop NSExceptions from escaping.)
+            @try {
+                if (isUndo) {
+                    [undoManager undo];
+                } else {
+                    [undoManager redo];
+                }
+            } @catch (NSException *exception) {
+                RLog(@"%@", exception);
+            }
+            return;
+        }
+        // Nothing to do in this editor; fall through so e.g. an empty settings
+        // text field still defers to its controller's undo.
+    }
+    NSResponder *responder = [self responderForUndoRedoSelector:selector menuItem:sender];
+    if (responder) {
         @try {
-            [undoResponder performSelector:@selector(undo:) withObject:sender];
+            [responder performSelector:selector withObject:sender];
         } @catch (NSException *exception) {
             RLog(@"%@", exception);
         }
-    } else {
-        [self undoCloseSession:nil];
+        return;
     }
+    NSBeep();
+}
+
+// The first responder in the key window's chain that can handle `selector` for
+// `menuItem`: it must implement the selector, conform to NSMenuItemValidation,
+// and validate the item. The validation requirement is what lets us skip an
+// NSWindow with an empty undo stack (NSWindow implements undo:/redo: and would
+// otherwise swallow the action into its unused default manager) and keep walking
+// to a window controller that owns a private undo manager -- e.g. the Smart
+// Selection or Context Menu Action prefs panels. The app delegate is not in any
+// window's responder chain, so there's no recursion risk. Text editors are
+// handled by the caller's NSText branch, not here (NSTextView doesn't implement
+// undo:/redo:).
+- (NSResponder *)responderForUndoRedoSelector:(SEL)selector menuItem:(NSMenuItem *)menuItem {
+    for (NSResponder *responder in [self allResponders]) {
+        if ([responder respondsToSelector:selector] &&
+            [responder conformsToProtocol:@protocol(NSMenuItemValidation)] &&
+            (!menuItem || [(id<NSMenuItemValidation>)responder validateMenuItem:menuItem])) {
+            return responder;
+        }
+    }
+    return nil;
+}
+
+// Enablement/title for the Undo or Redo menu item, matching the dispatch in
+// -performUndoRedoSelector:sender:.
+- (BOOL)validateUndoRedoMenuItem:(NSMenuItem *)menuItem
+                        selector:(SEL)selector
+                  allowMigration:(BOOL)allowMigration {
+    const BOOL isUndo = (selector == @selector(undo:));
+    NSString *genericTitle = isUndo
+        ? NSLocalizedStringWithDefaultValue(@"UndoMenu.Undo", nil, [NSBundle mainBundle], @"Undo", @"Generic Undo menu item title shown when there is nothing specific to undo")
+        : NSLocalizedStringWithDefaultValue(@"UndoMenu.Redo", nil, [NSBundle mainBundle], @"Redo", @"Generic Redo menu item title shown when there is nothing specific to redo");
+
+    // The one-time Undo Close migration notice takes the next ⌘Z when pending, so
+    // keep the generic title (not "Undo Typing") -- pressing it shows the notice,
+    // which offers Regular Undo to perform the pending undo.
+    if (allowMigration &&
+        !iTermUserDefaults.haveWarnedAboutUndoKeyChange &&
+        [[iTermController sharedInstance] hasRestorableSession]) {
+        menuItem.title = genericTitle;
+        return YES;
+    }
+
+    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    if ([firstResponder isKindOfClass:[NSText class]]) {
+        NSUndoManager *undoManager = firstResponder.undoManager;
+        if (isUndo ? undoManager.canUndo : undoManager.canRedo) {
+            menuItem.title = isUndo ? undoManager.undoMenuItemTitle : undoManager.redoMenuItemTitle;
+            return YES;
+        }
+        // else fall through to the forwarded responder.
+    }
+    menuItem.title = genericTitle;
+    // A validating responder further down the chain (settings controller) enables
+    // the item; -responderForUndoRedoSelector:menuItem: already required its
+    // validateMenuItem: to pass.
+    return ([self responderForUndoRedoSelector:selector menuItem:menuItem] != nil);
 }
 
 - (IBAction)undoCloseSession:(id)sender {
@@ -3185,9 +3346,9 @@ static iTermKeyEventReplayer *gReplayer;
     NSString *ring = iTermRetrospectiveLogString();
     if (ring.length == 0) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"No Retrospective Logs";
-        alert.informativeText = @"No retrospective debug logs have been recorded yet.";
-        [alert addButtonWithTitle:@"OK"];
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"DebugLogs.NoRetrospectiveTitle", nil, [NSBundle mainBundle], @"No Retrospective Logs", @"Title when there are no retrospective debug logs");
+        alert.informativeText = NSLocalizedStringWithDefaultValue(@"DebugLogs.NoRetrospectiveMessage", nil, [NSBundle mainBundle], @"No retrospective debug logs have been recorded yet.", @"Message when there are no retrospective debug logs");
+        [alert addButtonWithTitle:iTermLocalizedOK()];
         [alert runModal];
         return;
     }
@@ -3195,17 +3356,18 @@ static iTermKeyEventReplayer *gReplayer;
     // and view hierarchy, pinned messages). No footer: this is a one-time snapshot.
     NSString *log = [iTermDebugLogHeaderString() stringByAppendingString:ring];
     NSSavePanel *panel = [NSSavePanel savePanel];
+    // Localization unneeded
     panel.nameFieldStringValue = @"retrospective-debuglog.txt";
-    panel.title = @"Save Retrospective Debug Logs";
+    panel.title = NSLocalizedStringWithDefaultValue(@"DebugLogs.SaveRetrospectiveTitle", nil, [NSBundle mainBundle], @"Save Retrospective Debug Logs", @"Save-panel title for retrospective debug logs");
     if ([panel runModal] != NSModalResponseOK || panel.URL == nil) {
         return;
     }
     NSError *error = nil;
     if (![log writeToURL:panel.URL atomically:YES encoding:NSUTF8StringEncoding error:&error]) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Could Not Save";
-        alert.informativeText = [NSString stringWithFormat:@"Failed to save retrospective debug logs: %@", error.localizedDescription];
-        [alert addButtonWithTitle:@"OK"];
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"DebugLogs.CouldNotSaveTitle", nil, [NSBundle mainBundle], @"Could Not Save", @"Title when saving retrospective debug logs failed");
+        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DebugLogs.SaveFailed", nil, [NSBundle mainBundle], @"Failed to save retrospective debug logs: %@", @"Message that saving retrospective debug logs failed; %@ is the error"), error.localizedDescription];
+        [alert addButtonWithTitle:iTermLocalizedOK()];
         [alert runModal];
     }
 }
@@ -3262,12 +3424,12 @@ static iTermKeyEventReplayer *gReplayer;
                                                                                        withCompletion:
      ^(iTermPythonRuntimeDownloaderStatus status) {
          if (status == iTermPythonRuntimeDownloaderStatusNotNeeded) {
-             [iTermWarning showWarningWithTitle:@"You’re up to date!"
-                                        actions:@[ @"OK" ]
+             [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PythonRuntime.UpToDate", nil, [NSBundle mainBundle], @"You’re up to date!", @"Message shown when the Python runtime is already up to date")
+                                        actions:@[ iTermLocalizedOK() ]
                                       accessory:nil
                                      identifier:nil
                                     silenceable:kiTermWarningTypePersistent
-                                        heading:@"Python Runtime"
+                                        heading:NSLocalizedStringWithDefaultValue(@"PythonRuntime.Heading", nil, [NSBundle mainBundle], @"Python Runtime", @"Heading for Python runtime alerts")
                                          window:nil];
          }
      }];
@@ -3283,7 +3445,7 @@ static iTermKeyEventReplayer *gReplayer;
         [[iTermUvProvisioner shared] userRequestedUpgradeCheckWithCompletion:^(BOOL ok, NSString *message) {
             [[iTermScriptHistoryEntry globalEntry] addOutput:[message stringByAppendingString:@"\n"] completion:^{}];
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = ok ? @"Python Runtime" : @"Update Failed";
+            alert.messageText = ok ? NSLocalizedStringWithDefaultValue(@"PythonRuntime.Heading", nil, [NSBundle mainBundle], @"Python Runtime", @"Heading for Python runtime alerts") : NSLocalizedStringWithDefaultValue(@"PythonRuntime.UpdateFailedTitle", nil, [NSBundle mainBundle], @"Update Failed", @"Title when checking for a Python runtime update failed");
             alert.informativeText = message;
             [alert runModal];
         }];
@@ -3297,9 +3459,9 @@ static iTermKeyEventReplayer *gReplayer;
         }
         if (error != nil || python == nil) {
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = @"Installation Failed";
-            alert.informativeText = [NSString stringWithFormat:@"Could not install the Python runtime: %@",
-                                     error.localizedDescription ?: @"unknown error"];
+            alert.messageText = NSLocalizedStringWithDefaultValue(@"PythonRuntime.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Title when installing the Python runtime failed");
+            alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PythonRuntime.InstallFailed", nil, [NSBundle mainBundle], @"Could not install the Python runtime: %@", @"Message that the Python runtime could not be installed; %@ is the error"),
+                                     error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"PythonRuntime.UnknownError", nil, [NSBundle mainBundle], @"unknown error", @"Fallback text when an error has no description")];
             [alert runModal];
             return;
         }
@@ -3318,20 +3480,20 @@ static iTermKeyEventReplayer *gReplayer;
             [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentFromZip:panel.URL.path
                                                                                 completion:^(NSError *error) {
                 if (!error) {
-                    [iTermWarning showWarningWithTitle:@"Installed successfully!"
-                                               actions:@[ @"OK" ]
+                    [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PythonRuntime.InstalledSuccessfully", nil, [NSBundle mainBundle], @"Installed successfully!", @"Message shown when the Python runtime installed successfully")
+                                               actions:@[ iTermLocalizedOK() ]
                                              accessory:nil
                                             identifier:nil
                                            silenceable:kiTermWarningTypePersistent
-                                               heading:@"Python Runtime"
+                                               heading:NSLocalizedStringWithDefaultValue(@"PythonRuntime.Heading", nil, [NSBundle mainBundle], @"Python Runtime", @"Heading for Python runtime alerts")
                                                 window:nil];
                 } else {
-                    [iTermWarning showWarningWithTitle:error.localizedDescription ?: @"Unknown error"
-                                               actions:@[ @"OK" ]
+                    [iTermWarning showWarningWithTitle:error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"PythonRuntime.UnknownErrorTitle", nil, [NSBundle mainBundle], @"Unknown error", @"Title shown when an error has no description")
+                                               actions:@[ iTermLocalizedOK() ]
                                              accessory:nil
                                             identifier:nil
                                            silenceable:kiTermWarningTypePersistent
-                                               heading:@"Error Installing Python Runtime"
+                                               heading:NSLocalizedStringWithDefaultValue(@"PythonRuntime.InstallErrorHeading", nil, [NSBundle mainBundle], @"Error Installing Python Runtime", @"Heading when installing the Python runtime failed")
                                                 window:nil];
                 }
             }];
@@ -3344,12 +3506,32 @@ static iTermKeyEventReplayer *gReplayer;
     [self.scriptsMenuController build];
 }
 
+- (NSURL *)replBannerURL {
+    // The banner is a bundled text resource (it embeds ANSI styling, an OSC 8
+    // hyperlink, and a runnable code sample), so it is not a String Catalog string.
+    // A localized banner is shipped as repl_banner-<localization>.txt (e.g.
+    // repl_banner-pt-BR.txt), matching the app's resolved localization. Fall back to
+    // the English repl_banner.txt when the current language has no translated banner.
+    // (A cleaner long-term form is to make repl_banner.txt a localized resource in
+    // each <lang>.lproj and use NSBundle's localized URLForResource: lookup; that is
+    // a project-structure change deferred for now.)
+    for (NSString *localization in [[NSBundle mainBundle] preferredLocalizations]) {
+        NSString *name = [@"repl_banner-" stringByAppendingString:localization];
+        NSURL *url = [[NSBundle mainBundle] URLForResource:name withExtension:@"txt"];
+        if (url) {
+            return url;
+        }
+    }
+    return [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
+}
+
 - (void)launchREPLWithCommand:(NSString *)command arguments:(NSArray<NSString *> *)arguments {
-    NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
+    NSURL *bannerURL = [self replBannerURL];
     NSString *bannerText = [NSString stringWithContentsOfURL:bannerURL encoding:NSUTF8StringEncoding error:nil];
     NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
     NSString *key = [[NSUUID UUID] UUIDString];
     NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
+    // Localization unneeded
     iTermScriptHistoryEntry *entry = [[[iTermScriptHistoryEntry alloc] initWithName:@"REPL"
                                                                            fullPath:nil
                                                                          identifier:identifier
@@ -3390,9 +3572,9 @@ static iTermKeyEventReplayer *gReplayer;
             }
             if (interpreter == nil) {
                 NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-                alert.messageText = @"Python Environment Unavailable";
-                alert.informativeText = [NSString stringWithFormat:@"Could not prepare the Python environment for the REPL: %@",
-                                         uvError.localizedDescription ?: @"unknown error"];
+                alert.messageText = NSLocalizedStringWithDefaultValue(@"PythonRuntime.EnvUnavailableTitle", nil, [NSBundle mainBundle], @"Python Environment Unavailable", @"Title when the Python environment for the REPL could not be prepared");
+                alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PythonRuntime.REPLPrepareFailed", nil, [NSBundle mainBundle], @"Could not prepare the Python environment for the REPL: %@", @"Message that the REPL Python environment could not be prepared; %@ is the error"),
+                                         uvError.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"PythonRuntime.UnknownError", nil, [NSBundle mainBundle], @"unknown error", @"Fallback text when an error has no description")];
                 [alert runModal];
                 return;
             }
@@ -3537,15 +3719,15 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)gpuRendererAvailability:(id)sender {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = @"GPU Renderer Availability";
+    alert.messageText = NSLocalizedStringWithDefaultValue(@"GPURenderer.Title", nil, [NSBundle mainBundle], @"GPU Renderer Availability", @"Title of the GPU renderer availability alert");
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
     PTYSession *session = [term currentSession];
     PTYTab *tab = [term tabForSession:session];
     NSString *reason = [self gpuUnavailableStringForReason:tab.metalUnavailableReason];
     if (reason) {
-        alert.informativeText = [NSString stringWithFormat:@"GPU rendering is off in the current session because %@", reason];
+        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GPURenderer.OffBecause", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because %@", @"Explanation that GPU rendering is off; %@ is the reason"), reason];
     } else {
-        alert.informativeText = @"GPU rendering is enabled for the current session.";
+        alert.informativeText = NSLocalizedStringWithDefaultValue(@"GPURenderer.Enabled", nil, [NSBundle mainBundle], @"GPU rendering is enabled for the current session.", @"Message that GPU rendering is enabled");
     }
     [alert runModal];
 }
@@ -3616,16 +3798,18 @@ static iTermKeyEventReplayer *gReplayer;
     }
 
     if ([[[[iTermController sharedInstance] currentTerminal] currentSession] isTmuxClient]) {
-        NSString *heading =
-            [NSString stringWithFormat:@"What kind of %@ do you want to open?",
-                isWindow ? @"window" : @"tab"];
-        NSString *title =
-            [NSString stringWithFormat:@"The current session is a tmux session. "
-                                       @"Would you like to create a new tmux %@ or use the default profile?",
-                                       isWindow ? @"window" : @"tab"];
-        NSString *tmuxAction = isWindow ? @"New tmux Window" : @"New tmux Tab";
+        // Use complete per-case sentences rather than injecting a translated "window"/"tab" noun
+        // into a translated frame: word order and grammatical agreement do not compose across
+        // languages when a noun is substituted into a sentence.
+        NSString *heading = isWindow
+            ? NSLocalizedStringWithDefaultValue(@"Tmux.OpenKindHeadingWindow", nil, [NSBundle mainBundle], @"What kind of window do you want to open?", @"Heading asking what kind of window to open")
+            : NSLocalizedStringWithDefaultValue(@"Tmux.OpenKindHeadingTab", nil, [NSBundle mainBundle], @"What kind of tab do you want to open?", @"Heading asking what kind of tab to open");
+        NSString *title = isWindow
+            ? NSLocalizedStringWithDefaultValue(@"Tmux.OpenTitleWindow", nil, [NSBundle mainBundle], @"The current session is a tmux session. Would you like to create a new tmux window or use the default profile?", @"Prompt to open a new tmux window or use the default profile")
+            : NSLocalizedStringWithDefaultValue(@"Tmux.OpenTitleTab", nil, [NSBundle mainBundle], @"The current session is a tmux session. Would you like to create a new tmux tab or use the default profile?", @"Prompt to open a new tmux tab or use the default profile");
+        NSString *tmuxAction = isWindow ? NSLocalizedStringWithDefaultValue(@"Tmux.NewWindowAction", nil, [NSBundle mainBundle], @"New tmux Window", @"Button to create a new tmux window") : NSLocalizedStringWithDefaultValue(@"Tmux.NewTabAction", nil, [NSBundle mainBundle], @"New tmux Tab", @"Button to create a new tmux tab");
         iTermWarningSelection selection = [iTermWarning showWarningWithTitle:title
-                                                                     actions:@[ tmuxAction, @"Use Default Profile", @"Cancel" ]
+                                                                     actions:@[ tmuxAction, NSLocalizedStringWithDefaultValue(@"Tmux.UseDefaultProfile", nil, [NSBundle mainBundle], @"Use Default Profile", @"Button to open using the default profile instead of tmux"), iTermLocalizedCancel() ]
                                                                    accessory:nil
                                                                   identifier:key
                                                                  silenceable:kiTermWarningTypePermanentlySilenceable
@@ -3668,7 +3852,7 @@ static iTermKeyEventReplayer *gReplayer;
     double rate = bytes;
     rate /= delay;
 
-    [ToastWindowController showToastWithMessage:[NSString stringWithFormat:@"Pasting at up to %@/sec", [NSString it_formatBytes:rate]]];
+    [ToastWindowController showToastWithMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Paste.RateToast", nil, [NSBundle mainBundle], @"Pasting at up to %@/sec", @"Toast showing the current paste rate; %@ is a formatted byte count"), [NSString it_formatBytes:rate]]];
 }
 
 - (void)hideStuckToolTips {
@@ -3697,18 +3881,6 @@ static iTermKeyEventReplayer *gReplayer;
         responder = [responder nextResponder];
     }
     return responders;
-}
-
-- (NSResponder *)responderForMenuItem:(NSMenuItem *)menuItem {
-    for (NSResponder *responder in [self allResponders]) {
-        if ([responder respondsToSelector:@selector(undo:)] &&
-            [responder respondsToSelector:@selector(validateMenuItem:)] &&
-            [responder conformsToProtocol:@protocol(NSMenuItemValidation)] &&
-            [(id<NSMenuItemValidation>)responder validateMenuItem:menuItem]) {
-            return responder;
-        }
-    }
-    return nil;
 }
 
 - (void)newSessionInWindowAtIndex:(id)sender {
@@ -4143,7 +4315,7 @@ static iTermKeyEventReplayer *gReplayer;
             }];
         }
         for (id<iTermGenericNamedMarkReading> mark in namedMarks) {
-            NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:mark.name ?: @"Unnamed Mark"
+            NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:mark.name ?: NSLocalizedStringWithDefaultValue(@"NamedMarks.Unnamed", nil, [NSBundle mainBundle], @"Unnamed Mark", @"Menu title for a named mark that has no name")
                                                               action:@selector(navigateToNamedMark:)
                                                        keyEquivalent:@""];
             menuItem.representedObject = mark.guid;

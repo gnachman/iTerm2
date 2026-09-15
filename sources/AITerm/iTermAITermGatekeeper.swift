@@ -24,24 +24,24 @@ class iTermAITermGatekeeper: NSObject {
         DLog("check")
         if !iTermAdvancedSettingsModel.generativeAIAllowed() {
             if !silent {
-                iTermWarning.show(withTitle: "Generative AI features have been disabled. Check with your system administrator.",
-                                  actions: ["OK"],
+                iTermWarning.show(withTitle: String(localized: "AITermGatekeeper.GenerativeAIDisabled", defaultValue: "Generative AI features have been disabled. Check with your system administrator.", comment: "Warning shown when generative AI is disabled by policy"),
+                                  actions: [iTermLocalizedOK()],
                                   accessory: nil,
                                   identifier: nil,
                                   silenceable: .kiTermWarningTypePersistent,
-                                  heading: "Feature Unavailable",
+                                  heading: String(localized: "AITermGatekeeper.FeatureUnavailable", defaultValue: "Feature Unavailable", comment: "Heading for a warning that an AI feature cannot be used"),
                                   window: nil)
             }
             return false
         }
         if !iTermAITermGatekeeper.pluginInstalled() {
             if !silent {
-                let selection = iTermWarning.show(withTitle: "You must install the AI plugin before you can use this feature.",
-                                                  actions: ["Reveal in Settings", "Cancel"],
+                let selection = iTermWarning.show(withTitle: String(localized: "AITermGatekeeper.MustInstallPlugin", defaultValue: "You must install the AI plugin before you can use this feature.", comment: "Warning shown when the AI plugin is not installed"),
+                                                  actions: [String(localized: "AITermGatekeeper.RevealInSettings", defaultValue: "Reveal in Settings", comment: "Button that opens Settings to the relevant preference"), iTermLocalizedCancel()],
                                                   accessory: nil,
                                                   identifier: nil,
                                                   silenceable: .kiTermWarningTypePersistent,
-                                                  heading: "Plugin Missing",
+                                                  heading: String(localized: "AITermGatekeeper.PluginMissing", defaultValue: "Plugin Missing", comment: "Heading for a warning that the AI plugin is not installed"),
                                                   window: nil)
                 if selection == .kiTermWarningSelection0 {
                     PreferencePanel.sharedInstance().openToPreference(withKey: kPhonyPreferenceKeyInstallAIPlugin)
@@ -51,12 +51,12 @@ class iTermAITermGatekeeper: NSObject {
         }
         if !SecureUserDefaults.instance.enableAI.value {
             if !silent {
-                let selection = iTermWarning.show(withTitle: "You must enable AI features in settings before you can use this feature.",
-                                                  actions: ["Reveal", "Cancel"],
+                let selection = iTermWarning.show(withTitle: String(localized: "AITermGatekeeper.MustEnableAI", defaultValue: "You must enable AI features in settings before you can use this feature.", comment: "Warning shown when AI features are not yet enabled in settings"),
+                                                  actions: [String(localized: "AITermGatekeeper.Reveal", defaultValue: "Reveal", comment: "Button that reveals the relevant setting"), iTermLocalizedCancel()],
                                                   accessory: nil,
                                                   identifier: nil,
                                                   silenceable: .kiTermWarningTypePersistent,
-                                                  heading: "Feature Unavailable",
+                                                  heading: String(localized: "AITermGatekeeper.FeatureUnavailable", defaultValue: "Feature Unavailable", comment: "Heading for a warning that an AI feature cannot be used"),
                                                   window: nil)
                 if selection == .kiTermWarningSelection0 {
                     PreferencePanel.sharedInstance().openToPreference(withKey: kPreferenceKeyEnableAI)
@@ -70,22 +70,22 @@ class iTermAITermGatekeeper: NSObject {
             RLog("\(error.reason)")
             if !silent {
                 iTermWarning.show(withTitle: error.reason,
-                                  actions: ["OK"],
+                                  actions: [iTermLocalizedOK()],
                                   accessory: nil,
                                   identifier: nil,
                                   silenceable: .kiTermWarningTypePersistent,
-                                  heading: "Feature Unavailable",
+                                  heading: String(localized: "AITermGatekeeper.FeatureUnavailable", defaultValue: "Feature Unavailable", comment: "Heading for a warning that an AI feature cannot be used"),
                                   window: nil)
             }
             return false
         } catch {
             if !silent {
                 iTermWarning.show(withTitle: error.localizedDescription,
-                                  actions: ["OK"],
+                                  actions: [iTermLocalizedOK()],
                                   accessory: nil,
                                   identifier: nil,
                                   silenceable: .kiTermWarningTypePersistent,
-                                  heading: "Feature Unavailable",
+                                  heading: String(localized: "AITermGatekeeper.FeatureUnavailable", defaultValue: "Feature Unavailable", comment: "Heading for a warning that an AI feature cannot be used"),
                                   window: nil)
             }
             return false

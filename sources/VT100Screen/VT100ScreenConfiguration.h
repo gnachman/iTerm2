@@ -31,6 +31,13 @@ NS_ASSUME_NONNULL_BEGIN
 // Screen-relative window frame.
 @property (nonatomic, readonly) NSRect windowFrame;
 
+// Window frame in global AppKit coordinates (points, bottom-left origin).
+@property (nonatomic, readonly) NSRect globalWindowFrame;
+
+// Visible frames of all screens in global AppKit coordinates (points,
+// bottom-left origin), one boxed NSRect per NSScreen.
+@property (nonatomic, copy, readonly) NSArray<NSValue *> *screenFrames;
+
 // Is terminal-initiated printing allowed?
 @property (nonatomic, readonly) BOOL printingAllowed;
 @property (nonatomic, readonly) VT100GridSize theoreticalGridSize;
@@ -105,6 +112,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL clipboardAccessAllowed;
 @property (nonatomic, readwrite) BOOL miniaturized;
 @property (nonatomic, readwrite) NSRect windowFrame;
+@property (nonatomic, readwrite) NSRect globalWindowFrame;
+@property (nonatomic, copy, readwrite) NSArray<NSValue *> *screenFrames;
 @property (nonatomic, readwrite) VT100GridSize theoreticalGridSize;
 @property (nonatomic, copy, readwrite) NSString *iconTitle;
 @property (nonatomic, copy, readwrite) NSString *windowTitle;

@@ -72,12 +72,12 @@ class CommandExplainer: NSObject {
         guard let url = components.url else {
             return
         }
-        let selection = iTermWarning.show(withTitle: "This will open \(url.absoluteString) in \(browserName).",
-                                          actions: ["OK", "Cancel"],
+        let selection = iTermWarning.show(withTitle: String(localized: "CommandExplainer.OpenConfirmationMessage", defaultValue: "This will open \(url.absoluteString) in \(String(describing: browserName)).", comment: "Confirmation shown before opening a command explanation in the browser; first placeholder is the URL, second is the browser name"),
+                                          actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                                           accessory: nil,
                                           identifier: "NoSyncExplainShell",
                                           silenceable: .kiTermWarningTypePermanentlySilenceable,
-                                          heading: "Open ExplainShell?",
+                                          heading: String(localized: "CommandExplainer.OpenConfirmationHeading", defaultValue: "Open ExplainShell?", comment: "Heading of the confirmation shown before opening a command explanation"),
                                           window: window)
         if selection == .kiTermWarningSelection0 {
             NSWorkspace.shared.open(url)

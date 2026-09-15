@@ -77,9 +77,19 @@ enum ChatBlobCapture {
                             hostedTools: HostedTools,
                             newRoundTokenCount: Int? = nil,
                             database: ChatDatabase) -> Int {
-        if database.blobCount(inChat: chatID) > 0,
-           database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue) {
-            database.replaceBlobs(inChat: chatID, with: [])
+        if database.blobCount(inChat: chatID) > 0 {
+            // Re-freeze the whole history when the stored blobs no longer match
+            // what this turn will send: either a different PROTOCOL, or the SAME
+            // protocol at an older wire-FORMAT version (e.g. pre-native-shape
+            // .llama blobs). Without the version check, a stale-format chat would
+            // stay a permanent v0+v1 mix that safeBlobsForReplay always refuses,
+            // silently defeating blob replay forever and leaking rows.
+            let current = ChatBlob.currentWireFormatVersion(for: api)
+            let protocolMismatch = database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue)
+            let versionMismatch = (database.minStoredBlobWireFormatVersion(inChat: chatID) ?? current) != current
+            if protocolMismatch || versionMismatch {
+                database.replaceBlobs(inChat: chatID, with: [])
+            }
         }
         return captureNewRounds(chatID: chatID, allMessages: allMessages, api: api,
                                 modelName: modelName, hostedTools: hostedTools,
@@ -161,10 +171,20 @@ enum ChatBlobCapture {
                                 newRoundTokenCount: Int? = nil,
                                 database: ChatDatabase) -> Int {
         guard !newRounds.isEmpty else { return 0 }
-        if database.blobCount(inChat: chatID) > 0,
-           database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue) {
-            RLog("ChatBlobCapture: protocol mismatch for chat \(chatID); refusing appendNewRounds (a protocol switch must go through replaceBlobs)")
-            return 0
+        if database.blobCount(inChat: chatID) > 0 {
+            if database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue) {
+                RLog("ChatBlobCapture: protocol mismatch for chat \(chatID); refusing appendNewRounds (a protocol switch must go through replaceBlobs)")
+                return 0
+            }
+            // Defense mirroring the protocol guard: appending a current-version
+            // round onto stale-format rows would make a permanent mixed-version
+            // chat that safeBlobsForReplay refuses forever. A format bump must go
+            // through captureTurn's full re-freeze, so refuse here (the caller,
+            // captureNewRoundsFrom, routes a version mismatch to captureTurn).
+            if database.minStoredBlobWireFormatVersion(inChat: chatID) != ChatBlob.currentWireFormatVersion(for: api) {
+                RLog("ChatBlobCapture: wire-format version mismatch for chat \(chatID); refusing appendNewRounds (a format bump must go through captureTurn's re-freeze)")
+                return 0
+            }
         }
         let tokenCountForSingleRound = newRounds.count == 1 ? newRoundTokenCount : nil
         return appendRoundBlobs(chatID: chatID, rounds: newRounds,
@@ -205,7 +225,8 @@ enum ChatBlobCapture {
                                 role: .user,  // a round leads with a user message
                                 payload: payload,
                                 responseID: responseID,
-                                tokenCount: tokenCountForSingleRound)
+                                tokenCount: tokenCountForSingleRound,
+                                wireFormatVersion: ChatBlob.currentWireFormatVersion(for: api))
             if database.appendBlob(blob) != nil {
                 appended += 1
             } else {

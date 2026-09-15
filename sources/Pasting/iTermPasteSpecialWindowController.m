@@ -137,7 +137,7 @@
                     if (title.length > kMaxLength) {
                         title = [[title substringToIndex:kMaxLength] stringByAppendingString:@"…"];
                     }
-                    [labels addObject:[NSString stringWithFormat:@"Text: “%@”", title]];
+                    [labels addObject:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PasteSpecial.TextItemLabel", nil, [NSBundle mainBundle], @"Text: “%@”", @"Menu label for a text clipboard item; %@ is a preview of the text"), title]];
                     [values addObject:entry.mainValue];
                 }
                 [labels addObject:[NSNull null]];
@@ -232,7 +232,7 @@
                 }
             }
             NSString *label = [NSString stringWithFormat:@"%@: “%@”",
-                               [(description ?: @"Unknown Type") stringByCapitalizingFirstLetter],
+                               [(description ?: NSLocalizedStringWithDefaultValue(@"PasteSpecial.UnknownType", nil, [NSBundle mainBundle], @"Unknown Type", @"Fallback description for an unknown pasteboard type")) stringByCapitalizingFirstLetter],
                                [string ellipsizedDescriptionNoLongerThan:100]];
             [labels addObject:label];
         }
@@ -274,9 +274,9 @@
 
     [values addObject:[modifiedFilenames componentsJoinedByString:@" "]];
     if (filenames.count > 1) {
-        [labels addObject:@"Multiple file names"];
+        [labels addObject:NSLocalizedStringWithDefaultValue(@"PasteSpecial.MultipleFileNames", nil, [NSBundle mainBundle], @"Multiple file names", @"Menu label for pasting several file names")];
     } else if (filenames.count == 1) {
-        [labels addObject:@"File name"];
+        [labels addObject:NSLocalizedStringWithDefaultValue(@"PasteSpecial.FileName", nil, [NSBundle mainBundle], @"File name", @"Menu label for pasting a single file name")];
     }
 
     // Add an item for each existing non-directory file.
@@ -286,7 +286,7 @@
         if ([fileManager fileExistsAtPath:filename isDirectory:&isDirectory] &&
             !isDirectory) {
             [values addObject:[[iTermFileReference alloc] initWithName:filename]];
-            [labels addObject:[NSString stringWithFormat:@"Contents of %@", filename]];
+            [labels addObject:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PasteSpecial.ContentsOfFile", nil, [NSBundle mainBundle], @"Contents of %@", @"Menu label for pasting the contents of a file; %@ is the filename"), filename]];
         }
     }
 }
@@ -388,31 +388,20 @@
     return [shellsThatSwallowNewlines containsObject:_shell ?: @""];
 }
 
++ (NSString *)statsLabelStringForByteCount:(NSInteger)byteCount lineCount:(NSInteger)lineCount {
+    // Pass the integer counts so the catalog entry can pluralize each independently: a single
+    // byte/line reads “1 byte in 1 line.” rather than “1 bytes in 1 lines.”. The counts are also
+    // formatted with the locale's digit grouping.
+    return [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"PasteSpecial.BytesInLines", nil, [NSBundle mainBundle], @"%1$ld bytes in %2$ld lines.", @"Paste-special stats label; %1$ld is a byte count, %2$ld is a line count"),
+            (long)byteCount, (long)lineCount];
+}
+
 - (void)updatePreview {
     PasteEvent *pasteEvent = [self pasteEventWithString:_rawString forPreview:YES];
     [iTermPasteHelper sanitizePasteEvent:pasteEvent encoding:_encoding];
     _preview.string = pasteEvent.string;
-    NSNumberFormatter *bytesFormatter = [[NSNumberFormatter alloc] init];
-    int numBytes = _preview.string.length;
-    if (numBytes < 10) {
-        bytesFormatter.numberStyle = NSNumberFormatterSpellOutStyle;
-    } else {
-        bytesFormatter.numberStyle = NSNumberFormatterDecimalStyle;
-    }
-
-    NSNumberFormatter *linesFormatter = [[NSNumberFormatter alloc] init];
-    NSUInteger numberOfLines = _preview.string.numberOfLines;
-    if (numberOfLines < 10) {
-        linesFormatter.numberStyle = NSNumberFormatterSpellOutStyle;
-    } else {
-        linesFormatter.numberStyle = NSNumberFormatterDecimalStyle;
-    }
-
-    _statsLabel.stringValue = [NSString stringWithFormat:@"%@ byte%@ in %@ line%@.",
-                               [[bytesFormatter stringFromNumber:@(numBytes)] stringWithFirstLetterCapitalized],
-                               numBytes == 1 ? @"" : @"s",
-                               [linesFormatter stringFromNumber:@(numberOfLines)],
-                               numberOfLines == 1 ? @"" : @"s"];
+    _statsLabel.stringValue = [iTermPasteSpecialWindowController statsLabelStringForByteCount:_preview.string.length
+                                                                                   lineCount:_preview.string.numberOfLines];
     [self updateDuration];
 }
 
@@ -427,7 +416,7 @@
         duration = ceil(duration);
     }
     if (duration < 0.01) {
-        _estimatedDuration.stringValue = @"Instant";
+        _estimatedDuration.stringValue = NSLocalizedStringWithDefaultValue(@"PasteSpecial.InstantDuration", nil, [NSBundle mainBundle], @"Instant", @"Label shown when the estimated paste duration is effectively instant");
     } else {
         _estimatedDuration.stringValue = [_pasteSpecialViewController descriptionForDuration:duration];
     }

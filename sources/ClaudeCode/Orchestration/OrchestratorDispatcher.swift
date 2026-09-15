@@ -152,6 +152,21 @@ final class OrchestratorDispatcher {
     // tab-status watcher after a relaunch.
     private var escalationTimers: [String: Task<Void, Never>] = [:]
 
+    // Per-timer-watcher fire tasks, keyed by watcherID. A .timer watcher's task
+    // sleeps until its absolute fireDate (in bounded chunks so a system-sleep
+    // overshoot fires promptly and a long duration never rides one un-woken
+    // sleep), then publishes a timerFired status_update. Not persisted;
+    // reconcilePersistedWatchers re-arms one per surviving timer after a relaunch.
+    private var timerTasks: [String: Task<Void, Never>] = [:]
+
+    // Longest a timer task sleeps in one go before re-checking the wall clock.
+    // Bounds how late a timer can fire after the Mac wakes from sleep.
+    private static let timerPollCap: TimeInterval = 60
+
+    // Largest delay a timer may be scheduled for. Beyond this the request is
+    // rejected rather than silently clamped.
+    private static let maxTimerDelay: TimeInterval = 30 * 24 * 3600  // 30 days
+
     // How long a tab-status watcher waits for its status transition before
     // escalating to the screen-observation backstop.
     private static let tabStatusEscalationDelay: TimeInterval = 300  // 5 minutes
@@ -254,6 +269,10 @@ final class OrchestratorDispatcher {
             timer.cancel()
         }
         escalationTimers.removeAll()
+        for (_, task) in timerTasks {
+            task.cancel()
+        }
+        timerTasks.removeAll()
     }
 
     deinit {
@@ -508,7 +527,11 @@ final class OrchestratorDispatcher {
     // surviving watcher on the first tabStatus event after launch.
     @MainActor
     private func reconcilePersistedWatchers() {
-        let dropped = watchers.filter { sessionByGUID($0.sessionGUID) == nil }
+        // Timers target no session, so the missing-session drop never applies to
+        // them -- they are re-armed below regardless of any session state.
+        let dropped = watchers.filter {
+            $0.effectiveMode != .timer && sessionByGUID($0.sessionGUID) == nil
+        }
         let droppedIDs = Set(dropped.map { $0.watcherID })
         if !droppedIDs.isEmpty {
             watchers.removeAll { droppedIDs.contains($0.watcherID) }
@@ -551,6 +574,10 @@ final class OrchestratorDispatcher {
                 startScreenPoll(for: watcher)
             case .tabStatus:
                 armScreenEscalation(for: watcher)
+            case .timer:
+                // Re-arm the fire task; armTimer fires immediately if the
+                // scheduled time already passed while iTerm2 was not running.
+                armTimer(for: watcher)
             }
         }
         dropWatchers(revoked) { self.revokedReadDetail($0, afterRestart: true) }
@@ -581,7 +608,7 @@ final class OrchestratorDispatcher {
         // and stay chat-only.
         var pushed: Bool?
         if watcher.notifyUser == true,
-           reason == .stateReached || reason == .conditionMet {
+           reason == .stateReached || reason == .conditionMet || reason == .timerFired {
             if CompanionChatMuteRegistry.isMuted(chatID: chatID) {
                 RLog("[Orchestrator \(chatID)] watcher push suppressed: chat is muted")
                 pushed = false
@@ -814,6 +841,140 @@ final class OrchestratorDispatcher {
         return reached
     }
 
+    // MARK: - Timer watchers
+
+    // Register a fire-once timer. Unlike register_watch it targets no session and
+    // reads nothing, so there is no permission gate and no dedup on a session --
+    // each call schedules an independent fire. Validates that exactly one of
+    // delay_seconds / fire_at was supplied and that it lands in a sane future
+    // window, then builds a .timer watcher, persists it, and arms its fire task.
+    @MainActor
+    private func doRegisterTimer(_ args: RegisterTimerArgs) async throws -> OrchestratorResult {
+        let now = Date()
+        let fireDate = try Self.resolveTimerFireDate(
+            delaySeconds: args.delaySeconds, fireAt: args.fireAt, now: now)
+        let trimmedNote = args.note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let note = (trimmedNote?.isEmpty == false) ? trimmedNote : nil
+        // A synthetic workgroup ID (isSyntheticWorkgroup == true) so status_update
+        // labels/push titles read as just "Timer", not "Timer in <workgroup>".
+        let watcher = WorkgroupWatcher(
+            watcherID: UUID().uuidString,
+            sessionGUID: "",
+            workgroupID: WorkgroupIntrospection.syntheticWorkgroupIDPrefix + "timer",
+            workgroupName: "Timer",
+            roleID: "timer",
+            roleName: "Timer",
+            targetState: nil,
+            registeredAt: now,
+            mode: .timer,
+            condition: nil,
+            notifyUser: args.notifyUser,
+            fireDate: fireDate,
+            note: note)
+        watchers.append(watcher)
+        persistWatchers()
+        armTimer(for: watcher)
+        return .watcherRegistered(Self.description(of: watcher))
+    }
+
+    // Arm (or re-arm) a timer's fire task. Idempotent per watcherID so a reconcile
+    // re-arm can't double-fire. Fires immediately when fireDate is already past
+    // (an overdue timer whose window elapsed while iTerm2 was not running).
+    @MainActor
+    private func armTimer(for watcher: WorkgroupWatcher) {
+        guard watcher.effectiveMode == .timer, let fireDate = watcher.fireDate else { return }
+        let id = watcher.watcherID
+        guard timerTasks[id] == nil else { return }
+        timerTasks[id] = Task { @MainActor [weak self] in
+            // Sleep to fireDate in bounded chunks, re-reading the wall clock each
+            // wake. Task.sleep measures process-active time, not wall time, so a
+            // span the Mac spent asleep is corrected on the next tick rather than
+            // overshooting by the whole remaining duration.
+            while !Task.isCancelled {
+                let remaining = fireDate.timeIntervalSinceNow
+                if remaining <= 0 { break }
+                let chunk = min(remaining, Self.timerPollCap)
+                try? await Task.sleep(nanoseconds: UInt64(chunk * 1_000_000_000))
+            }
+            guard let self, !Task.isCancelled else { return }
+            self.fireTimer(watcherID: id)
+        }
+    }
+
+    // A timer reached its fire time: drop it, persist, and publish the
+    // timerFired status_update that wakes an agent turn.
+    @MainActor
+    private func fireTimer(watcherID id: String) {
+        guard let watcher = watchers.first(where: { $0.watcherID == id }) else { return }
+        watchers.removeAll { $0.watcherID == id }
+        persistWatchers()
+        removeWatcherAuxiliaries(watcherID: id)
+        let at = Self.iso8601.string(from: watcher.fireDate ?? Date())
+        var detail = "Timer fired (it was scheduled for \(at))."
+        if let note = watcher.note, !note.isEmpty {
+            detail += " You noted: \(note). Carry that out now."
+        } else {
+            detail += " Carry out whatever you scheduled it for."
+        }
+        publishStatusUpdate(
+            watcher: watcher,
+            reason: .timerFired,
+            stateReached: "",
+            detail: detail)
+    }
+
+    // Validate the register_timer time arguments and resolve the absolute fire
+    // instant. Pure and time-injectable (pass `now`) so it's unit-testable
+    // without a live dispatcher, mirroring resolveWatchTarget. Enforces exactly
+    // one of delay_seconds / fire_at, a positive/future time, and the 30-day cap;
+    // throws a model-facing OrchestratorError otherwise.
+    static func resolveTimerFireDate(delaySeconds: Double?,
+                                     fireAt: String?,
+                                     now: Date) throws -> Date {
+        if (delaySeconds == nil) == (fireAt == nil) {
+            throw OrchestratorError.malformedArgs(reason:
+                "Supply exactly one of delay_seconds (fire this many seconds from now) "
+                + "or fire_at (an absolute ISO-8601 time).")
+        }
+        if let delay = delaySeconds {
+            guard delay.isFinite, delay > 0 else {
+                throw OrchestratorError.malformedArgs(reason:
+                    "delay_seconds must be a positive number of seconds.")
+            }
+            guard delay <= maxTimerDelay else {
+                throw OrchestratorError.malformedArgs(reason:
+                    "delay_seconds is too large; the maximum is 30 days (\(Int(maxTimerDelay)) seconds).")
+            }
+            return now.addingTimeInterval(delay)
+        }
+        let raw = (fireAt ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let parsed = parseISO8601(raw) else {
+            throw OrchestratorError.malformedArgs(reason:
+                "fire_at could not be parsed as an ISO-8601 date-time with a timezone offset "
+                + "(e.g. \u{201C}2026-09-07T17:00:00-07:00\u{201D}). The current time is \(iso8601.string(from: now)).")
+        }
+        guard parsed > now else {
+            throw OrchestratorError.malformedArgs(reason:
+                "fire_at is not in the future. The current time is \(iso8601.string(from: now)); pick a later time or use delay_seconds.")
+        }
+        guard parsed.timeIntervalSince(now) <= maxTimerDelay else {
+            throw OrchestratorError.malformedArgs(reason:
+                "fire_at is too far in the future; the maximum is 30 days from now.")
+        }
+        return parsed
+    }
+
+    // Parse an ISO-8601 date-time, tolerating both fractional and whole seconds.
+    private static func parseISO8601(_ s: String) -> Date? {
+        if s.isEmpty { return nil }
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = withFraction.date(from: s) { return d }
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        return plain.date(from: s)
+    }
+
     // Tear down every piece of auxiliary machinery attached to a watcher:
     // its escalation timer and any screen poller. Called from each path that
     // removes a watcher from the list (tab-status fire, screen-poll fire,
@@ -824,6 +985,9 @@ final class OrchestratorDispatcher {
     private func removeWatcherAuxiliaries(watcherID: String) {
         if let timer = escalationTimers.removeValue(forKey: watcherID) {
             timer.cancel()
+        }
+        if let task = timerTasks.removeValue(forKey: watcherID) {
+            task.cancel()
         }
         cancelScreenPoller(watcherID: watcherID)
     }
@@ -1356,6 +1520,8 @@ final class OrchestratorDispatcher {
             return .startCodeReview(try decoder.decode(StartCodeReviewArgs.self, from: jsonArgs))
         case .registerWatch:
             return .registerWatch(try decoder.decode(RegisterWatchArgs.self, from: jsonArgs))
+        case .registerTimer:
+            return .registerTimer(try decoder.decode(RegisterTimerArgs.self, from: jsonArgs))
         case .unregisterWatch:
             struct A: Decodable { let watcher_id: String }
             return .unregisterWatch(watcherID: try decoder.decode(A.self, from: jsonArgs).watcher_id)
@@ -1680,6 +1846,8 @@ final class OrchestratorDispatcher {
             return try await doStartCodeReview(args)
         case .registerWatch(let args):
             return try await doRegisterWatch(args)
+        case .registerTimer(let args):
+            return try await doRegisterTimer(args)
         case .unregisterWatch(let watcherID):
             return doUnregisterWatch(watcherID: watcherID)
         case .listWatches:
@@ -2394,6 +2562,9 @@ final class OrchestratorDispatcher {
 
     private static func description(of watcher: WorkgroupWatcher,
                                    note: String? = nil) -> WatcherDescription {
+        // A timer echoes its fire time and its own note; other watchers omit
+        // fireAt and surface any advisory note passed by the caller.
+        let isTimer = watcher.effectiveMode == .timer
         return WatcherDescription(
             watcherID: watcher.watcherID,
             workgroupID: watcher.workgroupID,
@@ -2402,8 +2573,9 @@ final class OrchestratorDispatcher {
             roleName: watcher.roleName,
             targetState: watcher.targetState,
             condition: watcher.condition,
+            fireAt: watcher.fireDate.map { iso8601.string(from: $0) },
             registeredAt: iso8601.string(from: watcher.registeredAt),
-            note: note)
+            note: isTimer ? (note ?? watcher.note) : note)
     }
 
     // Writes `text` to the target session's PTY as if the user typed

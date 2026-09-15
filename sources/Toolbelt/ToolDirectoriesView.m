@@ -74,7 +74,7 @@ static const CGFloat kMargin = 5;
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         clear_.bezelStyle = NSBezelStyleRegularSquare;
         clear_.bordered = NO;
-        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
+        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"ToolDirectories.ClearAccessibility", nil, [NSBundle mainBundle], @"Clear", @"Accessibility description for the clear button")];
         clear_.imagePosition = NSImageOnly;
         clear_.frame = NSMakeRect(0, 0, 22, 22);
         [clear_ setTarget:self];
@@ -95,7 +95,7 @@ static const CGFloat kMargin = 5;
         _tableView.menu = [[NSMenu alloc] init];
         _tableView.menu.delegate = self;
         NSMenuItem *item;
-        item = [[NSMenuItem alloc] initWithTitle:@"Toggle Star"
+        item = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ToolDirectories.ToggleStar", nil, [NSBundle mainBundle], @"Toggle Star", @"Context menu item to toggle the starred state of a directory")
                                           action:@selector(toggleStar:)
                                    keyEquivalent:@""];
         [_tableView.menu addItem:item];
@@ -268,6 +268,7 @@ static const CGFloat kMargin = 5;
     NSString *text;
     NSString *escapedPath = [entry.path stringWithEscapedShellCharactersIncludingNewlines:YES];
     if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
+        // Localization unneeded
         text = [@"cd " stringByAppendingString:escapedPath];
     } else {
         text = escapedPath;
@@ -280,9 +281,9 @@ static const CGFloat kMargin = 5;
 
 - (void)clear:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Erase Saved Directories?";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.messageText = NSLocalizedStringWithDefaultValue(@"ToolDirectories.EraseTitle", nil, [NSBundle mainBundle], @"Erase Saved Directories?", @"Confirmation alert title for erasing saved directories");
+    [alert addButtonWithTitle:iTermLocalizedOK()];
+    [alert addButtonWithTitle:iTermLocalizedCancel()];
     if ([alert runModal] == NSAlertFirstButtonReturn) {
         [[iTermShellHistoryController sharedInstance] eraseCommandHistory:NO directories:YES];
     }

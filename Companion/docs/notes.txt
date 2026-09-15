@@ -1,6 +1,12 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 New Features:
+- iTerm2 Buddy now works with Macs that have AI
+  turned off. You can pair for terminal viewing
+  and control alone: browse sessions, watch live
+  output, and type from your phone. Chat surfaces
+  appear with a short explanation of how to turn
+  AI on, and re-enable live if you do.
 - Long-press one of your own messages in a chat
   to delete it and everything after it. The
   change syncs to the Mac and any other device in
@@ -14,6 +20,12 @@ New Features:
   enabling alerts on the Mac.
 
 Bug Fixes:
+- The QR scanner used to show a black preview the
+  first time you granted camera access (notably on
+  iOS 26), because the camera was set up before
+  permission was granted. It now waits for access
+  before configuring the camera, so the live
+  preview appears right away.
 - Opening a session that has already closed now
   shows a “Stream Ended” message explaining the
   session is gone, instead of a blank black
@@ -262,9 +274,7 @@ Bug Fixes:
   match it against your Mac and the relay
   logs when reporting a problem.
 - Pairing moved to the new sharded relay
-  resolver. An iPhone still on the old direct
-  relay is moved over automatically, and a
-  one-time notice reminds you to update
-  iTerm2 on your Mac so the two keep
-  connecting. Pairing with an older Mac is
-  refused with a prompt to update it.
+  resolver. Pairing with an older Mac is
+  refused with a prompt to update it. A
+  pairing made before the move must be made
+  again.

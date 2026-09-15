@@ -27,14 +27,14 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
         let menu = NSMenu()
         let hasExpression = (expression?.isEmpty == false)
         do {
-            let item = NSMenuItem(title: hasExpression ? "Edit Expression Binding" : "Bind to Expression",
+            let item = NSMenuItem(title: hasExpression ? String(localized: "ExpressionBindableView.EditBinding", defaultValue: "Edit Expression Binding", comment: "Menu item to edit an existing expression binding") : String(localized: "ExpressionBindableView.BindToExpression", defaultValue: "Bind to Expression", comment: "Menu item to bind a setting to an expression"),
                                   action: #selector(editBinding(_:)),
                                   keyEquivalent: "")
             item.target = self
             menu.addItem(item)
         }
         if hasExpression {
-            let item = NSMenuItem(title: "Remove Expression Binding",
+            let item = NSMenuItem(title: String(localized: "ExpressionBindableView.RemoveBinding", defaultValue: "Remove Expression Binding", comment: "Menu item to remove an expression binding"),
                                   action: #selector(removeBinding(_:)),
                                   keyEquivalent: "")
             item.target = self
@@ -65,7 +65,7 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
         textField.isEditable = true
         textField.isSelectable = true
         textField.stringValue = expression ?? ""
-        textField.placeholderString = "Expression (e.g., \(example))"
+        textField.placeholderString = String(localized: "ExpressionBindableView.ExpressionPlaceholder", defaultValue: "Expression (e.g., \(example))", comment: "Placeholder text for the expression input field")
 
         let pathSource = iTermVariableHistory.pathSource(for: .session)
         textFieldDelegate = iTermFunctionCallTextFieldDelegate(
@@ -74,15 +74,15 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
         textField.delegate = textFieldDelegate
 
         let alert = NSAlert()
-        alert.messageText = "Bind Expression to Setting"
-        alert.informativeText = "Enter expression to bind to this setting, or leave empty to clear the binding."
+        alert.messageText = String(localized: "ExpressionBindableView.BindMessageText", defaultValue: "Bind Expression to Setting", comment: "Title of the dialog for binding a setting to an expression")
+        alert.informativeText = String(localized: "ExpressionBindableView.BindInformativeText", defaultValue: "Enter expression to bind to this setting, or leave empty to clear the binding.", comment: "Explanation in the dialog for binding a setting to an expression")
         alert.accessoryView = textField
         alert.layout()
         DispatchQueue.main.async {
             alert.window.makeFirstResponder(textField)
         }
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: iTermLocalizedOK())
+        alert.addButton(withTitle: iTermLocalizedCancel())
         alert.showsHelp = true
         alert.delegate = self
         alert.beginSheetModal(for: window) { [weak self] response in
@@ -119,18 +119,18 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
 extension ExpressionBindableView {
     func showHelp(alert: NSAlert, exampleUserVar: String, exampleEnvironmentVar: String) -> Bool {
         let optionalTypeHelp = if let typeHelp {
-            """
+            String(localized: "ExpressionBindableView.HelpForThisSetting", defaultValue: """
             ### For This Setting
             \(typeHelp)
-            
-            
-            """
+
+
+            """, comment: "Help section header describing the current setting's expression binding")
         } else {
             ""
         }
         alert.accessoryView?.it_showInformativeMessage(withMarkdown:
                                                             optionalTypeHelp +
-            """
+            String(localized: "ExpressionBindableView.HelpBackground", defaultValue: """
             ### Background
             Binding a setting to an expression lets you change settings programmatically.
             
@@ -153,7 +153,7 @@ extension ExpressionBindableView {
             
             ### Debugging
             You can view variables in the Inspector (**Scripts > Manage > Console** and then click **Inspector**).
-            """)
+            """, comment: "Help text explaining how to bind a setting to an expression"))
         return true
     }
 }

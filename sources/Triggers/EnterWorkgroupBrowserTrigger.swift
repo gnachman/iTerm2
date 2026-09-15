@@ -13,7 +13,7 @@ import Foundation
 @objc(iTermEnterWorkgroupBrowserTrigger)
 class EnterWorkgroupBrowserTrigger: Trigger {
     override static var title: String {
-        return "Enter Workgroup…"
+        return String(localized: "Trigger.EnterWorkgroupBrowser.Title", defaultValue: "Enter Workgroup…", comment: "Trigger action name: enter a workgroup on the matching browser session")
     }
 
     override var description: String {

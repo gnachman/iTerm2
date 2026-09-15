@@ -158,18 +158,18 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     // MARK: - UI Construction
 
     private func addExitCodeFilterUI() {
-        let row = createRow(label: "Exit Code:")
+        let row = createRow(label: String(localized: "EventTrigger.Field.ExitCode", defaultValue: "Exit Code:", comment: "Field label for the exit code filter selector"))
 
         let popup = NSPopUpButton()
         popup.translatesAutoresizingMaskIntoConstraints = false
-        popup.addItems(withTitles: ["Any", "Zero (Success)", "Non-Zero (Failure)", "Specific Value…"])
+        popup.addItems(withTitles: [String(localized: "EventTrigger.ExitCodeFilter.Any", defaultValue: "Any", comment: "Exit code filter option: any exit code"), String(localized: "EventTrigger.ExitCodeFilter.Zero", defaultValue: "Zero (Success)", comment: "Exit code filter option: zero (success)"), String(localized: "EventTrigger.ExitCodeFilter.NonZero", defaultValue: "Non-Zero (Failure)", comment: "Exit code filter option: non-zero (failure)"), String(localized: "EventTrigger.ExitCodeFilter.Specific", defaultValue: "Specific Value…", comment: "Exit code filter option: a specific value")])
         popup.target = self
         popup.action = #selector(exitCodeFilterChanged(_:))
         exitCodeFilterPopup = popup
 
         let textField = NSTextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.placeholderString = "Exit code"
+        textField.placeholderString = String(localized: "EventTrigger.Placeholder.ExitCode", defaultValue: "Exit code", comment: "Placeholder for the specific exit code input")
         textField.isHidden = true
         textField.widthAnchor.constraint(equalToConstant: 60).isActive = true
         textField.delegate = self
@@ -182,7 +182,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     }
 
     private func addJobNameUI() {
-        let row = createRow(label: "Job:")
+        let row = createRow(label: String(localized: "EventTrigger.Field.Job", defaultValue: "Job:", comment: "Field label for the job name input"))
 
         let textField = NSTextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -194,7 +194,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         row.addArrangedSubview(textField)
         stackView.addArrangedSubview(row)
 
-        let helpLabel = NSTextField(labelWithString: "Process name to match in the foreground-job ancestry chain (case-insensitive)")
+        let helpLabel = NSTextField(labelWithString: String(localized: "EventTrigger.Help.JobName", defaultValue: "Process name to match in the foreground-job ancestry chain (case-insensitive)", comment: "Help text for the job name field"))
         helpLabel.translatesAutoresizingMaskIntoConstraints = false
         helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         helpLabel.textColor = .secondaryLabelColor
@@ -203,7 +203,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
 
     private func addVariableChangedUI() {
         // Variable name row (with completion).
-        let nameRow = createRow(label: "Variable:")
+        let nameRow = createRow(label: String(localized: "EventTrigger.Field.Variable", defaultValue: "Variable:", comment: "Field label for the variable name input"))
 
         let nameField = NSTextField()
         nameField.translatesAutoresizingMaskIntoConstraints = false
@@ -215,14 +215,14 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         nameRow.addArrangedSubview(nameField)
         stackView.addArrangedSubview(nameRow)
 
-        let nameHelp = NSTextField(labelWithString: "Name of the session variable to watch")
+        let nameHelp = NSTextField(labelWithString: String(localized: "EventTrigger.Help.VariableName", defaultValue: "Name of the session variable to watch", comment: "Help text for the variable name field"))
         nameHelp.translatesAutoresizingMaskIntoConstraints = false
         nameHelp.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         nameHelp.textColor = .secondaryLabelColor
         stackView.addArrangedSubview(nameHelp)
 
         // Value regex row.
-        let valueRow = createRow(label: "Value:")
+        let valueRow = createRow(label: String(localized: "EventTrigger.Field.Value", defaultValue: "Value:", comment: "Field label for the variable value regex input"))
 
         let valueField = NSTextField()
         valueField.translatesAutoresizingMaskIntoConstraints = false
@@ -234,7 +234,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         valueRow.addArrangedSubview(valueField)
         stackView.addArrangedSubview(valueRow)
 
-        let valueHelp = NSTextField(labelWithString: "Regular expression the new value must match (leave blank to match any change)")
+        let valueHelp = NSTextField(labelWithString: String(localized: "EventTrigger.Help.VariableValueRegex", defaultValue: "Regular expression the new value must match (leave blank to match any change)", comment: "Help text for the variable value regex field"))
         valueHelp.translatesAutoresizingMaskIntoConstraints = false
         valueHelp.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         valueHelp.textColor = .secondaryLabelColor
@@ -242,7 +242,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     }
 
     private func addDirectoryRegexUI() {
-        let row = createRow(label: "Directory:")
+        let row = createRow(label: String(localized: "EventTrigger.Field.Directory", defaultValue: "Directory:", comment: "Field label for the directory regex input"))
 
         let textField = NSTextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -254,7 +254,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         row.addArrangedSubview(textField)
         stackView.addArrangedSubview(row)
 
-        let helpLabel = NSTextField(labelWithString: "Regular expression to match the directory path")
+        let helpLabel = NSTextField(labelWithString: String(localized: "EventTrigger.Help.DirectoryRegex", defaultValue: "Regular expression to match the directory path", comment: "Help text for the directory path regex field"))
         helpLabel.translatesAutoresizingMaskIntoConstraints = false
         helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         helpLabel.textColor = .secondaryLabelColor
@@ -262,7 +262,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     }
 
     private func addTimeoutUI() {
-        let row = createRow(label: "Timeout:")
+        let row = createRow(label: String(localized: "EventTrigger.Field.Timeout", defaultValue: "Timeout:", comment: "Field label for the idle-timeout input"))
 
         let textField = NSTextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -272,7 +272,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         textField.formatter = iTermSaneNumberFormatter()
         timeoutTextField = textField
 
-        let unitsLabel = NSTextField(labelWithString: "seconds")
+        let unitsLabel = NSTextField(labelWithString: String(localized: "EventTrigger.SecondsUnit", defaultValue: "seconds", comment: "Units label for a duration field, in seconds"))
         unitsLabel.translatesAutoresizingMaskIntoConstraints = false
 
         row.addArrangedSubview(textField)
@@ -281,7 +281,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     }
 
     private func addSequenceIdUI() {
-        let row = createRow(label: "Sequence ID:")
+        let row = createRow(label: String(localized: "EventTrigger.Field.SequenceId", defaultValue: "Sequence ID:", comment: "Field label for the custom escape sequence identifier input"))
 
         let textField = NSTextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -293,7 +293,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         row.addArrangedSubview(textField)
         stackView.addArrangedSubview(row)
 
-        let helpLabel = NSTextField(labelWithString: "Regular expression to match the sequence identifier")
+        let helpLabel = NSTextField(labelWithString: String(localized: "EventTrigger.Help.SequenceIdRegex", defaultValue: "Regular expression to match the sequence identifier", comment: "Help text for the sequence identifier regex field"))
         helpLabel.translatesAutoresizingMaskIntoConstraints = false
         helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         helpLabel.textColor = .secondaryLabelColor
@@ -301,7 +301,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     }
 
     private func addNotificationMessageRegexUI() {
-        let row = createRow(label: "Message:")
+        let row = createRow(label: String(localized: "EventTrigger.Field.Message", defaultValue: "Message:", comment: "Field label for the notification message regex input"))
 
         let textField = NSTextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -313,7 +313,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         row.addArrangedSubview(textField)
         stackView.addArrangedSubview(row)
 
-        let helpLabel = NSTextField(labelWithString: "Regular expression to match the notification message")
+        let helpLabel = NSTextField(labelWithString: String(localized: "EventTrigger.Help.NotificationRegex", defaultValue: "Regular expression to match the notification message", comment: "Help text for the notification message regex field"))
         helpLabel.translatesAutoresizingMaskIntoConstraints = false
         helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         helpLabel.textColor = .secondaryLabelColor
@@ -321,7 +321,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     }
 
     private func addHostRegexUI() {
-        let row = createRow(label: "Host:")
+        let row = createRow(label: String(localized: "EventTrigger.Field.Host", defaultValue: "Host:", comment: "Field label for the host regex input"))
 
         let textField = NSTextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -333,7 +333,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         row.addArrangedSubview(textField)
         stackView.addArrangedSubview(row)
 
-        let helpLabel = NSTextField(labelWithString: "Regular expression to match the hostname")
+        let helpLabel = NSTextField(labelWithString: String(localized: "EventTrigger.Help.HostRegex", defaultValue: "Regular expression to match the hostname", comment: "Help text for the hostname regex field"))
         helpLabel.translatesAutoresizingMaskIntoConstraints = false
         helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         helpLabel.textColor = .secondaryLabelColor
@@ -341,7 +341,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     }
 
     private func addUserRegexUI() {
-        let row = createRow(label: "User:")
+        let row = createRow(label: String(localized: "EventTrigger.Field.User", defaultValue: "User:", comment: "Field label for the user regex input"))
 
         let textField = NSTextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -353,7 +353,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         row.addArrangedSubview(textField)
         stackView.addArrangedSubview(row)
 
-        let helpLabel = NSTextField(labelWithString: "Regular expression to match the username")
+        let helpLabel = NSTextField(labelWithString: String(localized: "EventTrigger.Help.UserRegex", defaultValue: "Regular expression to match the username", comment: "Help text for the username regex field"))
         helpLabel.translatesAutoresizingMaskIntoConstraints = false
         helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         helpLabel.textColor = .secondaryLabelColor
@@ -362,7 +362,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
 
     private func addLongRunningCommandUI() {
         // Threshold row
-        let thresholdRow = createRow(label: "Threshold:")
+        let thresholdRow = createRow(label: String(localized: "EventTrigger.Field.Threshold", defaultValue: "Threshold:", comment: "Field label for the long-running-command threshold input"))
 
         let thresholdField = NSTextField()
         thresholdField.translatesAutoresizingMaskIntoConstraints = false
@@ -372,7 +372,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         thresholdField.formatter = iTermSaneNumberFormatter()
         thresholdTextField = thresholdField
 
-        let unitsLabel = NSTextField(labelWithString: "seconds")
+        let unitsLabel = NSTextField(labelWithString: String(localized: "EventTrigger.SecondsUnit", defaultValue: "seconds", comment: "Units label for a duration field, in seconds"))
         unitsLabel.translatesAutoresizingMaskIntoConstraints = false
 
         thresholdRow.addArrangedSubview(thresholdField)
@@ -380,7 +380,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         stackView.addArrangedSubview(thresholdRow)
 
         // Command regex row
-        let commandRow = createRow(label: "Command:")
+        let commandRow = createRow(label: String(localized: "EventTrigger.Field.Command", defaultValue: "Command:", comment: "Field label for the command regex input"))
 
         let commandField = NSTextField()
         commandField.translatesAutoresizingMaskIntoConstraints = false
@@ -392,7 +392,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         commandRow.addArrangedSubview(commandField)
         stackView.addArrangedSubview(commandRow)
 
-        let helpLabel = NSTextField(labelWithString: "Regular expression to match the command line")
+        let helpLabel = NSTextField(labelWithString: String(localized: "EventTrigger.Help.CommandRegex", defaultValue: "Regular expression to match the command line", comment: "Help text for the command regex field"))
         helpLabel.translatesAutoresizingMaskIntoConstraints = false
         helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         helpLabel.textColor = .secondaryLabelColor
@@ -400,11 +400,11 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     }
 
     private func addProgressBarFilterUI() {
-        let row = createRow(label: "Fire When:")
+        let row = createRow(label: String(localized: "EventTrigger.Field.FireWhen", defaultValue: "Fire When:", comment: "Field label for the progress-bar trigger fire-when selector"))
 
         let popup = NSPopUpButton()
         popup.translatesAutoresizingMaskIntoConstraints = false
-        popup.addItems(withTitles: ["Appears or Disappears", "Appears", "Disappears"])
+        popup.addItems(withTitles: [String(localized: "EventTrigger.ProgressBarFilter.Either", defaultValue: "Appears or Disappears", comment: "Progress-bar trigger fire-when option: either appears or disappears"), String(localized: "EventTrigger.ProgressBarFilter.Appears", defaultValue: "Appears", comment: "Progress-bar trigger fire-when option: appears"), String(localized: "EventTrigger.ProgressBarFilter.Disappears", defaultValue: "Disappears", comment: "Progress-bar trigger fire-when option: disappears")])
         popup.target = self
         popup.action = #selector(progressBarFilterChanged(_:))
         progressBarFilterPopup = popup
@@ -414,7 +414,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     }
 
     private func addNoParametersLabel() {
-        let label = NSTextField(labelWithString: "No additional parameters required.")
+        let label = NSTextField(labelWithString: String(localized: "EventTrigger.NoParameters", defaultValue: "No additional parameters required.", comment: "Shown when an event trigger has no configurable parameters"))
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .secondaryLabelColor
         stackView.addArrangedSubview(label)
@@ -721,39 +721,39 @@ class EventTriggerMatchTypeHelper: NSObject {
     @objc static func displayName(for matchType: iTermTriggerMatchType) -> String {
         switch matchType {
         case .eventPromptDetected:
-            return "Prompt Detected"
+            return String(localized: "EventTrigger.Name.PromptDetected", defaultValue: "Prompt Detected", comment: "Display name for the Prompt Detected event trigger")
         case .eventCommandFinished:
-            return "Command Finished"
+            return String(localized: "EventTrigger.Name.CommandFinished", defaultValue: "Command Finished", comment: "Display name for the Command Finished event trigger")
         case .eventDirectoryChanged:
-            return "Directory Changed"
+            return String(localized: "EventTrigger.Name.DirectoryChanged", defaultValue: "Directory Changed", comment: "Display name for the Directory Changed event trigger")
         case .eventHostChanged:
-            return "Host Changed"
+            return String(localized: "EventTrigger.Name.HostChanged", defaultValue: "Host Changed", comment: "Display name for the Host Changed event trigger")
         case .eventUserChanged:
-            return "User Changed"
+            return String(localized: "EventTrigger.Name.UserChanged", defaultValue: "User Changed", comment: "Display name for the User Changed event trigger")
         case .eventIdle:
-            return "Idle (Silence)"
+            return String(localized: "EventTrigger.Name.Idle", defaultValue: "Idle (Silence)", comment: "Display name for the Idle (Silence) event trigger")
         case .eventActivityAfterIdle:
-            return "Activity After Idle"
+            return String(localized: "EventTrigger.Name.ActivityAfterIdle", defaultValue: "Activity After Idle", comment: "Display name for the Activity After Idle event trigger")
         case .eventSessionEnded:
-            return "Session Ended"
+            return String(localized: "EventTrigger.Name.SessionEnded", defaultValue: "Session Ended", comment: "Display name for the Session Ended event trigger")
         case .eventBellReceived:
-            return "Bell Received"
+            return String(localized: "EventTrigger.Name.BellReceived", defaultValue: "Bell Received", comment: "Display name for the Bell Received event trigger")
         case .eventLongRunningCommand:
-            return "Long-Running Command"
+            return String(localized: "EventTrigger.Name.LongRunningCommand", defaultValue: "Long-Running Command", comment: "Display name for the Long-Running Command event trigger")
         case .eventCustomEscapeSequence:
-            return "Custom Escape Sequence"
+            return String(localized: "EventTrigger.Name.CustomEscapeSequence", defaultValue: "Custom Escape Sequence", comment: "Display name for the Custom Escape Sequence event trigger")
         case .eventNotificationPosted:
-            return "Notification Posted"
+            return String(localized: "EventTrigger.Name.NotificationPosted", defaultValue: "Notification Posted", comment: "Display name for the Notification Posted event trigger")
         case .eventProgressBarChanged:
-            return "Progress Bar Changed"
+            return String(localized: "EventTrigger.Name.ProgressBarChanged", defaultValue: "Progress Bar Changed", comment: "Display name for the Progress Bar Changed event trigger")
         case .eventJobStarted:
-            return "Job Started"
+            return String(localized: "EventTrigger.Name.JobStarted", defaultValue: "Job Started", comment: "Display name for the Job Started event trigger")
         case .eventJobEnded:
-            return "Job Ended"
+            return String(localized: "EventTrigger.Name.JobEnded", defaultValue: "Job Ended", comment: "Display name for the Job Ended event trigger")
         case .eventVariableChanged:
-            return "Variable Changed"
+            return String(localized: "EventTrigger.Name.VariableChanged", defaultValue: "Variable Changed", comment: "Display name for the Variable Changed event trigger")
         default:
-            return "Unknown Event"
+            return String(localized: "EventTrigger.Name.Unknown", defaultValue: "Unknown Event", comment: "Display name for an unrecognized event trigger type")
         }
     }
 
@@ -761,37 +761,37 @@ class EventTriggerMatchTypeHelper: NSObject {
     @objc static func helpText(for matchType: iTermTriggerMatchType) -> String {
         switch matchType {
         case .eventPromptDetected:
-            return "Fires when shell integration detects a new prompt."
+            return String(localized: "EventTrigger.Help.PromptDetected", defaultValue: "Fires when shell integration detects a new prompt.", comment: "Help text for the Prompt Detected event trigger")
         case .eventCommandFinished:
-            return "Fires when a command exits. Requires shell integration."
+            return String(localized: "EventTrigger.Help.CommandFinished", defaultValue: "Fires when a command exits. Requires shell integration.", comment: "Help text for the Command Finished event trigger")
         case .eventDirectoryChanged:
-            return "Fires when the working directory changes."
+            return String(localized: "EventTrigger.Help.DirectoryChanged", defaultValue: "Fires when the working directory changes.", comment: "Help text for the Directory Changed event trigger")
         case .eventHostChanged:
-            return "Fires when connecting to a different host via SSH."
+            return String(localized: "EventTrigger.Help.HostChanged", defaultValue: "Fires when connecting to a different host via SSH.", comment: "Help text for the Host Changed event trigger")
         case .eventUserChanged:
-            return "Fires when the current user changes (su/sudo)."
+            return String(localized: "EventTrigger.Help.UserChanged", defaultValue: "Fires when the current user changes (su/sudo).", comment: "Help text for the User Changed event trigger")
         case .eventIdle:
-            return "Fires when no output is received for the specified duration."
+            return String(localized: "EventTrigger.Help.Idle", defaultValue: "Fires when no output is received for the specified duration.", comment: "Help text for the Idle (Silence) event trigger")
         case .eventActivityAfterIdle:
-            return "Fires when output resumes after being idle."
+            return String(localized: "EventTrigger.Help.ActivityAfterIdle", defaultValue: "Fires when output resumes after being idle.", comment: "Help text for the Activity After Idle event trigger")
         case .eventSessionEnded:
-            return "Fires when the session terminates."
+            return String(localized: "EventTrigger.Help.SessionEnded", defaultValue: "Fires when the session terminates.", comment: "Help text for the Session Ended event trigger")
         case .eventBellReceived:
-            return "Fires when a terminal bell (\\a) is received."
+            return String(localized: "EventTrigger.Help.BellReceived", defaultValue: "Fires when a terminal bell (\\a) is received.", comment: "Help text for the Bell Received event trigger; \\a denotes the bell control character")
         case .eventLongRunningCommand:
-            return "Fires when a command runs longer than the threshold."
+            return String(localized: "EventTrigger.Help.LongRunningCommand", defaultValue: "Fires when a command runs longer than the threshold.", comment: "Help text for the Long-Running Command event trigger")
         case .eventCustomEscapeSequence:
-            return "Fires when a specific OSC escape sequence is received."
+            return String(localized: "EventTrigger.Help.CustomEscapeSequence", defaultValue: "Fires when a specific OSC escape sequence is received.", comment: "Help text for the Custom Escape Sequence event trigger")
         case .eventNotificationPosted:
-            return "Fires when a notification is posted by a control sequence (OSC 9)."
+            return String(localized: "EventTrigger.Help.NotificationPosted", defaultValue: "Fires when a notification is posted by a control sequence (OSC 9).", comment: "Help text for the Notification Posted event trigger")
         case .eventProgressBarChanged:
-            return "Fires when a progress bar appears or disappears."
+            return String(localized: "EventTrigger.Help.ProgressBarChanged", defaultValue: "Fires when a progress bar appears or disappears.", comment: "Help text for the Progress Bar Changed event trigger")
         case .eventJobStarted:
-            return "Fires when a process matching the job filter enters the foreground-job ancestry chain."
+            return String(localized: "EventTrigger.Help.JobStarted", defaultValue: "Fires when a process matching the job filter enters the foreground-job ancestry chain.", comment: "Help text for the Job Started event trigger")
         case .eventJobEnded:
-            return "Fires when a process matching the job filter leaves the foreground-job ancestry chain."
+            return String(localized: "EventTrigger.Help.JobEnded", defaultValue: "Fires when a process matching the job filter leaves the foreground-job ancestry chain.", comment: "Help text for the Job Ended event trigger")
         case .eventVariableChanged:
-            return "Fires when a session variable changes to a value matching the regex."
+            return String(localized: "EventTrigger.Help.VariableChanged", defaultValue: "Fires when a session variable changes to a value matching the regex.", comment: "Help text for the Variable Changed event trigger")
         default:
             return ""
         }

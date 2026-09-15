@@ -878,7 +878,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
     __block BOOL handled = NO;
     __weak __typeof(self) weakSelf = self;
-    [_delegate apiServerCreateTab:request.createTabRequest handler:^(ITMCreateTabResponse *createTabResponse) {
+    [_delegate apiServerCreateTab:request.createTabRequest libraryVersion:webSocketConnection.libraryVersion connectionGuid:webSocketConnection.guid handler:^(ITMCreateTabResponse *createTabResponse) {
         assert(!handled);
         handled = YES;
         response.createTabResponse = createTabResponse;

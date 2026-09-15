@@ -303,7 +303,7 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
             assert(NO);
     }
 
-    NSString *reason = [NSString stringWithFormat:@"Invalid parsed expression type %@", @(parsedExpression.expressionType)];
+    NSString *reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionEvaluator.InvalidExpressionType", nil, [NSBundle mainBundle], @"Invalid parsed expression type %@", @"Error for an unrecognized parsed expression type; placeholder is the type number"), @(parsedExpression.expressionType)];
     NSError *error = [NSError errorWithDomain:@"com.iterm2.expression-evaluator"
                                          code:2
                                      userInfo:@{ NSLocalizedDescriptionKey: reason}];
@@ -468,7 +468,7 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
 
 - (void)logError:(NSError *)error invocation:(NSString *)invocation {
     NSString *message =
-    [NSString stringWithFormat:@"Error evaluating expression %@: %@\n",
+    [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionEvaluator.ErrorEvaluatingExpression", nil, [NSBundle mainBundle], @"Error evaluating expression %1$@: %2$@\n", @"Error logged when evaluating an expression fails; placeholders are the invocation and the error description"),
      invocation, error.localizedDescription];
     [[iTermScriptHistoryEntry globalEntry] addOutput:message completion:^{}];
 }

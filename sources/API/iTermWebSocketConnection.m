@@ -171,6 +171,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         NSString *key = headers[@"x-iterm2-key"] ?: [[NSUUID UUID] UUIDString];
         conn->_key = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
         conn->_advisoryName = headers[@"x-iterm2-advisory-name"];
+        conn->_libraryVersion = headers[@"x-iterm2-library-version"];
     }
     return conn;
 }
@@ -532,7 +533,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                @"Connection": @"Upgrade",
                @"Sec-WebSocket-Accept": [sha1 stringWithBase64EncodingWithLineBreak:@""],
                @"Sec-WebSocket-Protocol": kProtocolName,
-               @"X-iTerm2-Protocol-Version": @"1.17"
+               @"X-iTerm2-Protocol-Version": @"1.18"
              };
         if (version > kWebSocketVersion) {
             NSMutableDictionary *temp = [headers mutableCopy];

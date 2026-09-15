@@ -12,7 +12,7 @@ class InjectJavascriptURLTrigger: Trigger {
     }
 
     override static var title: String {
-        return "Inject Javascript (URL Regex)"
+        return String(localized: "Trigger.InjectJavascriptURL.Title", defaultValue: "Inject Javascript (URL Regex)", comment: "Trigger action name: inject JavaScript into a page matched by a URL regex")
     }
 
     override func takesParameter() -> Bool {
@@ -68,7 +68,7 @@ class InjectJavascriptContentTrigger: Trigger {
     }
 
     override static var title: String {
-        return "Inject Javascript (Content Regex)"
+        return String(localized: "Trigger.InjectJavascriptContent.Title", defaultValue: "Inject Javascript (Content Regex)", comment: "Trigger action name: inject JavaScript into a page matched by a content regex")
     }
 
     override func takesParameter() -> Bool {

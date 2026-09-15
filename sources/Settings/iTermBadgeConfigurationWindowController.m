@@ -64,6 +64,7 @@ typedef struct {
         _badge.delegate = self;
         _badge.fillColor = [NSColor blackColor];
         _badge.backgroundColor = [NSColor redColor];
+        // Localization unneeded
         _badge.stringValue = @"Lorem ipsum dolor sit amet";
     }
     return self;

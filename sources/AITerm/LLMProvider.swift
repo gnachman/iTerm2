@@ -101,11 +101,17 @@ struct LLMProvider {
                                                      streaming: false)) {
             return "Anthropic"
         }
+        // The .llama API type is Ollama's native /api/chat dialect regardless of
+        // which model (llama, qwen, ...) is served, so name it for the runner, not
+        // the model family. This is what error prefixes ("Error from Ollama") use.
+        if model.api == .llama {
+            return "Ollama"
+        }
         if model.name.contains("llama") {
             return "Llama"
         }
 
-        return "Unknown Platform"
+        return String(localized: "LLMProvider.UnknownPlatform", defaultValue: "Unknown Platform", comment: "Display name for an unrecognized AI provider")
     }
 
     var dynamicModelsSupported: Bool {
@@ -121,10 +127,9 @@ struct LLMProvider {
     }
 
     var functionsSupported: Bool {
-        // #llama-streaming-functions
-        if model.api == .llama && model.features.contains(.streaming) {
-            return false
-        }
+        // Ollama's native /api/chat (api == .llama) supports tool calls WHILE
+        // streaming as of Ollama's May 2025 release, so streaming no longer
+        // disqualifies function calling; gate purely on the advertised capability.
         return model.features.contains(.functionCalling)
     }
 
@@ -241,6 +246,13 @@ struct LLMProvider {
     // support here for free. Image-shaped MIMEs that are really text
     // (image/svg+xml) are handled by the textual branch of accepts() first.
     var supportsInlineImageBlock: Bool {
+        // Native Ollama can carry images (message.images[]), but capability is
+        // model-specific for a local runner and can't be inferred from the host,
+        // so gate it on the model's declared Vision feature (the manual editor
+        // checkbox). The cloud hosts stay serializer-capability gated.
+        if model.api == .llama {
+            return model.features.contains(.vision)
+        }
         let url = URL(string: model.url)
         return LLMMetadata.hostIsAnthropicAIAPI(url: url)
             || LLMMetadata.hostIsGoogleAIAPI(url: url)

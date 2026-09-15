@@ -546,10 +546,10 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
 
     NSString *aName;
 
-    aName = NSLocalizedStringFromTableInBundle(@"Default",
-                                               @"iTerm",
-                                               [NSBundle bundleForClass: [self class]],
-                                               @"Terminal Profiles");
+    // Localization unneeded: "Default" is the stable name of the built-in default
+    // profile, persisted and looked up by this exact string; localizing it would
+    // fork the profile's identity across locales.
+    aName = @"Default";
     [aDict setObject:aName forKey: KEY_NAME];
     [aDict setObject:kProfilePreferenceCommandTypeLoginShellValue forKey:KEY_CUSTOM_COMMAND];
     [aDict setObject:@"" forKey: KEY_COMMAND_LINE];
@@ -1066,14 +1066,50 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
 
 // identifier is optional. Old shortcuts only have a title.
 + (BOOL)shortcutIdentifier:(NSString *)identifier title:(NSString *)title matchesItem:(NSMenuItem *)item {
-    if (item.identifier && [identifier isEqualToString:item.identifier]) {
+    // A stored menu-item reference matches by stable key or, for older bindings that
+    // saved only a title, by title. Neither the identifier nor the accessibility
+    // identifier is localized, and each leaf menu item's accessibility identifier holds
+    // its English title (set in MainMenu.xib), so matching against those keeps bindings
+    // working after the visible title has been translated. The empty/"_NS" normalization
+    // is shared with the editor-side matcher (iTermMenuItemBinding) so the two cannot
+    // diverge: an empty string is not a real identifier and AppKit's synthetic "_NS:<n>"
+    // identifiers are positional, so both are treated as absent here.
+    NSString *axid = [(id)item accessibilityIdentifier];
+    NSString *stableIdentifier = [iTermMenuItemBinding normalizedStoredIdentifier:identifier];
+    // A synthetic "_NS:<n>" identifier normalizes to absent, but if it still names this exact
+    // live item honor it before the "_NS" bailout below. This mirrors the editor's exact-_NS
+    // fallback (iTermMenuItemBinding) so a localized visible title cannot defeat the match.
+    if (identifier.length && [identifier hasPrefix:@"_NS"] && item.identifier.length &&
+        [identifier isEqualToString:item.identifier]) {
         return YES;
     }
-    if (!identifier && [title isEqualToString:[item title]]) {
+    if (stableIdentifier) {
+        // A real, stable identifier must match exactly (against the identifier or the
+        // English accessibility identifier). We do not fall back to title here so a stale
+        // identifier cannot fire an unrelated item.
+        return ([iTermMenuItemBinding key:stableIdentifier matchesItemIdentifier:item.identifier] ||
+                (axid.length && [stableIdentifier isEqualToString:axid]));
+    }
+    if (title.length == 0) {
+        return NO;
+    }
+    // Title fallback. Always allowed to match the item's own (localized) title.
+    if ([title isEqualToString:[item title]]) {
         return YES;
     }
-
-    return NO;
+    // A synthetic "_NS:<n>" identifier is positional; matching its stored title against the
+    // English accessibility identifier would fire the wrong duplicate-titled item (e.g.
+    // Session > Reset vs Terminal State > Reset), so for synthetic identifiers we stop at
+    // the visible-title comparison above and let the walker resolve ambiguity.
+    if ([identifier hasPrefix:@"_NS"]) {
+        return NO;
+    }
+    // Legacy title-only bindings: the stored English title matches the English accessibility
+    // identifier, or a namespaced identifier such as "Toolbelt.Command History".
+    if (axid.length && [title isEqualToString:axid]) {
+        return YES;
+    }
+    return [iTermMenuItemBinding key:title matchesItemIdentifier:item.identifier];
 }
 
 @end

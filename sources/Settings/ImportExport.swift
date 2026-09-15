@@ -20,8 +20,8 @@ class ImportExport: NSObject {
         DLog("Begin")
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = ["itermexport"].compactMap { UTType(filenameExtension: $0) }
-        savePanel.nameFieldStringValue = "iTerm2 State.itermexport"
-        savePanel.title = "Export iTerm2 Settings and Data"
+        savePanel.nameFieldStringValue = String(localized: "ImportExport.DefaultExportFileName", defaultValue: "iTerm2 State.itermexport", comment: "Default file name suggested when exporting settings and data")
+        savePanel.title = String(localized: "ImportExport.ExportPanelTitle", defaultValue: "Export iTerm2 Settings and Data", comment: "Title of the save panel for exporting settings and data")
 
         let response = savePanel.runModal()
         guard response == NSApplication.ModalResponse.OK else {
@@ -42,27 +42,27 @@ class ImportExport: NSObject {
             RLog("Failed: \(error)")
             switch error {
             case ImportExportError.failedToCreateTempDir(let reason):
-                return .failure("Failed to create temporary directory: \(reason)")
+                return .failure(String(localized: "ImportExport.FailedToCreateTempDir", defaultValue: "Failed to create temporary directory: \(reason)", comment: "Export error; the placeholder is the failure reason"))
             case ImportExportError.failedToCreateIntermediateFolder(let reason):
-                return .failure("Failed to create folder: \(reason)")
+                return .failure(String(localized: "ImportExport.FailedToCreateFolder", defaultValue: "Failed to create folder: \(reason)", comment: "Export error; the placeholder is the failure reason"))
             case ImportExportError.failedToCopyFile(let reason):
-                return .failure("Failed to copy file: \(reason)")
+                return .failure(String(localized: "ImportExport.FailedToCopyFile", defaultValue: "Failed to copy file: \(reason)", comment: "Export error; the placeholder is the failure reason"))
             case ImportExportError.failedToSaveFile(let reason):
-                return .failure("Failed to save file: \(reason)")
+                return .failure(String(localized: "ImportExport.FailedToSaveFile", defaultValue: "Failed to save file: \(reason)", comment: "Export error; the placeholder is the failure reason"))
             case ImportExportError.bug(let reason):
-                return .failure("A bug was encountered: \(reason). Please report this at https://iterm2.com/bugs")
+                return .failure(String(localized: "ImportExport.BugEncountered", defaultValue: "A bug was encountered: \(reason). Please report this at https://iterm2.com/bugs", comment: "Export error shown when an internal bug occurs; the placeholder is the failure reason"))
             case ImportExportError.failedToCreateArchive(let reason):
-                return .failure("Failed to create archive: \(reason)")
+                return .failure(String(localized: "ImportExport.FailedToCreateArchive", defaultValue: "Failed to create archive: \(reason)", comment: "Export error; the placeholder is the failure reason"))
             case ImportExportError.failedToLoadFile(let reason):
-                return .failure("Failed to load file: \(reason)")
+                return .failure(String(localized: "ImportExport.FailedToLoadFile", defaultValue: "Failed to load file: \(reason)", comment: "Export error; the placeholder is the failure reason"))
             case ImportExportError.corruptDataFound(let reason):
-                return .failure("Malformed data found: \(reason)")
+                return .failure(String(localized: "ImportExport.MalformedDataFound", defaultValue: "Malformed data found: \(reason)", comment: "Export error; the placeholder is the failure reason"))
             case ImportExportError.scriptExportFailed(let reason):
-                return .failure("Script could not be exported: \(reason)")
+                return .failure(String(localized: "ImportExport.ScriptExportFailed", defaultValue: "Script could not be exported: \(reason)", comment: "Export error; the placeholder is the failure reason"))
             case ImportExportError.failedToInstallPythonRuntime:
-                return .failure("Failed to install Python runtime")
+                return .failure(String(localized: "ImportExport.FailedToInstallPythonRuntime", defaultValue: "Failed to install Python runtime", comment: "Export error shown when the Python runtime cannot be installed"))
             default:
-                return .failure("Unexpected error: \(error.localizedDescription)")
+                return .failure(String(localized: "ImportExport.UnexpectedError", defaultValue: "Unexpected error: \(error.localizedDescription)", comment: "Generic export error; the placeholder is the system error description"))
             }
         }
     }
@@ -91,12 +91,12 @@ class ImportExport: NSObject {
 
         do {
             let selection = iTermWarning.show(
-                withTitle: "Any needed Python runtimes will be installed and secure settings will be updated, which may require you to enter your password. Then iTerm2 will restart and finish importing. This can take several minutes.",
-                actions: ["OK", "Cancel"],
+                withTitle: String(localized: "ImportExport.ImportConfirmBody", defaultValue: "Any needed Python runtimes will be installed and secure settings will be updated, which may require you to enter your password. Then iTerm2 will restart and finish importing. This can take several minutes.", comment: "Body warning shown before importing settings and data"),
+                actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                 accessory: nil,
                 identifier: nil,
                 silenceable: .kiTermWarningTypePersistent,
-                heading: "Importing Settings and Data",
+                heading: String(localized: "ImportExport.ImportingHeading", defaultValue: "Importing Settings and Data", comment: "Heading of the dialog that imports settings and data"),
                 window: nil)
             if selection == .kiTermWarningSelection1 {
                 return nil
@@ -125,12 +125,12 @@ class ImportExport: NSObject {
     @objc
     static func eraseAll(window: NSWindow?) -> String? {
         let exportSelection = iTermWarning.show(
-            withTitle: "Would you like to export your settings and data first? You will be able to re-import the exported file later if you change your mind.",
-            actions: ["Export First", "Skip Export", "Cancel"],
+            withTitle: String(localized: "ImportExport.EraseExportFirstBody", defaultValue: "Would you like to export your settings and data first? You will be able to re-import the exported file later if you change your mind.", comment: "Body asking whether to export before erasing everything"),
+            actions: [String(localized: "ImportExport.ExportFirstAction", defaultValue: "Export First", comment: "Button to export settings before erasing"), String(localized: "ImportExport.SkipExportAction", defaultValue: "Skip Export", comment: "Button to skip exporting before erasing"), iTermLocalizedCancel()],
             accessory: nil,
             identifier: nil,
             silenceable: .kiTermWarningTypePersistent,
-            heading: "Erase All Settings and Data",
+            heading: String(localized: "ImportExport.EraseAllHeading", defaultValue: "Erase All Settings and Data", comment: "Heading of the dialog that erases all settings and data"),
             window: window)
 
         switch exportSelection {
@@ -150,11 +150,11 @@ class ImportExport: NSObject {
                 // export, not erase, and the erase has not happened.
                 _ = iTermWarning.show(
                     withTitle: message,
-                    actions: ["OK"],
+                    actions: [iTermLocalizedOK()],
                     accessory: nil,
                     identifier: nil,
                     silenceable: .kiTermWarningTypePersistent,
-                    heading: "Problem Exporting Settings and Data",
+                    heading: String(localized: "ImportExport.ProblemExportingHeading", defaultValue: "Problem Exporting Settings and Data", comment: "Heading shown when exporting settings and data fails"),
                     window: window)
                 return nil
             }
@@ -169,13 +169,13 @@ class ImportExport: NSObject {
         let confirmHeading: String
         let actionLabel: String
         if dryRun {
-            confirmTitle = """
+            confirmTitle = String(localized: "ImportExport.DryRunConfirmTitle", defaultValue: """
             Dry-run mode is enabled. iTerm2 will log to Console.app what it would erase and stay running. Nothing will actually be deleted.
-            """
-            confirmHeading = "Dry-Run Erase?"
-            actionLabel = "Run Dry Run"
+            """, comment: "Confirmation body shown before a dry-run erase")
+            confirmHeading = String(localized: "ImportExport.DryRunConfirmHeading", defaultValue: "Dry-Run Erase?", comment: "Confirmation heading shown before a dry-run erase")
+            actionLabel = String(localized: "ImportExport.DryRunActionLabel", defaultValue: "Run Dry Run", comment: "Button label to start a dry-run erase")
         } else {
-            confirmTitle = """
+            confirmTitle = String(localized: "ImportExport.EraseConfirmTitle", defaultValue: """
             The following will be erased and iTerm2 will quit immediately:
 
             \u{2022} Preferences (profiles, key bindings, arrangements, advanced settings)
@@ -187,9 +187,9 @@ class ImportExport: NSObject {
             Items stored in the macOS Keychain (such as the AI API key and Password Manager entries) are not erased and must be removed manually from Keychain Access if you want them gone too. On systems with networked home directories, secure settings stored under /usr/local are written by an administrator and may also need to be removed manually.
 
             This cannot be undone.
-            """
-            confirmHeading = "Erase Everything?"
-            actionLabel = "Erase Everything and Quit"
+            """, comment: "Confirmation body listing everything that will be erased")
+            confirmHeading = String(localized: "ImportExport.EraseConfirmHeading", defaultValue: "Erase Everything?", comment: "Confirmation heading shown before erasing everything")
+            actionLabel = String(localized: "ImportExport.EraseActionLabel", defaultValue: "Erase Everything and Quit", comment: "Button label to erase everything and quit")
         }
 
         let warning = iTermWarning()
@@ -197,7 +197,7 @@ class ImportExport: NSObject {
         warning.heading = confirmHeading
         let eraseAction = iTermWarningAction(label: actionLabel, block: nil)
         eraseAction.destructive = !dryRun
-        warning.warningActions = [iTermWarningAction(label: "Cancel"), eraseAction]
+        warning.warningActions = [iTermWarningAction(label: iTermLocalizedCancel()), eraseAction]
         warning.warningType = .kiTermWarningTypePersistent
         warning.window = window
         let confirm = warning.runModal()
@@ -210,12 +210,12 @@ class ImportExport: NSObject {
             _exit(0)
         }
         _ = iTermWarning.show(
-            withTitle: "iTerm2 logged what it would have erased to Console.app. Nothing was actually deleted because the “Dry-run Erase All Settings and Data” advanced setting is enabled.",
-            actions: ["OK"],
+            withTitle: String(localized: "ImportExport.DryRunCompleteBody", defaultValue: "iTerm2 logged what it would have erased to Console.app. Nothing was actually deleted because the “Dry-run Erase All Settings and Data” advanced setting is enabled.", comment: "Body of the alert shown after a dry-run erase completes"),
+            actions: [iTermLocalizedOK()],
             accessory: nil,
             identifier: nil,
             silenceable: .kiTermWarningTypePersistent,
-            heading: "Dry Run Complete",
+            heading: String(localized: "ImportExport.DryRunCompleteHeading", defaultValue: "Dry Run Complete", comment: "Heading of the alert shown after a dry-run erase completes"),
             window: window)
         return nil
     }
@@ -391,23 +391,24 @@ private struct ImportExportConfig {
     }
     var entities: [Entity] = [
         Entity(key: "python-runtimes",
-               displayName: "Python Runtimes",
+               displayName: String(localized: "ImportExport.EntityPythonRuntimes", defaultValue: "Python Runtimes", comment: "Name of the Python runtimes item in the import/export list"),
                flavor: .pythonRuntimes),
         Entity(key: "secure-user-defaults",
-               displayName: "Secure Settings",
+               displayName: String(localized: "ImportExport.EntitySecureSettings", defaultValue: "Secure Settings", comment: "Name of the secure settings item in the import/export list"),
                flavor: .secureUserDefaults),
         Entity(key: "disable-automation-auth",
-               displayName: "Python API Authorization Setting",
+               displayName: String(localized: "ImportExport.EntityPythonAPIAuthorization", defaultValue: "Python API Authorization Setting", comment: "Name of the Python API authorization setting item in the import/export list"),
                flavor: .disableAutomationAuth),
         Entity(key: "user-defaults",
-               displayName: "User Defaults",
+               displayName: String(localized: "ImportExport.EntityUserDefaults", defaultValue: "User Defaults", comment: "Name of the user defaults item in the import/export list"),
                flavor: .userDefaults),
         Entity(key: "dot-iterm2",
+               // Localization unneeded
                displayName: "~/.iterm2",
                flavor: .folder(Path(baseDirectory: .home, relativePath: ".iterm2"),
                                exclude: Set(["AppSupport", "iTermServer-*", "sockets", "Scripts"]))),
         Entity(key: "app-support",
-               displayName: "Application Support",
+               displayName: String(localized: "ImportExport.EntityApplicationSupport", defaultValue: "Application Support", comment: "Name of the Application Support folder item in the import/export list"),
                flavor: .folder(Path(baseDirectory: .applicationSupport, relativePath: nil),
                                exclude: Set(["????????-????-????-????-????????????",
                                              "*.secureSetting",
@@ -422,7 +423,7 @@ private struct ImportExportConfig {
                                              "servers",
                                              "version.txt"]))),
         Entity(key: "scripts",
-               displayName: "Python API Scripts",
+               displayName: String(localized: "ImportExport.EntityPythonAPIScripts", defaultValue: "Python API Scripts", comment: "Name of the Python API scripts item in the import/export list"),
                flavor: .scripts),
     ]
 }
@@ -478,7 +479,7 @@ private class Importer {
 
     func importEntities(from url: URL) throws {
         let tempDir = try makeTempDir()
-        setStatus("Extracting Archive")
+        setStatus(String(localized: "ImportExport.ExtractingArchive", defaultValue: "Extracting Archive", comment: "Progress status shown while extracting the import archive"))
         if NSData.untar(fromArchive: url, to: tempDir) != 0 {
             return
         }
@@ -501,7 +502,7 @@ private class Importer {
                               from baseURL: URL,
                               phase: Phase) throws {
         let url = baseURL.appendingPathComponent(entity.key)
-        setStatus("Importing \(entity.displayName)")
+        setStatus(String(localized: "ImportExport.ImportingEntity", defaultValue: "Importing \(entity.displayName)", comment: "Progress status while importing an entity; the placeholder is the entity name"))
         switch entity.flavor {
         case .pythonRuntimes:
             switch phase {
@@ -769,11 +770,11 @@ private struct PythonRuntimesImporterExporter {
             if !install(requirement: nil) {
                 throw ImportExportError.failedToInstallPythonRuntime
             }
-            setStatus?("Installing Python runtime \(i) of \(n)")
+            setStatus?(String(localized: "ImportExport.InstallingPythonRuntimeProgress", defaultValue: "Installing Python runtime \(i) of \(n)", comment: "Progress status while installing Python runtimes; first number is current, second is total"))
             i += 1
         }
         for requirement in info.requirements {
-            setStatus?("Installing Python runtime \(i) of \(n)")
+            setStatus?(String(localized: "ImportExport.InstallingPythonRuntimeProgress", defaultValue: "Installing Python runtime \(i) of \(n)", comment: "Progress status while installing Python runtimes; first number is current, second is total"))
             i += 1
             DLog("Install \(requirement)")
             if !install(requirement: requirement) {
@@ -931,13 +932,13 @@ private struct SecureUserDefaultsImporterExporter {
             plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
         } catch {
             DLog("\(error) for \(data.stringOrHex)")
-            throw ImportExportError.corruptDataFound("Invalid data found at \(source.path)")
+            throw ImportExportError.corruptDataFound(String(localized: "ImportExport.InvalidDataFound", defaultValue: "Invalid data found at \(source.path)", comment: "Error shown when imported data is invalid; the placeholder is a file path"))
         }
         if let stringDict = plist as? [String: String] {
             reallyPerformImport(stringDict)
         } else {
             DLog("Cast failed for \(plist)")
-            throw ImportExportError.corruptDataFound("Wrong format content for \(source.path)")
+            throw ImportExportError.corruptDataFound(String(localized: "ImportExport.WrongFormatContent", defaultValue: "Wrong format content for \(source.path)", comment: "Error shown when imported data has the wrong format; the placeholder is a file path"))
         }
     }
 
@@ -1058,7 +1059,7 @@ private struct ScriptsImporterExporter {
         }
         for (i, path) in items.enumerated() {
             DLog("\(path)")
-            setStatus?("Import script \(i + 1) of \(items.count)")
+            setStatus?(String(localized: "ImportExport.ImportScriptProgress", defaultValue: "Import script \(i + 1) of \(items.count)", comment: "Progress status while importing scripts; first number is current, second is total"))
             importScript(from: path, autolaunch: path.lastPathComponent.hasPrefix("autolaunch"))
         }
     }
@@ -1147,7 +1148,7 @@ fileprivate extension Dictionary {
         guard let plistData = try? PropertyListSerialization.data(fromPropertyList: self,
                                                                   format: .xml,
                                                                   options: 0) else {
-            throw ImportExportError.bug("Failed to serialize user defaults")
+            throw ImportExportError.bug(String(localized: "ImportExport.FailedToSerializeUserDefaults", defaultValue: "Failed to serialize user defaults", comment: "Error shown when user defaults cannot be serialized during export"))
         }
 
         do {

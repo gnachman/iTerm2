@@ -117,7 +117,7 @@ static const CGFloat kCollapsedHeight = 51;
     switch (_transferrableFile.status) {
         case kTransferrableFileStatusUnstarted:
         case kTransferrableFileStatusStarting:
-            view.statusMessage = @"Starting…";
+            view.statusMessage = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.Starting", nil, [NSBundle mainBundle], @"Starting…", @"Status message shown while a transfer is starting");
             [self collapse];
             break;
 
@@ -125,32 +125,32 @@ static const CGFloat kCollapsedHeight = 51;
             [self expand];
             [view.progressIndicator setHidden:[_transferrableFile fileSize] < 0];
             if (self.transferrableFile.isDownloading) {
-                view.statusMessage = @"Downloading…";
+                view.statusMessage = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.Downloading", nil, [NSBundle mainBundle], @"Downloading…", @"Status message shown while a file is downloading");
             } else {
-                view.statusMessage = @"Uploading…";
+                view.statusMessage = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.Uploading", nil, [NSBundle mainBundle], @"Uploading…", @"Status message shown while a file is uploading");
             }
             [self showMenu];
             break;
 
         case kTransferrableFileStatusFinishedSuccessfully:
             [self collapse];
-            view.statusMessage = @"Finished";
+            view.statusMessage = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.Finished", nil, [NSBundle mainBundle], @"Finished", @"Status text for a transfer that finished successfully");
             break;
 
         case kTransferrableFileStatusFinishedWithError:
             [self collapse];
-            view.statusMessage = @"Failed";
+            view.statusMessage = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.MessageFailed", nil, [NSBundle mainBundle], @"Failed", @"Status message shown for a failed transfer");
             [self showMenu];
             break;
 
         case kTransferrableFileStatusCancelling:
             [self expand];
-            view.statusMessage = @"Cancelling…";
+            view.statusMessage = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.MessageCancelling", nil, [NSBundle mainBundle], @"Cancelling…", @"Status message shown while a transfer is being cancelled");
             break;
 
         case kTransferrableFileStatusCancelled:
             [self collapse];
-            view.statusMessage = @"Cancelled";
+            view.statusMessage = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.MessageCancelled", nil, [NSBundle mainBundle], @"Cancelled", @"Status message shown for a cancelled transfer");
             break;
     }
     [view setNeedsDisplay:YES];
@@ -192,37 +192,37 @@ static const CGFloat kCollapsedHeight = 51;
 - (NSString *)stringForStatus:(TransferrableFileStatus)status {
     switch (_transferrableFile.status) {
         case kTransferrableFileStatusUnstarted:
-            return @"Unstarted";
+            return NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.StatusUnstarted", nil, [NSBundle mainBundle], @"Unstarted", @"Status text for a transfer that has not started");
         case kTransferrableFileStatusStarting:
-            return @"Starting";
+            return NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.StatusStarting", nil, [NSBundle mainBundle], @"Starting", @"Status text for a transfer that is starting");
         case kTransferrableFileStatusTransferring:
-            return @"Transferring";
+            return NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.StatusTransferring", nil, [NSBundle mainBundle], @"Transferring", @"Status text for a transfer that is in progress");
         case kTransferrableFileStatusFinishedSuccessfully:
-            return @"Finished";
+            return NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.Finished", nil, [NSBundle mainBundle], @"Finished", @"Status text for a transfer that finished successfully");
         case kTransferrableFileStatusFinishedWithError:
-            return [NSString stringWithFormat:@"Failed with error “%@”", [_transferrableFile error]];
+            return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.FailedWithError", nil, [NSBundle mainBundle], @"Failed with error “%@”", @"Status text for a failed transfer; %@ is the error message"), [_transferrableFile error]];
         case kTransferrableFileStatusCancelling:
-            return @"Waiting to cancel";
+            return NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.WaitingToCancel", nil, [NSBundle mainBundle], @"Waiting to cancel", @"Status text for a transfer that is waiting to be canceled");
         case kTransferrableFileStatusCancelled:
-            return @"Canceled by user";
+            return NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.Canceled", nil, [NSBundle mainBundle], @"Canceled by user", @"Status text for a transfer that was canceled by the user");
     }
 }
 
 - (void)getInfo:(id)sender {
     NSString *extra = @"";
     if (_transferrableFile.destination) {
-        extra = [NSString stringWithFormat:@"\nDestination: %@",
+        extra = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.Destination", nil, [NSBundle mainBundle], @"\nDestination: %@", @"Line in the transfer summary showing the destination; %@ is the path"),
                        _transferrableFile.destination];
     } else if (_transferrableFile.localPath) {
-        extra = [NSString stringWithFormat:@"\nLocal path: %@",
+        extra = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.LocalPath", nil, [NSBundle mainBundle], @"\nLocal path: %@", @"Line in the transfer summary showing the local path; %@ is the path"),
                        _transferrableFile.localPath];
     }
-    NSString *text = [NSString stringWithFormat:@"%@\n\nStatus: %@%@",
+    NSString *text = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.InfoText", nil, [NSBundle mainBundle], @"%1$@\n\nStatus: %2$@%3$@", @"Body of the file transfer summary; first %@ is the display name, second %@ is the status, third %@ is extra path info"),
                       [_transferrableFile displayName],
                       [self stringForStatus:_transferrableFile.status],
                       extra];
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"File Transfer Summary";
+    alert.messageText = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.SummaryTitle", nil, [NSBundle mainBundle], @"File Transfer Summary", @"Title of the dialog summarizing a file transfer");
     alert.informativeText = text;
     [alert layout];
     [alert runModal];

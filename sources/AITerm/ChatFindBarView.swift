@@ -49,10 +49,10 @@ class ChatFindBarView: NSView {
         .caseInsensitiveRegex,
     ]
     private static let modeTitles = [
-        "Smart Case",
-        "Ignore Case",
-        "Match Case",
-        "Regular Expression",
+        String(localized: "ChatFindBarView.ModeSmartCase", defaultValue: "Smart Case", comment: "Find bar search mode: smart case matching"),
+        String(localized: "ChatFindBarView.ModeIgnoreCase", defaultValue: "Ignore Case", comment: "Find bar search mode: case-insensitive matching"),
+        String(localized: "ChatFindBarView.ModeMatchCase", defaultValue: "Match Case", comment: "Find bar search mode: case-sensitive matching"),
+        String(localized: "ChatFindBarView.ModeRegularExpression", defaultValue: "Regular Expression", comment: "Find bar search mode: regular expression matching"),
     ]
 
     private static let controlSpacing: CGFloat = 8
@@ -96,9 +96,9 @@ class ChatFindBarView: NSView {
         if searchField.stringValue.isEmpty {
             counterLabel.stringValue = ""
         } else if total == 0 {
-            counterLabel.stringValue = "No results"
+            counterLabel.stringValue = String(localized: "ChatFindBarView.NoResults", defaultValue: "No results", comment: "Shown in the chat find bar when a search has no matches")
         } else if let current {
-            counterLabel.stringValue = "\(current + 1) of \(total)"
+            counterLabel.stringValue = String(localized: "ChatFindBarView.Counter", defaultValue: "\(current + 1) of \(total)", comment: "Find bar match counter; first placeholder is the current match number, second is the total number of matches")
         } else {
             counterLabel.stringValue = "\(total)"
         }
@@ -114,7 +114,7 @@ class ChatFindBarView: NSView {
 
         addSubview(backdrop)
 
-        searchField.placeholderString = "Find in Conversation"
+        searchField.placeholderString = String(localized: "ChatFindBarView.SearchPlaceholder", defaultValue: "Find in Conversation", comment: "Placeholder text in the chat find bar search field")
         searchField.sendsWholeSearchString = false
         searchField.sendsSearchStringImmediately = false
         searchField.delegate = self
@@ -131,13 +131,13 @@ class ChatFindBarView: NSView {
 
         configureChevron(previousButton,
                          symbol: SFSymbol.chevronUp,
-                         accessibility: "Find Previous",
+                         accessibility: String(localized: "ChatFindBarView.FindPreviousAccessibility", defaultValue: "Find Previous", comment: "Accessibility description for the find-previous button in the chat find bar"),
                          action: #selector(previousButtonClicked(_:)))
         addSubview(previousButton)
 
         configureChevron(nextButton,
                          symbol: SFSymbol.chevronDown,
-                         accessibility: "Find Next",
+                         accessibility: String(localized: "ChatFindBarView.FindNextAccessibility", defaultValue: "Find Next", comment: "Accessibility description for the find-next button in the chat find bar"),
                          action: #selector(nextButtonClicked(_:)))
         addSubview(nextButton)
 
@@ -150,7 +150,7 @@ class ChatFindBarView: NSView {
         addSubview(modeButton)
 
         closeButton.image = NSImage.it_image(forSymbolName: SFSymbol.xmark.rawValue,
-                                             accessibilityDescription: "Close find bar",
+                                             accessibilityDescription: String(localized: "ChatFindBarView.CloseAccessibility", defaultValue: "Close find bar", comment: "Accessibility description for the button that closes the find bar"),
                                              fallbackImageName: "xmark",
                                              for: ChatFindBarView.self)
         closeButton.bezelStyle = .badge

@@ -58,7 +58,7 @@ const CGFloat kDragAreaSize = 5;
 - (void)updateKillButtonImage {
     NSImage *closeImage;
     closeImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTrash)
-                           accessibilityDescription:@"Delete annotation"];
+                           accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PTYNoteView.DeleteAnnotation", nil, [NSBundle mainBundle], @"Delete annotation", @"Accessibility description for the button that deletes an annotation")];
     NSColor *tintColor = self.effectiveAppearance.it_isDark ? [NSColor whiteColor] : [NSColor blackColor];
     closeImage = [closeImage it_imageWithTintColor:tintColor];
     [killButton_ setImage:closeImage];

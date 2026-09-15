@@ -62,7 +62,7 @@ class SetProfileBooleanTrigger: Trigger {
     // MARK: - Trigger overrides
 
     override static var title: String {
-        return "Set Profile Setting…"
+        return String(localized: "Trigger.SetProfileBoolean.Title", defaultValue: "Set Profile Setting…", comment: "Trigger action name: set a session-local profile boolean setting")
     }
 
     override var description: String {

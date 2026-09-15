@@ -19,7 +19,9 @@
 #import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 
-NSString *iTermSnippetHelpMarkdown = @"Terms in the search query are used to prefix search snippet titles, content, and tags.\n\nYou can use the following operators to restrict what attributes of snippets a term searches:\n * `tag:` to search only tags.\n * `title:` to search only snippet titles.\n * `text:` to search only the text of a snippet.\nFor example, `tag:linux`.\n\nTo search only for snippets that do *not* match a term, use the `-` operator. For example, `-linux` or `-tag:linux`.\n\nYou can use `|` as logical OR. For example, `linux|bsd` or `tag:linux|tag:bsd`.";
+NSString *iTermSnippetHelpMarkdown(void) {
+    return NSLocalizedStringWithDefaultValue(@"Snippets.SearchHelp", nil, [NSBundle mainBundle], @"Terms in the search query are used to prefix search snippet titles, content, and tags.\n\nYou can use the following operators to restrict what attributes of snippets a term searches:\n * `tag:` to search only tags.\n * `title:` to search only snippet titles.\n * `text:` to search only the text of a snippet.\nFor example, `tag:linux`.\n\nTo search only for snippets that do *not* match a term, use the `-` operator. For example, `-linux` or `-tag:linux`.\n\nYou can use `|` as logical OR. For example, `linux|bsd` or `tag:linux|tag:bsd`.", @"Markdown help text for the snippet search field. Keep the code operators (tag:, title:, text:, the - prefix, and | ) unchanged; translate only the surrounding prose.");
+}
 
 @implementation iTermSnippet {
     NSDictionary *_dictionary;
@@ -330,12 +332,12 @@ static NSString *const kSnippetsDiscardedFallbackBackupKey = @"NoSyncSnippetsDis
         } else {
             [[iTermUserDefaults userDefaults] removeObjectForKey:kSnippetsFallbackPredecessorDigestKey];
         }
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem saving snippets to “%@”.\n\nThe error was:\n%@", path, error.localizedDescription]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Snippets.SaveFailedBody", nil, [NSBundle mainBundle], @"There was a problem saving snippets to “%1$@”.\n\nThe error was:\n%2$@", @"Warning body; first %@ is the file path, second is the error description"), path, error.localizedDescription]
+                                   actions:@[ iTermLocalizedOK() ]
                                  accessory:nil
                                 identifier:@"NoSyncWriteSnippetsFailed"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Problem Saving Snippets"
+                                   heading:NSLocalizedStringWithDefaultValue(@"Snippets.SaveFailedHeading", nil, [NSBundle mainBundle], @"Problem Saving Snippets", @"Warning heading shown when snippets cannot be saved")
                                     window:nil];
     } else {
         [[iTermUserDefaults userDefaults] removeObjectForKey:kPreferenceKeySnippets];

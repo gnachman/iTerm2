@@ -27,8 +27,10 @@ class iTermRemoteDataFileSync: NSObject {
         var errorDescription: String? {
             switch self {
             case .backupFailed(let itemName, let error):
+                // Localization unneeded
                 return "Failed to backup \(itemName): \(error.localizedDescription)"
             case .copyFailed(let itemName, let error):
+                // Localization unneeded
                 return "Failed to copy \(itemName): \(error.localizedDescription)"
             }
         }
@@ -726,6 +728,7 @@ class iTermRemoteDataFileSync: NSObject {
     private struct UnreadableFile: LocalizedError {
         let path: String
         var errorDescription: String? {
+            // Localization unneeded
             return "File exists but cannot be read (may be downloading): \(path)"
         }
     }
@@ -740,6 +743,7 @@ class iTermRemoteDataFileSync: NSObject {
     private struct SymlinkedItem: LocalizedError {
         let path: String
         var errorDescription: String? {
+            // Localization unneeded
             return "Refusing to sync a symlinked item (cannot be mirrored consistently): \(path)"
         }
     }

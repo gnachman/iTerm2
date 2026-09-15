@@ -14,7 +14,7 @@ class SGRTrigger: Trigger {
     }
 
     override static var title: String {
-        return "Change Style…"
+        return String(localized: "Trigger.SGR.Title", defaultValue: "Change Style…", comment: "Trigger action name: change the text style of the matching text using SGR codes")
     }
 
     override func takesParameter() -> Bool {

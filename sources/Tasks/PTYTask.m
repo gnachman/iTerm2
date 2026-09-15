@@ -823,11 +823,11 @@ static void HandleSigChld(int n) {
 
         case iTermJobManagerForkAndExecStatusFailedToFork: {
             RLog(@"Unable to fork %@: %s", progpath, strerror(optionalErrorCode.intValue));
-            NSString *error = @"Unable to fork child process: you may have too many processes already running.";
+            NSString *error = NSLocalizedStringWithDefaultValue(@"PTYTask.UnableToForkMessage", nil, [NSBundle mainBundle], @"Unable to fork child process: you may have too many processes already running.", @"Message shown when the app cannot fork a child process.");
             if (optionalErrorCode) {
-                error = [NSString stringWithFormat:@"%@ The system error was: %s", error, strerror(optionalErrorCode.intValue)];
+                error = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYTask.ForkErrorWithSystemError", nil, [NSBundle mainBundle], @"%1$@ The system error was: %2$s", @"Appends the system error to a fork-failure message. First %@ is the base message, %s is the system error string."), error, strerror(optionalErrorCode.intValue)];
             }
-            [[iTermNotificationController sharedInstance] notify:@"Unable to fork!"
+            [[iTermNotificationController sharedInstance] notify:NSLocalizedStringWithDefaultValue(@"PTYTask.UnableToForkTitle", nil, [NSBundle mainBundle], @"Unable to fork!", @"Notification title shown when the app cannot fork a child process.")
                                                  withDescription:error];
             [self.delegate taskDiedWithError:error];
             break;
@@ -844,9 +844,9 @@ static void HandleSigChld(int n) {
 
 - (void)showFailedToCreateTempSocketError {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Error";
-    alert.informativeText = [NSString stringWithFormat:@"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", NSTemporaryDirectory()];
-    [alert addButtonWithTitle:@"OK"];
+    alert.messageText = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
+    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYTask.TempFileError", nil, [NSBundle mainBundle], @"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", @"Error shown when a temporary file could not be created. %@ is the temporary directory path."), NSTemporaryDirectory()];
+    [alert addButtonWithTitle:iTermLocalizedOK()];
     [alert runModal];
 }
 

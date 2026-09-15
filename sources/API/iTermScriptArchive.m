@@ -140,25 +140,25 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 }
 
 - (BOOL)userAcceptsTrustedScriptAutoLaunchInstall {
-    NSString *body = [NSString stringWithFormat:@"“%@” would like to launch automatically when iTerm2 starts. Would you like to allow that?", self.name];
+    NSString *body = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptArchive.TrustedAutoLaunchMessage", nil, [NSBundle mainBundle], @"“%@” would like to launch automatically when iTerm2 starts. Would you like to allow that?", @"Prompt asking whether to allow a trusted script to auto-launch; %@ is the script name"), self.name];
     const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                       actions:@[ @"Launch Automatically", @"Lauch Manually" ]
+                                                                       actions:@[ NSLocalizedStringWithDefaultValue(@"ScriptArchive.LaunchAutomatically", nil, [NSBundle mainBundle], @"Launch Automatically", @"Button to allow a script to launch automatically"), NSLocalizedStringWithDefaultValue(@"ScriptArchive.LaunchManually", nil, [NSBundle mainBundle], @"Lauch Manually", @"Button to require launching a script manually") ]
                                                                      accessory:nil
                                                                     identifier:nil
                                                                    silenceable:kiTermWarningTypePersistent
-                                                                       heading:@"Allow Auto-Launch?"
+                                                                       heading:NSLocalizedStringWithDefaultValue(@"ScriptArchive.AllowAutoLaunchHeading", nil, [NSBundle mainBundle], @"Allow Auto-Launch?", @"Heading for the allow-auto-launch dialog")
                                                                         window:nil];
     return (selection == kiTermWarningSelection0);
 }
 
 - (BOOL)userAcceptsExplicitAutoLaunchInstall {
-    NSString *body = [NSString stringWithFormat:@"“%@” can launch automatically when iTerm2 starts. Would you like to allow that?", self.name];
+    NSString *body = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptArchive.ExplicitAutoLaunchMessage", nil, [NSBundle mainBundle], @"“%@” can launch automatically when iTerm2 starts. Would you like to allow that?", @"Prompt asking whether to allow a script to auto-launch; %@ is the script name"), self.name];
     const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                       actions:@[ @"Launch Automatically", @"Lauch Manually" ]
+                                                                       actions:@[ NSLocalizedStringWithDefaultValue(@"ScriptArchive.LaunchAutomatically", nil, [NSBundle mainBundle], @"Launch Automatically", @"Button to allow a script to launch automatically"), NSLocalizedStringWithDefaultValue(@"ScriptArchive.LaunchManually", nil, [NSBundle mainBundle], @"Lauch Manually", @"Button to require launching a script manually") ]
                                                                      accessory:nil
                                                                     identifier:nil
                                                                    silenceable:kiTermWarningTypePersistent
-                                                                       heading:@"Allow Auto-Launch?"
+                                                                       heading:NSLocalizedStringWithDefaultValue(@"ScriptArchive.AllowAutoLaunchHeading", nil, [NSBundle mainBundle], @"Allow Auto-Launch?", @"Heading for the allow-auto-launch dialog")
                                                                         window:nil];
     return (selection == kiTermWarningSelection0);
 }
@@ -241,7 +241,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     iTermSetupCfgParser *setupParser = [[iTermSetupCfgParser alloc] initWithPath:setupCfg];
     if (!setupParser) {
         RLog(@"Can't find setup.cfg");
-        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Cannot find setup.cfg" };
+        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ScriptArchive.MissingSetupCfg", nil, [NSBundle mainBundle], @"Cannot find setup.cfg", @"Error shown when a script archive is missing its required setup.cfg file") };
         NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
         completion(error, nil);
         return;
@@ -289,7 +289,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                                                        error:&error];
     if (error) {
         RLog(@"%@", error);
-        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Could not write to %@", to] };
+        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptArchive.WriteFailed", nil, [NSBundle mainBundle], @"Could not write to %@", @"Error shown when a script archive cannot create a file during installation; %@ is the path"), to] };
         NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
         completion(error, nil);
         return;
@@ -332,7 +332,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
             case iTermPythonRuntimeDownloaderStatusError: {
                 [[NSFileManager defaultManager] removeItemAtPath:to error:nil];
                 NSString *reason = [self errorReasonForRuntimeDownloaderStatus:status];
-                NSString *description = [NSString stringWithFormat:@"Python Runtime not downloaded: %@", reason];
+                NSString *description = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptArchive.RuntimeNotDownloaded", nil, [NSBundle mainBundle], @"Python Runtime not downloaded: %@", @"Error shown when the Python runtime needed to install a script could not be downloaded; %@ is the reason"), reason];
                 NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: description };
                 NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:3 userInfo:userInfo];
                 completion(error, nil);
@@ -377,14 +377,14 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 - (NSString *)errorReasonForRuntimeDownloaderStatus:(iTermPythonRuntimeDownloaderStatus)status {
     switch (status) {
         case iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound:
-            return @"Requested version not available";
+            return NSLocalizedStringWithDefaultValue(@"ScriptArchive.RequestedVersionUnavailable", nil, [NSBundle mainBundle], @"Requested version not available", @"Reason shown when the requested Python version for a script is not available for download");
         case iTermPythonRuntimeDownloaderStatusCanceledByUser:
-            return @"Canceled by user";
+            return NSLocalizedStringWithDefaultValue(@"ScriptArchive.CanceledByUser", nil, [NSBundle mainBundle], @"Canceled by user", @"Reason shown when the user cancels the Python runtime download during script installation");
         case iTermPythonRuntimeDownloaderStatusUnknown:
         case iTermPythonRuntimeDownloaderStatusWorking:
-            return @"An unknown problem occurred";
+            return NSLocalizedStringWithDefaultValue(@"ScriptArchive.UnknownProblem", nil, [NSBundle mainBundle], @"An unknown problem occurred", @"Reason shown when the Python runtime download fails for an unknown reason during script installation");
         case iTermPythonRuntimeDownloaderStatusError:
-            return @"Network error";
+            return NSLocalizedStringWithDefaultValue(@"ScriptArchive.NetworkError", nil, [NSBundle mainBundle], @"Network error", @"Reason shown when the Python runtime download fails due to a network error during script installation");
         case iTermPythonRuntimeDownloaderStatusNotNeeded:
         case iTermPythonRuntimeDownloaderStatusDownloaded:
             return nil;
@@ -412,8 +412,8 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
         }
         const BOOL dependencyFailed = (errorStatus.code == iTermInstallPythonStatusDependencyFailed);
         NSString *description = dependencyFailed
-            ? [NSString stringWithFormat:@"Failed to install Python package: %@", errorStatus.localizedDescription]
-            : [NSString stringWithFormat:@"Failed to install Python Runtime: %@", errorStatus.localizedDescription];
+            ? [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptArchive.PackageInstallFailed", nil, [NSBundle mainBundle], @"Failed to install Python package: %@", @"Error shown when installing a script’s Python dependency package fails; %@ is the detail"), errorStatus.localizedDescription]
+            : [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptArchive.RuntimeInstallFailed", nil, [NSBundle mainBundle], @"Failed to install Python Runtime: %@", @"Error shown when installing the Python runtime for a script fails; %@ is the detail"), errorStatus.localizedDescription];
         DLog(@"failure: %@", description);
         NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive"
                                              code:(dependencyFailed ? 2 : 1)

@@ -149,24 +149,35 @@ class Window:
             minimized_sessions = [
                 iterm2.session.Session(connection, None, summary)
                 for summary in (tab.minimized_sessions or [])]
-            tabs.append(
-                iterm2.tab.Tab(
-                    connection,
-                    tab.tab_id,
-                    root,
-                    tmux_window_id,
-                    tab.tmux_connection_id,
-                    minimized_sessions))
+            new_tab = iterm2.tab.Tab(
+                connection,
+                tab.tab_id,
+                root,
+                tmux_window_id,
+                tab.tmux_connection_id,
+                minimized_sessions)
+            # protocol 1.18+ reports the active session here, so current_session
+            # is correct straight from a list-sessions refresh without waiting
+            # for a focus notification. Older servers leave it unset.
+            if tab.HasField("active_session_id"):
+                new_tab.active_session_id = tab.active_session_id
+            tabs.append(new_tab)
 
         if not tabs:
             return None
 
-        return iterm2.window.Window(
+        new_window = iterm2.window.Window(
             connection,
             window.window_id,
             tabs,
             window.frame,
             window.number)
+        # protocol 1.18+ reports the selected tab here, so current_tab is
+        # correct straight from a list-sessions refresh without waiting for a
+        # focus notification. Older servers leave it unset.
+        if window.HasField("selected_tab_id"):
+            new_window.selected_tab_id = window.selected_tab_id
+        return new_window
 
     # pylint: disable=too-many-arguments
     def __init__(self, connection, window_id, tabs, frame, number):

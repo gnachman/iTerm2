@@ -19,7 +19,7 @@ class MoveSessionToNewTabBuiltInFunction: iTermBuiltInFunction {
             context: .app,
             sideEffectsPlaceholder: "[move_session_to_new_tab]") { parameters, completion in
                 guard let sessionID = parameters["session"] as? String else {
-                    completion(nil, Self.error("Missing session argument"))
+                    completion(nil, Self.error(String(localized: "MoveSession.MissingSessionArgument", defaultValue: "Missing session argument", comment: "Error when the session argument is missing")))
                     return
                 }
                 let windowID = parameters["window_id"] as? String
@@ -27,20 +27,20 @@ class MoveSessionToNewTabBuiltInFunction: iTermBuiltInFunction {
 
                 let controller = iTermController.sharedInstance()!
                 guard let session = controller.session(withGUID: sessionID) else {
-                    completion(nil, Self.error("Invalid session ID"))
+                    completion(nil, Self.error(String(localized: "MoveSession.InvalidSessionID", defaultValue: "Invalid session ID", comment: "Error when a session ID does not identify a session")))
                     return
                 }
 
                 let destWindow: PseudoTerminal
                 if let windowID = windowID {
                     guard let term = controller.terminal(withGuid: windowID) else {
-                        completion(nil, Self.error("Invalid window ID"))
+                        completion(nil, Self.error(String(localized: "MoveSession.InvalidWindowID", defaultValue: "Invalid window ID", comment: "Error when a window ID does not identify a window")))
                         return
                     }
                     destWindow = term
                 } else {
                     guard let term = controller.windowForSession(withGUID: sessionID) else {
-                        completion(nil, Self.error("Session has no window"))
+                        completion(nil, Self.error(String(localized: "MoveSession.NoWindow", defaultValue: "Session has no window", comment: "Error when a session is not in a window")))
                         return
                     }
                     destWindow = term
@@ -60,7 +60,7 @@ class MoveSessionToNewTabBuiltInFunction: iTermBuiltInFunction {
                         toNewTabIn: destWindow,
                         atIndex: tabIndex)
                     if tabID < 0 {
-                        completion(nil, Self.error("Failed to move session"))
+                        completion(nil, Self.error(String(localized: "MoveSession.MoveFailed", defaultValue: "Failed to move session", comment: "Error when moving a session into a new tab fails")))
                         return
                     }
                     completion(String(tabID), nil)
@@ -86,13 +86,13 @@ class MoveSessionToNewWindowBuiltInFunction: iTermBuiltInFunction {
             context: .app,
             sideEffectsPlaceholder: "[move_session_to_new_window]") { parameters, completion in
                 guard let sessionID = parameters["session"] as? String else {
-                    completion(nil, Self.error("Missing session argument"))
+                    completion(nil, Self.error(String(localized: "MoveSession.MissingSessionArgument", defaultValue: "Missing session argument", comment: "Error when the session argument is missing")))
                     return
                 }
 
                 let controller = iTermController.sharedInstance()!
                 guard let session = controller.session(withGUID: sessionID) else {
-                    completion(nil, Self.error("Invalid session ID"))
+                    completion(nil, Self.error(String(localized: "MoveSession.InvalidSessionID", defaultValue: "Invalid session ID", comment: "Error when a session ID does not identify a session")))
                     return
                 }
 
@@ -106,7 +106,7 @@ class MoveSessionToNewWindowBuiltInFunction: iTermBuiltInFunction {
                     if let windowGuid = windowGuid {
                         completion(windowGuid, nil)
                     } else {
-                        completion(nil, Self.error("Failed to move session to new window"))
+                        completion(nil, Self.error(String(localized: "MoveSession.MoveToNewWindowFailed", defaultValue: "Failed to move session to new window", comment: "Error when moving a session into a new window fails")))
                     }
                 }
             }

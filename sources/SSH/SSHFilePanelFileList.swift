@@ -71,10 +71,10 @@ class SSHFilePanelFileList: NSScrollView {
 
         var title: String {
             switch self {
-            case .name: return "Name"
-            case .dateModified: return "Date Created"
-            case .size: return "Size"
-            case .kind: return "Kind"
+            case .name: return String(localized: "SSHFilePanelFileList.ColumnName", defaultValue: "Name", comment: "Title of the Name column")
+            case .dateModified: return String(localized: "SSHFilePanelFileList.ColumnDateCreated", defaultValue: "Date Created", comment: "Title of the Date Created column")
+            case .size: return String(localized: "SSHFilePanelFileList.ColumnSize", defaultValue: "Size", comment: "Title of the Size column")
+            case .kind: return String(localized: "SSHFilePanelFileList.ColumnKind", defaultValue: "Kind", comment: "Title of the Kind column")
             }
         }
 
@@ -512,7 +512,7 @@ class SSHFilePanelFileList: NSScrollView {
         guard let size = size else { return "--" }
 
         if size == 0 {
-            return "Zero bytes"
+            return String(localized: "SSHFilePanelFileList.ZeroBytes", defaultValue: "Zero bytes", comment: "File size label for an empty (zero byte) file")
         }
 
         let formatter = ByteCountFormatter()
@@ -570,36 +570,36 @@ class SSHFilePanelFileList: NSScrollView {
             let pathExtension = (file.name as NSString).pathExtension.lowercased()
             switch pathExtension {
             case "png", "jpg", "jpeg", "gif", "bmp", "tiff":
-                return "\(pathExtension.uppercased()) image"
+                return String(localized: "SSHFilePanelFileList.KindImage", defaultValue: "\(pathExtension.uppercased()) image", comment: "Kind description for an image file, e.g. “PNG image”")
             case "txt", "md", "rtf":
-                return "Text document"
+                return String(localized: "SSHFilePanelFileList.KindTextDocument", defaultValue: "Text document", comment: "Kind description for a text document")
             case "pdf":
-                return "PDF document"
+                return String(localized: "SSHFilePanelFileList.KindPDFDocument", defaultValue: "PDF document", comment: "Kind description for a PDF document")
             case "mp4", "mov", "avi", "mkv":
-                return "Video"
+                return String(localized: "SSHFilePanelFileList.KindVideo", defaultValue: "Video", comment: "Kind description for a video file")
             case "mp3", "wav", "aac", "flac":
-                return "Audio"
+                return String(localized: "SSHFilePanelFileList.KindAudio", defaultValue: "Audio", comment: "Kind description for an audio file")
             case "zip", "tar", "gz", "bz2":
-                return "Archive"
+                return String(localized: "SSHFilePanelFileList.KindArchive", defaultValue: "Archive", comment: "Kind description for an archive file")
             case "lua":
-                return "Lua script"
+                return String(localized: "SSHFilePanelFileList.KindLuaScript", defaultValue: "Lua script", comment: "Kind description for a Lua script")
             case "nvim":
-                return "Neovim config"
+                return String(localized: "SSHFilePanelFileList.KindNeovimConfig", defaultValue: "Neovim config", comment: "Kind description for a Neovim config file")
             case "sh":
-                return "Shell script"
+                return String(localized: "SSHFilePanelFileList.KindShellScript", defaultValue: "Shell script", comment: "Kind description for a shell script")
             case "m":
-                return "Objective-C source"
+                return String(localized: "SSHFilePanelFileList.KindObjectiveCSource", defaultValue: "Objective-C source", comment: "Kind description for an Objective-C source file")
             case "":
-                return "Document"
+                return String(localized: "SSHFilePanelFileList.KindDocument", defaultValue: "Document", comment: "Kind description for a generic document")
             default:
-                return "Document"
+                return String(localized: "SSHFilePanelFileList.KindDocument", defaultValue: "Document", comment: "Kind description for a generic document")
             }
         case .folder:
-            return "Folder"
+            return String(localized: "SSHFilePanelFileList.KindFolder", defaultValue: "Folder", comment: "Kind description for a folder")
         case .host:
-            return "Host"
+            return String(localized: "SSHFilePanelFileList.KindHost", defaultValue: "Host", comment: "Kind description for a host")
         case .symlink:
-            return "Alias"
+            return String(localized: "SSHFilePanelFileList.KindAlias", defaultValue: "Alias", comment: "Kind description for a symlink/alias")
         }
     }
 }
@@ -986,6 +986,7 @@ extension SSHFilePanelFileList: NSFilePromiseProviderDelegate {
         guard let userInfo = filePromiseProvider.userInfo as? [String: Any],
               let node = userInfo["node"] as? FileNode else {
             DLog("Failed to get node from userInfo")
+            // Localization unneeded
             return "unknown_file"
         }
 
@@ -1005,7 +1006,7 @@ extension SSHFilePanelFileList: NSFilePromiseProviderDelegate {
               let endpoint = userInfo["endpoint"] as? SSHEndpoint,
               let fullPath = userInfo["fullPath"] as? String else {
             DLog("Missing file information for promise")
-            let error = NSError(domain: "SSHFilePanelError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing file information"])
+            let error = NSError(domain: "SSHFilePanelError", code: 1, userInfo: [NSLocalizedDescriptionKey: String(localized: "SSHFilePanelFileList.MissingFileInformation", defaultValue: "Missing file information", comment: "Error when file information needed for a drag-and-drop download is missing")])
             completionHandler(error)
             return
         }

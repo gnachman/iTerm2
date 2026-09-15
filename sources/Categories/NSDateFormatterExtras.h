@@ -14,6 +14,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)dateDifferenceStringFromDate:(NSDate * _Nonnull)date;
 + (NSString *)compactDateDifferenceStringFromDate:(NSDate * _Nonnull)date;
 + (NSString *)durationString:(NSTimeInterval)duration;
+
+// Exposed for testing: nonEnglishLanguage is nil for an English UI (separator is always ":"),
+// otherwise the separator follows locale's region.
++ (NSString *)durationString:(NSTimeInterval)duration
+          nonEnglishLanguage:(nullable NSString *)nonEnglishLanguage
+                      locale:(NSLocale *)locale;
 + (NSString *)dateDifferenceStringFromDate:(NSDate *)date
                                    options:(iTermDateDifferenceOptions)options;
 + (NSString *)compactDateDifferenceStringFromTimeDelta:(NSTimeInterval)theTime;

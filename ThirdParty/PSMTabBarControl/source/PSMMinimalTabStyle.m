@@ -557,7 +557,12 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 - (PSMTabBarCell *)lastVisibleCell {
     PSMTabBarControl *bar = self.tabBar;
     for (PSMTabBarCell *cell in bar.cells.reverseObjectEnumerator) {
-        if (!cell.isInOverflowMenu) {
+        // Mirror -[PSMTabBarControl _shouldDrawCell]: a collapsed group's trailing
+        // members stay in the cell list with a zero-size frame but isInOverflowMenu==NO.
+        // Skipping only overflow cells would return such a zero-height member when a
+        // collapsed group is the rightmost item, giving endInsetFrame zero height so the
+        // add-tab-button margin never gets painted (a white rectangle shows through).
+        if (!cell.isInOverflowMenu && !cell.isCollapsedHidden) {
             return cell;
         }
     }

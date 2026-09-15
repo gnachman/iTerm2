@@ -1408,10 +1408,15 @@ static const CGFloat kPSMSquaredCollapsedChevron = 14;  // room for the collapse
     }];
     // A fully collapsed run has no visible members, so the block above never
     // fires for it; draw the collapsed chip's self-contained affordance.
+    NSString *dropTargetGID = [bar collapsedTabGroupDropTargetIdentifier];
     [bar enumerateCollapsedTabGroupChipsWithBlock:^(PSMTabBarCell *chip,
                                                     NSInteger memberCount,
                                                     NSString *gid) {
-        [self drawSquaredCollapsedTabGroupChip:chip memberCount:memberCount groupID:gid inBar:bar];
+        [self drawSquaredCollapsedTabGroupChip:chip
+                                   memberCount:memberCount
+                                       groupID:gid
+                                         inBar:bar
+                                  isDropTarget:[gid isEqualToString:dropTargetGID]];
     }];
 }
 
@@ -1432,7 +1437,8 @@ static const CGFloat kPSMSquaredCollapsedChevron = 14;  // room for the collapse
 - (void)drawSquaredCollapsedTabGroupChip:(PSMTabBarCell *)chip
                              memberCount:(NSInteger)count
                                  groupID:(NSString *)gid
-                                   inBar:(PSMTabBarControl *)bar {
+                                   inBar:(PSMTabBarControl *)bar
+                            isDropTarget:(BOOL)isDropTarget {
     id<PSMTabGroup> group = [bar.tabGroupDataSource tabGroupWithIdentifier:gid];
     NSColor *groupColor = group.color ?: [NSColor systemBlueColor];
     NSString *name = group.name ?: @"";
@@ -1494,6 +1500,16 @@ static const CGFloat kPSMSquaredCollapsedChevron = 14;  // room for the collapse
     // Squared enclosing outline.
     [groupColor set];
     NSFrameRectWithWidthUsingOperation(box, 1, NSCompositingOperationSourceOver);
+
+    // Drop-target feedback: while a dragged tab is poised to join this collapsed
+    // group, frame the block in the accent color so the user sees the drop lands
+    // INSIDE the group (no member cells open a slot to show it).
+    // NSFrameRect* fills the border with the current FILL color, so use -set (not
+    // -setStroke) or the frame would draw in whatever fill color was last set.
+    if (isDropTarget) {
+        [[NSColor controlAccentColor] set];
+        NSFrameRectWithWidthUsingOperation(NSInsetRect(box, -1, -1), 2, NSCompositingOperationSourceOver);
+    }
 }
 
 - (void)drawSquaredTabGroupRunHorizontal:(BOOL)horizontal

@@ -150,6 +150,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 - (void)removeTabProgressBarForCell:(PSMTabBarCell *)cell;
 // Hit-test a group chip (chips are invisible to -cellForPoint:).
 - (PSMTabBarCell *)chipForPoint:(NSPoint)point;
+- (void)clearPreDragSelection;
+- (void)setPreDragSelectedTabViewItem:(NSTabViewItem *)item;
+- (BOOL)tabViewItemIsHiddenInBar:(NSTabViewItem *)item;
 @end
 
 @implementation PSMTabBarControl {
@@ -231,6 +234,14 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     BOOL _needsUpdateAnimate;
     BOOL _needsUpdate;
     NSInteger _preDragSelectedTabIndex;  // or NSNotFound
+    // The tab that was active when the current drag began, retained, but only
+    // when the drag started on a BACKGROUND (non-active) tab; nil when the
+    // dragged tab was itself the active one. Unlike the index above (which the
+    // out-of-bar restore in -dragWillExitTabBar consumes), this survives a
+    // re-entry so an in-bar drop into a collapsed group can restore it. Set in
+    // -mouseDown:, cleared when the drag ends (-dragDidFinish) or on a plain
+    // -mouseUp:.
+    NSTabViewItem *_preDragSelectedTabViewItem;
     NSMapTable<PSMTabBarCell *, NSView *> *_tabProgressBars;
     NSMutableArray<PSMToolTip *> *_tooltips;
     NSInteger _toolTipCoalescing;
@@ -441,6 +452,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [_overflowPopUpButton release];
     [_cells release];
     [_tabView release];
+    [_preDragSelectedTabViewItem release];
     [_addTabButton release];
     [partnerView release];
     [_lastMouseDownEvent release];
@@ -956,8 +968,72 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     }
 }
 
-- (void)dragDidFinish {
+- (void)setPreDragSelectedTabViewItem:(NSTabViewItem *)item {
+    if (item == _preDragSelectedTabViewItem) {
+        return;
+    }
+    [_preDragSelectedTabViewItem release];
+    _preDragSelectedTabViewItem = [item retain];
+}
+
+// Forget everything about the pre-drag selection (both the index the out-of-bar
+// restore uses and the retained item the in-bar-drop restore uses).
+- (void)clearPreDragSelection {
     _preDragSelectedTabIndex = NSNotFound;
+    [self setPreDragSelectedTabViewItem:nil];
+}
+
+- (void)dragDidFinish {
+    [self clearPreDragSelection];
+}
+
+- (NSTabViewItem *)preDragSelectedTabViewItem {
+    return _preDragSelectedTabViewItem;
+}
+
+// After an in-bar drop of `droppedItem`: when the tab landed hidden inside a
+// collapsed group AND the drag began on a BACKGROUND (not the active) tab, keep the
+// group collapsed and return YES. Returns NO when the caller should instead select
+// the dropped tab: it did not land in a collapsed group, or it WAS the active tab
+// (so selecting it expands the group -- a collapsed group can't hold the active
+// tab). `sourceBar` is the bar the tab was dragged FROM (== self same-window); its
+// pre-drag active tab (recorded in -mouseDown:) tells whether the dragged tab was a
+// background tab. Reading the SOURCE, not self, is what makes this correct for a
+// cross-window drop, where self (the destination) never recorded this drag.
+- (BOOL)keepCollapsedAfterInBarDropOf:(NSTabViewItem *)droppedItem
+                       draggedFromBar:(PSMTabBarControl *)sourceBar
+          destinationPreDropSelection:(NSTabViewItem *)destinationPreDropSelection {
+    const BOOL droppedHidden = [self tabViewItemIsHiddenInBar:droppedItem];
+    PSMTabBarControl *origin = sourceBar ?: self;
+    const BOOL sameWindow = (origin == self);
+    NSTabViewItem *sourceActive = [[[origin preDragSelectedTabViewItem] retain] autorelease];
+    RLog(@"tabGroup: keepCollapsed dropped=%@ droppedHidden=%d sameBar=%d sourcePreDrag=%@ destPreDrop=%@",
+         [droppedItem label] ?: @"-", (int)droppedHidden, (int)sameWindow,
+         [sourceActive label] ?: @"(nil)", [destinationPreDropSelection label] ?: @"(nil)");
+    if (!droppedHidden) {
+        return NO;  // did not land in a collapsed group -> select the dropped tab
+    }
+    if (sourceActive == nil || sourceActive == droppedItem) {
+        return NO;  // dragged the ACTIVE tab -> select it (expands the group)
+    }
+    // A BACKGROUND tab landed hidden in a collapsed group: keep the group collapsed
+    // by making the RIGHT tab active (so the dropped tab is not). The drop machinery
+    // has ALREADY selected the dropped tab in this bar (see -reallyPerformDragOperation:
+    // cross-window select, and same-window mouse-down), so restore explicitly:
+    //   same-window  -> the tab that was active before the drag (source == self)
+    //   cross-window -> this bar's OWN active tab from just before the drop
+    NSTabViewItem *restore = sameWindow ? sourceActive : destinationPreDropSelection;
+    if (restore == nil || restore == droppedItem ||
+        ![[self.tabView tabViewItems] containsObject:restore] ||
+        [self tabViewItemIsHiddenInBar:restore]) {
+        return NO;  // nothing valid to restore -> let the caller select the dropped tab
+    }
+    if (self.tabView.selectedTabViewItem != restore) {
+        [self.tabView selectTabViewItem:restore];
+    }
+    RLog(@"tabGroup: keepCollapsed restored selection to %@", [restore label] ?: @"-");
+    [origin clearPreDragSelection];
+    return YES;
 }
 
 // YES if `item`'s cell is currently hidden in the bar (overflowed or its group
@@ -2737,6 +2813,73 @@ typedef struct {
     return regularWidths;
 }
 
+// Width the cell area needs for every cell to be laid out at its minimum with
+// none dropped. Mirrors the three branches of the width builder below -- chips,
+// pinned, plain -- so the two must be edited together or the reservation this
+// feeds will disagree with the layout it is meant to predict.
+//
+// Uneven (sizeCellsToFit) and optimum sizing deliberately have no branch here.
+// -variableCellWidthsWithOverflow: returns nil unless every cell fits at its
+// desired width, and desired is already at least cellMinWidth;
+// -shouldUseOptimalWidthWithOverflow: is only true when optimum already fits.
+// Neither can overflow a bar that this expression says fits, so the overflow
+// threshold is a cellMinWidth question in every branch.
+- (CGFloat)minimumCellAreaWidth {
+    const CGFloat spacing = _style.intercellSpacing;
+    const CGFloat minWidth = self.cellMinWidth;
+
+    if ([self hasTabGroupChipCells]) {
+        // Collapsed members are hidden: no width and no intercell spacing, which
+        // is exactly why a raw tab count overstates what the tabs need.
+        const NSInteger visibleCellCount = [self numberOfCellsContributingIntercellSpacing];
+        CGFloat reserved = 0;
+        NSInteger tabCount = 0;
+        for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
+            PSMTabBarCell *cell = _cells[i];
+            if (cell.isCollapsedHidden) {
+                continue;
+            }
+            if (cell.isTabGroupChip) {
+                reserved += [self widthOfTabGroupChipCellAtIndex:i];
+            } else if (cell.isPinned) {
+                reserved += _pinnedTabWidth;
+            } else {
+                tabCount++;
+            }
+        }
+        return reserved + (CGFloat)tabCount * minWidth + spacing * MAX(0.0, (CGFloat)visibleCellCount - 1.0);
+    }
+
+    // Floor at one cell: _cells is briefly empty during teardown, and a zero
+    // minimum would hand a caller the entire bar for a frame.
+    const NSUInteger cellCount = MAX((NSUInteger)1, _cells.count);
+    const NSUInteger pinnedCount = [self numberOfPinnedCells];
+    if (pinnedCount > 0) {
+        const NSUInteger unpinnedCount = cellCount - pinnedCount;
+        return ([self totalPinnedSpaceForPinnedCount:pinnedCount unpinnedCount:unpinnedCount] +
+                (CGFloat)unpinnedCount * minWidth +
+                spacing * MAX(0.0, (CGFloat)unpinnedCount - 1.0));
+    }
+    return (CGFloat)cellCount * minWidth + spacing * MAX(0.0, (CGFloat)cellCount - 1.0);
+}
+
+- (CGFloat)maximumLeftInsetFittingAllCellsMinimallyForWidth:(CGFloat)width {
+    // -availableCellWidthWithOverflow: is frame width less both margins, so the
+    // largest inset that still fits is whatever remains once the margins and the
+    // cells' own minimum are taken out. Asking for the no-overflow right margin
+    // is the point: this answers whether the bar fits *without* degrading.
+    //
+    // The left margin is not simply insets.left: Yosemite returns it unchanged
+    // but Tahoe returns it plus 2. Subtracting self.insets.left leaves only that
+    // per-style constant, which is what a caller about to choose a new inset
+    // needs. Do not simplify either half away -- alone, one reads a stale inset
+    // and the other silently drops the style's own padding.
+    const CGFloat stylePadding = [_style leftMarginForTabBarControl] - self.insets.left;
+    const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:NO
+                                                                   addTabButton:self.showAddTabButton];
+    return width - stylePadding - rightMargin - [self minimumCellAreaWidth];
+}
+
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {
     if ([self hasTabGroupChipCells]) {
         return [self cellWidthsForHorizontalArrangementWithChipsWithOverflow:withOverflow];
@@ -3315,14 +3458,24 @@ typedef struct {
             [cell setCloseButtonPressed:NO];
             if ([theEvent clickCount] == 1) {
                 const NSEventModifierFlags mask = NSEventModifierFlagOption;
-                if (_selectsTabsOnMouseDown && (theEvent.modifierFlags & mask) == 0) {
-                    if (cell.state != NSControlStateValueOn) {
-                        _preDragSelectedTabIndex = [[self tabView] indexOfTabViewItem:self.tabView.selectedTabViewItem];
-                    } else {
-                        // Because we always want it to switch tabs, don't save
-                        // the index if you're dragging the current tab.
-                        _preDragSelectedTabIndex = NSNotFound;
-                    }
+                const BOOL plainClick = ((theEvent.modifierFlags & mask) == 0);
+                // Record the pre-drag active tab for the keep-a-collapsed-group-
+                // collapsed behavior on EVERY single-click that starts a potential
+                // drag, INDEPENDENT of both select-on-mouse-down AND the Option
+                // modifier (a drag is initiated in -mouseDragged: regardless of
+                // Option, so an Option-drag of a background tab must keep the group
+                // collapsed too). A cross-window drop reads the SOURCE bar's value.
+                // nil means the ACTIVE tab was clicked (dragging it expands the group).
+                [self setPreDragSelectedTabViewItem:(cell.state != NSControlStateValueOn
+                                                     ? self.tabView.selectedTabViewItem
+                                                     : nil)];
+                if (_selectsTabsOnMouseDown && plainClick) {
+                    // _preDragSelectedTabIndex drives restoring the selection if the
+                    // drag is cancelled -- a select-on-mouse-down concern only, so it
+                    // stays gated on that setting (unlike the item above).
+                    _preDragSelectedTabIndex = (cell.state != NSControlStateValueOn
+                                                ? [[self tabView] indexOfTabViewItem:self.tabView.selectedTabViewItem]
+                                                : NSNotFound);
                     [self tabClick:cell];
                 }
             }
@@ -3500,7 +3653,7 @@ typedef struct {
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
-    _preDragSelectedTabIndex = NSNotFound;
+    [self clearPreDragSelection];
     _haveInitialDragLocation = NO;
     if (_resizing) {
         _resizing = NO;
@@ -4552,6 +4705,18 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
             block(chip, run.memberCount, chip.tabGroupIdentifier);
         }
     }
+}
+
+// The id of the collapsed group the in-flight drag would join if dropped now, or
+// nil. A collapsed group draws no member cells, so the opening-slot affordance is
+// invisible; styles use this to highlight the group's chip as the drop target
+// instead. Only meaningful while this bar is the drag destination.
+- (NSString *)collapsedTabGroupDropTargetIdentifier {
+    PSMTabDragAssistant *assistant = [PSMTabDragAssistant sharedDragAssistant];
+    if (![assistant isDragging] || [assistant destinationTabBar] != self) {
+        return nil;
+    }
+    return [assistant collapsedGroupJoinTargetIdentifier];
 }
 
 // Like NSUnionRect, but a zero-WIDTH rect still contributes its x-position.

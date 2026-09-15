@@ -95,7 +95,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
             RLog(@"Wrong number of items in row: %@", row);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
-                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Wrong number of items in row: %@", row] }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GraphTableTransformer.WrongNumberOfItems", nil, [NSBundle mainBundle], @"Wrong number of items in row: %@", @"Error when a restored-state row has the wrong number of items. %@ is the row."), row] }];
             return nil;
         }
         NSString *key = [NSString castFrom:row[0]];
@@ -110,7 +110,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
             RLog(@"Bad row: %@", row);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
-                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Bad row: %@", row] }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GraphTableTransformer.BadRow", nil, [NSBundle mainBundle], @"Bad row: %@", @"Error when a restored-state row is malformed. %@ is the row."), row] }];
             return nil;
         }
         // data can be nil if hasLargeData is true (will be lazy loaded)
@@ -123,7 +123,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
                 RLog(@"Two roots found");
                 _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                                  code:1
-                                             userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Two roots found"] }];
+                                             userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GraphTableTransformer.TwoRootsFound", nil, [NSBundle mainBundle], @"Two roots found", @"Error when the restored-state graph has two root nodes.")] }];
                 return nil;
             }
             *rootNodeIDOut = rowid;
@@ -156,7 +156,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
             RLog(@"Dangling parent pointer %@ from %@", nodeDict[@"parent"], nodeid);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
-                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Dangling parent pointer %@ from %@", nodeDict[@"parent"], nodeid] }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GraphTableTransformer.DanglingParentPointer", nil, [NSBundle mainBundle], @"Dangling parent pointer %1$@ from %2$@", @"Error when a restored-state node references a missing parent. First %@ is the parent id, second is the node id."), nodeDict[@"parent"], nodeid] }];
             *stop = YES;
         }
         NSMutableArray *children = parentDict[@"children"];

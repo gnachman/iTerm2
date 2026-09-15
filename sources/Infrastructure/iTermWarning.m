@@ -12,7 +12,11 @@
 
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static const NSTimeInterval kOneMonthTime = 30 * 24 * 60 * 60;
-static NSString *const kCancel = @"Cancel";
+// The default Cancel label. Localized so that the label-array API's implicit cancel action matches
+// callers that pass the same localized "Cancel" (General.Cancel), rather than an English literal.
+static NSString *iTermWarningDefaultCancelLabel(void) {
+    return iTermLocalizedCancel();
+}
 static id<iTermWarningHandler> gWarningHandler;
 static BOOL gShowingWarning;
 BOOL gShowRememberedAlerts = NO;
@@ -112,7 +116,7 @@ BOOL gShowRememberedAlerts = NO;
                            identifier:identifier
                           silenceable:warningType
                               heading:heading
-                          cancelLabel:kCancel
+                          cancelLabel:iTermWarningDefaultCancelLabel()
                                window:window];
 }
 
@@ -200,6 +204,7 @@ BOOL gShowRememberedAlerts = NO;
 }
 
 - (void)runModalAsync:(void (^)(iTermWarningSelection result, iTermWarning *warning))completion {
+    [self resolveActionRoles];
     iTermWarningSelection preemptedSelection;
     if ([self preempt:&preemptedSelection]) {
         completion(preemptedSelection, self);
@@ -322,12 +327,12 @@ BOOL gShowRememberedAlerts = NO;
 
 - (NSAlert *)makeAlert {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = _heading ?: @"Warning";
+    alert.messageText = _heading ?: NSLocalizedStringWithDefaultValue(@"Warning.DefaultHeading", nil, [NSBundle mainBundle], @"Warning", @"Default title for a warning alert");
 
     // If this warning is being shown due to the "always show alerts with remembered
     // selections" mode, prepend explanatory text.
     if (_shownDueToRememberedAlertsMode && _savedSelectionLabel) {
-        alert.informativeText = [NSString stringWithFormat:@"%@\n\nThis alert had a saved selection of “%@”. It is being shown because “Always show alerts with remembered selections” is turned on in iTerm2 > Suppressed Alerts.", _title, _savedSelectionLabel];
+        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Warning.RememberedSelectionExplanation", nil, [NSBundle mainBundle], @"%1$@\n\nThis alert had a saved selection of “%2$@”. It is being shown because “Always show alerts with remembered selections” is turned on in iTerm2 > Suppressed Alerts.", @"Explanation shown when a suppressed alert is displayed anyway; first %@ is the original message, second %@ is the saved selection label"), _title, _savedSelectionLabel];
     } else {
         alert.informativeText = _title;
     }
@@ -362,12 +367,12 @@ BOOL gShowRememberedAlerts = NO;
 
     // Add "Permanently Forget Saved Selection" button when in remembered alerts mode.
     if (_shownDueToRememberedAlertsMode && _identifier) {
-        [alert addButtonWithTitle:@"Permanently Forget Saved Selection"];
+        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"Warning.PermanentlyForgetSavedSelection", nil, [NSBundle mainBundle], @"Permanently Forget Saved Selection", @"Button to forget a warning's remembered selection")];
     }
 
     int numNonCancelActions = [_warningActions count];
     for (iTermWarningAction *warningAction in _warningActions) {
-        if ([warningAction.label isEqualToString:_cancelLabel]) {
+        if (warningAction.isCancel) {
             --numNonCancelActions;
         }
     }
@@ -376,25 +381,27 @@ BOOL gShowRememberedAlerts = NO;
     if (_warningType == kiTermWarningTypeTemporarilySilenceable) {
         assert(_identifier);
         if (numNonCancelActions == 1) {
-            alert.suppressionButton.title = @"Suppress this message for ten minutes";
+            // Not a count plural: the wording depends on whether the warning has one action (suppress)
+            // or several (remember which one), and “ten minutes” is a fixed duration.
+            alert.suppressionButton.title = NSLocalizedStringWithDefaultValue(@"Warning.SuppressTenMinutes", nil, [NSBundle mainBundle], @"Suppress this message for ten minutes", @"Suppression checkbox for a single-action warning, temporary (ten minutes)");
         } else if (numNonCancelActions > 1) {
-            alert.suppressionButton.title = @"Remember my choice for ten minutes";
+            alert.suppressionButton.title = NSLocalizedStringWithDefaultValue(@"Warning.RememberTenMinutes", nil, [NSBundle mainBundle], @"Remember my choice for ten minutes", @"Suppression checkbox for a multi-action warning, temporary (ten minutes)");
         }
         alert.showsSuppressionButton = YES;
     } else if (_warningType == kiTermWarningTypeSilenceableForOneMonth) {
         assert(_identifier);
         if (numNonCancelActions == 1) {
-            alert.suppressionButton.title = @"Suppress this message for 30 days";
+            alert.suppressionButton.title = NSLocalizedStringWithDefaultValue(@"Warning.SuppressThirtyDays", nil, [NSBundle mainBundle], @"Suppress this message for 30 days", @"Suppression checkbox for a single-action warning, for 30 days");
         } else if (numNonCancelActions > 1) {
-            alert.suppressionButton.title = @"Remember my choice for 30 days";
+            alert.suppressionButton.title = NSLocalizedStringWithDefaultValue(@"Warning.RememberThirtyDays", nil, [NSBundle mainBundle], @"Remember my choice for 30 days", @"Suppression checkbox for a multi-action warning, for 30 days");
         }
         alert.showsSuppressionButton = YES;
     } else if (_warningType == kiTermWarningTypePermanentlySilenceable) {
         assert(_identifier);
         if (numNonCancelActions == 1) {
-            alert.suppressionButton.title = @"Suppress this message permanently";
+            alert.suppressionButton.title = NSLocalizedStringWithDefaultValue(@"Warning.SuppressPermanently", nil, [NSBundle mainBundle], @"Suppress this message permanently", @"Suppression checkbox for a single-action warning, permanent");
         } else if (numNonCancelActions > 1) {
-            alert.suppressionButton.title = @"Remember my choice";
+            alert.suppressionButton.title = NSLocalizedStringWithDefaultValue(@"Warning.RememberChoice", nil, [NSBundle mainBundle], @"Remember my choice", @"Suppression checkbox for a multi-action warning, permanent");
         }
         alert.showsSuppressionButton = YES;
     }
@@ -423,30 +430,14 @@ BOOL gShowRememberedAlerts = NO;
     return alert;
 }
 
-- (NSString *)labelForSelection:(iTermWarningSelection)selection {
-    if (_actionToSelectionMap) {
-        // Find which action index maps to this selection
-        for (NSUInteger i = 0; i < _actionToSelectionMap.count && i < _warningActions.count; i++) {
-            if (_actionToSelectionMap[i].integerValue == selection) {
-                return _warningActions[i].label;
-            }
-        }
-    } else {
-        // No mapping, selection index equals action index
-        if (selection >= 0 && selection < _warningActions.count) {
-            return _warningActions[selection].label;
-        }
-    }
-    return nil;
-}
-
 - (BOOL)preempt:(out iTermWarningSelection *)selectionPtr {
     if (!gWarningHandler &&
         _warningType != kiTermWarningTypePersistent &&
         [self.class identifierIsSilenced:_identifier]) {
         const iTermWarningSelection selection = [self.class savedSelectionForIdentifier:_identifier];
-        NSString *label = [self labelForSelection:selection];
-        if (!label || ![self shouldRememberLabel:label]) {
+        iTermWarningAction *action = [self actionForSelection:selection];
+        NSString *label = action.label;
+        if (!action || ![self shouldRememberAction:action]) {
             RLog(@"%@ has saved selection %@ but label %@ should not be remembered", self, @(selection), label);
             return NO;
         }
@@ -469,7 +460,35 @@ BOOL gShowRememberedAlerts = NO;
 }
 
 // Does not invoke the warning action's block
+// Resolve each action's structural role once, from the caller's own (already-localized) cancelLabel
+// and doNotRememberLabels, so the runtime never string-matches against a hardcoded @"Cancel". Only
+// sets flags; object-API callers that set isCancel/neverRemember directly are preserved.
+- (void)resolveActionRoles {
+    for (iTermWarningAction *action in _warningActions) {
+        if (_cancelLabel.length && [action.label isEqualToString:_cancelLabel]) {
+            action.isCancel = YES;
+        }
+        if (_doNotRememberLabels.count && [_doNotRememberLabels containsObject:action.label]) {
+            action.neverRemember = YES;
+        }
+    }
+}
+
+- (iTermWarningAction *)actionForSelection:(iTermWarningSelection)selection {
+    if (_actionToSelectionMap) {
+        for (NSUInteger i = 0; i < _actionToSelectionMap.count && i < _warningActions.count; i++) {
+            if (_actionToSelectionMap[i].integerValue == selection) {
+                return _warningActions[i];
+            }
+        }
+    } else if (selection >= 0 && selection < _warningActions.count) {
+        return _warningActions[selection];
+    }
+    return nil;
+}
+
 - (iTermWarningSelection)runModalImpl {
+    [self resolveActionRoles];
     iTermWarningSelection preemptedSelection;
     if ([self preempt:&preemptedSelection]) {
         return preemptedSelection;
@@ -495,11 +514,10 @@ BOOL gShowRememberedAlerts = NO;
     return [self handleResult:result alert:alert];
 }
 
-- (BOOL)shouldRememberLabel:(NSString *)label {
-    if ([label isEqualToString:_cancelLabel]) {
-        return NO;
-    }
-    if ([_doNotRememberLabels containsObject:label]) {
+- (BOOL)shouldRememberAction:(iTermWarningAction *)action {
+    // Cancel choices and explicitly-not-remembered actions are never persisted. Uses structural
+    // flags (resolved once in -resolveActionRoles) rather than comparing localized label strings.
+    if (action.isCancel || action.neverRemember) {
         return NO;
     }
     return YES;
@@ -526,31 +544,31 @@ BOOL gShowRememberedAlerts = NO;
     switch (result) {
         case NSAlertFirstButtonReturn:
             selection = [self.class remapSelection:kiTermWarningSelection0 withMapping:_actionToSelectionMap];
-            remember = [self shouldRememberLabel:_warningActions[0].label];
+            remember = [self shouldRememberAction:_warningActions[0]];
             break;
         case NSAlertSecondButtonReturn:
             selection = [self.class remapSelection:kiTermWarningSelection1 withMapping:_actionToSelectionMap];
-            remember = [self shouldRememberLabel:_warningActions[1].label];
+            remember = [self shouldRememberAction:_warningActions[1]];
             break;
         case NSAlertThirdButtonReturn:
             selection = [self.class remapSelection:kiTermWarningSelection2 withMapping:_actionToSelectionMap];
-            remember = [self shouldRememberLabel:_warningActions[2].label];
+            remember = [self shouldRememberAction:_warningActions[2]];
             break;
         case NSAlertThirdButtonReturn + 1:
             selection = [self.class remapSelection:kiTermWarningSelection3 withMapping:_actionToSelectionMap];
-            remember = [self shouldRememberLabel:_warningActions[3].label];
+            remember = [self shouldRememberAction:_warningActions[3]];
             break;
         case NSAlertThirdButtonReturn + 2:
             selection = [self.class remapSelection:kiTermWarningSelection4 withMapping:_actionToSelectionMap];
-            remember = [self shouldRememberLabel:_warningActions[4].label];
+            remember = [self shouldRememberAction:_warningActions[4]];
             break;
         case NSAlertThirdButtonReturn + 3:
             selection = [self.class remapSelection:kiTermWarningSelection5 withMapping:_actionToSelectionMap];
-            remember = [self shouldRememberLabel:_warningActions[5].label];
+            remember = [self shouldRememberAction:_warningActions[5]];
             break;
         case NSAlertThirdButtonReturn + 4:
             selection = [self.class remapSelection:kiTermWarningSelection6 withMapping:_actionToSelectionMap];
-            remember = [self shouldRememberLabel:_warningActions[6].label];
+            remember = [self shouldRememberAction:_warningActions[6]];
             break;
         default:
             selection = kItermWarningSelectionError;

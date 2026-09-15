@@ -119,9 +119,7 @@ final class OrchestrationToolProvider: ToolProvider {
         switch mode {
         case .sessionBound:
             registerEnableRequestTool(on: &conversation)
-            if offerWatchers() {
-                registerSessionBoundWatchTools(on: &conversation)
-            }
+            registerSessionBoundWatchTools(on: &conversation)
         case .orchestration:
             registerWorkgroupTools(on: &conversation)
             registerSessionTools(on: &conversation)
@@ -169,15 +167,24 @@ final class OrchestrationToolProvider: ToolProvider {
 
     // MARK: - Watch tools (.sessionBound, terminal-linked)
 
-    // The three watch tools for a session-bound chat. They dispatch through the
-    // SAME externalInvoker the orchestration surface uses, so the app-side
+    // The watch tools for a session-bound chat. They dispatch through the SAME
+    // externalInvoker the orchestration surface uses, so the app-side
     // OrchestratorClient runs the real watcher machinery (tab-status observer,
     // screen pollers, persistence, restart reconciliation). register_watch here
-    // has no session_guid: the dispatcher fills the target from the chat's
-    // linked terminal session. request_notification_permission is filtered on
-    // companion state exactly as registerWorkgroupTools does.
+    // has no session_guid: the dispatcher fills the target from the chat's linked
+    // terminal session, and it's offered only when a watch form is available
+    // (offerWatchers). register_timer, unregister_watch and list_watches are
+    // offered regardless: a timer reads nothing and needs no session, so a chat
+    // with no linked terminal (or with reads denied) can still set, list and
+    // cancel one. request_notification_permission is filtered on companion state
+    // exactly as registerWorkgroupTools does.
     private func registerSessionBoundWatchTools(on conversation: inout AIConversation) {
-        var definitions = OrchestratorCommand.sessionBoundWatchToolDefinitions
+        var definitions: [ToolDefinition] = [OrchestratorCommand.registerTimerDefinition]
+        if offerWatchers() {
+            definitions.append(OrchestratorCommand.sessionBoundRegisterWatchDefinition)
+        }
+        definitions.append(OrchestratorCommand.unregisterWatchDefinition)
+        definitions.append(OrchestratorCommand.listWatchesDefinition)
         // Offer request_notification_permission on the same companion-state
         // condition as the orchestration surface, reusing its shared definition
         // rather than re-declaring the prose/schema here.
@@ -425,6 +432,12 @@ final class OrchestrationToolProvider: ToolProvider {
             }
             let state = (dict["target_state"] as? String) ?? "?"
             return "Will notify when " + target + " becomes **\(state)**"
+        case "register_timer":
+            let when = Self.timerWhenPhrase(dict: dict)
+            if let note = dict["note"] as? String, !note.isEmpty {
+                return "Setting a timer to fire " + when + ": " + previewQuote(note)
+            }
+            return "Setting a timer to fire " + when
         case "unregister_watch":
             return "Cancelling a watch"
         case "list_watches":
@@ -487,5 +500,35 @@ final class OrchestrationToolProvider: ToolProvider {
             snippet = String(oneLine.prefix(maxLen)) + "…"
         }
         return "\u{201C}\(snippet)\u{201D}"
+    }
+
+    // When phrasing for the register_timer bubble, e.g. "in 2 hrs" or, when the
+    // model gave an absolute fire_at that can't be read as a future delta, "at
+    // <fire_at>". The duration uses the shared localized formatter
+    // (DateFormatter.compactDateDifferenceString) rather than a hand-rolled one.
+    private static func timerWhenPhrase(dict: [String: Any]) -> String {
+        if let delay = (dict["delay_seconds"] as? NSNumber)?.doubleValue, delay > 0 {
+            return "in " + DateFormatter.compactDateDifferenceString(fromTimeDelta: delay)
+        }
+        if let fireAt = dict["fire_at"] as? String, !fireAt.isEmpty {
+            if let date = parseISO8601(fireAt) {
+                let delta = date.timeIntervalSinceNow
+                if delta > 0 {
+                    return "in " + DateFormatter.compactDateDifferenceString(fromTimeDelta: delta)
+                }
+            }
+            return "at \(fireAt)"
+        }
+        return "later"
+    }
+
+    // Parse an ISO-8601 date-time, tolerating both fractional and whole seconds.
+    private static func parseISO8601(_ s: String) -> Date? {
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = withFraction.date(from: s) { return d }
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        return plain.date(from: s)
     }
 }

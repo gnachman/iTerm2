@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-extern NSString *iTermSnippetHelpMarkdown;
+NSString *iTermSnippetHelpMarkdown(void);
 
 @interface iTermSnippet : NSObject
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;

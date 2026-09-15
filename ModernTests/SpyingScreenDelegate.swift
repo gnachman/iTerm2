@@ -59,6 +59,38 @@ class SpyingScreenDelegate: FakeSession {
         setSessionSpecificProfileBoolCalls.append(SetSessionSpecificProfileBoolCall(value: value, key: profileKey))
     }
 
+    /// Number of times screenMouseModeDidChange fired (one per drained
+    /// "mouse mode did change" side effect).
+    private(set) var mouseModeDidChangeCount = 0
+
+    override func screenMouseModeDidChange() {
+        mouseModeDidChangeCount += 1
+    }
+
+    /// Every report the terminal sent back to the "process", in order. This is
+    /// the data that would be written to the tty (e.g. a DSR reply or an OSC 4
+    /// color report).
+    private(set) var sentReports: [Data] = []
+
+    /// Value returned from screenShouldInitiateWindowResize; defaults to denied
+    /// like FakeSession. Set to .allowed to exercise window-manipulation codes.
+    var windowResizePermission: PTYSessionResizePermission = .denied
+
+    /// Frames passed to screenSetWindowFrame (SetWindowFrame OSC).
+    private(set) var setWindowFrameCalls: [NSRect] = []
+
+    override func screenShouldInitiateWindowResize() -> PTYSessionResizePermission {
+        windowResizePermission
+    }
+
+    override func screenSetWindowFrame(_ frame: NSRect) {
+        setWindowFrameCalls.append(frame)
+    }
+
+    override func screenSendReport(_ data: Data) {
+        sentReports.append(data)
+    }
+
     func reset() {
         getWorkingDirectoryCalls.removeAll()
         pollLocalDirectoryOnlyCalls.removeAll()
@@ -67,6 +99,9 @@ class SpyingScreenDelegate: FakeSession {
         promptDidStartCalls.removeAll()
         promptDidEndCalls.removeAll()
         commandDidChangeCalls.removeAll()
+        mouseModeDidChangeCount = 0
+        setWindowFrameCalls.removeAll()
+        sentReports.removeAll()
     }
 
     // MARK: - Overrides

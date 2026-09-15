@@ -183,6 +183,10 @@
 {
 }
 
+- (void)windowSetFrame:(NSRect)frame
+{
+}
+
 - (void)windowPerformMiniaturize:(id)sender
 {
 }

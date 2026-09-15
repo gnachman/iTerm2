@@ -17,6 +17,7 @@
 #import "iTermParameterPanelWindowController.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermVariableScope.h"
+#import "iTermVariables.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PTYSession.h"
@@ -470,7 +471,10 @@ NS_ASSUME_NONNULL_BEGIN
             completion(ok);
         }
     }];
-    if ([[[request.windowController window] title] isEqualToString:@"Window"]) {
+    // Set the window title early if this window hasn't had one computed yet (a brand-new
+    // window still shows AppKit's default title, avoiding a flash of it). Test iTerm2's own
+    // window-title variable rather than the display title, which is localized.
+    if ([[request.windowController.scope valueForVariableName:iTermVariableKeyWindowTitle] length] == 0) {
         [request.windowController setWindowTitle];
     }
 }
@@ -495,6 +499,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     _parameterPanelWindowController = [[iTermParameterPanelWindowController alloc] initWithWindowNibName:@"iTermParameterPanelWindowController"];
     [_parameterPanelWindowController window];
+    // Localization unneeded
     [_parameterPanelWindowController.parameterName setStringValue:[NSString stringWithFormat:@"“%@”:", name]];
     [_parameterPanelWindowController.parameterValue setStringValue:@""];
 

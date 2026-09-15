@@ -9,7 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
 
-// These match labels in the profiles tab view. I guess it should be identifiers but I would probably forget to set them.
+// These match the stable xib identifiers on the profiles tab view items (not
+// their localized labels), so bulk copy works in every UI language.
 extern NSString *const iTermBulkCopyIdentifierColors;
 extern NSString *const iTermBulkCopyIdentifierText;
 extern NSString *const iTermBulkCopyIdentifierWeb;
@@ -41,5 +42,12 @@ extern NSString *const iTermBulkCopyIdentifierAdvanced;
 
 - (instancetype)initWithIdentifiers:(NSArray<NSString *> *)identifiers
                        profileTypes:(ProfileType)profileTypes;
+
+// Maps a profile-preferences tab view item's stable xib identifier to the
+// corresponding iTermBulkCopyIdentifier* constant, or nil if the tab has no
+// bulk-copy category (e.g. the General tab). This is intentionally keyed on
+// the language-independent xib identifier rather than the tab's localized
+// label, so it works in every UI language.
++ (nullable NSString *)bulkCopyIdentifierForTabViewItemIdentifier:(nullable NSString *)tabViewItemIdentifier;
 
 @end

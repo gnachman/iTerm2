@@ -215,19 +215,21 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
         NSString *location = getHeader(@"location");
         NSString *command;
         if ([location hasPrefix:@"/Library"]) {
+            // Localization unneeded
             command = @"sudo pip3 install --upgrade iterm2";
         } else {
+            // Localization unneeded
             command = @"pip3 install --user --upgrade iterm2";
         }
         dispatch_async(dispatch_get_main_queue(), ^{
-            NSString *message = [NSString stringWithFormat:@"The system Python's iterm2 module is out of date and won't work with this version of iTerm2. Run `%@` to fix it.", command];
+            NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"LaunchExperience.SystemPythonOutdatedMessage", nil, [NSBundle mainBundle], @"The system Python's iterm2 module is out of date and won't work with this version of iTerm2. Run `%@` to fix it.", @"Message that the system Python iterm2 module is out of date; placeholder is the shell command to run"), command];
             const iTermWarningSelection selection =
             [iTermWarning showWarningWithTitle:message
-                                       actions:@[ @"Copy Command", @"Ignore", @"Remind me Later"]
+                                       actions:@[ NSLocalizedStringWithDefaultValue(@"LaunchExperience.CopyCommand", nil, [NSBundle mainBundle], @"Copy Command", @"Button to copy the shell command to the clipboard"), NSLocalizedStringWithDefaultValue(@"LaunchExperience.Ignore", nil, [NSBundle mainBundle], @"Ignore", @"Button to ignore the outdated module warning"), NSLocalizedStringWithDefaultValue(@"LaunchExperience.RemindMeLater", nil, [NSBundle mainBundle], @"Remind me Later", @"Button to be reminded later about the outdated module")]
                                      accessory:nil
                                     identifier:@"SystemPythonModuleOutdated"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Upgrade system Python iterm2 module?"
+                                       heading:NSLocalizedStringWithDefaultValue(@"LaunchExperience.SystemPythonOutdatedHeading", nil, [NSBundle mainBundle], @"Upgrade system Python iterm2 module?", @"Heading asking whether to upgrade the system Python iterm2 module")
                                         window:nil];
             switch (selection) {
                 case kiTermWarningSelection0: {
@@ -274,12 +276,12 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
 }
 
 - (void)warnAboutChangeToDefaultPasteBehavior {
-    [iTermWarning showWarningWithTitle:@"iTerm2 no longer warns before a multi-line paste, unless you are at the shell prompt."
-                               actions:@[ @"OK" ]
+    [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"LaunchExperience.PasteBehaviorChangeMessage", nil, [NSBundle mainBundle], @"iTerm2 no longer warns before a multi-line paste, unless you are at the shell prompt.", @"Message explaining that iTerm2 no longer warns before multi-line pastes")
+                               actions:@[ iTermLocalizedOK() ]
                              accessory:nil
                             identifier:nil
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Important Change"
+                               heading:NSLocalizedStringWithDefaultValue(@"LaunchExperience.ImportantChange", nil, [NSBundle mainBundle], @"Important Change", @"Heading for an important behavior change notice")
                                 window:nil];
     [[iTermUserDefaults userDefaults] setBool:YES forKey:kHaveWarnedAboutPasteConfirmationChange];
 }

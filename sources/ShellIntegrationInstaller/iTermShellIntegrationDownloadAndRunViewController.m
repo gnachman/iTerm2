@@ -32,17 +32,18 @@
 }
 
 - (NSString *)command {
+    // Localization unneeded
     return [NSString stringWithFormat:@"\ncurl -L %@ | bash", self.urlString];
 }
 
 - (void)setInstallUtilities:(BOOL)installUtilities {
     _installUtilities = installUtilities;
-    NSString *prefix = self.busy ? @"Waiting for this command to finish:" : @"Press “Continue” to run this command:";
+    NSString *prefix = self.busy ? NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.WaitingForCommand", nil, [NSBundle mainBundle], @"Waiting for this command to finish:", @"Label shown while waiting for a shell command to finish.") : NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.PressContinueToRun", nil, [NSBundle mainBundle], @"Press “Continue” to run this command:", @"Prompt telling the user to press Continue to run a shell command.");
     self.textField.stringValue = [NSString stringWithFormat:@"%@\n%@", prefix, self.command];
 }
 
 - (void)showShellUnsupportedError {
-    self.textField.stringValue = @"😞 Your shell is not supported, or perhaps your $SHELL environment variable is not set correctly. Press “Continue” to try again.";
+    self.textField.stringValue = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.ShellUnsupported", nil, [NSBundle mainBundle], @"😞 Your shell is not supported, or perhaps your $SHELL environment variable is not set correctly. Press “Continue” to try again.", @"Error shown when the user’s shell is not supported by shell integration.");
 }
 
 - (IBAction)pipeCurlToBash:(id)sender {

@@ -22,7 +22,7 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
 @implementation iTermRPCTrigger
 
 + (NSString *)title {
-    return @"Invoke Script Function";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.RPC.Title", nil, [NSBundle mainBundle], @"Invoke Script Function", @"Trigger action name: invoke a registered Python API script function");
 }
 
 - (NSString *)description {

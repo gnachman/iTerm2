@@ -72,6 +72,7 @@ struct WebResponse: Codable {
 }
 
 struct PluginError: LocalizedError, Equatable, CustomDebugStringConvertible {
+    // Localization unneeded
     static let cancelled = PluginError(reason: "cancelled")
 
     var debugDescription: String {
@@ -91,6 +92,13 @@ struct PluginError: LocalizedError, Equatable, CustomDebugStringConvertible {
 struct Plugin {
     static private var _instance = MutableAtomicObject<Result<Plugin, PluginError>?>(nil)
     private static let publicKeyB64 = "fYLUx58QwucuPJRYxBjp7M//uVM0vTfgUo7d6u4TQR8="
+    /// The failure reason last logged by load(), so a repeated identical failure is
+    /// not logged again. instance() deliberately does NOT cache a failure (it
+    /// re-probes every call so a later install is noticed), and callers probe on hot
+    /// paths (e.g. menu validation of the inline-chat item), so without this a
+    /// missing plugin logs "Plugin not found" on every probe. Only accessed inside
+    /// _instance.mutableAccess (which serializes load()), so it needs no extra lock.
+    static private var lastLoggedFailureReason: String?
 
     static func instance() -> Result<Plugin, PluginError> {
         return _instance.mutableAccess { result in
@@ -108,42 +116,62 @@ struct Plugin {
 
     private static func load() -> Result<Plugin, PluginError> {
         do {
-            return  Result<Plugin, PluginError>.success(try Plugin())
+            let plugin = try Plugin()
+            // Success: clear the dedup so a future failure (plugin removed) logs again.
+            lastLoggedFailureReason = nil
+            return .success(plugin)
         } catch let error as PluginError {
-            let temp = Result<Plugin, PluginError>.failure(error)
-            RLog("\(error.reason)")
-            return temp
+            logFailureOnce(error.reason)
+            return .failure(error)
         } catch {
-            RLog("\(error.localizedDescription)")
-            let temp = Result<Plugin, PluginError>.failure(PluginError(reason: error.localizedDescription))
-            return temp
+            logFailureOnce(error.localizedDescription)
+            return .failure(PluginError(reason: error.localizedDescription))
         }
     }
+
+    /// Log a load failure only when its reason differs from the last one logged, so
+    /// repeated probes of a still-missing plugin don't spam the log while a genuine
+    /// change (missing -> signature invalid, or the plugin appearing then vanishing)
+    /// still surfaces.
+    private static func logFailureOnce(_ reason: String) {
+        guard lastLoggedFailureReason != reason else { return }
+        lastLoggedFailureReason = reason
+        RLog("\(reason)")
+    }
+    /// Posted after reload() re-probes the plugin, so observers can react to the
+    /// plugin being installed or removed. Plugin presence has no OS notification, and
+    /// reload() is the single choke point the Settings reload/validate flow and the
+    /// wizard's installer both go through, so this is where "the plugin came or went"
+    /// is observable. (aiAvailable() also depends on this, not just user defaults.)
+    static let didChangeNotification = Notification.Name("iTermAIPluginDidChange")
+
     static func reload() {
         _instance.mutableAccess { result in
             result = load()
         }
+        // Post outside the atomic access (the observer may read Plugin.instance()).
+        NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
     }
 
     private let bundleID = "com.googlecode.iterm2.iTermAI"
     private let code: String
     init() throws {
         guard let bundleURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
-            throw PluginError(reason: "Plugin not found")
+            throw PluginError(reason: String(localized: "AIPluginClient.NotFound", defaultValue: "Plugin not found", comment: "Error message when the AI plugin application cannot be located"))
         }
         let jsURL = bundleURL.appendingPathComponent("Contents/Resources/iTermAIPlugin.js")
         guard let codeData = try? Data(contentsOf: jsURL) else {
-            throw PluginError(reason: "Plugin missing from app bundle or not readable")
+            throw PluginError(reason: String(localized: "AIPluginClient.CodeMissing", defaultValue: "Plugin missing from app bundle or not readable", comment: "Error message when the AI plugin code file is missing or unreadable"))
         }
         guard let code = String(data: codeData, encoding: .utf8) else {
-            throw PluginError(reason: "Plugin code not valid UTF-8")
+            throw PluginError(reason: String(localized: "AIPluginClient.CodeNotUTF8", defaultValue: "Plugin code not valid UTF-8", comment: "Error message when the AI plugin code is not valid UTF-8"))
         }
         let signatureURL = bundleURL.appendingPathComponent("Contents/Resources/iTermAIPlugin.sig")
         guard let signatureB64 = try? String(contentsOf: signatureURL) else {
-            throw PluginError(reason: "Signature missing from app bundle or not readable")
+            throw PluginError(reason: String(localized: "AIPluginClient.SignatureMissing", defaultValue: "Signature missing from app bundle or not readable", comment: "Error message when the AI plugin signature file is missing or unreadable"))
         }
         guard let signatureData = Data(base64Encoded: signatureB64.trimmingCharacters(in: .whitespacesAndNewlines)) else {
-            throw PluginError(reason: "Signature of AI plugin is malformed")
+            throw PluginError(reason: String(localized: "AIPluginClient.SignatureMalformed", defaultValue: "Signature of AI plugin is malformed", comment: "Error message when the AI plugin signature data is malformed"))
         }
         try Plugin.checkSignature(message: codeData, signature: signatureData)
         self.code = code
@@ -152,7 +180,7 @@ struct Plugin {
     private static func checkSignature(message: Data, signature: Data) throws {
         let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: Data(base64Encoded: publicKeyB64)!)
         guard publicKey.isValidSignature(signature, for: message) else {
-            throw PluginError(reason: "The plugin's signature is invalid. Reinstall the plugin or upgrade iTerm2.")
+            throw PluginError(reason: String(localized: "AIPluginClient.SignatureInvalid", defaultValue: "The plugin’s signature is invalid. Reinstall the plugin or upgrade iTerm2.", comment: "Error message when the AI plugin signature fails validation"))
         }
         DLog("Signature is good")
     }
@@ -164,7 +192,7 @@ struct Plugin {
                                                             async: false,
                                                             stream: nil)
         guard let decimal = Decimal(string: string) else {
-            throw PluginError(reason: "Invalid version string: \(string)")
+            throw PluginError(reason: String(localized: "AIPluginClient.InvalidVersionString", defaultValue: "Invalid version string: \(string)", comment: "Error message when the AI plugin reports an unparseable version string"))
         }
         return decimal
     }
@@ -208,16 +236,16 @@ class iTermAIClient {
     func validate() throws {
         DLog("validate")
         if (!iTermAdvancedSettingsModel.generativeAIAllowed()) {
-            throw PluginError(reason: "Plugin not allowed by administator.")
+            throw PluginError(reason: String(localized: "AIPluginClient.NotAllowed", defaultValue: "Plugin not allowed by administator.", comment: "Error message when the AI plugin is disallowed by administrator policy"))
         }
         switch Plugin.instance() {
         case .success(let plugin):
             guard let pluginVersion = try? plugin.version() else {
-                throw PluginError(reason: "Unable to determine version of AI plugin. Reinstall it and upgrade iTerm2 if possible.")
+                throw PluginError(reason: String(localized: "AIPluginClient.VersionUnknown", defaultValue: "Unable to determine version of AI plugin. Reinstall it and upgrade iTerm2 if possible.", comment: "Error message when iTerm2 cannot determine the AI plugin version"))
             }
 
             guard pluginVersion == Decimal(string: requiredVersion) else {
-                throw PluginError(reason: "Plugin has version \(pluginVersion) but iTerm2 expects \(requiredVersion). Upgrade one or both.")
+                throw PluginError(reason: String(localized: "AIPluginClient.VersionMismatch", defaultValue: "Plugin has version \(String(describing: pluginVersion)) but iTerm2 expects \(String(describing: requiredVersion)). Upgrade one or both.", comment: "Error message when the AI plugin version does not match the version iTerm2 expects"))
             }
             return
         case .failure(let error):
@@ -363,6 +391,7 @@ class iTermAIClient {
             } else if let response = delivery.response {
                 result = .success(response)
             } else {
+                // Localization unneeded
                 result = .failure(PluginError(reason: "Cassette delivery had neither response nor error"))
             }
             executionQueue.async {
@@ -439,7 +468,7 @@ class iTermAIClient {
                 } catch let error as PluginError {
                     emit(.failure(error))
                 } catch {
-                    emit(.failure(PluginError(reason: "Unexpected exception: \(error.localizedDescription)")))
+                    emit(.failure(PluginError(reason: String(localized: "AIPluginClient.UnexpectedException", defaultValue: "Unexpected exception: \(error.localizedDescription)", comment: "Error message shown when an unexpected exception occurs in the AI plugin"))))
                 }
             case .failure(let error):
                 emit(.failure(error))

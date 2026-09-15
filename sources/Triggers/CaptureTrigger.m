@@ -20,7 +20,7 @@
 @implementation CaptureTrigger
 
 + (NSString *)title {
-    return @"Capture Output";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Capture.Title", nil, [NSBundle mainBundle], @"Capture Output", @"Trigger action name: capture matching output into the Captured Output tool");
 }
 
 - (NSString *)description {

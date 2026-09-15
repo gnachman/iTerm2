@@ -188,11 +188,10 @@ final class iTermWorkgroupInstance: NSObject {
             names.append(instance.workgroupDisplayName)
         }
         guard extraCount > 0 else { return nil }
-        let sessionWord = extraCount == 1 ? "session" : "sessions"
         if names.count == 1 {
-            return "This will also exit the workgroup “\(names[0])” and close \(extraCount) other \(sessionWord)."
+            return String(localized: "Workgroup.ExitOneWorkgroupCloseSessions", defaultValue: "This will also exit the workgroup “\(names[0])” and close \(extraCount) other sessions.", comment: "Confirmation; first placeholder is the workgroup name, second is the number of other sessions that will close")
         }
-        return "This will also exit \(names.count) workgroups and close \(extraCount) other \(sessionWord)."
+        return String(localized: "Workgroup.ExitWorkgroupsCloseSessions", defaultValue: "This will also exit \(names.count) workgroups and close \(extraCount) other sessions.", comment: "Confirmation; first placeholder is the number of workgroups, second is the number of other sessions that will close")
     }
 
     // Workgroup-wide git poller, shared across every gitStatus and

@@ -49,6 +49,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL copyModeCursorSelecting;
 @property (nonatomic) VT100GridCoord copyModeCursorCoord;
 @property (nonatomic) vector_float4 backgroundColor;
+// YES when the HDR-cursor hint applies (profile KEY_HDR_CURSOR + display headroom
+// + dark background): the cursor is drawn as a bright HDR white and its character
+// bold. Computed once in the glue so the cursor renderer and the bold path agree.
+@property (nonatomic) BOOL useHDRWhite;
 @end
 
 @interface iTermMetalIMEInfo : NSObject
@@ -203,7 +207,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic) BOOL captureDebugInfoForNextFrame;
 
 - (instancetype)init NS_UNAVAILABLE;
-- (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
+// framebufferPixelFormat is the format for the framebuffer, pipeline states, and
+// intermediate textures (fp16 when this session's HDR cursor is enabled, else
+// 8-bit). It is fixed for the driver's lifetime; SessionView rebuilds the driver
+// when the setting changes. See iTermMetalFramebufferPixelFormat().
+- (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device
+                    framebufferPixelFormat:(MTLPixelFormat)framebufferPixelFormat NS_DESIGNATED_INITIALIZER;
 
 - (void)setCellSize:(CGSize)cellSize
 cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing

@@ -8,7 +8,7 @@ struct Window: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "window",
         abstract: "Manage iTerm2 windows.",
-        subcommands: [
+        subcommands: sortedSubcommands([
             New.self,
             List.self,
             Close.self,
@@ -17,7 +17,7 @@ struct Window: ParsableCommand {
             Resize.self,
             Fullscreen.self,
             Arrange.self,
-        ]
+        ])
     )
 }
 
@@ -443,11 +443,11 @@ extension Window {
         static let configuration = CommandConfiguration(
             commandName: "arrange",
             abstract: "Window arrangement commands.",
-            subcommands: [
+            subcommands: sortedSubcommands([
                 Save.self,
                 Restore.self,
                 List.self,
-            ]
+            ])
         )
     }
 }

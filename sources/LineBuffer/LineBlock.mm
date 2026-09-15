@@ -131,7 +131,33 @@ struct iTermNumFullLinesCacheKeyHasher {
 
 static std::recursive_mutex gLineBlockMutex;
 
-
+// Debugging instrumentation. Every write to a block's shared _characterBuffer or
+// cumulative_line_lengths asserts the documented copy-on-write invariant from LineBlock+Private.h:
+// "When owner is nonnil or clients is not empty, a copy must be made before mutation." A violation
+// means a writer mutated a block whose buffer is still shared with a sibling (e.g. a search snapshot
+// reading it on the background search queue), which is the class of bug behind the
+// ScreenCharArrayToString search-thread crash. Catching it here traps the offending writer with a
+// stack trace instead of corrupting the reader later.
+//
+// This is compiled in only for debug/beta/nightly builds (BETA is defined for iTerm2SharedARC's
+// Development, Beta, and Nightly configs but not the stable Deployment config), so stable releases
+// pay no per-mutation cost: LineBlockCheckUniquelyOwnedForMutation becomes an empty static function
+// the optimizer eliminates at every call site. `what` names the allocation being written for the
+// crash log.
+static void LineBlockCheckUniquelyOwnedForMutation(__unsafe_unretained LineBlock *block,
+                                                   const char *what) {
+#if BETA
+    std::lock_guard<std::recursive_mutex> lock(gLineBlockMutex);
+    LineBlock *owner = block.owner;
+    const NSUInteger clientCount = block.clients.count;
+    NSString *ownerGuid = owner ? owner->_guid : @"(none)";
+    ITAssertWithMessage(owner == nil && clientCount == 0,
+                        @"Copy-on-write invariant violated writing %s of block %@ (abs %lld): buffer is still "
+                        @"shared (owner=%@ clients=%@). A writer skipped copy-on-write and will corrupt a reader "
+                        @"(e.g. a search snapshot) that shares this allocation.",
+                        what, block->_guid, block.absoluteBlockNumber, ownerGuid, @(clientCount));
+#endif
+}
 
 // Use iTermAssignToConstPointer if you need to change anything that is `const T * const` to make
 // these calls auditable to ensure we call validMutationCertificate appropriately.
@@ -195,7 +221,7 @@ NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lin
     lineBlock->_mutationCounter = iTermAllocateGeneration();
 }
 
-- (instancetype)initWithCharacterBuffer:(iTermCharacterBuffer *)characterBuffer 
+- (instancetype)initWithCharacterBuffer:(iTermCharacterBuffer *)characterBuffer
                                    guid:(NSString *)guid {
     self = [super init];
     if (self) {
@@ -3012,21 +3038,25 @@ crossBlockResultCount:(NSInteger *)crossBlockResultCount {
 
 - (int *)mutableCumulativeLineLengths {
     assert(_valid);
+    LineBlockCheckUniquelyOwnedForMutation(_lineBlock, "cumulative_line_lengths");
     return (int *)_lineBlock->cumulative_line_lengths;
 }
 
 - (screen_char_t *)mutableRawBuffer {
     assert(_valid);
+    LineBlockCheckUniquelyOwnedForMutation(_lineBlock, "character buffer");
     return _lineBlock->_characterBuffer.mutablePointer;
 }
 
 - (void)setRawBufferCapacity:(size_t)count {
     assert(_valid);
+    LineBlockCheckUniquelyOwnedForMutation(_lineBlock, "character buffer capacity");
     [_lineBlock->_characterBuffer resize:count];
 }
 
 - (void)setCumulativeLineLengthsCapacity:(int)capacity {
     assert(_valid);
+    LineBlockCheckUniquelyOwnedForMutation(_lineBlock, "cumulative_line_lengths capacity");
     iTermAssignToConstPointer((void **)&_lineBlock->cumulative_line_lengths,
                               iTermRealloc((void *)_lineBlock->cumulative_line_lengths, capacity, sizeof(int)));
 }

@@ -7,7 +7,7 @@ gesture that iTerm2 uses to trigger a drag-out). This program offers some text, 
 file, and a directory tree, and logs the drag lifecycle. Drop onto Finder,
 TextEdit, another terminal, etc.
 
-    python3 tests/kitty-dnd/drag_source.py [--machine-id] [-v]
+    python3 tests/kitty-dnd/drag_source.py [--machine-id] [--kitten-compat] [-v]
 
 It offers two MIME types:
   0: text/plain     "Dragged out of iTerm2 via OSC 72\n"
@@ -15,6 +15,16 @@ It offers two MIME types:
 
 Data is pre-sent with t=p, so the lazy t=e:x=5 request path is usually not
 exercised; it is still handled if the terminal asks.
+
+Pass --kitten-compat to mimic the real `kitten dnd` client's two wire quirks
+(issue 12961), which this harness otherwise papers over:
+  1. Its serializer OMITS any metadata key whose integer value is 0 (kitty's
+     `add` helper only emits key=val when val != 0). So the offer's index-0
+     pre-send carries no x= key and the index-0 data reply carries no y= key.
+  2. It answers a lazy t=e:x=5 request as a base64 data chunk FOLLOWED BY an
+     empty t=e terminator (EOF), rather than a single self-contained message.
+This reproduces the "EINVAL:unexpected t=e" failure a fixed terminal must not
+emit; run it and start a drag to confirm the fix.
 
 When the terminal is on a different machine than this program (the remote
 drag-out case), the terminal fetches each uri-list entry with t=k:x=idx. For a
@@ -56,6 +66,7 @@ _EVENT_NAMES = {"1": "accepted", "2": "action-changed", "3": "dropped",
 class DragSource:
     def __init__(self, args):
         self.args = args
+        self.kitten_compat = args.kitten_compat
         self.reader = OSC72Reader()
         self.mimes = ["text/plain", "text/uri-list"]
         self.tmp_root = tempfile.mkdtemp(prefix="kittydnd-")
@@ -66,6 +77,20 @@ class DragSource:
         # Directory handles allocated while pushing (0 and 1 are reserved for the
         # file / symlink type indicators, so start at 2).
         self._next_handle = 2
+
+    # The addressing keys kitty routes through its `add` helper, which emits
+    # key=val only when val != 0. The `t` and `m` (chunk-framing) keys are
+    # written unconditionally, so they are never dropped.
+    _ZERO_OMITTED_KEYS = frozenset("oxyXY")
+
+    def emit(self, metadata, **kwargs):
+        """Serialize and write one OSC 72 message. In --kitten-compat mode, drop
+        any zero-valued addressing key first, exactly as real kitty's serializer
+        does, so index-0 messages arrive without their x=/y= key."""
+        if self.kitten_compat:
+            metadata = {k: v for k, v in metadata.items()
+                        if not (k in self._ZERO_OMITTED_KEYS and v == "0")}
+        os.write(1, build(metadata, **kwargs).encode())
 
     def _uri(self, path):
         # file:// URLs that point to a directory must end with a slash.
@@ -99,11 +124,13 @@ class DragSource:
     def begin_offer(self, md):
         log("[drag_source] gesture at cell (%s,%s); offering %s" %
             (md.get("x"), md.get("y"), self.mimes))
-        os.write(1, build({"t": "o", "o": "1"},
-                          text_payload=" ".join(self.mimes)).encode())
+        self.emit({"t": "o", "o": "1"}, text_payload=" ".join(self.mimes))
+        # Real kitten pre-sends the offered data too; in --kitten-compat mode the
+        # index-0 pre-send loses its x= key (emit drops the "0"), which is the
+        # first half of issue 12961 (the terminal should still read it as index 0).
         for i, payload in enumerate(self.data):
-            os.write(1, build({"t": "p", "x": str(i)}, data_payload=payload).encode())
-        os.write(1, build({"t": "P", "x": "-1"}).encode())
+            self.emit({"t": "p", "x": str(i)}, data_payload=payload)
+        self.emit({"t": "P", "x": "-1"})
         log("[drag_source] pre-sent data and started drag (t=P)")
 
     def handle(self, md, payload):
@@ -127,8 +154,14 @@ class DragSource:
             if sub == "5":
                 idx = int(md.get("y", "0"))
                 data = self.data[idx] if 0 <= idx < len(self.data) else b""
-                os.write(1, build({"t": "e", "y": str(idx), "m": "0"},
-                                  data_payload=data).encode())
+                # The base64 data chunk. In --kitten-compat mode the index-0 reply
+                # loses its y= key (emit drops the "0"): the second half of issue
+                # 12961, which made the terminal reject it as "unexpected t=e".
+                self.emit({"t": "e", "y": str(idx), "m": "0"}, data_payload=data)
+                if self.kitten_compat:
+                    # Real kitten follows the chunk with an empty t=e terminator
+                    # (EOF). A correct terminal must accept it, not reject it.
+                    self.emit({"t": "e", "y": str(idx)})
 
     def serve_entry(self, md):
         # The terminal must only request top-level entries (t=k:x=idx). A Y-keyed
@@ -196,6 +229,10 @@ def main():
     ap.add_argument("--machine-id", action="store_true", help="(default; kept for compatibility)")
     ap.add_argument("--no-machine-id", action="store_true",
                     help="do not send our machine id (treat drag-out as local)")
+    ap.add_argument("--kitten-compat", action="store_true",
+                    help="mimic real `kitten dnd` wire quirks (omit zero-valued "
+                         "keys, send an empty t=e EOF terminator) to reproduce "
+                         "issue 12961")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args()
 

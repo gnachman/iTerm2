@@ -90,8 +90,8 @@ class iTermBrowserSuggestionsController {
 
             let searchSuggestion = URLSuggestion(
                 url: url,
-                displayText: NSAttributedString(string: "Search for \"\(actualQuery)\"", attributes: midTruncatingAttributes),
-                detail: "Web Search",
+                displayText: NSAttributedString(string: String(localized: "BrowserSuggestions.SearchFor", defaultValue: "Search for “\(actualQuery)”", comment: "Suggestion label to search the web for the typed query"), attributes: midTruncatingAttributes),
+                detail: String(localized: "BrowserSuggestions.WebSearch", defaultValue: "Web Search", comment: "Suggestion detail label for a web search"),
                 type: .webSearch
             )
 
@@ -101,9 +101,9 @@ class iTermBrowserSuggestionsController {
         if let normal = normalizeURL(query) {
             let suggestion = URLSuggestion(
                 url: normal.absoluteString,
-                displayText: NSAttributedString(string: "Navigate to \"\(normal.absoluteString)\"",
+                displayText: NSAttributedString(string: String(localized: "BrowserSuggestions.NavigateTo", defaultValue: "Navigate to “\(normal.absoluteString)”", comment: "Suggestion label to navigate to a typed URL"),
                                                 attributes: midTruncatingAttributes),
-                detail: "URL",
+                detail: String(localized: "BrowserSuggestions.URL", defaultValue: "URL", comment: "Suggestion detail label for navigating to a URL"),
                 type: .navigation
             )
             let urlScore: iTermBrowserSuggestionsController.Score
@@ -201,7 +201,7 @@ class iTermBrowserSuggestionsController {
             let suggestion = URLSuggestion(
                 url: bookmark.url,
                 displayText: displayText,
-                detail: "Bookmark",
+                detail: String(localized: "BrowserSuggestions.Bookmark", defaultValue: "Bookmark", comment: "Suggestion detail label for a bookmarked page"),
                 type: .bookmark
             )
             

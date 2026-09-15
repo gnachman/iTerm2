@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttp:\/\/localhost:11434\/api\/chat\ncontent-type: application\/json\n\n{\"keep_alive\":\"30m\",\"messages\":[{\"content\":\"Quote the value of the 'magic' key shown.\\n<iterm2:attachment file=\\\"magic.yaml\\\" type=\\\"text\\\/plain\\\">\\nmagic: pinecone-42\\n\\n<\\\/iterm2:attachment>\",\"role\":\"user\"}],\"model\":\"qwen3.5:4b\",\"options\":{\"num_ctx\":16384,\"num_predict\":16250},\"stream\":false}",
+  "key" : "f33e1846c164b42014bc06199626c325b6dfdbf7b817cf41c291cc2c01f817c6",
+  "response" : {
+    "data" : "{\"model\":\"qwen3.5:4b\",\"created_at\":\"2026-09-14T00:12:41.718135Z\",\"message\":{\"role\":\"assistant\",\"content\":\"pinecone-42\",\"thinking\":\"Thinking Process:\\n\\n1.  **Analyze the Request:** The user is asking for a specific value from a provided text snippet. The snippet is wrapped in `iterm2:attachment` tags, which suggests it's a simulated attachment or metadata block often used in these types of prompts to indicate hidden data or content. The key requested is 'magic'.\\n\\n2.  **Analyze the Input Data:**\\n    ```xml\\n    \\u003citerm2:attachment file=\\\"magic.yaml\\\" type=\\\"text\/plain\\\"\\u003e\\n    magic: pinecone-42\\n    \\u003c\/iterm2:attachment\\u003e\\n    ```\\n    Inside the tags, there is a key-value pair.\\n    Key: `magic`\\n    Value: `pinecone-42`\\n\\n3.  **Identify the Target:** The user wants the value associated with the 'magic' key.\\n\\n4.  **Formulate the Output:** The value is \\\"pinecone-42\\\". I should state this clearly.\\n\\n5.  **Final Check:** Does the response directly answer the question based *only* on the provided context? Yes. The instruction says \\\"Quote the value\\\", so providing the exact string is best.\\n\\n6.  **Construct Response:** pinecone-42\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":8481019167,\"load_duration\":3538959,\"prompt_eval_count\":54,\"prompt_eval_duration\":151201000,\"eval_count\":270,\"eval_duration\":8298332000}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

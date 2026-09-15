@@ -88,7 +88,8 @@ struct iTermHistogramBarChart: View {
                                     }
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Duration: \(bucket.range.lowerBound, specifier: "%.1f")µs–\(bucket.range.upperBound, specifier: "%.1f")µs")
-                                        Text("Count: \(bucket.y)")
+                                        // Localization unneeded: developer-facing statistic label
+                                        Text(verbatim: "Count: \(bucket.y)")
                                     }
                                     .font(.caption)
                                     .padding(4)
@@ -132,7 +133,8 @@ struct iTermHistogramBarChart: View {
                     AxisGridLine()
                     AxisValueLabel {
                         if let µs = value.as(Double.self) {
-                            Text("\(µs, specifier: "%.0f")µs")
+                            // Localization unneeded: developer-facing statistic label
+                            Text(verbatim: "\(String(format: "%.0f", µs))µs")
                         }
                     }
                 }
@@ -143,15 +145,17 @@ struct iTermHistogramBarChart: View {
     @ChartContentBuilder
     private var chartContent: some ChartContent {
         ForEach(buckets, id: \.x) { bucket in
+            // Localization unneeded: developer-facing statistic label
             RectangleMark(
-                xStart: .value("Start", bucket.range.lowerBound),
-                xEnd: .value("End", bucket.range.upperBound),
-                yStart: .value("Count", 0),
-                yEnd: .value("Count", bucket.y)
+                xStart: .value("Start" as String, bucket.range.lowerBound),
+                xEnd: .value("End" as String, bucket.range.upperBound),
+                yStart: .value("Count" as String, 0),
+                yEnd: .value("Count" as String, bucket.y)
             )
             .foregroundStyle(selectedX == bucket.x ? .purple : .blue)
         }
-        RuleMark(x: .value("Mean", meanValue))
+        // Localization unneeded: developer-facing statistic label
+        RuleMark(x: .value("Mean" as String, meanValue))
             .foregroundStyle(.red.opacity(0.75))
             .lineStyle(StrokeStyle(lineWidth: 2))
     }

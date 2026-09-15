@@ -29,6 +29,11 @@ final class WorkgroupAutoSendClippingsToolbarItem: SessionToolbarControl {
 
     private let button: NSButton
 
+    // Current visual on-state. Read-only; the source of truth is the
+    // owning session's autoSendClippingsWhenIdle flag, mirrored here by
+    // setOn. Exposed for tests and introspection.
+    var isOn: Bool { button.state == .on }
+
     init(identifier: String,
          priority: Int,
          isOn: Bool) {
@@ -45,16 +50,25 @@ final class WorkgroupAutoSendClippingsToolbarItem: SessionToolbarControl {
         button.action = #selector(didToggle(_:))
     }
 
+    // Reflect a state set programmatically without firing the delegate.
+    // Lets the port re-derive the button from its owning session's live
+    // flag (see iTermWorkgroupPeerPort.syncAutoBehaviorToggles).
+    func setOn(_ isOn: Bool) {
+        guard button.state != (isOn ? .on : .off) else { return }
+        button.state = isOn ? .on : .off
+        Self.configure(button: button, isOn: isOn)
+    }
+
     private static func configure(button: NSButton, isOn: Bool) {
         let symbol: SFSymbol = isOn ? .paperplaneFill : .paperplane
         button.image = NSImage(systemSymbolName: symbol.rawValue,
-                               accessibilityDescription: "Auto-send clippings when idle")
+                               accessibilityDescription: String(localized: "WorkgroupAutoSendClippings.AccessibilityDescription", defaultValue: "Auto-send clippings when idle", comment: "Accessibility description for the auto-send-clippings toggle"))
         // Explicit tints so the look is stable across window-active changes:
         // accent when on, a dim secondary label color when off.
         button.contentTintColor = isOn ? .controlAccentColor : .secondaryLabelColor
         button.toolTip = isOn
-            ? "Auto-send clippings to the main session when idle: on"
-            : "Auto-send clippings to the main session when idle: off"
+            ? String(localized: "WorkgroupAutoSendClippings.ToolTipOn", defaultValue: "Auto-send clippings to the main session when idle: on", comment: "Tooltip when the auto-send-clippings toggle is on")
+            : String(localized: "WorkgroupAutoSendClippings.ToolTipOff", defaultValue: "Auto-send clippings to the main session when idle: off", comment: "Tooltip when the auto-send-clippings toggle is off")
     }
 
     @objc private func didToggle(_ sender: Any?) {

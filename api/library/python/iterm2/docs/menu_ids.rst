@@ -19,11 +19,15 @@ Menu Item                                                                       
 ======================================================================================= ==============================================================================
 iTerm2 > About iTerm2                                                                   `About iTerm2`                                                                
 iTerm2 > Show Tip of the Day                                                            `Show Tip of the Day`                                                         
+iTerm2 > Companion Device Settings                                                      `Pair Companion Device`                                                       
+iTerm2 > Suppressed Alerts…                                                             `Suppressed Alerts`                                                           
 iTerm2 > Check for Updates…                                                             `Check For Updates…`                                                          
 iTerm2 > Toggle Debug Logging                                                           `Toggle Debug Logging`                                                        
+iTerm2 > Save Retrospective Debug Logs                                                  `Save Retrospective Debug Logs`                                               
 iTerm2 > Copy Performance Stats                                                         `Copy Performance Stats`                                                      
 iTerm2 > Capture GPU Frame                                                              `Capture Metal Frame`                                                         
-iTerm2 > Preferences...                                                                 `Preferences...`                                                              
+iTerm2 > Check Settings Control Truncation                                              `Check Settings Control Truncation`                                           
+iTerm2 > Preferences…                                                                   `Preferences...`                                                              
 iTerm2 > Hide iTerm2                                                                    `Hide iTerm2`                                                                 
 iTerm2 > Hide Others                                                                    `Hide Others`                                                                 
 iTerm2 > Show All                                                                       `Show All`                                                                    
@@ -31,11 +35,15 @@ iTerm2 > Secure Keyboard Entry                                                  
 iTerm2 > Make iTerm2 Default Term                                                       `Make iTerm2 Default Term`                                                    
 iTerm2 > Make Terminal Default Term                                                     `Make Terminal Default Term`                                                  
 iTerm2 > Install Shell Integration                                                      `Install Shell Integration`                                                   
+iTerm2 > Install Claude Code Integration                                                `Install Claude Code Integration`                                             
+iTerm2 > Reinstall Claude Code Integration                                              `Reinstall Claude Code Integration`                                           
+iTerm2 > Uninstall Claude Code Integration                                              `Uninstall Claude Code Integration`                                           
 iTerm2 > Remove Recent Profiles from Dock Menu                                          `Remove Recent Profiles from Dock Menu`                                       
 iTerm2 > Quit iTerm2                                                                    `Quit iTerm2`                                                                 
 Shell > New Window                                                                      `New Window`                                                                  
 Shell > New Window with Current Profile                                                 `New Window with Current Profile`                                             
 Shell > New Tab                                                                         `New Tab`                                                                     
+Shell > New Tab Next to Current Tab                                                     `New Tab Next to Current Tab`                                                 
 Shell > New Tab with Current Profile                                                    `New Tab with Current Profile`                                                
 Shell > Duplicate Window                                                                `Duplicate Window`                                                            
 Shell > Duplicate Tab                                                                   `Duplicate Tab`                                                               
@@ -49,11 +57,16 @@ Shell > Close                                                                   
 Shell > Close Terminal Window                                                           `Close Terminal Window`                                                       
 Shell > Close All Panes in Tab                                                          `Close All Panes in Tab`                                                      
 Shell > Undo Close                                                                      `Undo Close`                                                                  
+Shell > Archives > Save Archive of Current Session…                                     `Save Archive of Current Session`                                             
+Shell > Archives > Restore Archive…                                                     `Restore Archive`                                                             
+Shell > Workgroups > Exit Workgroup                                                     `Exit Workgroup`                                                              
 Shell > Broadcast Input > Send Input to Current Session Only                            `Broadcast Input.Send Input to Current Session Only`                          
 Shell > Broadcast Input > Broadcast Input to All Panes in All Tabs                      `Broadcast Input.Broadcast Input to All Panes in All Tabs`                    
 Shell > Broadcast Input > Broadcast Input to All Panes in Current Tab                   `Broadcast Input.Broadcast Input to All Panes in Current Tab`                 
 Shell > Broadcast Input > Toggle Broadcast Input to Current Session                     `Broadcast Input.Toggle Broadcast Input to Current Session`                   
 Shell > Broadcast Input > Show Background Pattern Indicator                             `Broadcast Input.Show Background Pattern Indicator`                           
+Shell > Broadcast Input > Current Session is Broadcast Source                           `Broadcast Input.Current Session is Broadcast Source`                         
+Shell > Toggle Buffer Input                                                             `Toggle Buffer Input`                                                         
 Shell > tmux > Detach                                                                   `tmux.Detach`                                                                 
 Shell > tmux > Force Detach                                                             `tmux.Force Detach`                                                           
 Shell > tmux > New Tmux Window                                                          `tmux.New Tmux Window`                                                        
@@ -62,7 +75,8 @@ Shell > tmux > Pause Pane                                                       
 Shell > tmux > Dashboard                                                                `tmux.Dashboard`                                                              
 Shell > ssh > Disconnect                                                                `ssh.Disconnect`                                                              
 Shell > ssh > Download Files…                                                           `ssh.Download Files`                                                          
-Shell > Page Setup...                                                                   `Page Setup...`                                                               
+Shell > ssh > Remote host can control iTerm2                                            `ssh.Remote host can control iTerm2`                                          
+Shell > Page Setup…                                                                     `Page Setup...`                                                               
 Shell > Print > Screen                                                                  `Print.Screen`                                                                
 Shell > Print > Selection                                                               `Print.Selection`                                                             
 Shell > Print > Buffer                                                                  `Print.Buffer`                                                                
@@ -103,7 +117,7 @@ Edit > Find > Find Next                                                         
 Edit > Find > Find Previous                                                             `Find.Find Previous`                                                          
 Edit > Find > Use Selection for Find                                                    `Find.Use Selection for Find`                                                 
 Edit > Find > Clear Find                                                                `Find.Clear Find`                                                             
-Edit > Find > Find Globally...                                                          `Find.Find Globally...`                                                       
+Edit > Find > Find Globally…                                                            `Find.Find Globally...`                                                       
 Edit > Find > Select Matches                                                            `Find.ConvertMatchesToSelections`                                             
 Edit > Find > Find URLs                                                                 `Find.Find URLs`                                                              
 Edit > Find > Find All Smart Selection Matches                                          `Find.Find All Smart Selection  Matches`                                      
@@ -114,6 +128,7 @@ Edit > Marks and Annotations > Jump to Mark                                     
 Edit > Marks and Annotations > Next Mark                                                `Marks and Annotations.Next Mark`                                             
 Edit > Marks and Annotations > Previous Mark                                            `Marks and Annotations.Previous Mark`                                         
 Edit > Marks and Annotations > Add Annotation at Cursor                                 `Marks and Annotations.Add Annotation at Cursor`                              
+Edit > Marks and Annotations > Annotate Selection                                       `Marks and Annotations.Annotate Selection`                                    
 Edit > Marks and Annotations > Next Annotation                                          `Marks and Annotations.Next  Annotation`                                      
 Edit > Marks and Annotations > Previous Annotation                                      `Marks and Annotations.Previous  Annotation`                                  
 Edit > Marks and Annotations > Alerts > Alert on Next Mark                              `Marks and Annotations.Alerts.Alert on Next Mark`                             
@@ -123,6 +138,7 @@ Edit > Marks and Annotations > Alerts > Post Notification                       
 Edit > Marks and Annotations > Alerts > Play a Sound                                    `Marks and Notes.Alerts.Play a Sound`                                         
 Edit > Set Named Mark                                                                   `Set Named Mark`                                                              
 Edit > Fold Selected Lines                                                              `Fold Selected Lines`                                                         
+Edit > Fold All                                                                         `Fold All Above Cursor`                                                       
 Edit > Clear Buffer                                                                     `Clear Buffer`                                                                
 Edit > Clear Instant Replay                                                             `Clear Instant Replay`                                                        
 Edit > Clear Scrollback Buffer                                                          `Clear Scrollback Buffer`                                                     
@@ -137,10 +153,13 @@ View > Disable Transparency for Active Window                                   
 View > Zoom In on Selection                                                             `Zoom In on Selection`                                                        
 View > Zoom Out                                                                         `Zoom Out`                                                                    
 View > Find Cursor                                                                      `Find Cursor`                                                                 
-View > Show Cursor Guide                                                                `Show Cursor Guide`                                                           
-View > Show Timestamps                                                                  `Show Timestamps`                                                             
 View > Show Annotations                                                                 `Show Annotations`                                                            
+View > Show Clippings                                                                   `Show Clippings`                                                              
+View > Show Inline Chat                                                                 `Show Inline Chat`                                                            
 View > Show Composer                                                                    `Composer`                                                                    
+View > Show Cursor Guide                                                                `Show Cursor Guide`                                                           
+View > Show Session Note                                                                `Edit Session Note`                                                           
+View > Show Timestamps                                                                  `Show Timestamps`                                                             
 View > Auto Command Completion                                                          `Auto Command Completion`                                                     
 View > Auto Composer                                                                    `Auto Composer`                                                               
 View > Open Quickly                                                                     `Open Quickly`                                                                
@@ -174,6 +193,7 @@ Session > Move Session > Move Session to Split Pane                             
 Session > Log > Log to File                                                             `Log.Toggle`                                                                  
 Session > Log > Import Recording                                                        `Log.ImportRecording`                                                         
 Session > Log > Export Recording                                                        `Log.ExportRecording`                                                         
+Session > Make Screenshot…                                                              `Make Screenshot`                                                             
 Session > Terminal State > Alternate Screen                                             `Alternate Screen`                                                            
 Session > Terminal State > Focus Reporting                                              `Focus Reporting`                                                             
 Session > Terminal State > Mouse Reporting                                              `Mouse Reporting`                                                             
@@ -220,15 +240,21 @@ Window > Edit Window Title                                                      
 Window > Tab > Edit Tab Title                                                           `Edit Tab Title`                                                              
 Window > Tab > Select Tab > Select Next Tab                                             `Select Next Tab`                                                             
 Window > Tab > Select Tab > Select Previous Tab                                         `Select Previous Tab`                                                         
+Window > Tab > Select Tab > Select Next Tab Group                                       `Select Next Tab Group`                                                       
+Window > Tab > Select Tab > Select Previous Tab Group                                   `Select Previous Tab Group`                                                   
 Window > Tab > Move Tab > Move Tab to New Window                                        `Move Tab to New Window`                                                      
 Window > Tab > Move Tab > Move Tab Left                                                 `Move Tab Left`                                                               
 Window > Tab > Move Tab > Move Tab Right                                                `Move Tab Right`                                                              
+Window > Tab > Add Tab to New Group…                                                    `Add Tab to New Group`                                                        
+Window > Tab > Remove Tab from Group                                                    `Remove Tab from Group`                                                       
 Window > Split Pane > Select Split Pane > Select Pane Above                             `Select Split Pane.Select Pane Above`                                         
 Window > Split Pane > Select Split Pane > Select Pane Below                             `Select Split Pane.Select Pane Below`                                         
 Window > Split Pane > Select Split Pane > Select Pane Left                              `Select Split Pane.Select Pane Left`                                          
 Window > Split Pane > Select Split Pane > Select Pane Right                             `Select Split Pane.Select Pane Right`                                         
 Window > Split Pane > Select Split Pane > Next Pane                                     `Select Split Pane.Next Pane`                                                 
 Window > Split Pane > Select Split Pane > Previous Pane                                 `Select Split Pane.Previous Pane`                                             
+Window > Split Pane > Select Split Pane > Previous Peer                                 `Select Split Pane.Previous Peer`                                             
+Window > Split Pane > Select Split Pane > Next Peer                                     `Select Split Pane.Next Peer`                                                 
 Window > Split Pane > Resize Split Pane > Move Divider Up                               `Resize Split Pane.Move Divider Up`                                           
 Window > Split Pane > Resize Split Pane > Move Divider Down                             `Resize Split Pane.Move Divider Down`                                         
 Window > Split Pane > Resize Split Pane > Move Divider Left                             `Resize Split Pane.Move Divider Left`                                         
@@ -238,6 +264,7 @@ Window > Window Style > Normal                                                  
 Window > Window Style > Full Screen                                                     `Window Style.Full Screen`                                                    
 Window > Window Style > Maximized                                                       `Window Style.Maximized`                                                      
 Window > Window Style > No Title Bar                                                    `Window Style.No Title Bar`                                                   
+Window > Window Style > Centered                                                        `Window Style.Centered`                                                       
 Window > Window Style > Full-Width Bottom of Screen                                     `Window Style.FullWidth Bottom of Screen`                                     
 Window > Window Style > Full-Width Top of Screen                                        `Window Style.FullWidth Top of Screen`                                        
 Window > Window Style > Full-Height Left of Screen                                      `Window Style..FullHeight Left of Screen`                                     
@@ -246,6 +273,9 @@ Window > Window Style > Bottom of Screen                                        
 Window > Window Style > Top of Screen                                                   `Window Style.Top of Screen`                                                  
 Window > Window Style > Left of Screen                                                  `Window Style.Left of Screen`                                                 
 Window > Window Style > Right of Screen                                                 `Window Style.Right of Screen`                                                
+Window > Lock Size                                                                      `Lock Size`                                                                   
+Window > Lock Layout                                                                    `Lock Layout`                                                                 
+Window > Notify on Status Change                                                        `Notify on Status Change`                                                     
 Window > Arrange Windows > Merge All Windows                                            `Merge All Windows`                                                           
 Window > Arrange Windows > Arrange Windows Horizontally                                 `Arrange Windows Horizontally`                                                
 Window > Arrange Windows > Arrange Split Panes Evenly                                   `Arrange Split Panes Evenly`                                                  
@@ -255,6 +285,7 @@ Window > Resize Window > Decrease Width                                         
 Window > Resize Window > Increase Width                                                 `Resize Window.Increase Width`                                                
 Window > Password Manager                                                               `Password Manager`                                                            
 Window > AI Chats                                                                       `AI Chats`                                                                    
+Window > Cockpit                                                                        `Cockpit`                                                                     
 Window > Pin Hotkey Window                                                              `Pin Hotkey Window`                                                           
 Window > Bring All To Front                                                             `Bring All To Front`                                                          
 Help > iTerm2 Help                                                                      `iTerm2 Help`                                                                 

@@ -135,13 +135,21 @@ struct KittyDnDMessage: Equatable {
     }
 
     /// The payload interpreted as base64-encoded bytes (file/image data). Returns
-    /// nil if the payload is absent or not valid base64. Padding is optional per
-    /// the spec ("base64 padding bytes ... may or may not be present"), but
-    /// Data(base64Encoded:) requires it, so we re-pad first.
+    /// nil if the payload is absent or not valid base64.
     var dataPayload: Data? {
         guard let rawPayload else {
             return nil
         }
+        return Self.decodeBase64Payload(rawPayload)
+    }
+
+    /// Decode a (possibly unpadded) base64 payload. Padding is optional per the
+    /// spec ("base64 padding bytes ... may or may not be present"), but
+    /// Data(base64Encoded:) requires it, so we re-pad first. Returns nil if the
+    /// input is not valid base64. Exposed so a caller reassembling a payload from
+    /// several messages (a chunked drag-data reply) can decode the concatenation
+    /// as a whole, rather than decoding each unaligned chunk on its own.
+    static func decodeBase64Payload(_ rawPayload: String) -> Data? {
         let remainder = rawPayload.utf8.count % 4
         // A length of exactly 1 more than a multiple of 4 is never valid base64.
         if remainder == 1 {

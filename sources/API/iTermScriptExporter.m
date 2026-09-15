@@ -42,13 +42,13 @@
                completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion {
     NSURL *relativeURL = [self relativeURLFromFullURL:fullURL];
     if (!relativeURL) {
-        completion(@"Invalid location (not under Scripts folder).", nil);
+        completion(NSLocalizedStringWithDefaultValue(@"ScriptExporter.InvalidLocation", nil, [NSBundle mainBundle], @"Invalid location (not under Scripts folder).", @"Error when the selected location is not under the Scripts folder"), nil);
         return;
     }
 
     BOOL fullEnvironment = NO;
     if (![self urlContainsScript:fullURL fullEnvironment:&fullEnvironment]) {
-        completion(@"No found script at selected location.", nil);
+        completion(NSLocalizedStringWithDefaultValue(@"ScriptExporter.NoScriptFound", nil, [NSBundle mainBundle], @"No found script at selected location.", @"Error when no script is found at the selected location"), nil);
         return;
     }
     NSString *name = [fullURL.path lastPathComponent];
@@ -112,7 +112,7 @@
     NSString *absSetupPath = [fullURL URLByAppendingPathComponent:@"setup.cfg"].path;
     iTermSetupCfgParser *setupParser = [[iTermSetupCfgParser alloc] initWithPath:absSetupPath];
     if (setupParser.dependenciesError) {
-        completion(@"Could not parse install_requires in setup.cfg", nil);
+        completion(NSLocalizedStringWithDefaultValue(@"ScriptExporter.SetupCfgParseError", nil, [NSBundle mainBundle], @"Could not parse install_requires in setup.cfg", @"Error when install_requires in setup.cfg cannot be parsed"), nil);
         return;
     }
 
@@ -132,7 +132,7 @@
                   callbackQueue:callbackQueue
                      completion:^(BOOL ok) {
                          if (!ok) {
-                             completion(@"Failed to create zip file.", nil);
+                             completion(NSLocalizedStringWithDefaultValue(@"ScriptExporter.ZipFailed", nil, [NSBundle mainBundle], @"Failed to create zip file.", @"Error when creating the export zip file fails"), nil);
                              return;
                          }
                          if (signingIdentity) {

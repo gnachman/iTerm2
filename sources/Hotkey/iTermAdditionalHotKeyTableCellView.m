@@ -17,7 +17,7 @@
 }
 
 - (void)awakeFromNib {
-    _shortcut.purpose = @"as a hotkey";
+    _shortcut.purpose = iTermShortcutInputViewPurposeHotkey;
     _shortcut.shortcutDelegate = self;
 }
 

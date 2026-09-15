@@ -168,8 +168,17 @@ extension CompanionWakeupCoordinator {
         let instance = CompanionWakeupCoordinator(
             interval: { TimeInterval(iTermAdvancedSettingsModel.companionWakeupCoalesceInterval()) },
             hasRenderableContent: { messageFloor, alertFloor in
-                ChatDatabase.instance?.hasRenderableContentSince(
-                    messageSeq: messageFloor,
+                // When AI is off the phone's chat UI is disabled, so chat messages
+                // are NOT renderable there and must not arm a wakeup. Otherwise, since
+                // an AI-off syncSince deliberately leaves the message floor unadvanced
+                // (so undelivered messages survive), any chat backlog above the floor
+                // would re-arm a wakeup on every fetch and self-perpetuate contentless
+                // wakeups until AI returns. Suppress the message branch by probing
+                // from Int64.max (nothing is above it), leaving only the alert check,
+                // which must keep working with AI off.
+                let effectiveMessageFloor = CompanionPairingController.aiAvailable() ? messageFloor : Int64.max
+                return ChatDatabase.instance?.hasRenderableContentSince(
+                    messageSeq: effectiveMessageFloor,
                     alertSeq: alertFloor,
                     mutedChatIDs: CompanionChatMuteRegistry.mutedChatIDs) ?? false
             },

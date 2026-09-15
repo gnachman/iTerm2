@@ -11,7 +11,11 @@
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
 #import "iTermShellHistoryController.h"
+#import "iTermSizeRememberingView.h"
 #import "iTerm2SharedARC-Swift.h"
+
+@interface ProfilesTerminalPreferencesViewController ()<iTermSizeRememberingViewDelegate>
+@end
 
 @implementation ProfilesTerminalPreferencesViewController {
     IBOutlet NSTextField *_numScrollbackLines;
@@ -343,11 +347,15 @@
     
     [self addViewToSearchIndex:_filterAlertsButton
 
-                   displayName:@"Filter alerts"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.FilterAlerts", nil, [NSBundle mainBundle], @"Filter alerts", @"Search index display name for the filter alerts control")
                        phrases:@[ @"bell", @"idle", @"session ended", @"new output"]
                            key:nil];
     [self updateEnabledState];
     [self commitControls];
+
+    if ([self.view isKindOfClass:[iTermSizeRememberingView class]]) {
+        ((iTermSizeRememberingView *)self.view).delegate = self;
+    }
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
@@ -355,14 +363,32 @@
     _setLocaleVars.enabled = NO;
 }
 
+- (void)sizeRememberingView:(iTermSizeRememberingView *)sender
+ effectiveAppearanceDidChange:(NSAppearance *)effectiveAppearance {
+    // Rebuild the locale name field's attributed string so its description color is
+    // re-resolved for the new appearance (NSTextField won't re-resolve an
+    // already-set attributed string's colors on its own). This is deferred to the
+    // next runloop spin because when this fires the field's own effectiveAppearance
+    // still lags the window's, so rebuilding synchronously would resolve
+    // secondaryLabelColor against the old appearance.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self updateCustomLocaleControls];
+    });
+}
+
+- (void)updateLocaleDescription {
+    [self updateCustomLocaleControls];
+}
+
 - (NSAttributedString *)attributedStringForLocale:(NSString *)lang {
-    NSString *title = [iTermLocaleGuesser titleForLocale:lang] ?: @"(No description available)";
+    NSString *title = [iTermLocaleGuesser titleForLocale:lang] ?: NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.NoLocaleDescription", nil, [NSBundle mainBundle], @"(No description available)", @"Placeholder shown when a locale has no human-readable description");
     NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] init];
     NSFont *monoFont = [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]];
+    // Localization unneeded
     NSAttributedString *langAS = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"LANG=%@", lang]
                                                                  attributes:@{ NSFontAttributeName: monoFont} ];
     NSAttributedString *titleAS = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"\u2002\u2002\u2002%@", title]
-                                                                  attributes:@{NSForegroundColorAttributeName: [[NSColor textColor] colorWithAlphaComponent:0.5] }];
+                                                                  attributes:@{NSForegroundColorAttributeName: [NSColor secondaryLabelColor] }];
     [attributedString appendAttributedString:langAS];
     [attributedString appendAttributedString:titleAS];
     return attributedString;
@@ -377,15 +403,16 @@
             iTermLocaleGuesser *guesser = [[iTermLocaleGuesser alloc] initWithEncoding:[self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]];
             NSDictionary *env = guesser.dictionaryWithLC_CTYPE;
             if (!env) {
-                _localeName.stringValue = @"Invalid encoding: neither $LC_CTYPE nor $LANG set.";
+                _localeName.stringValue = NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.InvalidEncodingNoLocaleVars", nil, [NSBundle mainBundle], @"Invalid encoding: neither $LC_CTYPE nor $LANG set.", @"Status shown when the encoding cannot be represented by any locale variable");
                 break;
             }
             NSString *ctype = [[guesser dictionaryWithLC_CTYPE] objectForKey:@"LC_CTYPE"];
             if (ctype) {
+                // Localization unneeded
                 _localeName.stringValue = [NSString stringWithFormat:@"LC_CTYPE=%@", ctype];
             } else {
                 RLog(@"enc=%@ %@", @([self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]), [guesser dictionaryWithLC_CTYPE]);
-                _localeName.stringValue = @"Unexpectedly missing LC_CTYPE. Report a bug.";
+                _localeName.stringValue = NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.MissingLCCTYPE", nil, [NSBundle mainBundle], @"Unexpectedly missing LC_CTYPE. Report a bug.", @"Status shown when LC_CTYPE is unexpectedly missing");
             }
             break;
         }
@@ -394,7 +421,7 @@
             if ([self stringForKey:KEY_CUSTOM_LOCALE].length) {
                 _localeName.attributedStringValue = [self attributedStringForLocale:[self stringForKey:KEY_CUSTOM_LOCALE]];
             } else {
-                _localeName.stringValue = @"No locale selected.";
+                _localeName.stringValue = NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.NoLocaleSelected", nil, [NSBundle mainBundle], @"No locale selected.", @"Status shown when no custom locale has been chosen");
             }
             break;
         }
@@ -405,13 +432,13 @@
             if (lang.length) {
                 _localeName.attributedStringValue = [self attributedStringForLocale:lang];
             } else {
-                _localeName.stringValue = @"No valid locale exists for this machine’s language and country.";
+                _localeName.stringValue = NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.NoValidLocale", nil, [NSBundle mainBundle], @"No valid locale exists for this machine’s language and country.", @"Status shown when no valid locale can be automatically determined");
             }
             break;
         }
         case iTermSetLocalVarsModeDoNotSet:
             _changeLocale.hidden = YES;
-            _localeName.stringValue = @"$LANG will not be set.";
+            _localeName.stringValue = NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.LangNotSet", nil, [NSBundle mainBundle], @"$LANG will not be set.", @"Status shown when the locale mode is set to do-not-set");
             break;
     }
 }
@@ -481,19 +508,19 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 - (IBAction)changeCustomLocale:(id)sender {
     iTermLocalePrompt *prompt = [[iTermLocalePrompt alloc] initWithEncoding:[self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]];
     prompt.defaultLocale = [self stringForKey:KEY_CUSTOM_LOCALE];
-    prompt.message = @"Select your preferred locale:";
+    prompt.message = NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.SelectLocaleMessage", nil, [NSBundle mainBundle], @"Select your preferred locale:", @"Prompt asking the user to choose a custom locale");
     prompt.allowRemember = NO;
     [prompt requestLocaleFromUserForProfile:nil inWindow:self.view.window cancelUsesC:NO];
     NSString *locale = prompt.selectedLocale;
     if (locale && [self unsignedIntegerForKey:KEY_CHARACTER_ENCODING] == NSUTF8StringEncoding && ![locale containsString:@"UTF-8"]) {
         NSString *guid = [self stringForKey:KEY_GUID] ?: @"";
         const iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:@"Warning! This profile uses a custom locale that doesn't use UTF-8 as its character encoding, but your profile *is* using UTF-8. This can cause error messages and non-ASCII text to appear wrong."
-                                   actions:@[ @"Change Locale", @"Keep This Locale"]
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.UTF8MismatchWarning", nil, [NSBundle mainBundle], @"Warning! This profile uses a custom locale that doesn't use UTF-8 as its character encoding, but your profile *is* using UTF-8. This can cause error messages and non-ASCII text to appear wrong.", @"Warning shown when a custom locale does not use UTF-8 but the profile does")
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.ChangeLocaleAction", nil, [NSBundle mainBundle], @"Change Locale", @"Button to change the custom locale"), NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.KeepLocaleAction", nil, [NSBundle mainBundle], @"Keep This Locale", @"Button to keep the current custom locale")]
                                  accessory:nil
                                 identifier:[@"NoSyncUTF8Mismatch_" stringByAppendingString:guid]
                                silenceable:kiTermWarningTypePermanentlySilenceable
-                                   heading:@"Wrong Encoding Detected"
+                                   heading:NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.WrongEncodingHeading", nil, [NSBundle mainBundle], @"Wrong Encoding Detected", @"Heading for the wrong-encoding warning")
                                     window:self.view.window];
         if (selection == kiTermWarningSelection0) {
             [self changeCustomLocale:sender];
@@ -509,7 +536,7 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 }
 
 - (IBAction)shellIntegrationRequired:(id)sender {
-    NSString *html = @"This feature requires shell integration to be installed. <a href=\"https://iterm2.com/documentation-shell-integration.html\">Learn more.</a>";
+    NSString *html = NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.ShellIntegrationRequiredHTML", nil, [NSBundle mainBundle], @"This feature requires shell integration to be installed. <a href=\"https://iterm2.com/documentation-shell-integration.html\">Learn more.</a>", @"Warning shown when a feature requires shell integration");
     NSAttributedString *attributedString = [NSAttributedString attributedStringWithHTML:html
                                                                                    font:[NSFont systemFontOfSize:[NSFont systemFontSize]]
                                                                          paragraphStyle:[NSParagraphStyle defaultParagraphStyle]];

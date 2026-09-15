@@ -67,6 +67,7 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // performs Undo Close (it formerly toggled Show Tabs in Full Screen, which has
 // moved to ⌘⇧U). NoSync because it is migration state, not a synced setting.
 @property (class, nonatomic) BOOL haveWarnedAboutUndoCloseShortcutChange;
+@property (class, nonatomic) BOOL haveWarnedAboutUndoKeyChange;
 
 // Set to YES after the one-time notice warning macOS 12 users that a future beta
 // will require macOS 13 (Phase 0 of the uv Python-runtime migration). NoSync

@@ -36,7 +36,7 @@ class CommandShareMenuProvider: NSObject {
         let command = mark.fullCommand ?? ""
         if !command.isEmpty {
             let snippetTitle = mark.firstLineOfCommand.flatMap { $0.isEmpty ? nil : $0 } ?? command
-            menu.addItem(title: "Add Command as Snippet") { [weak window] in
+            menu.addItem(title: String(localized: "CommandShare.AddCommandAsSnippet", defaultValue: "Add Command as Snippet", comment: "Menu item to add the command as a snippet.")) { [weak window] in
                 CommandShareMenuProvider.addCommandAsSnippet(title: snippetTitle,
                                                              value: command,
                                                              window: window,
@@ -49,7 +49,7 @@ class CommandShareMenuProvider: NSObject {
         let mark = self.mark
         let promisedContent = self.promisedContent
         let defaultBackgroundColor = self.defaultBackgroundColor
-        menu.addItem(title: "Save Command & Output…") { [weak window] in
+        menu.addItem(title: String(localized: "CommandShare.SaveCommandAndOutput", defaultValue: "Save Command & Output…", comment: "Menu item to save the command and its output to a file.")) { [weak window] in
             CommandShareMenuProvider.saveCommandAndOutput(promisedContent: promisedContent,
                                                           defaultBackgroundColor: defaultBackgroundColor,
                                                           mark: mark,
@@ -58,7 +58,7 @@ class CommandShareMenuProvider: NSObject {
 
         menu.addSeparator()
 
-        menu.addItem(title: "Share Command Output…") { [weak view] in
+        menu.addItem(title: String(localized: "CommandShare.ShareCommandOutput", defaultValue: "Share Command Output…", comment: "Menu item to share the command output.")) { [weak view] in
             if let view {
                 CommandShareMenuProvider.shareCommandOutput(locationInWindow: locationInWindow,
                                                             promisedContent: promisedContent,
@@ -69,12 +69,12 @@ class CommandShareMenuProvider: NSObject {
         menu.addSeparator()
 
         if let commandURL {
-            menu.addItem(title: "Copy Command URL to Clipboard") { [weak window] in
+            menu.addItem(title: String(localized: "CommandShare.CopyCommandURL", defaultValue: "Copy Command URL to Clipboard", comment: "Menu item to copy the command URL to the clipboard.")) { [weak window] in
                 CommandShareMenuProvider.copyCommandURL(url: commandURL,
                                                         window: window,
                                                         locationInWindow: locationInWindow)
             }
-            menu.addItem(title: "Share Command URL…") { [weak view] in
+            menu.addItem(title: String(localized: "CommandShare.ShareCommandURL", defaultValue: "Share Command URL…", comment: "Menu item to share the command URL.")) { [weak view] in
                 if let view {
                     CommandShareMenuProvider.shareCommandURL(locationInWindow: locationInWindow,
                                                              url: commandURL,
@@ -103,14 +103,14 @@ class CommandShareMenuProvider: NSObject {
             return
         }
         let point = window.convertPoint(toScreen: locationInWindow)
-        ToastWindowController.showToast(withMessage: "Snippet Added",
+        ToastWindowController.showToast(withMessage: String(localized: "CommandShare.SnippetAddedToast", defaultValue: "Snippet Added", comment: "Toast shown after adding a command as a snippet."),
                                         duration: 1,
                                         topLeftScreenCoordinate: point,
                                         pointSize: 12)
     }
 
     private static func defaultCommand(_ maybeCommand: String?) -> String {
-        let fallback = "iTerm2 Command"
+        let fallback = String(localized: "CommandShare.DefaultCommandName", defaultValue: "iTerm2 Command", comment: "Default file name used when saving a command that has no name.")
         guard let justCommand = maybeCommand else {
             return fallback
         }
@@ -143,7 +143,7 @@ class CommandShareMenuProvider: NSObject {
             return
         }
         let point = window.convertPoint(toScreen: locationInWindow)
-        ToastWindowController.showToast(withMessage: "Copied",
+        ToastWindowController.showToast(withMessage: String(localized: "CommandShare.CopiedToast", defaultValue: "Copied", comment: "Toast shown after copying the command URL to the clipboard."),
                                         duration: 1,
                                         topLeftScreenCoordinate: point,
                                         pointSize: 12)

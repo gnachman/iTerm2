@@ -80,7 +80,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         [_clearButton setAutoresizingMask:NSViewMinYMargin];
         _clearButton.bezelStyle = NSBezelStyleRegularSquare;
         _clearButton.bordered = NO;
-        _clearButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
+        _clearButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"CapturedOutput.ClearAccessibility", nil, [NSBundle mainBundle], @"Clear", @"Accessibility description for the clear button")];
         _clearButton.imagePosition = NSImageOnly;
         _clearButton.frame = NSMakeRect(0, 0, 22, 22);
         [self addSubview:_clearButton];
@@ -106,7 +106,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         tableView_.menu.delegate = self;
         tableView_.intercellSpacing = NSMakeSize(0, 2);
         NSMenuItem *item;
-        item = [[NSMenuItem alloc] initWithTitle:@"Toggle Checkmark"
+        item = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"CapturedOutput.ToggleCheckmark", nil, [NSBundle mainBundle], @"Toggle Checkmark", @"Context menu item to toggle a checkmark on a captured output row")
                                           action:@selector(toggleCheckmark:)
                                    keyEquivalent:@""];
         [tableView_.menu addItem:item];
@@ -289,8 +289,10 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 - (NSString *)labelForCapturedOutput:(CapturedOutput *)capturedOutput {
     NSString *label = capturedOutput.line;
     if (capturedOutput.state) {
+        // Localization unneeded
         label = [@"✔" stringByAppendingString:label];
     } else {
+        // Localization unneeded
         label = [@"-" stringByAppendingString:label];
     }
     return label;

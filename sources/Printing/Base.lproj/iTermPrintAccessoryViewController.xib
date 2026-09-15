@@ -14,11 +14,11 @@
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customView id="Hz6-mo-xeY">
-            <rect key="frame" x="0.0" y="0.0" width="154" height="54"/>
+            <rect key="frame" x="0.0" y="0.0" width="224" height="54"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HEu-C4-YL5">
-                    <rect key="frame" x="18" y="18" width="118" height="18"/>
+                    <rect key="frame" x="18" y="18" width="186" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Black and white" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="CkN-Sz-DhG">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -29,7 +29,7 @@
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="359" y="321"/>
+            <point key="canvasLocation" x="394" y="321"/>
         </customView>
         <userDefaultsController representsSharedInstance="YES" id="2rr-OT-G2C"/>
     </objects>

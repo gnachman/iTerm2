@@ -113,7 +113,7 @@
             NSString *formattedUnsignedDecimalValue =
                 [numberFormatter stringFromNumber:@(unsignedIntValue)];
             NSString *converted = formattedDecimalValue;
-            NSString *display = [NSString stringWithFormat:@"0x%x = %@ or %@%@",
+            NSString *display = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.HexToDecOr32", nil, [NSBundle mainBundle], @"0x%1$x = %2$@ or %3$@%4$@", @"Conversion help showing a 32-bit hex value and its two possible decimal interpretations; %x is the hex value, the two %@ are decimal values, last %@ is a human-readable size suffix"),
                                  intValue, formattedDecimalValue, formattedUnsignedDecimalValue,
                                  humanReadableSize];
             return [iTermTuple tupleWithObject:display andObject:converted];
@@ -156,7 +156,7 @@
                 [numberFormatter stringFromNumber:unsignedDecimalNumber];
             NSString *converted = [NSString stringWithFormat:@"%@",
                                    formattedDecimalValue];
-            NSString *display = [NSString stringWithFormat:@"0x%llx = %@ or %@%@",
+            NSString *display = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.HexToDecOr64", nil, [NSBundle mainBundle], @"0x%1$llx = %2$@ or %3$@%4$@", @"Conversion help showing a 64-bit hex value and its two possible decimal interpretations; %llx is the hex value, the two %@ are decimal values, last %@ is a human-readable size suffix"),
                                  value, formattedDecimalValue, formattedUnsignedDecimalValue,
                                  humanReadableSize];
             return [iTermTuple tupleWithObject:display andObject:converted];
@@ -209,7 +209,7 @@
             return [iTermTuple tupleWithObject:[fmt stringFromDate:date]
                                      andObject:[fmt stringFromDate:date]];
         } else {
-            return [iTermTuple tupleWithObject:[NSString stringWithFormat:@"Unix timestamp %@", @(date.timeIntervalSince1970)]
+            return [iTermTuple tupleWithObject:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.UnixTimestamp", nil, [NSBundle mainBundle], @"Unix timestamp %@", @"Conversion help showing a Unix timestamp; %@ is the numeric timestamp"), @(date.timeIntervalSince1970)]
                                      andObject:[@(date.timeIntervalSince1970) stringValue]];
         }
     } else {
@@ -258,7 +258,7 @@
     }
     NSString *ucs4String = [ucs4Strings componentsJoinedByString:@" "];
 
-    return [iTermTuple tupleWithObject:[NSString stringWithFormat:@"“%@” = %@ = %@ (UTF-8)", self, ucs4String, utf8String]
+    return [iTermTuple tupleWithObject:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.Utf8Help", nil, [NSBundle mainBundle], @"“%1$@” = %2$@ = %3$@ (UTF-8)", @"Conversion help showing a character, its UCS-4 code points, and its UTF-8 bytes; first %@ is the character, second is UCS-4 codes, third is UTF-8 bytes"), self, ucs4String, utf8String]
                              andObject:utf8String];
 }
 
@@ -356,7 +356,7 @@
         }
         if (decoded) {
             NSMenuItem *item = [[NSMenuItem alloc] init];
-            item.title = [NSString stringWithFormat:@"Base64: %@", [[decoded humanFriendlyStringRepresentation] ellipsizedDescriptionNoLongerThan:20]];
+            item.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.Base64Prefix", nil, [NSBundle mainBundle], @"Base64: %@", @"Context menu item showing the Base64-decoded preview of the selection; %@ is the decoded text"), [[decoded humanFriendlyStringRepresentation] ellipsizedDescriptionNoLongerThan:20]];
             item.action = selector;
             item.target = target;
             item.representedObject = decoded;
@@ -416,7 +416,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             if (data.length == 4) {
                 const uint32_t be = iTermInt32FromBytes(data.bytes, YES);
                 theItem = [[NSMenuItem alloc] init];
-                theItem.title = [NSString stringWithFormat:@"Big-Endian int32: %@", @(be)];
+                theItem.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.BigEndianInt32", nil, [NSBundle mainBundle], @"Big-Endian int32: %@", @"Context menu item showing the big-endian 32-bit integer value; %@ is the number"), @(be)];
                 theItem.target = self;
                 theItem.action = selector;
                 theItem.target = target;
@@ -425,7 +425,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
                 const uint32_t le = iTermInt32FromBytes(data.bytes, NO);
                 theItem = [[NSMenuItem alloc] init];
-                theItem.title = [NSString stringWithFormat:@"Little-Endian int32: %@", @(le)];
+                theItem.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.LittleEndianInt32", nil, [NSBundle mainBundle], @"Little-Endian int32: %@", @"Context menu item showing the little-endian 32-bit integer value; %@ is the number"), @(le)];
                 theItem.target = self;
                 theItem.action = selector;
                 theItem.target = target;
@@ -434,7 +434,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             } else if (data.length == 8) {
                 const uint64_t be = iTermInt64FromBytes(data.bytes, YES);
                 theItem = [[NSMenuItem alloc] init];
-                theItem.title = [NSString stringWithFormat:@"Big-Endian int64: %@", @(be)];
+                theItem.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.BigEndianInt64", nil, [NSBundle mainBundle], @"Big-Endian int64: %@", @"Context menu item showing the big-endian 64-bit integer value; %@ is the number"), @(be)];
                 theItem.target = self;
                 theItem.action = selector;
                 theItem.target = target;
@@ -443,7 +443,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
                 const uint64_t le = iTermInt64FromBytes(data.bytes, NO);
                 theItem = [[NSMenuItem alloc] init];
-                theItem.title = [NSString stringWithFormat:@"Little-Endian int64: %@", @(le)];
+                theItem.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.LittleEndianInt64", nil, [NSBundle mainBundle], @"Little-Endian int64: %@", @"Context menu item showing the little-endian 64-bit integer value; %@ is the number"), @(le)];
                 theItem.target = self;
                 theItem.action = selector;
                 theItem.target = target;
@@ -453,7 +453,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                 NSString *stringValue = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
                 if (stringValue) {
                     theItem = [[NSMenuItem alloc] init];
-                    theItem.title = [NSString stringWithFormat:@"%@ UTF-8 bytes: %@", @(data.length), stringValue];
+                    theItem.title = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.Utf8Bytes", nil, [NSBundle mainBundle], @"%1$ld UTF-8 bytes: %2$@", @"Context menu item showing decoded UTF-8 bytes; %1$ld is a UTF-8 byte count, %2$@ is the decoded string"), (long)data.length, stringValue];
                     theItem.target = self;
                     theItem.action = selector;
                     theItem.target = target;
@@ -463,7 +463,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             }
             if (!theItem && data.length > 4) {
                 theItem = [[NSMenuItem alloc] init];
-                theItem.title = [NSString stringWithFormat:@"%@ hex bytes", @(data.length)];
+                theItem.title = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"ContextMenu.HexBytes", nil, [NSBundle mainBundle], @"%1$ld hex bytes", @"Context menu item title showing a count of hexadecimal bytes; %1$ld is a count of hex bytes"), (long)data.length];
                 [theMenu insertItem:theItem atIndex:index++];
             }
         }
@@ -486,7 +486,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
         }
         if (decoded) {
             NSMenuItem *item = [[NSMenuItem alloc] init];
-            item.title = @"Copy Base64-Decoded";
+            item.title = NSLocalizedStringWithDefaultValue(@"ContextMenu.CopyBase64Decoded", nil, [NSBundle mainBundle], @"Copy Base64-Decoded", @"Context menu item to copy the selected text decoded from Base64");
             item.action = selectorForData;
             item.target = target;
             item.representedObject = decoded;
@@ -495,7 +495,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     }
     NSString *encoded = [[text dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:NSDataBase64Encoding76CharacterLineLength];
     NSMenuItem *item = [[NSMenuItem alloc] init];
-    item.title = @"Copy Base64-Encoded";
+    item.title = NSLocalizedStringWithDefaultValue(@"ContextMenu.CopyBase64Encoded", nil, [NSBundle mainBundle], @"Copy Base64-Encoded", @"Context menu item to copy the selected text encoded as Base64");
     item.target = target;
     item.action = selectorForString;
     item.representedObject = encoded;

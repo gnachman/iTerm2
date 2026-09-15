@@ -1923,6 +1923,97 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
         XCTAssertEqual(freshPeer.spy_terminateCount, 1)
     }
 
+    // MARK: - §17 Auto-behavior toggles track the live session flag
+
+    // The per-session flags (autoRequestReviewWhenIdle /
+    // autoSendClippingsWhenIdle) are the source of truth: the idle-driven
+    // behavior reads them live, but the toggle button views are built once
+    // and cached. A flag can change without going through the toggle's own
+    // action (arrangement restore writes it directly), so the button must
+    // be re-derived from the flag each time the toolbar is queried for
+    // display. These tests pin that.
+
+    // Main session carries the auto-request-review toggle; its sole peer
+    // is a code-review session, so the toggle is enabled (the count-==-1
+    // gate). Returns (workgroup, mainConfigID, reviewConfigID).
+    private func autoToggleWorkgroup() -> (iTermWorkgroup, String, String) {
+        let root = WGFix.makeRoot(items: [.modeSwitcher, .autoRequestReviewWhenIdle])
+        let review = WGFix.makePeer(parentID: root.uniqueIdentifier,
+                                    items: [.modeSwitcher, .autoSendClippingsWhenIdle],
+                                    displayName: "Review",
+                                    mode: .codeReview)
+        return (WGFix.wrap(name: "wgAutoToggles", sessions: [root, review]),
+                root.uniqueIdentifier,
+                review.uniqueIdentifier)
+    }
+
+    private func requestReviewToggle(forConfigID id: String) throws -> WorkgroupAutoRequestReviewToolbarItem {
+        let live = try XCTUnwrap(liveSession(forConfigID: id))
+        return try XCTUnwrap(instance!.toolbarItems(for: live)
+            .compactMap { $0 as? WorkgroupAutoRequestReviewToolbarItem }
+            .first)
+    }
+
+    private func sendClippingsToggle(forConfigID id: String) throws -> WorkgroupAutoSendClippingsToolbarItem {
+        let live = try XCTUnwrap(liveSession(forConfigID: id))
+        return try XCTUnwrap(instance!.toolbarItems(for: live)
+            .compactMap { $0 as? WorkgroupAutoSendClippingsToolbarItem }
+            .first)
+    }
+
+    // §17.1 — with the flag at its default (off), the button is off.
+    func test_17_1_requestReviewToggleOffWhenFlagOff() throws {
+        let (wg, mainID, _) = autoToggleWorkgroup()
+        enterWorkgroup(wg)
+        XCTAssertFalse(try requestReviewToggle(forConfigID: mainID).isOn)
+    }
+
+    // §17.2 — the reported bug: the flag is set programmatically (the
+    // arrangement-restore path, which bypasses the toggle's own action),
+    // and querying the toolbar for display re-derives the button to on.
+    func test_17_2_requestReviewToggleReflectsFlagSetProgrammatically() throws {
+        let (wg, mainID, _) = autoToggleWorkgroup()
+        enterWorkgroup(wg)
+        try XCTUnwrap(liveSession(forConfigID: mainID)).autoRequestReviewWhenIdle = true
+        XCTAssertTrue(try requestReviewToggle(forConfigID: mainID).isOn,
+                      "Display query must re-derive the button from the live flag")
+    }
+
+    // §17.3 — and back off when the flag is cleared.
+    func test_17_3_requestReviewToggleReflectsFlagCleared() throws {
+        let (wg, mainID, _) = autoToggleWorkgroup()
+        enterWorkgroup(wg)
+        let main = try XCTUnwrap(liveSession(forConfigID: mainID))
+        main.autoRequestReviewWhenIdle = true
+        XCTAssertTrue(try requestReviewToggle(forConfigID: mainID).isOn)
+        main.autoRequestReviewWhenIdle = false
+        XCTAssertFalse(try requestReviewToggle(forConfigID: mainID).isOn)
+    }
+
+    // §17.4 — re-deriving the button from the flag must not write the
+    // flag back (setOn doesn't fire the delegate), so a display query is
+    // side-effect free.
+    func test_17_4_syncingToggleDoesNotMutateFlag() throws {
+        let (wg, mainID, _) = autoToggleWorkgroup()
+        enterWorkgroup(wg)
+        let main = try XCTUnwrap(liveSession(forConfigID: mainID))
+        main.autoRequestReviewWhenIdle = true
+        _ = try requestReviewToggle(forConfigID: mainID)
+        XCTAssertTrue(main.autoRequestReviewWhenIdle,
+                      "A display query must not clear the flag")
+    }
+
+    // §17.5 — the sibling auto-send-clippings toggle on the review peer
+    // gets the same treatment.
+    func test_17_5_sendClippingsToggleReflectsFlag() throws {
+        let (wg, _, reviewID) = autoToggleWorkgroup()
+        enterWorkgroup(wg)
+        let review = try XCTUnwrap(liveSession(forConfigID: reviewID))
+        XCTAssertFalse(try sendClippingsToggle(forConfigID: reviewID).isOn)
+        review.autoSendClippingsWhenIdle = true
+        XCTAssertTrue(try sendClippingsToggle(forConfigID: reviewID).isOn)
+    }
+
     // MARK: - Test helpers
 
     private func expectedToolbarIsPeerPort(cfg: iTermWorkgroupSessionConfig) -> Bool {

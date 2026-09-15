@@ -1573,6 +1573,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
     private func handleDownload(_ download: WKDownload, sourceURL: URL?) {
         guard let sourceURL = sourceURL else { return }
 
+        // Localization unneeded
         let suggestedFilename = sourceURL.lastPathComponent.isEmpty ?
         "download" : sourceURL.lastPathComponent
 
@@ -1607,9 +1608,9 @@ extension iTermBrowserManager: WKUIDelegate {
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         // Handle JavaScript alerts
         let alert = NSAlert()
-        alert.messageText = "Web Page Alert"
+        alert.messageText = String(localized: "BrowserManager.WebPageAlert", defaultValue: "Web Page Alert", comment: "Title for a JavaScript alert dialog")
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: iTermLocalizedOK())
         alert.runModal()
         completionHandler()
     }
@@ -1617,10 +1618,10 @@ extension iTermBrowserManager: WKUIDelegate {
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
         // Handle JavaScript confirmations
         let alert = NSAlert()
-        alert.messageText = "Web Page Confirmation"
+        alert.messageText = String(localized: "BrowserManager.WebPageConfirmation", defaultValue: "Web Page Confirmation", comment: "Title for a JavaScript confirmation dialog")
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: iTermLocalizedOK())
+        alert.addButton(withTitle: iTermLocalizedCancel())
         let response = alert.runModal()
         completionHandler(response == .alertFirstButtonReturn)
     }
@@ -2086,12 +2087,12 @@ extension iTermBrowserManager: iTermBrowserAudioHandlerDelegate {
                     case denyAlways
                 }
                 let announcement = BrowserAnnouncement(
-                    message: "Audio was muted. Allow playback by \(origin)?",
+                    message: String(localized: "BrowserManager.AudioMutedPrompt", defaultValue: "Audio was muted. Allow playback by \(origin)?", comment: "Prompt asking whether to allow audio playback from an origin"),
                     style: .kiTermAnnouncementViewStyleQuestion,
-                    options: [.init(title: "Allow _Once", identifier: Action.allowOnce),
-                              .init(title: "Allow _Always", identifier: Action.allowAlways),
-                              .init(title: "_Deny Once", identifier: Action.denyOnce),
-                              .init(title: "De_ny Always", identifier: Action.denyAlways) ],
+                    options: [.init(title: String(localized: "BrowserManager.AllowOnce", defaultValue: "Allow _Once", comment: "Button to allow audio playback once"), identifier: Action.allowOnce),
+                              .init(title: String(localized: "BrowserManager.AllowAlways", defaultValue: "Allow _Always", comment: "Button to always allow audio playback"), identifier: Action.allowAlways),
+                              .init(title: String(localized: "BrowserManager.DenyOnce", defaultValue: "_Deny Once", comment: "Button to deny audio playback once"), identifier: Action.denyOnce),
+                              .init(title: String(localized: "BrowserManager.DenyAlways", defaultValue: "De_ny Always", comment: "Button to always deny audio playback"), identifier: Action.denyAlways) ],
                     identifier: "NoSyncMuteAudio_\(origin)")
                 switch await delegate?.browserManager(self, announce: announcement) {
                 case .allowOnce:

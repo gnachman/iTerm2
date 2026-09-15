@@ -235,26 +235,26 @@ typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
     _state = destinationState;
     switch (_state) {
         case iTermInstantReplayStateNormal:
-            _firstButton.title = @"Export…";
+            _firstButton.title = NSLocalizedStringWithDefaultValue(@"InstantReplay.Export", nil, [NSBundle mainBundle], @"Export…", @"Instant replay button to export a recording");
             _eventsView.startFraction = 0;
             _eventsView.endFraction = 0;
             [_eventsView setNeedsDisplay:YES];
             _secondButton.hidden = YES;
             break;
         case iTermInstantReplayStateSetStart:
-            _firstButton.title = @"Set Start";
+            _firstButton.title = NSLocalizedStringWithDefaultValue(@"InstantReplay.SetStart", nil, [NSBundle mainBundle], @"Set Start", @"Instant replay button to mark the start of a range");
             _slider.floatValue = 0;
             [_delegate instantReplaySeekTo:0];
             [self updateInstantReplayView];
-            _secondButton.title = @"Cancel";
+            _secondButton.title = iTermLocalizedCancel();
             _secondButton.hidden = NO;
             break;
         case iTermInstantReplayStateSetEnd:
-            _firstButton.title = @"Set End";
+            _firstButton.title = NSLocalizedStringWithDefaultValue(@"InstantReplay.SetEnd", nil, [NSBundle mainBundle], @"Set End", @"Instant replay button to mark the end of a range");
             _slider.floatValue = 1;
             [_delegate instantReplaySeekTo:1];
             [self updateInstantReplayView];
-            _secondButton.title = @"Cancel";
+            _secondButton.title = iTermLocalizedCancel();
             _secondButton.hidden = NO;
     }
 }
@@ -317,11 +317,11 @@ typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
     } else {
         // Live view
         [_slider setFloatValue:1.0];
-        [_currentTimeLabel setStringValue:@"Live View"];
+        [_currentTimeLabel setStringValue:NSLocalizedStringWithDefaultValue(@"InstantReplay.LiveView", nil, [NSBundle mainBundle], @"Live View", @"Instant replay label shown when viewing the live session")];
         [_currentTimeLabel sizeToFit];
     }
     [_earliestTimeLabel setStringValue:[self stringForTimestamp:firstTimestamp]];
-    [_latestTimeLabel setStringValue:@"Now"];
+    [_latestTimeLabel setStringValue:NSLocalizedStringWithDefaultValue(@"InstantReplay.Now", nil, [NSBundle mainBundle], @"Now", @"Instant replay latest-time label meaning the present moment")];
 
     // Adjust the width of the "earliest time" label, and keep the margin between it and the
     // slider the same.

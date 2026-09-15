@@ -1050,6 +1050,31 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     }
 }
 
+- (void)enumeratePromptsBackward:(void (^ NS_NOESCAPE)(id<VT100ScreenMarkReading> mark, BOOL *stop))block {
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        // reverseLimitEnumerator yields groups newest-first, but within a group
+        // the objects are in forward (oldest-first) order, so reverse each group
+        // to honor the newest-first contract when a limit group holds a tie.
+        for (id obj in [objects reverseObjectEnumerator]) {
+            id<VT100ScreenMarkReading> screenMark = [VT100ScreenMark castFrom:obj];
+            if (!screenMark) {
+                continue;
+            }
+            if (!screenMark.isPrompt) {
+                continue;
+            }
+            BOOL stop = NO;
+            block(screenMark, &stop);
+            if (stop) {
+                return;
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+}
+
 - (void)enumeratePortholes:(void (^ NS_NOESCAPE)(id<PortholeMarkReading> mark))block {
     for (NSArray<id<IntervalTreeImmutableObject>> *objects in _state.intervalTree.forwardLimitEnumerator) {
         for (id<IntervalTreeImmutableObject> object in objects) {
@@ -1456,15 +1481,19 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
                                                                            unlimited:unlimited];
         return YES;
     }];
-    [encoder encodeDictionaryWithKey:@"PrimaryGrid"
-                          generation:iTermGenerationAlwaysEncode
+    // Gate the (large) grid cell data on the grid's content generation so an
+    // unchanged grid is not rewritten on every save. See VT100Grid contentGeneration.
+    // New keys (…V2): the pre-3.x nodes were AlwaysEncode; using a new key orphans
+    // them on upgrade instead of colliding with the content-generation namespace.
+    [encoder encodeDictionaryWithKey:@"PrimaryGridV2"
+                          generation:_state.primaryGrid.contentGeneration
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
         [_state.primaryGrid encode:subencoder];
         return YES;
     }];
     if (_state.altGrid) {
-        [encoder encodeDictionaryWithKey:@"AltGrid"
-                              generation:iTermGenerationAlwaysEncode
+        [encoder encodeDictionaryWithKey:@"AltGridV2"
+                              generation:_state.altGrid.contentGeneration
                                    block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
             [_state.altGrid encode:subencoder];
             return YES;

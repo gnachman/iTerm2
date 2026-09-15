@@ -459,4 +459,24 @@ class URLDetectionAcrossLinesTests: XCTestCase {
                                                            extractor: extractor([padded, irssiLines[1]], width: 80))
         XCTAssertEqual(detected, "https://irssi.org")
     }
+
+    // Issue 13011 (and the same-root-cause 13020): Emacs/mew inside tmux. The URL sits at the end of
+    // a line whose remainder is cleared to nulls, then one or more blank (all-null) lines follow,
+    // then unrelated text whose first word ("Not") is URL-legal. Detection runs with hard newlines
+    // ignored (full-screen app), so the URL must still stop at the end of its drawn content rather
+    // than skipping the blank lines and absorbing "Not" -> ".../Not".
+    func testShortURLDoesNotAbsorbTextAfterBlankLines() {
+        let url = "https://ipshowcaseonthewater2026.rsvpify.com/"
+        let lines = [
+            "Register Here: " + url,      // line 0: URL ends mid-line; rest is nulls
+            "",                           // line 1: blank (all nulls)
+            "Not attending IBC? Book a virtual session",  // line 2
+        ]
+        // Click inside the host ('s' of "rsvpify", column 15 + offset into the URL).
+        let clickX = Int32(("Register Here: https://ipshowcaseonthewater2026.rsv").count - 1)
+        let detected = iTermURLActionFactory.urlLikeString(at: VT100GridCoord(x: clickX, y: 0),
+                                                           respectHardNewlines: false,
+                                                           extractor: extractor(lines, width: 80))
+        XCTAssertEqual(detected, url)
+    }
 }

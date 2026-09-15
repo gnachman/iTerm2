@@ -8,7 +8,7 @@ struct Session: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "session",
         abstract: "Manage iTerm2 sessions.",
-        subcommands: [
+        subcommands: sortedSubcommands([
             List.self,
             Split.self,
             Run.self,
@@ -28,7 +28,7 @@ struct Session: ParsableCommand {
             SetVar.self,
             AddClipping.self,
             ArchiveClippings.self,
-        ]
+        ])
     )
 }
 
@@ -762,7 +762,8 @@ extension Session {
     struct GetVar: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "get-var",
-            abstract: "Get session variable value."
+            abstract: "Get session variable value.",
+            discussion: "See also: it2 session set-var"
         )
 
         @Argument(help: "Variable name.")
@@ -910,7 +911,8 @@ extension Session {
     struct SetVar: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "set-var",
-            abstract: "Set session variable value."
+            abstract: "Set session variable value.",
+            discussion: "See also: it2 session get-var"
         )
 
         @Argument(help: "Variable name.")
@@ -957,7 +959,8 @@ extension Session {
     struct SetStatus: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "set-status",
-            abstract: "Set session status indicator."
+            abstract: "Set session status indicator.",
+            discussion: "See also: it2 session get-background-tasks"
         )
 
         @Option(name: .shortAndLong, help: "Target session ID.")
@@ -1032,7 +1035,8 @@ extension Session {
     struct GetBackgroundTasks: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "get-background-tasks",
-            abstract: "Print the background-task count last stored via set-status --background-tasks."
+            abstract: "Print the background-task count last stored via set-status --background-tasks.",
+            discussion: "See also: it2 session set-status"
         )
 
         @Option(name: .shortAndLong, help: "Target session ID.")

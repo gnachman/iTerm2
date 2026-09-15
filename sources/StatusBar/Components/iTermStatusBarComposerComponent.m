@@ -36,13 +36,13 @@
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *textColorKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Icon Color:"
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:NSLocalizedStringWithDefaultValue(@"StatusBarComposer.IconColorLabel", nil, [NSBundle mainBundle], @"Icon Color:", @"Label for the icon color knob in the composer status bar component")
                                                       type:iTermStatusBarComponentKnobTypeColor
                                                placeholder:nil
                                               defaultValue:nil
                                                        key:iTermStatusBarSharedTextColorKey];
     iTermStatusBarComponentKnob *backgroundColorKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color:"
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:NSLocalizedStringWithDefaultValue(@"StatusBarComposer.BackgroundColorLabel", nil, [NSBundle mainBundle], @"Background Color:", @"Label for the background color knob in the composer status bar component")
                                                       type:iTermStatusBarComponentKnobTypeColor
                                                placeholder:nil
                                               defaultValue:nil
@@ -66,16 +66,16 @@
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Composer";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarComposer.ShortDescription", nil, [NSBundle mainBundle], @"Composer", @"Short description of the composer status bar component");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Adds a text field for composing command lines.";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarComposer.DetailedDescription", nil, [NSBundle mainBundle], @"Adds a text field for composing command lines.", @"Detailed description of the composer status bar component");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
-    return @">_ [Command] 💬";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarComposer.Exemplar", nil, [NSBundle mainBundle], @">_ [Command] 💬", @"Exemplar shown in the status bar component picker for the composer component");
 }
 
 - (iTermsStatusBarComposerViewController *)viewController {

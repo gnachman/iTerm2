@@ -19,13 +19,8 @@ extension SessionView {
         installOverlay(
             DiffWaitingPromptView(
                 frame: scrollview.frame,
-                title: "Diff session is waiting for changes.",
-                body: "This session is set to Diff mode and only starts its "
-                    + "command when git reports staged or unstaged changes. "
-                    + "The working tree is currently clean, or iTerm2 hasn’t "
-                    + "finished its first check yet. Edit a file (or stage one) "
-                    + "and the command will start on its own. To run it now "
-                    + "anyway, click below.",
+                title: String(localized: "DiffWaitingPrompt.InitialTitle", defaultValue: "Diff session is waiting for changes.", comment: "Title of the overlay shown when a diff-mode session is waiting for git changes before it starts"),
+                body: String(localized: "DiffWaitingPrompt.InitialBody", defaultValue: "This session is set to Diff mode and only starts its command when git reports staged or unstaged changes. The working tree is currently clean, or iTerm2 hasn’t finished its first check yet. Edit a file (or stage one) and the command will start on its own. To run it now anyway, click below.", comment: "Body text explaining that a diff-mode session is waiting for git changes before it starts"),
                 showCancel: false),
             onRunAnyway: onRunAnyway,
             onCancel: nil)
@@ -44,12 +39,8 @@ extension SessionView {
         installOverlay(
             DiffWaitingPromptView(
                 frame: scrollview.frame,
-                title: "Reload queued. Waiting for changes.",
-                body: "This session is set to Diff mode, so Reload will "
-                    + "re-run the command only after git reports staged or "
-                    + "unstaged changes. The previous output is still on "
-                    + "screen behind this panel. Cancel to keep that output "
-                    + "and abandon the reload, or run the command now anyway.",
+                title: String(localized: "DiffWaitingPrompt.ReloadTitle", defaultValue: "Reload queued. Waiting for changes.", comment: "Title of the overlay shown when a diff-mode reload is queued and waiting for git changes"),
+                body: String(localized: "DiffWaitingPrompt.ReloadBody", defaultValue: "This session is set to Diff mode, so Reload will re-run the command only after git reports staged or unstaged changes. The previous output is still on screen behind this panel. Cancel to keep that output and abandon the reload, or run the command now anyway.", comment: "Body text explaining that a queued reload in diff mode is waiting for git changes"),
                 showCancel: true),
             onRunAnyway: onRunAnyway,
             onCancel: onCancel)

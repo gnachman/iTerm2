@@ -11,7 +11,7 @@
 @implementation StopTrigger
 
 + (NSString *)title {
-  return @"Stop Processing Triggers";
+  return NSLocalizedStringWithDefaultValue(@"Trigger.Stop.Title", nil, [NSBundle mainBundle], @"Stop Processing Triggers", @"Trigger action name: stop evaluating any further triggers on this line");
 }
 
 - (NSString *)description {

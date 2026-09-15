@@ -287,6 +287,28 @@ TAGS:
 install: | Deployment backup-old-iterm
 	cp -R $(BUILD_DIR)/Deployment/iTerm2.app $(APPS)
 
+# The code-derived string catalog is tracked at xcstrings/Localizable.xcstrings
+# (the canonical copy, owned by tools/extract_strings.sh). Xcode's per-build
+# "sync localizations" mangles whatever catalog is the app target's resource, so
+# the resource copy at sources/Localizable.xcstrings is gitignored and staged
+# here from the canonical copy before every build. This must run before
+# xcodebuild, because the xcstrings compile computes its outputs at build-planning
+# time, before any build phase would run. (The IDE does the same via a scheme
+# pre-action; see iTerm2.xcscheme.)
+.PHONY: ingest-catalogs
+ingest-catalogs:
+	cp -f xcstrings/Localizable.xcstrings sources/Localizable.xcstrings
+
+Development Beta Deployment Nightly: ingest-catalogs
+
+# Enable the repo's git hooks (tracked in tools/git-hooks). The pre-commit hook
+# blocks committing a newly-added string in xcstrings/Localizable.xcstrings that
+# isn't translated into every language the catalog uses. Run once per clone.
+.PHONY: install-hooks
+install-hooks:
+	git config core.hooksPath tools/git-hooks
+	@echo "Git hooks enabled (core.hooksPath=tools/git-hooks)."
+
 Development:
 	echo "Using PATH for build: $(PATH)"
 	cp plists/dev-iTerm2.plist plists/iTerm2.plist
@@ -297,10 +319,12 @@ Beta:
 	cp plists/beta-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -scheme iTerm2 -configuration Beta -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO && \
 	chmod -R go+rX $(BUILD_DIR)/Beta
+	tools/extract_strings.sh Beta "$(BUILD_DIR)"
 
 Deployment:
 	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO && \
 	chmod -R go+rX $(BUILD_DIR)/Deployment
+	tools/extract_strings.sh Deployment "$(BUILD_DIR)"
 
 Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
@@ -313,8 +337,32 @@ companion-iphone: force
 open: Development
 	open -W -n "$(BUILD_DIR)/Development/iTerm2.app" --args -suite $(SUITE)
 
+# Set LANGUAGE=<code> to force a UI language, e.g. `LANGUAGE=pt make run` adds
+# -AppleLanguages '(pt)'. Leave it unset to use the system language.
 run: Development
-	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) & \
+	$(MAKE) run-nobuild
+
+run-nobuild: force
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) $(if $(LANGUAGE),-AppleLanguages '($(LANGUAGE))') & \
+	pid=$$!; \
+	trap 'kill $$pid 2>/dev/null' INT TERM; \
+	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
+	wait $$pid
+
+# Regenerate sources/Localizable.xcstrings from the current sources. Swift strings come
+# from the per-file .stringsdata the build emits (SWIFT_EMIT_LOC_STRINGS=YES); Objective-C
+# strings are pulled from the NSLocalizedString family with extractLocStrings, which the
+# build does not run for the static-library targets. This is the standalone entry point;
+# the Beta and Deployment targets run the same step automatically after building.
+extract-strings: Development
+	tools/extract_strings.sh Development "$(BUILD_DIR)"
+
+# Like `run`, but doubles every localized string at runtime (e.g. "View" -> "View View")
+# with -NSDoubleLocalizedStrings. Needs no translations, and because the displayed text
+# then differs from the English source it flushes out code that still matches on English
+# strings (menu-item lookups, window titles, etc.).
+pseudorun: Development
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) -NSDoubleLocalizedStrings YES & \
 	pid=$$!; \
 	trap 'kill $$pid 2>/dev/null' INT TERM; \
 	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
@@ -525,11 +573,11 @@ ifdef UNIVERSAL
 librailroad_dsl: force
 	$(RUSTUP) target add x86_64-apple-darwin
 	$(RUSTUP) target add aarch64-apple-darwin
-	cd submodules/railroad_dsl && $(RUSTUP) run stable cargo build --release --target aarch64-apple-darwin && $(RUSTUP) run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+	cd submodules/railroad_dsl && MACOSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) $(RUSTUP) run stable cargo build --release --target aarch64-apple-darwin && MACOSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) $(RUSTUP) run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
 else
 librailroad_dsl: force
 	$(RUSTUP) target add $(RUST_NATIVE_TARGET)
-	cd submodules/railroad_dsl && $(RUSTUP) run stable cargo build --release --target $(RUST_NATIVE_TARGET) && cp target/$(RUST_NATIVE_TARGET)/release/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+	cd submodules/railroad_dsl && MACOSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) $(RUSTUP) run stable cargo build --release --target $(RUST_NATIVE_TARGET) && cp target/$(RUST_NATIVE_TARGET)/release/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
 endif
 
 pwmadapters: force
@@ -575,6 +623,12 @@ sparkle: force
 	rm -rf ThirdParty/Sparkle.framework
 	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
+# The Sparkle subbuild signs its nested Autoupdate.app helpers ad-hoc, which
+# fails notarization once embedded (CodeSignOnCopy does not re-sign them). When
+# signing, re-sign them with Developer ID. See tools/sign_sparkle_helpers.sh.
+ifdef SIGNED
+	tools/sign_sparkle_helpers.sh ThirdParty/Sparkle.framework
+endif
 
 paranoid-cc-status: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) cc-status

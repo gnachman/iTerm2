@@ -186,44 +186,61 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
         // resume a one-shot continuation from whichever finishes first and abandon
         // the loser (it ends when the socket actually closes; bounded, once).
         let race = ReceiveRace()
-        return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-            race.read = Task { [weak self] in
-                await race.ready()
-                guard let self else {
-                    if race.claim() { cont.resume(throwing: TransportError.closed) }
-                    return
-                }
-                do {
-                    let message = try await self.ws.receive()
-                    guard race.claim() else { return }
-                    race.close?.cancel()
-                    switch message {
-                    case .data(let data):
-                        cont.resume(returning: data)
-                    case .text:
-                        // Post-admission frames are always binary; a text frame is
-                        // the relay closing or a protocol error.
-                        self.signalClosed()
-                        cont.resume(throwing: TransportError.malformedFrame)
+        // Honor task cancellation. A cancelled receive (the reconnect handshake's
+        // withTimeout firing its timeout leg, which cancels the task running
+        // NoiseHandshake.perform) must unblock, even though ws.receive() ignores
+        // Swift cancellation and the keepalive is healthy (the socket still pings,
+        // but the peer's frame never comes because the mac's bridge died and
+        // re-parked). Route cancellation into the same close race that close() and
+        // the keepalive death use; without this the handshake, and the whole
+        // reconnect loop, hangs until the user force-quits ("paired but never
+        // reconnects"). The transport is torn down, matching close(): the caller
+        // gives up on this connection and re-parks on a fresh one.
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
+                race.read = Task { [weak self] in
+                    await race.ready()
+                    guard let self else {
+                        if race.claim() { cont.resume(throwing: TransportError.closed) }
+                        return
                     }
-                } catch {
-                    guard race.claim() else { return }
-                    race.close?.cancel()
-                    self.signalClosed()
-                    // Preserve a quota close so the caller (session/bridge receive
-                    // loop) can back off instead of fast-retrying; else "gone".
-                    cont.resume(throwing: (error as? TransportError) == .quotaExceeded
-                                ? TransportError.quotaExceeded : TransportError.closed)
+                    do {
+                        let message = try await self.ws.receive()
+                        guard race.claim() else { return }
+                        race.close?.cancel()
+                        switch message {
+                        case .data(let data):
+                            cont.resume(returning: data)
+                        case .text:
+                            // Post-admission frames are always binary; a text frame is
+                            // the relay closing or a protocol error.
+                            self.signalClosed()
+                            cont.resume(throwing: TransportError.malformedFrame)
+                        }
+                    } catch {
+                        guard race.claim() else { return }
+                        race.close?.cancel()
+                        self.signalClosed()
+                        // Preserve a quota close so the caller (session/bridge receive
+                        // loop) can back off instead of fast-retrying; else "gone".
+                        cont.resume(throwing: (error as? TransportError) == .quotaExceeded
+                                    ? TransportError.quotaExceeded : TransportError.closed)
+                    }
                 }
+                race.close = Task { [weak self] in
+                    await race.ready()
+                    await self?.awaitClosed()
+                    guard race.claim() else { return }
+                    race.read?.cancel()
+                    cont.resume(throwing: TransportError.closed)
+                }
+                race.start()
             }
-            race.close = Task { [weak self] in
-                await race.ready()
-                await self?.awaitClosed()
-                guard race.claim() else { return }
-                race.read?.cancel()
-                cont.resume(throwing: TransportError.closed)
-            }
-            race.start()
+        } onCancel: {
+            // Signals closed, which resolves the close race above so the continuation
+            // resumes with .closed; also cancels the socket so the abandoned read
+            // does not linger. Idempotent with a normal close/keepalive death.
+            cancelAndSignalClosed()
         }
     }
 

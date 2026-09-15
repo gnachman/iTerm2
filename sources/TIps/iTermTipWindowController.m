@@ -22,18 +22,20 @@
 
 #import <QuartzCore/QuartzCore.h>
 
-static NSString *const kLearnMoreTitle = @"Learn More";
-static NSString *const kDismissTipTitle = @"Dismiss Tip";
-static NSString *const kFewerOptionsTitle = @"Fewer Options";
-static NSString *const kMoreOptionsTitle = @"More Options";
-static NSString *const kShowThisLaterTitle = @"Show This Later";
-static NSString *const kDisableTipsTitle = @"Disable Tips";
-static NSString *const kEnableTipsTitle = @"Enable Tips";
-static NSString *const kShowNextTipTitle = @"Show Next Tip";
-static NSString *const kShowPreviousTipTitle = @"Show Previous Tip";
-static NSString *const kShowTipsWeeklyTitle = @"Show Tips Weekly";
-static NSString *const kShowTipsDailyTitle = @"Show Tips Daily";
-static NSString *const kShareTitle = @"Share";
+// Tip-card button titles. These double as lookup keys (actionWithTitle:), so display and
+// lookup both go through these functions and therefore stay consistent within a locale.
+static NSString *kLearnMoreTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.LearnMore", nil, [NSBundle mainBundle], @"Learn More", @"Tip card button"); }
+static NSString *kDismissTipTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.DismissTip", nil, [NSBundle mainBundle], @"Dismiss Tip", @"Tip card button"); }
+static NSString *kFewerOptionsTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.FewerOptions", nil, [NSBundle mainBundle], @"Fewer Options", @"Tip card button"); }
+static NSString *kMoreOptionsTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.MoreOptions", nil, [NSBundle mainBundle], @"More Options", @"Tip card button"); }
+static NSString *kShowThisLaterTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.ShowThisLater", nil, [NSBundle mainBundle], @"Show This Later", @"Tip card button"); }
+static NSString *kDisableTipsTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.DisableTips", nil, [NSBundle mainBundle], @"Disable Tips", @"Tip card button"); }
+static NSString *kEnableTipsTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.EnableTips", nil, [NSBundle mainBundle], @"Enable Tips", @"Tip card button"); }
+static NSString *kShowNextTipTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.ShowNextTip", nil, [NSBundle mainBundle], @"Show Next Tip", @"Tip card button"); }
+static NSString *kShowPreviousTipTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.ShowPreviousTip", nil, [NSBundle mainBundle], @"Show Previous Tip", @"Tip card button"); }
+static NSString *kShowTipsWeeklyTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.ShowTipsWeekly", nil, [NSBundle mainBundle], @"Show Tips Weekly", @"Tip card button"); }
+static NSString *kShowTipsDailyTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.ShowTipsDaily", nil, [NSBundle mainBundle], @"Show Tips Daily", @"Tip card button"); }
+static NSString *kShareTitle(void) { return NSLocalizedStringWithDefaultValue(@"Tips.Share", nil, [NSBundle mainBundle], @"Share", @"Tip card button"); }
 
 static const CGFloat kWindowWidth = 400;
 
@@ -163,20 +165,21 @@ static const CGFloat kWindowTopMargin = 8;
 - (void)addButtonsToCard:(iTermTipCardViewController *)card expanded:(BOOL)expanded {
     __weak __typeof(self) weakSelf = self;
     if (_tip.url) {
-        [card addActionWithTitle:kLearnMoreTitle
+        [card addActionWithTitle:kLearnMoreTitle()
                             icon:[NSImage it_imageNamed:@"Navigate" forClass:self.class]
                            block:^(id sendingCard) {
             [weakSelf openURL];
         }];
     }
-    [card addActionWithTitle:kDismissTipTitle
+    [card addActionWithTitle:kDismissTipTitle()
+                    // Localization unneeded
                     shortcut:@"⎋"
                         icon:[NSImage it_imageNamed:@"Dismiss" forClass:self.class]
                        block:^(id sendingCard) {
         [weakSelf dismiss];
     }];
 
-    NSString *toggleTitle = expanded ? kFewerOptionsTitle : kMoreOptionsTitle;
+    NSString *toggleTitle = expanded ? kFewerOptionsTitle() : kMoreOptionsTitle();
     iTermTipCardActionButton *button =
     [card addActionWithTitle:toggleTitle
                         icon:[NSImage it_imageNamed:@"ChevronDown" forClass:self.class]
@@ -186,7 +189,7 @@ static const CGFloat kWindowTopMargin = 8;
     [button setIconFlipped:expanded];
 
     button =
-    [card addActionWithTitle:kShowThisLaterTitle
+    [card addActionWithTitle:kShowThisLaterTitle()
                         icon:[NSImage it_imageNamed:@"Later" forClass:self.class]
                        block:^(id sendingCard) {
         [weakSelf showThisLater];
@@ -210,7 +213,7 @@ static const CGFloat kWindowTopMargin = 8;
     shareImage.template = NO;
 
     button =
-    [card addActionWithTitle:kShareTitle icon:shareImage block:^(id sendingCard) {
+    [card addActionWithTitle:kShareTitle() icon:shareImage block:^(id sendingCard) {
         [weakSelf shareThis:sendingCard];
     }];
     if (!expanded) {
@@ -219,9 +222,9 @@ static const CGFloat kWindowTopMargin = 8;
 
     NSString *frequencyTitle;
     if ([_delegate tipFrequencyIsHigh]) {
-        frequencyTitle = kShowTipsWeeklyTitle;
+        frequencyTitle = kShowTipsWeeklyTitle();
     } else {
-        frequencyTitle = kShowTipsDailyTitle;
+        frequencyTitle = kShowTipsDailyTitle();
     }
     button =
     [card addActionWithTitle:frequencyTitle
@@ -232,12 +235,12 @@ static const CGFloat kWindowTopMargin = 8;
             return;
         }
         [strongSelf->_delegate toggleTipFrequency];
-        iTermTipCardActionButton *theButton = [[iTermTipCardViewController castFrom:sendingCard] actionWithTitle:kShowTipsWeeklyTitle];
+        iTermTipCardActionButton *theButton = [[iTermTipCardViewController castFrom:sendingCard] actionWithTitle:kShowTipsWeeklyTitle()];
         if (theButton) {
-            [theButton setTitle:kShowTipsDailyTitle];
+            [theButton setTitle:kShowTipsDailyTitle()];
         } else {
-            theButton = [[iTermTipCardViewController castFrom:sendingCard] actionWithTitle:kShowTipsDailyTitle];
-            [theButton setTitle:kShowTipsWeeklyTitle];
+            theButton = [[iTermTipCardViewController castFrom:sendingCard] actionWithTitle:kShowTipsDailyTitle()];
+            [theButton setTitle:kShowTipsWeeklyTitle()];
         }
     }];
     if (!expanded) {
@@ -246,9 +249,9 @@ static const CGFloat kWindowTopMargin = 8;
 
     NSString *enableOrDisableTitle;
     if ([_delegate tipWindowTipsAreDisabled]) {
-        enableOrDisableTitle = kEnableTipsTitle;
+        enableOrDisableTitle = kEnableTipsTitle();
     } else {
-        enableOrDisableTitle = kDisableTipsTitle;
+        enableOrDisableTitle = kDisableTipsTitle();
     }
     button =
     [card addActionWithTitle:enableOrDisableTitle
@@ -261,9 +264,9 @@ static const CGFloat kWindowTopMargin = 8;
         if (![strongSelf->_delegate tipWindowTipsAreDisabled]) {
             [strongSelf disableTips];
         } else {
-            iTermTipCardActionButton *theButton = [[iTermTipCardViewController castFrom:sendingCard] actionWithTitle:kEnableTipsTitle];
+            iTermTipCardActionButton *theButton = [[iTermTipCardViewController castFrom:sendingCard] actionWithTitle:kEnableTipsTitle()];
             [strongSelf enableTips];
-            [theButton setTitle:kDisableTipsTitle];
+            [theButton setTitle:kDisableTipsTitle()];
         }
     }];
     if (!expanded) {
@@ -272,7 +275,7 @@ static const CGFloat kWindowTopMargin = 8;
 
     if ([_delegate tipWindowTipAfterTipWithIdentifier:self.tip.identifier]) {
         button =
-        [card addActionWithTitle:kShowNextTipTitle
+        [card addActionWithTitle:kShowNextTipTitle()
                             icon:[NSImage it_imageNamed:@"NextTip" forClass:self.class]
                            block:^(id sendingCard) {
             [weakSelf showNextTip];
@@ -283,7 +286,7 @@ static const CGFloat kWindowTopMargin = 8;
     }
     if ([_delegate tipWindowTipBeforeTipWithIdentifier:self.tip.identifier]) {
         button =
-        [card addActionWithTitle:kShowPreviousTipTitle
+        [card addActionWithTitle:kShowPreviousTipTitle()
                             icon:[NSImage it_imageNamed:@"NextTip" forClass:self.class]
                            block:^(id sendingCard) {
             [weakSelf showPreviousTip];
@@ -292,9 +295,9 @@ static const CGFloat kWindowTopMargin = 8;
         if (!expanded) {
             [button setCollapsed:YES];
         }
-        iTermTipCardActionButton *nextButton = [card actionWithTitle:kShowNextTipTitle];
+        iTermTipCardActionButton *nextButton = [card actionWithTitle:kShowNextTipTitle()];
         if (nextButton) {
-            [card combineActionWithTitle:kShowPreviousTipTitle andTitle:kShowNextTipTitle];
+            [card combineActionWithTitle:kShowPreviousTipTitle() andTitle:kShowNextTipTitle()];
         }
     }
 
@@ -313,14 +316,14 @@ static const CGFloat kWindowTopMargin = 8;
 
 // Action button titles that are collapsible. These must appear adjacently and last.
 - (NSArray *)collapsingTitles {
-    return @[ kShowThisLaterTitle,
-              kShareTitle,
-              kDisableTipsTitle,
-              kEnableTipsTitle,
-              kShowTipsDailyTitle,
-              kShowTipsWeeklyTitle,
-              kShowNextTipTitle,
-              kShowPreviousTipTitle ];
+    return @[ kShowThisLaterTitle(),
+              kShareTitle(),
+              kDisableTipsTitle(),
+              kEnableTipsTitle(),
+              kShowTipsDailyTitle(),
+              kShowTipsWeeklyTitle(),
+              kShowNextTipTitle(),
+              kShowPreviousTipTitle() ];
 }
 
 // I originally preferred to do this in windowDidLoad, but the window's frame
@@ -330,7 +333,7 @@ static const CGFloat kWindowTopMargin = 8;
 
     self.window.level = NSModalPanelWindowLevel;
     self.window.accessibilityElement = YES;
-    self.window.accessibilityLabel = @"iTerm2 Tip of the Day";
+    self.window.accessibilityLabel = NSLocalizedStringWithDefaultValue(@"TipWindow.AccessibilityLabel", nil, [NSBundle mainBundle], @"iTerm2 Tip of the Day", @"Accessibility label for the Tip of the Day window.");
     self.window.opaque = NO;
     self.window.alphaValue = 0;
 
@@ -455,32 +458,32 @@ static const CGFloat kWindowTopMargin = 8;
 }
 
 - (void)toggleOptionsInCard:(iTermTipCardViewController *)card {
-    iTermTipCardActionButton *action = [card actionWithTitle:kMoreOptionsTitle];
+    iTermTipCardActionButton *action = [card actionWithTitle:kMoreOptionsTitle()];
     if (action) {
         // Expanding
         [action setIconFlipped:YES];
-        [action setTitle:kFewerOptionsTitle];
-        [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingIn];
-        [[card actionWithTitle:kShareTitle] setAnimationState:kTipCardButtonAnimatingIn];
-        [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
-        [[card actionWithTitle:kEnableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
-        [[card actionWithTitle:kShowTipsWeeklyTitle] setAnimationState:kTipCardButtonAnimatingIn];
-        [[card actionWithTitle:kShowTipsDailyTitle] setAnimationState:kTipCardButtonAnimatingIn];
-        [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
-        [[card actionWithTitle:kShowPreviousTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
+        [action setTitle:kFewerOptionsTitle()];
+        [[card actionWithTitle:kShowThisLaterTitle()] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShareTitle()] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kDisableTipsTitle()] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kEnableTipsTitle()] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShowTipsWeeklyTitle()] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShowTipsDailyTitle()] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShowNextTipTitle()] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShowPreviousTipTitle()] setAnimationState:kTipCardButtonAnimatingIn];
     } else {
         // Collapsing
-        action = [card actionWithTitle:kFewerOptionsTitle];
+        action = [card actionWithTitle:kFewerOptionsTitle()];
         [action setIconFlipped:NO];
-        [action setTitle:kMoreOptionsTitle];
-        [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingOut];
-        [[card actionWithTitle:kShareTitle] setAnimationState:kTipCardButtonAnimatingOut];
-        [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
-        [[card actionWithTitle:kEnableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
-        [[card actionWithTitle:kShowTipsWeeklyTitle] setAnimationState:kTipCardButtonAnimatingOut];
-        [[card actionWithTitle:kShowTipsDailyTitle] setAnimationState:kTipCardButtonAnimatingOut];
-        [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
-        [[card actionWithTitle:kShowPreviousTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
+        [action setTitle:kMoreOptionsTitle()];
+        [[card actionWithTitle:kShowThisLaterTitle()] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShareTitle()] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kDisableTipsTitle()] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kEnableTipsTitle()] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShowTipsWeeklyTitle()] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShowTipsDailyTitle()] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShowNextTipTitle()] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShowPreviousTipTitle()] setAnimationState:kTipCardButtonAnimatingOut];
     }
     [self layoutCard:card animated:YES];
 }
@@ -544,7 +547,7 @@ static const CGFloat kWindowTopMargin = 8;
     // Tell the delegate we're going to show another tip, then show it.
     [_delegate tipWindowWillShowTipWithIdentifier:nextTip.identifier];
     self.tip = nextTip;
-    BOOL expanded = ([_cardViewController actionWithTitle:kMoreOptionsTitle] == nil);
+    BOOL expanded = ([_cardViewController actionWithTitle:kMoreOptionsTitle()] == nil);
     // Card moved to exitingCardViewControllers while buttons are disabled so buttons will
     // never be enabled in this card again.
     [_exitingCardViewControllers addObject:_cardViewController];

@@ -680,7 +680,7 @@ extension PTYTextView: ExternalSearchResultsController {
         let firstMaxLength = first.length - first.number(ofTrailingEmptyCellsWhereSpaceIsEmpty: true)
         let lastMaxLength = last.length - last.number(ofTrailingEmptyCellsWhereSpaceIsEmpty: true)
 
-        var mid = " …\(count) line\(count > 1 ? "s" : "")… "
+        var mid = String(localized: "PTYTextView.MidLineCount", defaultValue: " …\(count) lines… ", comment: "Middle-of-range line count marker; %lld is the number of lines. Keep the surrounding ellipses and spaces.")
         if mid.utf16.count + 10 > length {
             mid = "…"
         }
@@ -1216,7 +1216,7 @@ extension PTYTextView {
 
         // Line count
         let lineCount = Int(range.upperBound - range.lowerBound)
-        parts.append("…\(lineCount) line\(lineCount > 1 ? "s" : "")…")
+        parts.append(String(localized: "PTYTextView.PartsLineCount", defaultValue: "…\(lineCount) lines…", comment: "Line count marker in a compact description; %lld is the number of lines. Keep the surrounding ellipses."))
 
         // Last command if different
         if let lastCmd = lastMark?.firstLineOfCommand,

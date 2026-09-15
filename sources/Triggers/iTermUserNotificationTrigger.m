@@ -32,7 +32,7 @@
 }
 
 + (NSString *)title {
-    return @"Post Notification…";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.UserNotification.Title", nil, [NSBundle mainBundle], @"Post Notification…", @"Trigger action name: post a system notification");
 }
 
 - (NSString *)description {

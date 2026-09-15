@@ -60,7 +60,7 @@ class ToolStatusCellView: NSTableCellView {
 
         let bellConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .regular)
         bellView.image = NSImage(systemSymbolName: SFSymbol.bellBadge.rawValue,
-                                 accessibilityDescription: "Notify on status change armed")?
+                                 accessibilityDescription: String(localized: "ToolStatusCell.NotifyArmedAccessibility", defaultValue: "Notify on status change armed", comment: "Accessibility description for the notify-armed bell icon"))?
             .withSymbolConfiguration(bellConfig)
         bellView.imageScaling = .scaleProportionallyDown
         bellView.contentTintColor = .controlAccentColor
@@ -107,7 +107,7 @@ class ToolStatusCellView: NSTableCellView {
 
         let snoozeConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .regular)
         snoozeIconView.image = NSImage(systemSymbolName: SFSymbol.moonZzz.rawValue,
-                                       accessibilityDescription: "Snoozed")?
+                                       accessibilityDescription: String(localized: "ToolStatusCell.SnoozedAccessibility", defaultValue: "Snoozed", comment: "Accessibility description for the snoozed indicator icon"))?
             .withSymbolConfiguration(snoozeConfig)
         snoozeIconView.imageScaling = .scaleProportionallyDown
         snoozeIconView.contentTintColor = .secondaryLabelColor
@@ -337,6 +337,7 @@ class ToolStatusCellView: NSTableCellView {
         // A snoozed row both dims its text and shows the snooze glyph.
         snoozeIconView.isHidden = !dimmed
         separatorView.isHidden = !showSeparator
+        // Localization unneeded
         nameLabel.set(interpolatedString: #"\(iterm2.private.session_name(session: id))"#, scope: scope)
         bellView.isHidden = !armed
         if let dotImage {

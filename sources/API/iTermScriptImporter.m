@@ -75,7 +75,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
     DLog(@"downloadedURL=%@ userInitiated=%@ offerAutoLauch=%@", downloadedURL, @(userInitiated), @(offerAutoLaunch));
     if (sInstallingScript) {
         RLog(@"already installing");
-        completion(@"Another import is in progress. Please try again after it completes.", NO, nil);
+        completion(NSLocalizedStringWithDefaultValue(@"ScriptImporter.ImportInProgress", nil, [NSBundle mainBundle], @"Another import is in progress. Please try again after it completes.", @"Error shown when a second script import is attempted while one is already running"), NO, nil);
         return;
     }
 
@@ -128,7 +128,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
             DLog(@"Unzip finished with %@", error);
             if (error) {
                 [pleaseWait.window close];
-                completion([NSString stringWithFormat: @"Could not unzip archive: %@", error.localizedDescription], NO, nil);
+                completion([NSString stringWithFormat: NSLocalizedStringWithDefaultValue(@"ScriptImporter.UnzipFailed", nil, [NSBundle mainBundle], @"Could not unzip archive: %@", @"Error shown when a script archive cannot be unzipped; %@ is the underlying error"), error.localizedDescription], NO, nil);
                 sInstallingScript = NO;
                 return;
             }
@@ -163,7 +163,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
         DLog(@"Is .its");
         if (![verifier smellsLikeSignedArchive:NULL]) {
             DLog(@"Doesn't smell like signed archive");
-            completion(nil, @"This script archive is corrupt and cannot be installed.", NO, NO, NO);
+            completion(nil, NSLocalizedStringWithDefaultValue(@"ScriptImporter.ArchiveCorrupt", nil, [NSBundle mainBundle], @"This script archive is corrupt and cannot be installed.", @"Error shown when a signed script archive is malformed and cannot be installed"), NO, NO, NO);
             return;
         }
         
@@ -183,7 +183,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
         return;
     }
     if (requireSignature) {
-        completion(nil, @"This is not a valid iTerm2 script archive.", NO, NO, NO);
+        completion(nil, NSLocalizedStringWithDefaultValue(@"ScriptImporter.NotValidArchive", nil, [NSBundle mainBundle], @"This is not a valid iTerm2 script archive.", @"Error shown when a file offered for import is not an iTerm2 script archive"), NO, NO, NO);
         return;
     }
     completion(url, nil, NO, NO, NO);
@@ -198,7 +198,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
     DLog(@"ok=%@ zipURL=%@ requireSignature=%@", @(ok), zipURL, @(requireSignature));
     if (!ok) {
         DLog(@"Not OK");
-        completion(nil, error.localizedDescription ?: @"Unknown error", NO, NO, NO);
+        completion(nil, error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"ScriptImporter.UnknownError", nil, [NSBundle mainBundle], @"Unknown error", @"Generic fallback message used when a script import fails without a specific error description"), NO, NO, NO);
         return;
     }
     
@@ -206,13 +206,13 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
         NSData *data = [[verifier.reader signingCertificates:nil] firstObject];
         if (!data) {
             DLog(@"No cert data");
-            completion(nil, @"Could not find certificate after verficiation (nil data)", NO, NO, NO);
+            completion(nil, NSLocalizedStringWithDefaultValue(@"ScriptImporter.CertificateMissingNilData", nil, [NSBundle mainBundle], @"Could not find certificate after verification (nil data)", @"Error shown when a verified script archive unexpectedly has no signing certificate data"), NO, NO, NO);
             return;
         }
         SIGCertificate *cert = [[SIGCertificate alloc] initWithData:data];
         if (!cert) {
             DLog(@"Bad data");
-            completion(nil, @"Could not find certificate after verficiation (bad data)", NO, NO, NO);
+            completion(nil, NSLocalizedStringWithDefaultValue(@"ScriptImporter.CertificateMissingBadData", nil, [NSBundle mainBundle], @"Could not find certificate after verification (bad data)", @"Error shown when a verified script archive’s signing certificate data cannot be parsed"), NO, NO, NO);
             return;
         }
         [self confirmInstallationOfVerifiedArchive:verifier.reader
@@ -221,7 +221,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
             RLog(@"Confirmation ok=%@ reveal=%@", @(ok), @(reveal));
             if (!ok) {
                 DLog(@"Canceled");
-                completion(nil, @"Installation canceled by user request.", NO, NO, YES);
+                completion(nil, NSLocalizedStringWithDefaultValue(@"ScriptImporter.CanceledByUser", nil, [NSBundle mainBundle], @"Installation canceled by user request.", @"Message shown when the user declines to install a verified script archive"), NO, NO, YES);
                 return;
             }
             DLog(@"Will copy payload");
@@ -248,7 +248,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
     const BOOL ok = [verifier copyPayloadToURL:zipURL error:&innerError];
     DLog(@"%@", innerError);
     if (!ok) {
-        completion(nil, innerError.localizedDescription ?: @"Unknown error");
+        completion(nil, innerError.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"ScriptImporter.UnknownError", nil, [NSBundle mainBundle], @"Unknown error", @"Generic fallback message used when a script import fails without a specific error description"));
         return;
     }
     completion(zipURL, nil);
@@ -263,15 +263,15 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
                              withCertificate:(SIGCertificate *)cert
                                   completion:(void (^)(BOOL ok, BOOL toTemp))completion {
     DLog(@"Confirming");
-    NSString *body = [NSString stringWithFormat:@"The signature of ”%@” has been verified. The author is:\n\n%@\n\nWould you like to install it?",
+    NSString *body = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptImporter.SignatureVerifiedBody", nil, [NSBundle mainBundle], @"The signature of “%1$@” has been verified. The author is:\n\n%2$@\n\nWould you like to install it?", @"Message shown when a script archive signature is verified, asking whether to install it"),
                       reader.url.lastPathComponent,
-                      ((cert.name ?: cert.longDescription) ?: @"Unknown")];
+                      ((cert.name ?: cert.longDescription) ?: NSLocalizedStringWithDefaultValue(@"ScriptImporter.UnknownAuthor", nil, [NSBundle mainBundle], @"Unknown", @"Fallback shown for a script author when the certificate has no name or description"))];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                 actions:@[ @"OK", @"Cancel", @"Reveal Contents" ]
+                                                                 actions:@[ iTermLocalizedOK(), iTermLocalizedCancel(), NSLocalizedStringWithDefaultValue(@"ScriptImporter.RevealContents", nil, [NSBundle mainBundle], @"Reveal Contents", @"Button to reveal the contents of a script archive") ]
                                                                accessory:nil
                                                               identifier:nil
                                                              silenceable:kiTermWarningTypePersistent
-                                                                 heading:@"Confirm Installation"
+                                                                 heading:NSLocalizedStringWithDefaultValue(@"ScriptImporter.ConfirmInstallationHeading", nil, [NSBundle mainBundle], @"Confirm Installation", @"Heading of the dialog confirming installation of a verified script archive")
                                                                   window:nil];
     completion(selection != kiTermWarningSelection1, selection == kiTermWarningSelection2);
 }
@@ -330,10 +330,10 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
         RLog(@"Failed to extract archive from container");
         if (deprecated) {
             DLog(@"deprecated");
-            completion(@"This archive was created by an older version of iTerm2. This kind of archive is no longer supported and cannot be installed.", NO, nil);
+            completion(NSLocalizedStringWithDefaultValue(@"ScriptImporter.LegacyArchiveUnsupported", nil, [NSBundle mainBundle], @"This archive was created by an older version of iTerm2. This kind of archive is no longer supported and cannot be installed.", @"Error shown when trying to install a deprecated script archive from an older iTerm2 version"), NO, nil);
         } else {
             DLog(@"invalid");
-            completion(@"Archive does not contain a valid iTerm2 script", NO, nil);
+            completion(NSLocalizedStringWithDefaultValue(@"ScriptImporter.NoValidScript", nil, [NSBundle mainBundle], @"Archive does not contain a valid iTerm2 script", @"Error shown when an imported archive does not contain a valid iTerm2 script"), NO, nil);
         }
         return;
     }
@@ -342,12 +342,12 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
         DLog(@"Already have a script named %@", archive.name);
         iTermWarningSelection selection = kiTermWarningSelection0;
         if (!avoidUI) {
-            selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"A script named “%@” is already installed", archive.name]
-                                                   actions:@[ @"Replace Script", @"Cancel" ]
+            selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptImporter.AlreadyInstalled", nil, [NSBundle mainBundle], @"A script named “%@” is already installed", @"Warning title shown when installing a script whose name is already taken"), archive.name]
+                                                   actions:@[ NSLocalizedStringWithDefaultValue(@"ScriptImporter.ReplaceScript", nil, [NSBundle mainBundle], @"Replace Script", @"Button to replace an existing script"), iTermLocalizedCancel() ]
                                                  accessory:nil
                                                 identifier:nil
                                                silenceable:kiTermWarningTypePersistent
-                                                   heading:@"Script Already Exists"
+                                                   heading:NSLocalizedStringWithDefaultValue(@"ScriptImporter.AlreadyExistsHeading", nil, [NSBundle mainBundle], @"Script Already Exists", @"Heading of the warning shown when a script name is already taken")
                                                     window:nil];
         }
         if (selection == kiTermWarningSelection0) {
@@ -359,7 +359,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
             // move-aside flow fixed). Abort the replace and leave the script untouched.
             NSString *backup = [self moveAsideScriptNamed:archive.name];
             if (backup == nil) {
-                completion([NSString stringWithFormat:@"Could not replace “%@”: the existing script could not be moved aside, so it was left unchanged.", archive.name],
+                completion([NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptImporter.ReplaceFailed", nil, [NSBundle mainBundle], @"Could not replace “%@”: the existing script could not be moved aside, so it was left unchanged.", @"Error shown when replacing an installed script fails because the old one could not be moved aside; %@ is the script name"), archive.name],
                            NO, nil);
                 return;
             }
@@ -394,8 +394,8 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
                 [self restoreReplacedScriptToPath:[[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:archive.name]
                                        fromBackup:replacedScriptBackup];
                 NSString *message = canceled
-                    ? [NSString stringWithFormat:@"Replacing “%@” was canceled. The existing script was kept.", archive.name]
-                    : (error.localizedDescription ?: @"The script could not be installed.");
+                    ? [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptImporter.ReplaceCanceled", nil, [NSBundle mainBundle], @"Replacing “%@” was canceled. The existing script was kept.", @"Message shown when replacing an existing script was canceled"), archive.name]
+                    : (error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"ScriptImporter.CouldNotInstall", nil, [NSBundle mainBundle], @"The script could not be installed.", @"Generic message shown when a script could not be installed"));
                 completion(message, NO, nil);
                 return;
             }

@@ -17,6 +17,9 @@ extern NSString *const kRegexKey;
 // Notes describing the rule
 extern NSString *const kNotesKey;
 
+// Stable localization key for a built-in rule's notes (built-in rules only).
+extern NSString *const kNotesLocalizationKey;
+
 // One of the kXxxPrecision strings defined below.
 extern NSString *const kPrecisionKey;
 

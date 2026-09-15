@@ -71,4 +71,11 @@ andEditComponentWithIdentifier:(NSString *)identifier
 - (void)didLayoutSubviewsForEditCurrentSessionMode;
 - (void)switchProfilesIfNeededToRevealDocument:(iTermPreferencesSearchDocument *)document;
 
+#if ITERM_DEBUG
+// Debug-only: walk each profile sub-tab and log truncated controls. See
+// -[PreferencePanel debugCheckControlTruncation].
+- (void)debugCheckControlTruncationWithTopLabel:(NSString *)topLabel
+                                         window:(NSWindow *)window;
+#endif
+
 @end

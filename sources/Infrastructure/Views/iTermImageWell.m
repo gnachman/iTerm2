@@ -75,10 +75,10 @@
 
 - (void)updateOverlayText {
     if (self.image == nil) {
-        _overlayLabel.stringValue = @"No Image Selected\u2009—\u2009Click to set";
+        _overlayLabel.stringValue = NSLocalizedStringWithDefaultValue(@"ImageWell.NoImageSelected", nil, [NSBundle mainBundle], @"No Image Selected\u2009—\u2009Click to set", @"Image well overlay when no image is set");
     }
     else {
-        _overlayLabel.stringValue = @"Click to change";
+        _overlayLabel.stringValue = NSLocalizedStringWithDefaultValue(@"ImageWell.ClickToChange", nil, [NSBundle mainBundle], @"Click to change", @"Image well overlay when an image is set");
     }
     [self setNeedsLayout:YES];
 }

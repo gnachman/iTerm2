@@ -239,7 +239,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
 
     private static let hostReps: [CompanionHostMessage] = [
         .unsupported,
-        .hello(revision: 1, minimumPeer: 1, wantsNotificationPermission: false),
+        .hello(revision: 1, minimumPeer: 1, wantsNotificationPermission: false, aiAvailable: true),
         .chatsAndSessions(chats: [], sessions: []),
         .chatCreated(entry: CompanionChatListEntry(chat: Chat(title: "t", permissions: ""), snippet: nil)),
         .history(chatID: "c", messages: [], maxSeq: 0),
@@ -274,6 +274,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
             end: CompanionSelectionPoint(absLine: 1, column: 2))),
         .autoProvideConsent(satisfied: true),
         .turnLifecycle(event: .started, chatID: "c"),
+        .aiAvailabilityChanged(available: false),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -318,6 +319,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .selectionRange: return "selectionRange"
         case .autoProvideConsent: return "autoProvideConsent"
         case .turnLifecycle: return "turnLifecycle"
+        case .aiAvailabilityChanged: return "aiAvailabilityChanged"
         }
     }
 

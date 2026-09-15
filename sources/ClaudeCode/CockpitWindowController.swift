@@ -60,7 +60,7 @@ class CockpitWindowController: NSWindowController {
     // status (in place of a screen-center toast).
     private var composerTipLabel: NSTextField!
     private var tipResetItem: DispatchWorkItem?
-    private static let defaultCockpitTip = "Type @ to choose sessions to write to"
+    private static let defaultCockpitTip = String(localized: "Cockpit.DefaultTip", defaultValue: "Type @ to choose sessions to write to", comment: "Default hint line shown under the cockpit composer")
     // Local (NoSync) autosave for the list/composer divider position.
     private static let splitAutosaveName = "NoSyncCockpitSplit"
     // The document range of the @-run the picker is currently editing,
@@ -366,8 +366,13 @@ class CockpitWindowController: NSWindowController {
         if let statusFilter, !statuses.contains(statusFilter) {
             self.statusFilter = nil
         }
-        statusFilterItems = [(title: "All (\(total))", status: nil)]
-            + statuses.map { (title: "\($0) (\(statusCounts[$0] ?? 0))", status: $0) }
+        // Localize the no-status sentinel for display only; the filter key stays stable.
+        let noStatusHeader = String(localized: "Cockpit.NoStatusHeader", defaultValue: "No status", comment: "Cockpit group header for sessions that have no status")
+        statusFilterItems = [(title: String(localized: "Cockpit.FilterAll", defaultValue: "All (\(total))", comment: "Status filter menu item showing the total count of all sessions"), status: nil)]
+            + statuses.map { status in
+                let displayStatus = (status == Self.noStatusLabel) ? noStatusHeader : status
+                return (title: "\(displayStatus) (\(statusCounts[status] ?? 0))", status: status)
+            }
 
         let selectedIndex = statusFilterItems.firstIndex { $0.status == statusFilter } ?? 0
 
@@ -480,7 +485,7 @@ class CockpitWindowController: NSWindowController {
         // Let @-mention chips (NSTextAttachments) survive editing; the
         // composer is plain-text by default and would strip them.
         composerVC.setComposerRichTextEnabled(true)
-        composerVC.setComposerPlaceholder("Type here to write to selected sessions…")
+        composerVC.setComposerPlaceholder(String(localized: "Cockpit.ComposerPlaceholder", defaultValue: "Type here to write to selected sessions…", comment: "Placeholder text in the cockpit composer field"))
         // No host/scope: the cockpit has no shell, and suggestions are
         // suppressed (see minimalComposerShouldFetchSuggestions), so the
         // shell-completion path that would use them is never reached.
@@ -562,7 +567,7 @@ class CockpitWindowController: NSWindowController {
         button.bezelStyle = .texturedRounded
         button.isBordered = true
         button.image = NSImage(systemSymbolName: SFSymbol.gearshape.rawValue,
-                               accessibilityDescription: "Settings")
+                               accessibilityDescription: String(localized: "Cockpit.SettingsAccessibility", defaultValue: "Settings", comment: "Accessibility description for the settings toolbar button"))
         button.imagePosition = .imageOnly
         button.target = self
         button.action = #selector(showSettings(_:))
@@ -643,11 +648,11 @@ class CockpitWindowController: NSWindowController {
         }
         let symbol: SFSymbol = armed ? .bellBadge : .bell
         notifyToolbarItem.image = NSImage(systemSymbolName: symbol.rawValue,
-                                          accessibilityDescription: "Notify on status change")
+                                          accessibilityDescription: String(localized: "Cockpit.NotifyAccessibility", defaultValue: "Notify on status change", comment: "Accessibility description for the notify toolbar button"))
         notifyToolbarItem.isEnabled = enabled
         notifyToolbarItem.toolTip = armed
-            ? "Watching for a status change on the selected item. An alert will appear on the next change, then turn this off."
-            : "Notify with an alert when the selected window or session’s status changes."
+            ? String(localized: "Cockpit.NotifyWatchingTooltip", defaultValue: "Watching for a status change on the selected item. An alert will appear on the next change, then turn this off.", comment: "Tooltip for the notify button when it is armed and watching for a status change")
+            : String(localized: "Cockpit.NotifyTooltip", defaultValue: "Notify with an alert when the selected window or session’s status changes.", comment: "Tooltip for the notify button when it is not armed")
     }
 
     @objc private func notifyArmedDidChange(_ notification: Notification) {
@@ -912,21 +917,21 @@ class CockpitWindowController: NSWindowController {
             guard !command.isEmpty else { return }
             sessions = selectedRowSessions()
             guard !sessions.isEmpty else {
-                setCockpitStatus("Type @ to pick a session, or select rows first", isError: true)
+                setCockpitStatus(String(localized: "Cockpit.PickSessionStatus", defaultValue: "Type @ to pick a session, or select rows first", comment: "Cockpit status prompting the user to choose target sessions"), isError: true)
                 return
             }
         } else {
             let (resolved, unknown) = resolveTargets(chipTokens)
             guard unknown.isEmpty else {
-                setCockpitStatus("Unknown target \(unknown.joined(separator: " "))", isError: true)
+                setCockpitStatus(String(localized: "Cockpit.UnknownTargetStatus", defaultValue: "Unknown target \(unknown.joined(separator: " "))", comment: "Cockpit status listing unrecognized @mention targets"), isError: true)
                 return
             }
             guard !command.isEmpty else {
-                setCockpitStatus("Add a command after the @mention", isError: true)
+                setCockpitStatus(String(localized: "Cockpit.AddCommandStatus", defaultValue: "Add a command after the @mention", comment: "Cockpit status prompting the user to type a command after the @mention"), isError: true)
                 return
             }
             guard !resolved.isEmpty else {
-                setCockpitStatus("No matching sessions", isError: true)
+                setCockpitStatus(String(localized: "Cockpit.NoMatchingSessions", defaultValue: "No matching sessions", comment: "Cockpit status shown when the targets resolve to no sessions"), isError: true)
                 return
             }
             sessions = resolved
@@ -939,12 +944,12 @@ class CockpitWindowController: NSWindowController {
             sent += 1
         }
         guard sent > 0 else {
-            setCockpitStatus("No running sessions to send to", isError: true)
+            setCockpitStatus(String(localized: "Cockpit.NoRunningSessions", defaultValue: "No running sessions to send to", comment: "Cockpit status shown when there are no running sessions to send a command to"), isError: true)
             return
         }
         DLog("Cockpit sent command to \(sent) session(s)")
         clearCommandView()
-        setCockpitStatus("Sent to \(sent) session\(sent == 1 ? "" : "s")", isError: false)
+        setCockpitStatus(String(localized: "Cockpit.SentToSessions", defaultValue: "Sent to \(sent) sessions", comment: "Cockpit status; %lld is the number of sessions a command was sent to"), isError: false)
     }
 
     // After a send, drop the command text but keep the mention chips
@@ -1263,20 +1268,20 @@ fileprivate final class CockpitRow {
 
     var shortLabel: String {
         switch self {
-        case .byStatus: return "Status"
-        case .byWindow: return "Window"
-        case .byWorkgroup: return "Workgroup"
+        case .byStatus: return String(localized: "Cockpit.GroupByStatusLabel", defaultValue: "Status", comment: "Short label for the group-by-status option in the cockpit")
+        case .byWindow: return String(localized: "Cockpit.GroupByWindowLabel", defaultValue: "Window", comment: "Short label for the group-by-window option in the cockpit")
+        case .byWorkgroup: return String(localized: "Cockpit.GroupByWorkgroupLabel", defaultValue: "Workgroup", comment: "Short label for the group-by-workgroup option in the cockpit")
         }
     }
 
     var tooltip: String {
         switch self {
         case .byStatus:
-            return "Group sessions by status (Waiting / Working / Idle), within each window."
+            return String(localized: "Cockpit.GroupByStatusTooltip", defaultValue: "Group sessions by status (Waiting / Working / Idle), within each window.", comment: "Tooltip for the group-by-status option in the cockpit")
         case .byWindow:
-            return "Group sessions by window, then by tab and split pane."
+            return String(localized: "Cockpit.GroupByWindowTooltip", defaultValue: "Group sessions by window, then by tab and split pane.", comment: "Tooltip for the group-by-window option in the cockpit")
         case .byWorkgroup:
-            return "Show only sessions in a workgroup, grouped by workgroup."
+            return String(localized: "Cockpit.GroupByWorkgroupTooltip", defaultValue: "Show only sessions in a workgroup, grouped by workgroup.", comment: "Tooltip for the group-by-workgroup option in the cockpit")
         }
     }
 
@@ -1521,7 +1526,7 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
         let bell = CockpitPassthroughImageView()
         let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .regular)
         bell.image = NSImage(systemSymbolName: SFSymbol.bellBadge.rawValue,
-                             accessibilityDescription: "Notify on status change armed")?
+                             accessibilityDescription: String(localized: "Cockpit.NotifyArmedAccessibility", defaultValue: "Notify on status change armed", comment: "Accessibility description for the armed notify indicator on a row"))?
             .withSymbolConfiguration(config)
         bell.imageScaling = .scaleProportionallyDown
         bell.isHidden = true
@@ -2059,8 +2064,8 @@ extension CockpitWindowController {
             let buriedRow = rowCache[identity]
                 ?? CockpitRow(identity: identity,
                               kind: .buriedRoot,
-                              title: "Buried Sessions")
-            buriedRow.title = "Buried Sessions"
+                              title: String(localized: "Cockpit.BuriedSessions", defaultValue: "Buried Sessions", comment: "Title of the row grouping buried sessions in the cockpit"))
+            buriedRow.title = String(localized: "Cockpit.BuriedSessions", defaultValue: "Buried Sessions", comment: "Title of the row grouping buried sessions in the cockpit")
             buriedRow.armed = false
             freshCache[identity] = buriedRow
             buriedRow.children = bucketSessionsByStatus(
@@ -2127,8 +2132,8 @@ extension CockpitWindowController {
             let buriedRow = rowCache[identity]
                 ?? CockpitRow(identity: identity,
                               kind: .buriedRoot,
-                              title: "Buried Sessions")
-            buriedRow.title = "Buried Sessions"
+                              title: String(localized: "Cockpit.BuriedSessions", defaultValue: "Buried Sessions", comment: "Title of the row grouping buried sessions in the cockpit"))
+            buriedRow.title = String(localized: "Cockpit.BuriedSessions", defaultValue: "Buried Sessions", comment: "Title of the row grouping buried sessions in the cockpit")
             buriedRow.armed = false
             freshCache[identity] = buriedRow
             buriedRow.children = sessionRows(for: buriedExpanded,
@@ -2289,7 +2294,11 @@ extension CockpitWindowController {
             let members = bucketed[status] ?? []
             if members.isEmpty { continue }
             let identity = CockpitRow.Identity.group(scope, status)
-            let label = "\(status) · \(members.count)"
+            // Localize the no-status sentinel for display only; the bucket key stays stable.
+            let displayStatus = (status == Self.noStatusLabel)
+                ? String(localized: "Cockpit.NoStatusHeader", defaultValue: "No status", comment: "Cockpit group header for sessions that have no status")
+                : status
+            let label = "\(displayStatus) · \(members.count)"
             let groupRow = rowCache[identity]
                 ?? CockpitRow(identity: identity,
                               kind: .group(scope: scope, status: status),
@@ -2599,6 +2608,8 @@ extension CockpitWindowController {
     }
 
     // Sentinel bucket/filter key for sessions that report no status.
+    // Localization unneeded: a stable sentinel used as a bucket dictionary key and in == comparisons.
+    // The displayed form is localized where the group-header label is built.
     static let noStatusLabel = "No status"
 
     // The session's live, arbitrary status text and its color, straight
@@ -2722,11 +2733,11 @@ extension CockpitWindowController {
         if let title = tab.title, !title.isEmpty {
             return title
         }
-        return "Tab \(positionInWindow)"
+        return String(localized: "Cockpit.TabTitle", defaultValue: "Tab \(positionInWindow)", comment: "Default title for a tab row in the cockpit; the number is the tab position in the window")
     }
 
     private func cockpitWindowTitlePrefix(for terminal: PseudoTerminal) -> String {
-        return "Window \(terminal.number)"
+        return String(localized: "Cockpit.WindowTitle", defaultValue: "Window \(terminal.number)", comment: "Default title for a window row in the cockpit; the number is the window number")
     }
 
     private func cockpitWorkgroupTitle(for instance: iTermWorkgroupInstance) -> String {

@@ -43,6 +43,14 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @property(nonatomic, copy) NSString *label;
 @property(nonatomic, copy) iTermWarningActionBlock _Nullable block;
 
+// Structural identity, independent of the (localized) label. isCancel marks the Cancel/dismiss
+// action: it is excluded from the "remember my choice" affordance and its choice is never
+// persisted. neverRemember marks any other action whose choice should not be remembered. Object-
+// API callers may set these directly; the label-array API resolves them from cancelLabel /
+// doNotRememberLabels at show time, so the runtime never compares against a hardcoded @"Cancel".
+@property(nonatomic) BOOL isCancel;
+@property(nonatomic) BOOL neverRemember;
+
 @end
 
 // Recommended usage:

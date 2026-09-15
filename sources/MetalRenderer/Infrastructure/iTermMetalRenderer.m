@@ -1,7 +1,7 @@
 #import "iTermMetalRenderer.h"
 
 #import "DebugLogging.h"
-#import "iTermAdvancedSettingsModel.h"
+#import "iTermCursor.h"
 #import "iTermMalloc.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermMetalDebugInfo.h"
@@ -101,6 +101,7 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
         _colorSpace = colorSpace;
         _rightExtraPixels = rightExtraPixels;
         _panelReservationPixels = panelReservationPixels;
+        _framebufferPixelFormat = MTLPixelFormatBGRA8Unorm;
     }
     return self;
 }
@@ -189,6 +190,7 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     self = [super init];
     if (self) {
         _device = device;
+        _framebufferPixelFormat = MTLPixelFormatBGRA8Unorm;
     }
     return self;
 }
@@ -201,6 +203,7 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
     self = [super init];
     if (self) {
         _device = device;
+        _framebufferPixelFormat = MTLPixelFormatBGRA8Unorm;
         _vertexFunctionName = [vertexFunctionName copy];
         _fragmentFunctionName = [fragmentFunctionName copy];
         _blending = blending;
@@ -214,7 +217,8 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
 - (NSDictionary *)keyForPipelineState {
     // This must contain all inputs to picking the pipeline state. These can be changed at runtime.
     return @{ @"fragment function": _fragmentFunctionName ?: @"",
-              @"vertex function": _vertexFunctionName ?: @"" };
+              @"vertex function": _vertexFunctionName ?: @"",
+              @"pixel format": @(_framebufferPixelFormat) };
 }
 
 - (id<MTLRenderPipelineState>)pipelineState {
@@ -289,6 +293,10 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     return 8;
 }
 
+MTLPixelFormat iTermMetalFramebufferPixelFormat(BOOL hdrCursorEnabled) {
+    return hdrCursorEnabled ? MTLPixelFormatRGBA16Float : MTLPixelFormatBGRA8Unorm;
+}
+
 - (int)bitsPerSampleInPixelFormat:(MTLPixelFormat)format {
     return iTermBitsPerSampleForPixelFormat(format);
 }
@@ -320,6 +328,13 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
 
 - (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(iTermRenderConfiguration *)configuration
                                                                                commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    // This is the single choke point where every renderer's pipeline is built
+    // (cell renderers reach here via super; the copy/other wrappers via their
+    // internal iTermMetalRenderer). Adopt the frame's framebuffer format from the
+    // configuration before building so the pipeline's color attachment matches the
+    // framebuffer and intermediate textures. The pipeline cache is keyed on the
+    // format, so a format change (driver rebuild) produces a fresh pipeline.
+    self.framebufferPixelFormat = configuration.framebufferPixelFormat;
     iTermMetalRendererTransientState *tState = [[self.transientStateClass alloc] initWithConfiguration:configuration];
     tState.pipelineState = [self pipelineState];
     return tState;
@@ -427,11 +442,7 @@ int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format) {
     pipelineStateDescriptor.label = [NSString stringWithFormat:@"Pipeline for %@", NSStringFromClass([self class])];
     pipelineStateDescriptor.vertexFunction = vertexFunction;
     pipelineStateDescriptor.fragmentFunction = fragmentFunction;
-    if ([iTermAdvancedSettingsModel hdrCursor]) {
-        pipelineStateDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatRGBA16Float;
-    } else {
-        pipelineStateDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
-    }
+    pipelineStateDescriptor.colorAttachments[0].pixelFormat = self.framebufferPixelFormat;
 
     if (blending) {
         MTLRenderPipelineColorAttachmentDescriptor *renderbufferAttachment = pipelineStateDescriptor.colorAttachments[0];

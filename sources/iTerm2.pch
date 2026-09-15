@@ -5,4 +5,8 @@ _Pragma("clang diagnostic ignored \"-Wpartial-availability\"")
 #define ITERM_IGNORE_PARTIAL_END \
 _Pragma("clang diagnostic pop")
 
+#ifdef __OBJC__
+#import "iTermStandardButtons.h"
+#endif
+
 

@@ -155,10 +155,10 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     [self makeTextViewHorizontallyScrollable:_logsView];
     [self makeTextViewHorizontallyScrollable:_callsView];
 
-    [self setSymbol:SFSymbolGetString(SFSymbolScope) tooltip:@"Inspector" onButton:_inspectorButton];
-    [self setSymbol:SFSymbolGetString(SFSymbolStopCircle) tooltip:@"Terminate" onButton:_terminateButton];
-    [self setSymbol:SFSymbolGetString(SFSymbolArrowClockwise) tooltip:@"Restart" onButton:_startButton];
-    [self setSymbol:SFSymbolGetString(SFSymbolTrash) tooltip:@"Clear Terminated" onButton:_clearTerminatedButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolScope) tooltip:NSLocalizedStringWithDefaultValue(@"ScriptConsole.InspectorTooltip", nil, [NSBundle mainBundle], @"Inspector", @"Tooltip for the inspector button") onButton:_inspectorButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolStopCircle) tooltip:NSLocalizedStringWithDefaultValue(@"ScriptConsole.TerminateTooltip", nil, [NSBundle mainBundle], @"Terminate", @"Tooltip for the terminate button") onButton:_terminateButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolArrowClockwise) tooltip:NSLocalizedStringWithDefaultValue(@"ScriptConsole.RestartTooltip", nil, [NSBundle mainBundle], @"Restart", @"Tooltip for the restart button") onButton:_startButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolTrash) tooltip:NSLocalizedStringWithDefaultValue(@"ScriptConsole.ClearTerminatedTooltip", nil, [NSBundle mainBundle], @"Clear Terminated", @"Tooltip for the clear-terminated button") onButton:_clearTerminatedButton];
 
     [self reloadTableFully];
 }
@@ -544,9 +544,10 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (NSString *)formatPIDs:(NSArray<NSNumber *> *)pids {
     if (pids.count == 1) {
-        return [NSString stringWithFormat:@"PID %@", pids[0]];
+        return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptConsole.SinglePID", nil, [NSBundle mainBundle], @"PID %@", @"Label for a single process ID; %@ is the PID"), pids[0]];
     }
-    return [NSString stringWithFormat:@"PIDs %@", [pids componentsJoinedByString:@", "]];
+    // Not a count plural: always a list of process IDs.
+    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptConsole.PIDs", nil, [NSBundle mainBundle], @"PIDs %@", @"Label for a list of process IDs; %@ is the comma-separated list"), [pids componentsJoinedByString:@", "]];
 }
 
 - (void)connectionRejected:(NSNotification *)notification {
@@ -564,7 +565,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         }
         if (!name) {
             // Shouldn't happen as there ought to always be a PID
-            name = @"Unknown";
+            name = NSLocalizedStringWithDefaultValue(@"ScriptConsole.Unknown", nil, [NSBundle mainBundle], @"Unknown", @"Fallback name for a script with no identifiable name");
         }
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
                                                      fullPath:nil
@@ -593,7 +594,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         }
         if (!name) {
             // Shouldn't happen as there ought to always be a PID
-            name = @"Unknown";
+            name = NSLocalizedStringWithDefaultValue(@"ScriptConsole.Unknown", nil, [NSBundle mainBundle], @"Unknown", @"Fallback name for a script with no identifiable name");
         }
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
                                                      fullPath:nil
@@ -605,7 +606,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     }
     entry.websocketConnection = notification.userInfo[@"websocket"];
     DLog(@"Adding output");
-    [entry addOutput:[NSString stringWithFormat:@"Connection accepted: %@\n", notification.userInfo[@"reason"]]
+    [entry addOutput:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptConsole.ConnectionAccepted", nil, [NSBundle mainBundle], @"Connection accepted: %@\n", @"Script Console diagnostic logged when an API connection is accepted; %@ is the peer"), notification.userInfo[@"reason"]]
           completion:^{}];
     DLog(@"Done");
 }
@@ -617,7 +618,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     if (!entry) {
         return;
     }
-    [entry addOutput:@"\nConnection closed.\n" completion:^{}];
+    [entry addOutput:NSLocalizedStringWithDefaultValue(@"ScriptConsole.ConnectionClosed", nil, [NSBundle mainBundle], @"\nConnection closed.\n", @"Script Console diagnostic logged when an API connection is closed") completion:^{}];
     [entry stopRunning];
 }
 

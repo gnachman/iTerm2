@@ -168,6 +168,11 @@ extern NSString * const kTriggerVariableValueRegexKey;
 + (nullable NSSet<NSString *> *)synonyms;
 + (nullable Trigger *)triggerFromUntrustedDict:(NSDictionary *)dict;
 
+// Formats a timeout/threshold like "after 1 second" / "after 2 seconds" (plural catalog
+// form) for whole numbers, and "after 0.5 seconds" (locale-aware decimal) for fractional
+// values so sub-second values are not truncated to "after 0 seconds". Exposed for testing.
++ (NSString *)eventTimingDescriptionForSeconds:(NSNumber *)seconds;
+
 // Subclasses should implement:
 - (NSString *)title;
 - (nullable NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation;

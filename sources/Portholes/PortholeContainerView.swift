@@ -56,14 +56,14 @@ class PortholeContainerView: NSView {
 
     static func closeButtonImage(_ color: NSColor) -> NSImage {
         if let image = NSImage(systemSymbolName: SFSymbol.xmarkCircle.rawValue,
-                               accessibilityDescription: "Close markdown view") {
+                               accessibilityDescription: String(localized: "PortholeContainerView.CloseMarkdownView", defaultValue: "Close markdown view", comment: "Accessibility description for the close button on an inline markdown view")) {
             return image.it_image(withTintColor: color)
         }
         return NSImage.it_imageNamed("closebutton", for: Self.self)!.it_image(withTintColor: color)
     }
 
     init() {
-        wideButton = SaneButton(checkboxWithTitle: "Wide", target: nil, action: #selector(toggleWide(_:)))
+        wideButton = SaneButton(checkboxWithTitle: String(localized: "PortholeContainerView.Wide", defaultValue: "Wide", comment: "Checkbox that widens an inline markdown/porthole view"), target: nil, action: #selector(toggleWide(_:)))
 
         super.init(frame: NSRect(x: 0, y: 0, width: 100, height: 100))
 

@@ -113,6 +113,38 @@ static char iTermAdvancedSettingsTableKey;
 - (NSComparisonResult)compareAdvancedSettingDicts:(NSDictionary *)other;
 @end
 
+// Maps a stable English advanced-settings category name (from kAdvancedSettingCategory, i.e. the
+// SECTION_* value) to its localized display name. Used for the category header rows; the English
+// value remains the stable grouping/sort key so translation cannot fragment the groups.
+static NSString *iTermLocalizedAdvancedSettingCategory(NSString *english) {
+    static NSDictionary *map;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        map = @{
+            @"Tabs": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Tabs", nil, [NSBundle mainBundle], @"Tabs", @"Advanced settings category header"),
+            @"Mouse": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Mouse", nil, [NSBundle mainBundle], @"Mouse", @"Advanced settings category header"),
+            @"Terminal": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Terminal", nil, [NSBundle mainBundle], @"Terminal", @"Advanced settings category header"),
+            @"Hotkey": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Hotkey", nil, [NSBundle mainBundle], @"Hotkey", @"Advanced settings category header"),
+            @"General": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.General", nil, [NSBundle mainBundle], @"General", @"Advanced settings category header"),
+            @"Drawing": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Drawing", nil, [NSBundle mainBundle], @"Drawing", @"Advanced settings category header"),
+            @"Semantic History": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.SemanticHistory", nil, [NSBundle mainBundle], @"Semantic History", @"Advanced settings category header"),
+            @"Debugging": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Debugging", nil, [NSBundle mainBundle], @"Debugging", @"Advanced settings category header"),
+            @"Session": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Session", nil, [NSBundle mainBundle], @"Session", @"Advanced settings category header"),
+            @"Windows": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Windows", nil, [NSBundle mainBundle], @"Windows", @"Advanced settings category header"),
+            @"Tmux Integration": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.TmuxIntegration", nil, [NSBundle mainBundle], @"Tmux Integration", @"Advanced settings category header"),
+            @"SSH Integration": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.SSHIntegration", nil, [NSBundle mainBundle], @"SSH Integration", @"Advanced settings category header"),
+            @"Warnings": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Warnings", nil, [NSBundle mainBundle], @"Warnings", @"Advanced settings category header"),
+            @"Pasteboard": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Pasteboard", nil, [NSBundle mainBundle], @"Pasteboard", @"Advanced settings category header"),
+            @"Tip of the Day": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.TipOfTheDay", nil, [NSBundle mainBundle], @"Tip of the Day", @"Advanced settings category header"),
+            @"Badge": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Badge", nil, [NSBundle mainBundle], @"Badge", @"Advanced settings category header"),
+            @"Web Browser": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.WebBrowser", nil, [NSBundle mainBundle], @"Web Browser", @"Advanced settings category header"),
+            @"Experimental Features": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.ExperimentalFeatures", nil, [NSBundle mainBundle], @"Experimental Features", @"Advanced settings category header"),
+            @"Scripting": NSLocalizedStringWithDefaultValue(@"AdvancedSettingsCategory.Scripting", nil, [NSBundle mainBundle], @"Scripting", @"Advanced settings category header"),
+        };
+    });
+    return map[english] ?: english;
+}
+
 @implementation NSDictionary (AdvancedSettings)
 
 - (iTermAdvancedSettingType)advancedSettingType {
@@ -120,7 +152,15 @@ static char iTermAdvancedSettingsTableKey;
 }
 
 - (NSComparisonResult)compareAdvancedSettingDicts:(NSDictionary *)other {
-    return [self[kAdvancedSettingDescription] compare:other[kAdvancedSettingDescription]];
+    // Group by category first, then alphabetize within a category by description. The category
+    // headers display the localized category name, so order the groups by that localized name
+    // (not the stable English key) so the on-screen group order is alphabetical for the user. The
+    // English-to-localized mapping is deterministic, so grouping stays stable.
+    return [iTermAdvancedSettingsViewController compareAdvancedSettingDict:self
+                                                                   toDict:other
+                                                   localizedCategoryBlock:^NSString *(NSString *englishCategory) {
+        return iTermLocalizedAdvancedSettingCategory(englishCategory);
+    }];
 }
 
 @end
@@ -170,6 +210,20 @@ static NSDictionary *gIntrospection;
     return settings;
 }
 
++ (NSComparisonResult)compareAdvancedSettingDict:(NSDictionary *)lhs
+                                          toDict:(NSDictionary *)rhs
+                          localizedCategoryBlock:(NSString *(^)(NSString *englishCategory))localizedCategoryBlock {
+    NSString *lhsCategory = localizedCategoryBlock(lhs[kAdvancedSettingCategory]);
+    NSString *rhsCategory = localizedCategoryBlock(rhs[kAdvancedSettingCategory]);
+    // Locale-aware, Finder-style ordering (handles accents/CJK and embedded numbers naturally)
+    // since both the category and description are localized text.
+    NSComparisonResult categoryOrder = [lhsCategory localizedStandardCompare:rhsCategory];
+    if (categoryOrder != NSOrderedSame) {
+        return categoryOrder;
+    }
+    return [lhs[kAdvancedSettingDescription] localizedStandardCompare:rhs[kAdvancedSettingDescription]];
+}
+
 + (NSArray<NSDictionary *> *)sortedAdvancedSettings {
     static NSArray *sortedAdvancedSettings;
     static dispatch_once_t onceToken;
@@ -181,20 +235,18 @@ static NSDictionary *gIntrospection;
 }
 
 + (NSArray *)groupedSettingsArrayFromSortedArray:(NSArray *)sorted {
+    // Insert a category header (a bare NSString row) whenever the category changes. Dedupe on
+    // the stable English category from kAdvancedSettingCategory; display the localized name. The
+    // description is already just the body text (no "Category: " prefix), so it is used as-is.
     NSString *previousCategory = nil;
     NSMutableArray *result = [NSMutableArray array];
     for (NSDictionary *dict in sorted) {
-        NSString *description = dict[kAdvancedSettingDescription];
-        NSInteger colon = [description rangeOfString:@":"].location;
-        NSString *thisCategory = [description substringToIndex:colon];
-        NSString *remainder = [description substringFromIndex:colon + 2];
-        if (![thisCategory isEqualToString:previousCategory]) {
-            previousCategory = [thisCategory copy];
-            [result addObject:thisCategory];
+        NSString *category = dict[kAdvancedSettingCategory];
+        if (![category isEqualToString:previousCategory]) {
+            previousCategory = [category copy];
+            [result addObject:iTermLocalizedAdvancedSettingCategory(category)];
         }
-        NSMutableDictionary *temp = [dict mutableCopy];
-        temp[kAdvancedSettingDescription] = remainder;
-        [result addObject:temp];
+        [result addObject:dict];
     }
     return result;
 }
@@ -284,8 +336,8 @@ static NSDictionary *gIntrospection;
     [button setAction:@selector(toggleOnOff:)];
     button.identifier = @"onoff";
     [button.menu removeAllItems];
-    [button.menu addItemWithTitle:@"No" action:nil keyEquivalent:@""];
-    [button.menu addItemWithTitle:@"Yes" action:nil keyEquivalent:@""];
+    [button.menu addItemWithTitle:iTermLocalizedNo() action:nil keyEquivalent:@""];
+    [button.menu addItemWithTitle:iTermLocalizedYes() action:nil keyEquivalent:@""];
     [button selectItemAtIndex:on ? 1 : 0];
     return button;
 }
@@ -324,9 +376,9 @@ static NSDictionary *gIntrospection;
     [button setAction:@selector(toggleTristate:)];
     button.identifier = @"tristate";
     [button.menu removeAllItems];
-    [button.menu addItemWithTitle:@"Unspecified" action:nil keyEquivalent:@""];
-    [button.menu addItemWithTitle:@"No" action:nil keyEquivalent:@""];
-    [button.menu addItemWithTitle:@"Yes" action:nil keyEquivalent:@""];
+    [button.menu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AdvancedSettings.Unspecified", nil, [NSBundle mainBundle], @"Unspecified", @"Tristate advanced setting value meaning not yet set") action:nil keyEquivalent:@""];
+    [button.menu addItemWithTitle:iTermLocalizedNo() action:nil keyEquivalent:@""];
+    [button.menu addItemWithTitle:iTermLocalizedYes() action:nil keyEquivalent:@""];
 
     NSNumber *value = [self objectForRow:row];
     if (!value) {
@@ -424,8 +476,14 @@ static NSDictionary *gIntrospection;
             NSArray *parts = [_searchField.stringValue componentsSeparatedByString:@" "];
             NSArray *sortedSettings = [[self class] sortedAdvancedSettings];
             for (NSDictionary *dict in sortedSettings) {
-                NSString *description = dict[kAdvancedSettingDescription];
-                if ([self description:description matchesQuery:parts]) {
+                // Match against the description plus both the English category (stable key) and its
+                // localized display name, so searching for a category word finds all its settings.
+                NSString *category = dict[kAdvancedSettingCategory];
+                NSString *searchable = [NSString stringWithFormat:@"%@ %@ %@",
+                                        dict[kAdvancedSettingDescription],
+                                        category,
+                                        iTermLocalizedAdvancedSettingCategory(category)];
+                if ([self description:searchable matchesQuery:parts]) {
                     [result addObject:dict];
                 }
             }
@@ -765,9 +823,9 @@ static void iTermAdvancedSettingsSaveSecureString(NSDictionary *dict, NSString *
 - (NSArray<iTermPreferencesSearchDocument *> *)searchableViewControllerDocuments {
     if (!_docs) {
         _docs = [[iTermAdvancedSettingsViewController sortedAdvancedSettings] mapWithBlock:^id(NSDictionary *dict) {
-            iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:@"Advanced Preferences…"  // dict[kAdvancedSettingDescription]
+            iTermPreferencesSearchDocument *doc = [iTermPreferencesSearchDocument documentWithDisplayName:NSLocalizedStringWithDefaultValue(@"AdvancedSettings.DisplayName", nil, [NSBundle mainBundle], @"Advanced Preferences…", @"Display name of the Advanced Preferences section in settings search")  // dict[kAdvancedSettingDescription]
                                                                                                identifier:@"Advanced Preferences"  // dict[kAdvancedSettingIdentifier]
-                                                                                           keywordPhrases:@[ dict[kAdvancedSettingDescription] ]
+                                                                                           keywordPhrases:@[ dict[kAdvancedSettingDescription], dict[kAdvancedSettingCategory], iTermLocalizedAdvancedSettingCategory(dict[kAdvancedSettingCategory]) ]
                                                                                              profileTypes:ProfileTypeAll];
             doc.queryIndependentScore = -1;
             doc.ownerIdentifier = self.documentOwnerIdentifier;

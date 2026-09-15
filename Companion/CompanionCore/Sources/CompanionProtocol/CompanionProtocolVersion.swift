@@ -94,16 +94,13 @@ public enum CompanionProtocolVersion {
     /// its on-screen keyboard only when the mac advertises at least
     /// `keyInputRevision`.
     ///
-    /// Revision 11 moves everyone off the direct main relay
-    /// (https://relay.iterm2.com) onto the sharded resolver: on upgrade, a device
-    /// still pointing at that relay rewrites its pairing to the default resolver
-    /// (CompanionRelayMigration). An un-upgraded peer stays on the direct relay and
-    /// therefore cannot rendezvous on the shard host the upgraded peer resolves to,
-    /// so this is a HARD incompatibility like the revision-5 relay move, not a
-    /// gracefully-degradable feature. minimumPeer is raised to 11 to refuse any peer
-    /// that predates the migration (a revision-10 peer has no resolver support at
-    /// all), and each side also shows a one-time notice telling the user to update
-    /// the OTHER device.
+    /// Revision 11 moved everyone off the direct main relay
+    /// (https://relay.iterm2.com) onto the sharded resolver. An un-upgraded peer
+    /// stays on the direct relay and therefore cannot rendezvous on the shard host
+    /// the upgraded peer resolves to, so this is a HARD incompatibility like the
+    /// revision-5 relay move, not a gracefully-degradable feature. minimumPeer is
+    /// raised to 11 to refuse any peer that predates the resolver (a revision-10
+    /// peer has no resolver support at all).
     ///
     /// Revision 12 adds message deletion (the messagesRemoved host event and the
     /// deleteMessages client message), so an edit/delete truncation on either the
@@ -115,14 +112,27 @@ public enum CompanionProtocolVersion {
     /// the phone offers Delete only to a mac that does. An un-upgraded phone still
     /// reconciles a Mac-side deletion on its next reconnect via the messagesSince
     /// seq-reset path.
-    public static let current = 12
+    ///
+    /// Revision 13 decouples the companion from AI: the mac can now pair and serve
+    /// a phone (session browsing, live video, keyboard input) even when AI is
+    /// unavailable. The mac advertises AI availability in its hello
+    /// (`aiAvailable`) and pushes a live `aiAvailabilityChanged` event when the
+    /// user toggles AI mid-session, so the phone disables its chat surfaces with an
+    /// explanation instead of assuming AI is present. Additive and
+    /// backward-compatible: the hello field is optional (a pre-13 mac omits it, and
+    /// since a pre-13 mac only ever paired with AI on, the phone reads the absence
+    /// as "available"), and the new host event decodes as `.unsupported` on a
+    /// pre-13 phone. minimumPeer stays at 11. Each side self-gates on
+    /// `aiDecouplingRevision`: the mac sends the typed `.aiUnavailable` error only
+    /// to a phone that can decode it (an older phone gets a generic error instead).
+    public static let current = 13
 
     /// The oldest peer revision this build accepts. Raised to 11 (lockstep with
-    /// `current`) for the resolver migration: peers older than revision 11 stay on
+    /// `current`) for the sharded resolver: peers older than revision 11 stay on
     /// the direct relay (https://relay.iterm2.com) and cannot rendezvous with an
     /// upgraded peer that has moved to the sharded resolver, so they are refused
     /// with an upgrade wall rather than allowed to pair into a broken state. See
-    /// CompanionRelayMigration and CompanionPushRegistry.peerRevision.
+    /// CompanionPushRegistry.peerRevision.
     public static let minimumPeer = 11
 
     /// The first revision that supports live session streaming. A peer offers
@@ -179,6 +189,15 @@ public enum CompanionProtocolVersion {
     /// Delete only to such a mac. Below it, an edit/delete stays local and the
     /// phone reconciles on reconnect via the messagesSince seq reset.
     public static let messageDeletionRevision = 12
+
+    /// The first revision that carries AI-decoupling: the mac advertises AI
+    /// availability in its hello (`aiAvailable`) and emits the live
+    /// `aiAvailabilityChanged` event, and understands the typed `.aiUnavailable`
+    /// error code. The mac sends `.aiUnavailable` (rather than a generic error) for
+    /// an AI-only request only to a phone at least here; the phone gates its
+    /// chat-disabled UI on the mac's advertised AI availability, which older macs
+    /// (always AI-on when paired) implicitly report as available.
+    public static let aiDecouplingRevision = 13
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {

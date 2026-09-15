@@ -183,7 +183,7 @@ private extension MessagePrepPipeline {
                 content: fileContent) { result in
                     try? self?.uploadFinished(chatID: chatID,
                                               fileName: fileName,
-                                              description: fileName.lastPathComponent,
+                                              subject: .file(name: fileName.lastPathComponent),
                                               result: result,
                                               completion: completion)
                 }
@@ -192,21 +192,34 @@ private extension MessagePrepPipeline {
 
     // Result here is the result of the upload, while the completion block
     // is for the pipeline action.
+    // What was uploaded, for the completion notice. A named file's name is a self-contained value and
+    // is interpolated; the zipped-attachments case gets its own complete localized sentence rather
+    // than injecting the translated noun "attachments" into a frame.
+    enum UploadSubject {
+        case file(name: String)
+        case zippedAttachments
+    }
+
     func uploadFinished(chatID: String,
                         fileName: String,
-                        description: String,
+                        subject: UploadSubject,
                         result: Result<String, Error>,
                         completion: @escaping (Result<PipelineResult, Error>) throws -> Void) throws {
         switch result {
         case .success(let id):
-            try delegate?.publishNotice(
-                chatID: chatID,
-                message: "Upload of \(description) finished.")
+            let message: String
+            switch subject {
+            case .file(let name):
+                message = String(localized: "MessagePrepPipeline.UploadFinishedFile", defaultValue: "Upload of \(name) finished.", comment: "Notice shown when a named file upload finishes; the placeholder is a file name")
+            case .zippedAttachments:
+                message = String(localized: "MessagePrepPipeline.UploadFinishedAttachments", defaultValue: "Upload of attachments finished.", comment: "Notice shown when the upload of zipped attachments finishes")
+            }
+            try delegate?.publishNotice(chatID: chatID, message: message)
             try completion(.success(.fileUploaded(id: id, name: fileName)))
         case .failure(let error):
             try delegate?.publishNotice(
                 chatID: chatID,
-                message: "Failed to upload \(fileName): \(error.localizedDescription)")
+                message: String(localized: "MessagePrepPipeline.UploadFailed", defaultValue: "Failed to upload \(fileName): \(error.localizedDescription)", comment: "Notice shown when a file upload fails"))
             try completion(.failure(error))
         }
     }
@@ -232,7 +245,7 @@ private extension MessagePrepPipeline {
                     } failure: { error in
                         try self?.delegate?.publishNotice(
                             chatID: chatID,
-                            message: "There was a problem creating a vector store database: \(error.localizedDescription)")
+                            message: String(localized: "MessagePrepPipeline.VectorStoreCreateFailed", defaultValue: "There was a problem creating a vector store database: \(error.localizedDescription)", comment: "Notice shown when creating a vector store database fails"))
                         try? completion(.failure(error))
                     }
                 }
@@ -274,7 +287,7 @@ private extension MessagePrepPipeline {
             if let error {
                 try? self?.delegate?.publishNotice(
                     chatID: chatID,
-                    message: "There was a problem adding files to the vector store: \(error.localizedDescription)")
+                    message: String(localized: "MessagePrepPipeline.VectorStoreAddFailed", defaultValue: "There was a problem adding files to the vector store: \(error.localizedDescription)", comment: "Notice shown when adding files to the vector store fails"))
                 try? completion(.failure(error))
             } else {
                 try? completion(.success(.filesAddedToVectorStore))
@@ -340,7 +353,7 @@ private extension MessagePrepPipeline {
                 content: data) { result in
                     try? self?.uploadFinished(chatID: chatID,
                                               fileName: url.path,
-                                              description: "attachments",
+                                              subject: .zippedAttachments,
                                               result: result,
                                               completion: completion)
                 }
@@ -357,12 +370,14 @@ private extension MessagePrepPipeline {
         if addToVectorStore {
             if vectorStoreID == nil {
                 RLog("Need to create a vector store")
+                // Localization unneeded
                 try currentBuilder.add(description: "Create vector store",
                                        actionClosure: createVectorStoreAction(chatID: chatID))
                 currentBuilder = currentBuilder.makeChild()
             }
             for file in files {
                 DLog("Add upload action for \(file.name)")
+                // Localization unneeded
                 _ = try currentBuilder.add(description: "Upload \(file.name)",
                                            actionClosure: uploadAction(
                                             chatID: chatID,
@@ -370,6 +385,7 @@ private extension MessagePrepPipeline {
                                             fileContent: file.content))
             }
             currentBuilder = currentBuilder.makeChild()
+            // Localization unneeded
             try currentBuilder.add(description: "Add files to vector store") { [weak self] previousResults, completion in
                 self?.addFilesToVectorStoreAction(previousResults: previousResults,
                                                   vectorStoreID: vectorStoreID,
@@ -377,10 +393,12 @@ private extension MessagePrepPipeline {
             }
         } else {
             // Uploading for code interpreter. First zip the files, then upload them.
+            // Localization unneeded
             let zipID = try currentBuilder.add(description: "Zip files",
                                                actionClosure: makeZipAction(files: files))
             currentBuilder = currentBuilder.makeChild()
             DLog("Add upload action for zip file")
+            // Localization unneeded
             try currentBuilder.add(description: "Upload zip file",
                                    actionClosure: uploadZipAction(zipID: zipID,
                                                                   chatID: chatID))
@@ -406,13 +424,14 @@ private extension MessagePrepPipeline {
         DLog("files=\(files.map(\.name).joined(separator: ", "))")
         DLog("text=\(text)")
         if !files.isEmpty {
-            try delegate?.publishNotice(chatID: chatID, message: "Uploading…")
+            try delegate?.publishNotice(chatID: chatID, message: String(localized: "MessagePrepPipeline.Uploading", defaultValue: "Uploading…", comment: "Notice shown while files are uploading"))
             currentBuilder = try ingestFiles(files: files,
                                              chatID: userMessage.chatID,
                                              addToVectorStore: false,
                                              vectorStoreID: vectorStoreID,
                                              builder: currentBuilder)
         }
+        // Localization unneeded
         try currentBuilder.add(description: "Send message") { [weak self] values, actionCompletion in
             DLog("Ready to send the message now that all files are uploaded")
             let fileIDs = values.values.compactMap {

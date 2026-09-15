@@ -55,6 +55,7 @@ class iTermTouchIDHelper: NSObject {
         }
         let escaped = path.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
+        // Localization unneeded
         return "sudo \"\(escaped)\""
     }
 
@@ -62,12 +63,12 @@ class iTermTouchIDHelper: NSObject {
     /// for their sudo password in that window.
     @objc static func runInstallInNewWindow() {
         guard let path = scriptPath else {
-            iTermWarning.show(withTitle: "The Touch ID install script is missing from the iTerm2 application bundle.",
-                              actions: ["OK"],
+            iTermWarning.show(withTitle: String(localized: "TouchID.ScriptMissing", defaultValue: "The Touch ID install script is missing from the iTerm2 application bundle.", comment: "Warning shown when the Touch ID install script is missing from the bundle"),
+                              actions: [iTermLocalizedOK()],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Cannot Enable Touch ID for Sudo",
+                              heading: String(localized: "TouchID.CannotEnableHeading", defaultValue: "Cannot Enable Touch ID for Sudo", comment: "Warning heading when Touch ID for sudo cannot be enabled"),
                               window: nil)
             return
         }

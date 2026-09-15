@@ -28,22 +28,22 @@ static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnb
 static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
     if ([path isEqualToString:@"companion"]) {
         if (![iTermAdvancedSettingsModel generativeAIAllowed]) {
-            [iTermWarning showWarningWithTitle:@"Generative AI features have been disabled. Talk to your enterprise system administrator."
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"Onboarding.GenerativeAIDisabled", nil, [NSBundle mainBundle], @"Generative AI features have been disabled. Talk to your enterprise system administrator.", @"Message shown when generative AI features are disabled by an administrator")
+                                       actions:@[ iTermLocalizedOK() ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Feature Unavailable"
+                                       heading:NSLocalizedStringWithDefaultValue(@"Onboarding.FeatureUnavailable", nil, [NSBundle mainBundle], @"Feature Unavailable", @"Heading shown when a feature has been disabled by an administrator")
                                         window:window];
             return;
         }
         if (![iTermAdvancedSettingsModel companionPairingAllowed]) {
-            [iTermWarning showWarningWithTitle:@"Companion device pairing has been disabled. Talk to your enterprise system administrator."
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"Onboarding.CompanionPairingDisabled", nil, [NSBundle mainBundle], @"Companion device pairing has been disabled. Talk to your enterprise system administrator.", @"Message shown when companion device pairing is disabled by an administrator")
+                                       actions:@[ iTermLocalizedOK() ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Feature Unavailable"
+                                       heading:NSLocalizedStringWithDefaultValue(@"Onboarding.FeatureUnavailable", nil, [NSBundle mainBundle], @"Feature Unavailable", @"Heading shown when a feature has been disabled by an administrator")
                                         window:window];
             return;
         }
@@ -60,12 +60,12 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
     }
     if ([path isEqualToString:@"screenshot"]) {
         if (![iTermController sharedInstance].currentTerminal) {
-            [iTermWarning showWarningWithTitle:@"You need an open terminal window to make a screenshot."
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"Onboarding.NoTerminalWindowMessage", nil, [NSBundle mainBundle], @"You need an open terminal window to make a screenshot.", @"Message shown when trying to make a screenshot with no terminal window open")
+                                       actions:@[ iTermLocalizedOK() ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"No Terminal Window"
+                                       heading:NSLocalizedStringWithDefaultValue(@"Onboarding.NoTerminalWindowHeading", nil, [NSBundle mainBundle], @"No Terminal Window", @"Heading shown when trying to make a screenshot with no terminal window open")
                                         window:window];
             return;
         }

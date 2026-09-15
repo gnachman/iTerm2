@@ -79,6 +79,7 @@ static int gSignalsToList[] = {
 @implementation SignalPicker
 
 + (NSArray *)signalNames {
+    // Localization unneeded
     return @[[NSNull null], @"HUP",  @"INT",  @"QUIT",
              @"ILL",   @"TRAP", @"ABRT",   @"EMT",
              @"FPE",   @"KILL", @"BUS",    @"SEGV",
@@ -332,7 +333,7 @@ static int gSignalsToList[] = {
 }
 
 - (void)awakeFromNib {
-    kill_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Clear"];
+    kill_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"JobTree.Clear", nil, [NSBundle mainBundle], @"Clear", @"Accessibility description for the kill/clear button")];
     _outlineView.style = NSTableViewStyleInset;
     _outlineView.backgroundColor = [NSColor clearColor];
     if (!_useVisualEffectView) {
@@ -348,11 +349,11 @@ static int gSignalsToList[] = {
         }
     }
     NSImage *magnifyingGlass = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
-                                    accessibilityDescription:@"Inspect"];
+                                    accessibilityDescription:NSLocalizedStringWithDefaultValue(@"JobTree.Inspect", nil, [NSBundle mainBundle], @"Inspect", @"Accessibility description for the inspect (magnifying glass) button")];
     _inspectButton = [NSButton buttonWithImage:magnifyingGlass target:self action:@selector(inspect:)];
     _inspectButton.bordered = NO;
     _inspectButton.imageScaling = NSImageScaleProportionallyDown;
-    _inspectButton.toolTip = @"Inspect the selected process";
+    _inspectButton.toolTip = NSLocalizedStringWithDefaultValue(@"JobTree.InspectTooltip", nil, [NSBundle mainBundle], @"Inspect the selected process", @"Tooltip for the inspect button");
     _inspectButton.refusesFirstResponder = YES;
     [self.view addSubview:_inspectButton];
     [self updateKillButtonEnabled];
@@ -408,32 +409,26 @@ static int gSignalsToList[] = {
 }
 
 - (BOOL)shouldQuit {
-    NSString *description;
+    // Build a complete localized sentence per case rather than injecting a translated noun phrase as
+    // the object of "terminate", whose grammar (number, article, word order) differs by language.
+    NSString *title;
     const NSUInteger count = _outlineView.selectedRowIndexes.count;
     if (count == 0) {
         return NO;
     }
     if ([self anySelectedProcessHasChildren]) {
-        if (count == 1) {
-            description = @"one process and its children";
-        } else {
-            description = [NSString stringWithFormat:@"%@ processes and their children", @(count)];
-        }
+        title = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"JobTree.ConfirmTerminateWithChildren", nil, [NSBundle mainBundle], @"Are you sure? This may terminate %ld processes and their children.", @"Confirmation before terminating processes and their child processes; %ld is the count"), (long)count];
     } else {
-        if (count == 1) {
-            description = @"one process";
-        } else {
-            description = [NSString stringWithFormat:@"%@ processes", @(count)];
-        }
+        title = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"JobTree.ConfirmTerminate", nil, [NSBundle mainBundle], @"Are you sure? This may terminate %ld processes.", @"Confirmation before terminating processes; %ld is the count"), (long)count];
     }
 
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Are you sure? This may terminate %@.", description]
-                               actions:@[ @"OK", @"Cancel"]
+    [iTermWarning showWarningWithTitle:title
+                               actions:@[ iTermLocalizedOK(), iTermLocalizedCancel()]
                              accessory:nil
                             identifier:@"NoSyncSuppressSendSignal"
                            silenceable:kiTermWarningTypePermanentlySilenceable
-                               heading:@"Confirmation Needed"
+                               heading:NSLocalizedStringWithDefaultValue(@"JobTree.ConfirmationNeeded", nil, [NSBundle mainBundle], @"Confirmation Needed", @"Heading for the terminate-processes confirmation dialog")
                                 window:self.view.window];
     return selection == kiTermWarningSelection0;
 }
@@ -598,6 +593,7 @@ static int gSignalsToList[] = {
                             fittingSize.height);
     _outlineView.frame = frame;
 
+    // Localization unneeded
     const CGFloat pidWidth = [[[[self tableCellViewWithString:@"MMMMMM" image:nil isJob:NO] textField] cell] cellSizeForBounds:_outlineView.bounds].width;
     _outlineView.tableColumns.lastObject.width = pidWidth;
     _outlineView.tableColumns.firstObject.width = MAX(_outlineView.tableColumns.firstObject.minWidth,
@@ -772,7 +768,7 @@ static int gSignalsToList[] = {
     const BOOL monitored = (isJob && info.pid &&
                             [[iTermJobTerminationMonitor sharedInstance] isMonitoringProcessID:info.pid]);
     if (isJob) {
-        string = info.fullName ?: @"(terminated)";
+        string = info.fullName ?: NSLocalizedStringWithDefaultValue(@"JobTree.Terminated", nil, [NSBundle mainBundle], @"(terminated)", @"Placeholder shown for a job that has terminated");
         NSImage *rawImage = [_graphicSource imageForJobName:info.name];
         if (rawImage) {
             image = [NSImage imageWithSize:rawImage.size flipped:NO drawingHandler:^BOOL(NSRect dstRect) {
@@ -817,13 +813,13 @@ static int gSignalsToList[] = {
     }
     // Hovering any cell in the row reveals the full, untruncated command (the
     // visible text is clipped to the column width and capped at 256 chars).
-    cell.toolTip = info.fullName ?: @"(terminated)";
+    cell.toolTip = info.fullName ?: NSLocalizedStringWithDefaultValue(@"JobTree.Terminated", nil, [NSBundle mainBundle], @"(terminated)", @"Placeholder shown for a job that has terminated");
     return cell;
 }
 
 - (NSAttributedString *)monitorIndicatorPrefixWithFont:(NSFont *)font {
     NSImage *bell = [NSImage it_imageForSymbolName:@"bell"
-                            accessibilityDescription:@"Will notify when this job terminates"];
+                            accessibilityDescription:NSLocalizedStringWithDefaultValue(@"JobTree.BellAccessibility", nil, [NSBundle mainBundle], @"Will notify when this job terminates", @"Accessibility description for the bell indicator next to a monitored job")];
     if (!bell) {
         return [[NSAttributedString alloc] initWithString:@""];
     }

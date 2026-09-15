@@ -3,3 +3,4 @@
 //
 
 #import "LineBuffer.h"
+#import "iTermStandardButtons.h"

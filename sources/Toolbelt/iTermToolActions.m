@@ -64,10 +64,10 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        _applyButton = iTermToolActionsNewButton(@"play", @"Apply", self, @selector(apply:), frame);
-        _addButton = iTermToolActionsNewButton(@"plus", @"Add", self, @selector(add:), frame);
-        _removeButton = iTermToolActionsNewButton(@"minus", @"Remove", self, @selector(remove:), frame);
-        _editButton = iTermToolActionsNewButton(@"pencil", @"Edit", self, @selector(edit:), frame);
+        _applyButton = iTermToolActionsNewButton(@"play", NSLocalizedStringWithDefaultValue(@"ToolActions.Apply", nil, [NSBundle mainBundle], @"Apply", @"Apply button in the Actions tool"), self, @selector(apply:), frame);
+        _addButton = iTermToolActionsNewButton(@"plus", iTermLocalizedAdd(), self, @selector(add:), frame);
+        _removeButton = iTermToolActionsNewButton(@"minus", iTermLocalizedRemove(), self, @selector(remove:), frame);
+        _editButton = iTermToolActionsNewButton(@"pencil", iTermLocalizedEdit(), self, @selector(edit:), frame);
         [self addSubview:_applyButton];
         [self addSubview:_addButton];
         [self addSubview:_removeButton];
@@ -292,7 +292,7 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
     if (title.length) {
         return title;
     }
-    return @"Untitled";
+    return NSLocalizedStringWithDefaultValue(@"ToolActions.Untitled", nil, [NSBundle mainBundle], @"Untitled", @"Placeholder title for an action with no title");
 }
 
 - (void)update {
@@ -398,6 +398,17 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
     [[self undoManager] registerUndoWithTarget:self
                                       selector:@selector(setActions:)
                                         object:_actions];
+}
+
+// NSUndoManager holds targets unretained. pushUndo registers this view on the
+// window's shared undo manager, so if this tool is torn down while the window
+// lives (e.g. the tool is removed from the toolbelt) the registration would
+// dangle and crash the next Undo. Scrub it as we leave the window.
+- (void)viewWillMoveToWindow:(NSWindow *)newWindow {
+    if (newWindow != self.window) {
+        [self.window.undoManager removeAllActionsWithTarget:self];
+    }
+    [super viewWillMoveToWindow:newWindow];
 }
 
 @end

@@ -73,7 +73,7 @@ static const CGFloat kMargin = 5;
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         clear_.bezelStyle = NSBezelStyleRegularSquare;
         clear_.bordered = NO;
-        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
+        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"ToolCommandHistory.ClearAccessibility", nil, [NSBundle mainBundle], @"Clear", @"Accessibility description for the clear button")];
         clear_.imagePosition = NSImageOnly;
         clear_.frame = NSMakeRect(0, 0, 22, 22);
         [clear_ setTarget:self];
@@ -213,8 +213,10 @@ static const CGFloat kMargin = 5;
 
         if (commandUse.code.integerValue) {
             if ([NSDate isAprilFools]) {
+                // Localization unneeded
                 value = [@"💩 " stringByAppendingString:value];
             } else {
+                // Localization unneeded
                 value = [@"🚫 " stringByAppendingString:value];
             }
         }
@@ -299,6 +301,7 @@ static const CGFloat kMargin = 5;
     NSString *text = commandUse.command;
     if (([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagOption)) {
         if (commandUse.directory) {
+            // Localization unneeded
             text = [@"cd " stringByAppendingString:commandUse.directory];
         } else {
             return;
@@ -312,10 +315,10 @@ static const CGFloat kMargin = 5;
 
 - (void)clear:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Erase Command History";
-    alert.informativeText = @"Command history for all hosts will be erased. Continue?";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.messageText = NSLocalizedStringWithDefaultValue(@"ToolCommandHistory.EraseTitle", nil, [NSBundle mainBundle], @"Erase Command History", @"Confirmation alert title for erasing command history");
+    alert.informativeText = NSLocalizedStringWithDefaultValue(@"ToolCommandHistory.EraseMessage", nil, [NSBundle mainBundle], @"Command history for all hosts will be erased. Continue?", @"Confirmation alert message for erasing command history");
+    [alert addButtonWithTitle:iTermLocalizedOK()];
+    [alert addButtonWithTitle:iTermLocalizedCancel()];
     if ([alert runModal] == NSAlertFirstButtonReturn) {
         [[iTermShellHistoryController sharedInstance] eraseCommandHistory:YES directories:NO];
     }

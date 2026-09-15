@@ -173,10 +173,13 @@ enum BookmarkSortOption: String, CaseIterable {
     var displayName: String {
         switch self {
         case .dateAdded:
+            // Localization unneeded
             return "Date Added"
         case .title:
+            // Localization unneeded
             return "Title"
         case .url:
+            // Localization unneeded
             return "URL"
         }
     }

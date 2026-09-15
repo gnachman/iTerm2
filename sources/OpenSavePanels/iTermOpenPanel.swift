@@ -91,6 +91,7 @@ class iTermOpenPanel: NSObject {
                 if response == .OK, let urls = maybeURLs {
                     continuation.resume(returning: urls)
                 } else {
+                    // Localization unneeded
                     continuation.resume(throwing: iTermError("Canceled"))
                 }
             }
@@ -334,7 +335,7 @@ private extension iTermOpenPanel {
         
         // Create SSH panel button
         let sshButton = SSHOpenPanelButton()
-        sshButton.title = "Open SSH Panel..."
+        sshButton.title = String(localized: "OpenPanel.OpenSSHPanel", defaultValue: "Open SSH Panel…", comment: "Button to open the SSH panel in an open dialog")
         sshButton.target = self
         sshButton.action = #selector(openSSHPanelButtonClicked(_:))
         sshButton.bezelStyle = .rounded

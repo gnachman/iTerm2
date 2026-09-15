@@ -12,7 +12,7 @@ class ReloadBrowserTrigger: Trigger {
     }
 
     override static var title: String {
-        return "Reload After Delay"
+        return String(localized: "Trigger.ReloadBrowser.Title", defaultValue: "Reload After Delay", comment: "Trigger action name: reload the web page after a delay")
     }
 
     override func takesParameter() -> Bool {

@@ -124,9 +124,9 @@ class SSHFilePanelSidebar: NSView {
         var name: String {
             switch identifier {
             case .favorites:
-                return "Favorites"
+                return String(localized: "SSHFilePanelSidebar.Favorites", defaultValue: "Favorites", comment: "Title of the Favorites section in the SSH file panel sidebar")
             case .connectedHosts:
-                return "Connected Hosts"
+                return String(localized: "SSHFilePanelSidebar.ConnectedHosts", defaultValue: "Connected Hosts", comment: "Title of the Connected Hosts section in the SSH file panel sidebar")
             }
         }
 
@@ -240,13 +240,13 @@ class SSHFilePanelSidebar: NSView {
 
         // Standard user directories that appear in sidebar
         let standardLocations: [(FileManager.SearchPathDirectory, String)] = [
-            (.desktopDirectory, "Desktop"),
-            (.documentDirectory, "Documents"),
-            (.downloadsDirectory, "Downloads"),
-            (.moviesDirectory, "Movies"),
-            (.musicDirectory, "Music"),
-            (.picturesDirectory, "Pictures"),
-            (.userDirectory, "Home")
+            (.desktopDirectory, String(localized: "SSHFilePanelSidebar.Desktop", defaultValue: "Desktop", comment: "Name of the Desktop folder in the sidebar")),
+            (.documentDirectory, String(localized: "SSHFilePanelSidebar.Documents", defaultValue: "Documents", comment: "Name of the Documents folder in the sidebar")),
+            (.downloadsDirectory, String(localized: "SSHFilePanelSidebar.Downloads", defaultValue: "Downloads", comment: "Name of the Downloads folder in the sidebar")),
+            (.moviesDirectory, String(localized: "SSHFilePanelSidebar.Movies", defaultValue: "Movies", comment: "Name of the Movies folder in the sidebar")),
+            (.musicDirectory, String(localized: "SSHFilePanelSidebar.Music", defaultValue: "Music", comment: "Name of the Music folder in the sidebar")),
+            (.picturesDirectory, String(localized: "SSHFilePanelSidebar.Pictures", defaultValue: "Pictures", comment: "Name of the Pictures folder in the sidebar")),
+            (.userDirectory, String(localized: "SSHFilePanelSidebar.Home", defaultValue: "Home", comment: "Name of the Home folder in the sidebar"))
         ]
 
         for (directory, name) in standardLocations {
@@ -257,7 +257,7 @@ class SSHFilePanelSidebar: NSView {
 
         // Add Applications
         if let appsURL = fileManager.urls(for: .applicationDirectory, in: .localDomainMask).first {
-            favorites.append((name: "Applications", url: appsURL))
+            favorites.append((name: String(localized: "SSHFilePanelSidebar.Applications", defaultValue: "Applications", comment: "Name of the Applications folder in the sidebar"), url: appsURL))
         }
 
         return favorites
@@ -724,14 +724,14 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
                 } else {
                     image = NSImage.it_image(
                         forSymbolName: SFSymbol.folder.rawValue,
-                        accessibilityDescription: "Folder",
+                        accessibilityDescription: String(localized: "SSHFilePanelSidebar.Folder", defaultValue: "Folder", comment: "Accessibility description for a folder icon"),
                         fallbackImageName: "folder",
                         for: SSHFilePanelSidebar.self)
                 }
             } else {
                 image = NSImage.it_image(
                     forSymbolName: SFSymbol.folder.rawValue,
-                    accessibilityDescription: "Folder",
+                    accessibilityDescription: String(localized: "SSHFilePanelSidebar.Folder", defaultValue: "Folder", comment: "Accessibility description for a folder icon"),
                     fallbackImageName: "folder",
                     for: SSHFilePanel.self)
             }
@@ -744,7 +744,7 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
             } else {
                 image = NSImage.it_image(
                     forSymbolName: SFSymbol.serverRack.rawValue,
-                    accessibilityDescription: "Server",
+                    accessibilityDescription: String(localized: "SSHFilePanelSidebar.Server", defaultValue: "Server", comment: "Accessibility description for a server icon"),
                     fallbackImageName: "rack",
                     for: SSHFilePanel.self
                 )

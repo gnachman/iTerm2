@@ -72,6 +72,24 @@ final class CompanionHostBridge {
     /// Chat-list change observers driving unsolicited .chatListChanged pushes.
     private var chatListObservers: [any NSObjectProtocol] = []
     private var chatListPushTask: Task<Void, Never>?
+
+    /// Session-tree change observers driving unsolicited .sessionTree pushes, so
+    /// the phone's Sessions tab updates live as sessions/tabs/windows come and go
+    /// (rather than only on tab-appear or pull-to-refresh). Especially important
+    /// without AI, where terminal viewing is the whole feature.
+    private var sessionListObservers: [any NSObjectProtocol] = []
+    private var sessionTreePushTask: Task<Void, Never>?
+    /// When the last session-tree push actually went out, as a monotonic
+    /// systemUptime timestamp (never runs backward on a clock change), for rate
+    /// limiting (see scheduleSessionTreePush). nil until the first push.
+    private var lastSessionTreePush: TimeInterval?
+    /// The last session tree actually pushed, to drop byte-identical repeats (see
+    /// pushSessionTreeNow). nil until the first push.
+    private var lastPushedSessionTree: CompanionSessionTree?
+    /// The minimum spacing between session-tree pushes. A rename can churn a title
+    /// rapidly (e.g. a progress indicator in the title); this caps the resulting
+    /// pushes to one per interval while still letting an idle change go out at once.
+    private static let sessionTreePushMinInterval: TimeInterval = 2.0
     private var nextHostRequestID: UInt64 = 1
 
     /// Called once the transport closes remotely, so the owner can drop this
@@ -106,6 +124,12 @@ final class CompanionHostBridge {
     /// Set once an incompatible hello is seen: the bridge then serves nothing but
     /// a re-hello, so a stale peer cannot drive an out-of-date protocol.
     private var versionBlocked = false
+
+    /// The AI availability last advertised to this phone (seeded by the hello it
+    /// was sent). updateAIAvailability emits an aiAvailabilityChanged event only
+    /// when the value actually differs, so unrelated settings writes on the mac do
+    /// not spam the phone. nil until the first hello is sent.
+    private var lastAIAvailable: Bool?
 
     init(transport: MessageTransport) {
         self.transport = transport
@@ -184,6 +208,98 @@ final class CompanionHostBridge {
                 }
             })
         }
+
+        // Keep the phone's Sessions tab fresh: a session closing, the window/tab
+        // count changing, or a session being renamed changes the tree the phone
+        // shows. scheduleSessionTreePush rate-limits the result, so a progress-style
+        // title that churns rapidly still costs at most one push per interval while
+        // an idle change goes out immediately, and pushSessionTreeNow drops a push
+        // whose tree is byte-identical to the last. PTYSessionCreated is deliberately
+        // NOT observed: it fires from PTYSession -init, before the session is attached
+        // to a tab/window, so the tree wouldn't include it; iTermNumberOfSessions-
+        // DidChange (posted after attach) covers new sessions.
+        for name in [NSNotification.Name.PTYSessionTerminated,
+                     Notification.Name("iTermNumberOfSessionsDidChange"),
+                     NSNotification.Name.PTYSessionPresentationNameDidChange] {
+            sessionListObservers.append(center.addObserver(forName: name,
+                                                           object: nil,
+                                                           queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.scheduleSessionTreePush()
+                }
+            })
+        }
+    }
+
+    /// What scheduleSessionTreePush should do given the current time, the last push
+    /// time, the minimum spacing, and whether a trailing push is already queued.
+    enum SessionTreePushAction: Equatable {
+        /// Push immediately (idle long enough, or the first push).
+        case pushNow
+        /// A push is already queued; this change will ride it (it re-reads the tree
+        /// at fire time), so do nothing.
+        case alreadyScheduled
+        /// Too soon since the last push: queue a trailing push after this delay.
+        case scheduleAfter(TimeInterval)
+    }
+
+    /// Pure rate-limit decision, split out so it can be tested without real time.
+    /// Leading + trailing: an idle change fires at once, and while changes keep
+    /// coming they collapse to at most one push per interval, with a final trailing
+    /// push so the last state (e.g. the settled title) always lands.
+    nonisolated static func sessionTreePushAction(now: TimeInterval,
+                                                  lastPush: TimeInterval?,
+                                                  minInterval: TimeInterval,
+                                                  alreadyScheduled: Bool) -> SessionTreePushAction {
+        if alreadyScheduled { return .alreadyScheduled }
+        guard let lastPush else { return .pushNow }
+        let elapsed = now - lastPush
+        if elapsed >= minInterval { return .pushNow }
+        return .scheduleAfter(minInterval - elapsed)
+    }
+
+    /// Push the current session tree to the phone, rate-limited so a rapidly
+    /// churning title can't flood the relay. The phone updates model.sessionTree in
+    /// place; a peer too old to handle an unsolicited .sessionTree decodes it and
+    /// ignores it (it is a reply type there), so this is backward-compatible.
+    private func scheduleSessionTreePush() {
+        // Only a peer that understands an unsolicited .sessionTree benefits (a pre-13
+        // phone decodes it as an unexpected reply and discards it), and a
+        // version-blocked peer is served nothing but a re-hello, so skip the build +
+        // encode + send entirely for both rather than churn a tree they throw away.
+        guard !versionBlocked,
+              CompanionPushRegistry.peerRevision >= CompanionProtocolVersion.aiDecouplingRevision else {
+            return
+        }
+        switch Self.sessionTreePushAction(now: ProcessInfo.processInfo.systemUptime,
+                                          lastPush: lastSessionTreePush,
+                                          minInterval: Self.sessionTreePushMinInterval,
+                                          alreadyScheduled: sessionTreePushTask != nil) {
+        case .alreadyScheduled:
+            break
+        case .pushNow:
+            pushSessionTreeNow()
+        case .scheduleAfter(let delay):
+            sessionTreePushTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                guard let self, !Task.isCancelled else { return }
+                self.sessionTreePushTask = nil
+                self.pushSessionTreeNow()
+            }
+        }
+    }
+
+    private func pushSessionTreeNow() {
+        let tree = CompanionSessionLister.tree()
+        // Drop a byte-identical push: a close posts both PTYSessionTerminated and
+        // iTermNumberOfSessionsDidChange, so without this every open/close would ship
+        // two full trees, one a duplicate. Do NOT advance the throttle timestamp on a
+        // no-op, so the next genuine change can go out immediately rather than being
+        // rate-limited by a push that never happened.
+        guard tree != lastPushedSessionTree else { return }
+        lastPushedSessionTree = tree
+        lastSessionTreePush = ProcessInfo.processInfo.systemUptime
+        send(.sessionTree(tree), requestID: nil)
     }
 
     /// Coalesce bursts (a rename immediately invalidates the icon, which
@@ -194,7 +310,14 @@ final class CompanionHostBridge {
             try? await Task.sleep(nanoseconds: 500_000_000)
             guard let self, !Task.isCancelled else { return }
             self.chatListPushTask = nil
-            self.send(.chatListChanged(chats: self.chatEntries()), requestID: nil)
+            guard !self.versionBlocked else { return }
+            // Match the .listChatsAndSessions reply exactly: send no chats when AI is
+            // off, so a mid-session chat change (an already-open Mac window renaming
+            // or deleting a chat after an AI-off flip) can't repopulate the list
+            // behind a rev-13 phone's AI-unavailable panel or fill a pre-13 phone's
+            // still-enabled Chats tab with chats whose every tap then fails.
+            let chats = CompanionPairingController.aiAvailable() ? self.chatEntries() : []
+            self.send(.chatListChanged(chats: chats), requestID: nil)
         }
     }
 
@@ -211,6 +334,12 @@ final class CompanionHostBridge {
         chatListObservers.removeAll()
         chatListPushTask?.cancel()
         chatListPushTask = nil
+        for observer in sessionListObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        sessionListObservers.removeAll()
+        sessionTreePushTask?.cancel()
+        sessionTreePushTask = nil
         for subscription in subscriptions.values {
             subscription.unsubscribe()
         }
@@ -257,6 +386,12 @@ final class CompanionHostBridge {
         chatListObservers.removeAll()
         chatListPushTask?.cancel()
         chatListPushTask = nil
+        for observer in sessionListObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        sessionListObservers.removeAll()
+        sessionTreePushTask?.cancel()
+        sessionTreePushTask = nil
         for subscription in subscriptions.values {
             subscription.unsubscribe()
         }
@@ -343,6 +478,16 @@ final class CompanionHostBridge {
         default:
             classifyOnce(solicited: false)
         }
+        // Single AI gate: an AI-only request is refused when AI is off. `.open`
+        // requests (session browsing, video, keyboard, and persistence/cleanup like
+        // mute/unsubscribe) always run; `.mixed` requests (listChatsAndSessions,
+        // messagesSince, syncSince) are served partially by their handlers, which do
+        // their own AI check AFTER classifying the connection. Classifying above
+        // still happens before this refusal, so an interactive phone that sends an
+        // AI-only request is still recorded as interactive. See aiRequirement.
+        if Self.aiRequirement(of: envelope.payload) == .aiOnly {
+            guard requireAI(requestID) else { return }
+        }
         switch envelope.payload {
         case .unsupported:
             // A message type this mac build doesn't recognize (newer phone). The
@@ -354,7 +499,11 @@ final class CompanionHostBridge {
         case .hello(let revision, let minimumPeer):
             handleHello(peerRevision: revision, peerMinimumPeer: minimumPeer, requestID: requestID)
         case .listChatsAndSessions:
-            send(.chatsAndSessions(chats: chatEntries(),
+            // Mixed request: the session list works with or without AI, but chats
+            // are AI content. When AI is off, return the sessions and an empty chat
+            // list so the phone's Sessions tab still populates while its Chats tab
+            // shows the AI-unavailable panel.
+            send(.chatsAndSessions(chats: CompanionPairingController.aiAvailable() ? chatEntries() : [],
                                    sessions: CompanionSessionLister.sessions()),
                  requestID: requestID)
         case .createChat(let title, let mode):
@@ -383,13 +532,16 @@ final class CompanionHostBridge {
                      requestID: requestID)
             }
         case .setChatMuted(let chatID, let muted):
-            // The phone toggled the row optimistically; persist so the push
-            // path (agent-activity notifier + syncSince) honors it even while
-            // the phone is unreachable.
+            // Persistence, not an AI action (open): the phone toggled the row
+            // optimistically; persist so the push path (agent-activity notifier +
+            // syncSince) honors it even while the phone is unreachable, and so a
+            // mute set while AI is off is still in effect when AI returns.
             CompanionChatMuteRegistry.setMuted(muted, chatID: chatID)
         case .subscribe(let chatID):
             handleSubscribe(chatID: chatID, requestID: requestID)
         case .unsubscribe(let chatID):
+            // Cleanup, not an AI action (open): always honor it so a subscription
+            // can be detached even after AI is turned off.
             subscriptions[chatID]?.unsubscribe()
             subscriptions[chatID] = nil
         case .publish(let message, let chatID, _):
@@ -450,9 +602,16 @@ final class CompanionHostBridge {
                      requestID: requestID)
             }
         case .messagesSince(let collapseToken, let seq, let limit, let nonce):
+            // Mixed: handleMessagesSince classifies the connection from its nonce
+            // FIRST, then serves nothing if AI is off (a chat-only push). Gating here
+            // would skip that classification and misread an NSE wakeup as interactive.
             handleMessagesSince(collapseToken: collapseToken, seq: seq, limit: limit,
                                 nonce: nonce, requestID: requestID)
         case .syncSince(let messageSeq, let alertSeq, let limit, let nonce):
+            // Mixed: syncSince carries terminal ALERTS as well as chat messages, and
+            // alerts are a non-AI feature (their only push path). handleSyncSince
+            // serves alerts regardless and suppresses just the chat-message portion
+            // when AI is off.
             handleSyncSince(messageSeq: messageSeq, alertSeq: alertSeq, limit: limit,
                             nonce: nonce, requestID: requestID)
         case .unpairing:
@@ -1229,9 +1388,12 @@ final class CompanionHostBridge {
     /// from its side), then evaluate from ours; on incompatibility, block further
     /// service and ask the mac to show an upgrade alert.
     private func handleHello(peerRevision: Int, peerMinimumPeer: Int, requestID: UInt64?) {
+        let aiAvailable = CompanionPairingController.aiAvailable()
+        lastAIAvailable = aiAvailable
         send(.hello(revision: CompanionProtocolVersion.current,
                     minimumPeer: CompanionProtocolVersion.minimumPeer,
-                    wantsNotificationPermission: CompanionPushRegistry.alertsEverEnabled),
+                    wantsNotificationPermission: CompanionPushRegistry.alertsEverEnabled,
+                    aiAvailable: aiAvailable),
              requestID: requestID)
         let verdict = CompanionProtocolVersion.evaluate(peerRevision: peerRevision,
                                                         peerMinimumPeer: peerMinimumPeer)
@@ -1297,6 +1459,12 @@ final class CompanionHostBridge {
         // serves a reply. (consume is single-use to block replay after serving.)
         let solicited = nonce.map { CompanionPushNonceRegistry.shared.contains($0) } ?? false
         classifyOnce(solicited: solicited)
+
+        // messagesSince is a chat-only push (per-chat message previews), so it has
+        // nothing to serve when AI is off. Gate here, AFTER classifyOnce, rather than
+        // at the dispatch switch, so a background NSE wakeup still classifies the
+        // connection as solicited instead of being escalated to interactive.
+        guard requireAI(requestID) else { return }
 
         // Clamp the wire-supplied limit before any arithmetic or prefix(): it is
         // untrusted (any paired device sets it). A negative value would trap
@@ -1426,47 +1594,65 @@ final class CompanionHostBridge {
             return
         }
 
-        // --- Messages across all chats ---
+        let windowLimit = limit * 20
         // A negative message floor is the phone's FIRST-RUN signal (post-upgrade):
         // show the newest `limit` as a teaser and jump the floor to the global tip,
         // skipping the backlog rather than notifying it window-by-window. A normal
         // run drains OLDEST-first within a window and advances the floor only to the
         // highest seq it actually covered, so a truncated window never buries the
-        // tail (the tail drains on the next wakeup).
+        // tail (the tail drains on the next wakeup). Computed here (not inside the AI
+        // branch) because messageWindow is also the summarize cap used further down.
         let firstRun = messageSeq < 0
-        let windowLimit = limit * 20
         let messageWindow = firstRun ? limit : windowLimit
-        guard let probe = db.messagesSinceGlobal(sinceSeq: max(messageSeq, 0),
-                                                 windowLimit: messageWindow,
-                                                 ascending: !firstRun) else {
-            serveError("Chat database unavailable")
-            return
-        }
-        let globalMessageTip = probe.maxSeq
-        // Reset: the phone's floor is past the tip (the store was lost/recreated and
-        // seq rewound). Do NOT re-notify the rewound content; resync silently -
-        // return no message items, signal a reset so the NSE clears its stale-high
-        // per-chat watermarks, and float the floor to the new tip.
-        let messageReset = !firstRun && messageSeq > globalMessageTip
+
+        // --- Messages across all chats ---
+        // Chat messages are AI content. When AI is off, serve NONE and, crucially,
+        // do NOT move the phone's message floor: echo its incoming floor unchanged
+        // (advanceFloor is monotonic, so this is a no-op). Jumping the floor to the
+        // tip here would permanently drop messages that accrued while AI was ON but
+        // hadn't been pushed to the NSE yet - they would never be re-fetched once AI
+        // returns. Echoing the floor also keeps a first-run phone (messageSeq < 0) in
+        // first-run, so re-enabling AI still triggers the teaser + jump-to-tip rather
+        // than flooding the whole backlog. The alert portion below always runs.
         let messageRows: [(seq: Int64, message: Message)]
         let messageTruncated: Bool
         let messageFloorTarget: Int64
-        if messageReset {
+        let messageReset: Bool
+        if CompanionPairingController.aiAvailable() {
+            guard let probe = db.messagesSinceGlobal(sinceSeq: max(messageSeq, 0),
+                                                     windowLimit: messageWindow,
+                                                     ascending: !firstRun) else {
+                serveError("Chat database unavailable")
+                return
+            }
+            let globalMessageTip = probe.maxSeq
+            // Reset: the phone's floor is past the tip (the store was lost/recreated
+            // and seq rewound). Do NOT re-notify the rewound content; resync silently
+            // - return no message items, signal a reset so the NSE clears its
+            // stale-high per-chat watermarks, and float the floor to the new tip.
+            messageReset = !firstRun && messageSeq > globalMessageTip
+            if messageReset {
+                messageRows = []
+                messageTruncated = false
+                messageFloorTarget = globalMessageTip
+            } else if firstRun {
+                messageRows = probe.rows                        // newest `limit`, DESC
+                messageTruncated = probe.rows.count >= limit    // more backlog exists
+                messageFloorTarget = globalMessageTip           // jump to tip, skip backlog
+            } else {
+                messageRows = probe.rows                         // oldest window, ASC
+                messageTruncated = probe.rows.count >= windowLimit
+                // Advance the floor ONLY to the highest seq we covered in the window
+                // (its last ASC row); the tail above it drains next wakeup. When not
+                // truncated we covered everything above the floor, so jump to the tip.
+                messageFloorTarget = messageTruncated ? (probe.rows.last?.seq ?? globalMessageTip)
+                                                      : globalMessageTip
+            }
+        } else {
             messageRows = []
             messageTruncated = false
-            messageFloorTarget = globalMessageTip
-        } else if firstRun {
-            messageRows = probe.rows                       // newest `limit`, DESC
-            messageTruncated = probe.rows.count >= limit   // more backlog exists
-            messageFloorTarget = globalMessageTip          // jump to tip, skip backlog
-        } else {
-            messageRows = probe.rows                        // oldest window, ASC
-            messageTruncated = probe.rows.count >= windowLimit
-            // Advance the floor ONLY to the highest seq we covered in the window
-            // (its last ASC row); the tail above it drains next wakeup. When not
-            // truncated we covered everything above the floor, so jump to the tip.
-            messageFloorTarget = messageTruncated ? (probe.rows.last?.seq ?? globalMessageTip)
-                                                  : globalMessageTip
+            messageFloorTarget = messageSeq   // leave the floor exactly where it is
+            messageReset = false
         }
 
         // --- Alerts (oldest-first drain; window >= store prune cap, so the window
@@ -2025,6 +2211,106 @@ final class CompanionHostBridge {
 
     /// Enqueue one envelope. Synchronous: enqueue order (main-actor order) is
     /// transmit order among control frames, which always precede pending media.
+    /// Tell the connected phone that the mac's AI availability changed, but only
+    /// when it differs from what this bridge last advertised (in its hello or a
+    /// prior change event). Called by CompanionPairingController when a settings
+    /// change may have flipped aiAvailable(); the dedupe keeps unrelated settings
+    /// writes from emitting redundant events. A no-op before the first hello.
+    func updateAIAvailability(_ available: Bool) {
+        // No-op before the first hello: lastAIAvailable is nil until handleHello
+        // seeds it, and the hello reply carries the current availability, so there is
+        // nothing to update (and an aiAvailabilityChanged frame must not precede the
+        // hello reply). After hello, only send when the value actually changed.
+        guard let lastAIAvailable, lastAIAvailable != available else { return }
+        self.lastAIAvailable = available
+        RLog("Companion bridge: AI availability changed to \(available); notifying phone")
+        if !available {
+            // AI was just turned off (consent revoked or admin policy). The gate no
+            // longer drops the bridge, so tear down live chat subscriptions here;
+            // otherwise ChatBroker would keep pushing chat deltas, typing status, and
+            // turn lifecycle to a phone that has hidden its chat UI. Session browsing,
+            // video, and keyboard keep working. (The phone can't detach itself: its
+            // .unsubscribe would arrive after its own UI is already disabled.)
+            for subscription in subscriptions.values {
+                subscription.unsubscribe()
+            }
+            subscriptions.removeAll()
+        }
+        send(.aiAvailabilityChanged(available: available), requestID: nil)
+    }
+
+    /// Gate an AI-only request (chat, agent, orchestrator) on AI actually being
+    /// available. When it is not, reply with an error and return false so the
+    /// caller does nothing further. Non-AI requests (session browsing, live video,
+    /// keyboard input) never call this and keep working. Checked live per request,
+    /// since AI can toggle mid-session; a revision-13 phone reads aiAvailable from
+    /// the hello and will not send these at all, so this is a backstop for older
+    /// phones and mid-turn toggles. The typed .aiUnavailable code is sent only to a
+    /// phone new enough to decode it; an older phone gets .internalError instead
+    /// (the new string would fail its decode and drop the whole frame).
+    private func requireAI(_ requestID: UInt64?) -> Bool {
+        if CompanionPairingController.aiAvailable() {
+            return true
+        }
+        // Reply with a correlated error only for a request that expects one; a
+        // fire-and-forget message (no requestID) is dropped silently rather than
+        // answered with an uncorrelated error the phone would surface out of context.
+        // Either way log the drop, so a fire-and-forget AI request from an older
+        // phone (e.g. .publish, which a rev-11/12 phone still sends with its chat UI
+        // enabled) is diagnosable rather than vanishing without a trace.
+        if let requestID {
+            let code: CompanionError.Code =
+                Self.peerUnderstandsAIUnavailableCode(peerRevision: CompanionPushRegistry.peerRevision)
+                ? .aiUnavailable : .internalError
+            send(.error(CompanionError(code: code,
+                                       message: "AI features are turned off on the paired Mac.")),
+                 requestID: requestID)
+        } else {
+            RLog("Companion bridge: dropping AI-only request while AI is off (fire-and-forget, no error reply)")
+        }
+        return false
+    }
+
+    /// How a client message relates to AI, so the dispatch gate lives in one place.
+    /// Adding a new CompanionClientMessage case forces a compile error HERE (an
+    /// exhaustive switch) rather than silently serving AI content when AI is off.
+    enum AIRequirement { case open, mixed, aiOnly }
+
+    static func aiRequirement(of message: CompanionClientMessage) -> AIRequirement {
+        switch message {
+        // Never needs AI: the handshake, liveness, relay/push plumbing, unpair,
+        // session browsing/video/keyboard, mention resolution, and the
+        // persistence/cleanup messages (mute, unsubscribe).
+        case .unsupported, .hello, .ping, .relayRoomSecret, .pushStatus,
+             .notificationPermissionResponse, .unpairing, .resolveMentions,
+             .fetchSessionScreenInfo, .fetchSessionContent, .fetchHistoryTile,
+             .fetchWorkgroupInfo, .fetchSessionTree, .startSessionStream,
+             .stopSessionStream, .requestKeyframe, .updateStreamParams, .streamAck,
+             .reportScrollWheel, .selectionGesture, .clearSelection, .copySelection,
+             .selectAllInStream, .pasteText, .sendKey, .resizeSession,
+             .setChatMuted, .unsubscribe:
+            return .open
+        // Partly served when AI is off; the handler decides (session list without
+        // chats; alerts without chat messages). These also classify the connection
+        // themselves, so they must NOT be gated before their handler runs.
+        case .listChatsAndSessions, .messagesSince, .syncSince:
+            return .mixed
+        // Refused when AI is off.
+        case .createChat, .deleteChat, .deleteMessages, .subscribe, .publish,
+             .selectSessionResponse, .remoteCommandDecision, .linkSession,
+             .fetchAutoProvideConsent, .grantAutoProvideConsent:
+            return .aiOnly
+        }
+    }
+
+    /// Whether the paired phone is new enough to decode the typed `.aiUnavailable`
+    /// error code. A pre-13 phone can't (the unknown string fails its decode and
+    /// drops the whole frame), so requireAI sends it the generic `.internalError`
+    /// instead. Pure so the backward-compat boundary is tested without a bridge.
+    static func peerUnderstandsAIUnavailableCode(peerRevision: Int) -> Bool {
+        return peerRevision >= CompanionProtocolVersion.aiDecouplingRevision
+    }
+
     private func send(_ payload: CompanionHostMessage, requestID: UInt64?) {
         outbox?.enqueueControl(HostEnvelope(requestID: requestID, payload: payload))
     }

@@ -31,19 +31,20 @@ extension AddClippingBuiltInFunction: iTermBuiltInFunctionProtocol {
             optionalArguments: Set(),
             defaultValues: [argSession: iTermVariableKeySessionID],
             context: .session,
+            // Localization unneeded
             sideEffectsPlaceholder: "[add_clipping]") { parameters, completion in
                 guard let sessionID = parameters[argSession] as? String else {
-                    completion(nil, error(message: "Missing session_id. This shouldn't happen so please report a bug."))
+                    completion(nil, error(message: String(localized: "BuiltInFunction.MissingSessionID", defaultValue: "Missing session_id. This shouldn’t happen so please report a bug.", comment: "Error shown when the session_id argument is unexpectedly missing (should not happen)")))
                     return
                 }
                 guard let type = parameters[argType] as? String,
                       let title = parameters[argTitle] as? String,
                       let detail = parameters[argDetail] as? String else {
-                    completion(nil, error(message: "Missing required argument"))
+                    completion(nil, error(message: String(localized: "AddClipping.MissingArgument", defaultValue: "Missing required argument", comment: "Error shown when add_clipping is called without a required argument")))
                     return
                 }
                 guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, error(message: "No such session"))
+                    completion(nil, error(message: String(localized: "BuiltInFunction.NoSuchSession", defaultValue: "No such session", comment: "Error shown when a function is called with a session ID that does not exist")))
                     return
                 }
                 // Code-review-mode workgroup peers send their clippings

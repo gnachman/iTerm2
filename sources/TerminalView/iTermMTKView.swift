@@ -17,18 +17,31 @@ public class iTermMTKView: iTermMetalView {
     @objc(initWithFrame:device:)
     override init(frame: NSRect, device: MTLDevice?) {
         super.init(frame: frame, device: device)
-        if iTermAdvancedSettingsModel.hdrCursor() {
-            colorPixelFormat = .bgra8Unorm
-        }
+        // The drawable's pixel format is controlled by the CAMetalLayer's
+        // pixelFormat (set via enableHDR), not colorPixelFormat, so nothing to set
+        // here.
         // Timer is scheduled in viewDidMoveToWindow; a detached view shouldn't wake up.
+        // A display can gain or lose EDR headroom in place (preset switch in
+        // System Settings) without changing backing scale or color space, so
+        // viewDidChangeBackingProperties may not fire; observe screen-parameter
+        // changes directly so the layer's EDR flag and color space stay in sync.
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(screenParametersChanged),
+                                               name: NSApplication.didChangeScreenParametersNotification,
+                                               object: nil)
     }
-    
+
     @MainActor required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
     }
-    
+
     deinit {
         _timer?.invalidate()
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func screenParametersChanged() {
+        refreshHDRLayerState()
     }
 
     override public var alphaValue: CGFloat {
@@ -90,9 +103,54 @@ public class iTermMTKView: iTermMetalView {
         }
     }
 
+    // This session's per-profile HDR-cursor setting. Set by SessionView. Gates EDR
+    // engagement (and, at driver-build time, the fp16 pixel format). Changing it
+    // updates the layer's EDR flag/color space live; the pixel format change is
+    // handled by rebuilding the driver.
+    @objc var wantsHDR: Bool = false {
+        didSet {
+            if wantsHDR != oldValue {
+                refreshHDRLayerState()
+            }
+        }
+    }
+
+    // Whether to actually engage EDR: this session's HDR cursor is on AND the
+    // display has real headroom. The pixel format is fp16 whenever wantsHDR is on
+    // (it must match the cached pipeline states, which are built from the same
+    // flag), but EDR engagement is additionally headroom-gated so a no-headroom
+    // display is not needlessly pushed toward EDR and keeps its calibrated color
+    // space.
+    private var wantsEDR: Bool {
+        guard wantsHDR, let screen = window?.screen else {
+            return false
+        }
+        return screen.it_hasEDRHeadroom()
+    }
+
+    // The color space the metal layer should use. The HDR cursor needs an
+    // extended-range color space or the compositor clamps its boosted white to
+    // reference white. Only substitute the extended space when EDR is engaged, so
+    // an SDR display keeps its own (calibrated) color space. The shared helper
+    // matches the display's gamut (extended Display P3 vs extended sRGB) so a
+    // wide-gamut display's color reproduction is not shifted.
+    private var preferredColorspace: CGColorSpace? {
+        let screenColorspace = window?.screen?.colorSpace?.cgColorSpace
+        guard wantsEDR, let screen = window?.screen else {
+            return screenColorspace
+        }
+        return screen.it_extendedDynamicRangeColorSpace() ?? screenColorspace
+    }
+
+    // Keep the layer's EDR flag and color space in sync with the current display.
+    private func refreshHDRLayerState() {
+        colorspace = preferredColorspace
+        wantsExtendedDynamicRangeContent = wantsEDR
+    }
+
     override public func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        colorspace = window?.screen?.colorSpace?.cgColorSpace
+        refreshHDRLayerState()
         if window != nil {
             if _timer == nil {
                 it_schedule()
@@ -105,7 +163,14 @@ public class iTermMTKView: iTermMetalView {
 
     @objc(enclosingWindowDidMoveToScreen:)
     func enclosingWindowDidMove(to screen: NSScreen?) {
-        colorspace = window?.screen?.colorSpace?.cgColorSpace
+        refreshHDRLayerState()
+    }
+
+    override public func viewDidChangeBackingProperties() {
+        super.viewDidChangeBackingProperties()
+        // A display can change gamut or HDR mode in place (without the window
+        // moving to a different screen), so recompute here too.
+        refreshHDRLayerState()
     }
 
     @objc

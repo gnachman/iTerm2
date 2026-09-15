@@ -114,6 +114,20 @@ NS_ASSUME_NONNULL_BEGIN
 // Returns if it's safe to send reports.
 - (BOOL)terminalShouldSendReport:(BOOL)tmuxAllowed;
 
+// Like terminalShouldSendReport: but for reports whose value the mutation thread
+// owns and keeps current, so a run of them may share a single pause+sync instead
+// of paying one per query (issue 13013). Used by OSC 4 palette color queries
+// (value read from the mutation-thread colorMap) and by device status reports
+// such as CSI 6 n cursor position (value read from the mutation-thread grid
+// cursor); both read constant or mutation-owned state, never a stale snapshot.
+//
+// This is only safe for reports whose value the mutation thread owns and whose
+// every mutation schedules a disarming side effect. It must NOT be used for
+// reports that read main-thread-mirrored state such as the config snapshot (cell
+// size, backing scale, window/grid size), which is refreshed only by a sync and
+// would read stale. Such reports use terminalShouldSendReport:.
+- (BOOL)terminalShouldSendCoalescibleReport:(BOOL)tmuxAllowed;
+
 - (void)terminalReportVariableNamed:(NSString *)variable;
 
 // Sends a report.
@@ -268,6 +282,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Tries to move the window's top left coordinate to the given point.
 - (void)terminalMoveWindowTopLeftPointTo:(NSPoint)point;
 
+// Tries to set the window's frame in global AppKit coordinates (points).
+- (void)terminalSetWindowFrame:(NSRect)frame;
+
 // Either miniaturizes or unminiaturizes, depending on |mini|.
 - (void)terminalMiniaturize:(BOOL)mini;
 
@@ -285,6 +302,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Returns the top-left pixel coordinate of the window.
 - (NSPoint)terminalWindowTopLeftPixelCoordinate;
+
+// Returns the window's frame in global AppKit coordinates (points).
+- (NSRect)terminalWindowFrameInPoints;
+
+// Returns the visible frames of all screens in global AppKit coordinates
+// (points), one boxed NSRect per screen.
+- (NSArray<NSValue *> *)terminalScreenFramesInPoints;
 
 // Returns the size of the window in pixels.
 - (int)terminalWindowWidthInPixels;

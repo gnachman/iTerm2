@@ -293,6 +293,22 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }];
 }
 
+// Paused variant of addReportSideEffect:: pauses like addPausedSideEffect: but
+// schedules via addReportSideEffect so it does not disarm skip-sync.
+- (void)addPausedReportSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
+                             name:(NSString *)name {
+    DLog(@"[side effects] %@ Add paused report side effect %@", self.config.sessionGuid, name);
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor addReportSideEffect:^{
+        if (!weakSelf) {
+            [unpauser unpause];
+            return;
+        }
+        [weakSelf performPausedSideEffect:unpauser block:sideEffect name:name];
+    }];
+}
+
 - (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
                          name:(NSString *)name {
     DLog(@"[side effects] %@ Add deferred side effect %@", self.config.sessionGuid, name);
@@ -312,6 +328,18 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }];
 }
 
+
+// Like addSideEffect:name: but for purely outbound report-send side effects.
+// Does not invalidate the report skip-sync flag, so a burst of report queries
+// coalesces to a single joined sync instead of one per query.
+- (void)addReportSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect name:(NSString *)name {
+    DLog(@"[side effects] %@ Add report side effect %@", self.config.sessionGuid, name);
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor addReportSideEffect:^{
+        DLog(@"[side effects] %@ Execute report side effect %@", weakSelf.config.sessionGuid, name);
+        [weakSelf performSideEffect:sideEffect name:name];
+    }];
+}
 
 - (void)addNoDelegateSideEffect:(void (^)(void))sideEffect name:(NSString *)name {
     DLog(@"[side effects] %@ Add side effect %@", self.config.sessionGuid, name);
@@ -816,8 +844,15 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     VT100Grid *grid = self.currentGrid;
     VT100LineInfo *lineInfo = [grid lineInfoAtLineNumber:grid.cursorY];
     iTermMetadata md = lineInfo.metadata;
+    const iTermLineAttribute oldLineAttribute = md.lineAttribute;
     md.lineAttribute = lineAttribute;
     lineInfo.metadata = md;
+    if (oldLineAttribute != lineAttribute) {
+        // lineAttribute is serialized in per-line metadata; when length == 0 nothing
+        // else dirties this line. markLineDidChange: dirties it (so copyDirtyFromGrid:
+        // copies the metadata into the immutable grid) and bumps the content generation.
+        [grid markLineDidChange:grid.cursorY];
+    }
 
     const screen_char_t *chars = line;
     int len = length;
@@ -958,7 +993,17 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
                                 self.terminal.softAlternateScreenMode,
                                 NULL);
             if (rtlFound) {
-                [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
+                VT100Grid *grid = self.currentGrid;
+                VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
+                if (!predLineInfo.rtlFound) {
+                    // Only on the NO->YES transition: rtlFound is serialized in
+                    // per-line metadata; markLineDidChange: dirties the line (so
+                    // copyDirtyFromGrid: copies the changed metadata) and bumps the
+                    // content generation. Guarding avoids O(width) dirtying + a bump
+                    // per append while RTL text streams over an already-RTL line.
+                    [predLineInfo setRTLFound:YES];
+                    [grid markLineDidChange:pred.y];
+                }
             }
             const screen_char_t current = [self.currentGrid characterAt:pred];
             const unichar predecessorCode = firstChars[0].code;
@@ -1042,7 +1087,17 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         ssize_t bufferOffset = 0;
         if (augmented && len > 0) {
             if (rtlFound) {
-                [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
+                VT100Grid *grid = self.currentGrid;
+                VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
+                if (!predLineInfo.rtlFound) {
+                    // Only on the NO->YES transition: rtlFound is serialized in
+                    // per-line metadata; markLineDidChange: dirties the line (so
+                    // copyDirtyFromGrid: copies the changed metadata) and bumps the
+                    // content generation. Guarding avoids O(width) dirtying + a bump
+                    // per append while RTL text streams over an already-RTL line.
+                    [predLineInfo setRTLFound:YES];
+                    [grid markLineDidChange:pred.y];
+                }
             }
             const screen_char_t current = [self.currentGrid characterAt:pred];
             if (current.code != buffer[0].code || current.complexChar != buffer[0].complexChar) {
@@ -2659,7 +2714,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)convertHardNewlineToSoftOnGridLine:(int)line {
     screen_char_t *aLine = [self.currentGrid screenCharsAtLineNumber:line];
     if (aLine[self.currentGrid.size.width].code == EOL_HARD) {
-        aLine[self.currentGrid.size.width].code = EOL_SOFT;
+        // Go through setContinuationMarkOnLine:to: (rather than a raw write) so the
+        // line is dirtied and the content generation bumped, keeping the EOL change
+        // in saved state without relying on the caller to move the cursor.
+        [self.currentGrid setContinuationMarkOnLine:line to:EOL_SOFT];
     }
 }
 
@@ -3174,6 +3232,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // TODO: Per issue 12581 I should consider finding a way to do this unpaused. Perhaps it could be
     // unmanaged, or part of it could be unmanaged.
     const VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow);
+    // Snapshot the key reporting flags now, on the mutation thread, as of the FTCS C token.
+    // The side effect below may run after later tokens have changed the flags, so reading the
+    // live value there would be inconsistent with the snapshot taken at FTCS D. See 13015.
+    const VT100TerminalKeyReportingFlags keyReportingFlags = self.terminalKeyReportingFlags;
 
     if (IsSecureEventInputEnabled() || self.config.autoComposerEnabled) {
         [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
@@ -3187,6 +3249,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                        onHost:remoteHost
                                   inDirectory:workingDirectory
                                          mark:mark
+                            keyReportingFlags:keyReportingFlags
                                        paused:YES];
             DLog(@"commandDidEndWithRange: unpause");
             [unpauser unpause];
@@ -3203,6 +3266,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                        onHost:remoteHost
                                   inDirectory:workingDirectory
                                          mark:mark
+                            keyReportingFlags:keyReportingFlags
                                        paused:NO];
         } name:@"command did end with range"];
     }
@@ -3932,8 +3996,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     } else {
         DLog(@"No last command mark found.");
     }
+    // Snapshot the key reporting flags now, on the mutation thread, as of the FTCS D token.
+    // A shell like Fish 4.x re-enables key reporting for its next prompt with tokens that follow
+    // FTCS D; reading the live value in the side effect would see that later state and falsely
+    // conclude that an app left key reporting stuck on. See 13015.
+    const VT100TerminalKeyReportingFlags keyReportingFlags = self.terminalKeyReportingFlags;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenCommandDidExitWithCode:returnCode mark:doppelganger];
+        [delegate screenCommandDidExitWithCode:returnCode
+                             keyReportingFlags:keyReportingFlags
+                                          mark:doppelganger];
     } name:@"set rc 2"];
 }
 
@@ -6094,7 +6165,9 @@ lengthExcludingInBandSignaling:data.length
                    reattached:(BOOL)reattached
                     isArchive:(BOOL)isArchive
          largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider {
-    const BOOL newFormat = (dictionary[@"PrimaryGrid"] != nil);
+    // "…V2" is the current grid node key; "PrimaryGrid" is the pre-upgrade key,
+    // still read so old saves restore their grid contents.
+    const BOOL newFormat = (dictionary[@"PrimaryGridV2"] != nil || dictionary[@"PrimaryGrid"] != nil);
     if (!newFormat) {
         return;
     }
@@ -6242,14 +6315,14 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (void)appendArchiveRestoredBanner {
-    [self appendRestoredBanner:@"Archive Restored"];
+    [self appendRestoredBanner:NSLocalizedStringWithDefaultValue(@"ScreenRestore.ArchiveRestoredBanner", nil, [NSBundle mainBundle], @"Archive Restored", @"Banner shown when an archived session is restored")];
 }
 
 - (void)appendSessionRestoredBanner {
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     dateFormatter.dateStyle = NSDateFormatterMediumStyle;
     dateFormatter.timeStyle = NSDateFormatterShortStyle;
-    NSString *message = [NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]];
+    NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScreenRestore.SessionRestoredBanner", nil, [NSBundle mainBundle], @"Session Contents Restored on %@", @"Banner shown when session contents are restored; %@ is the date"), [dateFormatter stringFromDate:[NSDate date]]];
     [self appendRestoredBanner:message];
 }
 
@@ -6589,16 +6662,22 @@ lengthExcludingInBandSignaling:data.length
     self.altGrid.delegate = nil;
     self.altGrid = nil;
 
-    self.primaryGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"PrimaryGrid"]
+    // Prefer the current "…V2" key; fall back to the pre-upgrade "PrimaryGrid" key.
+    // The content generation is restored from the grid's own POD. A pre-upgrade save
+    // lacks that key; such a grid starts at generation 0 and is re-saved under the
+    // "…V2" key as a fresh node, so no migration fallback is needed.
+    NSString *primaryGridKey = dictionary[@"PrimaryGridV2"] ? @"PrimaryGridV2" : @"PrimaryGrid";
+    self.primaryGrid = [[VT100Grid alloc] initWithDictionary:dictionary[primaryGridKey]
                                                     delegate:self];
     self.primaryGrid.defaultChar = self.terminal.defaultChar;
     if (!self.primaryGrid) {
         // This is to prevent a crash if the dictionary is bad (i.e., non-backward compatible change in a future version).
         self.primaryGrid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(2, 2) delegate:self];
     }
-    NSDictionary *altGrid = dictionary[@"AltGrid"];
+    NSString *altGridKey = dictionary[@"AltGridV2"] ? @"AltGridV2" : @"AltGrid";
+    NSDictionary *altGrid = dictionary[altGridKey];
     if ([altGrid count]) {
-        self.altGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"AltGrid"]
+        self.altGrid = [[VT100Grid alloc] initWithDictionary:dictionary[altGridKey]
                                                     delegate:self];
     }
     if (!self.altGrid) {
@@ -7086,6 +7165,10 @@ lengthExcludingInBandSignaling:data.length
 - (void)addUnmanagedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))block
                           name:(NSString *)name {
     DLog(@"[side effects] Add unmanaged side effect %@", name);
+    // Like addUnmanagedPausedSideEffect:, this dispatches straight to the main
+    // queue and bypasses the executor's addSideEffect chokepoint, so invalidate
+    // the report skip-sync flag explicitly.
+    [_tokenExecutor noteStateSideEffectScheduled];
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         DLog(@"[side effects] Execute unmanaged side effect %@", name);
@@ -7099,6 +7182,10 @@ lengthExcludingInBandSignaling:data.length
 // very hard to reason about and are almost certainly incorrect.
 - (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block name:(NSString *)name {
     DLog(@"[side effects] add %@", name);
+    // This scheduling path bypasses the executor's addSideEffect chokepoint, so
+    // invalidate the report skip-sync flag explicitly. (Color-table sets go
+    // through here and are reportable state.)
+    [_tokenExecutor noteStateSideEffectScheduled];
     __weak __typeof(self) weakSelf = self;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     dispatch_async(dispatch_get_main_queue(), ^{

@@ -208,6 +208,9 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly, nullable) iTermFindDriver *findDriver;
 @property(nonatomic, readonly, nullable) iTermFindDriver *findDriverCreatingIfNeeded;
 @property(nonatomic, readonly) NSSize internalDecorationSize;
+// Vertical space the per-session toolbar (e.g. the workgroups toolbar) reserves at
+// the top, or 0 when there is no toolbar. Parallel to -titleReservedHeight.
+@property(nonatomic, readonly) CGFloat toolbarReservedHeight;
 @property(nonatomic, readonly) iTermSessionViewFindDriver findDriverType;
 @property(nonatomic, weak, nullable) id<iTermSearchResultsMinimapViewDelegate> searchResultsMinimapViewDelegate;
 @property(nonatomic, strong, nullable) iTermImageWrapper *image;
@@ -241,6 +244,14 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // the inner edge of the panel area.
 @property (nonatomic) CGFloat actualPanelReservation;
 @property (nonatomic, readonly) BOOL isBrowser;
+
+// The session's per-profile HDR-cursor setting (KEY_HDR_CURSOR). When on, the
+// metal framebuffer is fp16 and EDR is engaged (via the metal view and the HDR
+// engager) so the cursor can render brighter than white. Changing it while the
+// metal renderer is active requires rebuilding the driver (the pixel format is
+// baked into pipeline states); PTYSession does that via -bounceMetal.
+@property (nonatomic) BOOL hdrCursorEnabled;
+
 @property (nonatomic) VT100ScreenProgress progress;
 @property (nonatomic) BOOL enableProgressBars;
 @property (nonatomic) BOOL showInlineProgressBar;
@@ -272,6 +283,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
                        blend:(CGFloat)blend;
 
 + (double)titleHeight;
++ (CGFloat)toolbarHeight;
 + (NSDate*)lastResizeDate;
 + (void)windowDidResize;
 

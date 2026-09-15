@@ -1,0 +1,11 @@
+#!/bin/sh
+# Fast pre-commit guard. Only does real work when the code string catalog is part
+# of the commit; otherwise it exits immediately (no Python, no 7MB JSON parse).
+root=$(git rev-parse --show-toplevel) || exit 0
+cd "$root" || exit 0
+
+# Fast path: is xcstrings/Localizable.xcstrings actually staged in this commit?
+if git diff --cached --name-only --diff-filter=ACM | grep -qx 'xcstrings/Localizable.xcstrings'; then
+    exec python3 tools/check_untranslated_strings.py
+fi
+exit 0

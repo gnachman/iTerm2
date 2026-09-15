@@ -266,19 +266,23 @@ class iTermBrowserFindManager: NSObject {
             let thisGeneration = generation
 
             Task {
-                try await mutex.sync {
-                    if generation != thisGeneration {
-                        DLog("Not searching for \(searchTerm) because there is a more recent term")
-                        return
+                do {
+                    try await mutex.sync {
+                        if generation != thisGeneration {
+                            DLog("Not searching for \(searchTerm) because there is a more recent term")
+                            return
+                        }
+                        DLog("Begin search for \(searchTerm)")
+                        try await executeJavaScript(command: [
+                            "action": "startFind",
+                            "searchTerm": searchTerm,
+                            "contextLength": contextLength,
+                            "searchMode": mode.rawValue
+                        ], sharedState: sharedState)
+                        DLog("Completed search for \(searchTerm)")
                     }
-                    DLog("Begin search for \(searchTerm)")
-                    try await executeJavaScript(command: [
-                        "action": "startFind",
-                        "searchTerm": searchTerm,
-                        "contextLength": contextLength,
-                        "searchMode": mode.rawValue
-                    ], sharedState: sharedState)
-                    DLog("Completed search for \(searchTerm)")
+                } catch {
+                    DLog("search failed: \(error)")
                 }
             }
         }
@@ -286,7 +290,11 @@ class iTermBrowserFindManager: NSObject {
         func findNext(sharedState: Shared) {
             guard isSearchActive else { return }
             Task {
-                try await executeJavaScript(command: ["action": "findNext"], sharedState: sharedState)
+                do {
+                    try await executeJavaScript(command: ["action": "findNext"], sharedState: sharedState)
+                } catch {
+                    DLog("findNext failed: \(error)")
+                }
             }
         }
 
@@ -295,8 +303,12 @@ class iTermBrowserFindManager: NSObject {
                 return
             }
             Task {
-                try await executeJavaScript(command: ["action": "findPrevious"],
-                                            sharedState: sharedState)
+                do {
+                    try await executeJavaScript(command: ["action": "findPrevious"],
+                                                sharedState: sharedState)
+                } catch {
+                    DLog("findPrevious failed: \(error)")
+                }
             }
         }
 

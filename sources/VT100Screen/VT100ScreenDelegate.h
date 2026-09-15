@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermColorMap.h"
 #import "PTYTextViewDataSource.h"
+#import "VT100Terminal.h"
 #import "VT100TerminalDelegate.h"
 #import "VT100Token.h"
 
@@ -171,6 +172,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 // Delegate should move the window's top left point to the given screen coordinate.
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point;
+
+// Delegate should set the window's frame to the given global AppKit coordinate
+// rect (points).
+- (void)screenSetWindowFrame:(NSRect)frame;
 
 // If flag is set, the window should be miniaturized; otherwise, deminiaturize.
 - (void)screenMiniaturizeWindow:(BOOL)flag;
@@ -381,8 +386,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                          onHost:(id<VT100RemoteHostReading> _Nullable)host
                     inDirectory:(NSString * _Nullable)directory
                            mark:(id<VT100ScreenMarkReading> _Nullable)mark
+               keyReportingFlags:(VT100TerminalKeyReportingFlags)keyReportingFlags
                          paused:(BOOL)paused;
-- (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading> _Nullable)maybeMark;
+// keyReportingFlags is the key reporting flag state as of when the FTCS D token
+// was processed on the mutation thread. Pass it explicitly rather than reading
+// the live value later: by the time this side effect runs, a shell like Fish
+// 4.x may have already re-enabled key reporting for its next prompt, which
+// would otherwise look like an app that left key reporting stuck on. See 13015.
+- (void)screenCommandDidExitWithCode:(int)code
+                    keyReportingFlags:(VT100TerminalKeyReportingFlags)keyReportingFlags
+                                 mark:(id<VT100ScreenMarkReading> _Nullable)maybeMark;
 // Failed to run the command (e.g., syntax error)
 - (void)screenCommandDidAbortOnLine:(int)line
                         outputRange:(VT100GridCoordRange)outputRange

@@ -43,12 +43,12 @@ class ConductorFileTransfer: TransferrableFile {
     }
 
     override func displayName() -> String? {
-        return """
+        return String(localized: "ConductorFileTransfer.DisplayName", defaultValue: """
         iTerm2 SSH Integration Protocol
         User name: \(path.username ?? "(unknown)")")
         Host: \(path.hostname!)
         File: \(path.path!)"
-        """
+        """, comment: "Multi-line description of an SSH Integration file transfer")
     }
 
     override func shortName() -> String? {
@@ -56,7 +56,7 @@ class ConductorFileTransfer: TransferrableFile {
     }
 
     override func subheading() -> String? {
-        path.hostname! + " via SSH Integration"
+        String(localized: "ConductorFileTransfer.ViaSSHIntegration", defaultValue: "\(path.hostname!) via SSH Integration", comment: "Label indicating a transfer uses SSH Integration. %@ is the host name.")
     }
 
     override func authRequestor() -> String? {
@@ -67,7 +67,7 @@ class ConductorFileTransfer: TransferrableFile {
     }
 
     override func protocolName() -> String? {
-        return "SSH Integration"
+        return String(localized: "ConductorFileTransfer.ProtocolName", defaultValue: "SSH Integration", comment: "Name of the SSH Integration file transfer protocol")
     }
 
     private var chunked = false
@@ -151,12 +151,12 @@ class ConductorFileTransfer: TransferrableFile {
     func didFinishSuccessfully() {
         if state == .downloading {
             if !quarantine(_localPath, sourceURL: url) {
-                _error = "Failed to quarantine"
+                _error = String(localized: "ConductorFileTransfer.FailedToQuarantine", defaultValue: "Failed to quarantine", comment: "Error shown when a downloaded file cannot be quarantined")
                 FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(_error))
                 return
             }
             guard let attributes = try? FileManager.default.attributesOfItem(atPath: _localPath!) else {
-                _error = "Could not get attributes of \(_localPath!)"
+                _error = String(localized: "ConductorFileTransfer.CouldNotGetAttributes", defaultValue: "Could not get attributes of \(_localPath!)", comment: "Error shown when file attributes of a downloaded file cannot be read")
                 FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(_error))
                 return
             }
@@ -216,14 +216,14 @@ class ConductorFileTransfer: TransferrableFile {
         do {
             let attrs = try FileManager.default.attributesOfItem(atPath: path)
             guard let size = attrs[FileAttributeKey.size] as? Int else {
-                _error = "Could not get size of file: \(path)"
+                _error = String(localized: "ConductorFileTransfer.CouldNotGetSize", defaultValue: "Could not get size of file: \(path)", comment: "Error shown when the size of a file to upload cannot be determined")
                 state = .failed
                 FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(_error))
                 return nil
             }
             return size
         } catch {
-            _error = "No such file: \(path)"
+            _error = String(localized: "ConductorFileTransfer.NoSuchFile", defaultValue: "No such file: \(path)", comment: "Error shown when a file to upload does not exist")
             FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: error)
             state = .failed
             return nil
@@ -268,7 +268,7 @@ class ConductorFileTransfer: TransferrableFile {
 
     override func localPath() -> String? {
         if data != nil {
-            return "(In memory)"
+            return String(localized: "ConductorFileTransfer.InMemory", defaultValue: "(In memory)", comment: "Placeholder shown for a file transfer whose contents are held in memory rather than on disk")
         }
         return _localPath
     }
