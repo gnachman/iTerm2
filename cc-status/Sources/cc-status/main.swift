@@ -1,5 +1,8 @@
 import Foundation
 
+// Driven by Claude Code hooks (~/.claude/settings.json). Codex CLI hooks
+// (~/.codex/hooks.json) send the same payload shape, so one binary serves both.
+
 // Get iTerm2 session ID from environment.
 // TERM_SESSION_ID is like "w0t0p0:D1B2BAE2-3D01-4BB6-9021-27D6CF210957"
 guard let termSessionID = ProcessInfo.processInfo.environment["TERM_SESSION_ID"],
@@ -41,12 +44,24 @@ var detail: String? = nil
 // back what the last Stop/SubagentStop knew.
 var backgroundTasks: Int? = nil
 
+// Codex CLI sends no background_tasks, so its count is kept here from
+// SubagentStart/SubagentStop. It also fires no Stop when a detached sub-agent
+// finishes after the parent went idle, so SubagentStop needs to know whether
+// the turn is still open; that lives in a session variable. Both cost an extra
+// it2 round trip (~200 ms), so only Codex pays for them. Codex stamps turn_id
+// on every event; Claude Code only on MessageDisplay, which isn't handled here.
+let isCodex = json["turn_id"] != nil
+let turnOpenVariable = "user.ccStatusTurnOpen"
+
 switch eventName {
 case "UserPromptSubmit", "PreToolUse", "PostToolUse":
     status = "working"
     dotColor = "#ff9500"
     textColor = "#ff9500"
     detail = ""  // new turn / tool activity — previous detail is stale
+    if eventName == "UserPromptSubmit", isCodex {
+        setSessionVariable(turnOpenVariable, "1", it2SessionID: sessionID)
+    }
 case "PermissionRequest":
     status = "waiting"
     dotColor = "#5f87ff"
@@ -114,6 +129,9 @@ case "Stop":
     if let counted = backgroundTaskCount(json) {
         running = counted
         backgroundTasks = counted
+    } else if isCodex {
+        running = storedBackgroundTaskCount(it2SessionID: sessionID)
+        setSessionVariable(turnOpenVariable, "0", it2SessionID: sessionID)
     } else {
         running = 0
     }
@@ -132,6 +150,33 @@ case "Stop":
             detail = ""
         }
     }
+case "Interrupt":
+    // Codex CLI only: Esc cancelled the turn and no Stop follows.
+    guard isCodex else {
+        exit(0)
+    }
+    let running = storedBackgroundTaskCount(it2SessionID: sessionID)
+    setSessionVariable(turnOpenVariable, "0", it2SessionID: sessionID)
+    if running > 0 {
+        status = "working"
+        dotColor = "#ff9500"
+        textColor = "#ff9500"
+        detail = backgroundDetail(count: running)
+    } else {
+        status = "idle"
+        dotColor = "#00d75f"
+        textColor = "#888888"
+        detail = ""
+    }
+case "SubagentStart":
+    // Codex CLI only; Claude Code reports the count in Stop/SubagentStop.
+    guard isCodex else {
+        exit(0)
+    }
+    backgroundTasks = storedBackgroundTaskCount(it2SessionID: sessionID) + 1
+    status = "working"
+    dotColor = "#ff9500"
+    textColor = "#ff9500"
 case "SubagentStop":
     // Fires when any subagent finishes, including background agents
     // completing while the main loop sits at the prompt, so it is the
@@ -141,7 +186,23 @@ case "SubagentStop":
     // while work remains: SubagentStop also fires for internal utility
     // agents while the session is genuinely idle, and flashing those as
     // "working" would create the inverse of the false-idle bug.
-    guard let remaining = backgroundTaskCount(json, excludingID: json["agent_id"] as? String) else {
+    let remaining: Int
+    if let counted = backgroundTaskCount(json, excludingID: json["agent_id"] as? String) {
+        remaining = counted
+    } else if isCodex {
+        remaining = max(0, storedBackgroundTaskCount(it2SessionID: sessionID) - 1)
+        if remaining == 0, sessionVariable(turnOpenVariable, it2SessionID: sessionID) != "1" {
+            // Last one finished after the parent already stopped; nothing else fires.
+            status = "idle"
+            dotColor = "#00d75f"
+            textColor = "#888888"
+            if let message = json["last_assistant_message"] as? String {
+                detail = condense(message)
+            } else {
+                detail = ""
+            }
+        }
+    } else {
         exit(0)  // No field: nothing to learn from this event.
     }
     backgroundTasks = remaining
@@ -210,10 +271,22 @@ if let backgroundTasks = backgroundTasks {
     it2Args.append(contentsOf: ["--background-tasks", String(backgroundTasks)])
 }
 
+// Progress ring on the tab (OSC 9;4). Claude Code emits it itself, Codex CLI
+// doesn't. The hook shares the agent's tty, so the terminal picks it up
+// without disturbing the TUI. Repeating it for Claude Code is harmless.
+if let status = status, let tty = FileHandle(forWritingAtPath: "/dev/tty") {
+    let seq = status == "working" ? "\u{1b}]9;4;3\u{7}" : "\u{1b}]9;4;0\u{7}"
+    tty.write(Data(seq.utf8))
+    tty.closeFile()
+}
+
 let it2 = resolveIt2()
 let process = Process()
 process.executableURL = it2.executable
 process.arguments = it2.leadingArgs + it2Args
+// it2 prints "Session status updated." and Codex rejects non-JSON stdout from
+// SessionStart/Stop hooks. stderr still shows real failures.
+process.standardOutput = FileHandle.nullDevice
 do {
     try process.run()
 } catch {
@@ -237,9 +310,10 @@ if process.terminationStatus != 0 {
 /// which would otherwise make `/usr/bin/env it2` fail to find it2 and — because
 /// we exit 0 on a failed launch — silently leave the Session Status tool empty.
 ///
-/// Returns the absolute it2 path when the sibling is present and executable;
-/// otherwise falls back to a PATH lookup via /usr/bin/env so a hand-installed it2
-/// still works if the bundle layout ever changes.
+/// Returns the absolute it2 path when the sibling is present and executable,
+/// then the it2 inside an installed iTerm2.app; otherwise falls back to a PATH
+/// lookup via /usr/bin/env so a hand-installed it2 still works if the bundle
+/// layout ever changes.
 func resolveIt2() -> (executable: URL, leadingArgs: [String]) {
     let fm = FileManager.default
     // Claude Code invokes the hook by its absolute command path, so argv[0] is
@@ -251,7 +325,37 @@ func resolveIt2() -> (executable: URL, leadingArgs: [String]) {
     if fm.isExecutableFile(atPath: sibling.path) {
         return (sibling, [])
     }
+    // Standalone build: use the it2 inside the installed iTerm2.app.
+    let home = fm.homeDirectoryForCurrentUser.path
+    for app in ["\(home)/Applications/iTerm.app", "/Applications/iTerm.app"] {
+        let candidate = URL(fileURLWithPath: app + "/Contents/Resources/utilities/it2")
+        if fm.isExecutableFile(atPath: candidate.path) {
+            return (candidate, [])
+        }
+    }
     return (URL(fileURLWithPath: "/usr/bin/env"), ["it2"])
+}
+
+/// Trimmed stdout of an it2 subcommand, or nil if it failed.
+func it2Output(_ args: [String]) -> String? {
+    let it2 = resolveIt2()
+    let process = Process()
+    process.executableURL = it2.executable
+    process.arguments = it2.leadingArgs + args
+    let pipe = Pipe()
+    process.standardOutput = pipe
+    process.standardError = FileHandle.nullDevice
+    do {
+        try process.run()
+    } catch {
+        return nil
+    }
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    process.waitUntilExit()
+    guard process.terminationStatus == 0 else {
+        return nil
+    }
+    return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
 }
 
 // MARK: - Background tasks
@@ -320,26 +424,21 @@ func backgroundDetail(count: Int) -> String {
 /// (no stored value, session gone, it2 failed): the safe default, since
 /// it just restores the pre-background-awareness behavior.
 func storedBackgroundTaskCount(it2SessionID: String) -> Int {
-    let it2 = resolveIt2()
-    let process = Process()
-    process.executableURL = it2.executable
-    process.arguments = it2.leadingArgs + ["session", "get-background-tasks", "-s", it2SessionID]
-    let pipe = Pipe()
-    process.standardOutput = pipe
-    process.standardError = FileHandle.nullDevice
-    do {
-        try process.run()
-    } catch {
-        return 0
-    }
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    process.waitUntilExit()
-    guard process.terminationStatus == 0,
-          let output = String(data: data, encoding: .utf8),
-          let count = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+    guard let output = it2Output(["session", "get-background-tasks", "-s", it2SessionID]),
+          let count = Int(output) else {
         return 0
     }
     return max(0, count)
+}
+
+// MARK: - Session variables
+
+func setSessionVariable(_ name: String, _ value: String, it2SessionID: String) {
+    _ = it2Output(["session", "set-var", name, value, "--session", it2SessionID])
+}
+
+func sessionVariable(_ name: String, it2SessionID: String) -> String? {
+    return it2Output(["session", "get-var", name, "--session", it2SessionID])
 }
 
 // MARK: - Detail formatting
@@ -407,6 +506,16 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
     case "Agent", "Task":
         let desc = (toolInput["description"] as? String) ?? ""
         return "\(toolName): \(desc)"
+    case "apply_patch":
+        // Codex CLI's file edit. tool_input is the whole patch; show the files.
+        let patch = (toolInput["patch"] as? String) ?? (toolInput["input"] as? String) ?? ""
+        let files = applyPatchFiles(patch)
+        if files.isEmpty {
+            return "Edit"
+        }
+        return "Edit: " + files.map { shortPath($0) }.joined(separator: ", ")
+    case "update_plan":
+        return "Update plan"
     case "WebFetch":
         let url = (toolInput["url"] as? String) ?? ""
         return "WebFetch: \(shortURL(url))"
@@ -428,6 +537,22 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
         // (AskUserQuestion, TodoWrite, ExitPlanMode, …) never leaks into the UI.
         return humanize(toolName)
     }
+}
+
+/// Files named in the "*** Update/Add/Delete File:" headers of an apply_patch.
+func applyPatchFiles(_ patch: String) -> [String] {
+    var files: [String] = []
+    for line in patch.split(separator: "\n", omittingEmptySubsequences: true) {
+        for prefix in ["*** Update File: ", "*** Add File: ", "*** Delete File: "] {
+            if line.hasPrefix(prefix) {
+                let path = String(line.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                if !path.isEmpty, !files.contains(path) {
+                    files.append(path)
+                }
+            }
+        }
+    }
+    return files
 }
 
 /// Split a PascalCase/camelCase tool identifier into spaced words so unhandled
