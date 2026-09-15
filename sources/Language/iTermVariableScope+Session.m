@@ -401,4 +401,12 @@
     [self setValue:@(isBroadcastSource) forVariableNamed:iTermVariableKeyIsBroadcastSource];
 }
 
+- (NSString *)status {
+    return [self valueForVariableName:iTermVariableKeyStatus];
+}
+
+- (void)setStatus:(NSString *)status {
+    [self setValue:status forVariableNamed:iTermVariableKeyStatus];
+}
+
 @end

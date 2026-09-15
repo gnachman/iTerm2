@@ -25582,6 +25582,9 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         return;
     }
     [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
+    if (status.statusPresence != VT100TabStatusUpdateFieldNotSet) {
+        self.variablesScope.status = status.status;
+    }
     [_delegate sessionTabStatusDidChange:self];
 }
 
@@ -25610,6 +25613,7 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     }
     [_tabStatus clear];
     [[iTermDockBadgeController sharedInstance] sessionDidLeaveWaiting:_guid];
+    self.variablesScope.status = nil;
     [_delegate sessionTabStatusDidChange:self];
 }
 

@@ -61,6 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, copy) NSString *shell;
 @property (nullable, nonatomic, copy) NSString *uname;
 @property (nonatomic) BOOL isBroadcastSource;
+@property (nullable,  nonatomic, strong) NSString *status;
 
 @end
 
