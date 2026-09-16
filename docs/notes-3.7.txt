@@ -271,6 +271,10 @@ Improvements:
   tabs after a group follows suit.
 
 Bug Fixes:
+- Fixed the Python API not reporting OSC 8
+  hyperlinks. A cell’s CellStyle.url is now
+  populated, so scripts reading screen contents
+  can see the link target.
 - Fixed a crash when editing a dynamic profile
   whose file had been changed on disk.
 - Fixed a crash when clicking the bookmark
