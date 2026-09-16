@@ -244,8 +244,13 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(NSString
     NSArray<NSString *> *argv = @[ executable, path ];
     char **cargv = Make2DArray(argv);
     NSArray<NSString *> *env = @[];
-    if ([iTermAdvancedSettingsModel disclaimChildren]) {
+    // Disclaiming requires posix_spawn, and usePosixSpawn requests posix_spawn on its
+    // own, so use spawn if either is set. Only disclaim when disclaimChildren is set.
+    if ([iTermAdvancedSettingsModel disclaimChildren] || [iTermAdvancedSettingsModel usePosixSpawn]) {
         env = [env arrayByAddingObject:@"ITERM_FDMS_USE_SPAWN=1"];
+    }
+    if ([iTermAdvancedSettingsModel disclaimChildren]) {
+        env = [env arrayByAddingObject:@"ITERM_FDMS_DISCLAIM=1"];
     }
     char **cenv = Make2DArray(env);
     const char *argpath = executable.UTF8String;

@@ -66,6 +66,7 @@ static int MakeBlocking(int fd);
 static int gPipe[2];
 static char *gPath;
 static int use_spawn;
+static int disclaim;
 
 typedef struct {
     iTermMultiServerClientOriginatedMessage messageWithLaunchRequest;
@@ -242,6 +243,7 @@ static int LaunchModern(const iTermMultiServerRequestLaunch *launch,
                    launch->pwd,
                    launch->envp,
                    2,  // write errors to stderr
+                   disclaim,
                    0);
     }
     if (forkState->pid == -1) {
@@ -1025,6 +1027,7 @@ static int Initialize(char *path) {
     chdir("/");
 
     use_spawn = getenv("ITERM_FDMS_USE_SPAWN") != NULL;
+    disclaim = getenv("ITERM_FDMS_DISCLAIM") != NULL;
 
     return 0;
 }

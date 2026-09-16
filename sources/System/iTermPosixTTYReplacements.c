@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <os/availability.h>
+#include <paths.h>
 #include <signal.h>
 #include <spawn.h>
 #include <stdio.h>
@@ -413,7 +414,7 @@ static void iTermSpawnFailed(const char *argpath, int errorFd, const char *where
 }
 
 // Returns true on success.
-static int iTermSpawnInitializeAttrs(const char *argpath, int errorFd, posix_spawnattr_t *attrsPtr, int fork) {
+static int iTermSpawnInitializeAttrs(const char *argpath, int errorFd, posix_spawnattr_t *attrsPtr, int disclaim, int fork) {
     short flags = 0;
     // Use spawn-sigdefault in attrs rather than inheriting parent's signal
     // actions (vis-a-vis caught vs default action)
@@ -439,18 +440,22 @@ static int iTermSpawnInitializeAttrs(const char *argpath, int errorFd, posix_spa
         iTermSpawnFailed(argpath, errorFd, "posix_spawnattr_setflags", rc);
         return 0;
     }
-    rc = responsibility_spawnattrs_setdisclaim(attrsPtr, 1);
-    if (rc != 0) {
-        iTermSpawnFailed(argpath, errorFd, "responsibility_spawnattrs_setdisclaim", rc);
-        return 0;
+    if (disclaim) {
+        rc = responsibility_spawnattrs_setdisclaim(attrsPtr, 1);
+        if (rc != 0) {
+            iTermSpawnFailed(argpath, errorFd, "responsibility_spawnattrs_setdisclaim", rc);
+            return 0;
+        }
     }
 
-    // Do not start the new process with signal handlers.
+    // Reset every signal to its default disposition in the child, matching the
+    // iTermExec path, which does signal(i, SIG_DFL) for all signals. A full set is
+    // required: POSIX_SPAWN_SETSIGDEF forces the listed signals to SIG_DFL, and
+    // without them a signal the parent had ignored (SIG_IGN) would be inherited as
+    // ignored. The previous code filled the set and then removed every signal,
+    // leaving it empty, so ignored signals were not reset.
     sigset_t default_signals;
     sigfillset(&default_signals);
-    for (int i = 1; i < NSIG; i++) {
-        sigdelset(&default_signals, i);
-    }
     posix_spawnattr_setsigdefault(attrsPtr, &default_signals);
 
     // Unblock all signals.
@@ -502,7 +507,92 @@ static void iTermSpawnInitializeActions(const char *argpath,
     }
 }
 
-// An alternative to iTermExec. It disclaims ownership to improve TCC behavior. See issue 10360.
+// Resolve a bare executable name against $PATH, mirroring execvp. posix_spawn does
+// not search PATH and requires an absolute path (issue 12770), so callers can pass
+// either an absolute/relative path (containing a slash, used verbatim) or a bare
+// name, which is resolved here. On success the resolved path is written into
+// `buffer` (of size `bufsize`) and returned; otherwise argpath is returned
+// unchanged so posix_spawn reports the failure.
+//
+// This runs after fork() in the SETEXEC path, so it must be async-signal-safe: no
+// malloc and no getenv. PATH is read directly from the child's environment (envp),
+// which is the same environment posix_spawn hands the child, and access() is
+// async-signal-safe.
+static const char *iTermResolveExecutable(const char *argpath,
+                                          char *const *envp,
+                                          char *buffer,
+                                          size_t bufsize) {
+    if (argpath == NULL || argpath[0] == '\0') {
+        return argpath;
+    }
+    // A name containing a slash is used verbatim, exactly like execvp.
+    if (strchr(argpath, '/') != NULL) {
+        return argpath;
+    }
+
+    const char *path = NULL;
+    for (int i = 0; envp && envp[i]; i++) {
+        if (strncmp(envp[i], "PATH=", 5) == 0) {
+            path = envp[i] + 5;
+            break;
+        }
+    }
+    if (path == NULL) {
+        // The default search path execvp falls back to when PATH is unset. This is
+        // exactly what Libc's _execvpe uses (_PATH_DEFPATH), which is narrower than
+        // _PATH_STDPATH.
+        path = _PATH_DEFPATH;
+    }
+
+    const size_t namelen = strlen(argpath);
+    const char *dir = path;
+    for (;;) {
+        const char *colon = strchr(dir, ':');
+        const size_t rawlen = colon ? (size_t)(colon - dir) : strlen(dir);
+        // An empty element stands for the current directory, like execvp.
+        const char *element = rawlen ? dir : ".";
+        const size_t elementLen = rawlen ? rawlen : 1;
+        if (elementLen + 1 + namelen + 1 <= bufsize) {
+            char *w = buffer;
+            memcpy(w, element, elementLen);
+            w += elementLen;
+            *w++ = '/';
+            memcpy(w, argpath, namelen);
+            w += namelen;
+            *w = '\0';
+            // Match execvp's candidate selection. execvp does not use access(); it
+            // tries execve on each element and skips the ones that fail with ENOENT,
+            // ENOTDIR, or EACCES-on-a-stattable-path. A directory is exactly that last
+            // case (execve on a directory returns EACCES), so execvp skips it. But
+            // access(X_OK) returns 0 for a directory (its search bit) and for a
+            // non-executable-format file, so access alone would stop here and hand a
+            // directory to posix_spawn, which then fails and kills the session. Require
+            // a regular file in addition to X_OK: access(X_OK) is the right proxy for
+            // execve's permission check (it honors euid/egid and ACLs) and S_ISREG
+            // reproduces the skip-directories behavior. stat() is async-signal-safe, so
+            // it is safe on this post-fork path. Note we still do not reproduce execvp's
+            // ENOEXEC -> /bin/sh fallback, so a bare-name shebang-less script that is
+            // marked executable will fail here where execvp would run it under sh; that
+            // is a rare enough case to leave unsupported.
+            struct stat sb;
+            if (access(buffer, X_OK) == 0 &&
+                stat(buffer, &sb) == 0 &&
+                S_ISREG(sb.st_mode)) {
+                return buffer;
+            }
+        }
+        if (colon == NULL) {
+            break;
+        }
+        dir = colon + 1;
+    }
+    // Not found; let posix_spawn report ENOENT against the original name.
+    return argpath;
+}
+
+// An alternative to iTermExec. See issue 10360. When `disclaim` is set it disclaims
+// ownership to improve TCC behavior, which requires posix_spawn; using posix_spawn
+// without disclaiming is also supported.
 // fds is an array of file descriptors that should survive in the child duped to 0, 1, ....
 // Error output is written to errorFd.
 // If fork is true, this is a standard posix_spawn. Otherwise, it replaces the current image.
@@ -514,9 +604,10 @@ pid_t iTermSpawn(const char *argpath,
                 const char *initialPwd,
                 char **newEnviron,
                 int errorFd,
+                int disclaim,
                 int fork) API_AVAILABLE(macosx(10.15)) {
     posix_spawnattr_t attrs;
-    if (!iTermSpawnInitializeAttrs(argpath, errorFd, &attrs, fork)) {
+    if (!iTermSpawnInitializeAttrs(argpath, errorFd, &attrs, disclaim, fork)) {
         _exit(0);
     }
 
@@ -528,11 +619,14 @@ pid_t iTermSpawn(const char *argpath,
                                 numFds,
                                 initialPwd);
 
+    char resolvedPath[PATH_MAX];
+    const char *execPath = iTermResolveExecutable(argpath, newEnviron, resolvedPath, sizeof(resolvedPath));
+
     pid_t pid = -1;
     int rc;
     do {
         rc = posix_spawn(&pid,
-                         argpath,
+                         execPath,
                          &actions,
                          &attrs,
                          argv,
