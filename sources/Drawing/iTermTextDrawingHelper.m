@@ -2969,6 +2969,14 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
     } else if (imageMSB != -1) {
         state->previousImageMSB = imageMSB;
     }
+    // The third diacritic (the most significant byte of the image id) is
+    // optional while the image id fits in 24 bits. When no cell in the run ever
+    // specified it, treat it as zero rather than leaving the -1 "absent"
+    // sentinel, which would otherwise shift to 0xff000000 and produce a bogus
+    // image id that matches no placement (issue 13027).
+    if (imageMSB == -1) {
+        imageMSB = 0;
+    }
     if (coord.y != -1) {
         state->runLength = 1;
     } else {
