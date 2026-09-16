@@ -202,8 +202,21 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
             // Tolerate missing fields from a future/partial config:
             // default to the Anthropic provider, the bundled script
             // (empty command), and a 60s interval.
-            let provider = try c.decodeIfPresent(
-                WorkgroupUsageProvider.self, forKey: .provider)
+            //
+            // Decode `provider` as a raw String and map it ourselves.
+            // Decoding straight into WorkgroupUsageProvider would let the
+            // synthesized RawRepresentable conformance THROW on a value
+            // this build doesn't recognize (e.g. prefs synced from a newer
+            // iTerm2 with an additional provider case). That throw would
+            // propagate up through the toolbarItems array and the whole
+            // [iTermWorkgroup] decode, whose catch returns an empty array,
+            // silently discarding every saved workgroup. An unknown
+            // provider must degrade this one item to the default, never
+            // wipe everything.
+            let providerRaw = try c.decodeIfPresent(
+                String.self, forKey: .provider)
+            let provider = providerRaw
+                .flatMap(WorkgroupUsageProvider.init(rawValue:))
                 ?? .anthropicClaudeCode
             let command = try c.decodeIfPresent(
                 String.self, forKey: .command) ?? ""

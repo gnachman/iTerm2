@@ -85,10 +85,16 @@ else
     # rather than a developer API key (usage is subscription-only).
     # Capture stderr separately so it can go into a diagnostic if parsing
     # fails, without polluting the text we parse.
-    _err_file=$(mktemp 2>/dev/null || printf '/tmp/it2_claude_usage_err.%s' "$$")
+    # If mktemp fails, skip stderr capture entirely (redirect to
+    # /dev/null) rather than falling back to a predictable, PID-based
+    # path that a local attacker could pre-create as a symlink to
+    # redirect the write. Losing the stderr diagnostic is an acceptable
+    # tradeoff in that rare case.
+    _err_file=$(mktemp 2>/dev/null)
+    [ -n "$_err_file" ] || _err_file=/dev/null
     usage_text=$(env -u ANTHROPIC_API_KEY claude -p /usage 2>"$_err_file")
     stderr_text=$(cat "$_err_file" 2>/dev/null)
-    rm -f "$_err_file"
+    [ "$_err_file" = /dev/null ] || rm -f "$_err_file"
 fi
 
 # Parse the usage text with awk. Recognized line shapes (the middle dot
@@ -133,11 +139,20 @@ BEGIN { n = 0 }
         sub(/^Current week \(/, "", inner)
         sub(/\):.*$/, "", inner)
         label = "Week (" inner ")"
-        # W + the first alphanumeric initial of the model, uppercased.
+        # W + the first ASCII-alphanumeric initial of the model,
+        # uppercased. awk here is byte-oriented, so a non-Latin model
+        # name (every byte >= 0x80) strips to empty; in that case emit an
+        # empty short and let the toolbar Unicode-aware fallback derive a
+        # sensible abbreviation from the full label instead of forcing a
+        # bare "W".
         initial = inner
         sub(/^[^0-9A-Za-z]*/, "", initial)
         initial = substr(initial, 1, 1)
-        shortlbl = "W" toupper(initial)
+        if (initial == "") {
+            shortlbl = ""
+        } else {
+            shortlbl = "W" toupper(initial)
+        }
     } else {
         next
     }
@@ -193,7 +208,10 @@ fi
 # it must NOT be reportable, or users will file issues about their own
 # setup. Expected states get a plain, actionable message instead.
 
-both_output=$usage_text$stderr_text
+# Join with an explicit newline so a phrase can never straddle the
+# stdout/stderr boundary and form an accidental match (e.g. stdout
+# ending "...rate limi" + stderr starting "t exceeded").
+both_output=$(printf '%s\n%s' "$usage_text" "$stderr_text")
 
 # Does the output resemble a usage report? These phrases are the load-
 # bearing parts of the format; if they're present but no bar parsed, the
@@ -208,37 +226,31 @@ case "$usage_text" in
         ;;
 esac
 
-# Not usage-shaped: an expected environment state. Pick the most helpful
-# message we can from known signals (best-effort, English). Reportable is
-# false in every branch below - none of these are iTerm2 bugs.
-
+# Not usage-shaped: an expected environment state. One case with clauses
+# in an explicit priority order (first match wins), so overlapping phrases
+# resolve to the clearest cause rather than to whichever block happened to
+# run first. Priority, most-specific/actionable to most-transient:
+#   1. API key present    -> usage needs a subscription, not API billing
+#   2. subscription stated -> same conclusion, stated directly
+#   3. unknown command     -> actionable: update the CLI
+#   4. sign-in / auth      -> actionable: sign in (a hard blocker)
+#   5. rate limit          -> transient, checked last
+# Reportable is false in every clause: none of these are iTerm2 bugs.
 case "$both_output" in
     *"API key"*|*"api key"*|*ANTHROPIC_API_KEY*|*api_key*)
         emit_error "AI usage needs a Claude subscription (Pro or Max); it isn’t available for API-billing accounts." false ""
         ;;
-esac
-
-case "$both_output" in
     *[Ss]ubscription*)
         emit_error "AI usage is available only on a Claude subscription (Pro or Max)." false ""
         ;;
-esac
-
-case "$both_output" in
+    *"nknown command"*|*"available commands"*|*"not a valid"*)
+        emit_error "Update Claude Code to a version that supports usage reporting." false ""
+        ;;
     *[Ll]og\ in*|*[Ll]ogin*|*"sign in"*|*"signed in"*|*[Aa]uthenticat*)
         emit_error "Sign in to Claude Code with a Pro or Max plan to see AI usage." false ""
         ;;
-esac
-
-case "$both_output" in
     *"rate limit"*|*"Rate limit"*|*overloaded*|*"529"*|*"429"*)
         emit_error "Claude usage is temporarily unavailable. Try again later." false ""
-        ;;
-esac
-
-case "$both_output" in
-    *"nknown command"*|*"available commands"*|*"not a valid"*)
-        emit_error "Update Claude Code to a version that supports usage reporting." false ""
         ;;
 esac
 

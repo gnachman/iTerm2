@@ -185,4 +185,47 @@ final class WorkgroupUsageTests: XCTestCase {
         XCTAssertEqual(report.reportable, true)
         XCTAssertNotNil(report.diagnostic)
     }
+
+    func test_script_nonLatinModelEmitsEmptyShort() throws {
+        // A model name with no ASCII letters can't yield a byte-wise
+        // initial, so the script emits an empty short and defers to the
+        // toolbar's Unicode-aware fallback. It must NOT collapse the bar
+        // away or crash.
+        let data = try runScript(
+            fixture: "Current week (\u{03a9}\u{03bc}): 10% used \u{00b7} resets soon\n")
+        let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
+        XCTAssertEqual(report.bars.count, 1)
+        XCTAssertEqual(report.bars[0].label, "Week (\u{03a9}\u{03bc})")
+        XCTAssertEqual(report.bars[0].short, "")
+    }
+
+    // MARK: - Toolbar item decode robustness
+
+    func test_decodeUsageItem_unknownProviderDegradesInsteadOfThrowing() throws {
+        // Regression guard: a `.usage` item whose `provider` holds a
+        // rawValue this build doesn't recognize (e.g. prefs synced from a
+        // newer iTerm2) must decode to the default provider, NOT throw.
+        // A throw here would propagate up and make the whole workgroup
+        // model fail to decode, silently discarding every saved workgroup.
+        let json = #"{"kind":"usage","provider":"someFutureVendor","command":"","intervalSeconds":60}"#
+        let item = try JSONDecoder().decode(
+            iTermWorkgroupToolbarItem.self, from: Data(json.utf8))
+        guard case let .usage(provider, command, interval) = item else {
+            return XCTFail("expected a .usage item, got \(item)")
+        }
+        XCTAssertEqual(provider, .anthropicClaudeCode)
+        XCTAssertEqual(command, "")
+        XCTAssertEqual(interval, 60)
+    }
+
+    func test_decodeUsageItem_missingProviderDefaults() throws {
+        // An absent provider key still defaults cleanly (unchanged behavior).
+        let json = #"{"kind":"usage"}"#
+        let item = try JSONDecoder().decode(
+            iTermWorkgroupToolbarItem.self, from: Data(json.utf8))
+        guard case let .usage(provider, _, _) = item else {
+            return XCTFail("expected a .usage item, got \(item)")
+        }
+        XCTAssertEqual(provider, .anthropicClaudeCode)
+    }
 }

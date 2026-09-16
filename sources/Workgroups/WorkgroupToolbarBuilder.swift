@@ -238,7 +238,15 @@ enum WorkgroupToolbarBuilder {
             view.ownerPeerID = ownerPeerID
             return view
         case .usage(let provider, let command, let interval):
-            return WorkgroupUsageToolbarItem(identifier: id,
+            // A session may carry more than one AI Usage item (e.g. two
+            // different custom commands side by side). Disambiguate the
+            // identifier by the item's config so distinct instances get
+            // distinct ids rather than all sharing the bare "usage" kind
+            // rawValue. Deterministic (no per-process hashing) so it's
+            // stable across toolbar rebuilds; identical configs are
+            // already deduped upstream by item value.
+            let usageID = "\(id):\(provider.rawValue):\(interval):\(command)"
+            return WorkgroupUsageToolbarItem(identifier: usageID,
                                              priority: 2,
                                              provider: provider,
                                              command: command,

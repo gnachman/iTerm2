@@ -222,6 +222,10 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
         self.container = WorkgroupUsageContainerView(frame: .zero)
         super.init(identifier: identifier, priority: priority, view: container)
 
+        // Init runs on the main thread; safe to install the app-quit
+        // observer that terminates any in-flight usage commands.
+        Self.installTerminationObserverIfNeeded()
+
         messageLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         messageLabel.textColor = .tertiaryLabelColor
         messageLabel.lineBreakMode = .byTruncatingTail
@@ -317,8 +321,21 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
             DLog("WorkgroupUsage: skipping tick, previous run still in flight")
             return
         }
+        guard let invocation = resolveInvocation() else {
+            // Bundled script missing from the app bundle: a packaging
+            // regression, not a transient empty result. Surface it as a
+            // reportable error instead of the quiet "No usage data",
+            // which would otherwise make the regression invisible.
+            apply(report: WorkgroupUsageReport(
+                bars: [],
+                error: String(localized: "WorkgroupUsage.ScriptMissing",
+                              defaultValue: "The AI usage helper is missing from iTerm2. This is a bug.",
+                              comment: "AI usage toolbar item message when the bundled helper script is absent from the app bundle"),
+                diagnostic: "bundled script \(provider.bundledScriptResourceName).sh not found in app bundle",
+                reportable: true))
+            return
+        }
         runInFlight = true
-        let invocation = resolveInvocation()
         queue.async { [weak self] in
             let data = WorkgroupUsageToolbarItem.runCommand(
                 launchPath: invocation.launchPath,
@@ -335,56 +352,87 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
 
     // MARK: - Command
 
-    private func resolveInvocation() -> (launchPath: String, arguments: [String]) {
+    // Returns the command to run, or nil when the provider's bundled
+    // script is missing from the app bundle (a packaging regression the
+    // caller surfaces as a reportable error). A user-supplied custom
+    // command never returns nil.
+    private func resolveInvocation() -> (launchPath: String, arguments: [String])? {
         let trimmed = command.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             let resource = provider.bundledScriptResourceName
-            if let path = Bundle(for: WorkgroupUsageToolbarItem.self)
-                .path(forResource: resource, ofType: "sh") {
-                return ("/bin/sh", [path])
+            guard let path = Bundle(for: WorkgroupUsageToolbarItem.self)
+                .path(forResource: resource, ofType: "sh") else {
+                DLog("WorkgroupUsage: bundled \(resource).sh not found")
+                return nil
             }
-            DLog("WorkgroupUsage: bundled \(resource).sh not found")
-            // Nothing to run; return a harmless no-op that yields no
-            // output (decode falls back to an error report).
-            return ("/bin/sh", ["-c", "exit 1"])
+            return ("/bin/sh", [path])
         }
         return ("/bin/sh", ["-c", trimmed])
     }
 
-    // Runs the command on the calling (background) thread, terminating
-    // it if it exceeds `timeout` seconds. Returns stdout data, or nil
-    // on failure.
+    // Runs the command with a hard timeout and returns its stdout, or nil
+    // on failure. Uses the shared iTermBufferedCommandRunner so timeout,
+    // stderr draining, and SIGKILL escalation live in one place. stderr is
+    // discarded (routed to /dev/null), which both avoids an unread pipe
+    // filling and deadlocking the read, and keeps a stray warning from
+    // corrupting the JSON on stdout; the bundled script already folds
+    // claude's stderr into its own diagnostic field.
     private static func runCommand(launchPath: String,
                                    arguments: [String],
                                    timeout: TimeInterval) -> Data? {
-        let process = Process()
-        process.launchPath = launchPath
-        process.arguments = arguments
-        let stdout = Pipe()
-        process.standardOutput = stdout
-        process.standardError = Pipe()
+        let runner = iTermBufferedCommandRunner(command: launchPath,
+                                                withArguments: arguments,
+                                                path: "/")
+        runner.discardStandardError = true
+        // Bound captured output so a runaway custom command can't grow
+        // memory unbounded (1 MiB dwarfs any real usage JSON).
+        runner.maximumOutputSize = NSNumber(value: 1024 * 1024)
 
-        do {
-            try process.run()
-        } catch {
-            DLog("WorkgroupUsage: failed to launch \(launchPath): \(error)")
-            return nil
-        }
+        registerActiveRunner(runner)
+        defer { unregisterActiveRunner(runner) }
+        _ = runner.blockingRun(withTimeout: timeout)
+        return runner.output
+    }
 
-        // Watchdog: kill the process if it overruns.
-        let watchdog = DispatchWorkItem {
-            if process.isRunning {
-                DLog("WorkgroupUsage: command timed out, terminating")
-                process.terminate()
+    // MARK: - In-flight process registry
+
+    // In-flight runners, so they can be terminated when iTerm2 quits.
+    // Without this, a usage command still running at quit is reparented to
+    // launchd and lingers (or hangs) after iTerm2 exits; frequent
+    // quit/relaunch cycles would leak orphaned claude processes.
+    private static let activeRunnersLock = NSLock()
+    private static var activeRunners: [iTermBufferedCommandRunner] = []
+    private static var didInstallTerminationObserver = false
+
+    // Install once, on the main thread, from init.
+    private static func installTerminationObserverIfNeeded() {
+        guard !didInstallTerminationObserver else { return }
+        didInstallTerminationObserver = true
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil,
+            queue: .main) { _ in
+            activeRunnersLock.lock()
+            let runners = activeRunners
+            activeRunnersLock.unlock()
+            // Terminate outside the lock to avoid reentrancy with the
+            // register/unregister calls the runners' teardown may trigger.
+            for runner in runners {
+                runner.terminate()
             }
         }
-        DispatchQueue.global().asyncAfter(deadline: .now() + timeout,
-                                          execute: watchdog)
+    }
 
-        let data = stdout.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        watchdog.cancel()
-        return data
+    private static func registerActiveRunner(_ runner: iTermBufferedCommandRunner) {
+        activeRunnersLock.lock()
+        activeRunners.append(runner)
+        activeRunnersLock.unlock()
+    }
+
+    private static func unregisterActiveRunner(_ runner: iTermBufferedCommandRunner) {
+        activeRunnersLock.lock()
+        activeRunners.removeAll { $0 === runner }
+        activeRunnersLock.unlock()
     }
 
     private static func decode(data: Data?) -> WorkgroupUsageReport {
