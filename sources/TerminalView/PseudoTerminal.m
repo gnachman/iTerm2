@@ -264,7 +264,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 // Tab-group contiguity enforcement + keyboard unit reordering (defined below).
 - (void)enforceTabGroupContiguityInvariant;
 - (void)applyTabOrder:(NSArray<PTYTab *> *)target;
-- (void)moveCurrentTabUnitByOffset:(NSInteger)offset;
+- (void)moveCurrentTabByOffset:(NSInteger)offset;
 // Group drag helpers (defined below).
 - (void)moveTabGroup:(NSArray<PTYTab *> *)tabs toTerminal:(PseudoTerminal *)dest atIndex:(NSInteger)dropIndex;
 - (void)tearOffTabGroup:(NSArray<PTYTab *> *)tabs atScreenPoint:(NSPoint)screenPoint;
@@ -12171,14 +12171,20 @@ typedef struct {
 }
 
 - (IBAction)moveTabLeft:(id)sender {
-    [self moveCurrentTabUnitByOffset:-1];
+    [self moveCurrentTabByOffset:-1];
 }
 
-// Keyboard tab reordering treats each tab group as one indivisible unit so it
-// can never split a group: moving toward a group jumps the whole group, and
-// selecting a group member moves the entire group. An ungrouped tab is its own
-// unit, so with no groups this behaves exactly like the old single-tab swap.
-- (void)moveCurrentTabUnitByOffset:(NSInteger)offset {
+// Keyboard tab reordering moves a single tab one position at a time. When the
+// tab belongs to a group the group is NOT moved as a unit: the tab slides within
+// the group until it reaches an edge, then a further move in that direction pops
+// it out of the group (membership -> nil) in place. Conversely an ungrouped tab
+// that would cross into an adjacent group joins that group in place. With no
+// groups this behaves exactly like the old single-tab swap (including wrap at the
+// ends). The membership decision and target order come from
+// iTermTabGroupOrdering.singleTabMove; -applyTabOrder: then canonicalizes so the
+// pinned-left invariant is preserved (a move that would break it is clamped into
+// the legal zone).
+- (void)moveCurrentTabByOffset:(NSInteger)offset {
     if (_layoutLocked) {
         RLog(@"Layout is locked, refusing to move tab");
         return;
@@ -12192,60 +12198,31 @@ typedef struct {
         return;
     }
 
-    // Units: a contiguous same-group run, or a single ungrouped tab.
-    NSMutableArray<NSValue *> *units = [NSMutableArray array];
-    NSInteger i = 0;
-    while (i < (NSInteger)tabs.count) {
-        NSString *gid = tabs[i].tabGroupID;
-        NSInteger j = i + 1;
-        if (gid != nil) {
-            while (j < (NSInteger)tabs.count && [tabs[j].tabGroupID isEqualToString:gid]) {
-                j++;
-            }
-        }
-        [units addObject:[NSValue valueWithRange:NSMakeRange(i, j - i)]];
-        i = j;
+    NSMutableArray *groupIDs = [NSMutableArray arrayWithCapacity:tabs.count];
+    for (PTYTab *tab in tabs) {
+        [groupIDs addObject:(tab.tabGroupID ?: (id)[NSNull null])];
     }
-    const NSInteger unitCount = (NSInteger)units.count;
+    iTermSingleTabMove *move = [iTermTabGroupOrdering singleTabMoveForGroupIDs:groupIDs
+                                                                selectedIndex:sel
+                                                                       offset:offset];
 
-    NSInteger u = NSNotFound;
-    for (NSInteger k = 0; k < unitCount; k++) {
-        const NSRange r = units[k].rangeValue;
-        if (sel >= (NSInteger)r.location && sel < (NSInteger)(r.location + r.length)) {
-            u = k;
-            break;
-        }
-    }
-    if (u == NSNotFound || unitCount < 2) {
+    if (move.changesMembership) {
+        // Enter or leave a group in place (no reorder). Copy the group's
+        // definition to a joining tab (or clear it on leaving), repair
+        // contiguity, refresh colors, and keep the active tab out of a
+        // collapsed group -- exactly what a menu-driven membership change does.
+        tabs[sel].tabGroupID = move.newGroupID;
+        [self finalizeTabGroupMembershipChangeForTab:tabs[sel]];
         return;
     }
 
-    // New unit sequence: remove unit u, reinsert it one unit over (wrapping).
-    NSMutableArray<NSNumber *> *seq = [NSMutableArray arrayWithCapacity:unitCount];
-    for (NSInteger k = 0; k < unitCount; k++) {
-        [seq addObject:@(k)];
-    }
-    [seq removeObjectAtIndex:u];
-    NSInteger insertAt;
-    if (offset > 0) {
-        insertAt = (u == unitCount - 1) ? 0 : (u + 1);
-    } else {
-        insertAt = (u == 0) ? (NSInteger)seq.count : (u - 1);
-    }
-    [seq insertObject:@(u) atIndex:insertAt];
-
-    // Expand to a tab order.
+    // A pure reorder. -applyTabOrder: canonicalizes the target, so a wrapped
+    // move that would break the pinned-left invariant is clamped into the legal
+    // zone instead of aborting.
     NSMutableArray<PTYTab *> *target = [NSMutableArray arrayWithCapacity:tabs.count];
-    for (NSNumber *unitIndex in seq) {
-        const NSRange r = units[unitIndex.integerValue].rangeValue;
-        for (NSInteger k = (NSInteger)r.location; k < (NSInteger)(r.location + r.length); k++) {
-            [target addObject:tabs[k]];
-        }
+    for (NSNumber *index in move.order) {
+        [target addObject:tabs[index.integerValue]];
     }
-
-    // -applyTabOrder: canonicalizes the target, so a wrapped move that would
-    // break the pinned-left invariant is clamped into the legal zone (matching
-    // the old moveTabLeft:/moveTabRight: clamping) instead of aborting.
     [self applyTabOrder:target];
     [self setNeedsUpdateTabObjectCounts:YES];
     [self tabsDidReorder];
@@ -12295,7 +12272,7 @@ typedef struct {
 }
 
 - (IBAction)moveTabRight:(id)sender {
-    [self moveCurrentTabUnitByOffset:1];
+    [self moveCurrentTabByOffset:1];
 }
 
 - (IBAction)increaseHeight:(id)sender {

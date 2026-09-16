@@ -158,6 +158,12 @@ New Features:
   instead.
 
 Improvements:
+- The Move Tab Left and Move Tab Right shortcuts
+  now move just the current tab instead of its
+  whole tab group. Moving a tab past the edge of
+  its group pops it out of the group, and moving
+  an ungrouped tab into a neighboring group adds
+  it to that group.
 - Pairing a companion iPhone no longer requires
   AI. The setup wizard (iTerm2 > Companion Device
   Settings) now lets you choose “Terminal viewing

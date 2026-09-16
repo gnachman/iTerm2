@@ -224,4 +224,168 @@ final class iTermTabGroupOrderingTests: XCTestCase {
     func testInvariantUngroupedActiveHolds() {
         XCTAssertTrue(invariantHolds([nil, nil], [false, false], 1))
     }
+
+    // MARK: - Single-tab keyboard move (Move Tab Left/Right)
+
+    private func move(_ groupIDs: [String?], _ selectedIndex: Int, _ offset: Int) -> SingleTabMove {
+        return iTermTabGroupOrdering.singleTabMove(groupIDs: groupIDs,
+                                                   selectedIndex: selectedIndex,
+                                                   offset: offset)
+    }
+
+    private func assertReorder(_ m: SingleTabMove, _ expected: [Int], file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertFalse(m.changesMembership, "expected a reorder, got a membership change", file: file, line: line)
+        XCTAssertEqual(m.order.map { $0.intValue }, expected, file: file, line: line)
+    }
+
+    private func assertMembership(_ m: SingleTabMove, _ expected: String?, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(m.changesMembership, "expected a membership change, got a reorder", file: file, line: line)
+        XCTAssertEqual(m.newGroupID, expected, file: file, line: line)
+    }
+
+    // No groups: plain single-tab swaps, exactly like the old behavior.
+    func testMoveUngroupedSwapsRight() {
+        assertReorder(move([nil, nil, nil], 0, 1), [1, 0, 2])
+    }
+
+    func testMoveUngroupedSwapsLeft() {
+        assertReorder(move([nil, nil, nil], 1, -1), [1, 0, 2])
+    }
+
+    // An ungrouped tab at the far end wraps to the opposite end (old behavior).
+    func testMoveUngroupedWrapsRightAtEnd() {
+        assertReorder(move([nil, nil, nil], 2, 1), [2, 0, 1])
+    }
+
+    func testMoveUngroupedWrapsLeftAtStart() {
+        assertReorder(move([nil, nil, nil], 0, -1), [1, 2, 0])
+    }
+
+    // A grouped tab that is not at its group's edge slides within the group.
+    func testMoveWithinGroupRight() {
+        assertReorder(move(["G", "G", "G"], 0, 1), [1, 0, 2])
+    }
+
+    func testMoveWithinGroupLeft() {
+        assertReorder(move(["G", "G", "G"], 2, -1), [0, 2, 1])
+    }
+
+    // The last member of a group moving right leaves the group in place.
+    func testMoveLastMemberRightLeavesGroup() {
+        assertMembership(move([nil, "G", "G"], 2, 1), nil)
+    }
+
+    // The first member of a group moving left leaves the group in place.
+    func testMoveFirstMemberLeftLeavesGroup() {
+        assertMembership(move(["G", "G", nil], 0, -1), nil)
+    }
+
+    // A group member at the very end of the bar moving further off the end also
+    // just leaves the group (no wrap for grouped tabs).
+    func testMoveLastMemberAtBarEndLeavesGroup() {
+        assertMembership(move(["G", "G"], 1, 1), nil)
+    }
+
+    func testMoveFirstMemberAtBarStartLeavesGroup() {
+        assertMembership(move(["G", "G"], 0, -1), nil)
+    }
+
+    // A MULTI-member group facing a different group: the boundary member leaves
+    // its own group in place (it does not jump straight into the neighbor).
+    func testMoveMultiMemberGroupTowardOtherGroupLeavesOwnGroup() {
+        // G has two members; the second faces group H.
+        assertMembership(move(["G", "G", "H", "H"], 1, 1), nil)
+    }
+
+    // MARK: One-tab groups move as a unit (keep membership, never auto-exit)
+
+    // A one-tab group next to plain tabs swaps with the neighbor, keeping its
+    // group.
+    func testMoveOneTabGroupSwapsRight() {
+        assertReorder(move([nil, "G", nil], 1, 1), [0, 2, 1])
+    }
+
+    func testMoveOneTabGroupSwapsLeft() {
+        assertReorder(move([nil, "G", nil], 1, -1), [1, 0, 2])
+    }
+
+    // A one-tab group at the end wraps to the far end, keeping its group.
+    func testMoveOneTabGroupWrapsRightAtEnd() {
+        assertReorder(move([nil, nil, "G"], 2, 1), [2, 0, 1])
+    }
+
+    func testMoveOneTabGroupWrapsLeftAtStart() {
+        assertReorder(move(["G", nil, nil], 0, -1), [1, 2, 0])
+    }
+
+    // A one-tab group facing another group leaps the whole group in one step and
+    // stays its own group (it does not join the neighbor and does not dissolve).
+    func testMoveOneTabGroupLeapsGroupRight() {
+        // [X(G), Y, Y] -> [Y, Y, X]; X still group G.
+        assertReorder(move(["G", "H", "H"], 0, 1), [1, 2, 0])
+    }
+
+    func testMoveOneTabGroupLeapsGroupLeft() {
+        // [Y, Y, X(G)] -> [X, Y, Y]; X still group G.
+        assertReorder(move(["H", "H", "G"], 2, -1), [2, 0, 1])
+    }
+
+    // Leaping a group in the middle lands the tab just past that group, not at
+    // the bar's end.
+    func testMoveOneTabGroupLeapsGroupRightInMiddle() {
+        // [X(G), Y, Y, B] -> [Y, Y, X, B].
+        assertReorder(move(["G", "H", "H", nil], 0, 1), [1, 2, 0, 3])
+    }
+
+    func testMoveOneTabGroupLeapsGroupLeftInMiddle() {
+        // [A, Y, Y, X(G)] -> [A, X, Y, Y].
+        assertReorder(move([nil, "H", "H", "G"], 3, -1), [0, 3, 1, 2])
+    }
+
+    // An ungrouped tab crossing into an adjacent group joins that group in place.
+    func testMoveUngroupedIntoGroupOnRightJoins() {
+        assertMembership(move([nil, "G", "G"], 0, 1), "G")
+    }
+
+    func testMoveUngroupedIntoGroupOnLeftJoins() {
+        assertMembership(move(["G", "G", nil], 2, -1), "G")
+    }
+
+    // The full pass of an ungrouped tab through a two-member group and out the
+    // other side: enter, step, step, exit.
+    func testMoveUngroupedThroughGroupSequence() {
+        // [A, X, X] with A ungrouped, X = group G.
+        assertMembership(move([nil, "G", "G"], 0, 1), "G")   // A joins G at index 0
+        assertReorder(move(["G", "G", "G"], 0, 1), [1, 0, 2]) // A slides to index 1
+        assertReorder(move(["G", "G", "G"], 1, 1), [0, 2, 1]) // A slides to index 2 (last)
+        assertMembership(move(["G", "G", "G"], 2, 1), nil)    // A leaves G in place
+    }
+
+    // Degenerate inputs are safe no-op identities.
+    func testMoveSingleTabIsIdentity() {
+        assertReorder(move([nil], 0, 1), [0])
+    }
+
+    func testMoveOutOfRangeIndexIsIdentity() {
+        assertReorder(move([nil, nil], 5, 1), [0, 1])
+    }
+
+    func testMoveZeroOffsetIsIdentity() {
+        assertReorder(move([nil, nil], 0, 0), [0, 1])
+    }
+
+    // ObjC bridge: NSNull for ungrouped, returns the same decisions.
+    func testMoveObjCBridgeReorder() {
+        let m = iTermTabGroupOrdering.singleTabMove(groupIDs: [NSNull(), NSNull()] as [Any],
+                                                    selectedIndex: 0, offset: 1)
+        XCTAssertFalse(m.changesMembership)
+        XCTAssertEqual(m.order.map { $0.intValue }, [1, 0])
+    }
+
+    func testMoveObjCBridgeMembership() {
+        let m = iTermTabGroupOrdering.singleTabMove(groupIDs: [NSNull(), "G", "G"] as [Any],
+                                                    selectedIndex: 0, offset: 1)
+        XCTAssertTrue(m.changesMembership)
+        XCTAssertEqual(m.newGroupID, "G")
+    }
 }

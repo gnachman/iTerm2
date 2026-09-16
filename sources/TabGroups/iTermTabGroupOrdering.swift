@@ -130,4 +130,130 @@ class iTermTabGroupOrdering: NSObject {
         }
         return NSNumber(value: index)
     }
+
+    // MARK: - Single-tab keyboard move (Move Tab Left/Right)
+
+    // One step of moving a single tab one position in `offset`'s direction
+    // (+1 = right, -1 = left), with group membership changing at boundaries so
+    // the tab enters or exits a group instead of the whole group moving as a
+    // unit. Pure logic; the pinned-prefix and contiguity invariants are enforced
+    // afterward by canonicalOrder, so this ignores pinning. Rules for the tab at
+    // `selectedIndex` (group id `g`), looking at the neighbor it would cross:
+    //   - g is set with other members, neighbor is the same group: swap within
+    //     the group (a move).
+    //   - g is set with other members, neighbor differs or the tab is at the
+    //     group's edge in the travel direction: leave the group (membership ->
+    //     nil, no move) -- it separates from the siblings it leaves behind.
+    //   - g is set and the tab is the group's ONLY member: there are no siblings
+    //     to separate from and the group would be pointless left in place, so the
+    //     tab moves as a one-tab unit, keeping its group. It jumps the adjacent
+    //     unit -- an ungrouped tab (a swap) or a whole group (leaping the block to
+    //     keep both groups contiguous) -- or wraps at the end.
+    //   - g is nil, neighbor is in a group: join that group (no move).
+    //   - g is nil, neighbor is ungrouped: swap (a move).
+    //   - g is nil and there is no neighbor (tab at the end): wrap to the far end,
+    //     matching the pre-group Move Tab behavior.
+    static func singleTabMove(groupIDs: [String?],
+                              selectedIndex s: Int,
+                              offset: Int) -> SingleTabMove {
+        let n = groupIDs.count
+        guard n >= 2, s >= 0, s < n, offset != 0 else {
+            return SingleTabMove(order: Array(0..<n), newGroupID: nil, changesMembership: false)
+        }
+        let identity = Array(0..<n)
+        let dir = offset > 0 ? 1 : -1
+        let g = groupIDs[s]
+        let neighbor = s + dir
+        let inGroup = (g != nil && !g!.isEmpty)
+        let soleMember = inGroup && groupIDs.filter { $0 == g }.count == 1
+
+        // Wrap an end tab (any kind) to the opposite end, keeping its membership.
+        func wrapped() -> SingleTabMove {
+            var order = identity
+            order.remove(at: s)
+            order.insert(s, at: dir > 0 ? 0 : n - 1)
+            return SingleTabMove(order: order, newGroupID: nil, changesMembership: false)
+        }
+
+        if inGroup && !soleMember {
+            if neighbor >= 0, neighbor < n, groupIDs[neighbor] == g {
+                // Move within the group.
+                var order = identity
+                order.swapAt(s, neighbor)
+                return SingleTabMove(order: order, newGroupID: nil, changesMembership: false)
+            }
+            // At the group's edge in the travel direction: leave the group in place.
+            return SingleTabMove(order: identity, newGroupID: nil, changesMembership: true)
+        }
+
+        if soleMember {
+            // A one-tab group moves as a unit, keeping its group.
+            if neighbor < 0 || neighbor >= n {
+                return wrapped()
+            }
+            // Span the adjacent unit: a whole group's run, or a single ungrouped
+            // tab. Then place the tab on the far side of it.
+            let ng = groupIDs[neighbor]
+            var order = identity
+            order.remove(at: s)
+            if let ng, !ng.isEmpty {
+                if dir > 0 {
+                    var e = neighbor
+                    while e < n && groupIDs[e] == ng { e += 1 }
+                    order.insert(s, at: e - 1)  // just past the group's last member
+                } else {
+                    var b = neighbor
+                    while b >= 0 && groupIDs[b] == ng { b -= 1 }
+                    order.insert(s, at: b + 1)  // just before the group's first member
+                }
+            } else {
+                order.insert(s, at: neighbor)  // swap with the lone neighbor
+            }
+            return SingleTabMove(order: order, newGroupID: nil, changesMembership: false)
+        }
+
+        // Ungrouped tab.
+        if neighbor < 0 || neighbor >= n {
+            return wrapped()
+        }
+        let ng = groupIDs[neighbor]
+        if let ng, !ng.isEmpty {
+            // Ungrouped tab crossing into a group: join it, in place.
+            return SingleTabMove(order: identity, newGroupID: ng, changesMembership: true)
+        }
+        // Both ungrouped: plain swap.
+        var order = identity
+        order.swapAt(s, neighbor)
+        return SingleTabMove(order: order, newGroupID: nil, changesMembership: false)
+    }
+
+    // ObjC bridge for -[PseudoTerminal moveCurrentTabByOffset:]. `groupIDs`
+    // elements are NSString group ids or NSNull for ungrouped tabs.
+    @objc(singleTabMoveForGroupIDs:selectedIndex:offset:)
+    static func singleTabMove(groupIDs: [Any],
+                              selectedIndex: Int,
+                              offset: Int) -> SingleTabMove {
+        return singleTabMove(groupIDs: groupIDs.map { $0 as? String },
+                             selectedIndex: selectedIndex,
+                             offset: offset)
+    }
+}
+
+// The result of one single-tab keyboard move: the new tab order (as a
+// permutation of input indices) plus, when the selected tab's group membership
+// changes, its new group id (nil = ungrouped). When `changesMembership` is
+// false the caller only reorders; `order` is the identity for a pure membership
+// change.
+@objc(iTermSingleTabMove)
+class SingleTabMove: NSObject {
+    @objc let order: [NSNumber]
+    @objc let newGroupID: String?
+    @objc let changesMembership: Bool
+
+    init(order: [Int], newGroupID: String?, changesMembership: Bool) {
+        self.order = order.map { NSNumber(value: $0) }
+        self.newGroupID = newGroupID
+        self.changesMembership = changesMembership
+        super.init()
+    }
 }
