@@ -11,6 +11,10 @@ Bug Fixes:
 - Fixed a crash that could occur when quitting
   iTerm2 while several Claude Code sessions were
   running.
+- Fixed the Python API not reporting OSC 8
+  hyperlinks. A cell’s CellStyle.url is now
+  populated, so scripts reading screen contents
+  can see the link target.
 - Stopped falsely offering to reset the key
   reporting mode after every command when using
   Fish with oh-my-posh, which together emit a
