@@ -707,6 +707,7 @@
 		229997A22B1C8033B1EDEC2E /* iTermTmuxControlModeKeyName.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E02D44A9E1C1B28D6C40090 /* iTermTmuxControlModeKeyName.m */; };
 		23F147E06A07F14899B113FD /* iTermRightGutterController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1889B7BCB3C9FBBE656FC590 /* iTermRightGutterController.swift */; };
 		24AA7B99D58357DFF0FC3126 /* iTermWorkgroupRestoration.swift in Sources */ = {isa = PBXBuildFile; fileRef = E75A577B8D27C3128D180B27 /* iTermWorkgroupRestoration.swift */; };
+		24C720C5B54B4B0D1859206E /* WorkgroupUsageToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3C1692FB633AACA44AD2625 /* WorkgroupUsageToolbarItem.swift */; };
 		2541BDB636E0664DEE1BAB46 /* IT2Context.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B8E9770112162992653D558 /* IT2Context.swift */; };
 		2621488B01FD8224242400F6 /* CompanionTouchMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7FA7091BC6651354944E64 /* CompanionTouchMapper.swift */; };
 		26BD366BD1D02047E84E5F8D /* iTermWorkgroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A6B1D037AF894E662A0EFC /* iTermWorkgroup.swift */; };
@@ -952,6 +953,9 @@
 		53BBA0F5214205200074D061 /* NSAlert+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 53BBA0F3214205200074D061 /* NSAlert+iTerm.h */; };
 		53BBA0F6214205200074D061 /* NSAlert+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 53BBA0F4214205200074D061 /* NSAlert+iTerm.m */; };
 		53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
+		DC8EC130FF5C84A8B1B3956A /* claude_usage.sh in Resources */ = {isa = PBXBuildFile; fileRef = 264660071C2DC297B2CF9A22 /* claude_usage.sh */; };
+		BD4687F87AE63F10FF609B52 /* claude_usage.sh in Resources */ = {isa = PBXBuildFile; fileRef = 264660071C2DC297B2CF9A22 /* claude_usage.sh */; };
+		F327253A2620E27234CB6E9D /* claude_usage.sh in Resources */ = {isa = PBXBuildFile; fileRef = 264660071C2DC297B2CF9A22 /* claude_usage.sh */; };
 		53BBA0F9214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
 		53BBA0FA214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
 		53BCAAFA22668A1E00949829 /* iTermCachingFileManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 53BCAAF822668A1E00949829 /* iTermCachingFileManager.h */; };
@@ -6750,6 +6754,7 @@
 		53BBA0F3214205200074D061 /* NSAlert+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAlert+iTerm.h"; sourceTree = "<group>"; };
 		53BBA0F4214205200074D061 /* NSAlert+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAlert+iTerm.m"; sourceTree = "<group>"; };
 		53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = iterm2_git_poll.sh; path = sources/iterm2_git_poll.sh; sourceTree = "<group>"; };
+		264660071C2DC297B2CF9A22 /* claude_usage.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = claude_usage.sh; path = sources/Workgroups/UsageProviders/claude_usage.sh; sourceTree = "<group>"; };
 		53BCAAF822668A1E00949829 /* iTermCachingFileManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCachingFileManager.h; sourceTree = "<group>"; };
 		53BCAAF922668A1E00949829 /* iTermCachingFileManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCachingFileManager.m; sourceTree = "<group>"; };
 		53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMigrationHelper.h; sourceTree = "<group>"; };
@@ -10009,6 +10014,7 @@
 		E14CEFBAD0421B3A960496A9 /* WorkgroupPresets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupPresets.swift; sourceTree = "<group>"; };
 		E2BE75D00D5642419A4E0507 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/NumberOfSpacesAccessoryView.xcstrings; sourceTree = "<group>"; };
 		E314DB340B9B495F8F6D1578 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/PasteView.xcstrings; sourceTree = "<group>"; };
+		E3C1692FB633AACA44AD2625 /* WorkgroupUsageToolbarItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupUsageToolbarItem.swift; sourceTree = "<group>"; };
 		E4FCBB8A80DB478BBE9D21E5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MinimalFindView.xib; sourceTree = "<group>"; };
 		E5255A7A21B4425481DC8012 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/TmuxDashboard.xib; sourceTree = "<group>"; };
 		E6270F746A06950D2A3CE637 /* iTermUndoCloseMigrationWarning.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermUndoCloseMigrationWarning.swift; sourceTree = "<group>"; };
@@ -10656,6 +10662,7 @@
 				A60C0350208964FA00FE2F1F /* it2_api_wrapper.sh */,
 				A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */,
 				53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */,
+				264660071C2DC297B2CF9A22 /* claude_usage.sh */,
 				A6C4352021D1C64800346910 /* iterm2Invoke.js */,
 				53B93DE021F25E79001EC59C /* iterm2_git_wrapper.sh */,
 				5376CB3B220D2E4300FE7476 /* git.sb */,
@@ -11363,6 +11370,7 @@
 				3958B5886D15D42E92BF7392 /* WorkgroupRestorationCoordinator.swift */,
 				8BC80D4DB06ABEDF5FADC6B9 /* WorkgroupAutoSendClippingsToolbarItem.swift */,
 				84897A6E8B159D2C3608965D /* WorkgroupAutoRequestReviewToolbarItem.swift */,
+				E3C1692FB633AACA44AD2625 /* WorkgroupUsageToolbarItem.swift */,
 			);
 			path = Workgroups;
 			sourceTree = "<group>";
@@ -18781,6 +18789,7 @@
 				A6D693EA2E41446B005E9AFE /* monitor-play.js in Resources */,
 				A6EFF2331D2049A400806EEF /* Erase.png in Resources */,
 				53BBA0FA214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
+				DC8EC130FF5C84A8B1B3956A /* claude_usage.sh in Resources */,
 				A6B577D62C0A9520003FEB4F /* ai-plugin.sb in Resources */,
 				A6E7AE82214394DD00DE9F3B /* graphic_curl@2x.png in Resources */,
 				A67F6186214395A70093940A /* graphic_npm@2x.png in Resources */,
@@ -19511,6 +19520,7 @@
 				A6982A3D2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */,
 				A6CBB8F12E0A6C9F00B2CCCB /* load-readability.js in Resources */,
 				53BBA0F9214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
+				BD4687F87AE63F10FF609B52 /* claude_usage.sh in Resources */,
 				A6FE7AB62E0F27DD00BEBCE4 /* navigate-to-named-mark.js in Resources */,
 				A67F6185214395A70093940A /* graphic_npm@2x.png in Resources */,
 				A6038321294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */,
@@ -20215,6 +20225,7 @@
 				53B93DE121F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */,
 				A665C1FD2440461500F623F0 /* WindowCorner.png in Resources */,
 				53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
+				F327253A2620E27234CB6E9D /* claude_usage.sh in Resources */,
 				A6A832372E6808E000157F82 /* welcome-page.js in Resources */,
 				A6F7A707213CB143004DE961 /* StatusBarIconUser.png in Resources */,
 				A6F7A728213CB143004DE961 /* StatusBarIconComposer.png in Resources */,
@@ -22460,6 +22471,7 @@
 				6525DAAA19CCA2BCAF26D083 /* iTermAPICreateTabFocusDeferral.h in Sources */,
 				B4042F8000C16FCBCF0E3225 /* OllamaModelDiscovery.swift in Sources */,
 				FCEDFDBC42D7B491D8603596 /* OllamaModelCache.swift in Sources */,
+				24C720C5B54B4B0D1859206E /* WorkgroupUsageToolbarItem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

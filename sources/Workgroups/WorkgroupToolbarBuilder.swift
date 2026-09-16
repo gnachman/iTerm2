@@ -237,6 +237,12 @@ enum WorkgroupToolbarBuilder {
             view.autoRequestDelegate = context.autoRequestReviewDelegate
             view.ownerPeerID = ownerPeerID
             return view
+        case .usage(let provider, let command, let interval):
+            return WorkgroupUsageToolbarItem(identifier: id,
+                                             priority: 2,
+                                             provider: provider,
+                                             command: command,
+                                             intervalSeconds: interval)
         case .name:
             return makeNameLabel(context: context)
         }

@@ -66,9 +66,21 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
     private var toolbarSegmented: NSSegmentedControl!
     private var toolbarParamContainer: NSView!
     private var toolbarShortcutsContainer: NSView!
+    private var usageParamContainer: NSView!
 
     private var spacerMinField: NSTextField!
     private var spacerMaxField: NSTextField!
+
+    // Parameter controls for the .usage toolbar item.
+    private var usageProviderPopup: NSPopUpButton!
+    private var usageCommandField: NSTextField!
+    private var usageIntervalField: NSTextField!
+    private var usageProviderLabel: NSTextField!
+    private var usageCommandLabel: NSTextField!
+    private var usageIntervalLabel: NSTextField!
+    // Providers offered in the picker, in display order. Held so the
+    // popup's selected index maps back to a provider.
+    private let usageProviders: [WorkgroupUsageProvider] = WorkgroupUsageProvider.allCases
 
     // Three shortcut inputs for the .navigation cluster, plus one for
     // the standalone .reload item. The .reload's input is reused
@@ -297,6 +309,10 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         toolbarShortcutsContainer.isHidden = true
         section.addSubview(toolbarShortcutsContainer)
 
+        usageParamContainer = makeUsageParamContainer()
+        usageParamContainer.isHidden = true
+        section.addSubview(usageParamContainer)
+
         toolbarSegmented = NSSegmentedControl(
             images: [
                 NSImage(named: NSImage.addTemplateName) ?? NSImage(),
@@ -393,6 +409,51 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         container.addSubview(reloadShortcutInput)
 
         return container
+    }
+
+    // Three stacked rows for the .usage item: provider popup, command
+    // field, refresh interval. Modeled on the shortcuts container (a
+    // variable-height block) rather than the single-row spacer one.
+    private func makeUsageParamContainer() -> NSView {
+        let container = NSView(frame: .zero)
+
+        usageProviderLabel = NSTextField(labelWithString: String(localized: "WorkgroupSessionDetail.UsageProviderLabel", defaultValue: "Provider:", comment: "Label for the AI usage provider picker"))
+        usageProviderLabel.sizeToFit()
+        container.addSubview(usageProviderLabel)
+
+        usageProviderPopup = NSPopUpButton(frame: .zero, pullsDown: false)
+        usageProviderPopup.target = self
+        usageProviderPopup.action = #selector(usageProviderChanged(_:))
+        for provider in usageProviders {
+            usageProviderPopup.addItem(withTitle: provider.displayName)
+        }
+        container.addSubview(usageProviderPopup)
+
+        usageCommandLabel = NSTextField(labelWithString: String(localized: "WorkgroupSessionDetail.UsageCommandLabel", defaultValue: "Command:", comment: "Label for the AI usage command field"))
+        usageCommandLabel.sizeToFit()
+        container.addSubview(usageCommandLabel)
+
+        usageCommandField = NSTextField(frame: .zero)
+        usageCommandField.delegate = self
+        usageCommandField.placeholderString = String(localized: "WorkgroupSessionDetail.UsageCommandPlaceholder", defaultValue: "Default (bundled script)", comment: "Placeholder shown in the AI usage command field when it is empty and the bundled default script is used")
+        container.addSubview(usageCommandField)
+
+        usageIntervalLabel = NSTextField(labelWithString: String(localized: "WorkgroupSessionDetail.UsageIntervalLabel", defaultValue: "Every (sec):", comment: "Label for the AI usage refresh interval field, in seconds"))
+        usageIntervalLabel.sizeToFit()
+        container.addSubview(usageIntervalLabel)
+
+        usageIntervalField = NSTextField(frame: .zero)
+        usageIntervalField.delegate = self
+        container.addSubview(usageIntervalField)
+
+        return container
+    }
+
+    // Fixed three-row height for the usage container (provider,
+    // command, interval), or 0 when hidden.
+    private var usageParamContainerHeight: CGFloat {
+        guard !usageParamContainer.isHidden else { return 0 }
+        return 3 * rowHeight + 2 * rowSpacing
     }
 
     // Height of the shortcuts container as a function of the selected
@@ -543,9 +604,9 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
                                           width: max(0, w - 2 * margin),
                                           height: headerH)
 
-        // The param and shortcuts containers are mutually exclusive
-        // (they describe parameters of the selected row, and a row
-        // can't be both a spacer and a navigation/reload item).
+        // The param, shortcuts, and usage containers are mutually
+        // exclusive (they describe parameters of the selected row, and
+        // a row can't be more than one kind at once).
         let paramVisible = !toolbarParamContainer.isHidden
         let paramH: CGFloat = paramVisible ? rowHeight : 0
         toolbarParamContainer.frame = NSRect(
@@ -558,7 +619,12 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             width: max(0, w - 2 * margin),
             height: shortcutsH)
 
-        let extrasH = max(paramH, toolbarShortcutsContainer.frame.maxY)
+        let usageH = usageParamContainerHeight
+        usageParamContainer.frame = NSRect(
+            x: margin, y: 0, width: max(0, w - 2 * margin), height: usageH)
+
+        let extrasH = max(paramH,
+                          max(toolbarShortcutsContainer.frame.maxY, usageH))
         let segH: CGFloat = 22
         let segSpacing: CGFloat = (extrasH > 0) ? rowSpacing : 0
         let segY = extrasH + segSpacing
@@ -575,6 +641,28 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
 
         layoutToolbarParamContainer()
         layoutToolbarShortcutsContainer()
+        layoutUsageParamContainer()
+    }
+
+    private func layoutUsageParamContainer() {
+        guard !usageParamContainer.isHidden else { return }
+        let w = usageParamContainer.bounds.width
+        let h = usageParamContainer.bounds.height
+        let controlX = labelGutter
+        let controlW = max(0, w - controlX - margin)
+
+        // Lay rows top-down: provider, command, interval.
+        var y = h - rowHeight
+        func place(label: NSTextField, control: NSView) {
+            label.frame.origin = NSPoint(
+                x: margin, y: y + (rowHeight - label.frame.height) / 2)
+            control.frame = NSRect(x: controlX, y: y,
+                                   width: controlW, height: rowHeight)
+            y -= rowHeight + rowSpacing
+        }
+        place(label: usageProviderLabel, control: usageProviderPopup)
+        place(label: usageCommandLabel, control: usageCommandField)
+        place(label: usageIntervalLabel, control: usageIntervalField)
     }
 
     private func layoutToolbarShortcutsContainer() {
@@ -861,10 +949,12 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         let oldParamHidden = toolbarParamContainer.isHidden
         let oldShortcutsHidden = toolbarShortcutsContainer.isHidden
         let oldShortcutsHeight = shortcutsContainerHeight
+        let oldUsageHidden = usageParamContainer.isHidden
         defer {
             if oldParamHidden != toolbarParamContainer.isHidden
                 || oldShortcutsHidden != toolbarShortcutsContainer.isHidden
-                || oldShortcutsHeight != shortcutsContainerHeight {
+                || oldShortcutsHeight != shortcutsContainerHeight
+                || oldUsageHidden != usageParamContainer.isHidden {
                 view.needsLayout = true
             }
         }
@@ -872,17 +962,20 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
               row < toolbarItems.count else {
             toolbarParamContainer.isHidden = true
             toolbarShortcutsContainer.isHidden = true
+            usageParamContainer.isHidden = true
             return
         }
         switch toolbarItems[row] {
         case .spacer(let minWidth, let maxWidth):
             toolbarParamContainer.isHidden = false
             toolbarShortcutsContainer.isHidden = true
+            usageParamContainer.isHidden = true
             spacerMinField.stringValue = formatWidth(minWidth)
             spacerMaxField.stringValue = formatWidth(maxWidth)
         case .navigation(let shortcuts):
             toolbarParamContainer.isHidden = true
             toolbarShortcutsContainer.isHidden = false
+            usageParamContainer.isHidden = true
             setShortcutInput(backShortcutInput,
                              label: backShortcutLabel,
                              to: shortcuts.back,
@@ -898,6 +991,7 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
         case .reload(let shortcut):
             toolbarParamContainer.isHidden = true
             toolbarShortcutsContainer.isHidden = false
+            usageParamContainer.isHidden = true
             setShortcutInput(backShortcutInput,
                              label: backShortcutLabel,
                              to: nil,
@@ -910,9 +1004,19 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
                              label: reloadShortcutLabel,
                              to: shortcut,
                              visible: true)
+        case .usage(let provider, let command, let intervalSeconds):
+            toolbarParamContainer.isHidden = true
+            toolbarShortcutsContainer.isHidden = true
+            usageParamContainer.isHidden = false
+            if let index = usageProviders.firstIndex(of: provider) {
+                usageProviderPopup.selectItem(at: index)
+            }
+            usageCommandField.stringValue = command
+            usageIntervalField.stringValue = formatInterval(intervalSeconds)
         default:
             toolbarParamContainer.isHidden = true
             toolbarShortcutsContainer.isHidden = true
+            usageParamContainer.isHidden = true
         }
     }
 
@@ -932,6 +1036,65 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             return "\(Int(value))"
         }
         return String(format: "%.1f", Double(value))
+    }
+
+    // Minimum allowed refresh interval, in seconds, to keep a runaway
+    // command from being relaunched too aggressively.
+    private static let usageMinIntervalSeconds: Double = 5
+
+    private func formatInterval(_ value: Double) -> String {
+        if value == value.rounded() {
+            return "\(Int(value))"
+        }
+        return String(format: "%.1f", value)
+    }
+
+    @objc private func usageProviderChanged(_ sender: NSPopUpButton) {
+        applyUsageEditIfNeeded()
+    }
+
+    // Rebuild the selected .usage item from the current control values.
+    // Command is taken verbatim (empty = bundled default). Interval is
+    // rejected if blank/non-numeric (bounced back to the committed
+    // value); a valid interval is clamped to a sane minimum. Any
+    // provider/command change still commits even when the interval is
+    // being bounced.
+    private func applyUsageEditIfNeeded() {
+        guard var s = session,
+              let row = selectedToolbarRow,
+              row < s.toolbarItems.count,
+              case .usage(_, _, let currentInterval) =
+                s.toolbarItems[row] else { return }
+        let providerIndex = usageProviderPopup.indexOfSelectedItem
+        let provider: WorkgroupUsageProvider
+        if providerIndex >= 0 && providerIndex < usageProviders.count {
+            provider = usageProviders[providerIndex]
+        } else {
+            provider = .anthropicClaudeCode
+        }
+        let command = usageCommandField.stringValue
+        let interval: Double
+        if let intervalValue = Double(usageIntervalField.stringValue) {
+            interval = max(Self.usageMinIntervalSeconds, intervalValue)
+        } else {
+            // Blank/non-numeric: keep the committed interval and bounce
+            // the field back to it.
+            usageIntervalField.stringValue = formatInterval(currentInterval)
+            interval = currentInterval
+        }
+        let updated = iTermWorkgroupToolbarItem.usage(
+            provider: provider,
+            command: command,
+            intervalSeconds: interval)
+        guard updated != s.toolbarItems[row] else { return }
+        s.toolbarItems[row] = updated
+        commitUpdate(s, actionName: String(localized: "WorkgroupSessionDetail.ChangeUsageSettings", defaultValue: "Change AI Usage Settings", comment: "Undo action name for changing the AI usage toolbar item's settings")) { [weak self] in
+            guard let self else { return }
+            self.toolbarTable.reloadData(
+                forRowIndexes: IndexSet(integer: row),
+                columnIndexes: IndexSet(integer: 0))
+            self.refreshToolbarParamUI()
+        }
     }
 
     // MARK: - Toolbar items: actions
@@ -1172,6 +1335,8 @@ extension iTermWorkgroupSessionDetailViewController: NSTextFieldDelegate {
             }
         case spacerMinField, spacerMaxField:
             applySpacerEditIfNeeded()
+        case usageCommandField, usageIntervalField:
+            applyUsageEditIfNeeded()
         default:
             break
         }
@@ -1335,6 +1500,8 @@ extension iTermWorkgroupSessionDetailViewController: NSTableViewDataSource, NSTa
         switch item {
         case .spacer(let minWidth, let maxWidth):
             return String(localized: "WorkgroupSessionDetail.SpacerWidthFormat", defaultValue: "\(base) (\(formatWidth(minWidth))–\(formatWidth(maxWidth)) pt)", comment: "Toolbar list label for a spacer showing its min and max width in points")
+        case .usage(let provider, _, _):
+            return String(localized: "WorkgroupSessionDetail.UsageProviderFormat", defaultValue: "\(base) (\(provider.displayName))", comment: "Toolbar list label for the AI usage item showing its provider; %1$@ is the item name, %2$@ is the provider name")
         default:
             return base
         }

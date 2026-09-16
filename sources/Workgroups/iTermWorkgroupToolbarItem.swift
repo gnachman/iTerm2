@@ -8,6 +8,38 @@
 import CoreGraphics
 import Foundation
 
+// AI provider whose usage the `.usage` toolbar item reports. Only
+// Anthropic (via the Claude Code CLI) is implemented today; the enum
+// exists so the settings UI can offer a provider picker and so saved
+// configs carry a stable discriminator. rawValue is persisted, so
+// never rename an existing case.
+enum WorkgroupUsageProvider: String, Codable, CaseIterable, Equatable, Hashable {
+    case anthropicClaudeCode
+
+    var displayName: String {
+        switch self {
+        case .anthropicClaudeCode:
+            return String(localized: "WorkgroupUsageProvider.AnthropicClaudeCode",
+                          defaultValue: "Anthropic (Claude Code)",
+                          comment: "AI usage provider name: Anthropic usage read via the Claude Code CLI")
+        }
+    }
+
+    var defaultIntervalSeconds: Double { 60 }
+
+    // Resource name (no extension) of the bundled script that produces
+    // this provider's usage JSON when the user supplies no custom
+    // command. Each provider ships its own script under
+    // sources/Workgroups/UsageProviders/; the enum owns the mapping so a
+    // new provider is just a new case plus its script.
+    var bundledScriptResourceName: String {
+        switch self {
+        case .anthropicClaudeCode:
+            return "claude_usage"
+        }
+    }
+}
+
 // One toolbar tool in a workgroup session's toolbar. Using an enum with
 // associated values lets each tool carry its own parameters (a spacer has
 // width bounds; other tools are parameter-less today). New tools are added
@@ -49,6 +81,10 @@ enum iTermWorkgroupToolbarItemKind: String, Codable, CaseIterable {
     // unless the workgroup has exactly one code-review session. The
     // settings UI only offers this item on root sessions.
     case autoRequestReviewWhenIdle
+    // Periodically runs a command that reports AI usage as JSON and
+    // renders it as determinate progress bars. Available in every
+    // session mode. See WorkgroupUsageToolbarItem.
+    case usage
     // Auto-injected at runtime — never user-addable, never written to
     // disk. The decoder still understands it so a future change that
     // does persist it wouldn't trip an old client.
@@ -70,6 +106,11 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case gitBaseSelector
     case autoSendClippingsWhenIdle
     case autoRequestReviewWhenIdle
+    // AI usage gauge. `command` is the shell command that emits the
+    // usage JSON; an empty string means "use the provider's bundled
+    // default script", resolved at runtime so no absolute path is baked
+    // into the saved config. `intervalSeconds` is how often it reruns.
+    case usage(provider: WorkgroupUsageProvider, command: String, intervalSeconds: Double)
     case name
 
     var kind: iTermWorkgroupToolbarItemKind {
@@ -83,6 +124,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .gitBaseSelector: return .gitBaseSelector
         case .autoSendClippingsWhenIdle: return .autoSendClippingsWhenIdle
         case .autoRequestReviewWhenIdle: return .autoRequestReviewWhenIdle
+        case .usage: return .usage
         case .name: return .name
         }
     }
@@ -95,6 +137,9 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case forwardShortcut
         case reloadShortcut
         case shortcut
+        case provider
+        case command
+        case intervalSeconds
     }
 
     func encode(to encoder: Encoder) throws {
@@ -110,6 +155,10 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
             try c.encodeIfPresent(shortcuts.reload, forKey: .reloadShortcut)
         case .reload(let shortcut):
             try c.encodeIfPresent(shortcut, forKey: .shortcut)
+        case .usage(let provider, let command, let intervalSeconds):
+            try c.encode(provider, forKey: .provider)
+            try c.encode(command, forKey: .command)
+            try c.encode(intervalSeconds, forKey: .intervalSeconds)
         case .gitStatus, .changedFileSelector, .modeSwitcher,
              .gitBaseSelector, .autoSendClippingsWhenIdle,
              .autoRequestReviewWhenIdle, .name:
@@ -149,6 +198,20 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .gitBaseSelector: self = .gitBaseSelector
         case .autoSendClippingsWhenIdle: self = .autoSendClippingsWhenIdle
         case .autoRequestReviewWhenIdle: self = .autoRequestReviewWhenIdle
+        case .usage:
+            // Tolerate missing fields from a future/partial config:
+            // default to the Anthropic provider, the bundled script
+            // (empty command), and a 60s interval.
+            let provider = try c.decodeIfPresent(
+                WorkgroupUsageProvider.self, forKey: .provider)
+                ?? .anthropicClaudeCode
+            let command = try c.decodeIfPresent(
+                String.self, forKey: .command) ?? ""
+            let intervalSeconds = try c.decodeIfPresent(
+                Double.self, forKey: .intervalSeconds) ?? 60
+            self = .usage(provider: provider,
+                          command: command,
+                          intervalSeconds: intervalSeconds)
         case .name: self = .name
         }
     }

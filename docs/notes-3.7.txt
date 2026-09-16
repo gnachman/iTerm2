@@ -148,6 +148,14 @@ New Features:
   not named look exactly as before. The advanced
   setting “Show the window name beside the
   tabs” can turn it off or always show it.
+- The workgroup toolbar can show an AI Usage
+  gauge with your Claude subscription’s session
+  and weekly usage as progress bars. Add it to a
+  session’s toolbar in the workgroup settings and
+  choose how often it refreshes; it reads the
+  numbers by running the Claude Code command-line
+  tool. You can point it at your own command
+  instead.
 
 Improvements:
 - Pairing a companion iPhone no longer requires
