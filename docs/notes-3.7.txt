@@ -65,6 +65,13 @@ New Features:
   in which case it expands. While you drag, the
   group's pill highlights to show the tab will
   drop inside it.
+- The Python API can now discover and change
+  tab groups. A Tab has a tab_group property; a
+  Window has tab_groups and can create one with
+  create_tab_group; and a TabGroup can be
+  renamed, recolored, collapsed, or have tabs
+  added or removed. iTerm2 keeps each group's
+  tabs consecutive for you.
 - A new “Set Profile Setting” trigger action turns
   a profile checkbox on or off for the session.
   Paired with Job Started and Job Ended matches it

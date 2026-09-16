@@ -133,6 +133,21 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Member tabs of the given group, in tab order.
 - (NSArray<PTYTab *> *)tabsInGroup:(NSString *)groupID;
 
+// Python API tab-group mutators, invoked by iTermTabGroupBuiltInFunctions once
+// it has resolved which window hosts the group. They take a hex color string
+// (empty means "pick the next palette color") and a collapsed flag as an
+// NSNumber, and call completion(result, error). Kept window-scoped here so the
+// contiguity/relayout side effects run against the hosting window.
+- (void)apiSetTabGroupNameWithCompletion:(void (^)(id, NSError *))completion
+                                group_id:(NSString *)groupID
+                                    name:(NSString *)name;
+- (void)apiSetTabGroupColorWithCompletion:(void (^)(id, NSError *))completion
+                                 group_id:(NSString *)groupID
+                                    color:(NSString *)colorString;
+- (void)apiSetTabGroupCollapsedWithCompletion:(void (^)(id, NSError *))completion
+                                     group_id:(NSString *)groupID
+                                    collapsed:(NSNumber *)collapsed;
+
 // Put every tab in `tabs` into one brand-new tab group named `name`. A tab
 // that already belonged to a group is moved out of it into the new group.
 // The members are brought together into one contiguous block. No-op for fewer

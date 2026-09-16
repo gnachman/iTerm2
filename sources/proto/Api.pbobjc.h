@@ -5359,6 +5359,10 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
   ITMListSessionsResponse_Tab_FieldNumber_TmuxConnectionId = 5,
   ITMListSessionsResponse_Tab_FieldNumber_MinimizedSessionsArray = 6,
   ITMListSessionsResponse_Tab_FieldNumber_ActiveSessionId = 7,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupId = 8,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupName = 9,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupColor = 10,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupCollapsed = 11,
 };
 
 GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
@@ -5391,6 +5395,29 @@ GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
 /** Test to see if @c activeSessionId has been set. */
 @property(nonatomic, readwrite) BOOL hasActiveSessionId;
 
+/**
+ * Tab group membership. A tab group's identity is a UUID that rides on each
+ * member tab (there is no central registry); all members of a group carry
+ * the same name/color/collapsed values. tab_group_id is unset when the tab
+ * belongs to no group; the other three are meaningful only when it is set.
+ * The color is a hex string as produced by -[NSColor hexStringPreservingColorSpace]
+ * ("#rrggbb" for sRGB, "p3#rrggbbrrggbb" for Display P3). Added in protocol 1.19.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabGroupId;
+/** Test to see if @c tabGroupId has been set. */
+@property(nonatomic, readwrite) BOOL hasTabGroupId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabGroupName;
+/** Test to see if @c tabGroupName has been set. */
+@property(nonatomic, readwrite) BOOL hasTabGroupName;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabGroupColor;
+/** Test to see if @c tabGroupColor has been set. */
+@property(nonatomic, readwrite) BOOL hasTabGroupColor;
+
+@property(nonatomic, readwrite) BOOL tabGroupCollapsed;
+
+@property(nonatomic, readwrite) BOOL hasTabGroupCollapsed;
 @end
 
 #pragma mark - ITMCreateTabRequest

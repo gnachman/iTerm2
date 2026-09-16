@@ -2410,6 +2410,14 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             if (tab.tmuxController) {
                 tabMessage.tmuxConnectionId = tab.tmuxController.clientName;
             }
+            // Tab group membership (protocol 1.19+). The group's name/color/collapsed
+            // ride on the member tab, so they are meaningful only when tabGroupID is set.
+            if (tab.tabGroupID.length > 0) {
+                tabMessage.tabGroupId = tab.tabGroupID;
+                tabMessage.tabGroupName = tab.tabGroupName ?: @"";
+                tabMessage.tabGroupColor = [(tab.tabGroupColor ?: [NSColor systemBlueColor]) hexStringPreservingColorSpace];
+                tabMessage.tabGroupCollapsed = tab.tabGroupCollapsed;
+            }
             [windowMessage.tabsArray addObject:tabMessage];
         }
 

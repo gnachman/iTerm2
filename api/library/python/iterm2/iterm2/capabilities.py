@@ -227,3 +227,14 @@ def check_supports_screenshot(connection):
         raise AppVersionTooOld(
             "This version of iTerm2 is too old to capture screenshots via " +
             "the Python API. You should upgrade to run this script.")
+
+def supports_tab_groups(connection):
+    """Can you discover and modify tab groups?"""
+    min_ver = (1, 19)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_tab_groups(connection):
+    if not supports_tab_groups(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to control tab groups via " +
+            "the Python API. You should upgrade to run this script.")

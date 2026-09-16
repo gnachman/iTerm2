@@ -5,11 +5,14 @@ import typing
 
 import iterm2.api_pb2
 import iterm2.arrangement
+import iterm2.capabilities
+import iterm2.color
 import iterm2.connection
 import iterm2.profile
 import iterm2.rpc
 import iterm2.session
 import iterm2.tab
+import iterm2.tabgroup
 import iterm2.transaction
 import iterm2.util
 
@@ -155,7 +158,12 @@ class Window:
                 root,
                 tmux_window_id,
                 tab.tmux_connection_id,
-                minimized_sessions)
+                minimized_sessions,
+                tab.tab_group_id if tab.HasField("tab_group_id") else None,
+                tab.tab_group_name if tab.HasField("tab_group_name") else None,
+                tab.tab_group_color if tab.HasField("tab_group_color") else None,
+                tab.tab_group_collapsed if tab.HasField(
+                    "tab_group_collapsed") else None)
             # protocol 1.18+ reports the active session here, so current_session
             # is correct straight from a list-sessions refresh without waiting
             # for a focus notification. Older servers leave it unset.
@@ -265,6 +273,61 @@ class Window:
         await iterm2.rpc.async_reorder_tabs(
             self.connection,
             assignments=[(self.window_id, tab_ids)])
+
+    @property
+    def tab_groups(self) -> typing.List[iterm2.tabgroup.TabGroup]:
+        """
+        The distinct tab groups in this window, in tab order.
+
+        A tab group is a named, colored collection of adjacent tabs.
+
+        :returns: A list of :class:`~iterm2.tabgroup.TabGroup`.
+        """
+        result: typing.List[iterm2.tabgroup.TabGroup] = []
+        seen: typing.Set[str] = set()
+        for tab in self.__tabs:
+            group = tab.tab_group
+            if group is None or group.group_id in seen:
+                continue
+            seen.add(group.group_id)
+            result.append(group)
+        return result
+
+    async def async_create_tab_group(
+            self,
+            name: str,
+            tabs: typing.List[iterm2.tab.Tab],
+            color: typing.Optional[iterm2.color.Color] = None) -> (
+                iterm2.tabgroup.TabGroup):
+        """
+        Creates a new tab group from the given tabs.
+
+        All tabs must belong to this window. A tab already in another group is
+        moved into the new one. iTerm2 reorders tabs so the new group's members
+        are consecutive.
+
+        :param name: The name for the new group.
+        :param tabs: The tabs to place in the group. Must be non-empty and all
+            in this window.
+        :param color: The group's color, or `None` to have iTerm2 pick one.
+
+        :returns: The newly created :class:`~iterm2.tabgroup.TabGroup`. Its
+            `color` is `None` when iTerm2 picked one automatically; re-fetch the
+            app to observe the assigned color.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong (for
+            example, if a tab is not in this window).
+        """
+        iterm2.capabilities.check_supports_tab_groups(self.connection)
+        invocation = iterm2.util.invocation_string(
+            "iterm2.create_tab_group",
+            {"tab_ids": list(map(lambda tab: tab.tab_id, tabs)),
+             "name": name,
+             "color": color.hex if color else ""})
+        group_id = await iterm2.rpc.async_invoke_method(
+            self.connection, self.__window_id, invocation, -1)
+        return iterm2.tabgroup.TabGroup(
+            self.connection, group_id, name, color, False)
 
     @property
     def current_tab(self) -> typing.Optional[iterm2.tab.Tab]:

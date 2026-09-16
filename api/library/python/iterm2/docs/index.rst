@@ -43,6 +43,7 @@ Visit the :ref:`examples <examples-index>` for a collection of working examples.
    session
    statusbar
    tab
+   tabgroup
    tmux
    tool
    transaction

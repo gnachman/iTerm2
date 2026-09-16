@@ -1607,6 +1607,16 @@ message ListSessionsResponse {
     // guid of the tab's active session, so clients can determine the current
     // session without waiting for a focus notification. Added in protocol 1.18.
     optional string active_session_id = 7;
+    // Tab group membership. A tab group's identity is a UUID that rides on each
+    // member tab (there is no central registry); all members of a group carry
+    // the same name/color/collapsed values. tab_group_id is unset when the tab
+    // belongs to no group; the other three are meaningful only when it is set.
+    // The color is a hex string as produced by -[NSColor hexStringPreservingColorSpace]
+    // ("#rrggbb" for sRGB, "p3#rrggbbrrggbb" for Display P3). Added in protocol 1.19.
+    optional string tab_group_id = 8;
+    optional string tab_group_name = 9;
+    optional string tab_group_color = 10;
+    optional bool tab_group_collapsed = 11;
   }
   repeated Window windows = 1;
   repeated SessionSummary buried_sessions = 2;

@@ -15922,8 +15922,220 @@ backgroundColor:(NSColor *)backgroundColor {
                                                    target:self
                                                    action:@selector(setTitleWithCompletion:title:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+
+        // Tab group membership methods (Python API). These are window-scoped
+        // because the contiguity invariant is enforced by reordering this
+        // window's tabs, and because they act on tabs whose window is known at
+        // call time. The by-id mutators (rename/recolor/collapse) instead live
+        // in iTermTabGroupBuiltInFunctions as app-scope functions so they follow
+        // a group that has been dragged to another window. Colors are passed as
+        // hex strings (as -[NSColor hexStringPreservingColorSpace] produces); an
+        // empty color string means "pick the next palette color".
+        method = [[iTermBuiltInMethod alloc] initWithName:@"create_tab_group"
+                                            defaultValues:@{}
+                                                    types:@{ @"tab_ids": [NSArray class],
+                                                             @"name": [NSString class],
+                                                             @"color": [NSString class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextWindow
+                                   sideEffectsPlaceholder:@"[create_tab_group]"
+                                                   target:self
+                                                   action:@selector(apiCreateTabGroupWithCompletion:tab_ids:name:color:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"add_tab_to_group"
+                                            defaultValues:@{}
+                                                    types:@{ @"tab_id": [NSString class],
+                                                             @"group_id": [NSString class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextWindow
+                                   sideEffectsPlaceholder:@"[add_tab_to_group]"
+                                                   target:self
+                                                   action:@selector(apiAddTabToGroupWithCompletion:tab_id:group_id:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"remove_tab_from_group"
+                                            defaultValues:@{}
+                                                    types:@{ @"tab_id": [NSString class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextWindow
+                                   sideEffectsPlaceholder:@"[remove_tab_from_group]"
+                                                   target:self
+                                                   action:@selector(apiRemoveTabFromGroupWithCompletion:tab_id:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
+}
+
+#pragma mark - Tab group API methods
+
+// Resolve a tab_id (the stringified uniqueId reported by ListSessions) to a tab
+// in THIS window. Returns nil if no such tab is here, which is also how the
+// same-window invariant is enforced: a tab in another window won't be found.
+// Parse a color argument. An empty string means "no color specified"; the caller
+// decides the fallback (a palette color for create). *ok is set to NO only on a
+// non-empty string that fails to parse.
+- (NSColor *)apiColorFromString:(NSString *)string ok:(BOOL *)ok {
+    *ok = YES;
+    if (string.length == 0) {
+        return nil;
+    }
+    NSColor *color = [NSColor colorPreservingColorspaceFromString:string];
+    if (!color) {
+        *ok = NO;
+    }
+    return color;
+}
+
+- (NSError *)apiTabGroupErrorWithReason:(NSString *)reason {
+    return [NSError errorWithDomain:@"com.iterm2.tab-group"
+                               code:1
+                           userInfo:@{ NSLocalizedDescriptionKey: reason }];
+}
+
+// Members of the group in this window, or nil after invoking completion with the
+// standard "no such group" error. Lets each handler bail out in one line.
+- (NSArray<PTYTab *> *)apiMembersOfGroup:(NSString *)groupID
+                    orElseCallCompletion:(void (^)(id, NSError *))completion {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        completion(nil, [self apiTabGroupErrorWithReason:@"No such tab group in this window"]);
+        return nil;
+    }
+    return members;
+}
+
+- (void)apiCreateTabGroupWithCompletion:(void (^)(id, NSError *))completion
+                                 tab_ids:(NSArray *)tabIDs
+                                   name:(NSString *)name
+                                  color:(NSString *)colorString {
+    if (tabIDs.count == 0) {
+        completion(nil, [self apiTabGroupErrorWithReason:@"No tabs given"]);
+        return;
+    }
+    NSMutableArray<PTYTab *> *tabs = [NSMutableArray array];
+    for (id tabID in tabIDs) {
+        if (![tabID isKindOfClass:[NSString class]]) {
+            completion(nil, [self apiTabGroupErrorWithReason:@"tab_ids must be strings"]);
+            return;
+        }
+        PTYTab *tab = [self tabWithUniqueId:[tabID intValue]];
+        if (!tab) {
+            completion(nil, [self apiTabGroupErrorWithReason:[NSString stringWithFormat:@"No tab with id %@ in this window", tabID]]);
+            return;
+        }
+        [tabs addObject:tab];
+    }
+    BOOL ok = YES;
+    NSColor *color = [self apiColorFromString:colorString ok:&ok];
+    if (!ok) {
+        completion(nil, [self apiTabGroupErrorWithReason:@"Invalid color"]);
+        return;
+    }
+    if (!color) {
+        color = [self nextTabGroupColor];
+    }
+    // Assigning a fresh id overwrites any prior membership, so a tab already in a
+    // group is moved out of it and into the new one. The definition rides every
+    // member (there is no registry), so stamp name/color on all of them.
+    NSString *gid = [[NSUUID UUID] UUIDString];
+    for (PTYTab *tab in tabs) {
+        tab.tabGroupID = gid;
+        tab.tabGroupName = name;
+        tab.tabGroupColor = color;
+        tab.tabGroupCollapsed = NO;
+    }
+    RLog(@"tabGroup: API created group %@ (%@) from %@ tabs", gid, name, @(tabs.count));
+    [self updateTabColors];
+    // The members are likely scattered; repair the contiguity invariant so they
+    // become one block.
+    [self tabsDidReorder];
+    completion(gid, nil);
+}
+
+- (void)apiAddTabToGroupWithCompletion:(void (^)(id, NSError *))completion
+                                 tab_id:(NSString *)tabID
+                               group_id:(NSString *)groupID {
+    PTYTab *tab = [self tabWithUniqueId:tabID.intValue];
+    if (!tab) {
+        completion(nil, [self apiTabGroupErrorWithReason:@"No such tab in this window"]);
+        return;
+    }
+    if (![self apiMembersOfGroup:groupID orElseCallCompletion:completion]) {
+        return;
+    }
+    tab.tabGroupID = groupID;
+    RLog(@"tabGroup: API added tab %@ to group %@", tabID, groupID);
+    // Copy the definition from an existing member, repair contiguity (the added
+    // tab may be far from the group), and expand if the active tab just joined a
+    // collapsed group so it is never hidden.
+    [self finalizeTabGroupMembershipChangeForTab:tab];
+    completion(nil, nil);
+}
+
+- (void)apiRemoveTabFromGroupWithCompletion:(void (^)(id, NSError *))completion
+                                      tab_id:(NSString *)tabID {
+    PTYTab *tab = [self tabWithUniqueId:tabID.intValue];
+    if (!tab) {
+        completion(nil, [self apiTabGroupErrorWithReason:@"No such tab in this window"]);
+        return;
+    }
+    [self removeTabFromGroup:tab label:[[tab tabViewItem] label]];
+    completion(nil, nil);
+}
+
+- (void)apiSetTabGroupNameWithCompletion:(void (^)(id, NSError *))completion
+                                 group_id:(NSString *)groupID
+                                    name:(NSString *)name {
+    NSArray<PTYTab *> *members = [self apiMembersOfGroup:groupID orElseCallCompletion:completion];
+    if (!members) {
+        return;
+    }
+    // The name rides every member (there is no registry), so fan it out.
+    for (PTYTab *member in members) {
+        member.tabGroupName = name;
+    }
+    RLog(@"tabGroup: API renamed group %@ to %@", groupID, name);
+    [self updateTabColors];
+    // The chip's width is derived from the name, so re-derive and relay out now.
+    [self relayoutTabGroupChipsSynchronously];
+    completion(nil, nil);
+}
+
+- (void)apiSetTabGroupColorWithCompletion:(void (^)(id, NSError *))completion
+                                  group_id:(NSString *)groupID
+                                    color:(NSString *)colorString {
+    if (![self apiMembersOfGroup:groupID orElseCallCompletion:completion]) {
+        return;
+    }
+    BOOL ok = YES;
+    NSColor *color = [self apiColorFromString:colorString ok:&ok];
+    if (!ok) {
+        completion(nil, [self apiTabGroupErrorWithReason:@"Invalid color"]);
+        return;
+    }
+    if (!color) {
+        color = [self nextTabGroupColor];
+    }
+    [self setTabGroupColor:color forGroupID:groupID];
+    completion(nil, nil);
+}
+
+- (void)apiSetTabGroupCollapsedWithCompletion:(void (^)(id, NSError *))completion
+                                      group_id:(NSString *)groupID
+                                    collapsed:(NSNumber *)collapsed {
+    if (![self apiMembersOfGroup:groupID orElseCallCompletion:completion]) {
+        return;
+    }
+    if (collapsed.boolValue) {
+        // Collapse can be refused (e.g. the group is the whole window, so there
+        // is nowhere to move the active tab). Report the resulting state.
+        [self collapseTabGroup:groupID animated:NO];
+    } else {
+        [self expandTabGroup:groupID animated:NO];
+    }
+    const BOOL nowCollapsed = [self tabsInGroup:groupID].firstObject.tabGroupCollapsed;
+    completion(@(nowCollapsed), nil);
 }
 
 - (void)setTitleWithCompletion:(void (^)(id, NSError *))completion

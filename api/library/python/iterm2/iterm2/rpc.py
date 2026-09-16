@@ -865,14 +865,8 @@ async def async_invoke_function(
     return await _async_call(connection, request)
 
 
-async def async_invoke_method(connection, receiver, invocation, timeout):
-    """Convenience wrapper around async_invoke_function for methods."""
-    assert receiver
-    response = await iterm2.rpc.async_invoke_function(
-        connection,
-        invocation,
-        receiver=receiver,
-        timeout=timeout)
+def _invocation_result(response):
+    """Unwraps an invoke-function response, raising RPCException on error."""
     which = response.invoke_function_response.WhichOneof('disposition')
     if which == 'error':
         if (response.invoke_function_response.error.status ==
@@ -883,6 +877,26 @@ async def async_invoke_method(connection, receiver, invocation, timeout):
                 response.invoke_function_response.error.status),
             response.invoke_function_response.error.error_reason))
     return json.loads(response.invoke_function_response.success.json_result)
+
+
+async def async_invoke_method(connection, receiver, invocation, timeout):
+    """Convenience wrapper around async_invoke_function for methods."""
+    assert receiver
+    response = await iterm2.rpc.async_invoke_function(
+        connection,
+        invocation,
+        receiver=receiver,
+        timeout=timeout)
+    return _invocation_result(response)
+
+
+async def async_invoke_app_function(connection, invocation, timeout=-1):
+    """Convenience wrapper for invoking an app-scope (receiver-less) function."""
+    response = await iterm2.rpc.async_invoke_function(
+        connection,
+        invocation,
+        timeout=timeout)
+    return _invocation_result(response)
 
 # Private --------------------------------------------------------------------
 

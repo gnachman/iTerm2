@@ -11,6 +11,7 @@
 #import "iTermAlertBuiltInFunction.h"
 #import "iTermReflection.h"
 #import "iTermSetStatusBarComponentUnreadCountBuiltInFunction.h"
+#import "iTermTabGroupBuiltInFunctions.h"
 #import "iTermVariableReference.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -178,6 +179,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     [iTermTmuxFormatBuiltInFunction registerBuiltInFunction];
     [iTermSetStatusBuiltInFunction registerBuiltInFunction];
     [iTermSendCompanionNotificationBuiltInFunction registerBuiltInFunction];
+    [iTermTabGroupBuiltInFunctions registerBuiltInFunction];
 }
 
 + (instancetype)sharedInstance {
