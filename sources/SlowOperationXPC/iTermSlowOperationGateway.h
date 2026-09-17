@@ -44,12 +44,28 @@ NS_ASSUME_NONNULL_BEGIN
                          reqid:(int)reqid
                     completion:(void (^)(int rc, NSData *buffer))completion;
 
-// Get the value of an environment variable from the user's shell.
+// Get the value of an environment variable from the user's shell, read from the
+// EXPORTED environment via a fast non-interactive (bare -c) shell — the rc files
+// are NOT sourced. Right for variables the environment already carries (PATH,
+// SSH_AUTH_SOCK). A caller that needs a value set only in the interactive rc
+// files (e.g. CLAUDE_CONFIG_DIR in .zshrc) must instead use
+// runCommandInUserShell:interactive:YES:completion:.
 - (void)exfiltrateEnvironmentVariableNamed:(NSString *)name
                                      shell:(NSString *)shell
                                 completion:(void (^)(NSString *value))completion;
 
+// Runs a single command in the user's login shell (non-interactive). rc/banner
+// output is stripped; the reply is the command's own stdout, delivered on the
+// main thread, or nil if the command could not be run or exited nonzero.
 - (void)runCommandInUserShell:(NSString *)command completion:(void (^)(NSString * _Nullable value))completion;
+
+// Same, but when interactive is YES the shell sources the user's interactive rc
+// files (.zshrc/.bashrc/etc.) — needed to read variables like CLAUDE_CONFIG_DIR
+// that live there. Costs the full rc-startup time, so pass YES only when the
+// interactive environment is actually required.
+- (void)runCommandInUserShell:(NSString *)command
+                  interactive:(BOOL)interactive
+                   completion:(void (^)(NSString * _Nullable value))completion;
 
 - (void)findCompletionsWithPrefix:(NSString *)prefix
                     inDirectories:(NSArray<NSString *> *)directories
