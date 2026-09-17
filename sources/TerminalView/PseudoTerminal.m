@@ -14790,12 +14790,20 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     profile[KEY_INITIAL_URL] = url.absoluteString;
 
     NSNumber *tabIndex = nil;
+    PTYTab *originTab = nil;
     for (NSInteger i = 0; i < self.tabs.count; i++) {
         if ([[self.tabs[i].sessions mapWithBlock:^id _Nullable(PTYSession *s) { return s.guid; }] containsObject:sessionGuid]) {
             tabIndex = @(i + 1);
+            originTab = self.tabs[i];
             break;
         }
     }
+    // A tab opened from a link in a grouped tab lands immediately after it, so it
+    // joins that tab's group: same rule as "new tab to the right". Without this the
+    // new tab would be an ungrouped tab sitting inside the group's run, which also
+    // breaks the group's contiguity. Only when we found the origin tab; otherwise
+    // the new tab goes to the end of the tab bar and has nothing to be adjacent to.
+    NSString *groupIDToJoin = tabIndex ? originTab.tabGroupID : nil;
     PTYSession *(^makeSession)(Profile *, PseudoTerminal *) =
     ^PTYSession *(Profile *profile, PseudoTerminal *term) {
         profile = [profile dictionaryBySettingObject:kProfilePreferenceCommandTypeBrowserValue
@@ -14843,6 +14851,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                                                                         index:nil
                                                                       command:url.absoluteString
                                                                   makeSession:makeSession];
+    [self addTabForSession:theSession toGroupWithID:groupIDToJoin];
 
     return theSession.view.browserViewController.webView;
 }

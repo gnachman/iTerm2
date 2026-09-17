@@ -271,6 +271,11 @@ Improvements:
   tabs after a group follows suit.
 
 Bug Fixes:
+- Opening a link from a browser tab in a tab
+  group (with “Open in New Tab” or a link that
+  wants a new window) now puts the new tab in
+  that group instead of leaving it ungrouped in
+  the middle of the group. Issue 13029.
 - Fixed the Python API not reporting OSC 8
   hyperlinks. A cell’s CellStyle.url is now
   populated, so scripts reading screen contents
