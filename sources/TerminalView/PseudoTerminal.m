@@ -9930,6 +9930,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // happened.
     [self enforceTabGroupContiguityInvariant];
 
+    // Any reorder can change tabs' physical positions, and the Cmd-N shortcut
+    // numbers are assigned by position in -updateTabObjectCounts, so renumber
+    // here at the single choke point every reorder funnels through. Otherwise a
+    // group-membership change (e.g. removing the middle member of a group, which
+    // shifts the remaining members to stay contiguous) would leave the numbers
+    // glued to the old positions and the shortcuts non-consecutive.
+    [self setNeedsUpdateTabObjectCounts:YES];
+
     TmuxController *controller = nil;
     NSMutableArray *windowIds = [NSMutableArray array];
 
