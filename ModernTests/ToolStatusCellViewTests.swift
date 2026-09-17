@@ -418,8 +418,9 @@ final class ToolStatusShortcutReloadTests: XCTestCase {
     }
 
     // Lets the main queue drain the coalesced reload. Deterministic
-    // rather than timing-dependent: the reload was enqueued on the main
-    // queue before this block, and the main queue is FIFO.
+    // rather than timing-dependent: IdempotentOperationJoiner.asyncJoiner(.main)
+    // enqueued its updateIfNeeded on the main queue before this block, and
+    // the main queue is FIFO.
     private func drainMainQueue() {
         let drained = expectation(description: "main queue drained")
         DispatchQueue.main.async {
@@ -441,20 +442,24 @@ final class ToolStatusShortcutReloadTests: XCTestCase {
     func test_notificationBurstSchedulesExactlyOneReload() {
         let tool = makeTool()
         let nc = NotificationCenter.default
-        XCTAssertNil(tool.pendingShortcutReload)
+        XCTAssertEqual(tool.shortcutReloadCount, 0)
 
         nc.post(name: NSNotification.Name(iTermSelectedTabDidChange), object: nil)
-        let scheduled = tool.pendingShortcutReload
-        XCTAssertNotNil(scheduled, "The first notification must schedule a reload")
-
         nc.post(name: NSNotification.Name("iTermNumberOfSessionsDidChange"), object: nil)
         nc.post(name: .iTermTabDidChangePositionInWindow, object: nil)
-        XCTAssertTrue(tool.pendingShortcutReload === scheduled,
-                      "Further notifications must join the scheduled reload, not add more")
+        XCTAssertEqual(tool.shortcutReloadCount, 0,
+                       "The reload must be deferred, not run synchronously per notification")
 
         drainMainQueue()
-        XCTAssertNil(tool.pendingShortcutReload,
-                     "The scheduled reload must run and clear itself")
+        XCTAssertEqual(tool.shortcutReloadCount, 1,
+                       "Three notifications in one pass must produce exactly one reload")
+
+        // A later burst is a separate user action and reloads again.
+        nc.post(name: NSNotification.Name(iTermSelectedTabDidChange), object: nil)
+        nc.post(name: .iTermTabDidChangePositionInWindow, object: nil)
+        drainMainQueue()
+        XCTAssertEqual(tool.shortcutReloadCount, 2,
+                       "A later burst must schedule a fresh reload, not be swallowed")
     }
 
     // Hiding the toolbelt sets its hidden flag rather than removing it
@@ -469,6 +474,8 @@ final class ToolStatusShortcutReloadTests: XCTestCase {
         drainMainQueue()
         XCTAssertTrue(tool.missedShortcutReloadWhileHidden,
                       "A hidden tool must skip the reload and record that it owes one")
+        XCTAssertEqual(tool.shortcutReloadCount, 0,
+                       "A hidden tool must not reload at all")
     }
 
     // Showing the toolbelt again pays back the skipped reload. AppKit
@@ -482,16 +489,18 @@ final class ToolStatusShortcutReloadTests: XCTestCase {
                                         object: nil)
         drainMainQueue()
         XCTAssertTrue(tool.missedShortcutReloadWhileHidden)
+        XCTAssertEqual(tool.shortcutReloadCount, 0)
 
         tool.isHidden = false
         tool.viewDidUnhide()
         XCTAssertFalse(tool.missedShortcutReloadWhileHidden,
                        "Unhiding must clear the debt")
-        XCTAssertNotNil(tool.pendingShortcutReload,
-                        "Unhiding must schedule the reload it skipped")
+        XCTAssertEqual(tool.shortcutReloadCount, 0,
+                       "Unhiding must schedule the reload, not run it inline")
 
         drainMainQueue()
-        XCTAssertNil(tool.pendingShortcutReload)
+        XCTAssertEqual(tool.shortcutReloadCount, 1,
+                       "Unhiding must pay back exactly the one reload it skipped")
         XCTAssertFalse(tool.missedShortcutReloadWhileHidden,
                        "A visible tool must not record a missed reload")
     }
@@ -503,5 +512,6 @@ final class ToolStatusShortcutReloadTests: XCTestCase {
                                         object: nil)
         drainMainQueue()
         XCTAssertFalse(tool.missedShortcutReloadWhileHidden)
+        XCTAssertEqual(tool.shortcutReloadCount, 1)
     }
 }
