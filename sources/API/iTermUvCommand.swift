@@ -15,8 +15,12 @@ enum iTermUvCommand {
     // Environment set on every uv subprocess. only-managed forces
     // python-build-standalone and never a system/Homebrew interpreter; no-config
     // ignores the user's uv.toml; clone gives APFS copy-on-write dedup of packages
-    // from the cache. These are set at provision time only; launching a script is a
-    // bare exec of the venv's python and involves no uv.
+    // from the cache; system-certs loads the platform native trust store (macOS
+    // Keychain) so uv can download python-build-standalone behind corporate proxies
+    // that inject their own root CA, which uv's bundled Mozilla roots do not trust
+    // (issue #13059: UnknownIssuer from uv venv on macOS). These are set at
+    // provision time only; launching a script is a bare exec of the venv's python
+    // and involves no uv.
     static func provisionEnvironment(pythonInstallDir: String,
                                      cacheDir: String) -> [String: String] {
         return [
@@ -26,6 +30,7 @@ enum iTermUvCommand {
             "UV_NO_CONFIG": "1",
             "UV_PYTHON_DOWNLOADS": "automatic",
             "UV_LINK_MODE": "clone",
+            "UV_SYSTEM_CERTS": "1",
         ]
     }
 

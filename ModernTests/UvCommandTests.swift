@@ -66,10 +66,13 @@ final class UvCommandTests: XCTestCase {
         XCTAssertEqual(env["UV_PYTHON_INSTALL_DIR"], "/support/uv/python")
         XCTAssertEqual(env["UV_CACHE_DIR"], "/support/uv/cache")
         // only-managed forces python-build-standalone and never a system/Homebrew
-        // Python; no-config ignores the user's uv.toml; clone gives APFS reflink dedup.
+        // Python; no-config ignores the user's uv.toml; clone gives APFS reflink dedup;
+        // system-certs loads macOS Keychain CAs so uv can download behind corporate
+        // proxies (issue #13059: UnknownIssuer from uv venv on macOS).
         XCTAssertEqual(env["UV_PYTHON_PREFERENCE"], "only-managed")
         XCTAssertEqual(env["UV_NO_CONFIG"], "1")
         XCTAssertEqual(env["UV_PYTHON_DOWNLOADS"], "automatic")
         XCTAssertEqual(env["UV_LINK_MODE"], "clone")
+        XCTAssertEqual(env["UV_SYSTEM_CERTS"], "1")
     }
 }
