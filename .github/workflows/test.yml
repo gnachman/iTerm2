@@ -34,7 +34,7 @@ jobs:
         run: python -m mypy iterm2/
 
   xcode-tests:
-    runs-on: macos-26
+    runs-on: xcode-27
 
     steps:
       - name: Checkout
@@ -42,12 +42,12 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Select Xcode 26
+      - name: Select Xcode 27
         # Pin to the same Xcode the committed prebuilt binary dependencies were
         # built with. The build phase hard-fails (exit 1) unless `xcodebuild
         # -version` matches last-xcode-version byte for byte, so the build
         # number has to line up, not just the marketing version.
-        run: sudo xcode-select -s /Applications/Xcode_26.5.app/Contents/Developer
+        run: sudo xcode-select -s /Applications/Xcode_27.0.app/Contents/Developer
 
       - name: Show Xcode version
         run: xcodebuild -version
