@@ -50235,43 +50235,43 @@
       }
     },
     "ClaudeCode.HookMalformed" : {
-      "comment" : "Detail shown when the Claude Code settings file is not valid JSON",
+      "comment" : "Detail shown when the Claude Code settings file is not valid JSON; the interpolated value is the absolute path to settings.json",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "~/.claude/settings.json konnte nicht als JSON geparst werden. Öffnen Sie sie in einem Texteditor und prüfen Sie sie auf Syntaxfehler."
+            "value" : "%@ konnte nicht als JSON geparst werden. Öffnen Sie sie in einem Texteditor und prüfen Sie sie auf Syntaxfehler."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "~/.claude/settings.json couldn’t be parsed as JSON. Open it in a text editor and check it for syntax errors."
+            "value" : "%@ couldn’t be parsed as JSON. Open it in a text editor and check it for syntax errors."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "~/.claude/settings.jsonをJSONとして解析できませんでした。テキストエディタで開いて構文エラーを確認してください。"
+            "value" : "%@をJSONとして解析できませんでした。テキストエディタで開いて構文エラーを確認してください。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não foi possível analisar ~/.claude/settings.json como JSON. Abra-o em um editor de texto e verifique se há erros de sintaxe."
+            "value" : "Não foi possível analisar %@ como JSON. Abra-o em um editor de texto e verifique se há erros de sintaxe."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось разобрать ~/.claude/settings.json как JSON. Откройте файл в текстовом редакторе и проверьте синтаксис."
+            "value" : "Не удалось разобрать %@ как JSON. Откройте файл в текстовом редакторе и проверьте синтаксис."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "~/.claude/settings.json 无法被解析为 JSON。请在文本编辑器中打开并检查语法错误。"
+            "value" : "%@ 无法被解析为 JSON。请在文本编辑器中打开并检查语法错误。"
           }
         }
       }
@@ -50361,85 +50361,85 @@
       }
     },
     "ClaudeCode.HookUnreadable" : {
-      "comment" : "Detail shown when the Claude Code settings file could not be read",
+      "comment" : "Detail shown when the Claude Code settings file could not be read; the interpolated value is the absolute path to settings.json",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "~/.claude/settings.json konnte nicht gelesen werden. Prüfen Sie die Dateiberechtigungen."
+            "value" : "%@ konnte nicht gelesen werden. Prüfen Sie die Dateiberechtigungen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Could not read ~/.claude/settings.json — check the file’s permissions."
+            "value" : "Could not read %@ — check the file’s permissions."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "~/.claude/settings.jsonを読み込めませんでした。ファイルのアクセス権を確認してください。"
+            "value" : "%@を読み込めませんでした。ファイルのアクセス権を確認してください。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não foi possível ler ~/.claude/settings.json. Verifique as permissões do arquivo."
+            "value" : "Não foi possível ler %@. Verifique as permissões do arquivo."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось прочитать ~/.claude/settings.json. Проверьте права доступа к файлу."
+            "value" : "Не удалось прочитать %@. Проверьте права доступа к файлу."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法读取 ~/.claude/settings.json — 请检查文件的权限。"
+            "value" : "无法读取 %@ — 请检查文件的权限。"
           }
         }
       }
     },
     "ClaudeCode.HookWriteFailed" : {
-      "comment" : "Detail shown when the Claude Code settings file could not be written",
+      "comment" : "Detail shown when the Claude Code settings file could not be written; the interpolated value is the absolute path to settings.json",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "~/.claude/settings.json konnte nicht geschrieben werden. Prüfen Sie die Dateiberechtigungen."
+            "value" : "%@ konnte nicht geschrieben werden. Prüfen Sie die Dateiberechtigungen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Could not write to ~/.claude/settings.json — check the file’s permissions."
+            "value" : "Could not write to %@ — check the file’s permissions."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "~/.claude/settings.jsonに書き込めませんでした。ファイルのアクセス権を確認してください。"
+            "value" : "%@に書き込めませんでした。ファイルのアクセス権を確認してください。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não foi possível gravar em ~/.claude/settings.json. Verifique as permissões do arquivo."
+            "value" : "Não foi possível gravar em %@. Verifique as permissões do arquivo."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось записать в ~/.claude/settings.json. Проверьте права доступа к файлу."
+            "value" : "Не удалось записать в %@. Проверьте права доступа к файлу."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法写入 ~/.claude/settings.json — 请检查文件的权限。"
+            "value" : "无法写入 %@ — 请检查文件的权限。"
           }
         }
       }
@@ -50529,43 +50529,43 @@
       }
     },
     "ClaudeCode.UninstallBody" : {
-      "comment" : "Explanation of what uninstalling the Claude Code integration does",
+      "comment" : "Explanation of what uninstalling the Claude Code integration does; the interpolated value is the absolute path to settings.json",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dies entfernt den cc-status-Hook aus ~/.claude/settings.json, die Claude-Code-Arbeitsgruppe aus Ihren Einstellungen und die Trigger zum Betreten/Verlassen der Arbeitsgruppe aus jedem Profil. Eine erneute Installation ist jederzeit über iTerm2 > Claude-Code-Integration installieren möglich."
+            "value" : "Dies entfernt den cc-status-Hook aus %@, die Claude-Code-Arbeitsgruppe aus Ihren Einstellungen und die Trigger zum Betreten/Verlassen der Arbeitsgruppe aus jedem Profil. Eine erneute Installation ist jederzeit über iTerm2 > Claude-Code-Integration installieren möglich."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "This removes the cc-status hook from ~/.claude/settings.json, the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration."
+            "value" : "This removes the cc-status hook from %@, the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "これにより、~/.claude/settings.jsonからcc-statusフックが削除され、設定からClaude Codeワークグループが削除され、すべてのプロファイルからワークグループ参加/退出トリガーが削除されます。iTerm2 > Claude Code連携をアンインストールからいつでも再インストールできます。"
+            "value" : "これにより、%@からcc-statusフックが削除され、設定からClaude Codeワークグループが削除され、すべてのプロファイルからワークグループ参加/退出トリガーが削除されます。iTerm2 > Claude Code連携をアンインストールからいつでも再インストールできます。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Isso remove o hook cc-status de ~/.claude/settings.json, o workgroup do Claude Code dos seus ajustes e os gatilhos de entrar/sair do workgroup de todos os perfis. Você pode reinstalar a qualquer momento usando iTerm2 > Instalar integração do Claude Code."
+            "value" : "Isso remove o hook cc-status de %@, o workgroup do Claude Code dos seus ajustes e os gatilhos de entrar/sair do workgroup de todos os perfis. Você pode reinstalar a qualquer momento usando iTerm2 > Instalar integração do Claude Code."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Это удалит хук cc-status из ~/.claude/settings.json, рабочую группу Claude Code из ваших настроек и триггеры Enter/Exit Workgroup из всех профилей. Переустановить интеграцию можно в любой момент через iTerm2 > Install Claude Code Integration."
+            "value" : "Это удалит хук cc-status из %@, рабочую группу Claude Code из ваших настроек и триггеры Enter/Exit Workgroup из всех профилей. Переустановить интеграцию можно в любой момент через iTerm2 > Install Claude Code Integration."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "这将从 ~/.claude/settings.json 中移除 cc-status 钩子，从你的设置中移除 Claude Code 工作组，并从每个配置文件中移除“进入/退出工作组”触发器。你可以随时通过“iTerm2 > 安装 Claude Code 集成”重新安装。"
+            "value" : "这将从 %@ 中移除 cc-status 钩子，从你的设置中移除 Claude Code 工作组，并从每个配置文件中移除“进入/退出工作组”触发器。你可以随时通过“iTerm2 > 安装 Claude Code 集成”重新安装。"
           }
         }
       }
@@ -50860,6 +50860,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开始之前"
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.ConfigResolutionFailedBody" : {
+      "comment" : "Body of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user’s shell",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 konnte CLAUDE_CONFIG_DIR nicht aus Ihrer Shell lesen und weiß daher nicht, wo Claude Code seine Einstellungen speichert. Erneut versuchen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t read CLAUDE_CONFIG_DIR from your shell, so it doesn’t know where Claude Code keeps its settings. Try again?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2はシェルからCLAUDE_CONFIG_DIRを読み取れなかったため、Claude Codeが設定を保存する場所がわかりません。もう一度試しますか？"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não conseguiu ler CLAUDE_CONFIG_DIR do seu shell, portanto não sabe onde o Claude Code guarda as configurações. Tentar novamente?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не смог прочитать CLAUDE_CONFIG_DIR из вашей оболочки, поэтому не знает, где Claude Code хранит настройки. Попробовать снова?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 无法从你的 Shell 读取 CLAUDE_CONFIG_DIR，因此不知道 Claude Code 将设置保存在何处。要重试吗？"
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.ConfigResolutionFailedTitle" : {
+      "comment" : "Title of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user’s shell",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speicherort der Einstellungen konnte nicht ermittelt werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn’t Determine Settings Location"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定の場所を特定できませんでした"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível determinar o local das configurações"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось определить расположение настроек"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法确定设置位置"
           }
         }
       }
@@ -51788,6 +51872,48 @@
         }
       }
     },
+    "ClaudeCodeOnboarding.Retry" : {
+      "comment" : "Button to retry resolving the Claude Code settings location",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut versuchen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Retry"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再試行"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentar novamente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повторить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试"
+          }
+        }
+      }
+    },
     "ClaudeCodeOnboarding.Show" : {
       "comment" : "Button that shows the toolbelt onboarding step",
       "extractionState" : "extracted_with_value",
@@ -52125,43 +52251,43 @@
       }
     },
     "ClaudeHealthMonitor.BrokenTitle" : {
-      "comment" : "Body of the warning shown when the Claude Code status hook is missing from settings.json",
+      "comment" : "Body of the warning shown when the Claude Code status hook is missing from settings.json; the interpolated value is the absolute path to settings.json",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der cc-status-Hook von iTerm2 befindet sich nicht mehr in ~/.claude/settings.json. Das bedeutet meist, dass Claude Code diese Datei überschrieben hat. Soll der Hook neu installiert werden, damit die Statusanzeigen pro Tab („Arbeitet…“, „Wartet…“) wieder funktionieren?"
+            "value" : "Der cc-status-Hook von iTerm2 befindet sich nicht mehr in %@. Das bedeutet meist, dass Claude Code diese Datei überschrieben hat. Soll der Hook neu installiert werden, damit die Statusanzeigen pro Tab („Arbeitet…“, „Wartet…“) wieder funktionieren?"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "iTerm2’s cc-status hook is no longer in ~/.claude/settings.json. This usually means Claude Code rewrote that file. Reinstall the hook so per-tab status indicators (“Working…,” “Waiting…”) work again?"
+            "value" : "iTerm2’s cc-status hook is no longer in %@. This usually means Claude Code rewrote that file. Reinstall the hook so per-tab status indicators (“Working…,” “Waiting…”) work again?"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2のcc-statusフックが~/.claude/settings.jsonに存在しなくなりました。これは通常、Claude Codeがそのファイルを書き換えたことを意味します。タブごとのステータス表示（「作業中…」「待機中…」）が再び機能するように、フックを再インストールしますか？"
+            "value" : "iTerm2のcc-statusフックが%@に存在しなくなりました。これは通常、Claude Codeがそのファイルを書き換えたことを意味します。タブごとのステータス表示（「作業中…」「待機中…」）が再び機能するように、フックを再インストールしますか？"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O hook cc-status do iTerm2 não está mais em ~/.claude/settings.json. Isso geralmente significa que o Claude Code reescreveu esse arquivo. Reinstalar o hook para que os indicadores de status por aba (“Trabalhando…”, “Aguardando…”) voltem a funcionar?"
+            "value" : "O hook cc-status do iTerm2 não está mais em %@. Isso geralmente significa que o Claude Code reescreveu esse arquivo. Reinstalar o hook para que os indicadores de status por aba (“Trabalhando…”, “Aguardando…”) voltem a funcionar?"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Хук cc-status от iTerm2 больше не находится в ~/.claude/settings.json. Обычно это означает, что Claude Code перезаписал этот файл. Переустановить хук, чтобы индикаторы статуса на вкладках («Работает…», «Ожидание…») снова заработали?"
+            "value" : "Хук cc-status от iTerm2 больше не находится в %@. Обычно это означает, что Claude Code перезаписал этот файл. Переустановить хук, чтобы индикаторы статуса на вкладках («Работает…», «Ожидание…») снова заработали?"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2 的 cc-status 钩子已不在 ~/.claude/settings.json 中。这通常意味着 Claude Code 重写了该文件。重新安装钩子，以便每个标签页的状态指示器（“正在处理…”、“正在等待…”）重新工作？"
+            "value" : "iTerm2 的 cc-status 钩子已不在 %@ 中。这通常意味着 Claude Code 重写了该文件。重新安装钩子，以便每个标签页的状态指示器（“正在处理…”、“正在等待…”）重新工作？"
           }
         }
       }

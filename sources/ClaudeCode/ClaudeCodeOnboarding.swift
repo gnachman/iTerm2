@@ -91,7 +91,19 @@ class ClaudeCodeOnboarding: NSObject {
     private var backButton: NSButton!
     private var doItButton: NSButton!
     private var nextButton: NSButton!
+    private var cancelButton: NSButton!
+    private var spinner: NSProgressIndicator!
     private var scrims = [OnboardingScrim]()
+
+    // $CLAUDE_CONFIG_DIR resolution (the one shell spawn) is kicked off when the
+    // panel opens so the answer is usually ready by the time the user clicks
+    // Install. resolvedConfigDirectory is set when it completes;
+    // configResolutionInFlight guards against launching it twice. If the user
+    // clicks Install before it finishes, pendingInstallStep records the step to
+    // resume and the button bar shows a spinner + Cancel until it lands.
+    private var resolvedConfigDirectory: URL?
+    private var configResolutionInFlight = false
+    private var pendingInstallStep: Step?
     private var introSheet: NSWindow?
     private var introTitleLabel: NSTextField?
     private var introLeadLabel: NSTextField?
@@ -106,7 +118,8 @@ class ClaudeCodeOnboarding: NSObject {
 
     // MARK: - Public API
 
-    // Strip every cc-status hook entry from ~/.claude/settings.json.
+    // Strip every cc-status hook entry from Claude Code's settings.json
+    // (resolved from $CLAUDE_CONFIG_DIR, defaulting to ~/.claude).
     // Inverse of doInstallHook. Returns .success for the file-missing
     // and no-cc-status-entries cases; returns a specific failure
     // case (.unreadable / .malformed / .writeFailed) when something
@@ -117,15 +130,34 @@ class ClaudeCodeOnboarding: NSObject {
     // removed from the top-level settings — so the file shape after
     // uninstall matches what a fresh install would have produced if
     // the user had never installed our hook in the first place.
+    // Synchronous: claudeSettingsURL() reads the install-time-recorded directory
+    // and never spawns a shell, so there's nothing slow to defer.
     @objc
     @discardableResult
     static func uninstallHooks() -> ClaudeCodeUninstallHooksResult {
-        let settingsURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".claude")
-            .appendingPathComponent("settings.json")
-        guard FileManager.default.fileExists(atPath: settingsURL.path) else {
-            RLog("Onboarding: no settings.json, nothing to uninstall")
+        let result = stripCCStatusHooks(fromSettingsURL: claudeSettingsURL())
+        if result == .success {
             iTermUserDefaults.claudeCodeHooksInstalled = false
+        }
+        return result
+    }
+
+    // Strip every cc-status hook entry from the given settings.json. Returns
+    // .success for the file-missing and no-cc-status-entries cases; returns a
+    // specific failure (.unreadable / .malformed / .writeFailed) when something
+    // actually went wrong, so a caller can show a targeted alert instead of
+    // always blaming the write step. Cleans up empty containers as it goes — an
+    // event whose only hook was cc-status is removed entirely; an empty `hooks`
+    // dict is removed from the top-level settings — so the file shape afterward
+    // matches what a fresh install would have produced if the user had never
+    // installed our hook. Pure: touches only the given file, no user-defaults
+    // side effects (uninstallHooks and the reinstall-orphan cleanup layer those
+    // on top).
+    // internal (not private) for unit testing via @testable import.
+    @discardableResult
+    static func stripCCStatusHooks(fromSettingsURL settingsURL: URL) -> ClaudeCodeUninstallHooksResult {
+        guard FileManager.default.fileExists(atPath: settingsURL.path) else {
+            RLog("Onboarding: no settings.json at \(settingsURL.path), nothing to strip")
             return .success
         }
         let data: Data
@@ -147,7 +179,6 @@ class ClaudeCodeOnboarding: NSObject {
             return .malformed
         }
         guard var hooks = settings["hooks"] as? [String: Any] else {
-            iTermUserDefaults.claudeCodeHooksInstalled = false
             return .success
         }
         var changed = false
@@ -186,9 +217,6 @@ class ClaudeCodeOnboarding: NSObject {
             }
         }
         guard changed else {
-            // Nothing on disk references cc-status — cache is no
-            // longer "installed" regardless of what it was before.
-            iTermUserDefaults.claudeCodeHooksInstalled = false
             return .success
         }
         if hooks.isEmpty {
@@ -200,11 +228,10 @@ class ClaudeCodeOnboarding: NSObject {
             let out = try JSONSerialization.data(withJSONObject: settings,
                                                  options: [.prettyPrinted, .sortedKeys])
             try out.write(to: settingsURL, options: .atomic)
-            iTermUserDefaults.claudeCodeHooksInstalled = false
-            DLog("Onboarding: uninstalled cc-status hooks")
+            DLog("Onboarding: stripped cc-status hooks from \(settingsURL.path)")
             return .success
         } catch {
-            RLog("Onboarding: failed to write settings.json during uninstall: \(error)")
+            RLog("Onboarding: failed to write settings.json during strip: \(error)")
             return .writeFailed
         }
     }
@@ -432,9 +459,7 @@ class ClaudeCodeOnboarding: NSObject {
     // Reads disk and follows symlinks; call off the main thread.
     @objc
     static func hooksHealthyOnDiskForHealthCheck() -> Bool {
-        let settingsURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".claude")
-            .appendingPathComponent("settings.json")
+        let settingsURL = claudeSettingsURL()
         guard let data = try? Data(contentsOf: settingsURL),
               let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let hooks = parsed["hooks"] as? [String: Any] else {
@@ -478,9 +503,7 @@ class ClaudeCodeOnboarding: NSObject {
     // for the broken-install detector is
     // hooksHealthyOnDiskForHealthCheck above.
     private static func hooksInstalledOnDisk() -> Bool {
-        let settingsURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".claude")
-            .appendingPathComponent("settings.json")
+        let settingsURL = claudeSettingsURL()
         guard let data = try? Data(contentsOf: settingsURL),
               let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let hooks = parsed["hooks"] as? [String: Any] else {
@@ -729,6 +752,10 @@ class ClaudeCodeOnboarding: NSObject {
         onboarding.updateUI()
         onboarding.panel.center()
         onboarding.panel.makeKeyAndOrderFront(nil)
+        // Start the one CLAUDE_CONFIG_DIR shell resolution now, while the user
+        // reads the intro and steps through the panel, so Install rarely has to
+        // wait on it.
+        onboarding.startResolvingConfigDirectory()
         // Cover the installer with the heads-up intro until the user
         // dismisses it. They might've launched this from the menu
         // not knowing what's about to be touched on disk; a sheet
@@ -834,6 +861,26 @@ class ClaudeCodeOnboarding: NSObject {
                                   height: 32)
         backButton.autoresizingMask = [.maxXMargin, .maxYMargin]
         contentView.addSubview(backButton)
+
+        // Cancel button, shown in the Do It button's place only while the hook
+        // install is waiting on the (early-started) CLAUDE_CONFIG_DIR resolution.
+        cancelButton = NSButton(title: iTermLocalizedCancel(), target: self, action: #selector(cancelPressed(_:)))
+        cancelButton.bezelStyle = .rounded
+        cancelButton.frame = doItButton.frame
+        cancelButton.autoresizingMask = [.minXMargin, .maxYMargin]
+        cancelButton.isHidden = true
+        contentView.addSubview(cancelButton)
+
+        // Indeterminate spinner shown next to Cancel during that same wait.
+        spinner = NSProgressIndicator(frame: NSRect(x: doItButton.frame.minX - 28,
+                                                    y: buttonY + 6,
+                                                    width: 20,
+                                                    height: 20))
+        spinner.style = .spinning
+        spinner.controlSize = .small
+        spinner.isDisplayedWhenStopped = false
+        spinner.autoresizingMask = [.minXMargin, .maxYMargin]
+        contentView.addSubview(spinner)
     }
 
     // MARK: - Intro Sheet
@@ -1090,6 +1137,18 @@ class ClaudeCodeOnboarding: NSObject {
         // Update content
         contentLabel.stringValue = currentStep.description
 
+        // The step labels and content above always update. The button bar,
+        // however, is owned by the config-resolution wait while it's up
+        // (beginWaitingForConfigResolution): Do It is hidden behind the spinner
+        // + Cancel and Back/Next are disabled. updateUI can be re-entered during
+        // that wait (e.g. the panel-open disk health check's main-queue
+        // continuation), so bail out before touching the buttons rather than
+        // un-hiding Do It on top of Cancel. endWaitingForConfigResolution clears
+        // pendingInstallStep and calls updateUI again to restore this section.
+        guard pendingInstallStep == nil else {
+            return
+        }
+
         // Update buttons
         backButton.isEnabled = !isFirstStep
         doItButton.title = currentStep.buttonTitle
@@ -1149,24 +1208,145 @@ class ClaudeCodeOnboarding: NSObject {
     }
 
     @objc private func doItPressed(_ sender: Any?) {
-        let success: Bool
-        switch currentStep {
+        // Capture the step now rather than reading currentStep back in any async
+        // continuation. The config-dir wait itself is modal (Back/Next are
+        // disabled), but the file-I/O phase after it is not: performHookInstall
+        // runs with Back/Next re-enabled (endWaitingForConfigResolution calls
+        // updateUI before it starts), so the user can move to another step
+        // before installHookFiles completes. Re-reading currentStep there would
+        // mark whatever step they moved to as complete instead of installHook.
+        let step = currentStep
+        switch step {
         case .enablePythonAPI:
-            success = doEnablePythonAPI()
+            finishDoIt(doEnablePythonAPI(), step: step)
         case .installHook:
-            success = doInstallHook()
+            if let configDirectory = resolvedConfigDirectory {
+                // CLAUDE_CONFIG_DIR already resolved (started when the panel
+                // opened) — go straight to the fast file-write install.
+                performHookInstall(configDirectory: configDirectory, step: step)
+            } else {
+                // Still resolving: show a spinner + Cancel and resume when it
+                // lands (or the user cancels).
+                beginWaitingForConfigResolution(step: step)
+            }
         case .showToolbelt:
             doShowToolbelt()
-            success = true
+            finishDoIt(true, step: step)
         case .installWorkgroup:
-            success = doInstallWorkgroup()
+            finishDoIt(doInstallWorkgroup(), step: step)
         case .installTriggers:
-            success = doInstallTriggers()
+            finishDoIt(doInstallTriggers(), step: step)
         }
+    }
+
+    private func finishDoIt(_ success: Bool, step: Step) {
         if success {
-            completedSteps.insert(currentStep)
+            completedSteps.insert(step)
         }
         updateUI()
+    }
+
+    // MARK: - CLAUDE_CONFIG_DIR resolution
+
+    private func startResolvingConfigDirectory() {
+        guard resolvedConfigDirectory == nil, !configResolutionInFlight else {
+            return
+        }
+        configResolutionInFlight = true
+        Self.resolveConfigDirectory { [weak self] url in
+            guard let self, Self.instance === self else {
+                return
+            }
+            self.configResolutionInFlight = false
+            guard let url else {
+                // Lookup failed (see resolveConfigDirectory). Do NOT record a
+                // guessed directory; a retry can still succeed.
+                self.configResolutionFailed()
+                return
+            }
+            self.resolvedConfigDirectory = url
+            // If Install is waiting on this, resume it now.
+            if let step = self.pendingInstallStep {
+                self.pendingInstallStep = nil
+                self.endWaitingForConfigResolution()
+                self.performHookInstall(configDirectory: url, step: step)
+            }
+        }
+    }
+
+    private func configResolutionFailed() {
+        guard pendingInstallStep != nil else {
+            // The early background kick-off failed and nobody is waiting. Leave
+            // resolvedConfigDirectory nil so the next Install click re-resolves
+            // (showing the spinner) rather than silently proceeding.
+            return
+        }
+        // The user is waiting on the spinner. Offer to retry rather than install
+        // into a guessed location.
+        let alert = NSAlert()
+        alert.messageText = String(localized: "ClaudeCodeOnboarding.ConfigResolutionFailedTitle", defaultValue: "Couldn\u{2019}t Determine Settings Location", comment: "Title of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user\u{2019}s shell")
+        alert.informativeText = String(localized: "ClaudeCodeOnboarding.ConfigResolutionFailedBody", defaultValue: "iTerm2 couldn\u{2019}t read CLAUDE_CONFIG_DIR from your shell, so it doesn\u{2019}t know where Claude Code keeps its settings. Try again?", comment: "Body of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user\u{2019}s shell")
+        alert.addButton(withTitle: String(localized: "ClaudeCodeOnboarding.Retry", defaultValue: "Retry", comment: "Button to retry resolving the Claude Code settings location"))
+        alert.addButton(withTitle: iTermLocalizedCancel())
+        if alert.runModal() == .alertFirstButtonReturn {
+            // Keep the spinner up and pendingInstallStep set; re-resolve.
+            startResolvingConfigDirectory()
+        } else {
+            pendingInstallStep = nil
+            endWaitingForConfigResolution()
+        }
+    }
+
+    private func beginWaitingForConfigResolution(step: Step) {
+        pendingInstallStep = step
+        // In case the early kick-off never ran (defensive), start it now.
+        startResolvingConfigDirectory()
+        // Right-align Cancel where Do It sat, and drop the spinner to its left.
+        cancelButton.sizeToFit()
+        var cancelFrame = cancelButton.frame
+        cancelFrame.size.height = doItButton.frame.height
+        cancelFrame.origin.y = doItButton.frame.origin.y
+        cancelFrame.origin.x = doItButton.frame.maxX - cancelFrame.size.width
+        cancelButton.frame = cancelFrame
+        spinner.frame.origin.x = cancelFrame.minX - 28
+        spinner.frame.origin.y = doItButton.frame.origin.y + 6
+        cancelButton.isHidden = false
+        doItButton.isHidden = true
+        backButton.isEnabled = false
+        nextButton.isEnabled = false
+        // Move the keyboard affordances to Cancel: a hidden Do It button can't
+        // respond to Return, so clear its key equivalent and let Escape trigger
+        // Cancel. endWaitingForConfigResolution's updateUI() restores Do It's.
+        doItButton.keyEquivalent = ""
+        cancelButton.keyEquivalent = "\u{1b}"  // Escape
+        spinner.startAnimation(nil)
+    }
+
+    private func endWaitingForConfigResolution() {
+        spinner.stopAnimation(nil)
+        cancelButton.isHidden = true
+        cancelButton.keyEquivalent = ""
+        doItButton.isHidden = false
+        // updateUI restores the correct Back/Next/Do It enabled + default state,
+        // including Do It's Return key equivalent.
+        updateUI()
+    }
+
+    @objc private func cancelPressed(_ sender: Any?) {
+        // Abandon the wait; the shell resolution may still land later and set
+        // resolvedConfigDirectory (harmless — no install proceeds because
+        // pendingInstallStep is cleared).
+        pendingInstallStep = nil
+        endWaitingForConfigResolution()
+    }
+
+    private func performHookInstall(configDirectory: URL, step: Step) {
+        doItButton.isEnabled = false
+        Self.installHookFiles(configDirectory: configDirectory) { [weak self] success in
+            guard let self else { return }
+            self.doItButton.isEnabled = true
+            self.finishDoIt(success, step: step)
+        }
     }
 
     // MARK: - Step: Enable Python API
@@ -1271,6 +1451,102 @@ class ClaudeCodeOnboarding: NSObject {
         "SubagentStop",
     ]
 
+    private static var defaultClaudeConfigDirectory: URL {
+        return FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude")
+    }
+
+    // The directory Claude Code's settings.json lives in, as recorded at the
+    // last install/reinstall. Claude Code resolves its own settings from
+    // $CLAUDE_CONFIG_DIR (defaulting to ~/.claude — the supported way to run
+    // separate accounts, e.g. personal vs. work, on one machine). That variable
+    // lives in the user's interactive rc files, so reading it requires spawning
+    // their shell — expensive and only ever needed to decide WHERE to install.
+    // So we resolve it once, at install time (resolveConfigDirectory +
+    // recordConfigDirectory below), persist the result, and read it back here
+    // synchronously everywhere else. nil until a first install has run, in which
+    // case we assume the default; that matches Claude Code's own default and is
+    // where a from-scratch install would go.
+    private static var claudeConfigDirectory: URL {
+        if let path = iTermUserDefaults.claudeCodeConfigDirPath, !path.isEmpty {
+            return URL(fileURLWithPath: path)
+        }
+        return defaultClaudeConfigDirectory
+    }
+
+    // Settings.json location for reads (uninstall, health check, menu
+    // visibility). Synchronous and main-thread-safe: it never spawns a shell,
+    // just reads the directory recorded at the last install.
+    static func claudeSettingsURL() -> URL {
+        return claudeConfigDirectory.appendingPathComponent("settings.json")
+    }
+
+    // Resolve the real $CLAUDE_CONFIG_DIR by launching the user's shell. Used
+    // ONLY at install/reinstall, never for reads. Runs /usr/bin/env by absolute
+    // path (so a PATH override/alias/function can't shadow it) in an INTERACTIVE
+    // shell (-i) via iTermSlowOperationGateway, so the user's .zshrc/.bashrc/etc.
+    // — where CLAUDE_CONFIG_DIR usually lives — are sourced; a bare -c shell
+    // would miss it.
+    //
+    // Fully async (completion on the main thread). The install UI shows a spinner
+    // with a Cancel button so the user isn't blocked and can give up early. There
+    // is no UI-level cutoff, but the XPC service does bound the work: reallyRun
+    // ShellScript enforces a 15s wall-clock deadline (SIGTERM/SIGKILL) and the
+    // runShellScript watchdog is 20s; both surface here as completion(nil). The
+    // onboarding panel kicks this off as soon as it opens, so by the time the
+    // user reaches and clicks Install the answer is usually already in hand.
+    //
+    // completion(nil) means the lookup FAILED (the shell could not be run to
+    // completion: the 15s deadline, the 20s watchdog, a crash, or a setup error —
+    // all surfaced as nil output). That is distinct from a successful run where
+    // CLAUDE_CONFIG_DIR is simply unset, which yields the default directory:
+    // `/usr/bin/env` always prints output, so a non-nil result with no
+    // CLAUDE_CONFIG_DIR line genuinely means "unset". The caller must NOT persist
+    // a guessed directory on failure, or it would install into the wrong place
+    // and record it as ground truth.
+    //
+    // Only local sessions are covered: Claude Code hook installation has no
+    // remote/SSH support today (installHookFiles always writes locally), so there
+    // is no equivalent lookup over Conductor.
+    private static func resolveConfigDirectory(completion: @escaping (URL?) -> Void) {
+        iTermSlowOperationGateway.sharedInstance().runCommand(inUserShell: "/usr/bin/env",
+                                                              interactive: true) { output in
+            guard let output else {
+                RLog("Onboarding: CLAUDE_CONFIG_DIR lookup failed (shell did not run)")
+                completion(nil)
+                return
+            }
+            if let value = Self.parseCLAUDE_CONFIG_DIR(from: output), !value.isEmpty {
+                DLog("Resolved CLAUDE_CONFIG_DIR to \(value)")
+                completion(URL(fileURLWithPath: (value as NSString).expandingTildeInPath))
+            } else {
+                DLog("CLAUDE_CONFIG_DIR not set; using default")
+                completion(defaultClaudeConfigDirectory)
+            }
+        }
+    }
+
+    // Persist the directory we installed into so every later read
+    // (claudeConfigDirectory) returns it without spawning a shell.
+    private static func recordConfigDirectory(_ url: URL) {
+        iTermUserDefaults.claudeCodeConfigDirPath = url.path
+    }
+
+    // Extract CLAUDE_CONFIG_DIR from `/usr/bin/env` output (newline-separated
+    // KEY=VALUE lines). A value containing an embedded newline would split
+    // incorrectly — an accepted limitation shared with it2ssh's own env-report
+    // parsing (terminalUpdateEnv).
+    // internal (not private) for unit testing via @testable import.
+    static func parseCLAUDE_CONFIG_DIR(from output: String) -> String? {
+        for line in output.split(separator: "\n", omittingEmptySubsequences: true) {
+            guard let equals = line.firstIndex(of: "=") else { continue }
+            let key = String(line[line.startIndex..<equals])
+            guard key == "CLAUDE_CONFIG_DIR" else { continue }
+            return String(line[line.index(after: equals)...])
+        }
+        return nil
+    }
+
     private func claudeSessionGUIDs() -> Set<String> {
         // Prefer ClaudeWatcher if running, otherwise query GlobalJobMonitor directly.
         if let watcher = ClaudeWatcher.instance, !watcher.sessionIDs.isEmpty {
@@ -1290,16 +1566,29 @@ class ClaudeCodeOnboarding: NSObject {
         return actual
     }
 
-    private func doInstallHook() -> Bool {
+    // Writes the cc-status symlink and merges our hooks into
+    // configDirectory/settings.json on a background queue (local file I/O, which
+    // can block on a network-mounted home), then persists configDirectory and
+    // reports back on the main thread. configDirectory has already been resolved
+    // (resolveConfigDirectory) before this is called, so there is no shell spawn
+    // here.
+    private static func installHookFiles(configDirectory: URL, completion: @escaping (Bool) -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            installHookFilesOnBackgroundQueue(configDirectory: configDirectory, completion: completion)
+        }
+    }
+
+    private static func installHookFilesOnBackgroundQueue(configDirectory: URL, completion: @escaping (Bool) -> Void) {
         guard let ccStatusPath = Self.ensureCCStatusSymlink() else {
             RLog("Onboarding: couldn't prepare cc-status symlink")
-            return false
+            DispatchQueue.main.async {
+                completion(false)
+            }
+            return
         }
         DLog("Onboarding: cc-status hook will point at \(ccStatusPath)")
 
-        let settingsURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".claude")
-            .appendingPathComponent("settings.json")
+        let settingsURL = configDirectory.appendingPathComponent("settings.json")
 
         // Read existing settings, or start with an empty object.
         var settings: [String: Any]
@@ -1380,21 +1669,60 @@ class ClaudeCodeOnboarding: NSObject {
             DLog("Onboarding: wrote settings.json")
         } catch {
             RLog("Onboarding: failed to write settings.json: \(error)")
-            let alert = NSAlert()
-            alert.messageText = String(localized: "ClaudeCodeOnboarding.FailedToInstallHook", defaultValue: "Failed to install hook", comment: "Title of the alert shown when the Claude Code hook could not be installed")
-            alert.informativeText = String(localized: "ClaudeCodeOnboarding.FailedToWriteSettings", defaultValue: "Could not write to \(settingsURL.path): \(error.localizedDescription)", comment: "Body of the alert shown when settings.json could not be written; first interpolation is a file path, second is an error description")
-            alert.runModal()
-            return false
+            DispatchQueue.main.async {
+                let alert = NSAlert()
+                alert.messageText = String(localized: "ClaudeCodeOnboarding.FailedToInstallHook", defaultValue: "Failed to install hook", comment: "Title of the alert shown when the Claude Code hook could not be installed")
+                alert.informativeText = String(localized: "ClaudeCodeOnboarding.FailedToWriteSettings", defaultValue: "Could not write to \(settingsURL.path): \(error.localizedDescription)", comment: "Body of the alert shown when settings.json could not be written; first interpolation is a file path, second is an error description")
+                alert.runModal()
+                completion(false)
+            }
+            return
         }
-        iTermUserDefaults.claudeCodeHooksInstalled = true
-        // Sticky "user once completed setup" flag — distinct from the
-        // disk-reconciled cache above. Drives broken-install detection
-        // when something else (Claude Code itself, hand edits) strips
-        // our hook out of settings.json after the fact. Only the
-        // Uninstall menu flow clears it.
-        iTermUserDefaults.claudeCodeIntegrationCompleted = true
-        RLog("Onboarding: doInstallHook complete")
-        return true
+
+        // Only now that the new settings.json is safely written do we strip our
+        // hook from a DIFFERENT directory we installed into last time, so it
+        // stops firing from a file no read path will look at again. Doing this
+        // after the write (not before) means a failed write above can't leave
+        // the user with the hook removed from the old location and not installed
+        // in the new one. The "previous" location is the recorded one, or the
+        // default when nothing was recorded yet — covering the upgrade case where
+        // the pre-CLAUDE_CONFIG_DIR build hardcoded ~/.claude and never recorded
+        // a path. Best effort: a missing file is fine and we don't fail the
+        // install if the strip fails.
+        let previousDirectory: URL
+        if let recorded = iTermUserDefaults.claudeCodeConfigDirPath, !recorded.isEmpty {
+            previousDirectory = URL(fileURLWithPath: recorded)
+        } else {
+            previousDirectory = defaultClaudeConfigDirectory
+        }
+        // Compare normalized path STRINGS, not URLs. URL equality is string
+        // equality including the trailing slash, and URL(fileURLWithPath:) /
+        // appendingPathComponent decide that slash by stat-ing the filesystem.
+        // configDirectory was resolved before the write (directory may not have
+        // existed → no slash) and previousDirectory is built after it (directory
+        // now exists → slash), so comparing URLs here would spuriously report
+        // "changed" for a first-ever install into the default dir and strip the
+        // settings.json we just wrote. Paths don't depend on filesystem state.
+        if previousDirectory.standardizedFileURL.path != configDirectory.standardizedFileURL.path {
+            let oldSettingsURL = previousDirectory.appendingPathComponent("settings.json")
+            DLog("Onboarding: install dir changed; stripping stale hook from \(oldSettingsURL.path)")
+            stripCCStatusHooks(fromSettingsURL: oldSettingsURL)
+        }
+
+        DispatchQueue.main.async {
+            // Record where we installed so all later reads (uninstall, health
+            // check, menu visibility) find settings.json without spawning a shell.
+            recordConfigDirectory(configDirectory)
+            iTermUserDefaults.claudeCodeHooksInstalled = true
+            // Sticky "user once completed setup" flag — distinct from the
+            // disk-reconciled cache above. Drives broken-install detection
+            // when something else (Claude Code itself, hand edits) strips
+            // our hook out of settings.json after the fact. Only the
+            // Uninstall menu flow clears it.
+            iTermUserDefaults.claudeCodeIntegrationCompleted = true
+            RLog("Onboarding: hook install complete")
+            completion(true)
+        }
     }
 
     // MARK: - Step: Install Workgroup

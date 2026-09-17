@@ -29,6 +29,7 @@ static NSString *const iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows = @"
 static NSString *const iTermUserDefaultsKeyClaudeCodeWorkgroupUpsellSuppressed = @"ClaudeCodeWorkgroupUpsellSuppressed";
 static NSString *const iTermUserDefaultsKeyClaudeCodeHooksInstalled = @"NoSyncClaudeCodeHooksInstalled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeTriggersInstalled = @"ClaudeCodeTriggersInstalled";
+static NSString *const iTermUserDefaultsKeyClaudeCodeConfigDirPath = @"NoSyncClaudeCodeConfigDirPath";
 static NSString *const iTermUserDefaultsKeyClaudeCodeIntegrationCompleted = @"NoSyncClaudeCodeIntegrationCompleted";
 static NSString *const iTermUserDefaultsKeyShowSessionStatusInTabSubtitle = @"ShowSessionStatusInTabSubtitle";
 NSString *const iTermShowSessionStatusInTabSubtitleDidChange = @"iTermShowSessionStatusInTabSubtitleDidChange";
@@ -247,6 +248,18 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setClaudeCodeTriggersInstalled:(BOOL)installed {
     [self.userDefaults setBool:installed
                         forKey:iTermUserDefaultsKeyClaudeCodeTriggersInstalled];
+}
+
++ (nullable NSString *)claudeCodeConfigDirPath {
+    return [self.userDefaults stringForKey:iTermUserDefaultsKeyClaudeCodeConfigDirPath];
+}
+
++ (void)setClaudeCodeConfigDirPath:(nullable NSString *)path {
+    if (path) {
+        [self.userDefaults setObject:path forKey:iTermUserDefaultsKeyClaudeCodeConfigDirPath];
+    } else {
+        [self.userDefaults removeObjectForKey:iTermUserDefaultsKeyClaudeCodeConfigDirPath];
+    }
 }
 
 + (BOOL)claudeCodeIntegrationCompleted {

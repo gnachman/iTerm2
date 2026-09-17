@@ -10,7 +10,9 @@ import Foundation
 //
 // "Broken" means: the user once successfully installed the cc-status
 // hook (so iTermUserDefaults.claudeCodeIntegrationCompleted is true)
-// but the hook is no longer present in ~/.claude/settings.json.
+// but the hook is no longer present in Claude Code's settings.json
+// (resolved from $CLAUDE_CONFIG_DIR, defaulting to ~/.claude — see
+// ClaudeCodeOnboarding.claudeSettingsURL).
 // Claude Code itself rewrites that file periodically and has been
 // observed to drop our hook entry; we have no way to prevent that,
 // so the recovery story is "notice it the next time claude runs and
@@ -48,7 +50,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
     // burn the one-shot on whatever unrelated warning happened to
     // be up.
     //
-    // Without this gate we'd re-parse ~/.claude/settings.json
+    // Without this gate we'd re-parse Claude Code's settings.json
     // every time claude appears in or disappears from any
     // session's ancestor chain — a few times a day for active
     // users, and a burst at window restoration. If Claude Code
@@ -141,9 +143,11 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
             return
         }
         RLog("Health: integration completed but hook is missing on disk — prompting")
+        // Synchronous, main-safe read of the install-time-recorded path.
+        let path = ClaudeCodeOnboarding.claudeSettingsURL().path
         let warning = iTermWarning()
         warning.heading = String(localized: "ClaudeHealthMonitor.BrokenHeading", defaultValue: "Claude Code Integration Looks Broken", comment: "Heading of the warning shown when the Claude Code status hook is missing")
-        warning.title = String(localized: "ClaudeHealthMonitor.BrokenTitle", defaultValue: "iTerm2\u{2019}s cc-status hook is no longer in ~/.claude/settings.json. This usually means Claude Code rewrote that file. Reinstall the hook so per-tab status indicators (\u{201C}Working\u{2026},\u{201D} \u{201C}Waiting\u{2026}\u{201D}) work again?", comment: "Body of the warning shown when the Claude Code status hook is missing from settings.json")
+        warning.title = String(localized: "ClaudeHealthMonitor.BrokenTitle", defaultValue: "iTerm2\u{2019}s cc-status hook is no longer in \(path). This usually means Claude Code rewrote that file. Reinstall the hook so per-tab status indicators (\u{201C}Working\u{2026},\u{201D} \u{201C}Waiting\u{2026}\u{201D}) work again?", comment: "Body of the warning shown when the Claude Code status hook is missing from settings.json; the interpolated value is the absolute path to settings.json")
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
         warning.identifier = Self.warningIdentifier
         let reinstall = String(localized: "ClaudeHealthMonitor.Reinstall", defaultValue: "Reinstall", comment: "Button to reinstall the Claude Code status hook")

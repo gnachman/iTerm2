@@ -45,6 +45,13 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 @property (class, nonatomic) BOOL claudeCodeWorkgroupUpsellSuppressed;
 @property (class, nonatomic) BOOL claudeCodeHooksInstalled;
 @property (class, nonatomic) BOOL claudeCodeTriggersInstalled;
+// Absolute path to the directory Claude Code's settings.json was last
+// found in (resolved from $CLAUDE_CONFIG_DIR, defaulting to ~/.claude).
+// Persisted so app-launch's synchronous, main-thread reconciliation of
+// claudeCodeHooksInstalled — which must not spawn a shell to re-resolve
+// $CLAUDE_CONFIG_DIR — has a better guess than ~/.claude to check across
+// restarts. nil until the real (shell-spawning) resolution has run once.
+@property (class, nonatomic, copy, nullable) NSString *claudeCodeConfigDirPath;
 // Sticky flag: set to YES when the user successfully installs the
 // cc-status hook, cleared only by the Uninstall menu flow. Distinct
 // from claudeCodeHooksInstalled, which is reconciled against disk on

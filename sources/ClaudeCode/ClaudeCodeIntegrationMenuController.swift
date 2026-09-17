@@ -39,30 +39,38 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
     }
 
     @objc func uninstall(_ sender: Any?) {
+        // The settings.json location was recorded at install time, so this is a
+        // synchronous read (no shell spawn) and is the same path uninstallHooks
+        // operates on below.
+        let settingsPath = ClaudeCodeOnboarding.claudeSettingsURL().path
         let confirm = NSAlert()
         confirm.messageText = String(localized: "ClaudeCode.UninstallTitle", defaultValue: "Uninstall Claude Code Integration?", comment: "Title of the uninstall confirmation dialog")
-        confirm.informativeText = String(localized: "ClaudeCode.UninstallBody", defaultValue: "This removes the cc-status hook from ~/.claude/settings.json, the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration.", comment: "Explanation of what uninstalling the Claude Code integration does")
+        confirm.informativeText = String(localized: "ClaudeCode.UninstallBody", defaultValue: "This removes the cc-status hook from \(settingsPath), the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration.", comment: "Explanation of what uninstalling the Claude Code integration does; the interpolated value is the absolute path to settings.json")
         confirm.alertStyle = .warning
         confirm.addButton(withTitle: String(localized: "ClaudeCode.Uninstall", defaultValue: "Uninstall", comment: "Button to confirm uninstalling the Claude Code integration"))
         confirm.addButton(withTitle: iTermLocalizedCancel())
         guard confirm.runModal() == .alertFirstButtonReturn else { return }
 
         // Hooks first — they're the only step that can fail (disk).
-        // If the hook removal fails, ask before touching the rest:
-        // the user may want to bail out and fix the underlying
-        // problem (nothing removed, retryable), or push through and
-        // clean up the iTerm-side state anyway (cc-status will keep
-        // firing until they fix ~/.claude/settings.json by hand).
         let hookResult = ClaudeCodeOnboarding.uninstallHooks()
+        finishUninstall(hookResult: hookResult, settingsPath: settingsPath)
+    }
+
+    private func finishUninstall(hookResult: ClaudeCodeUninstallHooksResult, settingsPath: String) {
+        // If the hook removal fails, ask before touching the rest: the
+        // user may want to bail out and fix the underlying problem
+        // (nothing removed, retryable), or push through and clean up the
+        // iTerm-side state anyway (cc-status will keep firing until they
+        // fix settingsPath by hand).
         if hookResult != .success {
             let detail: String
             switch hookResult {
             case .unreadable:
-                detail = String(localized: "ClaudeCode.HookUnreadable", defaultValue: "Could not read ~/.claude/settings.json — check the file\u{2019}s permissions.", comment: "Detail shown when the Claude Code settings file could not be read")
+                detail = String(localized: "ClaudeCode.HookUnreadable", defaultValue: "Could not read \(settingsPath) — check the file\u{2019}s permissions.", comment: "Detail shown when the Claude Code settings file could not be read; the interpolated value is the absolute path to settings.json")
             case .malformed:
-                detail = String(localized: "ClaudeCode.HookMalformed", defaultValue: "~/.claude/settings.json couldn\u{2019}t be parsed as JSON. Open it in a text editor and check it for syntax errors.", comment: "Detail shown when the Claude Code settings file is not valid JSON")
+                detail = String(localized: "ClaudeCode.HookMalformed", defaultValue: "\(settingsPath) couldn\u{2019}t be parsed as JSON. Open it in a text editor and check it for syntax errors.", comment: "Detail shown when the Claude Code settings file is not valid JSON; the interpolated value is the absolute path to settings.json")
             case .writeFailed:
-                detail = String(localized: "ClaudeCode.HookWriteFailed", defaultValue: "Could not write to ~/.claude/settings.json — check the file\u{2019}s permissions.", comment: "Detail shown when the Claude Code settings file could not be written")
+                detail = String(localized: "ClaudeCode.HookWriteFailed", defaultValue: "Could not write to \(settingsPath) — check the file\u{2019}s permissions.", comment: "Detail shown when the Claude Code settings file could not be written; the interpolated value is the absolute path to settings.json")
             case .success:
                 detail = ""  // unreachable; covered by outer guard
             @unknown default:

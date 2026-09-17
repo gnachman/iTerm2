@@ -67,7 +67,8 @@ TOP-LEVEL keys
   PrefsCustomFolder, CustomScriptsFolder, DownloadsDirectory,
     ScreenshotSaveLocation, PreferredBaseDir, DynamicProfilesPath,
     GitSearchPath, PathsToIgnore, NativeRenderingCSSLight/Dark,
-    BrowserPluginPathHint, ImportPath, NoSyncLastSSHDirectory  paths
+    BrowserPluginPathHint, ImportPath, NoSyncLastSSHDirectory,
+    NoSyncClaudeCodeConfigDirPath  paths
   NoSyncSavePanelSavedSettings_* ......... nested "InitialDirectory" path
   PathToDatabase_* ....................... password-manager backend URL
   OnePasswordAccount, LastpassGroups ..... password-manager identifiers
@@ -209,6 +210,7 @@ CONTENT_KEYS = {
     "NativeRenderingCSSDark": REDACT_V,
     "BrowserPluginPathHint": REDACT_V,
     "NoSyncLastSSHDirectory": REDACT_V,
+    "NoSyncClaudeCodeConfigDirPath": REDACT_V,
     "NoSyncRecentArchives": REDACT_V,
     "InitialDirectory": REDACT_V,
     # hosts / URLs

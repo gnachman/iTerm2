@@ -478,3 +478,9 @@ Bug Fixes:
   it could fail with a certificate error even
   though the same download succeeded in a
   browser.
+- Installing the Claude Code Integration now
+  honors $CLAUDE_CONFIG_DIR, so per-tab status
+  indicators work for people who keep Claude
+  Code’s settings outside ~/.claude. It used to
+  always install into ~/.claude, where Claude
+  Code never looked.
