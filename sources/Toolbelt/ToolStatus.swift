@@ -72,16 +72,17 @@ class ToolStatus: NSView {
     // -[PseudoTerminal tabView:didSelectTabViewItem:], plus
     // iTermSelectedTabDidChange from the latter. They all want the same
     // thing, so do it once at the end of the current runloop pass rather
-    // than rebuilding every row three times. Scheduled with async (not the
-    // debounce interval above) so the shortcut labels still land in the
+    // than rebuilding every row three times. The async joiner (not the
+    // debounce interval above) keeps the shortcut labels landing in the
     // same frame as the switch.
-    // Internal (not private), like resolveSessionForReload below, so tests
-    // can pin the coalescing and hidden-toolbelt contracts without standing
-    // up a window and a populated table.
-    var pendingShortcutReload: DispatchWorkItem?
+    private let shortcutReloadJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
     // Set when a shortcut reload was skipped because the toolbelt is
     // hidden, so it can be honored as soon as it is shown again.
     var missedShortcutReloadWhileHidden = false
+    // Counts reloads that actually ran, so tests can pin the coalescing
+    // contract without standing up a window and a populated table.
+    // Internal (not private) for the same reason resolveSessionForReload is.
+    var shortcutReloadCount = 0
     // Session GUIDs the user has snoozed via the row context menu. Transient
     // per-tool UI state (not persisted): snoozed rows sink to the bottom and
     // render dimmed, and auto-un-snooze when their status next changes.
@@ -299,8 +300,12 @@ extension ToolStatus {
         pendingFlush?.cancel()
         pendingFlush = nil
         pendingKeys.removeAll()
-        pendingShortcutReload?.cancel()
-        pendingShortcutReload = nil
+        // The joiner has no transient cancel (invalidate() is permanent), so
+        // a shortcut reload already queued for this runloop pass still fires
+        // after the reload below. That costs one redundant pass over a
+        // toolbelt-sized table on a cold path (the tool entering or leaving a
+        // window), which is not worth a new primitive. Same bargain
+        // ChatInputView.layout() makes with its layoutJoiner.
         missedShortcutReloadWhileHidden = false
         statuses = SessionStatusController.instance.statuses.values.compactMap { status in
             let contains = windowContains(sessionGUID: status.sessionID)
@@ -409,16 +414,12 @@ private extension ToolStatus {
     // Schedules one reload for the end of the current runloop pass,
     // collapsing the burst of notifications a single tab switch produces.
     func setNeedsShortcutReload() {
-        if pendingShortcutReload != nil {
-            return
+        shortcutReloadJoiner.setNeedsUpdate { [weak self] in
+            self?.reloadShortcuts()
         }
-        let work = DispatchWorkItem { [weak self] in self?.reloadShortcuts() }
-        pendingShortcutReload = work
-        DispatchQueue.main.async(execute: work)
     }
 
     private func reloadShortcuts() {
-        pendingShortcutReload = nil
         // Hiding the toolbelt sets its `hidden` flag rather than taking it
         // out of the window, so this tool keeps receiving notifications and
         // `window` stays non-nil - which is why the window check in
@@ -430,6 +431,7 @@ private extension ToolStatus {
             return
         }
         missedShortcutReloadWhileHidden = false
+        shortcutReloadCount += 1
         guard let tableView = _tableView, !displayedStatuses.isEmpty else {
             return
         }
