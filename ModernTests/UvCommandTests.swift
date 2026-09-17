@@ -71,5 +71,11 @@ final class UvCommandTests: XCTestCase {
         XCTAssertEqual(env["UV_NO_CONFIG"], "1")
         XCTAssertEqual(env["UV_PYTHON_DOWNLOADS"], "automatic")
         XCTAssertEqual(env["UV_LINK_MODE"], "clone")
+        // Verify TLS against the keychain, matching the URLSession download of uv itself,
+        // so a proxy whose root CA the machine trusts does not fail the interpreter and
+        // wheel downloads. Must be UV_SYSTEM_CERTS: uv 0.12 warns on stderr about the
+        // older UV_NATIVE_TLS spelling, and that warning would surface in error alerts.
+        XCTAssertEqual(env["UV_SYSTEM_CERTS"], "1")
+        XCTAssertNil(env["UV_NATIVE_TLS"])
     }
 }
