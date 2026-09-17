@@ -465,3 +465,16 @@ Bug Fixes:
   left the popup blank and showed no checkmark
   next to it when reopened, although the
   setting was saved correctly.
+- Double-clicking the window name beside the
+  tabs now opens the same rename dialog as
+  Window > Edit Window Title, so a window can be
+  renamed where its name is shown rather than
+  only from the Window menu. Dragging the name
+  still moves the window and right-clicking it
+  still opens the tab bar menu.
+- Installing the Python runtime used by scripts
+  now trusts the certificates installed on your
+  Mac. On networks that inspect secure traffic,
+  it could fail with a certificate error even
+  though the same download succeeded in a
+  browser.
