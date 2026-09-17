@@ -17,3 +17,8 @@ Bug Fixes:
   tabs sat jammed against the top of the screen
   in fullscreen. Affects the Tahoe tab bar with
   tabs on top.
+- Fixed the Screen setting in Settings >
+  Profiles > Window. Choosing “Main Screen”
+  left the popup blank and showed no checkmark
+  next to it when reopened, although the
+  setting was saved correctly.
