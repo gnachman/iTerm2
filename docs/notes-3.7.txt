@@ -455,3 +455,8 @@ Bug Fixes:
   sits in a rounded container matching the
   sponsor cards; before that, dark themes get a
   frosted-glass look.
+- Fixed the Screen setting in Settings >
+  Profiles > Window. Choosing “Main Screen”
+  left the popup blank and showed no checkmark
+  next to it when reopened, although the
+  setting was saved correctly.

@@ -33,6 +33,10 @@ CGFloat iTermMaxBlurRadius(void) {
     return 64;
 }
 
+// Tag for the separator in the initial-screen picker. Must not collide with a screen index, with
+// -1 (no preference), or with -2 (screen with cursor).
+static const NSInteger iTermScreenPickerSeparatorTag = -1000;
+
 typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     iTermWindowUnitsTagCells = 0,
     iTermWindowUnitsTagScreenPercentage = 1
@@ -1047,7 +1051,11 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     [_screen addItemWithTitle:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ScreenWithCursor", nil, [NSBundle mainBundle], @"Screen with Cursor", @"Initial-screen picker option: open new windows on whichever display has the mouse cursor.")];
     [[_screen lastItem] setTag:-2];
     NSArray<NSScreen *> *screens = [NSScreen screens];
-    [_screen.menu addItem:[NSMenuItem separatorItem]];
+    NSMenuItem *separator = [NSMenuItem separatorItem];
+    // Separators default to tag 0, which collides with the main screen's tag and would cause
+    // selectItemWithTag:0 to select the (titleless) separator instead of the main screen.
+    separator.tag = iTermScreenPickerSeparatorTag;
+    [_screen.menu addItem:separator];
     const int numScreens = [screens count];
     for (i = 0; i < numScreens; i++) {
         if (i == 0) {
