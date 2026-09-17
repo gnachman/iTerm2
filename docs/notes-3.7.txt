@@ -55,3 +55,8 @@ Bug Fixes:
   like Shift-Enter send a distinct code) now
   keeps working when its session is restored,
   instead of quietly reverting to plain keys.
+- Fixed the Screen setting in Settings >
+  Profiles > Window. Choosing “Main Screen”
+  left the popup blank and showed no checkmark
+  next to it when reopened, although the
+  setting was saved correctly.
