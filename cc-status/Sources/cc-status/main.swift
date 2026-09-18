@@ -370,7 +370,9 @@ func resolveIt2() -> (executable: URL, leadingArgs: [String]) {
     if fm.isExecutableFile(atPath: sibling.path) {
         return (sibling, [])
     }
-    // Standalone build: use the it2 inside the installed iTerm2.app.
+    // Standalone build: use the it2 inside the installed iTerm2.app. Only the
+    // two default install locations are checked; a bundle under
+    // /Applications/Utilities or with another name falls through to PATH.
     let home = fm.homeDirectoryForCurrentUser.path
     for app in ["\(home)/Applications/iTerm.app", "/Applications/iTerm.app"] {
         let candidate = URL(fileURLWithPath: app + "/Contents/Resources/utilities/it2")
