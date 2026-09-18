@@ -278,6 +278,13 @@ Improvements:
   tabs after a group follows suit.
 
 Bug Fixes:
+- Restoring a saved window arrangement now keeps
+  the window on the display it was saved on. With
+  more than one display and “Displays have
+  separate Spaces” turned on, macOS could pull
+  the window onto whichever display held the
+  active Space while its tabs were being
+  restored. Issue 13002.
 - A hotkey window set to appear on all spaces no
   longer switches you to a different space when
   revealed after reopening the laptop lid. It is

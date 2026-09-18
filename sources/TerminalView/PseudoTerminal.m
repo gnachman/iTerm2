@@ -4167,11 +4167,29 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     if (self.hotkeyWindowType != iTermHotkeyWindowTypeNone) {
         _suppressMakeCurrentTerminal |= iTermSuppressMakeCurrentTerminalHotkey;
     }
+    // Inserting a tab makes the window key and orders it front, and AppKit's
+    // -[NSWindow _reallyDoOrderWindowAboveOrBelow:] takes that as license to move the window to
+    // whichever display holds the active Space when displays have separate Spaces. It does that by
+    // calling -setFrame:display: on us, so refuse frame changes for the duration and let ordering
+    // and keyness proceed normally. The saved frame is applied below, once the tabs are in. Issue
+    // 13002.
+    //
+    // Fullscreen windows are excluded because they take the setFrame = NO branch below and depend
+    // on AppKit sizing them to the fullscreen tile. This mirrors what
+    // -[iTermRestorableStateDriver restoreWindows:] does for system window restoration.
+    const BOOL isFullScreenArrangement = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
+                                          windowType == WINDOW_TYPE_LION_FULL_SCREEN);
+    const BOOL savedPreventFrameChange = self.ptyWindow.it_preventFrameChange;
+    if (!isFullScreenArrangement) {
+        RLog(@"Prevent frame changes while restoring tabs in %@", self);
+        self.ptyWindow.it_preventFrameChange = YES;
+    }
     const BOOL restoreTabsOK = [self restoreTabsFromArrangement:arrangement
                                                           named:arrangementName
                                                        sessions:sessions
                                              partialAttachments:partialAttachments
                                            largeContentProvider:largeContentProvider];
+    self.ptyWindow.it_preventFrameChange = savedPreventFrameChange;
     _suppressMakeCurrentTerminal &= ~iTermSuppressMakeCurrentTerminalHotkey;
     _restoringWindow = savedRestoringWindow;
     if (!restoreTabsOK) {
@@ -4267,6 +4285,11 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
             [[self window] setFrame:frame display:YES];
             RLog(@"Now canonicalize the frame %@", self);
             [self canonicalizeWindowFrame];
+            // The window becomes key and is ordered front again after this returns, and AppKit can
+            // move it off the arrangement's display a moment later, long after any bracket we could
+            // hold here. Defend the frame we just settled on for a couple of seconds. Issue 13002.
+            RLog(@"Force frame after restoring arrangement in %@", self);
+            [self forceFrame:self.window.frame];
         } else {
             RLog(@"No change needed");
         }

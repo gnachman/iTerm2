@@ -45,6 +45,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType);
 - (void)windowDidExitFullScreenImpl:(NSNotification *)notification;
 - (void)windowDidFailToEnterFullScreenImpl:(NSWindow *)window;
 - (void)updateWindowType;
+- (void)forceFrame:(NSRect)frame;
 - (void)clearForceFrame;
 - (NSWindowStyleMask)styleMask;
 - (void)safelySetStyleMask:(NSWindowStyleMask)styleMask;
