@@ -76,3 +76,8 @@ Bug Fixes:
   session that had gone quiet. A redraw with no
   other output behind it could be held back
   until something else happened in the session.
+- Fixed a bug where a profile whose custom
+  working directory used a tilde (such as
+  ~/www) wrongly reported the directory as
+  unavailable and started in the home
+  directory instead.
