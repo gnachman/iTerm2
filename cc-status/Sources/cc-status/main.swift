@@ -288,9 +288,10 @@ if let backgroundTasks = backgroundTasks {
 }
 
 // Progress ring on the tab (OSC 9;4). Claude Code emits it itself, Codex CLI
-// doesn't. The hook shares the agent's tty, so the terminal picks it up
-// without disturbing the TUI.
-if isCodex, let status = status, let tty = FileHandle(forWritingAtPath: "/dev/tty") {
+// doesn't. Writing it to the agent's tty reaches the terminal without
+// disturbing the TUI.
+if isCodex, let status = status, let path = agentTTYPath(),
+   let tty = FileHandle(forWritingAtPath: path) {
     let seq = status == "working" ? "\u{1b}]9;4;3\u{7}" : "\u{1b}]9;4;0\u{7}"
     tty.write(Data(seq.utf8))
     tty.closeFile()
@@ -312,6 +313,34 @@ do {
 process.waitUntilExit()
 if process.terminationStatus != 0 {
     FileHandle.standardError.write(Data("cc-status: it2 exited \(process.terminationStatus) for \(eventName)\n".utf8))
+}
+
+// MARK: - Agent tty
+
+/// Path of the terminal the agent is running in, or nil when there is none.
+/// Codex 0.155+ starts hooks with setsid (openai/codex#43876), so the hook has
+/// no controlling terminal of its own; the nearest ancestor that still has one
+/// is the agent.
+func agentTTYPath() -> String? {
+    if let own = FileHandle(forWritingAtPath: "/dev/tty") {
+        own.closeFile()
+        return "/dev/tty"
+    }
+    var pid = getppid()
+    while pid > 1 {
+        var info = kinfo_proc()
+        var size = MemoryLayout<kinfo_proc>.size
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
+        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else {
+            return nil
+        }
+        let dev = info.kp_eproc.e_tdev
+        if dev != -1, let name = devname(dev, S_IFCHR) {
+            return "/dev/" + String(cString: name)
+        }
+        pid = info.kp_eproc.e_ppid
+    }
+    return nil
 }
 
 // MARK: - it2 resolution
