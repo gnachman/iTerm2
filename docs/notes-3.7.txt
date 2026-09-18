@@ -34,3 +34,7 @@ Bug Fixes:
   with an SSH profile. Keystrokes and the output
   they produced were each held back about a
   second, so typing arrived in slow bursts.
+- Fixed occasional delayed screen updates in a
+  session that had gone quiet. A redraw with no
+  other output behind it could be held back
+  until something else happened in the session.

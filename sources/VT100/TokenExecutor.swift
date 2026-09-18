@@ -360,6 +360,12 @@ private class TokenExecutorImpl {
                     Self.activeSessionsWithTokens.mutableAccess { set in
                         set.remove(ObjectIdentifier(self))
                     }
+                } else {
+                    // Changing the period does not disturb timers already armed at the
+                    // old one, so without this a session that becomes visible waits out
+                    // whatever remains of a background-sized window before its first
+                    // paint.
+                    sideEffectScheduler.expedite(within: Self.foregroundSideEffectPeriod)
                 }
             }
         }
@@ -533,13 +539,13 @@ private class TokenExecutorImpl {
 
     func addDeferredSideEffect(_ task: @escaping TokenExecutorTask) {
         sideEffects.append(task)
-        sideEffectScheduler.markNeedsUpdate(deferred: sideEffectScheduler.period / 2)
+        sideEffectScheduler.markNeedsUpdateDeferredByHalfPeriod()
     }
 
     // Any queue
     func setSideEffectFlag(value: Int64) {
         if (sideEffects.setFlag(value) & value) == 0 {
-            sideEffectScheduler.markNeedsUpdate(deferred: sideEffectScheduler.period / 2)
+            sideEffectScheduler.markNeedsUpdateDeferredByHalfPeriod()
         }
     }
 
@@ -836,9 +842,21 @@ class PeriodicScheduler: NSObject {
     private var _needsUpdate = false
     private let queue: DispatchQueue
     private let mutex = Mutex()
-    var period: TimeInterval
+    // The mutation queue changes this when a session becomes visible or hidden while any
+    // queue may be reading it, so it is guarded like the rest of the scheduler's state.
+    // Code that already holds the mutex must use _period; the lock is not reentrant.
+    private var _period: TimeInterval
+    var period: TimeInterval {
+        get { return mutex.sync { _period } }
+        set { mutex.sync { _period = newValue } }
+    }
     private let action: () -> ()
-    private var scheduledDeferred = false  // guarded by mutex
+    // Deadline and generation of the deferred flush armed by markNeedsUpdate(deferred:),
+    // if any. A request whose deadline is no sooner than the armed one coalesces into it;
+    // a sooner one supersedes it by way of the generation counter, the same way
+    // resetAfterDelay(_:) supersedes an armed reset. Guarded by mutex.
+    private var pendingDeferredDeadline: DispatchTime?
+    private var deferredGeneration = 0
     // Deadline of the reset currently armed by resetAfterDelay(_:), if any, plus the
     // generation it belongs to. markNeedsUpdate(within:) uses these to pull an armed
     // reset in when `period` is longer than a caller can tolerate. Guarded by mutex.
@@ -848,7 +866,7 @@ class PeriodicScheduler: NSObject {
     @objc(initWithQueue:period:block:)
     init(_ queue: DispatchQueue, period: TimeInterval, action: @escaping () -> ()) {
         self.queue = queue
-        self.period = period
+        self._period = period
         self.action = action
     }
 
@@ -862,23 +880,72 @@ class PeriodicScheduler: NSObject {
         schedule(reset: false)
     }
 
+    // Like markNeedsUpdate() but deliberately withholds the flush for `delay` so that more
+    // tokens land in the same batch and intermediate state is never drawn. See
+    // TokenExecutorImpl.addDeferredSideEffect(_:); the motivating case is a terminal that
+    // hides the cursor and shows it again a few tokens later, where flushing in between
+    // costs a visible flicker. Issue 10206.
+    //
+    // At most one deferred flush is armed at a time. A request that is no sooner than the
+    // armed one coalesces into it rather than arming a timer of its own, which matters
+    // because the hot callers (the side-effect flags) hit this on every linefeed.
     @objc func markNeedsUpdate(deferred delay: TimeInterval) {
-        DLog("markNeedsUpdate(deferred: \(delay))")
-        let needsScheduling = mutex.sync {
+        armDeferredFlush(delay: delay)
+    }
+
+    // What every production caller wants: a deferred flush half a period out. The period
+    // is read under the same lock that arms the timer because the mutation queue changes
+    // it when a session becomes visible or hidden; reading it separately would let a
+    // session compute its window from one period and arm it against another. That closes
+    // only the compute/arm race. A window already armed at the background period is a
+    // separate problem, handled by expedite(within:) on the transition to foreground.
+    @objc func markNeedsUpdateDeferredByHalfPeriod() {
+        armDeferredFlush(delay: nil)
+    }
+
+    // A nil delay means half the current period. Sampling `now` before taking the lock
+    // keeps the deadline anchored to when the request was made rather than to when it
+    // won the lock, so requests cannot be ordered differently than they arrived.
+    private func armDeferredFlush(delay explicitDelay: TimeInterval?) {
+        let now = DispatchTime.now()
+        mutex.sync {
+            let delay = explicitDelay ?? (_period / 2.0)
             _needsUpdate = true
-            defer {
-                scheduledDeferred = true
+            if let pendingDeferredDeadline, pendingDeferredDeadline <= now + delay {
+                DLog("A deferred flush is already armed and is at least this soon")
+                return
             }
-            return scheduledDeferred
+            DLog("Arm deferred flush \(delay) from now")
+            deferAfterDelay(delay, from: now)
         }
-        if needsScheduling {
-            queue.asyncAfter(deadline: .now() + delay) { [weak self] in
-                guard let self else { return }
-                self.mutex.sync {
-                    self.scheduledDeferred = false
-                }
-                self.schedule(reset: false)
+    }
+
+    // Caller must hold the mutex. Arms a deferred flush `delay` from `now`, superseding
+    // any deferred flush armed earlier so that exactly one is live at a time. The mirror
+    // of resetAfterDelay(_:), which does the same for the throttling reset.
+    private func deferAfterDelay(_ delay: TimeInterval, from now: DispatchTime) {
+        deferredGeneration += 1
+        let generation = deferredGeneration
+        let deadline = now + delay
+        pendingDeferredDeadline = deadline
+        queue.asyncAfter(deadline: deadline) { [weak self] in
+            guard let self else {
+                return
             }
+            let superseded = self.mutex.sync { () -> Bool in
+                guard self.deferredGeneration == generation else {
+                    return true
+                }
+                self.pendingDeferredDeadline = nil
+                return false
+            }
+            if superseded {
+                // A later call armed a sooner flush, which is responsible for this update.
+                DLog("Ignore superseded deferred flush")
+                return
+            }
+            DLog("Deferred flush of \(delay) elapsed")
+            self.schedule(reset: false)
         }
     }
 
@@ -899,14 +966,59 @@ class PeriodicScheduler: NSObject {
                 scheduleLocked(reset: false)
                 return
             }
-            let deadline = DispatchTime.now() + maximumDelay
-            if let pendingResetDeadline, pendingResetDeadline <= deadline {
-                DLog("Armed reset is already soon enough")
-                return
-            }
-            DLog("Pull in armed reset to \(maximumDelay) from now")
-            resetAfterDelay(maximumDelay)
+            pullInArmedResetLocked(within: maximumDelay)
         }
+    }
+
+    // Shortens an armed reset to `maximumDelay` without itself requesting an update.
+    // markNeedsUpdate(within:) would set _needsUpdate, which forces a flush even when
+    // nothing is waiting; this only accelerates work that is already scheduled. Used when
+    // a session becomes visible and its period shrinks, so that nothing armed at the old,
+    // longer period holds the first paint for the rest of that period.
+    //
+    // Both armed timers have to be pulled in, and they are independent. The reset only
+    // exists while an update is throttled, whereas a deferred flush can be the only thing
+    // scheduled on an otherwise quiescent session: a hidden tab that draws a prompt arms
+    // a flush half a background period out and nothing else, so a user switching to it
+    // 50ms later would wait out the remaining 450ms.
+    @objc func expedite(within maximumDelay: TimeInterval) {
+        DLog("expedite(within: \(maximumDelay))")
+        let now = DispatchTime.now()
+        mutex.sync {
+            if _updatePending {
+                pullInArmedResetLocked(within: maximumDelay)
+            }
+            pullInArmedDeferredFlushLocked(within: maximumDelay, from: now)
+        }
+    }
+
+    // Caller must hold the mutex. Arms a deferred flush `maximumDelay` from now if one is
+    // armed and is further out than that. Does nothing when none is armed: unlike the
+    // reset, a deferred flush is a request that was actually made, so there is nothing to
+    // accelerate if nobody made one.
+    private func pullInArmedDeferredFlushLocked(within maximumDelay: TimeInterval,
+                                                from now: DispatchTime) {
+        guard let pendingDeferredDeadline else {
+            return
+        }
+        guard pendingDeferredDeadline > now + maximumDelay else {
+            DLog("Armed deferred flush is already soon enough")
+            return
+        }
+        DLog("Pull in armed deferred flush to \(maximumDelay) from now")
+        deferAfterDelay(maximumDelay, from: now)
+    }
+
+    // Caller must hold the mutex. Arms a reset `maximumDelay` from now unless the one
+    // already armed is at least that soon.
+    private func pullInArmedResetLocked(within maximumDelay: TimeInterval) {
+        let deadline = DispatchTime.now() + maximumDelay
+        if let pendingResetDeadline, pendingResetDeadline <= deadline {
+            DLog("Armed reset is already soon enough")
+            return
+        }
+        DLog("Pull in armed reset to \(maximumDelay) from now")
+        resetAfterDelay(maximumDelay)
     }
 
     @objc func schedule() {
@@ -946,7 +1058,7 @@ class PeriodicScheduler: NSObject {
             return
         }
 
-        resetAfterDelay(period)
+        resetAfterDelay(_period)
         _needsUpdate = false
         DLog("Periodic scheduler performing action")
         action()
