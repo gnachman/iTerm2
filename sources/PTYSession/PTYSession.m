@@ -20625,7 +20625,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         strongSelf->_uploadAndPasteTransfer = nil;
         [strongSelf.view hideUploadIndicator];
         if (success) {
-            NSString *escapedPath = [remotePath quotedStringForPaste];
+            NSString *escapedPath = [iTermNonTextPasteHelper escapedPathForPaste:remotePath];
             DLog(@"Pasting escaped path: %@", escapedPath);
             [strongSelf pasteString:escapedPath flags:0];
         } else {

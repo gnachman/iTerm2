@@ -582,7 +582,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         return [_delegate textViewCanCycleWorkgroupPeer];
     }
     if ([item action] == @selector(pasteBase64Encoded:)) {
-        return [[NSPasteboard generalPasteboard] dataForFirstFile] != nil;
+        return [[NSPasteboard generalPasteboard] hasReadableFirstFile];
     }
     if (item.action == @selector(bury:)) {
         // Disable bury for synthetic sessions - it doesn't work correctly

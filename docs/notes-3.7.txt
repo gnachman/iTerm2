@@ -534,3 +534,18 @@ Bug Fixes:
   session that had gone quiet. A redraw with no
   other output behind it could be held back
   until something else happened in the session.
+- Fixed a beachball with a large file, or a file
+  on a slow disk, copied from the Finder.
+  Opening Edit > Paste Special read the whole
+  file just to decide whether to enable Paste
+  File Base64-Encoded, and pasting read it again
+  before offering the paste options. Opening the
+  menu no longer reads the file at all, and
+  pasting looks at only the first 50 KB.
+- The file paste options (Paste Path, Paste
+  Paths, and Upload and Paste Path) now honor
+  the “When pasting a dropped filename, wrap it
+  in double quotes” setting in Settings >
+  General, as dragging a file into a local
+  session already did. They previously always
+  used double quotes, ignoring the setting.

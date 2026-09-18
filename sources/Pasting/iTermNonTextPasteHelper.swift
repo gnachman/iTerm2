@@ -183,10 +183,10 @@ class iTermNonTextPasteHelper: NSObject {
             switch actions[index] {
             case .pastePath:
                 DLog("handleFilePaste: pastePath")
-                self.delegate?.nonTextPasteHelper(self, pasteString: existingPaths.first!.quotedStringForPaste())
+                self.delegate?.nonTextPasteHelper(self, pasteString: Self.escapedPathForPaste(existingPaths.first!))
             case .pastePaths:
                 DLog("handleFilePaste: pastePaths")
-                let escapedPaths = existingPaths.map { $0.quotedStringForPaste() }.joined(separator: " ")
+                let escapedPaths = existingPaths.map { Self.escapedPathForPaste($0) }.joined(separator: " ")
                 self.delegate?.nonTextPasteHelper(self, pasteString: escapedPaths)
             case .pasteBase64:
                 DLog("handleFilePaste: pasteBase64")
@@ -400,11 +400,106 @@ class iTermNonTextPasteHelper: NSObject {
     }
 
     private func firstFileIsValidUTF8(_ paths: [String]) -> Bool {
-        guard let firstPath = paths.first,
-              let data = FileManager.default.contents(atPath: firstPath) else {
+        guard let firstPath = paths.first else {
             return false
         }
-        return String(data: data, encoding: .utf8) != nil
+        return Self.prefixIsValidUTF8(ofFileAt: firstPath)
+    }
+
+    // How much of a file we look at to decide whether it is text. Reading the whole file
+    // blocked the main thread for seconds on a large file or a slow disk (issue 13024),
+    // and this decision only controls whether the “Paste as Text” button is offered. A
+    // sample this small can be wrong about the rest of the file; pasteFileAsText handles
+    // that by reporting the file as not being UTF-8 rather than pasting garbage.
+    static let utf8SampleByteCount = 50 * 1024
+
+    // Whether the first utf8SampleByteCount bytes of the file are valid UTF-8. If they
+    // are, we assume the rest of the file is too rather than pay to read it.
+    static func prefixIsValidUTF8(ofFileAt path: String) -> Bool {
+        guard let handle = FileHandle(forReadingAtPath: path) else {
+            DLog("prefixIsValidUTF8: could not open \(path)")
+            return false
+        }
+        defer {
+            try? handle.close()
+        }
+        let data: Data
+        do {
+            // One byte more than we intend to look at, so that filling the sample is
+            // proof we cut the file short. Reading exactly utf8SampleByteCount cannot
+            // tell a file of that exact size from a longer one.
+            data = try handle.read(upToCount: utf8SampleByteCount + 1) ?? Data()
+        } catch {
+            DLog("prefixIsValidUTF8: read failed for \(path): \(error)")
+            return false
+        }
+        // Only forgive a truncated sequence when we are the ones who truncated it. A file
+        // that really ends mid-sequence is not valid UTF-8.
+        let weTruncated = data.count > utf8SampleByteCount
+        let sample = weTruncated ? trimmingPartialTrailingSequence(data.prefix(utf8SampleByteCount)) : data
+        return String(data: sample, encoding: .utf8) != nil
+    }
+
+    // Drops a trailing UTF-8 sequence that the sample boundary cut in half, so that a
+    // multi-byte scalar straddling the cut does not make a text file look like binary.
+    static func trimmingPartialTrailingSequence(_ data: Data) -> Data {
+        // A sequence is at most four bytes and a complete one needs no trimming, so the
+        // lead byte of an interrupted sequence is within the last three bytes.
+        let lowerBound = max(data.startIndex, data.endIndex - 3)
+        var i = data.endIndex - 1
+        while i >= lowerBound {
+            let byte = data[i]
+            if byte & 0b1100_0000 == 0b1000_0000 {
+                // Continuation byte: its lead byte is further back.
+                i -= 1
+                continue
+            }
+            if byte & 0b1000_0000 == 0 {
+                // ASCII scalar, so nothing was cut.
+                return data
+            }
+            // Lead byte. Trim it and its continuations only if its sequence runs past the
+            // end of what we read.
+            if sequenceLength(leadByte: byte) > data.endIndex - i {
+                return data.prefix(upTo: i)
+            }
+            return data
+        }
+        // Three trailing continuation bytes with no lead byte in reach: not valid UTF-8
+        // however the file continues, so leave it for the validator to reject.
+        return data
+    }
+
+    private static func sequenceLength(leadByte: UInt8) -> Int {
+        if leadByte & 0b1110_0000 == 0b1100_0000 {
+            return 2
+        }
+        if leadByte & 0b1111_0000 == 0b1110_0000 {
+            return 3
+        }
+        if leadByte & 0b1111_1000 == 0b1111_0000 {
+            return 4
+        }
+        // Not a lead byte at all, so there is nothing to wait for.
+        return 1
+    }
+
+    // Escapes a path the same way the drag-and-drop path does, honoring the user’s
+    // quoting preference: off (the default) gives backslash escaping, on wraps the whole
+    // path in quotes. 3.7.0 always quoted, which changed behavior for everyone. Every
+    // paste-a-path action goes through here, including the ones PTYSession runs after an
+    // upload, so they cannot disagree about the preference.
+    @objc(escapedPathForPaste:)
+    static func escapedPathForPaste(_ path: String) -> String {
+        let wrapInQuotes = iTermPreferences.bool(forKey: kPreferenceKeyWrapDroppedFilenamesInQuotesWhenPasting)
+        return escapedPathForPaste(path, wrapInQuotes: wrapInQuotes)
+    }
+
+    static func escapedPathForPaste(_ path: String, wrapInQuotes: Bool) -> String {
+        if wrapInQuotes {
+            return path.quotedStringForPaste()
+        }
+        return path.withEscapedShellCharacters(includingNewlines: true)
     }
 
     private func pasteBase64EncodedContents(of path: String) {
@@ -483,7 +578,7 @@ class iTermNonTextPasteHelper: NSObject {
             DLog("saveTempFileAndPastePath: failed to save temp file")
             return
         }
-        let escapedPath = tempPath.quotedStringForPaste()
+        let escapedPath = Self.escapedPathForPaste(tempPath)
         DLog("saveTempFileAndPastePath: pasting path \(escapedPath)")
         delegate?.nonTextPasteHelper(self, pasteString: escapedPath)
     }
