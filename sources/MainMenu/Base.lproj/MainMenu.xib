@@ -2146,6 +2146,12 @@ DQ
                                             </connections>
                                             <accessibility identifier="Centered"/>
                                         </menuItem>
+                                        <menuItem title="Centered, No Title Bar" tag="19" identifier="Window Style.Centered No Title Bar" id="Qd4-Vm-7xR">
+                                            <connections>
+                                                <action selector="setWindowStyle:" target="-1" id="Yk2-Ht-3bN"/>
+                                            </connections>
+                                            <accessibility identifier="Centered, No Title Bar"/>
+                                        </menuItem>
                                         <menuItem isSeparatorItem="YES" id="tC0-nP-ChJ"/>
                                         <menuItem title="Full-Width Bottom of Screen" tag="5" identifier="Window Style.FullWidth Bottom of Screen" id="VcO-5C-gYt">
                                             <connections>

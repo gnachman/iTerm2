@@ -43,6 +43,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return windowType;
 
         case WINDOW_TYPE_COMPACT:
@@ -71,6 +72,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return YES;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -101,6 +103,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return YES;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -221,6 +224,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -240,6 +244,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -276,6 +281,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             return NO;
@@ -379,6 +385,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
             return YES;
 
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             DLog(@"No title bar");
             if ([self windowTypeHasTitleBar:self.windowType]) {
                 DLog(@"Window type has title bar");
@@ -387,9 +394,19 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
                 [self updateTabColors];
                 [self.contentView didChangeCompactness];
                 [self.contentView layoutSubviews];
-                return YES;
+            } else {
+                // The old type was already chromeless, so there is no window to
+                // rebuild, but the type must still be recorded. Formerly it was
+                // not, which meant that switching between two chromeless types
+                // (an edge-attached one to No Title Bar, or either centered
+                // variant to the other) left windowType stale.
+                self.windowType = newWindowType;
+                self.window.movable = [self.class windowTypeIsMovable:newWindowType];
             }
-            self.window.movable = [self.class windowTypeIsMovable:newWindowType];
+            // WINDOW_TYPE_CENTERED_NO_TITLE_BAR has a canonical frame and must
+            // be re-centered after the switch. This leaves the frame alone for
+            // WINDOW_TYPE_NO_TITLE_BAR, which does not.
+            [self canonicalizeWindowFrame];
             return YES;
     }
     return YES;
@@ -1020,6 +1037,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
             case WINDOW_TYPE_CENTERED:
                 return NO;
             case WINDOW_TYPE_NO_TITLE_BAR:
+            case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             case WINDOW_TYPE_TOP_PERCENTAGE:
             case WINDOW_TYPE_BOTTOM_PERCENTAGE:
             case WINDOW_TYPE_LEFT_PERCENTAGE:
@@ -1057,6 +1075,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return (mask |
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskFullSizeContentView |

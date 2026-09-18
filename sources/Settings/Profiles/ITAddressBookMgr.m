@@ -110,6 +110,7 @@ iTermWindowType iTermUnthemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_ACCESSORY:
             return windowType;
     }
@@ -181,6 +182,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return windowType;
     }
     ITAssertWithMessage(NO, @"Unknown window type %@", @(windowType));
@@ -219,6 +221,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_COMPACT_CENTERED:
+            case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 width = -1;
                 break;
         }
@@ -251,6 +254,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_COMPACT_CENTERED:
+            case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 height = -1;
                 break;
         }

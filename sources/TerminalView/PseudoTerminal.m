@@ -663,6 +663,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -969,6 +970,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
             break;
         case WINDOW_TYPE_COMPACT_CENTERED:
             style = @"compact centered";
+            break;
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
+            style = @"centered without title bar";
             break;
         case WINDOW_TYPE_TOP_CELLS:
             style = @"top";
@@ -1570,6 +1574,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
@@ -1601,6 +1606,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -1657,6 +1663,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
@@ -1829,6 +1836,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_ACCESSORY:
             case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_COMPACT_CENTERED:
+            case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 RLog(@"Returning YES");
                 return YES;
             case WINDOW_TYPE_MAXIMIZED:
@@ -2074,6 +2082,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return PTYWindowTitleBarFlavorOnePoint;
     }
 
@@ -2095,6 +2104,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
@@ -3235,6 +3245,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
                 case WINDOW_TYPE_LION_FULL_SCREEN:
                 case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_COMPACT_CENTERED:
+                case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 case WINDOW_TYPE_BOTTOM_CELLS:
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_LEFT_CELLS:
@@ -3366,6 +3377,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
 
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             rect.origin.x = virtualScreenFrame.origin.x + (virtualScreenFrame.size.width - rect.size.width) / 2;
@@ -3674,6 +3686,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
 
                 case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_COMPACT_CENTERED:
+                case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 case WINDOW_TYPE_NORMAL:
@@ -4232,6 +4245,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
             case WINDOW_TYPE_RIGHT_CELLS:
             case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_COMPACT_CENTERED:
+            case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 RLog(@"No sanitization but width adjustment.");
                 // There's a good chance that sanitization would make sense here but I'm afraid of
                 // breaking things I don't understand by changing it.
@@ -5131,7 +5145,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             break;
 
         case WINDOW_TYPE_CENTERED:
-        case WINDOW_TYPE_COMPACT_CENTERED: {
+        case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR: {
             // Behave like a normal window: preserve the current size and only
             // re-center. Using preserveSize:NO here (as the edge-attached and
             // maximized types do) would snap the window back to the profile
@@ -5238,6 +5253,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return [self visibleFrameForScreen:self.window.screen];
     }
 }
@@ -5526,6 +5542,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return NO;
     }
 }
@@ -5546,6 +5563,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return NO;
 
         case WINDOW_TYPE_NORMAL:
@@ -5703,6 +5721,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
@@ -6356,6 +6375,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return NO;
 
         case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -6423,6 +6443,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             break;
     }
 
@@ -6494,6 +6515,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -6569,6 +6591,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             return NO;
@@ -6597,6 +6620,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_COMPACT_CENTERED:
+            case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             case WINDOW_TYPE_TOP_CELLS:
             case WINDOW_TYPE_LEFT_CELLS:
             case WINDOW_TYPE_NO_TITLE_BAR:
@@ -6813,7 +6837,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case TAB_STYLE_DARK_HIGH_CONTRAST:
             break;
     }
-    switch (exitingLionFullscreen_ ? self.savedWindowType : self.windowType) {
+    // Assign to a local of the enum type before switching. Switching directly on the ternary would
+    // promote its value to int (the usual arithmetic conversions apply to the conditional
+    // operator), which silently disables -Wswitch exhaustiveness checking.
+    const iTermWindowType effectiveWindowType = exitingLionFullscreen_ ? self.savedWindowType : self.windowType;
+    switch (effectiveWindowType) {
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
@@ -6823,10 +6851,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            RLog(@"NO - window type is %@", @(self.windowType));
+            RLog(@"NO - effective window type is %@ (windowType=%@)", @(effectiveWindowType), @(self.windowType));
             return NO;
 
         case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -6844,7 +6874,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 // windows would otherwise keep the tab bar in the content view,
                 // giving them a mismatched tab bar background and a titlebar
                 // separator line.
-                RLog(@"YES - macOS 26 with window type %@", @(self.windowType));
+                RLog(@"YES - macOS 26 with effective window type %@ (windowType=%@)", @(effectiveWindowType), @(self.windowType));
                 return YES;
             }
             if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
@@ -7416,6 +7446,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return NO;
 
@@ -8125,6 +8156,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_COMPACT_CENTERED:
+                case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_RIGHT_PERCENTAGE:
                 case WINDOW_TYPE_LEFT_PERCENTAGE:
@@ -8502,6 +8534,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_COMPACT_CENTERED:
+                case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_LEFT_CELLS:
                 case WINDOW_TYPE_RIGHT_CELLS:
@@ -8531,6 +8564,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_COMPACT_CENTERED:
+                case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_LEFT_CELLS:
                 case WINDOW_TYPE_RIGHT_CELLS:
@@ -8566,6 +8600,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_CENTERED:
                 case WINDOW_TYPE_COMPACT_CENTERED:
+                case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_LEFT_CELLS:
                 case WINDOW_TYPE_RIGHT_CELLS:
@@ -9234,6 +9269,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
@@ -9270,6 +9306,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return YES;
     }
     return NO;
@@ -10308,6 +10345,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_COMPACT:
@@ -12714,6 +12752,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_NORMAL:
@@ -12757,6 +12796,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return NO;
 
         case WINDOW_TYPE_NORMAL:
@@ -12796,6 +12836,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                     case WINDOW_TYPE_TOP_CELLS:
                     case WINDOW_TYPE_LEFT_CELLS:
                     case WINDOW_TYPE_NO_TITLE_BAR:
+                    case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                     case WINDOW_TYPE_RIGHT_CELLS:
                     case WINDOW_TYPE_BOTTOM_CELLS:
                     case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -12943,6 +12984,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -13084,6 +13126,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
     BOOL windowTypeCompatibleWithTopBorder = (self.windowType == WINDOW_TYPE_BOTTOM_PERCENTAGE ||
                                               self.windowType == WINDOW_TYPE_NO_TITLE_BAR ||
+                                              self.windowType == WINDOW_TYPE_CENTERED_NO_TITLE_BAR ||
                                               self.windowType == WINDOW_TYPE_BOTTOM_CELLS);
     return (!visibleTopTabBar &&
             windowTypeCompatibleWithTopBorder);
@@ -16341,6 +16384,7 @@ backgroundColor:(NSColor *)backgroundColor {
             
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:

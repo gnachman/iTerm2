@@ -466,6 +466,11 @@ typedef NS_ENUM(int, iTermWindowType) {
     
     WINDOW_TYPE_CENTERED = 17,  // May be converted to compact-centered depending on theme
     WINDOW_TYPE_COMPACT_CENTERED = 18,
+
+    // Centered like WINDOW_TYPE_CENTERED but chromeless like WINDOW_TYPE_NO_TITLE_BAR.
+    // Like WINDOW_TYPE_NO_TITLE_BAR it has no title bar in any theme, so unlike the
+    // centered pair above it needs no compact variant.
+    WINDOW_TYPE_CENTERED_NO_TITLE_BAR = 19,
 };
 
 iTermWindowType iTermWindowDefaultType(void);

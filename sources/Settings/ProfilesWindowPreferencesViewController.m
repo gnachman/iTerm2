@@ -436,6 +436,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             [self setObjectsFromDictionary:[self dictionaryToSaveWindowType:_windowStyle.selectedTag]];
             break;
 
@@ -494,6 +495,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             [_windowStyle selectItemWithTag:type];
             break;
         case WINDOW_TYPE_BOTTOM_CELLS:
@@ -524,6 +526,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_NO_TITLE_BAR:
             _columnsField.hidden = !columnsIsCells;
             _rowsField.hidden = !rowsIsCells;

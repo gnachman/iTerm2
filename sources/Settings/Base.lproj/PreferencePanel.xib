@@ -4132,6 +4132,7 @@ CA
                                         <menuItem title="No Title Bar" tag="12" id="REd-Hh-bME"/>
                                         <menuItem isSeparatorItem="YES" id="ohs-lg-RYo"/>
                                         <menuItem title="Centered" tag="17" id="r5u-Qn-ncn"/>
+                                        <menuItem title="Centered, No Title Bar" tag="19" id="Ctn-Lb-9wq"/>
                                         <menuItem isSeparatorItem="YES" id="DQW-yM-NUd"/>
                                         <menuItem title="Bottom of Screen" tag="5" id="4943" userLabel="Bottom of Screen (Width by Percentage)"/>
                                         <menuItem title="Top of Screen" tag="2" id="5591" userLabel="Top of Screen (Width by Percentage)"/>

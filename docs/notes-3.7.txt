@@ -163,6 +163,13 @@ New Features:
   numbers by running the Claude Code command-line
   tool. You can point it at your own command
   instead.
+- There is a new “Centered, No Title Bar”
+  window style, in Settings > Profiles > Window >
+  Style and in the Window > Window Style menu. It
+  stays centered on the screen like the Centered
+  style but has no title bar or window controls,
+  which is how Centered windows looked before
+  3.7.0.
 
 Improvements:
 - The Move Tab Left and Move Tab Right shortcuts
