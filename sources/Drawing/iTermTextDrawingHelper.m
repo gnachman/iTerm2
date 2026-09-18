@@ -3333,18 +3333,23 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                  element.virtual ? @"YES" : @"NO");
         }
     }
+    // A Unicode placeholder always refers to a virtual placement, so only ever match virtual
+    // placements here; a non-virtual placement of the same image (which is drawn directly at its own
+    // screen position) must never be picked up by a placeholder cell. Issue 13028.
     iTermKittyImageDraw *draw = nil;
     if (placementID != 0) {
-        // Look up by placement ID when specified
+        // Look up by placement ID when specified. Placement ids are unique per image, not globally,
+        // so the image id must match too; otherwise a placement of a different image that happens to
+        // reuse this placement id could be returned.
         draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
-            return element.placementID == placementID;
+            return element.virtual && element.placementID == placementID && element.imageID == imageID;
         }];
         DLog(@"Looked up by placementID, found: %@", draw);
     }
     if (!draw) {
         // Look up placement by image ID. Must include a size.
         draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
-            return element.imageID == imageID && element.placementSize.width > 0 && element.placementSize.height > 0;
+            return element.virtual && element.imageID == imageID && element.placementSize.width > 0 && element.placementSize.height > 0;
         }];
         DLog(@"Looked up by imageID, found: %@", draw);
     }

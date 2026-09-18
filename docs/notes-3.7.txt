@@ -345,6 +345,13 @@ Bug Fixes:
   reporting for non-US keyboard layouts, so
   shortcuts such as Ctrl-C work without
   switching layouts.
+- Fixed a bug in the Kitty graphics protocol
+  where transmitting a new image under an
+  image id already in use kept drawing the
+  old image in places that already showed it.
+  The newest image is now used, so one program
+  no longer shows a stale picture left behind
+  by another.
 - Fixed a bug where, if the AI asked for
   permission in a chat and you ignored the
   request and sent a new message instead, the
