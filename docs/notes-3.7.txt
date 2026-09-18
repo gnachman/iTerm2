@@ -509,6 +509,8 @@ Bug Fixes:
   pieces in reading order instead of stacking
   them on separate lines. Pieces on different
   lines still copy with line breaks.
+- Credit to Nimanou (nuved) for the
+  right-to-left improvements above.
 - Fixed a bug where dismissing a confirmation in
   certain Settings sheets (such as the hotkey
   configuration or special exceptions panels)
