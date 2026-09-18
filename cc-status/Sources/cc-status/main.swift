@@ -289,8 +289,8 @@ if let backgroundTasks = backgroundTasks {
 
 // Progress ring on the tab (OSC 9;4). Claude Code emits it itself, Codex CLI
 // doesn't. The hook shares the agent's tty, so the terminal picks it up
-// without disturbing the TUI. Repeating it for Claude Code is harmless.
-if let status = status, let tty = FileHandle(forWritingAtPath: "/dev/tty") {
+// without disturbing the TUI.
+if isCodex, let status = status, let tty = FileHandle(forWritingAtPath: "/dev/tty") {
     let seq = status == "working" ? "\u{1b}]9;4;3\u{7}" : "\u{1b}]9;4;0\u{7}"
     tty.write(Data(seq.utf8))
     tty.closeFile()
