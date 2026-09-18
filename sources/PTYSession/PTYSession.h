@@ -1362,6 +1362,14 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 + (ITMCellStyle *)protoStyleForCharacter:(screen_char_t)c
                        externalAttributes:(iTermExternalAttribute *)ea;
 
+// Pure transformation: produces the text of a line plus its run-length-encoded
+// code-point counts and cell styles. Exposed as a class method for unit testing.
++ (NSString *)stringForLine:(const screen_char_t *)screenChars
+                     length:(int)length
+                    eaIndex:(iTermExternalAttributeIndex * _Nullable)eaIndex
+                  cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray
+                stylesArray:(NSMutableArray<ITMCellStyle *> *)styleArray;
+
 - (nullable ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
 - (void)handleGetPromptRequest:(ITMGetPromptRequest *)request
                     completion:(void (^)(ITMGetPromptResponse *response))completion;

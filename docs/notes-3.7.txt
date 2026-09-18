@@ -285,6 +285,12 @@ Bug Fixes:
   hyperlinks. A cell’s CellStyle.url is now
   populated, so scripts reading screen contents
   can see the link target.
+- Fixed the Python API reporting an underline
+  color or a block ID on cells that did not have
+  one. The first plain cell after a run that did
+  was described as part of that run, so scripts
+  reading screen contents saw the attribute
+  spill past where it ended.
 - Fixed a crash when editing a dynamic profile
   whose file had been changed on disk.
 - Fixed a crash when clicking the bookmark
