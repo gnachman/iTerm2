@@ -204,6 +204,8 @@ def run_scenario(name, steps, binary, workdir):
             problems.append("exit status %d" % result.returncode)
         if result.stdout:  # Codex rejects non-JSON stdout from SessionStart/Stop hooks.
             problems.append("stdout not empty: %r" % result.stdout)
+        if result.stderr:
+            problems.append("stderr not empty: %r" % result.stderr)
         if calls != expected:
             problems.append("it2 calls\n      expected: %s\n      actual:   %s" % (expected, calls))
         if problems:
