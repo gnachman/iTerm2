@@ -60,3 +60,10 @@ Bug Fixes:
   left the popup blank and showed no checkmark
   next to it when reopened, although the
   setting was saved correctly.
+- Fixed a crash when a program wrote a hyperlink
+  whose web address contained an emoji or other
+  character outside the Basic Multilingual
+  Plane. The link is now handled correctly
+  instead of terminating iTerm2, which could
+  recur on restore because the saved session
+  replayed the same link.

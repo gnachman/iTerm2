@@ -1,0 +1,31 @@
+Manual test for issue 13063: OSC 8 hyperlink with a
+character outside the Basic Multilingual Plane.
+
+WARNING: on an unfixed build this aborts iTerm2 as
+soon as the link is parsed. If session restoration
+is on, the restored session replays the same bytes
+and crashes again, so the tab may be unrecoverable
+until you end it. Test in a throwaway window.
+
+Expected on a fixed build: every line below prints,
+each label is a working hyperlink, and iTerm2 stays
+up. Hover or cmd-click to check where each points.
+
+1. Emoji in the query (the reported crash):
+   ]8;;https://example.com/search?q=🎉\search?q=tada]8;;\
+
+2. Two query items, each with an emoji:
+   ]8;;https://example.com/search?q=🎉&b=🚀\two query items]8;;\
+
+3. Emoji in the path, with a character right after
+   it that used to get dropped:
+   ]8;;file:///tmp/🎉x/y.txt\file path with emoji]8;;\
+
+4. Non-BMP CJK (U+20000) in the query:
+   ]8;;https://example.com/?q=𠀀\CJK extension B]8;;\
+
+5. Controls that always worked, for comparison:
+   ]8;;https://example.com/?q=привет\Cyrillic query]8;;\
+   ]8;;https://example.com/foo%20bar\plain ASCII]8;;\
+
+If you reach this line, nothing crashed.
