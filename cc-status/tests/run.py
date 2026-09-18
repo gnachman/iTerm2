@@ -10,12 +10,16 @@ keeps the state the real one keeps (background-task count, session variables).
     swift build -c release && python3 tests/run.py
 """
 
+import fcntl
 import json
 import os
+import pty
 import shutil
 import subprocess
 import sys
 import tempfile
+import termios
+import threading
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIXTURES = os.path.join(ROOT, "tests", "fixtures")
@@ -79,6 +83,52 @@ def set_turn_open(value):
 
 def get_turn_open():
     return ["session", "get-var", TURN_OPEN, "--session", SESSION]
+
+
+# OSC 9;4 progress ring the Codex path writes to the agent's terminal.
+RING = {"working": b"\x1b]9;4;3\x07", "waiting": b"\x1b]9;4;0\x07", "idle": b"\x1b]9;4;0\x07"}
+
+
+def expected_ring(fixture, expected):
+    if not fixture.startswith("codex/"):
+        return b""  # Claude Code draws its own ring; the hook must stay quiet.
+    for call in expected:
+        if call[:1] == ["set-status"] and "--status" in call:
+            return RING[call[call.index("--status") + 1]]
+    return b""
+
+
+# Runs the hook the way Codex 0.155+ does (openai/codex#43876): the parent holds
+# the terminal, the hook is started with setsid and has no controlling terminal.
+DETACHED = """
+import os, sys
+pid = os.fork()
+if pid == 0:
+    os.setsid()
+    os.execv(sys.argv[1], sys.argv[1:])
+_, status = os.waitpid(pid, 0)
+sys.exit(os.waitstatus_to_exitcode(status))
+"""
+
+
+class Terminal:
+    """Reads the pty master continuously; an unread pty blocks the session
+    leader's exit until its output is drained."""
+
+    def __init__(self, master):
+        self.data = b""
+        self.thread = threading.Thread(target=self._read, args=(master,), daemon=True)
+        self.thread.start()
+
+    def _read(self, master):
+        while True:
+            try:
+                chunk = os.read(master, 4096)
+            except OSError:
+                return
+            if not chunk:
+                return
+            self.data += chunk
 
 
 # (fixture, expected it2 calls in order). A scenario runs its steps against one
@@ -190,16 +240,26 @@ def run_scenario(name, steps, binary, workdir):
         with open(os.path.join(FIXTURES, fixture + ".json"), "rb") as f:
             payload = f.read()
         open(log_path, "w").close()
-        # start_new_session drops the controlling terminal so the OSC progress
-        # write to /dev/tty is skipped instead of landing in this terminal.
         command = [os.path.join(workdir, "cc-status")]
         if fixture.startswith("codex/"):
             command += ["--agent", "codex"]
-        result = subprocess.run(command, input=payload, env=env,
-                                capture_output=True, start_new_session=True)
+        # A fresh pty stands in for the agent's terminal, so the progress ring
+        # can be checked instead of landing in this one.
+        master, slave = pty.openpty()
+        terminal = Terminal(master)
+        result = subprocess.run([sys.executable, "-c", DETACHED] + command, input=payload, env=env,
+                                capture_output=True, start_new_session=True, pass_fds=(slave,),
+                                preexec_fn=lambda: fcntl.ioctl(slave, termios.TIOCSCTTY, 0))
+        os.close(slave)
+        terminal.thread.join()
+        os.close(master)
+        ring = terminal.data
         with open(log_path) as f:
             calls = [line.rstrip("\n").split(ARG_SEPARATOR)[:-1] for line in f if line.strip()]
         problems = []
+        if ring != expected_ring(fixture, expected):
+            problems.append("terminal output\n      expected: %r\n      actual:   %r"
+                            % (expected_ring(fixture, expected), ring))
         if result.returncode != 0:
             problems.append("exit status %d" % result.returncode)
         if result.stdout:  # Codex rejects non-JSON stdout from SessionStart/Stop hooks.
