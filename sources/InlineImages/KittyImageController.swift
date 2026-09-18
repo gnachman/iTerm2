@@ -107,41 +107,9 @@ class KittyImageController: NSObject {
         }
 
         var pixelOffset: NSPoint?
-
-        // The requested source rectangle from the x/y/w/h keys, stored as fractions of the bitmap it
-        // was requested against. Resolving multiplies by the current bitmap's pixel size, so
-        // retransmitting the image id with a different-sized bitmap samples the same PROPORTIONAL
-        // region rather than a stale absolute box, and the region can never fall outside the bitmap.
-        // Values are in 0...1 with x+w <= 1 and y+h <= 1.
-        //
-        // ASSUMPTION (not yet confirmed against a running kitty): this matches kitty, whose
-        // ImageRef.src_rect (graphics.c) appears to be stored as fractions. Confirm with
-        // tests/kitty-crop-resize-retransmit.sh; if kitty samples absolute pixels instead, revert to
-        // absolute-pixel storage clamped at resolve time.
-        struct SourceRegion {
-            var x: CGFloat
-            var y: CGFloat
-            var w: CGFloat
-            var h: CGFloat
-        }
-        var sourceRegion: SourceRegion?
-
-        // Resolve the normalized source region against the given bitmap pixel size. Returns nil when
-        // no region was requested (meaning the whole image) or the request was empty (zero fraction),
-        // which keeps a zero-size (NaN/out-of-bounds) source frame out of the drawing math.
-        func resolvedSourceRect(imagePixelSize: NSSize) -> NSRect? {
-            guard let region = sourceRegion else {
-                return nil
-            }
-            let rect = NSRect(x: region.x * imagePixelSize.width,
-                              y: region.y * imagePixelSize.height,
-                              width: region.w * imagePixelSize.width,
-                              height: region.h * imagePixelSize.height)
-            guard rect.width > 0 && rect.height > 0 else {
-                return nil
-            }
-            return rect
-        }
+        // The source rectangle from the x/y/w/h keys, resolved against the image at display time and
+        // stored in pixels. It is not re-resolved on retransmit.
+        var sourceRect: NSRect?
 
         // Size in cells. If both are nonnil, stretch to fit. If exactly one is nonnil, pick the other
         // to maintain aspect ratio.
@@ -219,38 +187,6 @@ class KittyImageController: NSObject {
             }
         }
 
-        // The natural (unscaled) footprint size in pixels, captured when the placement was created.
-        // The on-screen footprint of a placement without explicit rows/columns is fixed at creation:
-        // the cursor was advanced past it and later output was laid out around it. Retransmitting the
-        // image id must scale the new bitmap into that same rect, not relayout the placement, so the
-        // footprint is frozen here rather than recomputed from whatever bitmap the placement points
-        // at now. (Which texels to sample still resolves against the live bitmap, via sourceRegion.)
-        var frozenNaturalSize: NSSize?
-
-        // The footprint size to use for sizing, preferring the frozen value and falling back to a
-        // live computation only if it was never captured.
-        private func footprintNaturalSize() -> NSSize? {
-            return frozenNaturalSize ?? liveNaturalPixelSize()
-        }
-
-        // The image's natural size in pixels computed from the image the placement currently points
-        // at. Used to capture frozenNaturalSize at creation. When a source region was requested it
-        // defines the natural size, because the transmitted s/v dimensions describe the whole bitmap,
-        // not the crop; otherwise fall back to s/v, then to the decoded bitmap size. Resolving the
-        // region needs the bitmap pixel size, so that lookup comes first.
-        func liveNaturalPixelSize() -> NSSize? {
-            if sourceRegion != nil,
-               let pixelSize = image.image.value?.size,
-               let rect = resolvedSourceRect(imagePixelSize: pixelSize) {
-                return rect.size
-            }
-            if image.metadata.width > 0 && image.metadata.height > 0 {
-                return NSSize(width: CGFloat(image.metadata.width),
-                              height: CGFloat(image.metadata.height))
-            }
-            return image.image.value?.size
-        }
-
         // In pixels, not points.
         func pixelSize(forCellSize cellSize: NSSize) -> NSSize {
             if let rows, let columns {
@@ -267,22 +203,29 @@ class KittyImageController: NSObject {
                 return NSSize(width: width,
                               height: pixelHeight(forWidth: width))
             }
-            return footprintNaturalSize() ?? NSSize(width: 1, height: 1)
+            if image.metadata.width > 0 && image.metadata.height > 0 {
+                return NSSize(width: CGFloat(image.metadata.width),
+                              height: CGFloat(image.metadata.height))
+            }
+            if let sourceRect {
+                return sourceRect.size
+            }
+            return image.image.value?.size ?? NSSize(width: 1, height: 1)
         }
 
         private func pixelWidth(forHeight height: CGFloat) -> CGFloat {
-            guard let natural = footprintNaturalSize(), natural.width > 0, natural.height > 0 else {
+            if image.metadata.height == 0 || image.metadata.width == 0 {
                 return 0
             }
-            let aspectRatio = natural.width / natural.height
+            let aspectRatio = CGFloat(image.metadata.width) / CGFloat(image.metadata.height)
             return round(height * aspectRatio)
         }
 
         private func pixelHeight(forWidth width: CGFloat) -> CGFloat {
-            guard let natural = footprintNaturalSize(), natural.width > 0, natural.height > 0 else {
+            if image.metadata.height == 0 || image.metadata.width == 0 {
                 return 0
             }
-            let aspectRatio = natural.width / natural.height
+            let aspectRatio = CGFloat(image.metadata.width) / CGFloat(image.metadata.height)
             return round(width / aspectRatio);
         }
 
@@ -707,11 +650,14 @@ class KittyImageController: NSObject {
     // re-pointed because they cannot be retransmitted (there is no id to retransmit under).
     private func repointPlacements(toReplacementImage image: Image) -> Bool {
         let identifier = image.metadata.identifier
-        // Only swap the image on virtual placements. A placement's requested source region is stored
-        // normalized and resolved against the current bitmap at draw time, so it adapts to the new
-        // bitmap's size without any destructive rewriting here.
+        // Only swap the image on virtual placements that have no source crop. A cropped placement's
+        // sourceRect was resolved against the bitmap present at display time; re-pointing it onto a
+        // differently-sized bitmap would leave a stale, possibly out-of-bounds crop, so a cropped
+        // placement keeps its captured bitmap.
         var changed = false
-        for i in placements.indices where placements[i].virtual && placements[i].image.metadata.identifier == identifier {
+        for i in placements.indices where placements[i].virtual
+            && placements[i].sourceRect == nil
+            && placements[i].image.metadata.identifier == identifier {
             placements[i].image = image
             changed = true
         }
@@ -1126,45 +1072,24 @@ class KittyImageController: NSObject {
             } else {
                 nil
             }
-        // Reject an out-of-range source crop the way kitty does (EINVAL) rather than silently
-        // widening it to the whole image. A zero w/h means "to the far edge", valid as long as the
-        // origin is inside the bitmap.
-        let hasSourceCrop = command.x > 0 || command.y > 0 || command.w > 0 || command.h > 0
-        if hasSourceCrop, let pixelSize = image.image.value?.size, pixelSize.width > 0, pixelSize.height > 0 {
-            if CGFloat(command.x) >= pixelSize.width ||
-                CGFloat(command.y) >= pixelSize.height ||
-                (command.w > 0 && CGFloat(command.x) + CGFloat(command.w) > pixelSize.width) ||
-                (command.h > 0 && CGFloat(command.y) + CGFloat(command.h) > pixelSize.height) {
-                RLog("executeDisplay(image): ERROR - source rectangle out of range")
-                return "EINVAL:source rectangle out of range"
+        // The source crop is resolved against the image present at display time and stored in pixels;
+        // it is not re-resolved on retransmit.
+        let sourceRect: NSRect? =
+            if command.x > 0 || command.y > 0 || command.w > 0 || command.h > 0 {
+                if let image = image.image.value {
+                    NSRect(x: CGFloat(command.x),
+                           y: CGFloat(command.y),
+                           width: command.w > 0 ? CGFloat(command.w) : (image.size.width - CGFloat(command.x)),
+                           height: command.h > 0 ? CGFloat(command.h) : (image.size.height - CGFloat(command.y)))
+                } else {
+                    NSRect(origin: .init(x: CGFloat(command.x), y: CGFloat(command.y)),
+                           size: .init(width: 1.0, height: 1.0))
+                }
+            } else {
+                nil
             }
-        }
-        // Normalize the x/y/w/h crop to fractions of the bitmap it was requested against, so a later
-        // retransmission to a different-sized bitmap samples the same proportional region (matching
-        // kitty) and the region can never fall outside the bitmap (see Placement.resolvedSourceRect).
-        // The crop was validated in-range above, so the resolved fractions are always positive.
-        let sourceRegion: Placement.SourceRegion? = {
-            guard hasSourceCrop else {
-                return nil
-            }
-            guard let pixelSize = image.image.value?.size,
-                  pixelSize.width > 0,
-                  pixelSize.height > 0 else {
-                return nil
-            }
-            let x = min(CGFloat(command.x), pixelSize.width)
-            let y = min(CGFloat(command.y), pixelSize.height)
-            let requestedW = command.w > 0 ? CGFloat(command.w) : (pixelSize.width - x)
-            let requestedH = command.h > 0 ? CGFloat(command.h) : (pixelSize.height - y)
-            let w = max(0, min(requestedW, pixelSize.width - x))
-            let h = max(0, min(requestedH, pixelSize.height - y))
-            return Placement.SourceRegion(x: x / pixelSize.width,
-                                          y: y / pixelSize.height,
-                                          w: w / pixelSize.width,
-                                          h: h / pixelSize.height)
-        }()
         let virtual = command.createUnicodePlaceholder == .createPlaceholder
-        DLog("executeDisplay(image): virtual=\(virtual) pixelOffset=\(String(describing: pixelOffset)) sourceRegion=\(String(describing: sourceRegion))")
+        DLog("executeDisplay(image): virtual=\(virtual) pixelOffset=\(String(describing: pixelOffset)) sourceRect=\(String(describing: sourceRect))")
         if virtual {
             if command.parentImageIdentifier != nil || command.parentPlacement != nil {
                 RLog("executeDisplay(image): ERROR - virtual placement cannot have parent")
@@ -1181,18 +1106,15 @@ class KittyImageController: NSObject {
                 Placement.Origin.absolute(cursorCoord)
             }
         DLog("executeDisplay(image): origin=\(origin) cursorCoord=(\(cursorCoord.x), \(cursorCoord.y))")
-        var placement = Placement(image: image,
+        let placement = Placement(image: image,
                                   placementId: command.placement,
                                   origin: origin,
                                   pixelOffset: pixelOffset,
-                                  sourceRegion: sourceRegion,
+                                  sourceRect: sourceRect,
                                   rows: command.r > 0 ? command.r : nil,
                                   columns: command.c > 0 ? command.c : nil,
                                   zIndex: command.z,
                                   virtual: virtual)
-        // Freeze the footprint now, against the bitmap present at creation, so a later retransmission
-        // of this image id scales the new bitmap into this rect instead of relaying out the placement.
-        placement.frozenNaturalSize = placement.liveNaturalPixelSize()
         if addingFormsCycle(placement: placement) {
             RLog("executeDisplay(image): ERROR - adding would form cycle")
             return "ECYCLE"
@@ -1618,9 +1540,8 @@ class iTermKittyImageDraw: NSObject {
         let physicalSize = image.scaledSize
         // Multiply by this to convert pixels to physical size.
         let pxToPhys = physicalSize.multiplied(by: pixelSize.inverted)
-        // sourceFrame is in physical units. Resolve the requested region against this bitmap's pixel
-        // size so a retransmit to a different-sized bitmap adapts and never exceeds the bounds.
-        sourceFrame = if let sourceRect = placement.resolvedSourceRect(imagePixelSize: pixelSize) {
+        // sourceFrame is in physical units.
+        sourceFrame = if let sourceRect = placement.sourceRect {
             NSRect(x: sourceRect.origin.x * pxToPhys.width,
                    y: sourceRect.origin.y * pxToPhys.height,
                    width: sourceRect.width * pxToPhys.width,
