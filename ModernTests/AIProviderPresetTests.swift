@@ -54,10 +54,12 @@ final class AIProviderPresetTests: XCTestCase {
                        "the single-model native preset must not be dynamic")
     }
 
-    // The OpenAI-compatible preset stays available but on the compat endpoint,
+    // Renamed from the Ollama-branded preset in 8b12ad481: for Ollama the two
+    // native presets are strictly better, so this one became the generic
+    // starting point for other local runners. It stays on the compat endpoint,
     // which cannot express think/num_ctx.
-    func test_ollamaCompatPreset_staysOnCompatEndpoint() throws {
-        let p = try preset(named: "Ollama (OpenAI-compatible)")
+    func test_localOpenAICompatPreset_staysOnCompatEndpoint() throws {
+        let p = try preset(named: "Local OpenAI-compatible (LM Studio, vLLM, \u{2026})")
         XCTAssertTrue(p.url.hasSuffix("/v1/chat/completions"))
         XCTAssertEqual(p.api, .chatCompletions)
     }

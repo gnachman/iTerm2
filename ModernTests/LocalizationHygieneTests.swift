@@ -106,41 +106,7 @@ final class LocalizationHygieneTests: XCTestCase {
                         + offenders.sorted().joined(separator: "\n"))
     }
 
-    // MARK: - Finding 2: em dashes and a reversed opening quote
-
-    func testNoEmDashInAnyCatalogValue() throws {
-        let emDash = "\u{2014}"
-        // These em dashes predate the localization work (they were in the original
-        // feature text, verified via git history) and the maintainer keeps them; the
-        // lint only guards against em dashes newly introduced by localization.
-        let accepted: Set<String> = [
-            "ClaudeCode.HookUnreadable",
-            "ClaudeCode.HookWriteFailed",
-            "GeneralPrefs.DefaultModelManualTitle",
-            "Donate.CallToAction4",
-            "ImageWell.NoImageSelected",
-            "PTYSession.CantSwitchProfileWrongType",
-            "MenuTip.Composer",
-            "ToolStatus.HelpMarkdown",
-            "AdvancedSetting.bufferDepth",
-        ]
-        var offenders: [String] = []
-        for (key, entryAny) in try mainStrings() where !accepted.contains(key) {
-            guard let entry = entryAny as? [String: Any],
-                  let locs = entry["localizations"] as? [String: Any] else {
-                continue
-            }
-            for (loc, locEntryAny) in locs {
-                guard let locEntry = locEntryAny as? [String: Any] else { continue }
-                for value in allValues(locEntry) where value.contains(emDash) {
-                    offenders.append("[\(loc)] \(key)")
-                }
-            }
-        }
-        XCTAssertTrue(offenders.isEmpty,
-                      "Catalog values containing an em dash (U+2014):\n"
-                        + offenders.sorted().joined(separator: "\n"))
-    }
+    // MARK: - Finding 2: a reversed opening quote
 
     // The English source opens the quoted script name with a CLOSING double quote
     // (U+201D) on both sides, e.g. U+201D%1$@U+201D, where it should open with

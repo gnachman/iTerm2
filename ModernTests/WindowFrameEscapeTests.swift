@@ -12,6 +12,11 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class WindowFrameEscapeTests: XCTestCase {
+    /// Generous on purpose: this only bounds a hang, and the suite runs under
+    /// ASan with guard malloc, where a side effect can take far longer than it
+    /// does in a normal build. A passing run does not spend it.
+    private let sideEffectTimeout: TimeInterval = 30.0
+
     // ESC ] 1337 ; <payload> BEL
     private func osc1337(_ payload: String) -> [UInt8] {
         return Array("\u{1b}]1337;\(payload)\u{07}".utf8)
@@ -25,9 +30,12 @@ final class WindowFrameEscapeTests: XCTestCase {
         let harness = TerminalTestHarness()
         harness.delegate.windowResizePermission = .allowed
         harness.resetCalls()
+        let delivered = expectation(description: "screenSetWindowFrame called")
+        harness.delegate.onSetWindowFrame = { _ in delivered.fulfill() }
 
         harness.feedEscapeSequence(osc1337("SetWindowFrame=100;200;800;600"))
         harness.sync()
+        wait(for: [delivered], timeout: sideEffectTimeout)
 
         XCTAssertEqual(harness.delegate.setWindowFrameCalls.count, 1)
         XCTAssertEqual(harness.delegate.setWindowFrameCalls.first,
@@ -40,9 +48,12 @@ final class WindowFrameEscapeTests: XCTestCase {
         let harness = TerminalTestHarness()
         harness.delegate.windowResizePermission = .allowed
         harness.resetCalls()
+        let delivered = expectation(description: "screenSetWindowFrame called")
+        harness.delegate.onSetWindowFrame = { _ in delivered.fulfill() }
 
         harness.feedEscapeSequence(osc1337("SetWindowFrame=-1440;-300;1280;1024"))
         harness.sync()
+        wait(for: [delivered], timeout: sideEffectTimeout)
 
         XCTAssertEqual(harness.delegate.setWindowFrameCalls.first,
                        NSRect(x: -1440, y: -300, width: 1280, height: 1024))

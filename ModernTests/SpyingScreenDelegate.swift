@@ -79,12 +79,18 @@ class SpyingScreenDelegate: FakeSession {
     /// Frames passed to screenSetWindowFrame (SetWindowFrame OSC).
     private(set) var setWindowFrameCalls: [NSRect] = []
 
+    /// Fired after each screenSetWindowFrame. That call arrives on an unmanaged
+    /// PAUSED side effect, which -performBlock(joinedThreads:) does not drain,
+    /// so a test cannot just sync and assert -- it has to wait for this.
+    var onSetWindowFrame: ((NSRect) -> Void)?
+
     override func screenShouldInitiateWindowResize() -> PTYSessionResizePermission {
         windowResizePermission
     }
 
     override func screenSetWindowFrame(_ frame: NSRect) {
         setWindowFrameCalls.append(frame)
+        onSetWindowFrame?(frame)
     }
 
     override func screenSendReport(_ data: Data) {
