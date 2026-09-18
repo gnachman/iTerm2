@@ -62,6 +62,27 @@
 // copyDirtyFromGrid: copies it into the immutable grid, AND bumps the content
 // generation. Both are required; see the implementation.
 - (void)markLineDidChange:(int)line;
+
+// Sets the DECDWL/DECDHL attribute of a line, dirtying it if it changed. The
+// attribute belongs to the line's content, so it has to travel with that
+// content when lines move and be cleared when a line is erased in full.
+- (void)setLineAttribute:(iTermLineAttribute)lineAttribute onLine:(int)line;
+
+// Same, for an inclusive range of lines, clamped to the grid. Call this before
+// blanking those lines: setCharsFrom: preserves the DWL_SPACER layout of a line
+// it still believes is double-width.
+- (void)setLineAttribute:(iTermLineAttribute)lineAttribute
+             onLinesFrom:(int)firstLine
+                      to:(int)lastLine;
+
+// Blanks every cell in the grid with `c` and returns every line to
+// single-width. This is what a caller wants when it blanks the whole grid and
+// then restores only some of the lines (from the line buffer, a DVR frame, and
+// so on): the lines it does not restore would otherwise keep a stale
+// DECDWL/DECDHL attribute, and setCharsFrom: would have written DWL_SPACERs
+// into their supposedly blank odd cells. DECALN deliberately does not use this:
+// xterm's alignment test fills the screen without touching line attributes.
+- (void)clearAllWithChar:(screen_char_t)c;
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 @property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
 @property(nonatomic, readonly) screen_char_t defaultChar;

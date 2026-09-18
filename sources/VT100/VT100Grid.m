@@ -363,6 +363,38 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     VT100GridDidChangeContent(&_contentGeneration);
 }
 
+- (void)setLineAttribute:(iTermLineAttribute)lineAttribute onLine:(int)line {
+    VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:line];
+    iTermMetadata metadata = lineInfo.metadata;
+    if (metadata.lineAttribute == lineAttribute) {
+        return;
+    }
+    metadata.lineAttribute = lineAttribute;
+    lineInfo.metadata = metadata;
+    // lineAttribute lives in per-line metadata, which markCharsDirty: does not
+    // cover, and it changes what is drawn (normal vs. double-size glyphs), so
+    // the line has to be dirtied and the content generation bumped.
+    [self markLineDidChange:line];
+}
+
+- (void)setLineAttribute:(iTermLineAttribute)lineAttribute
+             onLinesFrom:(int)firstLine
+                      to:(int)lastLine {
+    for (int y = MAX(0, firstLine); y <= MIN(lastLine, size_.height - 1); y++) {
+        [self setLineAttribute:lineAttribute onLine:y];
+    }
+}
+
+- (void)clearAllWithChar:(screen_char_t)c {
+    [self setLineAttribute:iTermLineAttributeSingleWidth
+               onLinesFrom:0
+                        to:size_.height - 1];
+    [self setCharsFrom:VT100GridCoordMake(0, 0)
+                    to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
+                toChar:c
+    externalAttributes:nil];
+}
+
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp {
     DLog(@"Mark %@ dirty=%@ delegate=%@", VT100GridCoordDescription(coord), @(dirty), delegate_);
 
@@ -1023,6 +1055,13 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
 
     const VT100GridCoord topLeft = VT100GridCoordMake(0, preserveCursorLine ? 1 + additionalLinesToSave : 0);
     const VT100GridCoord bottomRight = VT100GridCoordMake(size_.width - 1, size_.height - 1);
+    // DEC specifies that a reset returns the screen to single-height,
+    // single-width lines. Only the lines scrolled into history above had their
+    // metadata recycled; the rest are just blanked here, and the preserved lines
+    // above topLeft keep their content and so keep their attribute.
+    [self setLineAttribute:iTermLineAttributeSingleWidth
+               onLinesFrom:topLeft.y
+                        to:bottomRight.y];
     [self setCharsFrom:topLeft
                     to:bottomRight
                 toChar:[self defaultChar]
@@ -2038,9 +2077,19 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             // mixes moved and existing content, where a stale YES only costs a
             // wasted analysis but a stale NO would leave RTL text drawn in
             // logical order.
-            const BOOL sourceRTL = [self lineInfoAtLineNumber:sourceIndex].metadata.rtlFound;
+            const iTermMetadata sourceMetadata = [self lineInfoAtLineNumber:sourceIndex].metadata;
+            const BOOL sourceRTL = sourceMetadata.rtlFound;
             if (rect.origin.x == 0 && rect.size.width == size_.width) {
                 [[self lineInfoAtLineNumber:destIndex] setRTLFound:sourceRTL];
+                // The DECDWL/DECDHL attribute describes how this line's cells
+                // are laid out (each character followed by a DWL_SPACER) and how
+                // they are drawn, so it has to move with them. Only whole-line
+                // moves qualify: a partial move mixes moved and existing content,
+                // which has no single width class. Reading the source metadata
+                // before writing the destination is safe for the same reason the
+                // memmove above is: the loop walks in the direction that visits
+                // each source line before it is overwritten.
+                [self setLineAttribute:sourceMetadata.lineAttribute onLine:destIndex];
             } else if (sourceRTL) {
                 [[self lineInfoAtLineNumber:destIndex] setRTLFound:YES];
             }
@@ -2092,9 +2141,19 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             }
         }
 
-        // Clear region left over.
+        // Clear region left over. The lines scrolled in are blank, so they must
+        // not keep the attribute of whatever used to be there, waiting to
+        // inflate the next thing written to them. Reset it before clearing:
+        // setCharsFrom: preserves the DWL_SPACER layout of a line it still
+        // believes is double-width.
+        const BOOL movingWholeLines = (rect.origin.x == 0 && rect.size.width == size_.width);
         if (direction > 0) {
             const VT100GridCoord extent = VT100GridCoordMake(rightIndex, MIN(bottomIndex, rect.origin.y + distance - 1));
+            if (movingWholeLines) {
+                [self setLineAttribute:iTermLineAttributeSingleWidth
+                           onLinesFrom:rect.origin.y
+                                    to:extent.y];
+            }
             [self setCharsFrom:rect.origin
                             to:extent
                         toChar:defaultChar
@@ -2102,6 +2161,11 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         } else {
             const VT100GridCoord origin = VT100GridCoordMake(rect.origin.x, MAX(rect.origin.y, bottomIndex + distance + 1));
             const VT100GridCoord extent = VT100GridCoordMake(rightIndex, bottomIndex);
+            if (movingWholeLines) {
+                [self setLineAttribute:iTermLineAttributeSingleWidth
+                           onLinesFrom:origin.y
+                                    to:extent.y];
+            }
             [self setCharsFrom:origin
                             to:extent
                         toChar:defaultChar
@@ -2135,10 +2199,11 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                   metadataArray:(iTermMetadata *)sourceMetadataArray
                            info:(DVRFrameInfo)info {
     [self resetDWCFreeCount];
-    [self setCharsFrom:VT100GridCoordMake(0, 0)
-                    to:VT100GridCoordMake(size_.width - 1, size_.height - 1)
-                toChar:[self defaultChar]
-    externalAttributes:nil];
+    // Only the lines the loop below restores get their metadata set from the
+    // frame; any line past the frame's height keeps what it had, so clear the
+    // attributes here. (The second blanking below needs no reset of its own:
+    // nothing between the two re-establishes an attribute.)
+    [self clearAllWithChar:[self defaultChar]];
     int charsToCopyPerLine = MIN(size_.width, info.width);
     if (size_.width == info.width) {
         // Ok to copy continuation mark.

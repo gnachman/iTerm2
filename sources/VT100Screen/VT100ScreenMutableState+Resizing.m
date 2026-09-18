@@ -760,10 +760,11 @@ static void SwapInt(int *a, int *b) {
                                  oldSize:(VT100GridSize)oldSize
                                  newSize:(VT100GridSize)newSize {
     self.primaryGrid.size = newSize;
-    [self.primaryGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
-                            toChar:self.primaryGrid.savedDefaultChar
-                externalAttributes:nil];
+    // clearAllWithChar: because restoreScreenFromLineBuffer: below restores at
+    // most MIN(oldSize.height, newSize.height) lines and sets metadata only on
+    // those. Setting the size above rebuilds the line info (clearing attributes)
+    // only when the size actually changed, which is too subtle to rely on.
+    [self.primaryGrid clearAllWithChar:self.primaryGrid.savedDefaultChar];
     // If the height increased:
     // Growing (avoid pulling in stuff from scrollback. Add blank lines
     // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default

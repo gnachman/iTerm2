@@ -2578,4 +2578,299 @@ final class iTermLineAttributeTests: XCTestCase {
         }
         XCTAssertEqual(expectedLines.count, actualLines.count, "Line count should match")
     }
+
+    // MARK: - Stale Line Attributes (issue 13055)
+    //
+    // A DECDHL/DECDWL attribute must not outlive the text it was set for.
+    //
+    // DEC's VT510 Programmer Information defines ED as "This control function
+    // erases characters from part or all of the display. When you erase
+    // complete lines, they become single-height, single-width lines, with all
+    // visual character attributes cleared." The EL description mentions only
+    // character attributes, not line attributes. xterm implements that same
+    // split: screen.c ClearBufRows resets SetLineDblCS with the comment
+    // "clearing the whole row resets the doublesize characters" and is called
+    // from ED 2 for every row, from ED 0 for the rows below the cursor and from
+    // ED 1 for the rows above, while ClearInLine never touches it. xterm also
+    // carries the attribute along with the content when a scroll region
+    // scrolls, since it scrolls by rotating line records.
+    //
+    // Where the two sources diverge, we follow xterm. See
+    // testEraseInDisplayBelowKeepsAttributeOnCursorRow.
+    //
+    // tests/dwl-line-attribute-repro.sh drives the same cases through a real
+    // terminal if you want to see what they look like.
+
+    /// Draws a DECDHL top/bottom title pair on lines 9 and 10 (rows 10 and 11),
+    /// the way the app in issue 13055 draws its splash screen.
+    private func drawDoubleHeightTitle(_ screen: VT100Screen) {
+        inject(screen, "\u{1b}[10;1H\u{1b}#3Chronicles")
+        inject(screen, "\u{1b}[11;1H\u{1b}#4Chronicles")
+    }
+
+    /// ED 0 must reset the attribute on the rows it erases in full.
+    func testEraseInDisplayBelowClearsLineAttribute() {
+        let screen = makeScreen()
+        drawDoubleHeightTitle(screen)
+        XCTAssertEqual(lineAttribute(screen, line: 9), .doubleHeightTop)
+
+        inject(screen, "\u{1b}[H\u{1b}[J")  // home, erase to end of display
+
+        XCTAssertEqual(lineAttribute(screen, line: 9), .singleWidth,
+                       "ED 0 erased line 9 in full, so it should be single-width again")
+        XCTAssertEqual(lineAttribute(screen, line: 10), .singleWidth,
+                       "ED 0 erased line 10 in full, so it should be single-width again")
+    }
+
+    /// ED 1 must reset the attribute on the rows it erases in full.
+    func testEraseInDisplayAboveClearsLineAttribute() {
+        let screen = makeScreen()
+        drawDoubleHeightTitle(screen)
+
+        inject(screen, "\u{1b}[24;1H\u{1b}[1J")  // last row, erase to start of display
+
+        XCTAssertEqual(lineAttribute(screen, line: 9), .singleWidth,
+                       "ED 1 erased line 9 in full, so it should be single-width again")
+        XCTAssertEqual(lineAttribute(screen, line: 10), .singleWidth,
+                       "ED 1 erased line 10 in full, so it should be single-width again")
+    }
+
+    /// ED 2 must reset the attribute everywhere. This passes today only as a
+    /// side effect: erase-whole-display scrolls the screen into history first,
+    /// and that recycles the per-line metadata. A fix must not lose it.
+    func testEraseInDisplayAllClearsLineAttribute() {
+        let screen = makeScreen()
+        drawDoubleHeightTitle(screen)
+
+        inject(screen, "\u{1b}[2J")
+
+        XCTAssertEqual(lineAttribute(screen, line: 9), .singleWidth)
+        XCTAssertEqual(lineAttribute(screen, line: 10), .singleWidth)
+    }
+
+    /// xterm's ClearBelow does ClearRight on the cursor's own row and only
+    /// resets whole rows below it, so the cursor's row keeps its attribute even
+    /// when the cursor is at column 1 and the row therefore ends up entirely
+    /// blank. (This is not the home position: xterm's do_erase_display promotes
+    /// ED 0 at the home position to ED 2, which does reset every row. The cursor
+    /// is on line 9 here, so ClearBelow is what runs.) DEC's "when you erase
+    /// complete lines" wording arguably calls for a reset here; we deliberately
+    /// follow xterm instead, because it was the only implementation of these
+    /// codes for long enough that applications are written against its behavior
+    /// rather than against the manual. Pinned so that a fix for the cases above
+    /// does not over-reach.
+    func testEraseInDisplayBelowKeepsAttributeOnCursorRow() {
+        let screen = makeScreen()
+        drawDoubleHeightTitle(screen)
+
+        inject(screen, "\u{1b}[10;1H\u{1b}[J")  // cursor on the title row itself
+
+        XCTAssertEqual(lineAttribute(screen, line: 9), .doubleHeightTop,
+                       "the cursor's row is only partially erased, so it keeps its attribute")
+    }
+
+    /// EL does not reset the attribute in xterm (ClearInLine never touches
+    /// SetLineDblCS), so iTerm2 keeping it is correct. Pinned for the same
+    /// reason as the test above.
+    func testEraseLineKeepsLineAttribute() {
+        let screen = makeScreen()
+        drawDoubleHeightTitle(screen)
+
+        inject(screen, "\u{1b}[10;1H\u{1b}[2K")
+
+        XCTAssertEqual(lineAttribute(screen, line: 9), .doubleHeightTop,
+                       "EL erases the cells but leaves the line attribute alone")
+    }
+
+    /// The symptom from the issue: after the screen is erased, text repainted
+    /// on the former title row must be stored at normal width, one cell per
+    /// character and no DWL_SPACERs, rather than drawn giant.
+    func testRepaintAfterEraseInDisplayIsSingleWidth() {
+        let screen = makeScreen()
+        drawDoubleHeightTitle(screen)
+
+        inject(screen, "\u{1b}[H\u{1b}[J")
+        inject(screen, "\u{1b}[10;1HMain Menu")
+
+        let codes = lineCodes(screen, line: 9, count: 10)
+        let expected = Array("Main Menu".unicodeScalars).map { unichar($0.value) }
+        XCTAssertEqual(Array(codes.prefix(9)), expected,
+                       "repainted text should occupy one cell per character")
+        XCTAssertEqual(codes[9], 0, "no DWL_SPACER should follow the text")
+        XCTAssertEqual(getCursorX(screen), 9,
+                       "the cursor should have advanced 9 cells, not 18")
+    }
+
+    /// Scrolling a scroll region moves the cells up a row; the attribute has to
+    /// move with them or the text is drawn at normal width with a blank cell
+    /// between every character (DWL_SPACERs are not drawable).
+    func testScrollRegionMovesLineAttributeWithContent() {
+        let screen = makeScreen()
+        inject(screen, "\u{1b}[10;1H\u{1b}#6Chronicles")
+        XCTAssertEqual(lineAttribute(screen, line: 9), .doubleWidth)
+
+        inject(screen, "\u{1b}[8;15r")        // DECSTBM rows 8..15
+        inject(screen, "\u{1b}[15;1H\u{1b}D") // IND at the bottom margin scrolls up 1
+        inject(screen, "\u{1b}[r")            // reset the margins
+
+        XCTAssertEqual(lineAttribute(screen, line: 8), .doubleWidth,
+                       "the text moved to line 8, so its attribute should have too")
+
+        // And the cells really did move, spacers and all.
+        let codes = lineCodes(screen, line: 8, count: 4)
+        XCTAssertEqual(codes[0], unichar(UnicodeScalar("C").value))
+        XCTAssertEqual(codes[1], unichar(DWL_SPACER))
+        XCTAssertEqual(codes[2], unichar(UnicodeScalar("h").value))
+        XCTAssertEqual(codes[3], unichar(DWL_SPACER))
+    }
+
+    /// The row a scroll region scrolls away from is blanked, so it must not
+    /// keep a stale attribute waiting to inflate whatever is written there next.
+    func testScrollRegionResetsVacatedRowLineAttribute() {
+        let screen = makeScreen()
+        inject(screen, "\u{1b}[10;1H\u{1b}#6Chronicles")
+
+        inject(screen, "\u{1b}[8;15r")
+        inject(screen, "\u{1b}[15;1H\u{1b}D")
+        inject(screen, "\u{1b}[r")
+
+        XCTAssertEqual(lineAttribute(screen, line: 9), .singleWidth,
+                       "line 9 was vacated and blanked, so it should be single-width")
+    }
+
+    /// IL pushes the double-width row down and opens a blank row in its place.
+    /// The attribute should follow the text down and the new blank row should
+    /// come up single-width.
+    func testInsertLineMovesLineAttributeAndBlanksNewRow() {
+        let screen = makeScreen()
+        inject(screen, "\u{1b}[10;1H\u{1b}#6Chronicles")
+
+        inject(screen, "\u{1b}[10;1H\u{1b}[L")  // IL at the title row
+
+        XCTAssertEqual(lineAttribute(screen, line: 10), .doubleWidth,
+                       "the text was pushed down to line 10, so its attribute should follow")
+        XCTAssertEqual(lineAttribute(screen, line: 9), .singleWidth,
+                       "the freshly inserted blank line should be single-width")
+    }
+
+
+    /// The alternate screen grid outlives a trip through the primary buffer, so
+    /// a line left double-width by one visit must not still be double-width when
+    /// an app enters the alternate screen again.
+    func testReenteringAlternateScreenClearsLineAttribute() {
+        let screen = makeScreen()
+        inject(screen, "\u{1b}[?1049h")
+        inject(screen, "\u{1b}[10;1H\u{1b}#6Chronicles")
+        XCTAssertEqual(lineAttribute(screen, line: 9), .doubleWidth)
+
+        inject(screen, "\u{1b}[?1049l")
+        inject(screen, "\u{1b}[?1049h")
+
+        XCTAssertEqual(lineAttribute(screen, line: 9), .singleWidth,
+                       "entering the alternate screen clears it, so no line should still be double-width")
+    }
+
+    /// RIS must bring the screen back to single-height, single-width lines. A row
+    /// carrying only an attribute and no text is not "non-empty", so the reset
+    /// never scrolls it into history and it has to be cleared in place.
+    func testResetClearsLineAttributeOnEmptyRow() {
+        let screen = makeScreen()
+        inject(screen, "\u{1b}[10;1H\u{1b}#6")  // attribute, no text
+        XCTAssertEqual(lineAttribute(screen, line: 9), .doubleWidth)
+
+        inject(screen, "\u{1b}c")  // RIS
+
+        XCTAssertEqual(lineAttribute(screen, line: 9), .singleWidth)
+    }
+
+    /// Clear Buffer keeps the prompt line and blanks everything below it. The
+    /// blanked lines are not scrolled into history, so their attributes have to
+    /// be cleared in place.
+    func testClearBufferSavingPromptClearsLineAttributeBelow() {
+        let screen = makeScreen()
+        inject(screen, "\u{1b}[10;1H\u{1b}#6Chronicles")
+        inject(screen, "\u{1b}[1;1H")  // cursor above the title row
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.clearAndResetScreenSavingLines(1)
+        })
+
+        XCTAssertEqual(lineAttribute(screen, line: 9), .singleWidth)
+    }
+
+    /// The prompt line Clear Buffer preserves keeps its content, so it keeps its
+    /// attribute too.
+    func testClearBufferSavingPromptKeepsAttributeOnPreservedLine() {
+        let screen = makeScreen()
+        inject(screen, "\u{1b}[1;1H\u{1b}#6$ ")
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.clearAndResetScreenSavingLines(1)
+        })
+
+        XCTAssertEqual(lineAttribute(screen, line: 0), .doubleWidth,
+                       "the preserved line keeps its content, so it keeps its width class")
+    }
+
+
+    /// removeLastLine (the filter/live-search destination) appends the grid to
+    /// the line buffer, blanks the grid, and restores only as many lines as it
+    /// popped back. A line that is never restored must not keep the attribute it
+    /// had, nor DWL_SPACERs in its supposedly blank cells.
+    func testRemoveLastLineClearsLineAttributeOnUnrestoredRow() {
+        let screen = makeScreen()
+        // Line 9 is the last line in use, so removeLastRawLine drops it and the
+        // restore below covers only lines 0..8. Line 9 is the one left blank.
+        inject(screen, "\u{1b}[1;1HFirst")
+        inject(screen, "\u{1b}[10;1H\u{1b}#6Chronicles")
+        XCTAssertEqual(lineAttribute(screen, line: 9), .doubleWidth)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.removeLastLine()
+        })
+
+        XCTAssertEqual(lineAttribute(screen, line: 9), .singleWidth,
+                       "a line that was blanked and not restored should be single-width")
+        let codes = lineCodes(screen, line: 9, count: 4)
+        XCTAssertEqual(codes, [0, 0, 0, 0],
+                       "blank cells should be null, not DWL_SPACERs")
+    }
+
+    /// Restoring a DVR (Instant Replay) frame shorter than the grid blanks the
+    /// whole grid and sets metadata only on the rows the frame covers. The rows
+    /// past the frame must come back single-width and truly blank.
+    func testDVRFrameRestoreClearsLineAttributeBelowFrame() {
+        let screen = makeScreen(width: 10, height: 5)
+        setLineAttribute(screen, attr: .doubleWidth)
+        moveCursor(screen, toLine: 3)
+        setLineAttribute(screen, attr: .doubleWidth)
+        XCTAssertEqual(lineAttribute(screen, line: 3), .doubleWidth)
+
+        // A two-line frame over a five-line grid: lines 2..4 are not restored.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let grid = mutableState.currentGrid
+            let info = DVRFrameInfo(width: 10,
+                                    height: 2,
+                                    cursorX: 0,
+                                    cursorY: 0,
+                                    timestamp: 0,
+                                    frameType: Int32(DVRFrameTypeKeyFrame.rawValue))
+            let frame = [screen_char_t](repeating: screen_char_t(), count: 11 * 2)
+            var metadata = [iTermMetadataDefault(), iTermMetadataDefault()]
+            frame.withUnsafeBufferPointer { framePtr in
+                metadata.withUnsafeMutableBufferPointer { metadataPtr in
+                    grid.setContentsFromDVRFrame(framePtr.baseAddress!,
+                                                 metadataArray: metadataPtr.baseAddress!,
+                                                 info: info)
+                }
+            }
+        })
+
+        XCTAssertEqual(lineAttribute(screen, line: 3), .singleWidth,
+                       "a line past the restored frame should be single-width")
+        let codes = lineCodes(screen, line: 3, count: 4)
+        XCTAssertEqual(codes, [0, 0, 0, 0],
+                       "blank cells should be null, not DWL_SPACERs")
+    }
+
 }

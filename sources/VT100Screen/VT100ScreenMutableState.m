@@ -1628,11 +1628,51 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
             self.protectedMode = VT100TerminalProtectedModeNone;
         }
     } else {
+        // Before the cells go, because setCharsFrom: preserves the DWL_SPACER
+        // layout of a line it still believes is double-width.
+        [self resetLineAttributesForEraseInDisplayBefore:before after:after];
         [self.currentGrid setCharsInRun:theRun
                                  toChar:0
                      externalAttributes:nil];
     }
     [self clearTriggerLine];
+}
+
+// DEC's ED says "when you erase complete lines, they become single-height,
+// single-width lines, with all visual character attributes cleared." xterm
+// implements that in ClearBufRows ("clearing the whole row resets the doublesize
+// characters"), with three wrinkles we match: ED 0 from the home position and
+// ED 1 from the last cell are promoted to ED 2, so they reset every line; the
+// cursor's own line is otherwise left alone even when the erase happens to blank
+// it entirely (xterm's ClearBelow/ClearAbove use ClearRight/ClearLeft there,
+// which never reset); and a selective erase resets nothing, because xterm falls
+// back to per-line ClearInLine when protected mode is on.
+- (void)resetLineAttributesForEraseInDisplayBefore:(BOOL)before after:(BOOL)after {
+    const int height = self.currentGrid.size.height;
+    const int width = self.currentGrid.size.width;
+    const int cursorX = self.currentGrid.cursorX;
+    const int cursorY = self.currentGrid.cursorY;
+    int firstLine;
+    int lastLine;
+
+    if (before && after) {
+        firstLine = 0;
+        lastLine = height - 1;
+    } else if (after) {
+        const BOOL atHome = (cursorX == 0 && cursorY == 0);
+        firstLine = atHome ? 0 : cursorY + 1;
+        lastLine = height - 1;
+    } else if (before) {
+        const BOOL atLastCell = (cursorX >= width - 1 && cursorY == height - 1);
+        firstLine = 0;
+        lastLine = atLastCell ? height - 1 : cursorY - 1;
+    } else {
+        return;
+    }
+
+    [self.currentGrid setLineAttribute:iTermLineAttributeSingleWidth
+                           onLinesFrom:firstLine
+                                    to:lastLine];
 }
 
 - (void)eraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
@@ -1797,11 +1837,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenRemoveSelection];
     } name:@"erase screen and remove selection"];
-    [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                to:VT100GridCoordMake(self.currentGrid.size.width - 1,
-                                                      self.currentGrid.size.height - 1)
-                            toChar:[self.currentGrid defaultChar]
-                externalAttributes:nil];
+    // clearAllWithChar: rather than setCharsFrom: because the alt grid outlives a
+    // trip through the primary buffer (showAltBuffer only allocates it when it is
+    // nil, and showPrimaryBuffer never clears it), so a line left double-width by
+    // a previous visit would otherwise still be double-width when an app enters
+    // the alternate screen again.
+    [self.currentGrid clearAllWithChar:[self.currentGrid defaultChar]];
 }
 
 - (int)numberOfLinesToPreserveWhenClearingScreen {
@@ -2169,11 +2210,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // removeLastRawLine below can shift fold coordinates (this is a grid->buffer->grid reshuffle, not a
     // plain line move), so the cached bottommost-fold line must be recomputed.
     _foldCacheDirty = YES;
-    [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                to:VT100GridCoordMake(self.width - 1,
-                                                      self.height - 1)
-                            toChar:self.currentGrid.defaultChar
-                externalAttributes:nil];
+    // clearAllWithChar: because restoreScreenFromLineBuffer: below sets metadata
+    // only on the lines it restores, and numberOfLinesToPop can be smaller than
+    // the number appended.
+    [self.currentGrid clearAllWithChar:self.currentGrid.defaultChar];
     [self.linebuffer removeLastRawLine];
     const int postHocNumberOfLines = [self.linebuffer numberOfWrappedLinesWithWidth:self.width];
     const int numberOfLinesToPop = MAX(0, postHocNumberOfLines - preHocNumberOfLines);
@@ -5222,11 +5262,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // 4 |
     // 5 |
 
-    [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                to:VT100GridCoordMake(self.currentGrid.size.width - 1,
-                                                      self.currentGrid.size.height - 1)
-                            toChar:self.currentGrid.defaultChar
-                externalAttributes:nil];
+    // clearAllWithChar: because restoreScreenFromLineBuffer: sets metadata only on
+    // the lines it restores, which can be fewer than the grid's height.
+    [self.currentGrid clearAllWithChar:self.currentGrid.defaultChar];
     [self.currentGrid restoreScreenFromLineBuffer:self.linebuffer
                                   withDefaultChar:self.currentGrid.defaultChar
                                 maxLinesToRestore:gridSize.height];
@@ -6905,10 +6943,11 @@ lengthExcludingInBandSignaling:data.length
     }
 
     // Initialize alternate screen to be empty
-    [self.altGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                            to:VT100GridCoordMake(self.altGrid.size.width - 1, self.altGrid.size.height - 1)
-                        toChar:[self.altGrid defaultChar]
-            externalAttributes:nil];
+    // altGrid is either a fresh copy of primaryGrid (copying a line copies its
+    // metadata, lineAttribute included) or the grid left over from a previous
+    // alternate-screen session. Either way it can carry line attributes that the
+    // raw cells restored below know nothing about, so clear them.
+    [self.altGrid clearAllWithChar:[self.altGrid defaultChar]];
     // Copy the lines back over it
     int o = 0;
     for (int i = 0; o < self.altGrid.size.height && i < MIN(lines.count, self.altGrid.size.height); i++) {

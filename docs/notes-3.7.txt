@@ -491,3 +491,12 @@ Bug Fixes:
   instead of terminating iTerm2, which could
   recur on restore because the saved session
   replayed the same link.
+- Fixed double-width and double-height lines
+  (ESC #3, #4, and #6) staying double-sized
+  after the line was erased, scrolled, or
+  reset. A full-screen program that drew a
+  large title and then repainted could show
+  giant, clipped text where ordinary text
+  belonged; entering the alternate screen,
+  Reset, and Clear Buffer left the same stale
+  lines behind.
