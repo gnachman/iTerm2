@@ -2600,7 +2600,12 @@ extension Conductor {
             // restoring.
             log("Unexpected input: \(string)")
         case let .willExecutePipeline(contexts):
-            state = .executingPipeline(contexts.first!, Array(contexts.dropFirst()))
+            // The job's own state, not the conductor's: this is backgroundJobs[pid]. Mirrors
+            // the same transition in handle(line:), including delivering the line that
+            // triggered it.
+            backgroundJobs[pid] = .executingPipeline(contexts.first!, Array(contexts.dropFirst()))
+            try? update(executionContext: contexts.first!,
+                        result: .sideChannelLine(line: string, channel: channel, pid: pid))
         case let .executingPipeline(context, _):
             try? update(executionContext: context,
                         result: .sideChannelLine(line: string, channel: channel, pid: pid))
