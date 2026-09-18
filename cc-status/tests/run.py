@@ -128,9 +128,16 @@ SCENARIOS = {
         ("codex/SubagentStop", [get_background_tasks(), get_turn_open(),
                                 set_status(*IDLE, "--detail", "DONE", "--background-tasks", "0")]),
     ],
+    "codex: failed turn clears turn state": [
+        ("codex/UserPromptSubmit", [set_turn_open("1"), set_status(*WORKING, "--detail", "")]),
+        ("codex/StopFailure", [get_background_tasks(), set_turn_open("0"),
+                                set_status(*IDLE, "--detail", "")]),
+    ],
     "codex: session boundaries": [
-        ("codex/SessionStart", [set_status(*IDLE, "--detail", "", "--background-tasks", "0")]),
-        ("codex/SessionEnd", [set_status(*IDLE, "--detail", "", "--background-tasks", "0")]),
+        ("codex/SessionStart", [set_turn_open("0"),
+                                 set_status(*IDLE, "--detail", "", "--background-tasks", "0")]),
+        ("codex/SessionEnd", [set_turn_open("0"),
+                               set_status(*IDLE, "--detail", "", "--background-tasks", "0")]),
     ],
     "codex: apply_patch permission names the files": [
         ("codex/PermissionRequest-apply_patch",

@@ -139,9 +139,11 @@ case "Stop":
         backgroundTasks = counted
     } else if isCodex {
         running = storedBackgroundTaskCount(it2SessionID: sessionID)
-        setSessionVariable(turnOpenVariable, "0", it2SessionID: sessionID)
     } else {
         running = 0
+    }
+    if isCodex {
+        setSessionVariable(turnOpenVariable, "0", it2SessionID: sessionID)
     }
     if running > 0 {
         status = "working"
@@ -234,6 +236,9 @@ case "StopFailure":
     } else {
         running = storedBackgroundTaskCount(it2SessionID: sessionID)
     }
+    if isCodex {
+        setSessionVariable(turnOpenVariable, "0", it2SessionID: sessionID)
+    }
     if running > 0 {
         status = "working"
         dotColor = "#ff9500"
@@ -251,6 +256,9 @@ case "SessionStart", "SessionEnd":
     textColor = "#888888"
     detail = ""  // session boundary — wipe stale detail
     backgroundTasks = 0  // and the stored count with it
+    if isCodex {
+        setSessionVariable(turnOpenVariable, "0", it2SessionID: sessionID)
+    }
 default:
     exit(0)
 }
