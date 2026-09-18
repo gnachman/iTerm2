@@ -105,6 +105,21 @@ iTermTriggerScopeProvider> {
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
                        name:(NSString *)name;
 
+// Urgent variants of addSideEffect:name: and addPausedSideEffect:name:. A background
+// session batches its side effects at a much longer period than a visible one; these opt
+// out of that. Reach for one only when a batching period would stall a protocol or hold a
+// pause, not merely delay output. Two things make that a narrow test. Urgency does nothing
+// for a visible session, whose period is already the short one, so it is only ever about
+// off-screen sessions. And all the tiers share one FIFO, which executeSideEffects drains
+// whole, so an urgent flush carries every side effect queued ahead of it: a non-urgent one
+// is delayed only when it is the tail with no urgent sibling behind it. See
+// -[TokenExecutorImpl addUrgentSideEffect:]. Issue 13013.
+- (void)addUrgentSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
+                       name:(NSString *)name;
+
+- (void)addUrgentPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
+                             name:(NSString *)name;
+
 - (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
                          name:(NSString *)name;
 

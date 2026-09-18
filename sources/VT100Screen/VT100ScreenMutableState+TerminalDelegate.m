@@ -3644,7 +3644,7 @@ typedef struct {
     NSString *dcsID = values[4];
     [self appendBannerMessage:[NSString stringWithFormat:@"ssh %@", sshargs]];
     NSDictionary *savedState = self.savedState;
-    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+    [self addUrgentSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidHookSSHConductorWithToken:token
                                             uniqueID:uniqueID
                                             boolArgs:boolArgs
@@ -3656,20 +3656,20 @@ typedef struct {
 }
 
 - (void)terminalDidReadSSHConductorLine:(NSString *)string depth:(int)depth {
-    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+    [self addUrgentSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidReadSSHConductorLine:string depth:(int)depth];
     } name:@"read ssh"];
 
 }
 - (void)terminalDidUnhookSSHConductor {
-    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+    [self addUrgentSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidUnhookSSHConductor];
     } name:@"unhook ssh"];
 }
 
 - (void)terminalDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier
                                                     depth:(int)depth {
-    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+    [self addUrgentSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidBeginSSHConductorCommandWithIdentifier:identifier
                                                             depth:depth];
     } name:@"begin ssh command"];
@@ -3679,7 +3679,7 @@ typedef struct {
                                                    type:(NSString *)type
                                                  status:(uint8_t)status
                                                   depth:(int)depth {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDidEndSSHConductorCommandWithIdentifier:identifier
                                                            type:type
                                                          status:status
@@ -3694,6 +3694,10 @@ typedef struct {
                                    channel:(uint8_t)channel
                                      depth:(int)depth {
     DLog(@"terminalHandleSSHSideChannelOutput:%@ pid:%@ channel:%@ depth:%@", string, @(pid), @(channel), @(depth));
+    // Not urgent. A running command's output lines are always followed by an
+    // "end ssh command", which is urgent, and side effects share one FIFO, so they flush
+    // with it. The cases where this can be the last thing queued (autopoll lines and the
+    // EOF that re-arms autopoll, %notif) hold nothing up.
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenHandleSSHSideChannelOutput:string pid:pid channel:channel depth:depth];
     } name:@"handle side channel"];
@@ -3708,13 +3712,16 @@ typedef struct {
         return;
     }
     DLog(@"Add side effect to handle raw ssh data %@", data.shortDebugString);
+    // Not urgent. This only feeds a coprocess, if one is attached; it does not advance the
+    // conductor and nothing waits on it. Delivering coprocess input in batches when the
+    // session is off-screen is the batching working as intended.
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidReadRawSSHData:data];
     } name:@"read raw ssh"];
 }
 
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDidTerminateSSHProcess:pid code:code depth:depth];
         [unpauser unpause];
     } name:@"terminate pid"];
@@ -3725,7 +3732,7 @@ typedef struct {
         return;
     }
     DLog(@"terminalHandleIT2:%@ depth:%@", string, @(depth));
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addUrgentSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenHandleIT2:string depth:depth];
     } name:@"handle it2"];
 }
@@ -3770,7 +3777,9 @@ typedef struct {
     NSString *encodedBA = _sshIntegrationFlags[2];
     NSString *sshArgs = _sshIntegrationFlags[3];
     _sshIntegrationFlags = nil;
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    // Urgent: this is the handshake that starts the conductor, and it pauses the token
+    // executor until it runs.
+    [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenBeginSSHIntegrationWithToken:token
                                             uniqueID:uniqueID
                                            encodedBA:encodedBA
@@ -3809,7 +3818,8 @@ typedef struct {
     _sshIntegrationFlags = nil;
     __weak __typeof(self) weakSelf = self;
     dispatch_queue_t queue = _queue;
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    // Urgent: tears the conductor down and pauses the token executor until it runs.
+    [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         const NSInteger count = [delegate screenEndSSH:uniqueID];
         if (count <= 0) {
             [unpauser unpause];
@@ -3831,7 +3841,9 @@ typedef struct {
 - (void)terminalBeginFramerRecoveryForChildOfConductorAtDepth:(int)parentDepth {
     [self appendBannerMessage:@"Recovering ssh connection…"];
     self.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeRecovering;
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    // Urgent: opens the recovery handshake, which is strictly serial and pauses the token
+    // executor per step. See -terminalHandleFramerRecoveryString:.
+    [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenBeginFramerRecovery:parentDepth];
         [unpauser unpause];
     } name:@"begin framer recovery for child"];
@@ -3840,7 +3852,12 @@ typedef struct {
 - (void)terminalHandleFramerRecoveryString:(NSString *)string {
     __weak __typeof(self) weakSelf = self;
     dispatch_queue_t queue = _queue;
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    // Urgent, and this is the one that matters most on this path. The framer emits one
+    // recovery line per process and per saved key between begin-recovery and end-recovery,
+    // each arriving here as its own paused side effect that stops token execution until it
+    // runs. Batched at the background period that is a second per line, so recovering a
+    // hidden ssh session would be as slow as issue 13013 made typing.
+    [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         iTermConductorRecovery *recovery = [delegate screenHandleFramerRecoveryString:string];
         if (recovery) {
             weakSelf.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeSyncing;

@@ -222,6 +222,14 @@ class TokenExecutor: NSObject {
         impl.addSideEffect(task)
     }
 
+    // Any queue. Exempt from background batching; see
+    // TokenExecutorImpl.addUrgentSideEffect(_:) for when that is warranted.
+    @objc
+    func addUrgentSideEffect(_ task: @escaping TokenExecutorTask) {
+        if gDebugLogging.boolValue { DLog("add urgent side effect") }
+        impl.addUrgentSideEffect(task)
+    }
+
     // Any queue
     @objc
     func addDeferredSideEffect(_ task: @escaping TokenExecutorTask) {
@@ -336,13 +344,18 @@ private class TokenExecutorImpl {
     // This is used to give visible sessions priority for token processing over those that cannot
     // be seen. This prevents a very busy non-selected tab from starving a visible one.
     private static var activeSessionsWithTokens = MutableAtomicObject<Set<ObjectIdentifier>>(Set())
+    private static let foregroundSideEffectPeriod = 1.0 / 30.0
+    private static let backgroundSideEffectPeriod = 1.0
+    // Urgent side effects are not batched, so they run at the foreground rate no matter
+    // how the session is scheduled. See addUrgentSideEffect(_:).
+    private static let urgentSideEffectMaximumDelay = foregroundSideEffectPeriod
     @objc var isBackgroundSession = false {
         didSet {
 #if DEBUG
             iTermGCD.assertMutationQueueSafe()
 #endif
             if isBackgroundSession != oldValue {
-                sideEffectScheduler.period = isBackgroundSession ? 1.0 : 1.0 / 30.0
+                sideEffectScheduler.period = isBackgroundSession ? Self.backgroundSideEffectPeriod : Self.foregroundSideEffectPeriod
                 if isBackgroundSession {
                     Self.activeSessionsWithTokens.mutableAccess { set in
                         set.remove(ObjectIdentifier(self))
@@ -360,7 +373,7 @@ private class TokenExecutorImpl {
         self.queue = queue
         self.slownessDetector = slownessDetector
         self.semaphore = semaphore
-        sideEffectScheduler = PeriodicScheduler(DispatchQueue.main, period: 1 / 30.0, action: { [weak self] in
+        sideEffectScheduler = PeriodicScheduler(DispatchQueue.main, period: Self.foregroundSideEffectPeriod, action: { [weak self] in
             guard let self = self else {
                 return
             }
@@ -494,6 +507,28 @@ private class TokenExecutorImpl {
         sideEffects.append(task)
         if gDebugLogging.boolValue { DLog("addSideEffect()") }
         sideEffectScheduler.markNeedsUpdate()
+    }
+
+    // Like addSideEffect but exempt from the batching a background session applies to its
+    // side effects. Use it only where a batching period would stall a protocol or hold a
+    // pause, not merely delay output.
+    //
+    // The SSH conductor is the motivating case: it is a strictly serial request/response
+    // channel whose queue only advances when `end ssh command` runs, and that side effect
+    // is also a paused one, so it halts token execution until it runs. At the background
+    // period of 1s every conductor round trip -- including every keystroke sent to a tmux
+    // gateway over ssh -- cost a full second in each direction.
+    //
+    // Note this is a narrower test than "belongs to a latency-sensitive subsystem". Urgency
+    // is a no-op for a visible session, whose period is already the short one. And every
+    // tier appends to the same `sideEffects` FIFO, which executeSideEffects drains whole,
+    // so an urgent flush carries everything queued ahead of it; a non-urgent side effect is
+    // actually delayed only when it is the tail with no urgent sibling behind it.
+    // Issue 13013.
+    func addUrgentSideEffect(_ task: @escaping TokenExecutorTask) {
+        sideEffects.append(task)
+        if gDebugLogging.boolValue { DLog("addUrgentSideEffect()") }
+        sideEffectScheduler.markNeedsUpdate(within: Self.urgentSideEffectMaximumDelay)
     }
 
     func addDeferredSideEffect(_ task: @escaping TokenExecutorTask) {
@@ -804,6 +839,11 @@ class PeriodicScheduler: NSObject {
     var period: TimeInterval
     private let action: () -> ()
     private var scheduledDeferred = false  // guarded by mutex
+    // Deadline of the reset currently armed by resetAfterDelay(_:), if any, plus the
+    // generation it belongs to. markNeedsUpdate(within:) uses these to pull an armed
+    // reset in when `period` is longer than a caller can tolerate. Guarded by mutex.
+    private var pendingResetDeadline: DispatchTime?
+    private var resetGeneration = 0
 
     @objc(initWithQueue:period:block:)
     init(_ queue: DispatchQueue, period: TimeInterval, action: @escaping () -> ()) {
@@ -842,45 +882,89 @@ class PeriodicScheduler: NSObject {
         }
     }
 
+    // Like markNeedsUpdate() but guarantees the action runs within `maximumDelay` even
+    // when `period` is longer. Without this a caller that can't tolerate the period is
+    // stuck: in a steady state _updatePending is almost always true, so markNeedsUpdate()
+    // just returns and the action waits out the full period. Arming an earlier reset
+    // supersedes the pending one (see resetAfterDelay(_:)) so the rate limit stays exact
+    // rather than allowing two flushes in one period.
+    @objc func markNeedsUpdate(within maximumDelay: TimeInterval) {
+        DLog("markNeedsUpdate(within: \(maximumDelay))")
+        // One locked pass: dropping the lock to call schedule() would let another thread
+        // arm a full-period reset in the gap, which is exactly the delay we are avoiding.
+        mutex.sync {
+            _needsUpdate = true
+            guard _updatePending else {
+                // Nothing is throttling us, so run the action now.
+                scheduleLocked(reset: false)
+                return
+            }
+            let deadline = DispatchTime.now() + maximumDelay
+            if let pendingResetDeadline, pendingResetDeadline <= deadline {
+                DLog("Armed reset is already soon enough")
+                return
+            }
+            DLog("Pull in armed reset to \(maximumDelay) from now")
+            resetAfterDelay(maximumDelay)
+        }
+    }
+
     @objc func schedule() {
         schedule(reset: false)
     }
 
-    private func schedule(reset: Bool) {
+    private func schedule(reset: Bool, generation: Int? = nil) {
         mutex.sync {
-            DLog("schedule(reset: \(reset)) called")
-            if reset {
-                DLog("set updatePending = false")
-                _updatePending = false
-            }
-            guard _needsUpdate else {
-                // Nothing changed.
-                DLog("No update needed")
-                return
-            }
-            let wasPending = _updatePending
-            _updatePending = true
-
-            if wasPending {
-                // Too soon to update.
-                DLog("Too soon to update")
-                return
-            }
-
-            resetAfterDelay()
-            _needsUpdate = false
-            DLog("Periodic scheduler performing action")
-            action()
+            scheduleLocked(reset: reset, generation: generation)
         }
     }
 
-    private func resetAfterDelay() {
-        queue.asyncAfter(deadline: .now() + period) { [weak self] in
+    // Caller must hold the mutex.
+    private func scheduleLocked(reset: Bool, generation: Int? = nil) {
+        DLog("schedule(reset: \(reset)) called")
+        if let generation, generation != resetGeneration {
+            // A later call to resetAfterDelay(_:) superseded us.
+            DLog("Ignore superseded reset")
+            return
+        }
+        if reset {
+            DLog("set updatePending = false")
+            _updatePending = false
+            pendingResetDeadline = nil
+        }
+        guard _needsUpdate else {
+            // Nothing changed.
+            DLog("No update needed")
+            return
+        }
+        let wasPending = _updatePending
+        _updatePending = true
+
+        if wasPending {
+            // Too soon to update.
+            DLog("Too soon to update")
+            return
+        }
+
+        resetAfterDelay(period)
+        _needsUpdate = false
+        DLog("Periodic scheduler performing action")
+        action()
+    }
+
+    // Caller must hold the mutex. Arms a reset `delay` from now, superseding any reset
+    // armed earlier so that exactly one is live at a time.
+    private func resetAfterDelay(_ delay: TimeInterval) {
+        resetGeneration += 1
+        let generation = resetGeneration
+        let deadline = DispatchTime.now() + delay
+        pendingResetDeadline = deadline
+        queue.asyncAfter(deadline: deadline) { [weak self] in
             guard let self = self else {
                 return
             }
-            DLog("Resetting after delay of \(period)")
-            self.schedule(reset: true)
+            DLog("Resetting after delay of \(delay)")
+            self.schedule(reset: true, generation: generation)
         }
     }
 }
