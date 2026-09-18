@@ -558,7 +558,7 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
         if files.isEmpty {
             return "Edit"
         }
-        return "Edit: " + files.map { shortPath($0) }.joined(separator: ", ")
+        return condense("Edit: " + files.map { shortPath($0) }.joined(separator: ", "))
     case "update_plan":
         return "Update plan"
     case "WebFetch":
