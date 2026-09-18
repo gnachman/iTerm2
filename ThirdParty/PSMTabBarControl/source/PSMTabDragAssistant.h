@@ -12,6 +12,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "PSMTabBarControl.h"
+#import "PSMTabDragSessionDriver.h"
 @class PSMTabBarCell;
 @class PSMTabDragWindow;
 
@@ -27,6 +28,17 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 @interface PSMTabDragAssistant : NSObject
 
 @property (nonatomic, readonly) BOOL dropping;
+
+// The live AppKit services a drag uses: the NSDraggingSession and the pointer
+// polling. Defaults to a PSMAppKitTabDragSessionDriver. Tests substitute a fake
+// so that no real dragging session is ever armed in the test process; see the
+// comment on PSMTabDragSessionDriver for why a real one is fatal there.
+@property (nonatomic, retain) id<PSMTabDragSessionDriver> dragSessionDriver;
+
+// Frame of the floating window that carries the dragged tab's image, or
+// NSZeroRect when no drag is in flight. Exposed so tests driving a simulated
+// drag can assert that the image tracks the pointer.
+@property (nonatomic, readonly) NSRect dragTabWindowFrame;
 
 // Creation/destruction
 + (PSMTabDragAssistant *)sharedDragAssistant;

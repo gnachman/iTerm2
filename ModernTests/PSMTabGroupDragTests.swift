@@ -37,9 +37,17 @@ private final class ObservingChipCell: PSMTabBarCell {
 final class PSMTabGroupDragTests: XCTestCase {
     private var window: NSWindow!
     private var control: PSMTabBarControl!
+    private var dragDriver: FakeTabDragSessionDriver!
+    private var savedDragDriver: PSMTabDragSessionDriver!
 
     override func setUp() {
         super.setUp()
+        // Never let a test arm a real NSDraggingSession: it would not start
+        // here, it would start inside whatever later test first pumps the run
+        // loop, and hang that test forever in AppKit's modal drag loop.
+        savedDragDriver = PSMTabDragAssistant.shared().dragSessionDriver
+        dragDriver = FakeTabDragSessionDriver()
+        PSMTabDragAssistant.shared().dragSessionDriver = dragDriver
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 400),
                           styleMask: [.titled],
                           backing: .buffered,
@@ -56,6 +64,9 @@ final class PSMTabGroupDragTests: XCTestCase {
         // Make sure a failed/aborted drag doesn't leak assistant state into the
         // next test.
         PSMTabDragAssistant.shared().finishDrag()
+        PSMTabDragAssistant.shared().dragSessionDriver = savedDragDriver
+        savedDragDriver = nil
+        dragDriver = nil
         control = nil
         window = nil
         super.tearDown()
@@ -478,4 +489,97 @@ final class PSMTabGroupDragTests: XCTestCase {
         XCTAssertFalse(observing.frameReadAfterStrip,
                        "chip.frame was read after the chip was stripped from the control -- this is the use-after-free")
     }
+
+    // MARK: - Simulated drag session
+
+    // Starting a group drag must hand the driver exactly one dragging session,
+    // for the source bar, and start pointer tracking. Production wires these to
+    // NSDraggingSession and a CVDisplayLink; the point of the seam is that the
+    // assistant asks for them rather than reaching for AppKit itself.
+    func testStartingGroupDragOpensOneSessionAndStartsTracking() {
+        let (chip, members) = makeGroupedBar()
+        PSMTabDragAssistant.shared().startDraggingGroup(withChip: chip,
+                                                        members: members,
+                                                        fromTabBar: control,
+                                                        withMouseDownEvent: mouseDownEvent(at: NSPoint(x: 20, y: 12)))
+
+        XCTAssertEqual(dragDriver.startedSessionCount, 1)
+        XCTAssertTrue(dragDriver.lastTabBar === control)
+        XCTAssertEqual(dragDriver.lastDraggingItems.count, 1)
+        XCTAssertTrue(dragDriver.isTrackingMouse,
+                      "the drag image cannot follow the pointer if nothing is polling it")
+    }
+
+    // Finishing a drag must stop the polling. The real driver leaks a running
+    // CVDisplayLink otherwise.
+    func testFinishDragStopsMouseTracking() {
+        let (chip, members) = makeGroupedBar()
+        PSMTabDragAssistant.shared().startDraggingGroup(withChip: chip,
+                                                        members: members,
+                                                        fromTabBar: control,
+                                                        withMouseDownEvent: mouseDownEvent(at: NSPoint(x: 20, y: 12)))
+        XCTAssertTrue(dragDriver.isTrackingMouse)
+
+        PSMTabDragAssistant.shared().finishDrag()
+
+        XCTAssertFalse(dragDriver.isTrackingMouse)
+        XCTAssertGreaterThanOrEqual(dragDriver.stopMouseTrackingCount, 1)
+    }
+
+    // The whole point of simulating rather than stubbing: a pointer update fed
+    // through the driver must move the floating drag image, along the same code
+    // path a CVDisplayLink tick takes during a real drag.
+    func testSimulatedPointerMoveDragsTheTabImage() {
+        let (chip, members) = makeGroupedBar()
+        PSMTabDragAssistant.shared().startDraggingGroup(withChip: chip,
+                                                        members: members,
+                                                        fromTabBar: control,
+                                                        withMouseDownEvent: mouseDownEvent(at: NSPoint(x: 20, y: 12)))
+        // Arm the drag-window origin the way AppKit's drag-began callback does;
+        // until then the assistant ignores pointer updates.
+        PSMTabDragAssistant.shared().draggingBegan(at: NSPoint(x: 200, y: 200))
+        let start = PSMTabDragAssistant.shared().dragTabWindowFrame
+        XCTAssertFalse(NSEqualRects(start, .zero), "no drag image window to move")
+
+        dragDriver.simulateMouseMove(to: NSPoint(x: 360, y: 200))
+
+        let moved = PSMTabDragAssistant.shared().dragTabWindowFrame
+        XCTAssertEqual(moved.origin.x - start.origin.x, 160, accuracy: 1.0,
+                       "the drag image did not follow the pointer's 160pt travel")
+    }
+
+    // Successive updates keep tracking, and a repeat of the same position is
+    // ignored (the real display link fires ~60x/sec whether or not the pointer
+    // moved, so this dedupe is what keeps it cheap).
+    func testRepeatedPointerPositionIsIgnored() {
+        let (chip, members) = makeGroupedBar()
+        PSMTabDragAssistant.shared().startDraggingGroup(withChip: chip,
+                                                        members: members,
+                                                        fromTabBar: control,
+                                                        withMouseDownEvent: mouseDownEvent(at: NSPoint(x: 20, y: 12)))
+        PSMTabDragAssistant.shared().draggingBegan(at: NSPoint(x: 200, y: 200))
+
+        dragDriver.simulateMouseDrag(through: [NSPoint(x: 260, y: 200),
+                                               NSPoint(x: 320, y: 200)])
+        let afterDrag = PSMTabDragAssistant.shared().dragTabWindowFrame
+        dragDriver.simulateMouseMove(to: NSPoint(x: 320, y: 200))
+
+        XCTAssertEqual(PSMTabDragAssistant.shared().dragTabWindowFrame, afterDrag)
+    }
+
+    // Regression guard for the suite-wide hang: these tests must never arm a
+    // real NSCoreDragManager session. One that is armed here does not start
+    // here -- it starts inside whatever later test first pumps the run loop,
+    // and blocks it forever waiting for a mouse-up that never comes.
+    func testDragTestsNeverArmARealDraggingSession() {
+        let (chip, members) = makeGroupedBar()
+        PSMTabDragAssistant.shared().startDraggingGroup(withChip: chip,
+                                                        members: members,
+                                                        fromTabBar: control,
+                                                        withMouseDownEvent: mouseDownEvent(at: NSPoint(x: 20, y: 12)))
+
+        XCTAssertTrue(PSMTabDragAssistant.shared().dragSessionDriver === dragDriver,
+                      "something replaced the fake driver; a real drag session would hang a later test")
+    }
+
 }

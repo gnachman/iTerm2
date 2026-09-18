@@ -13,7 +13,6 @@
 #import "PSMTabStyle.h"
 #import "PSMTabDragWindow.h"
 #import <os/signpost.h>
-#import <CoreVideo/CoreVideo.h>
 #import <sys/time.h>
 
 NSString *const PSMTabDragIsGroupPasteboardType = @"com.iterm2.psm.tabgroup";
@@ -46,8 +45,6 @@ static os_log_t PSMTabDragLog(void) {
 // reference to it.
 @property (nonatomic, retain) NSWindow *temporarilyHiddenWindow;
 
-- (void)displayLinkDidFire;
-
 // Mid-drag group-chip helpers (defined below; declared here so the earlier
 // -calculateDragAnimationForTabBar: can call them without an implicit warning).
 - (void)reinsertDragChipsInTabBar:(PSMTabBarControl *)control;
@@ -58,24 +55,6 @@ static os_log_t PSMTabDragLog(void) {
                                  inControl:(PSMTabBarControl *)control
                                      cells:(NSArray *)cells;
 @end
-
-// CVDisplayLink callback - runs on a background thread, so we need to get to main thread
-// Using CFRunLoopPerformBlock with event tracking mode since dispatch_async doesn't work well during drags
-static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
-                                    const CVTimeStamp *now,
-                                    const CVTimeStamp *outputTime,
-                                    CVOptionFlags flagsIn,
-                                    CVOptionFlags *flagsOut,
-                                    void *context) {
-    @autoreleasepool {
-        PSMTabDragAssistant *assistant = (__bridge PSMTabDragAssistant *)context;
-        CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^{
-            [assistant displayLinkDidFire];
-        });
-        CFRunLoopWakeUp(CFRunLoopGetMain());
-    }
-    return kCVReturnSuccess;
-}
 
 @implementation PSMTabDragAssistant {
     PSMTabBarControl *_destinationTabBar;
@@ -177,8 +156,6 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     BOOL _dragThresholdExceeded;
     BOOL _dragWindowOriginInitialized;
 
-    // CVDisplayLink for tracking mouse during drag (bypasses NSDraggingSession throttling)
-    CVDisplayLinkRef _displayLink;
     NSPoint _lastPolledMouseLocation;
 
 #if PSM_DEBUG_DRAG_PERFORMANCE
@@ -224,11 +201,23 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     return self;
 }
 
-- (void)dealloc {
-    if (_displayLink) {
-        CVDisplayLinkStop(_displayLink);
-        CVDisplayLinkRelease(_displayLink);
+- (NSRect)dragTabWindowFrame {
+    if (!_dragTabWindow) {
+        return NSZeroRect;
     }
+    return [_dragTabWindow frame];
+}
+
+- (id<PSMTabDragSessionDriver>)dragSessionDriver {
+    if (!_dragSessionDriver) {
+        _dragSessionDriver = [[PSMAppKitTabDragSessionDriver alloc] init];
+    }
+    return _dragSessionDriver;
+}
+
+- (void)dealloc {
+    [_dragSessionDriver stopMouseTracking];
+    [_dragSessionDriver release];
     [_sourceTabBar release];
     [_destinationTabBar release];
     [_participatingTabBars release];
@@ -425,7 +414,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
 // Shared tail of a drag start (single tab or whole group): builds the floating
 // drag window, computes _dragTabOffset, begins the AppKit dragging session, and
-// starts the CVDisplayLink mouse polling. `cellFrame` is the dragged unit's frame
+// starts the drag driver's pointer polling. `cellFrame` is the dragged unit's frame
 // already adjusted for a flipped bar.
 - (void)beginDragSessionForControl:(PSMTabBarControl *)control
                               cell:(PSMTabBarCell *)cell
@@ -467,12 +456,9 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     NSPoint cellOriginInWindow = [control convertPoint:cellFrame.origin toView:nil];
     _dragTabOffset = NSMakeSize(windowCoord.x - cellOriginInWindow.x,
                                 windowCoord.y - cellOriginInWindow.y);
-    ILog(@"Begin dragging session for tab bar %p", control);
-    NSDraggingSession *draggingSession = [control beginDraggingSessionWithItems:@[ dragItem ]
-                                                                          event:event
-                                                                         source:control];
-    draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
-    draggingSession.draggingFormation = NSDraggingFormationNone;
+    [self.dragSessionDriver startDragSessionWithItems:@[ dragItem ]
+                                                event:event
+                                             inTabBar:control];
 
     // Set up high-frequency polling timer to track mouse position during drag
     // This bypasses the throttled NSDraggingSession callbacks
@@ -483,13 +469,17 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 #endif
     _lastPolledMouseLocation = NSZeroPoint;
 
-    // Create CVDisplayLink for display-synchronized mouse tracking
+    // Ask the driver for display-synchronized pointer updates.
 #if PSM_DEBUG_DRAG_PERFORMANCE
-    NSLog(@"[PSMTabDrag] Starting CVDisplayLink for mouse tracking");
+    NSLog(@"[PSMTabDrag] Starting mouse tracking");
 #endif
-    CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
-    CVDisplayLinkSetOutputCallback(_displayLink, &DisplayLinkCallback, (__bridge void *)self);
-    CVDisplayLinkStart(_displayLink);
+    // __block, so the block does not retain self: self owns the driver, the
+    // driver owns this handler. Tracking never outlives the assistant (a
+    // singleton), and -stopMouseTracking drops the handler.
+    __block __typeof(self) unretainedSelf = self;
+    [self.dragSessionDriver startMouseTrackingWithHandler:^{
+        [unretainedSelf displayLinkDidFire];
+    }];
 
 #if PSM_DEBUG_DRAG_PERFORMANCE
     // Create timestamp overlay window for debugging
@@ -1358,18 +1348,13 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [self closeTimestampWindow];
 #endif
 
-    // Stop CVDisplayLink and log final stats
-    if (_displayLink) {
 #if PSM_DEBUG_DRAG_PERFORMANCE
-        double elapsed = _pollingFirstEventTime > 0 ? (CACurrentMediaTime() - _pollingFirstEventTime) : 0;
-        double avgRate = elapsed > 0 ? (_pollingEventCount / elapsed) : 0;
-        NSLog(@"[PSMTabDrag] Stopping CVDisplayLink. Total updates: %d over %.2fs (avg %.1f updates/sec)",
-              _pollingEventCount, elapsed, avgRate);
+    double elapsed = _pollingFirstEventTime > 0 ? (CACurrentMediaTime() - _pollingFirstEventTime) : 0;
+    double avgRate = elapsed > 0 ? (_pollingEventCount / elapsed) : 0;
+    NSLog(@"[PSMTabDrag] Stopping mouse tracking. Total updates: %d over %.2fs (avg %.1f updates/sec)",
+          _pollingEventCount, elapsed, avgRate);
 #endif
-        CVDisplayLinkStop(_displayLink);
-        CVDisplayLinkRelease(_displayLink);
-        _displayLink = NULL;
-    }
+    [self.dragSessionDriver stopMouseTracking];
 
     [[self sourceTabBar] dragDidFinish];
     if ([[[self sourceTabBar] tabView] numberOfTabViewItems] == 0 &&
@@ -1586,9 +1571,10 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [self updateTimestampDisplay];
 #endif
 
-    // Get current mouse location in screen coordinates
-    // This is the same coordinate system used by draggingSession:movedToPoint:
-    NSPoint screenPoint = [NSEvent mouseLocation];
+    // Current pointer location in screen coordinates -- the same coordinate
+    // system used by draggingSession:movedToPoint:. Comes from the driver so a
+    // simulated drag can supply positions no pointer ever visited.
+    NSPoint screenPoint = self.dragSessionDriver.currentMouseLocation;
 
     // Skip if mouse hasn't moved
     if (NSEqualPoints(screenPoint, _lastPolledMouseLocation)) {

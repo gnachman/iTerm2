@@ -953,9 +953,6 @@
 		53BBA0F5214205200074D061 /* NSAlert+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 53BBA0F3214205200074D061 /* NSAlert+iTerm.h */; };
 		53BBA0F6214205200074D061 /* NSAlert+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 53BBA0F4214205200074D061 /* NSAlert+iTerm.m */; };
 		53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
-		DC8EC130FF5C84A8B1B3956A /* claude_usage.sh in Resources */ = {isa = PBXBuildFile; fileRef = 264660071C2DC297B2CF9A22 /* claude_usage.sh */; };
-		BD4687F87AE63F10FF609B52 /* claude_usage.sh in Resources */ = {isa = PBXBuildFile; fileRef = 264660071C2DC297B2CF9A22 /* claude_usage.sh */; };
-		F327253A2620E27234CB6E9D /* claude_usage.sh in Resources */ = {isa = PBXBuildFile; fileRef = 264660071C2DC297B2CF9A22 /* claude_usage.sh */; };
 		53BBA0F9214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
 		53BBA0FA214236AC0074D061 /* iterm2_git_poll.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */; };
 		53BCAAFA22668A1E00949829 /* iTermCachingFileManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 53BCAAF822668A1E00949829 /* iTermCachingFileManager.h */; };
@@ -5491,8 +5488,10 @@
 		B9B050C66BE98825D6AFEE47 /* cloak-page-world.js in Resources */ = {isa = PBXBuildFile; fileRef = ED1DEABF73F84ABCF9B2FDC8 /* cloak-page-world.js */; };
 		BA4C304EDA97BE8F1E96BDE4 /* iTermCorruptApplicationAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = C5E1A0E13FB6B39D3EE2F02D /* iTermCorruptApplicationAlert.m */; };
 		BA92EFE30108CC1ED8491814 /* ChatBlobAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4836A8DAE973FFD820A3513A /* ChatBlobAssembler.swift */; };
+		BB3599576D131056222AF693 /* PSMTabDragSessionDriver.m in Sources */ = {isa = PBXBuildFile; fileRef = D5B22C5FAF61770FD55AD000 /* PSMTabDragSessionDriver.m */; };
 		BB4ECCB6C145CDE401FE7EE7 /* CompanionPluginTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16244DB19048FCA0614235A6 /* CompanionPluginTransport.swift */; };
 		BCED56C0C7BC4730A6B05159 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9E8EE77086E04B6E9BACAF1D /* Localizable.xcstrings */; };
+		BD4687F87AE63F10FF609B52 /* claude_usage.sh in Resources */ = {isa = PBXBuildFile; fileRef = 264660071C2DC297B2CF9A22 /* claude_usage.sh */; };
 		BD4D313E427B806663EB3D47 /* AILiveAttachmentFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11BE1CE0F1EF4E86C53D1E0 /* AILiveAttachmentFixtures.swift */; };
 		BEEFCAFEDEADC0DE00000001 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
 		BEEFCAFEDEADC0DE00000002 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
@@ -5544,6 +5543,7 @@
 		DA92E7010063E8CD7DDDEE3B /* JSONArraySplice.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD71DB091B2D8353FCFAE0DD /* JSONArraySplice.swift */; };
 		DB42A165C1B25A2BD5FC2BB8 /* iterm2-test-adapter in CopyFiles */ = {isa = PBXBuildFile; fileRef = 91FA576A88BCF13676249576 /* iterm2-test-adapter */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		DBBAF45A1CB97E40AF51336D /* CompanionWizardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93E5C503C5B7199DE032A9C7 /* CompanionWizardWindowController.swift */; };
+		DC8EC130FF5C84A8B1B3956A /* claude_usage.sh in Resources */ = {isa = PBXBuildFile; fileRef = 264660071C2DC297B2CF9A22 /* claude_usage.sh */; };
 		DCE63F57A37160221DC5B939 /* iTermScreenshotPreviewOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE6718DDCFD2CA382391CDFD /* iTermScreenshotPreviewOverlay.swift */; };
 		DD4E77FB28CD2D48C6A13C66 /* TerminalHardRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECFD443A066A4370FCB20EFC /* TerminalHardRules.swift */; };
 		DD90A2E4670A4DAA580B2BA6 /* ChatManualStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099C8A86522346410F6224B1 /* ChatManualStackView.swift */; };
@@ -5580,6 +5580,7 @@
 		EFA6F6A0923E4129C1A12B09 /* CompanionPluginClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 288808F99DB33274E4751B98 /* CompanionPluginClient.swift */; };
 		F29990262A158DDA34836852 /* iTermCorruptApplicationAlert.h in Sources */ = {isa = PBXBuildFile; fileRef = 139B0F2464646FD17DF58221 /* iTermCorruptApplicationAlert.h */; };
 		F2B61BF663AD403768588B20 /* iTermNotifyOnStatusChangeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38C0DAB55C8520927EB4FB0 /* iTermNotifyOnStatusChangeController.swift */; };
+		F327253A2620E27234CB6E9D /* claude_usage.sh in Resources */ = {isa = PBXBuildFile; fileRef = 264660071C2DC297B2CF9A22 /* claude_usage.sh */; };
 		F47F2C13C9DE8CA385FB2694 /* AIBackslashEscapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBF17846F1849487090265E0 /* AIBackslashEscapes.swift */; };
 		F4B48ACE64DE84CB54640D8E /* ColorAlphaBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB585CA61BDA34E5071CFD83 /* ColorAlphaBuiltInFunction.swift */; };
 		F50FD9F1F317F265BA9D2575 /* AILiveAppleIntelligenceTabTitle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7133FD0EA06B662C44BD713A /* AILiveAppleIntelligenceTabTitle.swift */; };
@@ -6482,6 +6483,7 @@
 		257048DB7F3343FA9AA49966 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermStatusBarSetupViewController.xcstrings; sourceTree = "<group>"; };
 		2592CCDF993CD33E0DE3E6A3 /* AITabTitleCorpus.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AITabTitleCorpus.swift; sourceTree = "<group>"; };
 		25EC5E50C69463E890DD26BE /* CompanionToast.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionToast.swift; sourceTree = "<group>"; };
+		264660071C2DC297B2CF9A22 /* claude_usage.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = claude_usage.sh; path = sources/Workgroups/UsageProviders/claude_usage.sh; sourceTree = "<group>"; };
 		26D937108B4A3A7BC121FF1D /* iTermWorkgroupToolbarItemRegistry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupToolbarItemRegistry.swift; sourceTree = "<group>"; };
 		2759A1296CD24569B0F657B6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermScriptTemplatePickerWindowController.xib; sourceTree = "<group>"; };
 		288808F99DB33274E4751B98 /* CompanionPluginClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPluginClient.swift; sourceTree = "<group>"; };
@@ -6758,7 +6760,6 @@
 		53BBA0F3214205200074D061 /* NSAlert+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAlert+iTerm.h"; sourceTree = "<group>"; };
 		53BBA0F4214205200074D061 /* NSAlert+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAlert+iTerm.m"; sourceTree = "<group>"; };
 		53BBA0F7214236AC0074D061 /* iterm2_git_poll.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = iterm2_git_poll.sh; path = sources/iterm2_git_poll.sh; sourceTree = "<group>"; };
-		264660071C2DC297B2CF9A22 /* claude_usage.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = claude_usage.sh; path = sources/Workgroups/UsageProviders/claude_usage.sh; sourceTree = "<group>"; };
 		53BCAAF822668A1E00949829 /* iTermCachingFileManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCachingFileManager.h; sourceTree = "<group>"; };
 		53BCAAF922668A1E00949829 /* iTermCachingFileManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCachingFileManager.m; sourceTree = "<group>"; };
 		53C166A820C21FBB003B03AF /* iTermMigrationHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMigrationHelper.h; sourceTree = "<group>"; };
@@ -9975,6 +9976,8 @@
 		D553F290E3CD4513A168D3C2 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermMiniSearchFieldViewController.xcstrings; sourceTree = "<group>"; };
 		D55D72FD7220B5B06612565F /* iTermOpenDirectory+MainApp.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "iTermOpenDirectory+MainApp.h"; sourceTree = "<group>"; };
 		D5A9A797EDC5E8D4903696F5 /* ProfileBoolSettingCatalog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileBoolSettingCatalog.swift; sourceTree = "<group>"; };
+		D5B22C5FAF61770FD55AD000 /* PSMTabDragSessionDriver.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = PSMTabDragSessionDriver.m; sourceTree = "<group>"; };
+		D5B22C60AF61770FD55AD001 /* PSMTabDragSessionDriver.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = PSMTabDragSessionDriver.h; sourceTree = "<group>"; };
 		D6AA187B9B6E8DFF2E4B36AD /* AIModelCatalogUpdater.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIModelCatalogUpdater.swift; sourceTree = "<group>"; };
 		D7B735D5C742418D83DF5844 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermPasteSpecialViewController.xcstrings; sourceTree = "<group>"; };
 		D7D0842E4D84F3FC90A568B0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermSnippetsEditingViewController.xib; sourceTree = "<group>"; };
@@ -16425,6 +16428,8 @@
 				A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */,
 				A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */,
 				693EE5C4C127AC8FB85F37D9 /* PSMTabGroupChipView.m */,
+				D5B22C60AF61770FD55AD001 /* PSMTabDragSessionDriver.h */,
+				D5B22C5FAF61770FD55AD000 /* PSMTabDragSessionDriver.m */,
 			);
 			name = source;
 			path = PSMTabBarControl/source;
@@ -22600,6 +22605,7 @@
 				1DDC09401B4DB97500B1A910 /* iTermRoundedCornerScrollView.m in Sources */,
 				A6CEC1131DCE8146009F4FD2 /* GPBWellKnownTypes.m in Sources */,
 				A6C763E11B45C6DD00E3C992 /* PSMTabDragAssistant.m in Sources */,
+				BB3599576D131056222AF693 /* PSMTabDragSessionDriver.m in Sources */,
 				A6C763AE1B45C52B00E3C992 /* CaptureTrigger.m in Sources */,
 				A6E2A62D2B91053B00EC6070 /* VT100ScreenMutableState+MRR.m in Sources */,
 				A6C763411B45C52B00E3C992 /* iTermFindCursorView.m in Sources */,
