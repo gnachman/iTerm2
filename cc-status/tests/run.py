@@ -185,7 +185,10 @@ def run_scenario(name, steps, binary, workdir):
         open(log_path, "w").close()
         # start_new_session drops the controlling terminal so the OSC progress
         # write to /dev/tty is skipped instead of landing in this terminal.
-        result = subprocess.run([os.path.join(workdir, "cc-status")], input=payload, env=env,
+        command = [os.path.join(workdir, "cc-status")]
+        if fixture.startswith("codex/"):
+            command += ["--agent", "codex"]
+        result = subprocess.run(command, input=payload, env=env,
                                 capture_output=True, start_new_session=True)
         with open(log_path) as f:
             calls = [line.rstrip("\n").split(ARG_SEPARATOR)[:-1] for line in f if line.strip()]

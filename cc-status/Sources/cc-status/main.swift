@@ -3,6 +3,14 @@ import Foundation
 // Driven by Claude Code hooks (~/.claude/settings.json). Codex CLI hooks
 // (~/.codex/hooks.json) send the same payload shape, so one binary serves both.
 
+let agent: String? = {
+    guard let index = CommandLine.arguments.firstIndex(of: "--agent"),
+          index + 1 < CommandLine.arguments.count else {
+        return nil
+    }
+    return CommandLine.arguments[index + 1]
+}()
+
 // Get iTerm2 session ID from environment.
 // TERM_SESSION_ID is like "w0t0p0:D1B2BAE2-3D01-4BB6-9021-27D6CF210957"
 guard let termSessionID = ProcessInfo.processInfo.environment["TERM_SESSION_ID"],
@@ -48,9 +56,9 @@ var backgroundTasks: Int? = nil
 // SubagentStart/SubagentStop. It also fires no Stop when a detached sub-agent
 // finishes after the parent went idle, so SubagentStop needs to know whether
 // the turn is still open; that lives in a session variable. Both cost an extra
-// it2 round trip (~200 ms), so only Codex pays for them. Codex stamps turn_id
-// on every event; Claude Code only on MessageDisplay, which isn't handled here.
-let isCodex = json["turn_id"] != nil
+// it2 round trip (~200 ms), so only Codex pays for them. The hook configuration
+// passes the agent explicitly because session-boundary events have no turn_id.
+let isCodex = agent == "codex"
 let turnOpenVariable = "user.ccStatusTurnOpen"
 
 switch eventName {
