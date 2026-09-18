@@ -165,6 +165,11 @@ case "Interrupt":
     guard isCodex else {
         exit(0)
     }
+    // Codex gives Interrupt and SessionEnd one second by default, three at
+    // most, while other events get 600. At roughly 200 ms per it2 call the
+    // three below fit, but hooks.json should still ask for "timeout": 3; a
+    // hook killed between them leaves the flag and the count inconsistent
+    // with nothing later to heal them.
     let running = storedBackgroundTaskCount(it2SessionID: sessionID)
     setSessionVariable(turnOpenVariable, "0", it2SessionID: sessionID)
     if running > 0 {
