@@ -525,3 +525,8 @@ Bug Fixes:
   belonged; entering the alternate screen,
   Reset, and Clear Buffer left the same stale
   lines behind.
+- Fixed severe typing lag in a tmux Integration
+  session running on a host you connected to
+  with an SSH profile. Keystrokes and the output
+  they produced were each held back about a
+  second, so typing arrived in slow bursts.

@@ -293,6 +293,30 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }];
 }
 
+- (void)addUrgentSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
+                       name:(NSString *)name {
+    DLog(@"[side effects] %@ Add urgent side effect %@", self.config.sessionGuid, name);
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor addUrgentSideEffect:^{
+        DLog(@"[side effects] %@ Execute urgent side effect %@", weakSelf.config.sessionGuid, name);
+        [weakSelf performSideEffect:sideEffect name:name];
+    }];
+}
+
+- (void)addUrgentPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
+                             name:(NSString *)name {
+    DLog(@"[side effects] %@ Add urgent paused side effect %@", self.config.sessionGuid, name);
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor addUrgentSideEffect:^{
+        if (!weakSelf) {
+            [unpauser unpause];
+            return;
+        }
+        [weakSelf performPausedSideEffect:unpauser block:sideEffect name:name];
+    }];
+}
+
 // Paused variant of addReportSideEffect:: pauses like addPausedSideEffect: but
 // schedules via addReportSideEffect so it does not disarm skip-sync.
 - (void)addPausedReportSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
