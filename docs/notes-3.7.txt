@@ -271,6 +271,11 @@ Improvements:
   tabs after a group follows suit.
 
 Bug Fixes:
+- A hotkey window set to appear on all spaces no
+  longer switches you to a different space when
+  revealed after reopening the laptop lid. It is
+  now revealed on the current space and rejoins
+  all spaces afterward. Issue 12968.
 - Opening a link from a browser tab in a tab
   group (with “Open in New Tab” or a link that
   wants a new window) now puts the new tab in
