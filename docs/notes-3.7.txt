@@ -278,6 +278,13 @@ Improvements:
   tabs after a group follows suit.
 
 Bug Fixes:
+- The control sequence that resets a tab color to
+  the profile’s now restores it correctly when
+  the profile has separate light and dark mode
+  colors but its Tab Color predates them. It
+  could leave the tab with a color you never
+  chose, often red, or with no color at all.
+  Issue 13058.
 - A hotkey window set to appear on all spaces no
   longer switches you to a different space when
   revealed after reopening the laptop lid. It is

@@ -17669,6 +17669,26 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
               iTermAmendedColorKey2(baseKey, YES, NO) ];
 }
 
+// The value to restore for a tab-color key: what the profile literally stores,
+// or NSNull when it stores nothing.
+//
+// Deliberately raw rather than +[iTermProfilePreferences objectForKey:inProfile:]
+// or +boolForKey:inProfile:. A restore has to put back the profile's presence,
+// not its effective value, and for the appearance variants the difference is
+// the bug in issue 13058: an absent enable bit resolves to its default NO, and
+// writing that back materializes a Use Tab Color (Light)/(Dark) key, which
+// -amendedTabColorKey then prefers over the base key, so the profile's own tab
+// color stops being used. NSNull instead makes the restore remove the key (see
+// setSessionSpecificProfileValues:), leaving the effective value to come from
+// the defaults again, exactly as it did before the escape sequence ran.
+//
+// This is only equivalent to the resolved value because no tab-color key has a
+// computed value (see +[iTermProfilePreferences computedObjectDictionary]). A
+// computed one would need its presence tracked some other way.
+- (id)storedTabColorSettingForKey:(NSString *)key {
+    return _profile[key] ?: [NSNull null];
+}
+
 - (NSDictionary<NSString *, id> *)tabColorSettings {
     NSArray<NSString *> *useTabColorKeys = [self allTabColorKeysForBaseKey:KEY_USE_TAB_COLOR];
     NSArray<NSString *> *tabColorKeys = [self allTabColorKeysForBaseKey:KEY_TAB_COLOR];
@@ -17677,16 +17697,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
     // Retain baselines since setSessionSpecificProfileValues will remove them from
     // _preEscapeSequenceColors, potentially deallocating them.
-    for (NSString *key in useTabColorKeys) {
-        id baseline = [[_preEscapeSequenceColors[key] retain] autorelease] ?: @([iTermProfilePreferences boolForKey:key inProfile:_profile]);
-        settings[key] = baseline;
-    }
-
-    for (NSString *key in tabColorKeys) {
-        id baseline = [[_preEscapeSequenceColors[key] retain] autorelease] ?: _profile[key];
-        if (baseline) {
-            settings[key] = baseline;
-        }
+    //
+    // Every key gets an entry, including the ones the profile doesn't have, which
+    // get NSNull from -storedTabColorSettingForKey:. Skipping those was the other
+    // half of issue 13058: an escape sequence invents the (Light)/(Dark) keys on
+    // its first write, so with no baseline recorded the NEXT write captured the
+    // escape-written color as if it were the pre-escape value.
+    for (NSString *key in [useTabColorKeys arrayByAddingObjectsFromArray:tabColorKeys]) {
+        settings[key] = [[_preEscapeSequenceColors[key] retain] autorelease] ?: [self storedTabColorSettingForKey:key];
     }
 
     return settings;
@@ -17698,17 +17716,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
     NSDictionary<NSString *, id> *savedBaselines = [self tabColorSettings];
     NSMutableDictionary *valuesToRestore = [NSMutableDictionary dictionary];
-    for (NSString *key in useTabColorKeys) {
-        if (savedBaselines[key]) {
-            valuesToRestore[key] = savedBaselines[key];
-            [_preEscapeSequenceColors removeObjectForKey:key];
-        }
-    }
-    for (NSString *key in tabColorKeys) {
-        if (savedBaselines[key]) {
-            valuesToRestore[key] = savedBaselines[key];
-            [_preEscapeSequenceColors removeObjectForKey:key];
-        }
+    // tabColorSettings gives every key a value, using NSNull for the ones the
+    // profile lacked before the escape sequence ran, so each one is either
+    // restored or removed.
+    for (NSString *key in [useTabColorKeys arrayByAddingObjectsFromArray:tabColorKeys]) {
+        valuesToRestore[key] = savedBaselines[key];
+        [_preEscapeSequenceColors removeObjectForKey:key];
     }
     // Drop any i:N tab-color binding explicitly, even when no concrete Tab Color
     // value is being restored (e.g. the binding never resolved to a color), since
@@ -17777,11 +17790,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             dict[key] = @NO;
         }
         // "No Color" writes no KEY_TAB_COLOR value, so setSessionSpecificProfileValues:
-        // won't drop the KEY_TAB_COLOR baselines. Remove only the NSNull sentinels an
-        // i:N bind captured when the profile had no tab color: a lingering NSNull
-        // keeps hasRemainingColorBaselines YES forever and suppresses the mode-setting
-        // restore on later resets. A concrete baseline (from a real OSC tab-color set)
-        // is retained so a later reset can still restore it.
+        // won't drop the KEY_TAB_COLOR baselines. Remove only the NSNull sentinels,
+        // which any escape-sequence tab-color write leaves for a key the profile
+        // didn't have: a concrete color from -setTabColorFromEscapeSequence: (which
+        // invents the (Light)/(Dark) variants whenever the profile carries its tab
+        // color on the base key alone) or an i:N bind from -screenSetColorBinding:
+        // forProfileKey:. A lingering NSNull keeps hasRemainingColorBaselines YES
+        // forever and suppresses the mode-setting restore on later resets. Baselines
+        // that aren't NSNull are values the profile really had, so they stay and a
+        // later reset can still restore them.
         for (NSString *key in tabColorKeys) {
             if ([_preEscapeSequenceColors[key] isKindOfClass:[NSNull class]]) {
                 [_preEscapeSequenceColors removeObjectForKey:key];
