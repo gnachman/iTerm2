@@ -67,3 +67,8 @@ Bug Fixes:
   instead of terminating iTerm2, which could
   recur on restore because the saved session
   replayed the same link.
+- Fixed severe typing lag in a tmux Integration
+  session running on a host you connected to
+  with an SSH profile. Keystrokes and the output
+  they produced were each held back about a
+  second, so typing arrived in slow bursts.
