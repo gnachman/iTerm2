@@ -108,6 +108,41 @@ class PeriodicSchedulerUrgentTests: XCTestCase {
         XCTAssertEqual(counter.value, 1, "non-urgent update was not throttled")
     }
 
+    // A session that becomes visible shrinks its period, but the reset armed at the old,
+    // longer period keeps its deadline. expedite(within:) is what stops that
+    // reset from holding the first flush for the rest of the background second.
+    func testExpeditePullsInAResetArmedAtTheOldPeriod() {
+        let counter = Counter()
+        let scheduler = makeScheduler(counter)
+
+        // Runs the action and arms a reset `period` out.
+        scheduler.markNeedsUpdate()
+        XCTAssertEqual(counter.value, 1)
+
+        // Something is waiting behind that reset, as it would be for a session that kept
+        // producing output while hidden.
+        scheduler.markNeedsUpdate()
+
+        scheduler.period = urgentDelay
+        scheduler.expedite(within: urgentDelay)
+
+        let ran = poll(upTo: period - 1.0) { counter.value >= 2 }
+        XCTAssertTrue(ran, "expedited reset never ran; it waited out the old period")
+    }
+
+    // Unlike markNeedsUpdate(within:), expediting must not manufacture an update. A
+    // visible session with nothing queued should not be forced into a flush, which would
+    // cost a sync on every tab switch.
+    func testExpediteDoesNotForceAnUpdate() {
+        let counter = Counter()
+        let scheduler = makeScheduler(counter)
+
+        scheduler.expedite(within: urgentDelay)
+        poll(upTo: 0.5) { false }
+
+        XCTAssertEqual(counter.value, 0, "expediting forced a flush with nothing pending")
+    }
+
     // Repeated urgent requests must coalesce rather than arming a reset apiece. This is
     // what the generation counter in resetAfterDelay(_:) is for: only the newest armed
     // reset is honored, so 20 requests inside one urgent delay do not buy 20 runs.
