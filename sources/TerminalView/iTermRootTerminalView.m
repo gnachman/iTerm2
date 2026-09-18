@@ -358,9 +358,10 @@ typedef struct {
     } else if (!_tabBarControlOnLoan && !_windowNameBesideTabsLabel.hidden && view == _windowNameBesideTabsLabel && !_tabBarControl.isHidden) {
         // Unlike the window number, the name answers one gesture of its own: a
         // double-click opens the rename dialog, since the name is the one thing
-        // in the strip a user might want to change in place. -mouseDown: hands
-        // every other gesture straight back, so the strip is unchanged except
-        // for that one case.
+        // in the strip a user might want to change in place. It is detected in
+        // -mouseUp:, never -mouseDown: — overriding -mouseDown: at all switches
+        // off the automatic dragging that mouseDownCanMoveWindow provides, for
+        // the whole view and every window style.
         return self;
     } else if (!_windowTitleLabel.hidden && view == _windowTitleLabel) {
         return self;
@@ -376,29 +377,17 @@ typedef struct {
             NSPointInRect(point, _windowNameBesideTabsLabel.frame));
 }
 
-- (void)mouseDown:(NSEvent *)event {
-    if (![self pointIsInWindowNameBesideTabs:[self convertPoint:event.locationInWindow fromView:nil]]) {
-        [super mouseDown:event];
-        return;
-    }
-    if (event.clickCount == 2) {
-        [self.delegate rootTerminalViewDidRequestEditWindowName];
-        return;
-    }
-    // What makes an ordinary view behave like a title bar: the window follows
-    // the drag, and a plain click does nothing. It zooms on a double-click too,
-    // which is why the case above returns before reaching it — on the name, the
-    // double-click is spent on the title instead.
-    [self.window performWindowDragWithEvent:event];
-}
-
 - (void)mouseUp:(NSEvent *)event {
-    if (!_windowTitleLabel.hidden && event.clickCount == 2) {
+    if (event.clickCount == 2) {
         const NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
-        const CGFloat titleBarHeight = _tabBarControl.height;
-        NSRect rect = NSMakeRect(0, self.bounds.size.height - titleBarHeight, self.bounds.size.width, titleBarHeight);
-        if (NSPointInRect(point, rect)) {
-            [self.window it_titleBarDoubleClick];
+        if ([self pointIsInWindowNameBesideTabs:point]) {
+            [self.delegate rootTerminalViewDidRequestEditWindowName];
+        } else if (!_windowTitleLabel.hidden) {
+            const CGFloat titleBarHeight = _tabBarControl.height;
+            NSRect rect = NSMakeRect(0, self.bounds.size.height - titleBarHeight, self.bounds.size.width, titleBarHeight);
+            if (NSPointInRect(point, rect)) {
+                [self.window it_titleBarDoubleClick];
+            }
         }
     }
     [super mouseUp:event];
