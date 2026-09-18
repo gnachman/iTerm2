@@ -170,6 +170,10 @@ case "Interrupt":
     // three below fit, but hooks.json should still ask for "timeout": 3; a
     // hook killed between them leaves the flag and the count inconsistent
     // with nothing later to heal them.
+    // The count is kept: Esc interrupts only the root thread, a spawned
+    // agent keeps running and its SubagentStop still arrives. One that
+    // dies fires nothing, like a failed root turn, and the count then
+    // sticks until SessionEnd; that needs the staleness guard in iTerm2.
     let running = storedBackgroundTaskCount(it2SessionID: sessionID)
     setSessionVariable(turnOpenVariable, "0", it2SessionID: sessionID)
     if running > 0 {
