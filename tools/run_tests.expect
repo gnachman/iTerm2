@@ -1,13 +1,35 @@
-#!/usr/bin/expect -f
+#!/usr/bin/expect --
 
 if {$argc < 1} {
-    puts "Usage: run_tests.expect <test-name>"
+    puts "Usage: run_tests.expect \[-parallel\] <test-name> ..."
     puts "Example: run_tests.expect ModernTests/iTermScriptFunctionCallTest/testSignature"
+    puts ""
+    puts "  -parallel   Run test classes across several worker processes."
+    puts "              Faster (roughly 90s -> 55s for the whole suite), but"
+    puts "              xcodebuild then prints only the NAME of a failing test:"
+    puts "              no file, no line, no assertion message. Use it for a"
+    puts "              quick check when you do not expect failures, and re-run"
+    puts "              without it to find out why something failed."
+    puts ""
+    puts "              With -parallel and no test name, the whole suite runs."
     exit 1
 }
 
+# -parallel anywhere in the arguments; everything else is a test name.
+set parallel NO
+set test_names {}
+foreach arg $argv {
+    if {$arg eq "-parallel" || $arg eq "--parallel"} {
+        set parallel YES
+    } else {
+        lappend test_names $arg
+    }
+}
+
+# No -only-testing flags at all means the whole suite, which is the point of
+# passing -parallel by itself.
 set only_testing_flags {}
-foreach test_name $argv {
+foreach test_name $test_names {
     lappend only_testing_flags -only-testing:$test_name
 }
 set timeout -1
@@ -49,7 +71,7 @@ proc kill_tree {pid} {
     catch {exec kill -9 $pid}
 }
 
-spawn xcodebuild test -project iTerm2.xcodeproj -scheme ModernTests {*}$only_testing_flags -parallel-testing-enabled NO {*}$signing_flags
+spawn xcodebuild test -project iTerm2.xcodeproj -scheme ModernTests {*}$only_testing_flags -parallel-testing-enabled $parallel {*}$signing_flags
 set spawned_pid [exp_pid]
 
 proc cleanup_and_exit {code} {
@@ -74,6 +96,10 @@ expect {
         set code [lindex $result 3]
         if {$code != 0} {
             kill_tree $spawned_pid
+            if {$parallel eq "YES"} {
+                send_user "\n*** Tests failed. A parallel run reports only the test NAME;\n"
+                send_user "*** re-run without -parallel to see the assertion and its line. ***\n\n"
+            }
         }
         exit $code
     }
