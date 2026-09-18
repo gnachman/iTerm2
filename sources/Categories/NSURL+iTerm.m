@@ -401,6 +401,7 @@ static BOOL NSStringIsValidURLScheme(NSString *scheme) {
     // encoded and contains no raw percents".
     [charset addCharactersInString:@"%"];
     NSMutableString *urlString = [components.URL.absoluteString mutableCopy];
+    __block BOOL failed = NO;
     [uuidToQueryItem enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull uuid, NSURLQueryItem * _Nonnull queryItem, BOOL * _Nonnull stop) {
         NSString *queryParam;
         NSString *name = glueOriginal(queryItem.name);
@@ -412,11 +413,26 @@ static BOOL NSStringIsValidURLScheme(NSString *scheme) {
         } else {
             queryParam = [NSString stringWithFormat:@"%@=%@", name ?: @"", value];
         }
+        // -stringByAddingPercentEncodingWithAllowedCharacters: returns nil when the string is
+        // ill-formed UTF-16, such as a lone surrogate, because UTF-8 cannot represent one. Passing
+        // that nil to -replaceOccurrencesOfString:withString: raises, and this runs on the mutation
+        // queue, so an unusual hyperlink would abort the app. Give up on the whole URL instead.
+        // See issue 13063.
+        NSString *encodedQueryParam = [queryParam stringByAddingPercentEncodingWithAllowedCharacters:charset];
+        if (!encodedQueryParam) {
+            RLog(@"Query param %@ could not be percent-encoded", queryParam);
+            *stop = YES;
+            failed = YES;
+            return;
+        }
         [urlString replaceOccurrencesOfString:uuid
-                                   withString:[queryParam stringByAddingPercentEncodingWithAllowedCharacters:charset]
+                                   withString:encodedQueryParam
                                       options:0
                                         range:NSMakeRange(0, urlString.length)];
     }];
+    if (failed) {
+        return nil;
+    }
 
     // Restore semicolons in path
     [urlString replaceOccurrencesOfString:semicolonUUID withString:@";" options:0 range:NSMakeRange(0, urlString.length)];

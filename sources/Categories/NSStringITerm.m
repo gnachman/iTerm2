@@ -1571,13 +1571,18 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return [self rangeOfCharacterFromSet:searchSet options:0 range:NSMakeRange(index, self.length - index)];
 }
 
+// Add the entire matched range, not just its first index: a character outside the BMP occupies two
+// UTF-16 units and -rangeOfCharacterFromSet: reports both. Recording only the first index left the
+// low surrogate out of the set, so callers that slice the string by these indices split the pair and
+// produced substrings containing a lone surrogate. It also skipped whatever character followed,
+// since the search resumed in the middle of the pair. See issue 13063.
 - (NSIndexSet *)indicesOfCharactersInSet:(NSCharacterSet *)characterSet {
     NSMutableIndexSet *result = [[NSMutableIndexSet alloc] init];
     NSInteger start = 0;
     NSRange range = [self rangeOfCharacterFromSet:characterSet fromIndex:start];
     while (range.location != NSNotFound) {
-        [result addIndex:range.location];
-        start = range.location + 1;
+        [result addIndexesInRange:range];
+        start = NSMaxRange(range);
         range = [self rangeOfCharacterFromSet:characterSet fromIndex:start];
     }
     return result;
