@@ -30,6 +30,7 @@
     iTermVariableReference<NSString *> *_sourceRef;
     BOOL _sideEffectsAllowed;
     iTermIdempotentOperationJoiner *_reevaluationJoiner;
+    BOOL _invalidated;
 }
 
 - (instancetype)initWithString:(NSString *)stringToEvaluate
@@ -106,6 +107,16 @@
 }
 
 - (void)invalidate {
+    // Idempotent because the usual lifecycle invalidates twice: callers
+    // invalidate explicitly before dropping their reference, and then
+    // -dealloc invalidates again. -removeObserver: is O(the process's
+    // entire observer registrar) even when this object registered
+    // nothing, so the second pass costs as much as the first while
+    // having nothing left to remove.
+    if (_invalidated) {
+        return;
+    }
+    _invalidated = YES;
     _observer = nil;
     _sourceRef.onChangeBlock = nil;
     [_sourceRef invalidate];

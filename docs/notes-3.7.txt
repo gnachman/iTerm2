@@ -556,3 +556,6 @@ Bug Fixes:
   General, as dragging a file into a local
   session already did. They previously always
   used double quotes, ignoring the setting.
+- Fixed a lag when switching or closing tabs
+  with the Session Status tool open in the
+  toolbelt.
