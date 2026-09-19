@@ -76,12 +76,13 @@ class ToolStatus: NSView {
     // debounce interval above) keeps the shortcut labels landing in the
     // same frame as the switch.
     private let shortcutReloadJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
-    // Set when a shortcut reload was skipped because the toolbelt is
-    // hidden, so it can be honored as soon as it is shown again.
+    // Set when a shortcut reload was skipped because the tool is not
+    // visible (the toolbelt is hidden, or its window is miniaturized or
+    // ordered out), so it can be honored as soon as it is visible again.
     var missedShortcutReloadWhileHidden = false
-    // Counts reloads that actually ran, so tests can pin the coalescing
-    // contract without standing up a window and a populated table.
-    // Internal (not private) for the same reason resolveSessionForReload is.
+    // Counts reloads that reached the table, so tests can pin the
+    // coalescing contract. Internal (not private) for the same reason
+    // resolveSessionForReload is.
     var shortcutReloadCount = 0
     // Session GUIDs the user has snoozed via the row context menu. Transient
     // per-tool UI state (not persisted): snoozed rows sink to the bottom and
@@ -117,6 +118,18 @@ class ToolStatus: NSView {
         let session = iTermController.sharedInstance()?.anySession(withGUID: guid)
         resolvedSessionsForReload[guid] = WeakSessionBox(session)
         return session
+    }
+
+    // Seeds one row per session ID. The real path goes through
+    // windowContains(sessionGUID:), which needs a toolbelt delegate a test
+    // cannot provide. The IDs need not resolve to live sessions:
+    // configureCell(_:for:) blanks a row whose session is gone.
+    func setStatusesForTesting(sessionIDs: [String]) {
+        statuses = sessionIDs.map { sessionID in
+            makeStatus(tabStatus: iTermSessionTabStatus(sessionID: sessionID), sessionID: sessionID)
+        }.sorted()
+        rebuildDisplayed()
+        _tableView?.reloadData()
     }
 
     override init(frame frameRect: NSRect) {
@@ -307,6 +320,7 @@ extension ToolStatus {
         // window), which is not worth a new primitive. Same bargain
         // ChatInputView.layout() makes with its layoutJoiner.
         missedShortcutReloadWhileHidden = false
+        registerWindowVisibilityObserver()
         statuses = SessionStatusController.instance.statuses.values.compactMap { status in
             let contains = windowContains(sessionGUID: status.sessionID)
             DLog("ToolStatus viewDidMoveToWindow: sessionID=\(status.sessionID) contains=\(contains) hasActive=\(status.hasActiveStatus)")
@@ -324,11 +338,37 @@ extension ToolStatus {
 
     override func viewDidUnhide() {
         super.viewDidUnhide()
-        // Pay back a reload that was skipped while the toolbelt was hidden.
-        if missedShortcutReloadWhileHidden {
-            missedShortcutReloadWhileHidden = false
-            setNeedsShortcutReload()
+        payBackMissedShortcutReload()
+    }
+
+    // viewDidUnhide() covers the toolbelt being shown again, but not the
+    // window itself coming back from being miniaturized or ordered out.
+    // The window's occlusion state changes in both cases. Scoped to our
+    // own window so other windows' changes don't wake this tool.
+    private func registerWindowVisibilityObserver() {
+        let nc = NotificationCenter.default
+        nc.removeObserver(self, name: NSWindow.didChangeOcclusionStateNotification, object: nil)
+        guard let window else {
+            return
         }
+        nc.addObserver(self,
+                       selector: #selector(windowOcclusionStateDidChange(_:)),
+                       name: NSWindow.didChangeOcclusionStateNotification,
+                       object: window)
+    }
+
+    @objc
+    private func windowOcclusionStateDidChange(_ notification: Notification) {
+        payBackMissedShortcutReload()
+    }
+
+    // Pays back a reload that was skipped while the tool was not visible.
+    private func payBackMissedShortcutReload() {
+        guard missedShortcutReloadWhileHidden, it_isVisible else {
+            return
+        }
+        missedShortcutReloadWhileHidden = false
+        setNeedsShortcutReload()
     }
 }
 
@@ -423,18 +463,19 @@ private extension ToolStatus {
         // Hiding the toolbelt sets its `hidden` flag rather than taking it
         // out of the window, so this tool keeps receiving notifications and
         // `window` stays non-nil - which is why the window check in
-        // activeSessionDidChange(_:) does not cover this case. Rebuilding
-        // rows nobody can see is pure cost, so remember the debt and pay it
-        // in viewDidUnhide().
-        if isHiddenOrHasHiddenAncestor {
+        // activeSessionDidChange(_:) does not cover this case. Neither does
+        // it cover a miniaturized or ordered-out window. Rebuilding rows
+        // nobody can see is pure cost, so remember the debt and pay it in
+        // payBackMissedShortcutReload() once the tool is visible again.
+        if !it_isVisible {
             missedShortcutReloadWhileHidden = true
             return
         }
         missedShortcutReloadWhileHidden = false
-        shortcutReloadCount += 1
         guard let tableView = _tableView, !displayedStatuses.isEmpty else {
             return
         }
+        shortcutReloadCount += 1
         // Session/tab topology changed (these notifications include
         // session creation/destruction), so resolvability may have too.
         resolvedSessionsForReload.removeAll()
