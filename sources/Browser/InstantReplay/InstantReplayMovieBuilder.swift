@@ -22,7 +22,6 @@ class StreamOutput: NSObject, SCStreamOutput {
 }
 
 @MainActor
-@available(macOS 12.3, *)
 final class InstantReplayMovieBuilder: NSObject {
     private var recorders = [InMemoryVideoBuilder]()
     private let view: NSView
