@@ -83,43 +83,6 @@
     return YES;
 }
 
-// rdar://45295749/
-- (void)dismemberForScrollerStyle:(NSScrollerStyle)scrollerStyle {
-    DLog(@"Begin dismembering the scroll bar");
-    NSView *reparent = nil;
-    NSInteger index = NSNotFound;
-
-    // To work around awful performance issues introduced in Mojave caused
-    // by putting a scrollview over the iTermMTKView making the window server do
-    // an offscreen render (in iOS parlance) we reparent the scroller to be
-    // a subview of SessionView. That fixes the performance problem, but
-    // introduces a new issue: when the scroller style changes from legacy
-    // to overlay, it becomes invisible. Why? Because I'm doing things I
-    // shouldn't be doing. But we can fool NSScrollView by briefly
-    // reparenting it during setScrollerStyle:.
-    // See note in PTYTextView.m for a perhaps better fix.
-    if (self.scrollerStyle != scrollerStyle && scrollerStyle == NSScrollerStyleOverlay) {
-        DLog(@"PERFORMING DISMEMBERMENT");
-        NSView *preferredSuperview = [self superview];
-        if (preferredSuperview) {
-            index = [preferredSuperview.subviews indexOfObject:self];
-            NSScrollView *scrollview = [self.ptyScrollerDelegate ptyScrollerScrollView];
-            if (preferredSuperview != scrollview && scrollview != nil) {
-                RLog(@"Scroller style changing to overlay. Remove self from %@, add to %@", preferredSuperview, scrollview);
-                reparent = preferredSuperview;
-                [scrollview addSubview:self];
-            }
-        }
-    }
-
-    [super setScrollerStyle:scrollerStyle];
-
-    if (reparent && index != NSNotFound) {
-        DLog(@"Return to being child of %@", reparent);
-        [reparent insertSubview:self atIndex:index];
-    }
-}
-
 - (void)setScrollerStyle:(NSScrollerStyle)scrollerStyle {
     DLog(@"%@: set scroller style to %@ from %@:\n%@", self, @(scrollerStyle), @(self.scrollerStyle), [NSThread callStackSymbols]);
 
@@ -130,10 +93,6 @@
     }
     [self.ptyScrollerDelegate ptyScrollerDidTransitionToState:_ptyScrollerState];
 
-    if (PTYScrollView.shouldDismember) {
-        [self dismemberForScrollerStyle:scrollerStyle];
-        return;
-    }
     [super setScrollerStyle:scrollerStyle];
 }
 
@@ -202,10 +161,6 @@
 @implementation PTYScrollView {
     // Sadly the superclass's -scroller property may return a dealloc'ed instance.
     NSScroller *_scroller;
-}
-
-+ (BOOL)shouldDismember {
-    return [iTermAdvancedSettingsModel dismemberScrollView];
 }
 
 + (BOOL)isCompatibleWithResponsiveScrolling {

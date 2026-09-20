@@ -208,8 +208,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disableWindowSizeSnap;
 + (BOOL)disallowCopyEmptyString;
 + (BOOL)disclaimChildren;
-// Use PTYScrollView.shouldDismember, since disabling dismemberment is 10.15+
-+ (BOOL)dismemberScrollView;
 + (BOOL)disregardDockSettingToOpenTabsInsteadOfWindows;
 + (BOOL)dockIconTogglesWindow DEPRECATED_ATTRIBUTE;
 + (BOOL)doNotSetCtype;
