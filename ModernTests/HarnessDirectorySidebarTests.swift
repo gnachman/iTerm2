@@ -2,6 +2,44 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class HarnessDirectorySidebarTests: XCTestCase {
+    func testTransferRejectsReusedPIDAndCurrentProcess() throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sleep")
+        process.arguments = ["30"]
+        try process.run()
+        defer { if process.isRunning { process.terminate() }; process.waitUntilExit() }
+        let started = try XCTUnwrap(iTermLSOF.startTime(forProcess: process.processIdentifier))
+        XCTAssertFalse(HarnessProcessDiscovery.signalTransferProcesses([
+            (process.processIdentifier, started.addingTimeInterval(-1))]))
+        XCTAssertTrue(process.isRunning)
+        let ownStarted = try XCTUnwrap(iTermLSOF.startTime(forProcess: getpid()))
+        XCTAssertFalse(HarnessProcessDiscovery.signalTransferProcesses([(getpid(), ownStarted)]))
+    }
+
+    func testTransferWaitsForExitAndDoesNotForceKillOnTimeout() throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sleep")
+        process.arguments = ["30"]
+        try process.run()
+        defer { if process.isRunning { process.terminate() }; process.waitUntilExit() }
+        let started = try XCTUnwrap(iTermLSOF.startTime(forProcess: process.processIdentifier))
+        let targets = [(process.processIdentifier, started)]
+        let timeout = expectation(description: "Running original blocks replacement")
+        HarnessProcessDiscovery.waitForTransferExit(targets, deadline: .now()) { exited in
+            XCTAssertFalse(exited)
+            timeout.fulfill()
+        }
+        wait(for: [timeout], timeout: 5)
+        XCTAssertTrue(process.isRunning)
+        XCTAssertTrue(HarnessProcessDiscovery.signalTransferProcesses(targets))
+        let stopped = expectation(description: "Replacement allowed only after original exits")
+        HarnessProcessDiscovery.waitForTransferExit(targets, deadline: .now() + 5) { exited in
+            XCTAssertTrue(exited)
+            stopped.fulfill()
+        }
+        wait(for: [stopped], timeout: 10)
+    }
+
     func testDiscoveryFindsTmuxPaneWithClearedEnvironment() throws {
         guard let tmux = ["/opt/homebrew/bin/tmux", "/usr/local/bin/tmux", "/usr/bin/tmux"].first(where: {
             FileManager.default.isExecutableFile(atPath: $0)

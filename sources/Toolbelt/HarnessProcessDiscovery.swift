@@ -165,6 +165,70 @@ final class HarnessProcessDiscovery {
         return ResumeTarget(conversationID: id, transcript: path, commandPrefix: prefix)
     }
 
+    /// Called only after the user chooses Transfer and a recovery record has been saved.
+    /// Never signal a terminal shell, tmux server, process group, or a reused PID.
+    static func stopForTransfer(_ harness: Harness, target: ResumeTarget,
+                                completion: @escaping (Bool) -> Void) {
+        DispatchQueue.global(qos: .utility).async {
+            guard let current = resumeTarget(for: harness),
+                  current.conversationID == target.conversationID,
+                  current.transcript == target.transcript,
+                  current.commandPrefix == target.commandPrefix,
+                  let size = try? FileManager.default.attributesOfItem(atPath: target.transcript)[.size] as? NSNumber,
+                  size.intValue > 0 else {
+                DispatchQueue.main.async { completion(false) }
+                return
+            }
+            // Include the actual native harness behind an npm launcher, but not its tools.
+            var targets: [(Int32, Date)] = [(harness.pid, harness.started)]
+            for number in iTermLSOF.currentUserPids() ?? [] {
+                let pid = number.int32Value
+                var parent = iTermLSOF.ppid(forPid: pid)
+                var seen = Set<Int32>()
+                while parent > 1 && parent != harness.pid && seen.insert(parent).inserted {
+                    parent = iTermLSOF.ppid(forPid: parent)
+                }
+                guard parent == harness.pid,
+                      iTermLSOF.ttyRdev(forFileDescriptor: 0, ofProcess: pid) == harness.tty,
+                      let args = iTermLSOF.rawCommandLineArguments(forProcess: pid, execName: nil),
+                      SessionDirectoryKey.harnessName(executable: args.first, arguments: args) == harness.name,
+                      let started = iTermLSOF.startTime(forProcess: pid),
+                      !targets.contains(where: { $0.0 == pid }) else { continue }
+                targets.append((pid, started))
+            }
+            let success = signalTransferProcesses(targets)
+            guard success else {
+                DispatchQueue.main.async { completion(false) }
+                return
+            }
+            waitForTransferExit(targets, deadline: .now() + 15, completion: completion)
+        }
+    }
+
+    static func signalTransferProcesses(_ targets: [(Int32, Date)]) -> Bool {
+        // Validate the entire snapshot before signaling any process.
+        guard !targets.isEmpty, targets.allSatisfy({ pid, started in
+            pid > 1 && pid != getpid() && iTermLSOF.startTime(forProcess: pid) == started
+        }) else { return false }
+        for (pid, started) in targets.reversed() {
+            guard iTermLSOF.startTime(forProcess: pid) == started else { continue }
+            if kill(pid, SIGTERM) != 0 && errno != ESRCH { return false }
+        }
+        return true
+    }
+
+    static func waitForTransferExit(_ targets: [(Int32, Date)], deadline: DispatchTime,
+                                    completion: @escaping (Bool) -> Void) {
+        let exited = targets.allSatisfy { iTermLSOF.startTime(forProcess: $0.0) != $0.1 }
+        if exited || DispatchTime.now() >= deadline {
+            DispatchQueue.main.async { completion(exited) }
+            return
+        }
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.1) {
+            waitForTransferExit(targets, deadline: deadline, completion: completion)
+        }
+    }
+
     static func socketPath(_ tmux: String) -> String? {
         let fields = tmux.split(separator: ",", omittingEmptySubsequences: false)
         guard fields.count >= 3 else { return nil }

@@ -445,7 +445,7 @@ import AppKit
             field.stringValue = entry.name
             if let external = entry.external, external.tmuxSocket == nil {
                 field.toolTip = String(localized: "SessionDirectorySidebar.NativeTooltip",
-                    defaultValue: "Open this saved conversation in a tmux-backed or native iTerm2 tab. The conversation is identified automatically; the original process stays open.",
+                    defaultValue: "Open this saved conversation in a tmux-backed or native iTerm2 tab. The conversation is identified automatically; transferring closes the original process.",
                     comment: "Explains the resume choices for an external native harness")
             } else {
                 field.toolTip = entry.name
@@ -617,21 +617,24 @@ import AppKit
                 }
                 let alert = NSAlert()
                 alert.messageText = String(localized: "SessionDirectorySidebar.OpenNativeTitle",
-                    defaultValue: "Open Harness in iTerm2", comment: "Choose how to resume an external native harness")
+                    defaultValue: "Transfer Harness to iTerm2", comment: "Choose how to resume an external native harness")
                 alert.informativeText = String(localized: "SessionDirectorySidebar.OpenNativeExplanation",
-                    defaultValue: "The saved conversation was found automatically. Choose a tmux-backed tab or a native iTerm2 tab to resume it. The original stays open; continue only when it is idle, and use one copy at a time. A recovery handoff is saved automatically.", comment: "Explain automatic conversation resume and original process lifecycle")
+                    defaultValue: "Transfer only when the harness is idle. iTerm2 will save a recovery handoff, request that the original harness exit, and wait for it to close before resuming its saved conversation here. Unsaved input is not transferred.", comment: "Explain automatic conversation resume and original process lifecycle")
                 alert.addButton(withTitle: String(localized: "SessionDirectorySidebar.OpenTmux",
-                    defaultValue: "Open in Tmux Tab", comment: "Resume detected conversation in tmux"))
+                    defaultValue: "Transfer to Tmux Tab", comment: "Resume detected conversation in tmux"))
                 alert.addButton(withTitle: String(localized: "SessionDirectorySidebar.OpenNative",
-                    defaultValue: "Open in Native Tab", comment: "Resume detected conversation directly in iTerm2"))
+                    defaultValue: "Transfer to Native Tab", comment: "Resume detected conversation directly in iTerm2"))
                 alert.addButton(withTitle: String(localized: "SessionDirectorySidebar.Cancel",
                     defaultValue: "Cancel", comment: "Cancel native resume"))
                 alert.buttons[0].isEnabled = Self.tmuxExecutable != nil
                 alert.beginSheetModal(for: window) { [weak self] response in
                     guard let self else { return }
-                    self.resolvingResumes.remove(harness.id)
-                    guard response == .alertFirstButtonReturn || response == .alertSecondButtonReturn else { return }
+                    guard response == .alertFirstButtonReturn || response == .alertSecondButtonReturn else {
+                        self.resolvingResumes.remove(harness.id)
+                        return
+                    }
                     guard iTermLSOF.startTime(forProcess: harness.pid) == harness.started else {
+                        self.resolvingResumes.remove(harness.id)
                         self.showError(String(localized: "SessionDirectorySidebar.ProcessChanged",
                             defaultValue: "The original process has exited. Refresh the sidebar before opening it.", comment: "Process identity changed during resume prompt"))
                         return
@@ -646,19 +649,37 @@ import AppKit
                             "conversationID": target.conversationID, "transcript": target.transcript,
                             "originalPID": harness.pid, "originalStarted": harness.started.timeIntervalSince1970,
                             "created": Date().timeIntervalSince1970,
-                            "handoff": "Resume the saved conversation for task context, changes, checks, and next steps. The original process remains running; unsaved state is not transferred."]
+                            "handoff": "Resume the saved conversation for task context, changes, checks, and next steps. The user requested graceful shutdown of the original before resuming; unsaved state is not transferred."]
                         let file = folder.appendingPathComponent(token + ".json")
                         try JSONSerialization.data(withJSONObject: record, options: .prettyPrinted).write(to: file, options: .atomic)
                         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
                         let command = Self.shellCommand(target.commandPrefix + resume)
+                        let arguments: [String]
                         if response == .alertFirstButtonReturn, let tmux = Self.tmuxExecutable {
-                            self.launchProjectTab(entry, arguments: [tmux, "-L", "iterm2-harnesses", "new-session",
-                                "-s", "harness-" + token, "-c", directory, command])
+                            arguments = [tmux, "-L", "iterm2-harnesses", "new-session",
+                                         "-s", "harness-" + token, "-c", directory, command]
                         } else if response == .alertSecondButtonReturn {
-                            self.launchProjectTab(entry, arguments: ["/bin/sh", "-c",
-                                "cd " + Self.shellCommand([directory]) + " && exec " + command])
+                            arguments = ["/bin/sh", "-c",
+                                         "cd " + Self.shellCommand([directory]) + " && exec " + command]
+                        } else {
+                            self.resolvingResumes.remove(harness.id)
+                            return
                         }
-                    } catch { self.showError(error.localizedDescription) }
+                        HarnessProcessDiscovery.stopForTransfer(harness, target: target) { [weak self] exited in
+                            guard let self else { return }
+                            self.resolvingResumes.remove(harness.id)
+                            guard exited else {
+                                self.showError(String(localized: "SessionDirectorySidebar.TransferIncomplete",
+                                    defaultValue: "The original harness could not be verified or did not exit within 15 seconds. No replacement was started. The recovery handoff is saved. Check the original terminal before trying again.",
+                                    comment: "Graceful transfer failed without force killing the harness"))
+                                return
+                            }
+                            self.launchProjectTab(entry, arguments: arguments)
+                        }
+                    } catch {
+                        self.resolvingResumes.remove(harness.id)
+                        self.showError(error.localizedDescription)
+                    }
                 }
             }
         }
