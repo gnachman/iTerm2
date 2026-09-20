@@ -34,6 +34,7 @@ final class HarnessProcessDiscovery {
 
     static func scan() -> [Harness] {
         var result: [Harness] = []
+        var serverPanes: [Int32: [HarnessTmuxProbe.ServerPane]] = [:]
         for number in iTermLSOF.currentUserPids() ?? [] {
             let pid = number.int32Value
             guard pid > 0 else { continue }
@@ -55,8 +56,25 @@ final class HarnessProcessDiscovery {
             // Inspect only matched harness environments and retain only tmux identity.
             let environment = iTermLSOF.environment(forProcess: pid) ?? []
             let tmux = environment.first { $0.hasPrefix("TMUX=") }.map { String($0.dropFirst(5)) }
-            let pane = environment.first { $0.hasPrefix("TMUX_PANE=") }.map { String($0.dropFirst(10)) }
-            let socket = tmux.flatMap(socketPath)
+            var pane = environment.first { $0.hasPrefix("TMUX_PANE=") }.map { String($0.dropFirst(10)) }
+            var socket = tmux.flatMap(socketPath)
+            // Teerminal and other launchers may intentionally clear the pane environment.
+            // Match a real pane PID (or its descendant) on an ancestor tmux server instead.
+            if socket == nil || pane == nil {
+                for ancestor in ancestors {
+                    let panes: [HarnessTmuxProbe.ServerPane]
+                    if let cached = serverPanes[ancestor] { panes = cached }
+                    else {
+                        panes = HarnessTmuxProbe.serverPanes(pid: ancestor)
+                        serverPanes[ancestor] = panes
+                    }
+                    if let match = panes.first(where: { $0.pid == pid || ancestors.contains($0.pid) }) {
+                        socket = match.socket
+                        pane = match.id
+                        break
+                    }
+                }
+            }
             result.append(Harness(pid: pid, started: started, name: name,
                 directory: iTermLSOF.workingDirectory(ofProcess: pid), ancestors: ancestors,
                 tty: UInt64(tty), tmuxSocket: socket, tmuxPane: pane))

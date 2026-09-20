@@ -2,6 +2,62 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class HarnessDirectorySidebarTests: XCTestCase {
+    func testDiscoveryFindsTmuxPaneWithClearedEnvironment() throws {
+        guard let tmux = ["/opt/homebrew/bin/tmux", "/usr/local/bin/tmux", "/usr/bin/tmux"].first(where: {
+            FileManager.default.isExecutableFile(atPath: $0)
+        }) else { throw XCTSkip("tmux is not installed") }
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("harness-test-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        // Keep the UNIX socket below macOS's path-length limit, including long TMPDIRs.
+        let socket = "/tmp/iterm-harness-" + UUID().uuidString
+        func command(_ arguments: [String]) throws -> String {
+            let process = Process()
+            let output = Pipe()
+            process.executableURL = URL(fileURLWithPath: tmux)
+            process.arguments = ["-N", "-S", socket, "-f", "/dev/null"] + arguments
+            // The first command must be allowed to start this isolated fixture server.
+            if arguments.first == "new-session" { process.arguments?.removeFirst() }
+            process.standardOutput = output
+            process.standardError = FileHandle.nullDevice
+            try process.run()
+            let data = output.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            return String(data: data, encoding: .utf8) ?? ""
+        }
+        defer {
+            _ = try? command(["kill-server"])
+            try? FileManager.default.removeItem(at: directory)
+            try? FileManager.default.removeItem(atPath: socket)
+        }
+        _ = try command(["new-session", "-d", "-s", "fixture", "-c", directory.path,
+                         "/usr/bin/env -i /bin/zsh -c 'exec -a claude /bin/sleep 30'"])
+        let panePID = Int32(try command(["list-panes", "-a", "-F", "#{pane_pid}"]).trimmingCharacters(in: .whitespacesAndNewlines))
+        let found = expectation(description: "tmux identity recovered without environment markers")
+        var discovered: HarnessProcessDiscovery.Harness?
+        let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+            if let item = HarnessProcessDiscovery.scan().first(where: { $0.pid == panePID }) {
+                discovered = item
+                timer.invalidate()
+                found.fulfill()
+            }
+        }
+        defer { timer.invalidate() }
+        wait(for: [found], timeout: 10)
+        XCTAssertEqual(discovered?.tmuxSocket, socket)
+        XCTAssertEqual(discovered?.tmuxPane, "%0")
+        XCTAssertEqual(discovered?.name, "Claude")
+        if let discovered {
+            XCTAssertFalse((iTermLSOF.environment(forProcess: discovered.pid) ?? []).contains { $0.hasPrefix("TMUX=") })
+        }
+    }
+
+    func testServerPaneMetadataParsing() {
+        let panes = HarnessTmuxProbe.parseServerPanes("123\u{1f}%4\u{1f}/tmp/server with spaces\nbad\n")
+        XCTAssertEqual(panes.count, 1)
+        XCTAssertEqual(panes.first?.pid, 123)
+        XCTAssertEqual(panes.first?.socket, "/tmp/server with spaces")
+    }
+
     func testResumeRequiresExplicitIdentityAndSupportedHarness() {
         XCTAssertEqual(SessionDirectorySidebar.resumeArguments(harness: "Codex", conversationID: "abc"), ["resume", "abc"])
         XCTAssertEqual(SessionDirectorySidebar.resumeArguments(harness: "Claude", conversationID: "abc"), ["--resume", "abc"])

@@ -7,7 +7,7 @@ Major New Features:
   Select a directory to show its project tabs.
   Attach tmux harnesses or resume native ones
   from the sidebar’s context menu.
-  Switch between entries with Command-Option-1
+  Switch between projects with Command-Option-1
   through 9. Enable it in Advanced Settings by
   searching for “harnesses”.
 - iTerm2 is now localized: the interface follows

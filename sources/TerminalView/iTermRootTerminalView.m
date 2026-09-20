@@ -1641,7 +1641,8 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     }
     inputs.contentViewWidth = contentFrame.size.width;
     inputs.contentViewHeight = contentFrame.size.height;
-    inputs.harnessSidebarWidth = [iTermAdvancedSettingsModel showHarnessDirectorySidebar] ? 220 : 0;
+    inputs.harnessSidebarWidth = [iTermAdvancedSettingsModel showHarnessDirectorySidebar] ?
+        (self.harnessSidebar ? self.harnessSidebar.requestedWidth : [SessionDirectorySidebar preferredWidth]) : 0;
 
     // Tab bar dimensions
     inputs.tabBarHeight = _tabBarControl.height;
@@ -1998,6 +1999,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
         if (!self.harnessSidebar) {
             self.harnessSidebar = [[SessionDirectorySidebar alloc] initWithFrame:NSZeroRect];
             __weak iTermRootTerminalView *weakSelf = self;
+            self.harnessSidebar.widthDidChange = ^{
+                [weakSelf.delegate repositionWidgets];
+            };
             self.harnessSidebar.selectProjectTabAtIndex = ^(NSInteger index) {
                 iTermRootTerminalView *strongSelf = weakSelf;
                 NSArray *visible = [strongSelf.tabView.tabViewItems filteredArrayUsingPredicate:

@@ -55,7 +55,7 @@ const int kLayoutTabPositionRight = 3;
 + (iTermLayoutOutputs)reserveHarnessSidebarInOutputs:(iTermLayoutOutputs)outputs
                                             inputs:(iTermLayoutInputs)inputs {
     const CGFloat width = floor(MAX(0, MIN(inputs.harnessSidebarWidth,
-                                          CGRectGetWidth(outputs.tabViewFrame) * 0.3)));
+                                          MAX(0, CGRectGetWidth(outputs.tabViewFrame) - 240))));
     if (width == 0) {
         return outputs;
     }

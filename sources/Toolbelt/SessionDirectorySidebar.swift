@@ -2,6 +2,34 @@ import AppKit
 
 /// An opt-in navigator for coding harnesses across windows. It never sends terminal input.
 @objc final class SessionDirectorySidebar: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate, NSMenuDelegate {
+    private final class ResizeGrip: NSView {
+        var resize: ((CGFloat) -> Void)?
+        var finished: (() -> Void)?
+        private var startX: CGFloat = 0
+        private var startWidth: CGFloat = 0
+        override func resetCursorRects() { addCursorRect(bounds, cursor: .resizeLeftRight) }
+        override func mouseDown(with event: NSEvent) {
+            startX = event.locationInWindow.x
+            startWidth = superview?.bounds.width ?? 220
+        }
+        override func mouseDragged(with event: NSEvent) {
+            resize?(startWidth + event.locationInWindow.x - startX)
+        }
+        override func mouseUp(with event: NSEvent) { finished?() }
+        override func draw(_ dirtyRect: NSRect) {
+            NSColor.separatorColor.setFill()
+            NSRect(x: bounds.width - 1, y: 0, width: 1, height: bounds.height).fill()
+        }
+    }
+    private let resizeGrip = ResizeGrip()
+    private static let widthKey = "NoSyncHarnessSidebarWidth"
+    @objc static var preferredWidth: CGFloat {
+        let value = iTermUserDefaults.userDefaults().double(forKey: widthKey)
+        return value > 0 ? min(640, max(160, value)) : 220
+    }
+    @objc var requestedWidth: CGFloat = SessionDirectorySidebar.preferredWidth
+    @objc var widthDidChange: (() -> Void)?
+
     private final class Group: NSObject {
         let key: SessionDirectoryKey
         var sessions: [Entry] = []
@@ -84,6 +112,16 @@ import AppKit
         addSubview(heading)
         emptyLabel.textColor = .secondaryLabelColor
         addSubview(emptyLabel)
+        resizeGrip.resize = { [weak self] width in
+            guard let self else { return }
+            self.requestedWidth = min(640, max(160, width))
+            self.widthDidChange?()
+        }
+        resizeGrip.finished = { [weak self] in
+            guard let self else { return }
+            iTermUserDefaults.userDefaults().set(self.requestedWidth, forKey: Self.widthKey)
+        }
+        addSubview(resizeGrip)
         needsLayout = true
     }
 
@@ -91,6 +129,7 @@ import AppKit
 
     override func layout() {
         super.layout()
+        resizeGrip.frame = NSRect(x: max(0, bounds.width - 6), y: 0, width: 6, height: bounds.height)
         heading.frame = NSRect(x: 10, y: max(0, bounds.height - 28), width: max(0, bounds.width - 20), height: 20)
         scroll.frame = NSRect(x: 0, y: 0, width: bounds.width, height: max(0, bounds.height - 62))
         allProjectsButton.frame = NSRect(x: 10, y: max(0, bounds.height - 58), width: max(0, bounds.width - 20), height: 24)
@@ -114,13 +153,11 @@ import AppKit
                 return nil
             }
             guard let index = Self.shortcutIndex(event),
-                  index < self.groups.flatMap({ $0.sessions }).count else { return event }
+                  index < self.groups.count else { return event }
             if event.isARepeat { return nil }
-            let entry = self.groups.flatMap { $0.sessions }[index]
-            if let group = self.groups.first(where: { $0.sessions.contains(entry) }) {
-                self.outline.expandItem(group)
-            }
-            self.activate(entry)
+            let group = self.groups[index]
+            self.outline.expandItem(group)
+            self.selectProject(group)
             return nil
         }
         refresh()
@@ -300,7 +337,7 @@ import AppKit
             let key = previous?.key ?? candidate
             let title: String
             if let local {
-                title = harness.name + " — " + local.name
+                title = harness.name + (harness.tmuxSocket != nil ? " · tmux — " : " — ") + local.name
             } else if harness.tmuxSocket != nil {
                 title = harness.name + " · tmux · " + String(harness.pid)
             } else {
@@ -397,12 +434,11 @@ import AppKit
                 field.stringValue += " — " + identity
             }
             field.toolTip = field.stringValue
-        } else if let entry = item as? Entry {
-            if let index = groups.flatMap({ $0.sessions }).firstIndex(of: entry), index < 9 {
-                field.stringValue = "⌥⌘\(index + 1)  " + entry.name
-            } else {
-                field.stringValue = entry.name
+            if let index = groups.firstIndex(of: group), index < 9 {
+                field.stringValue = "⌥⌘\(index + 1)  " + field.stringValue
             }
+        } else if let entry = item as? Entry {
+            field.stringValue = entry.name
             if let external = entry.external, external.tmuxSocket == nil {
                 field.toolTip = String(localized: "SessionDirectorySidebar.NativeTooltip",
                     defaultValue: "Running native process. Use its original terminal to interact; selecting this row brings that application forward when available.",
@@ -631,12 +667,17 @@ import AppKit
         }
     }
 
+    private func selectProject(_ group: Group) {
+        selectedProject = group.key
+        applyProjectFilter()
+        let local = group.sessions.first { iTermController.sharedInstance()?.anySession(withGUID: $0.id) != nil }
+        if let entry = local ?? group.sessions.first { activate(entry) }
+    }
+
     func outlineViewSelectionDidChange(_ notification: Notification) {
         guard !refreshing, outline.selectedRow >= 0 else { return }
         if let group = outline.item(atRow: outline.selectedRow) as? Group {
-            selectedProject = group.key
-            applyProjectFilter()
-            if let entry = group.sessions.first { activate(entry) }
+            selectProject(group)
         } else if let entry = outline.item(atRow: outline.selectedRow) as? Entry {
             activate(entry)
         }

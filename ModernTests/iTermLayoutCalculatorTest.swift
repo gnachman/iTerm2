@@ -13,6 +13,16 @@ import XCTest
 
 final class iTermLayoutCalculatorTest: XCTestCase {
 
+    func testHarnessSidebarUsesRequestedWidthAndKeepsTerminalSpace() {
+        var inputs = makeDefaultInputs()
+        inputs.harnessSidebarWidth = 400
+        let result = iTermLayoutCalculator.calculateLayout(with: inputs)
+        XCTAssertEqual(result.harnessSidebarFrame.width, 400)
+        inputs.harnessSidebarWidth = 10000
+        let limited = iTermLayoutCalculator.calculateLayout(with: inputs)
+        XCTAssertGreaterThanOrEqual(limited.tabViewFrame.width, 240)
+    }
+
     func testHarnessSidebarReservesTerminalSpaceInEveryTabPosition() {
         for position in [kLayoutTabPositionTop, kLayoutTabPositionBottom, kLayoutTabPositionLeft, kLayoutTabPositionRight] {
             for visible in [true, false] {

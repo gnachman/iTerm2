@@ -67,8 +67,9 @@ final class HarnessTmuxProbe {
             let process = Process()
             let output = Pipe()
             process.executableURL = URL(fileURLWithPath: client.executable)
-            // -N prevents accidentally starting a server when the attachment has gone away.
-            process.arguments = ["-N"] + client.socketArguments + ["list-clients", "-F",
+            // -N prevents starting a server; -u preserves the field separator even when
+            // the app was launched without a UTF-8 locale (tmux otherwise replaces it with _).
+            process.arguments = ["-u", "-N"] + client.socketArguments + ["list-clients", "-F",
                 "#{client_pid}\u{1f}#{pane_id}\u{1f}#{pane_current_command}\u{1f}#{pane_current_path}\u{1f}#{pane_pid}"]
             process.standardOutput = output
             process.standardError = FileHandle.nullDevice
@@ -91,6 +92,53 @@ final class HarnessTmuxProbe {
             let text = String(data: data, encoding: .utf8) ?? ""
             let result = process.terminationStatus == 0 ? text : ""
             DispatchQueue.main.async { finish(server, text: result) }
+        }
+    }
+
+    struct ServerPane {
+        let pid: Int32
+        let id: String
+        let socket: String
+    }
+
+    // Called only from the background discovery scan, once per ancestor server.
+    static func serverPanes(pid: Int32) -> [ServerPane] {
+        var name: NSString?
+        _ = iTermLSOF.rawCommandLineArguments(forProcess: pid, execName: &name)
+        guard let executable = name as String?,
+              (executable as NSString).lastPathComponent == "tmux" else { return [] }
+        let sockets = Set((iTermLSOF.fileDescriptors(forProcess: pid) ?? []).compactMap { descriptor -> String? in
+            guard descriptor.type == "unix", let path = descriptor.detail, path.hasPrefix("/") else { return nil }
+            return path
+        })
+        return sockets.flatMap { socket -> [ServerPane] in
+            let process = Process()
+            let output = Pipe()
+            process.executableURL = URL(fileURLWithPath: executable)
+            process.arguments = ["-u", "-N", "-S", socket, "list-panes", "-a", "-F",
+                "#{pane_pid}\u{1f}#{pane_id}\u{1f}#{socket_path}"]
+            process.standardOutput = output
+            process.standardError = FileHandle.nullDevice
+            var environment = ProcessInfo.processInfo.environment
+            environment.removeValue(forKey: "TMUX")
+            process.environment = environment
+            do { try process.run() } catch { return [] }
+            let timeout = DispatchWorkItem { if process.isRunning { process.terminate() } }
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 2, execute: timeout)
+            let data = output.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            timeout.cancel()
+            guard process.terminationStatus == 0 else { return [] }
+            return parseServerPanes(String(data: data, encoding: .utf8) ?? "")
+        }
+    }
+
+    static func parseServerPanes(_ text: String) -> [ServerPane] {
+        text.split(separator: "\n").compactMap { line in
+            let fields = line.split(separator: "\u{1f}", maxSplits: 2, omittingEmptySubsequences: false)
+            guard fields.count == 3, let pid = Int32(fields[0]), pid > 0,
+                  fields[1].hasPrefix("%"), fields[2].hasPrefix("/") else { return nil }
+            return ServerPane(pid: pid, id: String(fields[1]), socket: String(fields[2]))
         }
     }
 
