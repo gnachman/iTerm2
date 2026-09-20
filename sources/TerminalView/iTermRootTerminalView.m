@@ -1997,12 +1997,53 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     if ([iTermAdvancedSettingsModel showHarnessDirectorySidebar]) {
         if (!self.harnessSidebar) {
             self.harnessSidebar = [[SessionDirectorySidebar alloc] initWithFrame:NSZeroRect];
+            __weak iTermRootTerminalView *weakSelf = self;
+            self.harnessSidebar.selectProjectTabAtIndex = ^(NSInteger index) {
+                iTermRootTerminalView *strongSelf = weakSelf;
+                NSArray *visible = [strongSelf.tabView.tabViewItems filteredArrayUsingPredicate:
+                    [NSPredicate predicateWithBlock:^BOOL(NSTabViewItem *item, NSDictionary *bindings) {
+                        return [strongSelf.tabBarControl.projectTabViewItems containsObject:item];
+                    }]];
+                if (index >= 0 && index < visible.count) {
+                    [strongSelf.tabView selectTabViewItem:visible[index]];
+                }
+            };
+            self.harnessSidebar.projectFilterDidChange = ^(NSSet *sessionIDs) {
+                iTermRootTerminalView *strongSelf = weakSelf;
+                if (!sessionIDs) {
+                    strongSelf.tabBarControl.projectTabViewItems = nil;
+                    strongSelf.tabView.hidden = NO;
+                    return;
+                }
+                NSMutableSet *items = [NSMutableSet set];
+                for (NSTabViewItem *item in strongSelf.tabView.tabViewItems) {
+                    PTYTab *tab = item.identifier;
+                    for (PTYSession *session in tab.sessions) {
+                        if ([sessionIDs containsObject:session.guid]) {
+                            [items addObject:item];
+                            break;
+                        }
+                    }
+                }
+                strongSelf.tabBarControl.projectTabViewItems = items;
+                strongSelf.tabView.hidden = (items.count == 0);
+                if (items.count && ![items containsObject:strongSelf.tabView.selectedTabViewItem]) {
+                    for (NSTabViewItem *item in strongSelf.tabView.tabViewItems) {
+                        if ([items containsObject:item]) {
+                            [strongSelf.tabView selectTabViewItem:item];
+                            break;
+                        }
+                    }
+                }
+            };
             [self addSubview:self.harnessSidebar];
         }
         const iTermLayoutOutputs sidebarLayout = [iTermLayoutCalculator calculateLayoutWithInputs:
                                                    [self layoutInputsForWindow:thisWindow]];
         self.harnessSidebar.frame = sidebarLayout.harnessSidebarFrame;
     } else if (self.harnessSidebar) {
+        self.tabBarControl.projectTabViewItems = nil;
+        self.tabView.hidden = NO;
         [self.harnessSidebar removeFromSuperview];
         self.harnessSidebar = nil;
     }

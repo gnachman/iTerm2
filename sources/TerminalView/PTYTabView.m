@@ -163,45 +163,57 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     [self selectTabViewItemWithIdentifier:[sender representedObject]];
 }
 
+// Keep normal and MRU tab cycling inside the selected navigator project.
+- (NSArray<NSTabViewItem *> *)projectItemsFrom:(NSArray<NSTabViewItem *> *)items {
+    PSMTabBarControl *control = [self.delegate isKindOfClass:[PSMTabBarControl class]] ? (id)self.delegate : nil;
+    NSSet *filter = control.projectTabViewItems;
+    if (!filter) { return items; }
+    return [items filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSTabViewItem *item, NSDictionary *bindings) {
+        return [filter containsObject:item];
+    }]];
+}
+
+- (void)selectAdjacentProjectTab:(BOOL)forwards {
+    NSArray *items = [self projectItemsFrom:self.tabViewItems];
+    if (items.count == 0) { return; }
+    NSInteger index = [items indexOfObject:self.selectedTabViewItem];
+    if (index == NSNotFound) { index = forwards ? -1 : 0; }
+    index = (index + (forwards ? 1 : -1) + items.count) % items.count;
+    [self selectTabViewItem:items[index]];
+}
+
 - (void)previousTab:(id)sender {
-    NSTabViewItem *tabViewItem = [self selectedTabViewItem];
-    [self selectPreviousTabViewItem:sender];
-    if (tabViewItem == [self selectedTabViewItem]) {
-        [self selectTabViewItemAtIndex:[self numberOfTabViewItems] - 1];
-    }
+    [self selectAdjacentProjectTab:NO];
 }
 
 - (void)nextTab:(id)sender {
-    NSTabViewItem *tabViewItem = [self selectedTabViewItem];
-    [self selectNextTabViewItem:sender];
-    if (tabViewItem == [self selectedTabViewItem]) {
-        [self selectTabViewItemAtIndex:0];
-    }
+    [self selectAdjacentProjectTab:YES];
 }
 
 - (void)cycleForwards:(BOOL)forwards {
-    if ([_tabViewItemsInMRUOrder count] == 0) {
+    NSArray *items = [self projectItemsFrom:_tabViewItemsInMRUOrder];
+    if ([items count] == 0) {
         return;
     }
     NSTabViewItem* tabViewItem = [self selectedTabViewItem];
-    NSUInteger theIndex = [_tabViewItemsInMRUOrder indexOfObject:tabViewItem];
+    NSUInteger theIndex = [items indexOfObject:tabViewItem];
     if (theIndex == NSNotFound) {
         theIndex = 0;
     }
     if (forwards) {
         theIndex++;
-        if (theIndex >= [_tabViewItemsInMRUOrder count]) {
+        if (theIndex >= [items count]) {
             theIndex = 0;
         }
     } else {
         NSInteger temp = theIndex;
         temp--;
         if (temp < 0) {
-            temp = [_tabViewItemsInMRUOrder count] - 1;
+            temp = [items count] - 1;
         }
         theIndex = temp;
     }
-    NSTabViewItem* next = _tabViewItemsInMRUOrder[theIndex];
+    NSTabViewItem* next = items[theIndex];
     // The MRU order won't be changed by cycling until you let up the modifier key in
     // cycleFlagsChanged:.
     [self selectTabViewItem:next];

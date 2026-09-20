@@ -52,6 +52,9 @@
 // draw/count/hit-test/accessibility loop. Unlike isInOverflowMenu it never gets
 // an overflow "..." menu item, so a collapsed member is truly hidden.
 @property(nonatomic, assign) BOOL isCollapsedHidden;
+// A transient navigator filter, independent of saved group collapse state.
+@property(nonatomic, assign) BOOL isProjectHidden;
+@property(nonatomic, readonly) BOOL isHiddenInBar;
 @property(nonatomic, assign) int currentStep;
 @property(nonatomic, copy) NSString *modifierString;
 @property(nonatomic, retain) NSColor *tabColor;

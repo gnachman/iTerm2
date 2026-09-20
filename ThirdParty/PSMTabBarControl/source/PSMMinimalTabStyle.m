@@ -562,7 +562,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
         // Skipping only overflow cells would return such a zero-height member when a
         // collapsed group is the rightmost item, giving endInsetFrame zero height so the
         // add-tab-button margin never gets painted (a white rectangle shows through).
-        if (!cell.isInOverflowMenu && !cell.isCollapsedHidden) {
+        if (!cell.isInOverflowMenu && !cell.isHiddenInBar) {
             return cell;
         }
     }

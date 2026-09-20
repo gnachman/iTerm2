@@ -1757,7 +1757,7 @@ static os_log_t PSMTabDragLog(void) {
             continue;
         }
         if (([c isTabGroupChip] && [self chipLeadsCollapsedRunInCells:cells atIndex:j]) ||
-            [c isCollapsedHidden]) {
+            [c isHiddenInBar]) {
             return YES;
         }
         break;  // a real tab or an expanded group's chip: not collapsed-adjacent
@@ -1769,7 +1769,7 @@ static os_log_t PSMTabDragLog(void) {
             continue;
         }
         if (([c isTabGroupChip] && [self chipLeadsCollapsedRunInCells:cells atIndex:j]) ||
-            [c isCollapsedHidden]) {
+            [c isHiddenInBar]) {
             return YES;
         }
         break;
@@ -1783,7 +1783,7 @@ static os_log_t PSMTabDragLog(void) {
     const NSInteger count = (NSInteger)cells.count;
     for (NSInteger k = chipIndex + 1; k < count; k++) {
         PSMTabBarCell *c = cells[k];
-        if (c.isCollapsedGroupJoinSlot || [c isCollapsedHidden]) {
+        if (c.isCollapsedGroupJoinSlot || [c isHiddenInBar]) {
             return YES;
         }
         if ([c isPlaceholder]) {
@@ -2361,7 +2361,7 @@ static os_log_t PSMTabDragLog(void) {
         PSMTabBarCell *ck = cells[k];
         if ([ck isTabGroupChip]) {
             runCell[k] = [self chipLeadsCollapsedRunInCells:cells atIndex:k];
-        } else if (![ck isPlaceholder] && [ck isCollapsedHidden]) {
+        } else if (![ck isPlaceholder] && [ck isHiddenInBar]) {
             runCell[k] = YES;
         }
     }
@@ -2594,7 +2594,7 @@ static os_log_t PSMTabDragLog(void) {
                 frame = [c frame];
             }
             memberCount++;
-            if (!c.isCollapsedHidden) {
+            if (!c.isHiddenInBar) {
                 allCollapsed = NO;
             }
         }
@@ -2725,7 +2725,7 @@ static os_log_t PSMTabDragLog(void) {
             // via a slot to its side -- so its end slot gets no join, or landing on
             // the slot that opens once you advance past the pill would join with no
             // highlight (the join zone would extend past the visible pill).
-            if (![c isCollapsedHidden]) {
+            if (![c isHiddenInBar]) {
                 endSlot.joinsTabGroupIdentifier = gid;
             }
             [withSlots addObject:endSlot];
@@ -2887,7 +2887,7 @@ static os_log_t PSMTabDragLog(void) {
         }
         // A real tab: a collapsed member is part of a pill (find that group's chip
         // to its left); a visible tab is not a pill.
-        if (![c isCollapsedHidden]) {
+        if (![c isHiddenInBar]) {
             return NSNotFound;
         }
         NSString *neighborGid = c.tabGroupIdentifier;

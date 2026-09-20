@@ -1,7 +1,7 @@
 import AppKit
 
 /// An opt-in navigator for coding harnesses across windows. It never sends terminal input.
-@objc final class SessionDirectorySidebar: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate {
+@objc final class SessionDirectorySidebar: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate, NSMenuDelegate {
     private final class Group: NSObject {
         let key: SessionDirectoryKey
         var sessions: [Entry] = []
@@ -28,6 +28,9 @@ import AppKit
         override var hash: Int { id.hashValue }
     }
 
+    @objc var selectProjectTabAtIndex: ((Int) -> Void)?
+    @objc var projectFilterDidChange: ((NSSet?) -> Void)?
+
     private let heading = NSTextField(labelWithString: String(localized: "SessionDirectorySidebar.Title",
         defaultValue: "Coding harnesses", comment: "Title of the coding harness navigator"))
     private let emptyLabel = NSTextField(wrappingLabelWithString: String(localized: "SessionDirectorySidebar.Empty",
@@ -40,6 +43,12 @@ import AppKit
     private var keyMonitor: Any?
     private var pendingAttachments = Set<String>()
     private var attachedSessionIDs: [String: String] = [:]
+    private var observedSessionIDs: Set<String>?
+    private var lastActiveSessionID: String?
+    private var selectedProject: SessionDirectoryKey?
+    private var projectSessionKeys: [String: SessionDirectoryKey] = [:]
+    private let allProjectsButton = NSButton(title: String(localized: "SessionDirectorySidebar.AllProjects",
+        defaultValue: "All projects", comment: "Clear the project tab filter"), target: nil, action: nil)
     private var refreshing = false
     private var nativeMonitors: [String: iTermTmuxOptionMonitor] = [:]
     private var pendingProbes = Set<String>()
@@ -58,6 +67,12 @@ import AppKit
         outline.style = .sourceList
         outline.dataSource = self
         outline.delegate = self
+        let menu = NSMenu()
+        menu.delegate = self
+        outline.menu = menu
+        allProjectsButton.target = self
+        allProjectsButton.action = #selector(showAllProjects)
+        addSubview(allProjectsButton)
         outline.setAccessibilityLabel(String(localized: "SessionDirectorySidebar.Accessibility",
             defaultValue: "Coding harnesses by directory", comment: "Accessibility label for the session navigator"))
         scroll.documentView = outline
@@ -77,7 +92,8 @@ import AppKit
     override func layout() {
         super.layout()
         heading.frame = NSRect(x: 10, y: max(0, bounds.height - 28), width: max(0, bounds.width - 20), height: 20)
-        scroll.frame = NSRect(x: 0, y: 0, width: bounds.width, height: max(0, bounds.height - 32))
+        scroll.frame = NSRect(x: 0, y: 0, width: bounds.width, height: max(0, bounds.height - 62))
+        allProjectsButton.frame = NSRect(x: 10, y: max(0, bounds.height - 58), width: max(0, bounds.width - 20), height: 24)
         emptyLabel.frame = NSRect(x: 10, y: max(0, bounds.height - 92), width: max(0, bounds.width - 20), height: 52)
     }
 
@@ -89,8 +105,15 @@ import AppKit
         keyMonitor = nil
         guard window != nil else { return }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, event.window === self.window,
-                  let index = Self.shortcutIndex(event),
+            guard let self, event.window === self.window else { return event }
+            if self.selectedProject != nil,
+               event.modifierFlags.intersection([.command, .option, .shift, .control]) == [.command],
+               let character = event.characters(byApplyingModifiers: []), character.count == 1,
+               let number = Int(character), (1...9).contains(number) {
+                if !event.isARepeat { self.selectProjectTabAtIndex?(number - 1) }
+                return nil
+            }
+            guard let index = Self.shortcutIndex(event),
                   index < self.groups.flatMap({ $0.sessions }).count else { return event }
             if event.isARepeat { return nil }
             let entry = self.groups.flatMap { $0.sessions }[index]
@@ -246,6 +269,8 @@ import AppKit
     private func refresh() {
         let sessions = (iTermController.sharedInstance()?.allSessions() ?? []).filter { !$0.exited }
         let ids = Set(sessions.map { $0.guid })
+        projectSessionKeys = projectSessionKeys.filter { ids.contains($0.key) }
+        attachedSessionIDs = attachedSessionIDs.filter { ids.contains($0.value) }
         for id in Array(nativeMonitors.keys) where !ids.contains(id) {
             nativeMonitors.removeValue(forKey: id)?.invalidate()
         }
@@ -285,8 +310,23 @@ import AppKit
             }
             entries.removeAll { $0.id == id }
             entries.append(Entry(id: id, name: title, runID: harness.id, key: key,
-                                 external: local == nil ? harness : nil))
+                                 external: harness))
         }
+        for entry in entries { projectSessionKeys[entry.id] = entry.key }
+        if let selectedProject, let observedSessionIDs {
+            for session in sessions where !observedSessionIDs.contains(session.guid) && projectSessionKeys[session.guid] == nil {
+                if session.delegate?.realParentWindow() === window?.windowController {
+                    projectSessionKeys[session.guid] = selectedProject
+                }
+            }
+        }
+        observedSessionIDs = ids
+        if let terminal = window?.windowController as? PseudoTerminal,
+           let active = terminal.currentSession(), active.guid != lastActiveSessionID {
+            lastActiveSessionID = active.guid
+            if selectedProject != nil, let key = projectSessionKeys[active.guid] { selectedProject = key }
+        }
+        applyProjectFilter()
         emptyLabel.isHidden = !entries.isEmpty
         guard entries != snapshot else {
             syncSelection()
@@ -343,7 +383,7 @@ import AppKit
 
     func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool { item is Group }
 
-    func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: Any) -> Bool { item is Entry }
+    func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: Any) -> Bool { true }
 
     func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
         let field = NSTextField(labelWithString: "")
@@ -375,6 +415,8 @@ import AppKit
     }
 
     private func activate(_ entry: Entry) {
+        selectedProject = entry.key
+        applyProjectFilter()
         if let session = iTermController.sharedInstance()?.anySession(withGUID: entry.id) {
             session.reveal()
             return
@@ -382,22 +424,11 @@ import AppKit
         guard let external = entry.external,
               iTermLSOF.startTime(forProcess: external.pid) == external.started else { return }
         if let socket = external.tmuxSocket, let pane = external.tmuxPane {
-            let searchPaths = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":")
-                .filter { $0.hasPrefix("/") }.map { String($0) + "/tmux" }
-            let executable = (searchPaths + ["/opt/homebrew/bin/tmux", "/usr/local/bin/tmux", "/usr/bin/tmux"])
-                .first { FileManager.default.isExecutableFile(atPath: $0) }
-            guard let executable, pendingAttachments.insert(external.id).inserted else { return }
-            let command = [executable, "-N", "-S", socket, "attach-session", "-t", pane]
-                .map { ($0 as NSString).withEscapedShellCharacters(includingNewlines: true) }
-                .joined(separator: " ")
-            iTermSessionLauncher.launchBookmark(nil,
-                in: iTermController.sharedInstance()?.currentTerminal, style: .tab, withURL: nil,
-                hotkeyWindowType: .none, makeKey: true, canActivate: true,
-                respectTabbingMode: false, index: nil, command: command, makeSession: nil,
-                didMakeSession: nil, completion: { [weak self] session, ok in
-                    self?.pendingAttachments.remove(external.id)
-                    if ok { self?.attachedSessionIDs[external.id] = session.guid }
-                })
+            guard let executable = Self.tmuxExecutable else {
+                showError(String(localized: "SessionDirectorySidebar.TmuxMissing", defaultValue: "Install tmux to attach this harness.", comment: "Missing tmux executable"))
+                return
+            }
+            launchProjectTab(entry, arguments: [executable, "-N", "-S", socket, "attach-session", "-t", pane])
         } else {
             // Native PTYs cannot be transplanted. Reveal their owning application when known.
             for pid in external.ancestors {
@@ -411,8 +442,203 @@ import AppKit
         }
     }
 
+    @objc private func showAllProjects() {
+        selectedProject = nil
+        applyProjectFilter()
+    }
+
+    private func applyProjectFilter() {
+        guard let selectedProject else {
+            projectFilterDidChange?(nil)
+            return
+        }
+        let ids = projectSessionKeys.filter { $0.value == selectedProject }.map { $0.key }
+        projectFilterDidChange?(NSSet(array: ids))
+    }
+
+    private static var tmuxExecutable: String? {
+        let paths = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":")
+            .filter { $0.hasPrefix("/") }.map { String($0) + "/tmux" }
+        return (paths + ["/opt/homebrew/bin/tmux", "/usr/local/bin/tmux", "/usr/bin/tmux"])
+            .first { FileManager.default.isExecutableFile(atPath: $0) }
+    }
+
+    static func shellCommand(_ arguments: [String]) -> String {
+        arguments.map { ($0 as NSString).withEscapedShellCharacters(includingNewlines: true) }.joined(separator: " ")
+    }
+
+    private func launchProjectTab(_ entry: Entry, arguments: [String]) {
+        let runID = entry.external?.id ?? entry.id
+        if let id = attachedSessionIDs[runID],
+           let session = iTermController.sharedInstance()?.anySession(withGUID: id), !session.exited {
+            session.reveal()
+            return
+        }
+        guard pendingAttachments.insert(runID).inserted else { return }
+        selectedProject = entry.key
+        iTermSessionLauncher.launchBookmark(nil,
+            in: window?.windowController as? PseudoTerminal, style: .tab, withURL: nil,
+            hotkeyWindowType: .none, makeKey: true, canActivate: true,
+            respectTabbingMode: false, index: nil, command: Self.shellCommand(arguments), makeSession: nil,
+            didMakeSession: { [weak self] session in
+                self?.projectSessionKeys[session.guid] = entry.key
+            }, completion: { [weak self] session, ok in
+                guard let self else { return }
+                self.pendingAttachments.remove(runID)
+                if ok {
+                    self.attachedSessionIDs[runID] = session.guid
+                    self.projectSessionKeys[session.guid] = entry.key
+                    if let tab = session.delegate as? PTYTab, let path = entry.key.path {
+                        tab.titleOverride = (path as NSString).lastPathComponent + " — " + (entry.external?.name ?? entry.name)
+                    }
+                } else {
+                    self.showError(String(localized: "SessionDirectorySidebar.LaunchFailed",
+                        defaultValue: "Could not open the harness tab.", comment: "Session launch failed"))
+                }
+                self.applyProjectFilter()
+            })
+    }
+
+    private func showError(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = message
+        if let window { alert.beginSheetModal(for: window) }
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+        guard outline.clickedRow >= 0 else { return }
+        if let group = outline.item(atRow: outline.clickedRow) as? Group {
+            let item = NSMenuItem(title: String(localized: "SessionDirectorySidebar.AttachProject",
+                defaultValue: "Attach Tmux Harnesses in Project", comment: "Open each tmux harness in this directory in its own tab"),
+                action: #selector(attachProjectFromMenu(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = group
+            menu.addItem(item)
+            return
+        }
+        guard let entry = outline.item(atRow: outline.clickedRow) as? Entry,
+              let harness = entry.external else { return }
+        let title = harness.tmuxSocket != nil
+            ? String(localized: "SessionDirectorySidebar.Attach", defaultValue: "Attach in Project Tab", comment: "Attach a running tmux harness")
+            : String(localized: "SessionDirectorySidebar.Resume", defaultValue: "Resume in Tmux…", comment: "Save a handoff and resume a native harness in tmux")
+        let item = NSMenuItem(title: title, action: #selector(attachFromMenu(_:)), keyEquivalent: "")
+        item.target = self
+        item.representedObject = entry
+        menu.addItem(item)
+    }
+
+    @objc private func attachProjectFromMenu(_ sender: NSMenuItem) {
+        guard let group = sender.representedObject as? Group else { return }
+        for entry in group.sessions where entry.external?.tmuxSocket != nil { activate(entry) }
+    }
+
+    @objc private func attachFromMenu(_ sender: NSMenuItem) {
+        guard let entry = sender.representedObject as? Entry, let harness = entry.external else { return }
+        if harness.tmuxSocket != nil {
+            activate(entry)
+        } else {
+            resumeNative(entry)
+        }
+    }
+
+    static func resumeArguments(harness: String, conversationID: String) -> [String]? {
+        // Require a specific identity, never an option or an implicit latest conversation.
+        guard !conversationID.isEmpty, !conversationID.hasPrefix("-"),
+              conversationID.rangeOfCharacter(from: .whitespacesAndNewlines) == nil else { return nil }
+        switch harness {
+        case "Codex": return ["resume", conversationID]
+        case "Claude": return ["--resume", conversationID]
+        case "Antigravity": return ["--conversation", conversationID]
+        default: return nil
+        }
+    }
+
+    private func resumeNative(_ entry: Entry) {
+        guard let harness = entry.external, let directory = entry.key.path,
+              let tmux = Self.tmuxExecutable, let window,
+              iTermLSOF.startTime(forProcess: harness.pid) == harness.started else {
+            showError(String(localized: "SessionDirectorySidebar.ResumeUnavailable",
+                defaultValue: "Resuming requires tmux, a running harness, and a known project directory.", comment: "Native resume prerequisites"))
+            return
+        }
+        guard Self.resumeArguments(harness: harness.name, conversationID: "id") != nil else {
+            showError(String(localized: "SessionDirectorySidebar.UnsupportedResume",
+                defaultValue: "Resuming in tmux is supported for Codex, Claude, and Antigravity.", comment: "Unsupported harness resume"))
+            return
+        }
+        var executableName: NSString?
+        guard let argv = iTermLSOF.rawCommandLineArguments(forProcess: harness.pid, execName: &executableName),
+              let executable = executableName as String?, executable.hasPrefix("/"),
+              FileManager.default.isExecutableFile(atPath: executable) else { return }
+        var prefix = [executable]
+        if (executable as NSString).lastPathComponent == "node", argv.count > 1 {
+            prefix.append(argv[1])
+        }
+        let alert = NSAlert()
+        alert.messageText = String(localized: "SessionDirectorySidebar.ResumeTitle",
+            defaultValue: "Resume Harness in Tmux", comment: "Native harness handoff dialog")
+        alert.informativeText = String(localized: "SessionDirectorySidebar.ResumeExplanation",
+            defaultValue: "Wait until the original harness is idle. Enter its saved conversation ID and a handoff with changes, checks, and next steps. This opens a resumed process in a project tab; the original stays open. Use only one copy of the conversation at a time.", comment: "Explain handoff and resume without moving or stopping the native process")
+        alert.addButton(withTitle: String(localized: "SessionDirectorySidebar.SaveAndResume",
+            defaultValue: "Save Handoff and Resume", comment: "Save handoff before starting a resumed harness"))
+        alert.addButton(withTitle: String(localized: "SessionDirectorySidebar.Cancel",
+            defaultValue: "Cancel", comment: "Cancel native resume"))
+        let accessory = NSView(frame: NSRect(x: 0, y: 0, width: 420, height: 145))
+        let identity = NSTextField(frame: NSRect(x: 0, y: 112, width: 420, height: 24))
+        identity.placeholderString = String(localized: "SessionDirectorySidebar.ConversationID",
+            defaultValue: "Saved conversation ID", comment: "Conversation identity input")
+        let handoff = NSTextField(frame: NSRect(x: 0, y: 32, width: 420, height: 72))
+        handoff.placeholderString = String(localized: "SessionDirectorySidebar.Handoff",
+            defaultValue: "Changes, checks, next steps…", comment: "Recovery handoff input")
+        handoff.usesSingleLineMode = false
+        let idle = NSButton(checkboxWithTitle: String(localized: "SessionDirectorySidebar.Idle",
+            defaultValue: "The original harness is idle", comment: "User confirms original process is idle"), target: nil, action: nil)
+        idle.frame = NSRect(x: 0, y: 0, width: 420, height: 24)
+        accessory.addSubview(identity)
+        accessory.addSubview(handoff)
+        accessory.addSubview(idle)
+        alert.accessoryView = accessory
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            let id = identity.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            let note = handoff.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard idle.state == .on, !note.isEmpty,
+                  let resume = Self.resumeArguments(harness: harness.name, conversationID: id),
+                  iTermLSOF.startTime(forProcess: harness.pid) == harness.started else {
+                self.showError(String(localized: "SessionDirectorySidebar.HandoffRequired",
+                    defaultValue: "Confirm the original harness is idle and provide its conversation ID and handoff before resuming.", comment: "Incomplete native handoff"))
+                return
+            }
+            do {
+                let folder = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                    appropriateFor: nil, create: true).appendingPathComponent("iTerm2/HarnessHandoffs", isDirectory: true)
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true,
+                    attributes: [.posixPermissions: 0o700])
+                let token = UUID().uuidString
+                let file = folder.appendingPathComponent(token + ".json")
+                let record: [String: Any] = ["directory": directory, "harness": harness.name,
+                    "conversationID": id, "handoff": note, "originalPID": harness.pid,
+                    "created": Date().timeIntervalSince1970]
+                try JSONSerialization.data(withJSONObject: record, options: .prettyPrinted).write(to: file, options: .atomic)
+                try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
+                // An isolated named server leaves existing tmux configuration and sessions alone.
+                self.launchProjectTab(entry, arguments: [tmux, "-L", "iterm2-harnesses", "new-session",
+                    "-s", "harness-" + token, "-c", directory, Self.shellCommand(prefix + resume)])
+            } catch {
+                self.showError(error.localizedDescription)
+            }
+        }
+    }
+
     func outlineViewSelectionDidChange(_ notification: Notification) {
-        guard !refreshing, outline.selectedRow >= 0, let entry = outline.item(atRow: outline.selectedRow) as? Entry else { return }
-        activate(entry)
+        guard !refreshing, outline.selectedRow >= 0 else { return }
+        if let group = outline.item(atRow: outline.selectedRow) as? Group {
+            selectedProject = group.key
+            applyProjectFilter()
+            if let entry = group.sessions.first { activate(entry) }
+        } else if let entry = outline.item(atRow: outline.selectedRow) as? Entry {
+            activate(entry)
+        }
     }
 }

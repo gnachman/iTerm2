@@ -2,6 +2,19 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class HarnessDirectorySidebarTests: XCTestCase {
+    func testResumeRequiresExplicitIdentityAndSupportedHarness() {
+        XCTAssertEqual(SessionDirectorySidebar.resumeArguments(harness: "Codex", conversationID: "abc"), ["resume", "abc"])
+        XCTAssertEqual(SessionDirectorySidebar.resumeArguments(harness: "Claude", conversationID: "abc"), ["--resume", "abc"])
+        XCTAssertNil(SessionDirectorySidebar.resumeArguments(harness: "Codex", conversationID: "--last"))
+        XCTAssertNil(SessionDirectorySidebar.resumeArguments(harness: "Codex", conversationID: ""))
+        XCTAssertNil(SessionDirectorySidebar.resumeArguments(harness: "Aider", conversationID: "abc"))
+    }
+
+    func testAttachmentCommandPreservesSocketAndPaneArguments() {
+        let arguments = ["/opt/bin/tmux", "-N", "-S", "/tmp/a b;$(echo unsafe)'socket", "attach-session", "-t", "%42"]
+        XCTAssertEqual((SessionDirectorySidebar.shellCommand(arguments) as NSString).componentsInShellCommand(), arguments)
+    }
+
     func testMachineWideDiscoveryFindsExternalTerminalHarness() throws {
         // A harmless process with a harness argv[0], in an independent PTY. No actual agent runs.
         let process = Process()

@@ -41,6 +41,25 @@ final class PSMTabGroupCollapsedDropSelectionTests: XCTestCase {
         control.tabView = tabView
     }
 
+    func testProjectFilterPreservesTabsAndGroupCollapseState() {
+        let bar = buildBar()
+        let count = tabView.numberOfTabViewItems
+        control.projectTabViewItems = Set([bar.solo])
+        XCTAssertTrue(bar.draggedCell.isHiddenInBar)
+        XCTAssertFalse((control.cells() as! [PSMTabBarCell]).first { $0.representedObject as? NSTabViewItem === bar.solo }!.isHiddenInBar)
+        XCTAssertEqual(tabView.numberOfTabViewItems, count)
+        let chips = (control.cells() as! [PSMTabBarCell]).filter { $0.isTabGroupChip }
+        XCTAssertTrue(chips.allSatisfy { $0.isProjectHidden })
+        XCTAssertEqual(bar.draggedCell.frame.width, 0)
+        XCTAssertFalse(bar.draggedCell.isCollapsedHidden)
+        bar.draggedCell.isCollapsedHidden = true
+        control.projectTabViewItems = nil
+        XCTAssertTrue(bar.draggedCell.isCollapsedHidden)
+        XCTAssertTrue(bar.draggedCell.isHiddenInBar)
+        bar.draggedCell.isCollapsedHidden = false
+        XCTAssertFalse(bar.draggedCell.isHiddenInBar)
+    }
+
     override func tearDown() {
         PSMTabDragAssistant.shared().finishDrag()
         items = []

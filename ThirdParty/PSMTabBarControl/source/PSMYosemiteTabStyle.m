@@ -1292,7 +1292,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
             // A collapsed member is normally skipped, but while a collapse/expand
             // slide is shrinking/growing its width it must draw (width > 0
             // mid-slide; exactly 0 when fully collapsed, skipped again then).
-            const BOOL hiddenByCollapse = (cell.isCollapsedHidden && NSWidth(cell.frame) <= 0);
+            const BOOL hiddenByCollapse = (cell.isHiddenInBar && NSWidth(cell.frame) <= 0);
             if (![cell isInOverflowMenu] && !hiddenByCollapse &&
                 NSIntersectsRect(NSInsetRect([cell frame], -1, -1), clipRect)) {
                 if (cell.state == stateToDraw) {
@@ -1335,7 +1335,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
     [self drawDividerBetweenTabBarAndContent:rect bar:bar];
 
     for (PSMTabBarCell *cell in [bar cells]) {
-        const BOOL hiddenByCollapse = (cell.isCollapsedHidden && NSWidth(cell.frame) <= 0);
+        const BOOL hiddenByCollapse = (cell.isHiddenInBar && NSWidth(cell.frame) <= 0);
         if (![cell isInOverflowMenu] && !hiddenByCollapse &&
             NSIntersectsRect([cell frame], clipRect) && cell.state == NSControlStateValueOn) {
             [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];

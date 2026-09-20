@@ -188,6 +188,10 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     NSTrackingArea *_closeButtonTrackingArea;
 }
 
+- (BOOL)isHiddenInBar {
+    return self.isCollapsedHidden || self.isProjectHidden;
+}
+
 #pragma mark - Creation/Destruction
 
 - (id)initWithControlView:(PSMTabBarControl *)controlView {
