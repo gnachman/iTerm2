@@ -84,6 +84,87 @@ final class HarnessProcessDiscovery {
         }
     }
 
+    struct ResumeTarget {
+        let conversationID: String
+        let transcript: String
+        let commandPrefix: [String]
+    }
+
+    static func conversationID(harness: String, path: String) -> String? {
+        let url = URL(fileURLWithPath: path)
+        let stem = url.deletingPathExtension().lastPathComponent
+        let candidate: String
+        switch harness {
+        case "Codex":
+            guard path.contains("/sessions/"), url.pathExtension == "jsonl", stem.hasPrefix("rollout-") else { return nil }
+            candidate = String(stem.suffix(36))
+        case "Claude":
+            guard path.contains("/projects/"), url.pathExtension == "jsonl" else { return nil }
+            candidate = stem
+        case "Antigravity":
+            guard path.contains("/conversations/"), url.pathExtension == "db" else { return nil }
+            candidate = stem
+        default: return nil
+        }
+        return UUID(uuidString: candidate)?.uuidString.lowercased()
+    }
+
+    // Read only process-linked evidence. Never choose the most recent conversation by directory.
+    static func resumeTarget(for harness: Harness) -> ResumeTarget? {
+        guard iTermLSOF.startTime(forProcess: harness.pid) == harness.started else { return nil }
+        var executableName: NSString?
+        guard let arguments = iTermLSOF.rawCommandLineArguments(forProcess: harness.pid, execName: &executableName),
+              let executable = executableName as String?, executable.hasPrefix("/") else { return nil }
+        var prefix = [executable]
+        if (executable as NSString).lastPathComponent == "node" {
+            guard arguments.count > 1 else { return nil }
+            prefix.append(arguments[1])
+        }
+        let environment = iTermLSOF.environment(forProcess: harness.pid) ?? []
+        // Preserve provider-specific history locations, not unrelated process environment.
+        let providerEnvironment = environment.filter {
+            $0.hasPrefix("CODEX_HOME=") || $0.hasPrefix("CLAUDE_CONFIG_DIR=")
+        }
+        if !providerEnvironment.isEmpty { prefix = ["/usr/bin/env"] + providerEnvironment + prefix }
+        let pids = (iTermLSOF.currentUserPids() ?? []).map { $0.int32Value }
+        let parents = Dictionary(uniqueKeysWithValues: pids.map { ($0, iTermLSOF.ppid(forPid: $0)) })
+        var descendants: Set<Int32> = [harness.pid]
+        for _ in 0..<8 {
+            let next = Set(pids.filter { parents[$0].map { descendants.contains($0) } ?? false })
+            let before = descendants.count
+            descendants.formUnion(next)
+            if descendants.count == before { break }
+        }
+        var candidates: [String: String] = [:]
+        for pid in descendants {
+            let tty = iTermLSOF.ttyRdev(forFileDescriptor: 0, ofProcess: pid)
+            guard pid == harness.pid || UInt64(tty) == harness.tty else { continue }
+            for descriptor in iTermLSOF.fileDescriptors(forProcess: pid) ?? [] where descriptor.type == "file" {
+                guard let path = descriptor.detail, let id = conversationID(harness: harness.name, path: path) else { continue }
+                candidates[id] = path
+            }
+            if harness.name == "Claude" {
+                let custom = environment.first { $0.hasPrefix("CLAUDE_CONFIG_DIR=") }.map { String($0.dropFirst(18)) }
+                let root = URL(fileURLWithPath: custom ?? NSHomeDirectory() + "/.claude")
+                let recordURL = root.appendingPathComponent("sessions/\(pid).json")
+                guard let data = try? Data(contentsOf: recordURL),
+                      let record = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+                      (record["pid"] as? NSNumber)?.int32Value == pid,
+                      let id = record["sessionId"] as? String, UUID(uuidString: id) != nil,
+                      let started = record["startedAt"] as? Double,
+                      abs(started / 1000 - (iTermLSOF.startTime(forProcess: pid)?.timeIntervalSince1970 ?? 0)) < 10 else { continue }
+                let projects = root.appendingPathComponent("projects")
+                for directory in (try? FileManager.default.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? [] {
+                    let transcript = directory.appendingPathComponent(id + ".jsonl")
+                    if FileManager.default.fileExists(atPath: transcript.path) { candidates[id.lowercased()] = transcript.path }
+                }
+            }
+        }
+        guard candidates.count == 1, let (id, path) = candidates.first,
+              iTermLSOF.startTime(forProcess: harness.pid) == harness.started else { return nil }
+        return ResumeTarget(conversationID: id, transcript: path, commandPrefix: prefix)
+    }
+
     static func socketPath(_ tmux: String) -> String? {
         let fields = tmux.split(separator: ",", omittingEmptySubsequences: false)
         guard fields.count >= 3 else { return nil }

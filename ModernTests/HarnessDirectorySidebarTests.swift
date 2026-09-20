@@ -58,6 +58,38 @@ final class HarnessDirectorySidebarTests: XCTestCase {
         XCTAssertEqual(panes.first?.socket, "/tmp/server with spaces")
     }
 
+    func testResumeIdentityUsesProviderConversationPaths() {
+        let id = "01234567-89ab-4cde-8fab-0123456789ab"
+        XCTAssertEqual(HarnessProcessDiscovery.conversationID(harness: "Codex",
+            path: "/home/.codex/sessions/2026/rollout-date-" + id + ".jsonl"), id)
+        XCTAssertEqual(HarnessProcessDiscovery.conversationID(harness: "Claude",
+            path: "/home/.claude/projects/work/" + id + ".jsonl"), id)
+        XCTAssertEqual(HarnessProcessDiscovery.conversationID(harness: "Antigravity",
+            path: "/home/.gemini/antigravity-cli/conversations/" + id + ".db"), id)
+        XCTAssertNil(HarnessProcessDiscovery.conversationID(harness: "Codex", path: "/tmp/" + id + ".jsonl"))
+        XCTAssertNil(HarnessProcessDiscovery.conversationID(harness: "Claude", path: "/projects/work/not-an-id.jsonl"))
+    }
+
+    func testResumeTargetUsesOpenTranscriptAndRejectsAmbiguousIdentity() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathComponent("sessions")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder.deletingLastPathComponent()) }
+        let id = UUID().uuidString.lowercased()
+        let first = folder.appendingPathComponent("rollout-date-" + id + ".jsonl")
+        try Data("{}\n".utf8).write(to: first)
+        let handle = try FileHandle(forReadingFrom: first)
+        defer { try? handle.close() }
+        let pid = ProcessInfo.processInfo.processIdentifier
+        let harness = HarnessProcessDiscovery.Harness(pid: pid, started: iTermLSOF.startTime(forProcess: pid)!,
+            name: "Codex", directory: folder.path, ancestors: [], tty: 0, tmuxSocket: nil, tmuxPane: nil)
+        XCTAssertEqual(HarnessProcessDiscovery.resumeTarget(for: harness)?.conversationID, id)
+        let second = folder.appendingPathComponent("rollout-date-" + UUID().uuidString + ".jsonl")
+        try Data("{}\n".utf8).write(to: second)
+        let other = try FileHandle(forReadingFrom: second)
+        defer { try? other.close() }
+        XCTAssertNil(HarnessProcessDiscovery.resumeTarget(for: harness))
+    }
+
     func testResumeRequiresExplicitIdentityAndSupportedHarness() {
         XCTAssertEqual(SessionDirectorySidebar.resumeArguments(harness: "Codex", conversationID: "abc"), ["resume", "abc"])
         XCTAssertEqual(SessionDirectorySidebar.resumeArguments(harness: "Claude", conversationID: "abc"), ["--resume", "abc"])
