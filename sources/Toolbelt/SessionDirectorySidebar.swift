@@ -13,15 +13,17 @@ import AppKit
         let name: String
         let runID: String
         let key: SessionDirectoryKey
-        init(id: String, name: String, runID: String, key: SessionDirectoryKey) {
+        let external: HarnessProcessDiscovery.Harness?
+        init(id: String, name: String, runID: String, key: SessionDirectoryKey, external: HarnessProcessDiscovery.Harness? = nil) {
             self.id = id
             self.name = name
             self.runID = runID
             self.key = key
+            self.external = external
         }
         override func isEqual(_ object: Any?) -> Bool {
             guard let other = object as? Entry else { return false }
-            return id == other.id && name == other.name && runID == other.runID && key == other.key
+            return id == other.id && name == other.name && runID == other.runID && key == other.key && external == other.external
         }
         override var hash: Int { id.hashValue }
     }
@@ -35,6 +37,9 @@ import AppKit
     private var groups: [Group] = []
     private var snapshot: [Entry] = []
     private var timer: Timer?
+    private var keyMonitor: Any?
+    private var pendingAttachments = Set<String>()
+    private var attachedSessionIDs: [String: String] = [:]
     private var refreshing = false
     private var nativeMonitors: [String: iTermTmuxOptionMonitor] = [:]
     private var pendingProbes = Set<String>()
@@ -80,7 +85,21 @@ import AppKit
         super.viewDidMoveToWindow()
         timer?.invalidate()
         timer = nil
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = nil
         guard window != nil else { return }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, event.window === self.window,
+                  let index = Self.shortcutIndex(event),
+                  index < self.groups.flatMap({ $0.sessions }).count else { return event }
+            if event.isARepeat { return nil }
+            let entry = self.groups.flatMap { $0.sessions }[index]
+            if let group = self.groups.first(where: { $0.sessions.contains(entry) }) {
+                self.outline.expandItem(group)
+            }
+            self.activate(entry)
+            return nil
+        }
         refresh()
         // Session metadata also changes without a tab insertion/removal (e.g. shell integration).
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -91,7 +110,16 @@ import AppKit
 
     deinit {
         timer?.invalidate()
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         for monitor in nativeMonitors.values { monitor.invalidate() }
+    }
+
+    static func shortcutIndex(_ event: NSEvent) -> Int? {
+        let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
+        guard flags == [.command, .option],
+              let characters = event.characters(byApplyingModifiers: []),
+              characters.count == 1, let number = Int(characters), (1...9).contains(number) else { return nil }
+        return number - 1
     }
 
     private static func launcherExecutable(_ process: iTermProcessInfo) -> String? {
@@ -223,7 +251,42 @@ import AppKit
         }
         tmuxClients = tmuxClients.filter { ids.contains($0.key) }
         tmuxPanes = tmuxPanes.filter { ids.contains($0.key) }
-        let entries = sessions.compactMap { entry(for: $0) }
+        HarnessProcessDiscovery.shared.refreshIfNeeded()
+        var entries = sessions.compactMap { entry(for: $0) }
+        for harness in HarnessProcessDiscovery.shared.harnesses {
+            let local = sessions.first { session in
+                if attachedSessionIDs[harness.id] == session.guid { return true }
+                if harness.pid == session.shell.pid || harness.ancestors.contains(session.shell.pid) { return true }
+                if let pane = tmuxPanes[session.guid], let pid = pane.pid,
+                   harness.pid == pid || harness.ancestors.contains(pid) { return true }
+                if session.isTmuxClient, session.screen.lastRemoteHost()?.isLocalhost == true,
+                   let value = nativeMonitors[session.guid]?.lastValue {
+                    let fields = value.split(separator: "\u{1f}", omittingEmptySubsequences: false)
+                    if fields.count >= 3, let pid = Int32(fields[2]) {
+                        return harness.pid == pid || harness.ancestors.contains(pid)
+                    }
+                }
+                return false
+            }
+            let id = local?.guid ?? harness.id
+            let candidate = SessionDirectoryKey(host: nil, user: NSUserName(),
+                                                path: harness.directory, sessionID: id)
+            let previous = snapshot.first { $0.id == id && $0.runID == harness.id && $0.key.path != nil }
+            let key = previous?.key ?? candidate
+            let title: String
+            if let local {
+                title = harness.name + " — " + local.name
+            } else if harness.tmuxSocket != nil {
+                title = harness.name + " · tmux · " + String(harness.pid)
+            } else {
+                let source = String(localized: "SessionDirectorySidebar.Native", defaultValue: "native",
+                    comment: "Source label for a native harness process outside this iTerm2 instance")
+                title = harness.name + " · " + source + " · " + String(harness.pid)
+            }
+            entries.removeAll { $0.id == id }
+            entries.append(Entry(id: id, name: title, runID: harness.id, key: key,
+                                 external: local == nil ? harness : nil))
+        }
         emptyLabel.isHidden = !entries.isEmpty
         guard entries != snapshot else {
             syncSelection()
@@ -295,14 +358,61 @@ import AppKit
             }
             field.toolTip = field.stringValue
         } else if let entry = item as? Entry {
-            field.stringValue = entry.name
-            field.toolTip = entry.name
+            if let index = groups.flatMap({ $0.sessions }).firstIndex(of: entry), index < 9 {
+                field.stringValue = "⌥⌘\(index + 1)  " + entry.name
+            } else {
+                field.stringValue = entry.name
+            }
+            if let external = entry.external, external.tmuxSocket == nil {
+                field.toolTip = String(localized: "SessionDirectorySidebar.NativeTooltip",
+                    defaultValue: "Running native process. Use its original terminal to interact; selecting this row brings that application forward when available.",
+                    comment: "Explains the limits of interacting with a native process owned by another application")
+            } else {
+                field.toolTip = entry.name
+            }
         }
         return field
     }
 
+    private func activate(_ entry: Entry) {
+        if let session = iTermController.sharedInstance()?.anySession(withGUID: entry.id) {
+            session.reveal()
+            return
+        }
+        guard let external = entry.external,
+              iTermLSOF.startTime(forProcess: external.pid) == external.started else { return }
+        if let socket = external.tmuxSocket, let pane = external.tmuxPane {
+            let searchPaths = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":")
+                .filter { $0.hasPrefix("/") }.map { String($0) + "/tmux" }
+            let executable = (searchPaths + ["/opt/homebrew/bin/tmux", "/usr/local/bin/tmux", "/usr/bin/tmux"])
+                .first { FileManager.default.isExecutableFile(atPath: $0) }
+            guard let executable, pendingAttachments.insert(external.id).inserted else { return }
+            let command = [executable, "-N", "-S", socket, "attach-session", "-t", pane]
+                .map { ($0 as NSString).withEscapedShellCharacters(includingNewlines: true) }
+                .joined(separator: " ")
+            iTermSessionLauncher.launchBookmark(nil,
+                in: iTermController.sharedInstance()?.currentTerminal, style: .tab, withURL: nil,
+                hotkeyWindowType: .none, makeKey: true, canActivate: true,
+                respectTabbingMode: false, index: nil, command: command, makeSession: nil,
+                didMakeSession: nil, completion: { [weak self] session, ok in
+                    self?.pendingAttachments.remove(external.id)
+                    if ok { self?.attachedSessionIDs[external.id] = session.guid }
+                })
+        } else {
+            // Native PTYs cannot be transplanted. Reveal their owning application when known.
+            for pid in external.ancestors {
+                if let owner = NSRunningApplication(processIdentifier: pid), let url = owner.bundleURL {
+                    let configuration = NSWorkspace.OpenConfiguration()
+                    configuration.activates = true
+                    NSWorkspace.shared.openApplication(at: url, configuration: configuration)
+                    break
+                }
+            }
+        }
+    }
+
     func outlineViewSelectionDidChange(_ notification: Notification) {
         guard !refreshing, outline.selectedRow >= 0, let entry = outline.item(atRow: outline.selectedRow) as? Entry else { return }
-        iTermController.sharedInstance()?.anySession(withGUID: entry.id)?.reveal()
+        activate(entry)
     }
 }

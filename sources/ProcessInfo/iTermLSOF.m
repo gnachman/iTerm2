@@ -473,6 +473,27 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
     return pidsArray;
 }
 
+// Restrict machine-wide harness discovery to processes owned by the current user.
++ (NSArray<NSNumber *> *)currentUserPids {
+    const int size = proc_listpids(PROC_UID_ONLY, getuid(), NULL, 0);
+    if (size <= 0) {
+        return @[];
+    }
+    NSMutableData *buffer = [NSMutableData dataWithLength:size];
+    const int bytes = proc_listpids(PROC_UID_ONLY, getuid(), buffer.mutableBytes, size);
+    if (bytes <= 0) {
+        return @[];
+    }
+    const pid_t *pids = buffer.bytes;
+    NSMutableArray<NSNumber *> *result = [NSMutableArray array];
+    for (int i = 0; i < bytes / sizeof(pid_t); i++) {
+        if (pids[i] > 0) {
+            [result addObject:@(pids[i])];
+        }
+    }
+    return result;
+}
+
 // Returns 0 on failure.
 + (pid_t)ppidForPid:(pid_t)childPid {
     struct proc_bsdshortinfo taskShortInfo;

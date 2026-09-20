@@ -2,6 +2,65 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class HarnessDirectorySidebarTests: XCTestCase {
+    func testMachineWideDiscoveryFindsExternalTerminalHarness() throws {
+        // A harmless process with a harness argv[0], in an independent PTY. No actual agent runs.
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/script")
+        process.arguments = ["-q", "/dev/null", "/bin/zsh", "-c", "exec -a claude /bin/sleep 30"]
+        let input = Pipe()
+        process.standardInput = input
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        var environment = ProcessInfo.processInfo.environment
+        environment.removeValue(forKey: "TMUX")
+        environment.removeValue(forKey: "TMUX_PANE")
+        process.environment = environment
+        try process.run()
+        var discovered: HarnessProcessDiscovery.Harness?
+        defer {
+            if let discovered { kill(discovered.pid, SIGTERM) }
+            if process.isRunning { process.terminate() }
+        }
+        let found = expectation(description: "external harness discovered without an iTerm session")
+        let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+            if let item = HarnessProcessDiscovery.scan().first(where: { $0.ancestors.contains(process.processIdentifier) }) {
+                discovered = item
+                timer.invalidate()
+                found.fulfill()
+            }
+        }
+        defer { timer.invalidate() }
+        wait(for: [found], timeout: 10)
+        XCTAssertEqual(discovered?.name, "Claude")
+        XCTAssertNil(discovered?.tmuxSocket)
+        XCTAssertNotNil(discovered?.directory)
+    }
+
+    func testDiscoveryCollapsesOnlySameTerminalLauncherChildren() {
+        func item(_ pid: Int32, ancestors: [Int32], tty: UInt64) -> HarnessProcessDiscovery.Harness {
+            .init(pid: pid, started: Date(timeIntervalSince1970: 1), name: "Codex", directory: "/work",
+                  ancestors: ancestors, tty: tty, tmuxSocket: nil, tmuxPane: nil)
+        }
+        let parent = item(10, ancestors: [1], tty: 100)
+        let wrapperChild = item(11, ancestors: [10, 1], tty: 100)
+        let separateTerminal = item(12, ancestors: [10, 1], tty: 200)
+        XCTAssertEqual(HarnessProcessDiscovery.deduplicated([parent, wrapperChild, separateTerminal]).map { $0.pid }, [10, 12])
+        XCTAssertEqual(HarnessProcessDiscovery.socketPath("/tmp/with,comma/server,123,0"), "/tmp/with,comma/server")
+        XCTAssertNil(HarnessProcessDiscovery.socketPath("invalid"))
+    }
+
+    func testSidebarShortcutRequiresCommandOption() {
+        func event(_ flags: NSEvent.ModifierFlags, character: String, code: UInt16 = 18) -> NSEvent {
+            NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: flags, timestamp: 0,
+                            windowNumber: 0, context: nil, characters: character,
+                            charactersIgnoringModifiers: character, isARepeat: false, keyCode: code)!
+        }
+        XCTAssertEqual(SessionDirectorySidebar.shortcutIndex(event([.command, .option], character: "1")), 0)
+        XCTAssertNil(SessionDirectorySidebar.shortcutIndex(event([.command], character: "1")))
+        XCTAssertNil(SessionDirectorySidebar.shortcutIndex(event([.option], character: "1")))
+        XCTAssertNil(SessionDirectorySidebar.shortcutIndex(event([.command, .option, .shift], character: "1")))
+    }
+
     func testDirectoryIdentity() {
         func key(_ host: String?, _ user: String?, _ path: String?, _ id: String = "a") -> SessionDirectoryKey {
             SessionDirectoryKey(host: host, user: user, path: path, sessionID: id)

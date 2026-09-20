@@ -26,6 +26,8 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 
 @interface iTermLSOF : NSObject
 
+// Argument boundaries are preserved; values are not shell-escaped.
++ (NSArray<NSString *> *)rawCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSArray<NSString *> *)commandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName;
 // The process's environment as an array of "KEY=VALUE" strings, or nil if it
@@ -44,6 +46,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 + (dev_t)ttyRdevForFileDescriptor:(int)fd ofProcess:(pid_t)pid;
 + (NSString *)displayCommandForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSArray<NSNumber *> *)allPids;
++ (NSArray<NSNumber *> *)currentUserPids;
 + (pid_t)ppidForPid:(pid_t)childPid;
 + (NSString *)nameOfProcessWithPid:(pid_t)thePid isForeground:(BOOL *)isForeground;
 

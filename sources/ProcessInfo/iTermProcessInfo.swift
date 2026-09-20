@@ -396,7 +396,9 @@ class iTermProcessInfo: NSObject {
         return expensiveValues.argv0Value
     }
 
-    var arguments: [String]? { expensiveValues.argumentsValue }
+    var arguments: [String]? {
+        expensiveValues.argumentsValue?.map { ($0 as NSString).componentsInShellCommand().first ?? $0 }
+    }
 
     @objc var commandLine: String? {
         return expensiveValues.commandLineValue
