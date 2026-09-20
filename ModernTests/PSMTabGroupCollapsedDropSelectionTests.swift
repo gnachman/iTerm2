@@ -60,6 +60,36 @@ final class PSMTabGroupCollapsedDropSelectionTests: XCTestCase {
         XCTAssertFalse(bar.draggedCell.isHiddenInBar)
     }
 
+    func testProjectFilterHidesUngroupedTabsInOrdinaryHorizontalBar() {
+        let cells = NSMutableArray()
+        for name in ["project-a", "project-b", "project-a-2"] {
+            let item = NSTabViewItem(identifier: name)
+            item.label = name
+            tabView.addTabViewItem(item)
+            items.append(item)
+            let cell = PSMTabBarCell(controlView: control)!
+            cell.representedObject = item
+            cells.add(cell)
+        }
+        control.cells().setArray(cells as [AnyObject])
+        let tabs = cells as! [PSMTabBarCell]
+        for fit in [false, true] {
+            control.sizeCellsToFit = fit
+            control.projectTabViewItems = Set([items[0], items[2]])
+            XCTAssertEqual(tabs[1].frame.width, 0)
+            XCTAssertGreaterThan(tabs[0].frame.width, 0)
+            XCTAssertGreaterThan(tabs[2].frame.width, 0)
+            XCTAssertFalse(tabs[1].isInOverflowMenu)
+            control.projectTabViewItems = Set([items[1]])
+            XCTAssertEqual(tabs[0].frame.width, 0)
+            XCTAssertEqual(tabs[2].frame.width, 0)
+            XCTAssertGreaterThan(tabs[1].frame.width, 0)
+            control.projectTabViewItems = nil
+            XCTAssertTrue(tabs.allSatisfy { $0.frame.width > 0 })
+        }
+        XCTAssertEqual(tabView.numberOfTabViewItems, 3)
+    }
+
     override func tearDown() {
         PSMTabDragAssistant.shared().finishDrag()
         items = []

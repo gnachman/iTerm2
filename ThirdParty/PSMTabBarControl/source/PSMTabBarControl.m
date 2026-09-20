@@ -2725,7 +2725,7 @@ typedef struct {
     return !self.stretchCellsToFit && canFitAllCellsOptimally;
 }
 
-// Fit/stretch layout when group chip cells are present. Chip (and pinned)
+// Fit/stretch layout when group chips or a project filter are present. Chip (and pinned)
 // cells keep their fixed width; the remaining space is shared among the
 // tab cells, which stretch to fill when stretchCellsToFit is on. Kept
 // separate from the pinned-centric path below so the (well-tested)
@@ -2856,7 +2856,7 @@ typedef struct {
     const CGFloat spacing = _style.intercellSpacing;
     const CGFloat minWidth = self.cellMinWidth;
 
-    if ([self hasTabGroupChipCells]) {
+    if (_projectTabViewItems != nil || [self hasTabGroupChipCells]) {
         // Collapsed members are hidden: no width and no intercell spacing, which
         // is exactly why a raw tab count overstates what the tabs need.
         const NSInteger visibleCellCount = [self numberOfCellsContributingIntercellSpacing];
@@ -2909,7 +2909,7 @@ typedef struct {
 }
 
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {
-    if ([self hasTabGroupChipCells]) {
+    if (_projectTabViewItems != nil || [self hasTabGroupChipCells]) {
         return [self cellWidthsForHorizontalArrangementWithChipsWithOverflow:withOverflow];
     }
     const NSUInteger cellCount = _cells.count;
