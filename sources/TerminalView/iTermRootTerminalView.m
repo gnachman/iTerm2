@@ -1727,6 +1727,10 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     }
 }
 
+- (BOOL)handleProjectShortcut:(NSEvent *)event {
+    return [self.harnessSidebar handleProjectShortcut:event];
+}
+
 - (void)layoutSubviewsTopTabBarVisible:(BOOL)topTabBarVisible forWindow:(NSWindow *)thisWindow {
     [self removeVerticalTabBarDragHandle];
 
@@ -2008,6 +2012,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                     [NSPredicate predicateWithBlock:^BOOL(NSTabViewItem *item, NSDictionary *bindings) {
                         return [strongSelf.tabBarControl.projectTabViewItems containsObject:item];
                     }]];
+                if (index == 8 && visible.count > 0) { index = visible.count - 1; }
                 if (index >= 0 && index < visible.count) {
                     [strongSelf.tabView selectTabViewItem:visible[index]];
                 }

@@ -6795,6 +6795,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return YES;
 }
 
+- (BOOL)handleProjectShortcut:(NSEvent *)event {
+    return [_contentView handleProjectShortcut:event];
+}
+
 - (BOOL)tabBarShouldBeAccessory {
     RLog(@"%@", self);
     if ([iTermAdvancedSettingsModel showHarnessDirectorySidebar]) {

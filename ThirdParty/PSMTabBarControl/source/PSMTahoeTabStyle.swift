@@ -338,7 +338,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private static func attributedObjectCountValue(forTabCell cell: PSMTabBarCell,
                                                    fontSize: CGFloat,
                                                    textColor: NSColor) -> NSAttributedString {
-        let count = cell.count
+        let count = cell.projectDisplayCount
         var contents = String(count)
         let modifierString = cell.modifierString ?? ""
         

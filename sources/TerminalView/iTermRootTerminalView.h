@@ -181,4 +181,7 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 // Re-reads the window name from the delegate and lays it out if it changed.
 - (void)updateWindowNameBesideTabs;
 
+// Project navigator shortcuts are dispatched before ordinary terminal key handling.
+- (BOOL)handleProjectShortcut:(NSEvent *)event;
+
 @end

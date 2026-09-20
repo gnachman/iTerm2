@@ -76,6 +76,8 @@ final class PSMTabGroupCollapsedDropSelectionTests: XCTestCase {
         for fit in [false, true] {
             control.sizeCellsToFit = fit
             control.projectTabViewItems = Set([items[0], items[2]])
+            XCTAssertEqual(tabs[0].projectDisplayCount, 1)
+            XCTAssertEqual(tabs[2].projectDisplayCount, 2)
             XCTAssertEqual(tabs[1].frame.width, 0)
             XCTAssertGreaterThan(tabs[0].frame.width, 0)
             XCTAssertGreaterThan(tabs[2].frame.width, 0)
@@ -83,6 +85,7 @@ final class PSMTabGroupCollapsedDropSelectionTests: XCTestCase {
             control.projectTabViewItems = Set([items[1]])
             XCTAssertEqual(tabs[0].frame.width, 0)
             XCTAssertEqual(tabs[2].frame.width, 0)
+            XCTAssertEqual(tabs[1].projectDisplayCount, 1)
             XCTAssertGreaterThan(tabs[1].frame.width, 0)
             control.projectTabViewItems = nil
             XCTAssertTrue(tabs.allSatisfy { $0.frame.width > 0 })

@@ -433,7 +433,7 @@
 #pragma mark - Cell Values
 
 - (NSAttributedString *)attributedObjectCountValueForTabCell:(PSMTabBarCell *)cell {
-    const NSInteger count = cell.count;
+    const NSInteger count = cell.projectDisplayCount;
     NSString *contents = [@(count) stringValue];
     NSString *const modifierString = [cell modifierString];
     if (modifierString.length > 0 && count < 9) {

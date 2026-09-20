@@ -68,7 +68,6 @@ import AppKit
     private var groups: [Group] = []
     private var snapshot: [Entry] = []
     private var timer: Timer?
-    private var keyMonitor: Any?
     private var pendingAttachments = Set<String>()
     private var attachedSessionIDs: [String: String] = [:]
     private var observedSessionIDs: Set<String>?
@@ -140,26 +139,7 @@ import AppKit
         super.viewDidMoveToWindow()
         timer?.invalidate()
         timer = nil
-        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
-        keyMonitor = nil
         guard window != nil else { return }
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, event.window === self.window else { return event }
-            if self.selectedProject != nil,
-               event.modifierFlags.intersection([.command, .option, .shift, .control]) == [.command],
-               let character = event.characters(byApplyingModifiers: []), character.count == 1,
-               let number = Int(character), (1...9).contains(number) {
-                if !event.isARepeat { self.selectProjectTabAtIndex?(number - 1) }
-                return nil
-            }
-            guard let index = Self.shortcutIndex(event),
-                  index < self.groups.count else { return event }
-            if event.isARepeat { return nil }
-            let group = self.groups[index]
-            self.outline.expandItem(group)
-            self.selectProject(group)
-            return nil
-        }
         refresh()
         // Session metadata also changes without a tab insertion/removal (e.g. shell integration).
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -170,16 +150,36 @@ import AppKit
 
     deinit {
         timer?.invalidate()
-        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         for monitor in nativeMonitors.values { monitor.invalidate() }
+    }
+
+    // Called by iTermApplication before its built-in pane/tab number shortcuts.
+    @objc func handleProjectShortcut(_ event: NSEvent) -> Bool {
+        guard event.type == .keyDown, event.window == nil || event.window === window else { return false }
+        let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
+        if selectedProject != nil, flags == [.command], let index = Self.numberIndex(event) {
+            if !event.isARepeat { selectProjectTabAtIndex?(index) }
+            return true
+        }
+        guard let index = Self.shortcutIndex(event) else { return false }
+        if !event.isARepeat, index < groups.count {
+            let group = groups[index]
+            outline.expandItem(group)
+            selectProject(group)
+        }
+        return true
+    }
+
+    private static func numberIndex(_ event: NSEvent) -> Int? {
+        guard let characters = event.characters(byApplyingModifiers: []),
+              characters.count == 1, let number = Int(characters), (1...9).contains(number) else { return nil }
+        return number - 1
     }
 
     static func shortcutIndex(_ event: NSEvent) -> Int? {
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
-        guard flags == [.command, .option],
-              let characters = event.characters(byApplyingModifiers: []),
-              characters.count == 1, let number = Int(characters), (1...9).contains(number) else { return nil }
-        return number - 1
+        guard flags == [.command, .option] else { return nil }
+        return numberIndex(event)
     }
 
     private static func launcherExecutable(_ process: iTermProcessInfo) -> String? {

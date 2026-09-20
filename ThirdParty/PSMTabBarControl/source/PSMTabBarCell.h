@@ -39,6 +39,7 @@
 @property(nonatomic, assign) BOOL hasCloseButton;
 @property(nonatomic, assign) BOOL hasIcon;
 @property(nonatomic, assign) int count;
+@property(nonatomic, readonly) NSInteger projectDisplayCount;
 @property(nonatomic, assign) BOOL isPlaceholder;
 // A tab-group chip cell: a first-class cell in the control's cell list
 // that heads a contiguous run of same-group tabs. Like a placeholder it

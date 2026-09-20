@@ -757,6 +757,13 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         return YES;
     }
 
+    // The sidebar owns project/tab numbers in its terminal window. Dispatch before
+    // the default Command-Option-number window switcher consumes the same chord.
+    if ([[self keyWindow] isTerminalWindow] &&
+        [(PseudoTerminal *)self.keyWindow.windowController handleProjectShortcut:event]) {
+        return YES;
+    }
+
     if ([self switchToWindowByNumber:event]) {
         return YES;
     }
