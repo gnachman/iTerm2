@@ -6797,6 +6797,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (BOOL)tabBarShouldBeAccessory {
     RLog(@"%@", self);
+    if ([iTermAdvancedSettingsModel showHarnessDirectorySidebar]) {
+        // Keep the tab bar in the content view so it can sit beside the project sidebar.
+        return NO;
+    }
     if (!(self.window.styleMask & NSWindowStyleMaskTitled)) {
         // You get an assertion if you try to add an accessory to an untitled window.
         RLog(@"NO - window not titled");

@@ -38,7 +38,13 @@ final class iTermLayoutCalculatorTest: XCTestCase {
                 XCTAssertEqual(result.harnessSidebarFrame.maxX, result.tabViewFrame.minX)
                 XCTAssertEqual(result.tabViewFrame.maxX, baseline.tabViewFrame.maxX)
                 XCTAssertEqual(result.tabViewFrame.width + result.harnessSidebarFrame.width, baseline.tabViewFrame.width)
-                XCTAssertEqual(result.tabBarFrame, baseline.tabBarFrame)
+                if visible && position == kLayoutTabPositionTop {
+                    XCTAssertEqual(result.tabBarFrame.minX, result.harnessSidebarFrame.maxX)
+                    XCTAssertEqual(result.tabBarFrame.maxX, baseline.tabBarFrame.maxX)
+                    XCTAssertEqual(result.harnessSidebarFrame.maxY, result.tabBarFrame.maxY)
+                } else {
+                    XCTAssertEqual(result.tabBarFrame, baseline.tabBarFrame)
+                }
                 XCTAssertEqual(result.toolbeltFrame, baseline.toolbeltFrame)
             }
         }

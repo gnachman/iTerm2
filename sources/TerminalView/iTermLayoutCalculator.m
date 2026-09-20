@@ -51,7 +51,7 @@ const int kLayoutTabPositionRight = 3;
     }
 }
 
-// Reserve space inside the terminal area, leaving tab bars and the right Toolbelt intact.
+// Reserve a left column; the top tab bar belongs to the terminal column.
 + (iTermLayoutOutputs)reserveHarnessSidebarInOutputs:(iTermLayoutOutputs)outputs
                                             inputs:(iTermLayoutInputs)inputs {
     const CGFloat width = floor(MAX(0, MIN(inputs.harnessSidebarWidth,
@@ -63,6 +63,14 @@ const int kLayoutTabPositionRight = 3;
     outputs.harnessSidebarFrame.size.width = width;
     outputs.tabViewFrame.origin.x += width;
     outputs.tabViewFrame.size.width -= width;
+    if (inputs.tabBarVisible && inputs.tabPosition == kLayoutTabPositionTop && !inputs.tabBarOnLoan) {
+        const CGFloat right = CGRectGetMaxX(outputs.tabBarFrame);
+        outputs.tabBarFrame.origin.x = CGRectGetMaxX(outputs.harnessSidebarFrame);
+        outputs.tabBarFrame.size.width = MAX(0, right - CGRectGetMinX(outputs.tabBarFrame));
+        const CGFloat top = MAX(CGRectGetMaxY(outputs.harnessSidebarFrame),
+                                CGRectGetMaxY(outputs.tabBarFrame));
+        outputs.harnessSidebarFrame.size.height = top - CGRectGetMinY(outputs.harnessSidebarFrame);
+    }
     if (inputs.hasStatusBar) {
         outputs.statusBarFrame.origin.x += width;
         outputs.statusBarFrame.size.width = MAX(0, outputs.statusBarFrame.size.width - width);
