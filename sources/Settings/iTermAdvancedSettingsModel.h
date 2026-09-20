@@ -551,6 +551,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)tabFlashAnimationDuration;
 + (BOOL)tabsWrapAround;
 + (BOOL)tabTitlesUseSmartTruncation;
++ (BOOL)showHarnessDirectorySidebar;
 + (BOOL)tabCloseButtonsAlwaysVisible;
 + (BOOL)throttleMetalConcurrentFrames;
 + (BOOL)metalSynchronizedDrawing;

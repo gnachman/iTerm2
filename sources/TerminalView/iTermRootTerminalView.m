@@ -92,6 +92,7 @@ typedef struct {
 @property(nonatomic, strong) iTermTabBarControlView *tabBarControl;
 @property(nonatomic, strong) SolidColorView *divisionView;
 @property(nonatomic, strong) iTermToolbeltView *toolbelt;
+@property(nonatomic, strong) SessionDirectorySidebar *harnessSidebar;
 @property(nonatomic, strong) iTermDragHandleView *verticalTabBarDragHandle;
 
 @end
@@ -1640,6 +1641,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     }
     inputs.contentViewWidth = contentFrame.size.width;
     inputs.contentViewHeight = contentFrame.size.height;
+    inputs.harnessSidebarWidth = [iTermAdvancedSettingsModel showHarnessDirectorySidebar] ? 220 : 0;
 
     // Tab bar dimensions
     inputs.tabBarHeight = _tabBarControl.height;
@@ -1991,6 +1993,18 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
         [self layoutSubviewsWithHiddenTabBarForWindow:thisWindow];
     } else {
         [self layoutSubviewsWithVisibleTabBarForWindow:thisWindow inlineToolbelt:showToolbeltInline];
+    }
+    if ([iTermAdvancedSettingsModel showHarnessDirectorySidebar]) {
+        if (!self.harnessSidebar) {
+            self.harnessSidebar = [[SessionDirectorySidebar alloc] initWithFrame:NSZeroRect];
+            [self addSubview:self.harnessSidebar];
+        }
+        const iTermLayoutOutputs sidebarLayout = [iTermLayoutCalculator calculateLayoutWithInputs:
+                                                   [self layoutInputsForWindow:thisWindow]];
+        self.harnessSidebar.frame = sidebarLayout.harnessSidebarFrame;
+    } else if (self.harnessSidebar) {
+        [self.harnessSidebar removeFromSuperview];
+        self.harnessSidebar = nil;
     }
     if (@available(macOS 12.0, *)) {
         const CGFloat notchHeight = [self notchInset];

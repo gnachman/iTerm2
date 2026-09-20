@@ -1,6 +1,10 @@
 Version TBD (unreleased; built off master)
 
 Major New Features:
+- An optional left sidebar groups coding harnesses
+  by directory, including native tmux panes and
+  local tmux attachments. Enable it in Advanced
+  Settings by searching for “harnesses”.
 - iTerm2 is now localized: the interface follows
   your Mac’s language and is available in
   Brazilian Portuguese, German, Japanese, Russian,

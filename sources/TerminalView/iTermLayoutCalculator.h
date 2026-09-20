@@ -25,6 +25,9 @@ typedef struct {
     CGFloat tabBarHeight;
     CGFloat leftTabBarWidth;
 
+    /// Requested width of the opt-in harness navigator. Zero disables it.
+    CGFloat harnessSidebarWidth;
+
     /// Toolbelt dimensions
     CGFloat toolbeltWidth;
     BOOL shouldShowToolbelt;
@@ -64,6 +67,9 @@ typedef struct {
 
 /// Output frame rects from layout calculation.
 typedef struct {
+    /// Frame for the harness navigator
+    CGRect harnessSidebarFrame;
+
     /// Frame for the tab view (main content area)
     CGRect tabViewFrame;
 

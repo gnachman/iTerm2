@@ -51,6 +51,25 @@ const int kLayoutTabPositionRight = 3;
     }
 }
 
+// Reserve space inside the terminal area, leaving tab bars and the right Toolbelt intact.
++ (iTermLayoutOutputs)reserveHarnessSidebarInOutputs:(iTermLayoutOutputs)outputs
+                                            inputs:(iTermLayoutInputs)inputs {
+    const CGFloat width = floor(MAX(0, MIN(inputs.harnessSidebarWidth,
+                                          CGRectGetWidth(outputs.tabViewFrame) * 0.3)));
+    if (width == 0) {
+        return outputs;
+    }
+    outputs.harnessSidebarFrame = outputs.tabViewFrame;
+    outputs.harnessSidebarFrame.size.width = width;
+    outputs.tabViewFrame.origin.x += width;
+    outputs.tabViewFrame.size.width -= width;
+    if (inputs.hasStatusBar) {
+        outputs.statusBarFrame.origin.x += width;
+        outputs.statusBarFrame.size.width = MAX(0, outputs.statusBarFrame.size.width - width);
+    }
+    return outputs;
+}
+
 #pragma mark - Hidden Tab Bar Layout
 
 + (iTermLayoutOutputs)calculateLayoutWithHiddenTabBarInputs:(iTermLayoutInputs)inputs {
@@ -115,7 +134,7 @@ const int kLayoutTabPositionRight = 3;
     // Calculate toolbelt frame
     outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
 
-    return outputs;
+    return [self reserveHarnessSidebarInOutputs:outputs inputs:inputs];
 }
 
 #pragma mark - Visible Top Tab Bar Layout
@@ -185,7 +204,7 @@ const int kLayoutTabPositionRight = 3;
 
     outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
 
-    return outputs;
+    return [self reserveHarnessSidebarInOutputs:outputs inputs:inputs];
 }
 
 #pragma mark - Visible Bottom Tab Bar Layout
@@ -238,7 +257,7 @@ const int kLayoutTabPositionRight = 3;
 
     outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
 
-    return outputs;
+    return [self reserveHarnessSidebarInOutputs:outputs inputs:inputs];
 }
 
 #pragma mark - Visible Left Tab Bar Layout
@@ -297,7 +316,7 @@ const int kLayoutTabPositionRight = 3;
 
     outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
 
-    return outputs;
+    return [self reserveHarnessSidebarInOutputs:outputs inputs:inputs];
 }
 
 #pragma mark - Visible Right Tab Bar Layout
@@ -356,7 +375,7 @@ const int kLayoutTabPositionRight = 3;
 
     outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
 
-    return outputs;
+    return [self reserveHarnessSidebarInOutputs:outputs inputs:inputs];
 }
 
 #pragma mark - Tab View Frame Shrinking

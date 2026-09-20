@@ -358,6 +358,7 @@ class iTermProcessInfo: NSObject {
     private struct ExpensiveValues {
         var isForegroundJob: Bool
         var commandLineValue: String?
+        var argumentsValue: [String]?
         var argv0Value: String?
         var nameValue: String?
 
@@ -369,6 +370,7 @@ class iTermProcessInfo: NSObject {
                 // Full command line with hacked command name
                 let argv = dataSource.commandLineArguments(forProcess: processID, execName: nil)
                 DLog("argv=\(argv?.joined(separator: " ") ?? "(nil)")")
+                argumentsValue = argv
                 commandLineValue = argv?.joined(separator: " ")
                 if let argv0 = argv?.first, !argv0.isEmpty {
                     argv0Value = argv0
@@ -393,6 +395,8 @@ class iTermProcessInfo: NSObject {
     @objc var argv0: String? {
         return expensiveValues.argv0Value
     }
+
+    var arguments: [String]? { expensiveValues.argumentsValue }
 
     @objc var commandLine: String? {
         return expensiveValues.commandLineValue

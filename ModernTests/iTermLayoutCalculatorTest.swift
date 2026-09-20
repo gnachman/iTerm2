@@ -13,6 +13,27 @@ import XCTest
 
 final class iTermLayoutCalculatorTest: XCTestCase {
 
+    func testHarnessSidebarReservesTerminalSpaceInEveryTabPosition() {
+        for position in [kLayoutTabPositionTop, kLayoutTabPositionBottom, kLayoutTabPositionLeft, kLayoutTabPositionRight] {
+            for visible in [true, false] {
+                var inputs = makeDefaultInputs()
+                inputs.tabPosition = position
+                inputs.tabBarVisible = visible ? true : false
+                inputs.shouldShowToolbelt = true
+                inputs.hasStatusBar = true
+                let baseline = iTermLayoutCalculator.calculateLayout(with: inputs)
+                inputs.harnessSidebarWidth = 220
+                let result = iTermLayoutCalculator.calculateLayout(with: inputs)
+                XCTAssertGreaterThan(result.harnessSidebarFrame.width, 0)
+                XCTAssertEqual(result.harnessSidebarFrame.maxX, result.tabViewFrame.minX)
+                XCTAssertEqual(result.tabViewFrame.maxX, baseline.tabViewFrame.maxX)
+                XCTAssertEqual(result.tabViewFrame.width + result.harnessSidebarFrame.width, baseline.tabViewFrame.width)
+                XCTAssertEqual(result.tabBarFrame, baseline.tabBarFrame)
+                XCTAssertEqual(result.toolbeltFrame, baseline.toolbeltFrame)
+            }
+        }
+    }
+
     // MARK: - Test Fixtures
 
     /// Creates default inputs with reasonable test values
