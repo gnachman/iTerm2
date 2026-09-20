@@ -5480,6 +5480,7 @@
 		B4042F8000C16FCBCF0E3225 /* OllamaModelDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ACC31B095944C8872BAF44F /* OllamaModelDiscovery.swift */; };
 		B4B8B00F6B4DED8C57F32A44 /* iTermRosettaSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BDC3CFCE129E42150030AF /* iTermRosettaSupport.swift */; };
 		B526853D585AF3C43FB31FF4 /* SessionCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7F8E4B139D63B87BBCC27AC /* SessionCommand.swift */; };
+		B62EABE8326E6BBA6BCB1BCB /* iTermBellSound.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96672AB6772261AAC628CBA6 /* iTermBellSound.swift */; };
 		B661B16FF0C20DC268588314 /* iTermMacOS13RequirementNotice.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1A9F00EB0A2E18AD334E88 /* iTermMacOS13RequirementNotice.swift */; };
 		B6F107C3AFA77C36642979FC /* CompanionPushRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A955B14FF6B89D29018C2AEA /* CompanionPushRegistry.swift */; };
 		B7D24BCC35360983559E530C /* iTermSuppressedAlerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DB0124F2AA65D7F51AD4A32 /* iTermSuppressedAlerts.swift */; };
@@ -6953,6 +6954,7 @@
 		94DFACF4D99D48FD8F0D304D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermSavePanelFileFormatAccessory.xib; sourceTree = "<group>"; };
 		95AE2311627C4BE4A6CFBA75 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermTipCardViewController.xcstrings; sourceTree = "<group>"; };
 		95E27DEB0B9DD8AE0960FAE5 /* ChatIconGenerator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatIconGenerator.swift; sourceTree = "<group>"; };
+		96672AB6772261AAC628CBA6 /* iTermBellSound.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBellSound.swift; sourceTree = "<group>"; };
 		97539C440B63BAC6011E9208 /* iTermScreenshotRedaction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermScreenshotRedaction.swift; sourceTree = "<group>"; };
 		97D4AF431084A0AD3B307753 /* iTermUvPythonVersion.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermUvPythonVersion.swift; sourceTree = "<group>"; };
 		9801DA0646B0541548CD6B0E /* ApplyLayoutBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ApplyLayoutBuiltInFunction.swift; sourceTree = "<group>"; };
@@ -15438,6 +15440,7 @@
 				4DB0124F2AA65D7F51AD4A32 /* iTermSuppressedAlerts.swift */,
 				0436163F14BE0D35B71494E9 /* iTermStandardButtons.m */,
 				BCB6504EA9415C3BAC796EA5 /* iTermStandardButtons.h */,
+				96672AB6772261AAC628CBA6 /* iTermBellSound.swift */,
 			);
 			path = Infrastructure;
 			sourceTree = "<group>";
@@ -22493,6 +22496,7 @@
 				796E31ABF13A4A84DA64E407 /* iTermTabGroupBuiltInFunctions.h in Sources */,
 				7BBAFFE1ADCFD95F75F66F9E /* iTermMachineIdentity.swift in Sources */,
 				0792C6E221685C8DCF4C5FFE /* AIWithheldKeyAdvice.swift in Sources */,
+				B62EABE8326E6BBA6BCB1BCB /* iTermBellSound.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

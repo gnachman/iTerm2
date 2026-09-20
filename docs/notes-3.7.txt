@@ -171,6 +171,12 @@ New Features:
   style but has no title bar or window controls,
   which is how Centered windows looked before
   3.7.0.
+- Each profile can now choose what its bell
+  sounds like, in Settings > Profiles > Terminal >
+  Bell sound. Pick one of the sounds installed on
+  your Mac or choose “Other…” for any audio file
+  of your own, and give noisy sessions a bell you
+  can tell apart from the rest.
 
 Improvements:
 - iTerm2 now recognizes when a terminal is

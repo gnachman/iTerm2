@@ -306,7 +306,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
                              KEY_DYNAMIC_PROFILE_PARENT_NAME,
                              KEY_DYNAMIC_PROFILE_PARENT_GUID,
                              KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE,
-                             KEY_SUBTITLE, KEY_CUSTOM_LOCALE, KEY_INITIAL_URL,
+                             KEY_SUBTITLE, KEY_CUSTOM_LOCALE, KEY_INITIAL_URL, KEY_BELL_SOUND,
                              KEY_BROWSER_EXTENSIONS_ROOT,
                              KEY_PROGRESS_BAR_COLOR_SCHEME];
 
@@ -845,6 +845,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
             KEY_DISABLE_PRINTING:                                   @"Whether to disable printing via escape sequences",
             KEY_DISABLE_SMCUP_RMCUP:                                @"Whether to disable alternate screen mode switching",
             KEY_SILENCE_BELL:                                       @"Whether to silence the terminal bell",
+            KEY_BELL_SOUND:                                         @"The sound the terminal bell plays, or empty for the system alert sound",
             KEY_PREVENT_SLEEP:                                      @"Whether to prevent system idle sleep while a session with this profile exists",
             KEY_DEFAULT_PANE_LOCKED:                                @"Whether new panes are locked by default",
             KEY_BUFFER_BY_DEFAULT:                                  @"Whether keyboard input should be buffered by default in new sessions",
@@ -1198,6 +1199,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
                   KEY_DISABLE_PRINTING: @NO,
                   KEY_DISABLE_SMCUP_RMCUP: @NO,
                   KEY_SILENCE_BELL: @NO,
+                  KEY_BELL_SOUND: @"",
                   KEY_PREVENT_SLEEP: @NO,
                   KEY_DEFAULT_PANE_LOCKED: @NO,
                   KEY_BUFFER_BY_DEFAULT: @NO,
