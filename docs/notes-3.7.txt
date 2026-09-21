@@ -576,3 +576,7 @@ Bug Fixes:
   of losing them entirely, and the ring stays
   within the tab bar’s rounded ends rather than
   drawing past them.
+- Fixed a bug where editing only the keystroke
+  of a Select Menu Item or Toggle Setting key
+  binding erased the menu item or setting it
+  was bound to.
