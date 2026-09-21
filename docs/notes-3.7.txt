@@ -85,3 +85,9 @@ Bug Fixes:
   of a Select Menu Item or Toggle Setting key
   binding erased the menu item or setting it
   was bound to.
+- Installing the Python runtime used by scripts
+  now trusts the certificates installed on your
+  Mac. On networks that inspect secure traffic,
+  it could fail with a certificate error even
+  though the same download succeeded in a
+  browser.

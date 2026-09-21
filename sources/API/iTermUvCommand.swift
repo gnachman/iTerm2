@@ -17,6 +17,17 @@ enum iTermUvCommand {
     // ignores the user's uv.toml; clone gives APFS copy-on-write dedup of packages
     // from the cache. These are set at provision time only; launching a script is a
     // bare exec of the venv's python and involves no uv.
+    //
+    // system-certs makes uv verify TLS against the macOS trust store instead of the
+    // Mozilla root set baked into its binary. Without it, provisioning is split-brained:
+    // we download the uv binary ourselves through URLSession, which honors the keychain,
+    // and then uv turns around and rejects the very next download (the interpreter, then
+    // the wheels) with "invalid peer certificate: UnknownIssuer" on any machine whose
+    // traffic is inspected by a proxy whose root CA is installed in the keychain. The
+    // trust store is the machine's authority on this; a build-time root set that
+    // disagrees with it is an inconsistency, not a safety net. Note the name: uv 0.12
+    // still accepts the older UV_NATIVE_TLS but warns about it on stderr, and we fold
+    // uv's stderr into user-visible errors.
     static func provisionEnvironment(pythonInstallDir: String,
                                      cacheDir: String) -> [String: String] {
         return [
@@ -26,6 +37,7 @@ enum iTermUvCommand {
             "UV_NO_CONFIG": "1",
             "UV_PYTHON_DOWNLOADS": "automatic",
             "UV_LINK_MODE": "clone",
+            "UV_SYSTEM_CERTS": "1",
         ]
     }
 
