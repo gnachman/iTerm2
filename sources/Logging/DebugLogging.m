@@ -55,7 +55,7 @@ static void AppendWindowDescription(NSWindow *window, NSMutableString *windows) 
     [windows appendFormat:@"\nWindow %@\n%@\n%@\n",
      window,
      [window delegate],
-     [window.contentView iterm_recursiveDescription]];
+     [(window.contentView.superview ?: window.contentView) iterm_recursiveDescription]];
 
     PseudoTerminal *term = [PseudoTerminal castFrom:window.delegate];
     if (term) {

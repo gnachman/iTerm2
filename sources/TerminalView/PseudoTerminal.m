@@ -6610,6 +6610,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 - (void)windowWillStartLiveResize:(NSNotification *)notification {
     RLog(@"self=%@", self);
+    RLog(@"minSize=%@ contentMinSize=%@ frame=%@",
+         NSStringFromSize(self.window.minSize),
+         NSStringFromSize(self.window.contentMinSize),
+         NSStringFromRect(self.window.frame));
+    // -fittingSize forces a constraint-based layout pass. Keep it out of RLog, whose arguments are
+    // always evaluated, so it only runs when the user has deliberately turned debug logging on.
+    DLog(@"contentView fittingSize=%@ constraints=%@ frameView constraints=%@",
+         NSStringFromSize(self.window.contentView.fittingSize),
+         @(self.window.contentView.it_authoredConstraintCount),
+         @(self.window.contentView.superview.it_authoredConstraintCount));
 
     [self clearForceFrame];
     liveResize_ = YES;
