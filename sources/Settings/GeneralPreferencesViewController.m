@@ -1458,14 +1458,39 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (void)testClicked:(id)sender {
     // Commit any in-progress header cell edit so the probe uses what's on screen.
     [_window makeFirstResponder:nil];
-    NSString *name =
-        [_nameField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     NSString *url =
         [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-    if (name.length == 0 || url.length == 0) {
+    // In auto-discovery mode the Model field is hidden and cleared, and the
+    // model lives in the popup instead, so reading the field would always find
+    // it empty and refuse to test a perfectly complete configuration. Resolve
+    // it the same way saveClicked does.
+    NSString *name;
+    NSString *missing = nil;
+    if (_dynamicModelsButton.state == NSControlStateValueOn) {
+        id popupSelection = _modelPopup.selectedItem.representedObject;
+        name = [popupSelection isKindOfClass:NSString.class] ? popupSelection : @"";
+        if (name.length == 0) {
+            // "All installed models" names no single model, but the probe has to
+            // ask for one. Use a discovered model, which is what this entry
+            // expands to at runtime.
+            name = [iTermOllamaModelCache.shared cachedModelNamesForEndpoint:url].firstObject ?: @"";
+            if (name.length == 0) {
+                missing = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingDiscoveredModel", nil, [NSBundle mainBundle], @"Choose a model, or click Refresh Models first, so there is something to test with.", @"Body of alert shown when an auto-discovery entry has no model to test against");
+            }
+        }
+    } else {
+        name = [_nameField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+        if (name.length == 0) {
+            missing = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingInfoText", nil, [NSBundle mainBundle], @"Enter a model name and URL before testing the connection.", @"Body of alert shown when required fields are empty before testing");
+        }
+    }
+    if (url.length == 0) {
+        missing = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingInfoText", nil, [NSBundle mainBundle], @"Enter a model name and URL before testing the connection.", @"Body of alert shown when required fields are empty before testing");
+    }
+    if (missing) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingInfoTitle", nil, [NSBundle mainBundle], @"Missing Information", @"Title of alert shown when required fields are empty before testing");
-        alert.informativeText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingInfoText", nil, [NSBundle mainBundle], @"Enter a model name and URL before testing the connection.", @"Body of alert shown when required fields are empty before testing");
+        alert.informativeText = missing;
         [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse returnCode) {}];
         return;
     }

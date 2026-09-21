@@ -2605,6 +2605,48 @@
         }
       }
     },
+    "AIModelEditor.MissingDiscoveredModel" : {
+      "comment" : "Body of alert shown when an auto-discovery entry has no model to test against",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie ein Modell aus oder klicken Sie zuerst auf „Modelle aktualisieren“, damit etwas zum Testen vorhanden ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose a model, or click Refresh Models first, so there is something to test with."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テストする対象が必要です。モデルを選択するか、先に「モデルを再取得」をクリックしてください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha um modelo ou clique em Atualizar modelos primeiro, para que haja algo a testar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выберите модель или сначала нажмите «Обновить модели», чтобы было что тестировать."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请选择一个模型，或先点击“刷新模型”，以便有可供测试的对象。"
+          }
+        }
+      }
+    },
     "AIModelEditor.MissingInfoText" : {
       "comment" : "Body of alert shown when required fields are empty before testing",
       "extractionState" : "extracted_with_value",
