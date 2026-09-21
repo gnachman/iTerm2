@@ -367,6 +367,34 @@ Bug Fixes:
   the “Supports temperature” toggle and
   always sent the temperature parameter,
   failing against endpoints that reject it.
+- Fixed a bug where the manual AI model
+  editor’s Test Connection button sent your
+  API key to an AI endpoint on your local
+  network, even though real requests never
+  do. An authenticated local server could
+  report a successful test and then reject
+  every chat message. The test now behaves
+  like a real request, and names the header
+  to add under Custom headers when the
+  endpoint wants a credential.
+- Fixed a bug where the host in an AI
+  model’s URL was compared letter for
+  letter, so its capitalization, or a
+  trailing dot, changed which API key was
+  sent. A local address written that way
+  (http://LOCALHOST:11434) was not
+  recognized as self-hosted and received
+  your provider key, and a provider address
+  written that way (https://API.DEEPSEEK.COM)
+  was attributed to OpenAI, so the wrong
+  key was sent.
+- Fixed a bug where a custom HTTP header for
+  an AI model whose name differed only in
+  capitalization from one iTerm2 sets itself
+  (such as “authorization”) was sent
+  alongside the built-in header instead of
+  replacing it, leaving it to chance which
+  value the server saw.
 - Fixed Kitty keyboard protocol base-layout
   reporting for non-US keyboard layouts, so
   shortcuts such as Ctrl-C work without

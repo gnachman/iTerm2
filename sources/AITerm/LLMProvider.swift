@@ -8,28 +8,17 @@
 struct LLMProvider {
     var model: AIMetadata.Model
 
-    // URL assuming the completions API is in use.
-    private var completionsURL: URL {
-        var value = iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? ""
-        if value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            value = "https://api.openai.com/v1/completions"
-        }
-        return URL(string: value) ?? URL(string: "about:empty")!
-    }
-
-    // URL assuming the responses API is in use.
-    private var responsesURL: URL {
-        var value = iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? ""
-        if value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            value = "https://api.openai.com/v1/responses"
-        }
-        return URL(string: value) ?? URL(string: "about:empty")!
+    // The model's endpoint. Everything here that reads model.url goes through
+    // this, so the request URL and the vendor host checks below can never be
+    // parsed two different ways.
+    private var parsedModelURL: URL? {
+        return URL(string: model.url)
     }
 
     func url(apiKey: String, streaming: Bool) -> URL {
         switch model.api {
         case .gemini:
-            let url = URL(string: model.url) ?? URL(string: "about:empty")!
+            let url = parsedModelURL ?? URL(string: "about:empty")!
             guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
                 return URL(string: "about:empty")!
             }
@@ -45,7 +34,7 @@ struct LLMProvider {
             }
             return components.url ?? URL(string: "about:empty")!
         default:
-            return URL(string: model.url) ?? URL(string: "about:empty")!
+            return parsedModelURL ?? URL(string: "about:empty")!
         }
     }
 
@@ -165,7 +154,7 @@ struct LLMProvider {
         if mimeType.hasPrefix("image/") || mimeType.hasPrefix("audio/") || mimeType.hasPrefix("video/") {
             return false
         }
-        if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) &&
+        if LLMMetadata.hostIsOpenAIAPI(url: parsedModelURL) &&
             (model.api == .responses) &&
             model.vectorStoreConfig != .disabled {
             return true
@@ -224,7 +213,7 @@ struct LLMProvider {
     }
 
     var supportsPDFAttachments: Bool {
-        let url = URL(string: model.url)
+        let url = parsedModelURL
         if LLMMetadata.hostIsOpenAIAPI(url: url) {
             return true
         }
@@ -253,7 +242,7 @@ struct LLMProvider {
         if model.api == .llama {
             return model.features.contains(.vision)
         }
-        let url = URL(string: model.url)
+        let url = parsedModelURL
         return LLMMetadata.hostIsAnthropicAIAPI(url: url)
             || LLMMetadata.hostIsGoogleAIAPI(url: url)
             || LLMMetadata.hostIsOpenAIAPI(url: url)
@@ -261,7 +250,7 @@ struct LLMProvider {
 
     // Gemini accepts video via inlineData; no other wired vendor takes video.
     var supportsInlineVideoBlock: Bool {
-        LLMMetadata.hostIsGoogleAIAPI(url: URL(string: model.url))
+        LLMMetadata.hostIsGoogleAIAPI(url: parsedModelURL)
     }
 
     // Audio is the one modality we still gate by sub-format. Unlike images
@@ -273,7 +262,7 @@ struct LLMProvider {
     // OpenAI audio is also chat-completions-only: the Responses API has no
     // audio input, so it is gated on the protocol too.
     func acceptsInlineAudio(mimeType: String) -> Bool {
-        let url = URL(string: model.url)
+        let url = parsedModelURL
         if LLMMetadata.hostIsGoogleAIAPI(url: url) {
             return true
         }
@@ -299,7 +288,7 @@ struct LLMProvider {
         // Marking them inline here, combined with excluding them from
         // shouldUploadFile above, makes the prep pipeline re-add them as
         // inline .file subparts so the serializer emits the typed block.
-        if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) &&
+        if LLMMetadata.hostIsOpenAIAPI(url: parsedModelURL) &&
             (model.api == .responses) &&
             model.vectorStoreConfig != .disabled {
             return mimeType == "application/pdf" || mimeType.hasPrefix("image/")

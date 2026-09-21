@@ -733,9 +733,10 @@ extension ChatViewController {
                                     apiKey: String?) -> Bool {
         // The built-in Ollama vendor is self-hosted (default endpoint is localhost)
         // and intentionally keyless: the request path grants it a placeholder
-        // registration (AITermController.isSelfHosted). It must stay selectable even
-        // before discovery has landed any models (server-down-at-launch window, the
-        // very case the self-healing cache exists to cover), so it is exempt from
+        // registration (AITermController.usesPlaceholderAPIKey). It must stay
+        // selectable even before discovery has landed any models
+        // (server-down-at-launch window, the very case the self-healing cache
+        // exists to cover), so it is exempt from
         // both the empty-models guard and the API-key check below. Remote Ollama
         // servers are configured as manual entries, not this vendor.
         if vendor == .llama {

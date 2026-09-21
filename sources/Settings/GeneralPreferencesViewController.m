@@ -63,6 +63,19 @@ static NSString *const kAIManualModelDynamicSelectedModelKey = @"dynamicSelected
 // Array of {"name","value"} dictionaries. Must match LLMMetadata.ManualModelKey.customHeaders.
 static NSString *const kAIManualModelCustomHeadersKey = @"customHeaders";
 
+// The two hints that explain a withheld API key. Shared by the main AI panel
+// (under the default-model popup) and the manual model editor's own hint, so
+// the same model can never be described two different ways in two places
+// (issue 13021). Worded without "below", since only the editor has the Custom
+// headers table beneath it.
+static NSString *iTermAIKeyHintSelfHosted(void) {
+    // The second clause is conditional, matching AIWithheldKeyAdvice: plain
+    // Ollama or LM Studio on localhost needs no credential at all, and a bare
+    // imperative would send those users to the Custom headers table for
+    // nothing.
+    return NSLocalizedStringWithDefaultValue(@"AIKeyHint.SelfHosted", nil, [NSBundle mainBundle], @"No API key is sent to a local endpoint. If it requires authentication, use a custom header.", @"Hint shown when the model URL is on the local network, where iTerm2 withholds the API key");
+}
+
 static NSString *const kAIManualModelsDefaultColumn = @"default";
 static NSString *const kAIManualModelsModelColumn = @"model";
 static NSString *const kAIManualModelsAPIColumn = @"api";
@@ -635,9 +648,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     const CGFloat width = 590;
     // Height must clear the fixed button row (Save/Cancel/Test) at y=16..46: the
     // content flows downward from height-66 and the custom-headers add/remove
-    // control lands at height-694, so the window has to be tall enough to keep
+    // control lands at height-708, so the window has to be tall enough to keep
     // that (and the headers table above it) above the buttons with a small gap.
-    const CGFloat height = 756;
+    // The 14 over the old 756 is the second line the API-key hint can now use.
+    const CGFloat height = 770;
     const CGFloat margin = 20;
     const CGFloat labelWidth = 150;
     const CGFloat fieldX = margin + labelWidth + 12;
@@ -774,9 +788,18 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _apiKeyHintLabel = [NSTextField labelWithString:@""];
     _apiKeyHintLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
     _apiKeyHintLabel.textColor = [NSColor secondaryLabelColor];
-    _apiKeyHintLabel.frame = NSMakeRect(fieldX, y + 4, fieldWidth, 16);
+    // Two lines, wrapped. The self-hosted variant is an instruction, not a
+    // label, and does not fit the 388pt column on one line in English, let
+    // alone once translated; truncating it would hide the actionable half.
+    // A wrapping field draws from the top of its frame, so keeping the top
+    // edge where the one-line version sat leaves short hints in place.
+    const CGFloat hintHeight = 30;
+    _apiKeyHintLabel.usesSingleLineMode = NO;
+    _apiKeyHintLabel.lineBreakMode = NSLineBreakByWordWrapping;
+    _apiKeyHintLabel.maximumNumberOfLines = 2;
+    _apiKeyHintLabel.frame = NSMakeRect(fieldX, y + 20 - hintHeight, fieldWidth, hintHeight);
     [content addSubview:_apiKeyHintLabel];
-    y -= 22;
+    y -= 22 + (hintHeight - 16);
 
     // The name and URL fields feed the vendor resolver, so track their edits.
     _nameField.delegate = self;
@@ -957,11 +980,19 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (void)updateEditorAPIKeyHint {
     const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedTag;
     NSString *modelName = _nameField.stringValue ?: @"";
-    NSString *url = _urlField.stringValue ?: @"";
+    // Trim like testClicked and saveClicked do. A leading space makes
+    // NSURL(string:) return nil, which would read as a public host here while
+    // the probe and the saved model correctly see a self-hosted one.
+    NSString *url =
+        [(_urlField.stringValue ?: @"") stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     const iTermAIVendor vendor = [iTermLLMMetadata vendorForManualModelWithAPI:api
                                                                            url:url
                                                                      modelName:modelName];
-    if (iTermAIVendorHasEnterableKey(vendor)) {
+    if ([AITermControllerObjC modelWithholdsAPIKeyForLocalEndpointURL:url api:api]) {
+        // A local/private endpoint never receives the vendor key, whatever the
+        // vendor classification says, so don't promise one (issue 13021).
+        _apiKeyHintLabel.stringValue = iTermAIKeyHintSelfHosted();
+    } else if (iTermAIVendorHasEnterableKey(vendor)) {
         _apiKeyHintLabel.stringValue =
             [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.Authorizes", nil, [NSBundle mainBundle], @"Authorizes with your %@ API key.", @"Hint telling the user which provider's API key authorizes the model; %@ is the provider name"),
              iTermAIVendorProviderName(vendor)];
@@ -970,6 +1001,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         // (which runs on-device or via Private Cloud Compute).
         _apiKeyHintLabel.stringValue = NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoKeyUsed", nil, [NSBundle mainBundle], @"No API key is used.", @"Hint shown when the selected model needs no API key");
     }
+    // The field wraps to at most two lines in a fixed-height window, which the
+    // English text clears with room to spare but a long enough translation
+    // would not. The tooltip keeps the whole sentence reachable either way.
+    _apiKeyHintLabel.toolTip = _apiKeyHintLabel.stringValue;
 }
 
 - (void)apiKeyHintInputDidChange:(id)sender {
@@ -3258,7 +3293,18 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // clear before starting a chat.
     const iTermAIVendor vendor = [self vendorForSelectedDefaultAIModel];
     _mainAIAPIKeyHint.hidden = NO;
-    if (iTermAIVendorHasEnterableKey(vendor)) {
+    // A manual model pointed at a local endpoint never receives the vendor
+    // key, whatever vendor it classifies as, so this must not promise one.
+    // Checked before the vendor branch, and using the same policy the request
+    // path and the model editor's own hint use, so the two hints cannot
+    // contradict each other (issue 13021).
+    NSString *modelURL = nil;
+    iTermAIAPI modelAPI = iTermAIAPIChatCompletions;
+    const BOOL isManual = [self selectedDefaultAIModelEndpoint:&modelURL api:&modelAPI];
+    if (isManual && [AITermControllerObjC modelWithholdsAPIKeyForLocalEndpointURL:modelURL
+                                                                              api:modelAPI]) {
+        _mainAIAPIKeyHint.stringValue = iTermAIKeyHintSelfHosted();
+    } else if (iTermAIVendorHasEnterableKey(vendor)) {
         NSString *providerName = iTermAIVendorProviderName(vendor);
         if ([AITermControllerObjC apiKeyIsConfiguredForVendor:vendor]) {
             _mainAIAPIKeyHint.stringValue =
@@ -3274,6 +3320,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         // (which runs on-device or via Private Cloud Compute).
         _mainAIAPIKeyHint.stringValue = NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoKeyUsed", nil, [NSBundle mainBundle], @"No API key is used.", @"Hint shown when the selected model needs no API key");
     }
+    // This label is a fixed-height single line in the xib, so a long enough
+    // translation would be cut off. Truncate visibly rather than clipping
+    // mid-glyph, and keep the whole sentence reachable on hover.
+    _mainAIAPIKeyHint.lineBreakMode = NSLineBreakByTruncatingTail;
+    _mainAIAPIKeyHint.toolTip = _mainAIAPIKeyHint.stringValue;
 }
 
 // The vendor whose stored key authorizes the model currently selected in the
@@ -3298,6 +3349,37 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         return [self providerForManualAIModelConfiguration:configuration];
     }
     return (iTermAIVendor)[self unsignedIntegerForKey:kPreferenceKeyAIVendor];
+}
+
+// The endpoint of the model currently selected in the default-model popup, when
+// that model is a manual entry. Only manual models carry a URL the user chose,
+// so only they can be local; a built-in vendor model always uses
+// that vendor's own https endpoint and never changes the key policy, so it
+// returns NO. Mirrors the lookup order in vendorForSelectedDefaultAIModel.
+- (BOOL)selectedDefaultAIModelEndpoint:(out NSString **)urlOut
+                                   api:(out iTermAIAPI *)apiOut {
+    NSString *identifier = _aiVendor.selectedItem.representedObject;
+    if ([self providerFromDefaultAIModelIdentifier:identifier]) {
+        return NO;
+    }
+    NSString *manualName = [self manualModelNameFromDefaultAIModelIdentifier:identifier];
+    iTermAIModel *model = [self settingsManualModelNamed:manualName];
+    if (model) {
+        *urlOut = model.url ?: @"";
+        *apiOut = model.api;
+        return YES;
+    }
+    NSDictionary *configuration =
+        [self manualAIModelConfigurationNamed:manualName
+                             inConfigurations:[self mutableManualAIModelConfigurations]];
+    if (configuration) {
+        *urlOut = configuration[kAIManualModelURLKey] ?: @"";
+        *apiOut = (iTermAIAPI)[self manualAIModelConfiguration:configuration
+                                                 integerForKey:kAIManualModelAPIKey
+                                                      fallback:iTermAIAPIChatCompletions];
+        return YES;
+    }
+    return NO;
 }
 
 - (BOOL)modelSupportsModernAPI {

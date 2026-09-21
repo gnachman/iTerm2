@@ -46,29 +46,33 @@ class LLMMetadata: NSObject {
         return true
     }
 
+    // All five host tests compare against the lowercased host: they pick which
+    // vendor's key to send (and, for Azure, which header name), so a host typed
+    // in capitals must not fall through to the .openAI default and carry the
+    // user's OpenAI key to someone else (issue 13021).
     @objc(hostIsOpenAIAPIForURL:)
     static func hostIsOpenAIAPI(url: URL?) -> Bool {
-        return url?.host == "api.openai.com"
+        return url?.it_normalizedHost == "api.openai.com"
     }
 
     @objc(hostIsOpenGoogleAPIForURL:)
     static func hostIsGoogleAIAPI(url: URL?) -> Bool {
-        return url?.host == "generativelanguage.googleapis.com"
+        return url?.it_normalizedHost == "generativelanguage.googleapis.com"
     }
 
     @objc(hostIsAzureAPIForURL:)
     static func hostIsAzureAIAPI(url: URL?) -> Bool {
-        return (url?.host ?? "").hasSuffix(".azure.com")
+        return (url?.it_normalizedHost ?? "").hasSuffix(".azure.com")
     }
 
     @objc(hostIsDeepSeekAIAPIForURL:)
     static func hostIsDeepSeekAIAPI(url: URL?) -> Bool {
-        return (url?.host ?? "").hasSuffix(".deepseek.com")
+        return (url?.it_normalizedHost ?? "").hasSuffix(".deepseek.com")
     }
 
     @objc(hostIsAnthropicAIAPIForURL:)
     static func hostIsAnthropicAIAPI(url: URL?) -> Bool {
-        return (url?.host ?? "").hasSuffix(".anthropic.com")
+        return (url?.it_normalizedHost ?? "").hasSuffix(".anthropic.com")
     }
 
     static var effectiveVendor: iTermAIVendor {
