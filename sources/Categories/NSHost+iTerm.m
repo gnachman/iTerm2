@@ -151,6 +151,32 @@ static NSMutableSet<NSString *> *iTermRememberedLocalNames(void) {
     }
 }
 
++ (void)it_rememberVerifiedLocalHostname:(NSString *)hostname {
+    if (hostname.length == 0) {
+        return;
+    }
+    // Defense in depth: this is the one place a name enters the process-wide
+    // local-names set with no validation, and it's called on every prompt. Refuse
+    // anything that can't be a real hostname (whitespace or a URL-structural
+    // character). A name like that means the OSC 7 authority was mangled; remembering
+    // the fragment would misclassify a genuinely remote host as local for the app's
+    // lifetime. Real names (including VPN / Tailscale / mDNS ones) are unaffected.
+    static NSCharacterSet *illegal;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        illegal = [[NSCharacterSet characterSetWithCharactersInString:@"/\\@?#%"]
+                   mutableCopy];
+        [(NSMutableCharacterSet *)illegal formUnionWithCharacterSet:
+            [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    });
+    if ([hostname rangeOfCharacterFromSet:illegal].location != NSNotFound) {
+        return;
+    }
+    @synchronized (NSHost.class) {
+        [iTermRememberedLocalNames() addObject:hostname.lowercaseString];
+    }
+}
+
 + (void)it_addRememberedLocalHostnameForTesting:(NSString *)hostname {
     if (hostname.length == 0) {
         return;

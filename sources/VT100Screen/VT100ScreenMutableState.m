@@ -107,6 +107,30 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     [iTermGCD setPerformingJoinedBlock:value];
 }
 
+// Process-wide one-shot for the "AcceptOSC7 is off" warning, so restoring N
+// sessions that each report OSC 7 doesn't stack N modal alerts. Synchronized
+// because sessions run on separate mutation queues.
+static BOOL sOSC7DisabledWarningShown;
+
+// Returns YES for the first caller per app run. Called at presentation time,
+// after the AcceptOSC7 re-check, so the token is spent only when an alert is
+// actually about to be shown.
++ (BOOL)consumeOSC7DisabledWarning {
+    @synchronized (self) {
+        if (sOSC7DisabledWarningShown) {
+            return NO;
+        }
+        sOSC7DisabledWarningShown = YES;
+        return YES;
+    }
+}
+
++ (void)resetOSC7DisabledWarningForTesting {
+    @synchronized (self) {
+        sOSC7DisabledWarningShown = NO;
+    }
+}
+
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     dispatch_queue_t queue = [iTermGCD mutationQueue];
 
@@ -3910,11 +3934,30 @@ void VT100ScreenEraseCell(screen_char_t *sct,
            user:(NSString *)user
  viaSSHIntegration:(BOOL)viaSSHIntegration
      completion:(void (^)(void))completion {
+    // No machine-identity assertion: locality is computed from the hostname.
+    [self setHost:host
+             user:user
+viaSSHIntegration:viaSSHIntegration
+  machineLocality:VT100RemoteHostLocalityUnknown
+   lastRemoteHost:[self lastRemoteHost]
+       completion:completion];
+}
+
+// machineLocality is an authoritative verdict from an OSC 7 ?machineID token, or
+// .Unknown to mean "no assertion; decide locality from the hostname". It cannot
+// override an ssh/conductor boundary, which is structurally remote.
+- (void)setHost:(NSString *)host
+           user:(NSString *)user
+ viaSSHIntegration:(BOOL)viaSSHIntegration
+ machineLocality:(VT100RemoteHostLocality)machineLocality
+ lastRemoteHost:(id<VT100RemoteHostReading>)lastRemoteHost
+     completion:(void (^)(void))completion {
     // Whether the caller actually reported a hostname (vs. a trigger that
     // supplied only a username and relies on backfill). This decides whether
-    // locality is computed fresh or carried forward.
+    // locality is computed fresh or carried forward. lastRemoteHost is passed in
+    // (not re-fetched) so the OSC 7 path resolves it once for both this and
+    // -normalizeOSC7Host:.
     const BOOL hostWasProvided = (host != nil);
-    id<VT100RemoteHostReading> lastRemoteHost = [self lastRemoteHost];
     if (!host) {
         // A trigger can set the user alone (e.g. "user@"); preserve the
         // previous hostname. The empty string stands in if there's none.
@@ -3929,7 +3972,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // to compare: the machine's names drift over time (mDNS can renumber
     // MacBook-Pro-3.local to -2 tomorrow), so a frozen verdict must not be
     // recomputed from names later. Precedence: an ssh/conductor boundary is
-    // structurally remote and outranks any name comparison.
+    // structurally remote and outranks any name comparison or machine-identity
+    // assertion.
     VT100RemoteHostLocality locality;
     if (viaSSHIntegration) {
         // Reached via ssh integration / conductor: structurally remote, even if
@@ -3937,6 +3981,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         // a container that shares our hostname). We can't prove the filesystem
         // is shared across a real transport, so treat it as remote.
         locality = VT100RemoteHostLocalityRemote;
+    } else if (machineLocality != VT100RemoteHostLocalityUnknown) {
+        // An OSC 7 ?machineID token proved same-machine (or not) by comparing a
+        // machine identity both ends compute independently. Trust it over the
+        // hostname, which is exactly what breaks for VPN / Tailscale / mDNS names.
+        locality = machineLocality;
+        if (locality == VT100RemoteHostLocalityLocalhost && hostWasProvided && host.length > 0) {
+            // Remember the name so hostname-only consumers (click-to-open of
+            // file:// URLs, status bar components) recognize it too, even when it
+            // matches none of the live local names. Only when the hostname was
+            // actually reported: a name backfilled from the previous host is not
+            // what the token vouches for, and remembering it would misclassify a
+            // genuinely remote host as local for the rest of the app run.
+            [NSHost it_rememberVerifiedLocalHostname:host];
+        }
     } else if (!hostWasProvided) {
         // Only a username was reported; the hostname was carried over from the
         // previous host, so its locality carries over too rather than being
@@ -4331,36 +4389,206 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     } name:@"reload mark cache"];
 }
 
+static int iTermHexDigitValue(unsigned char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+}
+
+// Percent-decode `encoded` to raw bytes and interpret them as ISO Latin-1 (a 1:1
+// byte->codepoint map). Fallback for -[NSURLComponents path], which returns @""
+// when any %-escape isn't valid UTF-8 - and Linux filenames are arbitrary byte
+// strings, so a non-UTF-8 directory must still track rather than be dropped. The
+// result is best-effort and will NOT round-trip to the on-disk bytes; treat it as
+// a display value.
+static NSString *iTermLatin1StringFromPercentEncodedPath(NSString *encoded) {
+    NSData *asciiData = [encoded dataUsingEncoding:NSUTF8StringEncoding];
+    if (!asciiData) {
+        return nil;
+    }
+    const unsigned char *bytes = asciiData.bytes;
+    const NSUInteger length = asciiData.length;
+    NSMutableData *decoded = [NSMutableData dataWithCapacity:length];
+    for (NSUInteger i = 0; i < length; i++) {
+        int hi, lo;
+        if (bytes[i] == '%' &&
+            i + 2 < length &&
+            (hi = iTermHexDigitValue(bytes[i + 1])) >= 0 &&
+            (lo = iTermHexDigitValue(bytes[i + 2])) >= 0) {
+            const unsigned char value = (unsigned char)((hi << 4) | lo);
+            [decoded appendBytes:&value length:1];
+            i += 2;
+        } else {
+            [decoded appendBytes:&bytes[i] length:1];
+        }
+    }
+    return [[NSString alloc] initWithData:decoded encoding:NSISOLatin1StringEncoding];
+}
+
+// The reported directory, falling back to an 8-bit decode for a path
+// NSURLComponents refuses to decode.
+static NSString *iTermOSC7PathFromComponents(NSURLComponents *components) {
+    NSString *path = components.path;
+    if (path.length > 0 || components.percentEncodedPath.length == 0) {
+        return path;
+    }
+    NSString *latin1Path = iTermLatin1StringFromPercentEncodedPath(components.percentEncodedPath);
+    if (latin1Path.length == 0) {
+        return path;
+    }
+    DLog(@"OSC 7 path %@ was not valid UTF-8; decoded as ISO Latin-1: %@",
+         components.percentEncodedPath, latin1Path);
+    return latin1Path;
+}
+
+// The ?machineID=<version>:<value> token, or nil if absent. It lets us decide
+// localhost by machine identity rather than by matching hostnames, which break for
+// VPN / Tailscale / mDNS names.
+static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"machineID"]) {
+            return item.value ?: @"";
+        }
+    }
+    return nil;
+}
+
 - (void)setWorkingDirectoryFromURLString:(NSString *)URLString {
     DLog(@"terminalSetWorkingDirectoryURL:%@", URLString);
 
-    if (![iTermAdvancedSettingsModel acceptOSC7]) {
-        return;
-    }
     NSURL *URL = [NSURL URLWithString:URLString];
     if (!URL || URLString.length == 0) {
+        // A hostname illegal in a URL authority (e.g. a space in a user-supplied
+        // iterm2_hostname) makes NSURL nil and discards the whole host+cwd report.
+        // Log it so it's diagnosable from a field log rather than silently stale.
+        DLog(@"OSC 7 URL did not parse; dropping report: %@", URLString);
         return;
     }
     NSURLComponents *components = [[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:NO];
     NSString *host = components.host;
     NSString *user = components.user;
-    NSString *path = components.path;
+    NSString *path = iTermOSC7PathFromComponents(components);
+    NSString *machineID = iTermOSC7MachineIDFromComponents(components);
 
-    if (host.length > 0 || user.length > 0) {
-        __weak __typeof(self) weakSelf = self;
-        [self setHost:host user:user viaSSHIntegration:NO completion:^{
-            [weakSelf setPathFromURL:path];
-        }];
+    if (![iTermAdvancedSettingsModel acceptOSC7]) {
+        [self warnOSC7DisabledIfNeededForMachineID:machineID];
+        return;
+    }
+    _queuedOSC7DisabledWarning = NO;
+
+    // An authoritative same-machine verdict, or Unknown to fall back to the
+    // hostname compare inside -setHost:.
+    const VT100RemoteHostLocality machineLocality = [iTermMachineIdentity localityForMachineIDToken:machineID];
+    // Resolve once and thread it into both normalize and setHost (lastRemoteHost is
+    // cache-backed and can rescan the interval tree).
+    id<VT100RemoteHostReading> lastRemoteHost = [self lastRemoteHost];
+    [self normalizeOSC7Host:&host user:&user machineLocality:machineLocality lastRemoteHost:lastRemoteHost];
+
+    // A machineID token is present iff this OSC 7 came from iTerm2 shell
+    // integration, which also sends OSC 133;A. 133;A owns the prompt, so ours stays
+    // a pure location report; a third-party OSC 7 is the only prompt signal there
+    // is, so it still establishes one. (Our scripts always emit at least "1:", so a
+    // bare "?machineID=" counts as third-party.)
+    const BOOL fromShellIntegration = (machineID.length > 0);
+    __weak __typeof(self) weakSelf = self;
+    void (^completion)(void) = ^{
+        [weakSelf setPathFromURL:path fromShellIntegration:fromShellIntegration];
+    };
+    if (host.length > 0 || user != nil || machineLocality != VT100RemoteHostLocalityUnknown) {
+        [self setHost:host
+                 user:user
+    viaSSHIntegration:NO
+      machineLocality:machineLocality
+       lastRemoteHost:lastRemoteHost
+           completion:completion];
     } else {
-        [self setPathFromURL:path];
+        completion();
     }
 }
 
-- (void)setPathFromURL:(NSString *)path {
+// Applies OSC 7's two carry-forward rules, in the order they depend on: the user
+// rule reads the reported host, so it must run before the host rule may replace it
+// with nil. On return nil means "carry the previous value forward" and @"" means
+// "record no value" - the distinction -setHost: makes with `if (!user)`.
+- (void)normalizeOSC7Host:(NSString *__autoreleasing *)hostPtr
+                     user:(NSString *__autoreleasing *)userPtr
+          machineLocality:(VT100RemoteHostLocality)machineLocality
+           lastRemoteHost:(id<VT100RemoteHostReading>)lastRemoteHost {
+    NSString *host = *hostPtr;
+    NSString *user = *userPtr;
+
+    // Inherit an omitted username only from the SAME host (fish's built-in
+    // file://host/path drops the user) or from a hostless, pure-path report. A
+    // report for a DIFFERENT host (VTE-style file://remotebox/path after
+    // `ssh remotebox`) must not inherit ours, or the remote host mark would be
+    // labeled with the local user.
+    if (user.length == 0) {
+        if (host.length == 0 ||
+            [host caseInsensitiveCompare:lastRemoteHost.hostname ?: @""] == NSOrderedSame) {
+            user = nil;
+        } else {
+            user = @"";
+        }
+    }
+
+    // NSURLComponents.host is @"" (not nil) for both "no authority" (file:///path)
+    // and "empty authority" (file://@/path). With a verdict, that @"" would reach
+    // -setHost: as a *provided* hostname and overwrite the known one, so carry it
+    // forward instead. Without a verdict, leave it as @"" so the hostname compare
+    // still forces Remote.
+    if (host.length == 0 && machineLocality != VT100RemoteHostLocalityUnknown) {
+        host = nil;
+    }
+
+    *hostPtr = host;
+    *userPtr = user;
+}
+
+// OSC 7 arrived while AcceptOSC7 is off. A machineID token marks it as iTerm2's
+// own shell integration, which reports location via OSC 7 instead of the
+// proprietary RemoteHost/CurrentDir codes, so if we've never seen those codes this
+// session the setting is silently breaking shell integration.
+- (void)warnOSC7DisabledIfNeededForMachineID:(NSString *)machineID {
+    if (machineID.length == 0 || _sawProprietaryLocationCode || _queuedOSC7DisabledWarning) {
+        return;
+    }
+    _queuedOSC7DisabledWarning = YES;
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        // Re-check and spend the process-wide one-shot here, at presentation time:
+        // the setting may have been turned back on since this was queued, and the
+        // token must not be spent on a warning that then gets dropped. The
+        // delegate's only job is to present.
+        if ([iTermAdvancedSettingsModel acceptOSC7]) {
+            return;
+        }
+        if (![VT100ScreenMutableState consumeOSC7DisabledWarning]) {
+            return;
+        }
+        [delegate screenDidReceiveOSC7WhileDisabled];
+    } name:@"warn OSC 7 disabled"];
+}
+
+- (void)setPathFromURL:(NSString *)path fromShellIntegration:(BOOL)fromShellIntegration {
+    if (path.length == 0) {
+        // A pathless OSC 7 (file://user@host, or a peer that dropped the path)
+        // carries no directory. Don't fall into currentDirectoryDidChangeTo:'s
+        // empty-dir branch, which polls the local child process for its cwd: over
+        // a plain ssh remote that records the LOCAL directory against the remote
+        // host. Leave the working directory unchanged instead.
+        return;
+    }
     __weak __typeof(self) weakSelf = self;
     [self currentDirectoryDidChangeTo:path completion:^{
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
+            return;
+        }
+        if (fromShellIntegration) {
+            // 133;A owns the prompt mark, the line-style newline injection, and the
+            // auto-composer placement, so a first-party OSC 7 must stay a pure
+            // location report; establishing the prompt here too would inject a
+            // redundant newline and re-reveal the composer for every OSC 7.
             return;
         }
         [strongSelf insertNewlinesBeforeAddingPromptMarkAfterPrompt:YES];
@@ -6803,7 +7031,9 @@ lengthExcludingInBandSignaling:data.length
     }
     NSString *path = [NSString castFrom:terminalState[VT100ScreenTerminalStateKeyPath]];
     if (path) {
-        [self setPathFromURL:path];
+        // A restore (conductor unhook), not a live shell-integration OSC 7: no
+        // 133;A follows, so establish the prompt as before.
+        [self setPathFromURL:path fromShellIntegration:NO];
     }
 }
 

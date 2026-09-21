@@ -15530,6 +15530,32 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_kittyDnDBridge reset];
 }
 
+- (void)screenDidReceiveOSC7WhileDisabled {
+    // The screen has already re-checked the setting and spent the process-wide
+    // one-shot; this method's only job is to present.
+    //
+    // If the warning is already silenced, showWarningWithTitle: preempts and
+    // returns the remembered selection WITHOUT presenting a dialog. We must not let
+    // a remembered "Turn On OSC 7" silently flip AcceptOSC7 back to YES: the user
+    // may have deliberately turned it off again in Settings, and "Don't change
+    // defaults silently" applies. So only honor a Turn On when the alert was
+    // actually shown (i.e. it was not already silenced when we called it).
+    NSString *const identifier = @"NoSyncOSC7DisabledBreaksShellIntegration";
+    const BOOL wasSilenced = [iTermWarning identifierIsSilenced:identifier];
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.OSC7DisabledMessage", nil, [NSBundle mainBundle], @"iTerm2’s shell integration now reports your username, hostname, and current directory using OSC 7, but the “Accept OSC 7” advanced setting is turned off. Shell integration will not work correctly until it is turned back on.", @"Warning that shell integration is broken because the Accept OSC 7 advanced setting is disabled")
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.OSC7DisabledTurnOn", nil, [NSBundle mainBundle], @"Turn On OSC 7", @"Button that re-enables the Accept OSC 7 advanced setting"),
+                                              iTermLocalizedCancel() ]
+                                 accessory:nil
+                                identifier:identifier
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:NSLocalizedStringWithDefaultValue(@"PTYSession.OSC7DisabledHeading", nil, [NSBundle mainBundle], @"Shell Integration Setting Conflict", @"Heading for a warning that the Accept OSC 7 setting is disabled")
+                                    window:self.view.window];
+    if (selection == kiTermWarningSelection0 && !wasSilenced) {
+        [iTermAdvancedSettingsModel setAcceptOSC7:YES];
+    }
+}
+
 - (void)restoreColorsFromProfile {
     NSMutableDictionary<NSString *, id> *change = [NSMutableDictionary dictionary];
     for (NSString *baseKey in [[_screen.colorMap colormapKeyToProfileKeyDictionary] allValues]) {

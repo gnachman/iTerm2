@@ -172,6 +172,14 @@ New Features:
   3.7.0.
 
 Improvements:
+- iTerm2 now recognizes when a terminal is
+  running on your own Mac by machine identity
+  rather than by hostname, so features that only
+  work locally keep working over a VPN or
+  Tailscale connection where the hostname no
+  longer matches. Reinstall shell integration
+  (iTerm2 > Install Shell Integration) to enable
+  this.
 - The Move Tab Left and Move Tab Right shortcuts
   now move just the current tab instead of its
   whole tab group. Moving a tab past the edge of
@@ -305,6 +313,10 @@ Bug Fixes:
   was described as part of that run, so scripts
   reading screen contents saw the attribute
   spill past where it ended.
+- Dragging a file into a local terminal now
+  inserts its path again on VPN or Tailscale
+  networks, where it had instead been offering
+  to upload the file.
 - Fixed a crash when editing a dynamic profile
   whose file had been changed on disk.
 - Fixed a crash when clicking the bookmark

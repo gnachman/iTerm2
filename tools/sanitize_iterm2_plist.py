@@ -72,7 +72,7 @@ TOP-LEVEL keys
   NoSyncSavePanelSavedSettings_* ......... nested "InitialDirectory" path
   PathToDatabase_* ....................... password-manager backend URL
   OnePasswordAccount, LastpassGroups ..... password-manager identifiers
-  FakeFullyQualifiedDomainName, AlternateSSHIntegrationScript, SshSchemePath
+  FakeFullyQualifiedDomainName, FakeBootSessionUUID, AlternateSSHIntegrationScript, SshSchemePath
   PasteSpecialRegex, PasteSpecialSubstitution
   SessionEndMessageText, SessionRestartedMessageText,
     SessionFinishedMessageText, TmuxTitlePrefix, NoSyncVariablesToReport,
@@ -225,6 +225,7 @@ CONTENT_KEYS = {
     "AitermURL": REDACT_V,
     "AiProxy": REDACT_V,
     "FakeFullyQualifiedDomainName": REDACT_V,
+    "FakeBootSessionUUID": REDACT_V,
     "NoSyncWorkgroupGitBaseRecents": REDACT_V,
     # environment / variables / remote state (deep: every string within)
     "Environment": REDACT_V,

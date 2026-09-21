@@ -73,6 +73,15 @@ iTermTriggerScopeProvider> {
     // use, when the screen state is fully settled.
     long long _bottommostFoldAbsLine;
     BOOL _foldCacheDirty;
+    // YES once this session has received a proprietary location code (1337;RemoteHost
+    // or CurrentDir). If we've seen those, disabling OSC 7 doesn't break shell
+    // integration's location reporting, so we don't warn about it.
+    BOOL _sawProprietaryLocationCode;
+    // YES once this session has queued the "AcceptOSC7 is off" warning, so a
+    // session reporting OSC 7 every prompt doesn't enqueue a side effect every
+    // prompt. Cleared whenever the setting is seen on, so a later off-episode
+    // can warn again.
+    BOOL _queuedOSC7DisabledWarning;
 }
 
 @property (atomic) BOOL hadCommand;

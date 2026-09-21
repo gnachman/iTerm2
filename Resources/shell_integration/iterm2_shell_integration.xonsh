@@ -12,14 +12,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# ShellIntegrationVersion=2;shell=xonsh
+# ShellIntegrationVersion=4;shell=xonsh
 
 class _iTerm2Xonsh:
     """iTerm2 integration with Xonsh shell."""
 
+    # Bytes left un-encoded when building the OSC 7 file URL path: the RFC 3986
+    # unreserved characters plus the path separator.
+    _PATH_SAFE = frozenset(b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/._~-")
+
     def __init__(self):
-        self.version = 2
+        self.version = 4
         self.stdout = @.imp.sys.__stdout__
+        # Machine identity for OSC 7 localhost detection. Computed lazily below,
+        # only for an interactive iTerm2 session: _compute_machine_id spawns a
+        # sysctl subprocess on Darwin, so we must not pay it in non-interactive
+        # xonsh or in a non-iTerm2 terminal where nothing is ever emitted.
+        self.machine_id = None
 
         # OSC 133 aid: per-command identifier the receiver uses to target a
         # specific mark for D-by-aid (and cascade-close when an outer
@@ -31,6 +40,8 @@ class _iTerm2Xonsh:
 
         self.add_iterm2_to_env()
         if self.is_iterm2_interactive():
+            self.machine_id = self._compute_machine_id()
+            self._suppress_native_osc7()
             self.add_iterm2_to_prompt_fields()
             self.add_iterm2_to_prompt()  # Wrap prompt immediately for first prompt
             self.add_iterm2_to_events()
@@ -98,12 +109,74 @@ class _iTerm2Xonsh:
 
         return @.env.get('HOSTNAME', '')
 
-    def set_state(self):
-        if (user := @.env.get('USER', '')) and (host := self._get_hostname()):
-            self.set_var("RemoteHost", f"{user}@{host}")
+    def _encode_path(self, path):
+        # Percent-encode per RFC 3986, preserving unreserved characters and the
+        # path separator, byte-wise over UTF-8 so non-ASCII survives (matching how
+        # the receiver decodes the URL).
+        return "".join(
+            chr(b) if b in self._PATH_SAFE else "%%%02X" % b
+            for b in path.encode("utf-8", "surrogateescape")
+        )
 
-        if (cwd := @.env.get("PWD", @.imp.os.getcwd())):
-            self.set_var("CurrentDir", cwd)
+    def _compute_machine_id(self):
+        # Sent as ?machineID=<version>:<value> on the OSC 7 URL. Version 1 is
+        # HMAC-SHA256(fixed key, macOS kern.bootsessionuuid) as lowercase hex: a
+        # per-boot identity the receiver (iTerm2, also on this machine) computes the
+        # same way and compares, so it knows the shell shares its filesystem without
+        # matching hostnames. We HMAC rather than send the raw per-boot UUID; the key
+        # is fixed and public (not a secret). Held only on this instance, never in
+        # the environment, so it can't leak across ssh. A non-Darwin host can't be
+        # this Mac, so it returns the empty value ("1:"). On Darwin, if sysctl gives
+        # nothing (or the HMAC can't be computed), it returns version 0 ("0:",
+        # identity unavailable): the receiver still treats this as iTerm2 shell
+        # integration but falls back to hostname matching instead of "not local".
+        if @.imp.platform.system() != "Darwin":
+            return "1:"
+        try:
+            bsid = $(sysctl -n kern.bootsessionuuid 2> /dev/null).strip()
+        except Exception:
+            bsid = ""
+        if not bsid:
+            return "0:"
+        try:
+            digest = @.imp.hmac.new(b"iterm2-osc7-machine-id",
+                                    bsid.encode("utf-8"),
+                                    @.imp.hashlib.sha256).hexdigest()
+        except Exception:
+            return "0:"
+        return f"1:{digest}"
+
+    def _suppress_native_osc7(self):
+        # Modern xonsh registers its own OSC 7 emitter on on_chdir. That report
+        # carries no username and no ?machineID=, so the receiver treats it as
+        # third-party: it re-establishes the prompt (a redundant newline / composer
+        # re-reveal in Auto Composer) and re-derives locality from the hostname,
+        # discarding our machineID verdict. Unregister it so only our report (with
+        # the machineID) fires per directory change. The single startup emission
+        # fires before this script is sourced, so it can't be suppressed - it is
+        # harmless. Wrapped in try/except: older xonsh has no native emitter.
+        try:
+            from xonsh.prompt.env import emit_osc7
+            events.on_chdir.discard(emit_osc7)
+        except Exception:
+            pass
+
+    def set_state(self):
+        # OSC 7: report username, hostname, and working directory as a single file
+        # URL. This supersedes the older 1337;RemoteHost and 1337;CurrentDir codes.
+        # Sanitize the authority: a username or hostname with a URL-structural
+        # character (/, ?, #, or whitespace) would silently restructure the URL -
+        # recording the wrong directory, or (since the machineID query still parses)
+        # poisoning localhost detection with a truncated host. Keep only a safe set
+        # so a malformed label degrades to a clean name; the username keeps @ (an AD
+        # login like alice@corp.com survives, since URL parsers split on the LAST @).
+        user = @.imp.re.sub(r'[^A-Za-z0-9._@-]', '', @.env.get('USER', ''))
+        host = @.imp.re.sub(r'[^A-Za-z0-9._-]', '', self._get_hostname())
+        cwd = @.env.get("PWD", @.imp.os.getcwd())
+        url = f"file://{user}@{host}{self._encode_path(cwd)}"
+        if self.machine_id is not None:
+            url += f"?machineID={self.machine_id}"
+        self.write_osc(f"7;{url}")
 
     def set_var(self, name, value):
         self.write_osc(f"1337;{name}={value}")

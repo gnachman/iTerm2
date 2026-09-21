@@ -9949,37 +9949,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OSC 7 zum Festlegen von Benutzername, Hostname und Pfad akzeptieren."
+            "value" : "OSC 7 zum Festlegen von Benutzername, Hostname und Pfad akzeptieren. iTerm2 Shell-Integration meldet diese Informationen jetzt über OSC 7, daher deaktiviert das Ausschalten dieser Option auch die Erfassung von Benutzername, Hostname und Verzeichnis durch die Shell-Integration."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Accept OSC 7 to set username, hostname, and path."
+            "value" : "Accept OSC 7 to set username, hostname, and path. iTerm2 shell integration now reports this information using OSC 7, so turning this off also disables shell integration’s username, hostname, and directory tracking."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザー名、ホスト名、パスの設定にOSC 7を受け付ける。"
+            "value" : "ユーザー名、ホスト名、パスの設定にOSC 7を受け付ける。iTerm2のシェル統合はこの情報をOSC 7を使って報告するようになったため、これをオフにすると、シェル統合によるユーザー名、ホスト名、ディレクトリの追跡も無効になります。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aceitar OSC 7 para definir nome de usuário, nome do host e caminho."
+            "value" : "Aceitar OSC 7 para definir nome de usuário, nome do host e caminho. A integração de shell do iTerm2 agora relata essas informações usando OSC 7, portanto desativar isto também desativa o rastreamento de nome de usuário, nome do host e diretório pela integração de shell."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Принимать OSC 7 для установки имени пользователя, имени хоста и пути."
+            "value" : "Принимать OSC 7 для установки имени пользователя, имени хоста и пути. Интеграция с оболочкой iTerm2 теперь передаёт эту информацию через OSC 7, поэтому отключение этого параметра также отключает отслеживание имени пользователя, имени хоста и каталога интеграцией с оболочкой."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "接受 OSC 7，用于设置用户名、主机名和路径"
+            "value" : "接受 OSC 7，用于设置用户名、主机名和路径。iTerm2 的 Shell 集成现在使用 OSC 7 报告这些信息，因此关闭此项也会禁用 Shell 集成对用户名、主机名和目录的跟踪。"
           }
         }
       }
@@ -16826,6 +16826,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "信号灯按钮与内联标签栏之间的额外间距（以点为单位）。\n仅当标签栏可见且位于窗口顶部时，此设置对紧凑主题和极简主题生效。"
+          }
+        }
+      }
+    },
+    "AdvancedSetting.fakeBootSessionUUID" : {
+      "comment" : "Advanced setting: fakeBootSessionUUID",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die für die OSC-7-machineID-Localhost-Erkennung verwendete Identität dieses Computers überschreiben.\nWenn nicht leer, verhält sich die App so, als würde kern.bootsessionuuid diesen Wert zurückgeben. So können Sie testen, wie die Localhost-Erkennung per Maschinenidentität reagiert, ohne neu zu starten. Wirkt sich auf Hosts aus, die nach der Änderung gemeldet werden; leer lassen, um den echten Wert zu verwenden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Override this machine’s identity used for OSC 7 machineID localhost detection.\nWhen non-empty, the app behaves as though kern.bootsessionuuid returns this value. Lets you test how machine-identity localhost detection reacts without rebooting. Affects hosts reported after you change it; leave empty to use the real value."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC 7 の machineID による localhost 検出に使用するこのマシンの識別情報を上書きします。\n空でない場合、アプリは kern.bootsessionuuid がこの値を返すかのように動作します。再起動することなく、マシン識別による localhost 検出がどう反応するかをテストできます。変更後に報告されるホストに影響します。実際の値を使用するには空欄のままにしてください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir a identidade desta máquina usada para detecção de localhost por machineID do OSC 7.\nQuando não vazio, o app se comporta como se kern.bootsessionuuid retornasse este valor. Permite testar como a detecção de localhost por identidade de máquina reage sem reiniciar. Afeta hosts relatados depois que você o altera; deixe vazio para usar o valor real."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переопределить идентичность этой машины, используемую для определения localhost по machineID OSC 7.\nЕсли не пусто, приложение ведёт себя так, будто kern.bootsessionuuid возвращает это значение. Позволяет проверить, как определение localhost по идентичности машины реагирует без перезагрузки. Влияет на хосты, сообщаемые после изменения; оставьте пустым, чтобы использовать настоящее значение."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "覆盖用于 OSC 7 machineID localhost 检测的本机身份。\n若填写了该值，应用程序将表现得好像 kern.bootsessionuuid 返回了这个值。这样无需重新启动，即可测试基于机器身份的 localhost 检测的反应。更改后会影响后续报告的主机；保持空白则使用真实值。"
           }
         }
       }
@@ -116117,6 +116159,132 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "好(_O)"
+          }
+        }
+      }
+    },
+    "PTYSession.OSC7DisabledHeading" : {
+      "comment" : "Heading for a warning that the Accept OSC 7 setting is disabled",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konflikt bei Shell-Integrationseinstellung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Shell Integration Setting Conflict"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "シェル統合設定の競合"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conflito de configuração da integração de shell"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Конфликт настроек интеграции с оболочкой"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell 集成设置冲突"
+          }
+        }
+      }
+    },
+    "PTYSession.OSC7DisabledMessage" : {
+      "comment" : "Warning that shell integration is broken because the Accept OSC 7 advanced setting is disabled",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2s Shell-Integration meldet jetzt Ihren Benutzernamen, Hostnamen und das aktuelle Verzeichnis über OSC 7, aber die erweiterte Einstellung „Accept OSC 7“ ist deaktiviert. Die Shell-Integration funktioniert erst wieder richtig, wenn sie erneut aktiviert wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2’s shell integration now reports your username, hostname, and current directory using OSC 7, but the “Accept OSC 7” advanced setting is turned off. Shell integration will not work correctly until it is turned back on."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 のシェル統合は、ユーザ名、ホスト名、現在のディレクトリを OSC 7 を使って報告するようになりましたが、詳細設定「Accept OSC 7」がオフになっています。オンに戻すまで、シェル統合は正しく動作しません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A integração de shell do iTerm2 agora relata seu nome de usuário, nome do host e diretório atual usando OSC 7, mas a configuração avançada “Accept OSC 7” está desativada. A integração de shell não funcionará corretamente até ser reativada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Интеграция с оболочкой iTerm2 теперь передаёт ваше имя пользователя, имя хоста и текущий каталог через OSC 7, но расширенная настройка «Accept OSC 7» отключена. Интеграция с оболочкой не будет работать правильно, пока её снова не включить."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 的 Shell 集成现在使用 OSC 7 报告您的用户名、主机名和当前目录，但高级设置“Accept OSC 7”已关闭。在重新开启之前，Shell 集成将无法正常工作。"
+          }
+        }
+      }
+    },
+    "PTYSession.OSC7DisabledTurnOn" : {
+      "comment" : "Button that re-enables the Accept OSC 7 advanced setting",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC 7 aktivieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Turn On OSC 7"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC 7 をオンにする"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar OSC 7"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Включить OSC 7"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启 OSC 7"
           }
         }
       }

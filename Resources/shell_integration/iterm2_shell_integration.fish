@@ -34,6 +34,66 @@ end
 
 if begin; status --is-interactive; and not functions -q -- iterm2_status; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen-256color; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != tmux-256color; and test "$TERM" != dumb; and test "$TERM" != linux; end
   begin
+    # fish emits its own OSC 7 on every prompt and every PWD change. It carries no
+    # username and no machineID, so iTerm2 treats it as third-party: it
+    # re-establishes the prompt (133;A already owns that, so this adds a blank line
+    # in Auto Composer mode) and re-derives locality from the hostname, discarding
+    # our machineID verdict. Shadow it with a no-op. __iterm2_shadow_cwd_osc does the
+    # work: for each known native emitter name, if it is absent OR exists with an OSC 7
+    # emitter body (the "file://" match, so a user's unrelated override is left alone),
+    # (re)define it as a no-op. Redefining an existing emitter in place stops it now;
+    # because our replacement carries no --on-variable PWD, that also clears fish's
+    # PWD-change handler. Defining a stub for an ABSENT name pre-empts fish 4.x, whose
+    # __fish_config_interactive skips its own definition when the function already
+    # exists (its `functions --query` guard) - so on 4.x even the one-time startup
+    # emission never happens. fish 3.x has no such guard: it defines the emitter
+    # unconditionally, clobbering our stub, which is why the one-shot handler below is
+    # also needed. The function is __fish_update_cwd_osc on fish 4.x but
+    # __update_cwd_osc on fish 3.x, so handle both; `function $var` needs eval to
+    # expand the name.
+    #
+    # We must not depend on whether this file is sourced before or after fish's own
+    # __fish_config_interactive defines that emitter, so we shadow twice:
+    #  - Inline, right now. This covers the injected vendor_conf.d loader, which
+    #    sources us on the first fish_prompt AFTER __fish_config_interactive has
+    #    already defined the emitter: we neutralize it immediately, with no window
+    #    before the next prompt. In the pre-prompt case it instead plants the stub that
+    #    fish 4.x's guard honors.
+    #  - From a one-shot fish_prompt handler. This covers a manual
+    #    `source ~/.iterm2_shell_integration.fish` in config.fish, which runs BEFORE
+    #    the first prompt on fish 3.x, where __fish_config_interactive later defines the
+    #    emitter unconditionally (clobbering the stub) and would resume emitting. fish
+    #    registers __fish_on_interactive (which runs __fish_config_interactive) in its
+    #    own share/config.fish before any user config.fish or conf.d, and event handlers
+    #    fire in registration order, so our handler is guaranteed to run after the
+    #    emitter exists. A handler registered mid-dispatch fires on the NEXT event,
+    #    which is exactly why inline (not the handler) is what covers the loader path.
+    # Both paths and both fish major versions verified on fish 3.7.1 and 4.x.
+    #
+    # Gated on iTerm2 because other terminals rely on fish's version: TERM_PROGRAM
+    # catches the local case, and LC_TERMINAL (which iTerm2 forwards over ssh, unlike
+    # TERM_PROGRAM) catches a remote shell reached through iTerm2. Caveat: these are
+    # private, undocumented fish API; if fish ever removes them this simply no-ops. On
+    # fish 3.x a single native OSC 7 (the __fish_config_interactive startup run-once)
+    # can precede suppression on the first prompt; on 4.x the guard removes even that.
+    # Steady state is clean on both.
+    if test "$TERM_PROGRAM" = "iTerm.app"; or test "$LC_TERMINAL" = "iTerm2"
+      function __iterm2_shadow_cwd_osc
+        for _iterm2_cwd_osc_fn in __fish_update_cwd_osc __update_cwd_osc
+          if not functions -q $_iterm2_cwd_osc_fn; or functions $_iterm2_cwd_osc_fn | string match -q "*file://*"
+            eval "function $_iterm2_cwd_osc_fn --description \"Suppressed by iTerm2 shell integration, which reports OSC 7 itself\"; end"
+          end
+        end
+        set -e _iterm2_cwd_osc_fn
+      end
+      __iterm2_shadow_cwd_osc
+      function __iterm2_suppress_cwd_osc --on-event fish_prompt
+        functions --erase __iterm2_suppress_cwd_osc
+        __iterm2_shadow_cwd_osc
+        functions --erase __iterm2_shadow_cwd_osc
+      end
+    end
+
     # OSC 133 aid: per-command identifier the receiver uses to target a
     # specific mark for D-by-aid (and cascade-close when an outer command
     # like ssh dies before its inner remote shell's D arrives). The salt
@@ -91,11 +151,29 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and te
     end
 
     function iterm2_write_remotehost_currentdir_uservars
+      # OSC 7: report username, hostname, and working directory as a single file
+      # URL. This supersedes the older 1337;RemoteHost and 1337;CurrentDir codes.
+      set -l _iterm2_host
       if not set -q -g iterm2_hostname
-        printf "\033]1337;RemoteHost=%s@%s\007\033]1337;CurrentDir=%s\007" $USER (hostname -f 2>/dev/null) $PWD
+        set _iterm2_host (hostname -f 2>/dev/null)
       else
-        printf "\033]1337;RemoteHost=%s@%s\007\033]1337;CurrentDir=%s\007" $USER $iterm2_hostname $PWD
+        set _iterm2_host $iterm2_hostname
       end
+      # Sanitize the authority: a username or hostname with a URL-structural
+      # character (/, ?, #, or whitespace) would silently restructure the URL -
+      # recording the wrong directory, or (since the machineID query still parses)
+      # poisoning localhost detection with a truncated host. Keep only a safe set so
+      # a malformed label degrades to a clean name; the username keeps @ (an AD
+      # login like alice@corp.com survives, since URL parsers split on the LAST @).
+      # Collapse the list FIRST: `set x (...)` splits on newlines and `set -g
+      # iterm2_hostname my host` is itself a multi-element list, so `string replace`
+      # alone runs per-element and never sees the separator (re-joined with a space
+      # in the quoted URL).
+      set _iterm2_host (string replace -ra '[^A-Za-z0-9._-]' '' -- (string join '' -- $_iterm2_host))
+      set -l _iterm2_user (string replace -ra '[^A-Za-z0-9._@-]' '' -- (string join '' -- $USER))
+      # Append the machine identity (computed once at source time, see below).
+      set -l _iterm2_url "file://$_iterm2_user@$_iterm2_host"(string escape --style=url -- "$PWD")"?machineID=$_iterm2_machine_id"
+      printf "\033]7;%s\007" "$_iterm2_url"
 
       # Users can define a function called iterm2_print_user_vars.
       # It should call iterm2_set_user_var and produce no other output.
@@ -174,9 +252,42 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and te
       end
     end
 
+    # Machine identity for OSC 7 localhost detection, computed ONCE and cached in a
+    # private, global-but-NOT-exported variable (set -g, never set -gx, so it cannot
+    # cross ssh; the _iterm2_ prefix matches the peer scripts and marks it as not a
+    # user-facing knob, unlike iterm2_hostname). Value is "1:<hmac>". We HMAC
+    # kern.bootsessionuuid with a fixed protocol key rather than sending the raw
+    # per-boot UUID; iTerm2 HMACs its own the same way and compares. The sysctl and
+    # openssl run once here, not per prompt. A known non-Darwin host can't be this
+    # Mac, so it sends the empty value ("1:"); a Darwin failure, or an OS we cannot
+    # determine at all (uname missing or silent), sends "0:" (identity unavailable, so
+    # the receiver falls back to hostname matching). uname is captured into one
+    # variable and quoted so an empty result is a single argument to test rather than
+    # a parse error, and guarded by `type -q` so a missing uname prints nothing.
+    if not set -q -g _iterm2_machine_id
+      set -l _iterm2_uname
+      if type -q uname
+        set _iterm2_uname (uname 2>/dev/null)
+      end
+      if test "$_iterm2_uname" = Darwin
+        set -l _iterm2_bsid (sysctl -n kern.bootsessionuuid 2>/dev/null)
+        set -g _iterm2_machine_id "0:"
+        if test -n "$_iterm2_bsid"
+          set -l _iterm2_hmac (printf '%s' "$_iterm2_bsid" | /usr/bin/openssl dgst -sha256 -hmac "iterm2-osc7-machine-id" 2>/dev/null | awk '{print $NF}')
+          if test -n "$_iterm2_hmac"
+            set -g _iterm2_machine_id "1:$_iterm2_hmac"
+          end
+        end
+      else if test -z "$_iterm2_uname"
+        set -g _iterm2_machine_id "0:"
+      else
+        set -g _iterm2_machine_id "1:"
+      end
+    end
+
     iterm2_write_remotehost_currentdir_uservars
   end
-  printf "\033]1337;ShellIntegrationVersion=22;shell=fish\007"
+  printf "\033]1337;ShellIntegrationVersion=25;shell=fish\007"
 end
 
 # it2 CLI over iTerm2 SSH integration: define it2 (materializing the embedded copy,

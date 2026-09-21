@@ -107,6 +107,12 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 // Called when the screen and terminal's attributes are reset
 - (void)screenDidReset;
 
+// Present the warning that the AcceptOSC7 advanced setting is silently breaking
+// shell integration, and offer to turn it back on. The screen has already decided
+// that a warning is warranted and spent the once-per-app-run token, so
+// implementations should just present.
+- (void)screenDidReceiveOSC7WhileDisabled;
+
 // Terminal can change title
 - (BOOL)screenAllowTitleSetting;
 

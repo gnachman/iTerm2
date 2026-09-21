@@ -673,17 +673,50 @@ function iterm2_end_osc {
   printf "\007"
 }
 
+# Percent-encode $1 per RFC 3986, preserving unreserved characters and the path
+# separator. LC_CTYPE=C/LC_COLLATE=C force byte-wise iteration so each UTF-8 byte is
+# encoded individually (matching how the receiver decodes the URL). Stores the
+# result in the global _iterm2_encoded_path rather than printing it, so the caller
+# reads a variable instead of forking a command substitution on every prompt.
+function iterm2_encode_path() {
+  local _iterm2_path="$1"
+  local _iterm2_i _iterm2_ch _iterm2_hexch _iterm2_out=""
+  local LC_CTYPE=C LC_COLLATE=C LC_ALL=
+  for ((_iterm2_i = 0; _iterm2_i < ${#_iterm2_path}; ++_iterm2_i)); do
+    _iterm2_ch="${_iterm2_path:_iterm2_i:1}"
+    if [[ "$_iterm2_ch" =~ [/._~A-Za-z0-9-] ]]; then
+      _iterm2_out+="$_iterm2_ch"
+    else
+      # printf treats byte values > 127 as negative and left-pads with FF, so
+      # keep only the low two hex digits.
+      printf -v _iterm2_hexch "%02X" "'$_iterm2_ch"
+      _iterm2_out+="%${_iterm2_hexch: -2:2}"
+    fi
+  done
+  _iterm2_encoded_path="$_iterm2_out"
+}
+
 function iterm2_print_state_data() {
   local _iterm2_hostname="${iterm2_hostname-}"
   if [ -z "${iterm2_hostname:-}" ]; then
     _iterm2_hostname=$(hostname -f 2>/dev/null)
   fi
+  # Sanitize the authority: a username or hostname with a URL-structural character
+  # (/, ?, #, or whitespace) would silently restructure the URL - recording the
+  # wrong directory, or (since the machineID query still parses) poisoning localhost
+  # detection with a truncated host. Keep only a safe set so a malformed label
+  # degrades to a clean name. The username keeps @ (an AD login like alice@corp.com
+  # survives, since URL parsers split on the LAST @).
+  local _iterm2_user="${USER//[^A-Za-z0-9._@-]/}"
+  _iterm2_hostname="${_iterm2_hostname//[^A-Za-z0-9._-]/}"
+  # OSC 7: report username, hostname, and working directory as a single file URL.
+  # This supersedes the older 1337;RemoteHost and 1337;CurrentDir codes.
+  local _iterm2_encoded_path=""
+  iterm2_encode_path "$PWD"
+  # Append the machine identity (computed once at source time, see below).
+  local _iterm2_url="file://${_iterm2_user}@${_iterm2_hostname}${_iterm2_encoded_path}?machineID=${_iterm2_machine_id}"
   iterm2_begin_osc
-  printf "1337;RemoteHost=%s@%s" "$USER" "$_iterm2_hostname"
-  iterm2_end_osc
-
-  iterm2_begin_osc
-  printf "1337;CurrentDir=%s" "$PWD"
+  printf "7;%s" "$_iterm2_url"
   iterm2_end_osc
 
   iterm2_print_user_vars
@@ -746,7 +779,7 @@ function iterm2_prompt_suffix() {
 
 function iterm2_print_version_number() {
   iterm2_begin_osc
-  printf "1337;ShellIntegrationVersion=20;shell=bash"
+  printf "1337;ShellIntegrationVersion=22;shell=bash"
   iterm2_end_osc
 }
 
@@ -761,6 +794,36 @@ if [ -z "${iterm2_hostname:-}" ]; then
       iterm2_hostname=$(hostname)
     fi
   fi
+fi
+
+# Machine identity for OSC 7 localhost detection, computed ONCE and cached in a
+# NON-EXPORTED shell variable (a plain assignment, never `export`, so it cannot
+# cross ssh) as "1:<hmac>". We HMAC kern.bootsessionuuid with a fixed protocol key
+# rather than sending the raw per-boot UUID on the wire; iTerm2 HMACs its own the
+# same way and compares. $OSTYPE is a bash builtin (no fork); the sysctl and
+# openssl run once here, not per prompt. A known non-Darwin host can't be this Mac,
+# so it sends the empty value ("1:"); a Darwin failure, or an OS we cannot determine
+# at all (empty $OSTYPE), sends "0:" (identity unavailable, so the receiver falls
+# back to hostname matching).
+if [ -z "${_iterm2_machine_id+set}" ]; then
+  case "${OSTYPE-}" in
+    darwin*)
+      _iterm2_bsid=$(sysctl -n kern.bootsessionuuid 2>/dev/null)
+      _iterm2_machine_id="0:"
+      if [ -n "$_iterm2_bsid" ]; then
+        _iterm2_hmac=$(printf '%s' "$_iterm2_bsid" | /usr/bin/openssl dgst -sha256 -hmac "iterm2-osc7-machine-id" 2>/dev/null | awk '{print $NF}')
+        [ -n "$_iterm2_hmac" ] && _iterm2_machine_id="1:$_iterm2_hmac"
+        unset _iterm2_hmac
+      fi
+      unset _iterm2_bsid
+      ;;
+    "")
+      _iterm2_machine_id="0:"
+      ;;
+    *)
+      _iterm2_machine_id="1:"
+      ;;
+  esac
 fi
 
 iterm2_maybe_print_cr() {
