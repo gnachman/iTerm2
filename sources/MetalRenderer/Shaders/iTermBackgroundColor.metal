@@ -5,11 +5,47 @@ using namespace metal;
 
 #import "iTermShaderTypes.h"
 
+// Issue 12791: Bit ORed into the shared report buffer when the GPU-side geometry witness
+// fails for any reason. The CPU side (iTermBackgroundColorRenderer.mm) distinguishes the
+// cause (transient vs persistent, non-finite vs zero-area) from its own re-check.
+constant uint iTermBgColorReportWitnessFailed = 0x1u;
+
 typedef struct {
     float4 clipSpacePosition [[position]];
     float4 color;
     bool cancel;
+    float isValid;  // Issue 12791: 1.0 = geometry witness passed, 0.0 = mismatch/non-finite
+    // Issue 12791: coverage witness. triangleId (0 or 1) is which of the quad's two
+    // triangles this fragment belongs to; isWitnessedQuad is 1 for the instance the CPU
+    // nominated, which is the largest merged multi-row run - the corner-to-corner quad
+    // the diagonal tracks, and the same quad the vertex witness describes. Counting only
+    // that instance keeps the measured coverage comparable with the expected area the
+    // CPU computes from the vertex slots.
+    // Integer stage_in members must be flat: they cannot be interpolated.
+    uint triangleId [[flat]];
+    uint isWitnessedQuad [[flat]];
 } iTermBackgroundColorVertexFunctionOutput;
+
+// Issue 12791: FNV-1a-32 over the vertex array, hashed float-by-float to avoid struct
+// padding. Witnesses the geometry buffer - the only per-vertex-varying input. Must match
+// the CPU-side implementation in iTermBackgroundColorRenderer.mm.
+static inline uint iTermBgColorGeometryHash(constant iTermVertex *vertices, uint count) {
+    uint hash = 2166136261u;
+    for (uint i = 0; i < count; i++) {
+        uint words[4] = {
+            as_type<uint>(vertices[i].position.x),
+            as_type<uint>(vertices[i].position.y),
+            as_type<uint>(vertices[i].textureCoordinate.x),
+            as_type<uint>(vertices[i].textureCoordinate.y)
+        };
+        for (uint j = 0; j < 4; j++) {
+            hash ^= words[j];
+            hash *= 16777619u;
+        }
+    }
+    // Match CPU-side: reserve 0 as a "skip check" sentinel.
+    return hash == 0u ? 1u : hash;
+}
 
 // Matches function in iTermOffscreenCommandLineBackgroundRenderer.m
 static float4 iTermBlendColors(float4 src, float4 dst) {
@@ -29,6 +65,14 @@ static float4 iTermPremultiply(float4 color) {
     return result;
 }
 
+// Issue 12791: the vertex witness below writes to a device buffer, which makes Metal warn
+// "writable resources in non-void vertex function". The write is the point: vertex shading
+// runs before clipping, so it is the only stage that can report on a triangle that never
+// rasterizes. Ordering against the fragment stage does not matter because the CPU reads the
+// buffer after the command buffer completes. Metal prints no -W name for this diagnostic, so
+// -Weverything is the only handle available; the pop below keeps it to this one function.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Weverything"
 vertex iTermBackgroundColorVertexFunctionOutput
 iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
                                  constant float2 *offset [[ buffer(iTermVertexInputIndexOffset) ]],
@@ -36,6 +80,8 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
                                  constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
                                  constant iTermBackgroundColorPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                                  constant iTermMetalBackgroundColorInfo *info [[ buffer(iTermVertexInputIndexDefaultBackgroundColorInfo) ]],
+                                 constant iTermBgColorChecksumParams *bgChecksum [[ buffer(iTermVertexInputIndexBgColorChecksum) ]],
+                                 device iTermBgColorVertexWitnessSlot *vertexWitness [[ buffer(iTermVertexInputIndexBgColorVertexWitness) ]],
                                  unsigned int iid [[instance_id]]) {
     iTermBackgroundColorVertexFunctionOutput out;
 
@@ -67,15 +113,83 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
 
     out.color = iTermPremultiply(iTermBlendColors(perInstanceUniforms[iid].color,
                                                   info->defaultBackgroundColor));
+
+    // Issue 12791: Tag this vertex for the fragment-side coverage witness. vertexID 0..2 is
+    // the first triangle, 3..5 the second.
+    out.triangleId = vertexID / 3u;
+    out.isWitnessedQuad = (iid == bgChecksum->witnessInstance) ? 1u : 0u;
+
+    // Issue 12791: Vertex-stage witness. The fragment-side coverage counters can only speak
+    // through fragments that actually run, so a triangle dropped between here and the
+    // rasterizer reports nothing but silence. This records what the vertex stage computed
+    // for the quad the CPU nominated, which survives that drop. The stores land before the
+    // rescue below so they describe the real geometry rather than the substituted triangle.
+    if (iid == bgChecksum->witnessInstance && vertexID < 6u) {
+        device iTermBgColorVertexWitnessSlot &slot = vertexWitness[vertexID];
+        slot.vertexPosition = vertexArray[vertexID].position.xy;
+        slot.pixelSpacePosition = pixelSpacePosition;
+        slot.clipSpacePosition = out.clipSpacePosition.xy;
+        slot.viewportSize = viewportSize;
+        slot.instanceOffset = perInstanceUniforms[iid].offset.xy;
+        slot.runLengthNumRows = float2(runLength, numRows);
+        slot.instanceID = iid;
+        slot.written = 1u;
+    }
+
+    // Issue 12791: Independent geometry witness. The expected hash arrives via
+    // setVertexBytes (inline command-buffer payload, not an MTLBuffer), so a stomp on the
+    // pooled unit-quad buffer between CPU write and GPU read produces a mismatch. The hash
+    // is over the whole vertex array, so every vertex agrees on the verdict. expected==0 is
+    // a "don't check" sentinel (used for the freshly-built suppressed region).
+    out.isValid = 1.0;
+    if (bgChecksum->expected != 0u && !out.cancel) {
+        const uint computed = iTermBgColorGeometryHash(vertexArray, bgChecksum->vertexCount);
+        const bool nonFinite = !isfinite(pixelSpacePosition.x) || !isfinite(pixelSpacePosition.y);
+        if (computed != bgChecksum->expected || nonFinite) {
+            out.isValid = 0.0;
+            // Rescue the vertex to a full-screen triangle so the fragment shader always runs
+            // and can witness the failure. This matters most for the exact symptom we chase:
+            // a corrupted (e.g. non-finite) vertex would otherwise collapse the triangle so no
+            // fragment ever runs, and a fragment-side witness would never see it. Every failing
+            // vertex maps to the same big triangle, so the whole quad flashes red for one frame.
+            const uint corner = vertexID % 3u;
+            out.clipSpacePosition = float4(corner == 1u ? 3.0 : -1.0,
+                                           corner == 2u ? 3.0 : -1.0,
+                                           0.0, 1.0);
+        }
+    }
     return out;
 }
+#pragma clang diagnostic pop
 
 // Trivial changes in this implementation trigger metal compiler bugs (like putting `return in.color` in an else clause).
 fragment float4
-iTermBackgroundColorFragmentShader(iTermBackgroundColorVertexFunctionOutput in [[stage_in]]) {
+iTermBackgroundColorFragmentShader(iTermBackgroundColorVertexFunctionOutput in [[stage_in]],
+                                   device atomic_uint *checksumReport [[ buffer(iTermFragmentBufferIndexBgColorChecksumReport) ]],
+                                   device atomic_uint *coverageReport [[ buffer(iTermFragmentBufferIndexBgColorCoverageReport) ]]) {
     if (in.cancel) {
         discard_fragment();
         return float4(0, 0, 0, 0);
+    }
+    // Issue 12791: Geometry witness failed for a triangle that still rasterized. Signal the
+    // CPU side (read in -[iTermBackgroundColorRendererTransientState didComplete]) and paint
+    // red for a visible witness. Checked after cancel so discarded fragments never report.
+    if (in.isValid < 0.5) {
+        atomic_fetch_or_explicit(checksumReport, iTermBgColorReportWitnessFailed, memory_order_relaxed);
+        return float4(1.0, 0.0, 0.0, 1.0);
+    }
+    // Issue 12791: per-triangle rasterizer coverage witness. Count how many fragments each of
+    // the nominated quad's two triangles actually rasterizes. Sparse-sample (1 fragment in 256)
+    // to bound atomic contention; that is plenty to tell "covers ~half the screen" from
+    // "rasterized ~nothing". If one triangle of the big quad comes back ~0 while the other
+    // covers the screen, the triangle is being dropped after the vertex stage (clip/guard-
+    // band) with valid geometry - the one failure the geometry checksum above cannot see.
+    if (in.isWitnessedQuad != 0u) {
+        const uint px = uint(in.clipSpacePosition.x);
+        const uint py = uint(in.clipSpacePosition.y);
+        if ((px & 15u) == 0u && (py & 15u) == 0u) {
+            atomic_fetch_add_explicit(&coverageReport[min(in.triangleId, 1u)], 1u, memory_order_relaxed);
+        }
     }
     return in.color;
 }

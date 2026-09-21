@@ -15576,37 +15576,37 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Besitz von Kindprozessen ablehnen.\nWenn aktiviert, sollte TCC beim Starten einer Cocoa-App aus einem Terminalfenster den Besitz für Berechtigungen der App und nicht iTerm2 zuschreiben. Damit Änderungen an dieser Einstellung wirksam werden, müssen Sie iTermServer beenden."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Disclaim ownership of children.\nBy enabling this, when launching a Cocoa app from a terminal window TCC should attribute ownership to the app, not iTerm2, for permissions. In order for changes to this setting to take effect, you must kill iTermServer."
+            "value" : "Disclaim ownership of children.\nBy enabling this, when launching a Cocoa app from a terminal window TCC should attribute ownership to the app, not iTerm2, for permissions. In order for changes to this setting to take effect, you must kill iTermServer. This uses posix_spawn to launch sessions."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "子プロセスの所有権を放棄します。\nこれを有効にすると、ターミナルウィンドウから Cocoa アプリを起動した際、権限に関して TCC は iTerm2 ではなくそのアプリに所有権を帰属させるようになります。この設定の変更を反映するには、iTermServer を終了させる必要があります。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Renunciar à propriedade dos filhos.\nAo ativar isto, ao iniciar um app Cocoa a partir de uma janela do terminal, o TCC deve atribuir a propriedade ao app, não ao iTerm2, para fins de permissões. Para que as alterações neste ajuste tenham efeito, você deve encerrar o iTermServer."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Отказаться от владения дочерними процессами.\nПри включении, когда приложение Cocoa запускается из окна терминала, TCC должен относить права доступа к приложению, а не к iTerm2. Чтобы изменение этой настройки вступило в силу, нужно завершить iTermServer."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "放弃子进程的所有权。\n启用此功能后，从终端窗口启动 Cocoa 应用时，TCC 应将该应用而非 iTerm2 作为权限归属对象。要使此设置生效，必须终止 iTermServer。"
           }
         }
@@ -30056,6 +30056,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用“打开目录”来确定用户 shell。"
+          }
+        }
+      }
+    },
+    "AdvancedSetting.usePosixSpawn" : {
+      "comment" : "Advanced setting: usePosixSpawn",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use posix_spawn instead of fork and exec to launch sessions?\nThis is a newer launch mechanism that avoids a slow file-descriptor-closing step. It does not change which app macOS attributes permission prompts to; for that see “Disclaim ownership of children.” In order for changes to this setting to take effect, you must kill iTermServer."
           }
         }
       }
@@ -174513,6 +174525,18 @@
         }
       }
     },
+    "TabGroup.NoSuchGroup" : {
+      "comment" : "Error when no tab group matches the given id",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No such tab group"
+          }
+        }
+      }
+    },
     "TerminalFile.Canceled" : {
       "comment" : "Error shown when the user cancels a download",
       "extractionState" : "extracted_with_value",
@@ -205260,6 +205284,18 @@
         }
       }
     },
+    "WorkgroupSessionDetail.ChangeUsageSettings" : {
+      "comment" : "Undo action name for changing the AI usage toolbar item's settings",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Change AI Usage Settings"
+          }
+        }
+      }
+    },
     "WorkgroupSessionDetail.CommandLabel" : {
       "comment" : "Label for the command row",
       "extractionState" : "extracted_with_value",
@@ -206352,6 +206388,66 @@
         }
       }
     },
+    "WorkgroupSessionDetail.UsageCommandLabel" : {
+      "comment" : "Label for the AI usage command field",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Command:"
+          }
+        }
+      }
+    },
+    "WorkgroupSessionDetail.UsageCommandPlaceholder" : {
+      "comment" : "Placeholder shown in the AI usage command field when it is empty and the bundled default script is used",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Default (bundled script)"
+          }
+        }
+      }
+    },
+    "WorkgroupSessionDetail.UsageIntervalLabel" : {
+      "comment" : "Label for the AI usage refresh interval field, in seconds",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Every (sec):"
+          }
+        }
+      }
+    },
+    "WorkgroupSessionDetail.UsageProviderFormat" : {
+      "comment" : "Toolbar list label for the AI usage item showing its provider; %1$@ is the item name, %2$@ is the provider name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "WorkgroupSessionDetail.UsageProviderLabel" : {
+      "comment" : "Label for the AI usage provider picker",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Provider:"
+          }
+        }
+      }
+    },
     "WorkgroupSessionDetail.VerticalAccessibility" : {
       "comment" : "Accessibility description for the vertical split orientation",
       "extractionState" : "extracted_with_value",
@@ -206810,6 +206906,150 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "灵活空白间隔"
+          }
+        }
+      }
+    },
+    "WorkgroupToolbarItemRegistry.Usage" : {
+      "comment" : "Toolbar item name: AI usage gauge",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI Usage"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.BadOutput" : {
+      "comment" : "AI usage toolbar item message when the command output could not be parsed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unreadable usage data"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ClickForDetails" : {
+      "comment" : "Tooltip on the AI usage toolbar item when an error can be reported; the placeholder is the short error summary",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ (click for details)"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.Loading" : {
+      "comment" : "Placeholder shown in the AI usage toolbar item before the first result arrives",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI usage…"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.NoOutput" : {
+      "comment" : "AI usage toolbar item message when the command produced no output",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No usage data"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ReportBug" : {
+      "comment" : "Button that opens a pre-filled bug report and copies the details to the clipboard",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Report a Bug"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ReportGuidanceIntro" : {
+      "comment" : "Guidance shown when the AI usage format couldn’t be parsed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t read the AI usage report. Updating iTerm2 to the latest version may fix this. If you’re already up to date, click “Report a Bug” to open a pre-filled report. The full details below are also copied to your clipboard."
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ReportTruncated" : {
+      "comment" : "Appended to a pre-filled bug report body when it was shortened to fit the URL",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "…(truncated; full report copied to your clipboard)"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ScriptMissing" : {
+      "comment" : "AI usage toolbar item message when the bundled helper script is absent from the app bundle",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The AI usage helper is missing from iTerm2. This is a bug."
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.Tooltip" : {
+      "comment" : "AI usage toolbar item tooltip: %1$@ is the limit name, %2$@ is the reset detail",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.Unavailable" : {
+      "comment" : "AI usage toolbar item message when no usage bars are available",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI usage unavailable"
+          }
+        }
+      }
+    },
+    "WorkgroupUsageProvider.AnthropicClaudeCode" : {
+      "comment" : "AI usage provider name: Anthropic usage read via the Claude Code CLI",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Anthropic (Claude Code)"
           }
         }
       }
