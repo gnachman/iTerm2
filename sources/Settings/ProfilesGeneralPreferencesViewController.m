@@ -14,6 +14,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermTheme.h"
 #import "iTermBadgeConfigurationWindowController.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermImageWell.h"
@@ -126,6 +127,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSButton *_locked;
 
     IBOutlet NSView *_tallTabBarRequestView;
+    // Pristine frames of the subtitle field and the tall-tab-bar request view,
+    // captured from the xib the first time -updateSubtitlesAllowed runs, so it can
+    // shrink the field to make room for the button and later restore it.
+    NSRect _pristineSubtitleFrame;
+    NSRect _pristineTallTabBarRequestFrame;
+    NSPoint _pristineTallTabBarButtonOrigin;
+    BOOL _capturedSubtitleFrames;
 
     // Controls for Edit Info
     IBOutlet ProfileListView *_profiles;
@@ -484,20 +492,104 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self commitControls];
 }
 
-- (void)updateSubtitlesAllowed {
-    BOOL subtitlesAllowed;
+// "Default tab bar height" value needed before a subtitle line fits under the title,
+// for the styles that go through the height check (Minimal and the Tahoe styles
+// always allow it, so they never reach here). On macOS 26 the Sequoia-style opt-out
+// (the non-Minimal, non-Compact styles) draws a top/bottom bar with 8pt of vertical
+// tab-bar insets (see -[PseudoTerminal tabBarInsets]), so its cell is (bar height -
+// 8) and it needs 8 more points than the rest; a left/right cell is the full bar
+// height (see -[PSMTabBarControl genericCellRectWithOverflow:]) so side tabs fit at
+// 28, as do Compact and every pre-26 style (no such insets). This is a profile-level
+// control with no bound window, so the opt-out case assumes the common non-compact
+// window; the renderer's own gate is exact per window, so a subtitle is never
+// clipped regardless of what this heuristic reports.
+- (CGFloat)minimumTabBarHeightForSubtitle {
+    const iTermPreferencesTabStyle tabStyle = (iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    const PSMTabPosition tabPosition = (PSMTabPosition)[iTermPreferences intForKey:kPreferenceKeyTabPosition];
+    const BOOL vertical = (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab);
     if (@available(macOS 26, *)) {
-        if ([iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_COMPACT) {
-            subtitlesAllowed = ([iTermAdvancedSettingsModel defaultTabBarHeight] >= 28);
-        } else {
-            subtitlesAllowed = YES;
+        if (!vertical && tabStyle != TAB_STYLE_MINIMAL && tabStyle != TAB_STYLE_COMPACT) {
+            return 36;
         }
-    } else {
-        subtitlesAllowed = ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL || [iTermAdvancedSettingsModel defaultTabBarHeight] >= 28);
     }
-    _subtitleText.hidden = !subtitlesAllowed;
+    return 28;
+}
+
+- (void)updateSubtitlesAllowed {
+    const iTermPreferencesTabStyle tabStyle = (iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle];
+
+    NSButton *button = nil;
+    NSTextField *requestLabel = nil;
+    for (NSView *view in _tallTabBarRequestView.subviews) {
+        if ([view isKindOfClass:[NSButton class]]) {
+            button = (NSButton *)view;
+        } else if ([view isKindOfClass:[NSTextField class]]) {
+            requestLabel = (NSTextField *)view;
+        }
+    }
+
+    if (!_capturedSubtitleFrames) {
+        _pristineSubtitleFrame = _subtitleText.frame;
+        _pristineTallTabBarRequestFrame = _tallTabBarRequestView.frame;
+        _pristineTallTabBarButtonOrigin = button.frame.origin;
+        _capturedSubtitleFrames = YES;
+    }
+
+    // Whether a subtitle can be drawn at all. Minimal and the macOS 26 Tahoe styles
+    // always allow it: the Tahoe bar fits a subtitle even at its native default
+    // height (it is just tighter than with the taller bar). The rest (Compact, the
+    // Sequoia-style opt-out, pre-26) need the height raised first.
+    BOOL subtitlesAllowed;
+    if (tabStyle == TAB_STYLE_MINIMAL || [iTermTheme tahoeTabBarInUse]) {
+        subtitlesAllowed = YES;
+    } else {
+        subtitlesAllowed = ([iTermAdvancedSettingsModel defaultTabBarHeight] >= [self minimumTabBarHeightForSubtitle]);
+    }
+
+    // For a Tahoe style whose bar isn't yet the taller opt-in height, offer the
+    // "Enable Tall Tab Bar" button beside the (still editable) subtitle field: the
+    // subtitle already renders, but looks better with more room. Not a requirement,
+    // just an enhancement.
+    BOOL offerTallTabBar = NO;
+    if (@available(macOS 26, *)) {
+        offerTallTabBar = (subtitlesAllowed &&
+                           [iTermTheme tahoeTabBarInUse] &&
+                           PSMTahoeTabStyle.horizontalTabBarHeight < PSMTahoeTabStyle.tallHorizontalTabBarHeight);
+    }
+
     [_subtitleLabel setLabelEnabled:subtitlesAllowed];
-    _tallTabBarRequestView.hidden = subtitlesAllowed;
+    if (!subtitlesAllowed) {
+        // The bar can't fit a subtitle at all: the request view (explanatory label
+        // plus button) takes the whole row in place of the field.
+        _subtitleText.hidden = YES;
+        _tallTabBarRequestView.frame = _pristineTallTabBarRequestFrame;
+        requestLabel.hidden = NO;
+        button.frameOrigin = NSMakePoint(_pristineTallTabBarButtonOrigin.x, button.frame.origin.y);
+        _tallTabBarRequestView.hidden = NO;
+    } else if (offerTallTabBar) {
+        // The subtitle renders now; shrink the field to make room for the button at
+        // the right end of the row (label hidden). The request view is narrowed to
+        // just the button so it doesn't cover, and swallow clicks over, the field.
+        const CGFloat gap = 8;
+        const CGFloat buttonWidth = NSWidth(button.frame);
+        const CGFloat rowRight = NSMaxX(_pristineTallTabBarRequestFrame);
+        _tallTabBarRequestView.frame = NSMakeRect(rowRight - buttonWidth,
+                                                  _pristineTallTabBarRequestFrame.origin.y,
+                                                  buttonWidth,
+                                                  NSHeight(_pristineTallTabBarRequestFrame));
+        button.frameOrigin = NSMakePoint(0, button.frame.origin.y);
+        requestLabel.hidden = YES;
+        NSRect fieldFrame = _pristineSubtitleFrame;
+        fieldFrame.size.width = (rowRight - buttonWidth - gap) - NSMinX(fieldFrame);
+        _subtitleText.frame = fieldFrame;
+        _subtitleText.hidden = NO;
+        _tallTabBarRequestView.hidden = NO;
+    } else {
+        // Full-width field, no button.
+        _subtitleText.frame = _pristineSubtitleFrame;
+        _subtitleText.hidden = NO;
+        _tallTabBarRequestView.hidden = YES;
+    }
 }
 
 - (BOOL)onUpdateTitle {
@@ -987,7 +1079,14 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 #pragma mark - Tall Tab Bar
 
 - (IBAction)enableTallTabBar:(id)sender {
-    [iTermAdvancedSettingsModel setDefaultTabBarHeight:28];
+    CGFloat height = [self minimumTabBarHeightForSubtitle];
+    if (@available(macOS 26, *)) {
+        if ([iTermTheme tahoeTabBarInUse]) {
+            // The Tahoe subtitle already fits; this button just gives it more room.
+            height = PSMTahoeTabStyle.tallHorizontalTabBarHeight;
+        }
+    }
+    [iTermAdvancedSettingsModel setDefaultTabBarHeight:height];
     [self updateSubtitlesAllowed];
     [[NSNotificationCenter defaultCenter] postNotificationName:kRefreshTerminalNotification object:nil];
 }

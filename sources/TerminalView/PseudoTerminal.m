@@ -5654,13 +5654,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                         bottomInset -= 4;
                     }
                     else if (_fullScreen && (tabPosition == PSMTab_TopTab || tabPosition == PSMTab_BottomTab)) {
-                        if (tabPosition == PSMTab_TopTab) {
-                            topInset += 4;
-                        } else {
-                            // Bottom tabs: increase bottom inset, decrease top inset
-                            bottomInset -= 4;
-                            topInset += 4;
-                        }
+                        // Move the tabs down from the screen edge and take that out of
+                        // the bottom inset so the vertical inset total (and thus the
+                        // cell height, which must stay tall enough for a two-line
+                        // label; see PSMTahoeTabStyle.pillRegionHeight) is preserved.
+                        // The window title is shown in traditional fullscreen, so
+                        // bottomInset is 8 here; clamp the shift to whatever the
+                        // bottom inset actually has so a future change that hides the
+                        // title (making bottomInset 3.5) can't drive it negative and
+                        // silently mis-size cells.
+                        const CGFloat delta = MIN(4, bottomInset);
+                        topInset += delta;
+                        bottomInset -= delta;
                     }
                     // Case 3: Outside fullscreen + tabbar on bottom → move down by 3 points
                     else if (!lionFullScreen_ && !_fullScreen && tabPosition == PSMTab_BottomTab) {
@@ -12715,14 +12720,49 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
             (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab)) {
             return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
         }
-    }
-    {
         if (iTermWindowTypeIsCompact(self.windowType) ||
             iTermWindowTypeIsCompact(self.savedWindowType)) {
+            // Compact window types keep their short bar: the extra vertical space is
+            // the point of a compact window. A Tahoe tab style here draws title-only
+            // (PSMTahoeTabStyle drops the status subtitle when the bar is too short
+            // to stack it; see the fit check in drawInterior) rather than clipping,
+            // so it does not need the taller bar and stays consistent with the
+            // compact window’s tight vertical insets.
             return [iTermAdvancedSettingsModel defaultTabBarHeight];
         }
         if (@available(macOS 26, *)) {
-            if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+            if (tabStyle == TAB_STYLE_MINIMAL) {
+                // Minimal top/bottom tabs in a non-compact window type (hotkey, No
+                // Title Bar, Top of Screen, Accessory). shouldHaveTallTabBar only
+                // covers the compact-window case, so without this they fall through
+                // to defaultTabBarHeight, which on macOS 26 (the Minimal cell has no
+                // insets) is too short for the status subtitle Minimal always offers,
+                // and PSMYosemiteTabStyle would fold it into the title. Use Minimal’s
+                // own tall height, exactly as the compact-window and left/right cases
+                // do. This is not the Tahoe height and is not the “Default tab bar
+                // height” setting, so it honors that setting’s promise not to affect
+                // Minimal.
+                //
+                // Minimal ignores useSequoiaStyleTabs (it always draws
+                // PSMMinimalTabStyle), so this applies to the opt-out too. The same
+                // too-short-cell bug exists pre-26, but the height there is a
+                // long-standing default; it is knowingly left alone to keep this
+                // macOS 26 change from silently retiling everyone’s pre-26 windows.
+                return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
+            }
+            if ([iTermTheme tahoeTabBarInUse]) {
+                // The macOS 26 Tahoe styles need the taller system height so a title
+                // stacks over a status subtitle. Gate on the Tahoe style actually
+                // being in use so it matches the style -[iTermTheme
+                // tabStyleWithDelegate:effectiveAppearance:] constructs and the
+                // sibling height in iTermTabBarControlView. A left/right bar's per-tab
+                // cell is the full bar height (insets are not subtracted for a
+                // vertical cell), so it uses the smaller verticalTabBarHeight to land
+                // on the same cell height as a top tab; this matches
+                // PSMTahoeTabStyle.tabBarHeight for the two orientations.
+                if (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab) {
+                    return PSMTahoeTabStyle.verticalTabBarHeight;
+                }
                 return PSMTahoeTabStyle.horizontalTabBarHeight;
             }
         }

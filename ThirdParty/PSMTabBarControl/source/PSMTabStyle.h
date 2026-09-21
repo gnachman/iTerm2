@@ -20,7 +20,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, weak, nullable) PSMTabBarControl *tabBar;
 @property(nonatomic, readonly, nullable) NSAppearance *accessoryAppearance;
 @property(nonatomic, readonly) CGFloat edgeDragHeight;
-@property(nonatomic, readonly) BOOL supportsMultiLineLabels;
 @property(nonatomic, readonly) CGFloat intercellSpacing;
 
 // identity

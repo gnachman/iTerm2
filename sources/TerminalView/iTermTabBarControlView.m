@@ -11,6 +11,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
+#import "iTermTheme.h"
 #import "DebugLogging.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
@@ -45,15 +46,13 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         // This used to depend on job but it's too difficult to do now that different sessions might
         // have different title formats.
         self.ignoreTrailingParentheticalsForSmartTruncation = YES;
+        CGFloat height = [iTermAdvancedSettingsModel defaultTabBarHeight];
         if (@available(macOS 26, *)) {
-            if (![iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
-                self.height =  PSMTahoeTabStyle.horizontalTabBarHeight;
-            } else {
-                self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
+            if ([iTermTheme tahoeTabBarInUse]) {
+                height = PSMTahoeTabStyle.horizontalTabBarHeight;
             }
-        } else {
-            self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
         }
+        self.height = height;
         self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton];
         self.selectsTabsOnMouseDown = [iTermAdvancedSettingsModel selectsTabsOnMouseDown];
         [[NSNotificationCenter defaultCenter] addObserver:self

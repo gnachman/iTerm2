@@ -181,6 +181,9 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)debugShowPromptMarkRangesInLegacyRenderer;
 + (CGFloat)defaultTabBarHeight;
 + (void)setDefaultTabBarHeight:(CGFloat)value;
+// YES if the user has an explicit value for defaultTabBarHeight (the key is present
+// in user defaults), as opposed to falling back to the built-in default.
++ (BOOL)defaultTabBarHeightIsExplicitlySet;
 + (int)defaultTabStopWidth;
 + (NSString *)defaultURLScheme;
 + (BOOL)defaultIconsUsingLetters;

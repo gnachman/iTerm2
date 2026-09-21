@@ -26,6 +26,13 @@
 - (NSImage *)it_cachingImageWithTintColor:(NSColor *)tintColor key:(const void *)key;
 @end
 
+@interface PSMYosemiteTabStyle ()
+// Whether the cell is tall enough to draw a subtitle on its own second line; when
+// NO, the status is folded into the title. Private to this class and its
+// subclasses (PSMMinimalTabStyle etc.); no longer part of the PSMTabStyle protocol.
+- (BOOL)supportsMultiLineLabels;
+@end
+
 
 @implementation PSMTabBarCell(PSMYosemiteTabStyle)
 
@@ -1063,6 +1070,17 @@ const void *PSMTabStyleDarkColorKey = "dark";
 }
 
 - (BOOL)supportsMultiLineLabels {
+    // A subtitle needs a horizontal cell at least 28pt tall. Gate on the cell
+    // height, not the bar bounds: -[PSMTabBarControl genericCellRectWithOverflow:]
+    // makes a horizontal cell (bar height - top inset - bottom inset). On macOS 26
+    // the Tahoe insets add 8pt of vertical inset even under the useSequoiaStyleTabs
+    // opt-out (where this Yosemite style draws), so testing the bar bounds would
+    // draw a clipped subtitle into a too-short cell. Left/right bars keep the
+    // historical bounds-based test so side-tab subtitles are unchanged on every
+    // macOS version (a vertical bar's bounds is the full side-bar height).
+    if (self.tabBar.orientation == PSMTabBarHorizontalOrientation) {
+        return self.tabBar.height - self.tabBar.insets.top - self.tabBar.insets.bottom >= 28;
+    }
     return NSHeight(self.tabBar.bounds) >= 28;
 }
 

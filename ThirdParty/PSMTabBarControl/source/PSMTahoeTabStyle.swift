@@ -67,10 +67,6 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         2.0
     }
     
-    @objc var supportsMultiLineLabels: Bool {
-        true
-    }
-    
     // MARK: - Initialization
     
     class var closeButtonDownColor: NSColor {
@@ -135,22 +131,139 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
     // MARK: - PSMTabStyle Protocol
     
-    @objc static var horizontalTabBarHeight = 36.0
-    
-    var tabBarHeight: CGFloat {
-        if orientation == .horizontalOrientation {
-            return Self.horizontalTabBarHeight
-        } else {
-            return max(26.0, iTermAdvancedSettingsModel.defaultTabBarHeight())
+    // The default Tahoe tab-bar height: the system height for a single-line tab, so
+    // its pill matches a native macOS tab bar. For the standard 11pt styles a title
+    // over a status subtitle still fits here (just tighter); raising the “Default tab
+    // bar height” setting to ~40 gives the subtitle more room. The 13pt high-contrast
+    // styles do not fit at this height and default taller instead (see
+    // horizontalTabBarHeight).
+    static let systemHorizontalTabBarHeight = 36.0
+
+    // The bar is at least the native height and grows to the user's configured
+    // "Default tab bar height" for more room. At the native height a title over a
+    // subtitle fits for the default 11pt font (the block clips to the capsule, ≈ the
+    // cell height, not the smaller pill background). The high-contrast styles draw at
+    // 13pt, whose block is too tall for the native height, so they default to the
+    // taller bar instead; high contrast is chunkier than the regular theme by design.
+    // It is not otherwise font-aware, so a large custom tab bar font, or a
+    // deliberately short bar such as a compact window, can still make the block too
+    // tall; drawInterior then falls back to a centered title-only line rather than
+    // clipping.
+    @objc static var horizontalTabBarHeight: CGFloat {
+        let base = max(systemHorizontalTabBarHeight, iTermAdvancedSettingsModel.defaultTabBarHeight())
+        // The high-contrast styles draw at 13pt, whose title over a subtitle does not
+        // fit the native height, so give them the taller bar. They are reached both
+        // by explicit choice AND implicitly (the default Automatic style plus the
+        // system Increase Contrast setting), so resolve the effective style through
+        // the appearance the way -[iTermTheme tabStyleWithDelegate:effectiveAppearance:]
+        // does rather than trusting the raw preference, which would miss the common
+        // Automatic case. refreshTerminal: relays out the bar on a system
+        // appearance/contrast change (via -viewDidChangeEffectiveAppearance) as well
+        // as on a preference change, so this recomputes when contrast is toggled.
+        //
+        // This is only the DEFAULT: an explicitly set "Default tab bar height" wins
+        // (so a high-contrast user who prefers the short bar can set it and accept
+        // the title-only fallback), and a custom tab bar font size overrides the 13pt
+        // (see the fontSize overrides), so the theme identity no longer implies the
+        // font — in that case leave the height alone and let drawInterior fall back to
+        // a title-only line if the block is too tall, as it does for any custom font.
+        if !iTermAdvancedSettingsModel.useCustomTabBarFontSize(),
+           !iTermAdvancedSettingsModel.defaultTabBarHeightIsExplicitlySet(),
+           let preferred = iTermPreferencesTabStyle(rawValue: iTermPreferences.int(forKey: kPreferenceKeyTabStyle)) {
+            let effective = NSApp.effectiveAppearance.it_tabStyle(preferred)
+            if effective == .TAB_STYLE_LIGHT_HIGH_CONTRAST || effective == .TAB_STYLE_DARK_HIGH_CONTRAST {
+                return max(base, tallHorizontalTabBarHeight)
+            }
         }
+        return base
+    }
+
+    // The height the "Enable Tall Tab Bar" affordance in Profiles > General raises
+    // the bar to. For the standard 11pt styles a subtitle already renders at the
+    // native height, but has more room (pill 28 vs 24) here; the 13pt high-contrast
+    // styles need this height to render one at all (see horizontalTabBarHeight).
+    // Used to decide whether to offer that button and what it sets.
+    @objc static var tallHorizontalTabBarHeight: CGFloat { 40.0 }
+
+    // Total vertical tab-bar inset (top + bottom) that -[PseudoTerminal tabBarInsets]
+    // applies to a Tahoe bar.
+    static let verticalTabBarInsetTotal = 8.0
+
+    // Per-tab height for a left/right (vertical) bar. A vertical cell is the full bar
+    // height (-[PSMTabBarControl genericCellRectWithOverflow:] does not subtract the
+    // insets for a vertical bar, unlike a horizontal one), so to give a side tab the
+    // same cell (and drawn pill) height as a top tab this must be the horizontal bar
+    // height minus the vertical insets. Reusing horizontalTabBarHeight verbatim would
+    // make side pills 8pt taller than top pills for the same setting.
+    @objc static var verticalTabBarHeight: CGFloat {
+        horizontalTabBarHeight - verticalTabBarInsetTotal
+    }
+
+    var tabBarHeight: CGFloat {
+        // A vertical (per-tab) cell needs the same room as a top tab to stack a title
+        // over a status subtitle, but "the same room" means the same cell height, not
+        // the same bar height: only the horizontal bar loses its insets to the cell.
+        // See verticalTabBarHeight. Read the control's orientation rather than the
+        // style's _orientation ivar, which -[PSMTabBarControl setStyle:] lays out
+        // against before assigning (see addTabButtonDimension). -[PseudoTerminal
+        // _desiredTabBarHeight] returns the matching value per tab position.
+        if (tabBar?.orientation ?? _orientation) == .verticalOrientation {
+            return Self.verticalTabBarHeight
+        }
+        return Self.horizontalTabBarHeight
+    }
+
+    // The +/overflow buttons are round and sized to the drawn pill (the capsule
+    // inset by the group-run outset), so they line up with the tab pills rather
+    // than standing proud of them. They are capped so that a very tall
+    // “Default tab bar height” cannot blow them up into a large empty glass circle:
+    // the plus glyph is drawn NSImageScaleProportionallyDown, so it does not grow
+    // with the circle. The cap is above the default (24pt at the system height) so
+    // the buttons still track the pill through normal heights.
+    private static let maxAddTabButtonDimension: CGFloat = 40
+    // Height of the drawn pill (the capsule inset by the group-run outset on each
+    // side). Works before the style is attached to a control too (addTabButtonSize
+    // and rightMarginForTabBarControl can both be reached then): pillRegionHeight
+    // then falls back to its capsule minimum (barHeight), which equals the capsule
+    // at the native system height, so the unattached value matches the attached
+    // default rather than disagreeing with it.
+    private var pillHeight: CGFloat {
+        return pillRegionHeight - 2 * Self.groupRunOutset
+    }
+    private var addTabButtonDimension: CGFloat {
+        // A vertical bar's add/overflow buttons are hardcoded to 24pt and never grow
+        // (see frameForOverflowButton), so pin the dimension to that fixed 24. Using
+        // the horizontal pillRegionHeight formula here would grow with a tall
+        // “Default tab bar height” (pillRegionHeight is the vertical bar's full
+        // cell height) and, via rightMarginForTabBarControl, silently shrink every
+        // vertical tab's label area.
+        //
+        // Read the control's orientation, not the style's own _orientation ivar:
+        // -[PSMTabBarControl setStyle:] lays the new style out (setupButtons/update
+        // -> addTabButtonSize/rightMarginForTabBarControl) before anything assigns
+        // the style's orientation, so _orientation would still be its
+        // .horizontalOrientation default and a vertical bar would take the
+        // horizontal formula for that first pass.
+        if (tabBar?.orientation ?? _orientation) == .verticalOrientation {
+            return 24
+        }
+        return min(Self.maxAddTabButtonDimension, pillHeight)
+    }
+    // Vertical origin: center the button in the pill region. This is a no-op at the
+    // system height (where the button height equals the pill height), and keeps the
+    // button vertically centered in the pill row once the size cap engages in a very
+    // tall bar instead of floating against the top edge.
+    private var addTabButtonTop: CGFloat {
+        return containerTopInset + Self.groupRunOutset + floor((pillHeight - addTabButtonDimension) / 2.0)
     }
 
     func frameForOverflowButton(withAddTabButton showAddTabButton: Bool, enclosureSize: NSSize, standardHeight: CGFloat) -> NSRect {
         if orientation == .horizontalOrientation {
-            return NSRect(x: enclosureSize.width - 36,
-                          y: containerTopInset,
-                          width: 28,
-                          height: 28)
+            let dim = addTabButtonDimension
+            return NSRect(x: enclosureSize.width - dim - 8,
+                          y: addTabButtonTop,
+                          width: dim,
+                          height: dim)
         }
         return NSRect(x: enclosureSize.width - 30, y: enclosureSize.height - 30, width: 24, height: 24)
     }
@@ -171,10 +284,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         guard let tabBar else {
             return .zero
         }
-        return NSRect(x: tabBar.bounds.width - 36,
-                      y: containerTopInset,
-                      width: 28,
-                      height: 28)
+        let dim = addTabButtonDimension
+        return NSRect(x: tabBar.bounds.width - dim - 8,
+                      y: addTabButtonTop,
+                      width: dim,
+                      height: dim)
     }
 
     // MARK: - Control Specific
@@ -185,7 +299,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     @objc func rightMarginForTabBarControl(withOverflow: Bool, addTabButton: Bool) -> Float {
         if withOverflow || addTabButton {
-            return 32.0 + Float(tabBar?.insets.right ?? 0) + 2.0
+            return Float(addTabButtonDimension + 4) + Float(tabBar?.insets.right ?? 0) + 2.0
         }
         return 2.0
     }
@@ -197,7 +311,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     // MARK: - Add Tab Button
     
     @objc var addTabButtonSize: NSSize {
-        return NSSize(width: 28, height: 28)
+        return NSSize(width: addTabButtonDimension, height: addTabButtonDimension)
     }
 
     @objc func addTabButtonImage() -> NSImage? {
@@ -433,6 +547,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
 
     private func backgroundRect(for cellFrame: NSRect) -> NSRect {
+        // Derive the pill from the cell so it stays inside the cell rect that
+        // hit-testing/hover/drag use. The cell is the capsule region minus 1, and
+        // this insets 2 on top / 1 on bottom, so the pill sits within both.
         var rect = cellFrame
         rect.origin.y += 2
         rect.size.height -= 3
@@ -590,10 +707,28 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
 
-    // Drawn pill height inside the horizontal tab-bar container (36pt).
-    // Only `clippingPath` reads this; cell pills use `pillCornerRadius(for:)`.
+    // Minimum capsule height, and the fallback when there is no tab bar. The
+    // capsule normally follows the cell-available region (see pillRegionHeight).
     private let barHeight = 28.0
-    private var barRadius: CGFloat { barHeight / 2.0 }
+
+    // Height of the rounded capsule the cells are clipped to. For a HORIZONTAL bar
+    // it equals the cell-available region (bar height minus the vertical insets),
+    // so the capsule exactly matches the cell rects the hit-testing uses and the
+    // group-run outline (which outsets past each pill) lands on the capsule edge
+    // without being clipped; it stays the same in every inset configuration because
+    // the insets redistribute a fixed total between top and bottom. This value is
+    // only meaningful for the horizontal bar: -genericCellRectWithOverflow: uses the
+    // full bar height for a vertical cell, and clippingPath draws the capsule only
+    // in the horizontal branch. addTabButtonDimension must not apply this
+    // horizontal-only formula to a vertical bar (there it would be the full cell
+    // height and grow with the “Default tab bar height” setting), so it returns a
+    // fixed value in the vertical case instead.
+    private var pillRegionHeight: CGFloat {
+        guard let tabBar else {
+            return barHeight
+        }
+        return max(barHeight, tabBar.height - tabBar.insets.top - tabBar.insets.bottom)
+    }
     let containerSideInset = CGFloat(8)
     var containerTopInset: CGFloat {
         tabBar?.insets.top ?? 0.0
@@ -604,7 +739,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private func backgroundRect(forBar bar: PSMTabBarControl, in rect: NSRect) -> NSRect {
         var backgroundRect = rect
         if bar.showAddTabButton {
-            backgroundRect.size.width -= 32.0
+            backgroundRect.size.width -= (addTabButtonDimension + 4)
         }
         return backgroundRect
     }
@@ -650,7 +785,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             let container = NSRect(x: containerSideInset - 0.5,
                                    y: containerTopInset,
                                    width: rect.width - containerSideInset * 2 + 1,
-                                   height: barHeight).insetBy(dx: insetX, dy: insetY)
+                                   height: pillRegionHeight).insetBy(dx: insetX, dy: insetY)
             let radius = max(0, container.height / 2.0)
             return NSBezierPath(roundedRect: container, xRadius: radius, yRadius: radius)
         } else {
@@ -738,9 +873,10 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             // rounded ends. The selected tab's opaque pill would then paint over
             // the bar's rounded border, since a non-scrollable bar only keeps tabs
             // off the ends via its left/right margins. Inset the cell clip so a
-            // ring of bar background survives around the rounded ends. The inset
-            // matches the pill's own top/bottom margin (see -backgroundRect(for:),
-            // which insets 2 top / 1 bottom) so the pill itself is never clipped.
+            // ring of bar background survives around the rounded ends. The 1pt
+            // vertical inset stays inside the pill (which backgroundRect(for:)
+            // insets from the capsule by the 2pt group-run outset on top and
+            // bottom), so the pill itself is never clipped.
             // Scope this tighter clip to the cells only: the group-run outline
             // (drawn below) is intentionally outset past the cells and must reach
             // the pill edges, so it stays under the full clip set above.
@@ -1488,26 +1624,36 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         path.stroke()
     }
     
+    // `height` is the subtitle's measured bounding height (see subtitleHeight); the
+    // caller already computed it to lay out the block, so it is passed in rather
+    // than measured again here.
     func drawSubtitle(cell: PSMTabBarCell,
                       orientation: PSMTabBarOrientation,
                       xOrigin: CGFloat,
                       maxWidth: CGFloat,
-                      labelOffset: CGFloat,
-                      mainLabelHeight: CGFloat) {
+                      yOrigin: CGFloat,
+                      height: CGFloat) {
         guard let cachedSubtitle = cell.cachedSubtitle, !cachedSubtitle.isEmpty else {
             return
         }
-        
+
         let attributedString = cachedSubtitle.attributedStringForcingLeftAlignment(orientation == .verticalOrientation,
                                                                                    truncatedForWidth: maxWidth)
-        let boundingSize = cachedSubtitle.boundingRect(with: NSSize(width: maxWidth, height: cell.frame.height)).size
         var labelRect = NSRect()
         labelRect.origin.x = xOrigin
-        labelRect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + mainLabelHeight + verticalOffsetForSubtitle()
-        labelRect.size.height = boundingSize.height
+        labelRect.origin.y = yOrigin
+        labelRect.size.height = height
         labelRect.size.width = maxWidth
-        
+
         attributedString.draw(in: labelRect)
+    }
+
+    // Height one subtitle line occupies, or 0 when there is none.
+    private func subtitleHeight(cell: PSMTabBarCell, maxWidth: CGFloat) -> CGFloat {
+        guard let cachedSubtitle = cell.cachedSubtitle, !cachedSubtitle.isEmpty else {
+            return 0
+        }
+        return cachedSubtitle.boundingRect(with: NSSize(width: maxWidth, height: cell.frame.height)).size.height
     }
     
     private func subtitleWidth(cell: PSMTabBarCell, orientation: PSMTabBarOrientation) -> CGFloat {
@@ -1578,26 +1724,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return labelRect.size.width
     }
     
-    @objc func willDrawSubtitle(_ subtitle: PSMCachedTitle?) -> Bool {
-        return Self.willDrawSubtitle(subtitle)
-    }
-    
+    // The label path (drawInterior) centers the title+subtitle block itself and no
+    // longer applies per-line offsets or consults an instance willDrawSubtitle, so
+    // only this static predicate remains.
     private static func willDrawSubtitle(_ subtitle: PSMCachedTitle?) -> Bool {
         return subtitle?.isEmpty == false
     }
-    
-    @objc func verticalOffsetForTitleWhenSubtitlePresent() -> CGFloat {
-        return Self.verticalOffsetForTitleWhenSubtitlePresent
-    }
-    
-    private static var verticalOffsetForTitleWhenSubtitlePresent: CGFloat {
-        return -5
-    }
-    
-    @objc func verticalOffsetForSubtitle() -> CGFloat {
-        return -2
-    }
-    
+
     @objc func shouldDrawTopLineSelected(_ selected: Bool, attached: Bool, position: PSMTabPosition) -> Bool {
         return false
     }
@@ -2177,19 +2310,52 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // Label and subtitle
         // For pinned tabs: skip title if a graphic icon is present.
         let skipLabel = cell.isPinned && cell.cachedTitle?.inputs.graphic != nil
-        let subtitleWidth = subtitleWidth(cell: cell, orientation: orientation)
-        let labelWidth = max(widthOfAttributedStringInCell(cell), subtitleWidth)
-        let supportsMultiLineLabels = self.supportsMultiLineLabels
-        // Amount to shift text down from vertically centered so that it matches the OS's rendering
+        let titleWidth = widthOfAttributedStringInCell(cell)
+        // Amount to shift text down from vertically centered so that it matches the OS's rendering.
         let textShift = 1.0 + orientationShift
+        // The title/subtitle label is centered with no downward shift, unlike the
+        // other items (icon, counter) which take textShift to match the OS's
+        // rendering. With the shift the label looked a touch low in both
+        // orientations (1pt in horizontal, 2pt in vertical, i.e. textShift).
+        let labelShift = 0.0
+        let cellHeight = cell.frame.size.height
+        // Whether a subtitle is actually drawn on its own line. Never for pinned
+        // tabs. The native default bar already fits a title over a subtitle (it is
+        // just tighter than the taller opt-in bar), so this is not gated on the bar
+        // height. When there is also a title, the title+subtitle block must fit the
+        // capsule the label is clipped to (drawTabBar clips everything to
+        // clippingPath, whose height is pillRegionHeight ≈ the cell height — NOT the
+        // smaller pill background that backgroundRect fills) once textShift has
+        // pushed it down; otherwise fall back to a title-only line rather than
+        // clipping. That fallback fires for a deliberately short bar (a compact
+        // window, whose ~24pt bar can't stack two lines) or a very large tab bar
+        // font. Decided ONCE here so the reserved label width below and the drawn
+        // content cannot disagree (they used to be computed from two predicates: a
+        // compact window reserved subtitle width for a subtitle that never fit and
+        // so was never drawn). Line heights are single-line and thus width-independent,
+        // so measure against the cell width like the width helpers.
+        var subtitleFits = !cell.isPinned && PSMTahoeTabStyle.willDrawSubtitle(cell.cachedSubtitle)
+        if subtitleFits, let cachedTitle = cell.cachedTitle, !cachedTitle.isEmpty {
+            let titleBlockHeight = cachedTitle.boundingRect(with: NSSize(width: cell.frame.width, height: cellHeight)).size.height
+            let subtitleBlockHeight = subtitleHeight(cell: cell, maxWidth: cell.frame.width)
+            subtitleFits = (titleBlockHeight + subtitleBlockHeight <= cellHeight - labelShift)
+        }
+        let willDrawSubtitle = subtitleFits
+        let labelWidth = willDrawSubtitle
+            ? max(titleWidth, subtitleWidth(cell: cell, orientation: orientation))
+            : titleWidth
         if !skipLabel {
             objects.append(TextLO(name: Name.label.rawValue,
                                   priority: Priority.required.rawValue,
                                   minWidth: 8,
                                   attributedStringWidth: labelWidth,
                                   gravity: orientation == .horizontalOrientation ? .center : .left) { resolved in
-                let labelOffset: CGFloat
-                let mainLabelHeight: CGFloat
+                let subtitleHeight = willDrawSubtitle ? self.subtitleHeight(cell: cell, maxWidth: resolved.frame.width) : 0
+                // Where the subtitle line goes. When there is a title it sits
+                // directly below it (set in the title branch); with no title it
+                // centers on its own. Everything centers in the cell; the pill is
+                // derived from the cell, so cell-centered content is pill-centered.
+                var subtitleTop = cell.frame.origin.y + floor((cellHeight - subtitleHeight) / 2.0) + labelShift
                 if let cachedTitle = cell.cachedTitle,
                    !cachedTitle.isEmpty {
                     let drawString: NSAttributedString
@@ -2209,24 +2375,28 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                     }
                     var rect = resolved.frame
                     let boundingSize = cachedTitle.boundingRect(with: NSSize(width: resolved.frame.width, height: cell.frame.height)).size
-                    mainLabelHeight = boundingSize.height
-                    labelOffset = PSMTahoeTabStyle.willDrawSubtitle(cell.cachedSubtitle) ? PSMTahoeTabStyle.verticalOffsetForTitleWhenSubtitlePresent : 0
-                    rect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + textShift
                     rect.size.height = boundingSize.height
+                    if willDrawSubtitle {
+                        // Center the title+subtitle as one block so the second line
+                        // isn't clipped and the title makes room for it rather than
+                        // jumping.
+                        let blockHeight = boundingSize.height + subtitleHeight
+                        let blockTop = cell.frame.origin.y + floor((cellHeight - blockHeight) / 2.0) + labelShift
+                        rect.origin.y = blockTop
+                        subtitleTop = blockTop + boundingSize.height
+                    } else {
+                        rect.origin.y = cell.frame.origin.y + floor((cellHeight - boundingSize.height) / 2.0) + labelShift
+                    }
                     drawString.draw(in: rect)
-                } else {
-                    labelOffset = 0
-                    mainLabelHeight = 0
                 }
 
-                // Draw subtitle (never for pinned tabs).
-                if supportsMultiLineLabels && !cell.isPinned {
+                if willDrawSubtitle {
                     self.drawSubtitle(cell: cell,
                                       orientation: orientation,
                                       xOrigin: resolved.frame.minX,
                                       maxWidth: resolved.frame.width,
-                                      labelOffset: labelOffset,
-                                      mainLabelHeight: mainLabelHeight)
+                                      yOrigin: subtitleTop,
+                                      height: subtitleHeight)
                 }
             })
         }

@@ -22,6 +22,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)sharedInstance;
 
+// YES when the macOS 26 Tahoe tab style is the one actually in use: macOS 26, the
+// Sequoia-style opt-out is off, and the preferred style is neither compact nor
+// minimal (which render with the Yosemite/Dark/Minimal styles). Callers that
+// special-case Tahoe tab geometry gate on this so they don't affect those styles.
++ (BOOL)tahoeTabBarInUse;
+
 // Creates a new tab style for the current global prefs.
 - (id<PSMTabStyle>)tabStyleWithDelegate:(id<PSMMinimalTabStyleDelegate>)delegate
                     effectiveAppearance:(NSAppearance *)effectiveAppearance;

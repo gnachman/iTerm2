@@ -23,7 +23,6 @@
 - (PSMTabBarOrientation)orientation;
 - (id<PSMTabBarControlDelegate>)delegate;
 - (NSTabView *)tabView;
-- (BOOL)supportsMultiLineLabels;
 @end
 
 @interface PSMTabBarCell : NSActionCell <NSCoding>

@@ -32,6 +32,18 @@
     return instance;
 }
 
++ (BOOL)tahoeTabBarInUse {
+    if (@available(macOS 26, *)) {
+        if ([iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+            return NO;
+        }
+        const iTermPreferencesTabStyle preferredStyle =
+            (iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        return preferredStyle != TAB_STYLE_COMPACT && preferredStyle != TAB_STYLE_MINIMAL;
+    }
+    return NO;
+}
+
 - (id<PSMTabStyle>)tabStyleWithDelegate:(id<PSMMinimalTabStyleDelegate>)delegate
                     effectiveAppearance:(NSAppearance *)effectiveAppearance {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];

@@ -172,6 +172,18 @@ New Features:
   3.7.0.
 
 Improvements:
+- On macOS 26, a tab can show its status subtitle
+  on a second line below the title. If the tab bar
+  is too short to fit both, use “Enable Tall Tab
+  Bar” beside the Subtitle field in Profiles >
+  General to make room.
+- On macOS 26, the high-contrast tab themes use a
+  taller tab bar by default so a status subtitle
+  fits under the title. Set “Default tab bar
+  height” to override it.
+- On macOS 26, Minimal-theme hotkey and other
+  borderless windows use a slightly taller tab bar
+  so a status subtitle fits on its own line.
 - iTerm2 now recognizes when a terminal is
   running on your own Mac by machine identity
   rather than by hostname, so features that only
