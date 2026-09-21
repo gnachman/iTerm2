@@ -34,6 +34,9 @@ class KittyImageRun: NSObject {
 class KittyImageRendererTransientState: iTermMetalCellRendererTransientState {
     fileprivate var draws = [iTermKittyImageDraw]()
     fileprivate var textures = ReferenceContainer<[UUID: MTLTexture]>([:])
+    // The renderer draws this transient state once per z-range (three times per frame), all sharing
+    // the same draws. Prune the shared texture cache only on the first pass of the frame.
+    fileprivate var didPruneTextures = false
     fileprivate var cellRenderer: iTermMetalCellRenderer!
     @objc var visibleRect = NSRect.zero
     @objc var totalScrollbackOverflow = Int64(0)
@@ -206,6 +209,19 @@ class KittyImageRenderer: NSObject, iTermMetalCellRendererProtocol {
     func draw(with frameData: iTermMetalFrameData, transientState: iTermMetalCellRendererTransientState) {
         guard let tState = transientState as? KittyImageRendererTransientState else {
             return
+        }
+        // Bound the texture cache to the working set. Every transmission mints a fresh Image with a
+        // fresh uniqueId, so an animation that repeatedly retransmits under one image id and
+        // redisplays it would otherwise add one permanent MTLTexture per frame. Drop cached textures
+        // whose image is not drawn this frame; live ones are kept and reused, so a stable scene never
+        // re-creates textures. Do this once per frame (not per z-range pass), and only rebuild the
+        // dictionary when something is actually dead so the steady state is free.
+        if !tState.didPruneTextures {
+            tState.didPruneTextures = true
+            let liveUUIDs = Set(tState.draws.map { $0.imageUniqueID })
+            if textures.value.contains(where: { !liveUUIDs.contains($0.key) }) {
+                textures.value = textures.value.filter { liveUUIDs.contains($0.key) }
+            }
         }
         let zRange = Range(Int(minZ)...Int(maxZ))
         tState.enumerateOperations(zRange: zRange) { op in

@@ -91,3 +91,8 @@ Bug Fixes:
   it could fail with a certificate error even
   though the same download succeeded in a
   browser.
+- Fixed unbounded memory growth with programs
+  that animate using the Kitty graphics
+  protocol. Each redrawn frame was kept for the
+  life of the window, so a long-running
+  animation could consume many gigabytes.
