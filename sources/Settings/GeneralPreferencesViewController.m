@@ -1039,7 +1039,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _modelPopup.lastItem.representedObject = @"";
 
     NSMutableArray<NSString *> *names =
-        [(url.length ? [iTermOllamaModelCache.shared cachedModelNamesForEndpoint:url] : @[]) mutableCopy];
+        [(url.length ? [iTermOllamaModelCache.shared cachedModelNamesForEndpoint:url
+                                                                          headers:[self nonEmptyHeaders]] : @[]) mutableCopy];
     // Keep a previously-chosen model selectable even when discovery hasn't run yet
     // (editing a saved entry with a cold cache), so opening + saving doesn't
     // silently reset the choice to "All".
@@ -1473,7 +1474,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             // "All installed models" names no single model, but the probe has to
             // ask for one. Use a discovered model, which is what this entry
             // expands to at runtime.
-            name = [iTermOllamaModelCache.shared cachedModelNamesForEndpoint:url].firstObject ?: @"";
+            name = [iTermOllamaModelCache.shared cachedModelNamesForEndpoint:url
+                                                                      headers:[self nonEmptyHeaders]].firstObject ?: @"";
             if (name.length == 0) {
                 missing = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingDiscoveredModel", nil, [NSBundle mainBundle], @"Choose a model, or click Refresh Models first, so there is something to test with.", @"Body of alert shown when an auto-discovery entry has no model to test against");
             }

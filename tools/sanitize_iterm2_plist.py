@@ -53,6 +53,9 @@ TOP-LEVEL keys
   NoSyncKnownHosts ....................... user@host:port list
   NoSyncWorkgroupGitBaseRecents .......... git base/ref recents
   NoSyncRecentArchives ................... archive file paths
+  NoSyncOllamaDiscoveredModels ........... discovered Ollama models, keyed by
+                                           endpoint URL (removed, not redacted:
+                                           the private part is in the KEY)
   NoSyncRecordedVariables ................ recorded variable names (deep)
   NoSyncSearchHistory[2] ................. find-bar search terms
   NoSyncOpenAIAPIKey ..................... legacy plaintext API key
@@ -213,6 +216,10 @@ CONTENT_KEYS = {
     "NoSyncClaudeCodeConfigDirPath": REDACT_V,
     "NoSyncRecentArchives": REDACT_V,
     "InitialDirectory": REDACT_V,
+    # Removed rather than redacted: this blob is keyed BY endpoint URL (plus a
+    # hash of the entry's custom headers), and scrub() can only rewrite values,
+    # never keys, so the hosts in the keys would survive a redaction.
+    "NoSyncOllamaDiscoveredModels": REMOVE,
     # hosts / URLs
     "Bound Hosts": REDACT_V,
     "NoSyncKnownHosts": REDACT_V,

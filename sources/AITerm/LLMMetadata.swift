@@ -267,16 +267,15 @@ class LLMMetadata: NSObject {
             // discovered from the server (with capabilities), instead of a single
             // hand-configured model.
             if bool(configuration, key: ManualModelKey.dynamicModels) {
-                // A manual dynamic entry pointing at the built-in default endpoint is
-                // redundant with the built-in Ollama vendor (same server, same cache).
-                // Skip it, or every local tag would list twice - a clean built-in copy
-                // plus a server-qualified manual copy that routes identically. Compare
-                // by derived tags URL so scheme/path variants of localhost still match.
-                if let url = configuration[ManualModelKey.url] as? String,
-                   let mine = OllamaModelDiscovery.tagsURL(fromEndpoint: url),
-                   mine == OllamaModelDiscovery.tagsURL(fromEndpoint: defaultOllamaEndpoint) {
-                    return []
-                }
+                // Every dynamic entry is expanded, including one pointed at the
+                // built-in default endpoint. That does duplicate the built-in Ollama
+                // vendor's models, but a model the user explicitly added has to show
+                // up where they added it: silently discarding the entry left them
+                // with a row in Manage AI Models that appeared nowhere else and no
+                // way to find out why. disambiguateDynamicCollisions below qualifies
+                // each manual copy with its server and leaves the built-in copy the
+                // clean tag, so the duplicate is visibly distinct and neither can
+                // shadow the other.
                 return dynamicOllamaModels(configuration: configuration)
             }
             return manualModel(configuration: configuration).map { [$0] } ?? []
@@ -407,24 +406,37 @@ class LLMMetadata: NSObject {
                                 vendor: .llama)
     }
 
+    // The configured dynamic entries as (url, headers), plus the built-in
+    // default endpoint. The discovery cache identifies a bucket by BOTH, since
+    // an endpoint reached with an auth header is a different view of the server
+    // than the same endpoint without one, so pruning its persisted snapshot by
+    // bare URL would either drop a header-bearing entry or keep buckets for
+    // header sets no longer configured.
+    static func dynamicOllamaConfigurations() -> [(url: String, headers: [[String: String]])] {
+        var result: [(url: String, headers: [[String: String]])] = [(defaultOllamaEndpoint, [])]
+        guard let raw = iTermPreferences.object(forKey: kPreferenceKeyAIManualModelConfigurations) as? [[String: Any]] else {
+            return result
+        }
+        for configuration in raw where bool(configuration, key: ManualModelKey.dynamicModels) {
+            guard let url = configuration[ManualModelKey.url] as? String, !url.isEmpty else {
+                continue
+            }
+            result.append((url, (configuration[ManualModelKey.customHeaders] as? [[String: String]]) ?? []))
+        }
+        return result
+    }
+
     // The endpoint URLs whose discovered models are currently in use: every
     // configured dynamic entry, plus the built-in default endpoint. The default is
     // ALWAYS included because ChatViewController.builtInModels always surfaces its
     // discovered models (a chat can pin the built-in Ollama vendor even when the
     // global default is a different vendor), so a discovery update for it is always
-    // relevant. Used to scope the model-cache change notification and to prune
-    // persistence to live endpoints (localhost is a single fixed endpoint, so
-    // always persisting it is bounded and lets it resolve synchronously at launch).
+    // relevant. Used to scope the model-cache change notification (localhost is a
+    // single fixed endpoint, so always including it is bounded). Derived from
+    // dynamicOllamaConfigurations so the two cannot drift on what counts as a
+    // configured entry.
     @objc static func dynamicOllamaEndpoints() -> Set<String> {
-        var result = Set<String>([defaultOllamaEndpoint])
-        if let raw = iTermPreferences.object(forKey: kPreferenceKeyAIManualModelConfigurations) as? [[String: Any]] {
-            for configuration in raw where bool(configuration, key: ManualModelKey.dynamicModels) {
-                if let url = configuration[ManualModelKey.url] as? String, !url.isEmpty {
-                    result.insert(url)
-                }
-            }
-        }
-        return result
+        return Set(dynamicOllamaConfigurations().map { $0.url })
     }
 
     private static func dynamicOllamaModels(configuration: [String: Any]) -> [AIMetadata.Model] {
