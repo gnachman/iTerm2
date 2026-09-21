@@ -81,3 +81,7 @@ Bug Fixes:
   ~/www) wrongly reported the directory as
   unavailable and started in the home
   directory instead.
+- Fixed a bug where editing only the keystroke
+  of a Select Menu Item or Toggle Setting key
+  binding erased the menu item or setting it
+  was bound to.
