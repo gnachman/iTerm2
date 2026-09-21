@@ -600,12 +600,53 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     let containerBottomInset = CGFloat(0)
     
+    /// The bar's own shape, minus the add-tab button's margin when it is showing.
+    private func backgroundRect(forBar bar: PSMTabBarControl, in rect: NSRect) -> NSRect {
+        var backgroundRect = rect
+        if bar.showAddTabButton {
+            backgroundRect.size.width -= 32.0
+        }
+        return backgroundRect
+    }
+
+    /// The shape a per-cell accessory subview (the progress ring, the activity indicator) has to stay
+    /// inside, in the bar's coordinates, or nil when there is none.
+    ///
+    /// An accessory is a subview drawn on top of -drawRect:, so it never sees the graphics clip
+    /// `drawTabBar` sets for cells, and without this it follows its tab straight out past the bar's
+    /// rounded ends. This is the bar's own painted shape: `drawBackground(in:color:horizontal:)`
+    /// fills exactly this path, so an accessory held to it cannot paint where the bar is not.
+    ///
+    /// Deliberately NOT the clip cells get while the bar is scrollable, which is this path tightened
+    /// by (2, 1) so a scrolled pill cannot paint over the rounded border. The progress ring is outset
+    /// past its pill by `progressRingWidth` on every side, and `adjustedCellRect` puts the cell's top
+    /// at `containerTopInset`, so the ring's top edge lands exactly on the container's. Holding it to
+    /// the cell clip would shave the ring's top band, and most of the first and last tab's side
+    /// bands, which is the very thing the ring is drawn outset to show.
+    @objc func accessoryClipPath(forTabBar bar: PSMTabBarControl) -> NSBezierPath? {
+        // Take the axis from the bar rather than the cached one, the way every other query that is
+        // handed a bar does, and pass it down instead of writing it back: only drawTabBar syncs the
+        // cache, and this runs from layout, where -[iTermTabBarControlView setOrientation:] relays
+        // out through -update before it assigns the style's orientation. Updating the cache here
+        // would flip it partway through a pass whose earlier half already read the old value.
+        guard bar.orientation == .horizontalOrientation else {
+            // The vertical clip is the bar's full rect, which no accessory can leave.
+            return nil
+        }
+        return clippingPath(rect: backgroundRect(forBar: bar, in: bar.bounds),
+                            orientation: bar.orientation)
+    }
+
     // The bar's rounded container shape. `insetX`/`insetY` shrink it on each side;
     // both default to 0 so the background fill uses the full shape. A scrollable
     // bar insets the *cell* clip (see -drawTabBar:) so scrolled cells can't paint
-    // over the rounded border.
-    private func clippingPath(rect: NSRect, insetX: CGFloat = 0, insetY: CGFloat = 0) -> NSBezierPath {
-        if orientation == .horizontalOrientation {
+    // over the rounded border. `orientation` defaults to the cached axis; a caller
+    // that runs outside a draw, where the cache can lag the bar, passes the bar's.
+    private func clippingPath(rect: NSRect,
+                              insetX: CGFloat = 0,
+                              insetY: CGFloat = 0,
+                              orientation: PSMTabBarOrientation? = nil) -> NSBezierPath {
+        if (orientation ?? _orientation) == .horizontalOrientation {
             let container = NSRect(x: containerSideInset - 0.5,
                                    y: containerTopInset,
                                    width: rect.width - containerSideInset * 2 + 1,
@@ -648,10 +689,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         
         
         let backgroundColor = Self.backgroundColor
-        var backgroundRect = rect
-        if bar.showAddTabButton {
-            backgroundRect.size.width -= 32.0
-        }
+        let backgroundRect = self.backgroundRect(forBar: bar, in: rect)
 
         drawBackground(in: backgroundRect, color: backgroundColor, horizontal: horizontal)
         NSGraphicsContext.current?.saveGraphicsState()

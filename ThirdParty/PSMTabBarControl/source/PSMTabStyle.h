@@ -44,6 +44,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell;
 @optional
 - (nullable NSBezierPath *)progressBarClipPathForTabCell:(PSMTabBarCell *)cell;
+// The shape per-cell accessory subviews (the progress bar, the activity indicator) must stay inside,
+// in the bar's coordinates, or nil if there is none. They draw on top of -drawRect: and so never see
+// the graphics clip this style sets for cells; the bar masks them to this instead. Note this is the
+// accessory's clip, not the cell's: an accessory may be outset past its cell on purpose.
+- (nullable NSBezierPath *)accessoryClipPathForTabBar:(PSMTabBarControl *)bar;
 // YES if this style draws whole-run tab-group decoration itself (in
 // -drawTabBar:), in which case the group chip CELL draws nothing. Styles that
 // return NO keep the basic per-cell chip.

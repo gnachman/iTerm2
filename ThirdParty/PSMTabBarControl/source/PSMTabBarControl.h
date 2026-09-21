@@ -515,3 +515,16 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 NS_ASSUME_NONNULL_END
 
 BOOL PSMShouldExtendTransparencyIntoMinimalTabBar(void);
+
+// Converts a rect in the tab bar's flipped coordinate system to the non-flipped coordinate system of
+// a subview's layer, given that subview's frame. Declared here so it can be unit-tested.
+NSRect PSMRectInLayerCoordinates(NSRect rect, NSRect subviewFrame);
+
+// The part of the interval [accessoryMin, accessoryMax] -- one axis of a per-cell accessory's frame,
+// along the scroll axis -- that is inside a scrollable bar's [leading, trailing] region, given the
+// same axis of the cell the accessory belongs to. NO when none of it is; see the implementation for
+// why the cell's extent is a parameter at all. Declared here so it can be unit-tested.
+BOOL PSMVisibleAccessoryInterval(CGFloat accessoryMin, CGFloat accessoryMax,
+                                 CGFloat cellMin, CGFloat cellMax,
+                                 CGFloat leading, CGFloat trailing,
+                                 CGFloat * _Nullable outMin, CGFloat * _Nullable outMax);

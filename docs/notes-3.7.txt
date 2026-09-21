@@ -556,3 +556,11 @@ Bug Fixes:
   General, as dragging a file into a local
   session already did. They previously always
   used double quotes, ignoring the setting.
+- On macOS Tahoe, the progress ring around a tab
+  is no longer missing from the first and last
+  tabs. A tab that is partly scrolled under the
+  window controls now keeps the visible part of
+  its ring, and its activity indicator, instead
+  of losing them entirely, and the ring stays
+  within the tab bar’s rounded ends rather than
+  drawing past them.
