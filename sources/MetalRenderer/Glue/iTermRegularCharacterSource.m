@@ -39,6 +39,9 @@
     NSMutableData *_positionsBuffer;
 
     BOOL _isAscii;
+    // Set by -frameFlipped: when the font answered the aliased measurement with something
+    // that cannot describe this context. See -boundsAreTrustworthy.
+    BOOL _aliasedBoundsWereRejected;
 }
 
 - (instancetype)initWithCharacter:(NSString *)string
@@ -164,12 +167,57 @@
     // unscaled bounds. We apply hScale/vScale manually below because the
     // CTM is only set during drawing, not when newParts calls this.
     // TODO: Is this step actually needed?
+    //
+    // CTLineGetImageBounds reports where ink lands if you draw into this context, so it
+    // consults the context's antialiasing flag and answers differently depending on it.
+    // Set the flag for both measurements rather than trusting the caller to have left it
+    // alone: -[iTermCharacterSource prepareToDrawIteration:...] calls us before
+    // -initializeIteration: has set it, but only for the first run of an iteration, so on
+    // later runs we would otherwise be handed a context that is already aliased and
+    // measure the same thing twice. The save/restore pair keeps all of this out of the
+    // draw that follows.
     CGContextSaveGState(_context);
     CGContextConcatCTM(_context, CGAffineTransformInvert(CGContextGetCTM(_context)));
+    CGContextSetShouldAntialias(_context, YES);
     CGRect frame = CTLineGetImageBounds(_lineRefs[0], _context);
+    CGRect aliasedFrame = CGRectNull;
+    if (!_antialiased) {
+        // Aliased rasterization hints glyphs into different pixels, sometimes well
+        // outside the antialiased bounds: Monaco 12's ~ draws at y 7...9 while the
+        // antialiased bounds claim y 2.18...4.37. Drawing is aliased here, so ask again
+        // that way. Getting this wrong leaves ink behind after the clear in
+        // drawWithOffset:iteration:, and the next glyph rasterized into this shared
+        // context picks it up. Issue 13071.
+        CGContextSetShouldAntialias(_context, NO);
+        aliasedFrame = CTLineGetImageBounds(_lineRefs[0], _context);
+    }
     CGContextRestoreGState(_context);
 
     CGRect result = [self frameForBoundingRect:frame flipped:flipped];
+    if (!CGRectIsNull(aliasedFrame) && !CGRectIsEmpty(aliasedFrame)) {
+        const CGRect aliasedResult = [self frameForBoundingRect:aliasedFrame flipped:flipped];
+        // Several fonts (a number of Nerd Font and Monaspace builds, BerkeleyMono)
+        // answer in font design units rather than points when asked with antialiasing
+        // off, e.g. {139, 512, 987, 393} at every point size. Those rects don't describe
+        // anything in this context and have to be thrown away.
+        const BOOL aliasedResultIsUsable =
+            CGRectContainsRect(CGRectMake(0, 0, _size.width, _size.height), aliasedResult);
+        if (aliasedResultIsUsable) {
+            // No extra margin here. This rect also picks the parts in -newParts, and
+            // widening it there costs draws for no benefit: over the sweep described
+            // below the bare union already leaves nothing clipped, while insetting it by
+            // 2px raised the mean parts per glyph from 2.24 to 3.72. The clear in
+            // -[iTermCharacterSource drawWithOffset:iteration:] needs strict pixel
+            // coverage and adds its own margin there.
+            result = CGRectUnion(result, aliasedResult);
+        } else {
+            _aliasedBoundsWereRejected = YES;
+            DLog(@"Aliased bounds %@ for '%@' in %@ do not fit a %@ context; bounds are "
+                 @"not trustworthy for this glyph.",
+                 NSStringFromRect(aliasedResult), _string, _font.fontName,
+                 NSStringFromSize(_size));
+        }
+    }
     if (iTermLineAttributeIsDoubleWidth(_lineAttribute)) {
         // Expand around the unshifted text origin for the horizontal DWL
         // scaling and (for DECDHL) the vertical scaling.
@@ -192,6 +240,16 @@
         }
     }
     return result;
+}
+
+// The antialiased measurement alone does not bound aliased ink: over a sweep of every
+// fixed-pitch family installed locally (ASCII 32...126 plus 31 single-width non-ASCII
+// glyphs, 9...16pt, regular/bold/italic/bold-italic, 1x and 2x, 330624 cases) it missed
+// in 119 cases by up to 7px, and no constant outset closed that below 7px of extra
+// margin. So when the aliased measurement had to be thrown away, say so and let the
+// caller clear conservatively rather than trusting a rect we know can be too small.
+- (BOOL)boundsAreTrustworthy {
+    return !_aliasedBoundsWereRejected;
 }
 
 #pragma mark Drawing

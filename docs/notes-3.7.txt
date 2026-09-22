@@ -610,3 +610,10 @@ Bug Fixes:
   was bound to.
 - Session status is now avilable in the
   session-scoped variable "status".
+- Fixed a bug where blank space rendered as a
+  stray “~” with the GPU renderer in profiles
+  that have Anti-aliased turned off. It showed
+  up most often in bold runs and in the padding
+  of full-screen programs like k9s, and it
+  persisted for the rest of the session once it
+  appeared.
