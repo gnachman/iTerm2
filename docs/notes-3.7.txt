@@ -1,3 +1,89 @@
+Version 3.7.3
+
+Bug Fixes:
+- Fixed the Python API not reporting OSC 8
+  hyperlinks. A cell’s CellStyle.url is now
+  populated, so scripts reading screen contents
+  can see the link target.
+- Fixed the Screen setting in Settings >
+  Profiles > Window. Choosing “Main Screen”
+  left the popup blank and showed no checkmark
+  next to it when reopened, although the
+  setting was saved correctly.
+- Fixed a crash when a program wrote a hyperlink
+  whose web address contained an emoji or other
+  character outside the Basic Multilingual
+  Plane. The link is now handled correctly
+  instead of terminating iTerm2, which could
+  recur on restore because the saved session
+  replayed the same link.
+- Fixed severe typing lag in a tmux Integration
+  session running on a host you connected to
+  with an SSH profile. Keystrokes and the output
+  they produced were each held back about a
+  second, so typing arrived in slow bursts.
+- Fixed occasional delayed screen updates in a
+  session that had gone quiet. A redraw with no
+  other output behind it could be held back
+  until something else happened in the session.
+- Fixed a bug where a profile whose custom
+  working directory used a tilde (such as
+  ~/www) wrongly reported the directory as
+  unavailable and started in the home
+  directory instead.
+- Fixed a bug where editing only the keystroke
+  of a Select Menu Item or Toggle Setting key
+  binding erased the menu item or setting it
+  was bound to.
+- Fixed a bug where a flag emoji took four
+  columns instead of two, leaving a gap after
+  it. A flag is now always two columns, the
+  width other terminals report for it, so the
+  advanced setting “Lone regional indicators
+  render full-width” no longer affects flags.
+  Skin-toned emoji are still affected and will
+  be fixed separately.
+- Fixed a bug where a character that combined
+  with the one before it could come out the
+  wrong width when the two halves arrived in
+  separate writes, leaving the cursor inside
+  the character.
+- Fixed Cmd-number tab shortcuts becoming
+  non-consecutive after changing a tab group
+  from the context menu. Removing a tab from a
+  group reordered the tabs but left the
+  shortcut numbers on their old positions.
+- Fixed Kitty graphics placeholder cells
+  drawing nothing when the image id fit in
+  three bytes and the program omitted the
+  optional diacritic that carries the high
+  byte. Other terminals render these, and now
+  iTerm2 does too.
+- Fixed a crash when asking for notification
+  permission. The reply block could be called
+  after it had gone out of scope, which could
+  terminate iTerm2 at the moment a
+  notification was first requested.
+- Installing the Python runtime used by scripts
+  now trusts the certificates installed on your
+  Mac. On networks that inspect secure traffic,
+  it could fail with a certificate error even
+  though the same download succeeded in a
+  browser.
+- Fixed unbounded memory growth with programs
+  that animate using the Kitty graphics
+  protocol. Each redrawn frame was kept for the
+  life of the window, so a long-running
+  animation could consume many gigabytes.
+- Fixed a bug where blank space rendered as a
+  stray “~” with the GPU renderer in profiles
+  that have Anti-aliased turned off. It showed
+  up most often in bold runs and in the padding
+  of full-screen programs like k9s, and it
+  persisted for the rest of the session once it
+  appeared.
+
+
 Version 3.7.2
 
 Bug Fixes:
@@ -11,10 +97,6 @@ Bug Fixes:
 - Fixed a crash that could occur when quitting
   iTerm2 while several Claude Code sessions were
   running.
-- Fixed the Python API not reporting OSC 8
-  hyperlinks. A cell’s CellStyle.url is now
-  populated, so scripts reading screen contents
-  can see the link target.
 - Stopped falsely offering to reset the key
   reporting mode after every command when using
   Fish with oh-my-posh, which together emit a
@@ -55,51 +137,3 @@ Bug Fixes:
   like Shift-Enter send a distinct code) now
   keeps working when its session is restored,
   instead of quietly reverting to plain keys.
-- Fixed the Screen setting in Settings >
-  Profiles > Window. Choosing “Main Screen”
-  left the popup blank and showed no checkmark
-  next to it when reopened, although the
-  setting was saved correctly.
-- Fixed a crash when a program wrote a hyperlink
-  whose web address contained an emoji or other
-  character outside the Basic Multilingual
-  Plane. The link is now handled correctly
-  instead of terminating iTerm2, which could
-  recur on restore because the saved session
-  replayed the same link.
-- Fixed severe typing lag in a tmux Integration
-  session running on a host you connected to
-  with an SSH profile. Keystrokes and the output
-  they produced were each held back about a
-  second, so typing arrived in slow bursts.
-- Fixed occasional delayed screen updates in a
-  session that had gone quiet. A redraw with no
-  other output behind it could be held back
-  until something else happened in the session.
-- Fixed a bug where a profile whose custom
-  working directory used a tilde (such as
-  ~/www) wrongly reported the directory as
-  unavailable and started in the home
-  directory instead.
-- Fixed a bug where editing only the keystroke
-  of a Select Menu Item or Toggle Setting key
-  binding erased the menu item or setting it
-  was bound to.
-- Installing the Python runtime used by scripts
-  now trusts the certificates installed on your
-  Mac. On networks that inspect secure traffic,
-  it could fail with a certificate error even
-  though the same download succeeded in a
-  browser.
-- Fixed unbounded memory growth with programs
-  that animate using the Kitty graphics
-  protocol. Each redrawn frame was kept for the
-  life of the window, so a long-running
-  animation could consume many gigabytes.
-- Fixed a bug where blank space rendered as a
-  stray “~” with the GPU renderer in profiles
-  that have Anti-aliased turned off. It showed
-  up most often in bold runs and in the padding
-  of full-screen programs like k9s, and it
-  persisted for the rest of the session once it
-  appeared.

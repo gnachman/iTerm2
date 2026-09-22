@@ -839,167 +839,236 @@ final class CharsetPerformanceTests: XCTestCase {
     }
 }
 
-// MARK: - Section 7: Regional indicator (flag) pairing
+// MARK: - Section 7: UAX #29 no-break rules survive the own-cell scan
 
-/// Regional indicators are stored one per cell (for wcwidth compatibility), so a flag
-/// emoji is two adjacent indicator cells and can even split across a soft wrap. Under the
-/// default fullWidthFlags=YES each indicator is double-width, inserting a DWC_RIGHT spacer
-/// after it, so a flag is laid out as [RI][DWC_RIGHT][RI][DWC_RIGHT]. The GPU renderer must
-/// pair the indicators (across the spacers) exactly as the legacy CoreText run does.
-final class RegionalIndicatorPairingTests: XCTestCase {
-    // Regional indicator symbols.
+/// codePointsWithOwnCell is derived from Grapheme_Base, so a code point that UAX #29
+/// forbids breaking before can still land in it and get re-split out of the cluster
+/// Apple already grouped correctly. Conjoining Hangul jamo were excluded from the set
+/// for that reason; regional indicators (GB12/GB13) need the same treatment. A flag must
+/// stay one complex char occupying two columns, exactly like a ZWJ sequence or a tag
+/// sequence.
+final class UAX29NoBreakTests: XCTestCase {
     private let regionalU: UInt32 = 0x1F1FA // 🇺
     private let regionalS: UInt32 = 0x1F1F8 // 🇸
     private let regionalF: UInt32 = 0x1F1EB // 🇫
     private let regionalR: UInt32 = 0x1F1F7 // 🇷
+    private let mediumSkin: UInt32 = 0x1F3FD
 
-    private func isSpacer(_ c: screen_char_t) -> Bool {
-        return ScreenCharIsDWC_RIGHT(c) || ScreenCharIsDWL_SPACER(c)
+    /// Assert that `s` becomes one double-width complex char whose string round-trips.
+    private func assertSingleDoubleWidthCell(_ codePoints: [UInt32],
+                                             unicodeVersion: Int = 9,
+                                             file: StaticString = #filePath,
+                                             line: UInt = #line) {
+        let s = stringFromCodePoints(codePoints)
+        let (buf, len, _) = callStringToScreenChars(s, unicodeVersion: unicodeVersion)
+        XCTAssertEqual(len, 2, "\(s) should occupy two columns", file: file, line: line)
+        guard len == 2 else { return }
+        XCTAssertNotEqual(buf[0].complexChar, 0, "\(s) should be a complex char", file: file, line: line)
+        XCTAssertTrue(ScreenCharIsDWC_RIGHT(buf[1]), "\(s) should be double-width", file: file, line: line)
+        XCTAssertEqual(CharToStr(buf[0].code, buf[0].complexChar != 0) as String?, s,
+                       "\(s) should round-trip from its cell", file: file, line: line)
     }
 
-    private func isRegionalIndicator(_ c: screen_char_t) -> Bool {
-        return c.complexChar != 0 && ComplexCharCodeIsRegionalIndicator(c.code)
+    // MARK: GB12/GB13 regional indicator pairs
+
+    /// Issue 13070: a flag rendered as four columns instead of two.
+    func testFlagOccupiesTwoColumns() {
+        assertSingleDoubleWidthCell([regionalU, regionalS])
     }
 
-    /// Compact role encoding across a line, running the same greedy pairing the renderer uses:
-    ///   "J" opening indicator joined to a partner   "C" closing indicator (suppressed)
-    ///   "L" lone/trailing indicator (fallback glyph) ">" transparent spacer
-    ///   "." any other cell
-    private func roles(_ buf: [screen_char_t], _ len: Int) -> String {
-        var pendingOpen: ObjCBool = false
-        var out = ""
-        buf.withUnsafeBufferPointer { ptr in
-            for i in 0..<len {
-                let r: iTermRegionalIndicatorPairing = withUnsafeMutablePointer(to: &pendingOpen) { pop in
-                    iTermRegionalIndicatorPairingForCell(ptr.baseAddress, Int32(i), Int32(len), pop)
-                }
-                let c = buf[i]
-                if r.suppress.boolValue {
-                    out += "C"
-                } else if r.joinWithNext.boolValue {
-                    out += "J"
-                } else if isSpacer(c) {
-                    out += ">"
-                } else if isRegionalIndicator(c) {
-                    out += "L"
-                } else {
-                    out += "."
-                }
-            }
-        }
-        return out
-    }
-
-    /// Roles for a string using the actual StringToScreenChars layout (double-width flags
-    /// under the default), i.e. indicators separated by DWC_RIGHT spacers.
-    private func rolesForString(_ s: String) -> String {
-        let (buf, len, _) = callStringToScreenChars(s)
-        return roles(buf, len)
-    }
-
-    /// Roles for the same content with spacers stripped, simulating the single-width layout
-    /// (fullWidthFlags off, or a tmux -CC width model that reports indicators as width 1).
-    private func rolesForStringSingleWidth(_ s: String) -> String {
-        let (buf, len, _) = callStringToScreenChars(s)
-        var compact = [screen_char_t]()
-        for i in 0..<len where !isSpacer(buf[i]) {
-            compact.append(buf[i])
-        }
-        return roles(compact, compact.count)
-    }
-
-    // MARK: Predicate
-
-    func testPredicate_regionalIndicatorsAreClassified() {
-        let (buf, len, _) = callStringToScreenChars(stringFromCodePoints([regionalU, regionalS]))
-        var indicators = 0
-        for i in 0..<len where isRegionalIndicator(buf[i]) {
-            indicators += 1
-        }
-        XCTAssertEqual(indicators, 2)
-    }
-
-    func testPredicate_nonIndicatorsAreRejected() {
-        // Single-codepoint emoji, a ZWJ family, and the black-flag base are not indicators.
-        for s in ["\u{1F4CA}", "\u{1F469}\u{200D}\u{1F373}", "\u{1F3F4}"] {
-            let (buf, len, _) = callStringToScreenChars(s)
-            for i in 0..<len {
-                XCTAssertFalse(isRegionalIndicator(buf[i]), "unexpected indicator in \(s)")
-            }
-        }
-    }
-
-    // MARK: Pairing under the default (double-width) layout
-
-    func testPairing_singleFlag() {
-        XCTAssertEqual(rolesForString(stringFromCodePoints([regionalU, regionalS])), "J>C>")
-    }
-
-    func testPairing_twoFlags() {
+    func testTwoFlagsOccupyTwoColumnsEach() {
         let s = stringFromCodePoints([regionalU, regionalS, regionalF, regionalR])
-        XCTAssertEqual(rolesForString(s), "J>C>J>C>")
+        let (buf, len, _) = callStringToScreenChars(s)
+        XCTAssertEqual(len, 4)
+        guard len == 4 else { return }
+        XCTAssertEqual(CharToStr(buf[0].code, buf[0].complexChar != 0) as String?,
+                       stringFromCodePoints([regionalU, regionalS]))
+        XCTAssertTrue(ScreenCharIsDWC_RIGHT(buf[1]))
+        XCTAssertEqual(CharToStr(buf[2].code, buf[2].complexChar != 0) as String?,
+                       stringFromCodePoints([regionalF, regionalR]))
+        XCTAssertTrue(ScreenCharIsDWC_RIGHT(buf[3]))
     }
 
-    func testPairing_oddRunLeavesTrailingIndicatorLone() {
+    /// An odd trailing indicator is its own cluster: a flag plus a lone indicator.
+    func testOddTrailingIndicatorStandsAlone() {
         let s = stringFromCodePoints([regionalU, regionalS, regionalF])
-        XCTAssertEqual(rolesForString(s), "J>C>L>")
+        let (buf, len, _) = callStringToScreenChars(s)
+        XCTAssertEqual(len, 4)
+        guard len == 4 else { return }
+        XCTAssertEqual(CharToStr(buf[0].code, buf[0].complexChar != 0) as String?,
+                       stringFromCodePoints([regionalU, regionalS]))
+        XCTAssertEqual(CharToStr(buf[2].code, buf[2].complexChar != 0) as String?,
+                       stringFromCodePoints([regionalF]))
     }
 
-    func testPairing_loneIndicator() {
-        XCTAssertEqual(rolesForString(stringFromCodePoints([regionalU])), "L>")
+    func testLoneIndicatorOccupiesTwoColumns() {
+        assertSingleDoubleWidthCell([regionalU])
     }
 
-    func testPairing_indicatorsSeparatedByTextDoNotPair() {
-        let s = stringFromCodePoints([regionalU, 0x41 /* A */, regionalS])
-        XCTAssertEqual(rolesForString(s), "L>.L>")
-    }
-
-    func testPairing_flagPrecededByText() {
+    /// A flag after other text still forms its own cluster.
+    func testFlagPrecededByText() {
         let s = stringFromCodePoints([0x41 /* A */, regionalU, regionalS])
-        XCTAssertEqual(rolesForString(s), ".J>C>")
+        let (buf, len, _) = callStringToScreenChars(s)
+        XCTAssertEqual(len, 3)
+        guard len == 3 else { return }
+        XCTAssertEqual(buf[0].code, unichar(0x41))
+        XCTAssertEqual(buf[0].complexChar, 0)
+        XCTAssertEqual(CharToStr(buf[1].code, buf[1].complexChar != 0) as String?,
+                       stringFromCodePoints([regionalU, regionalS]))
+        XCTAssertTrue(ScreenCharIsDWC_RIGHT(buf[2]))
     }
 
-    // MARK: Same pairing in the single-width layout
-
-    func testPairing_singleWidth_singleFlag() {
-        XCTAssertEqual(rolesForStringSingleWidth(stringFromCodePoints([regionalU, regionalS])), "JC")
+    /// Indicators separated by text do not pair.
+    func testIndicatorsSeparatedByTextDoNotPair() {
+        let s = stringFromCodePoints([regionalU, 0x41 /* A */, regionalS])
+        let (buf, len, _) = callStringToScreenChars(s)
+        XCTAssertEqual(len, 5)
+        guard len == 5 else { return }
+        XCTAssertEqual(buf[2].code, unichar(0x41))
     }
 
-    func testPairing_singleWidth_oddRun() {
-        let s = stringFromCodePoints([regionalU, regionalS, regionalF])
-        XCTAssertEqual(rolesForStringSingleWidth(s), "JCL")
+    // MARK: Emoji modifier sequences are deliberately left alone
+
+    /// Emoji modifiers are Grapheme_Base too, so the own-cell scan splits them off their
+    /// base and each half is double-width. That makes a skin-toned emoji four columns.
+    /// It is NOT fixed by excluding modifiers from the set the way regional indicators
+    /// are: a modifier has Grapheme_Cluster_Break=Extend, so Apple attaches one to
+    /// whatever precedes it, and CoreText draws a separate swatch glyph when the base
+    /// cannot take a modifier. Collapsing "A" + modifier into one cell would overlap it.
+    /// These tests pin the current behavior so a future fix has to be deliberate.
+    func testSkinToneStillSplitsFromItsBase() {
+        let (_, bmpLen, _) = callStringToScreenChars(stringFromCodePoints([0x270B, mediumSkin]))
+        XCTAssertEqual(bmpLen, 4, "✋🏽 currently occupies four columns")
+
+        let (_, suppLen, _) = callStringToScreenChars(stringFromCodePoints([0x1F44D, mediumSkin]))
+        XCTAssertEqual(suppLen, 4, "👍🏽 currently occupies four columns")
     }
 
-    // MARK: The opening cell reconstructs the whole flag string
+    // MARK: The rules this must not disturb
 
-    func testOpeningCellCarriesFullFlagString() {
-        let (buf, len, _) = callStringToScreenChars(stringFromCodePoints([regionalU, regionalS]))
-        var pendingOpen: ObjCBool = false
-        var reconstructed: String?
-        buf.withUnsafeBufferPointer { ptr in
-            for i in 0..<len {
-                let r: iTermRegionalIndicatorPairing = withUnsafeMutablePointer(to: &pendingOpen) { pop in
-                    iTermRegionalIndicatorPairingForCell(ptr.baseAddress, Int32(i), Int32(len), pop)
-                }
-                if r.joinWithNext.boolValue {
-                    let base = CharToStr(buf[i].code, buf[i].complexChar != 0) as String? ?? ""
-                    let successor = CharToStr(r.successorCode, true) as String? ?? ""
-                    reconstructed = base + successor
-                    break
-                }
+    /// Issue 7788: Apple groups these Tamil code points into one cluster; splitting at
+    /// base characters is the whole point of the own-cell scan.
+    func testTamilStillSplits() {
+        let s = stringFromCodePoints([0x0B95, 0x0BCD, 0x0B95, 0x0BC1])
+        let (_, len, _) = callStringToScreenChars(s)
+        XCTAssertEqual(len, 3)
+    }
+
+    /// GB6-GB8: conjoining jamo stay in one cluster.
+    func testDecomposedHangulStaysOneCluster() {
+        assertSingleDoubleWidthCell([0x1100, 0x1161, 0x11A8])
+    }
+
+    /// GB9 and GB11: a ZWJ sequence is one cluster, handled by the precededByZWJ guard.
+    func testZWJSequenceStaysOneCluster() {
+        assertSingleDoubleWidthCell([0x1F468, 0x200D, 0x1F469, 0x200D, 0x1F466])
+    }
+
+    /// A tag sequence flag is one cluster.
+    func testTagSequenceFlagStaysOneCluster() {
+        assertSingleDoubleWidthCell([0x1F3F4, 0xE0067, 0xE0062, 0xE0073, 0xE0063, 0xE0074, 0xE007F])
+    }
+}
+
+// MARK: - Section 8: A flag's width does not depend on the width gates
+
+/// A flag is now a single cluster, so its width comes entirely from the base regional
+/// indicator. That routes it through iTermIsFlagCharacter, which is gated on both
+/// fullWidthFlags and unicodeVersion >= 9 -- so turning either gate off would collapse
+/// the flag to a single narrow cell. Before flags were one cluster, the two own-cell
+/// indicators gave two columns under every setting, which is what every wcwidth reports.
+/// One column would put the shell's cursor arithmetic out of step with the grid, so a
+/// multi-indicator cluster must be double-width independently of both gates.
+final class FlagWidthGateTests: XCTestCase {
+    private let regionalU: UInt32 = 0x1F1FA
+    private let regionalS: UInt32 = 0x1F1F8
+    private static let fullWidthFlagsKey = "FullWidthFlags"
+    private var savedFullWidthFlags: Any?
+
+    override func setUp() {
+        super.setUp()
+        savedFullWidthFlags = iTermUserDefaults.userDefaults().object(forKey: Self.fullWidthFlagsKey)
+    }
+
+    override func tearDown() {
+        if let v = savedFullWidthFlags {
+            iTermUserDefaults.userDefaults().set(v, forKey: Self.fullWidthFlagsKey)
+        } else {
+            iTermUserDefaults.userDefaults().removeObject(forKey: Self.fullWidthFlagsKey)
+        }
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        super.tearDown()
+    }
+
+    private func setFullWidthFlags(_ value: Bool) {
+        iTermUserDefaults.userDefaults().set(value, forKey: Self.fullWidthFlagsKey)
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        XCTAssertEqual(iTermAdvancedSettingsModel.fullWidthFlags(), value)
+    }
+
+    private func assertFlagIsTwoColumns(unicodeVersion: Int,
+                                        softAlternateScreenMode: Bool = false,
+                                        file: StaticString = #filePath,
+                                        line: UInt = #line) {
+        let s = stringFromCodePoints([regionalU, regionalS])
+        let (buf, len, _) = callStringToScreenChars(s,
+                                                    unicodeVersion: unicodeVersion,
+                                                    softAlternateScreenMode: softAlternateScreenMode)
+        XCTAssertEqual(len, 2, "a flag must occupy two columns", file: file, line: line)
+        guard len == 2 else { return }
+        XCTAssertTrue(ScreenCharIsDWC_RIGHT(buf[1]), file: file, line: line)
+        XCTAssertEqual(CharToStr(buf[0].code, buf[0].complexChar != 0) as String?, s,
+                       file: file, line: line)
+    }
+
+    func testFlagIsTwoColumnsWithUnicode9() {
+        setFullWidthFlags(true)
+        assertFlagIsTwoColumns(unicodeVersion: 9)
+    }
+
+    /// Unchecking the profile's Unicode 9 box writes 8 explicitly.
+    func testFlagIsTwoColumnsWithUnicode8() {
+        setFullWidthFlags(true)
+        assertFlagIsTwoColumns(unicodeVersion: 8)
+    }
+
+    func testFlagIsTwoColumnsWithFullWidthFlagsOff() {
+        setFullWidthFlags(false)
+        assertFlagIsTwoColumns(unicodeVersion: 9)
+    }
+
+    func testFlagIsTwoColumnsWithBothGatesOff() {
+        setFullWidthFlags(false)
+        assertFlagIsTwoColumns(unicodeVersion: 8)
+    }
+
+    // MARK: The alternate screen
+
+    /// The flag rule is deliberately not gated on the alternate screen, unlike VS16
+    /// widening. The gate on VS16 exists because making an emoji-presentation sequence
+    /// full-width disagrees with wcwidth, which full-screen applications use: wcswidth
+    /// reports 1 for U+2764 U+FE0F. It reports 2 for a regional indicator pair, so giving a
+    /// flag two columns agrees with those applications rather than diverging from them, and
+    /// it should hold in both grids.
+    func testFlagIsTwoColumnsInAlternateScreen() {
+        for flags in [true, false] {
+            for version in [9, 8] {
+                setFullWidthFlags(flags)
+                assertFlagIsTwoColumns(unicodeVersion: version, softAlternateScreenMode: true)
             }
         }
-        XCTAssertEqual(reconstructed, stringFromCodePoints([regionalU, regionalS]))
     }
 
-    // MARK: Wrap boundary
+    /// The companion invariant: VS16 widening stays gated, so the flag rule must not have
+    /// generalized to emoji-presentation sequences.
+    func testVS16WideningRemainsRestrictedToPrimaryGrid() {
+        setFullWidthFlags(true)
+        let heart = stringFromCodePoints([0x2764, 0xFE0F])
 
-    /// A flag that splits across a soft wrap becomes a lone indicator at the end of one row
-    /// and another lone indicator at the start of the next. Pairing state is per-row, so each
-    /// renders its fallback glyph, identically to the legacy renderer (which shapes each row
-    /// as its own CoreText run). Simulate by pairing each row independently.
-    func testWrapSplit_bothHalvesRenderLone() {
-        XCTAssertEqual(rolesForString(stringFromCodePoints([regionalU])), "L>")
-        XCTAssertEqual(rolesForString(stringFromCodePoints([regionalS])), "L>")
+        let (_, primaryLen, _) = callStringToScreenChars(heart, softAlternateScreenMode: false)
+        XCTAssertEqual(primaryLen, 2, "VS16 widens in the primary grid")
+
+        let (_, altLen, _) = callStringToScreenChars(heart, softAlternateScreenMode: true)
+        XCTAssertEqual(altLen, 1, "VS16 must not widen in the alternate screen")
     }
 }
