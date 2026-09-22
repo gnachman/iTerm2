@@ -1517,6 +1517,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 tState.useHDRCursor = cursorInfo.useHDRWhite;
                 tState.doubleWidth = cursorInfo.doubleWidth;
                 tState.fadeAlpha = cursorFadeAlpha;
+                tState.pixelOffset = cursorInfo.pixelOffset;
 
                 tState = [frameData transientStateForRenderer:_frameCursorRenderer];
                 tState.coord = cursorInfo.coord;
