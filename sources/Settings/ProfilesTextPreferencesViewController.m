@@ -517,8 +517,8 @@
     switch ((ITermCursorType)[self intForKey:KEY_CURSOR_TYPE]) {
         case CURSOR_UNDERLINE:
         case CURSOR_VERTICAL:
-            return YES;
         case CURSOR_BOX:
+            return YES;
         case CURSOR_DEFAULT:
             return NO;
     }
