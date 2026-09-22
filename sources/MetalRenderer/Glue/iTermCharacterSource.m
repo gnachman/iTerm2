@@ -122,7 +122,6 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 @implementation iTermCharacterSource {
 @protected
     iTermCharacterSourceAttributes *_attributes;
-    BOOL _antialiased;
     BOOL _fakeItalic;
 
     // Large enough to hold glyphSize * maxParts in both horizontal and vertical direction.
@@ -536,6 +535,25 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         drawnRect = CGRectMake(0, 0, _size.width, _size.height);
     } else {
         drawnRect = [self frameFlipped:NO];
+        if (!_antialiased) {
+            // Clearing needs strict pixel coverage, unlike -newParts, which only cares
+            // which tiles are touched. Neither bounds measurement is exact for hinted
+            // aliased glyphs and CGContextClearRect treats the max edges as exclusive, so
+            // pay a small margin -- here rather than in -frameFlipped:, so part selection
+            // does not pay for it. Measured over the sweep described in
+            // iTermRegularCharacterSource: without this, ink survived the clear in 4 of
+            // 330624 cases, each by exactly one pixel. Issue 13071.
+            drawnRect = CGRectInset(drawnRect, -2, -2);
+        }
+        if (![self boundsAreTrustworthy]) {
+            // We have no measurement that bounds the ink, so clearing drawnRect could
+            // leave some behind for the next glyph drawn into this shared context to
+            // pick up. Clear everything, as the emoji path above does for the same
+            // reason. This costs a full-context clear, but glyph rasterization is cached
+            // per glyph key, so it is paid once per glyph rather than per frame.
+            // Issue 13071.
+            drawnRect = CGRectMake(0, 0, _size.width, _size.height);
+        }
         if ([self drawScale] > 1) {
             // Scaled glyphs can overflow beyond _size. Clear the entire context.
             drawnRect = CGRectMake(0, 0, CGBitmapContextGetWidth(_context),
@@ -886,6 +904,11 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     return [result copy];
 }
 
+// Subclasses that cannot measure aliased rasterization override this.
+- (BOOL)boundsAreTrustworthy {
+    return YES;
+}
+
 - (CGFloat)fakeBoldShift {
     if (_antialiased) {
         if (_descriptor.scale > 1) {
@@ -983,7 +1006,14 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         }
     }
     if (_fakeBold) {
-        frame.size.width += self.fakeBoldShift;
+        // Everything else here is in pixels by this point, and both draw sites offset the
+        // bolding pass by fakeBoldShift * scale (see -[iTermRegularCharacterSource
+        // drawRuns:atOffset:skew:iteration:] and -[iTermGlyphCharacterSource
+        // drawIteration:atOffset:skew:]), so the addend has to be scaled too. Unscaled,
+        // an aliased fake-bold glyph at 2x grew this rect by 1px while the second draw
+        // moved 2px right, leaving the rightmost column of ink outside both the clear and
+        // the parts -newParts picks.
+        frame.size.width += self.fakeBoldShift * _descriptor.scale;
     }
 
     CGSize offset = [self desiredOffset];

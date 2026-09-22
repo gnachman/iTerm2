@@ -1,0 +1,51 @@
+GPU vs legacy glyph rendering -- issue 13071
+Set Profiles > Text > Anti-aliased OFF, or none of this exercises the change.
+Every pair of lines below must look identical with and without GPU rendering.
+
+Fonts worth trying, and what each one stresses:
+  Monaco 12 or 9, on a NON-Retina display -- the reported bug itself (~).
+  Source Code Pro / Sauce Code Pro NFM 10-16 -- worst affected here (% and ").
+  PT Mono Bold 13-16 -- " at both backing scales.
+  JCsmPC 9-12 -- the largest error found (< and >).
+  Cascadia Code PL 14 or 16 -- backtick.
+  Berkeley Mono, Monaspace, CommitMono NF, Hasklug, Fira Mono NFM and
+  Operator Mono Bold report bounds in font design units when antialiasing
+  is off, so they exercise the fallback path.
+
+-- all of ASCII, in each typeface (builds all the glyph caches, in order) --
+[0m !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~[0m
+[1m !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~[0m
+[3m !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~[0m
+[1;3m !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~[0m
+
+-- dense runs: ink spilling into the next cell shows up here --
+[0m<<<<<<<<  >>>>>>>>  ////////  """"""""  ~~~~~~~~  %%%%%%%%  ........  ````````  \\\\\\\\[0m
+[1m<<<<<<<<  >>>>>>>>  ////////  """"""""  ~~~~~~~~  %%%%%%%%  ........  ````````  \\\\\\\\[0m
+[3m<<<<<<<<  >>>>>>>>  ////////  """"""""  ~~~~~~~~  %%%%%%%%  ........  ````````  \\\\\\\\[0m
+[1;3m<<<<<<<<  >>>>>>>>  ////////  """"""""  ~~~~~~~~  %%%%%%%%  ........  ````````  \\\\\\\\[0m
+
+-- each risky character between letters: watch for marks above or beside --
+[0mn<n n>n n/n n"n n~n n%n n.n n`n n\n[0m
+[1mn<n n>n n/n n"n n~n n%n n.n n`n n\n[0m
+[3mn<n n>n n/n n"n n~n n%n n.n n`n n\n[0m
+[1;3mn<n n>n n/n n"n n~n n%n n.n n`n n\n[0m
+
+-- risky character followed by a space: the reported symptom --
+[0m< < > > / / " " ~ ~ % % . . ` ` \ \[0m
+[1m< < > > / / " " ~ ~ % % . . ` ` \ \[0m
+[3m< < > > / / " " ~ ~ % % . . ` ` \ \[0m
+[1;3m< < > > / / " " ~ ~ % % . . ` ` \ \[0m
+
+-- the original repro: X, ten bold spaces, Y --
+X[1m          [0mY
+X[3m          [0mY
+X[1;3m          [0mY
+
+-- k9s-style padding: bold label, spaces, plain text --
+[1m<a>[0m       Attach
+[1m<ctrl-k>[0m       Kill
+[1m<shift-j>[0m       Jump Owner
+
+-- tildes and quotes adjacent to spaces, both orders --
+[1m~ ~~ ~~~ ~~~~ " "" """ % %% . .. ` `` < << > >>[0m
+[1m ~ ~~ ~~~  " ""  % %%  . ..  ` ``  < <<  > >> [0m
