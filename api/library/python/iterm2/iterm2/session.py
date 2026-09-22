@@ -170,6 +170,30 @@ class SessionLineInfo:
         return self.__line_info[3]
 
 
+class SessionNote:
+    """Describes a session's floating Session Note."""
+
+    def __init__(self, text: str, visible: bool, collapsed: bool):
+        self.__text = text
+        self.__visible = visible
+        self.__collapsed = collapsed
+
+    @property
+    def text(self) -> str:
+        """The plain-text contents of the note."""
+        return self.__text
+
+    @property
+    def visible(self) -> bool:
+        """Whether the note is currently visible over the terminal."""
+        return self.__visible
+
+    @property
+    def collapsed(self) -> bool:
+        """Whether the note is collapsed to its title bar."""
+        return self.__collapsed
+
+
 class Session:
     """
     Represents an iTerm2 session.
@@ -773,6 +797,52 @@ class Session:
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
         await self._async_set_property("buried", json.dumps(buried))
+
+    async def async_get_session_note(self) -> SessionNote:
+        """Returns this session's Session Note state.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+        """
+        response = await iterm2.rpc.async_get_property(
+            self.connection,
+            "session_note",
+            session_id=self.session_id)
+        status = response.get_property_response.status
+        # pylint: disable=no-member
+        if status != iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"):
+            raise iterm2.rpc.RPCException(
+                iterm2.api_pb2.GetPropertyResponse.Status.Name(status))
+        value = json.loads(response.get_property_response.json_value)
+        return SessionNote(
+            value["text"], value["visible"], value["collapsed"])
+
+    async def async_set_session_note(
+            self,
+            text: typing.Optional[str] = None,
+            visible: typing.Optional[bool] = None,
+            collapsed: typing.Optional[bool] = None) -> None:
+        """Updates selected fields of this session's Session Note.
+
+        Omitted fields retain their current values. Set ``text`` to an empty
+        string to remove the note. Showing a note does not move keyboard focus.
+
+        :param text: New plain-text contents, or ``None`` to preserve them.
+        :param visible: Whether the note is shown, or ``None`` to preserve it.
+        :param collapsed: Whether the note is collapsed, or ``None`` to
+            preserve it.
+        :throws: :class:`ValueError` if no fields are supplied.
+        :throws: :class:`~iterm2.rpc.RPCException` if iTerm2 rejects the update.
+        """
+        value: typing.Dict[str, typing.Union[str, bool]] = {}
+        if text is not None:
+            value["text"] = text
+        if visible is not None:
+            value["visible"] = visible
+        if collapsed is not None:
+            value["collapsed"] = collapsed
+        if not value:
+            raise ValueError("At least one Session Note field is required")
+        await self._async_set_property("session_note", json.dumps(value))
 
     async def _async_set_property(self, key, json_value):
         """Sets a property on this session.
