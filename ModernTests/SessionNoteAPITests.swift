@@ -68,6 +68,27 @@ final class SessionNoteAPITests: XCTestCase {
         XCTAssertTrue(session.sessionNoteModel === originalModel)
         XCTAssertEqual(session.sessionNoteModel?.text, "next action")
         XCTAssertEqual(session.sessionNoteModel?.isCollapsed, true)
+        XCTAssertEqual(session.sessionNoteAPIDictionary as? [String: AnyHashable], [
+            "text": "next action",
+            "visible": false,
+            "collapsed": true,
+        ])
+    }
+
+    func testHidingPreservesTextAndCollapsedState() {
+        let session = makeSession()
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": "keep", "collapsed": true])!))
+        let originalModel = session.sessionNoteModel
+
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["visible": false])!))
+        XCTAssertTrue(session.sessionNoteModel === originalModel)
+        XCTAssertEqual(session.sessionNoteAPIDictionary as? [String: AnyHashable], [
+            "text": "keep",
+            "visible": false,
+            "collapsed": true,
+        ])
     }
 
     func testTextPatchPreservesCollapsedState() {
