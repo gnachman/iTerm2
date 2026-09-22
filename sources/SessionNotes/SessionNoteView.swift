@@ -617,6 +617,7 @@ class SessionNoteView: NSView, NSTextViewDelegate {
         if textView.string != model.text {
             textView.string = model.text
         }
+        updateTitleLabel()
     }
 
     // MARK: - Key Handling

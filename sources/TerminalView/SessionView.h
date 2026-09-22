@@ -372,6 +372,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // Session note
 - (void)showSessionNoteWithModel:(iTermSessionNoteModel *)model;
 - (void)restoreSessionNoteWithModel:(iTermSessionNoteModel *)model;
+- (void)setSessionNoteCollapsed:(BOOL)collapsed;
 - (void)hideSessionNote;
 - (void)hideSessionNoteIfEmpty;
 @property(nonatomic, readonly) BOOL isSessionNoteVisible;
