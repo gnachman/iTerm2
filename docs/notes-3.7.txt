@@ -617,3 +617,32 @@ Bug Fixes:
   of full-screen programs like k9s, and it
   persisted for the rest of the session once it
   appeared.
+- Fixed a bug where a flag emoji took four
+  columns instead of two, leaving a gap after
+  it. A flag is now always two columns, the
+  width other terminals report for it, so the
+  advanced setting “Lone regional indicators
+  render full-width” no longer affects flags.
+  Skin-toned emoji are still affected and will
+  be fixed separately.
+- Fixed a bug where a character that combined
+  with the one before it could come out the
+  wrong width when the two halves arrived in
+  separate writes, leaving the cursor inside
+  the character.
+- Fixed Cmd-number tab shortcuts becoming
+  non-consecutive after changing a tab group
+  from the context menu. Removing a tab from a
+  group reordered the tabs but left the
+  shortcut numbers on their old positions.
+- Fixed Kitty graphics placeholder cells
+  drawing nothing when the image id fit in
+  three bytes and the program omitted the
+  optional diacritic that carries the high
+  byte. Other terminals render these, and now
+  iTerm2 does too.
+- Fixed a crash when asking for notification
+  permission. The reply block could be called
+  after it had gone out of scope, which could
+  terminate iTerm2 at the moment a
+  notification was first requested.

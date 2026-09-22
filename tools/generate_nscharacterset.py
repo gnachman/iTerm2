@@ -12,6 +12,7 @@ Data sources:
 - emoji-sequences.txt: Emoji sequences (for VS16 detection)
 - idn-chars.txt: IDN characters for URL detection
 - HangulSyllableType.txt: Conjoining jamo (L/V/T) that must not start their own cell
+- GraphemeBreakProperty.txt: Regional indicators, which must not start their own cell
 
 Usage:
     python3 tools/generate_nscharacterset.py
@@ -37,6 +38,7 @@ EMOJI_SEQUENCES_URL = "https://unicode.org/Public/emoji/latest/emoji-sequences.t
 IDN_CHARS_URL = "https://unicode.org/reports/tr36/idn-chars.txt"
 HANGUL_SYLLABLE_TYPE_URL = "https://unicode.org/Public/UCD/latest/ucd/HangulSyllableType.txt"
 BIDI_MIRRORING_URL = "https://unicode.org/Public/UCD/latest/ucd/BidiMirroring.txt"
+GRAPHEME_BREAK_PROPERTY_URL = "https://unicode.org/Public/UCD/latest/ucd/auxiliary/GraphemeBreakProperty.txt"
 
 # Cache directory for downloaded files
 CACHE_DIR = Path(__file__).parent / ".unicode_cache"
@@ -385,6 +387,7 @@ def main():
     idn_content = get_cached_or_fetch(IDN_CHARS_URL, "idn-chars.txt")
     hangul_syllable_type_content = get_cached_or_fetch(HANGUL_SYLLABLE_TYPE_URL, "HangulSyllableType.txt")
     bidi_mirroring_content = get_cached_or_fetch(BIDI_MIRRORING_URL, "BidiMirroring.txt")
+    grapheme_break_content = get_cached_or_fetch(GRAPHEME_BREAK_PROPERTY_URL, "GraphemeBreakProperty.txt")
 
     print("Parsing Unicode data...")
     unicode_data = parse_unicode_data(unicode_data_content)
@@ -463,8 +466,24 @@ def main():
         | parse_derived_props(hangul_syllable_type_content, "V")
         | parse_derived_props(hangul_syllable_type_content, "T")
     )
+    # Regional indicators are Grapheme_Base for the same reason and need the same
+    # exclusion. UAX #29 rules GB12/GB13 pair them up, so a flag emoji is one cluster that
+    # CFStringGetRangeOfComposedCharactersAtIndex already segments correctly (including a
+    # trailing odd indicator, which stands alone). Letting the own-cell scan re-split a
+    # pair made a flag four columns wide instead of two: each indicator became its own
+    # cell and the fullWidthFlags rule then doubled each one. See issue 13070.
+    #
+    # Note that emoji modifiers (skin tones) are Grapheme_Base too and are NOT excluded
+    # here. They have Grapheme_Cluster_Break=Extend, so Apple attaches one to whatever
+    # precedes it, valid base or not, and CoreText draws a separate swatch glyph when the
+    # sequence is not a real emoji modifier sequence. Excluding them outright would
+    # collapse "A" + modifier into a single cell and overlap the swatch. Suppressing that
+    # split correctly requires an Emoji_Modifier_Base check on the preceding code point.
+    regional_indicators = parse_derived_props(grapheme_break_content, "Regional_Indicator")
     own_cell_codes = sorted(
-        (base_codes | set(spacing_combining_codes) | modifier_letter_codes) - conjoining_jamo
+        (base_codes | set(spacing_combining_codes) | modifier_letter_codes)
+        - conjoining_jamo
+        - regional_indicators
     )
 
     # Split into BMP and supplementary for each set
