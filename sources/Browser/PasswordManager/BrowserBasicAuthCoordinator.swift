@@ -82,7 +82,6 @@
 
 import Foundation
 
-@available(macOS 11.0, *)
 @MainActor
 final class BrowserBasicAuthCoordinator {
 

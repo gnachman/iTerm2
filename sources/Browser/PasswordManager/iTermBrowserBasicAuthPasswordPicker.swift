@@ -10,7 +10,6 @@
 
 import AppKit
 
-@available(macOS 11.0, *)
 @MainActor
 @objc class iTermBrowserBasicAuthPasswordPicker: NSObject, @preconcurrency iTermPasswordManagerDelegate {
     private var windowController: iTermBrowserPasswordManagerWindowController?
