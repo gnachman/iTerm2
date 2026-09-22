@@ -1756,6 +1756,11 @@ extension PTYSession: AutomaticProfileSwitchingSessionDelegate {
 // MARK: - Session Note
 
 extension PTYSession {
+    @objc(hydrateSessionNoteFromArrangement:)
+    func hydrateSessionNote(fromArrangement arrangement: NSDictionary) {
+        sessionNoteModel = SessionNoteModel.fromArrangement(arrangement)
+    }
+
     @objc func textViewEditSessionNote() {
         guard let view else { return }
         if view.isSessionNoteVisible {

@@ -1908,10 +1908,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [[iTermSessionStatusController instance] tabStatusDidChange:aSession->_tabStatus];
         }
     }
-    NSDictionary *sessionNoteDict = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SESSION_NOTE]];
-    if (sessionNoteDict) {
-        aSession.sessionNoteModel = [iTermSessionNoteModel fromArrangement:sessionNoteDict];
-    }
     if (didRestoreContents && attachedToServer) {
         if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
             aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
@@ -2030,6 +2026,10 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.foundingArrangement = [arrangement dictionaryByRemovingObjectForKey:SESSION_ARRANGEMENT_CONTENTS];
     aSession.view = sessionView;
+    NSDictionary *sessionNoteDict = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SESSION_NOTE]];
+    if (sessionNoteDict) {
+        [aSession hydrateSessionNoteFromArrangement:sessionNoteDict];
+    }
 
     // Record the saved foreground-job ancestry now, synchronously and before any (re)attach, and
     // begin buffering live ancestry updates so a process-cache notification arriving during the

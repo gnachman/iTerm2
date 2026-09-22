@@ -169,4 +169,26 @@ final class SessionNoteAPITests: XCTestCase {
         XCTAssertEqual(session.sessionNoteModel?.text, "keep")
         XCTAssertEqual(session.sessionNoteModel?.isCollapsed, true)
     }
+
+    func testRestorationHydratesNoteBeforeRestoringItsView() {
+        let session = makeSession()
+        let view = SessionView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        session.view = view
+
+        session.hydrateSessionNote(fromArrangement: [
+            "text": "resume investigation",
+            "collapsed": true,
+            "frame": NSStringFromRect(NSRect(x: 20, y: 20, width: 300, height: 160)),
+        ])
+        session.didFinishRestoration()
+
+        XCTAssertEqual(session.sessionNoteModel?.text, "resume investigation")
+        XCTAssertEqual(session.sessionNoteModel?.isCollapsed, true)
+        XCTAssertTrue(view.isSessionNoteVisible)
+        XCTAssertEqual(session.sessionNoteAPIDictionary as? [String: AnyHashable], [
+            "text": "resume investigation",
+            "visible": true,
+            "collapsed": true,
+        ])
+    }
 }
