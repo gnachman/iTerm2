@@ -5,9 +5,9 @@
 //  Applies a full-view fragment shader (for example, a CRT effect) to the
 //  finished terminal frame as it is copied to the drawable.
 //
-//  The shader is chosen by the postProcessingShader advanced setting. It is
-//  either the name of a built-in shader (a .metalsrc file in the app bundle) or
-//  the path to a user-provided file. Both are compiled at runtime after
+//  The shader is chosen per profile (KEY_POST_PROCESSING_SHADER). It is either
+//  the name of a built-in shader (a .metalsrc file in the app bundle) or the
+//  path to a user-provided file. Both are compiled at runtime after
 //  iTermPostProcessPrelude.metalsrc, which defines the entry points, uniforms,
 //  and some GLSL compatibility shims. User files are recompiled when they
 //  change.
@@ -77,7 +77,7 @@ class PostProcessShaderCache: NSObject {
     // A nil value records a failed compile so it isn't retried every frame.
     private var pipelines = [Key: PostProcessPipeline?]()
     private var libraries = [Key: MTLLibrary?]()
-    private var lastFileCheck: FileCheck?
+    private var fileChecks = [String: FileCheck]()
     private static let builtInExtension = "metalsrc"
 
     // Frames per second to redraw at while a shader is active. Zero means
@@ -86,19 +86,10 @@ class PostProcessShaderCache: NSObject {
         return max(0, iTermAdvancedSettingsModel.postProcessingShaderFrameRate())
     }
 
-    @objc var isEnabled: Bool {
-        return !spec.isEmpty
-    }
-
-    private var spec: String {
-        return iTermAdvancedSettingsModel.postProcessingShader().trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    // Returns nil if no shader is configured or if it fails to compile.
-    @objc(pipelineForDevice:pixelFormat:)
-    func pipeline(device: MTLDevice, pixelFormat: MTLPixelFormat) -> PostProcessPipeline? {
-        let spec = self.spec
-        if spec.isEmpty {
+    // Returns nil if shader is empty or fails to compile.
+    @objc(pipelineForShader:device:pixelFormat:)
+    func pipeline(shader: String?, device: MTLDevice, pixelFormat: MTLPixelFormat) -> PostProcessPipeline? {
+        guard let spec = shader?.trimmingCharacters(in: .whitespacesAndNewlines), !spec.isEmpty else {
             return nil
         }
         let path = self.path(for: spec)
@@ -109,9 +100,9 @@ class PostProcessShaderCache: NSObject {
         if let cached = pipelines[key] {
             return cached
         }
-        // The shader or file changed, so older entries are garbage.
-        pipelines = pipelines.filter { $0.key.spec == spec && $0.key.modificationDate == key.modificationDate }
-        libraries = libraries.filter { $0.key.spec == spec && $0.key.modificationDate == key.modificationDate }
+        // Entries for older versions of this shader's file are garbage.
+        pipelines = pipelines.filter { $0.key.spec != spec || $0.key.modificationDate == key.modificationDate }
+        libraries = libraries.filter { $0.key.spec != spec || $0.key.modificationDate == key.modificationDate }
         let pipeline = makePipeline(key: key, path: path, device: device, pixelFormat: pixelFormat)
         pipelines[key] = pipeline
         return pipeline
@@ -125,14 +116,14 @@ class PostProcessShaderCache: NSObject {
         return nil
     }
 
-    // Checks the file system at most once a second.
+    // Checks the file system at most once a second per file.
     private func modificationDate(of path: String) -> Date? {
         let now = Date.timeIntervalSinceReferenceDate
-        if let check = lastFileCheck, check.path == path, now - check.checkedAt < 1 {
+        if let check = fileChecks[path], now - check.checkedAt < 1 {
             return check.modificationDate
         }
         let date = (try? FileManager.default.attributesOfItem(atPath: path))?[.modificationDate] as? Date
-        lastFileCheck = FileCheck(path: path, checkedAt: now, modificationDate: date)
+        fileChecks[path] = FileCheck(path: path, checkedAt: now, modificationDate: date)
         return date
     }
 

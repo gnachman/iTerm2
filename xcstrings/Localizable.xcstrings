@@ -23886,6 +23886,48 @@
         }
       }
     },
+    "AdvancedSetting.postProcessingShaderFrameRate" : {
+      "comment" : "Advanced setting: postProcessingShaderFrameRate",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildrate (FPS) für die Animation des Nachbearbeitungs-Shaders.\nMit 0 wird nur neu gezeichnet, wenn sich das Terminal ändert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Frame rate (FPS) for animating the post-processing shader.\nUse 0 to redraw only when the terminal changes."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ポストプロセス シェーダーをアニメーションさせるフレームレート (FPS)。\n0 にすると、ターミナルが変化したときだけ再描画します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taxa de quadros (FPS) para animar o shader de pós-processamento.\nUse 0 para redesenhar apenas quando o terminal mudar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Частота кадров (кадр/с) для анимации шейдера постобработки.\nУкажите 0, чтобы перерисовывать только при изменении терминала."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "后期处理着色器动画的帧率（FPS）。\n设为 0 则仅在终端内容变化时重绘。"
+          }
+        }
+      }
+    },
     "AdvancedSetting.preconvertStringsOnParserThread" : {
       "comment" : "Advanced setting: preconvertStringsOnParserThread",
       "extractionState" : "extracted_with_value",
@@ -131209,6 +131251,48 @@
         }
       }
     },
+    "Profiles.Window.BlurStyle" : {
+      "comment" : "Display name for the popup that chooses between classic blur and Liquid Glass behind the window.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unschärfestil: klassische Unschärfe oder Liquid Glass"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Blur style: classic blur or Liquid Glass"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ぼかしのスタイル: クラシックぼかしまたは Liquid Glass"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estilo de desfoque: desfoque clássico ou Liquid Glass"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стиль размытия: классическое размытие или Liquid Glass"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模糊样式：经典模糊或 Liquid Glass"
+          }
+        }
+      }
+    },
     "Profiles.Window.ColumnsBy" : {
       "comment" : "Label between the columns field and the rows field in the window-size row.",
       "extractionState" : "extracted_with_value",
@@ -132129,6 +132213,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "光标所在屏幕"
+          }
+        }
+      }
+    },
+    "Profiles.Window.Shader" : {
+      "comment" : "Display name for the popup that picks a post-processing shader, such as a CRT effect, for the terminal.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf das Terminal angewendeter Shader"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Shader applied to the terminal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ターミナルに適用するシェーダー"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shader aplicado ao terminal"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шейдер, применяемый к терминалу"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用于终端的着色器"
+          }
+        }
+      }
+    },
+    "Profiles.Window.ShaderPickerMessage" : {
+      "comment" : "Prompt in the open panel for choosing a post-processing shader file. mainImage() is the name of a function and should not be translated.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie eine Metal-Shader-Datei, die mainImage() definiert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose a Metal shader file that defines mainImage()."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mainImage() を定義している Metal シェーダーファイルを選択してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha um arquivo de shader Metal que defina mainImage()."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выберите файл шейдера Metal, в котором определена функция mainImage()."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个定义了 mainImage() 的 Metal 着色器文件。"
           }
         }
       }

@@ -584,7 +584,8 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     }
     if (!frameData.debugInfo && !_captureNextFrame) {
         iTermPostProcessShaderCache *shaderCache = [iTermPostProcessShaderCache instance];
-        frameData.postProcessPipeline = [shaderCache pipelineForDevice:frameData.device
+        frameData.postProcessPipeline = [shaderCache pipelineForShader:[_dataSource metalDriverPostProcessingShader]
+                                                                device:frameData.device
                                                            pixelFormat:_framebufferPixelFormat];
         // Don't burn the GPU animating a window nobody can see. Any change to the
         // terminal, such as a cursor blink, restarts the animation.
@@ -2780,8 +2781,9 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
     if ([iTermAdvancedSettingsModel metalSynchronizedDrawing]) {
         return;
     }
-    iTermPostProcessPipeline *pipeline = [[iTermPostProcessShaderCache instance] pipelineForDevice:view.device
-                                                                                        pixelFormat:_framebufferPixelFormat];
+    iTermPostProcessPipeline *pipeline = [[iTermPostProcessShaderCache instance] pipelineForShader:[_dataSource metalDriverPostProcessingShader]
+                                                                                            device:view.device
+                                                                                       pixelFormat:_framebufferPixelFormat];
     if (!pipeline) {
         return;
     }

@@ -69,7 +69,7 @@ TOP-LEVEL keys
                                            user-authored AI prompt templates
   PrefsCustomFolder, CustomScriptsFolder, DownloadsDirectory,
     ScreenshotSaveLocation, PreferredBaseDir, DynamicProfilesPath,
-    GitSearchPath, PostProcessingShader, PathsToIgnore, NativeRenderingCSSLight/Dark,
+    GitSearchPath, PathsToIgnore, NativeRenderingCSSLight/Dark,
     BrowserPluginPathHint, ImportPath, NoSyncLastSSHDirectory,
     NoSyncClaudeCodeConfigDirPath  paths
   NoSyncSavePanelSavedSettings_* ......... nested "InitialDirectory" path
@@ -89,7 +89,7 @@ embedded in arrangements under Bookmark / Initial Profile)
   Location, AWDS Window/Tab/Pane Directory, Log Directory, Log Filename
   Format, Archive Directory, Browser Extensions Root, Dynamic Profile
   Filename, Custom Locale, Bound Hosts, Jobs to Ignore, Snippets Filter,
-  tmux Pane Title
+  tmux Pane Title, Post-Processing Shader
   Nested: Triggers, Smart Selection Rules, Keyboard Map, Touch Bar Map,
           SSH, Semantic History, Status Bar Layout, Bindings
   Kept (NOT sensitive): Custom Command / Custom Directory / AWDS *Option
@@ -208,7 +208,7 @@ CONTENT_KEYS = {
     "PreferredBaseDir": REDACT_V,
     "DynamicProfilesPath": REDACT_V,
     "GitSearchPath": REDACT_V,
-    "PostProcessingShader": REDACT_V,
+    "Post-Processing Shader": REDACT_V,  # profile: shader file path
     "PathsToIgnore": REDACT_V,
     "NativeRenderingCSSLight": REDACT_V,
     "NativeRenderingCSSDark": REDACT_V,

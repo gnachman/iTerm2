@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "ITAddressBookMgr.h"
 #import "SolidColorView.h"
 #import "VT100GridTypes.h"
 
@@ -94,10 +95,10 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 // which is a PTYTab.
 @property(nonatomic, readonly) PTYTabView *tabView;
 
-// Puts a system Liquid Glass pane behind the window's contents, which refracts
-// the desktop behind the window. Style is @"clear" or @"regular"; nil removes it.
-// Has no effect before macOS 26.
-- (void)setLiquidGlassStyle:(nullable NSString *)style;
+// For the glass styles, puts a system Liquid Glass pane behind the window's
+// contents, which refracts the desktop behind the window. The classic style
+// removes it. Has no effect before macOS 26.
+- (void)setBlurStyle:(iTermBlurStyle)style;
 
 // This is a sometimes-visible control that shows the tabs and lets the user
 // change which is visible.

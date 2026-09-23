@@ -341,9 +341,9 @@ typedef struct {
     [self updateWindowNameBesideTabs];
 }
 
-- (void)setLiquidGlassStyle:(NSString *)style {
+- (void)setBlurStyle:(iTermBlurStyle)style {
     if (@available(macOS 26.0, *)) {
-        if (style == nil) {
+        if (style == iTermBlurStyleClassic) {
             [_liquidGlassView removeFromSuperview];
             _liquidGlassView = nil;
             return;
@@ -356,7 +356,7 @@ typedef struct {
             [self addSubview:glass positioned:NSWindowBelow relativeTo:nil];
             _liquidGlassView = glass;
         }
-        glass.style = [style isEqualToString:@"regular"] ? NSGlassEffectViewStyleRegular : NSGlassEffectViewStyleClear;
+        glass.style = (style == iTermBlurStyleRegularGlass) ? NSGlassEffectViewStyleRegular : NSGlassEffectViewStyleClear;
         glass.cornerRadius = [self resolvedWindowBorderCornerRadius];
         glass.frame = self.bounds;
     }

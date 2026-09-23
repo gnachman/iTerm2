@@ -27,6 +27,16 @@ class BackgroundImageMode(enum.Enum):
         return json.dumps(self.value)
 
 
+class BlurStyle(enum.Enum):
+    """Describes what is drawn behind a transparent window when blur is enabled."""
+    CLASSIC = 0  #: Classic background blur.
+    CLEAR_LIQUID_GLASS = 1  #: Clear Liquid Glass, which refracts what is behind the window. Requires macOS 26 or later; classic blur is used on older versions.
+    REGULAR_LIQUID_GLASS = 2  #: Regular (more tinted) Liquid Glass. Requires macOS 26 or later; classic blur is used on older versions.
+
+    def toJSON(self):
+        return json.dumps(self.value)
+
+
 class BadGUIDException(Exception):
     """Raised when a profile does not have a GUID or the GUID is unknown."""
 
@@ -1422,6 +1432,28 @@ class LocalWriteOnlyProfile:
         :param value: A float
         """
         return self._simple_set("Blur Radius", value)
+
+    def set_blur_style(self, value: BlurStyle):
+        """
+        Sets what is drawn behind the window when blur is enabled: classic
+        blur or Liquid Glass.
+
+        :param value: A `BlurStyle`
+        """
+        return self._simple_set("Blur Style", value)
+
+    def set_post_processing_shader(self, value: str):
+        """
+        Sets the shader applied to the rendered terminal when GPU rendering is
+        in use.
+
+        Use an empty string for none, the name of a built-in shader such as
+        "amber-crt", or the path to a Metal shader file that defines
+        mainImage().
+
+        :param value: A str
+        """
+        return self._simple_set("Post-Processing Shader", value)
 
     def set_background_image_mode(self, value: BackgroundImageMode):
         """
@@ -3480,6 +3512,28 @@ class WriteOnlyProfile:
         The value is between 0 and 30.
         """
         return await self._async_simple_set("Blur Radius", value)
+
+    async def async_set_blur_style(self, value: BlurStyle):
+        """
+        Sets what is drawn behind the window when blur is enabled: classic
+        blur or Liquid Glass.
+
+        :param value: A `BlurStyle`
+        """
+        return await self._async_simple_set("Blur Style", value)
+
+    async def async_set_post_processing_shader(self, value: str):
+        """
+        Sets the shader applied to the rendered terminal when GPU rendering is
+        in use.
+
+        Use an empty string for none, the name of a built-in shader such as
+        "amber-crt", or the path to a Metal shader file that defines
+        mainImage().
+
+        :param value: A str
+        """
+        return await self._async_simple_set("Post-Processing Shader", value)
 
     async def async_set_background_image_mode(self, value: BackgroundImageMode):
         """
@@ -5687,6 +5741,27 @@ class Profile(WriteOnlyProfile):
         :returns: A float
         """
         return self._simple_get("Blur Radius")
+
+    @property
+    def blur_style(self) -> BlurStyle:
+        """
+        Returns what is drawn behind the window when blur is enabled: classic
+        blur or Liquid Glass.
+
+        :returns: A `BlurStyle`
+        """
+        return BlurStyle(self._simple_get("Blur Style"))
+
+    @property
+    def post_processing_shader(self) -> str:
+        """
+        Returns the shader applied to the rendered terminal when GPU rendering
+        is in use: an empty string for none, the name of a built-in shader,
+        or the path to a shader file.
+
+        :returns: A str
+        """
+        return self._simple_get("Post-Processing Shader")
 
     @property
     def background_image_mode(self) -> BackgroundImageMode:

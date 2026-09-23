@@ -799,10 +799,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                  name:kUpdateLabelsNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(liquidGlassSettingMayHaveChanged:)
-                                                 name:iTermAdvancedSettingsDidChange
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(refreshTerminal:)
                                                  name:kRefreshTerminalNotification
                                                object:nil];
@@ -7295,31 +7291,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 }
 
-// The Liquid Glass style to use in place of blur, or nil for classic blur.
-- (NSString *)liquidGlassStyle {
+// Liquid Glass needs macOS 26; older systems get classic blur.
+- (iTermBlurStyle)effectiveBlurStyle {
     if (@available(macOS 26.0, *)) {
-        NSString *style = [[[iTermAdvancedSettingsModel liquidGlassBlur] lowercaseString]
-                           stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        if ([style isEqualToString:@"clear"] || [style isEqualToString:@"regular"]) {
-            return style;
-        }
+        return [[self currentTab] blurStyle];
     }
-    return nil;
-}
-
-- (void)liquidGlassSettingMayHaveChanged:(NSNotification *)notification {
-    // Posted on arbitrary threads.
-    __weak __typeof(self) weakSelf = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [[weakSelf currentTab] recheckBlur];
-    });
+    return iTermBlurStyleClassic;
 }
 
 - (void)enableBlur:(double)radius
 {
-    NSString *glassStyle = [self liquidGlassStyle];
-    [_contentView setLiquidGlassStyle:glassStyle];
-    if (glassStyle) {
+    const iTermBlurStyle style = [self effectiveBlurStyle];
+    [_contentView setBlurStyle:style];
+    if (style != iTermBlurStyleClassic) {
         // The glass does its own refraction and blur of what's behind the window.
         [self.ptyWindow disableBlur];
         return;
@@ -7345,7 +7329,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)reallyDisableBlurIfNeeded {
     if (!self.currentTab.blur) {
-        [_contentView setLiquidGlassStyle:nil];
+        [_contentView setBlurStyle:iTermBlurStyleClassic];
         [self.ptyWindow disableBlur];
     }
 }

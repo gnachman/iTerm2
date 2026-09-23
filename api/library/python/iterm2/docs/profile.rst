@@ -13,6 +13,10 @@ Profile
    :undoc-members:
    :members:
 
+.. autoclass:: iterm2.BlurStyle
+   :undoc-members:
+   :members:
+
 .. autoclass:: iterm2.CursorType
    :members:
 .. autoclass:: iterm2.ThinStrokes
