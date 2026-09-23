@@ -15990,48 +15990,6 @@
         }
       }
     },
-    "AdvancedSetting.dismemberScrollView" : {
-      "comment" : "Advanced setting: dismemberScrollView",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scrollansicht zerlegen für bessere GPU-Leistung?\nDies aktiviert einen gefährlichen Hack, der die Zeichenleistung möglicherweise nur unter macOS 10.14 verbessert."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Dismember scroll view for better GPU performance?\nThis enables a dangerous hack that might improve drawing performance on macOS 10.14 only."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "GPU パフォーマンス向上のためスクロールビューを分解しますか?\nこれは、macOS 10.14 でのみ描画パフォーマンスを改善する可能性がある危険なハックを有効にします。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desmembrar a scroll view para melhor desempenho de GPU?\nIsto ativa um hack perigoso que pode melhorar o desempenho de desenho apenas no macOS 10.14."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Разбирать scroll view на части для повышения производительности GPU?\nЭто включает опасный хак, который может улучшить производительность отрисовки только на macOS 10.14."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "为提升 GPU 性能而拆分滚动视图？\n此功能会使用一种可能存在风险的变通方法，仅可能在 macOS 10.14 系统上提升绘制性能。"
-          }
-        }
-      }
-    },
     "AdvancedSetting.disregardDockSettingToOpenTabsInsteadOfWindows" : {
       "comment" : "Advanced setting: disregardDockSettingToOpenTabsInsteadOfWindows",
       "extractionState" : "extracted_with_value",

@@ -683,3 +683,10 @@ Bug Fixes:
   name was already taken on the far host arrived
   as “name (2)” while the original name was
   pasted, naming a different file.
+- Fixed scrolling that stopped working in every
+  tab on macOS 27 for the few people who had
+  turned on the old “Dismember scroll view for
+  better GPU performance?” setting. That
+  workaround targeted macOS 10.14 and has been
+  removed, so the setting is gone and anyone
+  who had it on now gets the normal behavior.
