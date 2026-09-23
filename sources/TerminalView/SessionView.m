@@ -309,10 +309,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                      name:iTermMetalDeviceProviderPreferredDeviceDidChangeNotification
                                                    object:nil];
 #endif
-        if (PTYScrollView.shouldDismember) {
-            [self addSubviewBelowFindView:_scrollview.verticalScroller];
-            _scrollview.verticalScroller.frame = [self frameForScroller];
-        }
         _rightGutterController = [[iTermRightGutterController alloc] initWithSessionView:self];
         [self updateSessionSelectorButton];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -561,14 +557,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _imageView.blend = blend;
     [_toolbarView setTransparencyAlpha:transparencyAlpha];
     [CATransaction commit];
-}
-
-- (NSRect)frameForScroller {
-    [_scrollview.verticalScroller sizeToFit];
-    NSSize size = _scrollview.verticalScroller.frame.size;
-    NSSize mySize = self.bounds.size;
-    NSRect frame = NSMakeRect(mySize.width - size.width, 0, size.width, mySize.height);
-    return frame;
 }
 
 - (void)dealloc {
@@ -1290,9 +1278,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             frame.origin.y = maxY;
             DLog(@"Tweaking y offset of scrollview for title bar");
             _scrollview.frame = frame;
-            if (PTYScrollView.shouldDismember) {
-                _scrollview.verticalScroller.frame = [self frameForScroller];
-            }
         }
         [self updateToolbarFrame];
         if (_showBottomStatusBar) {
@@ -2121,9 +2106,6 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     if (adjustScrollView) {
         DLog(@"Tweaking scrollview for titlebar");
         [scrollView setFrame:frame];
-        if (PTYScrollView.shouldDismember) {
-            _scrollview.verticalScroller.frame = [self frameForScroller];
-        }
     } else {
         [self updateTitleFrame];
     }
@@ -2465,9 +2447,6 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
          NSStringFromRect(rect));
     [self scrollview].frame = rect;
     DLog(@"Scrollview frame is now %@", NSStringFromRect(self.scrollview.frame));
-    if (PTYScrollView.shouldDismember) {
-        _scrollview.verticalScroller.frame = [self frameForScroller];
-    }
     rect.origin = NSZeroPoint;
     rect.size.width = _scrollview.contentSize.width;
     rect.size.height = [_delegate sessionViewDesiredHeightOfDocumentView];
@@ -3031,10 +3010,6 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (NSColor *)genericStatusBarContainerBackgroundColor {
     return [self backgroundColorForDecorativeSubviews];
-}
-
-- (NSScrollView *)ptyScrollerScrollView {
-    return _scrollview;
 }
 
 #pragma mark - SplitSelectionViewDelegate

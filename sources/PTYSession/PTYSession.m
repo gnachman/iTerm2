@@ -9602,11 +9602,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     _wrapper.useMetal = YES;
     _textview.suppressDrawing = YES;
     [_view setSuppressLegacyDrawing:YES];
-    if (PTYScrollView.shouldDismember) {
-        _view.scrollview.alphaValue = 0;
-    } else {
-        [self updateWrapperAlphaForMetalEnabled:YES];
-    }
+    [self updateWrapperAlphaForMetalEnabled:YES];
     [self setMetalViewAlphaValue:1];
 }
 
@@ -9629,11 +9625,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     if (!useMetal) {
         _textview.suppressDrawing = NO;
         [_view setSuppressLegacyDrawing:NO];
-        if (PTYScrollView.shouldDismember) {
-            _view.scrollview.alphaValue = 1;
-        } else {
-            [self updateWrapperAlphaForMetalEnabled:NO];
-        }
+        [self updateWrapperAlphaForMetalEnabled:NO];
     }
 }
 
@@ -21803,11 +21795,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _wrapper.useMetal = NO;
     _textview.suppressDrawing = NO;
     [_view setSuppressLegacyDrawing:NO];
-    if (PTYScrollView.shouldDismember) {
-        _view.scrollview.alphaValue = 1;
-    } else {
-        [self updateWrapperAlphaForMetalEnabled:NO];
-    }
+    [self updateWrapperAlphaForMetalEnabled:NO];
     [self setMetalViewAlphaValue:0];
     id token = @(_nextMetalDisabledToken++);
     [_metalDisabledTokens addObject:token];

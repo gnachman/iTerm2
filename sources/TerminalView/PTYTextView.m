@@ -221,31 +221,6 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 }
 
 
-// This is an attempt to fix performance problems that appeared in macOS 10.14
-// (rdar://45295749, also mentioned in PTYScrollView.m).
-//
-// It seems that some combination of implementing drawRect:, not having a
-// layer, having a frame larger than the clip view, and maybe some other stuff
-// I can't figure out causes terrible performance problems.
-//
-// For a while I worked around this by dismembering the scroll view. The scroll
-// view itself would be hidden, while its scrollers were reparented and allowed
-// to remain visible. This worked around it, but I'm sure it caused crashes and
-// weird behavior. It may have been responsible for issue 8405.
-//
-// After flailing around for a while, I discovered that giving the view a layer
-// and hiding it while using Metal seems to fix the problem (at least on my iMac).
-//
-// My fear is that giving it a layer will break random things because that is a
-// proud tradition of layers on macOS. Time will tell if that is true.
-//
-// The test for whether performance is "good" or "bad" is to use the default
-// app settings and make a maximized window on a 2014 iMac. Run tests/spam.cc.
-// You should get just about 60 fps if it's fast, and 30-45 if it's slow.
-+ (BOOL)useLayerForBetterPerformance {
-    return ![iTermAdvancedSettingsModel dismemberScrollView];
-}
-
 + (NSSize)charSizeForFont:(NSFont *)aFont
         horizontalSpacing:(CGFloat)hspace
           verticalSpacing:(CGFloat)vspace {
@@ -2005,17 +1980,14 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
     DLog(@"Set suppressDrawing to %@ from %@", @(suppressDrawing), [NSThread callStackSymbols]);
     _suppressDrawing = suppressDrawing;
-    if (PTYTextView.useLayerForBetterPerformance) {
-        // Using a layer in a view inside a scrollview is a disaster, per macOS
-        // tradition (insane drawing artifacts, especially when scrolling). But
-        // not using a layer makes it godawful slow (see note about
-        // rdar://45295749). So use a layer when the view is hidden, and
-        // remove it when visible.
-        if (suppressDrawing) {
-            self.layer = [[[CALayer alloc] init] autorelease];
-        } else {
-            self.layer = nil;
-        }
+    // Using a layer in a view inside a scrollview is a disaster, per macOS
+    // tradition (insane drawing artifacts, especially when scrolling). But
+    // not using a layer makes it godawful slow (rdar://45295749).
+    // So use a layer when the view is hidden, and remove it when visible.
+    if (suppressDrawing) {
+        self.layer = [[[CALayer alloc] init] autorelease];
+    } else {
+        self.layer = nil;
     }
     PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
     [scrollView.verticalScroller setNeedsDisplay:YES];
