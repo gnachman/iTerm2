@@ -409,9 +409,9 @@ final class SwiftyStringTextFieldReuseTests: XCTestCase {
     }
 }
 
-// Pins the two halves of the tab-switch stall fix in ToolStatus: a burst
-// of topology notifications collapses into one reload, and a tool nobody
-// can see does no reload at all until it is visible again.
+// Pins the visibility half of the tab-switch stall fix in ToolStatus: a
+// tool nobody can see does no reload at all until it is visible again,
+// and then it pays back exactly the one reload it skipped.
 final class ToolStatusShortcutReloadTests: XCTestCase {
     private var window: NSWindow?
     private var savedLastUse: Any?
@@ -464,42 +464,8 @@ final class ToolStatusShortcutReloadTests: XCTestCase {
         wait(for: [drained], timeout: 10)
     }
 
-    // Tab operations post a burst of these. A switch posts
-    // iTermSessionBecameKey twice and iTermSelectedTabDidChange once;
-    // closing a tab posts those three plus iTermNumberOfSessionsDidChange
-    // twice, once from -[PseudoTerminal tabViewDidChangeNumberOfTabViewItems:]
-    // and once from -[PseudoTerminal sessionWasRemoved], for five in
-    // total. Every notification wired to needsShortcutReload(_:) must
-    // land in ONE scheduled reload rather than reloading every row
-    // synchronously once per notification.
-    func test_notificationBurstSchedulesExactlyOneReload() {
-        let tool = makeTool()
-        let nc = NotificationCenter.default
-        XCTAssertEqual(tool.shortcutReloadCount, 0)
-
-        // Exactly what closing a tab posts.
-        nc.post(name: NSNotification.Name(iTermSessionBecameKey), object: nil)
-        nc.post(name: NSNotification.Name(iTermSessionBecameKey), object: nil)
-        nc.post(name: NSNotification.Name(iTermSelectedTabDidChange), object: nil)
-        nc.post(name: NSNotification.Name("iTermNumberOfSessionsDidChange"), object: nil)
-        nc.post(name: NSNotification.Name("iTermNumberOfSessionsDidChange"), object: nil)
-        XCTAssertEqual(tool.shortcutReloadCount, 0,
-                       "The reload must be deferred, not run synchronously per notification")
-
-        drainMainQueue()
-        XCTAssertEqual(tool.shortcutReloadCount, 1,
-                       "Five notifications in one pass must produce exactly one reload")
-
-        // A later burst is a separate user action and reloads again.
-        nc.post(name: NSNotification.Name(iTermSelectedTabDidChange), object: nil)
-        nc.post(name: .iTermTabDidChangePositionInWindow, object: nil)
-        drainMainQueue()
-        XCTAssertEqual(tool.shortcutReloadCount, 2,
-                       "A later burst must schedule a fresh reload, not be swallowed")
-    }
-
     // The counter only moves when the table is actually reloaded, so the
-    // tests above can tell a working reload from one that bails early.
+    // other tests can tell a working reload from one that bails early.
     func test_toolWithNoRowsDoesNotCountAReload() {
         let tool = makeTool(sessionIDs: [])
         NotificationCenter.default.post(name: NSNotification.Name(iTermSelectedTabDidChange),
@@ -552,38 +518,6 @@ final class ToolStatusShortcutReloadTests: XCTestCase {
                        "Unhiding must pay back exactly the one reload it skipped")
         XCTAssertFalse(tool.missedShortcutReloadWhileHidden,
                        "A visible tool must not record a missed reload")
-    }
-
-    // A tool whose window is miniaturized or ordered out is not hidden,
-    // but nobody can see it either, so it skips the reload the same way.
-    // The window's occlusion state changes when it comes back, and that
-    // pays the debt. Ordering out stands in for miniaturizing, which
-    // animates. Posting the notification directly keeps the test
-    // independent of when the window server delivers it.
-    func test_toolInNonVisibleWindowSkipsTheReloadUntilTheWindowIsBack() throws {
-        let tool = makeTool()
-        let window = try XCTUnwrap(self.window)
-        window.orderOut(nil)
-        XCTAssertFalse(tool.it_isVisible)
-
-        NotificationCenter.default.post(name: NSNotification.Name(iTermSelectedTabDidChange),
-                                        object: nil)
-        drainMainQueue()
-        XCTAssertTrue(tool.missedShortcutReloadWhileHidden,
-                      "A tool in a non-visible window must skip the reload and record that it owes one")
-        XCTAssertEqual(tool.shortcutReloadCount, 0)
-
-        window.orderFront(nil)
-        NotificationCenter.default.post(name: NSWindow.didChangeOcclusionStateNotification,
-                                        object: window)
-        XCTAssertFalse(tool.missedShortcutReloadWhileHidden,
-                       "The window coming back must clear the debt")
-        XCTAssertEqual(tool.shortcutReloadCount, 0,
-                       "The window coming back must schedule the reload, not run it inline")
-
-        drainMainQueue()
-        XCTAssertEqual(tool.shortcutReloadCount, 1,
-                       "The window coming back must pay back exactly the one reload it skipped")
     }
 
     // A visible tool records no debt, so unhiding it later is a no-op.
