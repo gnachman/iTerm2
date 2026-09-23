@@ -124,6 +124,7 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTer
 @class iTermMetalRowData;
 @class iTermTexturePool;
 @class iTermMetalView;
+@class iTermPostProcessPipeline;
 @class MTLRenderPassDescriptor;
 @protocol CAMetalDrawable;
 
@@ -189,6 +190,14 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTer
 // Created only when hasUnderlines && useMultiPassUnderlineRenderer.
 @property (nonatomic, strong, nullable) MTLRenderPassDescriptor *textOffscreenRPD;       // Texture T: text only
 @property (nonatomic, strong, nullable) MTLRenderPassDescriptor *underlineOffscreenRPD;  // Texture U: underlines only
+
+// Post-processing shader. When set, the frame is rendered to the source texture and the
+// shader draws it into the drawable's render pass descriptor. In deferred-drawable mode
+// the shader replaces the copy to the drawable instead and these descriptors are nil.
+@property (nonatomic, strong, nullable) iTermPostProcessPipeline *postProcessPipeline;
+@property (nonatomic) double postProcessFrameRate;
+@property (nonatomic, strong, nullable) MTLRenderPassDescriptor *postProcessSourceRenderPassDescriptor;
+@property (nonatomic, strong, nullable) MTLRenderPassDescriptor *postProcessDestinationRenderPassDescriptor;
 
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
 @property (nonatomic) int currentPass;

@@ -402,6 +402,9 @@ static NSInteger gNextFrameDataNumber;
     if (self.underlineOffscreenRPD) {
         [self.fullSizeTexturePool returnTexture:self.underlineOffscreenRPD.colorAttachments[0].texture];
     }
+    if (self.postProcessSourceRenderPassDescriptor) {
+        [self.fullSizeTexturePool returnTexture:self.postProcessSourceRenderPassDescriptor.colorAttachments[0].texture];
+    }
 #if ENABLE_STATS
     double duration;
 

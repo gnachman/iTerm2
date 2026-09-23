@@ -1070,6 +1070,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
                                                      name:iTermAdvancedSettingsDidChange
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(postProcessingShaderSettingMayHaveChanged)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(alertOnMarksinOffscreenSessionsDidChange:)
                                                      name:iTermDidToggleAlertOnMarksInOffscreenSessionsNotification
                                                    object:nil];
@@ -9473,6 +9477,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return (!_cadenceController.isActive &&
             !_view.verticalScroller.userScroll &&
             !self.overrideGlobalDisableMetalWhenIdleSetting &&
+            !iTermPostProcessShaderCache.instance.isEnabled &&
             !_view.driver.captureDebugInfoForNextFrame);
 }
 

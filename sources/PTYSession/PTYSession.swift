@@ -3188,6 +3188,17 @@ extension PTYSession {
         }
     }
 
+    // Observes iTermAdvancedSettingsDidChange. A post-processing shader keeps the GPU
+    // renderer on even when idle, and an idle session needs a fresh frame for a new
+    // shader to take effect and start animating. Posted on arbitrary threads, like above.
+    @objc
+    nonisolated func postProcessingShaderSettingMayHaveChanged() {
+        Task { @MainActor [weak self] in
+            self?.delegate?.sessionUpdateMetalAllowed()
+            self?.view?.metalView?.needsDisplay = true
+        }
+    }
+
     // Internal (not private) so the lifecycle tests can drive the clearing logic
     // synchronously, without the async main-hop in the @objc entry point above.
     @MainActor

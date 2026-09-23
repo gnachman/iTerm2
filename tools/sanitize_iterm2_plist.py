@@ -69,7 +69,7 @@ TOP-LEVEL keys
                                            user-authored AI prompt templates
   PrefsCustomFolder, CustomScriptsFolder, DownloadsDirectory,
     ScreenshotSaveLocation, PreferredBaseDir, DynamicProfilesPath,
-    GitSearchPath, PathsToIgnore, NativeRenderingCSSLight/Dark,
+    GitSearchPath, PostProcessingShader, PathsToIgnore, NativeRenderingCSSLight/Dark,
     BrowserPluginPathHint, ImportPath, NoSyncLastSSHDirectory,
     NoSyncClaudeCodeConfigDirPath  paths
   NoSyncSavePanelSavedSettings_* ......... nested "InitialDirectory" path
@@ -208,6 +208,7 @@ CONTENT_KEYS = {
     "PreferredBaseDir": REDACT_V,
     "DynamicProfilesPath": REDACT_V,
     "GitSearchPath": REDACT_V,
+    "PostProcessingShader": REDACT_V,
     "PathsToIgnore": REDACT_V,
     "NativeRenderingCSSLight": REDACT_V,
     "NativeRenderingCSSDark": REDACT_V,
