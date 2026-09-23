@@ -1,0 +1,127 @@
+// Liquid Glass
+//
+// Clear glass pieces float over the terminal, in the style of Apple's Liquid
+// Glass. Each piece is flat in the middle, so text under it stays sharp, and
+// has a rounded bezel that refracts what is beneath it inward like the rim of
+// a lens (Snell's law through a squircle profile), with color dispersion only
+// at the rim and a specular rim light. Pieces drift slowly and merge like
+// liquid when they touch.
+
+// ---- Tunables (sizes are in points) ---------------------------------------
+
+constant float IOR          = 1.5;    // refractive index of the glass
+constant float DISPERSION   = 0.03;   // IOR spread between red and blue, 0 = none
+constant float BEZEL        = 22.0;   // width of the curved rim
+constant float THICKNESS    = 28.0;   // glass height at the top of the bezel
+constant float BASE         = 6.0;    // extra depth between glass and terminal
+constant float MERGE        = 36.0;   // how eagerly pieces melt together
+constant float TINT         = 0.035;  // faint brightening of the glass body
+constant float SPECULAR     = 0.7;    // rim light brightness
+constant float SPEED        = 0.035;  // drift speed
+constant float2 LIGHT_DIR   = float2(-0.55, 0.85);  // top left
+
+// ---- Helpers --------------------------------------------------------------
+
+static float sdCircle(float2 p, float r) {
+    return length(p) - r;
+}
+
+static float sdCapsule(float2 p, float2 halfSize) {
+    float r = halfSize.y;
+    float2 q = abs(p) - float2(halfSize.x - r, 0.0);
+    return length(max(q, float2(0.0))) + min(max(q.x, q.y), 0.0) - r;
+}
+
+// Polynomial smooth minimum; blends shapes like a liquid.
+static float smin(float a, float b, float k) {
+    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(b, a, h) - k * h * (1.0 - h);
+}
+
+// Signed distance to all glass, in pixels; negative inside.
+static float glass(float2 p, float2 res, float s, float t) {
+    float a = t * SPEED * 6.2831853;
+    float2 dropCenter = res * float2(0.5 + 0.30 * sin(a), 0.55 + 0.22 * sin(a * 1.37 + 1.1));
+    float2 pillCenter = res * float2(0.5 + 0.28 * sin(a * 0.71 + 2.0), 0.22 + 0.06 * sin(a * 0.9));
+    float2 beadCenter = dropCenter + s * 120.0 * float2(cos(a * 2.3), sin(a * 2.3));
+    float d = sdCircle(p - dropCenter, 78.0 * s);
+    d = smin(d, sdCapsule(p - pillCenter, s * float2(150.0, 30.0)), MERGE * s);
+    d = smin(d, sdCircle(p - beadCenter, 26.0 * s), MERGE * s);
+    return d;
+}
+
+// Squircle bezel profile: 0 at the outer edge, rising to 1 where the flat top begins.
+static float bezelHeight(float x) {
+    return pow(1.0 - pow(1.0 - clamp(x, 0.0, 1.0), 4.0), 0.25);
+}
+
+// Where a vertical ray through the glass lands on the terminal, as a pixel offset.
+static float2 refractOffset(float slope, float2 outward, float depth, float ior) {
+    float3 normal = normalize(float3(outward * slope, 1.0));
+    float3 ray = refract(float3(0.0, 0.0, -1.0), normal, 1.0 / ior);
+    return ray.xy / max(-ray.z, 1e-3) * depth;
+}
+
+// ---- Main -----------------------------------------------------------------
+
+float4 mainImage(float2 fragCoord,
+                 float2 iResolution,
+                 float iTime,
+                 float iScale,
+                 texture2d<float> iChannel0) {
+    float2 res = iResolution;
+    float s = iScale;
+    float t = iTime;
+
+    float sd = glass(fragCoord, res, s, t);
+    float2 uv = fragCoord / res;
+    if (sd > 0.0) {
+        // Not under glass: the terminal as is.
+        return texture(iChannel0, uv);
+    }
+
+    // Outward direction of the glass edge from the gradient of the distance field.
+    float2 e = float2(1.0, 0.0);
+    float2 outward = normalize(float2(glass(fragCoord + e.xy, res, s, t) - glass(fragCoord - e.xy, res, s, t),
+                                      glass(fragCoord + e.yx, res, s, t) - glass(fragCoord - e.yx, res, s, t)) + 1e-6);
+
+    // Height of the glass surface and its slope across the bezel.
+    float bezel = BEZEL * s;
+    float x = -sd / bezel;
+    float height = bezelHeight(x) * THICKNESS * s;
+    float dx = 0.01;
+    float slope = (bezelHeight(x + dx) - bezelHeight(x - dx)) / (2.0 * dx) * THICKNESS / BEZEL;
+    float depth = height + BASE * s;
+
+    // Refract each channel with a slightly different index for rim-only dispersion.
+    float2 offsetR = refractOffset(slope, outward, depth, IOR - DISPERSION);
+    float2 offsetG = refractOffset(slope, outward, depth, IOR);
+    float2 offsetB = refractOffset(slope, outward, depth, IOR + DISPERSION);
+    float4 g = texture(iChannel0, (fragCoord + offsetG) / res);
+    float r = texture(iChannel0, (fragCoord + offsetR) / res).r;
+    float b = texture(iChannel0, (fragCoord + offsetB) / res).b;
+    float4 col = float4(r, g.g, b, g.a);
+
+    // A faint lift so the glass body reads even over empty background.
+    col.rgb += TINT;
+    col.a = max(col.a, TINT);
+
+    // Rim light: bright where the bezel faces the light, strongest near the edge.
+    float2 light = normalize(LIGHT_DIR);
+    float rim = 1.0 - smoothstep(0.0, bezel, -sd);
+    float facing = max(dot(outward, light), 0.0);
+    float backFacing = max(dot(outward, -light), 0.0) * 0.4;
+    float edgeLine = 1.0 - smoothstep(0.0, 1.5 * s, -sd);  // crisp outline
+    float spec = SPECULAR * ((facing + backFacing) * rim * rim * 0.35 + edgeLine * (0.25 + facing));
+    col.rgb += spec;
+    col.a = max(col.a, min(spec, 1.0));
+
+    // Soft antialiased edge against the untouched terminal.
+    float coverage = smoothstep(0.0, 1.0, -sd);
+    float4 outside = texture(iChannel0, uv);
+    col = mix(outside, col, coverage);
+
+    // Keep it premultiplied.
+    col.rgb = min(col.rgb, float3(col.a));
+    return col;
+}

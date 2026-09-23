@@ -5426,6 +5426,7 @@
 		A6FE8D0C209382C000B5C648 /* download.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D06209382C000B5C648 /* download.png */; };
 		FBA75F4585EAB6B1F9A9B4CE /* iTermPostProcessPrelude.metalsrc in Resources */ = {isa = PBXBuildFile; fileRef = 49A023EE6F61EFB0066C0978 /* iTermPostProcessPrelude.metalsrc */; };
 		05ED03264B343F37D93FE3ED /* amber-crt.metalsrc in Resources */ = {isa = PBXBuildFile; fileRef = 081B189E8BC97E063D95B06E /* amber-crt.metalsrc */; };
+		B814482A5E378B84E1579049 /* liquid-glass.metalsrc in Resources */ = {isa = PBXBuildFile; fileRef = 226600EAEB88907CF500E9A3 /* liquid-glass.metalsrc */; };
 		A6FE8D15209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
 		A6FE8D16209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
 		A6FE8D17209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
@@ -9858,6 +9859,7 @@
 		A6FE8D06209382C000B5C648 /* download.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = download.png; path = images/download.png; sourceTree = "<group>"; };
 		49A023EE6F61EFB0066C0978 /* iTermPostProcessPrelude.metalsrc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = iTermPostProcessPrelude.metalsrc; path = OtherResources/iTermPostProcessPrelude.metalsrc; sourceTree = "<group>"; };
 		081B189E8BC97E063D95B06E /* amber-crt.metalsrc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "amber-crt.metalsrc"; path = "OtherResources/amber-crt.metalsrc"; sourceTree = "<group>"; };
+		226600EAEB88907CF500E9A3 /* liquid-glass.metalsrc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "liquid-glass.metalsrc"; path = "OtherResources/liquid-glass.metalsrc"; sourceTree = "<group>"; };
 		A6FE8D14209541BC00B5C648 /* rsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = rsa_pub.pem; path = OtherResources/rsa_pub.pem; sourceTree = "<group>"; };
 		A6FEA25D1CF0F20B00376F28 /* iTermEventTap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermEventTap.h; sourceTree = "<group>"; };
 		A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermEventTap.m; sourceTree = "<group>"; };
@@ -10684,6 +10686,7 @@
 				53B93DE021F25E79001EC59C /* iterm2_git_wrapper.sh */,
 				5376CB3B220D2E4300FE7476 /* git.sb */,
 				A6EEAED2283072CA0039E850 /* framer.py */,
+				226600EAEB88907CF500E9A3 /* liquid-glass.metalsrc */,
 				081B189E8BC97E063D95B06E /* amber-crt.metalsrc */,
 				49A023EE6F61EFB0066C0978 /* iTermPostProcessPrelude.metalsrc */,
 				A65DF4A42849C11D00AA29AB /* bash-si-loader */,
@@ -19637,6 +19640,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B814482A5E378B84E1579049 /* liquid-glass.metalsrc in Resources */,
 				05ED03264B343F37D93FE3ED /* amber-crt.metalsrc in Resources */,
 				FBA75F4585EAB6B1F9A9B4CE /* iTermPostProcessPrelude.metalsrc in Resources */,
 				A6109B612B969B4100D8E4E9 /* graphic_neovim.png in Resources */,

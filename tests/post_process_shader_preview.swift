@@ -6,6 +6,9 @@
 //
 // The shader is compiled the same way iTerm2 does it: after
 // OtherResources/iTermPostProcessPrelude.metalsrc.
+//
+// Set PREVIEW_BG_ALPHA (e.g. 0.4) to give the fake terminal a transparent
+// background; results are then composited over a fake blurred desktop.
 
 import AppKit
 import Metal
@@ -33,6 +36,7 @@ let times = args.count > 3 ? args[3...].compactMap { Float($0) } : [0.5, 2.0, 3.
 let width = 1600
 let height = 900
 let scale: Float = 2
+let backgroundAlpha = CGFloat(Double(ProcessInfo.processInfo.environment["PREVIEW_BG_ALPHA"] ?? "") ?? 1)
 
 // Draw something terminal-like.
 func makeTerminalImage() -> CGImage {
@@ -44,7 +48,7 @@ func makeTerminalImage() -> CGImage {
                             bytesPerRow: 0,
                             space: colorSpace,
                             bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
-    context.setFillColor(NSColor(srgbRed: 0.11, green: 0.08, blue: 0.03, alpha: 1).cgColor)
+    context.setFillColor(NSColor(srgbRed: 0.11, green: 0.08, blue: 0.03, alpha: backgroundAlpha).cgColor)
     context.fill(CGRect(x: 0, y: 0, width: width, height: height))
     let lines: [(String, NSColor)] = [
         ("moimart@minipro ~/code/iTerm2 % ls -la", .init(srgbRed: 1.0, green: 0.69, blue: 0.10, alpha: 1)),
@@ -68,6 +72,34 @@ func makeTerminalImage() -> CGImage {
     return context.makeImage()!
 }
 
+// Soft colored blobs, standing in for a blurred desktop behind a transparent window.
+func makeDesktopImage() -> CGImage {
+    let context = CGContext(data: nil,
+                            width: width,
+                            height: height,
+                            bitsPerComponent: 8,
+                            bytesPerRow: 0,
+                            space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
+    let colors = [NSColor(srgbRed: 0.10, green: 0.20, blue: 0.45, alpha: 1).cgColor,
+                  NSColor(srgbRed: 0.45, green: 0.15, blue: 0.40, alpha: 1).cgColor] as CFArray
+    let gradient = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB)!, colors: colors, locations: nil)!
+    context.drawLinearGradient(gradient, start: .zero, end: CGPoint(x: width, y: height), options: [])
+    let blobs: [(CGFloat, CGFloat, CGFloat, NSColor)] = [
+        (0.2, 0.3, 380, NSColor(srgbRed: 0.95, green: 0.55, blue: 0.20, alpha: 0.8)),
+        (0.75, 0.7, 420, NSColor(srgbRed: 0.20, green: 0.80, blue: 0.75, alpha: 0.7)),
+        (0.6, 0.2, 300, NSColor(srgbRed: 0.90, green: 0.30, blue: 0.50, alpha: 0.7)),
+    ]
+    for (x, y, r, color) in blobs {
+        let blob = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+                              colors: [color.cgColor, color.withAlphaComponent(0).cgColor] as CFArray,
+                              locations: nil)!
+        let center = CGPoint(x: x * CGFloat(width), y: y * CGFloat(height))
+        context.drawRadialGradient(blob, startCenter: center, startRadius: 0, endCenter: center, endRadius: r, options: [])
+    }
+    return context.makeImage()!
+}
+
 func writePNG(texture: MTLTexture, to url: URL) {
     let bytesPerRow = width * 4
     var bytes = [UInt8](repeating: 0, count: bytesPerRow * height)
@@ -84,7 +116,21 @@ func writePNG(texture: MTLTexture, to url: URL) {
                         decode: nil,
                         shouldInterpolate: false,
                         intent: .defaultIntent)!
-    let rep = NSBitmapImageRep(cgImage: image)
+    var output = image
+    if backgroundAlpha < 1 {
+        let context = CGContext(data: nil,
+                                width: width,
+                                height: height,
+                                bitsPerComponent: 8,
+                                bytesPerRow: 0,
+                                space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
+        let rect = CGRect(x: 0, y: 0, width: width, height: height)
+        context.draw(makeDesktopImage(), in: rect)
+        context.draw(image, in: rect)
+        output = context.makeImage()!
+    }
+    let rep = NSBitmapImageRep(cgImage: output)
     try! rep.representation(using: .png, properties: [:])!.write(to: url)
 }
 
