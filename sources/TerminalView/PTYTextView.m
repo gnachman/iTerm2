@@ -1462,10 +1462,15 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         [self requestDelegateRedraw];
     }
     [self updateUnderlinedURLs:event];
+    // Hit test against the whole session view, not just the scroll view, so that entering through
+    // a pane toolbar, title bar, or scroller still counts. Points outside this pane still fail.
     NSScrollView *scrollView = self.enclosingScrollView;
-    if ([scrollView hitTest:[scrollView convertPoint:event.locationInWindow fromView:nil]] == nil) {
-        DLog(@"hitTest at %@ in view (%@ in window) gives nil", NSStringFromPoint([self convertPoint:event.locationInWindow fromView:nil]),
-              NSStringFromPoint(event.locationInWindow));
+    NSView *hitTestView = scrollView.superview ?: scrollView;
+    // -hitTest: takes a point in the receiver's superview's coordinate system.
+    const NSPoint hitTestPoint = [hitTestView.superview convertPoint:event.locationInWindow fromView:nil];
+    if ([hitTestView hitTest:hitTestPoint] == nil) {
+        DLog(@"hitTest at %@ (%@ in window) against %@ with frame %@ gives nil", NSStringFromPoint(hitTestPoint),
+              NSStringFromPoint(event.locationInWindow), hitTestView, NSStringFromRect(hitTestView.frame));
         DLog(@"Event %@ at window coord %@ failed hit test for view with window coords %@",
              event, NSStringFromPoint(event.locationInWindow), NSStringFromRect([self convertRect:self.bounds toView:nil]));
         return;
