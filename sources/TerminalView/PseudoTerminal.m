@@ -799,6 +799,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                  name:kUpdateLabelsNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(liquidGlassSettingMayHaveChanged:)
+                                                 name:iTermAdvancedSettingsDidChange
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(refreshTerminal:)
                                                  name:kRefreshTerminalNotification
                                                object:nil];
@@ -7291,8 +7295,35 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 }
 
+// The Liquid Glass style to use in place of blur, or nil for classic blur.
+- (NSString *)liquidGlassStyle {
+    if (@available(macOS 26.0, *)) {
+        NSString *style = [[[iTermAdvancedSettingsModel liquidGlassBlur] lowercaseString]
+                           stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        if ([style isEqualToString:@"clear"] || [style isEqualToString:@"regular"]) {
+            return style;
+        }
+    }
+    return nil;
+}
+
+- (void)liquidGlassSettingMayHaveChanged:(NSNotification *)notification {
+    // Posted on arbitrary threads.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[weakSelf currentTab] recheckBlur];
+    });
+}
+
 - (void)enableBlur:(double)radius
 {
+    NSString *glassStyle = [self liquidGlassStyle];
+    [_contentView setLiquidGlassStyle:glassStyle];
+    if (glassStyle) {
+        // The glass does its own refraction and blur of what's behind the window.
+        [self.ptyWindow disableBlur];
+        return;
+    }
     id window = [self window];
     if (nil != window &&
         [window respondsToSelector:@selector(enableBlur:)]) {
@@ -7314,6 +7345,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)reallyDisableBlurIfNeeded {
     if (!self.currentTab.blur) {
+        [_contentView setLiquidGlassStyle:nil];
         [self.ptyWindow disableBlur];
     }
 }
