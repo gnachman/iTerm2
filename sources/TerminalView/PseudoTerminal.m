@@ -1241,6 +1241,23 @@ ITERM_WEAKLY_REFERENCEABLE
     });
 }
 
+- (void)rootTerminalViewHarnessSidebarVisibilityDidChange {
+    RLog(@"Harness sidebar visibility changed for %@", self);
+    // The tab bar can only sit beside the sidebar in the content view, so moving
+    // it into or out of the titlebar accessory comes first. The window keeps its
+    // frame and the terminal gives up or regains the sidebar's columns.
+    [self updateTabBarControlIsTitlebarAccessory];
+    self.tabBarControl.insets = [self tabBarInsets];
+    [self repositionWidgets];
+    [self fitTabsToWindow];
+    [self notifyTmuxOfWindowResize];
+}
+
+- (void)rootTerminalViewHarnessSidebarWidthDidFinishChanging {
+    [self fitTabsToWindow];
+    [self notifyTmuxOfWindowResize];
+}
+
 - (void)rootTerminalViewDidResizeContentArea {
     // Fixes an analog of issue 4323 that happens with left-side tabs. More
     // details in -toolbeltDidFinishGrowing.
@@ -7398,6 +7415,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     [self showOrHideInstantReplayBar];
     [self refreshTools];
+    [_contentView harnessSidebarSelectedTabDidChange];
     [self updateTabColors];
     [self updateSessionProgressBarVisibility];
     [self updateToolbeltAppearance];
@@ -13245,6 +13263,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     } else if ([self rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]) {
         decorationSize.height += [self rootTerminalViewHeightOfTabBar:_contentView];
     }
+    // The layout calculator reserves the harness sidebar beside the tab view in
+    // every tab position, whether or not the tab bar is visible.
+    decorationSize.width += _contentView.harnessSidebarDecorationWidth;
 
     if (self.divisionViewShouldBeVisible) {
         ++decorationSize.height;

@@ -70,10 +70,7 @@ final class HarnessProcessDiscovery {
             let tty = terminalDevice(of: pid)
             // Exclude MCP servers and app-internal workers connected only through pipes.
             guard tty != 0 else { continue }
-            var executable: NSString?
-            guard let args = iTermLSOF.rawCommandLineArguments(forProcess: pid, execName: &executable),
-                  let name = SessionDirectoryKey.harnessName(executable: args.first, arguments: args)
-                    ?? SessionDirectoryKey.harnessName(executable: executable as String?, arguments: args),
+            guard let name = harnessName(for: pid),
                   let started = iTermLSOF.startTime(forProcess: pid) else { continue }
             let ancestors = ancestors(of: pid)
             // Inspect only matched harness environments and retain only tmux identity.
@@ -112,6 +109,13 @@ final class HarnessProcessDiscovery {
     }
 
     // MARK: - Process facts
+
+    static func harnessName(for pid: Int32) -> String? {
+        var executable: NSString?
+        guard let args = iTermLSOF.rawCommandLineArguments(forProcess: pid, execName: &executable) else { return nil }
+        return SessionDirectoryKey.harnessName(executable: args.first, arguments: args)
+            ?? SessionDirectoryKey.harnessName(executable: executable as String?, arguments: args)
+    }
 
     private static func terminalDevice(of pid: Int32) -> UInt64 {
         let input = iTermLSOF.ttyRdev(forFileDescriptor: 0, ofProcess: pid)
@@ -339,10 +343,11 @@ final class HarnessProcessDiscovery {
         }
     }
 
-    // Codex config keys that grant what a refused permission flag would.
-    private static func codexConfigAllowed(_ value: String) -> Bool {
-        let key = value.split(separator: "=", maxSplits: 1).first.map { $0.lowercased() } ?? ""
-        return !["sandbox", "approval", "permission", "danger", "bypass", "trust"].contains { key.contains($0) }
+    // Codex config keys and values that grant what a refused permission flag would.
+    static func codexConfigAllowed(_ value: String) -> Bool {
+        let lower = value.lowercased()
+        let forbidden = ["sandbox", "approval", "permission", "danger", "bypass", "trust"]
+        return !forbidden.contains { lower.contains($0) }
     }
 
     static let promptArgument = "<prompt>"
@@ -516,14 +521,20 @@ final class HarnessProcessDiscovery {
         }
         // Fail closed: without the environment neither native status nor credentials can be proven.
         guard let originalEnvironment = inspectableEnvironment(harness.pid) else {
-            return .failure(multiplexerBlock(harness, environment: []) ?? .identityUnavailable)
+            return .failure(.insideMultiplexer)
         }
         if let block = multiplexerBlock(harness, environment: originalEnvironment) {
             return .failure(block)
         }
         var executableName: NSString?
-        guard let arguments = iTermLSOF.rawCommandLineArguments(forProcess: harness.pid, execName: &executableName),
-              let executable = executableName as String?, executable.hasPrefix("/") else {
+        guard let arguments = iTermLSOF.strictRawCommandLineArguments(forProcess: harness.pid, execName: &executableName) else {
+            let readable = iTermLSOF.rawCommandLineArguments(forProcess: harness.pid, execName: nil) != nil
+            let reason = String(localized: "HarnessProcessDiscovery.NonUTF8Argument",
+                                defaultValue: "non-UTF-8 argument",
+                                comment: "Launch setting that cannot be reproduced byte for byte")
+            return .failure(readable ? .unsupportedArguments([reason]) : .processChanged)
+        }
+        guard let executable = executableName as String?, executable.hasPrefix("/") else {
             return .failure(.processChanged)
         }
         var prefix = [executable]
@@ -588,8 +599,7 @@ final class HarnessProcessDiscovery {
                 }
                 guard parent == harness.pid,
                       terminalDevice(of: pid) == harness.tty,
-                      let args = iTermLSOF.rawCommandLineArguments(forProcess: pid, execName: nil),
-                      SessionDirectoryKey.harnessName(executable: args.first, arguments: args) == harness.name,
+                      harnessName(for: pid) == harness.name,
                       let started = iTermLSOF.startTime(forProcess: pid),
                       !targets.contains(where: { $0.0 == pid }) else { continue }
                 targets.append((pid, started))
@@ -616,9 +626,19 @@ final class HarnessProcessDiscovery {
         return true
     }
 
+    static func hasProcessExited(pid: Int32, started: Date) -> Bool {
+        if iTermLSOF.isZombieProcess(pid) {
+            return true
+        }
+        if let current = iTermLSOF.startTime(forProcess: pid) {
+            return current != started
+        }
+        return kill(pid, 0) != 0 && errno == ESRCH
+    }
+
     static func waitForTransferExit(_ targets: [(Int32, Date)], deadline: DispatchTime,
                                     completion: @escaping (Bool) -> Void) {
-        let exited = targets.allSatisfy { iTermLSOF.startTime(forProcess: $0.0) != $0.1 }
+        let exited = targets.allSatisfy { hasProcessExited(pid: $0.0, started: $0.1) }
         if exited || DispatchTime.now() >= deadline {
             DispatchQueue.main.async { completion(exited) }
             return

@@ -249,4 +249,55 @@ final class HarnessDirectorySidebarTests: XCTestCase {
         XCTAssertNil(HarnessTmuxProbe.parse(text, clientPID: 99))
         XCTAssertNil(HarnessTmuxProbe.parse("broken", clientPID: 20))
     }
+
+    func testProjectFilterReselectsOnlyForIntentionalProjectChanges() {
+        XCTAssertFalse(SessionDirectorySidebar.projectFilterReselects(.refresh))
+        XCTAssertTrue(SessionDirectorySidebar.projectFilterReselects(.projectChange))
+        XCTAssertFalse(SessionDirectorySidebar.projectFilterReselects(.selectedTab))
+    }
+
+    func testWindowLocalArrivalAdoptsSelectedProjectWithoutStealingExistingKeys() {
+        let project = SessionDirectoryKey(host: nil, user: nil, path: "/work", sessionID: "p")
+        let other = SessionDirectoryKey(host: nil, user: nil, path: "/other", sessionID: "o")
+        let keys = ["kept": other]
+        XCTAssertEqual(SessionDirectorySidebar.adoptingWindowArrivals(
+            keys: keys, previousWindowSessionIDs: nil, windowSessionIDs: ["moved"], selectedProject: project), keys)
+        XCTAssertEqual(SessionDirectorySidebar.adoptingWindowArrivals(
+            keys: keys, previousWindowSessionIDs: [], windowSessionIDs: ["moved"], selectedProject: nil), keys)
+        let adopted = SessionDirectorySidebar.adoptingWindowArrivals(
+            keys: keys,
+            previousWindowSessionIDs: ["kept"],
+            windowSessionIDs: ["kept", "moved"],
+            selectedProject: project)
+        XCTAssertEqual(adopted["kept"], other)
+        XCTAssertEqual(adopted["moved"], project)
+        let stable = SessionDirectorySidebar.adoptingWindowArrivals(
+            keys: adopted,
+            previousWindowSessionIDs: ["kept", "moved"],
+            windowSessionIDs: ["kept", "moved"],
+            selectedProject: project)
+        XCTAssertEqual(stable, adopted)
+    }
+
+    func testHarnessOperationReservationIsAppWide() {
+        let id = "harness-reservation-" + UUID().uuidString
+        defer { SessionDirectorySidebar.releaseHarnessOperation(id) }
+        XCTAssertTrue(SessionDirectorySidebar.reserveHarnessOperation(id))
+        XCTAssertFalse(SessionDirectorySidebar.reserveHarnessOperation(id),
+                       "a second window must not stop or attach a harness that is already reserved")
+        SessionDirectorySidebar.releaseHarnessOperation(id)
+        XCTAssertTrue(SessionDirectorySidebar.reserveHarnessOperation(id))
+    }
+
+    func testReplacementLaunchFailureNamesSavedHandoff() {
+        let path = "/tmp/handoff dir/token.json"
+        let message = SessionDirectorySidebar.replacementLaunchFailureMessage(handoffPath: path)
+        XCTAssertTrue(message.contains(path))
+    }
+
+    func testTransferTimeoutNamesSavedHandoff() {
+        let path = "/tmp/handoff dir/token.json"
+        let message = SessionDirectorySidebar.transferFailureMessage(.didNotExit, handoffPath: path)
+        XCTAssertTrue(message.contains(path))
+    }
 }

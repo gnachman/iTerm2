@@ -28,6 +28,9 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 
 // Argument boundaries are preserved; values are not shell-escaped.
 + (NSArray<NSString *> *)rawCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName;
+// For relaunching a process: refuse arguments whose original bytes cannot be
+// represented losslessly as UTF-8.
++ (NSArray<NSString *> *)strictRawCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSArray<NSString *> *)commandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName;
 // The process's environment as an array of "KEY=VALUE" strings, or nil if it
@@ -63,6 +66,7 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
                                  block:(void (^)(NSString *pwd))block;
 + (pid_t)pidOfFirstChildOf:(pid_t)parentPid;
 + (NSDate *)startTimeForProcess:(pid_t)pid;
++ (BOOL)isZombieProcess:(pid_t)pid;
 + (id<iTermProcessDataSource>)processDataSource;
 
 @end

@@ -259,6 +259,87 @@ final class HarnessTransferSafetyTests: XCTestCase {
             XCTAssertNil(Discovery.ttyRdev(path: "/etc/hosts"))
         }
     }
+
+    // MARK: - Additional Transfer Safety Tests
+
+    func testCodexRefusesDangerousConfigValues() {
+        XCTAssertEqual(carried("Codex", ["-c", "override_policy=\"danger-full-access\""]),
+                       .failure(.unsupportedArguments(["-c"])))
+        XCTAssertEqual(carried("Codex", ["-c", "execution_mode=bypass"]),
+                       .failure(.unsupportedArguments(["-c"])))
+        XCTAssertEqual(carried("Codex", ["-c", "grant_permission=always"]),
+                       .failure(.unsupportedArguments(["-c"])))
+        XCTAssertEqual(carried("Codex", ["-c", "trust_mode=all"]),
+                       .failure(.unsupportedArguments(["-c"])))
+
+        XCTAssertFalse(Discovery.codexConfigAllowed("override_policy=danger-full-access"))
+        XCTAssertFalse(Discovery.codexConfigAllowed("execution=bypass"))
+        XCTAssertFalse(Discovery.codexConfigAllowed("permission_level=unrestricted"))
+        XCTAssertFalse(Discovery.codexConfigAllowed("trust_mode=all"))
+        XCTAssertTrue(Discovery.codexConfigAllowed("model_reasoning_effort=high"))
+        XCTAssertTrue(Discovery.codexConfigAllowed("profile=production"))
+    }
+
+    func testTmuxProbeExecutableValidation() {
+        XCTAssertFalse(HarnessTmuxProbe.isValidExecutable("tmux"), "Relative executable must be rejected")
+        XCTAssertFalse(HarnessTmuxProbe.isValidExecutable("/nonexistent/bin/tmux"), "Nonexistent path must be rejected")
+        XCTAssertFalse(HarnessTmuxProbe.isValidExecutable("/bin/sh"), "Path not ending in tmux must be rejected")
+
+        let tempDir = FileManager.default.temporaryDirectory
+        let fakeTmuxDir = tempDir.appendingPathComponent("fake-tmux-dir-" + UUID().uuidString + "/tmux")
+        try? FileManager.default.createDirectory(at: fakeTmuxDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: fakeTmuxDir.deletingLastPathComponent()) }
+        XCTAssertFalse(HarnessTmuxProbe.isValidExecutable(fakeTmuxDir.path), "Directory named tmux must be rejected")
+
+        let nonExecDir = tempDir.appendingPathComponent("non-exec-tmux-" + UUID().uuidString)
+        let nonExecTmux = nonExecDir.appendingPathComponent("tmux")
+        try? FileManager.default.createDirectory(at: nonExecDir, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: nonExecTmux.path, contents: Data(), attributes: [.posixPermissions: 0o644])
+        defer { try? FileManager.default.removeItem(at: nonExecDir) }
+        XCTAssertFalse(HarnessTmuxProbe.isValidExecutable(nonExecTmux.path), "Non-executable file must be rejected")
+
+        for standard in ["/opt/homebrew/bin/tmux", "/usr/local/bin/tmux", "/usr/bin/tmux"] {
+            if FileManager.default.isExecutableFile(atPath: standard) {
+                XCTAssertTrue(HarnessTmuxProbe.isValidExecutable(standard))
+            }
+        }
+    }
+
+    func testCommandLineArgumentsPreservesEmptyItems() throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "sleep 10; :", "--", "", "final-arg"]
+        try process.run()
+        defer {
+            if process.isRunning { process.terminate() }
+            process.waitUntilExit()
+        }
+        var execName: NSString?
+        let args = iTermLSOF.rawCommandLineArguments(forProcess: process.processIdentifier, execName: &execName)
+        XCTAssertNotNil(args)
+        guard let args else { return }
+        // Arguments should include: ["sh", "-c", "sleep 10; :", "--", "", "final-arg"]
+        XCTAssertTrue(args.contains(""), "rawCommandLineArguments must not drop empty string argv items")
+        XCTAssertEqual(args.last, "final-arg")
+        XCTAssertEqual(iTermLSOF.strictRawCommandLineArguments(forProcess: process.processIdentifier,
+                                                               execName: nil), args)
+
+        let escaped = iTermLSOF.commandLineArguments(forProcess: process.processIdentifier, execName: nil)
+        XCTAssertNotNil(escaped)
+        XCTAssertTrue(escaped?.contains("\"\"") == true, "Empty argv item must be escaped as empty quotes")
+    }
+
+    func testProcessExitedDetection() {
+        let currentPid = getpid()
+        let startTime = iTermLSOF.startTime(forProcess: currentPid) ?? Date()
+        // A live process with matching start time has not exited.
+        XCTAssertFalse(Discovery.hasProcessExited(pid: currentPid, started: startTime))
+        // A different start time indicates exit/reuse.
+        XCTAssertTrue(Discovery.hasProcessExited(pid: currentPid, started: Date(timeIntervalSince1970: 0)))
+        // A nonexistent PID (e.g. 999999) has exited (ESRCH).
+        XCTAssertTrue(Discovery.hasProcessExited(pid: 999_999, started: Date()))
+    }
+
 }
 
 private extension Result {

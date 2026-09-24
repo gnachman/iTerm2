@@ -92,4 +92,49 @@ final class PSMTabGroupCollapsedDropFeedbackTests: XCTestCase {
                        "an expanded group's front slot must open a gap, so it is not a collapsed join slot")
         XCTAssertTrue((control.cells() as! [PSMTabBarCell]).allSatisfy { !$0.isCollapsedGroupJoinSlot })
     }
+
+    // A project filter hides tabs without collapsing their group. Those cells must
+    // not be treated as a collapsed pill: no join detector, and the chip stays undrawn.
+    func testProjectHiddenMemberIsNotACollapsedRun() {
+        let hidden = tabCell("A")
+        hidden.isProjectHidden = true
+        control.cells().setArray([placeholder(), hidden, placeholder(), tabCell(nil), placeholder()])
+        assistant.reinsertDragChips(inTabBar: control)
+
+        let cells = control.cells() as! [PSMTabBarCell]
+        let chip = cells.first { $0.isTabGroupChip }
+        XCTAssertEqual(chip?.isProjectHidden, true)
+        XCTAssertEqual(chip?.frame.width, 0)
+        XCTAssertTrue(cells.allSatisfy { !$0.isCollapsedGroupJoinSlot },
+                      "a project-filtered member is undrawn and must not mark a collapsed join slot")
+    }
+
+    // A project-hidden sibling before a drawn member does not collapse the group,
+    // and the drawn member still owns the expanded group's end join slot.
+    func testProjectHiddenMemberDoesNotCollapseVisibleSibling() {
+        let hidden = tabCell("A")
+        hidden.isProjectHidden = true
+        control.cells().setArray([placeholder(),
+                                  hidden, placeholder(),
+                                  tabCell("A"), placeholder(),
+                                  tabCell(nil), placeholder()])
+        assistant.reinsertDragChips(inTabBar: control)
+
+        let cells = control.cells() as! [PSMTabBarCell]
+        XCTAssertTrue(cells.allSatisfy { !$0.isCollapsedGroupJoinSlot })
+        XCTAssertEqual(cells.filter { $0.joinsTabGroupIdentifier == "A" }.count, 1)
+    }
+
+    // Collapse and the project filter are independent. A filtered member stays
+    // skipped even when it is also collapsed-hidden.
+    func testProjectHiddenCollapsedMemberIsSkipped() {
+        let hidden = tabCell("A", collapsed: true)
+        hidden.isProjectHidden = true
+        control.cells().setArray([placeholder(), hidden, placeholder(), tabCell(nil), placeholder()])
+        assistant.reinsertDragChips(inTabBar: control)
+
+        let cells = control.cells() as! [PSMTabBarCell]
+        XCTAssertTrue(cells.allSatisfy { !$0.isCollapsedGroupJoinSlot },
+                      "a project-hidden member is skipped even when its collapsed-hidden flag is set")
+    }
 }

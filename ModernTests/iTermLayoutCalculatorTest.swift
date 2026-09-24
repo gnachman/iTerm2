@@ -50,6 +50,42 @@ final class iTermLayoutCalculatorTest: XCTestCase {
         }
     }
 
+    func testZeroHarnessSidebarWidthLeavesLayoutUnchanged() {
+        var inputs = makeDefaultInputs()
+        inputs.hasStatusBar = true
+        inputs.shouldShowToolbelt = true
+        let baseline = iTermLayoutCalculator.calculateLayout(with: inputs)
+        inputs.harnessSidebarWidth = 0
+        let result = iTermLayoutCalculator.calculateLayout(with: inputs)
+        XCTAssertEqual(result.harnessSidebarFrame, .zero)
+        XCTAssertEqual(result.tabViewFrame, baseline.tabViewFrame)
+        XCTAssertEqual(result.tabBarFrame, baseline.tabBarFrame)
+        XCTAssertEqual(result.statusBarFrame, baseline.statusBarFrame)
+    }
+
+    func testHarnessSidebarSpansFullHeightWhenTopTabBarIsOnLoan() {
+        var inputs = makeDefaultInputs()
+        inputs.tabBarOnLoan = true
+        inputs.tabBarShouldBeAccessory = true
+        let baseline = iTermLayoutCalculator.calculateLayout(with: inputs)
+        inputs.harnessSidebarWidth = 220
+        let result = iTermLayoutCalculator.calculateLayout(with: inputs)
+        XCTAssertEqual(result.harnessSidebarFrame.minY, baseline.tabViewFrame.minY)
+        XCTAssertEqual(result.harnessSidebarFrame.maxY, baseline.tabViewFrame.maxY)
+        XCTAssertEqual(result.tabBarFrame, baseline.tabBarFrame)
+    }
+
+    func testHarnessSidebarNeverLeavesStatusBarWithNegativeWidth() {
+        var inputs = makeDefaultInputs()
+        inputs.contentViewWidth = 300
+        inputs.hasStatusBar = true
+        inputs.harnessSidebarWidth = 640
+        let result = iTermLayoutCalculator.calculateLayout(with: inputs)
+        XCTAssertGreaterThanOrEqual(result.statusBarFrame.width, 0)
+        XCTAssertGreaterThanOrEqual(result.tabViewFrame.width, 0)
+        XCTAssertEqual(result.harnessSidebarFrame.maxX, result.tabViewFrame.minX)
+    }
+
     // MARK: - Test Fixtures
 
     /// Creates default inputs with reasonable test values

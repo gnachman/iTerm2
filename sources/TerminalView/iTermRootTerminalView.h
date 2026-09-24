@@ -57,6 +57,11 @@
 // The window name beside the tabs was double-clicked. Opens the rename dialog
 // that Window > Edit Window Title opens, which is otherwise the only way there.
 - (void)rootTerminalViewDidRequestEditWindowName;
+
+// The harness sidebar was shown or hidden. The window must re-decide whether the
+// tab bar is a titlebar accessory and refit its tabs.
+- (void)rootTerminalViewHarnessSidebarVisibilityDidChange;
+- (void)rootTerminalViewHarnessSidebarWidthDidFinishChanging;
 - (NSImage *)rootTerminalViewCurrentTabIcon;
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons;
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons;
@@ -188,5 +193,12 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 // Project navigator shortcuts are dispatched before ordinary terminal key handling.
 - (BOOL)handleProjectShortcut:(NSEvent *)event digit:(NSInteger)digit;
 - (void)selectHarnessProjectContainingSessionGUID:(NSString *)guid;
+// Tells the harness sidebar the selected tab changed so it can follow a tab
+// selected outside the project filter.
+- (void)harnessSidebarSelectedTabDidChange;
+
+// Width the harness sidebar takes beside the tab view, or 0 when it is off. Part
+// of the window decoration, like a left-side tab bar.
+@property(nonatomic, readonly) CGFloat harnessSidebarDecorationWidth;
 
 @end

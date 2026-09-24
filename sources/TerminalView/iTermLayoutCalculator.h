@@ -119,6 +119,17 @@ typedef struct {
 /// Calculate layout for visible right tab bar.
 + (iTermLayoutOutputs)calculateLayoutWithVisibleRightTabBarInputs:(iTermLayoutInputs)inputs;
 
+/// Tabs the tab bar shows while a harness project is selected. Nil means no filter: a window
+/// with no tab in the project keeps showing everything. The selected tab is always included so
+/// the bar never hides the terminal on screen. Only an explicit project change (reselect) moves
+/// the selection, to the first project tab in orderedItems; periodic refreshes never do.
++ (nullable NSSet *)harnessProjectVisibleItemsForOrderedItems:(NSArray *)orderedItems
+                                                matchingItems:(NSSet *)matchingItems
+                                                 selectedItem:(nullable id)selectedItem
+                                                     reselect:(BOOL)reselect
+                                                 itemToSelect:(id _Nullable * _Nullable)itemToSelect
+    NS_SWIFT_NAME(harnessProjectVisibleItems(orderedItems:matchingItems:selectedItem:reselect:itemToSelect:));
+
 @end
 
 // Tab position constants (matching PSMTabBarControl)

@@ -29,6 +29,7 @@ import AppKit
     }
     @objc var requestedWidth: CGFloat = SessionDirectorySidebar.preferredWidth
     @objc var widthDidChange: (() -> Void)?
+    @objc var widthDidFinishChanging: (() -> Void)?
 
     private final class Group: NSObject {
         let key: SessionDirectoryKey
@@ -57,7 +58,9 @@ import AppKit
     }
 
     @objc var selectProjectTabAtIndex: ((Int) -> Void)?
-    @objc var projectFilterDidChange: ((NSSet?) -> Bool)?
+    /// `reselect` is true only for an intentional project change. Refreshes and tab
+    /// selection pass false so the selected tab stays visible and selection does not move.
+    @objc var projectFilterDidChange: ((NSSet?, Bool) -> Bool)?
 
     private let heading = NSTextField(labelWithString: String(localized: "SessionDirectorySidebar.Title",
         defaultValue: "Coding harnesses", comment: "Title of the coding harness navigator"))
@@ -68,14 +71,20 @@ import AppKit
     private var groups: [Group] = []
     private var snapshot: [Entry] = []
     private var timer: Timer?
-    private var pendingAttachments = Set<String>()
-    private var attachedSessionIDs: [String: String] = [:]
-    private var observedSessionIDs: Set<String>?
+    private var activeSessionObserver: NSObjectProtocol?
+    /// App-wide. Each sidebar is per window, so a per-instance set lets two windows
+    /// stop or attach the same harness.
+    private static var reservedHarnessIDs = Set<String>()
+    private var ownedReservations = Set<String>()
+    private static var attachedSessionIDs: [String: String] = [:]
+    /// A session keeps its project when its tab moves between windows.
+    private static var projectSessionKeys: [String: SessionDirectoryKey] = [:]
+    /// Session ids that were in this window on the previous refresh. The first
+    /// observation is only a baseline; later arrivals can join the selected project.
+    private var observedWindowSessionIDs: Set<String>?
     private var selectedEntryID: String?
-    private var resolvingResumes = Set<String>()
     private var selectedProject: SessionDirectoryKey?
     private var filterActive = false
-    private var projectSessionKeys: [String: SessionDirectoryKey] = [:]
     private let allProjectsButton = NSButton(title: String(localized: "SessionDirectorySidebar.AllProjects",
         defaultValue: "All projects", comment: "Clear the project tab filter"), target: nil, action: nil)
     private var refreshing = false
@@ -123,6 +132,7 @@ import AppKit
         resizeGrip.finished = { [weak self] in
             guard let self else { return }
             iTermUserDefaults.userDefaults().set(self.requestedWidth, forKey: Self.widthKey)
+            self.widthDidFinishChanging?()
         }
         addSubview(resizeGrip)
         needsLayout = true
@@ -143,7 +153,19 @@ import AppKit
         super.viewDidMoveToWindow()
         timer?.invalidate()
         timer = nil
+        if let activeSessionObserver {
+            NotificationCenter.default.removeObserver(activeSessionObserver)
+            self.activeSessionObserver = nil
+        }
         guard window != nil else { return }
+        activeSessionObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name(iTermSessionBecameKey), object: nil, queue: .main) { [weak self] notification in
+                guard let self, let session = notification.object as? PTYSession,
+                      let terminal = self.window?.windowController as? PseudoTerminal,
+                      session.delegate?.realParentWindow() === terminal,
+                      terminal.currentSession()?.guid == session.guid else { return }
+                self.selectedTabDidChange(toSessionGUID: session.guid)
+            }
         refresh()
         // Session metadata also changes without a tab insertion/removal (e.g. shell integration).
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -154,7 +176,9 @@ import AppKit
 
     deinit {
         timer?.invalidate()
+        if let activeSessionObserver { NotificationCenter.default.removeObserver(activeSessionObserver) }
         for monitor in nativeMonitors.values { monitor.invalidate() }
+        for id in ownedReservations { Self.releaseHarnessOperation(id) }
     }
 
     // Called by iTermApplication after checking the focused editor and key mappings.
@@ -328,8 +352,8 @@ import AppKit
     private func refresh() {
         let sessions = (iTermController.sharedInstance()?.allSessions() ?? []).filter { !$0.exited }
         let ids = Set(sessions.map { $0.guid })
-        projectSessionKeys = projectSessionKeys.filter { ids.contains($0.key) }
-        attachedSessionIDs = attachedSessionIDs.filter { ids.contains($0.value) }
+        Self.projectSessionKeys = Self.projectSessionKeys.filter { ids.contains($0.key) }
+        Self.attachedSessionIDs = Self.attachedSessionIDs.filter { ids.contains($0.value) }
         for id in Array(nativeMonitors.keys) where !ids.contains(id) {
             nativeMonitors.removeValue(forKey: id)?.invalidate()
         }
@@ -339,7 +363,7 @@ import AppKit
         var entries = sessions.compactMap { entry(for: $0) }
         for harness in HarnessProcessDiscovery.shared.harnesses {
             let local = sessions.first { session in
-                if attachedSessionIDs[harness.id] == session.guid { return true }
+                if Self.attachedSessionIDs[harness.id] == session.guid { return true }
                 if harness.pid == session.shell.pid || harness.ancestors.contains(session.shell.pid) { return true }
                 if let pane = tmuxPanes[session.guid], let pid = pane.pid,
                    harness.pid == pid || harness.ancestors.contains(pid) { return true }
@@ -375,16 +399,21 @@ import AppKit
             entries.append(Entry(id: id, name: title, runID: harness.id, key: key,
                                  external: harness))
         }
-        for entry in entries { projectSessionKeys[entry.id] = entry.key }
-        if let selectedProject, let observedSessionIDs {
-            for session in sessions where !observedSessionIDs.contains(session.guid) && projectSessionKeys[session.guid] == nil {
-                if session.delegate?.realParentWindow() === window?.windowController {
-                    projectSessionKeys[session.guid] = selectedProject
-                }
+        let windowIDs = windowSessionIDs(among: sessions)
+        Self.projectSessionKeys = Self.adoptingWindowArrivals(keys: Self.projectSessionKeys,
+                                                          previousWindowSessionIDs: observedWindowSessionIDs,
+                                                          windowSessionIDs: windowIDs,
+                                                          selectedProject: selectedProject)
+        for entry in entries {
+            let previousRun = snapshot.first { $0.id == entry.id }
+            if let previousRun, previousRun.runID != entry.runID {
+                Self.projectSessionKeys[entry.id] = entry.key
+            } else if Self.projectSessionKeys[entry.id] == nil {
+                Self.projectSessionKeys[entry.id] = entry.key
             }
         }
-        observedSessionIDs = ids
-        applyProjectFilter()
+        observedWindowSessionIDs = windowIDs
+        applyProjectFilter(.refresh)
         emptyLabel.isHidden = !entries.isEmpty
         guard entries != snapshot else {
             syncSelection()
@@ -486,17 +515,17 @@ import AppKit
             if let destination, destination.window !== window {
                 selectedProject = nil
                 selectedEntryID = nil
-                applyProjectFilter()
+                applyProjectFilter(.projectChange)
             } else if destination == nil {
                 selectedProject = entry.key
-                applyProjectFilter()
+                applyProjectFilter(.projectChange)
             }
             session.reveal()
             destination?.selectHarnessProjectContainingSessionGUID(session.guid)
             return
         }
         selectedProject = entry.key
-        applyProjectFilter()
+        applyProjectFilter(.projectChange)
         guard let external = entry.external, !external.tmuxUnverified,
               iTermLSOF.startTime(forProcess: external.pid) == external.started else { return }
         if let socket = external.tmuxSocket, let pane = external.tmuxPane {
@@ -513,7 +542,7 @@ import AppKit
     @objc private func showAllProjects() {
         selectedProject = nil
         selectedEntryID = nil
-        applyProjectFilter()
+        applyProjectFilter(.projectChange)
     }
 
     @objc(selectProjectContainingSessionGUID:)
@@ -525,18 +554,95 @@ import AppKit
         }
         selectedProject = entry.key
         selectedEntryID = entry.runID
-        applyProjectFilter()
+        applyProjectFilter(.projectChange)
         syncSelection()
     }
 
-    private func applyProjectFilter() {
+    enum ProjectFilterUpdate: Equatable {
+        case refresh
+        case projectChange
+        case selectedTab
+    }
+
+    static func projectFilterReselects(_ update: ProjectFilterUpdate) -> Bool {
+        update == .projectChange
+    }
+
+    /// Assigns the selected project to session ids that newly appeared in this window
+    /// and do not already belong to a project. Existing keys are left alone, and the
+    /// first observation (nil previous set) adopts nothing.
+    static func adoptingWindowArrivals(keys: [String: SessionDirectoryKey],
+                                        previousWindowSessionIDs: Set<String>?,
+                                        windowSessionIDs: Set<String>,
+                                        selectedProject: SessionDirectoryKey?) -> [String: SessionDirectoryKey] {
+        guard let previousWindowSessionIDs, let selectedProject else { return keys }
+        var adopted = keys
+        for id in windowSessionIDs where !previousWindowSessionIDs.contains(id) && adopted[id] == nil {
+            adopted[id] = selectedProject
+        }
+        return adopted
+    }
+
+    static func reserveHarnessOperation(_ id: String) -> Bool {
+        reservedHarnessIDs.insert(id).inserted
+    }
+
+    static func releaseHarnessOperation(_ id: String) {
+        reservedHarnessIDs.remove(id)
+    }
+
+    private func reserveOperation(_ id: String) -> Bool {
+        guard Self.reserveHarnessOperation(id) else { return false }
+        ownedReservations.insert(id)
+        return true
+    }
+
+    private func releaseOperation(_ id: String) {
+        ownedReservations.remove(id)
+        Self.releaseHarnessOperation(id)
+    }
+
+    static func replacementLaunchFailureMessage(handoffPath: String) -> String {
+        String(format: String(localized: "SessionDirectorySidebar.ReplacementLaunchFailed",
+            defaultValue: "The original harness exited, but the replacement tab could not be opened. The recovery handoff is saved at %@.",
+            comment: "Replacement session launch failed after the original process had already exited. %@ is the saved handoff file path."),
+            handoffPath)
+    }
+
+    @objc(selectedTabDidChangeToSessionGUID:)
+    func selectedTabDidChange(toSessionGUID guid: String?) {
+        if let guid, !guid.isEmpty, let previous = observedWindowSessionIDs, !previous.contains(guid) {
+            Self.projectSessionKeys = Self.adoptingWindowArrivals(keys: Self.projectSessionKeys,
+                                                              previousWindowSessionIDs: previous,
+                                                              windowSessionIDs: previous.union([guid]),
+                                                              selectedProject: selectedProject)
+            observedWindowSessionIDs?.insert(guid)
+        }
+        if let guid, let selectedProject, let tabProject = Self.projectSessionKeys[guid], tabProject != selectedProject {
+            self.selectedProject = tabProject
+            selectedEntryID = nil
+        }
+        applyProjectFilter(.selectedTab)
+        syncSelection()
+    }
+
+    private func windowSessionIDs(among sessions: [PTYSession]) -> Set<String> {
+        let controller = window?.windowController
+        return Set(sessions.compactMap { session in
+            guard session.delegate?.realParentWindow() === controller else { return nil }
+            return session.guid
+        })
+    }
+
+    private func applyProjectFilter(_ update: ProjectFilterUpdate) {
+        let reselect = Self.projectFilterReselects(update)
         guard let selectedProject else {
             filterActive = false
-            _ = projectFilterDidChange?(nil)
+            _ = projectFilterDidChange?(nil, reselect)
             return
         }
-        let ids = projectSessionKeys.filter { $0.value == selectedProject }.map { $0.key }
-        filterActive = projectFilterDidChange?(NSSet(array: ids)) ?? false
+        let ids = Self.projectSessionKeys.filter { $0.value == selectedProject }.map { $0.key }
+        filterActive = projectFilterDidChange?(NSSet(array: ids), reselect) ?? false
     }
 
     private static var tmuxExecutable: String? {
@@ -550,42 +656,51 @@ import AppKit
         arguments.map { ($0 as NSString).withEscapedShellCharacters(includingNewlines: true) }.joined(separator: " ")
     }
 
-    private func launchProjectTab(_ entry: Entry, arguments: [String]) {
+    private func launchProjectTab(_ entry: Entry, arguments: [String], holdsReservation: Bool = false, handoffPath: String? = nil) {
         let runID = entry.external?.id ?? entry.id
-        if let id = attachedSessionIDs[runID],
+        if let id = Self.attachedSessionIDs[runID],
            let session = iTermController.sharedInstance()?.anySession(withGUID: id), !session.exited {
+            if holdsReservation { releaseOperation(runID) }
             session.reveal()
             return
         }
-        guard pendingAttachments.insert(runID).inserted else { return }
+        if !holdsReservation && !reserveOperation(runID) {
+            DLog("Harness attach already reserved for \(runID)")
+            return
+        }
         selectedProject = entry.key
         iTermSessionLauncher.launchBookmark(nil,
             in: window?.windowController as? PseudoTerminal, style: .tab, withURL: nil,
             hotkeyWindowType: .none, makeKey: true, canActivate: true,
             respectTabbingMode: false, index: nil, command: Self.shellCommand(arguments), makeSession: nil,
-            didMakeSession: { [weak self] session in
-                self?.projectSessionKeys[session.guid] = entry.key
-            }, completion: { [weak self] session, ok in
-                guard let self else { return }
-                self.pendingAttachments.remove(runID)
+            didMakeSession: { session in
+                Self.projectSessionKeys[session.guid] = entry.key
+            }, completion: { [self] session, ok in
+                releaseOperation(runID)
                 if ok {
-                    self.attachedSessionIDs[runID] = session.guid
-                    self.projectSessionKeys[session.guid] = entry.key
+                    Self.attachedSessionIDs[runID] = session.guid
+                    Self.projectSessionKeys[session.guid] = entry.key
                     if let tab = session.delegate as? PTYTab, let path = entry.key.path {
                         tab.titleOverride = (path as NSString).lastPathComponent + " — " + (entry.external?.name ?? entry.name)
                     }
+                } else if let handoffPath {
+                    self.showError(Self.replacementLaunchFailureMessage(handoffPath: handoffPath))
                 } else {
                     self.showError(String(localized: "SessionDirectorySidebar.LaunchFailed",
                         defaultValue: "Could not open the harness tab.", comment: "Session launch failed"))
                 }
-                self.applyProjectFilter()
+                self.applyProjectFilter(.refresh)
             })
     }
 
     private func showError(_ message: String) {
         let alert = NSAlert()
         alert.messageText = message
-        if let window { alert.beginSheetModal(for: window) }
+        if let window, window.isVisible {
+            alert.beginSheetModal(for: window)
+        } else {
+            alert.runModal()
+        }
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
@@ -639,11 +754,14 @@ import AppKit
     private func resumeNative(_ entry: Entry) {
         guard let harness = entry.external, harness.isNative,
               let directory = entry.key.path, window != nil,
-              iTermController.sharedInstance()?.anySession(withGUID: entry.id) == nil,
-              resolvingResumes.insert(harness.id).inserted else { return }
-        if let id = attachedSessionIDs[harness.id],
+              iTermController.sharedInstance()?.anySession(withGUID: entry.id) == nil else { return }
+        guard reserveOperation(harness.id) else {
+            DLog("Harness transfer already reserved for \(harness.id)")
+            return
+        }
+        if let id = Self.attachedSessionIDs[harness.id],
            let session = iTermController.sharedInstance()?.anySession(withGUID: id), !session.exited {
-            resolvingResumes.remove(harness.id)
+            releaseOperation(harness.id)
             session.reveal()
             return
         }
@@ -657,9 +775,13 @@ import AppKit
         DispatchQueue.global(qos: .utility).async { [weak self] in
             let result = HarnessProcessDiscovery.resumeTarget(for: harness, protectedTTYs: protectedTTYs)
             DispatchQueue.main.async {
-                guard let self, let window = self.window else { return }
+                guard let self else { return }
+                guard let window = self.window else {
+                    self.releaseOperation(harness.id)
+                    return
+                }
                 guard case .success(let target) = result else {
-                    self.resolvingResumes.remove(harness.id)
+                    self.releaseOperation(harness.id)
                     if case .failure(let block) = result { self.showError(Self.transferBlockMessage(block)) }
                     return
                 }
@@ -678,11 +800,11 @@ import AppKit
                 alert.beginSheetModal(for: window) { [weak self] response in
                     guard let self else { return }
                     guard response == .alertFirstButtonReturn || response == .alertSecondButtonReturn else {
-                        self.resolvingResumes.remove(harness.id)
+                        self.releaseOperation(harness.id)
                         return
                     }
                     guard iTermLSOF.startTime(forProcess: harness.pid) == harness.started else {
-                        self.resolvingResumes.remove(harness.id)
+                        self.releaseOperation(harness.id)
                         self.showError(String(localized: "SessionDirectorySidebar.ProcessChanged",
                             defaultValue: "The original process has exited. Refresh the sidebar before opening it.", comment: "Process identity changed during resume prompt"))
                         return
@@ -710,23 +832,25 @@ import AppKit
                             arguments = ["/bin/sh", "-c",
                                          "cd " + Self.shellCommand([directory]) + " && exec " + command]
                         } else {
-                            self.resolvingResumes.remove(harness.id)
+                            self.releaseOperation(harness.id)
                             return
                         }
+                        let handoffPath = file.path
+                        // Once the original is told to exit, retain the handoff owner
+                        // through the replacement launch even if its sidebar is hidden.
                         HarnessProcessDiscovery.stopForTransfer(harness, target: target,
-                            protectedTTYs: protectedTTYs) { [weak self] outcome in
-                            guard let self else { return }
-                            self.resolvingResumes.remove(harness.id)
+                            protectedTTYs: protectedTTYs) { [self] outcome in
                             guard case .success = outcome else {
+                                self.releaseOperation(harness.id)
                                 if case .failure(let block) = outcome {
-                                    self.showError(Self.transferBlockMessage(block))
+                                    self.showError(Self.transferFailureMessage(block, handoffPath: handoffPath))
                                 }
                                 return
                             }
-                            self.launchProjectTab(entry, arguments: arguments)
+                            self.launchProjectTab(entry, arguments: arguments, holdsReservation: true, handoffPath: handoffPath)
                         }
                     } catch {
-                        self.resolvingResumes.remove(harness.id)
+                        self.releaseOperation(harness.id)
                         self.showError(error.localizedDescription)
                     }
                 }
@@ -764,9 +888,17 @@ import AppKit
         }
     }
 
+    static func transferFailureMessage(_ block: HarnessProcessDiscovery.TransferBlock,
+                                       handoffPath: String) -> String {
+        let location = String(format: String(localized: "SessionDirectorySidebar.SavedHandoffAt",
+            defaultValue: "Recovery handoff saved at %@.",
+            comment: "Location of a saved harness handoff after transfer did not complete"), handoffPath)
+        return transferBlockMessage(block) + "\n\n" + location
+    }
+
     private func selectProject(_ group: Group) {
         selectedProject = group.key
-        applyProjectFilter()
+        applyProjectFilter(.projectChange)
         let local = group.sessions.first { iTermController.sharedInstance()?.anySession(withGUID: $0.id) != nil }
         selectedEntryID = nil
         let tmux = group.sessions.first { $0.external?.tmuxSocket != nil }

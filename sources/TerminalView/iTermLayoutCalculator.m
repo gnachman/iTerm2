@@ -78,6 +78,34 @@ const int kLayoutTabPositionRight = 3;
     return outputs;
 }
 
++ (NSSet *)harnessProjectVisibleItemsForOrderedItems:(NSArray *)orderedItems
+                                      matchingItems:(NSSet *)matchingItems
+                                       selectedItem:(id)selectedItem
+                                           reselect:(BOOL)reselect
+                                       itemToSelect:(id *)itemToSelect {
+    if (itemToSelect) {
+        *itemToSelect = nil;
+    }
+    if (matchingItems.count == 0) {
+        return nil;
+    }
+    const BOOL selectedMatches = selectedItem != nil && [matchingItems containsObject:selectedItem];
+    if (reselect && !selectedMatches) {
+        for (id item in orderedItems) {
+            if ([matchingItems containsObject:item]) {
+                if (itemToSelect) {
+                    *itemToSelect = item;
+                }
+                return matchingItems;
+            }
+        }
+    }
+    if (selectedItem == nil || selectedMatches) {
+        return matchingItems;
+    }
+    return [matchingItems setByAddingObject:selectedItem];
+}
+
 #pragma mark - Hidden Tab Bar Layout
 
 + (iTermLayoutOutputs)calculateLayoutWithHiddenTabBarInputs:(iTermLayoutInputs)inputs {

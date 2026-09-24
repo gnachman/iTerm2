@@ -1743,21 +1743,22 @@ static os_log_t PSMTabDragLog(void) {
 }
 
 // YES if the placeholder at `index` touches a COLLAPSED group's run -- i.e. the
-// nearest non-placeholder cell on either side (a collapsed group draws no visible
-// members, so its run is the chip plus zero-width collapsed members) is a
-// collapsed chip or a collapsed member. Such a slot must never animate open: a gap
-// beside a collapsed pill shoves the pill run sideways (the field jitter). Slots
-// between two real/expanded cells are unaffected and still open normally.
+// nearest drawn cell on either side (a collapsed group draws no visible members,
+// so its run is the chip plus zero-width collapsed members) is a collapsed chip
+// or a collapsed member. Project-hidden cells are undrawn by the navigator filter
+// and are skipped; they are not collapsed members. Such a slot must never animate
+// open: a gap beside a collapsed pill shoves the pill run sideways (the field
+// jitter). Slots between two real/expanded cells are unaffected and still open normally.
 - (BOOL)placeholderAtIndex:(NSInteger)index isAdjacentToCollapsedRunInCells:(NSArray *)cells {
     const NSInteger count = (NSInteger)cells.count;
-    // Scan right, skipping other placeholders, to the first non-placeholder cell.
+    // Scan right, skipping placeholders and project-hidden cells, to the first drawn cell.
     for (NSInteger j = index + 1; j < count; j++) {
         PSMTabBarCell *c = cells[j];
-        if ([c isPlaceholder]) {
+        if ([c isPlaceholder] || c.isProjectHidden) {
             continue;
         }
         if (([c isTabGroupChip] && [self chipLeadsCollapsedRunInCells:cells atIndex:j]) ||
-            [c isHiddenInBar]) {
+            c.isCollapsedHidden) {
             return YES;
         }
         break;  // a real tab or an expanded group's chip: not collapsed-adjacent
@@ -1765,11 +1766,11 @@ static os_log_t PSMTabDragLog(void) {
     // Scan left similarly.
     for (NSInteger j = index - 1; j >= 0; j--) {
         PSMTabBarCell *c = cells[j];
-        if ([c isPlaceholder]) {
+        if ([c isPlaceholder] || c.isProjectHidden) {
             continue;
         }
         if (([c isTabGroupChip] && [self chipLeadsCollapsedRunInCells:cells atIndex:j]) ||
-            [c isHiddenInBar]) {
+            c.isCollapsedHidden) {
             return YES;
         }
         break;
@@ -1778,18 +1779,27 @@ static os_log_t PSMTabDragLog(void) {
 }
 
 // YES if the group chip at `chipIndex` heads a COLLAPSED run: its run leads with a
-// collapsed-group front slot (or a collapsed member) before any visible member.
+// collapsed-group front slot (or a collapsed member) before any drawn member.
+// Project-hidden cells are skipped. A chip whose members are all project-hidden
+// is undrawn, not a collapsed pill.
 - (BOOL)chipLeadsCollapsedRunInCells:(NSArray *)cells atIndex:(NSInteger)chipIndex {
+    PSMTabBarCell *chip = cells[chipIndex];
+    if (chip.isProjectHidden) {
+        return NO;
+    }
     const NSInteger count = (NSInteger)cells.count;
     for (NSInteger k = chipIndex + 1; k < count; k++) {
         PSMTabBarCell *c = cells[k];
-        if (c.isCollapsedGroupJoinSlot || [c isHiddenInBar]) {
+        if (c.isProjectHidden) {
+            continue;
+        }
+        if (c.isCollapsedGroupJoinSlot || c.isCollapsedHidden) {
             return YES;
         }
         if ([c isPlaceholder]) {
             continue;
         }
-        return NO;  // a visible member -> expanded group
+        return NO;  // a drawn member -> expanded group
     }
     return NO;
 }
@@ -2351,28 +2361,40 @@ static os_log_t PSMTabDragLog(void) {
     // below stays O(n) instead of re-scanning the whole array per placeholder (which
     // made it O(n^2) per frame). runCell[k]: cell k is a collapsed-run cell (a
     // collapsed member, or a chip that leads a collapsed run). collapsedAdjacent[k]:
-    // a placeholder at k has such a cell as its nearest non-placeholder neighbor on
-    // either side -- the same answer as -placeholderAtIndex:isAdjacentToCollapsedRunInCells:,
-    // computed once. (chipLeadsCollapsedRun scans only within each chip's own run, so
+    // a placeholder at k has such a cell as its nearest drawn neighbor on either
+    // side -- the same answer as -placeholderAtIndex:isAdjacentToCollapsedRunInCells:,
+    // computed once. Project-hidden cells are undrawn and are not neighbors.
+    // (chipLeadsCollapsedRun scans only within each chip's own run, so
     // the whole first pass is O(n) across non-overlapping runs.)
     BOOL *runCell = calloc(MAX(1, cellCount), sizeof(BOOL));
     BOOL *collapsedAdjacent = calloc(MAX(1, cellCount), sizeof(BOOL));
     for (NSInteger k = 0; k < cellCount; k++) {
         PSMTabBarCell *ck = cells[k];
+        if (ck.isProjectHidden) {
+            continue;
+        }
         if ([ck isTabGroupChip]) {
             runCell[k] = [self chipLeadsCollapsedRunInCells:cells atIndex:k];
-        } else if (![ck isPlaceholder] && [ck isHiddenInBar]) {
+        } else if (![ck isPlaceholder] && ck.isCollapsedHidden) {
             runCell[k] = YES;
         }
     }
     NSInteger leftNonPH = -1;
     for (NSInteger k = 0; k < cellCount; k++) {
-        if (![cells[k] isPlaceholder]) { leftNonPH = k; continue; }
+        PSMTabBarCell *ck = cells[k];
+        if (ck.isProjectHidden) {
+            continue;
+        }
+        if (![ck isPlaceholder]) { leftNonPH = k; continue; }
         if (leftNonPH >= 0 && runCell[leftNonPH]) { collapsedAdjacent[k] = YES; }
     }
     NSInteger rightNonPH = -1;
     for (NSInteger k = cellCount - 1; k >= 0; k--) {
-        if (![cells[k] isPlaceholder]) { rightNonPH = k; continue; }
+        PSMTabBarCell *ck = cells[k];
+        if (ck.isProjectHidden) {
+            continue;
+        }
+        if (![ck isPlaceholder]) { rightNonPH = k; continue; }
         if (rightNonPH >= 0 && runCell[rightNonPH]) { collapsedAdjacent[k] = YES; }
     }
 
@@ -2581,6 +2603,7 @@ static os_log_t PSMTabDragLog(void) {
         NSRect frame = NSZeroRect;
         NSInteger memberCount = 0;
         BOOL allCollapsed = YES;
+        BOOL sawProjectHiddenMember = NO;
         for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
             PSMTabBarCell *c = cells[j];
             if (c.isPlaceholder) {
@@ -2590,13 +2613,30 @@ static os_log_t PSMTabDragLog(void) {
                 ![c.tabGroupIdentifier isEqualToString:chip.tabGroupIdentifier]) {
                 break;
             }
+            if (c.isProjectHidden) {
+                sawProjectHiddenMember = YES;
+                continue;  // navigator filter, not group collapse
+            }
             if (memberCount == 0) {
                 frame = [c frame];
             }
             memberCount++;
-            if (!c.isHiddenInBar) {
+            if (!c.isCollapsedHidden) {
                 allCollapsed = NO;
             }
+        }
+        if (memberCount == 0 && sawProjectHiddenMember) {
+            // Every member is filtered out. The synthesized chip is not in the
+            // control's project-hidden pass, so mark it here and keep it undrawn.
+            chip.isProjectHidden = YES;
+            NSRect hiddenFrame = [chip frame];
+            if (horizontal) {
+                hiddenFrame.size.width = 0;
+            } else {
+                hiddenFrame.size.height = 0;
+            }
+            [chip setFrame:hiddenFrame];
+            continue;
         }
         const BOOL collapsedRun = (memberCount > 0 && allCollapsed);
         if (horizontal) {
@@ -2635,14 +2675,15 @@ static os_log_t PSMTabDragLog(void) {
         // drag is never allowed to land inside another group, so add neither.
         const BOOL draggingGroup = (_draggedGroupID.length > 0);
         if ([c isTabGroupChip]) {
-            if (!draggingGroup) {
-                // Front-of-group slot, sized to the first member.
+            if (!draggingGroup && !c.isProjectHidden) {
+                // Front-of-group slot, sized to the first drawn member.
                 NSRect slotFrame = [c frame];
                 for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
-                    if (![cells[j] isTabGroupChip]) {
-                        slotFrame = [cells[j] frame];
-                        break;
+                    if ([cells[j] isTabGroupChip] || [cells[j] isProjectHidden]) {
+                        continue;
                     }
+                    slotFrame = [cells[j] frame];
+                    break;
                 }
                 // Whether this group is collapsed: test its first real member (skip
                 // placeholders, including a drop slot sitting between the chip and the
@@ -2657,14 +2698,14 @@ static os_log_t PSMTabDragLog(void) {
                 BOOL firstMemberCollapsed = NO;
                 for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
                     PSMTabBarCell *cj = cells[j];
-                    if ([cj isPlaceholder]) {
+                    if ([cj isPlaceholder] || cj.isProjectHidden) {
                         continue;
                     }
                     if ([cj isTabGroupChip] ||
                         ![cj.tabGroupIdentifier isEqualToString:chipGid]) {
                         break;  // reached the next group -> this group has no member here
                     }
-                    firstMemberCollapsed = [cj isCollapsedHidden];
+                    firstMemberCollapsed = cj.isCollapsedHidden;
                     break;
                 }
                 PSMTabBarCell *slot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
@@ -2692,8 +2733,9 @@ static os_log_t PSMTabDragLog(void) {
         // Only real member tabs end a run. The dragged cell's own drop slot is
         // a placeholder that carries the group id (to anchor the chip); giving
         // it an end slot too would put two adjacent join slots with conflicting
-        // semantics at the group's trailing edge.
-        if ([c isPlaceholder]) {
+        // semantics at the group's trailing edge. Project-hidden members are
+        // undrawn and do not end a run.
+        if ([c isPlaceholder] || c.isProjectHidden) {
             continue;
         }
         // End-of-group slot: after a group's LAST member add a slot tagged to
@@ -2708,7 +2750,7 @@ static os_log_t PSMTabDragLog(void) {
         }
         BOOL isLastMember = YES;
         for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
-            if ([cells[j] isPlaceholder]) {
+            if ([cells[j] isPlaceholder] || [cells[j] isProjectHidden]) {
                 continue;
             }
             isLastMember = ([cells[j] isTabGroupChip] ||
@@ -2725,7 +2767,7 @@ static os_log_t PSMTabDragLog(void) {
             // via a slot to its side -- so its end slot gets no join, or landing on
             // the slot that opens once you advance past the pill would join with no
             // highlight (the join zone would extend past the visible pill).
-            if (![c isHiddenInBar]) {
+            if (!c.isCollapsedHidden) {
                 endSlot.joinsTabGroupIdentifier = gid;
             }
             [withSlots addObject:endSlot];
@@ -2787,7 +2829,7 @@ static os_log_t PSMTabDragLog(void) {
     PSMTabBarCell *afterReal = nil;
     for (NSInteger k = idx; k < (NSInteger)cells.count; k++) {
         PSMTabBarCell *c = cells[k];
-        if (c != [self draggedCell] && ![c isPlaceholder]) {
+        if (c != [self draggedCell] && ![c isPlaceholder] && !c.isProjectHidden) {
             afterReal = c;
             break;
         }
@@ -2795,7 +2837,7 @@ static os_log_t PSMTabDragLog(void) {
     PSMTabBarCell *beforeReal = nil;
     for (NSInteger k = idx - 1; k >= 0; k--) {
         PSMTabBarCell *c = cells[k];
-        if (c != [self draggedCell] && ![c isPlaceholder]) {
+        if (c != [self draggedCell] && ![c isPlaceholder] && !c.isProjectHidden) {
             beforeReal = c;
             break;
         }
@@ -2871,7 +2913,7 @@ static os_log_t PSMTabDragLog(void) {
     const NSInteger step = (direction >= 0) ? 1 : -1;
     for (NSInteger j = ci + step; j >= 0 && j < count; j += step) {
         PSMTabBarCell *c = cells[j];
-        if ([c isPlaceholder]) {
+        if ([c isPlaceholder] || c.isProjectHidden) {
             continue;
         }
         // Scanning right, cells still in THIS group's run are not the neighbor.
@@ -2886,8 +2928,8 @@ static os_log_t PSMTabDragLog(void) {
             return [self chipLeadsCollapsedRunInCells:cells atIndex:j] ? j : NSNotFound;
         }
         // A real tab: a collapsed member is part of a pill (find that group's chip
-        // to its left); a visible tab is not a pill.
-        if (![c isHiddenInBar]) {
+        // to its left); a drawn tab is not a pill. Project-hidden cells were skipped.
+        if (!c.isCollapsedHidden) {
             return NSNotFound;
         }
         NSString *neighborGid = c.tabGroupIdentifier;
@@ -2909,8 +2951,8 @@ static os_log_t PSMTabDragLog(void) {
         if ([c isTabGroupChip]) {
             return nil;  // hit the next group's chip with no between-slot
         }
-        if (c.isCollapsedGroupJoinSlot) {
-            continue;  // this group's front/detector slot
+        if (c.isCollapsedGroupJoinSlot || c.isProjectHidden) {
+            continue;  // this group's front/detector slot, or an undrawn project-filtered member
         }
         if (![c isPlaceholder] && [c.tabGroupIdentifier isEqualToString:gid]) {
             continue;  // a member of this group
@@ -2923,6 +2965,9 @@ static os_log_t PSMTabDragLog(void) {
                 PSMTabBarCell *cc = cells[k];
                 if ([cc isTabGroupChip]) {
                     break;
+                }
+                if (cc.isProjectHidden) {
+                    continue;
                 }
                 if (![cc isPlaceholder] && [cc.tabGroupIdentifier isEqualToString:gid]) {
                     memberAhead = YES;
@@ -2963,7 +3008,7 @@ static os_log_t PSMTabDragLog(void) {
         NSString *gid = cells[c].tabGroupIdentifier;
         NSInteger last = c;
         for (NSInteger j = c + 1; j < (NSInteger)cells.count; j++) {
-            if ([cells[j] isPlaceholder]) {
+            if ([cells[j] isPlaceholder] || [cells[j] isProjectHidden]) {
                 continue;
             }
             if ([cells[j] isTabGroupChip] || ![cells[j].tabGroupIdentifier isEqualToString:gid]) {
@@ -3008,7 +3053,7 @@ static os_log_t PSMTabDragLog(void) {
         if ([cell isInOverflowMenu]) {
             break;
         }
-        if ([cell isPlaceholder] || [cell isTabGroupChip]) {
+        if ([cell isPlaceholder] || [cell isTabGroupChip] || [cell isHiddenInBar]) {
             continue;
         }
         const CGFloat start = horizontal ? cell.frame.origin.x : cell.frame.origin.y;

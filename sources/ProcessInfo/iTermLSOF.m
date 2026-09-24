@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/proc_info.h>
+#include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/un.h>
@@ -60,6 +61,12 @@
     return [iTermLSOF ttyRdevForFileDescriptor:fd ofProcess:pid];
 }
 
+@end
+
+@interface iTermLSOF ()
++ (NSArray<NSString *> *)rawCommandLineArgumentsForProcess:(pid_t)pid
+                                                execName:(NSString **)execName
+                                              strictUTF8:(BOOL)strictUTF8;
 @end
 
 @implementation iTermLSOF {
@@ -116,6 +123,16 @@
 }
 
 + (NSArray<NSString *> *)rawCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName {
+    return [self rawCommandLineArgumentsForProcess:pid execName:execName strictUTF8:NO];
+}
+
++ (NSArray<NSString *> *)strictRawCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName {
+    return [self rawCommandLineArgumentsForProcess:pid execName:execName strictUTF8:YES];
+}
+
++ (NSArray<NSString *> *)rawCommandLineArgumentsForProcess:(pid_t)pid
+                                                execName:(NSString **)execName
+                                              strictUTF8:(BOOL)strictUTF8 {
     int argmax = [self maximumLengthOfProcargs];
     char *procargs = [self procargsForProcess:pid];
     if (procargs == nil) {
@@ -141,8 +158,12 @@
     if (offset == argmax) {
         return nil;
     }
+    NSString *decodedExecPath = [NSString stringWithUTF8String:exec_path];
+    if (strictUTF8 && !decodedExecPath) {
+        return nil;
+    }
     if (execName) {
-        *execName = [NSString stringWithUTF8String:exec_path];
+        *execName = decodedExecPath;
     }
 
     // Pull out null terminated argv components
@@ -152,9 +173,16 @@
     while (offset < argmax && argsConsumed < nargs) {
         if (procargs[offset] == 0) {
             NSString *string = [NSString stringWithUTF8String:start];
-            if (string.length > 0) {
-                [argv addObject:string];
+            if (!string) {
+                if (strictUTF8) {
+                    return nil;
+                }
+                string = [NSString stringWithCString:start encoding:NSISOLatin1StringEncoding];
+                if (!string) {
+                    return nil;
+                }
             }
+            [argv addObject:string];
             argsConsumed++;
             start = procargs + offset + 1;
         }
@@ -594,20 +622,26 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
 
 + (NSDate *)startTimeForProcess:(pid_t)pid {
     DLog(@"Want start time for %@", @(pid));
-    struct proc_taskallinfo taskAllInfo;
+    struct proc_bsdinfo info = {};
     const int rc = proc_pidinfo(pid,
-                                PROC_PIDTASKALLINFO,
+                                PROC_PIDTBSDINFO,
                                 0,
-                                &taskAllInfo,
-                                sizeof(taskAllInfo));
-    if (rc <= 0) {
-        DLog(@"Failed to get task all info");
+                                &info,
+                                sizeof(info));
+    if (rc != sizeof(info)) {
+        DLog(@"Failed to get BSD process info");
         return nil;
     }
 
-    double birthday = taskAllInfo.pbsd.pbi_start_tvsec;
-    birthday += taskAllInfo.pbsd.pbi_start_tvusec / 1000000.0;
+    double birthday = info.pbi_start_tvsec;
+    birthday += info.pbi_start_tvusec / 1000000.0;
     return [NSDate dateWithTimeIntervalSince1970:birthday];
+}
+
++ (BOOL)isZombieProcess:(pid_t)pid {
+    struct proc_bsdinfo info = {};
+    const int rc = proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, sizeof(info));
+    return rc == sizeof(info) && info.pbi_status == SZOMB;
 }
 
 + (NSString *)workingDirectoryOfProcess:(pid_t)pid {

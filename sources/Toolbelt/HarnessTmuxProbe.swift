@@ -50,6 +50,10 @@ final class HarnessTmuxProbe {
     }
 
     static func read(_ client: Client, completion: @escaping (Pane?) -> Void) {
+        guard isValidExecutable(client.executable) else {
+            completion(nil)
+            return
+        }
         let server = Server(executable: client.executable, arguments: client.socketArguments)
         let now = Date()
         cache = cache.filter { now.timeIntervalSince($0.value.date) < 30 }
@@ -101,12 +105,19 @@ final class HarnessTmuxProbe {
         let socket: String
     }
 
+    static func isValidExecutable(_ path: String) -> Bool {
+        guard path.hasPrefix("/"), (path as NSString).lastPathComponent == "tmux" else { return false }
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: path, isDirectory: &isDir), !isDir.boolValue else { return false }
+        return FileManager.default.isExecutableFile(atPath: path)
+    }
+
     // Called only from the background discovery scan, once per ancestor server.
     static func serverPanes(pid: Int32) -> [ServerPane] {
         var name: NSString?
         _ = iTermLSOF.rawCommandLineArguments(forProcess: pid, execName: &name)
         guard let executable = name as String?,
-              (executable as NSString).lastPathComponent == "tmux" else { return [] }
+              isValidExecutable(executable) else { return [] }
         let sockets = Set((iTermLSOF.fileDescriptors(forProcess: pid) ?? []).compactMap { descriptor -> String? in
             guard descriptor.type == "unix", let path = descriptor.detail, path.hasPrefix("/") else { return nil }
             return path
