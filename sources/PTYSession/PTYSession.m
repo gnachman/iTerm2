@@ -15261,9 +15261,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         DLog(@"Will upload local:%@ to remote:%@", file, path.path);
 
         if ([_conductor canTransferFilesTo:path]) {
+            // Continue, not break: this hands off one file, and the remaining ones still need
+            // uploading. A break here dropped every file after the first, silently, for anyone
+            // on ssh integration who dropped more than one file at a time.
+            //
+            // Unlike the SCPFile branch below these are not chained. Each conductor upload runs
+            // as its own task writing to its own "<dest>.uploading-<uuid>" tempfile, and the
+            // create/append/stat/mv commands serialize on the conductor's command queue, so
+            // concurrent uploads interleave chunks without colliding. That is by design: the
+            // upload is chunked precisely so it does not monopolize the connection.
             DLog(@"Using conductor for upload");
             [_conductor uploadFile:file to:path];
-            break;
+            continue;
         }
         DLog(@"Using SCPFile for upload");
         SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];

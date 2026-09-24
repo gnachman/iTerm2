@@ -643,3 +643,10 @@ Bug Fixes:
 - Fixed a lag when switching or closing tabs
   with the Session Status tool open in the
   toolbelt.
+- Uploading several files at once to a host you
+  connected to with an SSH profile now uploads
+  all of them. Dropping more than one file on
+  the terminal, or choosing Upload after
+  dropping them, transferred only the first and
+  silently discarded the rest. Uploads over
+  plain shell integration were unaffected.
