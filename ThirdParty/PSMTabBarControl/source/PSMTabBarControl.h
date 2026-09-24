@@ -412,6 +412,14 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // the previous layout pass's width.
 - (CGFloat)maximumLeftInsetFittingAllCellsMinimallyForWidth:(CGFloat)width;
 
+// The largest insets.left that still leaves the bar usable, which is the
+// question a decoration competing for the strip actually has. For a
+// non-scrollable bar that is the same as fitting every cell minimally, because
+// anything past it pushes tabs into the overflow menu. A scrollable bar reaches
+// its tabs by scrolling instead, so cells beyond the first cost the decoration
+// nothing and it only insists on room for one tab.
+- (CGFloat)maximumLeftInsetLeavingTabsUsableForWidth:(CGFloat)width;
+
 // The style's tab-group run outset when any chip cell is present, else 0.
 // The scrollable bar widens its trailing clip by this so a group's enclosing
 // pill is not cut off; with no groups the clip stays exactly at the viewport.

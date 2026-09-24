@@ -3074,6 +3074,29 @@ typedef struct {
     return width - stylePadding - rightMargin - [self minimumCellAreaWidth];
 }
 
+// What the bar must keep of its cell area to stay usable. A scrollable bar does
+// not shrink its cells to fit -- every tab keeps -scrollableTabWidth and the
+// ones that do not fit are scrolled to -- so insisting on room for all of them
+// reserves space that no tab would ever be laid out in. One tab's worth is what
+// it actually needs; the rest are a scroll away either way.
+//
+// Never more than the non-scrollable answer, so a caller can only gain room by
+// the bar being scrollable, never lose it.
+- (CGFloat)minimumUsableCellAreaWidth {
+    const CGFloat fittingAll = [self minimumCellAreaWidth];
+    if (![self tabBarIsScrollable] || _orientation != PSMTabBarHorizontalOrientation) {
+        return fittingAll;
+    }
+    return MIN(fittingAll, (CGFloat)_scrollableTabWidth);
+}
+
+- (CGFloat)maximumLeftInsetLeavingTabsUsableForWidth:(CGFloat)width {
+    const CGFloat stylePadding = [_style leftMarginForTabBarControl] - self.insets.left;
+    const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:NO
+                                                                   addTabButton:self.showAddTabButton];
+    return width - stylePadding - rightMargin - [self minimumUsableCellAreaWidth];
+}
+
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {
     if ([self hasTabGroupChipCells]) {
         return [self cellWidthsForHorizontalArrangementWithChipsWithOverflow:withOverflow];

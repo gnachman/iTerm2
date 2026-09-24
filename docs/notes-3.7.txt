@@ -152,7 +152,8 @@ New Features:
   no title bar to show it in. By default it
   appears only once you name a window with
   Window > Edit Window Title, so windows you have
-  not named look exactly as before. The advanced
+  not named look exactly as before. Double-click
+  the name to rename the window. The advanced
   setting “Show the window name beside the
   tabs” can turn it off or always show it.
 - The workgroup toolbar can show an AI Usage
@@ -537,13 +538,6 @@ Bug Fixes:
   left the popup blank and showed no checkmark
   next to it when reopened, although the
   setting was saved correctly.
-- Double-clicking the window name beside the
-  tabs now opens the same rename dialog as
-  Window > Edit Window Title, so a window can be
-  renamed where its name is shown rather than
-  only from the Window menu. Dragging the name
-  still moves the window and right-clicking it
-  still opens the tab bar menu.
 - Installing the Python runtime used by scripts
   now trusts the certificates installed on your
   Mac. On networks that inspect secure traffic,
@@ -649,10 +643,3 @@ Bug Fixes:
 - Fixed a lag when switching or closing tabs
   with the Session Status tool open in the
   toolbelt.
-- Double-clicking the window name beside the
-  tabs now opens the same rename dialog as
-  Window > Edit Window Title, so a window can be
-  renamed where its name is shown rather than
-  only from the Window menu. Dragging the name
-  still moves the window and right-clicking it
-  still opens the tab bar menu.

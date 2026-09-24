@@ -1233,7 +1233,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)rootTerminalViewDidRequestEditWindowName {
-    [self editWindowTitle:nil];
+    // -editWindowTitle: runs a modal alert, so let the click that got us here
+    // finish before the nested run loop starts.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf editWindowTitle:nil];
+    });
 }
 
 - (void)rootTerminalViewDidResizeContentArea {
