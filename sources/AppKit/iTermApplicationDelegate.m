@@ -378,10 +378,12 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     [ArchivesMenuBuilder setShared:[[ArchivesMenuBuilder alloc] initWithMenuItem:_archivesMenuItem]];
 
     NSMenu *viewMenu = [self topLevelViewWithIdentifier:@"View"];
-    NSMenuItem *sidebarItem = [viewMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ViewMenu.ShowHarnessSidebar", nil, [NSBundle mainBundle], @"Show Sidebar", @"View menu command to show the coding harness sidebar")
-                                                   action:@selector(toggleHarnessDirectorySidebar:)
-                                            keyEquivalent:@""];
+    NSMenuItem *sidebarItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ViewMenu.ViewSidebar", nil, [NSBundle mainBundle], @"View Sidebar", @"View menu toggle for the coding harness sidebar")
+                                                         action:@selector(toggleHarnessDirectorySidebar:)
+                                                  keyEquivalent:@"s"] autorelease];
     sidebarItem.target = self;
+    sidebarItem.keyEquivalentModifierMask = NSEventModifierFlagControl | NSEventModifierFlagCommand;
+    [viewMenu insertItem:sidebarItem atIndex:2];
     [viewMenu addItem:[NSMenuItem separatorItem]];
 
     NSSize tabColorViewSize = [ColorsMenuItemView preferredSize];
@@ -444,9 +446,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     const SEL action = [menuItem action];
     if (action == @selector(toggleHarnessDirectorySidebar:)) {
-        menuItem.title = [iTermAdvancedSettingsModel showHarnessDirectorySidebar] ?
-            NSLocalizedStringWithDefaultValue(@"ViewMenu.HideHarnessSidebar", nil, [NSBundle mainBundle], @"Hide Sidebar", @"View menu command to hide the coding harness sidebar") :
-            NSLocalizedStringWithDefaultValue(@"ViewMenu.ShowHarnessSidebar", nil, [NSBundle mainBundle], @"Show Sidebar", @"View menu command to show the coding harness sidebar");
+        menuItem.state = [iTermAdvancedSettingsModel showHarnessDirectorySidebar] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
     if (action == @selector(newSessionInTabAtIndex:) ||
