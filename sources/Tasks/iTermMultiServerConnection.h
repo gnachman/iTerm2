@@ -21,10 +21,18 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSArray<iTermFileDescriptorMultiClientChild *> *unattachedChildren;
 @property (nonatomic, readonly) int socketNumber;
 
+// YES if this process launched the server backing this connection. Only such a server
+// attributes its jobs to the running app, so new sessions must not use a connection
+// that was merely adopted from an earlier instance. See issue 12106.
+@property (atomic, readonly) BOOL launchedByThisProcess;
+
 + (BOOL)available;
 + (BOOL)pathIsSafe:(NSString *)path;
 
-+ (void)getOrCreatePrimaryConnectionWithCallback:(iTermCallback<id, iTermMultiServerConnection *> *)callback;
+// Returns a connection whose server this process launched, launching one if there is none.
+// Never returns a connection to a server left behind by an earlier run of the app, because
+// jobs under it are attributed to a dead process and lose TCC permissions. See issue 12106.
++ (void)getOrCreateConnectionForNewSessionWithCallback:(iTermCallback<id, iTermMultiServerConnection *> *)callback;
 
 + (void)getConnectionForSocketNumber:(int)number
                     createIfPossible:(BOOL)shouldCreate

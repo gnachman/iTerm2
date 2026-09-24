@@ -32,6 +32,10 @@
 
 NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescriptorMultiClientErrorDomain";
 
+@interface iTermFileDescriptorMultiClient()
+@property (atomic, readwrite) BOOL didLaunchDaemon;
+@end
+
 @implementation iTermFileDescriptorMultiClient {
     NSString *_socketPath;  // Thread safe because this is only assigned to in -initWithPath:
     iTermThread<iTermFileDescriptorMultiClientState *> *_thread;
@@ -924,6 +928,10 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
     if (forkState.pid < 0) {
         return NO;
     }
+    // This process is the server's parent, so it is also the responsible process for every
+    // job the server spawns. That attribution dies with us, which is why connections we only
+    // attached to must not be reused for new sessions. See issue 12106.
+    self.didLaunchDaemon = YES;
 
     // Capture locals so the handler block doesn't retain self (the source is owned by
     // `state`), and so we have context to log with.

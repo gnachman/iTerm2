@@ -319,6 +319,16 @@ Improvements:
   there, since they name nothing on that host.
 
 Bug Fixes:
+- After iTerm2 restarted with your sessions
+  restored, which happens after an update, a
+  crash, or a force quit, commands in newly
+  opened sessions could fail to reach devices on
+  your local network with “No route to host”
+  until you quit and reopened iTerm2. New
+  sessions now get local network access right
+  away. Sessions restored from before the restart
+  still need to be restarted to regain it.
+  Issue 12106.
 - The control sequence that resets a tab color to
   the profile’s now restores it correctly when
   the profile has separate light and dark mode

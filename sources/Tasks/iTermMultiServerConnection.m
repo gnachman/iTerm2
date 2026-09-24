@@ -8,6 +8,7 @@
 #import "iTermMultiServerConnection.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermNotificationCenter.h"
 #import "iTermProcessCache.h"
 #import "iTermThreadSafety.h"
@@ -17,12 +18,15 @@
 #import "TaskNotifier.h"
 #include <sys/un.h>
 
+// A healthy attach to a server this process did not launch is not an error, so it gets a
+// separate and much larger budget than the hard connect/launch failure count.
+static const int iTermMultiServerMaxForeignServersToSkip = 128;
+
 @class iTermMultiServerConnectionState;
 
 @interface iTermMultiServerConnectionGlobalState: iTermSynchronizedState<iTermMultiServerConnectionState *>
 @property (nonatomic, readonly) NSMutableDictionary<NSNumber *, iTermMultiServerConnection *> *registry;
 @property (nonatomic, readonly) NSMutableDictionary<NSNumber *, NSMutableArray<iTermCallback *> *> *pending;
-@property (nonatomic, strong) iTermMultiServerConnection *primary;
 @end
 
 @implementation iTermMultiServerConnectionGlobalState
@@ -61,9 +65,9 @@
 
 #pragma mark - Class Method APIs
 
-+ (void)getOrCreatePrimaryConnectionWithCallback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
++ (void)getOrCreateConnectionForNewSessionWithCallback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
     [self.thread dispatchAsync:^(iTermMultiServerConnectionGlobalState * _Nonnull state) {
-        [self getOrCreatePrimaryConnectionWithState:state callback:callback];
+        [self findAnyOwnConnectionCreatingIfNeededWithState:state callback:callback];
     }];
 }
 
@@ -93,39 +97,71 @@
     return thread;
 }
 
-+ (void)findExistingPrimaryConnection:(iTermCallback<iTermMultiServerConnectionGlobalState *, iTermMultiServerConnection *> *)callback {
-    [self.thread dispatchAsync:^(iTermMultiServerConnectionGlobalState *state) {
-        [callback invokeWithObject:state.primary];
-    }];
-}
-
-+ (void)findAnyConnectionCreatingIfNeededWithState:(iTermMultiServerConnectionGlobalState *)state
-                                          callback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
-    DLog(@"findAnyConnectionCreatingIfNeededWithState");
++ (void)findAnyOwnConnectionCreatingIfNeededWithState:(iTermMultiServerConnectionGlobalState *)state
+                                             callback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
+    DLog(@"findAnyOwnConnectionCreatingIfNeededWithState");
     [state check];
 
-    iTermMultiServerConnection *anyConnection = state.registry.allValues.firstObject;
-    if (anyConnection) {
-        [callback invokeWithObject:anyConnection];
+    // Only a server this process launched attributes its jobs to the running app. A server
+    // adopted from an earlier instance names a dead responsible process, so jobs started under
+    // it lose TCC permissions such as Local Network access (issue 12106). Reuse a connection we
+    // own, and launch a new server rather than fall back on an adopted one.
+    iTermMultiServerConnection *ownConnection =
+    [state.registry.allValues objectPassingTest:^BOOL(iTermMultiServerConnection *element,
+                                                      NSUInteger index,
+                                                      BOOL *stop) {
+        return element.launchedByThisProcess;
+    }];
+    if (ownConnection) {
+        DLog(@"Reusing connection %@ which this process launched", @(ownConnection.socketNumber));
+        [callback invokeWithObject:ownConnection];
         return;
     }
 
-    [self tryCreatingConnectionStartingAtNumber:1 failures:0 state:state callback:callback];
+    DLog(@"No connection launched by this process; creating one.");
+    [self tryCreatingConnectionStartingAtNumber:1 failures:0 adopted:0 state:state callback:callback];
 }
 
 + (void)tryCreatingConnectionStartingAtNumber:(int)i
                                      failures:(int)failures
+                                      adopted:(int)adopted
                                         state:(iTermMultiServerConnectionGlobalState *)state
                                      callback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
-    DLog(@"tryCreatingConnectionStartingAtNumber: %@", @(i));
-    [self connectionForSocketNumber:i
+    // Skip numbers already in the registry: -connectionForSocketNumber: returns the existing
+    // connection for those, which would hand back an adopted server instead of launching ours.
+    const int number = [iTermMultiServerSocketNumbers firstUnusedNumberFrom:i
+                                                                     inUse:state.registry.allKeys];
+    DLog(@"tryCreatingConnectionStartingAtNumber: %@ (requested %@)", @(number), @(i));
+    [self connectionForSocketNumber:number
                    createIfPossible:YES
                               state:state
                            callback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *state,
                                                                         iTermResult<iTermMultiServerConnection *> *result) {
         [result handleObject:
          ^(iTermMultiServerConnection * _Nonnull object) {
-            [callback invokeWithObject:object];
+            if (object.launchedByThisProcess) {
+                [callback invokeWithObject:object];
+                return;
+            }
+            // A live server from an earlier instance was listening on this socket, so we
+            // attached instead of launching. Its jobs would be attributed to a dead process,
+            // so keep looking for a number where we can launch our own.
+            DLog(@"Socket %@ has a server this process did not launch; trying the next number.",
+                 @(number));
+            // Nothing went wrong here, so this must not consume the hard-failure budget.
+            // Attaching registered this number, so the next iteration is guaranteed to try a
+            // higher one; the ceiling only guards against a pathological walk.
+            if (adopted >= iTermMultiServerMaxForeignServersToSkip) {
+                RLog(@"Giving up looking for a socket to launch our own server on after "
+                     @"skipping %@ servers this process did not launch.", @(adopted));
+                [callback invokeWithObject:nil];
+                return;
+            }
+            [self tryCreatingConnectionStartingAtNumber:number + 1
+                                               failures:failures
+                                                adopted:adopted + 1
+                                                  state:state
+                                               callback:callback];
         } error:
          ^(NSError * _Nonnull error) {
             DLog(@"tryCreatingConnectionStartingAtNumber: Failed, trying the next number.");
@@ -133,22 +169,13 @@
                 [callback invokeWithObject:nil];
                 return;
             }
-            [self tryCreatingConnectionStartingAtNumber:i + 1
+            [self tryCreatingConnectionStartingAtNumber:number + 1
                                                failures:failures + 1
+                                                adopted:adopted
                                                   state:state
                                                callback:callback];
         }];
     }]];
-}
-
-+ (void)getOrCreatePrimaryConnectionWithState:(iTermMultiServerConnectionGlobalState *)state
-                                     callback:(iTermCallback<id, iTermMultiServerConnection *> *)callback {
-    if (state.primary && [state.registry.allValues containsObject:state.primary]) {
-        [callback invokeWithObject:state.primary];
-        return;
-    }
-
-    [self findAnyConnectionCreatingIfNeededWithState:state callback:callback];
 }
 
 + (BOOL)available {
@@ -180,10 +207,17 @@
 
     DLog(@"Don't have an existing or pending connection for %@", @(number));
     [result.thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable connectionState) {
+        iTermFileDescriptorMultiClient *client = connectionState.client;
         if (shouldCreate) {
             // Attach or launch
             DLog(@"Attach or launch socket %@", @(number));
-            [connectionState.client attachToOrLaunchNewDaemonWithCallback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *globalState, NSNumber *statusNumber) {
+            [client attachToOrLaunchNewDaemonWithCallback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *globalState, NSNumber *statusNumber) {
+                if (client.didLaunchDaemon) {
+                    // Record even when the handshake failed. We forked that server, so if it
+                    // is still running, a later attach must not mistake it for one left by an
+                    // earlier run of the app.
+                    [[iTermForkedServerRegistry sharedInstance] recordSocketNumber:number];
+                }
                 iTermResult *resultObject;
                 if (!statusNumber.boolValue) {
                     RLog(@"Failed to attach or launch socket %@", @(number));
@@ -241,9 +275,6 @@
                 state:(iTermMultiServerConnectionGlobalState *)state {
     RLog(@"Register connection number %@", @(number));
     state.registry[@(number)] = result;
-    if (!state.primary) {
-        state.primary = result;
-    }
 }
 
 + (BOOL)pathIsSafe:(NSString *)path {
@@ -339,6 +370,12 @@
         pid = state.client.serverPID;
     }];
     return pid;
+}
+
+- (BOOL)launchedByThisProcess {
+    // Recorded when this process forks a server, so it stays true for a later client that
+    // re-attaches to that same server after the original client was torn down.
+    return [[iTermForkedServerRegistry sharedInstance] everLaunchedServerOnSocketNumber:self.socketNumber];
 }
 
 - (NSArray<iTermFileDescriptorMultiClientChild *> *)unattachedChildren {
