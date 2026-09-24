@@ -256,6 +256,11 @@ static const NSInteger iTermBellSoundOtherTag = 1;
         strongSelf->_bellSoundLabel.enabled = ![strongSelf boolForKey:KEY_SILENCE_BELL];
     };
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(installedBellSoundsDidChange:)
+                                                 name:iTermBellSound.installedSoundsDidChangeNotification
+                                               object:nil];
+    [iTermBellSound refreshInstalledSounds];
     [self rebuildBellSounds];
     info = [self defineControl:_bellSound
                            key:KEY_BELL_SOUND
@@ -483,6 +488,25 @@ static const NSInteger iTermBellSoundOtherTag = 1;
 
 #pragma mark - Bell Sound
 
+- (void)viewWillAppear {
+    [super viewWillAppear];
+    // Pick up sounds added to or removed from the Sounds folders since the last scan. The
+    // menu is rebuilt when the scan finishes if anything changed.
+    [iTermBellSound refreshInstalledSounds];
+}
+
+- (void)installedBellSoundsDidChange:(NSNotification *)notification {
+    [self rebuildBellSounds];
+    [self selectCurrentBellSound];
+}
+
+- (void)selectCurrentBellSound {
+    const NSInteger index = [_bellSound indexOfItemWithRepresentedObject:[self stringForKey:KEY_BELL_SOUND] ?: @""];
+    if (index >= 0) {
+        [_bellSound selectItemAtIndex:index];
+    }
+}
+
 - (void)rebuildBellSounds {
     NSString *const currentValue = [self stringForKey:KEY_BELL_SOUND] ?: @"";
     NSMenu *const menu = _bellSound.menu;
@@ -511,7 +535,7 @@ static const NSInteger iTermBellSoundOtherTag = 1;
         item.representedObject = currentValue;
         if (![iTermBellSound profileValueIsPlayable:currentValue]) {
             item.image = [NSImage it_imageNamed:@"WarningSign" forClass:self.class];
-            item.toolTip = NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.MissingBellSound", nil, [NSBundle mainBundle], @"This sound could not be found, so the bell plays the system alert sound.", @"Tooltip on the bell sound the profile names when that sound is missing");
+            item.toolTip = NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.UnplayableBellSound", nil, [NSBundle mainBundle], @"This sound can’t be played, so the bell plays the system alert sound.", @"Tooltip on the bell sound the profile names when that sound is missing or is not audio that can be played");
         }
         [menu addItem:item];
     }
@@ -540,17 +564,31 @@ static const NSInteger iTermBellSoundOtherTag = 1;
     panel.allowedContentTypes = @[ UTTypeAudio ];
     panel.message = NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.ChooseBellSound", nil, [NSBundle mainBundle], @"Choose the sound the bell should play.", @"Prompt above the file chooser for the terminal bell’s sound");
 
-    if ([panel runModal] == NSModalResponseOK && panel.URL) {
-        [self setString:[iTermBellSound profileValueForURL:panel.URL] forKey:KEY_BELL_SOUND];
-        [self rebuildBellSounds];
-        [self previewBellSound];
-    }
+    const BOOL chosen = ([panel runModal] == NSModalResponseOK && panel.URL != nil);
     // The popup is showing “Other…” whether or not a file was chosen, so put it back on
-    // the sound the profile now names.
-    const NSInteger index = [_bellSound indexOfItemWithRepresentedObject:[self stringForKey:KEY_BELL_SOUND] ?: @""];
-    if (index >= 0) {
-        [_bellSound selectItemAtIndex:index];
+    // the sound the profile names.
+    [self selectCurrentBellSound];
+    if (!chosen) {
+        return;
     }
+    // Whether the file can be stored by name depends on what else is in the Sounds
+    // folders, which takes a scan to find out.
+    NSString *const guid = [self stringForKey:KEY_GUID];
+    __weak __typeof(self) weakSelf = self;
+    [iTermBellSound profileValueForURL:panel.URL completion:^(NSString *value) {
+        [weakSelf setBellSound:value forProfileWithGUID:guid];
+    }];
+}
+
+- (void)setBellSound:(NSString *)value forProfileWithGUID:(NSString *)guid {
+    if (![[self stringForKey:KEY_GUID] isEqualToString:guid]) {
+        // A different profile was selected while the Sounds folders were being scanned.
+        return;
+    }
+    [self setString:value forKey:KEY_BELL_SOUND];
+    [self rebuildBellSounds];
+    [self selectCurrentBellSound];
+    [self previewBellSound];
 }
 
 - (void)previewBellSound {
