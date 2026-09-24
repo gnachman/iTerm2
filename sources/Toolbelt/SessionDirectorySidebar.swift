@@ -57,7 +57,7 @@ import AppKit
     }
 
     @objc var selectProjectTabAtIndex: ((Int) -> Void)?
-    @objc var projectFilterDidChange: ((NSSet?) -> Void)?
+    @objc var projectFilterDidChange: ((NSSet?) -> Bool)?
 
     private let heading = NSTextField(labelWithString: String(localized: "SessionDirectorySidebar.Title",
         defaultValue: "Coding harnesses", comment: "Title of the coding harness navigator"))
@@ -74,6 +74,7 @@ import AppKit
     private var selectedEntryID: String?
     private var resolvingResumes = Set<String>()
     private var selectedProject: SessionDirectoryKey?
+    private var filterActive = false
     private var projectSessionKeys: [String: SessionDirectoryKey] = [:]
     private let allProjectsButton = NSButton(title: String(localized: "SessionDirectorySidebar.AllProjects",
         defaultValue: "All projects", comment: "Clear the project tab filter"), target: nil, action: nil)
@@ -156,33 +157,51 @@ import AppKit
         for monitor in nativeMonitors.values { monitor.invalidate() }
     }
 
-    // Called by iTermApplication before its built-in pane/tab number shortcuts.
-    @objc func handleProjectShortcut(_ event: NSEvent) -> Bool {
+    // Called by iTermApplication after checking the focused editor and key mappings.
+    @objc func handleProjectShortcut(_ event: NSEvent, digit: Int) -> Bool {
         guard event.type == .keyDown, event.window == nil || event.window === window else { return false }
         let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
-        if selectedProject != nil, flags == [.command], let index = Self.numberIndex(event) {
-            if !event.isARepeat { selectProjectTabAtIndex?(index) }
-            return true
-        }
-        guard let index = Self.shortcutIndex(event) else { return false }
-        if !event.isARepeat, index < groups.count {
+        switch Self.shortcutAction(flags: flags, digit: digit,
+                                   projectMask: Self.shortcutMask(for: kPreferenceKeySwitchWindowModifier),
+                                   tabMask: Self.shortcutMask(for: kPreferenceKeySwitchTabModifier),
+                                   projectCount: groups.count, filterActive: filterActive) {
+        case .project(let index):
+            if event.isARepeat { return true }
             let group = groups[index]
             outline.expandItem(group)
             selectProject(group)
+            return true
+        case .tab(let index):
+            if !event.isARepeat { selectProjectTabAtIndex?(index) }
+            return true
+        case .pass:
+            return false
         }
-        return true
     }
 
-    private static func numberIndex(_ event: NSEvent) -> Int? {
-        guard let characters = event.characters(byApplyingModifiers: []),
-              characters.count == 1, let number = Int(characters), (1...9).contains(number) else { return nil }
-        return number - 1
+    enum ShortcutAction: Equatable {
+        case project(Int)
+        case tab(Int)
+        case pass
     }
 
-    static func shortcutIndex(_ event: NSEvent) -> Int? {
-        let flags = event.modifierFlags.intersection([.command, .option, .shift, .control])
-        guard flags == [.command, .option] else { return nil }
-        return numberIndex(event)
+    static func shortcutAction(flags: NSEvent.ModifierFlags, digit: Int,
+                               projectMask: NSEvent.ModifierFlags?, tabMask: NSEvent.ModifierFlags?,
+                               projectCount: Int, filterActive: Bool) -> ShortcutAction {
+        guard (1...9).contains(digit) else { return .pass }
+        if let projectMask, flags == projectMask, digit <= projectCount {
+            return .project(digit - 1)
+        }
+        if filterActive, let tabMask, flags == tabMask { return .tab(digit - 1) }
+        return .pass
+    }
+
+    private static func shortcutMask(for key: String) -> NSEvent.ModifierFlags? {
+        guard let tag = iTermPreferencesModifierTag(rawValue: iTermPreferences.int(forKey: key)),
+              tag != .preferenceModifierTagNone else { return nil }
+        let mask = NSEvent.ModifierFlags(rawValue: iTermPreferences.mask(for: tag))
+            .intersection([.command, .option, .shift, .control])
+        return mask.isEmpty ? nil : mask
     }
 
     private static func launcherExecutable(_ process: iTermProcessInfo) -> String? {
@@ -343,6 +362,10 @@ import AppKit
                 title = harness.name + (harness.tmuxSocket != nil ? " · tmux — " : " — ") + local.name
             } else if harness.tmuxSocket != nil {
                 title = harness.name + " · tmux · " + String(harness.pid)
+            } else if harness.tmuxUnverified {
+                let source = String(localized: "SessionDirectorySidebar.MultiplexerUnverified",
+                    defaultValue: "multiplexer unverified", comment: "Unverified multiplexer source label")
+                title = harness.name + " · " + source + " · " + String(harness.pid)
             } else {
                 let source = String(localized: "SessionDirectorySidebar.Native", defaultValue: "native",
                     comment: "Source label for a native harness process outside this iTerm2 instance")
@@ -438,12 +461,14 @@ import AppKit
                 field.stringValue += " — " + identity
             }
             field.toolTip = field.stringValue
-            if let index = groups.firstIndex(of: group), index < 9 {
-                field.stringValue = "⌥⌘\(index + 1)  " + field.stringValue
+            if let index = groups.firstIndex(of: group), index < 9,
+               let mask = Self.shortcutMask(for: kPreferenceKeySwitchWindowModifier) {
+                field.stringValue = "\(NSString.modifierSymbols(mask: mask.rawValue))\(index + 1)  " + field.stringValue
             }
         } else if let entry = item as? Entry {
             field.stringValue = entry.name
-            if let external = entry.external, external.tmuxSocket == nil {
+            if let external = entry.external, external.isNative,
+               iTermController.sharedInstance()?.anySession(withGUID: entry.id) == nil {
                 field.toolTip = String(localized: "SessionDirectorySidebar.NativeTooltip",
                     defaultValue: "Open this saved conversation in a tmux-backed or native iTerm2 tab. The conversation is identified automatically; transferring closes the original process.",
                     comment: "Explains the resume choices for an external native harness")
@@ -456,13 +481,23 @@ import AppKit
 
     private func activate(_ entry: Entry) {
         selectedEntryID = entry.runID
-        selectedProject = entry.key
-        applyProjectFilter()
         if let session = iTermController.sharedInstance()?.anySession(withGUID: entry.id) {
+            let destination = session.delegate?.realParentWindow() as? PseudoTerminal
+            if let destination, destination.window !== window {
+                selectedProject = nil
+                selectedEntryID = nil
+                applyProjectFilter()
+            } else if destination == nil {
+                selectedProject = entry.key
+                applyProjectFilter()
+            }
             session.reveal()
+            destination?.selectHarnessProjectContainingSessionGUID(session.guid)
             return
         }
-        guard let external = entry.external,
+        selectedProject = entry.key
+        applyProjectFilter()
+        guard let external = entry.external, !external.tmuxUnverified,
               iTermLSOF.startTime(forProcess: external.pid) == external.started else { return }
         if let socket = external.tmuxSocket, let pane = external.tmuxPane {
             guard let executable = Self.tmuxExecutable else {
@@ -481,13 +516,27 @@ import AppKit
         applyProjectFilter()
     }
 
+    @objc(selectProjectContainingSessionGUID:)
+    func selectProjectContainingSessionGUID(_ guid: String) {
+        if !snapshot.contains(where: { $0.id == guid }) { refresh() }
+        guard let entry = snapshot.first(where: { $0.id == guid }) else {
+            showAllProjects()
+            return
+        }
+        selectedProject = entry.key
+        selectedEntryID = entry.runID
+        applyProjectFilter()
+        syncSelection()
+    }
+
     private func applyProjectFilter() {
         guard let selectedProject else {
-            projectFilterDidChange?(nil)
+            filterActive = false
+            _ = projectFilterDidChange?(nil)
             return
         }
         let ids = projectSessionKeys.filter { $0.value == selectedProject }.map { $0.key }
-        projectFilterDidChange?(NSSet(array: ids))
+        filterActive = projectFilterDidChange?(NSSet(array: ids)) ?? false
     }
 
     private static var tmuxExecutable: String? {
@@ -552,7 +601,8 @@ import AppKit
             return
         }
         guard let entry = outline.item(atRow: outline.clickedRow) as? Entry,
-              let harness = entry.external else { return }
+              let harness = entry.external, !harness.tmuxUnverified,
+              iTermController.sharedInstance()?.anySession(withGUID: entry.id) == nil else { return }
         let title = harness.tmuxSocket != nil
             ? String(localized: "SessionDirectorySidebar.Attach", defaultValue: "Attach in Project Tab", comment: "Attach a running tmux harness")
             : String(localized: "SessionDirectorySidebar.Resume", defaultValue: "Open in iTerm2…", comment: "Choose a tmux or native tab for an external harness")
@@ -568,7 +618,9 @@ import AppKit
     }
 
     @objc private func attachFromMenu(_ sender: NSMenuItem) {
-        guard let entry = sender.representedObject as? Entry, let harness = entry.external else { return }
+        guard let entry = sender.representedObject as? Entry, let harness = entry.external,
+              !harness.tmuxUnverified,
+              iTermController.sharedInstance()?.anySession(withGUID: entry.id) == nil else { return }
         if harness.tmuxSocket != nil {
             activate(entry)
         } else {
@@ -576,28 +628,18 @@ import AppKit
         }
     }
 
-    static func resumeArguments(harness: String, conversationID: String) -> [String]? {
-        // Require a specific identity, never an option or an implicit latest conversation.
-        guard !conversationID.isEmpty, !conversationID.hasPrefix("-"),
-              conversationID.rangeOfCharacter(from: .whitespacesAndNewlines) == nil else { return nil }
-        switch harness {
-        case "Codex": return ["resume", conversationID]
-        case "Claude": return ["--resume", conversationID]
-        case "Antigravity": return ["--conversation", conversationID]
-        default: return nil
-        }
-    }
-
     @objc private func clickedNativeHarness() {
         guard outline.clickedRow >= 0,
               let entry = outline.item(atRow: outline.clickedRow) as? Entry,
-              entry.external?.tmuxSocket == nil,
+              entry.external?.isNative == true,
               iTermController.sharedInstance()?.anySession(withGUID: entry.id) == nil else { return }
         activate(entry)
     }
 
     private func resumeNative(_ entry: Entry) {
-        guard let harness = entry.external, let directory = entry.key.path, window != nil,
+        guard let harness = entry.external, harness.isNative,
+              let directory = entry.key.path, window != nil,
+              iTermController.sharedInstance()?.anySession(withGUID: entry.id) == nil,
               resolvingResumes.insert(harness.id).inserted else { return }
         if let id = attachedSessionIDs[harness.id],
            let session = iTermController.sharedInstance()?.anySession(withGUID: id), !session.exited {
@@ -605,14 +647,20 @@ import AppKit
             session.reveal()
             return
         }
+        let visible = iTermController.sharedInstance()?.allSessions() ?? []
+        let buried = iTermBuriedSessions.sharedInstance()?.buriedSessions() ?? []
+        let hosted = visible + buried
+        let protectedTTYs = Set((hosted + hosted.flatMap { $0.peerPort?.realizedPeerSessions ?? [] })
+            .filter { !$0.exited }
+            .compactMap { $0.tty }
+            .compactMap { HarnessProcessDiscovery.ttyRdev(path: $0) })
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            let target = HarnessProcessDiscovery.resumeTarget(for: harness)
+            let result = HarnessProcessDiscovery.resumeTarget(for: harness, protectedTTYs: protectedTTYs)
             DispatchQueue.main.async {
                 guard let self, let window = self.window else { return }
-                guard let target, let resume = Self.resumeArguments(harness: harness.name, conversationID: target.conversationID) else {
+                guard case .success(let target) = result else {
                     self.resolvingResumes.remove(harness.id)
-                    self.showError(String(localized: "SessionDirectorySidebar.IdentityUnavailable",
-                        defaultValue: "This harness’s saved conversation could not be identified unambiguously. Its original process is unchanged. Try again after it has saved a conversation.", comment: "No exact process-linked conversation identity found"))
+                    if case .failure(let block) = result { self.showError(Self.transferBlockMessage(block)) }
                     return
                 }
                 let alert = NSAlert()
@@ -653,7 +701,7 @@ import AppKit
                         let file = folder.appendingPathComponent(token + ".json")
                         try JSONSerialization.data(withJSONObject: record, options: .prettyPrinted).write(to: file, options: .atomic)
                         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
-                        let command = Self.shellCommand(target.commandPrefix + resume)
+                        let command = Self.shellCommand(target.command)
                         let arguments: [String]
                         if response == .alertFirstButtonReturn, let tmux = Self.tmuxExecutable {
                             arguments = [tmux, "-L", "iterm2-harnesses", "new-session",
@@ -665,13 +713,14 @@ import AppKit
                             self.resolvingResumes.remove(harness.id)
                             return
                         }
-                        HarnessProcessDiscovery.stopForTransfer(harness, target: target) { [weak self] exited in
+                        HarnessProcessDiscovery.stopForTransfer(harness, target: target,
+                            protectedTTYs: protectedTTYs) { [weak self] outcome in
                             guard let self else { return }
                             self.resolvingResumes.remove(harness.id)
-                            guard exited else {
-                                self.showError(String(localized: "SessionDirectorySidebar.TransferIncomplete",
-                                    defaultValue: "The original harness could not be verified or did not exit within 15 seconds. No replacement was started. The recovery handoff is saved. Check the original terminal before trying again.",
-                                    comment: "Graceful transfer failed without force killing the harness"))
+                            guard case .success = outcome else {
+                                if case .failure(let block) = outcome {
+                                    self.showError(Self.transferBlockMessage(block))
+                                }
                                 return
                             }
                             self.launchProjectTab(entry, arguments: arguments)
@@ -682,6 +731,36 @@ import AppKit
                     }
                 }
             }
+        }
+    }
+
+    private static func transferBlockMessage(_ block: HarnessProcessDiscovery.TransferBlock) -> String {
+        switch block {
+        case .processChanged:
+            return String(localized: "SessionDirectorySidebar.ProcessChanged",
+                defaultValue: "The original process changed or exited. Refresh the sidebar before transferring it.",
+                comment: "Process identity changed during transfer")
+        case .insideMultiplexer:
+            return String(localized: "SessionDirectorySidebar.UnverifiedMultiplexer",
+                defaultValue: "This harness may be inside a terminal multiplexer, but its pane could not be verified. Transfer is unavailable.",
+                comment: "Unverified terminal multiplexer prevents transfer")
+        case .hostedByITerm:
+            return String(localized: "SessionDirectorySidebar.AlreadyHosted",
+                defaultValue: "This harness is already hosted by iTerm2. Select its existing tab instead.",
+                comment: "Prevent transfer of an iTerm2-hosted process")
+        case .unsupportedArguments(let names), .credentialEnvironment(let names):
+            let reason = names.joined(separator: ", ")
+            return String(format: String(localized: "SessionDirectorySidebar.UnsafeLaunch",
+                defaultValue: "Transfer cannot safely reproduce these launch settings: %@. The original harness was not stopped.",
+                comment: "Original launch options or credential environment cannot be carried"), reason)
+        case .unsupportedHarness, .identityUnavailable, .busy:
+            return String(localized: "SessionDirectorySidebar.IdentityUnavailable",
+                defaultValue: "This harness’s saved conversation or launch settings could not be verified. Its original process was not stopped.",
+                comment: "No exact process-linked conversation identity or safe launch settings found")
+        case .didNotExit:
+            return String(localized: "SessionDirectorySidebar.TransferIncomplete",
+                defaultValue: "The original harness did not exit within 15 seconds. No replacement was started. The recovery handoff is saved. Check the original terminal before trying again.",
+                comment: "Graceful transfer timed out without force killing the harness")
         }
     }
 

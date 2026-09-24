@@ -757,11 +757,32 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         return YES;
     }
 
-    // The sidebar owns project/tab numbers in its terminal window. Dispatch before
-    // the default Command-Option-number window switcher consumes the same chord.
-    if ([[self keyWindow] isTerminalWindow] &&
-        [(PseudoTerminal *)self.keyWindow.windowController handleProjectShortcut:event]) {
-        return YES;
+    // Give explicit mappings precedence, then let the sidebar handle project
+    // numbers before the built-in window/tab switchers. Editors keep their keys.
+    if ([iTermAdvancedSettingsModel showHarnessDirectorySidebar] &&
+        [[self keyWindow] isTerminalWindow]) {
+        PseudoTerminal *terminal = (PseudoTerminal *)self.keyWindow.windowController;
+        NSResponder *responder = self.keyWindow.firstResponder;
+        const int digit = [self digitKeyForEvent:event];
+        const NSUInteger modifiers = event.it_modifierFlags &
+            (NSEventModifierFlagShift | NSEventModifierFlagControl |
+             NSEventModifierFlagOption | NSEventModifierFlagCommand);
+        const NSUInteger tabModifiers = [iTermPreferences maskForModifierTag:
+            [iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]];
+        const NSUInteger windowModifiers = [iTermPreferences maskForModifierTag:
+            [iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]];
+        if (digit >= 1 && digit <= 9 && modifiers != 0 &&
+            (modifiers == tabModifiers || modifiers == windowModifiers) &&
+            ![self responderIsEditingText:responder]) {
+            PTYSession *session = [self sessionOfFirstResponder] ?: terminal.currentSession;
+            if ([session hasActionableKeyMappingForEvent:event]) {
+                if ([self remapEvent:event inResponder:responder currentSession:session]) {
+                    return YES;
+                }
+            } else if ([terminal handleProjectShortcut:event digit:digit]) {
+                return YES;
+            }
+        }
     }
 
     if ([self switchToWindowByNumber:event]) {
@@ -1303,4 +1324,3 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 @end
-

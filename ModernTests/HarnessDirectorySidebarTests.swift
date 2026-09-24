@@ -120,20 +120,17 @@ final class HarnessDirectorySidebarTests: XCTestCase {
         let pid = ProcessInfo.processInfo.processIdentifier
         let harness = HarnessProcessDiscovery.Harness(pid: pid, started: iTermLSOF.startTime(forProcess: pid)!,
             name: "Codex", directory: folder.path, ancestors: [], tty: 0, tmuxSocket: nil, tmuxPane: nil)
-        XCTAssertEqual(HarnessProcessDiscovery.resumeTarget(for: harness)?.conversationID, id)
+        guard case .success(let identity) = HarnessProcessDiscovery.conversationIdentity(for: harness) else {
+            return XCTFail("Expected the open transcript to identify the conversation")
+        }
+        XCTAssertEqual(identity.conversationID, id)
+        XCTAssertEqual(URL(fileURLWithPath: identity.transcript).lastPathComponent, first.lastPathComponent)
         let second = folder.appendingPathComponent("rollout-date-" + UUID().uuidString + ".jsonl")
         try Data("{}\n".utf8).write(to: second)
         let other = try FileHandle(forReadingFrom: second)
         defer { try? other.close() }
-        XCTAssertNil(HarnessProcessDiscovery.resumeTarget(for: harness))
-    }
-
-    func testResumeRequiresExplicitIdentityAndSupportedHarness() {
-        XCTAssertEqual(SessionDirectorySidebar.resumeArguments(harness: "Codex", conversationID: "abc"), ["resume", "abc"])
-        XCTAssertEqual(SessionDirectorySidebar.resumeArguments(harness: "Claude", conversationID: "abc"), ["--resume", "abc"])
-        XCTAssertNil(SessionDirectorySidebar.resumeArguments(harness: "Codex", conversationID: "--last"))
-        XCTAssertNil(SessionDirectorySidebar.resumeArguments(harness: "Codex", conversationID: ""))
-        XCTAssertNil(SessionDirectorySidebar.resumeArguments(harness: "Aider", conversationID: "abc"))
+        XCTAssertEqual(HarnessProcessDiscovery.conversationIdentity(for: harness),
+                       .failure(.identityUnavailable))
     }
 
     func testAttachmentCommandPreservesSocketAndPaneArguments() {
@@ -188,16 +185,24 @@ final class HarnessDirectorySidebarTests: XCTestCase {
         XCTAssertNil(HarnessProcessDiscovery.socketPath("invalid"))
     }
 
-    func testSidebarShortcutRequiresCommandOption() {
-        func event(_ flags: NSEvent.ModifierFlags, character: String, code: UInt16 = 18) -> NSEvent {
-            NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: flags, timestamp: 0,
-                            windowNumber: 0, context: nil, characters: character,
-                            charactersIgnoringModifiers: character, isARepeat: false, keyCode: code)!
+    func testProjectShortcutsRespectConfiguredModifiersAndAvailableProjects() {
+        let projectMask: NSEvent.ModifierFlags = [.command, .option]
+        let tabMask: NSEvent.ModifierFlags = [.command]
+        func action(_ flags: NSEvent.ModifierFlags, _ digit: Int, _ projectCount: Int = 2,
+                    _ filterActive: Bool = true) -> SessionDirectorySidebar.ShortcutAction {
+            SessionDirectorySidebar.shortcutAction(flags: flags, digit: digit,
+                projectMask: projectMask, tabMask: tabMask,
+                projectCount: projectCount, filterActive: filterActive)
         }
-        XCTAssertEqual(SessionDirectorySidebar.shortcutIndex(event([.command, .option], character: "1")), 0)
-        XCTAssertNil(SessionDirectorySidebar.shortcutIndex(event([.command], character: "1")))
-        XCTAssertNil(SessionDirectorySidebar.shortcutIndex(event([.option], character: "1")))
-        XCTAssertNil(SessionDirectorySidebar.shortcutIndex(event([.command, .option, .shift], character: "1")))
+        XCTAssertEqual(action(projectMask, 1), .project(0))
+        XCTAssertEqual(action(projectMask, 3), .pass)
+        XCTAssertEqual(action(tabMask, 1), .tab(0))
+        XCTAssertEqual(action(tabMask, 9), .tab(8))
+        XCTAssertEqual(action(tabMask, 1, 2, false), .pass)
+        XCTAssertEqual(action([.command, .option, .shift], 1), .pass)
+        XCTAssertEqual(action(projectMask, 0), .pass)
+        XCTAssertEqual(SessionDirectorySidebar.shortcutAction(flags: tabMask, digit: 1,
+            projectMask: projectMask, tabMask: nil, projectCount: 2, filterActive: true), .pass)
     }
 
     func testDirectoryIdentity() {

@@ -6795,8 +6795,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return YES;
 }
 
-- (BOOL)handleProjectShortcut:(NSEvent *)event {
-    return [_contentView handleProjectShortcut:event];
+- (BOOL)handleProjectShortcut:(NSEvent *)event digit:(NSInteger)digit {
+    return [_contentView handleProjectShortcut:event digit:digit];
+}
+
+- (void)selectHarnessProjectContainingSessionGUID:(NSString *)guid {
+    [_contentView selectHarnessProjectContainingSessionGUID:guid];
 }
 
 - (BOOL)tabBarShouldBeAccessory {

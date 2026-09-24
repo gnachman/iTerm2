@@ -1727,8 +1727,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     }
 }
 
-- (BOOL)handleProjectShortcut:(NSEvent *)event {
-    return [self.harnessSidebar handleProjectShortcut:event];
+- (BOOL)handleProjectShortcut:(NSEvent *)event digit:(NSInteger)digit {
+    return [self.harnessSidebar handleProjectShortcut:event digit:digit];
+}
+
+- (void)selectHarnessProjectContainingSessionGUID:(NSString *)guid {
+    [self.harnessSidebar selectProjectContainingSessionGUID:guid];
 }
 
 - (void)layoutSubviewsTopTabBarVisible:(BOOL)topTabBarVisible forWindow:(NSWindow *)thisWindow {
@@ -2017,12 +2021,11 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                     [strongSelf.tabView selectTabViewItem:visible[index]];
                 }
             };
-            self.harnessSidebar.projectFilterDidChange = ^(NSSet *sessionIDs) {
+            self.harnessSidebar.projectFilterDidChange = ^BOOL(NSSet *sessionIDs) {
                 iTermRootTerminalView *strongSelf = weakSelf;
                 if (!sessionIDs) {
                     strongSelf.tabBarControl.projectTabViewItems = nil;
-                    strongSelf.tabView.hidden = NO;
-                    return;
+                    return NO;
                 }
                 NSMutableSet *items = [NSMutableSet set];
                 for (NSTabViewItem *item in strongSelf.tabView.tabViewItems) {
@@ -2034,8 +2037,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                         }
                     }
                 }
-                strongSelf.tabBarControl.projectTabViewItems = items;
-                strongSelf.tabView.hidden = (items.count == 0);
+                // Keep the selected terminal visible until this window has a tab
+                // for the project. The first matching tab enables the filter.
+                strongSelf.tabBarControl.projectTabViewItems = items.count ? items : nil;
                 if (items.count && ![items containsObject:strongSelf.tabView.selectedTabViewItem]) {
                     for (NSTabViewItem *item in strongSelf.tabView.tabViewItems) {
                         if ([items containsObject:item]) {
@@ -2044,6 +2048,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                         }
                     }
                 }
+                return items.count > 0;
             };
             [self addSubview:self.harnessSidebar];
         }
@@ -2052,7 +2057,6 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
         self.harnessSidebar.frame = sidebarLayout.harnessSidebarFrame;
     } else if (self.harnessSidebar) {
         self.tabBarControl.projectTabViewItems = nil;
-        self.tabView.hidden = NO;
         [self.harnessSidebar removeFromSuperview];
         self.harnessSidebar = nil;
     }

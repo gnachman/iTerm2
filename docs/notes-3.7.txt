@@ -7,8 +7,8 @@ Major New Features:
   Select a directory to show its project tabs.
   Attach tmux harnesses or transfer native ones
   into project tabs from the sidebar.
-  Switch between projects with Command-Option-1
-  through 9. Enable it in Advanced Settings by
+  Switch projects with your window-number
+  shortcut. Enable it in Advanced Settings by
   searching for “harnesses”.
 - iTerm2 is now localized: the interface follows
   your Mac’s language and is available in

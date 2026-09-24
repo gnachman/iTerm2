@@ -523,7 +523,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                     vertical:(BOOL)vertical;
 
 // Project navigator shortcuts are dispatched before ordinary terminal key handling.
-- (BOOL)handleProjectShortcut:(NSEvent *)event;
+- (BOOL)handleProjectShortcut:(NSEvent *)event digit:(NSInteger)digit;
+- (void)selectHarnessProjectContainingSessionGUID:(NSString *)guid;
 
 @end
-
