@@ -8,8 +8,7 @@ Major New Features:
   Attach tmux harnesses or transfer native ones
   into project tabs from the sidebar.
   Switch projects with your window-number
-  shortcut. Enable it in Advanced Settings by
-  searching for “harnesses”.
+  shortcut. Open it with View → Show Sidebar.
 - iTerm2 is now localized: the interface follows
   your Mac’s language and is available in
   Brazilian Portuguese, German, Japanese, Russian,

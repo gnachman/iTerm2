@@ -338,6 +338,9 @@ typedef struct {
 - (void)advancedSettingsDidChange:(NSNotification *)notification {
     [self updateBorderViews];
     [self updateWindowNameBesideTabs];
+    if ((self.harnessSidebar != nil) != [iTermAdvancedSettingsModel showHarnessDirectorySidebar]) {
+        [self.delegate repositionWidgets];
+    }
 }
 
 - (void)setDelegate:(id<iTermRootTerminalViewDelegate>)delegate {

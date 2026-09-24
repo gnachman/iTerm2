@@ -378,6 +378,10 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     [ArchivesMenuBuilder setShared:[[ArchivesMenuBuilder alloc] initWithMenuItem:_archivesMenuItem]];
 
     NSMenu *viewMenu = [self topLevelViewWithIdentifier:@"View"];
+    NSMenuItem *sidebarItem = [viewMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ViewMenu.ShowHarnessSidebar", nil, [NSBundle mainBundle], @"Show Sidebar", @"View menu command to show the coding harness sidebar")
+                                                   action:@selector(toggleHarnessDirectorySidebar:)
+                                            keyEquivalent:@""];
+    sidebarItem.target = self;
     [viewMenu addItem:[NSMenuItem separatorItem]];
 
     NSSize tabColorViewSize = [ColorsMenuItemView preferredSize];
@@ -439,6 +443,12 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     const SEL action = [menuItem action];
+    if (action == @selector(toggleHarnessDirectorySidebar:)) {
+        menuItem.title = [iTermAdvancedSettingsModel showHarnessDirectorySidebar] ?
+            NSLocalizedStringWithDefaultValue(@"ViewMenu.HideHarnessSidebar", nil, [NSBundle mainBundle], @"Hide Sidebar", @"View menu command to hide the coding harness sidebar") :
+            NSLocalizedStringWithDefaultValue(@"ViewMenu.ShowHarnessSidebar", nil, [NSBundle mainBundle], @"Show Sidebar", @"View menu command to show the coding harness sidebar");
+        return YES;
+    }
     if (action == @selector(newSessionInTabAtIndex:) ||
         action == @selector(newSession:) ||
         action == @selector(newSessionWithSameProfile:)) {
@@ -2829,6 +2839,10 @@ static iTermKeyEventReplayer *gReplayer;
     NSString *toolbeltPrefix = @"Toolbelt.";
     NSString *name = [menuItem.identifier hasPrefix:toolbeltPrefix] ? [menuItem.identifier substringFromIndex:toolbeltPrefix.length] : menuItem.title;
     [iTermToolbeltView toggleShouldShowTool:name];
+}
+
+- (IBAction)toggleHarnessDirectorySidebar:(id)sender {
+    [iTermAdvancedSettingsModel setShowHarnessDirectorySidebar:![iTermAdvancedSettingsModel showHarnessDirectorySidebar]];
 }
 
 - (IBAction)toggleFullScreenTabBar:(id)sender {
