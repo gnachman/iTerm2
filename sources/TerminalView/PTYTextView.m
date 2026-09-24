@@ -1462,17 +1462,15 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         [self requestDelegateRedraw];
     }
     [self updateUnderlinedURLs:event];
-    // Hit test against the whole session view, not just the scroll view, so that entering through
-    // a pane toolbar, title bar, or scroller still counts. Points outside this pane still fail.
+    // The hit test guards against entry events delivered to the wrong pane (issue 11009). Entry
+    // through other parts of the pane, such as its toolbar or title bar, is up to the delegate.
     NSScrollView *scrollView = self.enclosingScrollView;
-    NSView *hitTestView = scrollView.superview ?: scrollView;
     // -hitTest: takes a point in the receiver's superview's coordinate system.
-    const NSPoint hitTestPoint = [hitTestView.superview convertPoint:event.locationInWindow fromView:nil];
-    if ([hitTestView hitTest:hitTestPoint] == nil) {
-        DLog(@"hitTest at %@ (%@ in window) against %@ with frame %@ gives nil", NSStringFromPoint(hitTestPoint),
-              NSStringFromPoint(event.locationInWindow), hitTestView, NSStringFromRect(hitTestView.frame));
-        DLog(@"Event %@ at window coord %@ failed hit test for view with window coords %@",
-             event, NSStringFromPoint(event.locationInWindow), NSStringFromRect([self convertRect:self.bounds toView:nil]));
+    const NSPoint hitTestPoint = [scrollView.superview convertPoint:event.locationInWindow fromView:nil];
+    if ([scrollView hitTest:hitTestPoint] == nil &&
+        ![_delegate textViewShouldAcceptFocusFollowsMouseEntryOutsideScrollView:event]) {
+        DLog(@"Event %@ at window coord %@ failed hit test for scroll view with window coords %@",
+             event, NSStringFromPoint(event.locationInWindow), NSStringFromRect([scrollView convertRect:scrollView.bounds toView:nil]));
         return;
     }
     [_focusFollowsMouse mouseEntered:event];

@@ -14521,6 +14521,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [_view convertRect:visibleAnchorRect fromView:_textview];
 }
 
+- (BOOL)textViewShouldAcceptFocusFollowsMouseEntryOutsideScrollView:(NSEvent *)event {
+    return [_view focusFollowsMouseAcceptsEntryOutsideScrollView:event];
+}
+
 - (BOOL)textViewShowHoverURL:(NSString *)url anchor:(VT100GridWindowedRange)anchor {
     return [_view setHoverURL:url
                   anchorFrame:url ? [self boundingFrameForWindowedRange:anchor] : NSZeroRect];
