@@ -285,6 +285,20 @@ Improvements:
   the Right”, matching the direction the tabs
   actually run. The confirmation for closing the
   tabs after a group follows suit.
+- Dropping a text file into a session connected
+  to a remote host now offers Paste as Text,
+  which types the file’s contents into the
+  terminal. Previously only the upload options
+  and Paste Base64-Encoded Contents were offered
+  there.
+- Dropping several files into a session
+  connected to a remote host now offers “Upload
+  and Paste Paths”, which uploads them all and
+  then types their remote paths onto the command
+  line, as the single-file case already did.
+  Files that fail to upload are left out of what
+  is pasted. Local paths are no longer offered
+  there, since they name nothing on that host.
 
 Bug Fixes:
 - The control sequence that resets a tab color to
@@ -643,6 +657,19 @@ Bug Fixes:
 - Fixed a lag when switching or closing tabs
   with the Session Status tool open in the
   toolbelt.
+- Fixed “Remember my choice” applying the wrong
+  choice in the dialog that appears when you
+  paste a file, folder, or image. The answer was
+  remembered by button position, so a choice
+  saved for a local file could turn into a
+  different button in a session connected to a
+  remote host, silently uploading the file.
+  Each set of choices the dialog can offer now
+  remembers its own answer, so silencing it for
+  a local file no longer silences it for a
+  folder or for a remote host. Any answer you
+  had saved for these dialogs is cleared, so you
+  will be asked once more.
 - Uploading several files at once to a host you
   connected to with an SSH profile now uploads
   all of them. Dropping more than one file on
@@ -650,3 +677,9 @@ Bug Fixes:
   dropping them, transferred only the first and
   silently discarded the rest. Uploads over
   plain shell integration were unaffected.
+- “Upload and Paste Path” now pastes the path
+  the file actually landed on. Uploading over an
+  SSH profile never overwrites, so a file whose
+  name was already taken on the far host arrived
+  as “name (2)” while the original name was
+  pasted, naming a different file.

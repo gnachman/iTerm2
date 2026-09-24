@@ -86,7 +86,12 @@ TriggerDelegate> {
     iTermAppSwitchingPreventionDetector *_appSwitchingPreventionDetector;
     AITermControllerObjC *_aiterm;
     iTermNonTextPasteHelper *_nonTextPasteHelper;
-    TransferrableFile *_uploadAndPasteTransfer;  // Current upload for "upload and paste path" feature
+    // In-flight uploads for the "upload and paste path(s)" feature. Several at once when more
+    // than one file was dropped; empty when idle, which is what gates a second attempt.
+    NSMutableArray<TransferrableFile *> *_uploadAndPasteTransfers;
+    // Bumped whenever a group is torn down, so a completion that arrives after a cancel can
+    // tell that its group is gone and do nothing.
+    NSInteger _uploadAndPasteGeneration;
 }
 
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;

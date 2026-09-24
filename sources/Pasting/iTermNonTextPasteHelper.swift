@@ -15,6 +15,7 @@ protocol iTermNonTextPasteHelperDelegate: AnyObject {
     func nonTextPasteHelperCanUpload(_ sender: iTermNonTextPasteHelper) -> Bool
     func nonTextPasteHelper(_ sender: iTermNonTextPasteHelper, uploadFiles paths: [String])
     func nonTextPasteHelper(_ sender: iTermNonTextPasteHelper, uploadFileAndPastePath path: String)
+    func nonTextPasteHelper(_ sender: iTermNonTextPasteHelper, uploadFilesAndPastePaths paths: [String])
 }
 
 @objc(iTermNonTextPasteHelper)
@@ -66,7 +67,7 @@ class iTermNonTextPasteHelper: NSObject {
 
     // Raw values are stable identity (used for logging and for cancel-label matching); user-facing
     // button text comes from displayName.
-    private enum FilePasteAction: String {
+    enum FilePasteAction: String {
         case pastePath = "Paste Path"
         case pastePaths = "Paste Paths"
         case pasteBase64 = "Paste Base64-Encoded Contents"
@@ -74,6 +75,7 @@ class iTermNonTextPasteHelper: NSObject {
         case pasteAsText = "Paste as Text"
         case upload = "Upload"
         case uploadAndPastePath = "Upload and Paste Path"
+        case uploadAndPastePaths = "Upload and Paste Paths"
         case cancel = "Cancel"
 
         var displayName: String {
@@ -85,9 +87,117 @@ class iTermNonTextPasteHelper: NSObject {
             case .pasteAsText: return String(localized: "NonTextPaste.PasteAsText", defaultValue: "Paste as Text", comment: "Button to paste a file as text")
             case .upload: return String(localized: "NonTextPaste.Upload", defaultValue: "Upload", comment: "Button to upload files")
             case .uploadAndPastePath: return String(localized: "NonTextPaste.UploadAndPastePath", defaultValue: "Upload and Paste Path", comment: "Button to upload a file and paste its path")
+            case .uploadAndPastePaths: return String(localized: "NonTextPaste.UploadAndPastePaths", defaultValue: "Upload and Paste Paths", comment: "Button to upload several files and paste their paths")
             case .cancel: return iTermLocalizedCancel()
             }
         }
+
+        // A permanently silenced warning remembers an iTermWarningSelection. By default that is a
+        // button position, which would be wrong here because the action list varies with the paste
+        // (local vs. remote, file vs. folder, text-decodable or not). Give every action a fixed
+        // selection instead and hand it to iTermWarning as an actionToSelectionMap.
+        //
+        // What this is for, now that fileWarningIdentifier names the set of options offered: two
+        // dialogs with different options no longer share a saved answer at all, so this is not what
+        // prevents a cross-dialog collision. It is forward compatibility for the two ways one
+        // identifier still spans more than one list. Reordering buttons does not reset a saved
+        // answer, and pasteAsText, which is excluded from the identifier, fails to resolve when a
+        // binary file omits it rather than firing whatever else landed in its position.
+        //
+        // pastePath/pastePaths and uploadAndPastePath/uploadAndPastePaths each share a selection.
+        // Within a pair they are the same choice, the singular and plural forms never appear
+        // together, and seven selections is all iTermWarning defines while the one-file dialog uses
+        // every one of them.
+        var selection: iTermWarningSelection {
+            switch self {
+            case .pastePath, .pastePaths: return .kiTermWarningSelection0
+            case .pasteBase64: return .kiTermWarningSelection1
+            case .pasteBase64Archive: return .kiTermWarningSelection2
+            case .pasteAsText: return .kiTermWarningSelection3
+            case .upload: return .kiTermWarningSelection4
+            case .uploadAndPastePath, .uploadAndPastePaths: return .kiTermWarningSelection5
+            case .cancel: return .kiTermWarningSelection6
+            }
+        }
+    }
+
+    // The user-defaults key under which a silenced choice is remembered, derived from the options
+    // actually offered so that two pastes share a saved answer only when they present the same
+    // choices. A hand-named key cannot do this: one name covering several button lists means one
+    // saved answer between them, and whichever shape you answered last is the only one that stays
+    // silenced.
+    //
+    // Sorted, so reordering buttons (a display decision) does not reset anyone: actionToSelectionMap
+    // carries the saved choice across a reorder. Built from rawValue, which is stable identity,
+    // never displayName, which is localized and would give the same user a different memory per
+    // system language. Non-alphanumerics are stripped so a label like "Paste Base64-Encoded Archive
+    // (tar.gz)" does not put spaces, parens and a dot in a defaults key.
+    //
+    // Known cost: adding an option to a dialog changes its key, so everyone is asked once more for
+    // that dialog. The dialog did change, so that is defensible, but it is invisible from the call
+    // site, hence this note.
+    private static func warningIdentifier(prefix: String, names: [String]) -> String {
+        let tokens = names.map { name in
+            String(name.filter { $0.isLetter || $0.isNumber })
+        }.sorted()
+        return ([prefix] + tokens).joined(separator: "_")
+    }
+
+    // Cancel is excluded because it appears in every list and is never remembered. pasteAsText is
+    // excluded because it is purely additive: it does not change what the other buttons mean, so a
+    // text file and a binary file should share one memory. A saved pasteAsText simply fails to
+    // resolve for a binary file and the dialog asks again, which is correct.
+    static func fileWarningIdentifier(for actions: [FilePasteAction]) -> String {
+        return warningIdentifier(prefix: "NoSyncPasteNonTextFile",
+                                 names: actions.filter { $0 != .cancel && $0 != .pasteAsText }.map { $0.rawValue })
+    }
+
+    static func imageWarningIdentifier(for actions: [ImagePasteAction]) -> String {
+        return warningIdentifier(prefix: "NoSyncPasteImage",
+                                 names: actions.filter { $0 != .cancel }.map { $0.rawValue })
+    }
+
+    // The buttons to offer for a file paste. Order is display order; each action carries its own
+    // stable selection, so a remembered choice does not depend on where its button landed.
+    static func fileActions(singleFile: Bool,
+                            canUpload: Bool,
+                            isDirectory: Bool,
+                            canPasteAsText: Bool) -> [FilePasteAction] {
+        var actions = [FilePasteAction]()
+        if singleFile {
+            // Naming the file. This is the only part that depends on where the session is
+            // connected: a local path means nothing on the far host, so offer to put the file
+            // there instead of naming it.
+            if canUpload {
+                if !isDirectory {
+                    actions.append(.uploadAndPastePath)
+                }
+                actions.append(.upload)
+            } else {
+                actions.append(.pastePath)
+            }
+            // Sending the file's own bytes inline. These type into the tty, so they work the
+            // same whether the far end is local or remote, and are offered either way.
+            if isDirectory {
+                actions.append(.pasteBase64Archive)
+            } else {
+                actions.append(.pasteBase64)
+                if canPasteAsText {
+                    actions.append(.pasteAsText)
+                }
+            }
+        } else {
+            // Multiple files, following the same rule as one: the local paths mean nothing on the
+            // far host, so offer to put the files there and name them by where they landed.
+            if canUpload {
+                actions.append(.uploadAndPastePaths)
+                actions.append(.upload)
+            } else {
+                actions.append(.pastePaths)
+            }
+        }
+        actions.append(.cancel)
+        return actions
     }
 
     private func handleFilePaste(_ paths: [String]) -> Bool {
@@ -115,48 +225,18 @@ class iTermNonTextPasteHelper: NSObject {
 
         RLog("handleFilePaste: singleFile=\(singleFile) canUpload=\(canUpload) isDirectory=\(isDirectory) canPasteAsText=\(canPasteAsText)")
 
-        // Build actions list and track what each index means
-        var actions = [FilePasteAction]()
-        if singleFile {
-            if canUpload {
-                // Remote host: offer upload options and base64
-                if !isDirectory {
-                    actions.append(.uploadAndPastePath)
-                }
-                actions.append(.upload)
-                if isDirectory {
-                    actions.append(.pasteBase64Archive)
-                } else {
-                    actions.append(.pasteBase64)
-                }
-            } else {
-                // Local host: offer path and base64 options
-                actions.append(.pastePath)
-                if isDirectory {
-                    actions.append(.pasteBase64Archive)
-                } else {
-                    actions.append(.pasteBase64)
-                    if canPasteAsText {
-                        actions.append(.pasteAsText)
-                    }
-                }
-            }
-        } else {
-            // Multiple files
-            if canUpload {
-                actions.append(.upload)
-            }
-            actions.append(.pastePaths)
-        }
-        actions.append(.cancel)
-
+        let actions = Self.fileActions(singleFile: singleFile,
+                                       canUpload: canUpload,
+                                       isDirectory: isDirectory,
+                                       canPasteAsText: canPasteAsText)
         DLog("handleFilePaste: actions=\(actions.map { $0.rawValue })")
 
         // Build description of files for the dialog
         let warning = iTermWarning()
         warning.title = pasteFilesPrompt(existingPaths, isDirectory: isDirectory)
         warning.actionLabels = actions.map { $0.displayName }
-        warning.identifier = singleFile ? "NoSyncPasteNonTextFile" : "NoSyncPasteNonTextFiles"
+        warning.actionToSelectionMap = actions.map { NSNumber(value: $0.selection.rawValue) }
+        warning.identifier = Self.fileWarningIdentifier(for: actions)
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
         if isDirectory {
             warning.heading = String(localized: "NonTextPaste.PasteFolderHeading", defaultValue: "Paste Folder", comment: "Heading of the dialog for pasting a folder")
@@ -173,14 +253,13 @@ class iTermNonTextPasteHelper: NSObject {
                 DLog("handleFilePaste: self was deallocated")
                 return
             }
-            let index = self.selectionToIndex(selection)
-            RLog("handleFilePaste: user selected index \(index)")
-            guard index >= 0 && index < actions.count else {
-                RLog("handleFilePaste: invalid selection index")
+            guard let action = actions.first(where: { $0.selection == selection }) else {
+                RLog("handleFilePaste: selection \(selection.rawValue) matches no offered action")
                 return
             }
+            RLog("handleFilePaste: user selected \(action.rawValue)")
 
-            switch actions[index] {
+            switch action {
             case .pastePath:
                 DLog("handleFilePaste: pastePath")
                 self.delegate?.nonTextPasteHelper(self, pasteString: Self.escapedPathForPaste(existingPaths.first!))
@@ -203,6 +282,9 @@ class iTermNonTextPasteHelper: NSObject {
             case .uploadAndPastePath:
                 DLog("handleFilePaste: uploadAndPastePath")
                 self.delegate?.nonTextPasteHelper(self, uploadFileAndPastePath: existingPaths.first!)
+            case .uploadAndPastePaths:
+                DLog("handleFilePaste: uploadAndPastePaths")
+                self.delegate?.nonTextPasteHelper(self, uploadFilesAndPastePaths: existingPaths)
             case .cancel:
                 DLog("handleFilePaste: cancelled")
                 break
@@ -234,19 +316,6 @@ class iTermNonTextPasteHelper: NSObject {
         return FileManager.default.fileExists(atPath: path, isDirectory: &isDir) && isDir.boolValue
     }
 
-    private func selectionToIndex(_ selection: iTermWarningSelection) -> Int {
-        switch selection {
-        case .kiTermWarningSelection0: return 0
-        case .kiTermWarningSelection1: return 1
-        case .kiTermWarningSelection2: return 2
-        case .kiTermWarningSelection3: return 3
-        case .kiTermWarningSelection4: return 4
-        case .kiTermWarningSelection5: return 5
-        case .kiTermWarningSelection6: return 6
-        default: return -1
-        }
-    }
-
     private func showError(_ message: String) {
         let alert = NSAlert()
         alert.messageText = String(localized: "NonTextPaste.PasteFailedTitle", defaultValue: "Paste Failed", comment: "Title of the dialog shown when a paste operation fails")
@@ -261,7 +330,7 @@ class iTermNonTextPasteHelper: NSObject {
     }
 
     // Raw values are stable identity (logging and cancel-label matching); text comes from displayName.
-    private enum ImagePasteAction: String {
+    enum ImagePasteAction: String {
         case saveTempAndPastePath = "Save to Temp File and Paste Path"
         case pasteBase64 = "Paste Base64-Encoded Contents"
         case upload = "Upload"
@@ -277,18 +346,25 @@ class iTermNonTextPasteHelper: NSObject {
             case .cancel: return iTermLocalizedCancel()
             }
         }
+
+        // Stable per-action selections, for the reason given on FilePasteAction.selection: this
+        // list also varies, by whether the image type is known and whether we can upload.
+        var selection: iTermWarningSelection {
+            switch self {
+            case .saveTempAndPastePath: return .kiTermWarningSelection0
+            case .pasteBase64: return .kiTermWarningSelection1
+            case .upload: return .kiTermWarningSelection2
+            case .uploadAndPastePath: return .kiTermWarningSelection3
+            case .cancel: return .kiTermWarningSelection4
+            }
+        }
     }
 
-    private func handleImageDataPaste(imageData: Data, fileExtension: String?) -> Bool {
-        DLog("handleImageDataPaste: \(imageData.count) bytes, extension=\(fileExtension ?? "nil")")
-        let canUpload = delegate?.nonTextPasteHelperCanUpload(self) ?? false
-        let sizeDescription = ByteCountFormatter.string(fromByteCount: Int64(imageData.count), countStyle: .file)
-
-        DLog("handleImageDataPaste: canUpload=\(canUpload)")
-
-        // Build actions based on whether we can upload and whether we know the file type
+    // The buttons to offer for an image paste, based on whether we can upload and whether we know
+    // the file type. As with fileActions, order is display order only.
+    static func imageActions(hasFileExtension: Bool, canUpload: Bool) -> [ImagePasteAction] {
         var actions = [ImagePasteAction]()
-        if fileExtension != nil {
+        if hasFileExtension {
             if canUpload {
                 actions.append(.uploadAndPastePath)
                 actions.append(.upload)
@@ -298,13 +374,24 @@ class iTermNonTextPasteHelper: NSObject {
         }
         actions.append(.pasteBase64)
         actions.append(.cancel)
+        return actions
+    }
 
+    private func handleImageDataPaste(imageData: Data, fileExtension: String?) -> Bool {
+        DLog("handleImageDataPaste: \(imageData.count) bytes, extension=\(fileExtension ?? "nil")")
+        let canUpload = delegate?.nonTextPasteHelperCanUpload(self) ?? false
+        let sizeDescription = ByteCountFormatter.string(fromByteCount: Int64(imageData.count), countStyle: .file)
+
+        DLog("handleImageDataPaste: canUpload=\(canUpload)")
+
+        let actions = Self.imageActions(hasFileExtension: fileExtension != nil, canUpload: canUpload)
         DLog("handleImageDataPaste: actions=\(actions.map { $0.rawValue })")
 
         let warning = iTermWarning()
         warning.title = imageDataPrompt(fileExtension: fileExtension, size: sizeDescription)
         warning.actionLabels = actions.map { $0.displayName }
-        warning.identifier = canUpload ? "NoSyncPasteImageDataRemote" : "NoSyncPasteImageData"
+        warning.actionToSelectionMap = actions.map { NSNumber(value: $0.selection.rawValue) }
+        warning.identifier = Self.imageWarningIdentifier(for: actions)
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
         warning.heading = String(localized: "NonTextPaste.PasteImageHeading", defaultValue: "Paste Image", comment: "Heading for the paste-image options dialog")
         warning.cancelLabel = ImagePasteAction.cancel.displayName
@@ -315,14 +402,13 @@ class iTermNonTextPasteHelper: NSObject {
                 DLog("handleImageDataPaste: self was deallocated")
                 return
             }
-            let index = self.selectionToIndex(selection)
-            RLog("handleImageDataPaste: user selected index \(index)")
-            guard index >= 0 && index < actions.count else {
-                RLog("handleImageDataPaste: invalid selection index")
+            guard let action = actions.first(where: { $0.selection == selection }) else {
+                RLog("handleImageDataPaste: selection \(selection.rawValue) matches no offered action")
                 return
             }
+            RLog("handleImageDataPaste: user selected \(action.rawValue)")
 
-            switch actions[index] {
+            switch action {
             case .saveTempAndPastePath:
                 DLog("handleImageDataPaste: saveTempAndPastePath")
                 self.saveTempFileAndPastePath(imageData: imageData, fileExtension: fileExtension!)
