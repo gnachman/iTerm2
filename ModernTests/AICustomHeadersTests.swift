@@ -31,6 +31,43 @@ final class AICustomHeadersTests: XCTestCase {
         XCTAssertEqual(result["User-Agent"], "override")
     }
 
+    // HTTP field names are case-insensitive, so a custom "authorization" must
+    // replace the built-in "Authorization" rather than joining it in the
+    // dictionary: two entries differing only in case reach URLRequest as one
+    // field whose winner depends on dictionary order (issue 13021).
+    func testCustomHeaderOverridesBuiltInRegardlessOfCase() {
+        let result = AICustomHeaders.merged(into: ["Authorization": "Bearer placeholder"],
+                                            customHeaders: [["name": "authorization",
+                                                             "value": "Bearer secret"]])
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result.first?.value, "Bearer secret")
+    }
+
+    // The user's spelling wins, so the wire shows what they typed.
+    func testCaseInsensitiveOverrideKeepsTheUsersSpelling() {
+        let result = AICustomHeaders.merged(into: ["x-api-key": "placeholder"],
+                                            customHeaders: [["name": "X-API-Key",
+                                                             "value": "secret"]])
+        XCTAssertEqual(result, ["X-API-Key": "secret"])
+    }
+
+    func testLaterCustomHeaderOverridesAnEarlierOneDifferingOnlyInCase() {
+        let result = AICustomHeaders.merged(into: [:],
+                                            customHeaders: [
+                                                ["name": "X-Route", "value": "alpha"],
+                                                ["name": "x-route", "value": "beta"],
+                                            ])
+        XCTAssertEqual(result, ["x-route": "beta"])
+    }
+
+    // A rejected custom header must not take the built-in one down with it.
+    func testInvalidValueLeavesTheBuiltInHeaderIntact() {
+        let result = AICustomHeaders.merged(into: ["Authorization": "Bearer placeholder"],
+                                            customHeaders: [["name": "authorization",
+                                                             "value": "Bearer bad\r\nX-Smuggled: yes"]])
+        XCTAssertEqual(result, ["Authorization": "Bearer placeholder"])
+    }
+
     func testEmptyNameIsSkipped() {
         let result = AICustomHeaders.merged(into: [:],
                                             customHeaders: [

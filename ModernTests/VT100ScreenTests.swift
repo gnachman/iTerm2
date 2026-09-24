@@ -1760,6 +1760,15 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     /// in order. Used by KittyDnDParsingTests.
     var kittyDragAndDropContents = [String]()
 
+    /// Number of times screenGetWorkingDirectory(completion:) was invoked. Used by
+    /// the OSC 7 receiver tests to assert a pathless report doesn't poll the local
+    /// child process for its cwd.
+    var getWorkingDirectoryCallCount = 0
+
+    /// Set true when screenDidReceiveOSC7WhileDisabled fires, so the acceptOSC7
+    /// gate test can assert the warning path was taken.
+    var didWarnOSC7Disabled = false
+
     func screenConvertAbsoluteRange(_ range: VT100GridAbsCoordRange, toTextDocumentOfType type: String?, filename: String?, forceWide: Bool) {
 
     }
@@ -2115,6 +2124,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     }
     
     func screenGetWorkingDirectory(completion: @escaping (String?) -> Void) {
+        getWorkingDirectoryCallCount += 1
         completion(nil)
     }
     
@@ -2146,8 +2156,12 @@ class FakeSession: NSObject, VT100ScreenDelegate {
         completion()
     }
     
+    /// Number of screenPromptDidStart(atLine:) calls. Used by the OSC 7 receiver
+    /// tests to assert a shell-integration OSC 7 (machineID present) does not
+    /// establish the prompt, while a third-party OSC 7 does.
+    var promptDidStartCallCount = 0
     func screenPromptDidStart(atLine line: Int32) {
-
+        promptDidStartCallCount += 1
     }
 
     func screenPromptOfNonInitialKindDidStart(_ kind: VT100PromptKind) {
@@ -2394,7 +2408,12 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenDidReset() {
 
     }
-    
+
+    func screenDidReceiveOSC7WhileDisabled() {
+        // The screen has already applied the policy; "presenting" is just a record.
+        didWarnOSC7Disabled = true
+    }
+
     func screenAllowTitleSetting() -> Bool {
         false
     }

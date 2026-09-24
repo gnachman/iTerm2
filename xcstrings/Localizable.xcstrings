@@ -211,6 +211,300 @@
         }
       }
     },
+    "AIConnectionTester.CouldNotBuildRequest" : {
+      "comment" : "Result of the AI connection test when the request could not be constructed; the placeholder is an error description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anfrage konnte nicht erstellt werden: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not build a request: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リクエストを作成できませんでした: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível criar a solicitação: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сформировать запрос: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法构建请求：%@"
+          }
+        }
+      }
+    },
+    "AIConnectionTester.InvalidURL" : {
+      "comment" : "Result of the AI connection test when the configured URL cannot be parsed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die URL ist ungültig."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The URL is not valid."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URLが無効です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O URL não é válido."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL-адрес недействителен."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL 无效。"
+          }
+        }
+      }
+    },
+    "AIConnectionTester.ReviewPlaceholder" : {
+      "comment" : "Result of the AI connection test when the App Review placeholder key is configured",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Platzhalterschlüssel in Verwendung: KI-Antworten werden für die App-Überprüfung simuliert, es wird kein externer Dienst kontaktiert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Placeholder key in use: AI responses are simulated for App Review and no external service is contacted."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレースホルダキーを使用中です。App Review用にAI応答がシミュレートされ、外部サービスには接続されません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave de espaço reservado em uso: as respostas de IA são simuladas para a Revisão do App e nenhum serviço externo é contatado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Используется ключ-заполнитель: ответы ИИ имитируются для проверки приложения, внешние службы не задействуются."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在使用占位密钥：AI 回复为 App 审核模拟生成，不会联系任何外部服务。"
+          }
+        }
+      }
+    },
+    "AIConnectionTester.SelfHostedAuthHint" : {
+      "comment" : "Advice shown when a request to a self-hosted AI server fails and no credential header is configured; the placeholder is an HTTP header name such as Authorization or x-api-key, and “Custom headers” is the label of a section of the model editor",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 hat mit dieser Anfrage keinen API-Schlüssel gesendet. Wenn dieser Endpunkt eine Authentifizierung erfordert, fügen Sie den Header „%@“ unter „Benutzerdefinierte Header“ hinzu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 did not send an API key with this request. If this endpoint requires authentication, add the header “%@” under “Custom headers”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2はこのリクエストでAPIキーを送信しませんでした。このエンドポイントが認証を必要とする場合は、「カスタムヘッダー」に「%@」ヘッダーを追加してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não enviou uma chave de API com esta solicitação. Se este endpoint exigir autenticação, adicione o cabeçalho “%@” em “Cabeçalhos personalizados”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не отправил ключ API с этим запросом. Если этой конечной точке требуется аутентификация, добавьте заголовок «%@» в разделе «Пользовательские заголовки»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 未随此请求发送 API 密钥。如果此端点需要身份验证，请在“自定义头信息”中添加“%@”头信息。"
+          }
+        }
+      }
+    },
+    "AIConnectionTester.SelfHostedAuthHintGeneric" : {
+      "comment" : "Advice shown when a request to a self-hosted AI server fails and the selected API has no credential header to name; “Custom headers” is the label of a section of the model editor",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 hat mit dieser Anfrage keinen API-Schlüssel gesendet. Wenn dieser Endpunkt eine Authentifizierung erfordert, fügen Sie den von ihm erwarteten Header unter „Benutzerdefinierte Header“ hinzu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 did not send an API key with this request. If this endpoint requires authentication, add the header it expects under “Custom headers”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2はこのリクエストでAPIキーを送信しませんでした。このエンドポイントが認証を必要とする場合は、「カスタムヘッダー」に必要なヘッダーを追加してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não enviou uma chave de API com esta solicitação. Se este endpoint exigir autenticação, adicione o cabeçalho que ele espera em “Cabeçalhos personalizados”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не отправил ключ API с этим запросом. Если этой конечной точке требуется аутентификация, добавьте ожидаемый ею заголовок в разделе «Пользовательские заголовки»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 未随此请求发送 API 密钥。如果此端点需要身份验证，请在“自定义头信息”中添加它所需的头信息。"
+          }
+        }
+      }
+    },
+    "AIConnectionTester.Succeeded" : {
+      "comment" : "Result of a successful AI connection test",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Verbindung war erfolgreich. Das Modell hat normal geantwortet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The connection succeeded. The model responded normally."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続に成功しました。モデルは正常に応答しました。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A conexão funcionou. O modelo respondeu normalmente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подключение выполнено успешно. Модель ответила нормально."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接成功。模型响应正常。"
+          }
+        }
+      }
+    },
+    "AIConnectionTester.UnparseableReply" : {
+      "comment" : "Result of the AI connection test when the server's reply could not be parsed; the placeholder is an error description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Server hat geantwortet, aber seine Antwort war nicht verständlich: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The server responded but its reply could not be understood: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サーバーは応答しましたが、その内容を解釈できませんでした: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O servidor respondeu, mas não foi possível entender a resposta: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сервер ответил, но его ответ не удалось разобрать: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务器已响应，但无法理解其回复：%@"
+          }
+        }
+      }
+    },
     "AIError.RequestTooLarge" : {
       "comment" : "Error shown when the AI conversation exceeds the model’s token limit",
       "extractionState" : "extracted_with_value",
@@ -375,6 +669,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未使用 API 密钥。"
+          }
+        }
+      }
+    },
+    "AIKeyHint.SelfHosted" : {
+      "comment" : "Hint shown when the model URL is on the local network, where iTerm2 withholds the API key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An einen lokalen Endpunkt wird kein API-Schlüssel gesendet. Falls er eine Authentifizierung erfordert, verwenden Sie einen benutzerdefinierten Header."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No API key is sent to a local endpoint. If it requires authentication, use a custom header."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ローカルのエンドポイントにAPIキーは送信されません。認証が必要な場合は、カスタムヘッダーを使用してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma chave de API é enviada a um endpoint local. Se ele exigir autenticação, use um cabeçalho personalizado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключ API не отправляется на локальную конечную точку. Если ей требуется аутентификация, используйте пользовательский заголовок."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不会向本地端点发送 API 密钥。如果它需要身份验证，请使用自定义头信息。"
           }
         }
       }
@@ -2265,6 +2601,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最大响应令牌数必须大于 0。"
+          }
+        }
+      }
+    },
+    "AIModelEditor.MissingDiscoveredModel" : {
+      "comment" : "Body of alert shown when an auto-discovery entry has no model to test against",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie ein Modell aus oder klicken Sie zuerst auf „Modelle aktualisieren“, damit etwas zum Testen vorhanden ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose a model, or click Refresh Models first, so there is something to test with."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テストする対象が必要です。モデルを選択するか、先に「モデルを再取得」をクリックしてください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha um modelo ou clique em Atualizar modelos primeiro, para que haja algo a testar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выберите модель или сначала нажмите «Обновить модели», чтобы было что тестировать."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请选择一个模型，或先点击“刷新模型”，以便有可供测试的对象。"
           }
         }
       }
@@ -9949,37 +10327,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OSC 7 zum Festlegen von Benutzername, Hostname und Pfad akzeptieren."
+            "value" : "OSC 7 zum Festlegen von Benutzername, Hostname und Pfad akzeptieren. iTerm2 Shell-Integration meldet diese Informationen jetzt über OSC 7, daher deaktiviert das Ausschalten dieser Option auch die Erfassung von Benutzername, Hostname und Verzeichnis durch die Shell-Integration."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Accept OSC 7 to set username, hostname, and path."
+            "value" : "Accept OSC 7 to set username, hostname, and path. iTerm2 shell integration now reports this information using OSC 7, so turning this off also disables shell integration’s username, hostname, and directory tracking."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザー名、ホスト名、パスの設定にOSC 7を受け付ける。"
+            "value" : "ユーザー名、ホスト名、パスの設定にOSC 7を受け付ける。iTerm2のシェル統合はこの情報をOSC 7を使って報告するようになったため、これをオフにすると、シェル統合によるユーザー名、ホスト名、ディレクトリの追跡も無効になります。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aceitar OSC 7 para definir nome de usuário, nome do host e caminho."
+            "value" : "Aceitar OSC 7 para definir nome de usuário, nome do host e caminho. A integração de shell do iTerm2 agora relata essas informações usando OSC 7, portanto desativar isto também desativa o rastreamento de nome de usuário, nome do host e diretório pela integração de shell."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Принимать OSC 7 для установки имени пользователя, имени хоста и пути."
+            "value" : "Принимать OSC 7 для установки имени пользователя, имени хоста и пути. Интеграция с оболочкой iTerm2 теперь передаёт эту информацию через OSC 7, поэтому отключение этого параметра также отключает отслеживание имени пользователя, имени хоста и каталога интеграцией с оболочкой."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "接受 OSC 7，用于设置用户名、主机名和路径"
+            "value" : "接受 OSC 7，用于设置用户名、主机名和路径。iTerm2 的 Shell 集成现在使用 OSC 7 报告这些信息，因此关闭此项也会禁用 Shell 集成对用户名、主机名和目录的跟踪。"
           }
         }
       }
@@ -15577,37 +15955,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Besitz von Kindprozessen ablehnen.\nWenn aktiviert, sollte TCC beim Starten einer Cocoa-App aus einem Terminalfenster den Besitz für Berechtigungen der App und nicht iTerm2 zuschreiben. Damit Änderungen an dieser Einstellung wirksam werden, müssen Sie iTermServer beenden."
+            "value" : "Besitz von Kindprozessen ablehnen.\nWenn aktiviert, sollte TCC beim Starten einer Cocoa-App aus einem Terminalfenster den Besitz für Berechtigungen der App und nicht iTerm2 zuschreiben. Damit Änderungen an dieser Einstellung wirksam werden, müssen Sie iTermServer beenden. Dabei wird posix_spawn zum Starten von Sitzungen verwendet."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Disclaim ownership of children.\nBy enabling this, when launching a Cocoa app from a terminal window TCC should attribute ownership to the app, not iTerm2, for permissions. In order for changes to this setting to take effect, you must kill iTermServer."
+            "value" : "Disclaim ownership of children.\nBy enabling this, when launching a Cocoa app from a terminal window TCC should attribute ownership to the app, not iTerm2, for permissions. In order for changes to this setting to take effect, you must kill iTermServer. This uses posix_spawn to launch sessions."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "子プロセスの所有権を放棄します。\nこれを有効にすると、ターミナルウィンドウから Cocoa アプリを起動した際、権限に関して TCC は iTerm2 ではなくそのアプリに所有権を帰属させるようになります。この設定の変更を反映するには、iTermServer を終了させる必要があります。"
+            "value" : "子プロセスの所有権を放棄します。\nこれを有効にすると、ターミナルウィンドウから Cocoa アプリを起動した際、権限に関して TCC は iTerm2 ではなくそのアプリに所有権を帰属させるようになります。この設定の変更を反映するには、iTermServer を終了させる必要があります。この場合、セッションの起動には posix_spawn が使用されます。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Renunciar à propriedade dos filhos.\nAo ativar isto, ao iniciar um app Cocoa a partir de uma janela do terminal, o TCC deve atribuir a propriedade ao app, não ao iTerm2, para fins de permissões. Para que as alterações neste ajuste tenham efeito, você deve encerrar o iTermServer."
+            "value" : "Renunciar à propriedade dos filhos.\nAo ativar isto, ao iniciar um app Cocoa a partir de uma janela do terminal, o TCC deve atribuir a propriedade ao app, não ao iTerm2, para fins de permissões. Para que as alterações neste ajuste tenham efeito, você deve encerrar o iTermServer. Isto usa posix_spawn para iniciar sessões."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отказаться от владения дочерними процессами.\nПри включении, когда приложение Cocoa запускается из окна терминала, TCC должен относить права доступа к приложению, а не к iTerm2. Чтобы изменение этой настройки вступило в силу, нужно завершить iTermServer."
+            "value" : "Отказаться от владения дочерними процессами.\nПри включении, когда приложение Cocoa запускается из окна терминала, TCC должен относить права доступа к приложению, а не к iTerm2. Чтобы изменение этой настройки вступило в силу, нужно завершить iTermServer. При этом для запуска сессий используется posix_spawn."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "放弃子进程的所有权。\n启用此功能后，从终端窗口启动 Cocoa 应用时，TCC 应将该应用而非 iTerm2 作为权限归属对象。要使此设置生效，必须终止 iTermServer。"
+            "value" : "放弃子进程的所有权。\n启用此功能后，从终端窗口启动 Cocoa 应用时，TCC 应将该应用而非 iTerm2 作为权限归属对象。要使此设置生效，必须终止 iTermServer。此方式使用 posix_spawn 启动会话。"
           }
         }
       }
@@ -16826,6 +17204,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "信号灯按钮与内联标签栏之间的额外间距（以点为单位）。\n仅当标签栏可见且位于窗口顶部时，此设置对紧凑主题和极简主题生效。"
+          }
+        }
+      }
+    },
+    "AdvancedSetting.fakeBootSessionUUID" : {
+      "comment" : "Advanced setting: fakeBootSessionUUID",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die für die OSC-7-machineID-Localhost-Erkennung verwendete Identität dieses Computers überschreiben.\nWenn nicht leer, verhält sich die App so, als würde kern.bootsessionuuid diesen Wert zurückgeben. So können Sie testen, wie die Localhost-Erkennung per Maschinenidentität reagiert, ohne neu zu starten. Wirkt sich auf Hosts aus, die nach der Änderung gemeldet werden; leer lassen, um den echten Wert zu verwenden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Override this machine’s identity used for OSC 7 machineID localhost detection.\nWhen non-empty, the app behaves as though kern.bootsessionuuid returns this value. Lets you test how machine-identity localhost detection reacts without rebooting. Affects hosts reported after you change it; leave empty to use the real value."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC 7 の machineID による localhost 検出に使用するこのマシンの識別情報を上書きします。\n空でない場合、アプリは kern.bootsessionuuid がこの値を返すかのように動作します。再起動することなく、マシン識別による localhost 検出がどう反応するかをテストできます。変更後に報告されるホストに影響します。実際の値を使用するには空欄のままにしてください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir a identidade desta máquina usada para detecção de localhost por machineID do OSC 7.\nQuando não vazio, o app se comporta como se kern.bootsessionuuid retornasse este valor. Permite testar como a detecção de localhost por identidade de máquina reage sem reiniciar. Afeta hosts relatados depois que você o altera; deixe vazio para usar o valor real."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переопределить идентичность этой машины, используемую для определения localhost по machineID OSC 7.\nЕсли не пусто, приложение ведёт себя так, будто kern.bootsessionuuid возвращает это значение. Позволяет проверить, как определение localhost по идентичности машины реагирует без перезагрузки. Влияет на хосты, сообщаемые после изменения; оставьте пустым, чтобы использовать настоящее значение."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "覆盖用于 OSC 7 machineID localhost 检测的本机身份。\n若填写了该值，应用程序将表现得好像 kern.bootsessionuuid 返回了这个值。这样无需重新启动，即可测试基于机器身份的 localhost 检测的反应。更改后会影响后续报告的主机；保持空白则使用真实值。"
           }
         }
       }
@@ -30056,6 +30476,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用“打开目录”来确定用户 shell。"
+          }
+        }
+      }
+    },
+    "AdvancedSetting.usePosixSpawn" : {
+      "comment" : "Advanced setting: usePosixSpawn",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "posix_spawn statt fork und exec zum Starten von Sitzungen verwenden?\nDies ist ein neuerer Startmechanismus, der einen langsamen Schritt zum Schließen von Dateideskriptoren vermeidet. Er ändert nicht, welcher App macOS Berechtigungsanfragen zuschreibt; dafür siehe „Besitz von Kindprozessen ablehnen.“ Damit Änderungen an dieser Einstellung wirksam werden, müssen Sie iTermServer beenden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use posix_spawn instead of fork and exec to launch sessions?\nThis is a newer launch mechanism that avoids a slow file-descriptor-closing step. It does not change which app macOS attributes permission prompts to; for that see “Disclaim ownership of children.” In order for changes to this setting to take effect, you must kill iTermServer."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セッションの起動に fork と exec ではなく posix_spawn を使用しますか?\nこれは、ファイルディスクリプタを閉じる遅い処理を回避する新しい起動方式です。macOS が権限プロンプトをどのアプリに帰属させるかは変わりません。それについては「子プロセスの所有権を放棄します。」を参照してください。この設定の変更を反映するには、iTermServer を終了させる必要があります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar posix_spawn em vez de fork e exec para iniciar sessões?\nEste é um mecanismo de inicialização mais recente que evita uma etapa lenta de fechamento de descritores de arquivo. Ele não muda a qual app o macOS atribui os pedidos de permissão; para isso, consulte “Renunciar à propriedade dos filhos.” Para que as alterações neste ajuste tenham efeito, você deve encerrar o iTermServer."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Использовать posix_spawn вместо fork и exec для запуска сессий?\nЭто более новый механизм запуска, который позволяет избежать медленного этапа закрытия файловых дескрипторов. Он не меняет то, какому приложению macOS приписывает запросы разрешений; для этого см. «Отказаться от владения дочерними процессами.» Чтобы изменение этой настройки вступило в силу, нужно завершить iTermServer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 posix_spawn 而非 fork 和 exec 启动会话？\n这是一种较新的启动机制，可避免缓慢的关闭文件描述符步骤。它不会改变 macOS 将权限提示归属于哪个应用；如需更改，请参阅“放弃子进程的所有权。”要使此设置生效，必须终止 iTermServer。"
           }
         }
       }
@@ -116121,6 +116583,132 @@
         }
       }
     },
+    "PTYSession.OSC7DisabledHeading" : {
+      "comment" : "Heading for a warning that the Accept OSC 7 setting is disabled",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konflikt bei Shell-Integrationseinstellung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Shell Integration Setting Conflict"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "シェル統合設定の競合"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conflito de configuração da integração de shell"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Конфликт настроек интеграции с оболочкой"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell 集成设置冲突"
+          }
+        }
+      }
+    },
+    "PTYSession.OSC7DisabledMessage" : {
+      "comment" : "Warning that shell integration is broken because the Accept OSC 7 advanced setting is disabled",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2s Shell-Integration meldet jetzt Ihren Benutzernamen, Hostnamen und das aktuelle Verzeichnis über OSC 7, aber die erweiterte Einstellung „Accept OSC 7“ ist deaktiviert. Die Shell-Integration funktioniert erst wieder richtig, wenn sie erneut aktiviert wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2’s shell integration now reports your username, hostname, and current directory using OSC 7, but the “Accept OSC 7” advanced setting is turned off. Shell integration will not work correctly until it is turned back on."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 のシェル統合は、ユーザ名、ホスト名、現在のディレクトリを OSC 7 を使って報告するようになりましたが、詳細設定「Accept OSC 7」がオフになっています。オンに戻すまで、シェル統合は正しく動作しません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A integração de shell do iTerm2 agora relata seu nome de usuário, nome do host e diretório atual usando OSC 7, mas a configuração avançada “Accept OSC 7” está desativada. A integração de shell não funcionará corretamente até ser reativada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Интеграция с оболочкой iTerm2 теперь передаёт ваше имя пользователя, имя хоста и текущий каталог через OSC 7, но расширенная настройка «Accept OSC 7» отключена. Интеграция с оболочкой не будет работать правильно, пока её снова не включить."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 的 Shell 集成现在使用 OSC 7 报告您的用户名、主机名和当前目录，但高级设置“Accept OSC 7”已关闭。在重新开启之前，Shell 集成将无法正常工作。"
+          }
+        }
+      }
+    },
+    "PTYSession.OSC7DisabledTurnOn" : {
+      "comment" : "Button that re-enables the Accept OSC 7 advanced setting",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC 7 aktivieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Turn On OSC 7"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC 7 をオンにする"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar OSC 7"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Включить OSC 7"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启 OSC 7"
+          }
+        }
+      }
+    },
     "PTYSession.OpenSettings" : {
       "comment" : "Button that opens settings; underscore marks the keyboard shortcut key",
       "extractionState" : "extracted_with_value",
@@ -174513,6 +175101,48 @@
         }
       }
     },
+    "TabGroup.NoSuchGroup" : {
+      "comment" : "Error when no tab group matches the given id",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine solche Tab-Gruppe"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No such tab group"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのようなタブグループはありません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupo de abas inexistente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Такая группа вкладок не найдена"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有该标签页组"
+          }
+        }
+      }
+    },
     "TerminalFile.Canceled" : {
       "comment" : "Error shown when the user cancels a download",
       "extractionState" : "extracted_with_value",
@@ -205260,6 +205890,48 @@
         }
       }
     },
+    "WorkgroupSessionDetail.ChangeUsageSettings" : {
+      "comment" : "Undo action name for changing the AI usage toolbar item's settings",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "KI-Nutzungseinstellungen ändern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Change AI Usage Settings"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI使用状況の設定を変更"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterar ajustes de uso de IA"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить настройки использования ИИ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改 AI 用量设置"
+          }
+        }
+      }
+    },
     "WorkgroupSessionDetail.CommandLabel" : {
       "comment" : "Label for the command row",
       "extractionState" : "extracted_with_value",
@@ -206352,6 +207024,216 @@
         }
       }
     },
+    "WorkgroupSessionDetail.UsageCommandLabel" : {
+      "comment" : "Label for the AI usage command field",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Befehl:"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Command:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コマンド:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comando:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Команда:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "命令："
+          }
+        }
+      }
+    },
+    "WorkgroupSessionDetail.UsageCommandPlaceholder" : {
+      "comment" : "Placeholder shown in the AI usage command field when it is empty and the bundled default script is used",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard (mitgeliefertes Skript)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Default (bundled script)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デフォルト (同梱スクリプト)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Padrão (script incluído)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "По умолчанию (встроенный скрипт)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认（内置脚本）"
+          }
+        }
+      }
+    },
+    "WorkgroupSessionDetail.UsageIntervalLabel" : {
+      "comment" : "Label for the AI usage refresh interval field, in seconds",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle (Sek.):"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Every (sec):"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "間隔 (秒):"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A cada (s):"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Каждые (сек):"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每（秒）："
+          }
+        }
+      }
+    },
+    "WorkgroupSessionDetail.UsageProviderFormat" : {
+      "comment" : "Toolbar list label for the AI usage item showing its provider; %1$@ is the item name, %2$@ is the provider name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@（%2$@）"
+          }
+        }
+      }
+    },
+    "WorkgroupSessionDetail.UsageProviderLabel" : {
+      "comment" : "Label for the AI usage provider picker",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anbieter:"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Provider:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロバイダー:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Provedor:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Провайдер:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提供商："
+          }
+        }
+      }
+    },
     "WorkgroupSessionDetail.VerticalAccessibility" : {
       "comment" : "Accessibility description for the vertical split orientation",
       "extractionState" : "extracted_with_value",
@@ -206810,6 +207692,510 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "灵活空白间隔"
+          }
+        }
+      }
+    },
+    "WorkgroupToolbarItemRegistry.Usage" : {
+      "comment" : "Toolbar item name: AI usage gauge",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "KI-Nutzung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI Usage"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI使用状況"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uso de IA"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Использование ИИ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 用量"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.BadOutput" : {
+      "comment" : "AI usage toolbar item message when the command output could not be parsed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzungsdaten nicht lesbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unreadable usage data"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用状況データを読み取れません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dados de uso ilegíveis"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось прочитать данные об использовании"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取用量数据"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ClickForDetails" : {
+      "comment" : "Tooltip on the AI usage toolbar item when an error can be reported; the placeholder is the short error summary",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (für Details klicken)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ (click for details)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (クリックで詳細)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (clique para ver detalhes)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (нажмите для подробностей)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（点按查看详细信息）"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.Loading" : {
+      "comment" : "Placeholder shown in the AI usage toolbar item before the first result arrives",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "KI-Nutzung…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI usage…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI使用状況…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uso de IA…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Использование ИИ…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 用量…"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.NoOutput" : {
+      "comment" : "AI usage toolbar item message when the command produced no output",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Nutzungsdaten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No usage data"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用状況データがありません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum dado de uso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет данных об использовании"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无用量数据"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ReportBug" : {
+      "comment" : "Button that opens a pre-filled bug report and copies the details to the clipboard",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen Fehler melden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Report a Bug"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バグを報告"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reportar um bug"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сообщить об ошибке"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "报告错误"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ReportGuidanceIntro" : {
+      "comment" : "Guidance shown when the AI usage format couldn’t be parsed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 konnte den KI-Nutzungsbericht nicht lesen. Ein Update von iTerm2 auf die neueste Version behebt dies möglicherweise. Wenn Sie bereits aktuell sind, klicken Sie auf „Einen Fehler melden“, um einen vorausgefüllten Bericht zu öffnen. Die vollständigen Details unten werden auch in Ihre Zwischenablage kopiert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t read the AI usage report. Updating iTerm2 to the latest version may fix this. If you’re already up to date, click “Report a Bug” to open a pre-filled report. The full details below are also copied to your clipboard."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2はAI使用状況レポートを読み取れませんでした。iTerm2を最新バージョンに更新すると解決する場合があります。すでに最新の場合は、「バグを報告」をクリックすると、あらかじめ入力されたレポートが開きます。以下の詳細はクリップボードにもコピーされます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não conseguiu ler o relatório de uso de IA. Atualizar o iTerm2 para a versão mais recente pode resolver isto. Se você já está atualizado, clique em “Reportar um bug” para abrir um relatório pré-preenchido. Os detalhes completos abaixo também são copiados para a área de transferência."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не удалось прочитать отчёт об использовании ИИ. Возможно, поможет обновление iTerm2 до последней версии. Если у вас уже последняя версия, нажмите «Сообщить об ошибке», чтобы открыть заранее заполненный отчёт. Полные сведения ниже также скопированы в буфер обмена."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 无法读取 AI 用量报告。将 iTerm2 更新到最新版本可能会解决此问题。如果已是最新版本，请点按“报告错误”以打开预填的报告。下方的完整详细信息也已拷贝到剪贴板。"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ReportTruncated" : {
+      "comment" : "Appended to a pre-filled bug report body when it was shortened to fit the URL",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…(gekürzt; vollständiger Bericht in Ihre Zwischenablage kopiert)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "…(truncated; full report copied to your clipboard)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…(省略されました。完全なレポートはクリップボードにコピーされています)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…(truncado; relatório completo copiado para a área de transferência)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…(сокращено; полный отчёт скопирован в буфер обмена)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…（已截断；完整报告已拷贝到剪贴板）"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ScriptMissing" : {
+      "comment" : "AI usage toolbar item message when the bundled helper script is absent from the app bundle",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Hilfsprogramm für die KI-Nutzung fehlt in iTerm2. Das ist ein Fehler."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The AI usage helper is missing from iTerm2. This is a bug."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI使用状況のヘルパーがiTerm2に見つかりません。これはバグです。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O auxiliar de uso de IA está ausente do iTerm2. Isto é um bug."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В iTerm2 отсутствует вспомогательный компонент для использования ИИ. Это ошибка."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 中缺少 AI 用量辅助程序。这是一个缺陷。"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.Tooltip" : {
+      "comment" : "AI usage toolbar item tooltip: %1$@ is the limit name, %2$@ is the reset detail",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@：%2$@"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.Unavailable" : {
+      "comment" : "AI usage toolbar item message when no usage bars are available",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "KI-Nutzung nicht verfügbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI usage unavailable"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI使用状況は利用できません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uso de IA indisponível"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Данные об использовании ИИ недоступны"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 用量不可用"
+          }
+        }
+      }
+    },
+    "WorkgroupUsageProvider.AnthropicClaudeCode" : {
+      "comment" : "AI usage provider name: Anthropic usage read via the Claude Code CLI",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anthropic (Claude Code)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Anthropic (Claude Code)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anthropic (Claude Code)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anthropic (Claude Code)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anthropic (Claude Code)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anthropic (Claude Code)"
           }
         }
       }

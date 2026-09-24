@@ -901,7 +901,197 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     }
 }
 
+NSRect PSMRectInLayerCoordinates(NSRect rect, NSRect subviewFrame) {
+    return NSMakeRect(NSMinX(rect) - NSMinX(subviewFrame),
+                      NSHeight(subviewFrame) + NSMinY(subviewFrame) - NSMaxY(rect),
+                      NSWidth(rect),
+                      NSHeight(rect));
+}
+
+BOOL PSMVisibleAccessoryInterval(CGFloat accessoryMin, CGFloat accessoryMax,
+                                 CGFloat cellMin, CGFloat cellMax,
+                                 CGFloat leading, CGFloat trailing,
+                                 CGFloat *outMin, CGFloat *outMax) {
+    // The rule is per edge: a cell that lies inside the region does not get its accessory clipped on
+    // that side, and a cell that crosses the boundary gets it clipped exactly there.
+    //
+    // Not clipping a cell that fits is what keeps the first and last tab's ring whole. The Tahoe
+    // progress ring is outset past the pill by progressRingWidth on every side so it can draw around
+    // it (see -progressBarRectForTabCell:), and that outset lands in the gutter the style reserves
+    // for it, so an edge tab's ring reaches past the margin while the tab itself is fully in view.
+    // Clipping a cell that does not fit at the boundary is what keeps a tab that has really scrolled
+    // under the decorations from painting its ring into the band beyond, and matches where -drawRect:
+    // cuts the cell off.
+    //
+    // Compare with a tolerance: a cell that fits exactly does not land on the boundary exactly. Widths
+    // come from a per-tab division rounded to device pixels and are then accumulated through
+    // -floatValue in -_setupCells:, so the last cell's edge lands within a fraction of a point of the
+    // viewport rather than on it. -cellWidthsForHorizontalArrangementWithOverflow: allows itself the
+    // same half point (its fitTolerance) for the same reason. Without this a full-width bar would drop
+    // the last tab's ring cap or keep it depending on the window width.
+    const CGFloat edgeTolerance = 0.5;
+    const CGFloat regionMin = (cellMin >= leading - edgeTolerance) ? accessoryMin : leading;
+    const CGFloat regionMax = (cellMax <= trailing + edgeTolerance) ? accessoryMax : trailing;
+    const CGFloat visibleMin = MAX(accessoryMin, regionMin);
+    const CGFloat visibleMax = MIN(accessoryMax, regionMax);
+    if (visibleMax <= visibleMin) {
+        return NO;
+    }
+    if (outMin) {
+        *outMin = visibleMin;
+    }
+    if (outMax) {
+        *outMax = visibleMax;
+    }
+    return YES;
+}
+
+// The part of an accessory's frame that is inside the scrollable region, in the tab bar's
+// coordinates, or NSZeroRect when none of it is.
+- (NSRect)visiblePartOfAccessoryFrame:(NSRect)accessoryFrame ofCell:(PSMTabBarCell *)cell {
+    if (![self tabBarIsScrollable]) {
+        return accessoryFrame;
+    }
+    const NSRect cellFrame = [cell frame];
+    const BOOL vertical = [self isVerticalOrientation];
+    CGFloat visibleMin;
+    CGFloat visibleMax;
+    if (!PSMVisibleAccessoryInterval(vertical ? NSMinY(accessoryFrame) : NSMinX(accessoryFrame),
+                                     vertical ? NSMaxY(accessoryFrame) : NSMaxX(accessoryFrame),
+                                     vertical ? NSMinY(cellFrame) : NSMinX(cellFrame),
+                                     vertical ? NSMaxY(cellFrame) : NSMaxX(cellFrame),
+                                     [self scrollLeadingMargin],
+                                     [self scrollViewportLength],
+                                     &visibleMin,
+                                     &visibleMax)) {
+        return NSZeroRect;
+    }
+    NSRect visible = accessoryFrame;
+    if (vertical) {
+        visible.origin.y = visibleMin;
+        visible.size.height = visibleMax - visibleMin;
+    } else {
+        visible.origin.x = visibleMin;
+        visible.size.width = visibleMax - visibleMin;
+    }
+    return visible;
+}
+
+// A path from the tab bar's flipped coordinate system as a shape layer in the non-flipped coordinate
+// system of a subview's layer, ready to use as (or inside) that subview's mask.
+static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame) {
+    NSAffineTransformStruct s = {
+        .m11 = 1,
+        .m12 = 0,
+        .m21 = 0,
+        .m22 = -1,
+        .tX = -subviewFrame.origin.x,
+        .tY = subviewFrame.size.height + subviewFrame.origin.y
+    };
+    NSAffineTransform *transform = [[NSAffineTransform alloc] init];
+    [transform setTransformStruct:s];
+    NSBezierPath *localPath = [transform transformBezierPath:path];
+    [transform release];
+
+    CAShapeLayer *shape = [CAShapeLayer layer];
+    shape.path = [localPath iterm_CGPath];
+    // Even-odd so a clip path with a nested subpath (e.g. the Tahoe ring around the pill) punches out
+    // its interior. Harmless for single-subpath clip paths, where it matches nonzero.
+    shape.fillRule = kCAFillRuleEvenOdd;
+    return shape;
+}
+
+// The style's clip path for a progress bar, or nil when the style doesn't clip its progress bars.
+- (CAShapeLayer *)progressBarShapeMaskForCell:(PSMTabBarCell *)cell frame:(NSRect)frame {
+    if (![self.style respondsToSelector:@selector(progressBarClipPathForTabCell:)]) {
+        return nil;
+    }
+    NSBezierPath *clipPath = [self.style progressBarClipPathForTabCell:cell];
+    if (!clipPath) {
+        return nil;
+    }
+    return PSMMaskShapeForPath(clipPath, frame);
+}
+
+// The shape accessories must stay inside, in the bar's coordinates, or nil when the style has none.
+// Read once per pass and handed to -maskShapesForAccessoryFrame:...: it is the same path for every
+// accessory in the bar, and building it involves a style call and a fresh rounded-rect path.
+- (NSBezierPath *)accessoryClipPath {
+    if (![self.style respondsToSelector:@selector(accessoryClipPathForTabBar:)]) {
+        return nil;
+    }
+    return [self.style accessoryClipPathForTabBar:self];
+}
+
+// Masks an accessory view to the intersection of `shapes` (paths already converted to the view's own
+// coordinates, outermost first; may be empty) and `clipRect` (the part of the view inside the
+// scrollable region, in the same coordinates; a rect containing the view's bounds clips nothing).
+//
+// AppKit has no bezier path intersection, and even-odd winding gives symmetric difference rather than
+// intersection, so the shapes are chained instead: each layer's own mask is the next one, and a mask
+// is rendered as a layer tree whose alpha is what shows through, so the alpha that survives the chain
+// is exactly the intersection. The rect goes on the outside as a container that masksToBounds.
+- (void)setMaskOfAccessory:(NSView *)view
+                  toShapes:(NSArray<CAShapeLayer *> *)shapes
+                 clippedTo:(NSRect)clipRect {
+    // NSContainsRect is NO for an empty second rect, so an accessory with nothing to draw would ask
+    // for a container mask it has no use for. Callers drop empty accessories before getting here, but
+    // the predicate should not read backwards for one.
+    const BOOL clips = !NSIsEmptyRect(view.bounds) && !NSContainsRect(clipRect, view.bounds);
+    if (shapes.count == 0 && !clips) {
+        view.layer.mask = nil;
+        return;
+    }
+    view.wantsLayer = YES;
+    for (NSUInteger i = 0; i + 1 < shapes.count; i++) {
+        shapes[i].mask = shapes[i + 1];
+    }
+    // Only the outermost layer is positioned. A nested one is placed in the coordinate system of the
+    // layer it masks, which is the view's own, the same system its path is already in.
+    CAShapeLayer *outermost = shapes.firstObject;
+    if (!clips) {
+        view.layer.mask = outermost;
+        return;
+    }
+    CALayer *container = [CALayer layer];
+    container.frame = clipRect;
+    container.masksToBounds = YES;
+    if (outermost) {
+        // The path is in the view's coordinates, so shift the shape layer by the container's origin to
+        // keep the two registered.
+        outermost.frame = NSMakeRect(-NSMinX(clipRect),
+                                     -NSMinY(clipRect),
+                                     NSWidth(view.bounds),
+                                     NSHeight(view.bounds));
+        [container addSublayer:outermost];
+    } else {
+        // With no shape the container is the entire mask, so it has to be opaque to let anything
+        // through at all.
+        container.backgroundColor = CGColorGetConstantColor(kCGColorBlack);
+    }
+    view.layer.mask = container;
+}
+
+// The shapes an accessory at `frame` must stay inside: the style's clip path for that kind of
+// accessory (nil for an indicator, which has none), then the bar's own accessory clip.
+//
+// `accessoryClipPath` is shared across the pass, but the layer built from it is not: each accessory's
+// mask lives in that accessory's own coordinate system, so the path is converted per accessory.
+- (NSArray<CAShapeLayer *> *)maskShapesForAccessoryFrame:(NSRect)frame
+                                              styleShape:(CAShapeLayer *)styleShape
+                                       accessoryClipPath:(NSBezierPath *)accessoryClipPath {
+    NSMutableArray<CAShapeLayer *> *shapes = [NSMutableArray array];
+    if (styleShape) {
+        [shapes addObject:styleShape];
+    }
+    if (accessoryClipPath) {
+        [shapes addObject:PSMMaskShapeForPath(accessoryClipPath, frame)];
+    }
+    return shapes;
+}
+
 - (void)syncTabProgressBars {
+    NSBezierPath *accessoryClipPath = [self accessoryClipPath];
     NSMutableSet<PSMTabBarCell *> *visibleCells = [NSMutableSet set];
     for (PSMTabBarCell *cell in _cells) {
         if (![self shouldShowCustomProgressBarForTabCell:cell]) {
@@ -917,41 +1107,25 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
             }
             [_tabProgressBars setObject:progressBar forKey:cell];
         }
-        progressBar.frame = [self.style progressBarRectForTabCell:cell];
+        const NSRect frame = [self.style progressBarRectForTabCell:cell];
+        progressBar.frame = frame;
         [self configureCustomProgressBarView:progressBar forTabCell:cell];
-        if ([self.style respondsToSelector:@selector(progressBarClipPathForTabCell:)]) {
-            NSBezierPath *clipPath = [self.style progressBarClipPathForTabCell:cell];
-            if (clipPath) {
-                // Convert the clip path from the tab bar's flipped coordinate
-                // system to the progress bar layer's non-flipped coordinate system.
-                const NSRect frame = progressBar.frame;
-                NSAffineTransformStruct s = {
-                    .m11 = 1,
-                    .m12 = 0,
-                    .m21 = 0,
-                    .m22 = -1,
-                    .tX = -frame.origin.x,
-                    .tY = frame.size.height + frame.origin.y
-                };
-                NSAffineTransform *transform = [[NSAffineTransform alloc] init];
-                [transform setTransformStruct:s];
-                NSBezierPath *localPath = [transform transformBezierPath:clipPath];
-                CAShapeLayer *mask = [CAShapeLayer layer];
-                mask.path = [localPath iterm_CGPath];
-                // Even-odd so a clip path with a nested subpath (e.g. the Tahoe
-                // ring around the pill) punches out its interior. Harmless for
-                // single-subpath clip paths, where it matches nonzero.
-                mask.fillRule = kCAFillRuleEvenOdd;
-                progressBar.wantsLayer = YES;
-                progressBar.layer.mask = mask;
-                [transform release];
-            } else {
-                progressBar.layer.mask = nil;
-            }
-        } else {
+        // Clip here rather than in -clipAccessoriesToScrollRegion: this is where the bar's frame is
+        // decided, and -setProgress:forTabWithIdentifier: syncs without a following layout pass,
+        // which would otherwise leave a bar unclipped until the next -update:.
+        const NSRect visible = [self visiblePartOfAccessoryFrame:frame ofCell:cell];
+        if (NSIsEmptyRect(visible)) {
             progressBar.layer.mask = nil;
+            progressBar.hidden = YES;
+        } else {
+            CAShapeLayer *ring = [self progressBarShapeMaskForCell:cell frame:frame];
+            [self setMaskOfAccessory:progressBar
+                            toShapes:[self maskShapesForAccessoryFrame:frame
+                                                            styleShape:ring
+                                                     accessoryClipPath:accessoryClipPath]
+                           clippedTo:PSMRectInLayerCoordinates(visible, frame)];
+            progressBar.hidden = NO;
         }
-        progressBar.hidden = NO;
         if (progressBar.superview != self) {
             [self addSubview:progressBar];
         }
@@ -1530,7 +1704,14 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 
 - (void)setFrame:(NSRect)frame {
     [super setFrame:frame];
+    // A resize moves the trailing edge of the scroll region, so accessories need re-clipping against
+    // it rather than waiting for the next -update:. The cells have NOT been laid out for the new size
+    // yet, though -- that happens in the -_setupCells: to come -- so an accessory that measures as
+    // entirely outside right now may just be sitting at its old position. Mask it away (reversible,
+    // and the coming layout pass will mask it back) instead of pulling it out of the bar, which only
+    // -_setupCells: can undo.
     [self syncTabProgressBars];
+    [self clipAccessoriesToScrollRegionRemovingInvisible:NO];
 }
 
 #pragma mark - Scrollable tab bar
@@ -1585,17 +1766,6 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 
 - (void)clampScrollOffset {
     _scrollOffset = MAX(0, MIN([self maximumScrollOffset], _scrollOffset));
-}
-
-// YES if any part of the frame reaches before the leading margin (under the decorations) or past the
-// trailing edge, along the scroll axis.
-- (BOOL)frameIsOutsideScrollRegion:(NSRect)frame {
-    const CGFloat leading = [self scrollLeadingMargin];
-    const CGFloat trailing = [self scrollViewportLength];
-    if ([self isVerticalOrientation]) {
-        return NSMinY(frame) < leading || NSMaxY(frame) > trailing;
-    }
-    return NSMinX(frame) < leading || NSMaxX(frame) > trailing;
 }
 
 // Paints the bar's own background (and chrome, but no cells) into a scroll-margin strip by asking the
@@ -1699,26 +1869,43 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 }
 
 // Per-cell accessory subviews (the activity spinner, custom download progress bars) draw on top of
-// drawRect:, so the drawRect clip cannot cover them. A clipping container is not an option here:
-// clipsToBounds forces layer backing, which makes the bar render opaque over a transparent window. So
-// instead, after every layout pass has positioned its subviews, hide any accessory whose final frame
-// reaches above the decoration band or below the bottom edge. Runs last so nothing added or moved
-// after _setupCells can leak one out of the scrollable region.
-- (void)hideAccessoriesOutsideScrollRegion {
-    if (![self tabBarIsScrollable]) {
-        return;
-    }
+// drawRect:, so the drawRect clip cannot cover them. Nor can a clipping container: clipsToBounds on
+// the bar forces layer backing, which makes it render opaque over a transparent window. So instead,
+// after every layout pass has positioned its subviews, mask each accessory to the part of it inside
+// the scrollable region. Masking rather than hiding outright matters for a cell that is only partly
+// scrolled under the decorations: its accessory should be cut off at the margin, not vanish. Runs
+// last so nothing added or moved after _setupCells can leak one out of the scrollable region.
+//
+// Progress bars are clipped by -syncTabProgressBars, which runs just before this and already has the
+// style's clip path in hand; only the indicators are left to do here.
+//
+// An indicator outlives many layout passes and keeps whatever mask it was last given, so this runs
+// even when the bar is not scrollable: -visiblePartOfAccessoryFrame:ofCell: reports everything as
+// visible in that case, which is what clears a mask left over from when it was scrollable.
+//
+// `removeInvisible` is for a caller whose cell frames are current: an indicator with nothing visible
+// is taken out of the bar and its spinner stopped, which is cheaper than keeping an invisible view
+// animating, but only -_setupCells: puts it back. A caller working against a stale layout passes NO
+// and gets a mask covering the whole indicator instead, which the next pass undoes by itself.
+- (void)clipAccessoriesToScrollRegionRemovingInvisible:(BOOL)removeInvisible {
+    NSBezierPath *accessoryClipPath = [self accessoryClipPath];
     for (PSMTabBarCell *cell in _cells) {
-        NSView *indicator = [cell indicator];
-        if (indicator.superview == self && [self frameIsOutsideScrollRegion:indicator.frame]) {
+        PSMProgressIndicator *indicator = [cell indicator];
+        if (indicator.superview != self) {
+            continue;
+        }
+        const NSRect visible = [self visiblePartOfAccessoryFrame:indicator.frame ofCell:cell];
+        if (NSIsEmptyRect(visible) && removeInvisible) {
+            indicator.layer.mask = nil;
+            indicator.animate = NO;
             [indicator removeFromSuperview];
+            continue;
         }
-    }
-    for (NSView *progressBar in _tabProgressBars.objectEnumerator) {
-        if (progressBar.superview == self && !progressBar.isHidden &&
-            [self frameIsOutsideScrollRegion:progressBar.frame]) {
-            progressBar.hidden = YES;
-        }
+        [self setMaskOfAccessory:indicator
+                        toShapes:[self maskShapesForAccessoryFrame:indicator.frame
+                                                        styleShape:nil
+                                                 accessoryClipPath:accessoryClipPath]
+                       clippedTo:PSMRectInLayerCoordinates(visible, indicator.frame)];
     }
 }
 
@@ -1978,7 +2165,7 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     }
 
     [self syncTabProgressBars];
-    [self hideAccessoriesOutsideScrollRegion];
+    [self clipAccessoriesToScrollRegionRemovingInvisible:YES];
     if (_keepSelectedTabInView && !_adjustingScrollForSelection) {
         // Re-check after each layout so a tab whose width settles asynchronously ends up fully visible.
         _adjustingScrollForSelection = YES;
@@ -2228,6 +2415,13 @@ static CGFloat PSMCollapseEase(CGFloat t) {
     // The interpolated width > 0 keeps a collapsing member laid out (not zeroed)
     // by -_setupCells: so it slides shut/open.
     [self _setupCells:widths];
+    // -_setupCells: just moved the indicators, and an accessory's mask is in its own coordinates, so
+    // it still describes where that indicator was. Re-clip every tick, or a partly clipped spinner
+    // stays sliced for the length of the slide: -finishCollapseAnimation settles only the last
+    // frame. Pass NO because a member interpolating through zero width would otherwise be pulled out
+    // of the bar, and only -_setupCells: puts one back. Progress bars need nothing here, being
+    // hidden for the duration by -hideTabProgressBarsForCollapseAnimation.
+    [self clipAccessoriesToScrollRegionRemovingInvisible:NO];
     [self setNeedsDisplay:YES];
 }
 
@@ -2908,6 +3102,29 @@ typedef struct {
     return width - stylePadding - rightMargin - [self minimumCellAreaWidth];
 }
 
+// What the bar must keep of its cell area to stay usable. A scrollable bar does
+// not shrink its cells to fit -- every tab keeps -scrollableTabWidth and the
+// ones that do not fit are scrolled to -- so insisting on room for all of them
+// reserves space that no tab would ever be laid out in. One tab's worth is what
+// it actually needs; the rest are a scroll away either way.
+//
+// Never more than the non-scrollable answer, so a caller can only gain room by
+// the bar being scrollable, never lose it.
+- (CGFloat)minimumUsableCellAreaWidth {
+    const CGFloat fittingAll = [self minimumCellAreaWidth];
+    if (![self tabBarIsScrollable] || _orientation != PSMTabBarHorizontalOrientation) {
+        return fittingAll;
+    }
+    return MIN(fittingAll, (CGFloat)_scrollableTabWidth);
+}
+
+- (CGFloat)maximumLeftInsetLeavingTabsUsableForWidth:(CGFloat)width {
+    const CGFloat stylePadding = [_style leftMarginForTabBarControl] - self.insets.left;
+    const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:NO
+                                                                   addTabButton:self.showAddTabButton];
+    return width - stylePadding - rightMargin - [self minimumUsableCellAreaWidth];
+}
+
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {
     if (_projectTabViewItems != nil || [self hasTabGroupChipCells]) {
         return [self cellWidthsForHorizontalArrangementWithChipsWithOverflow:withOverflow];
@@ -3110,6 +3327,13 @@ typedef struct {
     if (!updated) {
         [self finishUpdateWithRegularWidths:targetWidths
                          widthsWithOverflow:targetWidths];
+        // -_setupCells: has just moved the cells, and the indicators with them, to the settled
+        // layout, but an accessory's mask is in its own coordinates and was computed for where it
+        // used to be. The synchronous layout paths re-clip at the end of -reallyUpdate:; this timer
+        // bypasses that, so without this the last tab keeps whatever clip it had before the tabs
+        // widened. -finishCollapseAnimation settles the other animator the same way, via -update:.
+        [self syncTabProgressBars];
+        [self clipAccessoriesToScrollRegionRemovingInvisible:YES];
         [timer invalidate];
         _animationTimer = nil;
     }
@@ -3314,8 +3538,8 @@ typedef struct {
             [cell setTabState:tabState];
             [cell setIsInOverflowMenu:NO];
 
-            // indicator (accessories outside the scroll region are hidden later by
-            // hideAccessoriesOutsideScrollRegion)
+            // indicator (accessories outside the scroll region are clipped or dropped later by
+            // -clipAccessoriesToScrollRegionRemovingInvisible:)
             if (![[cell indicator] isHidden] && !_hideIndicators) {
                 [[cell indicator] setFrame:[cell indicatorRectForFrame:cellRect]];
                 if (![[self subviews] containsObject:[cell indicator]]) {

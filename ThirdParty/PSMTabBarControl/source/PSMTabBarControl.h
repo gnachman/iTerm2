@@ -412,6 +412,14 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // the previous layout pass's width.
 - (CGFloat)maximumLeftInsetFittingAllCellsMinimallyForWidth:(CGFloat)width;
 
+// The largest insets.left that still leaves the bar usable, which is the
+// question a decoration competing for the strip actually has. For a
+// non-scrollable bar that is the same as fitting every cell minimally, because
+// anything past it pushes tabs into the overflow menu. A scrollable bar reaches
+// its tabs by scrolling instead, so cells beyond the first cost the decoration
+// nothing and it only insists on room for one tab.
+- (CGFloat)maximumLeftInsetLeavingTabsUsableForWidth:(CGFloat)width;
+
 // The style's tab-group run outset when any chip cell is present, else 0.
 // The scrollable bar widens its trailing clip by this so a group's enclosing
 // pill is not cut off; with no groups the clip stays exactly at the viewport.
@@ -517,3 +525,16 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 NS_ASSUME_NONNULL_END
 
 BOOL PSMShouldExtendTransparencyIntoMinimalTabBar(void);
+
+// Converts a rect in the tab bar's flipped coordinate system to the non-flipped coordinate system of
+// a subview's layer, given that subview's frame. Declared here so it can be unit-tested.
+NSRect PSMRectInLayerCoordinates(NSRect rect, NSRect subviewFrame);
+
+// The part of the interval [accessoryMin, accessoryMax] -- one axis of a per-cell accessory's frame,
+// along the scroll axis -- that is inside a scrollable bar's [leading, trailing] region, given the
+// same axis of the cell the accessory belongs to. NO when none of it is; see the implementation for
+// why the cell's extent is a parameter at all. Declared here so it can be unit-tested.
+BOOL PSMVisibleAccessoryInterval(CGFloat accessoryMin, CGFloat accessoryMax,
+                                 CGFloat cellMin, CGFloat cellMax,
+                                 CGFloat leading, CGFloat trailing,
+                                 CGFloat * _Nullable outMin, CGFloat * _Nullable outMax);

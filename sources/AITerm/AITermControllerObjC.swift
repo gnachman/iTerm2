@@ -51,6 +51,17 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         }
     }
 
+    // Exposes the request-time key policy to the Settings UI so its hints can't
+    // promise a key that a self-hosted endpoint will never receive (issue
+    // 13021). Keyed on the local-endpoint reason specifically: an on-device
+    // model is deliberately excluded, since "add a custom header" is
+    // meaningless for Apple Intelligence, which has no endpoint at all. It
+    // falls through to the generic "No API key is used." instead.
+    @objc(modelWithholdsAPIKeyForLocalEndpointURL:api:)
+    static func modelWithholdsAPIKeyForLocalEndpoint(url: String, api: iTermAIAPI) -> Bool {
+        return AITermController.apiKeyPolicy(url: url, api: api) == .placeholder(.localEndpoint)
+    }
+
     @objc static var apiKey: String? {
         get {
             apiKey(for: LLMMetadata.effectiveVendor)

@@ -53,6 +53,9 @@ TOP-LEVEL keys
   NoSyncKnownHosts ....................... user@host:port list
   NoSyncWorkgroupGitBaseRecents .......... git base/ref recents
   NoSyncRecentArchives ................... archive file paths
+  NoSyncOllamaDiscoveredModels ........... discovered Ollama models, keyed by
+                                           endpoint URL (removed, not redacted:
+                                           the private part is in the KEY)
   NoSyncRecordedVariables ................ recorded variable names (deep)
   NoSyncSearchHistory[2] ................. find-bar search terms
   NoSyncOpenAIAPIKey ..................... legacy plaintext API key
@@ -72,7 +75,7 @@ TOP-LEVEL keys
   NoSyncSavePanelSavedSettings_* ......... nested "InitialDirectory" path
   PathToDatabase_* ....................... password-manager backend URL
   OnePasswordAccount, LastpassGroups ..... password-manager identifiers
-  FakeFullyQualifiedDomainName, AlternateSSHIntegrationScript, SshSchemePath
+  FakeFullyQualifiedDomainName, FakeBootSessionUUID, AlternateSSHIntegrationScript, SshSchemePath
   PasteSpecialRegex, PasteSpecialSubstitution
   SessionEndMessageText, SessionRestartedMessageText,
     SessionFinishedMessageText, TmuxTitlePrefix, NoSyncVariablesToReport,
@@ -213,6 +216,10 @@ CONTENT_KEYS = {
     "NoSyncClaudeCodeConfigDirPath": REDACT_V,
     "NoSyncRecentArchives": REDACT_V,
     "InitialDirectory": REDACT_V,
+    # Removed rather than redacted: this blob is keyed BY endpoint URL (plus a
+    # hash of the entry's custom headers), and scrub() can only rewrite values,
+    # never keys, so the hosts in the keys would survive a redaction.
+    "NoSyncOllamaDiscoveredModels": REMOVE,
     # hosts / URLs
     "Bound Hosts": REDACT_V,
     "NoSyncKnownHosts": REDACT_V,
@@ -225,6 +232,7 @@ CONTENT_KEYS = {
     "AitermURL": REDACT_V,
     "AiProxy": REDACT_V,
     "FakeFullyQualifiedDomainName": REDACT_V,
+    "FakeBootSessionUUID": REDACT_V,
     "NoSyncWorkgroupGitBaseRecents": REDACT_V,
     # environment / variables / remote state (deep: every string within)
     "Environment": REDACT_V,

@@ -38,8 +38,18 @@ import Foundation
                 RLog("Skipping AI custom header \"\(name)\" because its value contains a control character")
                 continue
             }
-            if result[name] != nil {
-                RLog("AI custom header overrides existing header field \"\(name)\"")
+            // HTTP field names are case-insensitive, so drop any existing field
+            // that differs from this one only in case before inserting. Leaving
+            // both in the dictionary would send one field whose value depends on
+            // dictionary iteration order: a custom "authorization" would then
+            // only sometimes beat the built-in "Authorization" (issue 13021).
+            // The user's spelling replaces ours.
+            let superseded = result.keys.filter {
+                $0.caseInsensitiveCompare(name) == .orderedSame
+            }
+            for existing in superseded {
+                RLog("AI custom header overrides existing header field \"\(existing)\"")
+                result.removeValue(forKey: existing)
             }
             result[name] = value
         }

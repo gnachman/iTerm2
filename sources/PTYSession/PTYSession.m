@@ -9602,11 +9602,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     _wrapper.useMetal = YES;
     _textview.suppressDrawing = YES;
     [_view setSuppressLegacyDrawing:YES];
-    if (PTYScrollView.shouldDismember) {
-        _view.scrollview.alphaValue = 0;
-    } else {
-        [self updateWrapperAlphaForMetalEnabled:YES];
-    }
+    [self updateWrapperAlphaForMetalEnabled:YES];
     [self setMetalViewAlphaValue:1];
 }
 
@@ -9629,11 +9625,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     if (!useMetal) {
         _textview.suppressDrawing = NO;
         [_view setSuppressLegacyDrawing:NO];
-        if (PTYScrollView.shouldDismember) {
-            _view.scrollview.alphaValue = 1;
-        } else {
-            [self updateWrapperAlphaForMetalEnabled:NO];
-        }
+        [self updateWrapperAlphaForMetalEnabled:NO];
     }
 }
 
@@ -15269,9 +15261,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         DLog(@"Will upload local:%@ to remote:%@", file, path.path);
 
         if ([_conductor canTransferFilesTo:path]) {
+            // Continue, not break: this hands off one file, and the remaining ones still need
+            // uploading. A break here dropped every file after the first, silently, for anyone
+            // on ssh integration who dropped more than one file at a time.
+            //
+            // Unlike the SCPFile branch below these are not chained. Each conductor upload runs
+            // as its own task writing to its own "<dest>.uploading-<uuid>" tempfile, and the
+            // create/append/stat/mv commands serialize on the conductor's command queue, so
+            // concurrent uploads interleave chunks without colliding. That is by design: the
+            // upload is chunked precisely so it does not monopolize the connection.
             DLog(@"Using conductor for upload");
             [_conductor uploadFile:file to:path];
-            break;
+            continue;
         }
         DLog(@"Using SCPFile for upload");
         SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
@@ -15528,6 +15529,32 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // protocol enabled in sessions without shell integration (which never emit the
     // OSC 133 prompt mark that otherwise resets it).
     [_kittyDnDBridge reset];
+}
+
+- (void)screenDidReceiveOSC7WhileDisabled {
+    // The screen has already re-checked the setting and spent the process-wide
+    // one-shot; this method's only job is to present.
+    //
+    // If the warning is already silenced, showWarningWithTitle: preempts and
+    // returns the remembered selection WITHOUT presenting a dialog. We must not let
+    // a remembered "Turn On OSC 7" silently flip AcceptOSC7 back to YES: the user
+    // may have deliberately turned it off again in Settings, and "Don't change
+    // defaults silently" applies. So only honor a Turn On when the alert was
+    // actually shown (i.e. it was not already silenced when we called it).
+    NSString *const identifier = @"NoSyncOSC7DisabledBreaksShellIntegration";
+    const BOOL wasSilenced = [iTermWarning identifierIsSilenced:identifier];
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.OSC7DisabledMessage", nil, [NSBundle mainBundle], @"iTerm2’s shell integration now reports your username, hostname, and current directory using OSC 7, but the “Accept OSC 7” advanced setting is turned off. Shell integration will not work correctly until it is turned back on.", @"Warning that shell integration is broken because the Accept OSC 7 advanced setting is disabled")
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.OSC7DisabledTurnOn", nil, [NSBundle mainBundle], @"Turn On OSC 7", @"Button that re-enables the Accept OSC 7 advanced setting"),
+                                              iTermLocalizedCancel() ]
+                                 accessory:nil
+                                identifier:identifier
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:NSLocalizedStringWithDefaultValue(@"PTYSession.OSC7DisabledHeading", nil, [NSBundle mainBundle], @"Shell Integration Setting Conflict", @"Heading for a warning that the Accept OSC 7 setting is disabled")
+                                    window:self.view.window];
+    if (selection == kiTermWarningSelection0 && !wasSilenced) {
+        [iTermAdvancedSettingsModel setAcceptOSC7:YES];
+    }
 }
 
 - (void)restoreColorsFromProfile {
@@ -20599,7 +20626,22 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)nonTextPasteHelper:(iTermNonTextPasteHelper *)sender uploadFileAndPastePath:(NSString *)localPath {
     DLog(@"nonTextPasteHelper:uploadFileAndPastePath: localPath=%@", localPath);
-    if (_uploadAndPasteTransfer) {
+    [self uploadFilesAndPastePaths:@[ localPath ]];
+}
+
+- (void)nonTextPasteHelper:(iTermNonTextPasteHelper *)sender uploadFilesAndPastePaths:(NSArray<NSString *> *)localPaths {
+    DLog(@"nonTextPasteHelper:uploadFilesAndPastePaths: %@ paths", @(localPaths.count));
+    [self uploadFilesAndPastePaths:localPaths];
+}
+
+// Uploads every file, then pastes the paths they actually landed on, space-separated in the order
+// they were given. One file and several files run through here alike: the only differences are the
+// label on the progress indicator and how many paths come out the far end.
+- (void)uploadFilesAndPastePaths:(NSArray<NSString *> *)localPaths {
+    if (localPaths.count == 0) {
+        return;
+    }
+    if (_uploadAndPasteTransfers.count > 0) {
         DLog(@"Upload already in progress, blocking new upload");
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
         alert.messageText = NSLocalizedStringWithDefaultValue(@"PTYSession.UploadInProgressTitle", nil, [NSBundle mainBundle], @"Upload in Progress", @"Alert title when an upload is already in progress");
@@ -20619,48 +20661,117 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
 
-    // Calculate the remote path
-    NSString *filename = [localPath lastPathComponent];
-    NSString *remotePath = [scpPath.path stringByAppendingPathComponent:filename];
-    DLog(@"Remote path will be: %@", remotePath);
-
-    // Show upload indicator
+    NSString *label;
+    if (localPaths.count == 1) {
+        label = [localPaths.firstObject lastPathComponent];
+    } else {
+        label = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.UploadingFileCount", nil, [NSBundle mainBundle], @"%ld files", @"Label on the upload progress indicator when several files are uploading at once; %ld is the number of files"), (long)localPaths.count];
+    }
     __weak __typeof(self) weakSelf = self;
-    [_view showUploadIndicatorWithFilename:filename onCancel:^{
+    [_view showUploadIndicatorWithFilename:label onCancel:^{
         DLog(@"Upload cancelled by user");
         [weakSelf cancelUploadAndPaste];
     }];
 
-    // Start the upload with a completion handler
-    _uploadAndPasteTransfer = [self uploadFile:localPath toPath:scpPath completion:^(BOOL success, NSString *error) {
-        DLog(@"Upload completed: success=%d error=%@", success, error);
-        __strong __typeof(self) strongSelf = [[weakSelf retain] autorelease];
-        
-        if (!strongSelf) {
+    _uploadAndPasteGeneration += 1;
+    const NSInteger generation = _uploadAndPasteGeneration;
+    _uploadAndPasteTransfers = [[NSMutableArray alloc] init];
+
+    // Slot per input, filled in on success and left as NSNull on failure, so the pasted order
+    // matches the order dropped no matter which upload finishes first and a failure simply leaves
+    // a gap rather than shifting the rest.
+    NSMutableArray *remotePaths = [NSMutableArray array];
+    for (NSUInteger i = 0; i < localPaths.count; i++) {
+        [remotePaths addObject:[NSNull null]];
+    }
+
+    // Finish only once every upload has reported and the loop below has started them all. Without
+    // the second condition a synchronous failure (an unreadable file reports before its upload
+    // call even returns) would finish the group while later files were still to be started.
+    __block NSInteger completed = 0;
+    __block BOOL allStarted = NO;
+    void (^finishIfDone)(void) = ^{
+        if (!allStarted || completed < (NSInteger)localPaths.count) {
             return;
         }
-        strongSelf->_uploadAndPasteTransfer = nil;
-        [strongSelf.view hideUploadIndicator];
-        if (success) {
-            NSString *escapedPath = [iTermNonTextPasteHelper escapedPathForPaste:remotePath];
-            DLog(@"Pasting escaped path: %@", escapedPath);
-            [strongSelf pasteString:escapedPath flags:0];
-        } else {
-            DLog(@"Upload failed, not pasting path");
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_uploadAndPasteGeneration != generation) {
+            return;
         }
-    }];
+        [strongSelf finishUploadAndPasteWithRemotePaths:remotePaths];
+    };
+
+    for (NSUInteger i = 0; i < localPaths.count; i++) {
+        const NSUInteger index = i;
+        TransferrableFile *transfer =
+            [self uploadFile:localPaths[i] toPath:scpPath completion:^(BOOL success, NSString *error, NSString *remotePath) {
+                DLog(@"Upload of %@ completed: success=%d error=%@ remotePath=%@", localPaths[index], success, error, remotePath);
+                __strong __typeof(self) strongSelf = weakSelf;
+                if (!strongSelf || strongSelf->_uploadAndPasteGeneration != generation) {
+                    DLog(@"Ignoring completion from a cancelled or superseded upload group");
+                    return;
+                }
+                if (success && remotePath.length > 0) {
+                    remotePaths[index] = remotePath;
+                }
+                completed += 1;
+                finishIfDone();
+            }];
+        if (transfer) {
+            [_uploadAndPasteTransfers addObject:transfer];
+        }
+    }
+    allStarted = YES;
+    finishIfDone();
+}
+
+// Pastes the paths of the uploads that succeeded. A file that failed contributes nothing: its
+// name would point at something that is not there, and the failure is already reported in the
+// file transfers window. Pasting nothing at all is the right outcome when every one failed.
+- (void)finishUploadAndPasteWithRemotePaths:(NSArray *)remotePaths {
+    _uploadAndPasteGeneration += 1;
+    [_uploadAndPasteTransfers release];
+    _uploadAndPasteTransfers = nil;
+    [_view hideUploadIndicator];
+
+    NSMutableArray<NSString *> *escaped = [NSMutableArray array];
+    for (id remotePath in remotePaths) {
+        NSString *path = [NSString castFrom:remotePath];
+        if (path.length == 0) {
+            continue;
+        }
+        [escaped addObject:[iTermNonTextPasteHelper escapedPathForPaste:path]];
+    }
+    if (escaped.count == 0) {
+        DLog(@"Every upload failed, so nothing to paste");
+        return;
+    }
+    NSString *string = [escaped componentsJoinedByString:@" "];
+    DLog(@"Pasting %@ escaped path(s)", @(escaped.count));
+    [self pasteString:string flags:0];
 }
 
 - (void)cancelUploadAndPaste {
-    if (_uploadAndPasteTransfer) {
-        DLog(@"Cancelling upload and paste transfer");
-        [_uploadAndPasteTransfer stop];
-        _uploadAndPasteTransfer = nil;
+    if (_uploadAndPasteTransfers.count > 0) {
+        DLog(@"Cancelling %@ upload and paste transfer(s)", @(_uploadAndPasteTransfers.count));
+        // Bump first so completions provoked by -stop find their group gone and do not paste.
+        _uploadAndPasteGeneration += 1;
+        NSArray<TransferrableFile *> *transfers = [[_uploadAndPasteTransfers copy] autorelease];
+        [_uploadAndPasteTransfers release];
+        _uploadAndPasteTransfers = nil;
+        for (TransferrableFile *transfer in transfers) {
+            [transfer stop];
+        }
     }
     [_view hideUploadIndicator];
 }
 
-- (TransferrableFile *)uploadFile:(NSString *)localPath toPath:(SCPPath *)destinationPath completion:(void (^)(BOOL success, NSString *error))completion {
+// The completion reports where the file actually landed, which is not always the path computed
+// here: an upload over ssh integration never overwrites, so if the name is taken on the far host
+// it uploads as "name (2)" and records that. Pasting the requested path instead would name the
+// pre-existing file, which is a different file. -destination is the transfer's own answer once it
+// has finished, so ask it rather than predicting.
+- (TransferrableFile *)uploadFile:(NSString *)localPath toPath:(SCPPath *)destinationPath completion:(void (^)(BOOL success, NSString *error, NSString *remotePath))completion {
     DLog(@"uploadFile:%@ toPath:%@ with completion", localPath, destinationPath.path);
 
     NSString *filename = [localPath lastPathComponent];
@@ -20671,17 +20782,28 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     path.path = [destinationPath.path stringByAppendingPathComponent:filename];
     DLog(@"Will upload local:%@ to remote:%@", localPath, path.path);
 
+    // Assigned before any completion can run: the conductor finishes on a later turn of the run
+    // loop, and the SCPFile branch assigns before starting the upload. The one case that reports
+    // synchronously (an archive that could not be built) reports failure, where the path is unused.
+    __block TransferrableFile *transfer = nil;
+    NSString *predictedPath = path.path;
+    void (^wrapper)(BOOL, NSString *) = [[^(BOOL success, NSString *error) {
+        completion(success, error, transfer.destination ?: predictedPath);
+    } copy] autorelease];
+
     if ([_conductor canTransferFilesTo:path]) {
         DLog(@"Using conductor for upload with completion");
-        return [_conductor uploadFile:localPath to:path withCompletion:completion];
+        transfer = [_conductor uploadFile:localPath to:path withCompletion:wrapper];
+        return transfer;
     }
 
     DLog(@"Using SCPFile for upload with completion");
     SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
     scpFile.path = path;
     scpFile.localPath = localPath;
-    scpFile.completionBlock = completion;
+    scpFile.completionBlock = wrapper;
     DLog(@"SCPFile localPath=%@ remotePath=%@", scpFile.localPath, scpFile.path.path);
+    transfer = scpFile;
     [scpFile upload];
     return scpFile;
 }
@@ -21777,11 +21899,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _wrapper.useMetal = NO;
     _textview.suppressDrawing = NO;
     [_view setSuppressLegacyDrawing:NO];
-    if (PTYScrollView.shouldDismember) {
-        _view.scrollview.alphaValue = 1;
-    } else {
-        [self updateWrapperAlphaForMetalEnabled:NO];
-    }
+    [self updateWrapperAlphaForMetalEnabled:NO];
     [self setMetalViewAlphaValue:0];
     id token = @(_nextMetalDisabledToken++);
     [_metalDisabledTokens addObject:token];
@@ -25556,6 +25674,9 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         return;
     }
     [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
+    if (status.statusPresence != VT100TabStatusUpdateFieldNotSet) {
+        self.variablesScope.status = status.status;
+    }
     [_delegate sessionTabStatusDidChange:self];
 }
 
@@ -25584,6 +25705,7 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     }
     [_tabStatus clear];
     [[iTermDockBadgeController sharedInstance] sessionDidLeaveWaiting:_guid];
+    self.variablesScope.status = nil;
     [_delegate sessionTabStatusDidChange:self];
 }
 

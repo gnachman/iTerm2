@@ -186,4 +186,64 @@ final class PSMTabBarMinimumCellAreaTests: XCTestCase {
         XCTAssertEqual(withCollapsed, withOneMoreCollapsed, accuracy: 0.01,
                        "a hidden collapsed member should cost the bar nothing")
     }
+
+    // MARK: - What a decoration may take
+
+    // -maximumLeftInsetLeavingTabsUsableForWidth: asks the other question: how
+    // much may something painted over the strip take before the bar stops being
+    // usable. Fitting every cell minimally is the wrong bar for that when the
+    // bar scrolls, because the cells past the first are never laid out in the
+    // space the decoration would surrender.
+
+    private func withScrollableTabBar(_ enabled: Bool, _ body: () -> Void) {
+        let saved = iTermPreferences.bool(forKey: kPreferenceKeyScrollableSideTabBar)
+        iTermPreferences.setBool(enabled, forKey: kPreferenceKeyScrollableSideTabBar)
+        defer { iTermPreferences.setBool(saved, forKey: kPreferenceKeyScrollableSideTabBar) }
+        body()
+    }
+
+    func testScrollableBarDoesNotChargeForTabsBeyondTheFirst() {
+        withScrollableTabBar(true) {
+            addTabCells(3)
+            let threeTabs = control.maximumLeftInsetLeavingTabsUsable(forWidth: barWidth)
+            addTabCells(5)
+            let eightTabs = control.maximumLeftInsetLeavingTabsUsable(forWidth: barWidth)
+
+            XCTAssertEqual(threeTabs, eightTabs, accuracy: 0.01,
+                           "a scrollable bar scrolls to its extra tabs, so they should cost a decoration nothing")
+        }
+    }
+
+    func testNonScrollableBarChargesForEveryTab() {
+        withScrollableTabBar(false) {
+            addTabCells(3)
+            let threeTabs = control.maximumLeftInsetLeavingTabsUsable(forWidth: barWidth)
+            addTabCells(5)
+            let eightTabs = control.maximumLeftInsetLeavingTabsUsable(forWidth: barWidth)
+
+            XCTAssertEqual(threeTabs - eightTabs,
+                           5 * (CGFloat(control.cellMinWidth) + control.style.intercellSpacing),
+                           accuracy: 0.01,
+                           "a bar that cannot scroll needs room for every tab")
+            XCTAssertEqual(eightTabs,
+                           control.maximumLeftInsetFittingAllCellsMinimally(forWidth: barWidth),
+                           accuracy: 0.01,
+                           "with no scrolling the two questions have the same answer")
+        }
+    }
+
+    // The scrollable answer is a relaxation, never a tightening: a decoration
+    // can only gain room by the bar being scrollable.
+    func testScrollableBarIsNeverStricterThanFittingEveryCell() {
+        for count in [1, 2, 6] {
+            control.cells().removeAllObjects()
+            addTabCells(count)
+            let fittingAll = control.maximumLeftInsetFittingAllCellsMinimally(forWidth: barWidth)
+            withScrollableTabBar(true) {
+                XCTAssertGreaterThanOrEqual(control.maximumLeftInsetLeavingTabsUsable(forWidth: barWidth),
+                                            fittingAll - 0.01,
+                                            "\(count) tabs: scrolling should never leave a decoration less room")
+            }
+        }
+    }
 }

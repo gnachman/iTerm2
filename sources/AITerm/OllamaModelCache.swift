@@ -16,6 +16,7 @@
 //  pulled models appear, and on-read staleness also triggers a refresh.
 //
 
+import CryptoKit
 import Foundation
 
 @objc(iTermOllamaModelCache)
@@ -26,6 +27,10 @@ class OllamaModelCache: NSObject {
     @objc static let shared = OllamaModelCache()
 
     private struct Entry {
+        // The bare endpoint this entry's models were fetched from. The dictionary
+        // key is a bucket (endpoint plus a header digest), which is NOT a URL, so
+        // anything that needs the real one reads it here.
+        var endpoint: String = ""
         var models: [AIMetadata.Model] = []
         var haveSucceeded = false
         var lastAttempt: Date?
@@ -62,6 +67,46 @@ class OllamaModelCache: NSObject {
     // control in its completion), so they're delivered instead of dropped.
     private var pendingCompletions: [String: [(Int, Bool) -> Void]] = [:]
 
+    // The key every per-endpoint dictionary above is stored under. Headers are
+    // part of the identity because they change what /api/tags returns: an
+    // authenticated server answers 401 without them. Two configurations can name
+    // the SAME endpoint with different headers, most easily the built-in Ollama
+    // vendor (which never sends headers) and a manual dynamic entry on the
+    // default endpoint that carries an Authorization header. Sharing one bucket
+    // let the header-less fetch satisfy the header-bearing caller by coalescing,
+    // so the authenticated entry expanded to zero models depending on which
+    // fetch happened to start first.
+    //
+    // A header-less fetch keys on the bare endpoint, so persisted entries, the
+    // seeded cache, and every existing caller behave exactly as before.
+    //
+    // The headers are HASHED rather than spelled out, because this key is
+    // persisted to user defaults: an Authorization value in a dictionary key
+    // would put the credential in the prefs plist in the clear, where
+    // tools/sanitize_iterm2_plist.py structurally cannot reach it (it redacts
+    // values, never keys) and a debug-log breadcrumb would echo it. A hash keeps
+    // bucket identity (equal header sets hash equally) while recovering nothing.
+    // It also keeps the key ASCII: U+0001 is illegal in XML 1.0, so a raw digest
+    // made `defaults export` output that Python's plistlib refuses to parse, and
+    // the sanitizer runs on exactly that file.
+    private static func bucket(_ endpoint: String, _ headers: [[String: String]]) -> String {
+        guard !headers.isEmpty else {
+            return endpoint
+        }
+        // Order-independent so two equal header sets share a bucket. U+0001
+        // separates the fields before hashing: AICustomHeaders rejects control
+        // characters in names and values, so it cannot be forged from a header.
+        let digest = headers
+            .map { "\($0["name"] ?? "")\u{1}\($0["value"] ?? "")" }
+            .sorted()
+            .joined(separator: "\u{1}")
+        let hashed = SHA256.hash(data: Data(digest.utf8))
+            .prefix(8)
+            .map { String(format: "%02x", $0) }
+            .joined()
+        return "\(endpoint)|\(hashed)"
+    }
+
     private let networkTimeout: TimeInterval = 10
     private let successTTL: TimeInterval = 300
     private let failureRetryInterval: TimeInterval = 5
@@ -90,14 +135,14 @@ class OllamaModelCache: NSObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: block)
     }
 
-    func shouldRefresh(endpoint: String) -> Bool {
+    func shouldRefresh(endpoint: String, headers: [[String: String]] = []) -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        return shouldRefreshLocked(endpoint: endpoint)
+        return shouldRefreshLocked(bucket: Self.bucket(endpoint, headers))
     }
 
-    private func shouldRefreshLocked(endpoint: String) -> Bool {
-        guard let entry = cache[endpoint] else {
+    private func shouldRefreshLocked(bucket: String) -> Bool {
+        guard let entry = cache[bucket] else {
             return true
         }
         let elapsed = entry.lastAttempt.map { nowProvider().timeIntervalSince($0) } ?? .infinity
@@ -113,9 +158,10 @@ class OllamaModelCache: NSObject {
     // The cached models for an endpoint. Kicks off a background refresh when
     // missing/stale; the pickers update via didChangeNotification when it lands.
     func models(forEndpoint endpoint: String, headers: [[String: String]] = []) -> [AIMetadata.Model] {
+        let bucket = Self.bucket(endpoint, headers)
         lock.lock()
-        let cached = cache[endpoint]?.models ?? []
-        let refresh = shouldRefreshLocked(endpoint: endpoint)
+        let cached = cache[bucket]?.models ?? []
+        let refresh = shouldRefreshLocked(bucket: bucket)
         lock.unlock()
         if refresh {
             self.refresh(endpoint: endpoint, headers: headers)
@@ -126,11 +172,12 @@ class OllamaModelCache: NSObject {
     // The names of the currently-cached models for an endpoint, WITHOUT kicking off
     // a refresh. For the editor's discovered-models popup, which is populated after
     // an explicit Refresh (or from the persisted/seeded cache).
-    @objc(cachedModelNamesForEndpoint:)
-    func cachedModelNames(forEndpoint endpoint: String) -> [String] {
+    @objc(cachedModelNamesForEndpoint:headers:)
+    func cachedModelNames(forEndpoint endpoint: String,
+                          headers: [[String: String]] = []) -> [String] {
         lock.lock()
         defer { lock.unlock() }
-        return cache[endpoint]?.models.map { $0.name } ?? []
+        return cache[Self.bucket(endpoint, headers)]?.models.map { $0.name } ?? []
     }
 
     // Kick off a background refresh. Coalesces concurrent refreshes of the same
@@ -142,17 +189,21 @@ class OllamaModelCache: NSObject {
                  headers: [[String: String]] = [],
                  force: Bool = false,
                  completion: ((Int, Bool) -> Void)? = nil) {
+        let bucket = Self.bucket(endpoint, headers)
         lock.lock()
-        if !force && (inFlightCount[endpoint] ?? 0) > 0 {
+        if !force && (inFlightCount[bucket] ?? 0) > 0 {
             // Coalesce behind the in-flight fetch, but don't drop this caller's
-            // completion: run it when that fetch resolves.
+            // completion: run it when that fetch resolves. Only ever coalesces
+            // behind a fetch with the SAME headers, since the bucket includes
+            // them: a fetch that would 401 cannot stand in for an authenticated
+            // one.
             if let completion {
-                pendingCompletions[endpoint, default: []].append(completion)
+                pendingCompletions[bucket, default: []].append(completion)
             }
             lock.unlock()
             return
         }
-        inFlightCount[endpoint, default: 0] += 1
+        inFlightCount[bucket, default: 0] += 1
         lock.unlock()
 
         fetcher(endpoint, headers, networkTimeout) { [weak self] result in
@@ -174,7 +225,7 @@ class OllamaModelCache: NSObject {
             if !outcome.lastOfBatch && !outcome.succeeded {
                 if let completion {
                     self.lock.lock()
-                    self.pendingCompletions[endpoint, default: []].append(completion)
+                    self.pendingCompletions[bucket, default: []].append(completion)
                     self.lock.unlock()
                 }
                 return
@@ -200,7 +251,7 @@ class OllamaModelCache: NSObject {
                 return
             }
             self.lock.lock()
-            let coalesced = self.pendingCompletions.removeValue(forKey: endpoint) ?? []
+            let coalesced = self.pendingCompletions.removeValue(forKey: bucket) ?? []
             self.lock.unlock()
             for pending in coalesced {
                 pending(effectiveCount, !outcome.succeeded)
@@ -231,6 +282,10 @@ class OllamaModelCache: NSObject {
                 result: [AIMetadata.Model]?,
                 headers: [[String: String]] = [],
                 countsAgainstInFlight: Bool = false) -> BatchOutcome {
+        // Same bucket the matching refresh() tracked this fetch under, so an
+        // authenticated endpoint's bookkeeping and models never mix with the
+        // header-less view of the same URL.
+        let bucket = Self.bucket(endpoint, headers)
         lock.lock()
         // Decrement the in-flight count for this endpoint. Only the completion that
         // drains the last outstanding fetch does the per-round failure bookkeeping,
@@ -240,26 +295,27 @@ class OllamaModelCache: NSObject {
         var lastOfBatch: Bool
         var hadSuccess = false
         if countsAgainstInFlight {
-            let outstanding = inFlightCount[endpoint] ?? 0
+            let outstanding = inFlightCount[bucket] ?? 0
             if outstanding > 0 {
                 let remaining = outstanding - 1
-                inFlightCount[endpoint] = remaining == 0 ? nil : remaining
+                inFlightCount[bucket] = remaining == 0 ? nil : remaining
                 lastOfBatch = (remaining == 0)
             } else {
                 lastOfBatch = true
             }
             // Did an earlier fetch in this batch already succeed? If so, a trailing
             // failure must not re-increment the failure count or arm a retry.
-            hadSuccess = batchHadSuccess[endpoint] ?? false
+            hadSuccess = batchHadSuccess[bucket] ?? false
         } else {
             // A direct update is its own single round ONLY when no tracked fetch is
             // outstanding; while a fetch is in flight it defers the round to that
             // fetch's completion (lastOfBatch=false), and it never touches the
             // fetch's inFlightCount/batchHadSuccess.
-            lastOfBatch = (inFlightCount[endpoint] ?? 0) == 0
+            lastOfBatch = (inFlightCount[bucket] ?? 0) == 0
         }
 
-        var entry = cache[endpoint] ?? Entry()
+        var entry = cache[bucket] ?? Entry()
+        entry.endpoint = endpoint
         entry.lastAttempt = nowProvider()
         var changed = false
         var scheduleRetry = false
@@ -284,7 +340,7 @@ class OllamaModelCache: NSObject {
             entry.consecutiveFailures = 0
             entry.consecutiveEmpties = 0
             if countsAgainstInFlight && !lastOfBatch {
-                batchHadSuccess[endpoint] = true
+                batchHadSuccess[bucket] = true
             }
         } else if lastOfBatch && !hadSuccess {
             // Hard failure, or a not-yet-accepted suspicious empty: keep the last-good
@@ -303,12 +359,12 @@ class OllamaModelCache: NSObject {
         }
         // The batch is fully drained; clear its per-round success flag.
         if countsAgainstInFlight && lastOfBatch {
-            batchHadSuccess[endpoint] = nil
+            batchHadSuccess[bucket] = nil
         }
         let failures = entry.consecutiveFailures
         let succeeded = (result != nil) || hadSuccess
         let finalCount = entry.models.count
-        cache[endpoint] = entry
+        cache[bucket] = entry
         lock.unlock()
 
         if acceptEmpty {
@@ -361,23 +417,37 @@ class OllamaModelCache: NSObject {
         // Drop endpoints that are no longer configured (a since-deleted entry, or a
         // URL the user probed with "Refresh Models" but never saved), so the
         // persisted blob tracks only currently-configured servers.
-        restore(from: Self.endpointsPruned(representation, keeping: LLMMetadata.dynamicOllamaEndpoints()))
+        restore(from: Self.endpointsPruned(representation, keeping: Self.configuredBuckets()))
     }
 
-    // Keep only the endpoints in `configured`. Pure, so it's unit-testable.
+    // Keep only the buckets in `configured`. Pure, so it's unit-testable.
     static func endpointsPruned(_ representation: [String: Any],
                                 keeping configured: Set<String>) -> [String: Any] {
         return representation.filter { configured.contains($0.key) }
     }
 
+    // The buckets the currently-configured dynamic entries fetch under. A
+    // header-less entry's bucket is its bare URL, so a blob written before
+    // buckets existed still matches.
+    private static func configuredBuckets() -> Set<String> {
+        return Set(LLMMetadata.dynamicOllamaConfigurations().map { bucket($0.url, $0.headers) })
+    }
+
     // The serializable snapshot of the successfully-discovered models, keyed by
-    // endpoint. Pure (no I/O) so it's unit-testable.
+    // bucket. The bare endpoint travels in the value because the key may carry a
+    // header digest and so cannot be used as a URL. Pure (no I/O) so it's
+    // unit-testable.
+    static let persistedEndpointKey = "endpoint"
+    static let persistedModelsKey = "models"
+
     func persistedRepresentation() -> [String: Any] {
         lock.lock()
         defer { lock.unlock() }
         var result: [String: Any] = [:]
-        for (endpoint, entry) in cache where entry.haveSucceeded {
-            result[endpoint] = entry.models.map { Self.dictionary(from: $0) }
+        for (bucket, entry) in cache where entry.haveSucceeded {
+            let endpoint = entry.endpoint.isEmpty ? bucket : entry.endpoint
+            result[bucket] = [Self.persistedEndpointKey: endpoint,
+                              Self.persistedModelsKey: entry.models.map { Self.dictionary(from: $0) }]
         }
         return result
     }
@@ -387,15 +457,31 @@ class OllamaModelCache: NSObject {
     func restore(from representation: [String: Any]) {
         lock.lock()
         defer { lock.unlock() }
-        for (endpoint, value) in representation {
-            // Seed only endpoints with no in-memory entry: if an early read already
+        for (bucket, value) in representation {
+            // Seed only buckets with no in-memory entry: if an early read already
             // landed a live refresh, its fresh models must not be clobbered with the
             // (possibly stale) persisted set (which would also nil lastAttempt and
             // briefly resolve pinned tags against removed models).
-            guard cache[endpoint] == nil else { continue }
-            guard let dicts = value as? [[String: Any]] else { continue }
+            guard cache[bucket] == nil else { continue }
+            let endpoint: String
+            let dicts: [[String: Any]]
+            if let wrapped = value as? [String: Any] {
+                guard let url = wrapped[Self.persistedEndpointKey] as? String,
+                      let models = wrapped[Self.persistedModelsKey] as? [[String: Any]] else {
+                    continue
+                }
+                endpoint = url
+                dicts = models
+            } else if let legacy = value as? [[String: Any]] {
+                // Blobs written before buckets existed are keyed by the bare
+                // endpoint and hold the model list directly.
+                endpoint = bucket
+                dicts = legacy
+            } else {
+                continue
+            }
             let models = dicts.compactMap { Self.model(from: $0, endpoint: endpoint) }
-            cache[endpoint] = Entry(models: models, haveSucceeded: true, lastAttempt: nil)
+            cache[bucket] = Entry(endpoint: endpoint, models: models, haveSucceeded: true, lastAttempt: nil)
         }
     }
 
@@ -405,7 +491,7 @@ class OllamaModelCache: NSObject {
         // an unsaved URL still seeds the in-memory cache, but it must not grow the
         // persisted blob unboundedly.
         let pruned = Self.endpointsPruned(persistedRepresentation(),
-                                          keeping: LLMMetadata.dynamicOllamaEndpoints())
+                                          keeping: Self.configuredBuckets())
         iTermUserDefaults.userDefaults().set(pruned, forKey: Self.persistenceKey)
     }
 

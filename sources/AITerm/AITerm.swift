@@ -153,16 +153,63 @@ class AITermController {
         }
     }
 
+    // Stands in for the vendor key on endpoints that must never receive one.
+    // Localization unneeded: it goes on the wire, not on screen.
+    static let selfHostedPlaceholderAPIKey = "Placeholder for self-hosted"
+
+    // Why a model authorizes with `selfHostedPlaceholderAPIKey` instead of the
+    // vendor's stored key, or that it does not. Every caller derives its answer
+    // from this one function: the request path only cares whether a placeholder
+    // is used, while the Settings hints have to say which reason applies, and
+    // the two must never disagree about the same URL.
+    //
+    // - .onDevice: Apple Intelligence runs on-device and never builds a request.
+    // - .localEndpoint: a stored key (e.g. OpenAI) must not be sent as a Bearer
+    //   token to a localhost/private-IP server the user pointed a manual model
+    //   at, or it leaks off the intended vendor (issue 12477).
+    //   Such an endpoint carries its own auth via the model's custom headers
+    //   instead, which the user opts into explicitly.
+    enum APIKeyPolicy: Equatable {
+        case vendorKey
+        case placeholder(Reason)
+
+        enum Reason: Equatable {
+            case onDevice
+            case localEndpoint
+        }
+    }
+
+    // Shared with the Test Connection probe (issue 13021): when the probe
+    // resolved the key on its own it sent the real vendor key, so an
+    // authenticated local server reported success while real requests 401'd.
+    static func apiKeyPolicy(url: String, api: iTermAIAPI) -> APIKeyPolicy {
+        if api == .appleIntelligence {
+            return .placeholder(.onDevice)
+        }
+        guard let host = URL(string: url)?.host,
+              PrivateIPChecker.isLocalOrPrivate(host) else {
+            return .vendorKey
+        }
+        return .placeholder(.localEndpoint)
+    }
+
+    static func usesPlaceholderAPIKey(url: String, api: iTermAIAPI) -> Bool {
+        return apiKeyPolicy(url: url, api: api) != .vendorKey
+    }
+
     private var _registration: Registration?
     var registration: Registration? {
-        // Self-hosted/private endpoints and Apple Intelligence never get a real
-        // vendor key: a stored key (e.g. OpenAI) must not be sent as a Bearer
-        // token to a localhost/private-IP server the user pointed a manual model
-        // at, or it leaks off the intended vendor (issue 12477). An authenticated
-        // self-hosted endpoint carries its own auth via the model's custom
-        // headers instead. Checked first so it always wins over _registration.
-        if isSelfHosted || providerIsAppleIntelligence {
-            return Registration(apiKey: "Placeholder for self-hosted")
+        // The App Review key contacts no service at all, so it has to win over
+        // every other rule: requestCompletion short-circuits on it and answers
+        // locally. Substituting the self-hosted placeholder first would send a
+        // real request to whatever endpoint is configured, breaking the promise
+        // in reviewPlaceholderResponse that no data leaves the Mac.
+        if let _registration, _registration.apiKey == Self.reviewPlaceholderAPIKey {
+            return _registration
+        }
+        // Checked before the stored key so it always wins over _registration.
+        if usesPlaceholderAPIKey {
+            return Registration(apiKey: Self.selfHostedPlaceholderAPIKey)
         }
         let vendor = requiredRegistrationVendor
         if let _registration, _registration.isValid(for: vendor) {
@@ -310,19 +357,41 @@ class AITermController {
         handle(event: .cancel)
     }
 
-    private var isSelfHosted: Bool {
-        guard let provider = llmProvider,
-              let url = NSURL(string: provider.model.url),
-              let host = url.host else {
-            return false
+    // The user-visible error for a provider that answered with one, for every
+    // path that makes such a request (chat and the vector-store/file-upload
+    // helpers alike). Built in one place so they cannot differ: each appends
+    // the parsed reason when there is one, and the withheld-key explanation
+    // when the refusal is one that explains (see AIWithheldKeyAdvice).
+    //
+    // `requestURL` is the URL THIS request went to, which is not always the
+    // model's: the vector-store and file-upload helpers post to OpenAI's own
+    // endpoints regardless of where the model lives. Advice derived from the
+    // model URL would then tell someone whose local model has an OpenAI vector
+    // store to add a custom header, about a 401 from api.openai.com that a
+    // header on the model could not affect.
+    private func providerError(_ error: String,
+                               data: Data,
+                               provider: String,
+                               requestURL: String?) -> AIError {
+        var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
+        if let reason = LLMErrorParser.errorReason(data: data), !reason.isEmpty {
+            message += " " + reason
         }
-        return PrivateIPChecker.isLocalOrPrivate(host)
+        guard let model = llmProvider?.model, let requestURL else {
+            return AIError(message)
+        }
+        return AIError(AIWithheldKeyAdvice.amended(message: message,
+                                                   statusText: error,
+                                                   url: requestURL,
+                                                   api: model.api,
+                                                   customHeaders: model.customHeaders))
     }
 
-    // Apple Intelligence runs on-device and needs no API key, so it gets a
-    // placeholder registration and never builds an HTTP request.
-    private var providerIsAppleIntelligence: Bool {
-        return llmProvider?.model.api == .appleIntelligence
+    private var usesPlaceholderAPIKey: Bool {
+        guard let provider = llmProvider else {
+            return false
+        }
+        return Self.usesPlaceholderAPIKey(url: provider.model.url, api: provider.model.api)
     }
 
     var requiredRegistrationVendor: iTermAIVendor {
@@ -477,11 +546,10 @@ class AITermController {
             case .webResponse(let response):
                 if let error = response.error, !error.isEmpty {
                     let provider = llmProvider?.displayName ?? String(localized: "AITerm.DefaultProviderName", defaultValue: "server", comment: "Fallback name for the AI provider when its name is unknown, used in “Error from …”")
-                    var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
-                    if let reason = LLMErrorParser.errorReason(data: response.data.lossyData), !reason.isEmpty {
-                        message += " " + reason
-                    }
-                    handle(event: .error(AIError(message)))
+                    handle(event: .error(providerError(error,
+                                                       data: response.data.lossyData,
+                                                       provider: provider,
+                                                       requestURL: llmProvider?.model.url)))
                 } else if let streamParserState {
                     _ = parseStreamingResponse(data: response.data.data(using: .utf8)!,
                                                final: true,
@@ -545,13 +613,6 @@ class AITermController {
         }
     }
 
-    private var settingsURL: URL {
-        var value = iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? ""
-        if value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            value = iTermPreferences.defaultObject(forKey: kPreferenceKeyAITermURL) as! String
-        }
-        return URL(string: value) ?? URL(string: "about:empty")!
-    }
 
     private func requestCompletion(query: String, registration: Registration, stream: ((String) -> ())?) {
         requestCompletion(messages: [Message(role: .user, content: query)],
@@ -665,12 +726,10 @@ class AITermController {
                 switch result {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
-                        let provider = llmProvider.displayName
-                        var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
-                        if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
-                            message += " " + reason
-                        }
-                        handle(event: .error(AIError(message)))
+                        handle(event: .error(providerError(error,
+                                                           data: webResponse.data.lossyData,
+                                                           provider: llmProvider.displayName,
+                                                           requestURL: request.url)))
                         return
                     }
                     let id = try builder.idFromResponse(webResponse.data.lossyData)
@@ -716,12 +775,10 @@ class AITermController {
                 switch result {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
-                        let provider = llmProvider.displayName
-                        var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
-                        if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
-                            message += " " + reason
-                        }
-                        handle(event: .error(AIError(message)))
+                        handle(event: .error(providerError(error,
+                                                           data: webResponse.data.lossyData,
+                                                           provider: llmProvider.displayName,
+                                                           requestURL: request.url)))
                         return
                     }
 
@@ -782,12 +839,10 @@ class AITermController {
                 switch result {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
-                        let provider = llmProvider.displayName
-                        var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
-                        if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
-                            message += " " + reason
-                        }
-                        handle(event: .error(AIError(message)))
+                        handle(event: .error(providerError(error,
+                                                           data: webResponse.data.lossyData,
+                                                           provider: llmProvider.displayName,
+                                                           requestURL: request.url)))
                         return
                     }
 
@@ -844,12 +899,10 @@ class AITermController {
                 switch result {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
-                        let provider = llmProvider.displayName
-                        var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
-                        if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
-                            message += " " + reason
-                        }
-                        handle(event: .error(AIError(message)))
+                        handle(event: .error(providerError(error,
+                                                           data: webResponse.data.lossyData,
+                                                           provider: llmProvider.displayName,
+                                                           requestURL: request.url)))
                         return
                     }
 

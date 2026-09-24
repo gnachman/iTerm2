@@ -393,6 +393,12 @@ typedef struct {
     // Config snapshot used during conversion
     VT100StringConversionConfig config;
 
+    // How many UTF-16 units of the string were absorbed into buffer[0] by the prepended
+    // space. The mutation thread compares this against how many units the real predecessor
+    // absorbs; if they differ the space was not a faithful stand-in and the buffer cannot
+    // be used. See -[VT100ScreenMutableState appendStringAtCursor:preconvertedData:].
+    int firstClusterLengthInString;
+
     // Whether this data is valid and should be considered by the mutation thread
     BOOL valid;
 } PreconvertedStringData;

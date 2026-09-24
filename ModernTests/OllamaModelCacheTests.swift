@@ -247,6 +247,74 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertTrue(m.first?.features.contains(.configurableThinking) ?? false)
     }
 
+    // The persistence layer exists to resolve a pinned tag synchronously at
+    // launch. An entry reached with an auth header must get that too: its cache
+    // key is a bucket rather than a URL, so the snapshot has to carry the bare
+    // endpoint separately or the restored models would take the bucket as their
+    // URL (and pruning by URL would drop them entirely).
+    func test_persistenceRoundTrip_headerBearingEntry() {
+        let endpoint = "http://persist-auth:11434/api/chat"
+        let auth = [["name": "Authorization", "value": "Bearer secret"]]
+        let source = makeCache()
+        source.fetcher = { endpoint, _, _, completion in completion(self.models(endpoint)) }
+        source.refresh(endpoint: endpoint, headers: auth)
+
+        let representation = source.persistedRepresentation()
+        XCTAssertEqual(representation.count, 1)
+        XCTAssertFalse(representation.keys.contains(endpoint),
+                       "a header-bearing entry is keyed by its bucket, not the bare URL")
+
+        let restored = makeCache()
+        restored.restore(from: representation)
+        let m = restored.models(forEndpoint: endpoint, headers: auth)
+        XCTAssertEqual(m.map { $0.name }, ["qwen3.5:4b"],
+                       "the authenticated view resolves synchronously after a restore")
+        XCTAssertEqual(m.first?.url, endpoint,
+                       "restored models carry the real endpoint, never the bucket key")
+        XCTAssertFalse(m.first?.url.contains("\u{1}") ?? true)
+        XCTAssertTrue(restored.models(forEndpoint: endpoint).isEmpty,
+                      "and they are not visible to the header-less view")
+    }
+
+    // The persisted key must not spell out the headers. It is written to user
+    // defaults, where an Authorization value in a KEY is unreachable by
+    // tools/sanitize_iterm2_plist.py (it redacts values, never keys), and a
+    // control character in a key makes the exported XML plist unparseable.
+    func test_persistedKeys_carryNoCredentialAndStayXMLSafe() throws {
+        let endpoint = "http://persist-auth:11434/api/chat"
+        let secret = "Bearer sk-do-not-persist-me"
+        let cache = makeCache()
+        cache.fetcher = { endpoint, _, _, completion in completion(self.models(endpoint)) }
+        cache.refresh(endpoint: endpoint,
+                      headers: [["name": "Authorization", "value": secret]])
+
+        let representation = cache.persistedRepresentation()
+        let key = try XCTUnwrap(representation.keys.first)
+        XCTAssertFalse(key.contains(secret), "the credential must not appear in a persisted key")
+        XCTAssertFalse(key.contains("sk-do-not-persist-me"))
+        XCTAssertFalse(key.contains("Authorization"))
+        XCTAssertTrue(key.hasPrefix(endpoint + "|"), "the endpoint stays legible for pruning")
+        XCTAssertFalse(key.unicodeScalars.contains { $0.value < 0x20 },
+                       "a control character in a key makes the XML plist unparseable")
+        // The whole snapshot has to survive plist serialization.
+        XCTAssertNoThrow(try PropertyListSerialization.data(fromPropertyList: representation,
+                                                            format: .xml,
+                                                            options: 0))
+    }
+
+    // A blob written before buckets existed is keyed by the bare endpoint and
+    // holds the model list directly. It must still restore.
+    func test_restore_acceptsLegacyRepresentation() {
+        let endpoint = "http://legacy:11434/api/chat"
+        let legacy: [String: Any] = [endpoint: [["name": "qwen3.5:4b", "ctx": 4096]]]
+        let cache = makeCache()
+        cache.restore(from: legacy)
+
+        let m = cache.models(forEndpoint: endpoint)
+        XCTAssertEqual(m.map { $0.name }, ["qwen3.5:4b"])
+        XCTAssertEqual(m.first?.url, endpoint)
+    }
+
     // Persistence must track only currently-configured endpoints, so probing
     // unsaved URLs or deleting an entry doesn't grow the blob without bound.
     func test_endpointsPruned_keepsOnlyConfigured() {
@@ -374,6 +442,59 @@ final class OllamaModelCacheTests: XCTestCase {
                        "the qualified remote model still sends the raw tag on the wire")
     }
 
+    // A model the user added has to appear where they added it. A dynamic entry
+    // on the default endpoint duplicates the built-in Ollama vendor, but it is
+    // listed anyway: discarding it left a row in Manage AI Models that showed up
+    // nowhere else. Each manual copy is qualified with its server so the
+    // duplicate is distinguishable and cannot shadow the built-in one.
+    func test_defaultEndpoint_wholeServerDynamicEntry_isListed() {
+        let endpoint = LLMMetadata.defaultOllamaEndpoint
+        OllamaModelCache.shared.update(endpoint: endpoint, models: models(endpoint))
+        defer { OllamaModelCache.shared.update(endpoint: endpoint, models: []) }
+
+        let key = kPreferenceKeyAIManualModelConfigurations
+        let saved = iTermPreferences.object(forKey: key)
+        defer { iTermPreferences.setObject(saved, forKey: key) }
+        iTermPreferences.setObject([
+            ["url": endpoint, "dynamicModels": true, "api": Int(iTermAIAPI.llama.rawValue)],
+        ], forKey: key)
+
+        let manual = LLMMetadata.manualModels()
+        XCTAssertFalse(manual.isEmpty, "the entry the user added must be listed")
+        XCTAssertTrue(manual.contains { $0.effectiveModelName == "qwen3.5:4b" },
+                      "it expands to the server's tags and sends the raw tag on the wire")
+        XCTAssertFalse(manual.contains { $0.name == "qwen3.5:4b" },
+                       "each manual copy is qualified so it can't shadow the built-in one")
+        XCTAssertTrue(LLMMetadata.discoveredOllamaModels().contains { $0.name == "qwen3.5:4b" },
+                      "the built-in copy keeps the clean tag")
+    }
+
+    // An entry naming a SINGLE model is listed the same way.
+    func test_defaultEndpoint_dynamicEntryNamingOneModel_isListed() {
+        let endpoint = LLMMetadata.defaultOllamaEndpoint
+        OllamaModelCache.shared.update(endpoint: endpoint, models: models(endpoint))
+        defer { OllamaModelCache.shared.update(endpoint: endpoint, models: []) }
+
+        let key = kPreferenceKeyAIManualModelConfigurations
+        let saved = iTermPreferences.object(forKey: key)
+        defer { iTermPreferences.setObject(saved, forKey: key) }
+        iTermPreferences.setObject([
+            ["url": endpoint,
+             "dynamicModels": true,
+             "dynamicSelectedModel": "qwen3.5:4b",
+             "api": Int(iTermAIAPI.llama.rawValue)],
+        ], forKey: key)
+
+        let manual = LLMMetadata.manualModels()
+        XCTAssertEqual(manual.count, 1, "the chosen model is listed")
+        XCTAssertEqual(manual.first?.effectiveModelName, "qwen3.5:4b",
+                       "it still sends the raw tag on the wire")
+        XCTAssertFalse(manual.contains { $0.name == "qwen3.5:4b" },
+                       "its display name is qualified so it can't shadow the built-in copy")
+        XCTAssertTrue(LLMMetadata.discoveredOllamaModels().contains { $0.name == "qwen3.5:4b" },
+                      "the built-in copy keeps the clean tag")
+    }
+
     // The first-class Ollama vendor resolves its models from discovery at the
     // default endpoint, not a static catalog.
     func test_ollamaVendor_resolvesModelsFromDiscovery() {
@@ -433,6 +554,29 @@ final class OllamaModelCacheTests: XCTestCase {
 
         XCTAssertTrue(LLMMetadata.dynamicOllamaEndpoints().contains(LLMMetadata.defaultOllamaEndpoint),
                       "the default Ollama endpoint is always displayable and must be scoped in")
+    }
+
+    // The configured-entry list carries headers, because the cache identifies a
+    // bucket by endpoint AND headers: pruning by bare URL would drop a
+    // header-bearing entry's persisted models.
+    func test_dynamicOllamaConfigurations_carryHeaders() {
+        let key = kPreferenceKeyAIManualModelConfigurations
+        let saved = iTermPreferences.object(forKey: key)
+        defer { iTermPreferences.setObject(saved, forKey: key) }
+        let auth = [["name": "Authorization", "value": "Bearer secret"]]
+        iTermPreferences.setObject([
+            ["url": "http://gpu-box:11434/api/chat",
+             "dynamicModels": true,
+             "customHeaders": auth,
+             "api": Int(iTermAIAPI.llama.rawValue)],
+        ], forKey: key)
+
+        let configurations = LLMMetadata.dynamicOllamaConfigurations()
+        let entry = configurations.first { $0.url == "http://gpu-box:11434/api/chat" }
+        XCTAssertNotNil(entry)
+        XCTAssertEqual(entry?.headers as NSArray?, auth as NSArray)
+        XCTAssertTrue(configurations.contains { $0.url == LLMMetadata.defaultOllamaEndpoint && $0.headers.isEmpty },
+                      "the built-in default endpoint is always configured, header-less")
     }
 
     // Integration: a dynamic Ollama manual entry expands (via the shared cache)
@@ -680,6 +824,63 @@ final class OllamaModelCacheTests: XCTestCase {
 
         XCTAssertEqual(scheduled, 1,
                        "one endpoint's failed round must arm exactly one retry; a direct update overlapping an in-flight fetch must not be double-counted as two failed rounds")
+    }
+
+    // Headers are part of a bucket's identity. The built-in Ollama vendor fetches
+    // the default endpoint with no headers; a manual dynamic entry can name the
+    // SAME endpoint and carry an Authorization header for a local auth proxy.
+    // Sharing one bucket let the header-less fetch, which 401s, satisfy the
+    // authenticated caller by coalescing, so the entry expanded to zero models
+    // depending on which fetch started first.
+    func test_sameEndpointDifferentHeaders_doNotShareABucket() {
+        let cache = makeCache()
+        let auth = [["name": "Authorization", "value": "Bearer secret"]]
+        // The server answers only when the credential is present.
+        cache.fetcher = { endpoint, headers, _, completion in
+            completion(headers.isEmpty ? nil : self.models(endpoint))
+        }
+
+        cache.refresh(endpoint: "e")                  // header-less: 401s
+        cache.refresh(endpoint: "e", headers: auth)   // authenticated: succeeds
+
+        XCTAssertEqual(cache.cachedModelNames(forEndpoint: "e", headers: auth), ["qwen3.5:4b"],
+                       "the authenticated view must hold the models it fetched")
+        XCTAssertEqual(cache.cachedModelNames(forEndpoint: "e"), [],
+                       "the header-less view must not borrow them")
+    }
+
+    // ...and the authenticated fetch must actually issue rather than coalescing
+    // behind an in-flight header-less one that cannot satisfy it.
+    func test_authenticatedRefresh_doesNotCoalesceBehindAHeaderLessFetch() {
+        let cache = makeCache()
+        let auth = [["name": "Authorization", "value": "Bearer secret"]]
+        var seen: [[[String: String]]] = []
+        var pending: [() -> Void] = []
+        cache.fetcher = { endpoint, headers, _, completion in
+            seen.append(headers)
+            // Hold both fetches open so the second would coalesce if it could.
+            pending.append { completion(headers.isEmpty ? nil : self.models(endpoint)) }
+        }
+
+        cache.refresh(endpoint: "e")                  // in flight, header-less
+        cache.refresh(endpoint: "e", headers: auth)   // must issue its own fetch
+        XCTAssertEqual(seen.count, 2, "the authenticated fetch must not be coalesced away")
+        XCTAssertTrue(seen.contains { !$0.isEmpty }, "one of them carries the credential")
+
+        for resolve in pending { resolve() }
+        XCTAssertEqual(cache.cachedModelNames(forEndpoint: "e", headers: auth), ["qwen3.5:4b"])
+    }
+
+    // Two equal header sets in a different order are the same configuration and
+    // must share a bucket rather than each fetching.
+    func test_headerOrderDoesNotSplitTheBucket() {
+        let cache = makeCache()
+        let a = [["name": "X-A", "value": "1"], ["name": "X-B", "value": "2"]]
+        let b = [["name": "X-B", "value": "2"], ["name": "X-A", "value": "1"]]
+        cache.fetcher = { endpoint, _, _, completion in completion(self.models(endpoint)) }
+
+        cache.refresh(endpoint: "e", headers: a)
+        XCTAssertEqual(cache.cachedModelNames(forEndpoint: "e", headers: b), ["qwen3.5:4b"])
     }
 
     // A reachable server that momentarily returns {"models":[]} (mid-reload) must not

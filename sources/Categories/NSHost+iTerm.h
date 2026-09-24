@@ -34,6 +34,12 @@ NS_ASSUME_NONNULL_BEGIN
 // truth. Call it when a shell reports a host that was judged local.
 + (void)it_rememberLocalHostname:(nullable NSString *)hostname;
 
+// Like it_rememberLocalHostname: but records `hostname` unconditionally, without
+// requiring it to match a live local name - the VPN / Tailscale / mDNS case the
+// plain method rejects. Call this ONLY when locality was proven by something
+// stronger than the name itself, e.g. a matching OSC 7 machineID token.
++ (void)it_rememberVerifiedLocalHostname:(nullable NSString *)hostname;
+
 // For tests: seed/clear the remembered-local-names set directly.
 + (void)it_addRememberedLocalHostnameForTesting:(NSString *)hostname;
 + (void)it_resetRememberedLocalHostnamesForTesting;

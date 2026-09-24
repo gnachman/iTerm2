@@ -7,6 +7,8 @@
 //
 
 #import "NSView+RecursiveDescription.h"
+
+#import "NSView+iTerm.h"
 #import "NSObject+iTerm.h"
 
 @implementation NSView (RecursiveDescription)
@@ -80,6 +82,16 @@
      self.translatesAutoresizingMaskIntoConstraints ? @"No" : [NSString stringWithFormat:@"*AUTO LAYOUT IN EFFECT* intrinsicContentSize=%@", NSStringFromSize(self.intrinsicContentSize)],
      detail,
      self.trackingAreas.count ? self.trackingAreas : @"none"];
+    // Report only authored constraints. The synthesized autoresizing-mask ones appear on nearly
+    // every view once the engine is engaged and would bury the handful that someone wrote.
+    // Only ask about ambiguity when there are some: hasAmbiguousLayout is the accessor that
+    // consults the layout engine, and it means nothing for a view laid out by its mask.
+    const NSUInteger constraintCount = self.it_authoredConstraintCount;
+    if (constraintCount > 0) {
+        [s appendFormat:@" constraints=%@%@",
+         @(constraintCount),
+         self.hasAmbiguousLayout ? @" AMBIGUOUS" : @""];
+    }
     return s;
 }
 

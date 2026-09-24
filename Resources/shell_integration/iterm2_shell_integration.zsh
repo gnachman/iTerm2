@@ -56,13 +56,49 @@ if [[ -o interactive ]]; then
       }
     fi
 
+    # Percent-encode $1 per RFC 3986, preserving unreserved characters and the path
+    # separator. nomultibyte + LC_ALL=C force byte-wise iteration so each UTF-8 byte
+    # is encoded individually (matching how the receiver decodes it). Stores the
+    # result in the global _iterm2_encoded_path rather than printing it, so the
+    # caller reads a variable instead of forking a command substitution per prompt.
+    iterm2_encode_path() {
+      emulate -L zsh
+      setopt nomultibyte
+      local _iterm2_path="$1"
+      local _iterm2_i _iterm2_ch _iterm2_hexch _iterm2_out=""
+      local LC_ALL=C
+      for (( _iterm2_i = 1; _iterm2_i <= ${#_iterm2_path}; ++_iterm2_i )); do
+        _iterm2_ch="${_iterm2_path[_iterm2_i]}"
+        if [[ "$_iterm2_ch" == [/._~A-Za-z0-9-] ]]; then
+          _iterm2_out+="$_iterm2_ch"
+        else
+          printf -v _iterm2_hexch '%02X' "$(( #_iterm2_ch & 0xFF ))"
+          _iterm2_out+="%$_iterm2_hexch"
+        fi
+      done
+      _iterm2_encoded_path="$_iterm2_out"
+    }
+
     iterm2_print_state_data() {
       local _iterm2_hostname="${iterm2_hostname-}"
       if [ -z "${iterm2_hostname:-}" ]; then
         _iterm2_hostname=$(hostname -f 2>/dev/null)
       fi
-      printf "\033]1337;RemoteHost=%s@%s\007" "$USER" "${_iterm2_hostname-}"
-      printf "\033]1337;CurrentDir=%s\007" "$PWD"
+      # Sanitize the authority: a username or hostname with a URL-structural
+      # character (/, ?, #, or whitespace) would silently restructure the URL -
+      # recording the wrong directory, or (since the machineID query still parses)
+      # poisoning localhost detection with a truncated host. Keep only a safe set so
+      # a malformed label degrades to a clean name. The username keeps @ (an AD
+      # login like alice@corp.com survives, since URL parsers split on the LAST @).
+      local _iterm2_user="${USER//[^A-Za-z0-9._@-]/}"
+      _iterm2_hostname="${_iterm2_hostname//[^A-Za-z0-9._-]/}"
+      # OSC 7: report username, hostname, and working directory as a single file
+      # URL. This supersedes the older 1337;RemoteHost and 1337;CurrentDir codes.
+      local _iterm2_encoded_path=""
+      iterm2_encode_path "$PWD"
+      # Append the machine identity (computed once at source time, see below).
+      local _iterm2_url="file://${_iterm2_user}@${_iterm2_hostname}${_iterm2_encoded_path}?machineID=${_iterm2_machine_id}"
+      printf "\033]7;%s\007" "$_iterm2_url"
       iterm2_print_user_vars
     }
 
@@ -212,6 +248,36 @@ if [[ -o interactive ]]; then
       fi
     fi
 
+    # Machine identity for OSC 7 localhost detection, computed ONCE and cached in a
+    # NON-EXPORTED shell variable (never `export`/`typeset -x`, so it cannot cross
+    # ssh) as "1:<hmac>". We HMAC kern.bootsessionuuid with a fixed protocol key
+    # rather than sending the raw per-boot UUID; iTerm2 HMACs its own the same way
+    # and compares. The sysctl and openssl run once here, not per prompt. A known
+    # non-Darwin host can't be this Mac, so it sends the empty value ("1:"); a Darwin
+    # failure, or an OS we cannot determine at all (empty $OSTYPE), sends "0:"
+    # (identity unavailable, so the receiver falls back to hostname matching).
+    if [ -z "${_iterm2_machine_id+set}" ]; then
+      case "${OSTYPE-}" in
+        darwin*)
+          _iterm2_bsid=$(sysctl -n kern.bootsessionuuid 2>/dev/null)
+          _iterm2_machine_id="0:"
+          if [ -n "$_iterm2_bsid" ]; then
+            _iterm2_hmac=$(printf '%s' "$_iterm2_bsid" | /usr/bin/openssl dgst -sha256 -hmac "iterm2-osc7-machine-id" 2>/dev/null | awk '{print $NF}')
+            [ -n "$_iterm2_hmac" ] && _iterm2_machine_id="1:$_iterm2_hmac"
+            unset _iterm2_hmac
+          fi
+          unset _iterm2_bsid
+          ;;
+        "")
+          _iterm2_machine_id="0:"
+          ;;
+        *)
+          _iterm2_machine_id="1:"
+          ;;
+      esac
+    fi
+
+
     [[ -z ${precmd_functions-} ]] && precmd_functions=()
     precmd_functions=($precmd_functions iterm2_precmd)
 
@@ -219,7 +285,7 @@ if [[ -o interactive ]]; then
     preexec_functions=($preexec_functions iterm2_preexec)
 
     iterm2_print_state_data
-    printf "\033]1337;ShellIntegrationVersion=17;shell=zsh\007"
+    printf "\033]1337;ShellIntegrationVersion=19;shell=zsh\007"
   fi
 fi
 

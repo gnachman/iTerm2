@@ -352,6 +352,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)setWorkingDirectoryFromURLString:(NSString *)URLString;
 
+// Process-wide one-shot for the "AcceptOSC7 is off" shell-integration warning:
+// YES for the first caller per app run, NO thereafter. Reset only exists for
+// tests.
++ (BOOL)consumeOSC7DisabledWarning;
++ (void)resetOSC7DisabledWarningForTesting;
+
 #pragma mark Remote Host
 
 - (void)setRemoteHostFromString:(NSString *)remoteHost;

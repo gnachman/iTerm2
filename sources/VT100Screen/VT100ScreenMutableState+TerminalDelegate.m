@@ -1828,6 +1828,9 @@ typedef struct {
 
 - (void)terminalSetRemoteHost:(NSString *)remoteHost {
     DLog(@"begin");
+    // Location reported via a proprietary code, so OSC 7 isn't the only path;
+    // suppress the "OSC 7 disabled breaks shell integration" warning.
+    _sawProprietaryLocationCode = YES;
     [self setRemoteHostFromString:remoteHost];
 }
 
@@ -1846,6 +1849,8 @@ typedef struct {
 
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
     DLog(@"begin");
+    // Proprietary CurrentDir code: see -terminalSetRemoteHost:.
+    _sawProprietaryLocationCode = YES;
     [self currentDirectoryDidChangeTo:dir completion:^{}];
 }
 

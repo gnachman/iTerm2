@@ -581,6 +581,11 @@ typedef struct {
 // A tab is somewhere to go and the window name is only context for the tabs, so
 // the name gives up its space rather than crowd the tabs out of the bar.
 //
+// It gives up only what a tab can use, though. A scrollable bar keeps every tab
+// at its full width and scrolls, so the tabs past the first would not be laid
+// out in the space the name surrenders to them: asking the bar what fits
+// minimally there hid the name one tab at a time for nothing.
+//
 // The tab bar owns the rule for what fits -- collapsed group chips, pinned tabs,
 // its own margins and the overflow chevron all change the answer -- so ask it
 // rather than re-deriving it here. The estimate this replaced omitted the bar's
@@ -606,25 +611,24 @@ typedef struct {
     // the tabs never get either. Ignoring it let a large setting crowd the tabs,
     // which is the one thing this allowance exists to prevent.
     const CGFloat extraSpace = MAX(0, [iTermAdvancedSettingsModel extraSpaceBeforeCompactTopTabBar]);
-    const CGFloat maximumInset = [self.tabBarControl maximumLeftInsetFittingAllCellsMinimallyForWidth:stripWidth];
+    const CGFloat maximumInset = [self.tabBarControl maximumLeftInsetLeavingTabsUsableForWidth:stripWidth];
     return (maximumInset -
             [self leadingEdgeForWindowNameBesideTabs] -
             iTermWindowNameBesideTabsRightMargin -
             extraSpace);
 }
 
-// The width the name wants, measured from the string rather than read off the
-// label. -fittingSize makes a text field lay itself out to answer, and this sits
-// on -layoutSubviews' path, which runs on every resize and drag frame.
-- (CGFloat)naturalWindowNameBesideTabsTextWidth {
-    // Nothing can truncate against an unconstrained width, so this out-param is
-    // always NO here and the caller compares against its own allowance instead.
-    BOOL truncated = NO;
-    const NSRect rect = [_windowNameBesideTabsLabel.stringValue
-                            it_boundingRectWithSize:NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX)
-                                         attributes:[self windowNameBesideTabsMetricAttributes]
-                                          truncated:&truncated];
-    return ceil(NSWidth(rect));
+// The width the name wants: what the label needs to draw the whole string, not
+// what the glyphs measure. A text field cell insets its text about two points on
+// each side, so a frame sized to the glyphs leaves the cell short and it
+// truncates -- and truncation drops whole characters, so being four points shy
+// cost a good deal more than four points of name. "-zsh" measured 26 and needed
+// 30, and drew as "-…".
+//
+// The cell answers with the attributed string already in it, which carries the
+// same font and kerning -windowNameBesideTabsMetricAttributes measures with.
+- (CGFloat)naturalWindowNameBesideTabsLabelWidth {
+    return ceil([_windowNameBesideTabsLabel.cell cellSize].width);
 }
 
 - (CGFloat)measuredWindowNameBesideTabsTextWidth {
@@ -633,7 +637,7 @@ typedef struct {
     }
     const CGFloat allowance = MIN(iTermWindowNameBesideTabsMaximumWidth,
                                   [self allowanceForWindowNameBesideTabs]);
-    const CGFloat natural = [self naturalWindowNameBesideTabsTextWidth];
+    const CGFloat natural = [self naturalWindowNameBesideTabsLabelWidth];
     if (natural > allowance) {
         // The name cannot be shown in full: it is truncated, or hidden when the
         // allowance drops below the readable minimum. This fires only for a named
@@ -697,6 +701,15 @@ typedef struct {
                              textWidth,
                              _windowNameBesideTabsLabel.frame.size.height);
     return [self retinaRoundRect:rect];
+}
+
+// The label is painted over the strip and clicks belong to the tab bar
+// underneath it, so this asks about the point rather than hit-testing the view.
+- (BOOL)pointIsInWindowNameBesideTabs:(NSPoint)point {
+    return (!_tabBarControlOnLoan &&
+            !_windowNameBesideTabsLabel.hidden &&
+            !_tabBarControl.isHidden &&
+            NSPointInRect(point, _windowNameBesideTabsLabel.frame));
 }
 
 - (NSRect)frameForWindowTitleLabel {
@@ -2263,6 +2276,15 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (BOOL)iTermTabBarCanDragWindow {
     return [_delegate iTermTabBarCanDragWindow];
+}
+
+- (BOOL)iTermTabBarDoubleClickAtPointInWindow:(NSPoint)pointInWindow {
+    const NSPoint point = [self convertPoint:pointInWindow fromView:nil];
+    if (![self pointIsInWindowNameBesideTabs:point]) {
+        return NO;
+    }
+    [self.delegate rootTerminalViewDidRequestEditWindowName];
+    return YES;
 }
 
 - (void)iTermTabBarDidUpdateProgressBars {

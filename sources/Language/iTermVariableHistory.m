@@ -91,7 +91,8 @@
                                     iTermVariableKeySSHIntegrationLevel,
                                     iTermVariableKeyShell,
                                     iTermVariableKeyUname,
-                                    iTermVariableKeyIsBroadcastSource];
+                                    iTermVariableKeyIsBroadcastSource,
+                                    iTermVariableKeyStatus];
     [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [self recordUseOfVariableNamed:obj inContext:iTermVariablesSuggestionContextSession];
     }];

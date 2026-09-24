@@ -83,6 +83,7 @@ extern NSString *const iTermVariableKeySSHIntegrationLevel;  // NSNumber. 0=none
 extern NSString *const iTermVariableKeyShell;  // NSString. Value of last path component of $SHELL
 extern NSString *const iTermVariableKeyUname;  // NSString. Value of uname -a
 extern NSString *const iTermVariableKeyIsBroadcastSource;  // Bool. True when session is a broadcast source for input broadcasting.
+extern NSString *const iTermVariableKeyStatus;  // String. idle, working, waiting are typical values but it can be anything.
 
 extern NSString *const iTermVariableKeyWindowTitleOverrideFormat;
 extern NSString *const iTermVariableKeyWindowCurrentTab;

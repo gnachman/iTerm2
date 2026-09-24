@@ -420,6 +420,15 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     if (event.clickCount == 2 &&
         [self.itermTabBarDelegate iTermTabBarCanDragWindow] &&
         ![self clickedInCell:event]) {
+        // The double-click is handled here rather than by hit-testing the
+        // decorations painted over the strip to the tab bar's owner: taking a
+        // mouse-down away from this view also takes it out of -mouseDown:
+        // above, which is the only thing that drags a compact window by its
+        // title bar.
+        if ([self.itermTabBarDelegate respondsToSelector:@selector(iTermTabBarDoubleClickAtPointInWindow:)] &&
+            [self.itermTabBarDelegate iTermTabBarDoubleClickAtPointInWindow:event.locationInWindow]) {
+            return;
+        }
         [self.window it_titleBarDoubleClick];
         return;
     }

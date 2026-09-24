@@ -66,19 +66,70 @@ if ( ! ($?iterm2_shell_integration_installed)) then
               endif
           endif
       endif
-      if ( ! ($?iterm2_hostname)) then
-          alias _iterm2_print_remote_host 'printf "1337;RemoteHost=%s@%s" "$USER" `hostname -f`'
-      else
-          alias _iterm2_print_remote_host 'printf "1337;RemoteHost=%s@%s" "$USER" "$iterm2_hostname"'
-      endif
-      alias _iterm2_remote_host "(_iterm2_start; _iterm2_print_remote_host; _iterm2_end)"
+      # OSC 7: report username, hostname, and working directory as a single file
+      # URL, superseding the older 1337;RemoteHost and 1337;CurrentDir codes. The
+      # path is percent-encoded byte-wise by awk (LC_ALL=C) so UTF-8 survives. The
+      # awk program is stored in a variable to keep the alias quoting manageable.
+      # awk splits input on newlines (RS), so a path containing a newline arrives as
+      # multiple records; emit the encoded newline (%0A) between them so it is not
+      # silently dropped.
+      set _iterm2_urlencode_awk = 'BEGIN{for(i=0;i<256;i++)ord[sprintf("%c",i)]=i}{if(NR>1)printf "%%0A";s=$0;for(i=1;i<=length(s);i++){c=substr(s,i,1);if(c~/[\/._~A-Za-z0-9-]/)printf "%s",c;else printf "%%%02X",ord[c]}}'
 
-      # Define aliases for printing the current directory
-      alias _iterm2_print_current_dir 'printf "1337;CurrentDir=$PWD"'
-      alias _iterm2_current_dir "(_iterm2_start; _iterm2_print_current_dir; _iterm2_end)"
+      # Machine identity for localhost detection (see the OSC 7 machineID design).
+      # Version 1 is HMAC-SHA256(fixed key, macOS kern.bootsessionuuid) as hex; the
+      # receiver HMACs its own the same way and compares, so it knows the shell
+      # shares its filesystem without matching hostnames. We HMAC rather than send
+      # the raw per-boot UUID. This is a `set` (not `setenv`) variable, so it never
+      # enters the environment and cannot leak across ssh. A non-Darwin host reports
+      # "1:" (not this Mac); a Darwin failure reports "0:" (identity unavailable ->
+      # hostname fallback).
+      if ( ! ($?_iterm2_machine_id) ) then
+          if ( `uname` == Darwin ) then
+              set _iterm2_bsid = `sysctl -n kern.bootsessionuuid`
+              set _iterm2_machine_id = "0:"
+              if ( "$_iterm2_bsid" != "" ) then
+                  set _iterm2_hmac = `printf "%s" "$_iterm2_bsid" | /usr/bin/openssl dgst -sha256 -hmac "iterm2-osc7-machine-id" | awk '{print $NF}'`
+                  if ( "$_iterm2_hmac" != "" ) set _iterm2_machine_id = "1:$_iterm2_hmac"
+                  unset _iterm2_hmac
+              endif
+              unset _iterm2_bsid
+          else
+              set _iterm2_machine_id = "1:"
+          endif
+      endif
+      set _iterm2_machine_id_query = "?machineID=$_iterm2_machine_id"
+
+      # Sanitize the authority: a username or hostname with a URL-structural
+      # character (/, ?, #, or whitespace) would silently restructure the URL -
+      # recording the wrong directory, or (since the machineID query still parses)
+      # poisoning localhost detection with a truncated host. Keep only a safe set so
+      # a malformed label degrades to a clean name; the username keeps @ (an AD login
+      # like alice@corp.com survives, since URL parsers split on the LAST @).
+      # (`hostname -f`, used when iterm2_hostname is unset, is already clean.)
+      # Sanitize into script-private variables, NOT the user's iterm2_hostname: every
+      # other shell copies into a local and leaves the user's variable intact. The
+      # alias expands its variables at emission time, so it must read the sanitized
+      # private copy (_iterm2_hostname) rather than $iterm2_hostname - otherwise a
+      # value assigned after sourcing would never go through the sed, reopening the
+      # URL-restructuring hole.
+      set _iterm2_user = `printf "%s" "$USER" | sed 's/[^A-Za-z0-9._@-]//g'`
+      if ( $?iterm2_hostname ) then
+          set _iterm2_hostname = `printf "%s" "$iterm2_hostname" | sed 's/[^A-Za-z0-9._-]//g'`
+      endif
+
+      if ( ! ($?iterm2_hostname)) then
+          # Quote the hostname substitution so its output is one argument. An
+          # unquoted backtick word-splits: a hostname containing whitespace would
+          # then fill several %s and push the trailing ?machineID= argument off the
+          # end (silently dropped), and the positions would misalign.
+          alias _iterm2_print_osc7 'printf "7;file://%s@%s%s%s" "$_iterm2_user" "`hostname -f`" `printf "%s" "$PWD" | env LC_ALL=C awk "$_iterm2_urlencode_awk"` "$_iterm2_machine_id_query"'
+      else
+          alias _iterm2_print_osc7 'printf "7;file://%s@%s%s%s" "$_iterm2_user" "$_iterm2_hostname" `printf "%s" "$PWD" | env LC_ALL=C awk "$_iterm2_urlencode_awk"` "$_iterm2_machine_id_query"'
+      endif
+      alias _iterm2_osc7 "(_iterm2_start; _iterm2_print_osc7; _iterm2_end)"
 
       # Define aliases for printing the shell integration version this script is written against
-      alias _iterm2_print_shell_integration_version 'printf "1337;ShellIntegrationVersion=8;shell=tcsh"'
+      alias _iterm2_print_shell_integration_version 'printf "1337;ShellIntegrationVersion=9;shell=tcsh"'
       alias _iterm2_shell_integration_version "(_iterm2_start; _iterm2_print_shell_integration_version; _iterm2_end)"
 
       # Define aliases for defining the boundary between a command prompt and the
@@ -116,7 +167,7 @@ if ( ! ($?iterm2_shell_integration_installed)) then
       (which _iterm2_user_defined_vars >& /dev/null) || alias _iterm2_user_defined_vars ''
 
       # Combines all status update aliases
-      alias _iterm2_update_current_state '_iterm2_remote_host; _iterm2_current_dir; _iterm2_user_defined_vars'
+      alias _iterm2_update_current_state '_iterm2_osc7; _iterm2_user_defined_vars'
 
       # This is necessary so the first command line will have a hostname and current directory.
       _iterm2_update_current_state

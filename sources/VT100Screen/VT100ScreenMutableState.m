@@ -107,6 +107,30 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     [iTermGCD setPerformingJoinedBlock:value];
 }
 
+// Process-wide one-shot for the "AcceptOSC7 is off" warning, so restoring N
+// sessions that each report OSC 7 doesn't stack N modal alerts. Synchronized
+// because sessions run on separate mutation queues.
+static BOOL sOSC7DisabledWarningShown;
+
+// Returns YES for the first caller per app run. Called at presentation time,
+// after the AcceptOSC7 re-check, so the token is spent only when an alert is
+// actually about to be shown.
++ (BOOL)consumeOSC7DisabledWarning {
+    @synchronized (self) {
+        if (sOSC7DisabledWarningShown) {
+            return NO;
+        }
+        sOSC7DisabledWarningShown = YES;
+        return YES;
+    }
+}
+
++ (void)resetOSC7DisabledWarningForTesting {
+    @synchronized (self) {
+        sOSC7DisabledWarningShown = NO;
+    }
+}
+
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     dispatch_queue_t queue = [iTermGCD mutationQueue];
 
@@ -961,155 +985,233 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 
     // Check if we can use the preconverted data from the parser thread.
     BOOL needColorFixup = NO;
-    const BOOL usePreconverted = [self canUsePreconvertedData:pre needColorFixup:&needColorFixup];
+    if (![self canUsePreconvertedData:pre needColorFixup:&needColorFixup]) {
+        [self appendStringAtCursorSlowly:string];
+        return;
+    }
 
+    // Fast or medium path: use the preconverted buffer (space-augmented).
+    screen_char_t *buffer = pre->buffer;
+    len = pre->length;
+    BOOL dwc = pre->foundDwc;
+    BOOL rtlFound = pre->rtlFound;
+
+    if (needColorFixup) {
+        // Medium path: character codes and DWC_RIGHT markers are correct but colors differ.
+        const screen_char_t actualFg = [self.terminal foregroundColorCode];
+        const screen_char_t actualBg = [self.terminal backgroundColorCode];
+        for (int i = 0; i < len; i++) {
+            CopyForegroundColor(&buffer[i], actualFg);
+            CopyBackgroundColor(&buffer[i], actualBg);
+        }
+    }
+
+    // Handle combining mark predecessor fixup.
+    // The preconverted buffer was augmented with a space at index 0.
+    BOOL predecessorIsDoubleWidth = NO;
+    const VT100GridCoord pred = [self.currentGrid coordinateBefore:self.currentGrid.cursor
+                                          movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
+    NSString *predecessorString = pred.x >= 0 ? [self.currentGrid stringOrKittyPlaceholderStringForCharacterAt:pred] : nil;
+    const BOOL hasPredecessor = predecessorString != nil;
+
+    ssize_t bufferOffset = 0;
+    if (hasPredecessor && len > 0) {
+        // The preconverted buffer stands or falls on the prepended space having absorbed the
+        // same prefix of `string` that the real predecessor does. UAX #29 has rules where a
+        // predecessor absorbs more: GB11 (emoji ZWJ sequences), GB6-GB8 (conjoining Hangul
+        // jamo) and GB12/GB13 (regional indicators). When that happens the extra content is
+        // still sitting in the buffer and would be written a second time after having been
+        // merged into the predecessor cell. The parser thread cannot tell -- the predecessor
+        // is what it cannot see -- so it recorded what the space absorbed and the comparison
+        // happens here.
+        NSString *predecessorAugmented = [predecessorString stringByAppendingString:string];
+        const NSRange mergedFirstCluster =
+            [predecessorAugmented rangeOfComposedCharacterSequenceAtIndex:0];
+        const NSInteger absorbedByPredecessor =
+            (NSInteger)mergedFirstCluster.length - (NSInteger)predecessorString.length;
+        if (absorbedByPredecessor < 0 ||
+            absorbedByPredecessor != (NSInteger)pre->firstClusterLengthInString) {
+            [self appendStringAtCursorSlowly:string];
+            return;
+        }
+        // Take the first character from the predecessor-augmented string: computing it from
+        // the bare `string` would give a third answer, matching neither conversion.
+        NSString *augmented = [predecessorAugmented substringWithRange:mergedFirstCluster];
+        screen_char_t firstChars[8] = { 0 };
+        int firstLen = 8;
+        BOOL firstDwc = NO;
+        // After color fixup, buffer[0] has correct fg+bg fields.
+        StringToScreenChars(augmented,
+                            firstChars,
+                            buffer[0],
+                            buffer[0],
+                            &firstLen,
+                            self.config.treatAmbiguousCharsAsDoubleWidth,
+                            NULL,
+                            &firstDwc,
+                            self.config.normalization,
+                            self.config.unicodeVersion,
+                            self.terminal.softAlternateScreenMode,
+                            NULL);
+        // If the predecessor widens by absorbing the incoming code point, its new right
+        // half has to be written, and the space-augmented buffer has no DWC_RIGHT for it:
+        // buffer[0] is the prepended space plus any leading marks and buffer[1] is the
+        // next real character. Reconstructing the spacer here would also have to cope
+        // with the predecessor being the last cell of a soft-wrapped line. Hand the whole
+        // string to the slow path instead, which converts predecessor + string in one go.
+        // Nothing has been mutated yet.
+        if (firstLen > 1 &&
+            ScreenCharIsDWC_RIGHT(firstChars[1]) &&
+            !predecessorIsDoubleWidth) {
+            [self appendStringAtCursorSlowly:string];
+            return;
+        }
+        if (rtlFound) {
+            VT100Grid *grid = self.currentGrid;
+            VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
+            if (!predLineInfo.rtlFound) {
+                // Only on the NO->YES transition: rtlFound is serialized in
+                // per-line metadata; markLineDidChange: dirties the line (so
+                // copyDirtyFromGrid: copies the changed metadata) and bumps the
+                // content generation. Guarding avoids O(width) dirtying + a bump
+                // per append while RTL text streams over an already-RTL line.
+                [predLineInfo setRTLFound:YES];
+                [grid markLineDidChange:pred.y];
+            }
+        }
+        const screen_char_t current = [self.currentGrid characterAt:pred];
+        const unichar predecessorCode = firstChars[0].code;
+        const BOOL predecessorComplexChar = firstChars[0].complexChar;
+        if (current.code != predecessorCode || current.complexChar != predecessorComplexChar) {
+            [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
+                                              dwcFree:YES
+                                                block:^(screen_char_t *sct,
+                                                        iTermExternalAttribute *__autoreleasing *eaOut,
+                                                        VT100GridCoord coord,
+                                                        BOOL *stop) {
+                sct->code = predecessorCode;
+                sct->complexChar = predecessorComplexChar;
+            }];
+        }
+        bufferOffset++;
+        if (predecessorIsDoubleWidth && len > 1 && ScreenCharIsDWC_RIGHT(buffer[1])) {
+            bufferOffset++;
+        }
+    } else if (!buffer[0].complexChar) {
+        // No predecessor; first char is not a combining mark. Skip the prepended space.
+        bufferOffset++;
+    }
+
+    if (dwc) {
+        self.linebuffer.mayHaveDoubleWidthCharacter = dwc;
+    }
+    [self appendScreenCharArrayAtCursor:buffer + bufferOffset
+                                 length:len - bufferOffset
+                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]
+                               rtlFound:rtlFound
+                                dwcFree:!dwc];
+}
+
+// Convert `string` with the real predecessor prepended. Used when there is no usable
+// preconverted buffer, and when the fast path finds that the predecessor widens on merge:
+// the space-augmented buffer has no DWC_RIGHT for the widened cell, and converting
+// predecessor + string in one go produces the whole thing correctly.
+- (void)appendStringAtCursorSlowly:(NSString *)string {
     screen_char_t *buffer;
     screen_char_t *dynamicBuffer = NULL;
     BOOL dwc = NO;
     BOOL rtlFound = NO;
-
-    if (usePreconverted) {
-        // Fast or medium path: use preconverted buffer (space-augmented).
-        buffer = pre->buffer;
-        len = pre->length;
-        dwc = pre->foundDwc;
-        rtlFound = pre->rtlFound;
-
-        if (needColorFixup) {
-            // Medium path: character codes and DWC_RIGHT markers are correct but colors differ.
-            const screen_char_t actualFg = [self.terminal foregroundColorCode];
-            const screen_char_t actualBg = [self.terminal backgroundColorCode];
-            for (int i = 0; i < len; i++) {
-                CopyForegroundColor(&buffer[i], actualFg);
-                CopyBackgroundColor(&buffer[i], actualBg);
-            }
+    const int kStaticBufferElements = 1024;
+    screen_char_t staticBuffer[kStaticBufferElements];
+    string = [string normalized:self.normalization];
+    int len = [string length];
+    if (3 * len >= kStaticBufferElements) {
+        buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(3 * len,
+                                                               sizeof(screen_char_t));
+        assert(buffer);
+        if (!buffer) {
+            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
+            return;
         }
-
-        // Handle combining mark predecessor fixup.
-        // The preconverted buffer was augmented with a space at index 0.
-        BOOL predecessorIsDoubleWidth = NO;
-        const VT100GridCoord pred = [self.currentGrid coordinateBefore:self.currentGrid.cursor
-                                              movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
-        NSString *predecessorString = pred.x >= 0 ? [self.currentGrid stringOrKittyPlaceholderStringForCharacterAt:pred] : nil;
-        const BOOL hasPredecessor = predecessorString != nil;
-
-        ssize_t bufferOffset = 0;
-        if (hasPredecessor && len > 0) {
-            // Re-do the augmentation with the actual predecessor to check if
-            // a combining mark at the start of the string modifies it.
-            const NSRange firstCharRange = [string rangeOfComposedCharacterSequenceAtIndex:0];
-            NSString *firstChar = [string substringWithRange:firstCharRange];
-            NSString *augmented = [predecessorString stringByAppendingString:firstChar];
-            screen_char_t firstChars[8] = { 0 };
-            int firstLen = 8;
-            BOOL firstDwc = NO;
-            // After color fixup, buffer[0] has correct fg+bg fields.
-            StringToScreenChars(augmented,
-                                firstChars,
-                                buffer[0],
-                                buffer[0],
-                                &firstLen,
-                                self.config.treatAmbiguousCharsAsDoubleWidth,
-                                NULL,
-                                &firstDwc,
-                                self.config.normalization,
-                                self.config.unicodeVersion,
-                                self.terminal.softAlternateScreenMode,
-                                NULL);
-            if (rtlFound) {
-                VT100Grid *grid = self.currentGrid;
-                VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
-                if (!predLineInfo.rtlFound) {
-                    // Only on the NO->YES transition: rtlFound is serialized in
-                    // per-line metadata; markLineDidChange: dirties the line (so
-                    // copyDirtyFromGrid: copies the changed metadata) and bumps the
-                    // content generation. Guarding avoids O(width) dirtying + a bump
-                    // per append while RTL text streams over an already-RTL line.
-                    [predLineInfo setRTLFound:YES];
-                    [grid markLineDidChange:pred.y];
-                }
-            }
-            const screen_char_t current = [self.currentGrid characterAt:pred];
-            const unichar predecessorCode = firstChars[0].code;
-            const BOOL predecessorComplexChar = firstChars[0].complexChar;
-            if (current.code != predecessorCode || current.complexChar != predecessorComplexChar) {
-                [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
-                                                  dwcFree:YES
-                                                    block:^(screen_char_t *sct,
-                                                            iTermExternalAttribute *__autoreleasing *eaOut,
-                                                            VT100GridCoord coord,
-                                                            BOOL *stop) {
-                    sct->code = predecessorCode;
-                    sct->complexChar = predecessorComplexChar;
-                }];
-            }
-            bufferOffset++;
-            if (predecessorIsDoubleWidth && len > 1 && ScreenCharIsDWC_RIGHT(buffer[1])) {
-                bufferOffset++;
-            }
-        } else if (!buffer[0].complexChar) {
-            // No predecessor; first char is not a combining mark. Skip the prepended space.
-            bufferOffset++;
-        }
-
-        if (dwc) {
-            self.linebuffer.mayHaveDoubleWidthCharacter = dwc;
-        }
-        [self appendScreenCharArrayAtCursor:buffer + bufferOffset
-                                     length:len - bufferOffset
-                     externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]
-                                   rtlFound:rtlFound
-                                    dwcFree:!dwc];
     } else {
-        // Slow path: augment with actual predecessor and run StringToScreenChars.
-        const int kStaticBufferElements = 1024;
-        screen_char_t staticBuffer[kStaticBufferElements];
-        string = [string normalized:self.normalization];
-        len = [string length];
-        if (3 * len >= kStaticBufferElements) {
-            buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(3 * len,
-                                                                   sizeof(screen_char_t));
-            assert(buffer);
-            if (!buffer) {
-                NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
-                return;
-            }
-        } else {
-            buffer = staticBuffer;
-        }
+        buffer = staticBuffer;
+    }
 
     // `predecessorIsDoubleWidth` will be true if the cursor is over a double-width character
     // but NOT if it's over a DWC_RIGHT.
-        BOOL predecessorIsDoubleWidth = NO;
-        const VT100GridCoord pred = [self.currentGrid coordinateBefore:self.currentGrid.cursor
-                                              movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
-        NSString *augmentedString = string;
-        NSString *predecessorString = pred.x >= 0 ? [self.currentGrid stringOrKittyPlaceholderStringForCharacterAt:pred] : nil;
-        const BOOL augmented = predecessorString != nil;
-        if (augmented) {
-            augmentedString = [predecessorString stringByAppendingString:string];
-        } else {
-        // Prepend a space so we can detect if the first character is a combining mark.
-            augmentedString = [@" " stringByAppendingString:string];
-        }
+    BOOL predecessorIsDoubleWidth = NO;
+    const VT100GridCoord pred = [self.currentGrid coordinateBefore:self.currentGrid.cursor
+                                          movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
+    NSString *augmentedString = string;
+    NSString *predecessorString = pred.x >= 0 ? [self.currentGrid stringOrKittyPlaceholderStringForCharacterAt:pred] : nil;
+    const BOOL augmented = predecessorString != nil;
+    if (augmented) {
+        augmentedString = [predecessorString stringByAppendingString:string];
+    } else {
+    // Prepend a space so we can detect if the first character is a combining mark.
+        augmentedString = [@" " stringByAppendingString:string];
+    }
 
-        // Add DWC_RIGHT after each double-width character, build complex characters out of surrogates
-        // and combining marks, replace private codes with replacement characters, swallow zero-
-        // width spaces, and set fg/bg colors and attributes.
-        StringToScreenChars(augmentedString,
-                            buffer,
-                            [self.terminal foregroundColorCode],
-                            [self.terminal backgroundColorCode],
-                            &len,
-                            self.config.treatAmbiguousCharsAsDoubleWidth,
-                            NULL,
-                            &dwc,
-                            self.config.normalization,
-                            self.config.unicodeVersion,
-                            self.terminal.softAlternateScreenMode,
-                            &rtlFound);
-        ssize_t bufferOffset = 0;
-        if (augmented && len > 0) {
+    // Add DWC_RIGHT after each double-width character, build complex characters out of surrogates
+    // and combining marks, replace private codes with replacement characters, swallow zero-
+    // width spaces, and set fg/bg colors and attributes.
+    StringToScreenChars(augmentedString,
+                        buffer,
+                        [self.terminal foregroundColorCode],
+                        [self.terminal backgroundColorCode],
+                        &len,
+                        self.config.treatAmbiguousCharsAsDoubleWidth,
+                        NULL,
+                        &dwc,
+                        self.config.normalization,
+                        self.config.unicodeVersion,
+                        self.terminal.softAlternateScreenMode,
+                        &rtlFound);
+    ssize_t bufferOffset = 0;
+    if (augmented && len > 0) {
+        // Whether the merged character is wider than the predecessor was. `buffer` holds the
+        // conversion of predecessor + string, so buffer[1] is the merged character's spacer
+        // when it came out double-width.
+        const BOOL mergedIsDoubleWidth = (len > 1 && ScreenCharIsDWC_RIGHT(buffer[1]));
+        const BOOL predecessorWidens = (mergedIsDoubleWidth && !predecessorIsDoubleWidth);
+
+        // In the pending-wrap state the cursor sits at x == width, still on the
+        // predecessor's line, with the predecessor in the last column. A predecessor that
+        // widens there no longer fits on the line, so rewind onto it and re-emit the whole
+        // character rather than editing it in place: the grid's own right-margin handling
+        // then writes DWC_SKIP, marks the line EOL_DWC and puts the character at the start
+        // of the next line, exactly as if both halves had arrived in one write.
+        const BOOL predecessorIsLastCellOfLine =
+            (pred.y == self.currentGrid.cursorY &&
+             pred.x + 1 == self.currentGrid.cursorX &&
+             self.currentGrid.cursorX == self.currentGrid.size.width);
+        if (predecessorWidens && predecessorIsLastCellOfLine) {
+            // The merged character is re-emitted from `buffer`, whose cells were built with
+            // the SGR state of *this* write. Every other path here changes only code and
+            // complexChar on the predecessor and leaves its colors and attributes alone, so
+            // carry the predecessor's own screen_char_t over to keep the two in agreement:
+            // otherwise a character whose halves arrive under different renditions silently
+            // takes the later one.
+            screen_char_t merged = [self.currentGrid characterAt:pred];
+            merged.code = buffer[0].code;
+            merged.complexChar = buffer[0].complexChar;
+            buffer[0] = merged;
+            buffer[1] = merged;
+            ScreenCharSetDWC_RIGHT(&buffer[1]);
+            // The character lands on the next line, so that is where RTL was found.
+            if (rtlFound) {
+                VT100Grid *grid = self.currentGrid;
+                const int landingLine = MIN(pred.y + 1, grid.size.height - 1);
+                VT100LineInfo *landingLineInfo = [grid lineInfoAtLineNumber:landingLine];
+                if (!landingLineInfo.rtlFound) {
+                    [landingLineInfo setRTLFound:YES];
+                    [grid markLineDidChange:landingLine];
+                }
+            }
+            // bufferOffset stays 0 so buffer[0] (the merged character) is what gets
+            // written, starting at the predecessor's column.
+            self.currentGrid.cursorX = pred.x;
+        } else {
             if (rtlFound) {
                 VT100Grid *grid = self.currentGrid;
                 VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
@@ -1139,35 +1241,43 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
             }
             bufferOffset++;
 
-            // Does the augmented result begin with a double-width character? If so skip over the
-            // DWC_RIGHT when appending. I *think* this is redundant with the `predecessorIsDoubleWidth`
-            // test but I'm reluctant to remove it because it could break something.
-            const BOOL augmentedResultBeginsWithDoubleWidthCharacter = (augmented &&
-                                                                        len > 1 &&
-                                                                        ScreenCharIsDWC_RIGHT(buffer[1]) &&
-                                                                        !buffer[1].complexChar);
-            if ((augmentedResultBeginsWithDoubleWidthCharacter || predecessorIsDoubleWidth) && len > 1 && ScreenCharIsDWC_RIGHT(buffer[1])) {
-                // Skip over a preexisting DWC_RIGHT in the predecessor.
+            // The DWC_RIGHT skipped here is one that already exists on the grid after the
+            // predecessor, so the test is about the grid and not about the merged result.
+            // `predecessorIsDoubleWidth` is exactly that: it is set when
+            // -coordinateBefore:movedBackOverDoubleWidth: had to step back over a DWC_RIGHT
+            // to reach `pred`. A narrow predecessor that widens by absorbing the incoming
+            // code point has no DWC_RIGHT yet, so its second cell has to be written.
+            //
+            // The pending-wrap case is handled above. What remains is the predecessor being
+            // the last cell of an earlier soft-wrapped line, reached with the cursor at
+            // column 0; rewinding there would mean moving the cursor onto a previous line,
+            // so the predecessor is left narrow in that corner, as it was before. Writing
+            // the spacer instead would orphan it at column 0 with its left half on the line
+            // above, which is not a representable grid state.
+            const BOOL predecessorAdjoinsCursor = (pred.y == self.currentGrid.cursorY &&
+                                                   pred.x + 1 == self.currentGrid.cursorX);
+            if ((predecessorIsDoubleWidth || !predecessorAdjoinsCursor) && mergedIsDoubleWidth) {
+                // Skip a DWC_RIGHT that already exists on the grid, or one we cannot place.
                 bufferOffset++;
             }
-        } else if (!buffer[0].complexChar) {
-            // We infer that the first character in |string| was not a combining mark. If it were, it
-            // would have combined with the space we added to the start of |augmentedString|. Skip past
-            // the space.
-            bufferOffset++;
         }
+    } else if (!buffer[0].complexChar) {
+        // We infer that the first character in |string| was not a combining mark. If it were, it
+        // would have combined with the space we added to the start of |augmentedString|. Skip past
+        // the space.
+        bufferOffset++;
+    }
 
-        if (dwc) {
-            self.linebuffer.mayHaveDoubleWidthCharacter = dwc;
-        }
-        [self appendScreenCharArrayAtCursor:buffer + bufferOffset
-                                     length:len - bufferOffset
-                     externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]
-                                   rtlFound:rtlFound
-                                    dwcFree:!dwc];
-        if (buffer == dynamicBuffer) {
-            free(buffer);
-        }
+    if (dwc) {
+        self.linebuffer.mayHaveDoubleWidthCharacter = dwc;
+    }
+    [self appendScreenCharArrayAtCursor:buffer + bufferOffset
+                                 length:len - bufferOffset
+                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]
+                               rtlFound:rtlFound
+                                dwcFree:!dwc];
+    if (buffer == dynamicBuffer) {
+        free(buffer);
     }
 }
 
@@ -3910,11 +4020,30 @@ void VT100ScreenEraseCell(screen_char_t *sct,
            user:(NSString *)user
  viaSSHIntegration:(BOOL)viaSSHIntegration
      completion:(void (^)(void))completion {
+    // No machine-identity assertion: locality is computed from the hostname.
+    [self setHost:host
+             user:user
+viaSSHIntegration:viaSSHIntegration
+  machineLocality:VT100RemoteHostLocalityUnknown
+   lastRemoteHost:[self lastRemoteHost]
+       completion:completion];
+}
+
+// machineLocality is an authoritative verdict from an OSC 7 ?machineID token, or
+// .Unknown to mean "no assertion; decide locality from the hostname". It cannot
+// override an ssh/conductor boundary, which is structurally remote.
+- (void)setHost:(NSString *)host
+           user:(NSString *)user
+ viaSSHIntegration:(BOOL)viaSSHIntegration
+ machineLocality:(VT100RemoteHostLocality)machineLocality
+ lastRemoteHost:(id<VT100RemoteHostReading>)lastRemoteHost
+     completion:(void (^)(void))completion {
     // Whether the caller actually reported a hostname (vs. a trigger that
     // supplied only a username and relies on backfill). This decides whether
-    // locality is computed fresh or carried forward.
+    // locality is computed fresh or carried forward. lastRemoteHost is passed in
+    // (not re-fetched) so the OSC 7 path resolves it once for both this and
+    // -normalizeOSC7Host:.
     const BOOL hostWasProvided = (host != nil);
-    id<VT100RemoteHostReading> lastRemoteHost = [self lastRemoteHost];
     if (!host) {
         // A trigger can set the user alone (e.g. "user@"); preserve the
         // previous hostname. The empty string stands in if there's none.
@@ -3929,7 +4058,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // to compare: the machine's names drift over time (mDNS can renumber
     // MacBook-Pro-3.local to -2 tomorrow), so a frozen verdict must not be
     // recomputed from names later. Precedence: an ssh/conductor boundary is
-    // structurally remote and outranks any name comparison.
+    // structurally remote and outranks any name comparison or machine-identity
+    // assertion.
     VT100RemoteHostLocality locality;
     if (viaSSHIntegration) {
         // Reached via ssh integration / conductor: structurally remote, even if
@@ -3937,6 +4067,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         // a container that shares our hostname). We can't prove the filesystem
         // is shared across a real transport, so treat it as remote.
         locality = VT100RemoteHostLocalityRemote;
+    } else if (machineLocality != VT100RemoteHostLocalityUnknown) {
+        // An OSC 7 ?machineID token proved same-machine (or not) by comparing a
+        // machine identity both ends compute independently. Trust it over the
+        // hostname, which is exactly what breaks for VPN / Tailscale / mDNS names.
+        locality = machineLocality;
+        if (locality == VT100RemoteHostLocalityLocalhost && hostWasProvided && host.length > 0) {
+            // Remember the name so hostname-only consumers (click-to-open of
+            // file:// URLs, status bar components) recognize it too, even when it
+            // matches none of the live local names. Only when the hostname was
+            // actually reported: a name backfilled from the previous host is not
+            // what the token vouches for, and remembering it would misclassify a
+            // genuinely remote host as local for the rest of the app run.
+            [NSHost it_rememberVerifiedLocalHostname:host];
+        }
     } else if (!hostWasProvided) {
         // Only a username was reported; the hostname was carried over from the
         // previous host, so its locality carries over too rather than being
@@ -4331,36 +4475,206 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     } name:@"reload mark cache"];
 }
 
+static int iTermHexDigitValue(unsigned char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+}
+
+// Percent-decode `encoded` to raw bytes and interpret them as ISO Latin-1 (a 1:1
+// byte->codepoint map). Fallback for -[NSURLComponents path], which returns @""
+// when any %-escape isn't valid UTF-8 - and Linux filenames are arbitrary byte
+// strings, so a non-UTF-8 directory must still track rather than be dropped. The
+// result is best-effort and will NOT round-trip to the on-disk bytes; treat it as
+// a display value.
+static NSString *iTermLatin1StringFromPercentEncodedPath(NSString *encoded) {
+    NSData *asciiData = [encoded dataUsingEncoding:NSUTF8StringEncoding];
+    if (!asciiData) {
+        return nil;
+    }
+    const unsigned char *bytes = asciiData.bytes;
+    const NSUInteger length = asciiData.length;
+    NSMutableData *decoded = [NSMutableData dataWithCapacity:length];
+    for (NSUInteger i = 0; i < length; i++) {
+        int hi, lo;
+        if (bytes[i] == '%' &&
+            i + 2 < length &&
+            (hi = iTermHexDigitValue(bytes[i + 1])) >= 0 &&
+            (lo = iTermHexDigitValue(bytes[i + 2])) >= 0) {
+            const unsigned char value = (unsigned char)((hi << 4) | lo);
+            [decoded appendBytes:&value length:1];
+            i += 2;
+        } else {
+            [decoded appendBytes:&bytes[i] length:1];
+        }
+    }
+    return [[NSString alloc] initWithData:decoded encoding:NSISOLatin1StringEncoding];
+}
+
+// The reported directory, falling back to an 8-bit decode for a path
+// NSURLComponents refuses to decode.
+static NSString *iTermOSC7PathFromComponents(NSURLComponents *components) {
+    NSString *path = components.path;
+    if (path.length > 0 || components.percentEncodedPath.length == 0) {
+        return path;
+    }
+    NSString *latin1Path = iTermLatin1StringFromPercentEncodedPath(components.percentEncodedPath);
+    if (latin1Path.length == 0) {
+        return path;
+    }
+    DLog(@"OSC 7 path %@ was not valid UTF-8; decoded as ISO Latin-1: %@",
+         components.percentEncodedPath, latin1Path);
+    return latin1Path;
+}
+
+// The ?machineID=<version>:<value> token, or nil if absent. It lets us decide
+// localhost by machine identity rather than by matching hostnames, which break for
+// VPN / Tailscale / mDNS names.
+static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"machineID"]) {
+            return item.value ?: @"";
+        }
+    }
+    return nil;
+}
+
 - (void)setWorkingDirectoryFromURLString:(NSString *)URLString {
     DLog(@"terminalSetWorkingDirectoryURL:%@", URLString);
 
-    if (![iTermAdvancedSettingsModel acceptOSC7]) {
-        return;
-    }
     NSURL *URL = [NSURL URLWithString:URLString];
     if (!URL || URLString.length == 0) {
+        // A hostname illegal in a URL authority (e.g. a space in a user-supplied
+        // iterm2_hostname) makes NSURL nil and discards the whole host+cwd report.
+        // Log it so it's diagnosable from a field log rather than silently stale.
+        DLog(@"OSC 7 URL did not parse; dropping report: %@", URLString);
         return;
     }
     NSURLComponents *components = [[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:NO];
     NSString *host = components.host;
     NSString *user = components.user;
-    NSString *path = components.path;
+    NSString *path = iTermOSC7PathFromComponents(components);
+    NSString *machineID = iTermOSC7MachineIDFromComponents(components);
 
-    if (host.length > 0 || user.length > 0) {
-        __weak __typeof(self) weakSelf = self;
-        [self setHost:host user:user viaSSHIntegration:NO completion:^{
-            [weakSelf setPathFromURL:path];
-        }];
+    if (![iTermAdvancedSettingsModel acceptOSC7]) {
+        [self warnOSC7DisabledIfNeededForMachineID:machineID];
+        return;
+    }
+    _queuedOSC7DisabledWarning = NO;
+
+    // An authoritative same-machine verdict, or Unknown to fall back to the
+    // hostname compare inside -setHost:.
+    const VT100RemoteHostLocality machineLocality = [iTermMachineIdentity localityForMachineIDToken:machineID];
+    // Resolve once and thread it into both normalize and setHost (lastRemoteHost is
+    // cache-backed and can rescan the interval tree).
+    id<VT100RemoteHostReading> lastRemoteHost = [self lastRemoteHost];
+    [self normalizeOSC7Host:&host user:&user machineLocality:machineLocality lastRemoteHost:lastRemoteHost];
+
+    // A machineID token is present iff this OSC 7 came from iTerm2 shell
+    // integration, which also sends OSC 133;A. 133;A owns the prompt, so ours stays
+    // a pure location report; a third-party OSC 7 is the only prompt signal there
+    // is, so it still establishes one. (Our scripts always emit at least "1:", so a
+    // bare "?machineID=" counts as third-party.)
+    const BOOL fromShellIntegration = (machineID.length > 0);
+    __weak __typeof(self) weakSelf = self;
+    void (^completion)(void) = ^{
+        [weakSelf setPathFromURL:path fromShellIntegration:fromShellIntegration];
+    };
+    if (host.length > 0 || user != nil || machineLocality != VT100RemoteHostLocalityUnknown) {
+        [self setHost:host
+                 user:user
+    viaSSHIntegration:NO
+      machineLocality:machineLocality
+       lastRemoteHost:lastRemoteHost
+           completion:completion];
     } else {
-        [self setPathFromURL:path];
+        completion();
     }
 }
 
-- (void)setPathFromURL:(NSString *)path {
+// Applies OSC 7's two carry-forward rules, in the order they depend on: the user
+// rule reads the reported host, so it must run before the host rule may replace it
+// with nil. On return nil means "carry the previous value forward" and @"" means
+// "record no value" - the distinction -setHost: makes with `if (!user)`.
+- (void)normalizeOSC7Host:(NSString *__autoreleasing *)hostPtr
+                     user:(NSString *__autoreleasing *)userPtr
+          machineLocality:(VT100RemoteHostLocality)machineLocality
+           lastRemoteHost:(id<VT100RemoteHostReading>)lastRemoteHost {
+    NSString *host = *hostPtr;
+    NSString *user = *userPtr;
+
+    // Inherit an omitted username only from the SAME host (fish's built-in
+    // file://host/path drops the user) or from a hostless, pure-path report. A
+    // report for a DIFFERENT host (VTE-style file://remotebox/path after
+    // `ssh remotebox`) must not inherit ours, or the remote host mark would be
+    // labeled with the local user.
+    if (user.length == 0) {
+        if (host.length == 0 ||
+            [host caseInsensitiveCompare:lastRemoteHost.hostname ?: @""] == NSOrderedSame) {
+            user = nil;
+        } else {
+            user = @"";
+        }
+    }
+
+    // NSURLComponents.host is @"" (not nil) for both "no authority" (file:///path)
+    // and "empty authority" (file://@/path). With a verdict, that @"" would reach
+    // -setHost: as a *provided* hostname and overwrite the known one, so carry it
+    // forward instead. Without a verdict, leave it as @"" so the hostname compare
+    // still forces Remote.
+    if (host.length == 0 && machineLocality != VT100RemoteHostLocalityUnknown) {
+        host = nil;
+    }
+
+    *hostPtr = host;
+    *userPtr = user;
+}
+
+// OSC 7 arrived while AcceptOSC7 is off. A machineID token marks it as iTerm2's
+// own shell integration, which reports location via OSC 7 instead of the
+// proprietary RemoteHost/CurrentDir codes, so if we've never seen those codes this
+// session the setting is silently breaking shell integration.
+- (void)warnOSC7DisabledIfNeededForMachineID:(NSString *)machineID {
+    if (machineID.length == 0 || _sawProprietaryLocationCode || _queuedOSC7DisabledWarning) {
+        return;
+    }
+    _queuedOSC7DisabledWarning = YES;
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        // Re-check and spend the process-wide one-shot here, at presentation time:
+        // the setting may have been turned back on since this was queued, and the
+        // token must not be spent on a warning that then gets dropped. The
+        // delegate's only job is to present.
+        if ([iTermAdvancedSettingsModel acceptOSC7]) {
+            return;
+        }
+        if (![VT100ScreenMutableState consumeOSC7DisabledWarning]) {
+            return;
+        }
+        [delegate screenDidReceiveOSC7WhileDisabled];
+    } name:@"warn OSC 7 disabled"];
+}
+
+- (void)setPathFromURL:(NSString *)path fromShellIntegration:(BOOL)fromShellIntegration {
+    if (path.length == 0) {
+        // A pathless OSC 7 (file://user@host, or a peer that dropped the path)
+        // carries no directory. Don't fall into currentDirectoryDidChangeTo:'s
+        // empty-dir branch, which polls the local child process for its cwd: over
+        // a plain ssh remote that records the LOCAL directory against the remote
+        // host. Leave the working directory unchanged instead.
+        return;
+    }
     __weak __typeof(self) weakSelf = self;
     [self currentDirectoryDidChangeTo:path completion:^{
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
+            return;
+        }
+        if (fromShellIntegration) {
+            // 133;A owns the prompt mark, the line-style newline injection, and the
+            // auto-composer placement, so a first-party OSC 7 must stay a pure
+            // location report; establishing the prompt here too would inject a
+            // redundant newline and re-reveal the composer for every OSC 7.
             return;
         }
         [strongSelf insertNewlinesBeforeAddingPromptMarkAfterPrompt:YES];
@@ -6803,7 +7117,9 @@ lengthExcludingInBandSignaling:data.length
     }
     NSString *path = [NSString castFrom:terminalState[VT100ScreenTerminalStateKeyPath]];
     if (path) {
-        [self setPathFromURL:path];
+        // A restore (conductor unhook), not a live shell-integration OSC 7: no
+        // 133;A follows, so establish the prompt as before.
+        [self setPathFromURL:path fromShellIntegration:NO];
     }
 }
 

@@ -101,6 +101,26 @@
     return [NSString stringWithFormat:@"glyph-%@", @(_glyphNumber)];
 }
 
+// CTFontGetBoundingRectsForGlyphs returns unhinted design bounds. It takes no context, so
+// unlike iTermRegularCharacterSource we cannot ask CoreText where aliased rasterization
+// will actually land, and hinting can push ink well outside these bounds: over the sweep
+// described in iTermRegularCharacterSource these bounds missed aliased ink in 119 of
+// 330624 cases, by up to 7px, and PT Mono's ellipsis kept escaping until 7px of extra
+// margin. Rather than pick a constant fitted to the fonts that happened to be installed,
+// report the bounds as untrustworthy when drawing aliased and let the caller clear
+// conservatively. Antialiased drawing never escaped, so it keeps the cheap rect.
+//
+// Note this only makes the clear safe. -newParts still selects parts from the tight
+// bounds, so ink outside them is not captured at all. That is a pre-existing and very
+// small loss: over 91200 aliased cases it dropped ink from 27 tiles, 107 pixels in total,
+// all of it in BIZUD Gothic/Mincho (the underscore) and UnicodeIECsymbol. Making it exact
+// means deriving parts from the rasterized ink rather than from a measurement, which has
+// to read _datas rather than the context because -drawWithOffset:iteration: clears as it
+// goes. Not worth that today. Issue 13071.
+- (BOOL)boundsAreTrustworthy {
+    return _antialiased;
+}
+
 - (CGSize)desiredOffset {
     return CGSizeZero;
 }

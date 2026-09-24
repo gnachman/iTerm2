@@ -10,9 +10,12 @@ final class PrivateIPCheckerTests: XCTestCase {
         XCTAssertTrue(PrivateIPChecker.isLocalOrPrivate("localhost"))
     }
 
+    // Host names are case-insensitive (RFC 4343) and NSURL preserves whatever
+    // case was typed, so matching exactly used to let "http://LOCALHOST:1337"
+    // look public and take the user's real vendor API key with it (issue 13021).
     func testLocalhostUppercase() {
-        // DNS names are case-insensitive, but we match exactly
-        XCTAssertFalse(PrivateIPChecker.isLocalOrPrivate("LOCALHOST"))
+        XCTAssertTrue(PrivateIPChecker.isLocalOrPrivate("LOCALHOST"))
+        XCTAssertTrue(PrivateIPChecker.isLocalOrPrivate("LocalHost"))
     }
 
     // MARK: - .local Domain Tests
@@ -23,6 +26,23 @@ final class PrivateIPCheckerTests: XCTestCase {
 
     func testLocalDomainSubdomain() {
         XCTAssertTrue(PrivateIPChecker.isLocalOrPrivate("gpu.server.local"))
+    }
+
+    func testLocalDomainUppercase() {
+        XCTAssertTrue(PrivateIPChecker.isLocalOrPrivate("MyMac.Local"))
+        XCTAssertTrue(PrivateIPChecker.isLocalOrPrivate("osaurus.LOCAL"))
+    }
+
+    // A fully qualified name may carry the DNS root dot, which names the same
+    // host. Failing every suffix test because of it sent the vendor key to a
+    // machine on the LAN (issue 13021).
+    func testTrailingRootDotIsIgnored() {
+        XCTAssertTrue(PrivateIPChecker.isLocalOrPrivate("localhost."))
+        XCTAssertTrue(PrivateIPChecker.isLocalOrPrivate("osaurus.local."))
+        XCTAssertTrue(PrivateIPChecker.isLocalOrPrivate("192.168.1.10."))
+        XCTAssertTrue(PrivateIPChecker.isLocalOrPrivate("LOCALHOST."))
+        // A public name is still public with or without it.
+        XCTAssertFalse(PrivateIPChecker.isLocalOrPrivate("api.openai.com."))
     }
 
     func testLocalDomainNotSuffix() {

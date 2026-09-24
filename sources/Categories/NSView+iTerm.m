@@ -334,4 +334,22 @@ NSRect iTermRectCenteredVerticallyWithinRect(NSRect frameToCenter, NSRect contai
     return [self it_nonDefaultIndicator] != nil;
 }
 
+- (NSUInteger)it_authoredConstraintCount {
+    static Class synthesizedClass;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        synthesizedClass = NSClassFromString(@"NSAutoresizingMaskLayoutConstraint");
+    });
+    if (!synthesizedClass) {
+        return self.constraints.count;
+    }
+    NSUInteger count = 0;
+    for (NSLayoutConstraint *constraint in self.constraints) {
+        if (![constraint isKindOfClass:synthesizedClass]) {
+            count += 1;
+        }
+    }
+    return count;
+}
+
 @end
