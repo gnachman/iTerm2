@@ -186,6 +186,8 @@
 #define KEY_BLEND                  @"Blend"
 #define KEY_BLUR                   @"Blur"
 #define KEY_BLUR_RADIUS            @"Blur Radius"
+#define KEY_BLUR_STYLE             @"Blur Style"  // iTermBlurStyle enum
+#define KEY_POST_PROCESSING_SHADER @"Post-Processing Shader"  // Empty, a built-in shader name, or a path to a shader file
 #define KEY_ANTI_ALIASING          @"Anti Aliasing"  // DEPRECATED
 #define KEY_ASCII_ANTI_ALIASED     @"ASCII Anti Aliased"
 #define KEY_USE_NONASCII_FONT      @"Use Non-ASCII Font"
@@ -508,6 +510,14 @@ typedef NS_ENUM(NSUInteger, iTermHotKeyModifierActivation) {
     iTermHotKeyModifierActivationCommand = 3,
 };
 
+
+// How the content behind a transparent window is treated when Blur is on.
+typedef NS_ENUM(NSInteger, iTermBlurStyle) {
+    iTermBlurStyleClassic = 0,
+    // System Liquid Glass (macOS 26+). Falls back to classic blur on older systems.
+    iTermBlurStyleClearGlass = 1,
+    iTermBlurStyleRegularGlass = 2
+};
 
 typedef NS_ENUM(NSUInteger, iTermBackgroundImageMode) {
     iTermBackgroundImageModeStretch = 0,

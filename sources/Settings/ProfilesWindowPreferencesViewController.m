@@ -54,6 +54,9 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     IBOutlet NSButton *_useBlur;
     IBOutlet NSButton *_initialUseTransparency;
     IBOutlet NSSlider *_blurRadius;
+    IBOutlet NSPopUpButton *_blurStyle;
+    IBOutlet NSPopUpButton *_postProcessingShader;
+    IBOutlet NSTextField *_postProcessingShaderPath;
     IBOutlet NSButton *_useBackgroundImage;
     IBOutlet NSPopUpButton *_backgroundImageSourceMode;
     IBOutlet NSTextField *_backgroundImageLabel;  // text swaps between "Image:" and "Folder:"
@@ -165,9 +168,9 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
         }
         BOOL haveTransparency = (strongSelf->_transparency.doubleValue > 0);
         strongSelf->_transparencyAffectsOnlyDefaultBackgroundColor.enabled = haveTransparency;
-        strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSControlStateValueOn) && haveTransparency;
         strongSelf->_useBlur.enabled = haveTransparency;
         strongSelf->_transparencyOverrideNotice.hidden = !haveTransparency;
+        [strongSelf updateBlurControlsEnabled];
     };
 
     [self defineControl:_initialUseTransparency
@@ -184,10 +187,27 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
         if (!strongSelf) {
             return;
         }
-        BOOL haveTransparency = (strongSelf->_transparency.doubleValue > 0);
-        strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSControlStateValueOn) && haveTransparency;
+        [strongSelf updateBlurControlsEnabled];
         [strongSelf updateBlurRadiusWarning];
     };
+
+    // Liquid Glass needs macOS 26. Keep the choices visible but unavailable elsewhere.
+    _blurStyle.autoenablesItems = NO;
+    if (@available(macOS 26.0, *)) {
+    } else {
+        [_blurStyle.menu itemWithTag:iTermBlurStyleClearGlass].enabled = NO;
+        [_blurStyle.menu itemWithTag:iTermBlurStyleRegularGlass].enabled = NO;
+    }
+    info = [self defineControl:_blurStyle
+                           key:KEY_BLUR_STYLE
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BlurStyle", nil, [NSBundle mainBundle], @"Blur style: classic blur or Liquid Glass", @"Display name for the popup that chooses between classic blur and Liquid Glass behind the window.")
+                          type:kPreferenceInfoTypePopup];
+    info.observer = ^{
+        [weakSelf updateBlurControlsEnabled];
+        [weakSelf updateBlurRadiusWarning];
+    };
+
+    [self definePostProcessingShaderControl];
 
     _blurRadius.maxValue = iTermMaxBlurRadius();
     info = [self defineControl:_blurRadius
@@ -759,9 +779,118 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     }
 }
 
+// Blur needs transparency; the radius only applies to classic blur.
+- (void)updateBlurControlsEnabled {
+    const BOOL haveTransparency = (_transparency.doubleValue > 0);
+    const BOOL blurOn = (_useBlur.state == NSControlStateValueOn) && haveTransparency;
+    _blurStyle.enabled = blurOn;
+    _blurRadius.enabled = blurOn && [self blurStyleIsClassic];
+}
+
+- (BOOL)blurStyleIsClassic {
+    if (@available(macOS 26.0, *)) {
+        return [self integerForKey:KEY_BLUR_STYLE] == iTermBlurStyleClassic;
+    }
+    return YES;
+}
+
+#pragma mark - Post-Processing Shader
+
+// Tags of items in the shader popup.
+typedef NS_ENUM(NSInteger, iTermShaderPopupTag) {
+    iTermShaderPopupTagNone = 0,
+    iTermShaderPopupTagAmberCRT = 1,
+    iTermShaderPopupTagCustom = 2,
+    iTermShaderPopupTagChooseFile = 3
+};
+
+// The profile value for the built-in CRT shader. Names a bundled resource.
+static NSString *const iTermAmberCRTShaderName = @"amber-crt";  // Localization unneeded
+
+- (void)definePostProcessingShaderControl {
+    __weak __typeof(self) weakSelf = self;
+    [self defineControl:_postProcessingShader
+                    key:KEY_POST_PROCESSING_SHADER
+            displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.Shader", nil, [NSBundle mainBundle], @"Shader applied to the terminal", @"Display name for the popup that picks a post-processing shader, such as a CRT effect, for the terminal.")
+                   type:kPreferenceInfoTypePopup
+         settingChanged:^(id sender) {
+        [weakSelf postProcessingShaderPopupDidChange];
+    }
+                 update:^BOOL{
+        [weakSelf updatePostProcessingShaderControls];
+        return YES;
+    }];
+}
+
+- (void)postProcessingShaderPopupDidChange {
+    switch ((iTermShaderPopupTag)_postProcessingShader.selectedTag) {
+        case iTermShaderPopupTagNone:
+            [self setString:@"" forKey:KEY_POST_PROCESSING_SHADER];
+            break;
+        case iTermShaderPopupTagAmberCRT:
+            [self setString:iTermAmberCRTShaderName forKey:KEY_POST_PROCESSING_SHADER];
+            break;
+        case iTermShaderPopupTagCustom:
+            // Already the current shader.
+            break;
+        case iTermShaderPopupTagChooseFile:
+            [self choosePostProcessingShaderFile];
+            break;
+    }
+    [self updatePostProcessingShaderControls];
+}
+
+- (void)updatePostProcessingShaderControls {
+    NSString *shader = [self stringForKey:KEY_POST_PROCESSING_SHADER] ?: @"";
+    const BOOL isCustom = shader.length > 0 && ![shader isEqualToString:iTermAmberCRTShaderName];
+    NSMenuItem *customItem = [_postProcessingShader.menu itemWithTag:iTermShaderPopupTagCustom];
+    customItem.hidden = !isCustom;
+    customItem.title = isCustom ? shader.lastPathComponent : @"";
+    iTermShaderPopupTag tag = iTermShaderPopupTagNone;
+    if (isCustom) {
+        tag = iTermShaderPopupTagCustom;
+    } else if (shader.length > 0) {
+        tag = iTermShaderPopupTagAmberCRT;
+    }
+    [_postProcessingShader selectItemWithTag:tag];
+    _postProcessingShaderPath.hidden = !isCustom;
+    _postProcessingShaderPath.stringValue = isCustom ? [shader stringByAbbreviatingWithTildeInPath] : @"";
+    _postProcessingShaderPath.toolTip = isCustom ? shader : nil;
+}
+
+- (void)choosePostProcessingShaderFile {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseDirectories = NO;
+    panel.canChooseFiles = YES;
+    panel.allowsMultipleSelection = NO;
+    panel.message = NSLocalizedStringWithDefaultValue(@"Profiles.Window.ShaderPickerMessage", nil, [NSBundle mainBundle], @"Choose a Metal shader file that defines mainImage().", @"Prompt in the open panel for choosing a post-processing shader file. mainImage() is the name of a function and should not be translated.");
+    NSMutableArray<UTType *> *types = [NSMutableArray array];
+    for (NSString *extension in @[ @"metal", @"metalsrc" ]) {  // Localization unneeded
+        UTType *type = [UTType typeWithFilenameExtension:extension];
+        if (type) {
+            [types addObject:type];
+        }
+    }
+    panel.allowedContentTypes = types;
+
+    __weak __typeof(self) weakSelf = self;
+    [panel beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse result) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        NSString *path = panel.URLs.firstObject.path;
+        if (result == NSModalResponseOK && path.length > 0) {
+            [strongSelf setString:path forKey:KEY_POST_PROCESSING_SHADER];
+        }
+        // Either way, show the current shader rather than “Choose Shader File…”.
+        [strongSelf updatePostProcessingShaderControls];
+    }];
+}
+
 - (void)updateBlurRadiusWarning {
     // It seems to get slow around this point on some machines circa 2017.
-    if ([self boolForKey:KEY_BLUR] && [self floatForKey:KEY_BLUR_RADIUS] > 26) {
+    if ([self boolForKey:KEY_BLUR] && [self blurStyleIsClassic] && [self floatForKey:KEY_BLUR_RADIUS] > 26) {
         _largeBlurRadiusWarning.hidden = NO;
         return;
     }
@@ -795,6 +924,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     [self loadBackgroundImageForCurrentSource];
     [self updateCustomWindowTitleEnabled];
     [self updateCustomTabTitleEnabled];
+    [self updateBlurControlsEnabled];
     [_customWindowTitle it_removeWarning];
     [_customTabTitle it_removeWarning];
     if (![[self stringForKey:KEY_GUID] isEqual:_lastGuid]) {

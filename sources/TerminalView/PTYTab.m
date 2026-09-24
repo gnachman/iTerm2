@@ -3038,6 +3038,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return y > 0;
 }
 
+- (iTermBlurStyle)blurStyle {
+    for (PTYSession *session in [self sessions]) {
+        if ([iTermProfilePreferences boolForKey:KEY_BLUR inProfile:session.profile]) {
+            return (iTermBlurStyle)[iTermProfilePreferences integerForKey:KEY_BLUR_STYLE inProfile:session.profile];
+        }
+    }
+    return iTermBlurStyleClassic;
+}
+
 - (double)blurRadius {
     double sum = 0;
     double count = 0;

@@ -1769,6 +1769,9 @@ CA
                 <outlet property="_backgroundImageTextField" destination="7Cb-jv-S6d" id="NQK-eu-brl"/>
                 <outlet property="_blendAmount" destination="6320" id="FUt-BP-aez"/>
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
+                <outlet property="_blurStyle" destination="ja8-jH-92j" id="J4F-pv-FjP"/>
+                <outlet property="_postProcessingShader" destination="mba-j0-dYa" id="9Fo-tg-F2O"/>
+                <outlet property="_postProcessingShaderPath" destination="Cy4-rl-4Rn" id="j9P-5u-iCG"/>
                 <outlet property="_byLabel" destination="7so-Zo-Vb0" id="ya9-Ta-IiA"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_columnsUnitsButton" destination="hcl-cH-cmc" id="aP6-UG-v2Q"/>
@@ -4492,11 +4495,11 @@ CA
                     </subviews>
                 </customView>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A7r-Vr-KBC" customClass="iTermTerminalModeEnclosure">
-                    <rect key="frame" x="3" y="646" width="730" height="161"/>
+                    <rect key="frame" x="3" y="646" width="730" height="191"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aTQ-To-rLu" customClass="iTermSlider">
-                            <rect key="frame" x="174" y="40" width="264" height="20"/>
+                            <rect key="frame" x="174" y="70" width="264" height="20"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5363">
@@ -4511,7 +4514,7 @@ CA
                             </subviews>
                         </customView>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Y1h-Ft-NNU">
-                            <rect key="frame" x="442" y="139" width="277" height="22"/>
+                            <rect key="frame" x="442" y="169" width="277" height="22"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" controlSize="mini" title="View &gt; Use Transparency can override this setting temporarily per window." id="RKu-SH-ooZ">
                                 <font key="font" metaFont="miniSystem"/>
@@ -4520,7 +4523,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4980">
-                            <rect key="frame" x="292" y="126" width="98" height="11"/>
+                            <rect key="frame" x="292" y="156" width="98" height="11"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Transparent" id="4981">
                                 <font key="font" metaFont="menu" size="9"/>
@@ -4529,7 +4532,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hcE-h5-rBd">
-                            <rect key="frame" x="-1" y="68" width="168" height="16"/>
+                            <rect key="frame" x="-1" y="98" width="168" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Blur:" id="Gv2-ca-sCH">
                                 <font key="font" metaFont="system"/>
@@ -4538,7 +4541,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nMy-71-ZLL" customClass="iTermTerminalModeEnclosure">
-                            <rect key="frame" x="176" y="82" width="499" height="36"/>
+                            <rect key="frame" x="176" y="112" width="499" height="36"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <button toolTip="Enable this to make non-default background colors always opaque. This is useful when using Powerline in a translucent window." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fwj-4Y-nja" customClass="iTermSettingsCheckbox">
@@ -4556,7 +4559,7 @@ CA
                             </subviews>
                         </customView>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4979">
-                            <rect key="frame" x="171" y="126" width="98" height="11"/>
+                            <rect key="frame" x="171" y="156" width="98" height="11"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Opaque" id="4982">
                                 <font key="font" metaFont="menu" size="9"/>
@@ -4565,7 +4568,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5364">
-                            <rect key="frame" x="171" y="26" width="107" height="11"/>
+                            <rect key="frame" x="171" y="56" width="107" height="11"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Small Radius" id="5367">
                                 <font key="font" metaFont="menu" size="9"/>
@@ -4574,7 +4577,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Vwi-3q-miX" customClass="iTermSlider">
-                            <rect key="frame" x="174" y="141" width="264" height="20"/>
+                            <rect key="frame" x="174" y="171" width="264" height="20"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4978">
@@ -4589,7 +4592,7 @@ CA
                             </subviews>
                         </customView>
                         <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5365">
-                            <rect key="frame" x="297" y="27" width="96" height="11"/>
+                            <rect key="frame" x="297" y="57" width="96" height="11"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Large Radius" id="5366">
                                 <font key="font" metaFont="menu" size="9"/>
@@ -4598,7 +4601,7 @@ CA
                             </textFieldCell>
                         </textField>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4976" customClass="iTermSettingsCheckbox">
-                            <rect key="frame" x="174" y="67" width="433" height="18"/>
+                            <rect key="frame" x="174" y="97" width="242" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Blur content behind the window" bezelStyle="regularSquare" imagePosition="left" alignment="left" continuous="YES" inset="2" id="4985">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4609,7 +4612,7 @@ CA
                             </connections>
                         </button>
                         <textField hidden="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="F89-Ng-LFn">
-                            <rect key="frame" x="445" y="26" width="277" height="29"/>
+                            <rect key="frame" x="445" y="56" width="277" height="29"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" controlSize="mini" alignment="left" title="⚠️ Large radius may reduce performance" id="1JR-lN-kdB">
                                 <font key="font" metaFont="miniSystem"/>
@@ -4618,12 +4621,68 @@ CA
                             </textFieldCell>
                         </textField>
                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4975">
-                            <rect key="frame" x="-2" y="145" width="168" height="16"/>
+                            <rect key="frame" x="-2" y="175" width="168" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Transparency:" id="4986">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <popUpButton toolTip="Liquid Glass refracts what is behind the window. It requires macOS 26 or later." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ja8-jH-92j">
+                            <rect key="frame" x="418" y="92" width="200" height="26"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <popUpButtonCell key="cell" type="push" title="Classic Blur" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Kzb-nD-iGq" id="p2d-aq-YKd">
+                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="message"/>
+                                <menu key="menu" id="ogh-oN-IcD">
+                                    <items>
+                                        <menuItem title="Classic Blur" state="on" id="Kzb-nD-iGq"/>
+                                        <menuItem title="Clear Liquid Glass" tag="1" id="YTj-a9-hfM"/>
+                                        <menuItem title="Regular Liquid Glass" tag="2" id="7om-Lu-9MY"/>
+                                    </items>
+                                </menu>
+                            </popUpButtonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="BMA-OA-Kzc" id="LHj-8z-GLz"/>
+                            </connections>
+                        </popUpButton>
+                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yBf-A7-RTA">
+                            <rect key="frame" x="-1" y="6" width="168" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Shader:" id="lMT-uC-Mol">
+                                <font key="font" metaFont="system"/>
+                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <popUpButton toolTip="A shader transforms the rendered terminal, for example to look like a CRT. Shaders apply when GPU rendering is in use." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mba-j0-dYa">
+                            <rect key="frame" x="171" y="1" width="220" height="26"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <popUpButtonCell key="cell" type="push" title="None" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingMiddle" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="pXF-hE-Wbz" id="eme-Qo-XeC">
+                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="message"/>
+                                <menu key="menu" id="E8m-hP-uCb">
+                                    <items>
+                                        <menuItem title="None" state="on" id="pXF-hE-Wbz"/>
+                                        <menuItem title="Amber CRT" tag="1" id="MxY-Ru-Cu1"/>
+                                        <menuItem isSeparatorItem="YES" tag="-1" id="ADK-MX-m1e"/>
+                                        <menuItem title="Custom Shader" tag="2" id="eg3-MJ-5Ki"/>
+                                        <menuItem title="Choose Shader File…" tag="3" id="AbF-Vo-op1"/>
+                                    </items>
+                                </menu>
+                            </popUpButtonCell>
+                            <connections>
+                                <action selector="settingChanged:" target="BMA-OA-Kzc" id="C30-rV-Ubs"/>
+                            </connections>
+                        </popUpButton>
+                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Cy4-rl-4Rn">
+                            <rect key="frame" x="396" y="7" width="330" height="14"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" controlSize="small" lineBreakMode="truncatingMiddle" selectable="YES" title="Path" id="PcW-TV-dhz">
+                                <font key="font" metaFont="smallSystem"/>
+                                <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
                     </subviews>

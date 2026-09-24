@@ -7291,8 +7291,23 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 }
 
+// Liquid Glass needs macOS 26; older systems get classic blur.
+- (iTermBlurStyle)effectiveBlurStyle {
+    if (@available(macOS 26.0, *)) {
+        return [[self currentTab] blurStyle];
+    }
+    return iTermBlurStyleClassic;
+}
+
 - (void)enableBlur:(double)radius
 {
+    const iTermBlurStyle style = [self effectiveBlurStyle];
+    [_contentView setBlurStyle:style];
+    if (style != iTermBlurStyleClassic) {
+        // The glass does its own refraction and blur of what's behind the window.
+        [self.ptyWindow disableBlur];
+        return;
+    }
     id window = [self window];
     if (nil != window &&
         [window respondsToSelector:@selector(enableBlur:)]) {
@@ -7314,6 +7329,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)reallyDisableBlurIfNeeded {
     if (!self.currentTab.blur) {
+        [_contentView setBlurStyle:iTermBlurStyleClassic];
         [self.ptyWindow disableBlur];
     }
 }

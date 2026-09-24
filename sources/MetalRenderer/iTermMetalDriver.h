@@ -187,6 +187,8 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermMetalDriverDataSource<NSObject>
 
 - (BOOL)metalDriverShouldDrawFrame;
+// Post-processing shader for this session: nil or empty for none, a built-in name, or a path.
+- (nullable NSString *)metalDriverPostProcessingShader;
 - (nullable id<iTermMetalDriverDataSourcePerFrameState>)metalDriverWillBeginDrawingFrame;
 
 - (void)metalDriverDidDrawFrame:(id<iTermMetalDriverDataSourcePerFrameState>)perFrameState;

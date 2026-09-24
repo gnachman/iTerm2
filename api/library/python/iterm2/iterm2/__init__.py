@@ -43,7 +43,7 @@ from iterm2.preferences import PreferenceKey, async_get_preference, async_set_pr
 
 from iterm2.profile import (
     Profile, PartialProfile, BadGUIDException, LocalWriteOnlyProfile,
-    BackgroundImageMode, CursorType, ThinStrokes, UnicodeNormalization,
+    BackgroundImageMode, BlurStyle, CursorType, ThinStrokes, UnicodeNormalization,
     CharacterEncoding, OptionKeySends, InitialWorkingDirectory, IconMode,
     TitleComponents, WriteOnlyProfile)
 

@@ -150,6 +150,16 @@ typedef struct {
 
     // This one is special because it's debug only
     iTermCopyOffscreenRenderer *_copyOffscreenRenderer;
+
+    // Animates the post-processing shader between real frames by re-running just the
+    // shader on the last rendered frame, which is much cheaper than a full redraw.
+    // Guarded by @synchronized(self).
+    id<MTLTexture> _postProcessCachedSource;
+    BOOL _postProcessTickScheduled;
+    BOOL _postProcessTickInFlight;
+    // When the last real frame with post-processing completed. Real frames animate the
+    // shader too, so ticks are only needed when they stop coming.
+    CFTimeInterval _postProcessLastRealFrameTime;
     iTermTexturePool *_fullSizeTexturePool;
 
     // Written on _queue in didComplete:, read on main thread after dispatch_group_wait.
@@ -571,6 +581,16 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
         frameData.debugInfo = [[iTermMetalDebugInfo alloc] init];
         frameData.captureDescriptor = [self triggerProgrammaticCapture:frameData.device];
         self.captureDebugInfoForNextFrame = NO;
+    }
+    if (!frameData.debugInfo && !_captureNextFrame) {
+        iTermPostProcessShaderCache *shaderCache = [iTermPostProcessShaderCache instance];
+        frameData.postProcessPipeline = [shaderCache pipelineForShader:[_dataSource metalDriverPostProcessingShader]
+                                                                device:frameData.device
+                                                           pixelFormat:_framebufferPixelFormat];
+        // Don't burn the GPU animating a window nobody can see. Any change to the
+        // terminal, such as a cursor blink, restarts the animation.
+        const BOOL visible = !!(view.window.occlusionState & NSWindowOcclusionStateVisible);
+        frameData.postProcessFrameRate = visible ? shaderCache.frameRate : 0;
     }
     if (_total > 1) {
         [_startToStartHistogram addValue:startToStartTime * 1000];
@@ -997,7 +1017,25 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
             DLog(@"YIKES! Failed to get an RPD. %@/%@", self, frameData);
             return;
         }
+        if (frameData.postProcessPipeline && !frameData.deferCurrentDrawable) {
+            [self renderToPostProcessSourceInFrameData:frameData];
+        }
     }
+}
+
+// Redirects rendering to an offscreen texture that the post-processing shader will sample
+// while drawing into the drawable. In deferred mode rendering is already offscreen.
+- (void)renderToPostProcessSourceInFrameData:(iTermMetalFrameData *)frameData {
+    MTLRenderPassDescriptor *drawableDescriptor = frameData.renderPassDescriptor;
+    MTLRenderPassDescriptor *sourceDescriptor = [frameData newRenderPassDescriptorWithLabel:@"Post-process source"
+                                                                                       fast:YES];
+    // Begin in the same state the drawable would have, since the texture is recycled.
+    sourceDescriptor.colorAttachments[0].loadAction = drawableDescriptor.colorAttachments[0].loadAction;
+    sourceDescriptor.colorAttachments[0].clearColor = drawableDescriptor.colorAttachments[0].clearColor;
+    frameData.postProcessSourceRenderPassDescriptor = sourceDescriptor;
+    frameData.postProcessDestinationRenderPassDescriptor = drawableDescriptor;
+    frameData.renderPassDescriptor = sourceDescriptor;
+    frameData.destinationTexture = sourceDescriptor.colorAttachments[0].texture;
 }
 
 - (void)enqueueDrawCallsForFrameData:(iTermMetalFrameData *)frameData
@@ -2529,14 +2567,32 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         [frameData.renderEncoder endEncoding];
 
         [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
-        [self drawRenderer:_copyToDrawableRenderer
-                 frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
+        iTermCopyToDrawableRendererTransientState *copyState =
+            [frameData transientStateForRenderer:_copyToDrawableRenderer];
+        if (frameData.postProcessPipeline && copyState.sourceTexture) {
+            [frameData.postProcessPipeline drawWithEncoder:frameData.renderEncoder
+                                             sourceTexture:copyState.sourceTexture
+                                                     scale:frameData.scale];
+        } else {
+            [self drawRenderer:_copyToDrawableRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
+        }
     }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable ofBlock:^{
         DLog(@"  endEncoding %@", frameData);
         [frameData.renderEncoder endEncoding];
     }];
+    if (frameData.postProcessDestinationRenderPassDescriptor) {
+        DLog(@"  Post-process to drawable %@", frameData);
+        [frameData updateRenderEncoderWithRenderPassDescriptor:frameData.postProcessDestinationRenderPassDescriptor
+                                                          stat:iTermMetalFrameDataStatNA
+                                                         label:@"Post-process to drawable"];
+        [frameData.postProcessPipeline drawWithEncoder:frameData.renderEncoder
+                                         sourceTexture:frameData.postProcessSourceRenderPassDescriptor.colorAttachments[0].texture
+                                                 scale:frameData.scale];
+        [frameData.renderEncoder endEncoding];
+    }
 
     if (frameData.debugInfo) {
         DLog(@"  Copy offscreen texture to drawable %@", frameData);
@@ -2620,7 +2676,16 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         }
 
         completed = YES;
+        const BOOL canAnimateCheaply = [self cachePostProcessSourceFromFrameData:frameData];
         [self complete:frameData];
+        if (frameData.postProcessPipeline && frameData.postProcessFrameRate > 0) {
+            if (canAnimateCheaply) {
+                [self schedulePostProcessTickInView:frameData.view];
+            } else {
+                // Deferred-drawable mode has no cached frame, so redraw everything.
+                self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1.0 / frameData.postProcessFrameRate);
+            }
+        }
         [self scheduleDrawIfNeededInView:frameData.view];
 
         __weak __typeof(self) weakSelf = self;
@@ -2635,6 +2700,129 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         }];
     }
     return completed;
+}
+
+#pragma mark - Post-Processing Animation
+
+// Takes ownership of the frame's post-processing source texture so animation ticks can
+// reuse it. Returns whether there is now a cached frame. Must be called before -complete:,
+// which would otherwise return the texture to the pool.
+- (BOOL)cachePostProcessSourceFromFrameData:(iTermMetalFrameData *)frameData {
+    id<MTLTexture> texture = frameData.postProcessSourceRenderPassDescriptor.colorAttachments[0].texture;
+    frameData.postProcessSourceRenderPassDescriptor = nil;
+    id<MTLTexture> previous;
+    @synchronized (self) {
+        previous = _postProcessCachedSource;
+        _postProcessCachedSource = texture;
+        _postProcessLastRealFrameTime = CACurrentMediaTime();
+    }
+    if (previous) {
+        [_fullSizeTexturePool returnTexture:previous];
+    }
+    return texture != nil;
+}
+
+// Any thread.
+- (void)schedulePostProcessTickInView:(iTermMetalView *)view {
+    const double frameRate = [[iTermPostProcessShaderCache instance] frameRate];
+    if (frameRate <= 0) {
+        return;
+    }
+    [self schedulePostProcessTickInView:view after:1.0 / frameRate];
+}
+
+- (void)schedulePostProcessTickInView:(iTermMetalView *)view after:(NSTimeInterval)delay {
+    @synchronized (self) {
+        if (_postProcessTickScheduled) {
+            return;
+        }
+        _postProcessTickScheduled = YES;
+    }
+    __weak __typeof(self) weakSelf = self;
+    __weak iTermMetalView *weakView = view;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(NSEC_PER_SEC * delay)),
+                   dispatch_get_main_queue(), ^{
+        [weakSelf postProcessTickInView:weakView];
+    });
+}
+
+// Main thread. Draws the cached frame through the shader straight into a new drawable.
+// When this declines to draw, the loop stops until the next real frame restarts it.
+- (void)postProcessTickInView:(iTermMetalView *)view {
+    const double frameRate = [[iTermPostProcessShaderCache instance] frameRate];
+    if (frameRate <= 0) {
+        return;
+    }
+    const NSTimeInterval frameInterval = 1.0 / frameRate;
+    id<MTLTexture> source;
+    NSTimeInterval sinceRealFrame;
+    @synchronized (self) {
+        _postProcessTickScheduled = NO;
+        if (_currentFrames.count > 0 || _postProcessTickInFlight) {
+            // The frame in flight will schedule the next tick when it completes.
+            return;
+        }
+        source = _postProcessCachedSource;
+        sinceRealFrame = CACurrentMediaTime() - _postProcessLastRealFrameTime;
+    }
+    if (sinceRealFrame < frameInterval) {
+        // The terminal is redrawing on its own, which keeps the shader animated. Check
+        // again once a frame interval has passed without one.
+        [self schedulePostProcessTickInView:view after:frameInterval - sinceRealFrame];
+        return;
+    }
+    // The Metal view is transparent while the legacy renderer is in use.
+    if (!source || !view.window || view.isHidden || view.alphaValue == 0) {
+        return;
+    }
+    if (!(view.window.occlusionState & NSWindowOcclusionStateVisible)) {
+        return;
+    }
+    if ([iTermAdvancedSettingsModel metalSynchronizedDrawing]) {
+        return;
+    }
+    iTermPostProcessPipeline *pipeline = [[iTermPostProcessShaderCache instance] pipelineForShader:[_dataSource metalDriverPostProcessingShader]
+                                                                                            device:view.device
+                                                                                       pixelFormat:_framebufferPixelFormat];
+    if (!pipeline) {
+        return;
+    }
+    const CGSize drawableSize = view.drawableSize;
+    if (source.width != (NSUInteger)drawableSize.width || source.height != (NSUInteger)drawableSize.height) {
+        // Resized since the last frame. A real redraw gets things back in sync.
+        [view setNeedsDisplay:YES];
+        return;
+    }
+    id<CAMetalDrawable> drawable = [view nextDrawableWithTimeout:1.0 / 60.0];
+    if (!drawable) {
+        [self schedulePostProcessTickInView:view];
+        return;
+    }
+    MTLRenderPassDescriptor *descriptor = [view renderPassDescriptorForDrawable:drawable];
+    id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
+    commandBuffer.label = @"Post-process tick";
+    id<MTLRenderCommandEncoder> encoder = [commandBuffer renderCommandEncoderWithDescriptor:descriptor];
+    encoder.label = @"Post-process tick";
+    [pipeline drawWithEncoder:encoder sourceTexture:source scale:self.mainThreadState->scale];
+    [encoder endEncoding];
+    [commandBuffer presentDrawable:drawable];
+
+    @synchronized (self) {
+        _postProcessTickInFlight = YES;
+    }
+    __weak __typeof(self) weakSelf = self;
+    __weak iTermMetalView *weakView = view;
+    [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull buffer) {
+        __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        @synchronized (strongSelf) {
+            strongSelf->_postProcessTickInFlight = NO;
+        }
+        [strongSelf schedulePostProcessTickInView:weakView];
+    }];
+    [commandBuffer commit];
 }
 
 #pragma mark - Drawing Helpers

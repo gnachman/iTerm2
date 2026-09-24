@@ -254,6 +254,8 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (NSImage*)image:(BOOL)withSpaceForFrame;
 - (BOOL)blur;
 - (double)blurRadius;
+// The blur style of the first blurred session.
+- (iTermBlurStyle)blurStyle;
 
 - (NSSize)_minSessionSize:(SessionView*)sessionView respectPinning:(BOOL)respectPinning;
 - (NSSize)_sessionSize:(SessionView*)sessionView;

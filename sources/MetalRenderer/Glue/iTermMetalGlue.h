@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermImageWrapper *)metalGlueBackgroundImage;
 - (iTermBackgroundImageMode)metalGlueBackgroundImageMode;
 - (CGFloat)metalGlueBackgroundImageBlend;
+- (nullable NSString *)metalGluePostProcessingShader;
 
 @end
 

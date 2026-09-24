@@ -719,6 +719,7 @@
 		2B9C06D0CD49A450A73FA6BF /* APIChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2423D133EA9874246E972978 /* APIChannel.swift */; };
 		2BC74A744CA71657630D2C15 /* iTermInProcessAPIConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 047ECAD2519474D103A60FEC /* iTermInProcessAPIConnection.m */; };
 		2E1AADF79D2B83BA91BA1236 /* iTermGitFileStatus+Diffable.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD3AD5633442A7E32AF367B3 /* iTermGitFileStatus+Diffable.swift */; };
+		2E64C446B60042CE32EAADE7 /* iTermPostProcessRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC57E804313D497F8553FD1F /* iTermPostProcessRenderer.swift */; };
 		2E7E803BDBC6637DCA13222A /* AILiveAttachmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F790CA240B9BA05F26567E86 /* AILiveAttachmentTests.swift */; };
 		2F838DA1B7A01C369B4D8DBD /* OrchestratorSafetyGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7314A7A2A6834D29C14852 /* OrchestratorSafetyGate.swift */; };
 		3026579D9B9E512608DDF368 /* AIReasoningTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBEEBCEC29954CD954C38E3 /* AIReasoningTypes.swift */; };
@@ -5423,6 +5424,8 @@
 		A6FE8D0A209382C000B5C648 /* download.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D06209382C000B5C648 /* download.png */; };
 		A6FE8D0B209382C000B5C648 /* download.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D06209382C000B5C648 /* download.png */; };
 		A6FE8D0C209382C000B5C648 /* download.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D06209382C000B5C648 /* download.png */; };
+		FBA75F4585EAB6B1F9A9B4CE /* iTermPostProcessPrelude.metalsrc in Resources */ = {isa = PBXBuildFile; fileRef = 49A023EE6F61EFB0066C0978 /* iTermPostProcessPrelude.metalsrc */; };
+		05ED03264B343F37D93FE3ED /* amber-crt.metalsrc in Resources */ = {isa = PBXBuildFile; fileRef = 081B189E8BC97E063D95B06E /* amber-crt.metalsrc */; };
 		A6FE8D15209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
 		A6FE8D16209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
 		A6FE8D17209541BC00B5C648 /* rsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A6FE8D14209541BC00B5C648 /* rsa_pub.pem */; };
@@ -9853,6 +9856,8 @@
 		A6FE7AB52E0F27DD00BEBCE4 /* navigate-to-named-mark.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "navigate-to-named-mark.js"; sourceTree = "<group>"; };
 		A6FE8D05209382C000B5C648 /* download@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "download@2x.png"; path = "images/download@2x.png"; sourceTree = "<group>"; };
 		A6FE8D06209382C000B5C648 /* download.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = download.png; path = images/download.png; sourceTree = "<group>"; };
+		49A023EE6F61EFB0066C0978 /* iTermPostProcessPrelude.metalsrc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = iTermPostProcessPrelude.metalsrc; path = OtherResources/iTermPostProcessPrelude.metalsrc; sourceTree = "<group>"; };
+		081B189E8BC97E063D95B06E /* amber-crt.metalsrc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "amber-crt.metalsrc"; path = "OtherResources/amber-crt.metalsrc"; sourceTree = "<group>"; };
 		A6FE8D14209541BC00B5C648 /* rsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = rsa_pub.pem; path = OtherResources/rsa_pub.pem; sourceTree = "<group>"; };
 		A6FEA25D1CF0F20B00376F28 /* iTermEventTap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermEventTap.h; sourceTree = "<group>"; };
 		A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermEventTap.m; sourceTree = "<group>"; };
@@ -9924,6 +9929,7 @@
 		BBCB4235DB8B425C9CD446F5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermShellIntegrationWindowController.xib; sourceTree = "<group>"; };
 		BC034DF3476BBBD391660907 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermKeyMapping.xcstrings; sourceTree = "<group>"; };
 		BC311D11B068490AA711C8BA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Autocomplete.xib; sourceTree = "<group>"; };
+		BC57E804313D497F8553FD1F /* iTermPostProcessRenderer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermPostProcessRenderer.swift; sourceTree = "<group>"; };
 		BCB6504EA9415C3BAC796EA5 /* iTermStandardButtons.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermStandardButtons.h; sourceTree = "<group>"; };
 		BCBB83E64BDE6C3824D5CEF6 /* iTermSuppressedAlertsWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSuppressedAlertsWindowController.swift; sourceTree = "<group>"; };
 		BD02F2955BAF479EBAC063FE /* MentionParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MentionParser.swift; sourceTree = "<group>"; };
@@ -10678,6 +10684,8 @@
 				53B93DE021F25E79001EC59C /* iterm2_git_wrapper.sh */,
 				5376CB3B220D2E4300FE7476 /* git.sb */,
 				A6EEAED2283072CA0039E850 /* framer.py */,
+				081B189E8BC97E063D95B06E /* amber-crt.metalsrc */,
+				49A023EE6F61EFB0066C0978 /* iTermPostProcessPrelude.metalsrc */,
 				A65DF4A42849C11D00AA29AB /* bash-si-loader */,
 				DF18C01510605DB0C639038F /* ai-models.json */,
 			);
@@ -12549,6 +12557,7 @@
 				A62A79AD2F98835A007CAA0B /* TerminalButtonRenderer.swift */,
 				A62A79AE2F98835A007CAA0B /* UnderlineCompositeRenderer.swift */,
 				A62A79AF2F98835A007CAA0B /* UnderlineRenderer.swift */,
+				BC57E804313D497F8553FD1F /* iTermPostProcessRenderer.swift */,
 			);
 			path = Renderers;
 			sourceTree = "<group>";
@@ -19628,6 +19637,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				05ED03264B343F37D93FE3ED /* amber-crt.metalsrc in Resources */,
+				FBA75F4585EAB6B1F9A9B4CE /* iTermPostProcessPrelude.metalsrc in Resources */,
 				A6109B612B969B4100D8E4E9 /* graphic_neovim.png in Resources */,
 				A62A78DA2F987FA7007CAA0B /* iTermBadgeConfigurationWindowController.xib in Resources */,
 				A65DF4A12849601A00AA29AB /* .zshenv in Resources */,
@@ -22493,6 +22504,7 @@
 				796E31ABF13A4A84DA64E407 /* iTermTabGroupBuiltInFunctions.h in Sources */,
 				7BBAFFE1ADCFD95F75F66F9E /* iTermMachineIdentity.swift in Sources */,
 				0792C6E221685C8DCF4C5FFE /* AIWithheldKeyAdvice.swift in Sources */,
+				2E64C446B60042CE32EAADE7 /* iTermPostProcessRenderer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

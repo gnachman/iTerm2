@@ -643,6 +643,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     int _nextMetalDisabledToken;
     NSMutableSet *_metalDisabledTokens;
     BOOL _metalDeviceChanging;
+    // Whether the profile had a post-processing shader when it was last applied.
+    BOOL _hasPostProcessingShader;
 
     iTermVariables *_userVariables;
     iTermSwiftyString *_badgeSwiftyString;
@@ -6150,6 +6152,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self setTransparency:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:aDict]];
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR inProfile:aDict]];
 
+    // post-processing shader
+    [self postProcessingShaderDidChangeTo:[iTermProfilePreferences stringForKey:KEY_POST_PROCESSING_SHADER inProfile:aDict]];
+
     // bold
     [self setUseBoldFont:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_FONT
                                                    inProfile:aDict]];
@@ -9181,6 +9186,26 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 #pragma mark iTermMetalGlueDelegate
 
+- (nullable NSString *)metalGluePostProcessingShader {
+    return [iTermProfilePreferences stringForKey:KEY_POST_PROCESSING_SHADER inProfile:self.profile];
+}
+
+- (void)postProcessingShaderDidChangeTo:(NSString *)shader {
+    const BOOL hasShader = shader.length > 0;
+    const BOOL changed = (hasShader != _hasPostProcessingShader);
+    _hasPostProcessingShader = hasShader;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (changed) {
+            // A shader keeps the GPU renderer on even when idle (see -idleForMetal).
+            [strongSelf.delegate sessionUpdateMetalAllowed];
+        }
+        // Draw a frame so the new shader takes effect and starts animating.
+        [strongSelf.view.metalView setNeedsDisplay:YES];
+    });
+}
+
 - (iTermImageWrapper *)metalGlueBackgroundImage {
     if ([iTermPreferences perPaneBackgroundImage]) {
         return _backgroundImage;
@@ -9473,6 +9498,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return (!_cadenceController.isActive &&
             !_view.verticalScroller.userScroll &&
             !self.overrideGlobalDisableMetalWhenIdleSetting &&
+            !_hasPostProcessingShader &&
             !_view.driver.captureDebugInfoForNextFrame);
 }
 

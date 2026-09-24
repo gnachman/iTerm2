@@ -179,6 +179,8 @@ typedef struct {
     iTermImageView *_backgroundImage;
     iTermLayerBackedSolidColorView *_notchMask NS_AVAILABLE_MAC(12_0);
     iTermCompactProxyIconView *_compactProxyIconView;
+    // An NSGlassEffectView on macOS 26+, or nil when Liquid Glass is off.
+    NSView *_liquidGlassView;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -337,6 +339,27 @@ typedef struct {
 - (void)advancedSettingsDidChange:(NSNotification *)notification {
     [self updateBorderViews];
     [self updateWindowNameBesideTabs];
+}
+
+- (void)setBlurStyle:(iTermBlurStyle)style {
+    if (@available(macOS 26.0, *)) {
+        if (style == iTermBlurStyleClassic) {
+            [_liquidGlassView removeFromSuperview];
+            _liquidGlassView = nil;
+            return;
+        }
+        NSGlassEffectView *glass = (NSGlassEffectView *)_liquidGlassView;
+        if (!glass) {
+            glass = [[NSGlassEffectView alloc] initWithFrame:self.bounds];
+            glass.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+            // Behind everything else, so the terminal draws over the glass.
+            [self addSubview:glass positioned:NSWindowBelow relativeTo:nil];
+            _liquidGlassView = glass;
+        }
+        glass.style = (style == iTermBlurStyleRegularGlass) ? NSGlassEffectViewStyleRegular : NSGlassEffectViewStyleClear;
+        glass.cornerRadius = [self resolvedWindowBorderCornerRadius];
+        glass.frame = self.bounds;
+    }
 }
 
 - (void)setDelegate:(id<iTermRootTerminalViewDelegate>)delegate {
@@ -1124,6 +1147,10 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     _windowBorderView.haveRightEdge = self.delegate.haveRightBorderRegardlessOfScrollBar;
     _windowBorderView.haveBottomEdge = self.delegate.haveBottomBorder;
     _windowBorderView.borderColor = [self resolvedWindowBorderColor];
+    if (@available(macOS 26.0, *)) {
+        // The corner radius may have just been detected.
+        ((NSGlassEffectView *)_liquidGlassView).cornerRadius = [self resolvedWindowBorderCornerRadius];
+    }
 }
 
 - (void)setUseMetal:(BOOL)useMetal {
@@ -1962,6 +1989,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (void)layoutSubviews {
     DLog(@"Before:\n%@", [self iterm_recursiveDescription]);
+    _liquidGlassView.frame = self.bounds;
     [self.delegate rootTerminalViewWillLayoutSubviews];
     // Everything the window name's width depends on -- our frame, the toolbelt,
     // the tab bar's settings -- may have moved since the last pass.

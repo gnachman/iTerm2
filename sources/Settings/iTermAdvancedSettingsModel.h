@@ -326,6 +326,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)menuTipDelay;
 + (double)metalRedrawPeriod;
 + (double)metalSlowFrameRate;
++ (double)postProcessingShaderFrameRate;
 + (BOOL)middleClickClosesTab;
 + (int)minCompactTabWidth;
 + (double)minimalDeslectedColoredTabAlpha;
