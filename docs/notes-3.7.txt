@@ -690,3 +690,10 @@ Bug Fixes:
   workaround targeted macOS 10.14 and has been
   removed, so the setting is gone and anyone
   who had it on now gets the normal behavior.
+- Fixed a bug on macOS 26 where pressing
+  Cmd-Tab to leave a full screen window would
+  flash the other app and immediately switch
+  back to iTerm2, sometimes leaving you unable
+  to change apps without the mouse. This
+  affected windows using the older full screen
+  style with menu bar hiding turned on.

@@ -146,6 +146,7 @@ static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
     [self setApplicationPresentationFlagsWithHiddenDock:shouldHideDock
                                                 menuBar:shouldHideMenuBar
                                          screenWithDock:screenWithDock
+                                                  force:NO
                                                 attempt:attempt];
     DLog(@"END update");
 }
@@ -209,7 +210,7 @@ static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
 }
 
 - (void)forceShowMenuBarAndDock {
-    [self setApplicationPresentationFlagsWithHiddenDock:NO menuBar:NO screenWithDock:nil attempt:0];
+    [self setApplicationPresentationFlagsWithHiddenDock:NO menuBar:NO screenWithDock:nil force:YES attempt:0];
 }
 
 NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
@@ -233,6 +234,7 @@ NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
 - (void)setApplicationPresentationFlagsWithHiddenDock:(BOOL)shouldHideDock
                                               menuBar:(BOOL)shouldHideMenuBar
                                        screenWithDock:(NSScreen *)screenWithDock
+                                                force:(BOOL)force
                                               attempt:(int)attempt {
     DLog(@"setting options: hide dock=%@ hide menu bar=%@", @(shouldHideDock), @(shouldHideMenuBar));
 
@@ -258,6 +260,30 @@ NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
     if (NSApp.presentationOptions == presentationOptions) {
         return;
     }
+
+    // Presentation options only apply while we are the active app, and macOS
+    // drops ours on deactivation without being asked. Writing them while
+    // inactive is therefore redundant, and on macOS 26 it perturbs the
+    // app-switch handshake: the system hands activation straight back to us, so
+    // cmd-tabbing out of a non-native fullscreen window flashes the other app
+    // and snaps back to the terminal. Issue 12993.
+    //
+    // The call site that made this look necessary is
+    // -[PseudoTerminal windowDidResignKey:], which has restored the menu bar
+    // since 2010, when it used the process-global +[NSMenu setMenuBarVisible:]
+    // and genuinely had to. Presentation options replaced that API in 2011 and
+    // the restore has been dead weight ever since. We compute the right state
+    // again the next time we become active.
+    //
+    // -forceShowMenuBarAndDock passes force:YES because the hotkey window's
+    // previous-state restoration and the issue 4136 workaround both have to
+    // write while another app is active.
+    if (!force && !NSApp.isActive) {
+        RLog(@"Not setting presentation options to %@ because the app is inactive",
+             PODescription(presentationOptions));
+        return;
+    }
+
     if (presentationOptions & NSApplicationPresentationFullScreen) {
         // Do not remove auto-hide dock/menubar when in full screen or else you don't get
         // a title bar w/ title bar view controller. A new feature of macOS 10.15.6.
