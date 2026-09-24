@@ -20,6 +20,7 @@ private class FlippedVisualEffectView: NSVisualEffectView {
 
 private class SessionNoteTextView: NSTextView {
     var collapseHandler: (() -> Void)?
+    var didBecomeFirstResponderHandler: (() -> Void)?
 
     // Bind the undo stack to this text view's lifetime. NSUndoManager holds
     // undo targets unowned(unsafe), so registering text-edit undo on a shared
@@ -38,6 +39,14 @@ private class SessionNoteTextView: NSTextView {
 
     override func paste(_ sender: Any?) {
         pasteAsPlainText(sender)
+    }
+
+    override func becomeFirstResponder() -> Bool {
+        let result = super.becomeFirstResponder()
+        if result {
+            didBecomeFirstResponderHandler?()
+        }
+        return result
     }
 }
 
@@ -58,6 +67,8 @@ class SessionNoteView: NSView, NSTextViewDelegate {
     private let collapseButton: NSButton
 
     private var expandedHeight: CGFloat
+    // False from when the note takes focus with the pointer outside it until the pointer first enters it.
+    private var pointerHasEnteredSinceFocus = true
     private var isDragging = false
     private var dragOrigin = NSPoint.zero
     private var frameOriginAtDragStart = NSPoint.zero
@@ -93,6 +104,43 @@ class SessionNoteView: NSView, NSTextViewDelegate {
             animateCollapseChange()
             delegate?.sessionNoteViewDidUpdateFrame(self)
         }
+    }
+
+    // Keep keyboard focus in the note when the pointer crosses into or over the pane.
+    override func it_focusFollowsMouseImmune() -> Bool {
+        return true
+    }
+
+    // Until the pointer has entered the note, don't let focus-follows-mouse move focus to any pane.
+    override func it_focusFollowsMouseHoldsFocus() -> Bool {
+        return !pointerHasEnteredSinceFocus
+    }
+
+    private var pointerIsInside: Bool {
+        guard let window else {
+            return false
+        }
+        let point = convert(window.mouseLocationOutsideOfEventStream, from: nil)
+        return bounds.contains(point)
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for area in trackingAreas where area.owner === self {
+            removeTrackingArea(area)
+        }
+        addTrackingArea(NSTrackingArea(rect: .zero,
+                                       options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                       owner: self,
+                                       userInfo: nil))
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        if !pointerHasEnteredSinceFocus {
+            DLog("Pointer entered session note; focus-follows-mouse may move focus again")
+            pointerHasEnteredSinceFocus = true
+        }
+        super.mouseEntered(with: event)
     }
 
     // MARK: - Init
@@ -195,6 +243,13 @@ class SessionNoteView: NSView, NSTextViewDelegate {
         textView.delegate = self
         textView.collapseHandler = { [weak self] in
             self?.isCollapsed = true
+        }
+        textView.didBecomeFirstResponderHandler = { [weak self] in
+            guard let self else {
+                return
+            }
+            pointerHasEnteredSinceFocus = pointerIsInside
+            DLog("Session note became first responder; pointer inside=\(pointerHasEnteredSinceFocus)")
         }
         textView.string = model.text
 
