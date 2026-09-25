@@ -1797,9 +1797,11 @@ extension PTYSession {
 
         let nextText = update.text ?? sessionNoteModel?.text ?? ""
         let nextVisible = update.visible ?? view?.isSessionNoteVisible ?? false
-        let nextCollapsed = update.collapsed ?? sessionNoteModel?.isCollapsed ?? false
 
-        guard !nextText.isEmpty || (!nextVisible && !nextCollapsed) else {
+        // Only an explicit request to show or collapse an empty note is an error, which is also what
+        // the pre-check in -[iTermAPIHelper setSessionNote] tests. Falling back to current state here
+        // instead would reject hiding a note whose text was cleared in the Notes toolbelt.
+        guard !nextText.isEmpty || (update.visible != true && update.collapsed != true) else {
             return false
         }
         if nextText.isEmpty {
@@ -1820,6 +1822,9 @@ extension PTYSession {
                 view?.restoreSessionNote(with: model)
             } else {
                 view?.hideSessionNote()
+                // -hideSessionNote does this too, but a session with no view still needs the model to
+                // record that the note is not showing, or a later restore would float it.
+                model.isVisible = false
             }
         }
         if let collapsed = update.collapsed {

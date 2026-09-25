@@ -449,6 +449,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     NSString *_termVariable;
 
+    // Highest note-model generation this session has ever installed. See -setSessionNoteModel:.
+    NSInteger _sessionNoteGenerationFloor;
+
     // Has the underlying connection been closed?
     BOOL _exited;
 
@@ -1977,9 +1980,31 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([_foundingArrangement[SESSION_ARRANGEMENT_FILTER] length] > 0) {
         [self.delegate session:self setFilter:_foundingArrangement[SESSION_ARRANGEMENT_FILTER]];
     }
-    if (_sessionNoteModel.hasContent) {
+    // A note is encoded whenever it has text, including one the user hid or one that only ever
+    // existed in the Notes toolbelt, so restoring unconditionally would float a note that was not
+    // showing when the arrangement was saved.
+    if (_sessionNoteModel.hasContent && _sessionNoteModel.isVisible) {
         [_view restoreSessionNoteWithModel:_sessionNoteModel];
     }
+}
+
+- (void)setSessionNoteModel:(iTermSessionNoteModel *)sessionNoteModel {
+    if (sessionNoteModel == _sessionNoteModel) {
+        return;
+    }
+    // The arrangement encoder reuses the saved note record whenever the generation it is handed equals
+    // the record's, and a fresh model starts counting from zero. Clearing a note and then creating
+    // another could therefore hand it the same generation the old note was saved at, and the stale
+    // text would win. Keep a floor across replacements so the counter never restarts.
+    _sessionNoteGenerationFloor = MAX(_sessionNoteGenerationFloor, _sessionNoteModel.generation);
+    [_sessionNoteModel release];
+    _sessionNoteModel = [sessionNoteModel retain];
+    [_sessionNoteModel advanceGenerationPast:_sessionNoteGenerationFloor];
+    // The Notes toolbelt holds onto the model it is editing and only reloads when the key session or
+    // its mode changes. Without this it would keep editing a model this session has dropped, and the
+    // user's next keystroke there would go nowhere.
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionNoteModel.modelDidChangeNotification
+                                                        object:self];
 }
 
 - (PTYSession *)newSessionForChannelID:(NSString *)channelID command:(NSString *)command {

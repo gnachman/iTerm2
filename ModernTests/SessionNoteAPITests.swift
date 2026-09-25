@@ -191,4 +191,192 @@ final class SessionNoteAPITests: XCTestCase {
             "collapsed": true,
         ])
     }
+
+    // MARK: - Visibility round-trip
+
+    private func makeSessionWithView() -> (PTYSession, SessionView) {
+        let session = makeSession()
+        let view = SessionView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        session.view = view
+        return (session, view)
+    }
+
+    private func encodedArrangement(_ model: SessionNoteModel) -> NSDictionary {
+        let adapter = iTermMutableDictionaryEncoderAdapter.encoder()
+        model.encode(with: adapter)
+        return adapter.mutableDictionary as NSDictionary
+    }
+
+    func testHiddenNoteDoesNotComeBackVisible() {
+        let (session, view) = makeSessionWithView()
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": "notes", "visible": true])!))
+        XCTAssertTrue(view.isSessionNoteVisible)
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["visible": false])!))
+        XCTAssertFalse(view.isSessionNoteVisible)
+        let arrangement = encodedArrangement(session.sessionNoteModel!)
+
+        let (restored, restoredView) = makeSessionWithView()
+        restored.hydrateSessionNote(fromArrangement: arrangement)
+        restored.didFinishRestoration()
+
+        XCTAssertEqual(restored.sessionNoteModel?.text, "notes")
+        XCTAssertFalse(restoredView.isSessionNoteVisible)
+        XCTAssertEqual(restored.sessionNoteAPIDictionary["visible"] as? Bool, false)
+    }
+
+    func testVisibleNoteComesBackVisible() {
+        let (session, view) = makeSessionWithView()
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": "notes", "visible": true, "collapsed": true])!))
+        XCTAssertTrue(view.isSessionNoteVisible)
+        let arrangement = encodedArrangement(session.sessionNoteModel!)
+
+        let (restored, restoredView) = makeSessionWithView()
+        restored.hydrateSessionNote(fromArrangement: arrangement)
+        restored.didFinishRestoration()
+
+        XCTAssertTrue(restoredView.isSessionNoteVisible)
+        XCTAssertEqual(restored.sessionNoteAPIDictionary as? [String: AnyHashable], [
+            "text": "notes",
+            "visible": true,
+            "collapsed": true,
+        ])
+    }
+
+    func testNoteThatWasNeverShownDoesNotFloatOnRestore() {
+        let session = makeSession()
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": "toolbelt only"])!))
+        let arrangement = encodedArrangement(session.sessionNoteModel!)
+
+        let (restored, restoredView) = makeSessionWithView()
+        restored.hydrateSessionNote(fromArrangement: arrangement)
+        restored.didFinishRestoration()
+
+        XCTAssertEqual(restored.sessionNoteModel?.text, "toolbelt only")
+        XCTAssertFalse(restoredView.isSessionNoteVisible)
+    }
+
+    // The delta encoder reuses the previously encoded record whenever the generation has not moved,
+    // so a visibility change that does not bump it would never reach saved state.
+    func testVisibilityChangeBumpsGeneration() {
+        let model = SessionNoteModel()
+        model.text = "content"
+        let generationBefore = model.generation
+
+        model.isVisible = true
+
+        XCTAssertGreaterThan(model.generation, generationBefore)
+    }
+
+    func testArrangementWithoutVisibleKeyRestoresShowing() {
+        let model = SessionNoteModel.fromArrangement(["text": "written by an older build"])
+
+        XCTAssertEqual(model?.isVisible, true)
+    }
+
+    // A restored model that restarted near zero could later reach the generation the record was
+    // saved at, and the delta encoder would then reuse the stale record instead of the edits.
+    func testRestoredModelResumesTheSavedGeneration() {
+        let model = SessionNoteModel()
+        model.text = "typed"
+        model.isVisible = true
+        model.isCollapsed = true
+        model.noteFrame = NSRect(x: 1, y: 2, width: 300, height: 200)
+        model.text = "typed more"
+        model.text = "typed even more"
+        let savedGeneration = model.generation
+
+        let restored = SessionNoteModel.fromArrangement(encodedArrangement(model))!
+
+        XCTAssertEqual(restored.generation, savedGeneration)
+        XCTAssertEqual(restored.text, "typed even more")
+        XCTAssertEqual(restored.isCollapsed, true)
+        XCTAssertEqual(restored.noteFrame, NSRect(x: 1, y: 2, width: 300, height: 200))
+    }
+
+    func testRestoredModelIsNeverBehindTheSavedGeneration() {
+        // A hand-edited or corrupt generation smaller than what restoring the properties already
+        // reached must not wind the counter backwards.
+        let restored = SessionNoteModel.fromArrangement([
+            "text": "typed",
+            "visible": true,
+            "collapsed": true,
+            "generation": 1,
+        ])!
+
+        XCTAssertGreaterThanOrEqual(restored.generation, 3)
+    }
+
+    func testHidingWithoutALiveViewRecordsTheNoteAsHidden() {
+        let session = makeSession()
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": "content"])!))
+
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["visible": false])!))
+
+        XCTAssertEqual(session.sessionNoteModel?.isVisible, false)
+    }
+
+    // MARK: - Model replacement
+
+    func testReplacingTheModelNotifiesObservers() {
+        let session = makeSession()
+        var posted = 0
+        let token = NotificationCenter.default.addObserver(
+            forName: SessionNoteModel.modelDidChangeNotification,
+            object: session,
+            queue: nil) { _ in posted += 1 }
+        defer { NotificationCenter.default.removeObserver(token) }
+
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": "created"])!))
+        XCTAssertEqual(posted, 1)
+
+        // A patch that keeps the same model must not claim a replacement.
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": "revised"])!))
+        XCTAssertEqual(posted, 1)
+
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": ""])!))
+        XCTAssertNil(session.sessionNoteModel)
+        XCTAssertEqual(posted, 2)
+    }
+
+    // The delta encoder reuses the saved record when the generation it is handed matches, so a
+    // replacement model must never land on a generation the previous one already reached.
+    func testReplacementModelStartsPastThePreviousGeneration() {
+        let session = makeSession()
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": "old"])!))
+        let oldGeneration = session.sessionNoteModel!.generation
+
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": ""])!))
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": "new"])!))
+
+        XCTAssertGreaterThan(session.sessionNoteModel!.generation, oldGeneration)
+    }
+
+    // MARK: - Validator parity with the API pre-check
+
+    func testHidingANoteWhoseTextWasClearedElsewhereSucceeds() {
+        let session = makeSession()
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["text": "temporary", "collapsed": true])!))
+        // Stands in for the user clearing the text in the Notes toolbelt, which leaves a collapsed
+        // model with no content behind. -[iTermAPIHelper setSessionNote] admits this patch, so
+        // applying it must not report failure.
+        session.sessionNoteModel?.text = ""
+
+        XCTAssertTrue(session.applySessionNoteAPIUpdate(
+            SessionNoteAPIUpdate.parse(["visible": false])!))
+
+        XCTAssertNil(session.sessionNoteModel)
+    }
 }
