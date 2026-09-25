@@ -22819,6 +22819,18 @@
         }
       }
     },
+    "Ctn-Lb-9wq.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Centered, No Title Bar\"; ObjectID = \"Ctn-Lb-9wq\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Centered, No Title Bar"
+          }
+        }
+      }
+    },
     "CTV-C2-y5j.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"⌥ Left Option\"; ObjectID = \"CTV-C2-y5j\";",
       "extractionState" : "extracted_with_value",
