@@ -429,7 +429,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenPushKeyLabels:(NSString * _Nonnull)value;
 - (void)screenPopKeyLabels:(NSString * _Nonnull)value;
 - (void)screenSendModifiersDidChange;
-- (void)screenKeyReportingFlagsDidChange;
+- (void)screenKeyReportingFlagsDidChange:(BOOL)wholeValueReplaced;
+
+// iTerm2 reset the key reporting mode itself. See terminalDidResetKeyReportingLocally.
+- (void)screenDidResetKeyReportingLocally;
 
 - (void)screenTerminalAttemptedPasteboardAccess;
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus;

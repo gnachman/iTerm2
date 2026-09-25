@@ -2506,7 +2506,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self invalidateCommandStartCoordWithoutSideEffects];
     // currentGrid selects which key-reporting stack contributes the effective flags.
     if (oldKeyReportingFlags != self.terminalKeyReportingFlags) {
-        [self terminalKeyReportingFlagsDidChange];
+        [self terminalKeyReportingFlagsDidChange:NO];
     }
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
@@ -2531,7 +2531,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
     if (oldKeyReportingFlags != self.terminalKeyReportingFlags) {
-        [self terminalKeyReportingFlagsDidChange];
+        [self terminalKeyReportingFlagsDidChange:NO];
     }
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];

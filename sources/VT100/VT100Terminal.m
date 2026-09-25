@@ -430,9 +430,21 @@ static const int kMaxScreenRows = 4096;
     [self.delegate terminalDidReset];
 }
 
+- (void)resetKeyReportingModeLocally {
+    DLog(@"reset key reporting mode locally");
+    [self resetSendModifiersWithSideEffects:NO];
+    [self.delegate terminalDidChangeSendModifiers];
+    [self.delegate terminalDidResetKeyReportingLocally];
+}
+
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects {
     DLog(@"reset send modifiers with side effects=%@", @(sideEffects));
     self.dirty = YES;
+    // CSI >m and CSI >4m with no parameters land here, so this is the same sequence family as the
+    // parameterized branches in -executeToken: and needs the same before/after test. Resetting a
+    // mode that is already off changes nothing, and reporting it anyway would be read as the shell
+    // writing the mode. See 13032.
+    const VT100TerminalKeyReportingFlags beforeReset = self.keyReportingFlags;
     for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
         _sendModifiers[i] = @-1;
     }
@@ -442,6 +454,9 @@ static const int kMaxScreenRows = 4096;
     [_alternateKeyReportingModeStack removeAllObjects];
     if (sideEffects) {
         [self.delegate terminalDidChangeSendModifiers];
+        if (beforeReset != self.keyReportingFlags) {
+            [self.delegate terminalKeyReportingFlagsDidChange:YES];
+        }
     }
 }
 
@@ -657,7 +672,7 @@ static const int kMaxScreenRows = 4096;
     } else {
         _keyReportingFlags ^= flag;
     }
-    [self.delegate terminalKeyReportingFlagsDidChange];
+    [self.delegate terminalKeyReportingFlagsDidChange:NO];
 }
 
 - (VT100TerminalKeyReportingFlags)keyReportingFlags {
@@ -2548,8 +2563,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 } else {
                     _keyReportingFlags = effective;
                 }
+                // Mode 1 assigns the whole value; 2 and 3 only set or clear the named bits.
+                [self.delegate terminalKeyReportingFlagsDidChange:(token.csi->p[1] == 1)];
             }
-            [self.delegate terminalKeyReportingFlagsDidChange];
             break;
 
         case VT100CSI_PUSH_KEY_REPORTING_MODE:
@@ -2980,8 +2996,14 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
                 _sendModifiers[resource] = @-1;
                 self.dirty = YES;
+                // Emptying the stack changes the effective flags whenever it was non-empty, so
+                // compare the getter across the change rather than assuming. See 13032.
+                const VT100TerminalKeyReportingFlags before = self.keyReportingFlags;
                 [self.currentKeyReportingModeStack removeAllObjects];
                 [self.delegate terminalDidChangeSendModifiers];
+                if (before != self.keyReportingFlags) {
+                    [self.delegate terminalKeyReportingFlagsDidChange:NO];
+                }
             }
             self.dirty = YES;
             break;
@@ -3006,6 +3028,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             self.dirty = YES;
             _sendModifiers[resource] = @(value);
+            // Zeroing the flags and emptying the stack below both change what the getter returns.
+            // Compare across the whole change and notify once. See 13032.
+            const VT100TerminalKeyReportingFlags beforeSetModifiers = self.keyReportingFlags;
             _keyReportingFlags = 0;
             // The protocol described here:
             // https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
@@ -3015,6 +3040,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             self.dirty = YES;
             [self.currentKeyReportingModeStack removeAllObjects];
             [self.delegate terminalDidChangeSendModifiers];
+            if (beforeSetModifiers != self.keyReportingFlags) {
+                [self.delegate terminalKeyReportingFlagsDidChange:YES];
+            }
             break;
         }
 
@@ -3219,7 +3247,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     [self.currentKeyReportingModeStack addObject:@(flags)];
     [self pruneKeyReportingModeStack:self.currentKeyReportingModeStack];
     DLog(@"Stack:\n%@", self.currentKeyReportingModeStack);
-    [self.delegate terminalKeyReportingFlagsDidChange];
+    [self.delegate terminalKeyReportingFlagsDidChange:NO];
 }
 
 - (void)popKeyReportingModes:(int)count {
@@ -3233,7 +3261,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         [self.currentKeyReportingModeStack removeLastObject];
     }
     DLog(@"Stack:\n%@", self.currentKeyReportingModeStack);
-    [self.delegate terminalKeyReportingFlagsDidChange];
+    [self.delegate terminalKeyReportingFlagsDidChange:NO];
 }
 
 - (void)executeRequestTermcapTerminfo:(VT100Token *)token {

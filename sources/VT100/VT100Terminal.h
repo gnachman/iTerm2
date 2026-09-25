@@ -193,6 +193,11 @@ typedef NS_ENUM(NSUInteger, VT100TerminalResetReason) {
 - (void)gentleReset;
 
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects;
+
+// Reset the key reporting mode on iTerm2's own initiative rather than in response to the data
+// stream. Reports through terminalDidResetKeyReportingLocally so the delegate can tell this write
+// apart from one the shell made. See 13032.
+- (void)resetKeyReportingModeLocally;
 - (void)toggleAlternateScreen;
 - (void)toggleKeyReportingFlag:(VT100TerminalKeyReportingFlags)flag;
 

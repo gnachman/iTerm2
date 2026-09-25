@@ -3681,14 +3681,22 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     } name:@"change send modifiers"];
 }
 
-- (void)terminalKeyReportingFlagsDidChange {
+- (void)terminalDidResetKeyReportingLocally {
+    DLog(@"begin");
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        DLog(@"begin side-effect");
+        [delegate screenDidResetKeyReportingLocally];
+    } name:@"key reporting reset locally"];
+}
+
+- (void)terminalKeyReportingFlagsDidChange:(BOOL)wholeValueReplaced {
     DLog(@"begin");
     // It's safe to do this because it won't be reeentrant and it's necessary because it syncs
     // afterwards (this change is reporable). It's joined so we get the updated config and can
     // respond to DCS_REQUEST_TERMCAP_TERMINFO properly.
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
-        [delegate screenKeyReportingFlagsDidChange];
+        [delegate screenKeyReportingFlagsDidChange:wholeValueReplaced];
     } name:@"key reporting flags did change"];
 }
 

@@ -2067,7 +2067,11 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenKeyReportingFlagsDidChange() {
+    func screenDidResetKeyReportingLocally() {
+
+    }
+
+    func screenKeyReportingFlagsDidChange(_ wholeValueReplaced: Bool) {
         keyReportingFlagsAtChange.append(screen!.terminalKeyReportingFlags)
     }
     

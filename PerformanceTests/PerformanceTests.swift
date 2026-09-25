@@ -174,7 +174,8 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenPushKeyLabels(_ value: String) {}
     func screenPopKeyLabels(_ value: String) {}
     func screenSendModifiersDidChange() {}
-    func screenKeyReportingFlagsDidChange() {}
+    func screenKeyReportingFlagsDidChange(_ wholeValueReplaced: Bool) {}
+    func screenDidResetKeyReportingLocally() {}
     func screenReportVariableNamed(_ name: String) {}
     func screenReportCapabilities() {}
     func screenCommandDidChange(to command: String, atPrompt: Bool, hadCommand: Bool, haveCommand: Bool) {}

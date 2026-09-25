@@ -534,13 +534,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     VT100GridAbsCoordRange _lastOrCurrentlyRunningCommandAbsRange;
 
-    // Key reporting flags when the most recent command started executing.
-    // Used to detect when an app enables CSI u mode but fails to clean up.
-    VT100TerminalKeyReportingFlags _keyReportingFlagsAtCommandStart;
-
-    // True after screenDidExecuteCommand: is called. Used to avoid false positives
-    // in maybeOfferToResetKeyReportingModeWithFlags: when a shell sends OSC 133;D before OSC 133;C.
-    BOOL _haveCommandStart;
+    // Decides whether a command left the kitty keyboard protocol enabled behind it. See 13032.
+    iTermStuckKeyReportingDetector *_stuckKeyReportingDetector;
 
     NSTimeInterval _timeOfLastScheduling;
 
@@ -1318,6 +1313,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_localFileChecker release];
     [_pendingConductor release];
     [_appSwitchingPreventionDetector release];
+    [_stuckKeyReportingDetector release];
     [_queuedConnectingSSH release];
     [_hostStack release];
     [_defaultPointer release];
@@ -1932,7 +1928,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                          VT100ScreenMutableState *mutableState,
                                                          id<VT100ScreenDelegate> delegate) {
-            [terminal resetSendModifiersWithSideEffects:YES];
+            [terminal resetKeyReportingModeLocally];
         }];
     }
     if (state) {
@@ -14758,6 +14754,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             case 14:
             case 15:
             case 16:
+                // This is iTerm2's own write, not the shell's, but it needs no exclusion from
+                // the stuck key reporting detector: toggling one bit is a merge, which the
+                // detector already ignores. Wrapping it in ignoringOurOwnWrites: would not
+                // work anyway, because the change notification is a joined side effect that
+                // the joined block drains only after this block returns. See 13032.
                 [terminal toggleKeyReportingFlag:1 << (tag - 12)];
                 [self updateKeyMapper];
                 break;
@@ -18188,35 +18189,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if ([iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:self.profile]) {
         return;
     }
-    // Only check if we've seen a command start - otherwise _keyReportingFlagsAtCommandStart
-    // is just the uninitialized default value (0), not the actual flags at command start.
-    // This avoids false positives when Fish sends OSC 133;D before OSC 133;C on startup.
-    if (!_haveCommandStart) {
+    if (![[self stuckKeyReportingDetector] commandDidEndWithKeyReportingFlags:keyReportingFlags]) {
         return;
     }
-    // Consume the command start now, before any flag-based early return. Each FTCS D closes at most
-    // one command, so a subsequent FTCS D that arrives without an intervening FTCS C must not be
-    // evaluated against the prior command's start flags. Some setups (e.g. Fish + oh-my-posh) emit a
-    // duplicate/stray FTCS D as part of the next prompt's sequence, after the shell has already
-    // re-enabled key reporting for that prompt. Consuming the flag here means the first D handles the
-    // real command exit and the stray D is ignored rather than misread as an app leaving key
-    // reporting stuck on. See 13032. (The FTCS-D-time snapshot from 13015 alone is insufficient here
-    // because the re-enable precedes the second D.)
-    _haveCommandStart = NO;
-
-    // Check if key reporting flags are non-zero. Use the value snapshotted when the FTCS D token
-    // was processed rather than the live value: a shell like Fish 4.x re-enables key reporting for
-    // its next prompt right after FTCS D, and reading the live value here would misread that as an
-    // app leaving key reporting stuck on. See 13015.
-    if (keyReportingFlags == 0) {
-        return;
-    }
-    // Only warn if flags were off when the command started but are on now.
-    // This avoids false positives for shells like Fish 4.0+ that legitimately use progressive enhancements.
-    if (_keyReportingFlagsAtCommandStart != 0) {
-        return;
-    }
-
     // Ask nagging controller - it handles user defaults and showing the nag
     if ([self.naggingController shouldResetKeyReportingMode]) {
         [self naggingControllerResetKeyReportingMode];
@@ -18591,6 +18566,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (iTermStuckKeyReportingDetector *)stuckKeyReportingDetector {
+    if (!_stuckKeyReportingDetector) {
+        _stuckKeyReportingDetector = [[iTermStuckKeyReportingDetector alloc] init];
+    }
+    return _stuckKeyReportingDetector;
+}
+
 - (iTermAppSwitchingPreventionDetector *)appSwitchingPreventionDetector {
     if (!_appSwitchingPreventionDetector) {
         _appSwitchingPreventionDetector = [[iTermAppSwitchingPreventionDetector alloc] init];
@@ -18606,11 +18588,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                            mark:(id<VT100ScreenMarkReading>)mark
               keyReportingFlags:(VT100TerminalKeyReportingFlags)keyReportingFlags
                          paused:(BOOL)paused {
-    // Save key reporting flags at command start to detect apps that enable CSI u but don't clean up.
-    // Use the value snapshotted when the FTCS C token was processed, not the live value, so it is
-    // consistent with the flags snapshotted at command exit. See 13015.
-    _haveCommandStart = YES;
-    _keyReportingFlagsAtCommandStart = keyReportingFlags;
+    [[self stuckKeyReportingDetector] commandDidStart:command keyReportingFlags:keyReportingFlags];
     if (_eventTriggerEvaluator.hasLongRunningCommandTrigger) {
         [_eventTriggerEvaluator commandStartedWithCommand:command];
     }
@@ -19583,7 +19561,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
-- (void)screenKeyReportingFlagsDidChange {
+- (void)screenDidResetKeyReportingLocally {
+    __weak __typeof(self) weakSelf = self;
+    [[self stuckKeyReportingDetector] ignoringOurOwnWrites:^{
+        [weakSelf screenKeyReportingFlagsDidChange:YES];
+    }];
+}
+
+- (void)screenKeyReportingFlagsDidChange:(BOOL)wholeValueReplaced {
+    // Recorded ahead of the profile gate below so it stays correct for profiles that don't allow
+    // modifyOtherKeys. See 13032.
+    [[self stuckKeyReportingDetector] keyReportingFlagsDidChangeWithWholeValueReplaced:wholeValueReplaced];
+
     const BOOL allowed = [iTermProfilePreferences boolForKey:KEY_ALLOW_MODIFY_OTHER_KEYS
                                                    inProfile:self.profile];
     if (!allowed) {
@@ -24024,7 +24013,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                  VT100ScreenMutableState *mutableState,
                                                  id<VT100ScreenDelegate> delegate) {
-            [terminal resetSendModifiersWithSideEffects:YES];
+            [terminal resetKeyReportingModeLocally];
         }];
     });
 }
