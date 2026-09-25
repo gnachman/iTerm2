@@ -1680,6 +1680,41 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     return [self.delegate sessionViewOffscreenCommandLineFrameForView:self];
 }
 
+- (BOOL)focusFollowsMouseAcceptsEntryOutsideScrollView:(NSEvent *)event {
+    if (event.type != NSEventTypeMouseEntered) {
+        // Fragile tracking modes forward exits from an overlay as entries. Leaving an overlay
+        // should only focus the terminal when the pointer lands on the terminal itself.
+        DLog(@"Reject FFM entry outside scroll view for event type %@", @(event.type));
+        return NO;
+    }
+    NSView *contentView = self.window.contentView;
+    // -hitTest: takes a point in the receiver's superview's coordinate system.
+    NSView *hitView = [contentView hitTest:[contentView.superview convertPoint:event.locationInWindow fromView:nil]];
+    // Walk the hit view up to the direct child of this view.
+    NSView *child = hitView;
+    while (child != nil && child.superview != self) {
+        child = child.superview;
+    }
+    // Other children (gutter panels, find, session note, minimaps, announcements) and points
+    // outside this pane don't qualify.
+    const BOOL childQualifies = (child != nil &&
+                                 (child == _toolbarView ||
+                                  child == _title ||
+                                  child == _genericStatusBarContainer));
+    if (!childQualifies) {
+        DLog(@"Reject FFM entry outside scroll view over %@ (child %@)", hitView, child);
+        return NO;
+    }
+    // Keep focus in a control of that bar, such as a status bar search field.
+    NSView *firstResponderView = [NSView castFrom:self.window.firstResponder];
+    if ([firstResponderView isDescendantOf:child]) {
+        DLog(@"Reject FFM entry over %@ because first responder %@ is inside it", child, firstResponderView);
+        return NO;
+    }
+    DLog(@"Accept FFM entry over %@", child);
+    return YES;
+}
+
 - (void)mouseEntered:(NSEvent *)theEvent {
     DLog(@"mouseEntered %@", self);
     switch ([theEvent.trackingArea.userInfo[@"mode"] unsignedIntegerValue]) {

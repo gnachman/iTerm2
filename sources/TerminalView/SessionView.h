@@ -354,6 +354,9 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)tabColorDidChange;
 - (void)didBecomeVisible;
 - (void)showUnobtrusiveMessage:(NSString *)message;
+// YES if focus follows mouse should focus the terminal for an entry event whose location is outside
+// the scroll view, e.g. through the pane toolbar or title bar.
+- (BOOL)focusFollowsMouseAcceptsEntryOutsideScrollView:(NSEvent *)event;
 - (void)showUnobtrusiveMessage:(NSString *)message duration:(NSTimeInterval)duration;
 - (void)showUploadIndicatorWithFilename:(NSString *)filename onCancel:(void (^)(void))onCancel;
 - (void)hideUploadIndicator;

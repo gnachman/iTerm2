@@ -262,6 +262,9 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewBurySession;
 // anchor is a visual range
 - (BOOL)textViewShowHoverURL:(NSString *)url anchor:(VT100GridWindowedRange)anchor;
+// Focus follows mouse entered this pane somewhere other than the terminal's scroll view. Return YES
+// if it should still focus the terminal (e.g., entry through the pane toolbar or title bar).
+- (BOOL)textViewShouldAcceptFocusFollowsMouseEntryOutsideScrollView:(NSEvent *)event;
 
 - (BOOL)textViewCopyMode;
 - (BOOL)textViewCopyModeSelecting;
