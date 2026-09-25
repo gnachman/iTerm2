@@ -1,0 +1,20 @@
+{
+  "agent_id": "agent-1",
+  "agent_type": "general-purpose",
+  "background_tasks": [
+    {
+      "agent_type": "general-purpose",
+      "description": "sleep then DONE",
+      "id": "agent-1",
+      "status": "running",
+      "type": "subagent"
+    }
+  ],
+  "cwd": "/Users/user/github/cc-status",
+  "hook_event_name": "SubagentStop",
+  "last_assistant_message": "DONE",
+  "permission_mode": "default",
+  "prompt_id": "1f9b2c5e-3c1d-4a1b-9c4e-7a2f0e6d8b11",
+  "session_id": "7b9d396c-0ffb-4ab9-b36e-074717cc2ca5",
+  "transcript_path": "/Users/user/.claude/projects/-Users-user-github-cc-status/7b9d396c-0ffb-4ab9-b36e-074717cc2ca5.jsonl"
+}

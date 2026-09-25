@@ -1,0 +1,9 @@
+{
+  "cwd": "/Users/user/github/cc-status",
+  "hook_event_name": "Interrupt",
+  "model": "gpt-6-astra",
+  "permission_mode": "default",
+  "session_id": "01a09fa1-d3a9-7543-a9d1-aa7efe7e441d",
+  "transcript_path": "/Users/user/.codex/sessions/2026/09/14/rollout-2026-09-14T13-16-17-01a09fa1-d3a9-7543-a9d1-aa7efe7e441d.jsonl",
+  "turn_id": "01a09fa9-5b93-7192-ba3f-5e9d1b7c23d6"
+}
