@@ -955,6 +955,43 @@ extension Session {
 
 // MARK: - session set-status
 
+// The options for setting a session status, shared by `it2 session set-status`
+// and the top-level `it2 set-status` shortcut so the two cannot drift.
+struct SetStatusOptions: ParsableArguments {
+    @Option(name: .shortAndLong, help: "Target session ID.")
+    var session: String
+
+    @Option(name: .long, help: "Status text (idle, working, or waiting).")
+    var status: String?
+
+    @Option(name: .long, help: "Dot indicator color as #rrggbb.")
+    var dotColor: String?
+
+    @Option(name: .long, help: "Text color as #rrggbb.")
+    var textColor: String?
+
+    @Option(name: .long, help: "Optional detail text shown alongside the status.")
+    var detail: String?
+
+    @Option(name: .long, help: "Number of background tasks still running (stored in memory for later get-background-tasks queries).")
+    var backgroundTasks: Int?
+
+    @Option(name: .long, help: "Expire this status by itself when an event happens. The only value is “progress-end”: the session reported through the progress protocol (OSC 9;4) that the operation running when the status was set has ended.")
+    var expiresOn: String?
+
+    @Option(name: .long, help: "Status text to leave behind when the status expires. Empty clears it.")
+    var thenStatus: String?
+
+    @Option(name: .long, help: "Dot indicator color to leave behind when the status expires, as #rrggbb. Empty clears it.")
+    var thenDotColor: String?
+
+    @Option(name: .long, help: "Text color to leave behind when the status expires, as #rrggbb. Empty clears it.")
+    var thenTextColor: String?
+
+    @Option(name: .long, help: "Detail text to leave behind when the status expires. Empty clears it.")
+    var thenDetail: String?
+}
+
 extension Session {
     struct SetStatus: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
@@ -963,23 +1000,7 @@ extension Session {
             discussion: "See also: it2 session get-background-tasks"
         )
 
-        @Option(name: .shortAndLong, help: "Target session ID.")
-        var session: String
-
-        @Option(name: .long, help: "Status text (idle, working, or waiting).")
-        var status: String?
-
-        @Option(name: .long, help: "Dot indicator color as #rrggbb.")
-        var dotColor: String?
-
-        @Option(name: .long, help: "Text color as #rrggbb.")
-        var textColor: String?
-
-        @Option(name: .long, help: "Optional detail text shown alongside the status.")
-        var detail: String?
-
-        @Option(name: .long, help: "Number of background tasks still running (stored in memory for later get-background-tasks queries).")
-        var backgroundTasks: Int?
+        @OptionGroup var options: SetStatusOptions
 
         func run(_ ctx: IT2Context) throws {
             let client = try ctx.makeClient()
@@ -987,24 +1008,39 @@ extension Session {
 
             let invoke = ITMInvokeFunctionRequest()
             let sessionContext = ITMInvokeFunctionRequest_Session()
-            sessionContext.sessionId = session
+            sessionContext.sessionId = options.session
             invoke.session = sessionContext
 
             var args: [String] = []
-            if let status = status {
+            if let status = options.status {
                 args.append("status: \(jsonString(status))")
             }
-            if let textColor = textColor {
+            if let textColor = options.textColor {
                 args.append("text_color: \(jsonString(textColor))")
             }
-            if let dotColor = dotColor {
+            if let dotColor = options.dotColor {
                 args.append("dot_color: \(jsonString(dotColor))")
             }
-            if let detail = detail {
+            if let detail = options.detail {
                 args.append("detail: \(jsonString(detail))")
             }
-            if let backgroundTasks = backgroundTasks {
+            if let backgroundTasks = options.backgroundTasks {
                 args.append("background_tasks: \(backgroundTasks)")
+            }
+            if let expiresOn = options.expiresOn {
+                args.append("expires_on: \(jsonString(expiresOn))")
+            }
+            if let thenStatus = options.thenStatus {
+                args.append("then_status: \(jsonString(thenStatus))")
+            }
+            if let thenDotColor = options.thenDotColor {
+                args.append("then_dot_color: \(jsonString(thenDotColor))")
+            }
+            if let thenTextColor = options.thenTextColor {
+                args.append("then_text_color: \(jsonString(thenTextColor))")
+            }
+            if let thenDetail = options.thenDetail {
+                args.append("then_detail: \(jsonString(thenDetail))")
             }
 
             invoke.invocation = "iterm2.set_status(\(args.joined(separator: ", ")))"
