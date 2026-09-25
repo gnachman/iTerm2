@@ -8,6 +8,7 @@
 #import "iTermAPIHelper.h"
 
 #import "iTermAPICreateTabFocusDeferral.h"
+#import "iTerm2SharedARC-Swift.h"
 
 #import "CVector.h"
 #import "DebugLogging.h"
@@ -2837,9 +2838,32 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         }
         return ITMSetPropertyResponse_Status_Ok;
     };
+    SetSessionPropertyBlock setSessionNote = ^ITMSetPropertyResponse_Status {
+        iTermSessionNoteAPIUpdate *update =
+            [iTermSessionNoteAPIUpdate parse:value];
+        if (!update) {
+            return ITMSetPropertyResponse_Status_InvalidValue;
+        }
+        NSString *resultingText = update.hasText
+            ? update.textValue
+            : (session.sessionNoteModel.text ?: @"");
+        if (resultingText.length == 0 &&
+            ((update.hasVisible && update.visibleValue) ||
+             (update.hasCollapsed && update.collapsedValue))) {
+            return ITMSetPropertyResponse_Status_InvalidValue;
+        }
+        if (update.hasVisible && update.visibleValue && !session.view) {
+            return ITMSetPropertyResponse_Status_Impossible;
+        }
+        if (![session applySessionNoteAPIUpdate:update]) {
+            return ITMSetPropertyResponse_Status_InvalidValue;
+        }
+        return ITMSetPropertyResponse_Status_Ok;
+    };
     NSDictionary<NSString *, SetSessionPropertyBlock> *handlers =
         @{ @"grid_size": setGridSize,
            @"buried": setBuried,
+           @"session_note": setSessionNote,
          };
     SetSessionPropertyBlock block = handlers[name];
     if (block) {
@@ -2969,10 +2993,15 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         BOOL isBuried = [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:session];
         return [NSJSONSerialization it_jsonStringForObject:@(isBuried)];
     };
+    GetSessionPropertyBlock getSessionNote = ^NSString * {
+        return [NSJSONSerialization
+            it_jsonStringForObject:session.sessionNoteAPIDictionary];
+    };
     NSDictionary<NSString *, GetSessionPropertyBlock> *handlers =
         @{ @"grid_size": getGridSize,
            @"buried": getBuried,
            @"number_of_lines": getNumberOfLines,
+           @"session_note": getSessionNote,
          };
 
     GetSessionPropertyBlock block = handlers[name];
