@@ -13551,6 +13551,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     DLog(@"textViewDidBecomeFirstResponder for %@", self);
     [[iTermInputSourceForcer sharedInstance] forceKeyboardForSessionIfNeeded:self];
     [self notifyActive];
+    [self updateTrackingAreasAfterFirstResponderChange];
+}
+
+// The session view's focus-follows-mouse tracking mode depends on whether an immune overlay (find,
+// composer) is first responder. Defer to the next main-queue turn because the window's
+// firstResponder isn't updated until the resign/become handshake finishes.
+- (void)updateTrackingAreasAfterFirstResponderChange {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DLog(@"Update tracking areas after first responder change for %@", weakSelf);
+        [weakSelf.view updateTrackingAreas];
+    });
 }
 
 - (void)notifyActive {
@@ -13572,6 +13584,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)textViewDidResignFirstResponder {
     [_view setNeedsDisplay:YES];
     self.copyMode = false;
+    [self updateTrackingAreasAfterFirstResponderChange];
 }
 
 - (void)setReportingMouseDownForEventType:(NSEventType)eventType {
