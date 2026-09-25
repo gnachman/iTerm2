@@ -189,6 +189,19 @@ New Features:
   macOS puts a returning window on whichever
   Space its display is showing at the time, which
   may not be the Space it left.
+- A session status can now be told when it
+  stops being true. Along with the status,
+  a program says what the status should
+  become once the work it describes is
+  over, and iTerm2 makes the change when
+  the program reports that the work
+  finished. It keeps a status from
+  outliving the thing it was reporting on
+  when a program is stopped partway
+  through. Set it with the --expires-on
+  option of it2 set-status, or the
+  expires_on argument of the Python API’s
+  set_status.
 
 Improvements:
 - iTerm2 now recognizes when a terminal is
@@ -319,6 +332,11 @@ Improvements:
   there, since they name nothing on that host.
 
 Bug Fixes:
+- Interrupting Claude Code with Esc now
+  returns its Session Status to idle. The
+  tab kept reading “working”, or “waiting”
+  if a permission prompt was open, until
+  the next thing you asked it to do.
 - After iTerm2 restarted with your sessions
   restored, which happens after an update, a
   crash, or a force quit, commands in newly

@@ -16,6 +16,14 @@ guard !inputData.isEmpty,
     exit(0)
 }
 
+// The palette. Each status has one pair of colors wherever it is set.
+let workingDot = "#ff9500"
+let workingText = "#ff9500"
+let waitingDot = "#5f87ff"
+let waitingText = "#5f87ff"
+let idleDot = "#00d75f"
+let idleText = "#888888"
+
 // Map hook event to status, colors, and detail.
 //
 // Detail lifecycle:
@@ -35,6 +43,33 @@ var dotColor: String? = nil
 var textColor: String? = nil
 // nil = don't touch detail; non-nil (including "") = send --detail through.
 var detail: String? = nil
+// Whether this status is only true while the current turn is in flight, in
+// which case iTerm2 is asked to drop it back to idle when the session's
+// progress protocol reports the turn ended. That edge is the only signal an
+// interrupt produces: pressing Esc runs no hook at all, so without it a turn
+// cancelled mid-flight leaves the tab reading “working” or “waiting” until
+// the next turn.
+//
+// All of this is measured against Claude Code 2.1.274, by driving a session
+// under a pty and recording both the hook events and the escape sequences:
+//   • A turn start emits OSC 9;4;3 about 40ms after the prompt is submitted,
+//     and a turn end emits OSC 9;4;0 within about 120ms, whether it ended by
+//     itself, by an API error, or by Esc.
+//   • Esc emits no hook of any kind. Nothing else reports the interrupt.
+//   • The indicator stays on for the whole turn, including the 15s a
+//     permission prompt sat open waiting for an answer, and it does not stop
+//     when Esc is swallowed by the slash-command menu mid-turn. That is why
+//     the waiting statuses are armed too: the only thing that stops the
+//     indicator under a permission prompt is dismissing it.
+// If a later version stops the indicator while blocked on the user, a waiting
+// status would expire to idle while the prompt is still up, so recheck this
+// before trusting it on a much newer Claude Code.
+//
+// Background work is deliberately not accounted for here: the fallback is
+// always plain idle. iTerm2 holds an expiration back while the background
+// task count it was told about is non-zero and applies it when the count
+// reaches zero, so the simple fallback still converges on the truth.
+var expiresOnProgressEnd = false
 // nil = don't touch the stored count; non-nil = send --background-tasks.
 // iTerm2 keeps the count in RAM only (never written to disk); it exists
 // so a later idle_prompt, whose payload carries no task info, can read
@@ -44,14 +79,16 @@ var backgroundTasks: Int? = nil
 switch eventName {
 case "UserPromptSubmit", "PreToolUse", "PostToolUse":
     status = "working"
-    dotColor = "#ff9500"
-    textColor = "#ff9500"
+    dotColor = workingDot
+    textColor = workingText
     detail = ""  // new turn / tool activity — previous detail is stale
+    expiresOnProgressEnd = true
 case "PermissionRequest":
     status = "waiting"
-    dotColor = "#5f87ff"
-    textColor = "#5f87ff"
+    dotColor = waitingDot
+    textColor = waitingText
     detail = permissionDetail(json)
+    expiresOnProgressEnd = true
 case "Notification":
     let notificationType = json["notification_type"] as? String
     if notificationType == "idle_prompt" {
@@ -64,13 +101,13 @@ case "Notification":
         let running = backgroundTaskCount(json) ?? storedBackgroundTaskCount(it2SessionID: sessionID)
         if running > 0 {
             status = "working"
-            dotColor = "#ff9500"
-            textColor = "#ff9500"
+            dotColor = workingDot
+            textColor = workingText
             detail = backgroundDetail(count: running)
         } else {
             status = "idle"
-            dotColor = "#00d75f"
-            textColor = "#888888"
+            dotColor = idleDot
+            textColor = idleText
             if let message = json["last_assistant_message"] as? String {
                 // Re-assert the last message. Also replaces a stale
                 // "N background tasks running" line from an earlier
@@ -91,13 +128,14 @@ case "Notification":
         }
     } else {
         status = "waiting"
-        dotColor = "#5f87ff"
-        textColor = "#5f87ff"
+        dotColor = waitingDot
+        textColor = waitingText
         // Skip detail for permission_prompt (PermissionRequest carries it better).
         // Other subtypes (auth_success, elicitation_dialog, ...) get the message.
         if notificationType != "permission_prompt", let message = json["message"] as? String {
             detail = condense(message)
         }
+        expiresOnProgressEnd = true
     }
 case "Stop":
     // Stop fires whenever the main loop finishes a turn, including while
@@ -119,13 +157,13 @@ case "Stop":
     }
     if running > 0 {
         status = "working"
-        dotColor = "#ff9500"
-        textColor = "#ff9500"
+        dotColor = workingDot
+        textColor = workingText
         detail = backgroundDetail(count: running)
     } else {
         status = "idle"
-        dotColor = "#00d75f"
-        textColor = "#888888"
+        dotColor = idleDot
+        textColor = idleText
         if let message = json["last_assistant_message"] as? String {
             detail = condense(message)
         } else {
@@ -147,13 +185,26 @@ case "SubagentStop":
     backgroundTasks = remaining
     if remaining > 0 {
         status = "working"
-        dotColor = "#ff9500"
-        textColor = "#ff9500"
+        dotColor = workingDot
+        textColor = workingText
         detail = backgroundDetail(count: remaining)
+        // This can land mid-turn, and re-asserting the status disowns
+        // whatever the turn's last event asked to happen when the turn
+        // ends. Without re-arming, an Esc between here and the next tool
+        // event would go unnoticed and leave the tab reading "working."
+        expiresOnProgressEnd = true
     }
     // remaining == 0: last one done. Store the zero but change nothing
     // visible; the main loop wakes to process the results and its own
     // events (PostToolUse/Stop) report from here.
+    //
+    // Deliberately no expiry here either, and not merely because there is
+    // no status to scope: sending one would make this an assertion rather
+    // than bookkeeping, and iTerm2 treats a bookkeeping update as the one
+    // thing that can release an expiration being held back by outstanding
+    // background work. Asserting instead would cancel that expiration and
+    // re-arm it for an operation that has already ended, so the tab would
+    // sit on a stale status until the next turn.
 case "StopFailure":
     // The turn ended in an API error, but background tasks keep running
     // independently; apply the same gate as Stop so a failed turn does
@@ -167,19 +218,19 @@ case "StopFailure":
     }
     if running > 0 {
         status = "working"
-        dotColor = "#ff9500"
-        textColor = "#ff9500"
+        dotColor = workingDot
+        textColor = workingText
         detail = backgroundDetail(count: running)
     } else {
         status = "idle"
-        dotColor = "#00d75f"
-        textColor = "#888888"
+        dotColor = idleDot
+        textColor = idleText
         detail = ""
     }
 case "SessionStart", "SessionEnd":
     status = "idle"
-    dotColor = "#00d75f"
-    textColor = "#888888"
+    dotColor = idleDot
+    textColor = idleText
     detail = ""  // session boundary — wipe stale detail
     backgroundTasks = 0  // and the stored count with it
 default:
@@ -208,6 +259,15 @@ if let detail = detail {
 }
 if let backgroundTasks = backgroundTasks {
     it2Args.append(contentsOf: ["--background-tasks", String(backgroundTasks)])
+}
+if expiresOnProgressEnd {
+    it2Args.append(contentsOf: [
+        "--expires-on", "progress-end",
+        "--then-status", "idle",
+        "--then-dot-color", idleDot,
+        "--then-text-color", idleText,
+        "--then-detail", "",
+    ])
 }
 
 let it2 = resolveIt2()
