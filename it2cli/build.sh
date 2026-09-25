@@ -8,6 +8,13 @@ cd "$SCRIPT_DIR"
 # Ensure protobuf symlinks exist
 ./setup.sh
 
+# Where SwiftPM put a build's product. Ask rather than assume: the layout
+# differs between SwiftPM's own build system and the Xcode one it uses when
+# Xcode is present, and hardcoding either silently produces no binary.
+product_path() {
+    swift build -c release --arch "$1" --scratch-path ".build-$1" --show-bin-path
+}
+
 NATIVE_ARCH=$(uname -m)
 
 # Code signing setup
@@ -41,8 +48,8 @@ if [ "${UNIVERSAL:-0}" = "1" ]; then
 
     echo "Creating universal binary..."
     lipo -create \
-        .build-arm64/arm64-apple-macosx/release/it2 \
-        .build-x86_64/x86_64-apple-macosx/release/it2 \
+        "$(product_path arm64)/it2" \
+        "$(product_path x86_64)/it2" \
         -output .build/release/it2
 
     sign_binary "it2"
@@ -55,7 +62,7 @@ else
     swift build -c release --arch "$NATIVE_ARCH" --scratch-path ".build-$NATIVE_ARCH" --disable-sandbox
 
     mkdir -p .build/release
-    cp ".build-$NATIVE_ARCH/${NATIVE_ARCH}-apple-macosx/release/it2" ".build/release/it2"
+    cp "$(product_path "$NATIVE_ARCH")/it2" ".build/release/it2"
 
     sign_binary "it2"
 
