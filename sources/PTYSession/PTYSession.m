@@ -645,7 +645,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermSwiftyString *_subtitleSwiftyString;
     iTermSwiftyString *_backgroundImageSwiftyString;
 
-    iTermSessionTabStatus *_tabStatus;
+    // Owns the session's tab status and when a status scoped to an operation
+    // stops being true.
+    iTermTabStatusController *_tabStatusController;
 
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     // Used to render the background behind a screenshot with transparency forced off.
@@ -1229,7 +1231,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_badgeSwiftyString release];
     [_backgroundImageSwiftyString release];
     [_subtitleSwiftyString release];
-    [_tabStatus release];
+    [_tabStatusController release];
     [_autoNameSwiftyString release];
     [_statusBarViewController release];
     [_backgroundDrawingHelper release];
@@ -1898,10 +1900,12 @@ ITERM_WEAKLY_REFERENCEABLE
     aSession.cursorTypeOverride = arrangement[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE];
     NSDictionary *tabStatusDict = arrangement[SESSION_ARRANGEMENT_TAB_STATUS];
     if (tabStatusDict) {
-        aSession->_tabStatus = [[iTermSessionTabStatus fromArrangementDictionary:tabStatusDict
-                                                                       sessionID:aSession.guid] retain];
-        if (aSession->_tabStatus) {
-            [[iTermSessionStatusController instance] tabStatusDidChange:aSession->_tabStatus];
+        iTermSessionTabStatus *restoredTabStatus =
+            [iTermSessionTabStatus fromArrangementDictionary:tabStatusDict
+                                                   sessionID:aSession.guid];
+        if (restoredTabStatus) {
+            [aSession.tabStatusController adoptRestoredStatus:restoredTabStatus];
+            [[iTermSessionStatusController instance] tabStatusDidChange:restoredTabStatus];
         }
     }
     NSDictionary *sessionNoteDict = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SESSION_NOTE]];
@@ -4727,8 +4731,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // Drop the cached tab-status instance so that if the session restarts and
     // gets a new guid, the next status update creates a fresh instance keyed by
     // the current guid instead of the stale one captured here at init time.
-    [_tabStatus release];
-    _tabStatus = nil;
+    [_tabStatusController programDidExit];
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [_delegate updateLabelAttributes];
@@ -7480,7 +7483,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
 
     if (includeContents) {
-        NSDictionary *tabStatusDict = [_tabStatus arrangementDictionary];
+        NSDictionary *tabStatusDict = [_tabStatusController.statusIfPresent arrangementDictionary];
         if (tabStatusDict) {
             result[SESSION_ARRANGEMENT_TAB_STATUS] = tabStatusDict;
         }
@@ -25649,24 +25652,36 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 }
 
 - (iTermSessionTabStatus *)tabStatus {
-    if (!_tabStatus) {
-        _tabStatus = [[iTermSessionTabStatus alloc] initWithSessionID:self.guid];
+    return self.tabStatusController.status;
+}
+
+// Created lazily, since PTYSession has several init paths and a session may
+// never have a status at all.
+- (iTermTabStatusController *)tabStatusController {
+    if (!_tabStatusController) {
+        __weak __typeof(self) weakSelf = self;
+        _tabStatusController =
+            [[iTermTabStatusController alloc] initWithSessionID:^NSString * {
+                return weakSelf.guid ?: @"";
+            } didChange:^(NSString * _Nullable previousStatusText) {
+                [weakSelf tabStatusDidChangeFromStatusText:previousStatusText];
+            }];
     }
-    return _tabStatus;
+    return _tabStatusController;
+}
+
+- (void)tabStatusDidChangeFromStatusText:(NSString *)previousStatusText {
+    [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
+    // Read from the status rather than from whatever update caused the change:
+    // a status that expires on its own has no update to read, and the variable
+    // would otherwise keep reporting what the program last said.
+    self.variablesScope.status = self.tabStatus.statusText;
+    [_delegate sessionTabStatusDidChange:self];
 }
 
 - (void)screenSetTabStatus:(VT100TabStatusUpdate *)status {
     DLog(@"%@ screenSetTabStatus: %@", self, status.description);
-    NSString *previousStatusText = self.tabStatus.statusText;
-    if (![self.tabStatus apply:status]) {
-        DLog(@"No change");
-        return;
-    }
-    [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
-    if (status.statusPresence != VT100TabStatusUpdateFieldNotSet) {
-        self.variablesScope.status = status.status;
-    }
-    [_delegate sessionTabStatusDidChange:self];
+    [self.tabStatusController apply:status];
 }
 
 - (void)maybePostTabStatusNotificationWithPreviousStatusText:(NSString *)previousStatusText {
@@ -25689,13 +25704,16 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 }
 
 - (void)clearTabStatus {
-    if (!_tabStatus || !_tabStatus.hasActiveStatus) {
+    if (![_tabStatusController clearStatus]) {
         return;
     }
-    [_tabStatus clear];
     [[iTermDockBadgeController sharedInstance] sessionDidLeaveWaiting:_guid];
     self.variablesScope.status = nil;
     [_delegate sessionTabStatusDidChange:self];
+}
+
+- (void)screenProgressProtocolDidReportProgress:(VT100ScreenProgress)progress {
+    [self.tabStatusController progressProtocolDidReport:progress];
 }
 
 @end

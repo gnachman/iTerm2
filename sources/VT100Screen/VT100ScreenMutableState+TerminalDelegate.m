@@ -1604,6 +1604,16 @@ typedef struct {
     } name:@"pop title for window"];
 }
 
+// A progress state the program reported through OSC 9;4. Distinct from
+// setting the property directly (as a reset does) because only the program's
+// own report says anything about whether its work is still running.
+- (void)setProgressFromProtocol:(VT100ScreenProgress)progress {
+    [self setProgress:progress];
+    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenProgressProtocolDidReportProgress:progress];
+    } name:@"progress protocol"];
+}
+
 - (void)terminalPostUserNotification:(NSString *)message {
     NSArray<NSString *> *params = [message componentsSeparatedByString:@";"];
     if (params.count >= 1 && [params[0] isNumeric]) {
@@ -1617,26 +1627,26 @@ typedef struct {
                 const int pr = havePR ? [params[2] intValue] : -1;
                 switch (st) {
                     case 0:
-                        [self setProgress:VT100ScreenProgressStopped];
+                        [self setProgressFromProtocol:VT100ScreenProgressStopped];
                         break;
                     case 1:  // set progress value to pr (number, 0-100)
                         if (pr >= 0 && pr <= 100) {
-                            [self setProgress:VT100ScreenProgressSuccessBase + pr];
+                            [self setProgressFromProtocol:VT100ScreenProgressSuccessBase + pr];
                         }
                         break;
                     case 2:  // set error state in progress. pr is optional
                         if (pr >= 0 && pr <= 100) {
-                            [self setProgress:VT100ScreenProgressErrorBase + pr];
+                            [self setProgressFromProtocol:VT100ScreenProgressErrorBase + pr];
                         } else {
-                            [self setProgress:VT100ScreenProgressError];
+                            [self setProgressFromProtocol:VT100ScreenProgressError];
                         }
                         break;
                     case 3:  // set indeterminate state
-                        [self setProgress:VT100ScreenProgressIndeterminate];
+                        [self setProgressFromProtocol:VT100ScreenProgressIndeterminate];
                         break;
                     case 4: {  // set paused state in progress. pr is optional
                         if (pr >= 0 && pr <= 100) {
-                            [self setProgress:VT100ScreenProgressWarningBase + pr];
+                            [self setProgressFromProtocol:VT100ScreenProgressWarningBase + pr];
                         } else if (!havePR) {
                             // Keep the percentage that is already showing and just recolor it,
                             // as Ghostty does: its docs say the value is used when specified and
@@ -1645,14 +1655,14 @@ typedef struct {
                             // to keep, show the minimum visible amount.
                             const int currentPercentage = VT100ScreenProgressPercentage(self.progress);
                             const int percentage = currentPercentage > 0 ? currentPercentage : kMinimumVisibleProgressPercentage;
-                            [self setProgress:VT100ScreenProgressWarningBase + percentage];
+                            [self setProgressFromProtocol:VT100ScreenProgressWarningBase + percentage];
                         }
                         // A pr that is present but out of range is ignored, as in case 1.
                         break;
                     }
                 }
             } else if (params.count == 1) {
-                [self setProgress:VT100ScreenProgressStopped];
+                [self setProgressFromProtocol:VT100ScreenProgressStopped];
             }
         } else {
             DLog(@"Ignoring %@", message);

@@ -1,3 +1,19 @@
+// Why a status that was true when it was set can stop being true on its own.
+// A program that reports status out of band has no way to announce every way
+// its work can end, since an interrupt in particular may run no hook at all,
+// so it can instead say up front what should happen when the terminal sees
+// the work finish.
+@objc(VT100TabStatusExpirationReason)
+enum VT100TabStatusExpirationReason: Int {
+    // The status stands until something replaces it. The default.
+    case never = 0
+
+    // The status was scoped to an operation the program announced through the
+    // progress protocol (OSC 9;4), and stops being true when that operation
+    // ends.
+    case progressEnd = 1
+}
+
 // An incremental update from OSC 21337. Each field may be not set (omitted),
 // cleared (empty value), or set to a value.
 @objc(VT100TabStatusUpdate)
@@ -28,6 +44,26 @@ class VT100TabStatusUpdate: NSObject {
     // count back instead of keeping state of their own on disk.
     @objc var backgroundTasksPresence: VT100TabStatusUpdateFieldPresence = .notSet
     @objc var backgroundTasks: Int = 0
+
+    // When this status should expire on its own, and what to apply in its
+    // place when it does. The fallback is a plain update, so an expiring
+    // status can hand off to another status rather than only disappearing.
+    // Ignored unless expiresOn is something other than .never.
+    @objc var expiresOn: VT100TabStatusExpirationReason = .never
+    @objc var expirationFallback: VT100TabStatusUpdate?
+
+    // Whether this update says anything about what the session is doing, as
+    // opposed to only parking bookkeeping such as the background-task count.
+    // Only a real assertion supersedes the previous one's expiration: a
+    // program that updates its task count mid-operation has not changed its
+    // mind about what should happen when the operation ends.
+    @objc var assertsStatus: Bool {
+        return statusPresence != .notSet ||
+               indicatorPresence != .notSet ||
+               statusColorPresence != .notSet ||
+               detailPresence != .notSet ||
+               expiresOn != .never
+    }
 
     override var description: String {
         var parts = [String]()
@@ -76,6 +112,10 @@ class VT100TabStatusUpdate: NSObject {
         case .set:
             parts.append("background-tasks=\(backgroundTasks)")
         @unknown default: break
+        }
+        if expiresOn != .never {
+            parts.append("expires-on=\(expiresOn)")
+            parts.append("then=\(expirationFallback?.description ?? "nothing")")
         }
         if parts.isEmpty {
             return "VT100TabStatusUpdate{empty}"
@@ -195,6 +235,12 @@ class iTermSessionTabStatus: NSObject {
         super.init()
     }
 
+    // What an update says should happen when the status stops being true is
+    // not kept here. iTermTabStatusController owns that, along with
+    // the timing that decides when it happens, so this stays a plain record of
+    // what the session is showing: something that can be copied for the tab
+    // aggregate and written to an arrangement without dragging live state
+    // along.
     @objc func apply(_ update: VT100TabStatusUpdate) -> Bool {
         let before = state
         switch update.indicatorPresence {

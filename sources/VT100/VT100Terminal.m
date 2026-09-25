@@ -4629,6 +4629,10 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
     if (!payload) {
         return;
     }
+    [_delegate terminalSetTabStatus:[self tabStatusUpdateForOSC21337Payload:payload]];
+}
+
+- (VT100TabStatusUpdate *)tabStatusUpdateForOSC21337Payload:(NSString *)payload {
 
     // Parse the payload into tokens split on unescaped semicolons.
     VT100TabStatusUpdate *status = [[VT100TabStatusUpdate alloc] init];
@@ -4655,6 +4659,8 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
     }
     [tokens addObject:[currentToken copy]];
 
+    static NSString *const thenPrefix = @"then-";
+    VT100TabStatusUpdate *fallback = nil;
     for (NSString *kvString in tokens) {
         NSRange eqRange = [kvString rangeOfString:@"="];
         NSString *key;
@@ -4667,47 +4673,95 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
             value = [kvString substringFromIndex:eqRange.location + 1];
         }
 
-        if ([key isEqualToString:@"indicator"]) {
-            if (value.length == 0) {
-                status.indicatorPresence = VT100TabStatusUpdateFieldCleared;
-            } else {
-                NSArray<NSNumber *> *components = [self xtermParseColorArgument:value];
-                if (components) {
-                    status.indicatorPresence = VT100TabStatusUpdateFieldSet;
-                    iTermSRGBColor c = { components[0].doubleValue, components[1].doubleValue, components[2].doubleValue };
-                    status.indicator = c;
-                }
+        if ([key isEqualToString:@"expires-on"]) {
+            // The status is only true while some operation is; say which one.
+            if ([value isEqualToString:@"progress-end"]) {
+                status.expiresOn = VT100TabStatusExpirationReasonProgressEnd;
+            } else if (value.length == 0) {
+                status.expiresOn = VT100TabStatusExpirationReasonNever;
             }
-        } else if ([key isEqualToString:@"status"]) {
-            if (value.length > 0) {
-                status.statusPresence = VT100TabStatusUpdateFieldSet;
-                status.status = value;
-            } else {
-                status.statusPresence = VT100TabStatusUpdateFieldCleared;
-            }
-        } else if ([key isEqualToString:@"status-color"]) {
-            if (value.length == 0) {
-                status.statusColorPresence = VT100TabStatusUpdateFieldCleared;
-            } else {
-                NSArray<NSNumber *> *components = [self xtermParseColorArgument:value];
-                if (components) {
-                    status.statusColorPresence = VT100TabStatusUpdateFieldSet;
-                    iTermSRGBColor c = { components[0].doubleValue, components[1].doubleValue, components[2].doubleValue };
-                    status.statusColor = c;
-                }
-            }
-        } else if ([key isEqualToString:@"detail"]) {
-            if (value.length > 0) {
-                status.detailPresence = VT100TabStatusUpdateFieldSet;
-                status.detail = value;
-            } else {
-                status.detailPresence = VT100TabStatusUpdateFieldCleared;
-            }
+            continue;
         }
+
+        // then-* names the status to leave behind when this one expires. The
+        // fields are the same ones, so they parse the same way. An
+        // unrecognized then- key is ignored like any other unknown key, and
+        // must not conjure an empty fallback: that would turn “expire and
+        // clear” into “expire and do nothing,” making a typo worse than
+        // leaving the key out.
+        if ([key hasPrefix:thenPrefix]) {
+            VT100TabStatusUpdate *candidate = fallback ?: [[VT100TabStatusUpdate alloc] init];
+            if ([self setTabStatusField:[key substringFromIndex:thenPrefix.length]
+                                  value:value
+                                     on:candidate]) {
+                fallback = candidate;
+            }
+            continue;
+        }
+
         // Unknown keys are silently ignored
+        [self setTabStatusField:key value:value on:status];
     }
 
-    [_delegate terminalSetTabStatus:status];
+    if (status.expiresOn != VT100TabStatusExpirationReasonNever) {
+        // No then-* fields means the status just goes away.
+        status.expirationFallback = fallback ?: [VT100TabStatusUpdate clear];
+    }
+
+    return status;
+}
+
+// Applies one key=value pair from an OSC 21337 payload to `update`. An empty
+// value clears the field. Returns whether the pair set anything: NO for a key
+// that is not a status field, and NO for a value that could not be parsed.
+// Recognizing the key is not enough, because the caller decides from this
+// whether a then-* fallback exists at all, and a fallback that sets no field
+// would turn “expire and clear” into “expire and do nothing.”
+- (BOOL)setTabStatusField:(NSString *)key
+                    value:(NSString *)value
+                       on:(VT100TabStatusUpdate *)update {
+    if ([key isEqualToString:@"indicator"]) {
+        if (value.length == 0) {
+            update.indicatorPresence = VT100TabStatusUpdateFieldCleared;
+        } else {
+            NSArray<NSNumber *> *components = [self xtermParseColorArgument:value];
+            if (!components) {
+                return NO;
+            }
+            update.indicatorPresence = VT100TabStatusUpdateFieldSet;
+            iTermSRGBColor c = { components[0].doubleValue, components[1].doubleValue, components[2].doubleValue };
+            update.indicator = c;
+        }
+    } else if ([key isEqualToString:@"status"]) {
+        if (value.length > 0) {
+            update.statusPresence = VT100TabStatusUpdateFieldSet;
+            update.status = value;
+        } else {
+            update.statusPresence = VT100TabStatusUpdateFieldCleared;
+        }
+    } else if ([key isEqualToString:@"status-color"]) {
+        if (value.length == 0) {
+            update.statusColorPresence = VT100TabStatusUpdateFieldCleared;
+        } else {
+            NSArray<NSNumber *> *components = [self xtermParseColorArgument:value];
+            if (!components) {
+                return NO;
+            }
+            update.statusColorPresence = VT100TabStatusUpdateFieldSet;
+            iTermSRGBColor c = { components[0].doubleValue, components[1].doubleValue, components[2].doubleValue };
+            update.statusColor = c;
+        }
+    } else if ([key isEqualToString:@"detail"]) {
+        if (value.length > 0) {
+            update.detailPresence = VT100TabStatusUpdateFieldSet;
+            update.detail = value;
+        } else {
+            update.detailPresence = VT100TabStatusUpdateFieldCleared;
+        }
+    } else {
+        return NO;
+    }
+    return YES;
 }
 
 // This is based on a misbegotten linux console control sequence:

@@ -253,6 +253,7 @@
 #import "iTermFocusablePanel.h"
 #import "ITAddressBookMgr.h"
 #import "ProfileModelWrapper.h"
+#import "VT100Terminal+Testing.h"
 #import "VT100DCSParser.h"
 #import "VT100LineInfo.h"
 #import "VT100RemoteHost.h"
