@@ -6693,7 +6693,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     NSString *path = [iTermProfilePreferences stringForKey:KEY_ICON_PATH inProfile:profile];
     BOOL flipped = NO;
-    return [_customIcon imageAtPath:path ofSize:NSMakeSize(16, 16) flipped:flipped];
+    const CGFloat size = [iTermAdvancedSettingsModel tabIconSize];
+    return [_customIcon imageAtPath:path ofSize:NSMakeSize(size, size) flipped:flipped];
 }
 
 - (NSString *)windowTitle {
