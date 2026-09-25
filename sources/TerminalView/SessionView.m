@@ -3090,6 +3090,10 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     [self ensureSessionNoteViewWithModel:model];
 }
 
+- (void)setSessionNoteCollapsed:(BOOL)collapsed {
+    _sessionNoteView.isCollapsed = collapsed;
+}
+
 - (void)ensureSessionNoteViewWithModel:(iTermSessionNoteModel *)model {
     if (_sessionNoteView) {
         return;

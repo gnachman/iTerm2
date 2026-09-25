@@ -1756,6 +1756,11 @@ extension PTYSession: AutomaticProfileSwitchingSessionDelegate {
 // MARK: - Session Note
 
 extension PTYSession {
+    @objc(hydrateSessionNoteFromArrangement:)
+    func hydrateSessionNote(fromArrangement arrangement: NSDictionary) {
+        sessionNoteModel = SessionNoteModel.fromArrangement(arrangement)
+    }
+
     @objc func textViewEditSessionNote() {
         guard let view else { return }
         if view.isSessionNoteVisible {
@@ -1766,6 +1771,65 @@ extension PTYSession {
             }
             view.showSessionNote(with: sessionNoteModel!)
         }
+    }
+
+    @objc(sessionNoteAPIDictionary)
+    var sessionNoteAPIDictionary: NSDictionary {
+        let model = sessionNoteModel
+        return [
+            "text": model?.text ?? "",
+            "visible": view?.isSessionNoteVisible ?? false,
+            "collapsed": model?.isCollapsed ?? false,
+        ]
+    }
+
+    @objc(applySessionNoteAPIUpdate:)
+    func applySessionNoteAPIUpdate(_ update: SessionNoteAPIUpdate) -> Bool {
+        if update.text == "" {
+            guard update.visible != true,
+                  update.collapsed != true else {
+                return false
+            }
+            view?.hideSessionNote()
+            sessionNoteModel = nil
+            return true
+        }
+
+        let nextText = update.text ?? sessionNoteModel?.text ?? ""
+        let nextVisible = update.visible ?? view?.isSessionNoteVisible ?? false
+        let nextCollapsed = update.collapsed ?? sessionNoteModel?.isCollapsed ?? false
+
+        guard !nextText.isEmpty || (!nextVisible && !nextCollapsed) else {
+            return false
+        }
+        if nextText.isEmpty {
+            view?.hideSessionNote()
+            sessionNoteModel = nil
+            return true
+        }
+        guard !nextVisible || view != nil else {
+            return false
+        }
+
+        let model = sessionNoteModel ?? SessionNoteModel()
+        model.text = nextText
+        sessionNoteModel = model
+
+        if let visible = update.visible {
+            if visible {
+                view?.restoreSessionNote(with: model)
+            } else {
+                view?.hideSessionNote()
+            }
+        }
+        if let collapsed = update.collapsed {
+            if view?.isSessionNoteVisible == true {
+                view?.setSessionNoteCollapsed(collapsed)
+            } else {
+                model.isCollapsed = collapsed
+            }
+        }
+        return true
     }
 }
 

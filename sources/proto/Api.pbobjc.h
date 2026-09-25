@@ -3171,6 +3171,7 @@ GPB_FINAL @interface ITMGetPropertyRequest : GPBMessage
  * "grid_size" -> { "width": number, "height": number }
  * "buried" -> boolean
  * "number_of_lines" -> { "overflow": number, "grid": number, "history": number }
+ * "session_note" -> { "text": string, "visible": boolean, "collapsed": boolean }
  *
  * For windows:
  * "frame" -> { "origin": { "x": number, "y": number }, "size": { "width": number, "height": number } }
@@ -3253,6 +3254,8 @@ GPB_FINAL @interface ITMSetPropertyRequest : GPBMessage
  * For sessions:
  * grid_size      { "width": 80, "height": 25 }
  * buried         true
+ * "session_note" -> { "text": string, "visible": boolean, "collapsed": boolean }
+ * Accepts a partial object; omitted keys retain their current values.
  **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
 /** Test to see if @c name has been set. */

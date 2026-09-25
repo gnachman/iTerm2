@@ -2811,6 +2811,7 @@ class GetPropertyRequest(_message.Message):
     "grid_size" -> { "width": number, "height": number }
     "buried" -> boolean
     "number_of_lines" -> { "overflow": number, "grid": number, "history": number }
+    "session_note" -> { "text": string, "visible": boolean, "collapsed": boolean }
 
     For windows:
     "frame" -> { "origin": { "x": number, "y": number }, "size": { "width": number, "height": number } }
@@ -2900,6 +2901,8 @@ class SetPropertyRequest(_message.Message):
     For sessions:
     grid_size      { "width": 80, "height": 25 }
     buried         true
+    "session_note" -> { "text": string, "visible": boolean, "collapsed": boolean }
+    Accepts a partial object; omitted keys retain their current values.
     """
     json_value: _builtins.str
     def __init__(

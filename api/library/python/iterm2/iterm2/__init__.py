@@ -58,7 +58,7 @@ from iterm2.screen import ScreenStreamer, LineContents, ScreenContents
 from iterm2.selection import SelectionMode, SubSelection, Selection
 
 from iterm2.session import (
-    SplitPaneException, Splitter, Session, InvalidSessionId)
+    SplitPaneException, Splitter, Session, SessionNote, InvalidSessionId)
 
 from iterm2.statusbar import (
     StatusBarComponent, CheckboxKnob, StringKnob, PositiveFloatingPointKnob,

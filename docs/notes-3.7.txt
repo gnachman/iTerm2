@@ -35,6 +35,8 @@ New Features:
   status indicator by session ID, and
   session_id_for_tmux_pane finds the session
   showing a tmux pane.
+- The Python API can now read, show, hide, and
+  update a session’s Session Note.
 - Right-clicking your own message in AI chat now
   offers Delete, which removes that message and
   everything after it. Edit, Fork, and Delete are
