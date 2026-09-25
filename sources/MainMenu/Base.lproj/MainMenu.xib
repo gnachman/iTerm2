@@ -2220,6 +2220,13 @@ DQ
                                 </connections>
                                 <accessibility identifier="Lock Layout"/>
                             </menuItem>
+                            <menuItem title="Lock Location" identifier="Lock Location" id="Lk3-Ly-Lt2">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleLocationLocked:" target="-1" id="Lk4-Ly-Lt3"/>
+                                </connections>
+                                <accessibility identifier="Lock Location"/>
+                            </menuItem>
                             <menuItem title="Notify on Status Change" identifier="Notify on Status Change" id="Ns0-Ch-G01">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>

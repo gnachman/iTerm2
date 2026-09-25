@@ -12,6 +12,7 @@
 @class iTermWindowShortcutLabelTitlebarAccessoryViewController;
 @class iTermTitlebarAccessoryNanny;
 @class iTermWindowInitialPositioner;
+@class iTermWindowLocationLockController;
 
 // Constants for saved window arrangement key names.
 extern NSString *const TERMINAL_ARRANGEMENT_OLD_X_ORIGIN;
@@ -116,6 +117,11 @@ extern NSString *const TERMINAL_ARRANGEMENT_LAYOUT_LOCKED;
     // closed, reordered, dragged, or moved between windows. Mutually exclusive
     // with _sizeLocked.
     BOOL _layoutLocked;
+
+    // Owns Lock Location for this window: whether it is on, where the window
+    // belongs, and when to put it back. Independent of _sizeLocked and
+    // _layoutLocked; all three can be on at once.
+    iTermWindowLocationLockController *_locationLockController;
 }
 
 @property (nonatomic, retain) NSCustomTouchBarItem *tabsTouchBarItem;

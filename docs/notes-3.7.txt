@@ -175,6 +175,20 @@ New Features:
   style but has no title bar or window controls,
   which is how Centered windows looked before
   3.7.0.
+- Window > Lock Location pins a window to the
+  display and position it has when you turn it
+  on. If anything moves the window it goes right
+  back, and when that display is disconnected, as
+  happens while a laptop sleeps, the window waits
+  and returns when the display comes back.
+  Dragging the window turns the lock off. Styles
+  that fill or attach to the screen, such as
+  Maximized, Centered, and the top, bottom, left,
+  and right styles, keep their usual shape and
+  are held to their display instead. Note that
+  macOS puts a returning window on whichever
+  Space its display is showing at the time, which
+  may not be the Space it left.
 
 Improvements:
 - iTerm2 now recognizes when a terminal is

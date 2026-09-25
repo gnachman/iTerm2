@@ -149,6 +149,11 @@
 
 #import "iTerm2SharedARC-Swift.h"
 
+// Declared here rather than in PseudoTerminal+Private.h because the generated
+// Swift header cannot be imported from a header that the bridging header pulls in.
+@interface PseudoTerminal () <iTermWindowLocationLockControllerDelegate>
+@end
+
 @class QLPreviewPanel;
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
@@ -592,6 +597,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                                                   disableAutoFrame:disableAutoFrame
                                                                                        profileGUID:profile[KEY_GUID]
                                                                                           delegate:self];
+    _locationLockController = [[iTermWindowLocationLockController alloc] initWithDelegate:self];
     _titlebarAccessoryNanny = [[iTermTitlebarAccessoryNanny alloc] init];
     _titlebarAccessoryNanny.windowController = self;
     _titlebarAccessoryNanny.defaultHeight = [self desiredTabBarHeight];
@@ -1107,6 +1113,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self cleanUpTabColorPicker];
     [_broadcastInputHelper release];
     [_windowPositioner release];
+    [_locationLockController release];
     [autocompleteView shutdown];
     [commandHistoryPopup shutdown];
     [_directoriesPopupWindowController shutdown];
@@ -4191,6 +4198,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     }
     _sizeLocked = [arrangement[TERMINAL_ARRANGEMENT_SIZE_LOCKED] boolValue];
     _layoutLocked = [arrangement[TERMINAL_ARRANGEMENT_LAYOUT_LOCKED] boolValue];
+    [_locationLockController loadArrangement:arrangement];
     self.scope.windowTitleOverrideFormat = arrangement[TERMINAL_ARRANGEMENT_TITLE_OVERRIDE];
 
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
@@ -4346,6 +4354,16 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     }
     [_contentView updateToolbeltForWindow:self.window];
     [self updateTouchBarFunctionKeyLabels];
+    // A lock restored from an arrangement starts dormant and has never been
+    // enforced, and the arrangement's own frame may be whatever macOS left the
+    // window at when it was saved. Give it its first enforcement once the window
+    // is on a screen, which it may not be until this turn of the runloop ends.
+    // The controller holds a weak delegate, so this is a no-op if the window is
+    // gone by the time it runs.
+    iTermWindowLocationLockController *locationLockController = _locationLockController;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [locationLockController enforce];
+    });
     return YES;
 }
 
@@ -4405,15 +4423,24 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
 - (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
                              includingContents:(BOOL)includeContents {
     NSArray<PTYTab *> *tabs = [self tabsToEncodeExcludingTmux:excludeTmux];
-    return [self arrangementWithTabs:tabs includingContents:includeContents];
+    return [self arrangementWithTabs:tabs
+                   includingContents:includeContents
+                 representsThisWindow:YES];
 }
 
 - (Profile *)expurgatedInitialProfile {
     return [PseudoTerminal expurgatedInitialProfile:_initialProfile];
 }
 
+// representsThisWindow is NO when the arrangement describes only some of this
+// window's tabs, as Save Tab as Window Arrangement and Save Tab Group as Window
+// Arrangement do. Such an arrangement opens a new window later, and state that
+// belongs to this window instance rather than to its tabs must not come along:
+// a location lock would pin the new window to a frame its user never chose, and
+// restoring the arrangement twice would stack two undraggable windows.
 - (NSDictionary *)arrangementWithTabs:(NSArray<PTYTab *> *)tabs
-                    includingContents:(BOOL)includeContents {
+                    includingContents:(BOOL)includeContents
+                 representsThisWindow:(BOOL)representsThisWindow {
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:7];
     iTermMutableDictionaryEncoderAdapter *adapter =
         [[[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:result] autorelease];
@@ -4423,6 +4450,9 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
                                   encoder:adapter];
     if (!commit) {
         return nil;
+    }
+    if (representsThisWindow) {
+        [_locationLockController populateInArrangement:adapter];
     }
     return result;
 }
@@ -4725,6 +4755,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         NSRect frame = [self.window constrainFrameRect:self.window.frame toScreen:self.window.screen];
         [self.window setFrame:frame display:YES animate:NO];
     }
+    // The window had no screen while it was in the dock, so a location lock could
+    // not act on any display change that happened meanwhile. Now it can.
+    [_locationLockController enforce];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowDidDeminiaturize"
                                                         object:self
                                                       userInfo:nil];
@@ -5386,6 +5419,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)screenParametersDidChange {
     PtyLog(@"Screen parameters changed.");
     [self canonicalizeWindowFrame];
+    // The anchor display may have just come back, in which case this is where a
+    // lock that has been lying in wait since the displays went away gets to act.
+    [_locationLockController enforce];
     if (self.window.backingScaleFactor != _backingScaleFactor) {
         _backingScaleFactor = self.window.backingScaleFactor;
         [self.currentTab bounceMetal];
@@ -6174,8 +6210,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowWillMove:(NSNotification *)notification {
-    // AFAICT this is only called when you move the window by dragging it or double-click the title bar.
+    // Called when the user starts dragging the window or double clicks the title
+    // bar. Measured to be posted for -[NSWindow performWindowDragWithEvent:] drags
+    // too, which is how compact and no-title-bar windows move, so this is the one
+    // signal that a user drag has begun.
     RLog(@"Looks like the user started dragging the window.");
+    [self userDragOfWindowMayBeBeginning];
+}
+
+- (void)userDragOfWindowMayBeBeginning {
     [self clearForceFrame];
     _windowIsMoving = YES;
     _screenBeforeMoving = [[NSScreen screens] indexOfObject:self.window.screen];
@@ -6193,6 +6236,28 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self canonicalizeWindowFrame];
     }
     [self saveTmuxWindowOrigins];
+    // Beware: this almost never fires, and that is a deliberate trade rather than a
+    // bug waiting to be fixed.
+    //
+    // _windowIsMoving is cleared at the bottom of this method, so it is only set
+    // during the *first* -windowDidMove: of a drag, roughly 100ms after
+    // -windowWillMove:. A drag that begins in the middle of a display reaches the
+    // next one hundreds of move events later, long after the flag is gone, so the
+    // anchor usually survives exactly the drag this was written to release. It
+    // does work when the window starts near a boundary, because then the first few
+    // pixels of movement already change which screen owns the window, which is
+    // also how it gets tested by hand and why it looks like it works.
+    //
+    // It cannot be repaired by clearing the flag somewhere else. Nothing reports
+    // that a drag ended: the window server performs the drag, so the app never
+    // sees the mouse up, and the only usable signal is polling
+    // +[NSEvent pressedMouseButtons] from inside some notification we happen to
+    // receive. After the last move of a drag no more arrive, so a lazily cleared
+    // flag stays set until an unrelated move turns up, measured at 27 to 38
+    // seconds of ordinary use. That would trade a missed crossing for a spurious
+    // anchor clear any time a programmatic move lands while a button happens to be
+    // down, and throwing away an anchor the user configured destroys state, while
+    // missing a crossing only leaves the previous behavior in place.
     if (_windowIsMoving && _windowPositioner.isAnchoredToScreen) {
         NSInteger screenIndex = [[NSScreen screens] indexOfObject:self.window.screen];
         if (screenIndex != _screenBeforeMoving) {
@@ -6200,6 +6265,20 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             [_windowPositioner clearScreenAnchor];
         }
     }
+    // -windowWillMove: is sent for a drag but not for a programmatic move, so it
+    // is how we tell the user apart from an accessibility client.
+    //
+    // The mouse button is checked too because _windowIsMoving can be stale:
+    // nothing is posted when a drag ends without moving the window, such as a
+    // title bar click that doesn't move it, so the clear at the bottom of this
+    // method never runs and the flag survives into some later programmatic move.
+    // A live drag always has the left button down. Releasing a location lock
+    // throws away something the user asked for, so it takes both signals.
+    const BOOL userIsDraggingWindow = (_windowIsMoving &&
+                                       ([NSEvent pressedMouseButtons] & 1) != 0);
+    [_locationLockController windowDidMoveUserIsDragging:userIsDraggingWindow];
+    // Keeps _windowIsMoving honest, at the cost of the anchor check above. Read
+    // the comment there before moving or deleting this.
     _windowIsMoving = NO;
     [self updateVariables];
     _inWindowDidMove = NO;
@@ -6213,6 +6292,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                             object:self.swipeIdentifier];
     }
     lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
+    [_locationLockController windowDidResize];
     if (zooming_) {
         RLog(@"zooming so pretend nothing happened for better performance");
         // Pretend nothing happened to avoid slowing down zooming.
@@ -9784,7 +9864,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (members.count == 0) {
         return;
     }
-    NSDictionary *arrangement = [self arrangementWithTabs:members includingContents:NO];
+    NSDictionary *arrangement = [self arrangementWithTabs:members
+                                        includingContents:NO
+                                     representsThisWindow:NO];
     if (!arrangement) {
         return;
     }
@@ -13432,6 +13514,51 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }
 }
 
+#pragma mark - Location Lock
+
+- (IBAction)toggleLocationLocked:(id)sender {
+    [_locationLockController toggle];
+}
+
+// Called the moment the displays change, well before -screenParametersDidChange
+// acts on it.
+- (void)locationLockDisplaysDidChange {
+    [_locationLockController displaysDidChange];
+}
+
+#pragma mark - iTermWindowLocationLockControllerDelegate
+
+- (NSWindow<PTYWindow> *)windowForLocationLock {
+    return self.ptyWindow;
+}
+
+- (iTermWindowType)locationLockWindowType {
+    return self.windowType;
+}
+
+- (int)locationLockProfileScreenPreference {
+    return _windowPositioner.screenNumberFromFirstProfile;
+}
+
+- (BOOL)locationLockWindowStateOwnsFrame {
+    if (_fullScreen || togglingFullScreen_ || self.lionFullScreen || togglingLionFullScreen_) {
+        return YES;
+    }
+    iTermProfileHotKey *profileHotKey =
+        [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
+    if (profileHotKey &&
+        (![profileHotKey isRevealed] || profileHotKey.rollingIn || profileHotKey.rollingOut)) {
+        // A hidden or animating hotkey window is parked wherever its roll in or
+        // roll out needs it to be.
+        return YES;
+    }
+    return NO;
+}
+
+- (void)locationLockMoveToScreen:(NSScreen *)screen {
+    [self moveToScreen:screen];
+}
+
 - (IBAction)moveSessionToWindow:(id)sender {
     [[MovePaneController sharedInstance] moveSessionToNewWindow:[self currentSession]
                                                         atPoint:[[self window] pointToScreenCoords:NSMakePoint(10, -10)]];
@@ -13881,6 +14008,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if ([item action] == @selector(toggleLayoutLocked:)) {
         [item setState:_layoutLocked ? NSControlStateValueOn : NSControlStateValueOff];
         return YES;
+    } else if ([item action] == @selector(toggleLocationLocked:)) {
+        [item setState:_locationLockController.isLocked ? NSControlStateValueOn : NSControlStateValueOff];
+        // canLock gates taking a new lock. Releasing one you already have must
+        // always be reachable, including while the window is full screen and the
+        // lock is dormant, or it becomes impossible to turn off.
+        return _locationLockController.isLocked || _locationLockController.canLock;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         if (self.currentSession.locked) {
             return NO;
@@ -14533,7 +14666,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     if (!theTab) {
         theTab = [self currentTab];
     }
-    NSDictionary *arrangement = [self arrangementWithTabs:@[ theTab ] includingContents:NO];
+    NSDictionary *arrangement = [self arrangementWithTabs:@[ theTab ]
+                                        includingContents:NO
+                                     representsThisWindow:NO];
     [WindowArrangements nameForNewArrangement:^(NSString *name) {
         if (name) {
             [WindowArrangements setArrangement:@[ arrangement ] withName:name];
@@ -14715,6 +14850,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         if (profile) {
             int screenNumber = [iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile];
             _windowPositioner.screenNumberFromFirstProfile = screenNumber;
+            [_locationLockController profileScreenPreferenceDidChange];
             screenNumber = [PseudoTerminal screenNumberForPreferredScreenNumber:screenNumber
                                                                      windowType:self.windowType
                                                                   defaultScreen:[[self window] screen]];
@@ -16360,6 +16496,7 @@ backgroundColor:(NSColor *)backgroundColor {
     [encoder encodeNumber:@(self.window.miniaturized) forKey:TERMINAL_ARRANGEMENT_MINIATURIZED];
     [encoder encodeNumber:@(_sizeLocked) forKey:TERMINAL_ARRANGEMENT_SIZE_LOCKED];
     [encoder encodeNumber:@(_layoutLocked) forKey:TERMINAL_ARRANGEMENT_LAYOUT_LOCKED];
+    [_locationLockController populateInArrangement:adapter];
     return commit;
 }
 
@@ -16373,6 +16510,10 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (void)didFinishRestoringWindow {
     RLog(@"%@ widthAdjustment=%@", self, @(_widthAdjustment));
+    // System window restoration doesn't go through -loadArrangement:, so this is
+    // where a restored location lock gets its first enforcement. Before the early
+    // return below, which is about width adjustment and not about the lock.
+    [_locationLockController enforce];
     if (_widthAdjustment == 0) {
         return;
     }

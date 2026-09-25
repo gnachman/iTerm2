@@ -392,6 +392,11 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // etc.) change.
 - (void)screenParametersDidChange;
 
+// Called the instant the displays change, before -screenParametersDidChange is
+// scheduled, so a location lock can stop trusting frames while macOS relocates
+// windows.
+- (void)locationLockDisplaysDidChange;
+
 // Changes how input is broadcast.
 - (void)setBroadcastMode:(BroadcastMode)mode;
 - (void)setBroadcastingSessions:(NSArray<NSArray<PTYSession *> *> *)domains;
