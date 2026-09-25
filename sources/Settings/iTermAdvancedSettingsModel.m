@@ -302,6 +302,7 @@ BOOL UseSystemCursorWhenPossibleDefault(void) {
 #define SECTION_TABS @"Tabs"
 
 DEFINE_BOOL(openProfilesInNewWindow, NO, SECTION_TABS, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.openProfilesInNewWindow", nil, [NSBundle mainBundle], @"Choosing a profile from the “Profiles” menu opens a new window.\nYou must restart iTerm2 after changing this setting for it to take effect.", @"Advanced setting: openProfilesInNewWindow"));
+DEFINE_SETTABLE_BOOL(showHarnessDirectorySidebar, ShowHarnessDirectorySidebar, NO, SECTION_TABS, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.showHarnessDirectorySidebar", nil, [NSBundle mainBundle], @"Show coding harnesses grouped by directory in a left sidebar.", @"Advanced setting: showHarnessDirectorySidebar"));
 DEFINE_BOOL(useUnevenTabs, NO, SECTION_TABS, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.useUnevenTabs", nil, [NSBundle mainBundle], @"Uneven tab widths allowed.", @"Advanced setting: useUnevenTabs"));
 DEFINE_INT(minTabWidth, 75, SECTION_TABS, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.minTabWidth", nil, [NSBundle mainBundle], @"Minimum tab width when using uneven tab widths.", @"Advanced setting: minTabWidth"));
 DEFINE_INT(minCompactTabWidth, 60, SECTION_TABS, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.minCompactTabWidth", nil, [NSBundle mainBundle], @"Minimum tab width when using uneven tab widths for compact tabs.", @"Advanced setting: minCompactTabWidth"));

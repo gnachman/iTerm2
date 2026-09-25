@@ -378,6 +378,12 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     [ArchivesMenuBuilder setShared:[[ArchivesMenuBuilder alloc] initWithMenuItem:_archivesMenuItem]];
 
     NSMenu *viewMenu = [self topLevelViewWithIdentifier:@"View"];
+    NSMenuItem *sidebarItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ViewMenu.ViewSidebar", nil, [NSBundle mainBundle], @"View Sidebar", @"View menu toggle for the coding harness sidebar")
+                                                         action:@selector(toggleHarnessDirectorySidebar:)
+                                                  keyEquivalent:@"s"] autorelease];
+    sidebarItem.target = self;
+    sidebarItem.keyEquivalentModifierMask = NSEventModifierFlagControl | NSEventModifierFlagCommand;
+    [viewMenu insertItem:sidebarItem atIndex:2];
     [viewMenu addItem:[NSMenuItem separatorItem]];
 
     NSSize tabColorViewSize = [ColorsMenuItemView preferredSize];
@@ -439,6 +445,10 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     const SEL action = [menuItem action];
+    if (action == @selector(toggleHarnessDirectorySidebar:)) {
+        menuItem.state = [iTermAdvancedSettingsModel showHarnessDirectorySidebar] ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
+    }
     if (action == @selector(newSessionInTabAtIndex:) ||
         action == @selector(newSession:) ||
         action == @selector(newSessionWithSameProfile:)) {
@@ -2829,6 +2839,10 @@ static iTermKeyEventReplayer *gReplayer;
     NSString *toolbeltPrefix = @"Toolbelt.";
     NSString *name = [menuItem.identifier hasPrefix:toolbeltPrefix] ? [menuItem.identifier substringFromIndex:toolbeltPrefix.length] : menuItem.title;
     [iTermToolbeltView toggleShouldShowTool:name];
+}
+
+- (IBAction)toggleHarnessDirectorySidebar:(id)sender {
+    [iTermAdvancedSettingsModel setShowHarnessDirectorySidebar:![iTermAdvancedSettingsModel showHarnessDirectorySidebar]];
 }
 
 - (IBAction)toggleFullScreenTabBar:(id)sender {

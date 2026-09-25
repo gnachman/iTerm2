@@ -92,6 +92,7 @@ typedef struct {
 @property(nonatomic, strong) iTermTabBarControlView *tabBarControl;
 @property(nonatomic, strong) SolidColorView *divisionView;
 @property(nonatomic, strong) iTermToolbeltView *toolbelt;
+@property(nonatomic, strong) SessionDirectorySidebar *harnessSidebar;
 @property(nonatomic, strong) iTermDragHandleView *verticalTabBarDragHandle;
 
 @end
@@ -337,6 +338,9 @@ typedef struct {
 - (void)advancedSettingsDidChange:(NSNotification *)notification {
     [self updateBorderViews];
     [self updateWindowNameBesideTabs];
+    if ((self.harnessSidebar != nil) != [iTermAdvancedSettingsModel showHarnessDirectorySidebar]) {
+        [self.delegate rootTerminalViewHarnessSidebarVisibilityDidChange];
+    }
 }
 
 - (void)setDelegate:(id<iTermRootTerminalViewDelegate>)delegate {
@@ -1653,6 +1657,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     }
     inputs.contentViewWidth = contentFrame.size.width;
     inputs.contentViewHeight = contentFrame.size.height;
+    inputs.harnessSidebarWidth = self.harnessSidebarDecorationWidth;
 
     // Tab bar dimensions
     inputs.tabBarHeight = _tabBarControl.height;
@@ -1735,6 +1740,71 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
         // exit-fullscreen transition into the windowed titlebar.
         self.tabBarControl.insets = [self.delegate tabBarInsets];
     }
+}
+
+- (BOOL)handleProjectShortcut:(NSEvent *)event digit:(NSInteger)digit {
+    return [self.harnessSidebar handleProjectShortcut:event digit:digit];
+}
+
+- (void)selectHarnessProjectContainingSessionGUID:(NSString *)guid {
+    [self.harnessSidebar selectProjectContainingSessionGUID:guid];
+}
+
+- (void)harnessSidebarSelectedTabDidChange {
+    if (!self.harnessSidebar) {
+        return;
+    }
+    PTYTab *tab = self.tabView.selectedTabViewItem.identifier;
+    [self.harnessSidebar selectedTabDidChangeToSessionGUID:tab.activeSession.guid];
+}
+
+// The requested width rather than the laid-out one: the window grows to fit the
+// sidebar. The layout calculator clamps it only when the window is too narrow.
+- (CGFloat)harnessSidebarDecorationWidth {
+    if (![iTermAdvancedSettingsModel showHarnessDirectorySidebar]) {
+        return 0;
+    }
+    return self.harnessSidebar ? self.harnessSidebar.requestedWidth : [SessionDirectorySidebar preferredWidth];
+}
+
+- (BOOL)applyHarnessProjectFilter:(NSSet<NSString *> *)sessionIDs reselect:(BOOL)reselect {
+    if (!sessionIDs) {
+        self.tabBarControl.projectTabViewItems = nil;
+        return NO;
+    }
+    NSMutableSet<NSTabViewItem *> *matching = [NSMutableSet set];
+    for (NSTabViewItem *item in self.tabView.tabViewItems) {
+        PTYTab *tab = item.identifier;
+        for (PTYSession *session in tab.sessions) {
+            if ([sessionIDs containsObject:session.guid]) {
+                [matching addObject:item];
+                break;
+            }
+        }
+    }
+    id itemToSelect = nil;
+    NSSet *visible = [iTermLayoutCalculator harnessProjectVisibleItemsForOrderedItems:self.tabView.tabViewItems
+                                                                      matchingItems:matching
+                                                                       selectedItem:self.tabView.selectedTabViewItem
+                                                                           reselect:reselect
+                                                                       itemToSelect:&itemToSelect];
+    DLog(@"Project filter matches %@ of %@ tabs, reselect=%@, selecting %@",
+         @(matching.count), @(self.tabView.numberOfTabViewItems), @(reselect), itemToSelect);
+    self.tabBarControl.projectTabViewItems = visible;
+    if (itemToSelect) {
+        // A tab may contain panes from different projects. Focus a matching
+        // pane before selecting the tab so the selection callback keeps this
+        // project instead of following the tab's previously active pane.
+        PTYTab *tab = [(NSTabViewItem *)itemToSelect identifier];
+        for (PTYSession *session in tab.sessions) {
+            if ([sessionIDs containsObject:session.guid]) {
+                [tab setActiveSession:session];
+                break;
+            }
+        }
+        [self.tabView selectTabViewItem:itemToSelect];
+    }
+    return matching.count > 0;
 }
 
 - (void)layoutSubviewsTopTabBarVisible:(BOOL)topTabBarVisible forWindow:(NSWindow *)thisWindow {
@@ -2004,6 +2074,42 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
         [self layoutSubviewsWithHiddenTabBarForWindow:thisWindow];
     } else {
         [self layoutSubviewsWithVisibleTabBarForWindow:thisWindow inlineToolbelt:showToolbeltInline];
+    }
+    if ([iTermAdvancedSettingsModel showHarnessDirectorySidebar]) {
+        if (!self.harnessSidebar) {
+            self.harnessSidebar = [[SessionDirectorySidebar alloc] initWithFrame:NSZeroRect];
+            __weak iTermRootTerminalView *weakSelf = self;
+            self.harnessSidebar.widthDidChange = ^{
+                [weakSelf.delegate repositionWidgets];
+            };
+            self.harnessSidebar.widthDidFinishChanging = ^{
+                [weakSelf.delegate rootTerminalViewHarnessSidebarWidthDidFinishChanging];
+            };
+            self.harnessSidebar.selectProjectTabAtIndex = ^(NSInteger index) {
+                iTermRootTerminalView *strongSelf = weakSelf;
+                NSArray *visible = [strongSelf.tabView.tabViewItems filteredArrayUsingPredicate:
+                    [NSPredicate predicateWithBlock:^BOOL(NSTabViewItem *item, NSDictionary *bindings) {
+                        return [strongSelf.tabBarControl.projectTabViewItems containsObject:item];
+                    }]];
+                if (index == 8 && visible.count > 0) { index = visible.count - 1; }
+                if (index >= 0 && index < visible.count) {
+                    [strongSelf.tabView selectTabViewItem:visible[index]];
+                }
+            };
+            // Only an explicit project change may move the selection; the
+            // sidebar's periodic refresh passes reselect=NO.
+            self.harnessSidebar.projectFilterDidChange = ^BOOL(NSSet *sessionIDs, BOOL reselect) {
+                return [weakSelf applyHarnessProjectFilter:sessionIDs reselect:reselect];
+            };
+            [self addSubview:self.harnessSidebar];
+        }
+        const iTermLayoutOutputs sidebarLayout = [iTermLayoutCalculator calculateLayoutWithInputs:
+                                                   [self layoutInputsForWindow:thisWindow]];
+        self.harnessSidebar.frame = sidebarLayout.harnessSidebarFrame;
+    } else if (self.harnessSidebar) {
+        self.tabBarControl.projectTabViewItems = nil;
+        [self.harnessSidebar removeFromSuperview];
+        self.harnessSidebar = nil;
     }
     if (@available(macOS 12.0, *)) {
         const CGFloat notchHeight = [self notchInset];

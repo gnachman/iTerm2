@@ -51,6 +51,61 @@ const int kLayoutTabPositionRight = 3;
     }
 }
 
+// Reserve a left column; the top tab bar belongs to the terminal column.
++ (iTermLayoutOutputs)reserveHarnessSidebarInOutputs:(iTermLayoutOutputs)outputs
+                                            inputs:(iTermLayoutInputs)inputs {
+    const CGFloat width = floor(MAX(0, MIN(inputs.harnessSidebarWidth,
+                                          MAX(0, CGRectGetWidth(outputs.tabViewFrame) - 240))));
+    if (width == 0) {
+        return outputs;
+    }
+    outputs.harnessSidebarFrame = outputs.tabViewFrame;
+    outputs.harnessSidebarFrame.size.width = width;
+    outputs.tabViewFrame.origin.x += width;
+    outputs.tabViewFrame.size.width -= width;
+    if (inputs.tabBarVisible && inputs.tabPosition == kLayoutTabPositionTop && !inputs.tabBarOnLoan) {
+        const CGFloat right = CGRectGetMaxX(outputs.tabBarFrame);
+        outputs.tabBarFrame.origin.x = CGRectGetMaxX(outputs.harnessSidebarFrame);
+        outputs.tabBarFrame.size.width = MAX(0, right - CGRectGetMinX(outputs.tabBarFrame));
+        const CGFloat top = MAX(CGRectGetMaxY(outputs.harnessSidebarFrame),
+                                CGRectGetMaxY(outputs.tabBarFrame));
+        outputs.harnessSidebarFrame.size.height = top - CGRectGetMinY(outputs.harnessSidebarFrame);
+    }
+    if (inputs.hasStatusBar) {
+        outputs.statusBarFrame.origin.x += width;
+        outputs.statusBarFrame.size.width = MAX(0, outputs.statusBarFrame.size.width - width);
+    }
+    return outputs;
+}
+
++ (NSSet *)harnessProjectVisibleItemsForOrderedItems:(NSArray *)orderedItems
+                                      matchingItems:(NSSet *)matchingItems
+                                       selectedItem:(id)selectedItem
+                                           reselect:(BOOL)reselect
+                                       itemToSelect:(id *)itemToSelect {
+    if (itemToSelect) {
+        *itemToSelect = nil;
+    }
+    if (matchingItems.count == 0) {
+        return nil;
+    }
+    const BOOL selectedMatches = selectedItem != nil && [matchingItems containsObject:selectedItem];
+    if (reselect && !selectedMatches) {
+        for (id item in orderedItems) {
+            if ([matchingItems containsObject:item]) {
+                if (itemToSelect) {
+                    *itemToSelect = item;
+                }
+                return matchingItems;
+            }
+        }
+    }
+    if (selectedItem == nil || selectedMatches) {
+        return matchingItems;
+    }
+    return [matchingItems setByAddingObject:selectedItem];
+}
+
 #pragma mark - Hidden Tab Bar Layout
 
 + (iTermLayoutOutputs)calculateLayoutWithHiddenTabBarInputs:(iTermLayoutInputs)inputs {
@@ -115,7 +170,7 @@ const int kLayoutTabPositionRight = 3;
     // Calculate toolbelt frame
     outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
 
-    return outputs;
+    return [self reserveHarnessSidebarInOutputs:outputs inputs:inputs];
 }
 
 #pragma mark - Visible Top Tab Bar Layout
@@ -185,7 +240,7 @@ const int kLayoutTabPositionRight = 3;
 
     outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
 
-    return outputs;
+    return [self reserveHarnessSidebarInOutputs:outputs inputs:inputs];
 }
 
 #pragma mark - Visible Bottom Tab Bar Layout
@@ -238,7 +293,7 @@ const int kLayoutTabPositionRight = 3;
 
     outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
 
-    return outputs;
+    return [self reserveHarnessSidebarInOutputs:outputs inputs:inputs];
 }
 
 #pragma mark - Visible Left Tab Bar Layout
@@ -297,7 +352,7 @@ const int kLayoutTabPositionRight = 3;
 
     outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
 
-    return outputs;
+    return [self reserveHarnessSidebarInOutputs:outputs inputs:inputs];
 }
 
 #pragma mark - Visible Right Tab Bar Layout
@@ -356,7 +411,7 @@ const int kLayoutTabPositionRight = 3;
 
     outputs.toolbeltFrame = [self toolbeltFrameWithInputs:inputs];
 
-    return outputs;
+    return [self reserveHarnessSidebarInOutputs:outputs inputs:inputs];
 }
 
 #pragma mark - Tab View Frame Shrinking

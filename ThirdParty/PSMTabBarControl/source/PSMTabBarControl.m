@@ -433,6 +433,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 }
 
 - (void)dealloc {
+    [_projectTabViewItems release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
 
@@ -1226,12 +1227,12 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
 // "is this cell visible in the bar" test (the cell-level companion to
 // -tabViewItemIsHiddenInBar:); route cell loops that mean "drawn"/"not drawn"
 // (isLast, hit-test tracking rects, and similar) through it rather than
-// re-spelling `!isInOverflowMenu && !isCollapsedHidden`, so a future addition to
+// re-spelling `!isInOverflowMenu && !isHiddenInBar`, so a future addition to
 // the definition of "drawn" lands everywhere. (Loops that additionally exclude
 // chips or placeholders express a DIFFERENT concept -- a real drawable tab cell
 // -- and intentionally do not funnel through here.)
 - (BOOL)cellIsDrawnInBar:(PSMTabBarCell *)cell {
-    return ![cell isInOverflowMenu] && ![cell isCollapsedHidden];
+    return ![cell isInOverflowMenu] && ![cell isHiddenInBar];
 }
 
 - (void)dragWillExitTabBar {
@@ -1908,7 +1909,34 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
     }
 }
 
+- (void)setProjectTabViewItems:(NSSet<NSTabViewItem *> *)items {
+    if (_projectTabViewItems == items || [_projectTabViewItems isEqualToSet:items]) {
+        return;
+    }
+    [_projectTabViewItems release];
+    _projectTabViewItems = [items copy];
+    [self updateWithoutAnimation];
+}
+
 - (void)update:(BOOL)animate {
+    for (PSMTabBarCell *cell in _cells) {
+        cell.isProjectHidden = _projectTabViewItems != nil &&
+            !cell.isPlaceholder && !cell.isTabGroupChip &&
+            ![_projectTabViewItems containsObject:cell.representedObject];
+    }
+    // Hide group chips as well when none of their member tabs belongs to the project.
+    for (PSMTabBarCell *chip in _cells) {
+        if (!chip.isTabGroupChip) { continue; }
+        chip.isProjectHidden = _projectTabViewItems != nil;
+        for (PSMTabBarCell *cell in _cells) {
+            if (!cell.isTabGroupChip && !cell.isPlaceholder && !cell.isProjectHidden &&
+                [cell.tabGroupIdentifier isEqualToString:chip.tabGroupIdentifier]) {
+                chip.isProjectHidden = NO;
+                break;
+            }
+        }
+    }
+
     // This method handles all of the cell layout, and is called when something changes to require
     // the refresh.  This method is not called during drag and drop. See the PSMTabDragAssistant's
     // calculateDragAnimationForTabBar: method, which does layout in that case.
@@ -2087,7 +2115,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
             // Group chip cells are short; everything else uses the tab height.
             CGFloat totalHeight = 0;
             for (PSMTabBarCell *cell in _cells) {
-                if (cell.isCollapsedHidden) {
+                if (cell.isHiddenInBar) {
                     continue;  // hidden by a collapsed group: no height
                 }
                 totalHeight += cell.isTabGroupChip ? [self heightOfTabGroupChipCell:cell] : tabHeight;
@@ -2097,14 +2125,14 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
             currentOrigin -= _scrollOffset;
             for (int i = 0; i < cellCount; ++i) {
                 [newOrigins addObject:@(currentOrigin)];
-                if (_cells[i].isCollapsedHidden) {
+                if (_cells[i].isHiddenInBar) {
                     continue;  // zero height: keep this origin but don't advance
                 }
                 currentOrigin += _cells[i].isTabGroupChip ? [self heightOfTabGroupChipCell:_cells[i]] : tabHeight;
             }
         } else {
             for (int i = 0; i < cellCount; ++i) {
-                if (_cells[i].isCollapsedHidden) {
+                if (_cells[i].isHiddenInBar) {
                     // Zero height, index-aligned origin, never breaks the walk.
                     [newOrigins addObject:@(currentOrigin)];
                     continue;
@@ -2122,7 +2150,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
                     // trailing collapsed members to the last real origin.
                     if ([newOrigins count] > 0 && [self frame].size.height - currentOrigin < h) {
                         while (newOrigins.count > 0 &&
-                               _cells[newOrigins.count - 1].isCollapsedHidden) {
+                               _cells[newOrigins.count - 1].isHiddenInBar) {
                             [newOrigins removeLastObject];
                         }
                         if (newOrigins.count > 0) {
@@ -2375,7 +2403,7 @@ static CGFloat PSMCollapseEase(CGFloat t) {
             sum += w;
             // A collapsed member with a zero interpolated width is not laid out
             // (no cell, no intercell spacing); everything else advances.
-            if (!(_cells[i].isCollapsedHidden && w <= 0)) {
+            if (!(_cells[i].isHiddenInBar && w <= 0)) {
                 laidOut++;
             }
         }
@@ -2454,7 +2482,7 @@ static CGFloat PSMCollapseEase(CGFloat t) {
     for (PSMTabBarCell *cell in _cells) {
         const CGFloat fullSlot = cell.isTabGroupChip ? [self heightOfTabGroupChipCell:cell] : tabHeight;
         [start addObject:@((NSHeight(cell.frame) > 0) ? fullSlot : 0.0)];
-        [target addObject:@(cell.isCollapsedHidden ? 0.0 : fullSlot)];
+        [target addObject:@(cell.isHiddenInBar ? 0.0 : fullSlot)];
     }
     [_collapseStartWidths release];
     _collapseStartWidths = [start copy];
@@ -2737,7 +2765,7 @@ typedef struct {
             // spacing to the real layout (like every other width builder), so it
             // must not count here or the reserved spacing and per-tab denominator
             // inflate and the drop slot comes out narrower than the settled size.
-            if (![cell isTabGroupChip] && ![cell isPlaceholder] && ![cell isCollapsedHidden]) {
+            if (![cell isTabGroupChip] && ![cell isPlaceholder] && ![cell isHiddenInBar]) {
                 existing++;
             }
         }
@@ -2788,7 +2816,7 @@ typedef struct {
     for (NSInteger cellIdx = 0; cellIdx < (NSInteger)_cells.count; cellIdx++) {
         PSMTabBarCell *cell = _cells[cellIdx];
         CGFloat width;
-        if (cell.isCollapsedHidden) {
+        if (cell.isHiddenInBar) {
             width = 0;  // hidden by a collapsed group; keeps index alignment
         } else if (cell.isTabGroupChip) {
             width = [self widthOfTabGroupChipCellAtIndex:cellIdx];
@@ -2826,7 +2854,7 @@ typedef struct {
 - (NSInteger)numberOfCellsContributingIntercellSpacing {
     NSInteger count = 0;
     for (PSMTabBarCell *cell in _cells) {
-        if (!cell.isCollapsedHidden) {
+        if (!cell.isHiddenInBar) {
             count++;
         }
     }
@@ -2856,7 +2884,7 @@ typedef struct {
     for (NSInteger cellIdx = 0; cellIdx < (NSInteger)_cells.count; cellIdx++) {
         PSMTabBarCell *cell = _cells[cellIdx];
         CGFloat width;
-        if (cell.isCollapsedHidden) {
+        if (cell.isHiddenInBar) {
             width = 0;  // hidden by a collapsed group; keeps index alignment
         } else if (cell.isTabGroupChip) {
             width = [self widthOfTabGroupChipCellAtIndex:cellIdx];
@@ -2891,7 +2919,7 @@ typedef struct {
     return !self.stretchCellsToFit && canFitAllCellsOptimally;
 }
 
-// Fit/stretch layout when group chip cells are present. Chip (and pinned)
+// Fit/stretch layout when group chips or a project filter are present. Chip (and pinned)
 // cells keep their fixed width; the remaining space is shared among the
 // tab cells, which stretch to fill when stretchCellsToFit is on. Kept
 // separate from the pinned-centric path below so the (well-tested)
@@ -2918,7 +2946,7 @@ typedef struct {
     NSInteger tabCount = 0;
     for (NSInteger cellIdx = 0; cellIdx < (NSInteger)_cells.count; cellIdx++) {
         PSMTabBarCell *cell = _cells[cellIdx];
-        if (cell.isCollapsedHidden) {
+        if (cell.isHiddenInBar) {
             continue;  // hidden by a collapsed group: no reserved width, not a tab
         }
         if (cell.isTabGroupChip) {
@@ -2957,7 +2985,7 @@ typedef struct {
     const CGFloat fitTolerance = 0.5;
     for (NSInteger cellIdx = 0; cellIdx < (NSInteger)_cells.count; cellIdx++) {
         PSMTabBarCell *cell = _cells[cellIdx];
-        if (cell.isCollapsedHidden) {
+        if (cell.isHiddenInBar) {
             // Keep the index-aligned prefix contract: emit a zero-width entry
             // with no spacing and never break here, so a collapsed member in the
             // middle of the bar doesn't misalign later cells' frames.
@@ -3022,7 +3050,7 @@ typedef struct {
     const CGFloat spacing = _style.intercellSpacing;
     const CGFloat minWidth = self.cellMinWidth;
 
-    if ([self hasTabGroupChipCells]) {
+    if (_projectTabViewItems != nil || [self hasTabGroupChipCells]) {
         // Collapsed members are hidden: no width and no intercell spacing, which
         // is exactly why a raw tab count overstates what the tabs need.
         const NSInteger visibleCellCount = [self numberOfCellsContributingIntercellSpacing];
@@ -3030,7 +3058,7 @@ typedef struct {
         NSInteger tabCount = 0;
         for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
             PSMTabBarCell *cell = _cells[i];
-            if (cell.isCollapsedHidden) {
+            if (cell.isHiddenInBar) {
                 continue;
             }
             if (cell.isTabGroupChip) {
@@ -3098,7 +3126,7 @@ typedef struct {
 }
 
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {
-    if ([self hasTabGroupChipCells]) {
+    if (_projectTabViewItems != nil || [self hasTabGroupChipCells]) {
         return [self cellWidthsForHorizontalArrangementWithChipsWithOverflow:withOverflow];
     }
     const NSUInteger cellCount = _cells.count;
@@ -3373,7 +3401,7 @@ typedef struct {
                                 interpolatedWidth:(CGFloat)w
                                  intercellSpacing:(CGFloat)intercellSpacing {
     if (!_collapseAnimating || _collapseVertical ||
-        i < 0 || i >= (NSInteger)_cells.count || !_cells[i].isCollapsedHidden) {
+        i < 0 || i >= (NSInteger)_cells.count || !_cells[i].isHiddenInBar) {
         return intercellSpacing;
     }
     const CGFloat full = (i < (NSInteger)_collapseStartWidths.count &&
@@ -3416,7 +3444,7 @@ typedef struct {
             // full height.
             const BOOL animatingSize = (horizontalLayout &&
                                         [[newValues objectAtIndex:i] doubleValue] > 0);
-            if (cell.isCollapsedHidden && !animatingSize) {
+            if (cell.isHiddenInBar && !animatingSize) {
                 // Hidden by a collapsed group: give it a zero-size frame, drop
                 // its tracking rects and indicator, keep it out of the overflow
                 // menu, and do NOT advance the x-origin (the `continue` skips the
@@ -3536,7 +3564,7 @@ typedef struct {
                 [[cell indicator] removeFromSuperview];
                 continue;
             }
-            if (cell.isCollapsedHidden) {
+            if (cell.isHiddenInBar) {
                 // A collapsed member that fell past the visible prefix: hidden,
                 // and never added to the overflow "..." menu (that would defeat
                 // collapse).
@@ -4678,7 +4706,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         // drop target, so hit-testing skips them (a click over a chip is
         // treated as "no cell", e.g. so it doesn't suppress window drag).
         // Collapsed members are hidden (zero frame) and must not be hit either.
-        if ([cell isTabGroupChip] || [cell isCollapsedHidden]) {
+        if ([cell isTabGroupChip] || [cell isHiddenInBar]) {
             continue;
         }
         if (NSPointInRect(point, [cell frame])) {
@@ -4702,7 +4730,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         if ([cell isInOverflowMenu]) {
             break;
         }
-        if ([cell isTabGroupChip] || [cell isCollapsedHidden]) {
+        if ([cell isTabGroupChip] || [cell isHiddenInBar]) {
             continue;
         }
         last = cell;
@@ -4745,7 +4773,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         if ([cell isInOverflowMenu]) {
             break;
         }
-        if ([cell isTabGroupChip] || [cell isCollapsedHidden]) {
+        if ([cell isTabGroupChip] || [cell isHiddenInBar]) {
             // Chips represent no tab; collapsed members are off-screen. Either
             // one published here would create a phantom or invisible AX tab.
             // (Collapsed members remain in -accessibilityTabs, the full logical
@@ -4982,7 +5010,7 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
             // Exception: while a collapse slide runs, a collapsed member still has
             // a (shrinking) width, so keep it in the run and the outline encloses
             // it as it slides shut -- matching expand's growing outline.
-            if (c.isCollapsedHidden && NSWidth(c.frame) <= 0) {
+            if (c.isHiddenInBar && NSWidth(c.frame) <= 0) {
                 continue;
             }
             // A drag interleaves placeholder cells between real ones; they're
@@ -5048,7 +5076,7 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
 // rule lives in one place.
 + (NSRect)firstFullSizeTabCellFrameInCells:(NSArray<PSMTabBarCell *> *)cells {
     for (PSMTabBarCell *c in cells) {
-        if (![c isTabGroupChip] && ![c isCollapsedHidden] &&
+        if (![c isTabGroupChip] && ![c isHiddenInBar] &&
             NSWidth(c.frame) > 0 && NSHeight(c.frame) > 0) {
             return c.frame;
         }

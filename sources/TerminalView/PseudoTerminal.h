@@ -522,5 +522,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
              nearSessionGuid:(NSString *)sessionGuid
                     vertical:(BOOL)vertical;
 
-@end
+// Project navigator shortcuts are dispatched before ordinary terminal key handling.
+- (BOOL)handleProjectShortcut:(NSEvent *)event digit:(NSInteger)digit;
+- (void)selectHarnessProjectContainingSessionGUID:(NSString *)guid;
 
+@end

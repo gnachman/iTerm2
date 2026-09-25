@@ -98,6 +98,19 @@ final class PSMTabGroupDropResolutionTests: XCTestCase {
         XCTAssertEqual(assistant.groupContainingDrop(of: dragged, inTabBar: control), "A")
     }
 
+    func testDropBetweenProjectHiddenMembersDoesNotJoinHiddenGroup() {
+        let dragged = tabCell(nil)
+        let hiddenBefore = tabCell("A")
+        hiddenBefore.isProjectHidden = true
+        let hiddenAfter = tabCell("A")
+        hiddenAfter.isProjectHidden = true
+        let between = placeholder()
+        control.cells().setArray([tabCell(nil), hiddenBefore, between, hiddenAfter, tabCell(nil)])
+        assistant.setDraggedCell(dragged)
+        assistant.setTargetCell(between)
+        XCTAssertNil(assistant.groupContainingDrop(of: dragged, inTabBar: control))
+    }
+
     // MARK: - reinsertDragChipsInTabBar slot layout
 
     // While dragging the last member of a group, its gid-carrying drop slot

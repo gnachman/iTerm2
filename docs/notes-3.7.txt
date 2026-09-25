@@ -1,6 +1,15 @@
 Version TBD (unreleased; built off master)
 
 Major New Features:
+- An optional left sidebar groups running coding
+  harnesses across your machine by directory,
+  including native processes and tmux sessions.
+  Select a directory to show its project tabs.
+  Attach tmux harnesses or transfer native ones
+  into project tabs from the sidebar.
+  Switch projects with your window-number
+  shortcut. Toggle it with View → View Sidebar
+  or Control-Command-S.
 - iTerm2 is now localized: the interface follows
   your Mac’s language and is available in
   Brazilian Portuguese, German, Japanese, Russian,

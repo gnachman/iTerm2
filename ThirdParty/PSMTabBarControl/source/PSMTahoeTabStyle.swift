@@ -338,7 +338,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private static func attributedObjectCountValue(forTabCell cell: PSMTabBarCell,
                                                    fontSize: CGFloat,
                                                    textColor: NSColor) -> NSAttributedString {
-        let count = cell.count
+        let count = cell.projectDisplayCount
         var contents = String(count)
         let modifierString = cell.modifierString ?? ""
         
@@ -724,12 +724,10 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             // a group chip) must redraw that cell for its shadow to survive. Using
             // only cell.frame here left the shadow painted over by the bar
             // background and not restored.
-            // A collapsed member is normally skipped, but while a collapse/expand
-            // animation is sliding its width between full and 0 it must be drawn
-            // (its width is > 0 mid-slide; it lands at exactly 0 when fully
-            // collapsed, at which point it's skipped again).
-            let hiddenByCollapse = cell.isCollapsedHidden && cell.frame.width <= 0
-            return !cell.isInOverflowMenu && !hiddenByCollapse &&
+            // Hidden project tabs and collapsed members have zero width. Keep a
+            // collapsed member visible while its width animates toward zero.
+            let hiddenInBar = cell.isHiddenInBar && cell.frame.width <= 0
+            return !cell.isInOverflowMenu && !hiddenInBar &&
                 NSIntersectsRect(dirtyFrame(for: cell), clipRect)
         }
 

@@ -188,6 +188,23 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     NSTrackingArea *_closeButtonTrackingArea;
 }
 
+- (NSInteger)projectDisplayCount {
+    PSMTabBarControl *control = (PSMTabBarControl *)self.controlView;
+    NSSet *filter = control.projectTabViewItems;
+    if (!filter) { return self.count; }
+    NSInteger index = 0;
+    for (NSTabViewItem *item in control.tabView.tabViewItems) {
+        if (![filter containsObject:item]) { continue; }
+        index++;
+        if (item == self.representedObject) { return index; }
+    }
+    return 0;
+}
+
+- (BOOL)isHiddenInBar {
+    return self.isCollapsedHidden || self.isProjectHidden;
+}
+
 #pragma mark - Creation/Destruction
 
 - (id)initWithControlView:(PSMTabBarControl *)controlView {

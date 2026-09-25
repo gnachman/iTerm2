@@ -285,3 +285,5 @@
 #import <CoreParse/CoreParse.h>
 #import "iTermTabTitleFrameFingerprint.h"
 #import "iTermSessionTitleBuiltInFunction.h"
+
+#import "iTermTmuxOptionMonitor.h"

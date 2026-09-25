@@ -452,6 +452,8 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // tab-cell world, and re-normalizes when the drag ends.
 - (void)removeAllTabGroupChipCells;
 - (void)normalizeTabGroupChipCells;
+// nil shows every tab; an empty set shows no tabs. Does not remove sessions.
+@property(nonatomic, copy, nullable) NSSet<NSTabViewItem *> *projectTabViewItems;
 - (void)update;
 - (void)updateWithoutAnimation;
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem;
