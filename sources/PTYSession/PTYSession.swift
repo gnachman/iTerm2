@@ -1407,6 +1407,7 @@ extension PTYSession {
             KEY_USE_HFS_PLUS_MAPPING: nullValue,
             KEY_UNICODE_NORMALIZATION: nullValue,
             KEY_SILENCE_BELL: nullValue,
+            KEY_BELL_SOUND: nullValue,
             KEY_VISUAL_BELL: nullValue,
             KEY_FLASHING_BELL: nullValue,
             KEY_XTERM_MOUSE_REPORTING: nullValue,

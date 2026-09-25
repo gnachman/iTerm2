@@ -137273,6 +137273,48 @@
         }
       }
     },
+    "ProfilesTerminal.ChooseBellSound" : {
+      "comment" : "Prompt above the file chooser for the terminal bell’s sound",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie den Ton, den der Signalton abspielen soll."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose the sound the bell should play."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ベルで再生するサウンドを選択してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha o som que a campainha deve tocar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выберите звук, который будет воспроизводить звонок."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择铃声要播放的声音。"
+          }
+        }
+      }
+    },
     "ProfilesTerminal.FilterAlerts" : {
       "comment" : "Search index display name for the filter alerts control",
       "extractionState" : "extracted_with_value",
@@ -137609,6 +137651,48 @@
         }
       }
     },
+    "ProfilesTerminal.OtherBellSound" : {
+      "comment" : "Menu item that opens a file chooser to pick an audio file for the terminal bell",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere …"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Other…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その他…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outro…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другой…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他…"
+          }
+        }
+      }
+    },
     "ProfilesTerminal.SelectLocaleMessage" : {
       "comment" : "Prompt asking the user to choose a custom locale",
       "extractionState" : "extracted_with_value",
@@ -137693,6 +137777,48 @@
         }
       }
     },
+    "ProfilesTerminal.SystemAlertSound" : {
+      "comment" : "Name in the bell sound menu of the Mac’s own alert sound, which is what the bell plays by default",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System-Warnton"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "System Alert Sound"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "システムの警告音"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som de alerta do sistema"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Системный звук предупреждения"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统提示音"
+          }
+        }
+      }
+    },
     "ProfilesTerminal.UTF8MismatchWarning" : {
       "comment" : "Warning shown when a custom locale does not use UTF-8 but the profile does",
       "extractionState" : "extracted_with_value",
@@ -137731,6 +137857,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "警告！此配置文件使用的自定义语言环境不使用 UTF-8 作为字符编码，但你的配置文件*确实*使用 UTF-8。这可能导致错误消息和非 ASCII 文本显示异常。"
+          }
+        }
+      }
+    },
+    "ProfilesTerminal.UnplayableBellSound" : {
+      "comment" : "Tooltip on the bell sound the profile names when that sound is missing or is not audio that can be played",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Ton kann nicht wiedergegeben werden, daher ertönt stattdessen der System-Warnton."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This sound can’t be played, so the bell plays the system alert sound."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このサウンドは再生できないため、ベルにはシステムの警告音が使われます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este som não pode ser reproduzido, então a campainha toca o som de alerta do sistema."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Этот звук невозможно воспроизвести, поэтому для звонка используется системный звук предупреждения."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法播放此声音，因此铃声将使用系统提示音。"
           }
         }
       }
