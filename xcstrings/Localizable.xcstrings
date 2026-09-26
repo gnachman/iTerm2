@@ -18013,37 +18013,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Flaggen-Emojis in voller Breite darstellen"
+            "value" : "Einzelne Regionalindikatoren werden in voller Breite dargestellt.\nEine vollständige Flagge belegt immer zwei Spalten, was der Breite entspricht, die wcwidth für das Paar meldet."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Flag emoji render full-width"
+            "value" : "Lone regional indicators render full-width.\nA complete flag is always two columns, which is the width wcwidth reports for the pair."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "国旗の絵文字を全角で表示する"
+            "value" : "単独の地域表示記号を全角で表示します。\n完全な国旗は常に2列分の幅になり、これはwcwidthがその組に対して報告する幅と一致します。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Emojis de bandeira renderizam em largura total"
+            "value" : "Indicadores regionais isolados são renderizados com largura total.\nUma bandeira completa ocupa sempre duas colunas, que é a largura que o wcwidth informa para o par."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Флаги-эмодзи отображаются на полную ширину"
+            "value" : "Отдельные региональные индикаторы отображаются на полную ширину.\nПолный флаг всегда занимает два столбца — именно такую ширину wcwidth сообщает для пары."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "标记表情符号为全宽显示"
+            "value" : "单独的区域指示符以全宽显示。\n完整的旗帜始终占两列，这也是 wcwidth 为该对字符报告的宽度。"
           }
         }
       }
@@ -71076,7 +71076,7 @@
       }
     },
     "EditKeyAction.ActionCopyModeCommands" : {
-      "comment" : "Action name: Copy Mode Commands\n   Copy mode commands label/placeholder",
+      "comment" : "Copy Mode Commands: the action name in the picker, and the placeholder in its parameter field",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -80988,7 +80988,7 @@
       }
     },
     "General.Close" : {
-      "comment" : "Close\nClose button",
+      "comment" : "Close: used on buttons and menu items",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -81114,7 +81114,7 @@
       }
     },
     "General.Delete" : {
-      "comment" : "Delete\nDelete button\nDelete menu item\nLabel for a Delete control",
+      "comment" : "Delete: used on buttons, menu items and other controls",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -81408,7 +81408,7 @@
       }
     },
     "General.Open" : {
-      "comment" : "Open button\nOpen menu item",
+      "comment" : "Open: used on buttons, menu items and window titles",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -81534,7 +81534,7 @@
       }
     },
     "General.Save" : {
-      "comment" : "Save button\nSave menu item",
+      "comment" : "Save: used on buttons and menu items",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -98029,6 +98029,48 @@
         }
       }
     },
+    "MenuTip.LockLocation" : {
+      "comment" : "Menu item help for the ‘Lock Location’ menu item",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn die Position eines Fensters gesperrt ist, kehrt es zu dem Display und der Position zurück, die es beim Sperren hatte, falls irgendetwas es verschiebt. Fensterstile, die den Bildschirm füllen oder sich an ihm ausrichten, etwa Maximiert, Zentriert sowie die Stile oben, unten, links und rechts, behalten ihre gewohnte Form und werden stattdessen an ihrem Display festgehalten. Ist dieses Display getrennt, wie es beim Ruhezustand eines Laptops vorkommt, wartet das Fenster und kehrt zurück, sobald das Display wieder verfügbar ist. Durch Ziehen des Fensters wird die Sperre aufgehoben. Beachten Sie, dass macOS ein zurückkehrendes Fenster auf demjenigen Space platziert, der auf seinem Display gerade angezeigt wird, und das muss nicht der Space sein, auf dem es ursprünglich war."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When a window’s location is locked, it returns to the display and position it had when you locked it if anything moves it. Window styles that fill or attach to the screen, such as Maximized, Centered, and the top, bottom, left, and right styles, keep their usual shape and are held to their display instead. If that display is disconnected, as happens when a laptop sleeps, the window waits and goes back when the display returns. Dragging the window unlocks it. Note that macOS puts a returning window on whatever Space its display is currently showing, which may not be the Space it started on."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウの位置をロックすると、何かがウインドウを動かした場合でも、ロックした時点のディスプレイと位置に戻ります。画面全体を占めたり画面の端に固定されたりするウインドウスタイル（最大化、中央揃え、上、下、左、右のスタイルなど）は、通常の形状を保ったまま、代わりに元のディスプレイに固定されます。ノートブックがスリープしたときのようにそのディスプレイが切断されている場合、ウインドウは待機し、ディスプレイが戻ったときに元の位置に戻ります。ウインドウをドラッグするとロックは解除されます。なお、macOSは戻ってきたウインドウを、そのディスプレイが現在表示しているスペースに配置するため、元のスペースとは異なる場合があります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando a localização de uma janela está bloqueada, ela retorna à tela e à posição que tinha quando você a bloqueou, caso algo a mova. Estilos de janela que preenchem a tela ou se fixam a ela, como Maximizada, Centralizado e os estilos superior, inferior, esquerdo e direito, mantêm sua forma habitual e, em vez disso, ficam presos à sua tela. Se essa tela for desconectada, como acontece quando um laptop entra em repouso, a janela aguarda e volta quando a tela retornar. Arrastar a janela desbloqueia a localização. Observe que o macOS coloca uma janela que retorna no Espaço que a tela dela está exibindo naquele momento, que pode não ser o Espaço em que ela começou."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Когда положение окна заблокировано, окно возвращается на тот дисплей и в то положение, которые были у него в момент блокировки, если что-либо его переместит. Стили окна, которые заполняют экран или привязаны к нему, например «Развёрнуто», «По центру», а также стили сверху, снизу, слева и справа, сохраняют свою обычную форму и вместо этого удерживаются на своём дисплее. Если этот дисплей отключён, как это происходит при переходе ноутбука в режим сна, окно ждёт и возвращается, когда дисплей снова появится. Перетаскивание окна снимает блокировку. Учтите, что macOS помещает возвращающееся окно в то пространство (Space), которое его дисплей показывает в данный момент, и это может быть не то пространство, в котором окно было изначально."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁定窗口位置后，如果有任何操作移动了它，它会回到您锁定时所在的显示器和位置。填满屏幕或吸附到屏幕的窗口样式，例如“最大化”、“居中”以及上、下、左、右等样式，会保持原有的形状，改为固定在各自的显示器上。如果该显示器已断开连接（例如笔记本电脑进入睡眠时），窗口会等待，并在显示器恢复后回到原处。拖动窗口即可解除锁定。请注意，macOS 会把返回的窗口放到其显示器当前显示的那个空间上，而这可能不是它最初所在的空间。"
+          }
+        }
+      }
+    },
     "MenuTip.LockSize" : {
       "comment" : "Menu item help for the ‘Lock Size’ menu item",
       "extractionState" : "extracted_with_value",
@@ -109456,6 +109498,48 @@
         }
       }
     },
+    "NonTextPaste.UploadAndPastePaths" : {
+      "comment" : "Button to upload several files and paste their paths",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hochladen und Pfade einfügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Upload and Paste Paths"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップロードしてパスを貼り付け"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar e colar caminhos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить и вставить пути"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上传并粘贴路径"
+          }
+        }
+      }
+    },
     "ObjCExceptions.UnknownReason" : {
       "comment" : "Fallback failure reason when a caught exception has no reason",
       "extractionState" : "extracted_with_value",
@@ -119842,6 +119926,119 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在上传"
+          }
+        }
+      }
+    },
+    "PTYSession.UploadingFileCount" : {
+      "comment" : "Label on the upload progress indicator when several files are uploading at once; %ld is the number of files",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld Datei"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld Dateien"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%ld file"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%ld files"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld個のファイル"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld arquivo"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld arquivos"
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld файла"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld файлов"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld файл"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld файла"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld 个文件"
+                }
+              }
+            }
           }
         }
       }
@@ -135788,7 +135985,7 @@
       }
     },
     "ProfilesMenu.OpenAll" : {
-      "comment" : "Menu item that opens all profiles in this folder as tabs\nMenu item to open all profiles",
+      "comment" : "Menu item that opens every profile in the menu or folder as tabs",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -135830,7 +136027,7 @@
       }
     },
     "ProfilesMenu.OpenAllInNewWindow" : {
-      "comment" : "Menu item that opens all profiles in this folder in a new window\nMenu item to open all profiles in a new window",
+      "comment" : "Menu item that opens every profile in the menu or folder in a new window",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -143241,7 +143438,7 @@
       }
     },
     "PseudoTerminal.Select" : {
-      "comment" : "Menu item heading for the submenu that selects among tabs\n   Menu item that selects a tab from a submenu",
+      "comment" : "Select: the heading of the tab-selection submenu, and the item that opens it",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -164141,7 +164338,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无效的点颜色格式（期望为 #rrggbb）"
+            "value" : "无效的 dot_color（期望为 #rrggbb）"
           }
         }
       }
@@ -164183,7 +164380,175 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无效的文本颜色 (期望 #rrggbb)"
+            "value" : "无效的 text_color（期望为 #rrggbb）"
+          }
+        }
+      }
+    },
+    "SetStatus.InvalidThenDotColor" : {
+      "comment" : "Error when the then_dot_color argument isn't a valid hex color",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungültige then_dot_color (erwartet: #rrggbb)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Invalid then_dot_color (expected #rrggbb)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "then_dot_colorが無効です（#rrggbb形式を指定してください）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "then_dot_color inválido (esperado #rrggbb)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недопустимое значение then_dot_color (ожидается #rrggbb)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无效的 then_dot_color（期望为 #rrggbb）"
+          }
+        }
+      }
+    },
+    "SetStatus.InvalidThenTextColor" : {
+      "comment" : "Error when the then_text_color argument isn't a valid hex color",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungültige then_text_color (erwartet: #rrggbb)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Invalid then_text_color (expected #rrggbb)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "then_text_colorが無効です（#rrggbb形式を指定してください）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "then_text_color inválido (esperado #rrggbb)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недопустимое значение then_text_color (ожидается #rrggbb)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无效的 then_text_color（期望为 #rrggbb）"
+          }
+        }
+      }
+    },
+    "SetStatus.ThenWithoutExpiresOn" : {
+      "comment" : "Error when a caller asks for a replacement status without saying when it should be applied",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die then_-Argumente haben nur in Verbindung mit expires_on eine Bedeutung, aber expires_on wurde nicht angegeben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The then_ arguments only mean something with expires_on, which was not given."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "then_引数はexpires_onと一緒に指定した場合にのみ意味を持ちますが、expires_onが指定されていません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os argumentos then_ só fazem sentido com expires_on, que não foi informado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Аргументы then_ имеют смысл только вместе с expires_on, который не был указан."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "then_ 参数只有在配合 expires_on 时才有意义，但未提供 expires_on。"
+          }
+        }
+      }
+    },
+    "SetStatus.UnknownExpiresOn" : {
+      "comment" : "Error when the expires_on argument names an event iTerm2 does not know. The placeholder is the value the caller passed.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekanntes expires_on „%@“. Der einzige unterstützte Wert ist progress-end."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unknown expires_on “%@”. The only supported value is progress-end."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "expires_onの値「%@」は不明です。サポートされている値はprogress-endのみです。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "expires_on desconhecido “%@”. O único valor suportado é progress-end."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Неизвестное значение expires_on «%@». Единственное поддерживаемое значение — progress-end."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知的 expires_on “%@”。唯一支持的值是 progress-end。"
           }
         }
       }
