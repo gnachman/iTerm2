@@ -137,6 +137,18 @@ func runParsedCommand(_ command: ParsableCommand, _ context: IT2Context) throws 
 /// and shortcuts alike. Conform every such leaf command.
 protocol RemoteForbiddenCommand {}
 
+/// Marks a command that can target a tmux pane, so tests can enumerate them. The rules about what
+/// a pane address means -- including that it cannot cross SSH integration -- live in
+/// `APIClient.resolveSessionId`, which is where an address becomes a session. Nothing is enforced
+/// here; a second copy of that rule would only drift from the one that runs.
+protocol TmuxAddressableCommand {
+    var tmuxOptions: TmuxPaneOptions { get }
+}
+
+extension TmuxAddressableCommand {
+    var usesTmuxAddressing: Bool { return tmuxOptions.usesTmuxAddressing }
+}
+
 /// Top-level it2 subcommands blocked wholesale on the embedded/over-SSH path, matched by name
 /// before parsing. `auth` mints and prints reusable local API credentials by driving osascript
 /// on the Mac; streaming those to a remote hands it an off-device, non-revocable credential

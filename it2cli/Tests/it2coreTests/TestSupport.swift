@@ -33,14 +33,16 @@ final class OutputCapture {
 
     func context(channel: FakeChannel,
                  confirm: @escaping (String) -> Bool = { _ in false },
-                 isRemote: Bool = false) -> IT2Context {
+                 isRemote: Bool = false,
+                 originIdentifier: String? = nil) -> IT2Context {
         return IT2Context(
             out: { [weak self] in self?.out.append($0) },
             err: { [weak self] in self?.err.append($0) },
             confirm: confirm,
             makeClient: { APIClient(channel: channel) },
             installsSignalHandlers: false,  // embedded-like: no process to own
-            isRemote: isRemote
+            isRemote: isRemote,
+            originIdentifier: originIdentifier
         )
     }
 }

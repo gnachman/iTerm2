@@ -13,14 +13,14 @@ final class IT2EmbeddedTests: XCTestCase {
 
     func testUnknownCommandReturns64AndWritesUsage() {
         let (io, _, err) = capturing()
-        let code = IT2Embedded.run(arguments: ["definitely-not-a-command"], io: io, channel: FakeChannel())
+        let code = IT2Embedded.run(arguments: ["definitely-not-a-command"], io: io, channel: FakeChannel(), originIdentifier: nil)
         XCTAssertEqual(code, 64) // ArgumentParser validation failure
         XCTAssertFalse(err().isEmpty, "usage/error should go to stderr")
     }
 
     func testVersionReturnsZeroAndWritesToStdout() {
         let (io, out, _) = capturing()
-        let code = IT2Embedded.run(arguments: ["--version"], io: io, channel: FakeChannel())
+        let code = IT2Embedded.run(arguments: ["--version"], io: io, channel: FakeChannel(), originIdentifier: nil)
         XCTAssertEqual(code, 0)
         XCTAssertTrue(out().contains("1.0.0"), "got \(out())")
     }
@@ -34,7 +34,7 @@ final class IT2EmbeddedTests: XCTestCase {
         defer { unsetenv("IT2_CONFIG_PATH") }
 
         let (io, _, err) = capturing()
-        let code = IT2Embedded.run(arguments: ["alias", "nope"], io: io, channel: FakeChannel())
+        let code = IT2Embedded.run(arguments: ["alias", "nope"], io: io, channel: FakeChannel(), originIdentifier: nil)
         XCTAssertEqual(code, 3)
         XCTAssertEqual(err(), ["No aliases defined in config file"])
     }

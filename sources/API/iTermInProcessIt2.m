@@ -189,10 +189,17 @@
         if (cancellationHandler) {
             cancellationHandler(^{ [channel disconnect]; });
         }
+        // originIdentifier reaches tmux pane addressing, where it says which connection the
+        // caller's $TMUX arrived over: it is the conductor's clientUniqueID. That is compared
+        // against the connection carrying each tmux gateway, which works because the remote it2
+        // routes a pane's call onto the connection that attached last (see
+        // TmuxController's advertiseIT2Client). Passed from here rather than taken from
+        // `arguments`, which the remote side controls.
         const int32_t exitCode = [IT2Runner runArguments:arguments
                                            stdoutHandler:stdoutBlock
                                            stderrHandler:stderrBlock
-                                                 channel:channel];
+                                                 channel:channel
+                                        originIdentifier:originIdentifier];
         // Unregister even if the command never opened a client (e.g. --version),
         // which would otherwise leave the synthetic connection registered.
         // Idempotent with the client's own disconnect on the command path.

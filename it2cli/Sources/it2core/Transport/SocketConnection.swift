@@ -127,7 +127,23 @@ class SocketConnection {
         let appSupport = NSSearchPathForDirectoriesInDomains(
             .applicationSupportDirectory, .userDomainMask, true
         ).first!
-        let suite = ProcessInfo.processInfo.environment["IT2_SUITE"] ?? "iTerm2"
-        return "\(appSupport)/\(suite)/private/socket"
+        let environment = ProcessInfo.processInfo.environment
+        func path(forSuite suite: String) -> String {
+            return "\(appSupport)/\(suite)/private/socket"
+        }
+        // Inside a tmux pane, the iTerm2 instances attached to the server have each said which
+        // suite they run under, newest attacher first; those beat the value the pane inherited
+        // (see TmuxOwnership). An advertised suite whose socket is gone is skipped: its iTerm2
+        // quit without the record being pruned, and the next one down may well be live.
+        for record in TmuxOwnership.advertisedRecords(environment: environment) {
+            guard let suite = record["suite"], !suite.isEmpty else {
+                continue
+            }
+            let candidate = path(forSuite: suite)
+            if FileManager.default.fileExists(atPath: candidate) {
+                return candidate
+            }
+        }
+        return path(forSuite: environment["IT2_SUITE"] ?? "iTerm2")
     }
 }

@@ -11,6 +11,30 @@ Major New Features:
   and Simplified Chinese.
 
 New Features:
+- `it2` can now target a session by the tmux pane
+  it is showing. From inside a tmux Integration
+  pane, pass --tmux "$TMUX" --tmux-pane
+  "$TMUX_PANE" to session set-status, get-status,
+  set-var or get-var; a program running there
+  cannot otherwise learn which session it is in.
+  This works the same on a host reached through
+  SSH Integration. (Claude Code’s own status hook
+  is not yet installed on remote hosts, so its
+  status is only reported automatically for
+  sessions on this Mac.)
+  Claude Code’s status is no longer reported from
+  a pane of a plain tmux session (one not using
+  tmux Integration), since iTerm2 cannot tell
+  which tab, if any, is showing that pane.
+- New `it2 session get-status` prints a session’s
+  status indicator as JSON. `set-status` no
+  longer requires --session and defaults to the
+  active session.
+- New Python API functions set_session_status and
+  get_session_status read and write a session’s
+  status indicator by session ID, and
+  session_id_for_tmux_pane finds the session
+  showing a tmux pane.
 - Right-clicking your own message in AI chat now
   offers Delete, which removes that message and
   everything after it. Edit, Fork, and Delete are
@@ -356,6 +380,12 @@ Bug Fixes:
   away. Sessions restored from before the restart
   still need to be restarted to regain it.
   Issue 12106.
+- The Session Status toolbelt tool now lists
+  Claude Code sessions running inside tmux
+  Integration panes, on this Mac or on a host
+  reached through SSH Integration. They never
+  appeared before, and their status went
+  unreported to the rest of the app. Issue 13049.
 - The control sequence that resets a tab color to
   the profile’s now restores it correctly when
   the profile has separate light and dark mode

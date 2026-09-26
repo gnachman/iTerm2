@@ -30,6 +30,7 @@ import os
 import signal
 import socket
 import struct
+import subprocess
 import sys
 import time
 
@@ -193,24 +194,165 @@ def eprint(message):
         pass
 
 
+# Records that attached iTerm2 controllers publish on a tmux server, one global user option
+# per attached client: @it2_client_<hex of tmux client name> = c_<hex of JSON>. Keep these in
+# step with TmuxController's advertiseIT2Client in the iTerm2 app and with it2cli's
+# TmuxOwnership.swift, the local counterpart of this code.
+TMUX_IT2_CLIENT_OPTION_PREFIX = "@it2_client_"
+TMUX_IT2_CLIENT_RECORD_TAG = "c_"
+# Marks list-clients lines in the combined query output so they cannot be confused with
+# show-options lines.
+TMUX_CLIENT_LINE_PREFIX = "IT2CLIENT"
+
+
+def tmux_query_arguments(socket_path):
+    """argv for one tmux invocation that lists attached clients and dumps global options.
+
+    A bare ";" argument separates commands in a sequence, so both run in one client. The
+    format carries real tab characters: tmux does not interpret backslash escapes in a
+    format string.
+    """
+    fmt = "\t".join([TMUX_CLIENT_LINE_PREFIX, "#{client_name}", "#{client_control_mode}",
+                     "#{client_created}"])
+    return ["tmux", "-S", socket_path, "list-clients", "-F", fmt, ";", "show-options", "-g"]
+
+
+def parse_tmux_client_records(output):
+    """The records of iTerm2 clients currently attached to a tmux server, newest first.
+
+    Parses the combined output of tmux_query_arguments. A record counts only if its
+    client is still attached in control mode, so a record that was never removed (its
+    iTerm2 crashed, its ssh connection dropped) is ignored rather than tried. Anything
+    malformed is skipped: a record is advisory and must not take down the lookup for the
+    well-formed ones next to it.
+    """
+    attached_at = {}   # client name -> attach time, attached control-mode clients only
+    records = {}       # client name -> record dict
+    for line in output.splitlines():
+        if line.startswith(TMUX_CLIENT_LINE_PREFIX + "\t"):
+            fields = line.split("\t")
+            if len(fields) < 4:
+                continue
+            name, control_mode, created = fields[1], fields[2], fields[3]
+            # A missing client_control_mode (very old tmux prints nothing for an unknown
+            # format) is accepted; only an explicit 0 rejects.
+            if control_mode == "0":
+                continue
+            try:
+                attached_at[name] = int(created)
+            except ValueError:
+                attached_at[name] = 0
+            continue
+        if not line.startswith(TMUX_IT2_CLIENT_OPTION_PREFIX):
+            continue
+        option, _sep, value = line.partition(" ")
+        value = value.strip()
+        # show-options only quotes a value that needs it, and ours never does, but strip
+        # quotes anyway in case that changes.
+        if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
+            value = value[1:-1]
+        if not value.startswith(TMUX_IT2_CLIENT_RECORD_TAG):
+            continue
+        try:
+            name = bytes.fromhex(option[len(TMUX_IT2_CLIENT_OPTION_PREFIX):]).decode("utf-8")
+            record = json.loads(
+                bytes.fromhex(value[len(TMUX_IT2_CLIENT_RECORD_TAG):]).decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            continue
+        if isinstance(record, dict):
+            records[name] = record
+    # Newest attach first; name as a tiebreaker so the order is deterministic.
+    ordered = sorted(attached_at, key=lambda n: (-attached_at[n], n))
+    return [records[n] for n in ordered if n in records]
+
+
+def tmux_advertised_client_records():
+    """The records of the iTerm2 clients attached to this pane's tmux server, newest first.
+
+    A pane inherits IT2_SOCK/IT2_NONCE from the tmux server, which froze them when it
+    started. They name whichever ssh connection happened to start the server, which
+    after a detach and a reattach from another connection, or an iTerm2 relaunch, is
+    not the one showing the pane and may not exist at all. So each tmux -CC controller
+    publishes its own socket and nonce on the server when it attaches, and this client
+    looks there first. Only records whose client is still attached are returned, newest
+    attacher first, which matches the app's rule that the last attacher owns the pane;
+    the caller tries each in turn and falls back to the pane's own environment last.
+
+    Returns [] when not inside tmux or the server cannot be asked; a wedged server must
+    not hang every it2 call, hence the timeout.
+    """
+    tmux = os.environ.get("TMUX")
+    if not tmux:
+        return []
+    # $TMUX is "<socket path>,<server pid>,<session id>"; the path may itself contain
+    # commas, so it is everything before the LAST two fields.
+    fields = tmux.split(",")
+    if len(fields) < 3:
+        return []
+    socket_path = ",".join(fields[:-2])
+    if not socket_path:
+        return []
+    try:
+        result = subprocess.run(
+            tmux_query_arguments(socket_path),
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
+            timeout=2)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if result.returncode != 0:
+        return []
+    return parse_tmux_client_records(result.stdout.decode("utf-8", "replace"))
+
+
+def connect_to_iterm2(candidates):
+    """Connect to the first candidate that accepts. Returns (socket, nonce) or (None, error).
+
+    A candidate is a record with "sock" and "nonce". Both come from the same record, so
+    a socket is never paired with another connection's nonce. A refused or missing
+    socket moves on to the next candidate; the pane's own environment is normally last.
+    """
+    last_error = None
+    for candidate in candidates:
+        path = candidate.get("sock")
+        if not isinstance(path, str) or not path:
+            continue
+        nonce = candidate.get("nonce")
+        if not isinstance(nonce, str):
+            nonce = ""
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        try:
+            sock.connect(path)
+        except OSError as e:
+            last_error = "%s: %s" % (path, e)
+            try:
+                sock.close()
+            except OSError:
+                pass
+            continue
+        return sock, nonce
+    return None, last_error
+
+
 def main():
-    sock_path = os.environ.get("IT2_SOCK")
-    if not sock_path:
+    candidates = tmux_advertised_client_records()
+    own_sock_path = os.environ.get("IT2_SOCK")
+    if own_sock_path:
+        candidates.append({"sock": own_sock_path, "nonce": os.environ.get("IT2_NONCE", "")})
+    if not candidates:
         eprint("it2: not running under iTerm2 SSH integration (IT2_SOCK is unset).\n")
         return 2
 
     try:
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(sock_path)
-    except OSError as e:
-        eprint("it2: cannot reach iTerm2 (%s): %s\n" % (sock_path, e))
-        return 2
+        sock, nonce = connect_to_iterm2(candidates)
     except KeyboardInterrupt:
         return 130
+    if sock is None:
+        eprint("it2: cannot reach iTerm2 (%s)\n" % nonce)
+        return 2
 
     cols, rows = terminal_size()
     hello = {
-        "nonce": os.environ.get("IT2_NONCE", ""),
+        "nonce": nonce,
         "argv": sys.argv[1:],
         "cwd": safe_getcwd(),
         "term": os.environ.get("TERM", ""),

@@ -23,6 +23,7 @@ struct Session: ParsableCommand {
             SetName.self,
             SetColor.self,
             SetStatus.self,
+            GetStatus.self,
             GetBackgroundTasks.self,
             GetVar.self,
             SetVar.self,
@@ -759,7 +760,7 @@ extension Session {
 // MARK: - session get-var
 
 extension Session {
-    struct GetVar: ParsableCommand, IT2Runnable {
+    struct GetVar: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
         static let configuration = CommandConfiguration(
             commandName: "get-var",
             abstract: "Get session variable value.",
@@ -769,15 +770,22 @@ extension Session {
         @Argument(help: "Variable name.")
         var variable: String
 
-        @Option(name: .shortAndLong, help: "Target session ID (default: active).")
+        @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
         var session: String?
+
+        @OptionGroup var tmuxOptions: TmuxPaneOptions
 
         func run(_ ctx: IT2Context) throws {
             let client = try ctx.makeClient()
             defer { client.disconnect() }
 
+            guard let sessionId = try client.resolveTarget(session,
+                                                           tmuxOptions: tmuxOptions,
+                                                           ctx: ctx) else {
+                return
+            }
             let varReq = ITMVariableRequest()
-            varReq.sessionId = try client.resolveSessionId(session)
+            varReq.sessionId = sessionId
             varReq.getArray.add(variable)
 
             let request = ITMClientOriginatedMessage()
@@ -908,7 +916,7 @@ extension Session {
 // MARK: - session set-var
 
 extension Session {
-    struct SetVar: ParsableCommand, IT2Runnable {
+    struct SetVar: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
         static let configuration = CommandConfiguration(
             commandName: "set-var",
             abstract: "Set session variable value.",
@@ -921,15 +929,23 @@ extension Session {
         @Argument(help: "Value to set.")
         var value: String
 
-        @Option(name: .shortAndLong, help: "Target session ID (default: active).")
+        @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
         var session: String?
+
+        @OptionGroup var tmuxOptions: TmuxPaneOptions
 
         func run(_ ctx: IT2Context) throws {
             let client = try ctx.makeClient()
             defer { client.disconnect() }
 
+            guard let sessionId = try client.resolveTarget(session,
+                                                           tmuxOptions: tmuxOptions,
+                                                           allowAll: true,
+                                                           ctx: ctx) else {
+                return
+            }
             let varReq = ITMVariableRequest()
-            varReq.sessionId = try client.resolveSessionId(session)
+            varReq.sessionId = sessionId
 
             let setEntry = ITMVariableRequest_Set()
             setEntry.name = variable
@@ -953,13 +969,66 @@ extension Session {
     }
 }
 
+// MARK: - session get-status
+
+extension Session {
+    struct GetStatus: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "get-status",
+            abstract: "Print a session’s status indicator as JSON.",
+            discussion: "See also: it2 session set-status"
+        )
+
+        @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
+        var session: String?
+
+        @OptionGroup var tmuxOptions: TmuxPaneOptions
+
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
+            defer { client.disconnect() }
+
+            guard let sessionId = try client.resolveTarget(session,
+                                                           tmuxOptions: tmuxOptions,
+                                                           ctx: ctx) else {
+                return
+            }
+
+            let invoke = ITMInvokeFunctionRequest()
+            invoke.app = ITMInvokeFunctionRequest_App()
+            invoke.invocation = "iterm2.get_session_status(session_id: \(jsonString(sessionId)))"
+
+            let request = ITMClientOriginatedMessage()
+            request.id_p = client.nextId()
+            request.invokeFunctionRequest = invoke
+
+            let response = try client.send(request)
+            guard response.submessageOneOfCase == .invokeFunctionResponse,
+                  let invokeResp = response.invokeFunctionResponse else {
+                throw IT2Error.apiError("No invoke function response")
+            }
+
+            if invokeResp.dispositionOneOfCase == .error {
+                let reason = invokeResp.error?.errorReason ?? "unknown"
+                throw IT2Error.apiError("Get status failed: \(reason)")
+            }
+
+            // Keys match set-status's options, and an unset field is null rather than absent, so
+            // a read and a write are obviously symmetric.
+            ctx.out(invokeResp.success?.jsonResult ?? "{}")
+        }
+    }
+}
+
 // MARK: - session set-status
 
 // The options for setting a session status, shared by `it2 session set-status`
 // and the top-level `it2 set-status` shortcut so the two cannot drift.
 struct SetStatusOptions: ParsableArguments {
-    @Option(name: .shortAndLong, help: "Target session ID.")
-    var session: String
+    @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
+    var session: String?
+
+    @OptionGroup var tmuxOptions: TmuxPaneOptions
 
     @Option(name: .long, help: "Status text (idle, working, or waiting).")
     var status: String?
@@ -990,60 +1059,71 @@ struct SetStatusOptions: ParsableArguments {
 
     @Option(name: .long, help: "Detail text to leave behind when the status expires. Empty clears it.")
     var thenDetail: String?
+
+    /// The keyword arguments for iterm2.set_session_status, minus session_id.
+    var invocationArguments: [String] {
+        var args: [String] = []
+        if let status {
+            args.append("status: \(jsonString(status))")
+        }
+        if let textColor {
+            args.append("text_color: \(jsonString(textColor))")
+        }
+        if let dotColor {
+            args.append("dot_color: \(jsonString(dotColor))")
+        }
+        if let detail {
+            args.append("detail: \(jsonString(detail))")
+        }
+        if let backgroundTasks {
+            args.append("background_tasks: \(backgroundTasks)")
+        }
+        if let expiresOn {
+            args.append("expires_on: \(jsonString(expiresOn))")
+        }
+        if let thenStatus {
+            args.append("then_status: \(jsonString(thenStatus))")
+        }
+        if let thenDotColor {
+            args.append("then_dot_color: \(jsonString(thenDotColor))")
+        }
+        if let thenTextColor {
+            args.append("then_text_color: \(jsonString(thenTextColor))")
+        }
+        if let thenDetail {
+            args.append("then_detail: \(jsonString(thenDetail))")
+        }
+        return args
+    }
 }
 
 extension Session {
-    struct SetStatus: ParsableCommand, IT2Runnable {
+    struct SetStatus: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
         static let configuration = CommandConfiguration(
             commandName: "set-status",
             abstract: "Set session status indicator.",
-            discussion: "See also: it2 session get-background-tasks"
+            discussion: "See also: it2 session get-status, it2 session get-background-tasks"
         )
 
         @OptionGroup var options: SetStatusOptions
+
+        var tmuxOptions: TmuxPaneOptions { return options.tmuxOptions }
 
         func run(_ ctx: IT2Context) throws {
             let client = try ctx.makeClient()
             defer { client.disconnect() }
 
+            guard let sessionId = try client.resolveTarget(options.session,
+                                                           tmuxOptions: options.tmuxOptions,
+                                                           ctx: ctx) else {
+                return
+            }
+
+            let args = ["session_id: \(jsonString(sessionId))"] + options.invocationArguments
+
             let invoke = ITMInvokeFunctionRequest()
-            let sessionContext = ITMInvokeFunctionRequest_Session()
-            sessionContext.sessionId = options.session
-            invoke.session = sessionContext
-
-            var args: [String] = []
-            if let status = options.status {
-                args.append("status: \(jsonString(status))")
-            }
-            if let textColor = options.textColor {
-                args.append("text_color: \(jsonString(textColor))")
-            }
-            if let dotColor = options.dotColor {
-                args.append("dot_color: \(jsonString(dotColor))")
-            }
-            if let detail = options.detail {
-                args.append("detail: \(jsonString(detail))")
-            }
-            if let backgroundTasks = options.backgroundTasks {
-                args.append("background_tasks: \(backgroundTasks)")
-            }
-            if let expiresOn = options.expiresOn {
-                args.append("expires_on: \(jsonString(expiresOn))")
-            }
-            if let thenStatus = options.thenStatus {
-                args.append("then_status: \(jsonString(thenStatus))")
-            }
-            if let thenDotColor = options.thenDotColor {
-                args.append("then_dot_color: \(jsonString(thenDotColor))")
-            }
-            if let thenTextColor = options.thenTextColor {
-                args.append("then_text_color: \(jsonString(thenTextColor))")
-            }
-            if let thenDetail = options.thenDetail {
-                args.append("then_detail: \(jsonString(thenDetail))")
-            }
-
-            invoke.invocation = "iterm2.set_status(\(args.joined(separator: ", ")))"
+            invoke.app = ITMInvokeFunctionRequest_App()
+            invoke.invocation = "iterm2.set_session_status(\(args.joined(separator: ", ")))"
 
             let request = ITMClientOriginatedMessage()
             request.id_p = client.nextId()
@@ -1068,23 +1148,31 @@ extension Session {
 // MARK: - session get-background-tasks
 
 extension Session {
-    struct GetBackgroundTasks: ParsableCommand, IT2Runnable {
+    struct GetBackgroundTasks: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
         static let configuration = CommandConfiguration(
             commandName: "get-background-tasks",
             abstract: "Print the background-task count last stored via set-status --background-tasks.",
             discussion: "See also: it2 session set-status"
         )
 
-        @Option(name: .shortAndLong, help: "Target session ID.")
-        var session: String
+        @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
+        var session: String?
+
+        @OptionGroup var tmuxOptions: TmuxPaneOptions
 
         func run(_ ctx: IT2Context) throws {
             let client = try ctx.makeClient()
             defer { client.disconnect() }
 
+            guard let sessionId = try client.resolveTarget(session,
+                                                           tmuxOptions: tmuxOptions,
+                                                           ctx: ctx) else {
+                return
+            }
+
             let invoke = ITMInvokeFunctionRequest()
             let sessionContext = ITMInvokeFunctionRequest_Session()
-            sessionContext.sessionId = session
+            sessionContext.sessionId = sessionId
             invoke.session = sessionContext
             invoke.invocation = "iterm2.get_background_task_count()"
 

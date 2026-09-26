@@ -4,6 +4,14 @@ import Foundation
 import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via the bridging header
 #endif
 
+/// Render an option as argv elements for a shortcut that re-serializes and re-parses.
+///
+/// "--name=value" so a value beginning with "-" survives the inner parse, except for an empty
+/// value: ArgumentParser reads a bare "--name=" as a missing value, so that one goes as two
+/// elements. An empty string can never be mistaken for an option name, so it is unambiguous.
+func shortcutOptionArgs(_ name: String, _ value: String) -> [String] {
+    return value.isEmpty ? [name, value] : ["\(name)=\(value)"]
+}
 // Top-level shortcuts that mirror the Python it2's convenience commands.
 
 struct SendShortcut: ParsableCommand, IT2Runnable {
@@ -22,9 +30,12 @@ struct SendShortcut: ParsableCommand, IT2Runnable {
     var all = false
 
     func run(_ ctx: IT2Context) throws {
-        var args = [text]
-        if let s = session { args += ["-s", s] }
-        if all { args += ["-a"] }
+        // Options first, then "--", then the positional: the text is arbitrary and one that begins
+        // with "-" would otherwise be re-read as an option name by the inner parse.
+        var args = [String]()
+        if let s = session { args += shortcutOptionArgs("--session", s) }
+        if all { args.append("--all") }
+        args += ["--", text]
         let cmd = try Session.Send.parse(args)
         try runParsedCommand(cmd, ctx)
     }
@@ -46,9 +57,12 @@ struct RunShortcut: ParsableCommand, IT2Runnable {
     var all = false
 
     func run(_ ctx: IT2Context) throws {
-        var args = [command]
-        if let s = session { args += ["-s", s] }
-        if all { args += ["-a"] }
+        // Options first, then "--", then the positional: the text is arbitrary and one that begins
+        // with "-" would otherwise be re-read as an option name by the inner parse.
+        var args = [String]()
+        if let s = session { args += shortcutOptionArgs("--session", s) }
+        if all { args.append("--all") }
+        args += ["--", command]
         let cmd = try Session.Run.parse(args)
         try runParsedCommand(cmd, ctx)
     }
@@ -72,8 +86,8 @@ struct SplitShortcut: ParsableCommand, IT2Runnable {
     func run(_ ctx: IT2Context) throws {
         var args: [String] = []
         if vertical { args.append("-v") }
-        if let s = session { args += ["-s", s] }
-        if let p = profile { args += ["-p", p] }
+        if let s = session { args += shortcutOptionArgs("--session", s) }
+        if let p = profile { args += shortcutOptionArgs("--profile", p) }
         let cmd = try Session.Split.parse(args)
         try runParsedCommand(cmd, ctx)
     }
@@ -93,8 +107,8 @@ struct VSplitShortcut: ParsableCommand, IT2Runnable {
 
     func run(_ ctx: IT2Context) throws {
         var args = ["-v"]
-        if let s = session { args += ["-s", s] }
-        if let p = profile { args += ["-p", p] }
+        if let s = session { args += shortcutOptionArgs("--session", s) }
+        if let p = profile { args += shortcutOptionArgs("--profile", p) }
         let cmd = try Session.Split.parse(args)
         try runParsedCommand(cmd, ctx)
     }
@@ -111,7 +125,7 @@ struct ClearShortcut: ParsableCommand, IT2Runnable {
 
     func run(_ ctx: IT2Context) throws {
         var args: [String] = []
-        if let s = session { args += ["-s", s] }
+        if let s = session { args += shortcutOptionArgs("--session", s) }
         let cmd = try Session.Clear.parse(args)
         try runParsedCommand(cmd, ctx)
     }
@@ -148,8 +162,8 @@ struct NewShortcut: ParsableCommand, IT2Runnable {
 
     func run(_ ctx: IT2Context) throws {
         var args: [String] = []
-        if let p = profile { args += ["-p", p] }
-        if let c = command { args += ["-c", c] }
+        if let p = profile { args += shortcutOptionArgs("--profile", p) }
+        if let c = command { args += shortcutOptionArgs("--command", c) }
         let cmd = try Window.New.parse(args)
         try runParsedCommand(cmd, ctx)
     }
@@ -172,15 +186,15 @@ struct NewTabShortcut: ParsableCommand, IT2Runnable {
 
     func run(_ ctx: IT2Context) throws {
         var args: [String] = []
-        if let p = profile { args += ["-p", p] }
-        if let w = window { args += ["-w", w] }
-        if let c = command { args += ["-c", c] }
+        if let p = profile { args += shortcutOptionArgs("--profile", p) }
+        if let w = window { args += shortcutOptionArgs("--window", w) }
+        if let c = command { args += shortcutOptionArgs("--command", c) }
         let cmd = try Tab.New.parse(args)
         try runParsedCommand(cmd, ctx)
     }
 }
 
-struct SetStatusShortcut: ParsableCommand, IT2Runnable {
+struct SetStatusShortcut: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
     static let configuration = CommandConfiguration(
         commandName: "set-status",
         abstract: "Shortcut for 'it2 session set-status'."
@@ -189,6 +203,8 @@ struct SetStatusShortcut: ParsableCommand, IT2Runnable {
     // Shared with the subcommand rather than restated, so an option added to
     // one is never missing from the other.
     @OptionGroup var options: SetStatusOptions
+
+    var tmuxOptions: TmuxPaneOptions { return options.tmuxOptions }
 
     func run(_ ctx: IT2Context) throws {
         var cmd = Session.SetStatus()

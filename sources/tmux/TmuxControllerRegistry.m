@@ -71,6 +71,10 @@ NSString *const kTmuxControllerRegistryDidChange = @"kTmuxControllerRegistryDidC
     return [[controllers_ allKeys] sortedArrayUsingSelector:@selector(compare:)];
 }
 
+- (NSArray<TmuxController *> *)allControllers {
+    return controllers_.allValues;
+}
+
 - (TmuxController *)tmuxControllerWithSessionGUID:(NSString *)sessionGUID {
     for (NSString *key in controllers_) {
         TmuxController *controller = controllers_[key];

@@ -10320,6 +10320,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     [self printTmuxMessage:@"Detaching..."];
+    // Before the detach goes out, so the record leaves with us rather than lingering until another
+    // attached controller hears we left.
+    [_tmuxController withdrawIT2ClientRecord];
     [_tmuxGateway detach];
 }
 
@@ -10752,6 +10755,30 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (NSString *)tmuxOwningSessionGUID {
     return self.guid;
+}
+
+- (NSString *)tmuxGatewayOriginIdentifier {
+    // nil for a local gateway, which is what makes "same machine" decidable without a machine ID:
+    // the conductor identifies one ssh connection. Two connections to the same host get two
+    // identifiers, so this is a same-connection test, and tmuxGatewayIT2ClientRecord is what makes
+    // that sufficient: a pane's it2 call is routed to the connection that attached last, which is
+    // this one. A gateway reached by plain ssh (no integration) has no conductor and so reports
+    // nil, which is why the locator keeps its serverIsLocal check on the local branch -- that is
+    // the case where the server is remote but nothing here can say so.
+    return self.conductor.clientUniqueID;
+}
+
+- (NSDictionary<NSString *, NSString *> *)tmuxGatewayIT2ClientRecord {
+    iTermConductor *conductor = self.conductor;
+    if (conductor) {
+        // Nil until the proxy has been set up, in which case there is nothing worth advertising:
+        // a remote it2 could not reach this connection anyway.
+        return conductor.it2ClientRecord;
+    }
+    // No conductor: a local server, or one reached by plain ssh where no it2 exists to read this.
+    // The local it2 finds its socket by suite, so a second instance running under -suite can be
+    // told apart from the main one.
+    return @{ @"suite": [iTermUserDefaults customSuiteName] ?: @"iTerm2" };
 }
 
 - (void)tmuxDidOpenInitialWindows {

@@ -61,6 +61,25 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxDidOpenInitialWindows;
 - (void)tmuxDoubleAttachForSessionGUID:(NSString *)sessionGUID;
 - (NSString *)tmuxOwningSessionGUID;
+// Identifies the connection this gateway's tmux server is reached over, for pane addressing.
+//
+// nil means this Mac. Non-nil is the clientUniqueID of the SSH-integration conductor the gateway
+// session runs over, which names one ssh connection. A pane address ($TMUX) collected on some
+// machine is only comparable with a server on that same machine: socket paths are byte-identical
+// across hosts sharing a uid, and pids collide freely, so without this a remote address could
+// match a local server by coincidence. The comparison is by connection rather than by host, which
+// only works because tmuxGatewayIT2ClientRecord steers a pane's it2 call onto the connection that
+// attached most recently. See TmuxPaneLocator.
+- (NSString *)tmuxGatewayOriginIdentifier;
+
+// What `it2` in one of this server's panes needs to reach iTerm2 over this gateway's connection.
+// The controller publishes it as a per-client user option on the server (see
+// TmuxController's advertiseIT2Client), where it2 looks before its own environment: a pane's own
+// copy is frozen when the server starts and names a connection that a reattach from elsewhere,
+// or an iTerm2 relaunch, may have replaced. {sock, nonce} over SSH integration, {suite}
+// otherwise, nil when there is nothing to advertise yet. Keep the keys in step with it2.py and
+// it2cli's TmuxOwnership.swift, which read them.
+- (NSDictionary<NSString *, NSString *> *)tmuxGatewayIT2ClientRecord;
 - (BOOL)tmuxGatewayShouldForceDetach;
 - (void)tmuxGatewayDidTimeOutDuringInitialization:(BOOL)duringInitialization;
 - (void)tmuxActiveWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
