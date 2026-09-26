@@ -36,6 +36,13 @@ final class PTYTabManualTitleRefreshTests: XCTestCase {
     /// here plays that part, so the test has to keep them alive itself.
     private var tabViewItems = [NSTabViewItem]()
 
+    /// Likewise for the tmux controllers -tmuxTab is keyed off.
+    private var tmuxControllers = [TmuxController]()
+
+    private var tmuxPrefix: String {
+        return iTermAdvancedSettingsModel.tmuxTitlePrefix() ?? ""
+    }
+
     override func setUp() {
         super.setUp()
         savedShowStatusInSubtitle = iTermUserDefaults.showSessionStatusInTabSubtitle
@@ -45,6 +52,14 @@ final class PTYTabManualTitleRefreshTests: XCTestCase {
     override func tearDown() {
         iTermUserDefaults.showSessionStatusInTabSubtitle = savedShowStatusInSubtitle
         tabViewItems.removeAll()
+        // -[TmuxController initWithGateway:...] registers the controller with the
+        // shared registry and only -detach removes it. Unregister explicitly so a
+        // gateway-less test controller does not stay visible to the rest of the
+        // process, and so client-name uniquing does not drift between tests.
+        for controller in tmuxControllers {
+            TmuxControllerRegistry.sharedInstance().setController(nil, forClient: controller.clientName)
+        }
+        tmuxControllers.removeAll()
         super.tearDown()
     }
 
@@ -457,6 +472,105 @@ final class PTYTabManualTitleRefreshTests: XCTestCase {
         XCTAssertFalse(tab.tabViewItem?.label.contains("(null)") ?? true)
         XCTAssertTrue(tab.tabViewItem?.label.hasSuffix("\n") ?? false,
                       "the title/subtitle separator must survive an empty subtitle")
+    }
+
+    /// `-loadTitleFromSession` used to set the label straight from
+    /// `activeSession.name`, which meant the tmux-window-load path laundered a
+    /// title override and dropped the subtitle line. That path calls
+    /// -updateTabTitle now; this pins what it must preserve. (The tmux prefix half
+    /// of that fix needs a live TmuxController, for which there is no test seam.)
+    func testUpdateTabTitleKeepsManualTitleAndSeparator() {
+        let (tab, session) = makeTab()
+        applyManualTitle(to: tab, session: session)
+
+        tab.updateTitle()   // -[PTYTab updateTabTitle], as Swift imports it
+
+        XCTAssertEqual(titleLine(of: tab), manualTitle,
+                       "recomputing the tab title must not fall back to the session name")
+        XCTAssertTrue(tab.tabViewItem?.label.hasSuffix("\n") ?? false,
+                      "and must keep the title/subtitle separator")
+    }
+
+    // MARK: - tmux tabs
+
+    /// Makes `tab` report itself as a tmux tab. -isTmuxTab is just
+    /// `tmuxController_ != nil` and none of the title code messages the controller,
+    /// so one built without a gateway is enough to reach the tmux branch of
+    /// -updateTabTitleForCurrentSessionName:. The ivar has no setter, hence KVC.
+    private func makeTmuxTab(file: StaticString = #filePath,
+                             line: UInt = #line) -> (PTYTab, PTYSession) {
+        let (tab, session) = makeTab()
+        let controller = TmuxController(gateway: nil,
+                                        clientName: "test",
+                                        profile: [:],
+                                        profileModel: nil)!
+        tmuxControllers.append(controller)
+        tab.setValue(controller, forKey: "tmuxController_")
+        XCTAssertTrue(tab.isTmuxTab, "test setup: the tab must take the tmux branch",
+                      file: file, line: line)
+        return (tab, session)
+    }
+
+    /// -[PseudoTerminal loadTmuxLayout:...] recomputes the title before the sessions
+    /// have evaluated one, so the tab has to name itself after the tmux window. This
+    /// is the branch `-loadTitleFromSession` bypassed entirely by assigning
+    /// activeSession.name to the label.
+    func testTmuxTabWithNoSessionNameUsesTmuxWindowName() {
+        let (tab, session) = makeTmuxTab()
+        tab.tmuxWindowName = "editor"
+
+        tab.name(of: session, didChangeTo: nil)
+
+        XCTAssertEqual(tab.title, "\(tmuxPrefix)editor")
+        XCTAssertEqual(titleLine(of: tab), "\(tmuxPrefix)editor")
+    }
+
+    /// Once a session has a name it already carries the marker, because
+    /// -[iTermSessionNameController formattedName:] applied it. The tab must use it
+    /// as-is rather than decorating it a second time.
+    func testTmuxTabDoesNotRedecorateAnAlreadyDecoratedSessionName() {
+        let (tab, session) = makeTmuxTab()
+        tab.tmuxWindowName = "editor"
+
+        tab.name(of: session, didChangeTo: "\(tmuxPrefix)vim")
+
+        XCTAssertEqual(titleLine(of: tab), "\(tmuxPrefix)vim")
+    }
+
+    /// A title override is the tab's own text and has no marker, so the tab adds one
+    /// -- exactly once, however many times the title is recomputed.
+    func testTmuxTabPrefixesTitleOverrideExactlyOnce() {
+        let (tab, _) = makeTmuxTab()
+        // Set the resolved override directly: -setTitleOverride: would also rename
+        // the tmux window, which needs a gateway, and the evaluation it goes through
+        // is the swifty-string machinery rather than anything under test here.
+        scope(of: tab).setValue(manualTitle, forVariableNamed: iTermVariableKeyTabTitleOverride)
+
+        tab.updateTitle()
+        XCTAssertEqual(titleLine(of: tab), "\(tmuxPrefix)\(manualTitle)")
+
+        tab.updateTitle()
+        XCTAssertEqual(titleLine(of: tab), "\(tmuxPrefix)\(manualTitle)",
+                       "recomputing must not stack a second marker")
+    }
+
+    /// The other half of what `-loadTitleFromSession` dropped on this path: it
+    /// assigned a bare session name, so the tab bar lost the subtitle line.
+    func testTmuxTabLabelKeepsSubtitleSeparator() {
+        let (tab, session) = makeTmuxTab()
+        tab.tmuxWindowName = "editor"
+        session.tabStatus?.statusText = statusText
+        tab.sessionTabStatusDidChange(session)
+
+        // Updating the status spins the runloop, which lets this profile-less
+        // session's name controller publish its " " placeholder. Clear it so
+        // -updateTabTitle passes nil and the tmux window name supplies the title --
+        // the shape -[PseudoTerminal loadTmuxLayout:...] is in.
+        session.genericScope.setValue(nil, forVariableNamed: iTermVariableKeySessionPresentationName)
+        tab.updateTitle()
+
+        XCTAssertEqual(subtitleLine(of: tab), statusText)
+        XCTAssertEqual(tab.tabViewItem?.label, "\(tmuxPrefix)editor\n\(statusText)")
     }
 
     // MARK: - New tabs

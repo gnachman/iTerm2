@@ -56,6 +56,12 @@ extern NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier;
 // Forces a synchronous eval followed by an async.
 - (void)setNeedsUpdate;
 
+// Call when -sessionNameControllerFormattingDescriptor would return something
+// different than it did at the last evaluation, e.g. when a session acquires a
+// tmux controller. Re-publishes the presentation name with the new formatting,
+// unless the formatted name is what was published last.
+- (void)formattingDescriptorDidChange;
+
 - (void)updateIfNeeded;
 
 @end

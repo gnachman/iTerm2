@@ -40,7 +40,12 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
 
     NSString *_cachedEvaluation;
     NSString *_cachedBuiltInWindowTitleEvaluation;
+    NSString *_lastPublishedPresentationName;
     BOOL _needsUpdate;
+    // YES while the delegate is being told about a new name. Observers of the
+    // session's name variable can read a title accessor synchronously from inside
+    // that callback; -updateIfNeeded must not start another evaluation then.
+    BOOL _publishing;
     NSInteger _count;
     NSInteger _appliedCount;
     NSArray<iTermVariableReference *> *_refs;
@@ -137,6 +142,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
              [weakSelf logError:error forInvocation:invocation];
          }
          if (!sync) {
+             // Set presentation name to formatted title
              [weakSelf didEvaluateInvocationWithResult:result];
          }
          completion(result);
@@ -267,8 +273,25 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
         return;
     }
     _cachedEvaluation = [result copy];
+    const BOOL wasPublishing = _publishing;
+    _publishing = YES;
     [_delegate sessionNameControllerNameWillChangeTo:_cachedEvaluation];
-    [_delegate sessionNameControllerPresentationNameDidChangeTo:self.presentationSessionTitle];
+    [self publishPresentationName];
+    _publishing = wasPublishing;
+}
+
+// Publishes the formatted cached evaluation. This reads -formattedName: directly
+// rather than -presentationSessionTitle: that accessor calls -updateIfNeeded first,
+// and this runs from inside an evaluation's completion, where a pending
+// -setNeedsReevaluation flag would start a nested evaluation and publish twice.
+// The pending flag belongs to the main-queue hop that scheduled it.
+- (void)publishPresentationName {
+    NSString *presentationName = [self formattedName:_cachedEvaluation];
+    _lastPublishedPresentationName = [presentationName copy];
+    const BOOL wasPublishing = _publishing;
+    _publishing = YES;
+    [_delegate sessionNameControllerPresentationNameDidChangeTo:presentationName];
+    _publishing = wasPublishing;
 }
 
 - (NSString *)presentationWindowTitle {
@@ -385,6 +408,32 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
     return base;
 }
 
+// -formattedName: applies the tmux decoration on top of the cached base name, so
+// the descriptor can change -- a session acquires or loses a tmux controller --
+// while the base name stays the same. Re-format the cached name and publish it if
+// it differs from what was published last. Issue 13072.
+//
+// -evaluateInvocationSynchronously: calls this from its "base name unchanged"
+// arm, so any descriptor change that also touches an observed variable (the tmux
+// client name, role, or pane title) is picked up by the reevaluation the
+// recording scope schedules. PTYSession also calls it directly where the visible
+// title should change in the same turn rather than a main-queue hop later.
+- (void)formattingDescriptorDidChange {
+    if (!_cachedEvaluation) {
+        // Nothing to re-format. The first evaluation will use the new descriptor.
+        return;
+    }
+    NSString *presentationName = [self formattedName:_cachedEvaluation];
+    if ([NSObject object:presentationName isEqualToObject:_lastPublishedPresentationName]) {
+        // Installing a tmux controller on every pane of a freshly loaded layout
+        // comes through here once per pane; don't run the delegate's publish
+        // path when nothing visible changed.
+        DLog(@"formatted name unchanged %@", self.delegate);
+        return;
+    }
+    [self publishPresentationName];
+}
+
 // Forces sync followed by async eval. Use this when the invocation changes.
 - (void)setNeedsUpdate {
     [self evaluateInvocationSynchronously:YES];
@@ -402,6 +451,15 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
 }
 
 - (void)updateIfNeeded {
+    if (_publishing) {
+        // Re-entered from a delegate callback: an observer of the session's name
+        // variable read a title accessor. The cache is already current, and if an
+        // observer flagged a reevaluation, the main-queue hop that
+        // -setNeedsReevaluation scheduled will run it. Starting one here would
+        // nest an evaluation inside a publish and publish twice for one change.
+        DLog(@"updateIfNeeded re-entered during publish; deferring %@", self.delegate);
+        return;
+    }
     if (!_cachedEvaluation) {
         _needsUpdate = YES;
     }
@@ -432,16 +490,31 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
                 DLog(@"Ignore blank evaluation; keep %@", strongSelf->_cachedEvaluation);
                 return;
             }
-            NSString *safeName = presentationName ?: @"Untitled";
-            if ([NSObject object:strongSelf->_cachedEvaluation isEqualToObject:safeName]) {
+            // Every completion path hands back a non-nil string: the early
+            // returns above pass literals and -valueForInvocation:withResult:error:
+            // never returns nil.
+            ITAssertWithMessage(presentationName != nil, @"nil presentation name from %@", strongSelf.delegate);
+            if ([NSObject object:strongSelf->_cachedEvaluation isEqualToObject:presentationName]) {
+                // The base name is unchanged, but this reevaluation may have been
+                // scheduled because an observed tmux variable changed, and the
+                // formatting descriptor with it. Publish if the decorated name
+                // differs from the last one published; otherwise nothing changed.
                 DLog(@"result is unchanged %@", strongSelf.delegate);
+                [strongSelf formattingDescriptorDidChange];
                 return;
             }
-            strongSelf->_cachedEvaluation = [safeName copy];
-            if (!synchronous || presentationName != nil) {
-                DLog(@"Notify delegate %@", strongSelf.delegate);
-                [strongSelf.delegate sessionNameControllerPresentationNameDidChangeTo:safeName];
-            }
+            // Publish through the shared path rather than notifying the delegate
+            // here. The asynchronous arm of -evaluateInvocationSynchronously:
+            // sideEffectsAllowed:completion: already calls this, so the two arms
+            // used to disagree: this one published the raw cached evaluation as
+            // the presentation name, skipping -formattedName: (so a tmux session's
+            // decoration was missing) and never calling
+            // -sessionNameControllerNameWillChangeTo:, so the session's name
+            // variable went stale until an async evaluation landed. Both matter:
+            // PTYTab falls back to -[PTYSession name] when it has no tab title of
+            // its own. Issue 13072.
+            DLog(@"Notify delegate %@", strongSelf.delegate);
+            [strongSelf didEvaluateInvocationWithResult:presentationName];
         }
     }];
 }

@@ -264,6 +264,7 @@
 #import "VT100TerminalDelegate.h"
 #import "TmuxGateway.h"
 #import "TmuxController.h"
+#import "TmuxControllerRegistry.h"
 #import "charmaps.h"
 #import "SSKeychain.h"
 #import "iTermPasswordManagerWindowController.h"

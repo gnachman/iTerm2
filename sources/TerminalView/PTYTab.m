@@ -825,10 +825,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                              isDark:isDark];
 }
 
-- (void)loadTitleFromSession {
-    tabViewItem_.label = self.activeSession.name;
-}
-
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString*)newName {
     if ([self activeSession] == session) {
         [self updateTabTitleForCurrentSessionName:newName];

@@ -336,6 +336,11 @@ Bug Fixes:
   is no longer replaced by the session’s name
   whenever the tab’s subtitle changes or its
   label is otherwise refreshed. Issue 13072.
+- When a tmux integration window first loads, its
+  tab now shows the finished title right away.
+  It used to briefly show a bare session name,
+  with neither the “↣” marker that flags a tmux
+  tab nor the second line under the title.
 - Interrupting Claude Code with Esc now
   returns its Session Status to idle. The
   tab kept reading “working”, or “waiting”
