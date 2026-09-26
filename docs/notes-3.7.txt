@@ -356,6 +356,12 @@ Improvements:
   Files that fail to upload are left out of what
   is pasted. Local paths are no longer offered
   there, since they name nothing on that host.
+- Fixed a source of main-thread stalls that built
+  up in windows left open for days.
+- The Snippets tool no longer rebuilds its list
+  every time you switch tabs or the running
+  command changes, which had been making windows
+  slowly get slower the longer they stayed open.
 
 Bug Fixes:
 - A tab name you set yourself with Edit Tab Title

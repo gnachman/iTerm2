@@ -218,9 +218,10 @@ class SessionToolbarView: NSView {
                 let dividerX = x + item.width + Self.dividerSidePadding
                 let vInset = Self.dividerVerticalInset
                 let dividerHeight = max(0, height - vInset * 2)
-                dividers.append(makeDivider(x: dividerX,
-                                            y: topBottomMargin + vInset,
-                                            height: dividerHeight))
+                dividers.append(divider(at: dividers.count,
+                                        x: dividerX,
+                                        y: topBottomMargin + vInset,
+                                        height: dividerHeight))
             }
             x += item.width + builder.spacerWidth
             item.obj.layoutSubviews()
@@ -231,13 +232,31 @@ class SessionToolbarView: NSView {
         subviews = [backgroundView, bottomDivider] + dividers + result.map { $0.obj.view }
     }
 
+    // Dividers are recycled across layout passes rather than rebuilt.
+    // Building a fresh NSBox every pass meant each pass allocated views
+    // and then let them die in the runloop's autorelease pool, and AppKit
+    // unregisters a dying view by asking the notification center to drop
+    // every registration for it, a sweep whose cost grows with the whole
+    // center. In a long-lived process that dominated main-thread time.
+    // The pool is bounded by the number of toolbar items, so it never
+    // needs to shrink.
+    private var dividerPool: [NSBox] = []
+
+    private func divider(at index: Int, x: CGFloat, y: CGFloat, height: CGFloat) -> NSView {
+        while dividerPool.count <= index {
+            dividerPool.append(makeDivider())
+        }
+        let box = dividerPool[index]
+        box.frame = NSRect(x: x, y: y, width: Self.dividerThickness, height: height)
+        return box
+    }
+
     // Vertical 1pt separator. NSBox.boxType = .separator picks a
     // system-adapted color (matches the bottom divider) and the
     // 1pt-wide / full-height frame triggers its vertical orientation.
-    private func makeDivider(x: CGFloat, y: CGFloat, height: CGFloat) -> NSView {
+    private func makeDivider() -> NSBox {
         let box = NSBox()
         box.boxType = .separator
-        box.frame = NSRect(x: x, y: y, width: Self.dividerThickness, height: height)
         return box
     }
 }
