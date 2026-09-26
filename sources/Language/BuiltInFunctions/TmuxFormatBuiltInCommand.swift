@@ -9,8 +9,10 @@
 class TmuxFormatBuiltInFunction: NSObject {}
 
 extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
+    private static let errorDomain = "com.iterm2.tmux-format"
+
     private static func error(message: String) -> NSError {
-        return NSError(domain: "com.iterm2.tmux-format",
+        return NSError(domain: errorDomain,
                        code: 1,
                        userInfo: [ NSLocalizedDescriptionKey: message])
     }
@@ -30,12 +32,10 @@ extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
             context: .session,
             sideEffectsPlaceholder: nil) {
                 parameters, completion in
-                guard let sessionID = parameters[sessionIDKey] as? String else {
-                    completion(nil, error(message: String(localized: "TmuxFormat.MissingSessionID", defaultValue: "Missing \(sessionIDKey). This shouldn't happen so please report a bug.", comment: "Error when the session_id argument is missing")))
-                    return
-                }
-                guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
-                    completion(nil, error(message: String(localized: "BuiltInFunction.NoSuchSession", defaultValue: "No such session", comment: "Error shown when a function is called with a session ID that does not exist")))
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 errorDomain: errorDomain,
+                                                                 lookup: .inWindow,
+                                                                 completion: completion) else {
                     return
                 }
                 guard let ref = parameters[backingVariableKey] as? iTermVariableReference<AnyObject> else {

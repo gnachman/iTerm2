@@ -144,6 +144,14 @@ class TabStatusController: NSObject {
     @objc
     func apply(_ update: VT100TabStatusUpdate) {
         let status = self.status
+        // An update whose preconditions no longer hold is dropped whole (see
+        // VT100TabStatusUpdate.requiredTurnOpen), and dropped means it must
+        // not supersede an armed expiration either: the status it would have
+        // replaced is still the one the program last asserted.
+        guard status.preconditionsHold(for: update) else {
+            DLog("Dropping \(update): its preconditions do not hold")
+            return
+        }
         let assertsStatus = update.assertsStatus
         if assertsStatus {
             // Whether the expiration being replaced had already been released
@@ -187,14 +195,17 @@ class TabStatusController: NSObject {
             DLog("No change from \(update)")
         }
 
+        let changesCount = update.backgroundTasksPresence != .notSet ||
+                           update.backgroundTasksDelta != nil
         guard !assertsStatus,
-              update.backgroundTasksPresence != .notSet,
+              changesCount,
               headStartElapsed,
               generation == operationEndGeneration else {
             return
         }
         // The head start has already elapsed and left an expiration held back
-        // by outstanding background work. This update carries a new count, so
+        // by outstanding background work. This update carries a new count, or
+        // a delta that produces one at the moment it is applied, so
         // it may be the program reporting that the last of it finished, which
         // is the one thing that can change that answer. Releasing a hold is
         // not the same as skipping the wait, so there is nothing to wait for

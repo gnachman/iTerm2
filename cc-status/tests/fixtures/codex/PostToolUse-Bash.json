@@ -1,0 +1,15 @@
+{
+  "cwd": "/Users/user/github/cc-status",
+  "hook_event_name": "PostToolUse",
+  "model": "gpt-6-astra",
+  "permission_mode": "default",
+  "session_id": "01a09fa1-d3a9-7543-a9d1-aa7efe7e441d",
+  "tool_input": {
+    "command": "echo hello"
+  },
+  "tool_name": "Bash",
+  "tool_response": "hello\n",
+  "tool_use_id": "exec-7b7d92e4-da80-40cf-ad01-7c882f86926e",
+  "transcript_path": "/Users/user/.codex/sessions/2026/09/14/rollout-2026-09-14T13-16-17-01a09fa1-d3a9-7543-a9d1-aa7efe7e441d.jsonl",
+  "turn_id": "01a09fa8-5dd0-7c32-98e1-e6f5ef92fe91"
+}

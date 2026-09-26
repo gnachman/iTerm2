@@ -16,8 +16,10 @@ class AddClippingBuiltInFunction: NSObject {
 }
 
 extension AddClippingBuiltInFunction: iTermBuiltInFunctionProtocol {
+    private static let errorDomain = "com.iterm2.add-clipping"
+
     private static func error(message: String) -> NSError {
-        return NSError(domain: "com.iterm2.add-clipping",
+        return NSError(domain: errorDomain,
                        code: 1,
                        userInfo: [NSLocalizedDescriptionKey: message])
     }
@@ -33,18 +35,16 @@ extension AddClippingBuiltInFunction: iTermBuiltInFunctionProtocol {
             context: .session,
             // Localization unneeded
             sideEffectsPlaceholder: "[add_clipping]") { parameters, completion in
-                guard let sessionID = parameters[argSession] as? String else {
-                    completion(nil, error(message: String(localized: "BuiltInFunction.MissingSessionID", defaultValue: "Missing session_id. This shouldn’t happen so please report a bug.", comment: "Error shown when the session_id argument is unexpectedly missing (should not happen)")))
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 key: argSession,
+                                                                 errorDomain: errorDomain,
+                                                                 completion: completion) else {
                     return
                 }
                 guard let type = parameters[argType] as? String,
                       let title = parameters[argTitle] as? String,
                       let detail = parameters[argDetail] as? String else {
                     completion(nil, error(message: String(localized: "AddClipping.MissingArgument", defaultValue: "Missing required argument", comment: "Error shown when add_clipping is called without a required argument")))
-                    return
-                }
-                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, error(message: String(localized: "BuiltInFunction.NoSuchSession", defaultValue: "No such session", comment: "Error shown when a function is called with a session ID that does not exist")))
                     return
                 }
                 // Code-review-mode workgroup peers send their clippings

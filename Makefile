@@ -609,7 +609,7 @@ it2cli: force
 	cp it2cli/.build/release/it2 it2cli/bin
 
 paranoid-it2cli: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) it2cli
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" it2cli
 
 cc-status: force
 	cd cc-status/ && ./build.sh
@@ -631,7 +631,7 @@ ifdef SIGNED
 endif
 
 paranoid-cc-status: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) cc-status
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" cc-status
 
 paranoid-CoreParse: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" CoreParse

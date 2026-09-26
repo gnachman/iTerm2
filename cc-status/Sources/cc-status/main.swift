@@ -1,21 +1,59 @@
 import Foundation
 
+// Driven by Claude Code hooks (~/.claude/settings.json). Codex CLI hooks (~/.codex/hooks.json)
+// send the same payload shape, so one binary serves both; the hook configuration passes
+// --agent codex to say which (see Agent).
+//
 // The entry point. The work is split across Addressing.swift (which session), HookEvent.swift
 // (what to say about it) and It2Runner.swift (saying it); what stays here is main() plus the
-// helpers that turn a hook payload into detail text.
+// helpers that turn a hook payload into detail text and read back what iTerm2 holds.
 
 func main() {
     let environment = ProcessInfo.processInfo.environment
+    let agent = Agent(arguments: CommandLine.arguments)
     guard let event = readHookEvent() else {
         return
     }
     guard let address = resolveAddress(environment) else {
         return
     }
-    guard let update = statusUpdate(forEvent: event.name, json: event.json, address: address) else {
+    guard let update = statusUpdate(forEvent: event.name, json: event.json, address: address, agent: agent),
+          !update.isEmpty else {
+        // Nothing to say. This happens on a Codex SubagentStop that leaves work
+        // running: the decrement already stored the new count and the display is
+        // deliberately unchanged, so there is no reason to spend another round
+        // trip on a set-status carrying only an address.
         return
     }
-    It2Runner(address: address, eventName: event.name).send(update)
+    It2Runner(address: address, eventName: event.name, agent: agent).send(update)
+}
+
+// MARK: - Agent tty
+
+/// Path of the terminal the agent is running in, or nil when there is none.
+/// Codex 0.155+ starts hooks with setsid (openai/codex#43876), so the hook has
+/// no controlling terminal of its own; the nearest ancestor that still has one
+/// is the agent.
+func agentTTYPath() -> String? {
+    if let own = FileHandle(forWritingAtPath: "/dev/tty") {
+        own.closeFile()
+        return "/dev/tty"
+    }
+    var pid = getppid()
+    while pid > 1 {
+        var info = kinfo_proc()
+        var size = MemoryLayout<kinfo_proc>.size
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
+        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else {
+            return nil
+        }
+        let dev = info.kp_eproc.e_tdev
+        if dev != -1, let name = devname(dev, S_IFCHR) {
+            return "/dev/" + String(cString: name)
+        }
+        pid = info.kp_eproc.e_ppid
+    }
+    return nil
 }
 
 // MARK: - it2 resolution
@@ -109,33 +147,36 @@ func backgroundDetail(count: Int) -> String {
 // background work is outstanding. cc-status runs once per hook event and keeps no state of its
 // own.
 
+/// Trimmed stdout of an it2 subcommand, or nil if it failed. Always quiet: these reads happen
+/// mid-turn and a failure is not worth a word; each caller has a safe default instead.
+func quietIt2Output(_ arguments: [String]) -> String? {
+    guard let result = runIt2(arguments + ["--quiet-if-unresolved"]), result.status == 0 else {
+        return nil
+    }
+    return result.stdout
+}
+
 /// Ask iTerm2 for the stored count. 0 when unavailable for any reason
 /// (no stored value, session gone, it2 failed): the safe default, since
 /// it just restores the pre-background-awareness behavior.
 func storedBackgroundTaskCount(addressArgs: [String]) -> Int {
-    let it2 = resolveIt2()
-    let process = Process()
-    process.executableURL = it2.executable
-    // Always quiet: this read happens mid-turn and its failure is not worth a word; the count
-    // simply reads back as zero.
-    process.arguments = it2.leadingArgs + ["session", "get-background-tasks"] + addressArgs
-        + ["--quiet-if-unresolved"]
-    let pipe = Pipe()
-    process.standardOutput = pipe
-    process.standardError = FileHandle.nullDevice
-    do {
-        try process.run()
-    } catch {
-        return 0
-    }
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    process.waitUntilExit()
-    guard process.terminationStatus == 0,
-          let output = String(data: data, encoding: .utf8),
-          let count = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+    guard let output = quietIt2Output(["session", "get-background-tasks"] + addressArgs),
+          let count = Int(output) else {
         return 0
     }
     return max(0, count)
+}
+
+/// Adds to the stored background-task count and returns the status as it stands afterwards, or
+/// nil if the call failed or its answer could not be read. One it2 round trip, and atomic: iTerm2
+/// applies the delta where the count lives, so two hooks changing it at once cannot lose one.
+func changeBackgroundTaskCount(by delta: Int, addressArgs: [String]) -> CurrentStatus? {
+    guard let output = quietIt2Output(["set-status"] + addressArgs
+                                      + optionArgs("--background-tasks-delta", String(delta))
+                                      + ["--json"]) else {
+        return nil
+    }
+    return CurrentStatus(json: output)
 }
 
 // MARK: - Detail formatting
@@ -203,6 +244,16 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
     case "Agent", "Task":
         let desc = (toolInput["description"] as? String) ?? ""
         return "\(toolName): \(desc)"
+    case "apply_patch":
+        // Codex CLI's file edit. tool_input is the whole patch; show the files.
+        let patch = (toolInput["patch"] as? String) ?? (toolInput["input"] as? String) ?? ""
+        let files = applyPatchFiles(patch)
+        if files.isEmpty {
+            return "Edit"
+        }
+        return condense("Edit: " + files.map { shortPath($0) }.joined(separator: ", "))
+    case "update_plan":
+        return "Update plan"
     case "WebFetch":
         let url = (toolInput["url"] as? String) ?? ""
         return "WebFetch: \(shortURL(url))"
@@ -226,10 +277,35 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
     }
 }
 
+/// Files named in the "*** Update/Add/Delete File:" headers of an apply_patch.
+func applyPatchFiles(_ patch: String) -> [String] {
+    var files: [String] = []
+    for line in patch.split(separator: "\n", omittingEmptySubsequences: true) {
+        for prefix in ["*** Update File: ", "*** Add File: ", "*** Delete File: "] {
+            if line.hasPrefix(prefix) {
+                let path = String(line.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                if !path.isEmpty, !files.contains(path) {
+                    files.append(path)
+                }
+            }
+        }
+    }
+    return files
+}
+
 /// Split a PascalCase/camelCase tool identifier into spaced words so unhandled
 /// tools read naturally instead of leaking their raw keyword. Keeps acronym runs
 /// together: "AskUserQuestion" -> "Ask User Question", "URLFetch" -> "URL Fetch".
 func humanize(_ identifier: String) -> String {
+    // Codex names its tools in snake_case, which the pass below cannot see:
+    // split there first so "read_file" reads as "Read File".
+    if identifier.contains("_") {
+        let words = identifier.split(separator: "_").map { part -> String in
+            let word = humanize(String(part))
+            return word.prefix(1).uppercased() + word.dropFirst()
+        }
+        return words.isEmpty ? identifier : words.joined(separator: " ")
+    }
     let chars = Array(identifier)
     var words: [String] = []
     var current = ""

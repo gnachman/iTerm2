@@ -18,18 +18,17 @@ class MoveSessionToNewTabBuiltInFunction: iTermBuiltInFunction {
             defaultValues: [:],
             context: .app,
             sideEffectsPlaceholder: "[move_session_to_new_tab]") { parameters, completion in
-                guard let sessionID = parameters["session"] as? String else {
-                    completion(nil, Self.error(String(localized: "MoveSession.MissingSessionArgument", defaultValue: "Missing session argument", comment: "Error when the session argument is missing")))
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 key: "session",
+                                                                 errorDomain: errorDomain,
+                                                                 lookup: .inWindow,
+                                                                 completion: completion) else {
                     return
                 }
                 let windowID = parameters["window_id"] as? String
                 let tabIndex = (parameters["tab_index"] as? NSNumber)?.int32Value ?? -1
 
                 let controller = iTermController.sharedInstance()!
-                guard let session = controller.session(withGUID: sessionID) else {
-                    completion(nil, Self.error(String(localized: "MoveSession.InvalidSessionID", defaultValue: "Invalid session ID", comment: "Error when a session ID does not identify a session")))
-                    return
-                }
 
                 let destWindow: PseudoTerminal
                 if let windowID = windowID {
@@ -39,7 +38,7 @@ class MoveSessionToNewTabBuiltInFunction: iTermBuiltInFunction {
                     }
                     destWindow = term
                 } else {
-                    guard let term = controller.windowForSession(withGUID: sessionID) else {
+                    guard let term = controller.windowForSession(withGUID: session.guid) else {
                         completion(nil, Self.error(String(localized: "MoveSession.NoWindow", defaultValue: "Session has no window", comment: "Error when a session is not in a window")))
                         return
                     }
@@ -69,8 +68,10 @@ class MoveSessionToNewTabBuiltInFunction: iTermBuiltInFunction {
         iTermBuiltInFunctions.sharedInstance().register(f, namespace: "iterm2")
     }
 
+    private static let errorDomain = "com.iterm2.move-session-to-new-tab"
+
     private static func error(_ message: String) -> NSError {
-        return NSError(domain: "com.iterm2.move-session-to-new-tab",
+        return NSError(domain: errorDomain,
                        code: 1,
                        userInfo: [NSLocalizedDescriptionKey: message])
     }
@@ -85,14 +86,11 @@ class MoveSessionToNewWindowBuiltInFunction: iTermBuiltInFunction {
             defaultValues: [:],
             context: .app,
             sideEffectsPlaceholder: "[move_session_to_new_window]") { parameters, completion in
-                guard let sessionID = parameters["session"] as? String else {
-                    completion(nil, Self.error(String(localized: "MoveSession.MissingSessionArgument", defaultValue: "Missing session argument", comment: "Error when the session argument is missing")))
-                    return
-                }
-
-                let controller = iTermController.sharedInstance()!
-                guard let session = controller.session(withGUID: sessionID) else {
-                    completion(nil, Self.error(String(localized: "MoveSession.InvalidSessionID", defaultValue: "Invalid session ID", comment: "Error when a session ID does not identify a session")))
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 key: "session",
+                                                                 errorDomain: errorDomain,
+                                                                 lookup: .inWindow,
+                                                                 completion: completion) else {
                     return
                 }
 
@@ -113,8 +111,10 @@ class MoveSessionToNewWindowBuiltInFunction: iTermBuiltInFunction {
         iTermBuiltInFunctions.sharedInstance().register(f, namespace: "iterm2")
     }
 
+    private static let errorDomain = "com.iterm2.move-session-to-new-window"
+
     private static func error(_ message: String) -> NSError {
-        return NSError(domain: "com.iterm2.move-session-to-new-window",
+        return NSError(domain: errorDomain,
                        code: 1,
                        userInfo: [NSLocalizedDescriptionKey: message])
     }

@@ -17,6 +17,10 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
     private static let dotColorArg = "dot_color"
     private static let detailArg = "detail"
     private static let backgroundTasksArg = "background_tasks"
+    private static let backgroundTasksDeltaArg = "background_tasks_delta"
+    private static let turnOpenArg = "turn_open"
+    private static let ifTurnOpenArg = "if_turn_open"
+    private static let ifBackgroundTasksArg = "if_background_tasks"
     private static let expiresOnArg = "expires_on"
     private static let thenStatusArg = "then_status"
     private static let thenTextColorArg = "then_text_color"
@@ -103,8 +107,10 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
         return color
     }
 
+    private static let errorDomain = "com.iterm2.set-status"
+
     private static func error(message: String) -> NSError {
-        return NSError(domain: "com.iterm2.set-status",
+        return NSError(domain: errorDomain,
                        code: 1,
                        userInfo: [NSLocalizedDescriptionKey: message])
     }
@@ -117,10 +123,12 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
         return error(message: String(localized: "BuiltInFunction.NoSuchSession", defaultValue: "No such session", comment: "Error shown when a function is called with a session ID that does not exist"))
     }
 
-    // Turn the status arguments into an update, or explain why they're invalid. Shared by the
-    // session-context and app-context setters so the two can't drift: both take exactly the same
-    // fields, including the background-task count and the expiration with its fallback.
-    private static func makeUpdate(_ parameters: [AnyHashable: Any]) -> Result<VT100TabStatusUpdate, NSError> {
+    // Turn the status arguments into an update, or throw the error to hand back through the
+    // completion when an argument makes no sense. Shared by the session-context and app-context
+    // setters so the two can't drift: both take exactly the same fields, including the
+    // background-task count, the turn flag, the preconditions and the expiration with its fallback.
+    // Internal rather than private so ModernTests can pin what each argument becomes.
+    static func update(from parameters: [AnyHashable: Any]) throws -> VT100TabStatusUpdate {
         let update = VT100TabStatusUpdate()
         if let invalid = populate(update,
                                   status: parameters[statusArg] as? String,
@@ -129,15 +137,33 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                                   detail: parameters[detailArg] as? String) {
             switch invalid {
             case .textColor:
-                return .failure(error(message: String(localized: "SetStatus.InvalidTextColor", defaultValue: "Invalid text_color (expected #rrggbb)", comment: "Error when the text_color argument isn't a valid hex color")))
+                throw error(message: String(localized: "SetStatus.InvalidTextColor", defaultValue: "Invalid text_color (expected #rrggbb)", comment: "Error when the text_color argument isn't a valid hex color"))
             case .dotColor:
-                return .failure(error(message: String(localized: "SetStatus.InvalidDotColor", defaultValue: "Invalid dot_color (expected #rrggbb)", comment: "Error when the dot_color argument isn't a valid hex color")))
+                throw error(message: String(localized: "SetStatus.InvalidDotColor", defaultValue: "Invalid dot_color (expected #rrggbb)", comment: "Error when the dot_color argument isn't a valid hex color"))
             }
         }
 
+        let delta = parameters[backgroundTasksDeltaArg] as? NSNumber
         if let backgroundTasks = parameters[backgroundTasksArg] as? NSNumber {
+            if delta != nil {
+                throw error(message: String(localized: "BuiltInFunction.BackgroundTasksAndDelta", defaultValue: "Pass background_tasks or background_tasks_delta, not both.", comment: "Error shown when a status update tries to assign and add to the background task count at once"))
+            }
             update.backgroundTasksPresence = .set
             update.backgroundTasks = max(0, backgroundTasks.intValue)
+        } else if let delta {
+            update.backgroundTasksDelta = delta
+        }
+
+        if let turnOpen = parameters[turnOpenArg] as? NSNumber {
+            update.turnOpenPresence = .set
+            update.turnOpen = turnOpen.boolValue
+        }
+
+        if let requiredTurnOpen = parameters[ifTurnOpenArg] as? NSNumber {
+            update.requiredTurnOpen = NSNumber(value: requiredTurnOpen.boolValue)
+        }
+        if let requiredBackgroundTasks = parameters[ifBackgroundTasksArg] as? NSNumber {
+            update.requiredBackgroundTasks = NSNumber(value: requiredBackgroundTasks.intValue)
         }
 
         let thenStatus = parameters[thenStatusArg] as? String
@@ -149,7 +175,7 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
 
         if let expiresOn = parameters[expiresOnArg] as? String, !expiresOn.isEmpty {
             guard expiresOn == progressEndReason else {
-                return .failure(error(message: String(localized: "SetStatus.UnknownExpiresOn", defaultValue: "Unknown expires_on “\(expiresOn)”. The only supported value is progress-end.", comment: "Error when the expires_on argument names an event iTerm2 does not know. The placeholder is the value the caller passed.")))
+                throw error(message: String(localized: "SetStatus.UnknownExpiresOn", defaultValue: "Unknown expires_on “\(expiresOn)”. The only supported value is progress-end.", comment: "Error when the expires_on argument names an event iTerm2 does not know. The placeholder is the value the caller passed."))
             }
             // With no then_ arguments the status simply goes away when
             // it expires, which is what a caller who only wants to
@@ -162,18 +188,18 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                                       detail: thenDetail) {
                 switch invalid {
                 case .textColor:
-                    return .failure(error(message: String(localized: "SetStatus.InvalidThenTextColor", defaultValue: "Invalid then_text_color (expected #rrggbb)", comment: "Error when the then_text_color argument isn't a valid hex color")))
+                    throw error(message: String(localized: "SetStatus.InvalidThenTextColor", defaultValue: "Invalid then_text_color (expected #rrggbb)", comment: "Error when the then_text_color argument isn't a valid hex color"))
                 case .dotColor:
-                    return .failure(error(message: String(localized: "SetStatus.InvalidThenDotColor", defaultValue: "Invalid then_dot_color (expected #rrggbb)", comment: "Error when the then_dot_color argument isn't a valid hex color")))
+                    throw error(message: String(localized: "SetStatus.InvalidThenDotColor", defaultValue: "Invalid then_dot_color (expected #rrggbb)", comment: "Error when the then_dot_color argument isn't a valid hex color"))
                 }
             }
             update.expiresOn = .progressEnd
             update.expirationFallback = fallback
         } else if hasFallbackArgs {
-            return .failure(error(message: String(localized: "SetStatus.ThenWithoutExpiresOn", defaultValue: "The then_ arguments only mean something with expires_on, which was not given.", comment: "Error when a caller asks for a replacement status without saying when it should be applied")))
+            throw error(message: String(localized: "SetStatus.ThenWithoutExpiresOn", defaultValue: "The then_ arguments only mean something with expires_on, which was not given.", comment: "Error when a caller asks for a replacement status without saying when it should be applied"))
         }
 
-        return .success(update)
+        return update
     }
 
     // Resolve a target the way the rest of the API does: "active" is a spelling every other it2
@@ -227,6 +253,44 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
         return value
     }
 
+    // Everything a caller may need to decide its next move, keyed the same way set_session_status
+    // takes its arguments so a read and a write are obviously symmetric: what is displayed, the
+    // parked background-task count, and whether the reporting program said it is mid-turn (null
+    // when it never said). Unset fields are null rather than absent, so a caller can tell
+    // "explicitly empty" from "key I don't know about". The setters answer with this too, so a
+    // caller that just changed something learns the result in the same round trip instead of
+    // asking again. Internal rather than private so ModernTests can pin the shape cc-status parses.
+    static func statusDictionary(for status: iTermSessionTabStatus?) -> NSDictionary {
+        let turnOpen: Any = status?.turnOpen.map { NSNumber(value: $0) } ?? NSNull()
+        let result: [String: Any] = [
+            statusArg: orNull(status?.statusText),
+            textColorArg: orNull((status?.hasStatusTextColor ?? false) ? hexString(status!.statusTextColor) : nil),
+            dotColorArg: orNull((status?.hasIndicator ?? false) ? hexString(status!.indicatorColor) : nil),
+            detailArg: orNull(status?.detailText),
+            backgroundTasksArg: NSNumber(value: status?.backgroundTasks ?? 0),
+            turnOpenArg: turnOpen,
+        ]
+        return result as NSDictionary
+    }
+
+    // Applies the update and answers with the status as it then stands. This runs on the main
+    // queue, so nothing can have altered the status between the update and the read. An update
+    // whose preconditions failed was dropped, and the status that comes back is what it was
+    // dropped against.
+    private static func apply(_ parameters: [AnyHashable: Any],
+                              to session: PTYSession,
+                              completion: (Any?, Error?) -> Void) {
+        let update: VT100TabStatusUpdate
+        do {
+            update = try self.update(from: parameters)
+        } catch {
+            completion(nil, error)
+            return
+        }
+        session.screenSetTabStatus(update)
+        completion(statusDictionary(for: session.tabStatus), nil)
+    }
+
     // Clamp and round. iTermSRGBColor components are not guaranteed to sit in 0...1: converting an
     // out-of-gamut Display P3 selection to sRGB can overshoot either end, and xtermParseColorArgument
     // (which feeds the OSC 21337 path) does not bound them either. Truncating -0.05 would print
@@ -259,6 +323,10 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                 dotColorArg: NSString.self,
                 detailArg: NSString.self,
                 backgroundTasksArg: NSNumber.self,
+                backgroundTasksDeltaArg: NSNumber.self,
+                turnOpenArg: NSNumber.self,
+                ifTurnOpenArg: NSNumber.self,
+                ifBackgroundTasksArg: NSNumber.self,
                 expiresOnArg: NSString.self,
                 thenStatusArg: NSString.self,
                 thenTextColorArg: NSString.self,
@@ -293,22 +361,14 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
             // Localization unneeded
             sideEffectsPlaceholder: "[set_status]") { parameters, completion in
                 DLog("set_status \(parameters)")
-                guard let sessionID = parameters[sessionIDArg] as? String else {
-                    completion(nil, missingSessionIDError())
-                    return
-                }
-                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, noSuchSessionError())
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 key: sessionIDArg,
+                                                                 errorDomain: errorDomain,
+                                                                 completion: completion) else {
                     return
                 }
                 warnIfTmuxGateway(session, functionName: "set_status")
-                switch makeUpdate(parameters) {
-                case .failure(let err):
-                    completion(nil, err)
-                case .success(let update):
-                    session.screenSetTabStatus(update)
-                    completion(nil, nil)
-                }
+                apply(parameters, to: session, completion: completion)
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")
     }
@@ -326,12 +386,10 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
             defaultValues: [sessionIDArg: iTermVariableKeySessionID],
             context: .session,
             sideEffectsPlaceholder: nil) { parameters, completion in
-                guard let sessionID = parameters[sessionIDArg] as? String else {
-                    completion(nil, missingSessionIDError())
-                    return
-                }
-                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, noSuchSessionError())
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 key: sessionIDArg,
+                                                                 errorDomain: errorDomain,
+                                                                 completion: completion) else {
                     return
                 }
                 completion(NSNumber(value: session.tabStatus?.backgroundTasks ?? 0), nil)
@@ -366,22 +424,14 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                     return
                 }
                 warnIfTmuxGateway(session, functionName: "set_session_status")
-                switch makeUpdate(parameters) {
-                case .failure(let err):
-                    completion(nil, err)
-                case .success(let update):
-                    session.screenSetTabStatus(update)
-                    completion(nil, nil)
-                }
+                apply(parameters, to: session, completion: completion)
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")
     }
 
-    // Returns the accumulated status as a dictionary keyed the same way set_session_status takes
-    // its arguments, so a read and a write are obviously symmetric. Unset fields are null rather
-    // than absent, so a caller can tell "explicitly empty" from "key I don't know about". The
-    // background-task count is included so a caller addressing a tmux pane can read it back
-    // without a second function.
+    // Returns the accumulated status (see statusDictionary). The background-task count and the
+    // turn flag are included so a caller addressing a tmux pane can read them back without a
+    // second function.
     private static func registerGetSessionStatus() {
         let builtInFunction = iTermBuiltInFunction(
             name: "get_session_status",
@@ -398,12 +448,7 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                     completion(nil, noSuchSessionError())
                     return
                 }
-                let status = session.tabStatus
-                completion([statusArg: orNull(status?.statusText),
-                            textColorArg: orNull((status?.hasStatusTextColor ?? false) ? hexString(status!.statusTextColor) : nil),
-                            dotColorArg: orNull((status?.hasIndicator ?? false) ? hexString(status!.indicatorColor) : nil),
-                            detailArg: orNull(status?.detailText),
-                            backgroundTasksArg: NSNumber(value: status?.backgroundTasks ?? 0)], nil)
+                completion(statusDictionary(for: session.tabStatus), nil)
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")
     }

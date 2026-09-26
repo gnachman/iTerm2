@@ -1,0 +1,9 @@
+{
+  "cwd": "/Users/user/github/cc-status",
+  "hook_event_name": "StopFailure",
+  "model": "gpt-6-astra",
+  "permission_mode": "default",
+  "session_id": "01a09fa1-d3a9-7543-a9d1-aa7efe7e441d",
+  "transcript_path": "/Users/user/.codex/sessions/2026/09/14/rollout.jsonl",
+  "turn_id": "01a09fa8-5dd0-7c32-98e1-e6f5ef92fe91"
+}

@@ -86,6 +86,38 @@ final class APIClient {
         throw IT2Error.targetNotFound("No active session found")
     }
 
+    /// Invokes a built-in function and returns its JSON result, or "" when it
+    /// returned nothing. With a session ID the function runs in that session's
+    /// context; without one it runs in the app context and names its own
+    /// target. `failure` prefixes the reason when the function itself reports
+    /// an error.
+    func invoke(_ invocation: String, sessionID: String? = nil, failure: String) throws -> String {
+        let invoke = ITMInvokeFunctionRequest()
+        if let sessionID {
+            let sessionContext = ITMInvokeFunctionRequest_Session()
+            sessionContext.sessionId = sessionID
+            invoke.session = sessionContext
+        } else {
+            invoke.app = ITMInvokeFunctionRequest_App()
+        }
+        invoke.invocation = invocation
+
+        let request = ITMClientOriginatedMessage()
+        request.id_p = nextId()
+        request.invokeFunctionRequest = invoke
+
+        let response = try send(request)
+        guard response.submessageOneOfCase == .invokeFunctionResponse,
+              let invokeResp = response.invokeFunctionResponse else {
+            throw IT2Error.apiError("No invoke function response")
+        }
+        if invokeResp.dispositionOneOfCase == .error {
+            let reason = invokeResp.error?.errorReason ?? "unknown"
+            throw IT2Error.apiError("\(failure): \(reason)")
+        }
+        return invokeResp.success?.jsonResult ?? ""
+    }
+
     /// Block until the next server message is available. Used by streaming
     /// (monitor) commands that receive an unbounded sequence of notifications.
     func receiveMessage() throws -> ITMServerOriginatedMessage {

@@ -376,6 +376,49 @@ final class TabStatusControllerTests: XCTestCase {
         XCTAssertFalse(controller.hasArmedExpiration)
     }
 
+    /// A delta is bookkeeping that changes the count only as it is applied,
+    /// so it must be able to release a held expiration the same way an
+    /// assigned count can: cc-status's Codex path counts sub-agents down
+    /// with deltas and never assigns.
+    func testADeltaReachingZeroReleasesAHeldExpiration() {
+        let controller = makeController()
+        controller.apply(working(expiring: true, backgroundTasks: 1))
+        controller.progressProtocolDidReport(.indeterminate)
+        controller.progressProtocolDidReport(.stopped)
+        settle()
+        XCTAssertEqual(status.statusText, "working")
+
+        let decrement = VT100TabStatusUpdate()
+        decrement.backgroundTasksDelta = -1
+        controller.apply(decrement)
+        XCTAssertEqual(status.statusText, "idle")
+    }
+
+    /// An update whose preconditions fail is dropped whole, and dropped means
+    /// it does not supersede the armed expiration either: the status it would
+    /// have replaced is still the one the program last asserted, along with
+    /// what that assertion asked to happen when the operation ends.
+    func testADroppedUpdateLeavesTheExpirationArmed() {
+        let controller = makeController()
+        controller.apply(working(expiring: true))
+
+        let idle = VT100TabStatusUpdate()
+        idle.statusPresence = .set
+        idle.status = "idle"
+        // The turn flag was never set, so a closed-turn precondition fails.
+        idle.requiredTurnOpen = NSNumber(value: false)
+        controller.apply(idle)
+
+        XCTAssertEqual(status.statusText, "working")
+        XCTAssertTrue(controller.hasArmedExpiration)
+        XCTAssertEqual(changes.count, 1)
+
+        controller.progressProtocolDidReport(.indeterminate)
+        expectStatus("idle") {
+            controller.progressProtocolDidReport(.stopped)
+        }
+    }
+
     func testBookkeepingDoesNotReleaseAnExpirationArmedAfterTheOperationEnded() {
         // The regression: the operation-ended flag outlives the expiration it
         // was set for, so a count landing after the next turn started must not

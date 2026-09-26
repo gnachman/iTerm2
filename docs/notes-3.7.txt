@@ -37,6 +37,25 @@ New Features:
   showing a tmux pane.
 - The Python API can now read, show, hide, and
   update a session’s Session Note.
+- The Session Status tool can now follow Codex
+  CLI as well as Claude Code. There is no
+  installer for Codex yet. Write a small shell
+  script that runs the hook program inside
+  iTerm2.app (Contents/Resources/utilities/
+  cc-status) with the argument --agent codex,
+  then in ~/.codex/hooks.json point each event
+  at that script and set timeout to 3 on the
+  Interrupt and SessionEnd hooks. Codex allows
+  those two events one second by default, which
+  is not always enough for the hook to finish.
+  The status dot then tracks the agent through
+  a turn, names what a permission request wants
+  to do, clears when you interrupt with Esc, and
+  keeps showing work in progress while a
+  detached sub-agent runs on after the turn
+  that started it. The tab gets a progress
+  indicator too, which Codex does not draw for
+  itself.
 - Right-clicking your own message in AI chat now
   offers Delete, which removes that message and
   everything after it. Edit, Fork, and Delete are

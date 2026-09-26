@@ -11,11 +11,7 @@ class ArchiveClippingsBuiltInFunction: NSObject {
 }
 
 extension ArchiveClippingsBuiltInFunction: iTermBuiltInFunctionProtocol {
-    private static func error(message: String) -> NSError {
-        return NSError(domain: "com.iterm2.archive-clippings",
-                       code: 1,
-                       userInfo: [NSLocalizedDescriptionKey: message])
-    }
+    private static let errorDomain = "com.iterm2.archive-clippings"
 
     static func register() {
         let builtInFunction = iTermBuiltInFunction(
@@ -26,12 +22,10 @@ extension ArchiveClippingsBuiltInFunction: iTermBuiltInFunctionProtocol {
             context: .session,
             // Localization unneeded
             sideEffectsPlaceholder: "[archive_clippings]") { parameters, completion in
-                guard let sessionID = parameters[argSession] as? String else {
-                    completion(nil, error(message: String(localized: "BuiltInFunction.MissingSessionID", defaultValue: "Missing session_id. This shouldn’t happen so please report a bug.", comment: "Error shown when the session_id argument is unexpectedly missing (should not happen)")))
-                    return
-                }
-                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, error(message: String(localized: "BuiltInFunction.NoSuchSession", defaultValue: "No such session", comment: "Error shown when a function is called with a session ID that does not exist")))
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 key: argSession,
+                                                                 errorDomain: errorDomain,
+                                                                 completion: completion) else {
                     return
                 }
                 // Mirror add_clipping's routing: a code-review workgroup peer

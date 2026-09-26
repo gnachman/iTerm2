@@ -972,11 +972,20 @@ extension Session {
 // MARK: - session get-status
 
 extension Session {
+    /// The read-back get-status and set-status --json share.
+    static func getStatusInvocation(sessionID: String) -> String {
+        return "iterm2.get_session_status(session_id: \(jsonString(sessionID)))"
+    }
+
     struct GetStatus: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
         static let configuration = CommandConfiguration(
             commandName: "get-status",
-            abstract: "Print a session’s status indicator as JSON.",
-            discussion: "See also: it2 session set-status"
+            abstract: "Print a session’s status indicator as JSON: status, text_color, dot_color, detail, background_tasks and turn_open.",
+            discussion: """
+                turn_open is null until set-status --turn-open has been called \
+                for the session. set-status --json prints the same thing \
+                after applying an update. See also: it2 session set-status
+                """
         )
 
         @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
@@ -994,28 +1003,11 @@ extension Session {
                 return
             }
 
-            let invoke = ITMInvokeFunctionRequest()
-            invoke.app = ITMInvokeFunctionRequest_App()
-            invoke.invocation = "iterm2.get_session_status(session_id: \(jsonString(sessionId)))"
-
-            let request = ITMClientOriginatedMessage()
-            request.id_p = client.nextId()
-            request.invokeFunctionRequest = invoke
-
-            let response = try client.send(request)
-            guard response.submessageOneOfCase == .invokeFunctionResponse,
-                  let invokeResp = response.invokeFunctionResponse else {
-                throw IT2Error.apiError("No invoke function response")
-            }
-
-            if invokeResp.dispositionOneOfCase == .error {
-                let reason = invokeResp.error?.errorReason ?? "unknown"
-                throw IT2Error.apiError("Get status failed: \(reason)")
-            }
-
+            let result = try client.invoke(Session.getStatusInvocation(sessionID: sessionId),
+                                           failure: "Get status failed")
             // Keys match set-status's options, and an unset field is null rather than absent, so
             // a read and a write are obviously symmetric.
-            ctx.out(invokeResp.success?.jsonResult ?? "{}")
+            ctx.out(result.isEmpty ? "{}" : result)
         }
     }
 }
@@ -1044,6 +1036,44 @@ struct SetStatusOptions: ParsableArguments {
 
     @Option(name: .long, help: "Number of background tasks still running (stored in memory for later get-background-tasks queries).")
     var backgroundTasks: Int?
+
+    @Option(name: .long, parsing: .unconditional, help: """
+        Add to the background task count rather than assigning it, \
+        clamped at zero. The read and the write happen together, so two \
+        callers counting at the same time cannot lose an update the way a \
+        separate get-background-tasks and set-status could. Cannot be \
+        combined with --background-tasks. Pass --json to see the result.
+        """)
+    var backgroundTasksDelta: Int?
+
+    @Option(name: .long, help: """
+        Record whether the status-reporting program is mid-turn (true or \
+        false). Stored in memory for later get-status queries.
+        """)
+    var turnOpen: Bool?
+
+    @Option(name: .long, help: """
+        Apply the update only if the turn flag currently holds this value \
+        (true or false). A flag never set matches neither. Together with \
+        --if-background-tasks this lets a caller act on a status it read \
+        a moment ago without a newer update being overwritten in between; \
+        with --json, the printed status shows whether the update landed.
+        """)
+    var ifTurnOpen: Bool?
+
+    @Option(name: .long, help: """
+        Apply the update only if the background task count currently \
+        equals this value. See --if-turn-open.
+        """)
+    var ifBackgroundTasks: Int?
+
+    @Flag(name: .long, help: """
+        Print the status as it stood once this update was applied, in the \
+        form get-status prints, instead of the usual message. Lets a \
+        caller that changed the count or closed the turn learn in the \
+        same round trip what the session looked like at that instant.
+        """)
+    var json = false
 
     @Option(name: .long, help: "Expire this status by itself when an event happens. The only value is “progress-end”: the session reported through the progress protocol (OSC 9;4) that the operation running when the status was set has ended.")
     var expiresOn: String?
@@ -1078,6 +1108,18 @@ struct SetStatusOptions: ParsableArguments {
         if let backgroundTasks {
             args.append("background_tasks: \(backgroundTasks)")
         }
+        if let backgroundTasksDelta {
+            args.append("background_tasks_delta: \(backgroundTasksDelta)")
+        }
+        if let turnOpen {
+            args.append("turn_open: \(turnOpen)")
+        }
+        if let ifTurnOpen {
+            args.append("if_turn_open: \(ifTurnOpen)")
+        }
+        if let ifBackgroundTasks {
+            args.append("if_background_tasks: \(ifBackgroundTasks)")
+        }
         if let expiresOn {
             args.append("expires_on: \(jsonString(expiresOn))")
         }
@@ -1109,6 +1151,23 @@ extension Session {
 
         var tmuxOptions: TmuxPaneOptions { return options.tmuxOptions }
 
+        /// The JSON --json prints. An older iTerm2 answers set_session_status
+        /// with nothing at all, and the update has landed by the time the
+        /// answer is looked at, so an answer that is not the status is not a
+        /// failure: the status is read back with `readBack` instead. Only when
+        /// that gives nothing either is the caller told that the update went
+        /// through but its result is unknown.
+        static func statusJSON(fromResult result: String, readBack: () throws -> String) throws -> String {
+            if result.hasPrefix("{") {
+                return result
+            }
+            let status = try readBack()
+            guard status.hasPrefix("{") else {
+                throw IT2Error.apiError("Status updated but the resulting status was not returned")
+            }
+            return status
+        }
+
         func run(_ ctx: IT2Context) throws {
             let client = try ctx.makeClient()
             defer { client.disconnect() }
@@ -1120,26 +1179,19 @@ extension Session {
             }
 
             let args = ["session_id: \(jsonString(sessionId))"] + options.invocationArguments
+            let result = try client.invoke("iterm2.set_session_status(\(args.joined(separator: ", ")))",
+                                           failure: "Set status failed")
 
-            let invoke = ITMInvokeFunctionRequest()
-            invoke.app = ITMInvokeFunctionRequest_App()
-            invoke.invocation = "iterm2.set_session_status(\(args.joined(separator: ", ")))"
-
-            let request = ITMClientOriginatedMessage()
-            request.id_p = client.nextId()
-            request.invokeFunctionRequest = invoke
-
-            let response = try client.send(request)
-            guard response.submessageOneOfCase == .invokeFunctionResponse,
-                  let invokeResp = response.invokeFunctionResponse else {
-                throw IT2Error.apiError("No invoke function response")
+            // The status comes back with every call, but printing it only on
+            // request keeps this parseable: a caller that asked for it gets
+            // the JSON and nothing else.
+            if options.json {
+                ctx.out(try Self.statusJSON(fromResult: result) {
+                    try client.invoke(Session.getStatusInvocation(sessionID: sessionId),
+                                      failure: "Status updated but it could not be read back")
+                })
+                return
             }
-
-            if invokeResp.dispositionOneOfCase == .error {
-                let reason = invokeResp.error?.errorReason ?? "unknown"
-                throw IT2Error.apiError("Set status failed: \(reason)")
-            }
-
             ctx.out("Session status updated.")
         }
     }
@@ -1170,28 +1222,10 @@ extension Session {
                 return
             }
 
-            let invoke = ITMInvokeFunctionRequest()
-            let sessionContext = ITMInvokeFunctionRequest_Session()
-            sessionContext.sessionId = sessionId
-            invoke.session = sessionContext
-            invoke.invocation = "iterm2.get_background_task_count()"
-
-            let request = ITMClientOriginatedMessage()
-            request.id_p = client.nextId()
-            request.invokeFunctionRequest = invoke
-
-            let response = try client.send(request)
-            guard response.submessageOneOfCase == .invokeFunctionResponse,
-                  let invokeResp = response.invokeFunctionResponse else {
-                throw IT2Error.apiError("No invoke function response")
-            }
-
-            if invokeResp.dispositionOneOfCase == .error {
-                let reason = invokeResp.error?.errorReason ?? "unknown"
-                throw IT2Error.apiError("Get background tasks failed: \(reason)")
-            }
-
-            ctx.out(invokeResp.success?.jsonResult ?? "0")
+            let result = try client.invoke("iterm2.get_background_task_count()",
+                                           sessionID: sessionId,
+                                           failure: "Get background tasks failed")
+            ctx.out(result.isEmpty ? "0" : result)
         }
     }
 }
