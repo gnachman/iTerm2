@@ -817,6 +817,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                  name:@"kPTYSessionTmuxFontDidChange"
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(tmuxControllerSessionWasRenamed:)
+                                                 name:kTmuxControllerSessionWasRenamed
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadBookmarks)
                                                  name:kReloadAllProfiles
                                                object:nil];
@@ -1564,8 +1568,10 @@ ITERM_WEAKLY_REFERENCEABLE
         }]) {
             [self fitWindowToIdealizedTabsPreservingHeight:NO];
         }
-        TmuxController *first = self.uniqueTmuxControllers.firstObject;
-        [first restoreWindowFrame:self];
+        // Tabs from more than one tmux session can share this window; prefer
+        // the active tab's controller over an arbitrary "first".
+        TmuxController *controller = self.currentTab.tmuxController ?: self.uniqueTmuxControllers.firstObject;
+        [controller restoreWindowFrame:self];
     }
 }
 
@@ -3930,8 +3936,12 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
 - (TmuxController *)currentTmuxController {
     TmuxController *controller = [[self currentSession] tmuxController];
     if (!controller) {
+        // Prefer a controller hosted in this window over a random global one.
+        controller = [[self uniqueTmuxControllers] firstObject];
+    }
+    if (!controller) {
         controller = [[[iTermController sharedInstance] anyTmuxSession] tmuxController];
-        RLog(@"No controller for current session %@, picking one at random: %@",
+        RLog(@"No controller for current session %@ or window, picking one at random: %@",
              [self currentSession], controller);
     }
     return controller;
@@ -4009,6 +4019,9 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
         [aSession setTmuxController:tmuxController];
         [self setDimmingForSession:aSession];
     }
+    // Group this tab with the rest of its tmux session's windows so each
+    // session forms its own labeled block in the tab bar.
+    [self applyTmuxSessionGroupToTab:tab];
     // -setTmuxController: above republishes each session's presentation name with
     // the tmux formatting applied. This covers what that can't: a session that has
     // not evaluated a title yet has nothing to republish, so the tab title falls
@@ -8593,8 +8606,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     // A single tab dragged out of the tab bar becomes an ungrouped tab in its new
     // window. Only a whole-group tear-off (handled by tearOffGroupWithID:) preserves
-    // group membership.
-    if (aTab.tabGroupID != nil) {
+    // group membership. Exception: a tmux session's auto-managed group rides along
+    // so the session's panel materializes in the new window.
+    if (aTab.tabGroupID != nil && ![PseudoTerminal tabGroupIDIsTmuxSessionGroup:aTab.tabGroupID]) {
         RLog(@"tabGroup: clearing group %@ from tab %@ torn off into a new window",
              aTab.tabGroupID, [tabViewItem label]);
         aTab.tabGroupID = nil;
@@ -8976,6 +8990,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (!theTab) {
         return NO;
     }
+    // A tmux tab's group is the session's auto-managed panel; membership is
+    // not user-editable. Offer only rename, which round-trips through tmux
+    // rename-session (see -renameTabGroupWithID:).
+    if ([PseudoTerminal tabGroupIDIsTmuxSessionGroup:theTab.tabGroupID]) {
+        NSMenuItem *renameItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.RenameGroup", nil, [NSBundle mainBundle], @"Rename Group…", @"Menu item that renames a tab group")
+                                                             action:@selector(renameTabGroup:)
+                                                      keyEquivalent:@""] autorelease];
+        renameItem.representedObject = tabViewItem;
+        renameItem.target = self;
+        [rootMenu addItem:renameItem];
+        return YES;
+    }
     NSMenu *groupMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
 
     NSMenuItem *newGroupItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewGroup", nil, [NSBundle mainBundle], @"New Group…", @"Menu item that creates a new tab group")
@@ -8985,7 +9011,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     newGroupItem.target = self;
     [groupMenu addItem:newGroupItem];
 
-    NSArray<iTermTabGroup *> *groups = [self tabGroupsInWindow];
+    // Leave tmux session groups out of the join list: their membership belongs
+    // to the tmux integration.
+    NSArray<iTermTabGroup *> *groups = [[self tabGroupsInWindow] filteredArrayUsingBlock:^BOOL(iTermTabGroup *group) {
+        return ![PseudoTerminal tabGroupIDIsTmuxSessionGroup:group.uniqueIdentifier];
+    }];
     if (groups.count > 0) {
         [groupMenu addItem:[NSMenuItem separatorItem]];
         for (iTermTabGroup *group in groups) {
@@ -9439,6 +9469,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
         resolved = [iTermTabGroupContiguity resolvedGroupForTabAt:index order:order];
     }
+    // Tmux session groups are owned by the integration: a tmux tab always
+    // keeps its session's group (the contiguity repair bounces it back into
+    // its run) and a foreign tab never adopts one by landing inside it.
+    if ([iTermAdvancedSettingsModel tmuxGroupTabsBySession]) {
+        if (droppedTab.tmuxController) {
+            NSString *sessionGroupID = [self tmuxSessionGroupIDForController:droppedTab.tmuxController];
+            if (sessionGroupID) {
+                resolved = sessionGroupID;
+            }
+        } else if ([PseudoTerminal tabGroupIDIsTmuxSessionGroup:resolved]) {
+            resolved = droppedTab.tabGroupID;
+        }
+    }
     if (resolved == droppedTab.tabGroupID || [resolved isEqualToString:droppedTab.tabGroupID]) {
         return;
     }
@@ -9487,6 +9530,138 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 }
 
+#pragma mark - Tmux session tab groups
+
+// Tab-group ids in this namespace are owned by the tmux integration: one
+// auto-managed group per control-mode session, so each session's windows form
+// their own labeled block ("panel") in the tab bar and windows from several
+// sessions can share one native window. Membership is derived from each tab's
+// controller and is not user-editable; renaming round-trips through tmux
+// rename-session. Keyed by client name (unique per connection) rather than
+// session name so renames don't change identity.
+static NSString *const iTermTmuxSessionTabGroupIDPrefix = @"tmux://";
+
++ (BOOL)tabGroupIDIsTmuxSessionGroup:(NSString *)groupID {
+    return [groupID hasPrefix:iTermTmuxSessionTabGroupIDPrefix];
+}
+
+- (NSString *)tmuxSessionGroupIDForController:(TmuxController *)controller {
+    NSString *clientName = controller.clientName;
+    if (!clientName) {
+        return nil;
+    }
+    return [iTermTmuxSessionTabGroupIDPrefix stringByAppendingString:clientName];
+}
+
+// The live controller a tmux session group belongs to, or nil for user groups
+// and detached sessions.
+- (TmuxController *)tmuxControllerForSessionGroupID:(NSString *)groupID {
+    if (![PseudoTerminal tabGroupIDIsTmuxSessionGroup:groupID]) {
+        return nil;
+    }
+    NSString *clientName = [groupID substringFromIndex:iTermTmuxSessionTabGroupIDPrefix.length];
+    return [[TmuxControllerRegistry sharedInstance] controllerForClient:clientName];
+}
+
+// Stamp `tab` with a session group id (nil clears it) and make sure the group
+// has a definition -- the first member defines the name (the tmux session
+// name) and color.
+- (void)setTmuxSessionGroupID:(NSString *)groupID onTab:(PTYTab *)tab controller:(TmuxController *)controller {
+    RLog(@"tabGroup: tmux session group %@ -> %@ on tab %@", tab.tabGroupID ?: @"(none)", groupID ?: @"(none)", tab);
+    tab.tabGroupID = groupID;
+    // Copy name/color/collapsed/pinned from an existing member so the
+    // definition stays uniform across the group (or clear them with the id).
+    [self reconcileTabGroupDefinitionForTab:tab];
+    if (!groupID) {
+        return;
+    }
+    if (tab.tabGroupName.length == 0) {
+        tab.tabGroupName = controller.sessionName.length > 0 ? controller.sessionName : controller.clientName;
+    }
+    if (!tab.tabGroupColor) {
+        tab.tabGroupColor = [self nextTabGroupColor];
+    }
+}
+
+// Put a tmux tab in its session's auto-managed group. Called whenever a tmux
+// tab is created in this window (-loadTmuxLayout:...). Presentation-only
+// state: the id derives from the tab's controller, so the group dissolves
+// when its last tab closes (detach) and travels with tabs dragged to other
+// windows.
+- (void)applyTmuxSessionGroupToTab:(PTYTab *)tab {
+    if (![iTermAdvancedSettingsModel tmuxGroupTabsBySession]) {
+        return;
+    }
+    NSString *groupID = [self tmuxSessionGroupIDForController:tab.tmuxController];
+    if (!groupID) {
+        return;
+    }
+    if (![tab.tabGroupID isEqualToString:groupID]) {
+        [self setTmuxSessionGroupID:groupID onTab:tab controller:tab.tmuxController];
+    }
+    [self updateTabColors];  // pushes membership to the tab bar
+    // Keep the session's tabs one contiguous block. Do NOT use -tabsDidReorder
+    // here: this runs during attach, when writing the window order back to the
+    // tmux server would be premature.
+    [self enforceTabGroupContiguityInvariant];
+}
+
+// Membership of tmux session groups is derived state; anything that puts a
+// session group id on a tab that doesn't belong (tab duplication and
+// arrangement restore copy the id with the tab; a drop can adopt one) or
+// strips it from a tmux tab is repaired here. Also clears every session group
+// when the feature is disabled.
+- (void)reconcileTmuxSessionGroupMembership {
+    const BOOL enabled = [iTermAdvancedSettingsModel tmuxGroupTabsBySession];
+    BOOL changed = NO;
+    for (PTYTab *tab in [self tabs]) {
+        NSString *expected = enabled ? [self tmuxSessionGroupIDForController:tab.tmuxController] : nil;
+        NSString *gid = tab.tabGroupID;
+        if (!expected && ![PseudoTerminal tabGroupIDIsTmuxSessionGroup:gid]) {
+            continue;  // user group or ungrouped: not ours to manage
+        }
+        if (expected == gid || [expected isEqualToString:gid]) {
+            continue;
+        }
+        [self setTmuxSessionGroupID:expected onTab:tab controller:tab.tmuxController];
+        changed = YES;
+    }
+    if (changed) {
+        [self updateTabColors];
+    }
+}
+
+// A tmux session was renamed, possibly from another client: refresh the
+// auto-group's name on the session's tabs in this window. The controller's
+// sessionName was already updated if the renamed session is its attached one;
+// for any other session there is nothing to show, so this converges to
+// sessionName either way.
+- (void)tmuxControllerSessionWasRenamed:(NSNotification *)notification {
+    if (![iTermAdvancedSettingsModel tmuxGroupTabsBySession]) {
+        return;
+    }
+    TmuxController *controller = [TmuxController castFrom:[notification.object lastObject]];
+    NSString *groupID = [self tmuxSessionGroupIDForController:controller];
+    if (!groupID) {
+        return;
+    }
+    NSString *name = controller.sessionName.length > 0 ? controller.sessionName : controller.clientName;
+    BOOL changed = NO;
+    for (PTYTab *tab in [self tabsInGroup:groupID]) {
+        if (![tab.tabGroupName isEqualToString:name]) {
+            tab.tabGroupName = name;
+            changed = YES;
+        }
+    }
+    if (!changed) {
+        return;
+    }
+    [self updateTabColors];
+    // The chip's width derives from the name; relay out synchronously like
+    // -renameTabGroupWithID: does.
+    [self relayoutTabGroupChipsSynchronously];
+}
+
 #pragma mark - Tab group context menu
 
 // Member tabs of `groupID`, in tab order.
@@ -9531,11 +9706,25 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         @[NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseOtherTabs", nil, [NSBundle mainBundle], @"Close Other Tabs", @"Menu item that closes tabs other than the current one"), @"closeTabsOutsideGroup:"],
         @[closeAfterTitle, @"closeTabsRightOfGroup:"],
     ];
+    if ([PseudoTerminal tabGroupIDIsTmuxSessionGroup:groupID]) {
+        // Membership is owned by the tmux integration: duplicating members or
+        // stripping their group makes no sense for a session's windows.
+        specs = [specs filteredArrayUsingBlock:^BOOL(NSArray<NSString *> *spec) {
+            return !([spec[1] isEqualToString:@"duplicateTabGroup:"] ||
+                     [spec[1] isEqualToString:@"ungroupTabGroup:"]);
+        }];
+    }
+    BOOL lastWasSeparator = YES;  // also suppresses a leading separator
     for (NSArray<NSString *> *spec in specs) {
         if ([spec[0] isEqualToString:@"-"]) {
-            [menu addItem:[NSMenuItem separatorItem]];
+            // Collapse runs of separators left by the tmux filtering above.
+            if (!lastWasSeparator) {
+                [menu addItem:[NSMenuItem separatorItem]];
+                lastWasSeparator = YES;
+            }
             continue;
         }
+        lastWasSeparator = NO;
         NSMenuItem *mi = [[[NSMenuItem alloc] initWithTitle:spec[0]
                                                      action:NSSelectorFromString(spec[1])
                                               keyEquivalent:@""] autorelease];
@@ -9824,6 +10013,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (members.count == 0) {
         return;
     }
+    TmuxController *tmuxSessionController = [self tmuxControllerForSessionGroupID:groupID];
+    if (tmuxSessionController) {
+        // The name belongs to the tmux session; rename it there and let the
+        // %session-renamed notification update the group name on the tabs.
+        NSString *sessionName = [self promptForTabGroupName:(tmuxSessionController.sessionName ?: @"")
+                                                      title:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.RenameTmuxSession", nil, [NSBundle mainBundle], @"Rename tmux Session", @"Title of the dialog for renaming a tmux session")];
+        if (sessionName.length == 0) {
+            return;  // cancelled, or empty (tmux session names cannot be empty)
+        }
+        [tmuxSessionController renameSessionNumber:tmuxSessionController.sessionId
+                                                to:sessionName];
+        return;
+    }
     NSString *name = [self promptForTabGroupName:(members.firstObject.tabGroupName ?: @"") title:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.RenameTabGroupTitle", nil, [NSBundle mainBundle], @"Rename Tab Group", @"Title of the dialog for renaming a tab group")];
     if (!name) {
         return;  // cancelled
@@ -10059,6 +10261,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)tabsDidReorder {
+    // Tmux session-group membership is derived from each tab's controller;
+    // repair stale/foreign ids before enforcing contiguity so the repair
+    // works with correct ids.
+    [self reconcileTmuxSessionGroupMembership];
     // Repair the group-contiguity invariant first so everything below (and the
     // persisted arrangement) sees a valid order regardless of how the reorder
     // happened.
@@ -10072,17 +10278,27 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // glued to the old positions and the shortcuts non-consecutive.
     [self setNeedsUpdateTabObjectCounts:YES];
 
-    TmuxController *controller = nil;
-    NSMutableArray *windowIds = [NSMutableArray array];
-
+    // Sync each session's server-side window order from this window's tab
+    // order. Bucket ids per controller: tabs from several tmux sessions can
+    // share this window, and a controller must only receive its own ids.
+    NSMutableArray<TmuxController *> *controllers = [NSMutableArray array];
+    NSMutableArray<NSMutableArray<NSNumber *> *> *windowIdBuckets = [NSMutableArray array];
     for (PTYTab *tab in [self tabs]) {
         TmuxController *tmuxController = tab.tmuxController;
-        if (tmuxController) {
-            controller = tmuxController;
-            [windowIds addObject:@(tab.tmuxWindow)];
+        if (!tmuxController) {
+            continue;
         }
+        NSUInteger bucket = [controllers indexOfObjectIdenticalTo:tmuxController];
+        if (bucket == NSNotFound) {
+            [controllers addObject:tmuxController];
+            [windowIdBuckets addObject:[NSMutableArray array]];
+            bucket = controllers.count - 1;
+        }
+        [windowIdBuckets[bucket] addObject:@(tab.tmuxWindow)];
     }
-    [controller setPartialWindowIdOrder:windowIds];
+    [controllers enumerateObjectsUsingBlock:^(TmuxController *tmuxController, NSUInteger idx, BOOL *stop) {
+        [tmuxController setPartialWindowIdOrder:windowIdBuckets[idx]];
+    }];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermTabDidChangePositionInWindowNotification object:nil];
     for (PTYSession *session in self.allSessions) {
         [session didMoveSession];
@@ -14482,6 +14698,22 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     if (members.count == 0) {
         return;
     }
+    TmuxController *tmuxSessionController = [self tmuxControllerForSessionGroupID:groupID];
+    if (tmuxSessionController) {
+        // "New tab" in a tmux session's panel means a new tmux window in that
+        // session. Open it alongside the group's last member; the stamp in
+        // -loadTmuxLayout: adds it to the group.
+        NSString *affinity = [NSString stringWithFormat:@"%d", [members.lastObject tmuxWindow]];
+        [tmuxSessionController newWindowWithAffinity:affinity
+                                                size:[PTYTab sizeForTmuxWindowWithAffinity:affinity
+                                                                                controller:tmuxSessionController]
+                                    initialDirectory:[iTermInitialDirectory initialDirectoryFromProfile:members.lastObject.activeSession.profile
+                                                                                             objectType:iTermTabObject]
+                                               index:nil
+                                               scope:[iTermVariableScope globalsScope]
+                                          completion:nil];
+        return;
+    }
     const NSInteger lastIndex = [self indexOfTab:members.lastObject];
     if (lastIndex == NSNotFound) {
         return;
@@ -14512,6 +14744,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     if (!current || current.tabGroupID.length == 0) {
         return nil;
     }
+    if ([PseudoTerminal tabGroupIDIsTmuxSessionGroup:current.tabGroupID]) {
+        // A plain new tab next to a tmux tab must not join the session's group.
+        return nil;
+    }
     const NSInteger currentIndex = [self indexOfTab:current];
     if (currentIndex == NSNotFound) {
         return nil;
@@ -14526,6 +14762,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 // valid. No-op if the group vanished or the session has no tab here.
 - (void)addTabForSession:(PTYSession *)session toGroupWithID:(NSString *)groupID {
     if (groupID.length == 0 || !session) {
+        return;
+    }
+    if ([PseudoTerminal tabGroupIDIsTmuxSessionGroup:groupID]) {
+        // Regular tabs never join a tmux session's group.
         return;
     }
     PTYTab *tab = [self tabForSession:session];
