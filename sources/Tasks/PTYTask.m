@@ -179,8 +179,12 @@ static void HandleSigChld(int n) {
 
 - (NSString *)getWorkingDirectory {
     DLog(@"Want working directory of %@ - SYNCHRONOUS", @(self.pid));
-    if (self.pid == -1) {
-        DLog(@"Want to use the kernel to get the working directory but pid = -1");
+    // The kernel lookup needs a real pid. Job managers report a sentinel when there is none: -1
+    // for the legacy and monoserver managers, 0 for the multiserver manager when no job was ever
+    // launched (a browser session, for one), and always 0 for the tmux and channel managers,
+    // whose hasJob is YES even though there is no local process to ask about.
+    if (self.pid <= 0) {
+        DLog(@"Want to use the kernel to get the working directory but there is no local pid");
         return nil;
     }
     return [iTermLSOF workingDirectoryOfProcess:self.pid];
@@ -188,8 +192,8 @@ static void HandleSigChld(int n) {
 
 - (void)getWorkingDirectoryWithCompletion:(void (^)(NSString *pwd))completion {
     DLog(@"Want working directory of %@ - async", @(self.pid));
-    if (self.pid == -1) {
-        DLog(@"Want to use the kernel to get the working directory but pid = -1");
+    if (self.pid <= 0) {
+        DLog(@"Want to use the kernel to get the working directory but there is no local pid");
         completion(nil);
         return;
     }
@@ -781,16 +785,31 @@ static void HandleSigChld(int n) {
     [argv addObjectsFromArray:args];
 
     DLog(@"Preparing to launch a job. Command is %@ and args are %@", commandToExec, args);
-    DLog(@"Environment is\n%@", env);
-    NSArray<NSString *> *newEnviron = [self environWithOverrides:env];
 
+    // Resolve the directory we will chdir to, and give the child the same value in PWD. They used
+    // to be able to disagree, since only this copy was standardized: a profile directory of
+    // "~/www" launched the job in the right place but told it PWD=~/www.
+    //
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
-    NSString *initialPwd = [[env objectForKey:@"PWD"] stringByStandardizingPath];
+    // Test the length, not just for nil: PTYSession substitutes the home directory for an empty
+    // PWD, but not every caller goes through it, and an empty path handed to chdir() fails and
+    // silently leaves the child in iTermServer's working directory.
+    NSString *rawPwd = [env objectForKey:@"PWD"];
+    NSString *standardizedPwd = [rawPwd stringByStandardizingPath];
+    NSString *initialPwd = standardizedPwd.length ? standardizedPwd : NSHomeDirectory();
+    if (rawPwd) {
+        // Only when the caller set PWD. An absent PWD is meaningful: the session factory leaves it
+        // out for an ssh command, whose directory belongs to the remote host.
+        env = [env dictionaryBySettingObject:initialPwd forKey:@"PWD"];
+    }
+    DLog(@"Environment is\n%@", env);
     DLog(@"initialPwd=%@, jobManager=%@", initialPwd, self.jobManager);
+
+    NSArray<NSString *> *newEnviron = [self environWithOverrides:env];
     [self.jobManager forkAndExecWithTtyState:ttyState
                                      argpath:commandToExec
                                         argv:argv
-                                  initialPwd:initialPwd ?: NSHomeDirectory()
+                                  initialPwd:initialPwd
                                   newEnviron:newEnviron
                                         task:self
                                   completion:

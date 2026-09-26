@@ -10,6 +10,14 @@ import Security
 import UniformTypeIdentifiers
 
 extension String {
+    var nilIfEmpty: String? {
+        if isEmpty {
+            nil
+        } else {
+            self
+        }
+    }
+
     func containsCaseInsensitive(_ substring: String) -> Bool {
         if substring.isEmpty {
             return true

@@ -308,8 +308,11 @@ class iTermSessionDirectoryTracker: NSObject {
             return
         }
 
-        // New session is local - use local directory logic
-        let envPwd = delegate?.directoryTrackerEnvironmentPWD(self)
+        // New session is local - use local directory logic. nilIfEmpty because a session that
+        // never had a local directory (a browser session, for one) restores an empty string from
+        // its arrangement into env[PWD], and handing that to the new session as a directory would
+        // launch it with an empty working directory.
+        let envPwd = delegate?.directoryTrackerEnvironmentPWD(self)?.nilIfEmpty
         asyncCurrentLocalWorkingDirectory { [weak self] pwd in
             guard self != nil else {
                 completion(envPwd)

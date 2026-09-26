@@ -3333,10 +3333,13 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"LC_TERMINAL"] = @"iTerm2";
         env[@"LC_TERMINAL_VERSION"] = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
     }
-    if (env[PWD_ENVNAME] == nil && _sshState == iTermSSHStateNone) {
-        // Set "PWD"
+    NSString *originalPwd = env[PWD_ENVNAME];
+    if (originalPwd.length == 0 && _sshState == iTermSSHStateNone) {
+        // Set "PWD". Test the length, not just for nil: a session with no local directory to
+        // report (a browser session, for one) saves an empty string in its arrangement, and that
+        // empty string comes back here on restore. The trimming below would turn it into "/".
         env[PWD_ENVNAME] = [PWD_ENVVALUE stringByExpandingTildeInPath];
-        DLog(@"env[%@] was nil. Set it to home directory: %@", PWD_ENVNAME, env[PWD_ENVNAME]);
+        DLog(@"env[%@] was nil or empty. Set it to home directory: %@", PWD_ENVNAME, env[PWD_ENVNAME]);
     }
 
     // Remove trailing slashes, unless the path is just "/"

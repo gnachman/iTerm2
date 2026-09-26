@@ -91,6 +91,14 @@
             _evaluated = NSHomeDirectory();
             break;
         case iTermInitialDirectoryModeRecycle:
+            if (oldPWD.length == 0) {
+                // There is no directory to recycle: the previous session had none (a browser
+                // session, for one) or there was no previous session. Answer nil so the caller
+                // falls back to the home directory. Return rather than break so this does not
+                // fall through into evaluating a Custom-mode format, which Recycle mode lacks.
+                completion(nil);
+                return;
+            }
             _evaluated = oldPWD;
             break;
     }

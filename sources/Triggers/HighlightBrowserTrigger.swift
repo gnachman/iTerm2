@@ -133,13 +133,3 @@ extension HighlightBrowserTrigger: BrowserTrigger {
     }
 }
 
-extension String {
-    var nilIfEmpty: String? {
-        if isEmpty {
-            nil
-        } else {
-            self
-        }
-    }
-}
-

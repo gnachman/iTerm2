@@ -720,6 +720,30 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         waitForExpectations(timeout: 1.0)
     }
 
+    // A session that never had a local directory -- a browser session, for one -- saves an empty
+    // string as its working directory in its arrangement, and that empty string comes back in
+    // env[PWD] on restore. Handing it to the new session as a directory launches the shell with
+    // an empty PWD, whose chdir() fails, leaving it in iTermServer's working directory ("/").
+    func testAsyncInitialDirectory_EmptyEnvPWD_ReturnsNil() {
+        // Given
+        mockDelegate.sshIdentityProvider = nil
+        mockDelegate.environmentPWD = ""
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = nil
+        mockDelegate.workingDirectoryProvider = provider
+
+        let expectation = self.expectation(description: "completion called")
+
+        // When
+        tracker.asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory(sshIdentity: nil) { pwd in
+            // Then
+            XCTAssertNil(pwd)
+            expectation.fulfill()
+        }
+
+        waitForExpectations(timeout: 1.0)
+    }
+
     // MARK: - 8. SSH Identity Tests (Phase 2 Bug Fix)
 
     func testAsyncInitialDirectory_LocalSessionToSSHSession_ReturnsNil() {

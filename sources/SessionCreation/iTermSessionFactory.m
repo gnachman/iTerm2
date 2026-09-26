@@ -324,7 +324,11 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *pwd = suggestion;
     DLog(@"using pwd of %@", pwd);
     if ([pwd length] == 0) {
-        if (self.oldCWD) {
+        // Test the length, not just for nil: an empty oldCWD means "no directory known", and
+        // taking it would leave env[PWD] empty, which PTYSession used to rewrite to "/" before
+        // launch. Sessions with no local directory to report (a browser session, for one) save
+        // an empty string in their arrangement, so an empty oldCWD reaches here routinely.
+        if (self.oldCWD.length) {
             pwd = self.oldCWD;
             DLog(@"pwd was empty. Use oldCWD of %@", pwd);
         } else {

@@ -386,6 +386,13 @@ Bug Fixes:
   reached through SSH Integration. They never
   appeared before, and their status went
   unreported to the rest of the app. Issue 13049.
+- A new tab, split, or window created while a
+  browser tab was focused no longer starts in
+  the root directory when its profile is set
+  to “Reuse previous session’s directory.” A
+  browser tab has no directory to reuse, so
+  the new session now starts in your home
+  directory.
 - The control sequence that resets a tab color to
   the profile’s now restores it correctly when
   the profile has separate light and dark mode

@@ -107,8 +107,14 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
         return;
     }
     pid_t pid = [self.delegate workingDirectoryPollerProcessID];
-    if (pid == -1) {
+    // Not just -1: job managers that run jobs in servers report 0 when no job was ever launched,
+    // and the tmux and channel job managers always report 0.
+    if (pid <= 0) {
         DLog(@"No pid!");
+        // Answer anyone waiting on this poll. Asking the kernel about a bogus pid used to fail and
+        // eventually complete with nil; short-circuiting without this would leave a caller that
+        // added a one-time completion waiting forever.
+        [self didFindWorkingDirectory:nil];
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -134,13 +140,20 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
     if (pwd) {
         _haveFoundInitialDirectory = YES;
     }
+    [self didFindWorkingDirectory:pwd];
+    [self.delegate workingDirectoryPollerDidFindWorkingDirectory:pwd
+                                                     invalidated:!valid];
+}
+
+// Hand a poll's result to everyone waiting on it. Separate from the delegate call above because
+// the no-pid case has nothing to tell the delegate -- there was no poll -- but still owes its
+// callers an answer.
+- (void)didFindWorkingDirectory:(NSString *)pwd {
     NSArray<iTermWorkingDirectoryPollerClosure> *completions = [_completions copy];
     [_completions removeAllObjects];
     [completions enumerateObjectsUsingBlock:^(iTermWorkingDirectoryPollerClosure  _Nonnull completion, NSUInteger idx, BOOL * _Nonnull stop) {
         completion(pwd);
     }];
-    [self.delegate workingDirectoryPollerDidFindWorkingDirectory:pwd
-                                                     invalidated:!valid];
 }
 
 - (void)tmuxOptionMonitorDidProduceDirectory:(NSString *)directory {
