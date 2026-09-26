@@ -31,6 +31,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL cursorShadow;
 // Pixel offset for smooth cursor animation (applied in addition to coord-based position)
 @property (nonatomic) CGPoint pixelOffset;
+// YES while a smooth-slide animation is sliding the cursor between cells. The
+// box cursor's glyph-color inversion is keyed on the discrete destination
+// cell and can't track the sub-cell pixelOffset, so it's suppressed while
+// this is set (see loadCursorInfoWithDrawingHelper: and
+// applyBoxCursorTextColorTweakForRow: in iTermMetalPerFrameState.m).
+@property (nonatomic) BOOL slideAnimationInProgress;
 // Opacity in [0, 1] for smooth blink fading. 1 means fully opaque (the default).
 // The character drawn over a box cursor is crossfaded toward the normal text
 // color as this approaches 0 (see iTermMetalPerFrameState).

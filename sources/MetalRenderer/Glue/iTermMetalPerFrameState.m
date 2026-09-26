@@ -357,6 +357,7 @@ typedef struct {
     const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
     _cursorInfo = [[iTermMetalCursorInfo alloc] init];
     _cursorInfo.fadeAlpha = 1.0;
+    _cursorInfo.slideAnimationInProgress = textView.slideAnimationInProgress;
     // Decide the HDR-cursor treatment once, where the profile hint, headroom, and
     // background are all known, so the cursor renderer and the bold path agree.
     // Uses the default background (like the legacy renderer) as the dark test.
@@ -452,7 +453,12 @@ typedef struct {
             _cursorInfo.backgroundColor = [self backgroundColorForCharacter:screenChar
                                                                    selected:[row->_selectedIndexSet containsIndex:_cursorInfo.coord.x]
                                                                   findMatch:row->_matches && CheckFindMatchAtIndex(row->_matches, _cursorInfo.coord.x)];
-            if (_cursorInfo.type == CURSOR_BOX) {
+            if (_cursorInfo.type == CURSOR_BOX && !_cursorInfo.slideAnimationInProgress) {
+                // While sliding, the box is just a plain colored rectangle
+                // (see cursorSupportsSmoothSlide); skip the glyph-inversion
+                // setup below, which is keyed to the discrete destination
+                // cell and would otherwise recolor that glyph before the
+                // rectangle visually arrives there.
                 _cursorInfo.shouldDrawText = YES;
                 iTermSmartCursorColor *smartCursorColor = nil;
                 // When the HDR hint applies, iTermCursorRenderer force-overrides
@@ -2128,7 +2134,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     if (!(row == _cursorInfo.coord.y &&
           _cursorInfo.type == CURSOR_BOX &&
           _cursorInfo.cursorVisible &&
-          !_cursorInfo.frameOnly)) {
+          !_cursorInfo.frameOnly) ||
+        _cursorInfo.slideAnimationInProgress) {
         return;
     }
     vector_float4 cursorTextColor;

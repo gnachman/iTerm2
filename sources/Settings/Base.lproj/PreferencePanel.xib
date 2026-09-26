@@ -3462,7 +3462,7 @@ CA
                                 <outlet property="nextKeyView" destination="4782" id="Ddq-1S-9QC"/>
                             </connections>
                         </button>
-                        <button toolTip="When enabled, small horizontal cursor movements are animated. Not available for block cursors." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WVK-xs-N2h" customClass="iTermSettingsCheckbox">
+                        <button toolTip="When enabled, small horizontal cursor movements are animated." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WVK-xs-N2h" customClass="iTermSettingsCheckbox">
                             <rect key="frame" x="174" y="271" width="544" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Smooth-typing animation" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="9e0-hJ-QjT">

@@ -769,7 +769,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
             KEY_CURSOR_HIDDEN_WITHOUT_FOCUS:                        @"Whether to hide cursor when window loses focus",
             KEY_ANIMATE_MOVEMENT:                                   @"Whether to animate cursor movement",
             KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS:          @"Whether to animate cursor movement only in interactive apps",
-            KEY_CURSOR_SMOOTH_SLIDE:                                @"Whether to smoothly slide underscore and vertical bar cursors",
+            KEY_CURSOR_SMOOTH_SLIDE:                                @"Whether to smoothly slide underscore, vertical bar, and block cursors",
             KEY_CURSOR_SMOOTH_BLINK:                                @"Whether the cursor fades smoothly when it blinks instead of toggling abruptly",
             KEY_CURSOR_BLINK_FADE_IN_DURATION:                      @"Duration in seconds for the cursor to fade in when smooth blink is enabled",
             KEY_CURSOR_BLINK_FADE_OUT_DURATION:                     @"Duration in seconds for the cursor to fade out when smooth blink is enabled",

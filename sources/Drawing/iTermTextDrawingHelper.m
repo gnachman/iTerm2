@@ -3822,8 +3822,12 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     if (![self cursorIsSolidRectangle]) {
         return NO;
     }
-    // Block cursor inverts character colors - doesn't work for smooth slide
-    return _cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL;
+    // The box cursor normally redraws the character underneath it in an
+    // inverted color, which can't be interpolated between two cells. While
+    // the slide is in progress the cursor (and its glyph inversion) is
+    // hidden entirely via drawingHelperSlideAnimationInProgress, so only a
+    // plain colored rectangle needs to be animated, same as the other types.
+    return _cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL || _cursorType == CURSOR_BOX;
 }
 
 typedef struct {
