@@ -202,8 +202,10 @@ typedef enum {
 // Do two or more panes in this tab have different (non-nil) tab colors?
 - (BOOL)sessionTabHasMultipleDistinctTabColors;
 
-// Session-initiated name change.
-- (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString *)newName;
+// Session-initiated name change. Nullable so implementations cope with a session
+// that has no computed name yet; -[PTYTab updateTabTitleForCurrentSessionName:],
+// which the implementation forwards to, is reached that way from -updateTabTitle.
+- (void)nameOfSession:(PTYSession *)session didChangeTo:(nullable NSString *)newName;
 
 // Session-initiated font size. May cause window size to adjust.
 - (void)sessionDidChangeFontSize:(PTYSession *)session

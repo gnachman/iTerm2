@@ -8761,7 +8761,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     theTab.delegate = self;
     NSTabViewItem *tabViewItem = [[[NSTabViewItem alloc] initWithIdentifier:(id)theTab] autorelease];
     [theTab setTabViewItem:tabViewItem];
-    [tabViewItem setLabel:[session name] ? [session name] : @""];
 
     [theTab numberOfSessionsDidChange];
     [self saveTmuxWindowOrigins];

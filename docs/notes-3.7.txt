@@ -332,6 +332,10 @@ Improvements:
   there, since they name nothing on that host.
 
 Bug Fixes:
+- A tab name you set yourself with Edit Tab Title
+  is no longer replaced by the session’s name
+  whenever the tab’s subtitle changes or its
+  label is otherwise refreshed. Issue 13072.
 - Interrupting Claude Code with Esc now
   returns its Session Status to idle. The
   tab kept reading “working”, or “waiting”
