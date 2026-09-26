@@ -218,6 +218,67 @@ final class PTYTabManualTitleRefreshTests: XCTestCase {
         XCTAssertEqual(titleLine(of: tab), "vim")
     }
 
+    /// Instant Replay, Screenshot Mode and clearing a filter all swap a synthetic
+    /// session in and back out again. The way in refreshes the title; the way out
+    /// has to as well, or the label is stuck on the synthetic session's name --
+    /// which differs from the live one whenever the title format names the job or
+    /// command, as the default profile title does.
+    func testTitleFollowsLiveSessionAfterSyntheticSwap() {
+        let (tab, live) = makeTab()
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+
+        let synthetic = makeSession()
+        synthetic.genericScope.setValue("replay", forVariableNamed: iTermVariableKeySessionName)
+        tab.replaceActiveSession(withSyntheticSession: synthetic)
+        tab.name(of: synthetic, didChangeTo: "replay")
+        XCTAssertEqual(titleLine(of: tab), "replay", "test setup: the synthetic session owns the title")
+
+        // The swap spins the runloop, which lets each session's name controller
+        // compute a title for these profile-less sessions and land its " "
+        // placeholder on their name variables. Restore the live session's, and
+        // give it the presentation name a real session would already have, so the
+        // assertions below are about the swap rather than about the fixture.
+        // Nothing spins the runloop after this point.
+        live.genericScope.setValue(sessionName, forVariableNamed: iTermVariableKeySessionName)
+        live.genericScope.setValue(sessionName,
+                                   forVariableNamed: iTermVariableKeySessionPresentationName)
+
+        tab.showLiveSession(live, inPlaceOf: synthetic)
+
+        XCTAssertEqual(titleLine(of: tab), sessionName,
+                       "leaving the synthetic session must put the live session's title back")
+
+        // And it must survive the next refresh, which is the path that used to
+        // repair this by rebuilding from activeSession.name.
+        tab.sessionTabStatusDidChange(live)
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+    }
+
+    /// Entering a swap must set the tab title as synchronously as leaving one does.
+    /// -replaceActiveSessionWithSyntheticSession: asks the synthetic session's name
+    /// controller to update, but that publish lands in -nameOfSession:didChangeTo:
+    /// before activeSession_ has been reassigned, so the guard there drops it and
+    /// only a later main-queue turn would repair the title.
+    func testTitleFollowsSyntheticSessionOnEntry() {
+        let (tab, _) = makeTab()
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+
+        let synthetic = makeSession()
+        synthetic.genericScope.setValue("replay", forVariableNamed: iTermVariableKeySessionName)
+        tab.replaceActiveSession(withSyntheticSession: synthetic)
+
+        // Deliberately no -nameOfSession:didChangeTo: call: the swap itself has to
+        // have set the title. The assertion is "no longer the live session's"
+        // rather than a literal, because the swap's own -setNeedsUpdate recomputes
+        // a name for this profile-less synthetic session while the swap is still in
+        // flight, so the exact text is the name controller's business, not the
+        // tab's. What this pins is that the tab stopped following the live session
+        // synchronously, which is the defect.
+        XCTAssertNotEqual(titleLine(of: tab), sessionName,
+                          "the tab must stop showing the live session's title")
+        XCTAssertNotNil(tab.title, "the swap must leave the tab with a title")
+    }
+
     /// A terminal session may legitimately clear its name (browsers suppress a
     /// blank title, terminals honor it). Whatever that draws, the two label
     /// paths have to draw the same thing -- otherwise which one ran last decides
@@ -289,6 +350,73 @@ final class PTYTabManualTitleRefreshTests: XCTestCase {
 
         XCTAssertEqual(titleLine(of: tab), " ",
                        "a refresh must agree with the name-change path")
+    }
+
+    /// Switching the active pane. -tabBarLabel is read here while the
+    /// tab title variable still holds the outgoing pane's title, so the label may
+    /// only be assigned once -updateTabTitle has recomputed it. A freshly split
+    /// pane also has no presentation name yet, which is what makes the
+    /// session-name fallback in -updateTabTitleForCurrentSessionName: load-bearing.
+    func testTabTitleFollowsNewlyActivePane() {
+        let (tab, first) = makeTab()
+        let second = makeSession()
+        tab.splitVertically(true, newSession: second, before: false, targetSession: first)
+
+        // The split spins the runloop, so each profile-less session's name
+        // controller has had a chance to land its " " placeholder. Set the names
+        // the panes are meant to have, and clear the presentation names so
+        // -updateTabTitle passes nil -- which is the shape a freshly split pane
+        // has, and the one that makes the session-name fallback load-bearing.
+        for (session, name) in [(first, sessionName), (second, "vim")] {
+            session.genericScope.setValue(name, forVariableNamed: iTermVariableKeySessionName)
+            session.genericScope.setValue(nil,
+                                          forVariableNamed: iTermVariableKeySessionPresentationName)
+        }
+
+        tab.activeSession = second
+        XCTAssertEqual(tab.title, "vim", "the tab title variable must track the new pane")
+        XCTAssertEqual(titleLine(of: tab), "vim", "and so must the label")
+
+        tab.activeSession = first
+        XCTAssertEqual(tab.title, sessionName)
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+    }
+
+    /// -setActiveSession: notifies the rest of the app about the new pane before it
+    /// returns: it posts iTermSessionBecameKey and tells the window, which re-renders
+    /// the touch bar's tab labels. Everything that runs from those hooks must already
+    /// see the incoming pane's title, both in tab.title and on the label. Leaving the
+    /// recompute until the end of the method meant they saw the outgoing pane's
+    /// title, followed by a second render once the title caught up.
+    func testTabTitleIsCurrentWhenSessionBecameKeyIsPosted() {
+        let (tab, first) = makeTab()
+        let second = makeSession()
+        tab.splitVertically(true, newSession: second, before: false, targetSession: first)
+        for (session, name) in [(first, sessionName), (second, "vim")] {
+            session.genericScope.setValue(name, forVariableNamed: iTermVariableKeySessionName)
+            session.genericScope.setValue(nil,
+                                          forVariableNamed: iTermVariableKeySessionPresentationName)
+        }
+
+        var titleWhenKey: String?
+        var labelWhenKey: String?
+        let observer = NotificationCenter.default.addObserver(forName: NSNotification.Name(iTermSessionBecameKey),
+                                                              object: second,
+                                                              queue: nil) { [weak tab] _ in
+            guard let tab else {
+                return
+            }
+            titleWhenKey = tab.title
+            labelWhenKey = tab.tabViewItem?.label.components(separatedBy: "\n").first
+        }
+        defer { NotificationCenter.default.removeObserver(observer) }
+
+        tab.activeSession = second
+
+        XCTAssertEqual(titleWhenKey, "vim",
+                       "tab.title must already track the new pane when iTermSessionBecameKey fires")
+        XCTAssertEqual(labelWhenKey, "vim",
+                       "and so must the label")
     }
 
     /// -setActiveSession:nil leaves the tab view item alive and returns early, so

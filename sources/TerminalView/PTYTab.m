@@ -954,9 +954,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeyTabCurrentSession];
         return;
     }
+    // Recompute the title (and the label) before anything below observes the
+    // change: -setWindowTitle reads it, and so do the iTermSessionBecameKey
+    // observers and -[PseudoTerminal tabActiveSessionDidChange], which re-renders
+    // the touch bar's tab labels. Issue 13072.
+    [self updateTabTitle];
     if (changed) {
         [parentWindow_ setWindowTitle];
-        [tabViewItem_ setLabel:[self tabBarLabel]];
         if ([realParentWindow_ currentTab] == self) {
             // If you set a textview in a non-current tab to the first responder and
             // then close that tab, it crashes with NSTextInput calling
@@ -1020,7 +1024,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         DLog(@"Clear dead state");
         [self setState:0 reset:kPTYTabDeadState];
     }
-    [self updateTabTitle];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermCurrentSessionDidChange
                                                         object:activeSession_
                                                       userInfo:nil];
@@ -1846,6 +1849,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self fitSessionToCurrentViewSize:newSession];
     }
     [newView layoutContentsForNewlyActiveSession];
+
+    // The -setNeedsUpdate above makes the synthetic session compute its own name,
+    // but its synchronous publish cannot reach the tab title: it lands in
+    // -nameOfSession:didChangeTo:, which drops anything that isn't from the active
+    // session, and activeSession_ was still the live session at that point. Only
+    // the dispatch_async that -setNeedsReevaluation schedules would eventually
+    // repair it, a main-queue turn later, so the tab bar could draw one frame
+    // holding the live session's title. Recompute here, now that the synthetic
+    // session is active, so entering a swap is as synchronous as leaving one.
+    // Issue 13072.
+    [self updateTabTitle];
 }
 
 - (int)tabNumberForItermSessionId {
@@ -1938,6 +1952,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     RLog(@"IR exit swap (refit): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@",
          liveSession, liveSession.columns, liveSession.rows,
          NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame));
+
+    // This method assigns activeSession_ directly rather than going through
+    // -setActiveSession:, so it misses that method's -updateTabTitle and the tab
+    // title would keep holding the synthetic session's. Its counterpart
+    // -replaceActiveSessionWithSyntheticSession: ends with the same call, for the
+    // same reason; entering and leaving a swap are symmetric. Issue 13072.
+    [self updateTabTitle];
 }
 
 #pragma mark - Screenshot Mode
