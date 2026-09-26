@@ -780,3 +780,8 @@ Bug Fixes:
   to change apps without the mouse. This
   affected windows using the older full screen
   style with menu bar hiding turned on.
+- The offer to try the Claude Code Integration
+  no longer appears when a brief, non-interactive
+  claude command (like “claude plugin list”)
+  runs. Claude Code must keep running for a few
+  seconds before iTerm2 offers the integration.
