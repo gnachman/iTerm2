@@ -108,7 +108,9 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
     iTermVariableRecordingScope *recordingScope;  // either nil or equal to scope
     if (sync) {
         recordingScope = [self.delegate.sessionNameControllerScope recordingCopy];
-        scope.neverReturnNil = YES;
+        // Deliberately no neverReturnNil on the recording scope: an earlier attempt
+        // was a no-op, and enabling it would pass unresolved variables to the
+        // title function as empty strings instead of omitting them.
         scope = recordingScope;
     } else {
         scope = self.delegate.sessionNameControllerScope;

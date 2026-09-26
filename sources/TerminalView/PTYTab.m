@@ -3656,7 +3656,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     [theTab setParentWindow:term];
     theTab.delegate = term;
-    [theTab->tabViewItem_ setLabel:NSLocalizedStringWithDefaultValue(@"PTYTab.Restoring", nil, [NSBundle mainBundle], @"Restoring…", @"Tab label shown while a tab is being restored")];
 
     [theTab setObjectCount:[term numberOfTabs] + 1];
 
