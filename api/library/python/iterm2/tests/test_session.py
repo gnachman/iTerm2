@@ -8,9 +8,13 @@ import pytest
 import iterm2
 
 
-def make_session():
-    """Return a Session with a minimal real protobuf link."""
-    connection = object()
+def make_session(protocol_version=(1, 20)):
+    """Return a Session with a minimal real protobuf link.
+
+    The connection reports a protocol version because the Session Note methods
+    check that the attached iTerm2 supports the feature.
+    """
+    connection = SimpleNamespace(iterm2_protocol_version=protocol_version)
     link = iterm2.api_pb2.SplitTreeNode.SplitTreeLink()
     link.session.unique_identifier = "session-id"
     return iterm2.Session(connection, link), connection
@@ -152,3 +156,19 @@ def test_set_session_note_raises_rpc_exception_for_non_ok_status(monkeypatch):
 
     with pytest.raises(iterm2.rpc.RPCException, match="INVALID_VALUE"):
         asyncio.run(session.async_set_session_note(text="updated"))
+
+
+def test_get_session_note_requires_app_support():
+    """An iTerm2 too old for Session Notes reports that, not an RPC failure."""
+    session, _ = make_session(protocol_version=(1, 19))
+
+    with pytest.raises(iterm2.capabilities.AppVersionTooOld):
+        asyncio.run(session.async_get_session_note())
+
+
+def test_set_session_note_requires_app_support():
+    """The support check runs before the patch is validated or sent."""
+    session, _ = make_session(protocol_version=(1, 19))
+
+    with pytest.raises(iterm2.capabilities.AppVersionTooOld):
+        asyncio.run(session.async_set_session_note(text="remember this"))

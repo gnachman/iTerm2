@@ -803,6 +803,7 @@ class Session:
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
+        iterm2.capabilities.check_supports_session_note(self.connection)
         response = await iterm2.rpc.async_get_property(
             self.connection,
             "session_note",
@@ -833,6 +834,7 @@ class Session:
         :throws: :class:`ValueError` if no fields are supplied.
         :throws: :class:`~iterm2.rpc.RPCException` if iTerm2 rejects the update.
         """
+        iterm2.capabilities.check_supports_session_note(self.connection)
         value: typing.Dict[str, typing.Union[str, bool]] = {}
         if text is not None:
             value["text"] = text

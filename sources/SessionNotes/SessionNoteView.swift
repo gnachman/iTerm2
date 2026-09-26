@@ -255,6 +255,15 @@ class SessionNoteView: NSView, NSTextViewDelegate {
         NotificationCenter.default.removeObserver(self)
     }
 
+    override func viewWillMove(toSuperview newSuperview: NSView?) {
+        super.viewWillMove(toSuperview: newSuperview)
+        if newSuperview == nil {
+            // The note is being hidden. Don't keep animating a detached view.
+            collapseAnimationTimer?.invalidate()
+            collapseAnimationTimer = nil
+        }
+    }
+
     // MARK: - Layout
 
     override func resizeSubviews(withOldSize oldSize: NSSize) {
@@ -530,7 +539,10 @@ class SessionNoteView: NSView, NSTextViewDelegate {
 
     /// Keep model.noteFrame as the expanded frame, even when collapsed.
     @objc func syncModelFrame() {
-        if model.isCollapsed {
+        // Mid-animation the frame is a transient interpolated one. That includes an expand, where
+        // model.isCollapsed is already false, so hiding the note then would otherwise save a
+        // half-grown frame as its real size.
+        if model.isCollapsed || isAnimatingCollapse {
             model.noteFrame = expandedFrameKeepingTopEdge()
         } else {
             model.noteFrame = frame

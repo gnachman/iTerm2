@@ -238,3 +238,15 @@ def check_supports_tab_groups(connection):
         raise AppVersionTooOld(
             "This version of iTerm2 is too old to control tab groups via " +
             "the Python API. You should upgrade to run this script.")
+
+def supports_session_note(connection):
+    """Can you read and write a session's Session Note?"""
+    min_ver = (1, 20)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_session_note(connection):
+    if not supports_session_note(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to read or write Session " +
+            "Notes via the Python API. You should upgrade to run this " +
+            "script.")
