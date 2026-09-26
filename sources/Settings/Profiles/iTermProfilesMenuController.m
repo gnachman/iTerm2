@@ -96,7 +96,7 @@ static id gAltOpenAllRepresentedObject;
 + (void)addOpenAllToMenu:(NSMenu *)menu params:(iTermProfileModelJournalParams *)params identifier:(NSString *)identifier {
     // Add separator + open all menu items
     [menu addItem:[NSMenuItem separatorItem]];
-    NSMenuItem *openAll = [menu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAll", nil, [NSBundle mainBundle], @"Open All", @"Menu item to open all profiles") action:params.openAllSelector keyEquivalent:@""];
+    NSMenuItem *openAll = [menu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAll", nil, [NSBundle mainBundle], @"Open All", @"Menu item that opens every profile in the menu or folder as tabs") action:params.openAllSelector keyEquivalent:@""];
     if (@available(macOS 26, *)) {
         if (iTermMainMenuMangler.menuActionImagesEnabled) {
             openAll.image = [NSImage imageWithSystemSymbolName:@"person.3.sequence"
@@ -111,7 +111,7 @@ static id gAltOpenAllRepresentedObject;
     [openAll setTarget:params.target];
 
     // Add alternate open all menu
-    NSMenuItem *altOpenAll = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAllInNewWindow", nil, [NSBundle mainBundle], @"Open All in New Window", @"Menu item to open all profiles in a new window")
+    NSMenuItem *altOpenAll = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAllInNewWindow", nil, [NSBundle mainBundle], @"Open All in New Window", @"Menu item that opens every profile in the menu or folder in a new window")
                                                         action:params.alternateOpenAllSelector
                                                  keyEquivalent:@""];
     [altOpenAll setTarget:params.target];

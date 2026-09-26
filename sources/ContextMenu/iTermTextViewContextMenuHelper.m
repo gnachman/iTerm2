@@ -636,7 +636,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     
     [theMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"General.Paste", nil, [NSBundle mainBundle], @"Paste", @"Paste menu item")
                      action:@selector(paste:) keyEquivalent:@""];
-    [theMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"General.Save", nil, [NSBundle mainBundle], @"Save", @"Save menu item")
+    [theMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"General.Save", nil, [NSBundle mainBundle], @"Save", @"Save: used on buttons and menu items")
                      action:@selector(saveDocumentAs:) keyEquivalent:@""];
 
     // Separator
@@ -722,7 +722,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     // Close current pane
-    add(NSLocalizedStringWithDefaultValue(@"General.Close", nil, [NSBundle mainBundle], @"Close", @"Close"), @selector(closeTextViewSession:));
+    add(NSLocalizedStringWithDefaultValue(@"General.Close", nil, [NSBundle mainBundle], @"Close", @"Close: used on buttons and menu items"), @selector(closeTextViewSession:));
     add(NSLocalizedStringWithDefaultValue(@"ContextMenu.Restart", nil, [NSBundle mainBundle], @"Restart", @"Context menu item to restart the session"), @selector(restartSession:));
 
     [self.delegate contextMenu:self amend:theMenu];

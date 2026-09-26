@@ -100,7 +100,7 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
         cancelButton.bezelStyle = .rounded
         cancelButton.keyEquivalent = "\u{1b}" // Escape key
 
-        saveButton = NSButton(title: String(localized: "General.Save", defaultValue: "Save", comment: "Save button"), target: self, action: #selector(saveChanges))
+        saveButton = NSButton(title: String(localized: "General.Save", defaultValue: "Save", comment: "Save: used on buttons and menu items"), target: self, action: #selector(saveChanges))
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         saveButton.bezelStyle = .rounded
         saveButton.keyEquivalent = "\r"
@@ -223,7 +223,7 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
         let alert = NSAlert()
         alert.messageText = String(localized: "BookmarkTagEditor.DeleteBookmark", defaultValue: "Delete Bookmark", comment: "Title/label for deleting a bookmark")
         alert.informativeText = String(localized: "BookmarkTagEditor.DeleteConfirm", defaultValue: "Are you sure you want to delete this bookmark?", comment: "Confirmation prompt before deleting a bookmark")
-        alert.addButton(withTitle: String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete button"))
+        alert.addButton(withTitle: String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete: used on buttons, menu items and other controls"))
         alert.addButton(withTitle: iTermLocalizedCancel())
         alert.alertStyle = .warning
 

@@ -115,7 +115,7 @@ class FileAttachmentSubpartView: NSView {
         revealItem.target = self
         menu.addItem(revealItem)
 
-        let openItem = NSMenuItem(title: String(localized: "General.Open", defaultValue: "Open", comment: "Open menu item"), action: #selector(openFile), keyEquivalent: "")
+        let openItem = NSMenuItem(title: String(localized: "General.Open", defaultValue: "Open", comment: "Open: used on buttons, menu items and window titles"), action: #selector(openFile), keyEquivalent: "")
         openItem.target = self
         menu.addItem(openItem)
 

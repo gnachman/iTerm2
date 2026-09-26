@@ -335,7 +335,7 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
     // Add / remove on the left, then edit / duplicate / default.
     _addDeleteControl = [self makeSegmentedControlWithSegments:@[
         @{ @"symbol": SFSymbolGetString(SFSymbolPlus), @"tip": iTermLocalizedAdd() },
-        @{ @"symbol": SFSymbolGetString(SFSymbolMinus), @"tip": NSLocalizedStringWithDefaultValue(@"General.Delete", nil, [NSBundle mainBundle], @"Delete", @"Delete button") }
+        @{ @"symbol": SFSymbolGetString(SFSymbolMinus), @"tip": NSLocalizedStringWithDefaultValue(@"General.Delete", nil, [NSBundle mainBundle], @"Delete", @"Delete: used on buttons, menu items and other controls") }
     ] action:@selector(addDeleteClicked:)];
     _editControl = [self makeSegmentedControlWithSegments:@[
         @{ @"symbol": SFSymbolGetString(SFSymbolPencil), @"tip": iTermLocalizedEdit() },
@@ -926,7 +926,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [content addSubview:headersAddRemove];
     y -= 22 + 10;
 
-    NSButton *save = [NSButton buttonWithTitle:(_isEditing ? NSLocalizedStringWithDefaultValue(@"General.Save", nil, [NSBundle mainBundle], @"Save", @"Save button") : iTermLocalizedAdd())
+    NSButton *save = [NSButton buttonWithTitle:(_isEditing ? NSLocalizedStringWithDefaultValue(@"General.Save", nil, [NSBundle mainBundle], @"Save", @"Save: used on buttons and menu items") : iTermLocalizedAdd())
                                         target:self
                                         action:@selector(saveClicked:)];
     save.bezelStyle = NSBezelStyleRounded;

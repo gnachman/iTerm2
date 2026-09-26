@@ -869,7 +869,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
     if (openAllSelector && count > 1) {
         [subMenu addItem:[NSMenuItem separatorItem]];
-        aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAll", nil, [NSBundle mainBundle], @"Open All", @"Menu item that opens all profiles in this folder as tabs")
+        aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAll", nil, [NSBundle mainBundle], @"Open All", @"Menu item that opens every profile in the menu or folder as tabs")
                                                action:openAllSelector
                                         keyEquivalent:@""];
         if (@available(macOS 26, *)) {
@@ -890,7 +890,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         [subMenu addItem:aMenuItem];
 
         // Add alternate -------------------------------------------------------
-        aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAllInNewWindow", nil, [NSBundle mainBundle], @"Open All in New Window", @"Menu item that opens all profiles in this folder in a new window")
+        aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAllInNewWindow", nil, [NSBundle mainBundle], @"Open All in New Window", @"Menu item that opens every profile in the menu or folder in a new window")
                                                action:openAllSelector
                                         keyEquivalent:@""];
         modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;

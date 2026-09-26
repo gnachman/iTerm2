@@ -854,7 +854,7 @@ extension ChatWindowController: ChatViewControllerDelegate {
         warning.title = String(localized: "ChatWindowController.DeleteChatConfirm", defaultValue: "Are you sure you want to delete \(count) chats? This action cannot be undone.", comment: "Confirmation before deleting chats; %lld is the number of chats")
         warning.heading = String(localized: "ChatWindowController.DeleteChatHeading", defaultValue: "Delete \(count) Chats?", comment: "Heading of the delete-chats confirmation; %lld is the number of chats")
 
-        let action = iTermWarningAction(label: String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete button")) { [weak self] _ in
+        let action = iTermWarningAction(label: String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete: used on buttons, menu items and other controls")) { [weak self] _ in
             guard let self else {
                 return
             }

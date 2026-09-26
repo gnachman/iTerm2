@@ -7301,7 +7301,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     // Create a menu with a submenu to navigate between tabs if there are more than one
     if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        [theMenu insertItemWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Select", nil, [NSBundle mainBundle], @"Select", @"Menu item heading for the submenu that selects among tabs")
+        [theMenu insertItemWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Select", nil, [NSBundle mainBundle], @"Select", @"Select: the heading of the tab-selection submenu, and the item that opens it")
                               action:nil
                        keyEquivalent:@""
                              atIndex:nextIndex];
@@ -8357,7 +8357,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 [tabMenu addItem:item];
             }
 
-            [rootMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Select", nil, [NSBundle mainBundle], @"Select", @"Menu item that selects a tab from a submenu")
+            [rootMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Select", nil, [NSBundle mainBundle], @"Select", @"Select: the heading of the tab-selection submenu, and the item that opens it")
                                 action:nil
                          keyEquivalent:@""];
             [rootMenu setSubmenu:tabMenu forItem:[rootMenu itemAtIndex:0]];
@@ -9981,7 +9981,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     NSString *count = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.TabCount", nil, [NSBundle mainBundle], @"%lu tabs", @"A count of tabs shown in a close-confirmation; %lu is the number of tabs"), (unsigned long)closable.count];
     const iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@ (%@)", question, count]
-                                   actions:@[ NSLocalizedStringWithDefaultValue(@"General.Close", nil, [NSBundle mainBundle], @"Close", @"Close button"), iTermLocalizedCancel() ]
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"General.Close", nil, [NSBundle mainBundle], @"Close", @"Close: used on buttons and menu items"), iTermLocalizedCancel() ]
                                  accessory:nil
                                 identifier:@"NoSyncCloseTabGroup"
                                silenceable:kiTermWarningTypePersistent

@@ -515,7 +515,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSMutableString *question = [NSMutableString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.DeleteProfileConfirmation", nil, [NSBundle mainBundle], @"Delete profile %@?", @"Confirmation prompt when deleting a profile. %@ is the profile name."),
                                  profile[KEY_NAME]];
     if ([iTermWarning showWarningWithTitle:question
-                                   actions:@[ NSLocalizedStringWithDefaultValue(@"General.Delete", nil, [NSBundle mainBundle], @"Delete", @"Delete"), iTermLocalizedCancel() ]
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"General.Delete", nil, [NSBundle mainBundle], @"Delete", @"Delete: used on buttons, menu items and other controls"), iTermLocalizedCancel() ]
                                 identifier:@"DeleteProfile"
                                silenceable:kiTermWarningTypeTemporarilySilenceable
                                     window:self.view.window] == kiTermWarningSelection0) {
