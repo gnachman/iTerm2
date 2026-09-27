@@ -1,0 +1,22 @@
+=== iTerm2: 16th SGR parameter / overflow-subparameter test ===
+
+cat this file in iTerm2 (a terminal, not a trigger). On a FIXED build you
+should see the "expected" rendering; a build with the bug shows "buggy".
+
+NOTE: this exercises the terminal CSI parser. The other half of the fix
+(the SGR *trigger* dropping its 16th parameter) fires only on matched
+output through a configured trigger, so it cannot be verified by cat.
+
+[A] Sanity: the 16th parameter and its subparameters are honored.
+    Fifteen filler params (0), then 38:2:255:0:0 as the 16th parameter.
+    expected: the word RED is red.
+    -> [0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;38:2:255:0:0mRED[0m
+
+[B] The bug: a 17th (overflow) parameter must NOT dump its subparameter
+    onto the 16th one. The 16th param is 4 (underline); a 17th param
+    "3:5" follows and overflows.
+    expected: STRAIGHT underline (the whole 17th param is discarded).
+    buggy:    the ":5" latched onto the 4, making 4:5 = DASHED underline.
+    -> [0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;4;3:5munderlined[0m
+    reference: an intentional 4:5 dashed underline, to compare against [B]:
+    -> [0;4:5mdashed[0m

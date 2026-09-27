@@ -312,12 +312,7 @@ static NSString *const kArrangement = @"Arrangement";
         return NSNormalWindowLevel;
     }
     DLog(@"Use main menu window level (I am key, no detected panels are open)");
-    NSWindowLevel windowLevelJustBelowNotificiations;
-    if (@available(macOS 10.16, *)) {
-        windowLevelJustBelowNotificiations = NSMainMenuWindowLevel - 2;
-    } else {
-        windowLevelJustBelowNotificiations = 17;
-    }
+    NSWindowLevel windowLevelJustBelowNotificiations = NSMainMenuWindowLevel - 2;
     // These are the window levels in play:
     //
     // NSStatusWindowLevel (25) -                Floating hotkey panels overlapping a fixed, visible menu bar.
@@ -436,6 +431,7 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return [windowController canonicalFrameForScreen:screen];
 
         case WINDOW_TYPE_NORMAL:
@@ -466,6 +462,7 @@ static NSString *const kArrangement = @"Arrangement";
     switch (self.windowController.windowType) {
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             return rect.origin;
 
         case WINDOW_TYPE_TOP_PERCENTAGE:
@@ -607,6 +604,7 @@ static NSString *const kArrangement = @"Arrangement";
     self.windowController.window.animator.alphaValue = 0;
 #if BETA
     SetPinnedDebugLogMessage([NSString stringWithFormat:@"Fade out hotkey window %p", self],
+                             @"%@",
                              [[NSThread callStackSymbols] componentsJoinedByString:@"\n"]);
 #endif
     [NSAnimationContext endGrouping];
@@ -642,6 +640,7 @@ static NSString *const kArrangement = @"Arrangement";
 
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
@@ -656,6 +655,41 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (BOOL)floats {
     return [iTermProfilePreferences boolForKey:KEY_HOTKEY_FLOAT inProfile:self.profile];
+}
+
+// After a display reconfiguration (for example, closing and reopening the laptop lid on a
+// multi-monitor setup) macOS can drop a join-all-spaces window's membership in the active
+// space and pin it to a single space. When that happens, ordering the window front switches
+// the user to that space instead of revealing the window in place (issue 12968).
+//
+// To reveal it on the current space, momentarily clear CanJoinAllSpaces so the window behaves
+// like an ordinary window: ordering an ordinary, currently-hidden window front brings it to
+// the active space. The all-spaces behavior is then restored on the next runloop spin, once
+// the window has been placed.
+//
+// The restore MUST be asynchronous. macOS coalesces collectionBehavior changes made within a
+// single runloop iteration, so clearing and restoring the bit back-to-back is a no-op: macOS
+// never sees the window as an ordinary window and orders it front on its stale space instead.
+- (void)prepareJoinsAllSpacesWindowForRollInOnActiveSpace {
+    if (self.windowController.spaceSetting != iTermProfileJoinsAllSpaces) {
+        return;
+    }
+    NSWindow *window = self.windowController.window;
+    if (window.isOnActiveSpace) {
+        return;
+    }
+    DLog(@"Join-all-spaces hotkey window is off the active space before roll-in. Clear CanJoinAllSpaces so it reveals on the current space, then restore it after a runloop spin.");
+    const NSWindowCollectionBehavior desired = self.windowController.desiredWindowCollectionBehavior;
+    window.collectionBehavior = (desired & ~NSWindowCollectionBehaviorCanJoinAllSpaces);
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf.windowController.window) {
+            return;
+        }
+        DLog(@"Restore join-all-spaces collection behavior after roll-in placed the window on the active space.");
+        strongSelf.windowController.window.collectionBehavior = strongSelf.windowController.desiredWindowCollectionBehavior;
+    });
 }
 
 - (void)rollInAnimated:(BOOL)animated {
@@ -675,6 +709,8 @@ static NSString *const kArrangement = @"Arrangement";
         // do this for all window types, but I don't want to risk introducing bugs here.
         [self moveToPreferredScreen];
     }
+    // Must run before ordering the window front, or macOS will switch spaces first (issue 12968).
+    [self prepareJoinsAllSpacesWindowForRollInOnActiveSpace];
     if (self.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel) {
         DLog(@"Activate iTerm2 prior to animating hotkey window in");
         _activationPending = YES;
@@ -707,6 +743,7 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_COMPACT_CENTERED:
+            case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
             case WINDOW_TYPE_COMPACT:
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
@@ -772,6 +809,7 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_ACCESSORY:
             case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_COMPACT_CENTERED:
+            case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
                 [self fadeOut:causedByKeypress];
                 break;
 

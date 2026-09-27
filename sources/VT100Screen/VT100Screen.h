@@ -179,6 +179,10 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)enumeratePromptsFrom:(nullable NSString *)maybeFirst
                           to:(nullable NSString *)maybeLast
                        block:(void (^ NS_NOESCAPE)(id<VT100ScreenMarkReading> mark))block;
+// Enumerates prompt marks newest-first, stopping as soon as the block sets
+// *stop. For bounded tail queries (e.g. "the last few commands") that would
+// otherwise walk the entire mark history forward just to keep the suffix.
+- (void)enumeratePromptsBackward:(void (^ NS_NOESCAPE)(id<VT100ScreenMarkReading> mark, BOOL *stop))block;
 - (void)enumeratePortholes:(void (^ NS_NOESCAPE)(id<PortholeMarkReading> mark))block;
 
 // These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.

@@ -168,7 +168,7 @@
 }
 
 - (NSString *)displayName {
-    return [NSString stringWithFormat:@"🔲 %@ (%@)", _windowController.window.title, _windowController.terminalGuid];
+    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"SessionTabWindowOutline.WindowDisplayName", nil, [NSBundle mainBundle], @"🔲 %1$@ (%2$@)", @"Window row label in the session/tab/window outline: window title and terminal GUID"), _windowController.window.title, _windowController.terminalGuid];
 }
 
 - (iTermVariableScope *)scope {
@@ -242,12 +242,8 @@
 }
 
 - (void)awakeFromNib {
-    if (@available(macOS 10.16, *)) {
-#ifdef MAC_OS_X_VERSION_10_16
-        _sessionTabWindowOutlineView.style = NSTableViewStyleInset;
-        _variablesOutlineView.style = NSTableViewStyleInset;
-#endif
-    }
+    _sessionTabWindowOutlineView.style = NSTableViewStyleInset;
+    _variablesOutlineView.style = NSTableViewStyleInset;
     [_sessionTabWindowOutlineView expandItem:nil expandChildren:YES];
 }
 

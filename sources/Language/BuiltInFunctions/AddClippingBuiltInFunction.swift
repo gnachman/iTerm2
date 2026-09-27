@@ -16,8 +16,10 @@ class AddClippingBuiltInFunction: NSObject {
 }
 
 extension AddClippingBuiltInFunction: iTermBuiltInFunctionProtocol {
+    private static let errorDomain = "com.iterm2.add-clipping"
+
     private static func error(message: String) -> NSError {
-        return NSError(domain: "com.iterm2.add-clipping",
+        return NSError(domain: errorDomain,
                        code: 1,
                        userInfo: [NSLocalizedDescriptionKey: message])
     }
@@ -31,19 +33,18 @@ extension AddClippingBuiltInFunction: iTermBuiltInFunctionProtocol {
             optionalArguments: Set(),
             defaultValues: [argSession: iTermVariableKeySessionID],
             context: .session,
+            // Localization unneeded
             sideEffectsPlaceholder: "[add_clipping]") { parameters, completion in
-                guard let sessionID = parameters[argSession] as? String else {
-                    completion(nil, error(message: "Missing session_id. This shouldn't happen so please report a bug."))
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 key: argSession,
+                                                                 errorDomain: errorDomain,
+                                                                 completion: completion) else {
                     return
                 }
                 guard let type = parameters[argType] as? String,
                       let title = parameters[argTitle] as? String,
                       let detail = parameters[argDetail] as? String else {
-                    completion(nil, error(message: "Missing required argument"))
-                    return
-                }
-                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, error(message: "No such session"))
+                    completion(nil, error(message: String(localized: "AddClipping.MissingArgument", defaultValue: "Missing required argument", comment: "Error shown when add_clipping is called without a required argument")))
                     return
                 }
                 // Code-review-mode workgroup peers send their clippings

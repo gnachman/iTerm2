@@ -28,6 +28,12 @@ extern NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier;
 - (iTermVariableScope *)sessionNameControllerScope;
 - (NSString *)sessionNameControllerUniqueIdentifier;
 
+// YES if a blank built-in title for this session should be treated as a transient
+// artifact (e.g. a browser session that momentarily can't resolve during restoration)
+// and the previous title kept, rather than honored as a real name-clear. Terminal
+// sessions return NO so an explicit title clear (OSC 2, etc.) still works.
+- (BOOL)sessionNameControllerShouldSuppressEmptyTitle;
+
 @end
 
 @interface iTermSessionNameController : NSObject
@@ -49,6 +55,12 @@ extern NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier;
 
 // Forces a synchronous eval followed by an async.
 - (void)setNeedsUpdate;
+
+// Call when -sessionNameControllerFormattingDescriptor would return something
+// different than it did at the last evaluation, e.g. when a session acquires a
+// tmux controller. Re-publishes the presentation name with the new formatting,
+// unless the formatted name is what was published last.
+- (void)formattingDescriptorDidChange;
 
 - (void)updateIfNeeded;
 

@@ -150,7 +150,16 @@
         return;
     }
     _animate = animate;
-    if (animate) {
+    [self updateAnimation];
+}
+
+// Only the indeterminate indicator has a spinner to run. A determinate one hides it (see
+// -updateAnimated:), so animating it is work nobody can see, and callers ask for animation without
+// knowing which mode this is in: the tab bar turns it on for every cell it adds, on every frame
+// change, and at the end of a live resize. Decide here, where the mode is known, rather than at each
+// of those call sites.
+- (void)updateAnimation {
+    if (_animate && _indeterminate) {
         [_indeterminateIndicator startAnimation:nil];
     } else {
         [_indeterminateIndicator stopAnimation:nil];
@@ -165,6 +174,9 @@
 - (void)becomeIndeterminate {
     _indeterminate = YES;
     [self updateAnimated:NO];
+    // There is a spinner to run again now, so honor a -setAnimate:YES that arrived while this was
+    // determinate.
+    [self updateAnimation];
 }
 
 - (void)becomeDeterminateWithFraction:(CGFloat)fraction

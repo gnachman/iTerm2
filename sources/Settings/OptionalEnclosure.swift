@@ -124,6 +124,13 @@ extension NSView {
             return result
         }
 
+        // If we've run before, restore the original layout (frames plus any nested
+        // tab view items that a prior configuration removed) BEFORE walking. This
+        // ensures the walk classifies enclosures inside re-attached tabs; otherwise
+        // they stay detached at walk time, never make it into `reveal`, and remain
+        // hidden, leaving the tab empty.
+        restoreFrames(stateStorage: stateStorage)
+
         var reveal = [ModalEnclosure]()
         var remove = [ModalEnclosure]()
         var nestedTabViews = [NSTabView]()
@@ -174,11 +181,12 @@ extension NSView {
                 return true
             }
         }
-        // On the first call, save a bunch of state. On subsequent calls, restore it.
-        saveOrRestoreFrames(enclosures,
-                            nestedTabViews,
-                            configuration,
-                            stateStorage: stateStorage)
+        // On the first call, save a bunch of state so later calls can restore it
+        // (the restore itself already happened above, before the walk).
+        saveFramesIfNeeded(enclosures,
+                           nestedTabViews,
+                           stateStorage: stateStorage)
+        savedFrames(stateStorage: stateStorage)?.configuration = configuration
         let groupedRemove = Dictionary(grouping: remove,
                                        by: { $0.superview?.it_addressString ?? "(nil)" })
         for enclosure in reveal {
@@ -210,46 +218,56 @@ extension NSView {
         stateStorage[key] as? SavedFrames
     }
 
+    // Restore the pristine layout captured on the first call: original frames and
+    // any nested tab view items that were subsequently removed. Called before the
+    // walk so the classification sees the full view hierarchy. A no-op on the very
+    // first call, before anything has been saved.
     @nonobjc
-    private func saveOrRestoreFrames(_ enclosures: [ModalEnclosure],
-                                     _ tabViews: [NSTabView],
-                                     _ configuration: SavedFrames.Configuration,
-                                     stateStorage: NSMutableDictionary) {
-        if let savedFrames = savedFrames(stateStorage: stateStorage) {
-            // Restore all the original frames
-            for tuple in savedFrames.frames {
-                /*
-                if tuple.0.identifier?.rawValue == "debug" {
-                    print("Restoring frame of debug view. It is \(tuple.1)")
-                }
-                 */
-                tuple.0.frame = tuple.1
-            }
-            // Put back formerly removed tab view items
-            for tuple in savedFrames.tabViewItems {
-                let tabView = tuple.0
-                var i = 0
-                for item in tuple.1 {
-                    if i == tabView.tabViewItems.count || tabView.tabViewItems[i] != item {
-                        tabView.insertTabViewItem(item, at: i)
-                    }
-                    i += 1
-                }
-            }
-            savedFrames.configuration = configuration
-        } else {
-            let siblings = Set(enclosures.flatMap { $0.superview?.subviews ?? [] })
+    private func restoreFrames(stateStorage: NSMutableDictionary) {
+        guard let savedFrames = savedFrames(stateStorage: stateStorage) else {
+            return
+        }
+        // Restore all the original frames
+        for tuple in savedFrames.frames {
             /*
-            if let debug = siblings.first(where: { $0.identifier?.rawValue == "debug" }) {
-                fuckingPrint("Saving frame of debug view \(debug.description). It is \(debug.frame)")
+            if tuple.0.identifier?.rawValue == "debug" {
+                print("Restoring frame of debug view. It is \(tuple.1)")
             }
              */
-            let savedFrames = SavedFrames()
-            savedFrames.frames = siblings.map { ($0, $0.frame) }
-            savedFrames.tabViewItems = tabViews.map { ($0, $0.tabViewItems) }
-            savedFrames.configuration = configuration
-            stateStorage[key] = savedFrames
+            tuple.0.frame = tuple.1
         }
+        // Put back formerly removed tab view items
+        for tuple in savedFrames.tabViewItems {
+            let tabView = tuple.0
+            var i = 0
+            for item in tuple.1 {
+                if i == tabView.tabViewItems.count || tabView.tabViewItems[i] != item {
+                    tabView.insertTabViewItem(item, at: i)
+                }
+                i += 1
+            }
+        }
+    }
+
+    // On the first call (nothing saved yet), capture the pristine layout so later
+    // calls can restore it. A no-op once state exists.
+    @nonobjc
+    private func saveFramesIfNeeded(_ enclosures: [ModalEnclosure],
+                                    _ tabViews: [NSTabView],
+                                    stateStorage: NSMutableDictionary) {
+        guard savedFrames(stateStorage: stateStorage) == nil else {
+            return
+        }
+        let siblings = Set(enclosures.flatMap { $0.superview?.subviews ?? [] })
+        /*
+        if let debug = siblings.first(where: { $0.identifier?.rawValue == "debug" }) {
+            fuckingPrint("Saving frame of debug view \(debug.description). It is \(debug.frame)")
+        }
+         */
+        let savedFrames = SavedFrames()
+        savedFrames.frames = siblings.map { ($0, $0.frame) }
+        savedFrames.tabViewItems = tabViews.map { ($0, $0.tabViewItems) }
+        stateStorage[key] = savedFrames
     }
 
     // Both sets of views are grouped by parent, so it's an array of sibling views.

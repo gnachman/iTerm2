@@ -14,14 +14,20 @@
 #import "iTermPathFinder.h"
 #import "pidinfo-Swift.h"
 #include <dirent.h>
+#include <fcntl.h>
 #include <libproc.h>
 #include <mach-o/dyld.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <signal.h>
 #include <sys/resource.h>
+#include <sys/select.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
+#include <unistd.h>
 
 //#define ENABLE_RANDOM_WEDGING 1
 //#define ENABLE_VERY_VERBOSE_LOGGING 1
@@ -60,16 +66,22 @@
 
 - (void)runShellScript:(NSString *)script
                  shell:(NSString *)shell
+           interactive:(BOOL)interactive
              withReply:(void (^)(NSData * _Nullable, NSData * _Nullable, int))reply {
-    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
+    // 20s watchdog: above reallyRunShellScript's own 15s deadline, so in the
+    // normal wedge case that method terminates the shell and replies first, and
+    // this watchdog is only a backstop if the deadline logic itself fails.
+    [self performRiskyBlockWithTimeout:20 block:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
         if (!shouldPerform) {
-            reply(nil, nil, 0);
+            // Watchdog fired: the shell wedged. Report a distinct negative
+            // status so callers can tell this from a clean run (status 0).
+            reply(nil, nil, -2);
             syslog(LOG_WARNING, "pidinfo wedged while running script");
             return;
         }
-        [self reallyRunShellScript:script shell:shell completion:^(NSData *output,
-                                                                   NSData *error,
-                                                                   int status) {
+        [self reallyRunShellScript:script shell:shell interactive:interactive completion:^(NSData *output,
+                                                                                           NSData *error,
+                                                                                           int status) {
             if (!completion()) {
                 syslog(LOG_INFO, "runShellScript finished after timing out");
                 return;
@@ -77,27 +89,6 @@
             reply(output, error, status);
         }];
     }];
-}
-
-- (NSString *)temporaryFileNameWithPrefix:(NSString *)prefix suffix:(NSString *)suffix {
-    assert(strlen(suffix.UTF8String) < INT_MAX);
-    NSString *template = [NSString stringWithFormat:@"%@XXXXXX%@", prefix ?: @"", suffix ?: @""];
-    NSString *tempFileTemplate =
-        [NSTemporaryDirectory() stringByAppendingPathComponent:template];
-    const char *tempFileTemplateCString =
-        [tempFileTemplate fileSystemRepresentation];
-    char *tempFileNameCString = strdup(tempFileTemplateCString);
-    int fileDescriptor = mkstemps(tempFileNameCString, (int)strlen(suffix.UTF8String));
-
-    if (fileDescriptor == -1) {
-        free(tempFileNameCString);
-        return nil;
-    }
-    close(fileDescriptor);
-    NSString *filename = [[NSFileManager defaultManager] stringWithFileSystemRepresentation:tempFileNameCString
-                                                                                     length:strlen(tempFileNameCString)];
-    free(tempFileNameCString);
-    return filename;
 }
 
 static int MakeNonBlocking(int fd) {
@@ -109,69 +100,317 @@ static int MakeNonBlocking(int fd) {
     return rc == -1;
 }
 
-- (void)reallyRunShellScript:(NSString *)script shell:(NSString *)shell completion:(void (^)(NSData * _Nullable, NSData * _Nullable, int))completion {
-    @try {
-        NSTask *task = [[NSTask alloc] init];
-        task.launchPath = shell;
+// Cap on captured stdout/stderr. A producer that never stops (`yes`, `cat
+// /dev/zero`, a runaway rc file) must not grow our buffers without bound.
+static const NSUInteger kMaxShellOutputBytes = 1048576;  // 1 MB
 
-        NSString *tempfile = [self temporaryFileNameWithPrefix:@"iTerm2-script" suffix:@"sh"];
-        NSError *error = nil;
-        [script writeToFile:tempfile atomically:YES encoding:NSUTF8StringEncoding error:&error];
-        if (error) {
-            completion(nil, nil, 0);
-            return;
+typedef NS_ENUM(int, DrainResult) {
+    DrainResultPending,  // no data right now, or hit the per-call budget: keep polling
+    DrainResultDone,     // fd is finished (EOF or a hard read error): drop from the select set
+};
+
+// Drains what is currently readable on a nonblocking fd into `sink` (or discards
+// it when sink is nil).
+//
+// Always bounded, whether or not there is a sink: it reads at most a fixed number
+// of chunks per call and then returns DrainResultPending, so control returns to
+// the caller's deadline / output-cap / process-exit checks even against a
+// producer that keeps the fd perpetually readable (e.g. a backgrounded rc daemon
+// spewing to the inherited stdout, where read never returns EAGAIN). The earlier
+// version only bounded the sink case and would spin forever on a nil-sink discard
+// drain.
+//
+// Returns DrainResultDone on EOF or a hard read error (anything but EINTR/EAGAIN,
+// e.g. EIO) so the caller drops the fd from the select set instead of busy-
+// spinning on a fd that select keeps reporting readable.
+static DrainResult DrainFDNonBlocking(int fd, NSMutableData * _Nullable sink) {
+    char buffer[65536];
+    const int maxReadsPerCall = 64;  // 64 * 64 KB = 4 MB before yielding to the caller
+    for (int i = 0; i < maxReadsPerCall; i++) {
+        if (sink && sink.length > kMaxShellOutputBytes) {
+            return DrainResultPending;  // over cap; caller notices and terminates the shell
         }
-        chmod(tempfile.UTF8String, 0700);
-        task.arguments = @[ @"-c", tempfile ];
-
-        NSPipe *stdinPipe = [[NSPipe alloc] init];
-        NSPipe *outputPipe = [[NSPipe alloc] init];
-        NSPipe *errorPipe = [[NSPipe alloc] init];
-        task.standardInput = stdinPipe;
-        task.standardOutput = outputPipe;
-        task.standardError = errorPipe;
-
-        [task launch];
-
-        NSFileHandle *outputHandle = outputPipe.fileHandleForReading;
-        NSFileHandle *errorHandle = errorPipe.fileHandleForReading;
-        NSMutableData *accumulatedOutput = [[NSMutableData alloc] init];
-        NSMutableData *accumulatedError = [[NSMutableData alloc] init];
-
-        MakeNonBlocking(outputHandle.fileDescriptor);
-        MakeNonBlocking(errorHandle.fileDescriptor);
-
-        while (1) {
-            int fds[2] = { outputHandle.fileDescriptor, errorHandle.fileDescriptor };
-            int results[2] = { 0, 0 };
-            iTermSelect(fds, sizeof(fds) / sizeof(*fds), results, 0);
-            if (results[0]) {
-                NSData *data = outputHandle.availableData;
-                if (data.length == 0) {
-                    break;
-                }
-                [accumulatedOutput appendData:data];
+        const ssize_t n = read(fd, buffer, sizeof(buffer));
+        if (n > 0) {
+            if (sink) {
+                [sink appendBytes:buffer length:n];
             }
-            if (results[1]) {
-                NSData *data = errorHandle.availableData;
-                if (data.length == 0) {
-                    break;
-                }
-                [accumulatedError appendData:data];
-            }
-            if (accumulatedOutput.length > 1048576 ||
-                accumulatedError.length > 1048576) {
-                [task terminate];
+            continue;
+        }
+        if (n == 0) {
+            return DrainResultDone;  // EOF
+        }
+        // n < 0
+        if (errno == EINTR) {
+            continue;
+        }
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            return DrainResultPending;  // no data available now
+        }
+        return DrainResultDone;  // hard error (EIO, EBADF, …): treat the fd as finished
+    }
+    return DrainResultPending;  // hit the per-call budget; more may remain
+}
+
+// Runs `script` in the user's login shell. When `interactive` is YES the shell
+// runs with -i so it sources the user's interactive rc files (.zshrc/.bashrc/
+// config.fish/etc.), where CLAUDE_CONFIG_DIR and similar are usually set; a bare
+// -c shell sources none of those (zsh sources only .zshenv, bash nothing). Pass
+// NO for the fast path (PATH/SSH_AUTH_SOCK come from the exported environment),
+// since sourcing a heavy rc costs seconds and, with no controlling tty, also
+// prints job-control complaints to stderr.
+//
+// Either way, the command's OWN stdout is redirected to a private FIFO in an
+// unguessable 0700 mkdtemp directory. In interactive mode this is essential: rc
+// files and shell greetings/banners (fish_greeting, oh-my-zsh nags, MOTD echoes,
+// the xonsh banner) freely write to stdout and would otherwise corrupt the
+// captured output. Whatever they print lands on the shell's real stdout, which we
+// drain and discard, so `output` is the exact command output on every shell. (In
+// non-interactive mode there is no such noise, but the FIFO is harmless.)
+//
+// Completion is detected from the SHELL PROCESS exiting (polled), NOT from its
+// stdout/stderr pipes reaching EOF: interactive rc files routinely background a
+// long-lived daemon (ssh-agent, gpg-agent, powerline-daemon, any `foo &`) that
+// inherits the shell's stdout/stderr write ends and keeps them open after the
+// shell itself exits, so those pipes may never EOF.
+//
+// A negative status distinguishes "could not run to completion" from a real run:
+// -1 for the >1 MB-output kill, and -2 for everything else we abort ourselves
+// (setup failure of temp dir / FIFO / launch, the 15s deadline kill, or a select
+// error), versus the shell's own >= 0 exit status on success.
+- (void)reallyRunShellScript:(NSString *)script shell:(NSString *)shell interactive:(BOOL)interactive completion:(void (^)(NSData * _Nullable, NSData * _Nullable, int))completion {
+    // Unguessable, private (0700) working directory holding both the script file
+    // and the output FIFO. mkdtemp gives us the unguessable name and tight perms.
+    NSString *dirTemplate =
+        [NSTemporaryDirectory() stringByAppendingPathComponent:@"iTerm2-shellrun.XXXXXXXX"];
+    char *dirBuf = strdup(dirTemplate.fileSystemRepresentation);
+    if (!dirBuf) {
+        completion(nil, nil, -2);
+        return;
+    }
+    char *dir = mkdtemp(dirBuf);
+    if (!dir) {
+        free(dirBuf);
+        completion(nil, nil, -2);
+        return;
+    }
+    NSString *dirPath = [[NSFileManager defaultManager] stringWithFileSystemRepresentation:dir
+                                                                                    length:strlen(dir)];
+    free(dirBuf);
+
+    // Everything below runs the command and fills these; completion is called
+    // exactly once, after the @try and after cleanup, so a throwing reply block
+    // (which would trigger @catch) can never double-invoke it.
+    int fifoReadFD = -1;
+    int fifoWriteFD = -1;
+    NSTask *task = nil;
+    NSData *resultOutput = nil;
+    NSData *resultError = nil;
+    int resultStatus = 0;
+    BOOL ok = NO;
+
+    @try {
+        // do/while(0): a setup failure `break`s to cleanup without calling
+        // completion here (keeping completion single-call).
+        do {
+            NSString *fifoPath = [dirPath stringByAppendingPathComponent:@"out"];
+            // The redirect below single-quotes this path. A single-quoted string
+            // containing no single quote is a literal in bash/zsh/tcsh/fish/xonsh
+            // alike, so this is portable and doesn't depend on TMPDIR being free
+            // of spaces or metacharacters. The one thing single-quoting can't
+            // survive is an embedded single quote, so bail if the path has one
+            // (it never should: it's TMPDIR + an mkdtemp alphanumeric suffix +
+            // "/out").
+            if ([fifoPath containsString:@"'"]) {
                 break;
             }
-        }
+            if (mkfifo(fifoPath.fileSystemRepresentation, 0600) != 0) {
+                break;
+            }
 
-        [task waitUntilExit];
-        completion(accumulatedOutput, accumulatedError, task.terminationStatus);
+            NSString *scriptPath = [dirPath stringByAppendingPathComponent:@"script"];
+            // Redirect ONLY the command's stdout to the FIFO. rc-file/banner output,
+            // which was written to the shell's stdout before this command runs, is
+            // left on the shell's real stdout (drained and discarded below).
+            // PRECONDITION (see the protocol header): `script` is a SINGLE command.
+            // Appending `> fifo` binds to the last command only, so in a compound
+            // script (`a && b`, `a; b`) earlier output would be silently dropped.
+            // Making the redirect wrap the whole script is not portable across the
+            // shells we support (`{ …; }` breaks fish/csh), hence the precondition.
+            NSString *trimmed =
+                [script stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            NSString *fullScript = [NSString stringWithFormat:@"%@ > '%@'\n", trimmed, fifoPath];
+            NSError *writeError = nil;
+            [fullScript writeToFile:scriptPath atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+            if (writeError) {
+                break;
+            }
+            chmod(scriptPath.fileSystemRepresentation, 0700);
+
+            // Open the read end nonblocking (so the open itself doesn't wait for a
+            // writer), plus a write end we hold open for the whole run. The held
+            // writer keeps the read end from ever reporting EOF, so a nonblocking
+            // read of the FIFO returns EAGAIN (not 0) when momentarily empty.
+            fifoReadFD = open(fifoPath.fileSystemRepresentation, O_RDONLY | O_NONBLOCK);
+            if (fifoReadFD < 0) {
+                break;
+            }
+            fifoWriteFD = open(fifoPath.fileSystemRepresentation, O_WRONLY | O_NONBLOCK);
+            if (fifoWriteFD < 0) {
+                break;
+            }
+
+            task = [[NSTask alloc] init];
+            task.launchPath = shell;
+            task.arguments = interactive ? @[ @"-i", @"-c", scriptPath ] : @[ @"-c", scriptPath ];
+            // Null stdin: an interactive shell must not block trying to read input.
+            task.standardInput = [NSFileHandle fileHandleWithNullDevice];
+            NSPipe *outputPipe = [[NSPipe alloc] init];  // rc/banner noise: drained and discarded
+            NSPipe *errorPipe = [[NSPipe alloc] init];
+            task.standardOutput = outputPipe;
+            task.standardError = errorPipe;
+
+            [task launch];
+
+            const int shellOutFD = outputPipe.fileHandleForReading.fileDescriptor;
+            const int shellErrFD = errorPipe.fileHandleForReading.fileDescriptor;
+            MakeNonBlocking(shellOutFD);
+            MakeNonBlocking(shellErrFD);
+
+            NSMutableData *accumulatedOutput = [[NSMutableData alloc] init];
+            NSMutableData *accumulatedError = [[NSMutableData alloc] init];
+            // 0 = ran to completion; -1 = killed for exceeding the output cap;
+            // -2 = killed for exceeding the wall-clock deadline.
+            int failureStatus = 0;
+            BOOL shellOutEOF = NO;
+            BOOL shellErrEOF = NO;
+            BOOL fifoDone = NO;
+            // Hard wall-clock deadline. An interactive (-i) shell sources the
+            // user's full rc, which can hang indefinitely (a network-mounted
+            // prompt hook, a `read` in a conditional, conda on a slow volume),
+            // and our own poll loop has no other way to stop. Kept below the
+            // performRiskyBlock watchdog (20s, set on the runShellScript entry)
+            // so we terminate and clean up ourselves before the watchdog gives
+            // up — otherwise the process, this thread, the FIFO, and the temp
+            // dir would leak permanently and completion would never fire.
+            const NSTimeInterval deadline =
+                [NSProcessInfo processInfo].systemUptime + 15.0;
+
+            // Poll: select with a short timeout so we periodically re-check
+            // whether the shell process has exited, then drain whatever is
+            // readable. We can't wait for the pipes to EOF (a backgrounded rc
+            // daemon may hold them open forever), so process exit is the signal.
+            // Once a fd is finished (EOF, or a hard read error) we drop it from
+            // the set, otherwise it stays perpetually select-readable and would
+            // busy-spin. The FIFO normally never finishes (the held writer keeps
+            // it from EOF) so it only wakes on real data; but it too is dropped
+            // on a hard error, or it would spin to the deadline. The loop still
+            // terminates on process exit, so dropping every fd is harmless.
+            while (1) {
+                fd_set readset;
+                FD_ZERO(&readset);
+                int maxFD = -1;
+                if (!fifoDone) {
+                    FD_SET(fifoReadFD, &readset);
+                    if (fifoReadFD > maxFD) { maxFD = fifoReadFD; }
+                }
+                if (!shellOutEOF) {
+                    FD_SET(shellOutFD, &readset);
+                    if (shellOutFD > maxFD) { maxFD = shellOutFD; }
+                }
+                if (!shellErrEOF) {
+                    FD_SET(shellErrFD, &readset);
+                    if (shellErrFD > maxFD) { maxFD = shellErrFD; }
+                }
+                struct timeval tv = { .tv_sec = 0, .tv_usec = 100000 };  // 100 ms
+                // nfds is maxFD + 1; 0 (all fds dropped) makes select a plain
+                // 100 ms sleep, after which the exit/deadline checks still run.
+                const int selected = select(maxFD + 1, &readset, NULL, NULL, &tv);
+                if (selected > 0) {
+                    if (!fifoDone && FD_ISSET(fifoReadFD, &readset)) {
+                        fifoDone = (DrainFDNonBlocking(fifoReadFD, accumulatedOutput) == DrainResultDone);
+                    }
+                    if (!shellOutEOF && FD_ISSET(shellOutFD, &readset)) {
+                        shellOutEOF = (DrainFDNonBlocking(shellOutFD, nil) == DrainResultDone);  // rc/banner noise
+                    }
+                    if (!shellErrEOF && FD_ISSET(shellErrFD, &readset)) {
+                        shellErrEOF = (DrainFDNonBlocking(shellErrFD, accumulatedError) == DrainResultDone);
+                    }
+                } else if (selected < 0 && errno != EINTR) {
+                    // Our own polling broke; we have NOT observed the shell
+                    // exit. Terminate and take the grace/kill path rather than
+                    // falling through to a waitUntilExit that could block on a
+                    // still-running shell forever.
+                    syslog(LOG_WARNING, "pidinfo: select failed (%s); terminating shell", strerror(errno));
+                    [task terminate];
+                    failureStatus = -2;
+                    break;
+                }
+                if (accumulatedOutput.length > kMaxShellOutputBytes ||
+                    accumulatedError.length > kMaxShellOutputBytes) {
+                    [task terminate];
+                    failureStatus = -1;
+                    break;
+                }
+                if ([NSProcessInfo processInfo].systemUptime > deadline) {
+                    syslog(LOG_WARNING, "pidinfo: shell script exceeded deadline; terminating");
+                    [task terminate];
+                    failureStatus = -2;
+                    break;
+                }
+                if (!task.isRunning) {
+                    // Shell exited. One last nonblocking drain to pick up bytes
+                    // buffered in the FIFO/pipes between the final select and now.
+                    DrainFDNonBlocking(fifoReadFD, accumulatedOutput);
+                    DrainFDNonBlocking(shellOutFD, nil);
+                    DrainFDNonBlocking(shellErrFD, accumulatedError);
+                    break;
+                }
+            }
+
+            if (failureStatus != 0) {
+                // We SIGTERM'd the shell. Give it a short grace to die, then
+                // SIGKILL so a shell ignoring SIGTERM can't linger. Don't
+                // waitUntilExit unconditionally (it could block); the fds close
+                // below and any writer hits EPIPE on the gone FIFO.
+                const NSTimeInterval graceEnd =
+                    [NSProcessInfo processInfo].systemUptime + 1.0;
+                while (task.isRunning &&
+                       [NSProcessInfo processInfo].systemUptime < graceEnd) {
+                    usleep(50000);  // 50 ms
+                }
+                if (task.isRunning) {
+                    kill(task.processIdentifier, SIGKILL);
+                }
+                resultStatus = failureStatus;  // resultOutput/Error stay nil
+                ok = YES;
+            } else {
+                [task waitUntilExit];
+                resultOutput = accumulatedOutput;
+                resultError = accumulatedError;
+                resultStatus = (int)task.terminationStatus;
+                ok = YES;
+            }
+        } while (0);
     } @catch (NSException *exception) {
-        completion(nil, nil, 0);
+        ok = NO;
     }
 
+    if (fifoReadFD >= 0) {
+        close(fifoReadFD);
+    }
+    if (fifoWriteFD >= 0) {
+        close(fifoWriteFD);
+    }
+    [[NSFileManager defaultManager] removeItemAtPath:dirPath error:nil];
+
+    if (ok) {
+        completion(resultOutput, resultError, resultStatus);
+    } else {
+        // Setup failure (do/while break) or a launch exception: "could not run",
+        // distinct from a clean run's >= 0 status.
+        completion(nil, nil, -2);
+    }
 }
 
 - (void)getProcessInfoForProcessID:(NSNumber *)pid

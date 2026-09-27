@@ -20,6 +20,8 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
     func browserViewController(_ controller: iTermBrowserViewController,
                                didUpdateFavicon favicon: NSImage?)
     func browserViewController(_ controller: iTermBrowserViewController,
+                               didUpdateBackgroundColor color: NSColor?)
+    func browserViewController(_ controller: iTermBrowserViewController,
                                requestNewWindowForURL url: URL,
                                configuration: WKWebViewConfiguration) -> iTermBrowserWebView?
     func browserViewControllerShowFindPanel(_ controller: iTermBrowserViewController)
@@ -228,7 +230,7 @@ extension iTermBrowserViewController {
     @objc
     func terminate() {
         browserManager.webView.stopLoading()
-        browserManager.webView.loadHTMLString("", baseURL: URL("about:empty"))
+        browserManager.webView.loadHTMLString("", baseURL: URL(string: "about:empty"))
         browserManager.webView.navigationDelegate = nil
         browserManager.webView.uiDelegate = nil
         browserManager.webView.removeFromSuperview()
@@ -273,12 +275,12 @@ extension iTermBrowserViewController {
                 } catch {
                     videoWindowController?.close()
                     videoWindowController = nil
-                    iTermWarning.show(withTitle: "Could not create movie: \(error.localizedDescription)",
-                                      actions: ["OK"],
+                    iTermWarning.show(withTitle: String(localized: "BrowserViewController.CouldNotCreateMovie", defaultValue: "Could not create movie: \(error.localizedDescription)", comment: "Error shown when saving an instant replay movie fails"),
+                                      actions: [iTermLocalizedOK()],
                                       accessory: nil,
                                       identifier: nil,
                                       silenceable: .kiTermWarningTypePersistent,
-                                      heading: "Problem saving instant replay movie",
+                                      heading: String(localized: "BrowserViewController.ProblemSavingMovieHeading", defaultValue: "Problem saving instant replay movie", comment: "Heading for error when saving an instant replay movie fails"),
                                       window: view.window)
                 }
             }
@@ -721,6 +723,7 @@ extension iTermBrowserViewController {
                 completion(.success(FindOnPageOutput(results: results,
                                                      excessiveResultsDropped: dropped)))
             } catch {
+                // Localization unneeded
                 completion(.failure(BrowserManagerError(errorDescription: "The page could not be converted to markdown for processing")))
             }
         }
@@ -809,6 +812,10 @@ extension iTermBrowserViewController {
 
     private func setupBrowserManager() {
         browserManager.delegate = self
+        // Don't seed the page background color here: before any page has loaded, the web
+        // view's underPageBackgroundColor is WebKit's (light) default, not the page's
+        // real color. Seeding it would flip a dark-profile browser tab to light until a
+        // real page loads. The color is emitted once the page settles in didFinish.
     }
 
     private func setupToolbar() {
@@ -978,7 +985,7 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
             // Remove bookmark
             let success = await database.removeBookmark(url: currentURL)
             if success {
-                ToastWindowController.showToast(withMessage: "Bookmark Removed")
+                ToastWindowController.showToast(withMessage: String(localized: "BrowserViewController.BookmarkRemoved", defaultValue: "Bookmark Removed", comment: "Toast shown after removing a bookmark"))
             }
         } else {
             // Add bookmark first, then show tag editor
@@ -1100,6 +1107,10 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         delegate?.browserViewController(self, didUpdateFavicon: favicon)
     }
 
+    func browserManager(_ manager: iTermBrowserManager, didUpdateBackgroundColor color: NSColor?) {
+        delegate?.browserViewController(self, didUpdateBackgroundColor: color)
+    }
+
     func browserManager(_ manager: iTermBrowserManager, didUpdateCanGoBack canGoBack: Bool) {
         toolbar.updateNavigationButtons(canGoBack: canGoBack, canGoForward: manager.webView.canGoForward)
     }
@@ -1163,11 +1174,15 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         BookmarkDialogViewController.show(window: window) { [weak self] name in
             Task { @MainActor in
                 guard let self else { return }
-                try await self.browserManager.namedMarkManager?.add(with: name,
-                                                                    webView: self.browserManager.webView,
-                                                                    httpMethod: self.browserManager.currentHTTPMethod,
-                                                                    clickPoint: point)
-                NamedMarksDidChangeNotification(sessionGuid: nil).post()
+                do {
+                    try await self.browserManager.namedMarkManager?.add(with: name,
+                                                                        webView: self.browserManager.webView,
+                                                                        httpMethod: self.browserManager.currentHTTPMethod,
+                                                                        clickPoint: point)
+                    NamedMarksDidChangeNotification(sessionGuid: nil).post()
+                } catch {
+                    DLog("Failed to add named mark: \(error)")
+                }
             }
         }
     }
@@ -1328,7 +1343,7 @@ extension iTermBrowserViewController {
             }
 
             let savePanel = iTermModernSavePanel()
-            savePanel.defaultFilename = browserManager.webView.title ?? "Untitled"
+            savePanel.defaultFilename = browserManager.webView.title ?? String(localized: "BrowserViewController.Untitled", defaultValue: "Untitled", comment: "Default filename when the page has no title")
             let response = await savePanel.beginSheetModal(for: window)
             if response == .OK,
                 let item = savePanel.item,
@@ -1397,12 +1412,16 @@ extension iTermBrowserViewController {
                 let viewPoint = NSPoint(x: bounds.midX, y: bounds.midY)
                 let windowPoint = self.browserManager.webView.convert(viewPoint, to: nil)
                 let jsPoint = self.browserManager.webView.convertToJavaScriptCoordinates(windowPoint)
-                try await self.browserManager.namedMarkManager?.add(
-                    with: name,
-                    webView: self.browserManager.webView,
-                    httpMethod: self.browserManager.currentHTTPMethod,
-                    clickPoint: jsPoint)
-                NamedMarksDidChangeNotification(sessionGuid: nil).post()
+                do {
+                    try await self.browserManager.namedMarkManager?.add(
+                        with: name,
+                        webView: self.browserManager.webView,
+                        httpMethod: self.browserManager.currentHTTPMethod,
+                        clickPoint: jsPoint)
+                    NamedMarksDidChangeNotification(sessionGuid: nil).post()
+                } catch {
+                    DLog("Failed to add named mark: \(error)")
+                }
             }
         }
     }
@@ -1514,6 +1533,7 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
                 delegate?.browserViewController(self,
                                                 showError: error.localizedDescription,
                                                 suppressionKey: "NoSyncSuppressCopyModeErrors",
+                                                // Localization unneeded
                                                 identifier: "Copy Mode Error")
                 DLog("\(error.localizedDescription)")
                 return

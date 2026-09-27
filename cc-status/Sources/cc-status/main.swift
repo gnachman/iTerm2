@@ -1,228 +1,59 @@
 import Foundation
 
-// Get iTerm2 session ID from environment.
-// TERM_SESSION_ID is like "w0t0p0:D1B2BAE2-3D01-4BB6-9021-27D6CF210957"
-guard let termSessionID = ProcessInfo.processInfo.environment["TERM_SESSION_ID"],
-      let colonIndex = termSessionID.firstIndex(of: ":") else {
-    exit(0)
-}
-let sessionID = String(termSessionID[termSessionID.index(after: colonIndex)...])
-
-// Read JSON payload from stdin.
-let inputData = FileHandle.standardInput.readDataToEndOfFile()
-guard !inputData.isEmpty,
-      let json = try? JSONSerialization.jsonObject(with: inputData) as? [String: Any],
-      let eventName = json["hook_event_name"] as? String else {
-    exit(0)
-}
-
-// Map hook event to status, colors, and detail.
+// Driven by Claude Code hooks (~/.claude/settings.json). Codex CLI hooks (~/.codex/hooks.json)
+// send the same payload shape, so one binary serves both; the hook configuration passes
+// --agent codex to say which (see Agent).
 //
-// Detail lifecycle:
-//   • SET on events that carry rich, at-a-glance info (PermissionRequest, Stop,
-//     Notification for unusual subtypes).
-//   • CLEARED (set to "") on events that make prior detail stale: the start of a
-//     new turn (UserPromptSubmit), ongoing tool activity (Pre/PostToolUse), and
-//     session boundaries (SessionStart/End). This is what stops "Allow Edit: …"
-//     from sticking around after the user grants permission.
-//   • LEFT ALONE (nil) for duplicate signals — Notification(permission_prompt)
-//     would overwrite PermissionRequest's richer detail; Notification(idle_prompt)
-//     would overwrite Stop's last_assistant_message.
-// status/colors are nil for updates that only store the background-task
-// count without changing what's displayed (SubagentStop reaching zero).
-var status: String? = nil
-var dotColor: String? = nil
-var textColor: String? = nil
-// nil = don't touch detail; non-nil (including "") = send --detail through.
-var detail: String? = nil
-// nil = don't touch the stored count; non-nil = send --background-tasks.
-// iTerm2 keeps the count in RAM only (never written to disk); it exists
-// so a later idle_prompt, whose payload carries no task info, can read
-// back what the last Stop/SubagentStop knew.
-var backgroundTasks: Int? = nil
+// The entry point. The work is split across Addressing.swift (which session), HookEvent.swift
+// (what to say about it) and It2Runner.swift (saying it); what stays here is main() plus the
+// helpers that turn a hook payload into detail text and read back what iTerm2 holds.
 
-switch eventName {
-case "UserPromptSubmit", "PreToolUse", "PostToolUse":
-    status = "working"
-    dotColor = "#ff9500"
-    textColor = "#ff9500"
-    detail = ""  // new turn / tool activity — previous detail is stale
-case "PermissionRequest":
-    status = "waiting"
-    dotColor = "#5f87ff"
-    textColor = "#5f87ff"
-    detail = permissionDetail(json)
-case "Notification":
-    let notificationType = json["notification_type"] as? String
-    if notificationType == "idle_prompt" {
-        // Verified against Claude Code 2.1.201: idle_prompt payloads do
-        // NOT carry background_tasks, so read back the count the
-        // Stop/SubagentStop handlers stored in iTerm2. Without the
-        // fallback, the idle nudge (~60s after Stop) would flip a
-        // working-because-background session to idle, resurrecting the
-        // false-idle bug.
-        let running = backgroundTaskCount(json) ?? storedBackgroundTaskCount(it2SessionID: sessionID)
-        if running > 0 {
-            status = "working"
-            dotColor = "#ff9500"
-            textColor = "#ff9500"
-            detail = backgroundDetail(count: running)
-        } else {
-            status = "idle"
-            dotColor = "#00d75f"
-            textColor = "#888888"
-            if let message = json["last_assistant_message"] as? String {
-                // Re-assert the last message. Also replaces a stale
-                // "N background tasks running" line from an earlier
-                // Stop, if this payload happens to carry the message.
-                detail = condense(message)
-            } else {
-                // Clear the detail. An earlier Stop may have set
-                // "N background tasks running" and the tasks have
-                // since finished without another Stop (background
-                // shell commands end silently); leaving that line
-                // next to an idle dot would be false. The cost is
-                // that Stop's last_assistant_message no longer
-                // survives the nudge (2.1.201 idle_prompt payloads
-                // lack the message); truthful-but-empty beats
-                // sticky-but-possibly-false.
-                detail = ""
-            }
-        }
-    } else {
-        status = "waiting"
-        dotColor = "#5f87ff"
-        textColor = "#5f87ff"
-        // Skip detail for permission_prompt (PermissionRequest carries it better).
-        // Other subtypes (auth_success, elicitation_dialog, ...) get the message.
-        if notificationType != "permission_prompt", let message = json["message"] as? String {
-            detail = condense(message)
-        }
+func main() {
+    let environment = ProcessInfo.processInfo.environment
+    let agent = Agent(arguments: CommandLine.arguments)
+    guard let event = readHookEvent() else {
+        return
     }
-case "Stop":
-    // Stop fires whenever the main loop finishes a turn, including while
-    // background subagents (Agent tool with run_in_background) and
-    // background Bash tasks keep working. In that case the session is not
-    // meaningfully idle: a completion watcher that trusts "idle" here
-    // fires on every between-subagents lull. background_tasks (Claude
-    // Code 2.1.198+; shape verified against 2.1.201) lists the
-    // still-running work; stay "working" until a Stop arrives with none.
-    // Store the count in iTerm2 only when the payload actually carried
-    // the field: on older Claude Code it never exists, and the stored
-    // count correctly stays at its initial zero.
-    let running: Int
-    if let counted = backgroundTaskCount(json) {
-        running = counted
-        backgroundTasks = counted
-    } else {
-        running = 0
+    guard let address = resolveAddress(environment) else {
+        return
     }
-    if running > 0 {
-        status = "working"
-        dotColor = "#ff9500"
-        textColor = "#ff9500"
-        detail = backgroundDetail(count: running)
-    } else {
-        status = "idle"
-        dotColor = "#00d75f"
-        textColor = "#888888"
-        if let message = json["last_assistant_message"] as? String {
-            detail = condense(message)
-        } else {
-            detail = ""
-        }
+    guard let update = statusUpdate(forEvent: event.name, json: event.json, address: address, agent: agent),
+          !update.isEmpty else {
+        // Nothing to say. This happens on a Codex SubagentStop that leaves work
+        // running: the decrement already stored the new count and the display is
+        // deliberately unchanged, so there is no reason to spend another round
+        // trip on a set-status carrying only an address.
+        return
     }
-case "SubagentStop":
-    // Fires when any subagent finishes, including background agents
-    // completing while the main loop sits at the prompt, so it is the
-    // only signal that updates the count between turns. The payload
-    // still lists the agent that just stopped as "running" (verified on
-    // 2.1.201), so exclude it by agent_id. Only re-assert "working"
-    // while work remains: SubagentStop also fires for internal utility
-    // agents while the session is genuinely idle, and flashing those as
-    // "working" would create the inverse of the false-idle bug.
-    guard let remaining = backgroundTaskCount(json, excludingID: json["agent_id"] as? String) else {
-        exit(0)  // No field: nothing to learn from this event.
-    }
-    backgroundTasks = remaining
-    if remaining > 0 {
-        status = "working"
-        dotColor = "#ff9500"
-        textColor = "#ff9500"
-        detail = backgroundDetail(count: remaining)
-    }
-    // remaining == 0: last one done. Store the zero but change nothing
-    // visible; the main loop wakes to process the results and its own
-    // events (PostToolUse/Stop) report from here.
-case "StopFailure":
-    // The turn ended in an API error, but background tasks keep running
-    // independently; apply the same gate as Stop so a failed turn does
-    // not fake idleness during background work.
-    let running: Int
-    if let counted = backgroundTaskCount(json) {
-        running = counted
-        backgroundTasks = counted
-    } else {
-        running = storedBackgroundTaskCount(it2SessionID: sessionID)
-    }
-    if running > 0 {
-        status = "working"
-        dotColor = "#ff9500"
-        textColor = "#ff9500"
-        detail = backgroundDetail(count: running)
-    } else {
-        status = "idle"
-        dotColor = "#00d75f"
-        textColor = "#888888"
-        detail = ""
-    }
-case "SessionStart", "SessionEnd":
-    status = "idle"
-    dotColor = "#00d75f"
-    textColor = "#888888"
-    detail = ""  // session boundary — wipe stale detail
-    backgroundTasks = 0  // and the stored count with it
-default:
-    exit(0)
+    It2Runner(address: address, eventName: event.name, agent: agent).send(update)
 }
 
-// Build and run it2 invocation. Every field is presence-gated: an
-// update can change just the stored background-task count without
-// touching the visible status.
-var it2Args = [
-    "set-status",
-    "--session", sessionID,
-]
-if let status = status {
-    it2Args.append(contentsOf: ["--status", status])
-}
-if let dotColor = dotColor {
-    it2Args.append(contentsOf: ["--dot-color", dotColor])
-}
-if let textColor = textColor {
-    it2Args.append(contentsOf: ["--text-color", textColor])
-}
-// Pass --detail only when cc-status has an opinion; empty string explicitly clears.
-if let detail = detail {
-    it2Args.append(contentsOf: ["--detail", detail])
-}
-if let backgroundTasks = backgroundTasks {
-    it2Args.append(contentsOf: ["--background-tasks", String(backgroundTasks)])
-}
+// MARK: - Agent tty
 
-let it2 = resolveIt2()
-let process = Process()
-process.executableURL = it2.executable
-process.arguments = it2.leadingArgs + it2Args
-do {
-    try process.run()
-} catch {
-    FileHandle.standardError.write(Data("cc-status: failed to run it2: \(error)\n".utf8))
-    exit(0)
-}
-process.waitUntilExit()
-if process.terminationStatus != 0 {
-    FileHandle.standardError.write(Data("cc-status: it2 exited \(process.terminationStatus) for \(eventName)\n".utf8))
+/// Path of the terminal the agent is running in, or nil when there is none.
+/// Codex 0.155+ starts hooks with setsid (openai/codex#43876), so the hook has
+/// no controlling terminal of its own; the nearest ancestor that still has one
+/// is the agent.
+func agentTTYPath() -> String? {
+    if let own = FileHandle(forWritingAtPath: "/dev/tty") {
+        own.closeFile()
+        return "/dev/tty"
+    }
+    var pid = getppid()
+    while pid > 1 {
+        var info = kinfo_proc()
+        var size = MemoryLayout<kinfo_proc>.size
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
+        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else {
+            return nil
+        }
+        let dev = info.kp_eproc.e_tdev
+        if dev != -1, let name = devname(dev, S_IFCHR) {
+            return "/dev/" + String(cString: name)
+        }
+        pid = info.kp_eproc.e_ppid
+    }
+    return nil
 }
 
 // MARK: - it2 resolution
@@ -309,37 +140,43 @@ func backgroundDetail(count: Int) -> String {
 
 // MARK: - Stored background-task count
 //
-// idle_prompt payloads carry no background_tasks (verified on 2.1.201),
-// so the last count seen by Stop/StopFailure/SubagentStop is stored IN
-// iTerm2 (RAM only, alongside the rest of the session's tab status;
-// nothing touches the filesystem) via set-status --background-tasks,
-// and read back here. cc-status runs once per hook event and keeps no
-// state of its own.
+// idle_prompt payloads carry no background_tasks (verified on 2.1.201), so the last count seen by
+// Stop/StopFailure/SubagentStop is stored IN iTerm2 (RAM only, alongside the rest of the
+// session's tab status; nothing touches the filesystem) via set-status --background-tasks, and
+// read back here. iTerm2 also uses that count itself, to hold an expiring status back while
+// background work is outstanding. cc-status runs once per hook event and keeps no state of its
+// own.
+
+/// Trimmed stdout of an it2 subcommand, or nil if it failed. Always quiet: these reads happen
+/// mid-turn and a failure is not worth a word; each caller has a safe default instead.
+func quietIt2Output(_ arguments: [String]) -> String? {
+    guard let result = runIt2(arguments + ["--quiet-if-unresolved"]), result.status == 0 else {
+        return nil
+    }
+    return result.stdout
+}
 
 /// Ask iTerm2 for the stored count. 0 when unavailable for any reason
 /// (no stored value, session gone, it2 failed): the safe default, since
 /// it just restores the pre-background-awareness behavior.
-func storedBackgroundTaskCount(it2SessionID: String) -> Int {
-    let it2 = resolveIt2()
-    let process = Process()
-    process.executableURL = it2.executable
-    process.arguments = it2.leadingArgs + ["session", "get-background-tasks", "-s", it2SessionID]
-    let pipe = Pipe()
-    process.standardOutput = pipe
-    process.standardError = FileHandle.nullDevice
-    do {
-        try process.run()
-    } catch {
-        return 0
-    }
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    process.waitUntilExit()
-    guard process.terminationStatus == 0,
-          let output = String(data: data, encoding: .utf8),
-          let count = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+func storedBackgroundTaskCount(addressArgs: [String]) -> Int {
+    guard let output = quietIt2Output(["session", "get-background-tasks"] + addressArgs),
+          let count = Int(output) else {
         return 0
     }
     return max(0, count)
+}
+
+/// Adds to the stored background-task count and returns the status as it stands afterwards, or
+/// nil if the call failed or its answer could not be read. One it2 round trip, and atomic: iTerm2
+/// applies the delta where the count lives, so two hooks changing it at once cannot lose one.
+func changeBackgroundTaskCount(by delta: Int, addressArgs: [String]) -> CurrentStatus? {
+    guard let output = quietIt2Output(["set-status"] + addressArgs
+                                      + optionArgs("--background-tasks-delta", String(delta))
+                                      + ["--json"]) else {
+        return nil
+    }
+    return CurrentStatus(json: output)
 }
 
 // MARK: - Detail formatting
@@ -407,6 +244,16 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
     case "Agent", "Task":
         let desc = (toolInput["description"] as? String) ?? ""
         return "\(toolName): \(desc)"
+    case "apply_patch":
+        // Codex CLI's file edit. tool_input is the whole patch; show the files.
+        let patch = (toolInput["patch"] as? String) ?? (toolInput["input"] as? String) ?? ""
+        let files = applyPatchFiles(patch)
+        if files.isEmpty {
+            return "Edit"
+        }
+        return condense("Edit: " + files.map { shortPath($0) }.joined(separator: ", "))
+    case "update_plan":
+        return "Update plan"
     case "WebFetch":
         let url = (toolInput["url"] as? String) ?? ""
         return "WebFetch: \(shortURL(url))"
@@ -430,10 +277,35 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
     }
 }
 
+/// Files named in the "*** Update/Add/Delete File:" headers of an apply_patch.
+func applyPatchFiles(_ patch: String) -> [String] {
+    var files: [String] = []
+    for line in patch.split(separator: "\n", omittingEmptySubsequences: true) {
+        for prefix in ["*** Update File: ", "*** Add File: ", "*** Delete File: "] {
+            if line.hasPrefix(prefix) {
+                let path = String(line.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                if !path.isEmpty, !files.contains(path) {
+                    files.append(path)
+                }
+            }
+        }
+    }
+    return files
+}
+
 /// Split a PascalCase/camelCase tool identifier into spaced words so unhandled
 /// tools read naturally instead of leaking their raw keyword. Keeps acronym runs
 /// together: "AskUserQuestion" -> "Ask User Question", "URLFetch" -> "URL Fetch".
 func humanize(_ identifier: String) -> String {
+    // Codex names its tools in snake_case, which the pass below cannot see:
+    // split there first so "read_file" reads as "Read File".
+    if identifier.contains("_") {
+        let words = identifier.split(separator: "_").map { part -> String in
+            let word = humanize(String(part))
+            return word.prefix(1).uppercased() + word.dropFirst()
+        }
+        return words.isEmpty ? identifier : words.joined(separator: " ")
+    }
     let chars = Array(identifier)
     var words: [String] = []
     var current = ""
@@ -478,3 +350,7 @@ func shortURL(_ raw: String) -> String {
     let first = url.pathComponents.dropFirst().first ?? ""
     return first.isEmpty ? host : "\(host)/\(first)"
 }
+
+// Runs last, and is the only top-level statement in the package: SPM allows those in main.swift
+// alone, which is why the other three files hold declarations only.
+main()

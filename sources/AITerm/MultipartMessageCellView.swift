@@ -10,7 +10,7 @@ import AppKit
 class CodeAttachmentTextView: AutoSizingTextView {}
 class StatusUpdateTextView: AutoSizingTextView {}
 
-class MultipartMessageCellView: MessageCellView {
+class MultipartMessageCellView: MessageCellView, ChatFindableCellView {
     let bubbleView = BubbleView()
 
     private let timestamp: MessageTimestamp = {
@@ -56,6 +56,11 @@ class MultipartMessageCellView: MessageCellView {
             }
         }
     }
+
+    // Text-bearing subparts in order (file attachments have no text view).
+    // Must match the segment order produced by
+    // ChatViewController.findSegments(for:) for a .multipart flavor.
+    var findableTextViews: [NSTextView] { textViews }
 
     static let bubbleInsetTop: CGFloat = 8
     static let bubbleInsetBottom: CGFloat = 8
@@ -379,7 +384,7 @@ class MultipartMessageCellView: MessageCellView {
         header.wantsLayer = true
         updateCodeBlockHeaderColors(header)
 
-        let titleLabel = NSTextField(labelWithString: "Code Interpreter")
+        let titleLabel = NSTextField(labelWithString: String(localized: "MultipartMessageCell.CodeInterpreterTitle", defaultValue: "Code Interpreter", comment: "Header label for a code interpreter code block"))
         titleLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize, weight: .medium)
         titleLabel.textColor = effectiveAppearance.it_isDark ? .white : .black
         titleLabel.identifier = NSUserInterfaceItemIdentifier("codeBlockTitle")
@@ -389,15 +394,15 @@ class MultipartMessageCellView: MessageCellView {
         // Same reason as in RegularMessageCellView: prevent NSScrollView's
         // focus-tracking auto-scroll on click.
         copyButton.refusesFirstResponder = true
-        copyButton.title = "Copy"
+        copyButton.title = iTermLocalizedCopy()
         if #available(macOS 15, *) {
             copyButton.image = NSImage.it_image(forSymbolName: SFSymbol.documentOnDocument.rawValue,
-                                                accessibilityDescription: "Copy",
+                                                accessibilityDescription: iTermLocalizedCopy(),
                                                 fallbackImageName: "document.on.document",
                                                 for: MultipartMessageCellView.self)
         } else {
             copyButton.image = NSImage.it_image(forSymbolName: SFSymbol.docOnDoc.rawValue,
-                                                accessibilityDescription: "Copy",
+                                                accessibilityDescription: iTermLocalizedCopy(),
                                                 fallbackImageName: "document.on.document",
                                                 for: MultipartMessageCellView.self)
         }

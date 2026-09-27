@@ -45,6 +45,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString * _Nullable)keyInBindingDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;
 - (NSDictionary * _Nullable)valueInBindingDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;
+
+// YES if some binding in `dict` shares this keystroke's physical key and modifiers
+// (its portableSerialized), regardless of the character. Used to detect that a
+// keystroke would match were language-agnostic (physical key) matching enabled.
+// Returns NO if this keystroke has no virtual key code.
+- (BOOL)hasPhysicalKeyMatchInDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;
 - (iTermKeystroke *)keystrokeWithoutVirtualKeyCode;
 
 @end

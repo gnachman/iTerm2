@@ -21,10 +21,8 @@ class ConductorRegistry {
             conductors[identity] = existing.map { WeakBox($0) } + [WeakBox(conductor)]
         }
         if existing.isEmpty {
-            if #available (macOS 11.0, *) {
-                NotificationCenter.default.post(name: SSHFilePanel.connectedHostsDidChangeNotification,
-                                                object: nil)
-            }
+            NotificationCenter.default.post(name: SSHFilePanel.connectedHostsDidChangeNotification,
+                                            object: nil)
         }
     }
 
@@ -37,11 +35,9 @@ class ConductorRegistry {
             } else {
                 conductors[sshIdentity] = updated.map { WeakBox($0) }
             }
-            if #available (macOS 11.0, *) {
-                if updated.count < existing.count {
-                    NotificationCenter.default.post(name: SSHFilePanel.connectedHostsDidChangeNotification,
-                                                    object: nil)
-                }
+            if updated.count < existing.count {
+                NotificationCenter.default.post(name: SSHFilePanel.connectedHostsDidChangeNotification,
+                                                object: nil)
             }
         }
     }
@@ -71,7 +67,6 @@ class ConductorRegistry {
     }
 }
 
-@available(macOS 11, *)
 extension ConductorRegistry: SSHFilePanelDataSource {
     func remoteFilePanelSSHEndpoints(for identity: SSHIdentity) -> [SSHEndpoint] {
         return self[identity].filter { $0.delegate != nil }

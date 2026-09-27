@@ -1,0 +1,22 @@
+#!/bin/sh
+# Manual testing of the Codex hooks against a development build.
+#
+# Point ~/.codex/hooks.json at this script and run codex inside a tab of
+# Build/Development/iTerm2.app. Using the bundled cc-status rather than
+# cc-status/bin matters: cc-status looks for it2 next to itself, and the copy
+# inside the bundle sits beside the freshly built it2. The installed
+# /Applications or ~/Applications iTerm2 ships an older it2 with no
+# --background-tasks-delta, and cc-status would silently fail every decrement
+# against it.
+#
+# The tab supplies IT2_SUITE, so it2 reaches the development instance rather
+# than whichever iTerm2 owns the default socket.
+#
+#   sed "s|CHECKOUT|$PWD|" tests/codex-hooks.json \
+#     | sed "s|tests/cc-status-codex|tests/cc-status-codex-dev|" \
+#     > ~/.codex/hooks.json
+#
+# Codex asks to trust a changed hooks.json on next launch; approve it, or the
+# hooks fail silently.
+exec "$(dirname "$0")/../Build/Development/iTerm2.app/Contents/Resources/utilities/cc-status" \
+    --agent codex "$@"

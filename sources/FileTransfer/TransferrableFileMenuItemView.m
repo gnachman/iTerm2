@@ -12,19 +12,11 @@
 const CGFloat progressIndicatorHeight = 6;
 
 static CGFloat TransferrableFileMenuItemViewLeftMargin(void) {
-    if (@available(macOS 10.16, *)) {
-        return 14;
-    } else {
-        return 20;
-    }
+    return 14;
 }
 
 static CGFloat TransferrableFileMenuItemViewRightMargin(void) {
-    if (@available(macOS 10.16, *)) {
-        return 14;
-    } else {
-        return 8;
-    }
+    return 14;
 }
 
 @interface TransferrableFileMenuItemView ()

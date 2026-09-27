@@ -32,6 +32,18 @@ struct CreateView: View {
     }
 
     var body: some View {
+        if !model.aiAvailable {
+            // Creating a chat is an AI feature; when the Mac has AI off, explain
+            // rather than offer a picker that can't produce a working chat.
+            AIUnavailablePanel()
+                .navigationTitle("New Chat")
+                .navigationBarTitleDisplayMode(.inline)
+        } else {
+            picker
+        }
+    }
+
+    private var picker: some View {
         VStack(spacing: 0) {
             Picker("Chat with", selection: $kind) {
                 Text("A session").tag(Kind.session)

@@ -104,6 +104,26 @@ struct RegisterWatchArgs: Codable {
     }
 }
 
+struct RegisterTimerArgs: Codable {
+    // Relative delay in seconds from now. Mutually exclusive with fireAt; the
+    // dispatcher validates that exactly one is supplied.
+    let delaySeconds: Double?
+    // Absolute wall-clock instant, ISO 8601 (e.g. "2026-09-07T17:00:00-07:00").
+    // Mutually exclusive with delaySeconds.
+    let fireAt: String?
+    // Optional free-text reminder echoed back when the timer fires so the agent
+    // remembers what it planned to do.
+    let note: String?
+    // The user asked to be alerted: push to the paired phone when the timer fires.
+    let notifyUser: Bool?
+    enum CodingKeys: String, CodingKey {
+        case delaySeconds = "delay_seconds"
+        case fireAt = "fire_at"
+        case note
+        case notifyUser = "notify_user"
+    }
+}
+
 struct StartCodeReviewArgs: Codable {
     let sessionGuid: String
     // Pick the prompt by name from the user's saved prompts (see
@@ -201,6 +221,7 @@ enum ToolName: String, CaseIterable {
     case startSession = "start_session"
     case startCodeReview = "start_code_review"
     case registerWatch = "register_watch"
+    case registerTimer = "register_timer"
     case unregisterWatch = "unregister_watch"
     case listWatches = "list_watches"
     case notify = "notify"
@@ -237,6 +258,9 @@ enum OrchestratorCommand {
     // immediately; iTerm2 delivers a status_update message into the
     // chat when the watched condition fires.
     case registerWatch(RegisterWatchArgs)
+    // Async timer that fires once at a wall-clock time. Non-blocking, like
+    // register_watch; iTerm2 delivers a status_update into the chat on fire.
+    case registerTimer(RegisterTimerArgs)
     case unregisterWatch(watcherID: String)
     case listWatches
 
@@ -269,7 +293,7 @@ enum OrchestratorCommand {
             return .write
         case .startSession:
             return .spawn
-        case .registerWatch, .unregisterWatch, .listWatches:
+        case .registerWatch, .registerTimer, .unregisterWatch, .listWatches:
             return .watcher
         case .notify, .requestNotificationPermission:
             // These touch the user's own phone, not a session, so they
@@ -302,7 +326,7 @@ enum OrchestratorCommand {
         case .listWorkgroups, .getState, .getScreenContents, .scrollWheel,
                 .listWorkgroupClippings,
                 .startSession,
-                .registerWatch, .unregisterWatch, .listWatches,
+                .registerWatch, .registerTimer, .unregisterWatch, .listWatches,
                 .notify, .requestNotificationPermission:
             return .none
         }
@@ -404,10 +428,14 @@ struct WatcherDescription: Codable {
     // register_watch form that created the watcher.
     let targetState: SessionState?
     let condition: String?
+    // Timer watchers only: the absolute wall-clock instant it will fire, ISO 8601.
+    // Omitted from the JSON when nil (synthesized encodeIfPresent).
+    let fireAt: String?
     let registeredAt: String  // ISO 8601
     // Optional advisory surfaced to the model at registration, e.g. a tab-status
     // watch that has no screen-based backstop because View Contents isn't
-    // granted. Omitted from the JSON when nil (synthesized encodeIfPresent).
+    // granted. For a timer, the free-text reminder the agent attached. Omitted
+    // from the JSON when nil (synthesized encodeIfPresent).
     let note: String?
     enum CodingKeys: String, CodingKey {
         case watcherID = "watcher_id"
@@ -417,6 +445,7 @@ struct WatcherDescription: Codable {
         case roleName = "role_name"
         case targetState = "target_state"
         case condition
+        case fireAt = "fire_at"
         case registeredAt = "registered_at"
         case note
     }

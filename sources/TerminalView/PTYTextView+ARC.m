@@ -155,10 +155,10 @@ iTermCommandInfoViewControllerDelegate>
     if (item.action == @selector(sshDisconnect:)) {
         NSString *name = [self.delegate textViewCurrentSSHSessionName];
         if (name) {
-            item.title = [NSString stringWithFormat:@"Disconnect from %@", name];
+            item.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYTextView.DisconnectFrom", nil, [NSBundle mainBundle], @"Disconnect from %@", @"Menu item title; %@ is the SSH session name"), name];
             return YES;
         } else {
-            item.title = @"Disconnect";
+            item.title = NSLocalizedStringWithDefaultValue(@"PTYTextView.Disconnect", nil, [NSBundle mainBundle], @"Disconnect", @"Menu item title to disconnect from an SSH session");
         }
     }
     if (item.action == @selector(toggleRemoteHostCanControlIterm2:)) {
@@ -177,13 +177,13 @@ iTermCommandInfoViewControllerDelegate>
             return NO;
         }
         if (!self.selection.hasSelection && !self.selection.live) {
-            item.title = @"Fold/Unfold";
+            item.title = NSLocalizedStringWithDefaultValue(@"PTYTextView.FoldUnfold", nil, [NSBundle mainBundle], @"Fold/Unfold", @"Menu item title for folding or unfolding lines");
             return NO;
         }
         if ([self selectionContainsFold]) {
-            item.title = @"Unfold in Selection";
+            item.title = NSLocalizedStringWithDefaultValue(@"PTYTextView.UnfoldInSelection", nil, [NSBundle mainBundle], @"Unfold in Selection", @"Menu item title for unfolding folded lines within the selection");
         } else {
-            item.title = @"Fold Selected Lines";
+            item.title = NSLocalizedStringWithDefaultValue(@"PTYTextView.FoldSelectedLines", nil, [NSBundle mainBundle], @"Fold Selected Lines", @"Menu item title for folding the selected lines");
         }
         return YES;
     }
@@ -676,12 +676,11 @@ iTermCommandInfoViewControllerDelegate>
 
     iTermSelection *selection = [[iTermSelection alloc] init];
     selection.delegate = self;
-    [selection beginSelectionAtAbsCoord:absCoordRange.start
-                                   mode:kiTermSelectionModeCharacter
-                                 resume:NO
-                                 append:NO];
-    [selection moveSelectionEndpointTo:absCoordRange.end];
-    [selection endLiveSelection];
+    // absCoordRange is LOGICAL. Commit it as a logical selection rather than
+    // driving a character-mode live selection, which with bidi on would treat it
+    // as visual columns and extract the wrong text on right-to-left lines.
+    [selection setSelectedLogicalRange:VT100GridAbsWindowedRangeMake(absCoordRange, 0, 0)
+                                  mode:kiTermSelectionModeCharacter];
     return [self promisedStringForSelectedTextCappedAtSize:INT_MAX
                                          minimumLineNumber:0
                                                 timestamps:NO
@@ -829,10 +828,10 @@ iTermCommandInfoViewControllerDelegate>
                         mouseLocation:(NSPoint)mouseLocation {
     iTermSimpleContextMenu *menu = [[iTermSimpleContextMenu alloc] init];
     __weak __typeof(self) weakSelf = self;
-    [menu addItemWithTitle:@"Look Up in Dictionary" action:^{
+    [menu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"PTYTextView.LookUpInDictionary", nil, [NSBundle mainBundle], @"Look Up in Dictionary", @"Context menu item that looks up the selected word in the dictionary") action:^{
         [weakSelf showDefinitionForWordAt:clickPoint];
     }];
-    [menu addItemWithTitle:@"Quick Look" action:^{
+    [menu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"PTYTextView.QuickLook", nil, [NSBundle mainBundle], @"Quick Look", @"Context menu item that opens Quick Look") action:^{
         [weakSelf openQuickLookForURL:url
                             urlAction:urlAction
                             withEvent:event];
@@ -936,8 +935,13 @@ iTermCommandInfoViewControllerDelegate>
         return;
     }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self.dataSource];
+    // clickPoint is a visual grid coordinate; rangeForWordAt works in logical
+    // space, so convert it (a no-op unless the line is bidi-reordered). Without
+    // this, "Look Up" landed on the wrong word on right-to-left lines.
+    const VT100GridCoord logicalCoord =
+        [self logicalCoordForVisualCoord:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
     VT100GridWindowedRange range =
-    [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
+    [extractor rangeForWordAt:logicalCoord
                 maximumLength:kReasonableMaximumWordLength];
     NSAttributedString *word = [extractor contentInRange:range
                                        attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea, const iTermImmutableMetadata *metadata) {
@@ -1388,9 +1392,7 @@ iTermCommandInfoViewControllerDelegate>
           minimumLineNumber:(int)minimumLineNumber
                  timestamps:(BOOL)timestamps
                   selection:(iTermSelection *)selection {
-    if (@available(macOS 11.0, *)) {
-        [[iTermAsyncSelectionProvider currentProvider] cancel];
-    }
+    [[iTermAsyncSelectionProvider currentProvider] cancel];
     switch (style) {
         case iTermCopyTextStyleAttributed:
             return [[self promisedAttributedStringForSelectedTextCappedAtSize:maxBytes
@@ -1981,7 +1983,7 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
         }
     }
     if (copied) {
-        [ToastWindowController showToastWithMessage:@"Copied"
+        [ToastWindowController showToastWithMessage:NSLocalizedStringWithDefaultValue(@"PTYTextView.Copied", nil, [NSBundle mainBundle], @"Copied", @"Toast shown after copying text")
                                            duration:1.5
                                    screenCoordinate:[NSEvent mouseLocation]
                                           pointSize:12];
@@ -2070,8 +2072,8 @@ runCommandInBackground:(NSString *)command {
     iTermBackgroundCommandRunner *runner =
         [[iTermBackgroundCommandRunner alloc] initWithCommand:command
                                                         shell:self.delegate.textViewShell
-                                                        title:@"Smart Selection Action"];
-    runner.notificationTitle = @"Smart Selection Action Failed";
+                                                        title:NSLocalizedStringWithDefaultValue(@"PTYTextView.SmartSelectionActionTitle", nil, [NSBundle mainBundle], @"Smart Selection Action", @"Title for a background command run by a smart selection action")];
+    runner.notificationTitle = NSLocalizedStringWithDefaultValue(@"PTYTextView.SmartSelectionActionFailed", nil, [NSBundle mainBundle], @"Smart Selection Action Failed", @"Notification title shown when a smart selection action fails");
     [runner run];
 }
 
@@ -2149,15 +2151,14 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
        inspectImage:(id<iTermImageInfoReading>)imageInfo {
     if (imageInfo) {
         NSString *text = [NSString stringWithFormat:
-                          @"Filename: %@\n"
-                          @"Dimensions: %d x %d",
+                          NSLocalizedStringWithDefaultValue(@"PTYTextView.ImageInfo", nil, [NSBundle mainBundle], @"Filename: %1$@\nDimensions: %2$d x %3$d", @"Image inspector text; %@ is the file name and the two %d are the pixel width and height"),
                           imageInfo.filename,
                           (int)imageInfo.image.size.width,
                           (int)imageInfo.image.size.height];
 
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = text;
-        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:iTermLocalizedOK()];
         [alert layout];
         [alert runModal];
     }
@@ -2208,6 +2209,11 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     const NSRect visibleRect = [self visibleRect];
     const double sideMargins = [iTermPreferences sideMargins];
 
+    // Internal geometry: use raw allSubSelections. During an in-progress bidi
+    // character drag the live range holds visual columns, which is what a pixel rect
+    // wants; logicalSubSelections would decompose it into logical runs. (In practice
+    // this only ever reads a committed selection, where the two are identical, but the
+    // rule is: logical for external consumers, raw for geometry.)
     for (iTermSubSelection *sub in self.selection.allSubSelections) {
         VT100GridAbsCoordRange absRange = sub.absRange.coordRange;
 
@@ -2749,6 +2755,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 - (BOOL)contextMenuWillDownloadWithSSHIntegrationOnAbsLine:(long long)absLine {
     __block BOOL result = NO;
     [self withRelativeCoord:VT100GridAbsCoordMake(0, absLine) block:^(VT100GridCoord coord) {
+        // Localization unneeded
         SCPPath *path = [self.dataSource scpPathForFile:@"placeholder" onLine:coord.y];
         result = [self.delegate textViewCanUseSSHIntegrationFor:path];
     }];
@@ -3043,7 +3050,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [self copyString:content];
     const NSPoint p = view.centerScreenCoordinate;
     if (p.x == p.x) {
-        [ToastWindowController showToastWithMessage:@"Copied"
+        [ToastWindowController showToastWithMessage:NSLocalizedStringWithDefaultValue(@"PTYTextView.Copied", nil, [NSBundle mainBundle], @"Copied", @"Toast shown after copying text")
                                            duration:1
                                    screenCoordinate:p
                                           pointSize:12];

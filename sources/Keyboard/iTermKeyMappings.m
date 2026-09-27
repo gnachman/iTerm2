@@ -13,6 +13,7 @@
 #import "ProfileModel.h"
 #import "iTermKeyBindingAction.h"
 #import "iTermKeystroke.h"
+#import "iTermPreferences.h"
 #import "iTermPresetKeyMappings.h"
 #import "iTermUserDefaults.h"
 #import "iTermUserDefaultsObserver.h"
@@ -53,6 +54,31 @@ static NSDictionary *gGlobalKeyMapping;
 
     return [self localActionForKeystroke:keystroke
                              keyMappings:[self globalKeyMap]];
+}
+
++ (BOOL)keystrokeWouldMatchOnlyByPhysicalKey:(iTermKeystroke *)keystroke
+                                 keyMappings:(NSDictionary *)keyMappings {
+    if ([iTermPreferences boolForKey:kPreferenceKeyLanguageAgnosticKeyBindings]) {
+        // Physical-key matching is already on, so there is nothing to suggest.
+        return NO;
+    }
+    if (!keystroke.hasVirtualKeyCode) {
+        return NO;
+    }
+    if ([self actionForKeystroke:keystroke keyMappings:keyMappings]) {
+        // Already matches by character; no suggestion needed.
+        return NO;
+    }
+    // hasPhysicalKeyMatchInDictionary: treats a nil/non-dictionary as no match, so a
+    // nil keyMappings (global-only search) needs no separate guard here.
+    const BOOL match =
+        [keystroke hasPhysicalKeyMatchInDictionary:keyMappings] ||
+        [keystroke hasPhysicalKeyMatchInDictionary:[self globalKeyMap]];
+    if (match) {
+        DLog(@"Keystroke %@ matches no binding by character but would match by physical key",
+             keystroke.serialized);
+    }
+    return match;
 }
 
 + (iTermKeyBindingAction *)globalActionAtIndex:(NSInteger)rowIndex {

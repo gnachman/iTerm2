@@ -13,7 +13,11 @@ struct HomeView: View {
 
     var body: some View {
         Group {
-            if model.chats.isEmpty {
+            if !model.aiAvailable {
+                // AI is off on the paired Mac: no chats exist. Explain why and point
+                // the user to the Sessions tab, which still works.
+                AIUnavailablePanel()
+            } else if model.chats.isEmpty {
                 emptyState
             } else {
                 List(model.chats, id: \.chat.id) { entry in
@@ -62,6 +66,8 @@ struct HomeView: View {
                 } label: {
                     Label("New Chat", systemImage: "square.and.pencil")
                 }
+                // Creating a chat needs AI; disable when the Mac has it off.
+                .disabled(!model.aiAvailable)
             }
         }
     }

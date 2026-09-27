@@ -8,12 +8,10 @@
 import WebKit
 import Foundation
 
-@available(macOS 11.0, *)
 @objc protocol iTermBrowserBookmarkViewHandlerDelegate: AnyObject {
     @MainActor func bookmarkViewHandlerDidNavigateToURL(_ handler: iTermBrowserBookmarkViewHandler, url: String)
 }
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserBookmarkViewHandler)
 @MainActor
 class iTermBrowserBookmarkViewHandler: NSObject, iTermBrowserPageHandler {
@@ -28,7 +26,6 @@ class iTermBrowserBookmarkViewHandler: NSObject, iTermBrowserPageHandler {
 }
 
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserBookmarkViewHandler)
 @MainActor
 extension iTermBrowserBookmarkViewHandler {

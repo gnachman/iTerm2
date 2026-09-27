@@ -40,12 +40,12 @@ class ProfileDocument: NSObject {
                 newName != name,
                 let profileWithName = ProfileModel.sharedInstance().bookmark(withName: name) {
                 let selection = iTermWarning.show(
-                    withTitle: "Would you like to open the profile formerly named \(name) that is now called \(newName) (which this shortcut refers to), or the profile that currently has the name \(name)?",
-                    actions: [ "Open \(name)", "Open \(newName)", "Cancel"],
+                    withTitle: String(localized: "ProfileDocument.RenamedPrompt", defaultValue: "Would you like to open the profile formerly named \(name) that is now called \(newName) (which this shortcut refers to), or the profile that currently has the name \(name)?", comment: "Prompt asking which profile to open when a shortcut refers to a renamed profile"),
+                    actions: [ String(localized: "ProfileDocument.OpenName", defaultValue: "Open \(name)", comment: "Button to open the profile that currently has the old name"), String(localized: "ProfileDocument.OpenNewName", defaultValue: "Open \(newName)", comment: "Button to open the renamed profile the shortcut refers to"), iTermLocalizedCancel()],
                     accessory: nil,
                     identifier: "NoSyncOpenRenamedProfile",
                     silenceable: .kiTermWarningTypePermanentlySilenceable,
-                    heading: "Profile Renamed",
+                    heading: String(localized: "ProfileDocument.RenamedHeading", defaultValue: "Profile Renamed", comment: "Heading of the alert shown when a profile shortcut refers to a renamed profile"),
                     window: controller.currentTerminal?.window())
                 switch selection {
                 case .kiTermWarningSelection0:
@@ -66,6 +66,38 @@ class ProfileDocument: NSObject {
         }
     }
 
+    // Locale-independent on-disk name for the Recents symlink. This filename is
+    // effectively an identifier: both the create and cleanup paths key off it, so
+    // it MUST NOT be localized. If it varied by language, switching the UI
+    // language would strand the links created under the previous language on disk
+    // (their targets are still valid), and macOS Recents would then show one
+    // duplicate entry per language for the same profile, forever.
+    static func recentsLinkFilename(name: String) -> String {
+        return "New “\(name)” tab"
+    }
+
+    // Writes the realfile that backs a Recents entry and (re)creates the stable
+    // symlink at linkURL pointing at it. Because linkURL's filename is
+    // locale-independent (see recentsLinkFilename), calling this again for the
+    // same profile overwrites the same link instead of leaving a per-language
+    // duplicate behind.
+    static func writeRecentLink(guid: String, name: String, linkURL: URL, basePath: String) throws {
+        try? FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: false)
+        // Use a fresh UUID because profile names are subject to change and you don't want
+        // to be in a situation where a profile gets renamed and you have two links
+        // with different names ("Old Name" and "New Name") linking to the same .itermtab
+        // file, as one will certainly disagree with the contents of the file, which also
+        // lists the name.
+        let path = basePath.appending(pathComponent: UUID().uuidString + ".itermtab")
+        let realURL = URL(fileURLWithPath: path)
+        let contents = guid + "\n" + name
+        try contents.write(to: realURL, atomically: false, encoding: .utf8)
+
+        try? FileManager.default.removeItem(at: linkURL)
+        try FileManager.default.createSymbolicLink(atPath: linkURL.path,
+                                                   withDestinationPath: realURL.lastPathComponent)
+    }
+
     @objc
     static func addToRecents(guid: String, name: String) {
         guard iTermAdvancedSettingsModel.saveProfilesToRecentDocuments() else {
@@ -76,30 +108,15 @@ class ProfileDocument: NSObject {
         }
         let basePath = appSupport.appending(pathComponent: folder)
         queue.async {
-            let linkURL = URL(fileURLWithPath: basePath.appending(pathComponent: "New “\(name)” tab"))
+            // The symlink filename is a locale-independent identifier (see
+            // recentsLinkFilename). Both the create and cleanup paths key off it,
+            // so it must not change when the UI language changes.
+            let linkURL = URL(fileURLWithPath: basePath.appending(pathComponent: recentsLinkFilename(name: name)))
             if cache[guid] != name {
-                try? FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: false)
-                // Use a fresh UUID because profile names are subject to change and you don't want
-                // to be in a situation where a profile gets renamed and you have two links
-                // with different names ("Old Name" and "New Name") linking to the same .itermtab
-                // file, as one will certainly disagree with the contents of the file, which also
-                // lists the name.
-                let path = basePath.appending(pathComponent: UUID().uuidString + ".itermtab")
-                let realURL = URL(fileURLWithPath: path)
                 do {
-                    let contents = guid + "\n" + name
-                    try contents.write(to: realURL, atomically: false, encoding: .utf8)
+                    try writeRecentLink(guid: guid, name: name, linkURL: linkURL, basePath: basePath)
                 } catch {
-                    RLog("Failed to write to \(realURL.absoluteString): \(error)")
-                    return
-                }
-
-                try? FileManager.default.removeItem(at: linkURL)
-                do {
-                    try FileManager.default.createSymbolicLink(atPath: linkURL.path,
-                                                               withDestinationPath: realURL.lastPathComponent)
-                } catch {
-                    RLog("Failed to link \(linkURL.absoluteString) to \(realURL.absoluteString): \(error)")
+                    RLog("Failed to write recent link \(linkURL.absoluteString): \(error)")
                     return
                 }
                 cache[guid] = name

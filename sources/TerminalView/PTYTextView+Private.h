@@ -62,7 +62,7 @@ NSPopoverDelegate> {
 @property(nonatomic, strong) iTermFindCursorView *findCursorView;
 @property(nonatomic, strong) NSWindow *findCursorWindow;  // For find-cursor animation
 @property(nonatomic, strong) iTermQuickLookController *quickLookController;
-@property(strong, readwrite) NSTouchBar *touchBar NS_AVAILABLE_MAC(10_12_2);
+@property(strong, readwrite) NSTouchBar *touchBar;
 @property(nonatomic, readonly) BOOL hasUnderline;
 @property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;
 @property(nonatomic, readonly, strong) NSMutableArray<id<Porthole>> *portholes;
@@ -111,6 +111,10 @@ NSPopoverDelegate> {
 // Creates a new drawing helper configured for offscreen rendering (screenshots, etc.).
 // Interactive features (cursor, selection, marks) are disabled.
 - (iTermTextDrawingHelper *)newDrawingHelperForOffscreenRendering;
+
+// Converts a visual grid coordinate to the logical one the selection model
+// uses. A no-op unless the line is bidi-reordered.
+- (VT100GridCoord)logicalCoordForVisualCoord:(VT100GridCoord)visualCoord;
 
 @end
 

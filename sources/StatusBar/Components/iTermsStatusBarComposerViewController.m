@@ -183,11 +183,7 @@ doCommandBySelector:(SEL)commandSelector {
 
 - (void)drawWithFrame:(NSRect)originalFrame inView:(NSView *)controlView {
     if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
-        if (@available(macOS 10.16, *)) {
-            [self drawModernWithFrame:originalFrame inView:controlView];
-        } else {
-            assert(NO);
-        }
+        [self drawModernWithFrame:originalFrame inView:controlView];
     } else {
         [self drawLegacyWithFrame:originalFrame inView:controlView];
     }
@@ -197,7 +193,7 @@ doCommandBySelector:(SEL)commandSelector {
     [super drawWithFrame:originalFrame inView:controlView];
 }
 
-- (void)drawModernWithFrame:(NSRect)originalFrame inView:(NSView *)controlView NS_AVAILABLE_MAC(10_16) {
+- (void)drawModernWithFrame:(NSRect)originalFrame inView:(NSView *)controlView {
     NSRect cellFrame = originalFrame;
     cellFrame.origin.y -= 1;
     [self.backgroundColor set];
@@ -238,7 +234,7 @@ doCommandBySelector:(SEL)commandSelector {
         static NSImage *darkImage;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            lightImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolChevronDown) accessibilityDescription:@"Show History"];
+            lightImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolChevronDown) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"StatusBarComposer.ShowHistory", nil, [NSBundle mainBundle], @"Show History", @"Accessibility description for the show history button")];
             darkImage = [lightImage it_imageWithTintColor:[NSColor whiteColor]];
         });
         NSImage *image = controlView.effectiveAppearance.it_isDark ? darkImage : lightImage;

@@ -7,6 +7,7 @@
 #import "FutureMethods.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCursor.h"
 #import "iTermASCIITexture.h"
 #import "iTermAlphaBlendingHelper.h"
 #import "iTermBackgroundImageRenderer.h"
@@ -24,6 +25,7 @@
 #import "iTermLineStyleMarkRenderer.h"
 #import "iTermMetalDebugInfo.h"
 #import "iTermMetalFrameData.h"
+#import "iTermMetalRenderer.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalRowData.h"
 #import "iTermOffscreenCommandLineBackgroundRenderer.h"
@@ -90,7 +92,7 @@ typedef struct {
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
     NSInteger unfamiliarTextureCount;
 #endif
-    CGFloat maximumExtendedDynamicRangeColorComponentValue NS_AVAILABLE_MAC(10_15);
+    CGFloat maximumExtendedDynamicRangeColorComponentValue;
     CGFloat legacyScrollbarWidth;
     CGFloat rightExtraPixels;
     CGFloat panelReservationPixels;
@@ -109,6 +111,7 @@ typedef struct {
 @end
 
 @implementation iTermMetalDriver {
+    MTLPixelFormat _framebufferPixelFormat;
     iTermMarginRenderer *_marginRenderer;
     iTermBackgroundImageRenderer *_backgroundImageRenderer;
     iTermBackgroundColorRenderer *_backgroundColorRenderer;
@@ -193,9 +196,11 @@ typedef struct {
 #endif
 }
 
-- (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device {
+- (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device
+                 framebufferPixelFormat:(MTLPixelFormat)framebufferPixelFormat {
     self = [super init];
     if (self) {
+        _framebufferPixelFormat = framebufferPixelFormat;
         static int gNextIdentifier;
         _identifier = [NSString stringWithFormat:@"[driver %d]", gNextIdentifier++];
         _startToStartHistogram = [[iTermHistogram alloc] init];
@@ -234,10 +239,8 @@ typedef struct {
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:device];
         _copyToDrawableRenderer = [[iTermCopyToDrawableRenderer alloc] initWithDevice:device];
         _blockRenderer = [[iTermBlockRenderer alloc] initWithDevice:device];
-        if (@available(macOS 11, *)) {
-            _pillBackgroundRenderer = [[iTermPillBackgroundRenderer alloc] initWithDevice:device];
-            _terminalButtonRenderer = [[iTermTerminalButtonRenderer alloc] initWithDevice:device];
-        }
+        _pillBackgroundRenderer = [[iTermPillBackgroundRenderer alloc] initWithDevice:device];
+        _terminalButtonRenderer = [[iTermTerminalButtonRenderer alloc] initWithDevice:device];
         _rectangleRenderer = [[iTermRectangleRenderer alloc] initWithDevice:device];
         _underlineRenderer = [[iTermUnderlineRenderer alloc] initWithDevice:device];
         _underlineCompositeRenderer = [[iTermUnderlineCompositeRenderer alloc] initWithDevice:device];
@@ -488,7 +491,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     });
 }
 
-- (MTLCaptureDescriptor *)triggerProgrammaticCapture:(id<MTLDevice>)device NS_AVAILABLE_MAC(10_15) {
+- (MTLCaptureDescriptor *)triggerProgrammaticCapture:(id<MTLDevice>)device {
     MTLCaptureManager* captureManager = [MTLCaptureManager sharedCaptureManager];
     MTLCaptureDescriptor* captureDescriptor = [[MTLCaptureDescriptor alloc] init];
     NSString *filename = [NSString stringWithFormat:@"/tmp/%@.gputrace", [[NSUUID UUID] UUIDString]];
@@ -517,9 +520,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
         [self scheduleDrawIfNeededInView:view];
         return NO;
     }
-    if (@available(macOS 10.15, *)) {
-        self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue = view.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
-    }
+    self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue = view.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
 
 #if ENABLE_FLAKY_METAL
 #warning DO NOT SUBMIT - FLAKY MODE ENABLED
@@ -568,9 +569,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
 
     if (self.captureDebugInfoForNextFrame) {
         frameData.debugInfo = [[iTermMetalDebugInfo alloc] init];
-        if (@available(macOS 10.15, *)) {
-            frameData.captureDescriptor = [self triggerProgrammaticCapture:frameData.device];
-        }
+        frameData.captureDescriptor = [self triggerProgrammaticCapture:frameData.device];
         self.captureDebugInfoForNextFrame = NO;
     }
     if (_total > 1) {
@@ -638,6 +637,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     }
     iTermMetalFrameData *frameData = [[iTermMetalFrameData alloc] initWithView:view
                                                            fullSizeTexturePool:_fullSizeTexturePool];
+    frameData.framebufferPixelFormat = _framebufferPixelFormat;
 
     [frameData measureTimeForStat:iTermMetalFrameDataStatMtExtractFromApp ofBlock:^{
         frameData.viewportSize = self.mainThreadState->viewportSize;
@@ -670,9 +670,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                                                   pointInsets.bottom * scale,
                                                   pointInsets.right * scale);
         frameData.vmargin = [iTermPreferences topBottomMargins];
-        if (@available(macOS 10.15, *)) {
-            frameData.maximumExtendedDynamicRangeColorComponentValue = self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue;
-        }
+        frameData.maximumExtendedDynamicRangeColorComponentValue = self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue;
     }];
     return frameData;
 }
@@ -824,6 +822,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     [self updateCursorGuideRendererForFrameData:frameData];
     [self updateIndicatorRendererForFrameData:frameData];
     [self updateTimestampsRendererForFrameData:frameData];
+    [self updateArrowStyleMarkRendererForFrameData:frameData];
 
     [self.cellRenderers enumerateObjectsUsingBlock:^(id<iTermMetalCellRenderer>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (!obj.rendererDisabled) {
@@ -887,9 +886,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     [self populateImageRendererTransientStateWithFrameData:frameData];
     [self populateBackgroundImageRendererTransientStateWithFrameData:frameData];
     [self populateBlockRendererTransientStateWithFrameData:frameData];
-    if (@available(macOS 11, *)) {
-        [self populateTerminalButtonRendererTransientStateWithFrameData:frameData];
-    }
+    [self populateTerminalButtonRendererTransientStateWithFrameData:frameData];
     [self populateRectangleRendererTransientStateWithFrameData:frameData];
     [self populateUnderlineRendererTransientStateWithFrameData:frameData];
     [self populateUnderlineCompositeRendererTransientStateWithFrameData:frameData];
@@ -899,12 +896,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
 - (id<MTLTexture>)destinationTextureForFrameData:(iTermMetalFrameData *)frameData {
     if (frameData.debugInfo) {
         // Render to offscreen first
-        MTLPixelFormat pixelFormat;
-        if ([iTermAdvancedSettingsModel hdrCursor]) {
-            pixelFormat = MTLPixelFormatRGBA16Float;
-        } else {
-            pixelFormat = MTLPixelFormatBGRA8Unorm;
-        }
+        const MTLPixelFormat pixelFormat = _framebufferPixelFormat;
         MTLTextureDescriptor *textureDescriptor =
             [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:pixelFormat
                                                                width:frameData.destinationDrawable.texture.width
@@ -912,8 +904,13 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                                                            mipmapped:NO];
         id<MTLTexture> texture = [frameData.device newTextureWithDescriptor:textureDescriptor];
         texture.label = @"Offscreen destination";
-        [iTermTexture setBytesPerRow:frameData.destinationDrawable.texture.width * 4
-                         rawDataSize:frameData.destinationDrawable.texture.width * frameData.destinationDrawable.texture.height * 4
+        // fp16 (HDR cursor) is 2 bytes/sample, 8-bit is 1; the byte metadata must
+        // match the actual format or the debug read-back over/under-runs.
+        const NSUInteger bytesPerSample = iTermBitsPerSampleForPixelFormat(pixelFormat) / 8;
+        const NSUInteger width = frameData.destinationDrawable.texture.width;
+        const NSUInteger height = frameData.destinationDrawable.texture.height;
+        [iTermTexture setBytesPerRow:width * 4 * bytesPerSample
+                         rawDataSize:width * height * 4 * bytesPerSample
                      samplesPerPixel:4
                           forTexture:texture];
         return texture;
@@ -1342,6 +1339,16 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                                                      emoji:&emoji];
 }
 
+- (void)updateArrowStyleMarkRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_arrowStyleMarkRenderer.rendererDisabled) {
+        return;
+    }
+    [_arrowStyleMarkRenderer updateForCellConfiguration:frameData.cellConfiguration
+                                          successColor:frameData.perFrameState.markSuccessColor
+                                            otherColor:frameData.perFrameState.markOtherColor
+                                          failureColor:frameData.perFrameState.markFailureColor];
+}
+
 - (void)updateBackgroundImageRendererForFrameData:(iTermMetalFrameData *)frameData {
     if (_backgroundImageRenderer.rendererDisabled) {
         return;
@@ -1490,6 +1497,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_underlineCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
+                tState.useHDRCursor = cursorInfo.useHDRWhite;
                 tState.doubleWidth = cursorInfo.doubleWidth;
                 tState.pixelOffset = cursorInfo.pixelOffset;
                 tState.fadeAlpha = cursorFadeAlpha;
@@ -1506,6 +1514,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_blockCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
+                tState.useHDRCursor = cursorInfo.useHDRWhite;
                 tState.doubleWidth = cursorInfo.doubleWidth;
                 tState.fadeAlpha = cursorFadeAlpha;
 
@@ -1520,6 +1529,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_barCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
+                tState.useHDRCursor = cursorInfo.useHDRWhite;
                 tState.pixelOffset = cursorInfo.pixelOffset;
                 tState.fadeAlpha = cursorFadeAlpha;
 
@@ -2119,7 +2129,10 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
     // Blit to shared buffer so CPU can see it
     id<MTLBlitCommandEncoder> blitter = [frameData.commandBuffer blitCommandEncoder];
     blitter.label = [NSString stringWithFormat:@"Get debug pixels for %@", label];
-    NSUInteger bytesPerRow = frameData.destinationTexture.width * 4;
+    // fp16 (HDR cursor) is 2 bytes/sample, 8-bit is 1; the buffer and stride must
+    // match the destination texture's format or the blit over/under-runs.
+    const NSUInteger bytesPerSample = iTermBitsPerSampleForPixelFormat(frameData.destinationTexture.pixelFormat) / 8;
+    NSUInteger bytesPerRow = frameData.destinationTexture.width * 4 * bytesPerSample;
     NSUInteger length = bytesPerRow * frameData.destinationTexture.height;
     id<MTLBuffer> buffer = [frameData.device newBufferWithLength:length options:MTLResourceStorageModeShared];
     [blitter copyFromTexture:frameData.destinationTexture
@@ -2227,8 +2240,16 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
                                                                                       label:NSStringFromClass([state class])];
         iTermMetalDebugInfo *debugInfo = frameData.debugInfo;
         CGSize size = CGSizeMake(frameData.viewportSize.x, frameData.viewportSize.y);
+        // The BGRA->RGBA swap and the 8-bit debug image both assume BGRA8. For the
+        // fp16 (HDR cursor) framebuffer there is no correct 8-bit interpretation, so
+        // skip the render-output image rather than corrupt/garble it. Debug-only.
+        const BOOL isFP16 = (frameData.destinationTexture.pixelFormat == MTLPixelFormatRGBA16Float);
         [frameData.commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
             void (^block)(void) = ^{
+                if (isFP16) {
+                    DLog(@"Skipping debug render-output image for fp16 framebuffer (HDR cursor)");
+                    return;
+                }
                 NSMutableData *data = [NSMutableData dataWithBytes:pixelBuffer.contents length:pixelBuffer.length];
                 [self convertBGRAToRGBA:data];
                 [debugInfo addRenderOutputData:data size:size transientState:state];
@@ -2587,12 +2608,10 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         DLog(@"first time completed %@", frameData);
         if (frameData.debugInfo) {
             DLog(@"have debug info %@", frameData);
-            if (@available(macOS 10.15, *)) {
-                if (frameData.captureDescriptor) {
-                    MTLCaptureManager* captureManager = [MTLCaptureManager sharedCaptureManager];
-                    [captureManager stopCapture];
-                    [frameData.debugInfo addMetalCapture:frameData.captureDescriptor.outputURL];
-                }
+            if (frameData.captureDescriptor) {
+                MTLCaptureManager* captureManager = [MTLCaptureManager sharedCaptureManager];
+                [captureManager stopCapture];
+                [frameData.debugInfo addMetalCapture:frameData.captureDescriptor.outputURL];
             }
             NSData *archive = [frameData.debugInfo newArchive];
             dispatch_async(dispatch_get_main_queue(), ^{

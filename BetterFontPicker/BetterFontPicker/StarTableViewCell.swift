@@ -39,10 +39,8 @@ class StarTableViewCell: NSView {
         super.init(frame: NSRect.zero)
 
         imageView.image = StarTableViewCell.emptyStarImage
-        if #available(macOS 10.14, *) {
-            imageView.image?.isTemplate = true
-            imageView.contentTintColor = NSColor.labelColor
-        }
+        imageView.image?.isTemplate = true
+        imageView.contentTintColor = NSColor.labelColor
         addSubview(imageView)
         imageView.frame = NSRect(origin: NSPoint(x: bounds.size.width - StarTableViewCell.emptyStarImage.size.width,
                                                  y: (bounds.size.height - StarTableViewCell.emptyStarImage.size.height) / 2.0),

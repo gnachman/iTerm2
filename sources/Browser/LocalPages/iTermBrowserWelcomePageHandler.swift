@@ -8,12 +8,10 @@
 import WebKit
 import Foundation
 
-@available(macOS 11.0, *)
 @objc protocol iTermBrowserWelcomePageHandlerDelegate: AnyObject {
     @MainActor func welcomePageHandlerDidNavigateToURL(_ handler: iTermBrowserWelcomePageHandler, url: String)
 }
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserWelcomePageHandler)
 @MainActor
 class iTermBrowserWelcomePageHandler: NSObject, iTermBrowserPageHandler {

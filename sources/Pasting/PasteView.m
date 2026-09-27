@@ -37,7 +37,7 @@
 @end
 
 @implementation MinimalPasteView {
-    NSVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
+    NSVisualEffectView *_vev;
 }
 
 - (void)awakeFromNib {

@@ -9,18 +9,21 @@
 #import <Foundation/Foundation.h>
 #import "IntervalTree.h"
 
-// Whether a remote host is the local machine. Determined once, at the moment
-// the host is reported (when the reporting shell's name and gethostname() are
-// contemporaneous), and then frozen. Recomputing it later by string-comparing
-// the recorded hostname against the live local hostname is unreliable because
-// a network change can rename the local .local host out from under us.
+// Whether a remote host is the local machine. Decided when the host is
+// reported, while the reported name and our own name reflect the same instant,
+// and then frozen. It must be frozen and not recomputed from names later: the
+// machine's names drift over time (mDNS can renumber MacBook-Pro-3.local to -2),
+// so a later string compare is unreliable, and could even flip a real remote to
+// a false localhost if our own name drifts into a collision. -isLocalhost only
+// compares names as a best-effort fallback for hosts with no frozen bit.
 typedef NS_ENUM(NSInteger, VT100RemoteHostLocality) {
-    // Not determined. Hosts deserialized from a format that predates the
-    // stored bit land here; consumers fall back to the legacy name compare.
+    // Not frozen. Only older serialized data (predating this stamp) lands here;
+    // -isLocalhost falls back to a best-effort name compare.
     VT100RemoteHostLocalityUnknown = 0,
-    // Known to be the local machine when it was reported.
+    // Frozen: was the local machine when reported.
     VT100RemoteHostLocalityLocalhost,
-    // Known to be a different machine when it was reported.
+    // Frozen: a different machine when reported (a foreign name, or reached
+    // across an ssh/conductor boundary).
     VT100RemoteHostLocalityRemote,
 };
 
@@ -35,8 +38,8 @@ NS_ASSUME_NONNULL_BEGIN
 // to publish a non-null isLocalhost variable).
 @property(nonatomic, readonly) VT100RemoteHostLocality localityState;
 
-// Whether this is the local host. Uses localityState when known; falls back
-// to a (fragile) hostname-vs-gethostname() compare when locality is unknown.
+// Whether this is the local host. Uses the frozen localityState; for older data
+// with no frozen bit, falls back to a best-effort name compare.
 @property(nonatomic, readonly) BOOL isLocalhost;
 @property(nonatomic, readonly) BOOL isRemoteHost;
 

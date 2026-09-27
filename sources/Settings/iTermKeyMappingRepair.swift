@@ -90,25 +90,22 @@ class iTermKeyMappingRepair: NSObject {
                 return keystrokeString
             }
             let action = iTermKeyBindingAction.withDictionary(actionDict)
-            let actionName = action?.displayName ?? "Unknown action"
-            return "\(keystrokeString): \(actionName)"
+            let actionName = action?.displayName ?? String(localized: "KeyMappingRepair.UnknownAction", defaultValue: "Unknown action", comment: "Fallback shown for a key binding whose action cannot be identified")
+            return String(localized: "KeyMappingRepair.BindingDescription", defaultValue: "\(keystrokeString): \(actionName)", comment: "A key binding description: keystroke followed by its action name")
         }
 
         let bindingsList = descriptions.sorted().map { "• \($0)" }.joined(separator: "\n")
         let count = corrupted.count
-        let bindingWord = count == 1 ? "key binding" : "key bindings"
-        let message = """
-            This will repair \(count) \(bindingWord) that \(count == 1 ? "was" : "were") corrupted by a bug in \
-            an earlier version of iTerm2. The affected \(count == 1 ? "binding currently displays" : "bindings currently display") incorrectly \
-            but \(count == 1 ? "functions" : "function") properly. After repair, \(count == 1 ? "it" : "they") will display correctly.
-
-            Affected \(bindingWord):
-            \(bindingsList)
-            """
+        // The whole intro varies by count (binding/bindings, was/were, displays/display, it/they), so
+        // it is a single String Catalog plural on the count; the binding list is appended outside it
+        // so the plural entry stays a simple single-argument plural (translators can add few/many).
+        let intro = String(localized: "KeyMappingRepair.RepairIntro", defaultValue: "This will repair \(count) key bindings that were corrupted by a bug in an earlier version of iTerm2. The affected bindings currently display incorrectly but function properly. After repair, they will display correctly.\n\nAffected key bindings:", comment: "Repair explanation; %lld is the number of corrupted key bindings")
+        let message = intro + "\n" + bindingsList
 
         let selection = iTermWarning.show(
             withTitle: message,
-            actions: ["Repair", "Cancel"],
+            actions: [String(localized: "KeyMappingRepair.Repair", defaultValue: "Repair", comment: "Button to repair corrupted key bindings"),
+                      iTermLocalizedCancel()],
             identifier: nil,
             silenceable: .kiTermWarningTypePersistent,
             window: window

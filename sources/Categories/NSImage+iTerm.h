@@ -48,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString * _Nullable)extensionForUniformType:(NSString *)type;
 
 + (NSImage * _Nullable)it_imageForSymbolName:(NSString *)name
-                    accessibilityDescription:(NSString * _Nullable)description NS_AVAILABLE_MAC(10_16);
+                    accessibilityDescription:(NSString * _Nullable)description;
 + (NSImage * _Nullable)it_imageForSymbolName:(NSString *)name
                     accessibilityDescription:(NSString * _Nullable)description
                            fallbackImageName:(NSString *)fallbackImageName

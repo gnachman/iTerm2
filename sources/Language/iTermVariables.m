@@ -61,6 +61,7 @@ NSString *const iTermVariableKeySessionTermID = @"termid";
 NSString *const iTermVariableKeySessionProfileName = @"profileName";
 NSString *const iTermVariableKeySessionIconName = @"terminalIconName";
 NSString *const iTermVariableKeySessionTriggerName = @"triggerName";
+NSString *const iTermVariableKeySessionAITitle = @"aiTitle";
 NSString *const iTermVariableKeySessionWindowName = @"terminalWindowName";
 NSString *const iTermVariableKeySessionJob = @"jobName";
 NSString *const iTermVariableKeySessionProcessTitle = @"processTitle";
@@ -96,6 +97,7 @@ NSString *const iTermVariableKeySSHIntegrationLevel = @"sshIntegrationLevel";
 NSString *const iTermVariableKeyShell = @"shell";
 NSString *const iTermVariableKeyUname = @"uname";
 NSString *const iTermVariableKeyIsBroadcastSource = @"isBroadcastSource";
+NSString *const iTermVariableKeyStatus = @"status";
 
 #pragma mark - Window Context
 

@@ -97,6 +97,10 @@ static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";  // DEPRECATED - Each PTY
 static NSString* TAB_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 static NSString* TAB_GUID = @"Tab GUID";
 static NSString* TAB_ARRANGEMENT_PINNED = @"Pinned";
+static NSString* TAB_ARRANGEMENT_GROUP_ID = @"Tab Group ID";
+static NSString* TAB_ARRANGEMENT_GROUP_NAME = @"Tab Group Name";
+static NSString* TAB_ARRANGEMENT_GROUP_COLOR = @"Tab Group Color";
+static NSString* TAB_ARRANGEMENT_GROUP_COLLAPSED = @"Tab Group Collapsed";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -507,6 +511,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     __weak __typeof(self) weakSelf = self;
     _tabTitleOverrideSwiftyString.observer = ^(NSString * _Nonnull newValue, NSError *error) {
         if (error) {
+            // Localization unneeded
             return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
         }
         [weakSelf updateTitleOverrideFromFormatVariable];
@@ -642,11 +647,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return anyChange;
 }
 
-- (void)numberOfSessionsDidChange {
+// Applies -updatePaneTitles and, if it changed a session's dimensions on a tmux tab, renegotiates
+// the window size with the server. Per-session decoration changes (title bar, workgroups toolbar)
+// alter how many rows fit and tmux owns pane sizes, so it must be told. `reason` is for logging.
+- (void)updatePaneTitlesRenegotiatingTmuxSizeIfNeeded:(NSString *)reason {
     if ([self updatePaneTitles] && [self isTmuxTab]) {
-        DLog(@"PTYTab numberOfSessionsDidChange triggering windowDidResize");
+        DLog(@"PTYTab %@ triggering windowDidResize", reason);
         [tmuxController_ windowDidResize:realParentWindow_];
     }
+}
+
+- (void)numberOfSessionsDidChange {
+    [self updatePaneTitlesRenegotiatingTmuxSizeIfNeeded:@"numberOfSessionsDidChange"];
     [self updateSessionOrdinals];
     [realParentWindow_ invalidateRestorableState];
     if (self.isBroadcasting) {
@@ -720,14 +732,32 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return result;
 }
 
-- (NSString *)labelForActiveSession {
-    NSString *title = [[self activeSession] name];
+// The label to put on the tab bar: the tab's resolved title plus the subtitle line.
+- (NSString *)tabBarLabel {
+    // Not activeSession.name. A tab title the user set by hand (Edit Tab Title) or
+    // one from a profile's custom tab title belongs to the tab, not to any session,
+    // and -updateTabTitleForCurrentSessionName: already resolves it into
+    // iTermVariableKeyTabTitle. Reading the session name here is what let every
+    // caller of -_refreshLabels: (a tab-status change, a subtitle change,
+    // kUpdateLabelsNotification) replace the user's title with the profile name.
+    // Issue 13072.
+    //
+    // The fallback covers the window before any title has been computed: every new
+    // tab is drawn once from -setTabViewItem: before its name controller first
+    // fires. It is nil-only on purpose -- an empty or whitespace-only title is a
+    // value -updateTabTitleForCurrentSessionName: resolved and meant, so
+    // second-guessing it here would recreate the disagreement this fix removes.
+    NSString *title = self.title ?: [[self activeSession] name];
     return [self stringByAppendingSubtitleForActiveSession:title];
 }
 
 - (NSString *)stringByAppendingSubtitleForActiveSession:(NSString *)title {
-    NSString *subtitle = self.activeSession.subtitle;
-    NSString *statusText = _aggregatedTabStatus.statusText;
+    // Coalesce rather than guard: subtitle is nil when there is no active session
+    // and %@ would draw the literal text “(null)”. The newline must stay
+    // unconditional -- PSM splits the label on it, so "title\n" is how a stale
+    // subtitle gets erased (issue 10143).
+    NSString *subtitle = self.activeSession.subtitle ?: @"";
+    NSString *statusText = [iTermSetTabStatusTrigger localizedStatusForDisplay:_aggregatedTabStatus.statusText];
     if (statusText.length > 0 && iTermUserDefaults.showSessionStatusInTabSubtitle) {
         if (subtitle.length > 0) {
             subtitle = [NSString stringWithFormat:@"%@ \u2013 %@", statusText, subtitle];
@@ -740,7 +770,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)_refreshLabels:(id)sender {
     if ([self activeSession]) {
-        [tabViewItem_ setLabel:[self labelForActiveSession]];
+        [tabViewItem_ setLabel:[self tabBarLabel]];
         [parentWindow_ setWindowTitle];
     }
 }
@@ -795,10 +825,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                              isDark:isDark];
 }
 
-- (void)loadTitleFromSession {
-    tabViewItem_.label = self.activeSession.name;
-}
-
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString*)newName {
     if ([self activeSession] == session) {
         [self updateTabTitleForCurrentSessionName:newName];
@@ -816,16 +842,34 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             } else if (tmuxWindowName.length) {
                 value = [tmuxPrefix stringByAppendingString:tmuxWindowName];
             } else {
-                value = [tmuxPrefix stringByAppendingString:self.activeSession.name];
+                // activeSession can be nil (see the non-tmux branch below).
+                value = [tmuxPrefix stringByAppendingString:self.activeSession.name ?: @""];
             }
         } else {
-            value = newName ?: @"";
+            // Fall back to the session's name rather than storing an empty tab
+            // title, as the tmux branch above already does. newName is nil until
+            // the session's name controller first evaluates -- a freshly split
+            // pane, a tab still being built -- and an empty title would both draw
+            // a blank tab and disagree with -tabBarLabel, whose only source used
+            // to be -[PTYSession name]. Issue 13072.
+            //
+            // A session that deliberately blanks its title does not come through
+            // here: -[iTermSessionNameController valueForInvocation:withResult:error:]
+            // maps a blank result to @" ", a resolved value that is drawn as-is.
+            //
+            // -[PTYSession name] is never nil, but self.activeSession can be
+            // (-setActiveSession:nil returns early and leaves tabViewItem_ alive),
+            // and a nil value would remove tab.title from the scope and draw the
+            // literal text “(null)” in the tab bar.
+            value = newName.length ? newName : (self.activeSession.name ?: @"");
         }
     } else if (self.tmuxTab && ![value hasPrefix:tmuxPrefix]) {
         value = [tmuxPrefix stringByAppendingString:value];
     }
     [self.variablesScope setValue:value forVariableNamed:iTermVariableKeyTabTitle];
-    [tabViewItem_ setLabel:[self stringByAppendingSubtitleForActiveSession:value]];  // PSM uses bindings to bind the label to its title
+    // Derive the label through -tabBarLabel rather than assembling it from `value`:
+    // two derivations that can drift apart is how issue 13072 happened.
+    [tabViewItem_ setLabel:[self tabBarLabel]];  // PSM uses bindings to bind the label to its title
     [self.realParentWindow tabTitleDidChange:self];
 }
 
@@ -906,9 +950,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeyTabCurrentSession];
         return;
     }
+    // Recompute the title (and the label) before anything below observes the
+    // change: -setWindowTitle reads it, and so do the iTermSessionBecameKey
+    // observers and -[PseudoTerminal tabActiveSessionDidChange], which re-renders
+    // the touch bar's tab labels. Issue 13072.
+    [self updateTabTitle];
     if (changed) {
         [parentWindow_ setWindowTitle];
-        [tabViewItem_ setLabel:[self labelForActiveSession]];
         if ([realParentWindow_ currentTab] == self) {
             // If you set a textview in a non-current tab to the first responder and
             // then close that tab, it crashes with NSTextInput calling
@@ -972,7 +1020,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         DLog(@"Clear dead state");
         [self setState:0 reset:kPTYTabDeadState];
     }
-    [self updateTabTitle];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermCurrentSessionDidChange
                                                         object:activeSession_
                                                       userInfo:nil];
@@ -1257,7 +1304,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (theTabViewItem != nil) {
         // While Lion-restoring windows, there may be no active session.
         if ([self activeSession]) {
-            [tabViewItem_ setLabel:[self labelForActiveSession]];
+            [tabViewItem_ setLabel:[self tabBarLabel]];
         } else {
             [tabViewItem_ setLabel:@""];
         }
@@ -1735,6 +1782,23 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [hiddenLiveViews_ addObject:oldView];
     [parentSplit replaceSubview:oldView with:newView];
 
+    // If the tab is maximized, root_'s single slot now holds the synthetic
+    // newView, but idMap_ still references the live oldView. Mirror
+    // -showLiveSession:inPlaceOf: and remap idMap_ so the maximized slot's view
+    // is the one idMap_ knows about. Otherwise -removeSession: for the synthetic
+    // would skip its unmaximize guard (view not in idMap_) yet still pull the
+    // view out of root_, emptying it while isMaximized_ stays YES and crashing a
+    // later -unmaximize. The loop is a no-op when not maximized (idMap_ is nil).
+    // See issue 12992.
+    for (NSNumber *key in idMap_) {
+        if (idMap_[key] == oldView) {
+            idMap_[key] = newView;
+            // Copy the saved size so unmaximize restores to the correct pre-maximize size.
+            [newView setSavedSize:oldView.savedSize];
+            break;
+        }
+    }
+
     // NOTE: We set newView.frame to oldView.frame above. If they are equal in
     // size then -resizeSubviewsWithOldSize: does not fire, so the synthetic
     // session's scrollview frame is NOT re-fit to the new view here. That leaves a
@@ -1781,6 +1845,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self fitSessionToCurrentViewSize:newSession];
     }
     [newView layoutContentsForNewlyActiveSession];
+
+    // The -setNeedsUpdate above makes the synthetic session compute its own name,
+    // but its synchronous publish cannot reach the tab title: it lands in
+    // -nameOfSession:didChangeTo:, which drops anything that isn't from the active
+    // session, and activeSession_ was still the live session at that point. Only
+    // the dispatch_async that -setNeedsReevaluation schedules would eventually
+    // repair it, a main-queue turn later, so the tab bar could draw one frame
+    // holding the live session's title. Recompute here, now that the synthetic
+    // session is active, so entering a swap is as synchronous as leaving one.
+    // Issue 13072.
+    [self updateTabTitle];
 }
 
 - (int)tabNumberForItermSessionId {
@@ -1873,6 +1948,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     RLog(@"IR exit swap (refit): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@",
          liveSession, liveSession.columns, liveSession.rows,
          NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame));
+
+    // This method assigns activeSession_ directly rather than going through
+    // -setActiveSession:, so it misses that method's -updateTabTitle and the tab
+    // title would keep holding the synthetic session's. Its counterpart
+    // -replaceActiveSessionWithSyntheticSession: ends with the same call, for the
+    // same reason; entering and leaving a swap are symmetric. Issue 13072.
+    [self updateTabTitle];
 }
 
 #pragma mark - Screenshot Mode
@@ -2221,10 +2303,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)removeSession:(PTYSession*)aSession {
     SessionView *theView = aSession.view;
 
-    // Only unmaximize if the session's view is actually in idMap_. When a synthetic session
-    // (e.g., filter) is terminated, its view may have already been replaced by the live session's
-    // view in idMap_, so we shouldn't unmaximize in that case.
-    if (idMap_ && [[idMap_ allValues] containsObject:theView]) {
+    // Unmaximize if the session's view is in idMap_ (the normal maximized case,
+    // where every pane's view is in idMap_). Also unmaximize if the view being
+    // removed currently occupies the maximized root_ slot even when it is not in
+    // idMap_ (e.g. a synthetic filter/instant-replay view swapped into root_
+    // after maximize): otherwise the removal below would empty root_ while
+    // isMaximized_ stays YES, corrupting the maximize invariant and crashing a
+    // later -unmaximize. When a synthetic session has already been swapped back
+    // to the live view in idMap_ (see -showLiveSession:inPlaceOf:), neither
+    // condition holds and we correctly skip unmaximize. See issue 12992.
+    if (idMap_ && ([[idMap_ allValues] containsObject:theView] ||
+                   [[root_ subviews] firstObject] == theView)) {
         [self unmaximize];
     }
     PtyLog(@"PTYTab removeSession:%p", aSession);
@@ -2465,6 +2554,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                         dimensions:(NSSize)dimensions
                         showTitles:(BOOL)showTitles
                showBottomStatusBar:(BOOL)showBottomStatusBar
+                       showToolbar:(BOOL)showToolbar
                         rightExtra:(CGFloat)rightExtra
                         inTerminal:(id<WindowControllerInterface>)term {
     int rows = dimensions.height;
@@ -2493,6 +2583,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (showBottomStatusBar) {
         outerSize.height += iTermGetStatusBarHeight();
     }
+    // The per-session toolbar (e.g. the workgroups toolbar) is always at the top and
+    // steals vertical space from cells, just like the title bar and bottom status bar.
+    if (showToolbar) {
+        outerSize.height += [SessionView toolbarHeight];
+    }
     DLog(@"session size, including space for the scrollview's decoration, is %@", NSStringFromSize(outerSize));
     return outerSize;
 }
@@ -2504,6 +2599,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  dimensions:NSMakeSize([session columns], [session rows])
                                  showTitles:[sessionView showTitle]
                         showBottomStatusBar:sessionView.showBottomStatusBar
+                              showToolbar:(sessionView.toolbarReservedHeight > 0)
                                  rightExtra:session.desiredRightExtra
                                  inTerminal:parentWindow_];
 }
@@ -3417,6 +3513,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut {
+    // This rewrites root_'s subviews wholesale (below). If either tab is
+    // maximized, its root_ holds only the zoomed view with the rest parked in
+    // idMap_, and isMaximized_/idMap_/savedArrangement_ describe a layout this
+    // rewrite would invalidate, leaving root_'s subview count != 1 and crashing
+    // a later -unmaximize (including during teardown). Restore both tabs to
+    // their full trees first, matching the pattern in -swapSession:*. See issue
+    // 12992.
+    if (isMaximized_) {
+        [self unmaximize];
+    }
+    if (tabToGut->isMaximized_) {
+        [tabToGut unmaximize];
+    }
     for (PTYSession *aSession in [tabToGut sessions]) {
         aSession.delegate = self;
     }
@@ -3547,7 +3656,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     [theTab setParentWindow:term];
     theTab.delegate = term;
-    [theTab->tabViewItem_ setLabel:@"Restoring..."];
 
     [theTab setObjectCount:[term numberOfTabs] + 1];
 
@@ -3573,6 +3681,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                        options:options]];
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
     theTab->_pinned = [arrangement[TAB_ARRANGEMENT_PINNED] boolValue];
+    theTab.tabGroupID = [arrangement[TAB_ARRANGEMENT_GROUP_ID] nilIfNull];
+    theTab.tabGroupName = [arrangement[TAB_ARRANGEMENT_GROUP_NAME] nilIfNull];
+    NSDictionary *groupColorDict = [arrangement[TAB_ARRANGEMENT_GROUP_COLOR] nilIfNull];
+    if (groupColorDict) {
+        theTab.tabGroupColor = [groupColorDict colorValue];
+    }
+    theTab.tabGroupCollapsed = [arrangement[TAB_ARRANGEMENT_GROUP_COLLAPSED] boolValue];
     NSString *guid = arrangement[TAB_GUID];
     if (guid) {
         if ([[iTermController sharedInstance] tabWithGUID:guid] ||
@@ -3908,6 +4023,16 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                    options:(NSDictionary *)options {
     DLog(@"Encode tab %@", self);
     encoder[TAB_ARRANGEMENT_PINNED] = @(self.isPinned);
+    if (self.tabGroupID) {
+        encoder[TAB_ARRANGEMENT_GROUP_ID] = self.tabGroupID;
+        if (self.tabGroupName) {
+            encoder[TAB_ARRANGEMENT_GROUP_NAME] = self.tabGroupName;
+        }
+        if (self.tabGroupColor) {
+            encoder[TAB_ARRANGEMENT_GROUP_COLOR] = self.tabGroupColor.dictionaryValue;
+        }
+        encoder[TAB_ARRANGEMENT_GROUP_COLLAPSED] = @(self.tabGroupCollapsed);
+    }
     // If in screenshot mode, encode the live session instead of the synthetic one
     PTYSession *sessionToEncode = self.activeSession;
     BOOL inScreenshotMode = (sessionToEncode.liveSession != nil);
@@ -4011,6 +4136,33 @@ typedef struct {
     NSSize maximumSize;
 } iTermSizeRange;
 
+// Private, derived parse-tree key: whether a leaf's session currently shows the per-session
+// toolbar (e.g. the workgroups toolbar). Populated by -annotateShowToolbarInTmuxParseTree: and
+// consumed by the geometry pass so that pass doesn't need the tmux controller.
+static NSString *const PTYTabParseTreeShowToolbarKey = @"iTerm2ShowToolbar";
+
+// Annotate each leaf with whether its session shows the per-session toolbar. Unlike titles (a
+// tab-wide pref) and bottom status bars (never present in tmux), the toolbar is per-session
+// (workgroup membership), so it can't be a single tab-wide flag. On initial creation the session
+// doesn't exist yet (sessionForWindowPane: returns nil, so toolbarReservedHeight is 0), which is correct.
++ (void)annotateShowToolbarInTmuxParseTree:(NSMutableDictionary *)parseTree
+                            tmuxController:(TmuxController *)tmuxController {
+    switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
+        case kLeafLayoutNode: {
+            const int windowPane = [parseTree[kLayoutDictWindowPaneKey] intValue];
+            PTYSession *session = [tmuxController sessionForWindowPane:windowPane];
+            parseTree[PTYTabParseTreeShowToolbarKey] = @(session.view.toolbarReservedHeight > 0);
+            break;
+        }
+        case kVSplitLayoutNode:
+        case kHSplitLayoutNode:
+            for (NSMutableDictionary *child in parseTree[kLayoutDictChildrenKey]) {
+                [self annotateShowToolbarInTmuxParseTree:child tmuxController:tmuxController];
+            }
+            break;
+    }
+}
+
 + (iTermSizeRange)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                                          showTitles:(BOOL)showTitles
                                 showBottomStatusBar:(BOOL)showBottomStatusBar
@@ -4026,11 +4178,17 @@ typedef struct {
         case kLeafLayoutNode: {
             DLog(@"Leaf node. Compute size of session");
             const NSSize cellSize = [self cellSizeForBookmark:profile];
+            // showToolbar reserves space for the per-session toolbar (e.g. the workgroups toolbar),
+            // which is always at the top and steals cell space. It's read from the parse tree, which
+            // -annotateShowToolbarInTmuxParseTree:tmuxController: filled in per leaf, so this geometry
+            // pass doesn't need the tmux controller. Without the reservation the SessionView would be
+            // sized to hold only the grid tmux sent, and the toolbar would overlay the top rows.
             const NSSize size = [PTYTab _sessionSizeWithCellSize:cellSize
                                                       dimensions:NSMakeSize([parseTree[kLayoutDictWidthKey] intValue],
                                                                             [parseTree[kLayoutDictHeightKey] intValue])
                                                       showTitles:showTitles
                                              showBottomStatusBar:showBottomStatusBar
+                                                     showToolbar:[parseTree[PTYTabParseTreeShowToolbarKey] boolValue]
                                                       rightExtra:[PTYSession desiredRightExtraForProfile:profile session:nil]
                                                       inTerminal:term];
             parseTree[kLayoutDictPixelWidthKey] = @(size.width);
@@ -4220,7 +4378,8 @@ typedef struct {
 + (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                      inTerminal:(NSWindowController<iTermWindowController> *)term
                          zoomed:(BOOL)zoomed
-                        profile:(Profile *)profile {
+                        profile:(Profile *)profile
+                 tmuxController:(TmuxController *)tmuxController {
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
     const BOOL perPaneTitleBarEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
@@ -4228,6 +4387,10 @@ typedef struct {
     // TODO: I'm not sure why zoomed is taken into account here but not in
     // other places like this that decide if titles should be shown.
     const BOOL showTitles = forceTitleBar || (perPaneTitleBarEnabled && (zoomed || haveMultipleSessions));
+
+    // Record per-leaf toolbar state up front so the geometry pass below is a pure function of the
+    // parse tree (it reads PTYTabParseTreeShowToolbarKey rather than consulting the controller).
+    [PTYTab annotateShowToolbarInTmuxParseTree:parseTree tmuxController:tmuxController];
 
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
@@ -4265,7 +4428,8 @@ typedef struct {
     [PTYTab setSizesInTmuxParseTree:parseTree_
                          inTerminal:realParentWindow_
                              zoomed:isMaximized_
-                            profile:[self.tmuxController profileForWindow:self.tmuxWindow]];
+                            profile:[self.tmuxController profileForWindow:self.tmuxWindow]
+                     tmuxController:self.tmuxController];
     [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree_];
     if (shouldZoom) {
         [self maximizeAfterApplyingTmuxParseTree:visibleParseTree_ ?: parseTree_
@@ -4284,7 +4448,8 @@ typedef struct {
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:term
                              zoomed:NO
-                            profile:profile];
+                            profile:profile
+                     tmuxController:tmuxController];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
 
     // Grow the window to fit the tab before adding it
@@ -4607,13 +4772,19 @@ typedef struct {
 
         NSArray<NSNumber *> *decorationSizes =
         [sessionViewsInSlice mapWithBlock:^id(SessionView *sessionView) {
-            DLog(@"%@ showTitle=%@ showBottomStatusBar=%@ ",
-                 sessionView, @(sessionView.showTitle), @(sessionView.showBottomStatusBar));
             const CGFloat titleBarHeight = sessionView.showTitle ? SessionView.titleHeight : 0;
             // NOTE: At the time of writing tmux tabs can’t have per-pane status bars. Should that ever
             // change, this line of code might prevent a bug.
             const CGFloat statusBarHeight = sessionView.showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
-            return @(titleBarHeight + statusBarHeight + margins.height);
+            // Reserve space for the per-session toolbar (e.g. the workgroups toolbar). Without this
+            // the tmux window is reported one or more rows too tall, so the pane the server sends back
+            // doesn't fit the toolbar-inset content area and the grid renders misaligned (the content
+            // jumps whenever the renderer toggles between legacy and GPU).
+            const CGFloat toolbarHeight = sessionView.toolbarReservedHeight;
+            DLog(@"%@ showTitle=%@ (%@) showBottomStatusBar=%@ (%@) toolbarHeight=%@",
+                 sessionView, @(sessionView.showTitle), @(titleBarHeight),
+                 @(sessionView.showBottomStatusBar), @(statusBarHeight), @(toolbarHeight));
+            return @(titleBarHeight + statusBarHeight + toolbarHeight + margins.height);
         }];
         DLog(@"Decoration sizes are %@", decorationSizes);
         const CGFloat totalDecorationSize = [decorationSizes sumOfNumbers] + numberOfDividers * dividerThickness;
@@ -4980,6 +5151,7 @@ typedef struct {
                                                                          link.session.gridSize.height)
                                                    showTitles:sessionView.showTitle
                                           showBottomStatusBar:sessionView.showBottomStatusBar
+                                                showToolbar:(sessionView.toolbarReservedHeight > 0)
                                                    rightExtra:session.desiredRightExtra
                                                    inTerminal:realParentWindow_];
         } else {
@@ -5172,6 +5344,15 @@ typedef struct {
 
 - (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
                            tmuxController:(TmuxController *)tmuxController {
+    // This reads [self sessions] (idMap_-backed while maximized) and rebuilds
+    // root_ via -setRoot:, terminating the leftover sessions. It is only correct
+    // when not maximized; its sole caller (-setTmuxLayout:...) unmaximizes first.
+    // Assert to catch any future or re-entrant caller that reaches here while
+    // maximized, which would terminate every parked pane and corrupt root_. See
+    // issue 12992.
+    ITAssertWithMessage(!isMaximized_,
+                        @"replaceViewHierarchyWithParseTree while maximized (idMap_ has %@ entries)",
+                        @(idMap_.count));
     SessionView *nearestNeighbor = [self nearestNeighborOfSession:self.activeSession];
 
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
@@ -5290,7 +5471,8 @@ typedef struct {
     [PTYTab setSizesInTmuxParseTree:maximizedParseTree
                          inTerminal:realParentWindow_
                              zoomed:YES
-                            profile:[tmuxController profileForWindow:self.tmuxWindow]];
+                            profile:[tmuxController profileForWindow:self.tmuxWindow]
+                     tmuxController:tmuxController];
     DLog(@"PTYTab maximizeAfterApplyingTmuxParseTree using width of %@", parseTree[kLayoutDictMaximumPixelWidthKey]);
     [self resizeViewsInViewHierarchy:root_ forNewLayout:maximizedParseTree];
     DLog(@"After resizing views in maximize, root_.width=%f, flexibleView_.width=%f",
@@ -5343,7 +5525,8 @@ typedef struct {
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_
                              zoomed:shouldZoom
-                            profile:[tmuxController profileForWindow:self.tmuxWindow]];
+                            profile:[tmuxController profileForWindow:self.tmuxWindow]
+                     tmuxController:tmuxController];
     DLog(@"Parse tree including sizes:\n%@", parseTree);
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
         DLog(@"Parse tree matches the root's view hierarchy.");
@@ -5563,6 +5746,7 @@ typedef struct {
                                         dimensions:NSMakeSize(gridSize.width, gridSize.height)
                                         showTitles:showTitles
                                showBottomStatusBar:NO
+                                     showToolbar:(sessionView.toolbarReservedHeight > 0)
                                         rightExtra:sessionView.desiredRightExtra
                                         inTerminal:self.realParentWindow];
     NSRect frame = {
@@ -5573,17 +5757,35 @@ typedef struct {
 }
 
 - (void)unmaximize {
-    assert(savedArrangement_);
-    assert(idMap_);
-    assert(isMaximized_);
+    ITAssertWithMessage(savedArrangement_, @"unmaximize with nil savedArrangement_");
+    ITAssertWithMessage(idMap_, @"unmaximize with nil idMap_");
+    ITAssertWithMessage(isMaximized_, @"unmaximize while not maximized");
 
-    // Pull the formerly maximized sessionview out of the old root.
-    assert([[root_ subviews] count] == 1);
-    SessionView* formerlyMaximizedSessionView = [[root_ subviews] objectAtIndex:0];
+    // A properly maximized tab always has exactly one subview in root_. A
+    // different count means some view-hierarchy mutation corrupted the maximize
+    // invariant without going through the unmaximize/maximize dance. We do not
+    // expect this to happen (see issue 12992 fixes), but if it does, recover by
+    // rebuilding from idMap_/savedArrangement_ below rather than crashing.
+    // ITCriticalError captures a debug log and prompts the user to send it so the
+    // corrupter can be found, while letting the app keep running.
+    const NSUInteger rootSubviewCount = [[root_ subviews] count];
+    ITCriticalError(rootSubviewCount == 1,
+                    @"unmaximize: root_ has %@ subviews, expected 1. idMap_ has %@ entries. %@",
+                    @(rootSubviewCount), @(idMap_.count), self);
+    if (rootSubviewCount == 1) {
+        // Pull the formerly maximized sessionview out of the old root.
+        SessionView* formerlyMaximizedSessionView = [[root_ subviews] objectAtIndex:0];
 
-    // I'm not convinced this is necessary but I'm afraid to remove it. idMap_ should hold refs to all SessionViews that matter.
-    [formerlyMaximizedSessionView removeFromSuperview];
-    [formerlyMaximizedSessionView setFrameSize:savedSize_];
+        // I'm not convinced this is necessary but I'm afraid to remove it. idMap_ should hold refs to all SessionViews that matter.
+        [formerlyMaximizedSessionView removeFromSuperview];
+        [formerlyMaximizedSessionView setFrameSize:savedSize_];
+    } else {
+        // Detach whatever root_ currently holds so nothing is double-parented
+        // when the rebuilt tree re-adds views from idMap_.
+        for (NSView *subview in [[root_ subviews] copy]) {
+            [subview removeFromSuperview];
+        }
+    }
 
     // Build a tree with splitters and SessionViews/PTYSessions from idMap.
     NSSplitView *newRoot = [PTYTab _recursiveRestoreSplitters:[savedArrangement_ objectForKey:TAB_ARRANGEMENT_ROOT]
@@ -6066,7 +6268,7 @@ typedef struct {
     [self updateTabTitle];
     for (PTYSession *session in self.sessions) {
         if ([session checkForCyclesInSwiftyStrings]) {
-            _tabTitleOverrideSwiftyString.swiftyString = @"[Cycle detected]";
+            _tabTitleOverrideSwiftyString.swiftyString = NSLocalizedStringWithDefaultValue(@"PTYTab.CycleDetected", nil, [NSBundle mainBundle], @"[Cycle detected]", @"Placeholder tab title shown when a cycle is detected in the title format");
         }
     }
 }
@@ -6941,11 +7143,11 @@ typedef struct {
                 // See if a notification should be posted.
                 if (!session.havePostedIdleNotification && [session shouldPostUserNotification]) {
                     NSString *theDescription =
-                        [NSString stringWithFormat:@"Session %@ in tab #%d became idle.",
+                        [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYTab.SessionBecameIdle", nil, [NSBundle mainBundle], @"Session %1$@ in tab #%2$d became idle.", @"Notification body; %@ is the session name and %d is the tab number"),
                             [[session name] removingHTMLFromTabTitleIfNeeded],
                             [self tabNumber]];
                     if ([iTermProfilePreferences boolForKey:KEY_SEND_IDLE_ALERT inProfile:session.profile]) {
-                        [[iTermNotificationController sharedInstance] notify:@"Idle"
+                        [[iTermNotificationController sharedInstance] notify:NSLocalizedStringWithDefaultValue(@"PTYTab.Idle", nil, [NSBundle mainBundle], @"Idle", @"Notification title shown when a session becomes idle")
                                                          withDescription:theDescription
                                                              windowIndex:[session screenWindowIndex]
                                                                 tabIndex:[session screenTabIndex]
@@ -6984,11 +7186,8 @@ typedef struct {
         notify &&
         [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
         if ([iTermProfilePreferences boolForKey:KEY_SEND_NEW_OUTPUT_ALERT inProfile:self.activeSession.profile]) {
-            [[iTermNotificationController sharedInstance] notify:NSLocalizedStringFromTableInBundle(@"New Output",
-                                                                                                @"iTerm",
-                                                                                                [NSBundle bundleForClass:[self class]],
-                                                                                                @"User Alerts")
-                                             withDescription:[NSString stringWithFormat:@"New output was received in %@, tab #%d.",
+            [[iTermNotificationController sharedInstance] notify:NSLocalizedStringWithDefaultValue(@"PTYTab.NewOutputTitle", nil, [NSBundle mainBundle], @"New Output", @"Notification title shown when new output arrives in a background session")
+                                             withDescription:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYTab.NewOutputReceived", nil, [NSBundle mainBundle], @"New output was received in %1$@, tab #%2$d.", @"Notification body; %@ is the session name and %d is the tab number"),
                                                               [[[self activeSession] name] removingHTMLFromTabTitleIfNeeded],
                                                               [self tabNumber]]
                                                  windowIndex:[[self activeSession] screenWindowIndex]
@@ -7038,7 +7237,7 @@ typedef struct {
 }
 
 // Note this is a notification handler
-- (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
+- (void)updateUseMetal {
     DLog(@"begin");
     const BOOL resizing = self.realParentWindow.windowIsResizing;
     const BOOL powerOK = [[iTermPowerManager sharedInstance] metalAllowed];
@@ -7371,6 +7570,13 @@ typedef struct {
     [self updateUseMetal];
 }
 
+- (void)sessionRebuildMetal {
+    // The metal framebuffer pixel format is baked into the driver at creation, so
+    // a session's HDR-cursor toggle requires a full teardown/rebuild. Reuse the
+    // same off/on cycle used when a metal-affecting setting changes.
+    [self bounceMetal];
+}
+
 - (void)sessionDidChangeMetalViewAlphaValue:(PTYSession *)session to:(CGFloat)newValue {
     [self.delegate tabDidChangeMetalViewVisibility:self];
 }
@@ -7480,7 +7686,10 @@ typedef struct {
 }
 
 - (void)sessionDidChangeDesiredToolbarItems:(PTYSession *)session {
-    [self updatePaneTitles];
+    // Showing/hiding the toolbar changes how much vertical space is available for cells, so a tmux
+    // tab must renegotiate its window size; otherwise the grid keeps its old (toolbar-less) height
+    // and renders rows behind the toolbar.
+    [self updatePaneTitlesRenegotiatingTmuxSizeIfNeeded:@"sessionDidChangeDesiredToolbarItems"];
 }
 
 - (void)sessionDidSetWindowTitle:(NSString *)title {
@@ -7513,9 +7722,14 @@ typedef struct {
 
 - (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session {
     if (session == self.activeSession) {
+        // Background-image handling only concerns the active session.
         [self.delegate tabActiveSessionDidUpdatePreferencesFromProfile:self];
-        [self updatePaneTitles];
     }
+    // Applying a reloaded profile can change a session's decoration (e.g. the title bar) as a side
+    // effect of -updatePaneTitles, which changes how many rows fit. This delegate fires per session,
+    // so don't gate on the active session: a background pane's reload must renegotiate too. The
+    // helper resizes tmux only if -updatePaneTitles actually changed a pane's dimensions.
+    [self updatePaneTitlesRenegotiatingTmuxSizeIfNeeded:@"sessionDidUpdatePreferencesFromProfile"];
 }
 
 - (void)session:(PTYSession *)session

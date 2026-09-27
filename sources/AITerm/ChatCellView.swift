@@ -87,7 +87,7 @@ class ChatCellView: NSTableCellView {
 
     func load(chat: Chat, dataSource: ChatListDataSource) {
         if TypingStatusModel.instance.isTyping(participant: .agent, chatID: chat.id) {
-            snippet = "AI is typing…"
+            snippet = String(localized: "ChatCellView.AITyping", defaultValue: "AI is typing…", comment: "Snippet shown in the chat list while the AI is composing a reply")
         } else {
             self.snippet = dataSource.snippet(forChatID: chat.id)
         }
@@ -118,7 +118,7 @@ class ChatCellView: NSTableCellView {
                 if typing {
                     self.typing = true
                     DLog("set typing=true in \(chatID)")
-                    snippet = "AI is typing…"
+                    snippet = String(localized: "ChatCellView.AITyping", defaultValue: "AI is typing…", comment: "Snippet shown in the chat list while the AI is composing a reply")
                 } else {
                     self.typing = false
                     DLog("set typing=false in \(chatID)")
@@ -133,6 +133,12 @@ class ChatCellView: NSTableCellView {
             // Chat-list snippet reacts to typing + deliveries, not turn-lifecycle
             // boundaries (those drive the phone's reply notification).
             break
+        case .messagesRemoved:
+            // A truncation may have removed the message the snippet reflected;
+            // recompute it from what remains.
+            if !typing {
+                self.snippet = dataSource?.snippet(forChatID: chatID) ?? ""
+            }
         }
     }
 
@@ -208,7 +214,7 @@ class ChatCellView: NSTableCellView {
             let configuration = NSImage.SymbolConfiguration(pointSize: iconDiameter * 0.45,
                                                             weight: .medium)
             if let symbol = NSImage(systemSymbolName: SFSymbol.message.rawValue,
-                                    accessibilityDescription: "Chat")?
+                                    accessibilityDescription: String(localized: "ChatCellView.ChatAccessibility", defaultValue: "Chat", comment: "Accessibility description for the default chat avatar icon"))?
                 .withSymbolConfiguration(configuration)?
                 .it_image(withTintColor: .white) {
                 let symbolSize = symbol.size

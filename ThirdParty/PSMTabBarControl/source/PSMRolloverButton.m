@@ -135,8 +135,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     }
 }
 
-// macOS 10.14+ because it needs layers to properly composite the background color.
-- (void)updateBackgroundAlphaTimer:(NSTimer *)timer NS_AVAILABLE_MAC(10_14) {
+- (void)updateBackgroundAlphaTimer:(NSTimer *)timer {
     const CGFloat duration = 0.25;
     const CGFloat changePerSecond = PSMRolloverButtonMaxAlpha / duration;
     if (_alpha < _targetAlpha) {

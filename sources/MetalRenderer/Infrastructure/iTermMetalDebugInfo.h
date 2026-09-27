@@ -9,7 +9,6 @@
 
 #import <MetalKit/MetalKit.h>
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDebugInfoFormatter<NSObject>
 
 @optional
@@ -21,7 +20,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @class iTermMetalRowData;
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalDebugDrawInfo : NSObject
 
 @property (nonatomic, copy) NSString *fragmentFunctionName;
@@ -40,13 +38,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalCellRenderer;
 @class iTermMetalRendererTransientState;
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalDebugInfo : NSObject
 
 @property (nonatomic, readonly) NSUInteger numberOfRecordedDraws;
 
 - (void)setRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor;
-- (void)setPostmultipliedRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor NS_AVAILABLE_MAC(10_14);
+- (void)setPostmultipliedRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor;
 - (void)setIntermediateRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor;
 - (void)setTemporaryRenderPassDescriptor:(MTLRenderPassDescriptor *)renderPassDescriptor;
 - (void)addRowData:(iTermMetalRowData *)rowData;

@@ -49,25 +49,18 @@ static const CGFloat kMargin = 4;
         _paragraphStyle.allowsDefaultTighteningForTruncation = NO;
 
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
-        if (@available(macOS 10.16, *)) {
-            clear_.bezelStyle = NSBezelStyleRegularSquare;
-            clear_.bordered = NO;
-            clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Delete All"];
-            clear_.imagePosition = NSImageOnly;
-            clear_.frame = NSMakeRect(0, 0, 22, 22);
-        } else {
-            [clear_ setButtonType:NSButtonTypeMomentaryPushIn];
-            [clear_ setTitle:@"Clear All"];
-            [clear_ setBezelStyle:NSBezelStyleSmallSquare];
-            [clear_ sizeToFit];
-        }
+        clear_.bezelStyle = NSBezelStyleRegularSquare;
+        clear_.bordered = NO;
+        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"ToolPasteHistory.DeleteAllAccessibility", nil, [NSBundle mainBundle], @"Delete All", @"Accessibility description for the delete all button")];
+        clear_.imagePosition = NSImageOnly;
+        clear_.frame = NSMakeRect(0, 0, 22, 22);
         [clear_ setTarget:self];
         [clear_ setAction:@selector(clear:)];
         [clear_ setAutoresizingMask:NSViewMinYMargin];
         [self addSubview:clear_];
 
         _secureKeyboardEntryWarning = [NSTextField newLabelStyledTextField];
-        _secureKeyboardEntryWarning.stringValue = @"⚠️ Secure keyboard entry disables paste history.";
+        _secureKeyboardEntryWarning.stringValue = NSLocalizedStringWithDefaultValue(@"ToolPasteHistory.SecureKeyboardWarning", nil, [NSBundle mainBundle], @"⚠️ Secure keyboard entry disables paste history.", @"Warning shown when secure keyboard entry is enabled");
         _secureKeyboardEntryWarning.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         _secureKeyboardEntryWarning.cell.truncatesLastVisibleLine = YES;
         _secureKeyboardEntryWarning.hidden = ![[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
@@ -103,13 +96,13 @@ static const CGFloat kMargin = 4;
         _tableView.menu = [[NSMenu alloc] init];
         _tableView.menu.delegate = self;
         NSMenuItem *item;
-        item = [[NSMenuItem alloc] initWithTitle:@"Copy"
+        item = [[NSMenuItem alloc] initWithTitle:iTermLocalizedCopy()
                                           action:@selector(copySelection:)
                                    keyEquivalent:@""];
         item.target = self;
         [_tableView.menu addItem:item];
 
-        item = [[NSMenuItem alloc] initWithTitle:@"Open in Advanced Paste"
+        item = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ToolPasteHistory.OpenInAdvancedPaste", nil, [NSBundle mainBundle], @"Open in Advanced Paste", @"Context menu item to open the selection in Advanced Paste")
                                           action:@selector(openInAdvancedPaste:)
                                    keyEquivalent:@""];
         item.target = self;
@@ -170,15 +163,10 @@ static const CGFloat kMargin = 4;
 
 - (void)relayout {
     NSRect frame = self.frame;
-    if (@available(macOS 10.16, *)){
-        clear_.frame = NSMakeRect(frame.size.width - clear_.frame.size.width,
-                                  frame.size.height - clear_.frame.size.height,
-                                  clear_.frame.size.width,
-                                  clear_.frame.size.height);
-    } else {
-        [clear_ sizeToFit];
-        [clear_ setFrame:NSMakeRect(frame.size.width - clear_.frame.size.width, frame.size.height - kButtonHeight, clear_.frame.size.width, kButtonHeight)];
-    }
+    clear_.frame = NSMakeRect(frame.size.width - clear_.frame.size.width,
+                              frame.size.height - clear_.frame.size.height,
+                              clear_.frame.size.width,
+                              clear_.frame.size.height);
 
     _secureKeyboardEntryWarning.hidden = [iTermAdvancedSettingsModel saveToPasteHistoryWhenSecureInputEnabled] || ![[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
     _secureKeyboardEntryWarning.frame = NSMakeRect(0, 0, frame.size.width, _secureKeyboardEntryWarning.frame.size.height);
@@ -195,10 +183,7 @@ static const CGFloat kMargin = 4;
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    if (@available(macOS 10.16, *)) {
-        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
-    }
-    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
+    return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
@@ -291,10 +276,10 @@ static const CGFloat kMargin = 4;
 
 - (void)clear:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Erase Paste History";
-    alert.informativeText = @"Paste history will be erased. Continue?";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.messageText = NSLocalizedStringWithDefaultValue(@"ToolPasteHistory.EraseTitle", nil, [NSBundle mainBundle], @"Erase Paste History", @"Confirmation alert title for erasing paste history");
+    alert.informativeText = NSLocalizedStringWithDefaultValue(@"ToolPasteHistory.EraseMessage", nil, [NSBundle mainBundle], @"Paste history will be erased. Continue?", @"Confirmation alert message for erasing paste history");
+    [alert addButtonWithTitle:iTermLocalizedOK()];
+    [alert addButtonWithTitle:iTermLocalizedCancel()];
     if ([alert runModal] == NSAlertFirstButtonReturn) {
         [pasteHistory_ eraseHistory];
         [pasteHistory_ clear];

@@ -1,6 +1,5 @@
 import WebKit
 
-@available(macOS 11.0, *)
 @MainActor
 final class iTermBrowserAutofillWriter {
     private let webView: iTermBrowserWebView

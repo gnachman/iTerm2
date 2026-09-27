@@ -570,6 +570,24 @@ class ChatDatabase {
         return nil
     }
 
+    // The lowest wire-format version among a chat's blobs, or nil if it has none.
+    func minStoredBlobWireFormatVersion(inChat chatID: String) -> Int? {
+        let (sql, args) = ChatBlob.minWireFormatVersionQuery(forChatID: chatID)
+        do {
+            guard let rs = try db.executeQuery(sql, withArguments: args) else { return nil }
+            defer { rs.close() }
+            if rs.next() {
+                // min() over zero rows yields SQL NULL (nil string); guard so an
+                // empty chat returns nil (no blobs) rather than a spurious 0.
+                guard rs.string(forColumn: "minversion") != nil else { return nil }
+                return Int(rs.longLongInt(forColumn: "minversion"))
+            }
+        } catch {
+            RLog("minStoredBlobWireFormatVersion failed for chat \(chatID): \(error)")
+        }
+        return nil
+    }
+
     /// The blobID of a chat's newest blob (highest seq), or nil if it has none. Reads
     /// ONE row / ONE column - no payload decode - so capture can recover the
     /// just-appended blob's id without loading and decoding every round.

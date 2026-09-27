@@ -41,9 +41,7 @@ class SearchableComboTableView: NSTableView, MouseObservingTableView {
     }
 
     override func awakeFromNib() {
-        if #available(macOS 11.0, *) {
-            style = .sourceList
-        }
+        style = .sourceList
     }
 
     public override func keyDown(with event: NSEvent) {

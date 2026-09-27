@@ -190,6 +190,22 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
 
     [self build];
     if ([_attributedString isKindOfClass:[NSAttributedString class]]) {
+        // A color-only attribute change appends a new run to the same string
+        // instead of starting a new one (so Arabic shaping survives a selection
+        // boundary). -build folds the per-character cell-index blobs and the
+        // source-columns range into the FINAL run's attributes only, but
+        // consumers read them at index 0, so spread them across the whole
+        // string. The blobs cover every character appended over the builder's
+        // lifetime, so full-range application is correct for merged runs too.
+        NSMutableAttributedString *mas = [NSMutableAttributedString castFrom:_attributedString];
+        if (mas.length > 0) {
+            const NSRange fullRange = NSMakeRange(0, mas.length);
+            if (temp[iTermSourceColumnsAttribute]) {
+                [mas addAttribute:iTermSourceColumnsAttribute value:temp[iTermSourceColumnsAttribute] range:fullRange];
+            }
+            [mas addAttribute:iTermSourceCellIndexAttribute value:temp[iTermSourceCellIndexAttribute] range:fullRange];
+            [mas addAttribute:iTermDrawInCellIndexAttribute value:temp[iTermDrawInCellIndexAttribute] range:fullRange];
+        }
         [_attributedString endEditing];
     }
     return _attributedString;

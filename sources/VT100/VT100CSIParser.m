@@ -183,6 +183,10 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
     //        this sequence should be mark as unrecognized.
     BOOL isSub = NO;
     BOOL readNumericParameter = NO;
+    // Whether the most recently opened parameter was actually stored. Subparameters belong to
+    // that parameter, so when it was discarded for lack of room they must be discarded too:
+    // attaching them to the last parameter that did fit would change its meaning.
+    BOOL lastParameterStored = NO;
     unsigned char c;
     while (iTermParserTryPeek(context, &c) && c >= 0x30 && c <= 0x3f) {
         switch (c) {
@@ -208,7 +212,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                     }
                 }
 
-                if (isSub && param->count > 0) {
+                if (isSub && param->count > 0 && lastParameterStored) {
                     // This implementation is not really well aligned with the spec. In ECMA-48
                     // section 5.4, the format of a CSI code is described. The parameter string,
                     // which follows CSI, is a semicolon-delimited list of parameter substrings
@@ -226,6 +230,9 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                     param->p[param->count] = n;
                     // increment the parameter count
                     param->count++;
+                    lastParameterStored = YES;
+                } else if (!isSub) {
+                    lastParameterStored = NO;
                 }
 
                 // set the numeric parameter flag
@@ -234,11 +241,19 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                 break;
             }
 
-            case ';':
-                // If we got an implied (blank) parameter, increment the parameter count again
-                if (param->count < VT100CSIPARAM_MAX && readNumericParameter == NO) {
-                    param->count++;
+            case ';': {
+                if (readNumericParameter == NO) {
+                    // An implied (blank) parameter. Like any other it can take subparameters, but
+                    // only if there was room to store it.
+                    if (param->count < VT100CSIPARAM_MAX) {
+                        param->count++;
+                        lastParameterStored = YES;
+                    } else {
+                        lastParameterStored = NO;
+                    }
                 }
+                // Otherwise the parameter that just ended keeps whatever status it had: a
+                // subparameter arriving without a new parameter belongs to it.
                 // reset the parameter flag
                 readNumericParameter = NO;
                 isSub = NO;
@@ -246,6 +261,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                     return NO;
                 }
                 break;
+            }
 
             case ':':
                 // 2013/1/10 H. Saito
@@ -766,6 +782,9 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
                     break;
                 case 14:
                     result->type = XTERMCC_REPORT_WIN_PIX_SIZE;
+                    break;
+                case 16:
+                    result->type = XTERMCC_REPORT_CELL_SIZE_PIX;
                     break;
                 case 18:
                     result->type = XTERMCC_REPORT_WIN_SIZE;

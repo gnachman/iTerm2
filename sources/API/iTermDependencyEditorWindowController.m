@@ -7,7 +7,9 @@
 
 #import "iTermDependencyEditorWindowController.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
@@ -39,6 +41,21 @@
     NSArray<iTermTuple<NSString *, NSString *> *> *_packageTuples;
     iTermScriptItem *_selectedScriptItem;
     NSString *_pythonVersion;
+    // Set while a uv .venv rebuild (Python version change) is in flight. The rebuild can
+    // take minutes and its dependency list is a snapshot taken at click time, so any edit
+    // made meanwhile would be installed into the soon-discarded venv and then erased when
+    // setup.cfg is rewritten from the snapshot. Guard the mutating actions on it.
+    BOOL _rebuildInProgress;
+}
+
+// Enable/disable the editing controls during a rebuild. The Add button has no outlet, so
+// the mutating actions also early-return on _rebuildInProgress as the real guard.
+- (void)setEditingControlsEnabled:(BOOL)enabled {
+    _scriptsButton.enabled = enabled;
+    _pythonVersionButton.enabled = enabled;
+    _tableView.enabled = enabled;
+    _remove.enabled = enabled;
+    _checkForUpdate.enabled = enabled;
 }
 
 + (instancetype)sharedInstance {
@@ -80,20 +97,32 @@
     }
 }
 
+- (BOOL)selectedScriptIsUv {
+    return [iTermScriptRuntime backendForScriptContainer:_selectedScriptItem.path] == iTermScriptRuntimeBackendUv;
+}
+
 - (void)fetchVersionOfPackage:(NSString *)packageName completion:(void (^)(BOOL ok, NSString *result))completion {
+    // `pip show` (and uv's, which is strict) wants a bare package name, but a dependency
+    // may be a full requirement like "aiohttp>=3.14.3". Pass just the name.
+    NSString *baseName = [packageName pythonPackage] ?: packageName;
+    void (^handle)(BOOL, NSData *) = ^(BOOL ok, NSData *output) {
+        if (!ok) {
+            completion(NO, [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding]);
+        } else {
+            completion(YES, [self versionInPipOutput:output]);
+        }
+    };
+    if ([self selectedScriptIsUv]) {
+        [[iTermUvProvisioner shared] runUvPipWithPipArguments:@[ @"show", baseName ]
+                                                   venvPython:[iTermScriptRuntime uvInterpreterPathForScriptContainer:_selectedScriptItem.path]
+                                                   completion:handle];
+        return;
+    }
     NSURL *container = [NSURL fileURLWithPath:_selectedScriptItem.path];
     [[iTermPythonRuntimeDownloader sharedInstance] runPip3InContainer:container
                                                         pythonVersion:_pythonVersion
-                                                        withArguments:@[ @"show", packageName ]
-                                                           completion:^(BOOL ok, NSData *output) {
-                                                               if (!ok) {
-                                                                   completion(NO, [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding]);
-                                                                   return;
-                                                               } else {
-                                                                   NSString *version = [self versionInPipOutput:output];
-                                                                   completion(YES, version);
-                                                               }
-                                                           }];
+                                                        withArguments:@[ @"show", baseName ]
+                                                           completion:handle];
 }
 
 - (void)loadPackageAtIndex:(NSInteger)index {
@@ -176,6 +205,43 @@
 }
 
 - (void)loadPythonVersionsSelecting:(NSString *)selectedVersion {
+    if ([self selectedScriptIsUv]) {
+        // Offer exactly what the INSTALLED uv can provide (uv python list), so the list
+        // never claims a version the current uv cannot install. The current version is
+        // shown immediately; the full list fills in asynchronously (it spawns uv).
+        NSString *current = [iTermScriptRuntime pythonVersionForScriptContainer:_selectedScriptItem.path] ?: selectedVersion ?: @"";
+        _pythonVersion = current;
+        [_pythonVersionButton.menu removeAllItems];
+        if (current.length) {
+            [_pythonVersionButton addItemWithTitle:current];
+            _pythonVersionButton.title = current;
+        }
+        NSString *container = _selectedScriptItem.path;
+        __weak __typeof(self) weakSelf = self;
+        [[iTermUvProvisioner shared] availableMinorsWithCompletion:^(NSArray<NSString *> *minors) {
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf || strongSelf->_selectedScriptItem.path != container) {
+                return;  // the user switched scripts while uv was queried
+            }
+            NSMutableArray<NSString *> *versions = [minors mutableCopy];
+            if (current.length && ![versions containsObject:current]) {
+                [versions addObject:current];
+            }
+            [versions sortUsingComparator:^NSComparisonResult(NSString *a, NSString *b) {
+                return [a compare:b options:NSNumericSearch];
+            }];
+            [strongSelf->_pythonVersionButton.menu removeAllItems];
+            for (NSString *version in versions) {
+                [strongSelf->_pythonVersionButton addItemWithTitle:version];
+            }
+            strongSelf->_pythonVersionButton.title = strongSelf->_pythonVersion;
+            const NSInteger idx = [versions indexOfObject:strongSelf->_pythonVersion];
+            if (idx != NSNotFound) {
+                [strongSelf->_pythonVersionButton selectItemAtIndex:idx];
+            }
+        }];
+        return;
+    }
     NSString *const env = [[_selectedScriptItem.path stringByAppendingPathComponent:@"iterm2env"] stringByAppendingPathComponent:@"versions"];
     _pythonVersion = selectedVersion ?: [iTermPythonRuntimeDownloader bestPythonVersionAt:env];
     NSArray<NSString *> *versions = [[[[iTermPythonRuntimeDownloader pythonVersionsAt:env] mapWithBlock:^id(NSString *version) {
@@ -226,7 +292,10 @@
             if (!ok) {
                 return;
             }
-            [iTermDependencyEditorWindowController setDependency:[NSString stringWithFormat:@"%@>=%@", tuple.firstObject, result]
+            // Re-pin to the just-installed version using the bare name, so an already
+            // versioned dependency does not become "aiohttp>=3.14.3>=3.14.3".
+            NSString *baseName = [tuple.firstObject pythonPackage] ?: tuple.firstObject;
+            [iTermDependencyEditorWindowController setDependency:[NSString stringWithFormat:@"%@>=%@", baseName, result]
                                                       scriptPath:scriptPath];
         }];
     }
@@ -276,8 +345,8 @@
 
     iTermWarning *warning = [[iTermWarning alloc] init];
     warning.heading = @"Add Dependency";
-    warning.title = @"What dependency would you like to add?";
-    warning.actionLabels = @[ @"OK", @"Cancel" ];
+    warning.title = NSLocalizedStringWithDefaultValue(@"DependencyEditor.AddDependencyMessage", nil, [NSBundle mainBundle], @"What dependency would you like to add?", @"Prompt asking which dependency to add");
+    warning.actionLabels = @[ iTermLocalizedOK(), iTermLocalizedCancel() ];
     warning.accessory = textField;
     warning.warningType = kiTermWarningTypePersistent;
     warning.window = self.window;
@@ -298,29 +367,41 @@
 }
 
 - (void)runPip3WithArguments:(NSArray<NSString *> *)arguments completion:(void (^)(void))completion {
-    NSURL *container = [NSURL fileURLWithPath:_selectedScriptItem.path];
-    NSString *pip3 = [[iTermPythonRuntimeDownloader sharedInstance] pip3At:[container.path stringByAppendingPathComponent:@"iterm2env"]
+    NSString *executable;
+    NSArray<NSString *> *executableArguments;
+    NSDictionary<NSString *, NSString *> *environment;
+    if ([self selectedScriptIsUv]) {
+        NSString *venvPython = [iTermScriptRuntime uvInterpreterPathForScriptContainer:_selectedScriptItem.path];
+        executable = [iTermUvProvisioner uvBinaryPath];
+        executableArguments = [iTermUvProvisioner uvPipArgumentsWithPipArguments:arguments venvPython:venvPython];
+        environment = [iTermUvProvisioner provisionEnvironment];
+    } else {
+        executable = [[iTermPythonRuntimeDownloader sharedInstance] pip3At:[_selectedScriptItem.path stringByAppendingPathComponent:@"iterm2env"]
                                                              pythonVersion:_pythonVersion];
+        executableArguments = arguments;
+        environment = nil;
+    }
     NSString *command =
-    [[pip3 stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]
-     stringByAppendingFormat:@" %@", [[arguments mapWithBlock:^id(NSString *anObject) {
+    [[executable stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]
+     // Localization unneeded
+     stringByAppendingFormat:@" %@", [[executableArguments mapWithBlock:^id(NSString *anObject) {
         return [anObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
     }] componentsJoinedByString:@" "]];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:command
-                                                                 actions:@[ @"OK", @"Cancel" ]
+                                                                 actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
                                                                accessory:nil
                                                               identifier:@"DependencyEditorPip3Confirmation"
                                                              silenceable:kiTermWarningTypePersistent
-                                                                 heading:@"Run this Command?"
+                                                                 heading:NSLocalizedStringWithDefaultValue(@"DependencyEditor.RunCommandHeading", nil, [NSBundle mainBundle], @"Run this Command?", @"Heading confirming whether to run a pip command")
                                                                   window:self.window];
     if (selection == kiTermWarningSelection1) {
         return;
     }
-    // Escape the path to pip3 because it gets evaluated as a swifty string.
-    [[iTermController sharedInstance] openSingleUseWindowWithCommand:pip3
-                                                           arguments:arguments
+    // Escape the path because it gets evaluated as a swifty string.
+    [[iTermController sharedInstance] openSingleUseWindowWithCommand:executable
+                                                           arguments:executableArguments
                                                               inject:nil
-                                                         environment:nil
+                                                         environment:environment
                                                                  pwd:nil
                                                              options:iTermSingleUseWindowOptionsCommandNotSwiftyString
                                                       didMakeSession:nil
@@ -340,12 +421,12 @@
 }
 
 - (void)uninstallDidFailForPackage:(NSString *)package {
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Uninstall of %@ failed. Check the output of pip3 for errors.",package]
-                               actions:@[ @"OK" ]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.UninstallFailedMessage", nil, [NSBundle mainBundle], @"Uninstall of %@ failed. Check the pip output for errors.", @"Error when uninstalling a package fails; %@ is the package name"),package]
+                               actions:@[ iTermLocalizedOK() ]
                              accessory:nil
                             identifier:@"DependencyEditorInstallationFailed"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Removal Failed"
+                               heading:NSLocalizedStringWithDefaultValue(@"DependencyEditor.RemovalFailedHeading", nil, [NSBundle mainBundle], @"Removal Failed", @"Heading when removing a package fails")
                                 window:self.window];
 }
 
@@ -353,12 +434,12 @@
                   selectedScriptPath:(NSString *)selectedScriptPath
                    newDependencyName:(NSString *)newDependencyName {
     if (!ok) {
-        [iTermWarning showWarningWithTitle:@"Check the output of pip3 for errors."
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallFailedCheckPip", nil, [NSBundle mainBundle], @"Check the pip output for errors.", @"Instruction to check pip output after an installation failure")
+                                   actions:@[ iTermLocalizedOK() ]
                                  accessory:nil
                                 identifier:@"DependencyEditorInstallationFailed"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Installation Failed"
+                                   heading:NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title when installation fails")
                                     window:self.window];
         return;
     }
@@ -391,6 +472,9 @@
 #pragma mark - Actions
 
 - (IBAction)upgrade:(id)sender {
+    if (_rebuildInProgress) {
+        return;
+    }
     if (!_selectedScriptItem) {
         return;
     }
@@ -399,9 +483,9 @@
     NSURL *folder = [[[NSURL fileURLWithPath:_selectedScriptItem.path] URLByDeletingLastPathComponent] URLByAppendingPathComponent:name];
     if ([[NSFileManager defaultManager] fileExistsAtPath:folder.path]) {
         iTermWarning *warning = [[iTermWarning alloc] init];
-        warning.title = [NSString stringWithFormat:@"Can’t upgrade because %@ already exists", folder.path];
+        warning.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.FolderExistsMessage", nil, [NSBundle mainBundle], @"Can’t upgrade because %@ already exists", @"Error when a destination folder already exists; %@ is the path"), folder.path];
         warning.heading = @"Error";
-        warning.actionLabels = @[ @"OK" ];
+        warning.actionLabels = @[ iTermLocalizedOK() ];
         warning.warningType = kiTermWarningTypePersistent;
         warning.window = self.window;
         [warning runModal];
@@ -412,20 +496,44 @@
     __weak __typeof(self) weakSelf = self;
     NSString *pythonVersion =
     [iTermAPIScriptLauncher inferredPythonVersionFromScriptAt:item.path];
-    [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
-                                                                 dependencies:@[]
-                                                                pythonVersion:pythonVersion
-                                                                   completion:^(NSError *errorStatus) {
+    __block iTermProvisioningProgressWindowController *progress = nil;
+    void (^upgradeCompletion)(NSError *) = ^(NSError *errorStatus) {
+        [progress dismiss];
+        progress = nil;
         if (errorStatus != nil) {
+            if ([iTermUvProvisioner isCancelationError:errorStatus]) {
+                // The user declined the download; do not report a failure.
+                return;
+            }
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Installation Failed";
-            alert.informativeText = [NSString stringWithFormat:@"Please file a bug report at https://iterm2.com/bugs. The following error occurred while upgrading a dependency: %@", errorStatus.localizedDescription];
+            alert.messageText = NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title when installation fails");
+            alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.UpgradeErrorMessage", nil, [NSBundle mainBundle], @"Please file a bug report at https://iterm2.com/bugs. The following error occurred while upgrading a dependency: %@", @"Error message when upgrading a dependency fails; %@ is the error"), errorStatus.localizedDescription];
             [alert runModal];
             return;
         }
         [weakSelf finishUpgradingScriptItem:item toFullEnvironmentAt:folder];
         // TODO: Rebuild menus
-    }];
+    };
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // Converting a basic script to a full environment is a form of migration, so
+        // honor the gate and build a uv .venv rather than a legacy iterm2env.
+        progress = [[iTermProvisioningProgressWindowController alloc] init];
+        // Show progress only once the download phase is done and the venv build starts,
+        // so it does not float over the download confirmation and progress window.
+        [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:folder.path
+                                                              requestedPythonVersion:pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
+                                                                        dependencies:@[]
+                                                                      createSetupCfg:YES
+                                                                provisioningDidBegin:^{
+            [progress showWithMessage:NSLocalizedStringWithDefaultValue(@"DependencyEditor.SettingUpEnvironment", nil, [NSBundle mainBundle], @"Setting up the Python environment…", @"Progress message shown while building a new Python environment")];
+        }
+                                                                          completion:upgradeCompletion];
+    } else {
+        [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
+                                                                     dependencies:@[]
+                                                                    pythonVersion:pythonVersion
+                                                                       completion:upgradeCompletion];
+    }
 }
 
 - (void)finishUpgradingScriptItem:(iTermScriptItem *)item
@@ -441,8 +549,8 @@
                                  error:&error];
     if (error) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Installation Failed";
-        alert.informativeText = [NSString stringWithFormat:@"Error creating %@: %@", innerFolder, error.localizedDescription];
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title when installation fails");
+        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.ErrorCreatingMessage", nil, [NSBundle mainBundle], @"Error creating %1$@: %2$@", @"Error creating a folder; first %@ is the folder, second %@ is the error"), innerFolder, error.localizedDescription];
         [alert runModal];
         return;
     }
@@ -454,8 +562,8 @@
                           error:&error];
     if (error) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Installation Failed";
-        alert.informativeText = [NSString stringWithFormat:@"Error moving %@ to %@: %@", item.path, destination, error.localizedDescription];
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title when installation fails");
+        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.ErrorMovingMessage", nil, [NSBundle mainBundle], @"Error moving %1$@ to %2$@: %3$@", @"Error moving a file; first %@ is source, second %@ is destination, third %@ is the error"), item.path, destination, error.localizedDescription];
         [alert runModal];
         return;
     }
@@ -487,6 +595,9 @@
 }
 
 - (IBAction)add:(id)sender {
+    if (_rebuildInProgress) {
+        return;
+    }
     iTermScriptItem *selectedScriptItem = _selectedScriptItem;
     if (!selectedScriptItem) {
         return;
@@ -511,6 +622,9 @@
 }
 
 - (IBAction)remove:(id)sender {
+    if (_rebuildInProgress) {
+        return;
+    }
     const NSInteger index = _tableView.selectedRow;
     if (index < 0) {
         return;
@@ -537,6 +651,9 @@
 }
 
 - (IBAction)pythonVersionChanged:(id)sender {
+    if (_rebuildInProgress) {
+        return;
+    }
     NSString *selectedVersion = [[_pythonVersionButton selectedItem] title];
     if ([selectedVersion isEqualToString:_pythonVersion]) {
         return;
@@ -544,9 +661,9 @@
     SUStandardVersionComparator *comparator = [[SUStandardVersionComparator alloc] init];
     if ([comparator compareVersion:selectedVersion toVersion:_pythonVersion] == NSOrderedAscending) {
         iTermWarning *warning = [[iTermWarning alloc] init];
-        warning.title = @"You have asked to downgrade to an older Python version. Dependencies will need to be reinstalled. This may go badly. Are you sure you want to do this?";
+        warning.title = NSLocalizedStringWithDefaultValue(@"DependencyEditor.ConfirmDowngradeMessage", nil, [NSBundle mainBundle], @"You have asked to downgrade to an older Python version. Dependencies will need to be reinstalled. This may go badly. Are you sure you want to do this?", @"Confirmation prompt before downgrading the Python version");
         warning.heading = @"Confirm Python Downgrade";
-        warning.actionLabels = @[ @"OK", @"Cancel" ];
+        warning.actionLabels = @[ iTermLocalizedOK(), iTermLocalizedCancel() ];
         warning.identifier = @"DependencyEditorConfirmDowngrade";
         warning.warningType = kiTermWarningTypePersistent;
         warning.window = self.window;
@@ -558,9 +675,9 @@
         }
     } else {
         iTermWarning *warning = [[iTermWarning alloc] init];
-        warning.title = @"You have asked to upgrade to a newer Python version. Dependencies will need to be reinstalled. OK to continue?";
+        warning.title = NSLocalizedStringWithDefaultValue(@"DependencyEditor.ConfirmUpgradeMessage", nil, [NSBundle mainBundle], @"You have asked to upgrade to a newer Python version. Dependencies will need to be reinstalled. OK to continue?", @"Confirmation prompt before upgrading the Python version");
         warning.heading = @"Confirm Python Upgrade";
-        warning.actionLabels = @[ @"OK", @"Cancel" ];
+        warning.actionLabels = @[ iTermLocalizedOK(), iTermLocalizedCancel() ];
         warning.identifier = @"DependencyEditorConfirmUpgrade";
         warning.warningType = kiTermWarningTypePersistent;
         warning.window = self.window;
@@ -576,6 +693,46 @@
     NSString *path = [_selectedScriptItem.path stringByAppendingPathComponent:@"setup.cfg"];
     iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:path];
     NSArray<NSString *> *dependencies = [parser.dependencies copy];
+    if ([self selectedScriptIsUv]) {
+        // For uv, `uv pip install` would keep the existing interpreter, so actually
+        // rebuild the .venv at the new version. downloadAndProvisionFullEnvironment
+        // rebuilds the venv, reinstalls the dependencies (and iterm2), and rewrites
+        // setup.cfg with the new version.
+        NSString *container = _selectedScriptItem.path;
+        // Lock out edits while the rebuild runs: its `dependencies` is a click-time snapshot
+        // and the venv is swapped atomically at the end, so a package added meanwhile would
+        // install into the discarded venv and then be erased when setup.cfg is rewritten.
+        _rebuildInProgress = YES;
+        [self setEditingControlsEnabled:NO];
+        __block iTermProvisioningProgressWindowController *progress = [[iTermProvisioningProgressWindowController alloc] init];
+        __weak __typeof(self) weakSelf = self;
+        [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:container
+                                                              requestedPythonVersion:selectedVersion
+                                                                        dependencies:dependencies ?: @[]
+                                                                      createSetupCfg:YES
+                                                                provisioningDidBegin:^{
+            [progress showWithMessage:NSLocalizedStringWithDefaultValue(@"DependencyEditor.RebuildingEnvironment", nil, [NSBundle mainBundle], @"Rebuilding the Python environment…", @"Progress message shown while rebuilding an existing Python environment")];
+        }
+                                                                          completion:^(NSError *error) {
+            [progress dismiss];
+            progress = nil;
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            strongSelf->_rebuildInProgress = NO;
+            [strongSelf setEditingControlsEnabled:YES];
+            if (error != nil && ![iTermUvProvisioner isCancelationError:error]) {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = NSLocalizedStringWithDefaultValue(@"DependencyEditor.CouldNotChangeVersionTitle", nil, [NSBundle mainBundle], @"Could Not Change Python Version", @"Alert title when the Python version could not be changed");
+                alert.informativeText = error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"DependencyEditor.UnknownError", nil, [NSBundle mainBundle], @"Unknown error", @"Fallback text for an unknown error");
+                [alert runModal];
+            }
+            // Refresh the editor from the (rebuilt) environment and setup.cfg.
+            [strongSelf didSelectScriptAtIndex:strongSelf->_scriptsButton.indexOfSelectedItem];
+        }];
+        return;
+    }
     [iTermSetupCfgParser writeSetupCfgToFile:path
                                         name:parser.name
                                 dependencies:@[]

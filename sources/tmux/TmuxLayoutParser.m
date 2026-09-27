@@ -93,8 +93,18 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
 
 - (NSMutableDictionary *)parsedLayoutFromString:(NSString *)layout
 {
+    // Every valid layout begins with a 5-character header ("xxxx,") followed by
+    // at least a minimal cell. tmux 3.8 emits an empty layout for a window whose
+    // panes are all floating, and truncated or otherwise malformed strings can
+    // arrive over control mode. Guard here so bad input returns nil instead of
+    // underflowing the range below (layout.length - 5 wraps around when the
+    // string is shorter than the header) and throwing an NSRangeException.
+    if (layout.length <= 5) {
+        return nil;
+    }
     NSMutableArray *temp = [NSMutableArray array];
-    if ([self parseLayout:layout range:NSMakeRange(5, layout.length - 5) intoTree:temp]) {
+    if ([self parseLayout:layout range:NSMakeRange(5, layout.length - 5) intoTree:temp] &&
+        temp.count > 0) {
         NSMutableDictionary *tree = [temp objectAtIndex:0];
         if ([[tree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
             // Add a do-nothing root splitter so that the root is always a splitter.
@@ -328,6 +338,12 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
                                                             range:NSMakeRange(0, suffix.length)
                                                              open:c == '[' ? @"[" : @"{"
                                                             close:c == '[' ? @"]" : @"}"];
+            if (childrenRange.location == NSNotFound) {
+                // Unbalanced braces: bail rather than compute an out-of-bounds
+                // substring range below.
+                NSLog(@"Unbalanced braces in layout array: %@", layouts);
+                return nil;
+            }
             int nextItemOffset = childrenRange.location + childrenRange.length + 1;
             [rest setString:[suffix substringWithRange:NSMakeRange(nextItemOffset,
                                                                    suffix.length - nextItemOffset)]];
@@ -384,6 +400,11 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
                                                             range:range
                                                              open:openChar
                                                             close:closeChar];
+            if (childrenRange.location == NSNotFound) {
+                // Unbalanced braces: refuse rather than pass an out-of-bounds
+                // range to substringWithRange: in parseLayoutArray.
+                return NO;
+            }
             NSMutableArray *children = [NSMutableArray array];
             NSMutableDictionary *splitDict = [self splitDictWithType:nodeType];
             if (!splitDict) {

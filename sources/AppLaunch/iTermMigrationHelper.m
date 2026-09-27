@@ -60,12 +60,12 @@
         return;
     }
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:@"Move OpenAI API key into the keychain? It is currently stored in User Defaults, which is not as secure."
-                               actions:@[ @"OK", @"Erase from Settings" ]
+    [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"MigrationHelper.MoveOpenAIKeyMessage", nil, [NSBundle mainBundle], @"Move OpenAI API key into the keychain? It is currently stored in User Defaults, which is not as secure.", @"Message asking whether to move the OpenAI API key into the keychain")
+                               actions:@[ iTermLocalizedOK(), NSLocalizedStringWithDefaultValue(@"MigrationHelper.EraseFromSettings", nil, [NSBundle mainBundle], @"Erase from Settings", @"Button to erase the OpenAI API key from settings") ]
                              accessory:nil
                             identifier:@"NoSyncMoveOpenAIAPIKeyIntoKeychain"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Move Key" 
+                               heading:NSLocalizedStringWithDefaultValue(@"MigrationHelper.MoveKeyHeading", nil, [NSBundle mainBundle], @"Move Key", @"Heading asking whether to move the OpenAI API key into the keychain")
                                 window:nil];
     if (selection == kiTermWarningSelection0) {
         [self addOpenAIKeyToKeychain:key];
@@ -110,10 +110,8 @@
         }
 
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Manual Update Needed";
-        alert.informativeText = @"iTerm2's Application Support directory has changed.\n\n"
-        @"Previously, both these directories were supported:\n~/Library/Application Support/iTerm\n~/Library/Application Support/iTerm2.\n\n"
-            @"Now, only the iTerm2 version is supported. But you have files in both so please move everything from iTerm to iTerm2.";
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"MigrationHelper.ManualUpdateNeeded", nil, [NSBundle mainBundle], @"Manual Update Needed", @"Title of the manual migration alert");
+        alert.informativeText = NSLocalizedStringWithDefaultValue(@"MigrationHelper.ManualUpdateBody", nil, [NSBundle mainBundle], @"iTerm2's Application Support directory has changed.\n\nPreviously, both these directories were supported:\n~/Library/Application Support/iTerm\n~/Library/Application Support/iTerm2.\n\nNow, only the iTerm2 version is supported. But you have files in both so please move everything from iTerm to iTerm2.", @"Explanation that the application support directory changed and the user must move files manually");
 
         NSMutableArray<NSString *> *files = [NSMutableArray array];
         int over = 0;
@@ -129,11 +127,12 @@
         if (over == 0) {
             message = [files componentsJoinedByString:@"\n"];
         } else {
-            message = [NSString stringWithFormat:@"%@\n…and %@ more", [files componentsJoinedByString:@"\n"], @(over)];
+            // Not a count plural: "more" does not inflect for the count in English.
+            message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Migration.AndNMore", nil, [NSBundle mainBundle], @"%1$@\n…and %2$@ more", @"Shown when a file list is truncated; %1$@ is the list, %2$@ is the count of additional files"), [files componentsJoinedByString:@"\n"], @(over)];
         }
 
         iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
-                                                                               prompt:@"Directory Listing"
+                                                                               prompt:NSLocalizedStringWithDefaultValue(@"MigrationHelper.DirectoryListing", nil, [NSBundle mainBundle], @"Directory Listing", @"Disclosure prompt showing the list of files in a directory")
                                                                               message:message];
         iTermAccessoryViewUnfucker *unfucker = [[iTermAccessoryViewUnfucker alloc] initWithView:accessory];
         accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
@@ -146,9 +145,9 @@
         [unfucker layout];
         alert.accessoryView = unfucker;
 
-        [alert addButtonWithTitle:@"Open in Finder"];
-        [alert addButtonWithTitle:@"I Fixed It"];
-        [alert addButtonWithTitle:@"Not Now"];
+        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"MigrationHelper.OpenInFinder", nil, [NSBundle mainBundle], @"Open in Finder", @"Button to reveal directories in Finder")];
+        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"MigrationHelper.IFixedIt", nil, [NSBundle mainBundle], @"I Fixed It", @"Button indicating the user has finished moving files manually")];
+        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"MigrationHelper.NotNow", nil, [NSBundle mainBundle], @"Not Now", @"Button to postpone the migration")];
         switch ([alert runModal]) {
             case NSAlertFirstButtonReturn:
                 [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:legacy],
@@ -291,16 +290,16 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
 }
 
 + (BOOL)askToRemoveDeprecatedKeyMappings:(NSString *)specialReason NS_AVAILABLE_MAC(15) {
-    NSString *message = specialReason ?: @"Some profiles have unnecessary key mappings which may interfere with window tiling shortcuts added in macOS Sequoia. These were in the default profile for many years but are no longer needed. Remove the key mappings? It shouldn’t break anything, and it won’t modify the on-disk copy of the dynamic profile.";
+    NSString *message = specialReason ?: NSLocalizedStringWithDefaultValue(@"MigrationHelper.RemoveKeyMappingsMessage", nil, [NSBundle mainBundle], @"Some profiles have unnecessary key mappings which may interfere with window tiling shortcuts added in macOS Sequoia. These were in the default profile for many years but are no longer needed. Remove the key mappings? It shouldn’t break anything, and it won’t modify the on-disk copy of the dynamic profile.", @"Message asking whether to remove deprecated key mappings");
 
 
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"OK", @"Learn More", @"Cancel" ]
+                               actions:@[ iTermLocalizedOK(), NSLocalizedStringWithDefaultValue(@"MigrationHelper.LearnMore", nil, [NSBundle mainBundle], @"Learn More", @"Button to learn more about removing deprecated key mappings"), iTermLocalizedCancel() ]
                              accessory:nil
                             identifier:nil
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Remove Deprecated Key Mappings?"
+                               heading:NSLocalizedStringWithDefaultValue(@"MigrationHelper.RemoveKeyMappingsHeading", nil, [NSBundle mainBundle], @"Remove Deprecated Key Mappings?", @"Heading asking whether to remove deprecated key mappings")
                                 window:nil];
     switch (selection) {
         case kiTermWarningSelection0:  // ok
@@ -445,6 +444,69 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
                 [safetyDefaults removeObjectForKey:kPreferenceKeyAISafetyCheckNagComplete];
             }
         }
+    }
+
+    // One-time: custom HTTP headers used to be a single global setting
+    // (kPreferenceKeyAICustomHeaders, shipped in 3.7.0beta3). They are now
+    // per-model. Copy the former global list into every existing manual model
+    // configuration that does not already define its own headers, so a user who
+    // relied on e.g. a proxy auth header keeps sending it to those models. The
+    // legacy single model (when there are no configurations) inherits the global
+    // pref directly in LLMMetadata.legacyManualModel(), so it needs nothing here.
+    // The global pref is left in place for that legacy path; the request builder
+    // no longer reads it (it uses the per-model headers).
+    NSUserDefaults *headersDefaults = [iTermUserDefaults userDefaults];
+    if (![headersDefaults boolForKey:@"NoSyncAICustomHeadersPerModelMigrationDone"]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled]) {
+            id rawHeaders = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
+            id rawConfigs = [iTermPreferences objectForKey:kPreferenceKeyAIManualModelConfigurations];
+            // The header pref is non-NoSync and can round-trip through synced or
+            // hand-edited plists, so keep only well-formed {name,value} string
+            // entries. A malformed value would otherwise be stamped verbatim and
+            // then silently dropped at request time.
+            NSMutableArray *sanitizedHeaders = [NSMutableArray array];
+            if ([rawHeaders isKindOfClass:[NSArray class]]) {
+                for (id header in (NSArray *)rawHeaders) {
+                    if ([header isKindOfClass:[NSDictionary class]] &&
+                        [((NSDictionary *)header)[@"name"] isKindOfClass:[NSString class]]) {
+                        id value = ((NSDictionary *)header)[@"value"];
+                        [sanitizedHeaders addObject:@{
+                            @"name": ((NSDictionary *)header)[@"name"],
+                            @"value": [value isKindOfClass:[NSString class]] ? value : @"",
+                        }];
+                    }
+                }
+            }
+            if (sanitizedHeaders.count > 0 &&
+                [rawConfigs isKindOfClass:[NSArray class]] &&
+                [(NSArray *)rawConfigs count] > 0) {
+                NSMutableArray *migratedConfigs = [NSMutableArray array];
+                for (id entry in (NSArray *)rawConfigs) {
+                    id existing = [entry isKindOfClass:[NSDictionary class]]
+                        ? ((NSDictionary *)entry)[@"customHeaders"] : nil;
+                    // Treat missing OR empty headers as not-yet-migrated: opening
+                    // the editor before this migration runs stamps an empty array
+                    // into a config, which must not shadow the global headers the
+                    // user was relying on.
+                    const BOOL needsHeaders =
+                        (existing == nil) ||
+                        ([existing isKindOfClass:[NSArray class]] && [(NSArray *)existing count] == 0);
+                    if ([entry isKindOfClass:[NSDictionary class]] && needsHeaders) {
+                        NSMutableDictionary *updated = [entry mutableCopy];
+                        updated[@"customHeaders"] = sanitizedHeaders;
+                        [migratedConfigs addObject:updated];
+                    } else {
+                        [migratedConfigs addObject:entry];
+                    }
+                }
+                [iTermPreferences setObject:migratedConfigs
+                                     forKey:kPreferenceKeyAIManualModelConfigurations];
+            }
+        }
+        // Set the done flag only AFTER the config write above. If the process
+        // dies in between, the flag stays unset and this (idempotent) migration
+        // re-runs, rather than being marked complete with nothing copied.
+        [headersDefaults setBool:YES forKey:@"NoSyncAICustomHeadersPerModelMigrationDone"];
     }
 
     if ([iTermSecureUserDefaults.instance enableAI]) {

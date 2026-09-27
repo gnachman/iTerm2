@@ -174,7 +174,8 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenPushKeyLabels(_ value: String) {}
     func screenPopKeyLabels(_ value: String) {}
     func screenSendModifiersDidChange() {}
-    func screenKeyReportingFlagsDidChange() {}
+    func screenKeyReportingFlagsDidChange(_ wholeValueReplaced: Bool) {}
+    func screenDidResetKeyReportingLocally() {}
     func screenReportVariableNamed(_ name: String) {}
     func screenReportCapabilities() {}
     func screenCommandDidChange(to command: String, atPrompt: Bool, hadCommand: Bool, haveCommand: Bool) {}
@@ -217,6 +218,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenSetTabColorGreenComponent(to color: CGFloat) {}
     func screenSetTabColorBlueComponent(to color: CGFloat) {}
     func screenSetColor(_ color: NSColor?, profileKey: String?) -> Bool { true }
+    func screenSetColorBinding(_ expression: String, forProfileKey profileKey: String) {}
     func screenResetColor(withColorMapKey key: Int32, profileKey: String, dark: Bool) -> [NSNumber : Any] { [:] }
     func screenSelectColorPresetNamed(_ name: String) {}
     func screenCurrentHostDidChange(_ host: any VT100RemoteHostReading, pwd workingDirectory: String?, ssh: Bool) {}

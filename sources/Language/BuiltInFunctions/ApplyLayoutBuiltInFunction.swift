@@ -25,13 +25,13 @@ class ApplyLayoutBuiltInFunction: iTermBuiltInFunction {
                 // but the iTerm expression parser does not decode `\"` back
                 // to `"`. Base64 sidesteps that entirely.
                 guard let specB64 = parameters["spec_json_b64"] as? String else {
-                    completion(nil, Self.error("Missing spec_json_b64 argument"))
+                    completion(nil, Self.error(String(localized: "ApplyLayout.MissingSpecArg", defaultValue: "Missing spec_json_b64 argument", comment: "Error shown when the apply_layout spec_json_b64 argument is missing")))
                     return
                 }
                 guard let data = Data(base64Encoded: specB64),
                       let parsed = try? JSONSerialization.jsonObject(with: data),
                       let dict = parsed as? [String: Any] else {
-                    completion(nil, Self.error("spec_json_b64 is not valid base64-encoded JSON"))
+                    completion(nil, Self.error(String(localized: "ApplyLayout.InvalidSpecJSON", defaultValue: "spec_json_b64 is not valid base64-encoded JSON", comment: "Error shown when the apply_layout spec argument is not valid base64-encoded JSON")))
                     return
                 }
 
@@ -72,40 +72,40 @@ class ApplyLayoutBuiltInFunction: iTermBuiltInFunction {
     private static func describe(_ error: LayoutSpecError) -> String {
         switch error {
         case .missingField(let path, let field):
-            return "Missing field '\(field)' at \(path)"
+            return String(localized: "ApplyLayout.MissingField", defaultValue: "Missing field '\(field)' at \(path)", comment: "Error shown when a required field is missing from an apply_layout spec")
         case .wrongType(let path, let expected):
-            return "Wrong type at \(path): expected \(expected)"
+            return String(localized: "ApplyLayout.WrongType", defaultValue: "Wrong type at \(path): expected \(expected)", comment: "Error shown when a field in an apply_layout spec has the wrong type")
         case .unknownLeafKind(let path):
-            return "Unknown leaf kind at \(path) (must be session_id, new_session, or splitter)"
+            return String(localized: "ApplyLayout.UnknownLeafKind", defaultValue: "Unknown leaf kind at \(path) (must be session_id, new_session, or splitter)", comment: "Error shown when an apply_layout spec has a leaf node of an unrecognized kind")
         case .splitterTooFewChildren(let path, let count):
-            return "Splitter at \(path) has \(count) children; must have at least 2"
+            return String(localized: "ApplyLayout.SplitterTooFewChildren", defaultValue: "Splitter at \(path) has \(count) children; must have at least 2", comment: "apply_layout error when a splitter has too few children; first placeholder is the path, second is the child count")
         case .nestedSameOrientation(let path):
-            return "Same-orientation splitter nesting at \(path) (vertical inside vertical or horizontal inside horizontal)"
+            return String(localized: "ApplyLayout.NestedSameOrientation", defaultValue: "Same-orientation splitter nesting at \(path) (vertical inside vertical or horizontal inside horizontal)", comment: "Error shown when an apply_layout spec nests splitters of the same orientation")
         case .treeTooDeep(let path, let depth):
-            return "Layout tree at \(path) is too deep (\(depth))"
+            return String(localized: "ApplyLayout.TreeTooDeep", defaultValue: "Layout tree at \(path) is too deep (\(depth))", comment: "Error shown when an apply_layout spec nests splitters too deeply")
         case .duplicateSessionID(let guid):
-            return "Session GUID '\(guid)' appears more than once in the spec"
+            return String(localized: "ApplyLayout.DuplicateSessionID", defaultValue: "Session GUID '\(guid)' appears more than once in the spec", comment: "Error shown when a session GUID appears more than once in an apply_layout spec")
         }
     }
 
     private static func describe(_ error: LayoutResolverError) -> String {
         switch error {
         case .unknownSession(let guid):
-            return "Unknown session: \(guid)"
+            return String(localized: "ApplyLayout.UnknownSession", defaultValue: "Unknown session: \(guid)", comment: "Error shown when a session GUID in an apply_layout spec does not exist")
         case .unknownTab(let guid):
-            return "Unknown tab: \(guid)"
+            return String(localized: "ApplyLayout.UnknownTab", defaultValue: "Unknown tab: \(guid)", comment: "Error shown when a tab GUID in an apply_layout spec does not exist")
         case .unknownWindow(let guid):
-            return "Unknown window: \(guid)"
+            return String(localized: "ApplyLayout.UnknownWindow", defaultValue: "Unknown window: \(guid)", comment: "Error shown when a window GUID in an apply_layout spec does not exist")
         case .orphanedSession(let tabGUID, let sessionGUID):
-            return "Session \(sessionGUID) in tab \(tabGUID) is unaccounted for; it must appear in the new layout or in close_sessions/close_tabs"
+            return String(localized: "ApplyLayout.OrphanedSession", defaultValue: "Session \(sessionGUID) in tab \(tabGUID) is unaccounted for; it must appear in the new layout or in close_sessions/close_tabs", comment: "Error shown when a session is left unaccounted for by an apply_layout spec")
         case .tmuxTabNotSupported(let tabGUID):
-            return "Tab \(tabGUID) is a tmux integration tab; layout application is not supported on tmux tabs"
+            return String(localized: "ApplyLayout.TmuxTabNotSupported", defaultValue: "Tab \(tabGUID) is a tmux integration tab; layout application is not supported on tmux tabs", comment: "Error shown when apply_layout targets a tmux integration tab")
         case .newTabsNotSupported:
-            return "The 'new_tabs' field is not supported by apply_layout"
+            return String(localized: "ApplyLayout.NewTabsNotSupported", defaultValue: "The 'new_tabs' field is not supported by apply_layout", comment: "Error shown when an apply_layout spec uses the unsupported new_tabs field")
         case .newWindowsNotSupported:
-            return "The 'new_windows' field is not supported by apply_layout"
+            return String(localized: "ApplyLayout.NewWindowsNotSupported", defaultValue: "The 'new_windows' field is not supported by apply_layout", comment: "Error shown when an apply_layout spec uses the unsupported new_windows field")
         case .unknownProfile(let guid):
-            return "Unknown profile: \(guid)"
+            return String(localized: "ApplyLayout.UnknownProfile", defaultValue: "Unknown profile: \(guid)", comment: "Error shown when a profile GUID in an apply_layout spec does not exist")
         }
     }
 }

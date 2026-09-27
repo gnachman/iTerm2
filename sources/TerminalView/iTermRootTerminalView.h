@@ -48,6 +48,15 @@
 - (NSColor *)rootTerminalViewTabBarBackgroundColorIgnoringTabColor:(BOOL)ignoreTabColor;
 - (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible;
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar;
+
+// The window name to show beside the tabs, or nil when it should not be shown.
+// Compact and minimal themes have no title bar, so without this the window name
+// is only visible when the tab bar is hidden and the title takes its place.
+- (NSString *)rootTerminalViewWindowNameBesideTabs;
+
+// The window name beside the tabs was double-clicked. Opens the rename dialog
+// that Window > Edit Window Title opens, which is otherwise the only way there.
+- (void)rootTerminalViewDidRequestEditWindowName;
 - (NSImage *)rootTerminalViewCurrentTabIcon;
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons;
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons;
@@ -113,9 +122,9 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic, readonly) CGFloat leftTabBarPreferredWidth;
 
 @property(nonatomic) BOOL useMetal;
-@property(nonatomic, readonly) BOOL tabBarControlOnLoan NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, readonly) BOOL tabBarControlOnLoan;
 @property(nonatomic, strong, readonly) iTermStatusBarViewController *statusBarViewController;
-@property(nonatomic, readonly) iTermImageView *backgroundImage NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, readonly) iTermImageView *backgroundImage;
 // Excludes the window number
 @property(nonatomic, readonly) NSString *windowTitle;
 
@@ -148,19 +157,32 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)windowTitleDidChangeTo:(NSString *)title;
 - (void)windowNumberDidChangeTo:(NSNumber *)number;
 - (void)setWindowTitleIcon:(NSImage *)icon;
-- (iTermTabBarControlView *)borrowTabBarControl NS_AVAILABLE_MAC(10_14);
-- (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl NS_AVAILABLE_MAC(10_14);
+- (iTermTabBarControlView *)borrowTabBarControl;
+- (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl;
 - (CGFloat)maximumToolbeltWidthForViewWidth:(CGFloat)viewWidth;
 - (void)updateToolbeltProportionsIfNeeded;
 - (void)setToolbeltProportions:(NSDictionary *)proportions;
 - (void)invalidateAutomaticTabBarBackingHiding;
-- (void)setShowsWindowSize:(BOOL)showsWindowSize NS_AVAILABLE_MAC(10_14);
+- (void)setShowsWindowSize:(BOOL)showsWindowSize;
 - (void)windowDidResize;
 - (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth contentWidth:(CGFloat)contentWidth;
-- (void)updateTitleAndBorderViews NS_AVAILABLE_MAC(10_14);
+- (void)updateTitleAndBorderViews;
 - (void)setSubtitle:(NSString *)subtitle;
 - (void)setCurrentSessionAlpha:(CGFloat)alpha;
 - (void)updateProxyIcon;
 - (CGFloat)compactProxyIconWidthIncludingMargin;
+
+// Horizontal space the window name beside the tabs occupies, including its
+// margins, or 0 when it is not shown. The tab bar's left inset must reserve it.
+- (CGFloat)windowNameBesideTabsWidthIncludingMargin;
+
+// Width the tab bar's left inset reserves before the window name: stoplight
+// buttons, proxy icon, and the window number's box or its stand-in padding.
+// The name's own frame comes from this too, so the space reserved and the
+// position drawn cannot diverge.
+- (CGFloat)widthOfDecorationsBeforeWindowNameBesideTabs;
+
+// Re-reads the window name from the delegate and lays it out if it changed.
+- (void)updateWindowNameBesideTabs;
 
 @end

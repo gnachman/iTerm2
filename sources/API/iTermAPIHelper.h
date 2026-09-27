@@ -122,7 +122,7 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
                            fullParameters:(out NSDictionary<NSString *, id> **)fullParameters;
 
 - (void)logToConnectionHostingFunctionWithSignature:(NSString *)signatureString
-                                             format:(NSString *)format, ...;
+                                             format:(NSString *)format, ... NS_FORMAT_FUNCTION(2,3);
 - (void)logToConnectionHostingFunctionWithSignature:(NSString *)signatureString
                                              string:(NSString *)string;
 - (iTermScriptHistoryEntry *)scriptHistoryEntryForConnectionKey:(NSString *)connectionKey;

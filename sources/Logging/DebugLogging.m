@@ -55,7 +55,7 @@ static void AppendWindowDescription(NSWindow *window, NSMutableString *windows) 
     [windows appendFormat:@"\nWindow %@\n%@\n%@\n",
      window,
      [window delegate],
-     [window.contentView iterm_recursiveDescription]];
+     [(window.contentView.superview ?: window.contentView) iterm_recursiveDescription]];
 
     PseudoTerminal *term = [PseudoTerminal castFrom:window.delegate];
     if (term) {
@@ -149,15 +149,61 @@ static NSString *DebugLogFooterString(void) {
           [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
 }
 
+// Replaces unpaired UTF-16 surrogates with U+FFFD. UTF-8 cannot represent a lone
+// surrogate, and -dataUsingEncoding: returns nil for a string containing one even
+// with allowLossyConversion:YES: the "lossy" flag substitutes characters the
+// target encoding lacks, and since UTF-8 lacks none, it never engages. Terminal
+// contents, pasteboard text, and strings built from a half-delivered UTF-8
+// sequence all carry lone surrogates, so debug logs pick them up.
+static NSString *StringByReplacingUnpairedSurrogates(NSString *string) {
+    const NSUInteger length = string.length;
+    unichar *buffer = malloc(length * sizeof(unichar));
+    if (!buffer) {
+        return nil;
+    }
+    [string getCharacters:buffer range:NSMakeRange(0, length)];
+    for (NSUInteger i = 0; i < length; i++) {
+        const unichar c = buffer[i];
+        if (c >= 0xD800 && c <= 0xDBFF) {
+            // High surrogate: valid only when a low surrogate follows.
+            if (i + 1 < length && buffer[i + 1] >= 0xDC00 && buffer[i + 1] <= 0xDFFF) {
+                i++;
+            } else {
+                buffer[i] = 0xFFFD;
+            }
+        } else if (c >= 0xDC00 && c <= 0xDFFF) {
+            // Low surrogate with no high surrogate before it.
+            buffer[i] = 0xFFFD;
+        }
+    }
+    NSString *result = [[NSString alloc] initWithCharacters:buffer length:length];
+    free(buffer);
+    return result;
+}
+
+// UTF-8 encodes `string`, repairing ill-formed UTF-16 if that is what stands in
+// the way. Never returns nil: callers put the result straight into an array
+// literal or -writeData:, both of which raise on nil, and losing an entire
+// capture to one bad character is worse than a marker where it stood.
+// Localization unneeded: this goes in the debug log, which is read by developers.
+static NSData *DebugLogDataFromString(NSString *string) {
+    NSData *data = [(string ?: @"") dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
+    if (!data) {
+        data = [StringByReplacingUnpairedSurrogates(string) dataUsingEncoding:NSUTF8StringEncoding
+                                                          allowLossyConversion:YES];
+    }
+    return data ?: [@"*LOG TEXT COULD NOT BE ENCODED*\n" dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 static void FlushDebugLog(void) {
     [GetDebugLogLock() lock];
     // Encode the header, body, and footer as three separate chunks rather than
     // concatenating them into one full-size string (and then a full-size NSData)
     // first. On a large capture that concatenation was the peak-memory spike at
     // stop; three streamed writes keep at most one body-sized copy alive.
-    NSData *headerData = [(gDebugLogHeader ?: @"") dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
-    NSData *bodyData = [(gDebugLogStr ?: @"") dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
-    NSData *footerData = [DebugLogFooterString() dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
+    NSData *headerData = DebugLogDataFromString(gDebugLogHeader);
+    NSData *bodyData = DebugLogDataFromString(gDebugLogStr);
+    NSData *footerData = DebugLogDataFromString(DebugLogFooterString());
 
     const BOOL append = ([iTermAdvancedSettingsModel appendToExistingDebugLog] &&
                          [[NSFileManager defaultManager] fileExistsAtPath:kDebugLogFilename]);
@@ -183,8 +229,8 @@ static void FlushDebugLog(void) {
         // writeData:error: populates `error`, but a failed createFileAtPath: or a
         // nil file handle leaves it nil; fall back to a concrete message so the
         // user gets an actionable reason instead of "(null)".
-        NSString *reason = error.localizedDescription ?: [NSString stringWithFormat:@"could not open %@ for writing", kDebugLogFilename];
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to save debug log: %@", reason] actions:@[ @"OK" ] accessory:nil identifier:nil silenceable:kiTermWarningTypePersistent heading:@"Problem Saving Debug Log" window:nil];
+        NSString *reason = error.localizedDescription ?: [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DebugLogging.CouldNotOpenForWriting", nil, [NSBundle mainBundle], @"could not open %@ for writing", @"Failure reason; %@ is the file name that could not be opened"), kDebugLogFilename];
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DebugLogging.FailedToSave", nil, [NSBundle mainBundle], @"Failed to save debug log: %@", @"Warning title; %@ is the failure reason"), reason] actions:@[ iTermLocalizedOK() ] accessory:nil identifier:nil silenceable:kiTermWarningTypePersistent heading:NSLocalizedStringWithDefaultValue(@"DebugLogging.ProblemSavingHeading", nil, [NSBundle mainBundle], @"Problem Saving Debug Log", @"Warning heading shown when the debug log could not be saved") window:nil];
     }
 
     [gDebugLogStr setString:@""];
@@ -452,7 +498,7 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
     NSString *string = [NSString stringWithFormat:@"%lld.%06lld %s:%d (%s): %@\n",
                         (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function, value];
     @synchronized (object) {
-        [handleToUse writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
+        [handleToUse writeData:DebugLogDataFromString(string)];
         [handleToUse synchronizeFile];
     }
 
@@ -531,17 +577,17 @@ BOOL TurnOffDebugLoggingSilently(void) {
 void ToggleDebugLogging(void) {
     if (!gDebugLogging) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Debug Logging Enabled";
-        alert.informativeText = @"Please reproduce the bug. Then toggle debug logging again to save the log.";
-        [alert addButtonWithTitle:@"OK"];
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"DebugLogging.LoggingEnabledTitle", nil, [NSBundle mainBundle], @"Debug Logging Enabled", @"Alert title shown when debug logging is turned on");
+        alert.informativeText = NSLocalizedStringWithDefaultValue(@"DebugLogging.LoggingEnabledMessage", nil, [NSBundle mainBundle], @"Please reproduce the bug. Then toggle debug logging again to save the log.", @"Alert message instructing the user to reproduce the bug while debug logging is on");
+        [alert addButtonWithTitle:iTermLocalizedOK()];
         [alert runModal];
         StartDebugLogging();
     } else {
         StopDebugLogging();
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Debug Logging Stopped";
-        alert.informativeText = @"Please send /tmp/debuglog.txt to the developers.";
-        [alert addButtonWithTitle:@"OK"];
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"DebugLogging.LoggingStoppedTitle", nil, [NSBundle mainBundle], @"Debug Logging Stopped", @"Alert title shown when debug logging is turned off");
+        alert.informativeText = NSLocalizedStringWithDefaultValue(@"DebugLogging.LoggingStoppedMessage", nil, [NSBundle mainBundle], @"Please send /tmp/debuglog.txt to the developers.", @"Alert message instructing the user to send the debug log file to the developers");
+        [alert addButtonWithTitle:iTermLocalizedOK()];
         [alert runModal];
     }
 }

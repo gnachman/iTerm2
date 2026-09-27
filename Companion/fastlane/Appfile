@@ -1,0 +1,7 @@
+app_identifier("com.googlecode.iterm2.companion")
+apple_id("apple@georgester.com")
+
+# Developer Portal team. App Store Connect team is resolved automatically for a
+# single-team account; if you belong to more than one, set itc_team_id here.
+team_id("H7V7XYVQ7D")
+# itc_team_id("XXXXXXXX")

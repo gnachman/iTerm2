@@ -5,7 +5,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextRenderer : NSObject<iTermMetalCellRenderer>
 @property (nonatomic, readonly) CGSize asciiOffset;
 

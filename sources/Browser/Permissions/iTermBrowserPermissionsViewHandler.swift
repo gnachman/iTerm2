@@ -8,12 +8,10 @@
 import WebKit
 import Foundation
 
-@available(macOS 11.0, *)
 @objc protocol iTermBrowserPermissionsViewHandlerDelegate: AnyObject {
     @MainActor func permissionsViewHandlerDidRevokeAllPermissions(_ handler: iTermBrowserPermissionsViewHandler, for origin: String)
 }
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserPermissionsViewHandler)
 @MainActor
 class iTermBrowserPermissionsViewHandler: NSObject, iTermBrowserPageHandler {
@@ -27,7 +25,6 @@ class iTermBrowserPermissionsViewHandler: NSObject, iTermBrowserPageHandler {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserPermissionsViewHandler {
     // MARK: - Public Interface

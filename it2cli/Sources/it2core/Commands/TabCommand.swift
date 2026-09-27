@@ -8,7 +8,7 @@ struct Tab: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "tab",
         abstract: "Manage iTerm2 tabs.",
-        subcommands: [
+        subcommands: sortedSubcommands([
             New.self,
             List.self,
             Close.self,
@@ -17,7 +17,7 @@ struct Tab: ParsableCommand {
             Next.self,
             Prev.self,
             Goto.self,
-        ]
+        ])
     )
 }
 

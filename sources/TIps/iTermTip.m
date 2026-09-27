@@ -41,7 +41,7 @@ NSString *const kTipUrlKey = @"url";
         return [[xml stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"]
                 stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"];
     };
-    NSString *link = self.url ? [NSString stringWithFormat:@"<p><a href=\"%@\">Learn More</a></p>", self.url] : @"";
+    NSString *link = self.url ? [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Tip.LearnMoreLink", nil, [NSBundle mainBundle], @"<p><a href=\"%@\">Learn More</a></p>", @"HTML link to learn more about a tip; %@ is the URL"), self.url] : @"";
     NSString *htmlString = [NSString stringWithFormat:@"<h1>%@</h1><p>%@</p>%@",
                             escape(self.title),
                             escape(self.body),

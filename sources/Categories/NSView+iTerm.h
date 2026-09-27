@@ -70,6 +70,11 @@ NSString *CGAffineTransformDescription(CGAffineTransform tm);
 @property (nonatomic, readonly) BOOL it_canDraw;
 @property(nonatomic) BOOL it_showNonDefaultIndicator;
 
+// Number of constraints on this view that a human actually created. AppKit synthesizes four
+// NSAutoresizingMaskLayoutConstraints per subview once the layout engine is engaged in a window,
+// and those swamp the real ones in a view hierarchy dump.
+- (NSUInteger)it_authoredConstraintCount;
+
 @end
 
 @interface NSView(Private)

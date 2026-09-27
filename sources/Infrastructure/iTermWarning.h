@@ -43,6 +43,14 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @property(nonatomic, copy) NSString *label;
 @property(nonatomic, copy) iTermWarningActionBlock _Nullable block;
 
+// Structural identity, independent of the (localized) label. isCancel marks the Cancel/dismiss
+// action: it is excluded from the "remember my choice" affordance and its choice is never
+// persisted. neverRemember marks any other action whose choice should not be remembered. Object-
+// API callers may set these directly; the label-array API resolves them from cancelLabel /
+// doNotRememberLabels at show time, so the runtime never compares against a hardcoded @"Cancel".
+@property(nonatomic) BOOL isCancel;
+@property(nonatomic) BOOL neverRemember;
+
 @end
 
 // Recommended usage:
@@ -68,10 +76,17 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 + (void)unsilenceIdentifier:(NSString * _Nullable)identifier;
 + (void)setIdentifier:(NSString * _Nullable)identifier permanentSelection:(iTermWarningSelection)selection;
 + (BOOL)identifierIsSilenced:(NSString * _Nullable)identifier;
+// A token identifying the current silence episode, or nil if not silenced. It
+// changes when a fresh silence episode begins (e.g. re-silencing after a
+// temporary silence lapsed), so callers can tell one episode from the next.
++ (NSString * _Nullable)silenceEpisodeTokenForIdentifier:(NSString * _Nullable)identifier;
 + (void)setIdentifier:(NSString *)identifier isSilenced:(BOOL)silenced;
 
-// Toggle the mode that shows alerts even when they have a remembered selection.
-+ (void)toggleShowRememberedAlerts;
+// Whether to show alerts even when they have a remembered selection. Toggled via
+// the Suppressed Alerts panel. Backed by the gShowRememberedAlerts global, which
+// is read directly in hot drawing paths.
+@property (class, nonatomic) BOOL showRememberedAlerts;
+
 // Remove the saved selection for a specific identifier.
 + (void)clearSavedSelectionForIdentifier:(NSString *)identifier;
 
@@ -186,7 +201,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @property(nonatomic, retain) NSWindow * _Nullable window;
 @property(nonatomic, retain) NSView * _Nullable initialFirstResponder;
 
-// Set to YES when this warning is being shown because "Always Show Alerts with Remembered Selections" is enabled.
+// Set to YES when this warning is being shown because "always show alerts with remembered selections" is on (a checkbox in the Suppressed Alerts panel).
 @property(nonatomic) BOOL shownDueToRememberedAlertsMode;
 // The label of the saved selection (set when shownDueToRememberedAlertsMode is YES).
 @property(nonatomic, copy) NSString * _Nullable savedSelectionLabel;

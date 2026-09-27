@@ -281,6 +281,16 @@ enum ChatBlobAssembler {
             RLog("ChatBlobAssembler: chat \(chatID) blobs are not all protocol \(expectedProtocol.rawValue); refusing blob replay (needs a re-freeze)")
             return nil
         }
+        // Same protocol is not enough: a protocol's frozen wire shape can change
+        // without the enum changing (e.g. .llama's native Ollama tool messages).
+        // A blob whose format version does not match the code's current version
+        // for its protocol holds bytes that are invalid under today's builder, so
+        // refuse it and let the caller re-freeze via the codec.
+        let expectedVersion = ChatBlob.currentWireFormatVersion(for: expectedProtocol)
+        guard blobs.allSatisfy({ $0.wireFormatVersion == expectedVersion }) else {
+            RLog("ChatBlobAssembler: chat \(chatID) blobs are not all wire-format version \(expectedVersion) for protocol \(expectedProtocol.rawValue); refusing blob replay (needs a re-freeze)")
+            return nil
+        }
         guard (try? stitch(blobs)) != nil else {
             RLog("ChatBlobAssembler: chat \(chatID) has a corrupt blob payload; refusing blob replay")
             return nil

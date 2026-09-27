@@ -15,7 +15,7 @@
 
 + (NSString *)title
 {
-    return @"Set Title…";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.SetTitle.Title", nil, [NSBundle mainBundle], @"Set Title…", @"Trigger action name: set the session's title");
 }
 
 - (NSString *)description {

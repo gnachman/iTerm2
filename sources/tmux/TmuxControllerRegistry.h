@@ -23,4 +23,8 @@ extern NSString *const kTmuxControllerRegistryDidChange;
 - (NSString *)uniqueClientNameBasedOn:(NSString *)preferredName;
 - (TmuxController *)tmuxControllerWithSessionGUID:(NSString *)sessionGUID;
 
+// Every live controller, in no particular order. Used to find the one attached to a
+// particular tmux server+session (see TmuxPaneLocator).
+- (NSArray<TmuxController *> *)allControllers;
+
 @end

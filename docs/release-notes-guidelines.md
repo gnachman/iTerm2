@@ -94,12 +94,56 @@ Collapse repetitive low-detail items:
   - `notes-<version>beta<N>.txt` — per-beta diff, relative to the previous beta.
 - After creating a new notes file, `git add` it (per CLAUDE.md).
 
+## Maintaining the cumulative file across releases
+
+`docs/notes-3.7.txt` is the **running cumulative file** for the current
+line: day to day you append new items to it, and it should contain
+**only unreleased changes** — things that have not shipped in any
+released build yet.
+
+- **Never repeat a published item.** Once a change ships in a stable
+  release (or a beta the reader may have installed), it must not appear
+  in the notes for a *later* release. Re-listing it just tells readers
+  about something they already have.
+- **Trim on release.** When a release is cut, the items it shipped
+  become published. Remove them from the cumulative file so what
+  remains is only the still-unreleased work for the next version. The
+  baseline for "already published" is the notes of the release that
+  just shipped (its `notes-<version>.txt` / `notes-<version>beta<N>.txt`).
+- **Nothing is lost by trimming.** Every shipped version's notes are
+  preserved in its own per-version file and in git history. The
+  cumulative file is a working set, not an archive.
+- **Verify against what actually shipped, not against wording.** The
+  cumulative file and the per-version files are written independently,
+  so the same change is often worded differently in each. Decide what
+  is published by the *commit* (is it in the shipped tag?), not by
+  matching bullet text. A feature documented late can describe code
+  that shipped in an earlier release — in that case the bullet is
+  published even though the doc commit is recent. Split such write-ups:
+  drop the parts already shipped, keep the parts that are new.
+
+### Branches
+
+- **master** accumulates all development; its `notes-3.7.txt` holds
+  every unreleased item destined for the next build off master (whose
+  version may not be known yet — a placeholder header is fine).
+- **`release_x.y.z`** branches are cut from master and take
+  cherry-picks. On a release branch, `notes-3.7.txt` should contain
+  only what is new **since the previous release on that line** —
+  typically just the handful of fixes cherry-picked for that patch.
+- Because 3.7.x patch releases cherry-pick a subset of master's
+  commits, "unreleased on master" is not simply "the newest commits."
+  Compare by commit against the shipped tag (e.g. subject match or
+  patch-id) to find what a release actually included.
+
 ## Pre-commit checklist
 
 - [ ] Each entry makes sense without reading the source or commits.
 - [ ] No internal jargon ("right gutter", "peer", "in-session overlay", hook names, etc.).
 - [ ] No advanced-setting bullets.
 - [ ] No developer-only bullets.
+- [ ] No implementation-detail narration (internal machinery, refactors, rationale) — just what the reader observes.
+- [ ] No item that already shipped in an earlier release; the cumulative file holds only unreleased changes.
 - [ ] No bug-fix bullets for features that are themselves new in this release.
 - [ ] Improvements are under `Improvements:`, not `Bug Fixes:`.
 - [ ] Crashes / memory leaks / hangs are collapsed into single bullets.

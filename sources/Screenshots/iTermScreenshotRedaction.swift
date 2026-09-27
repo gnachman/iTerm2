@@ -200,7 +200,7 @@ class iTermScreenshotRedactionManager: NSObject {
         let lineCount = lines.count
 
         // Build the label
-        let label = lineCount == 1 ? "1 line" : "\(lineCount) lines"
+        let label = String(localized: "ScreenshotRedaction.LineCount", defaultValue: "\(lineCount) lines", comment: "Redaction label; %lld is the number of lines")
 
         if nonEmptyLines.isEmpty {
             // No non-empty lines, just show line count

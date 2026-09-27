@@ -76,6 +76,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
 
+    // Set once per mouse-down after we have offered the drag gesture to a program
+    // that accepts Kitty drag-and-drop offers, so we only offer it once per drag.
+    BOOL _kittyDragOfferStarted;
+    // The drag event we offered to a Kitty DnD program, kept so we can synthesize
+    // the button-release report if the program turns it into a native drag (whose
+    // session then swallows the real mouseUp).
+    NSEvent *_kittyDragGestureEvent;
+
     BOOL _committedToDrag;
 
     // Detects when the user is trying to scroll in alt screen with the scroll wheel.
@@ -258,6 +266,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     dragOk_ = YES;
     _committedToDrag = NO;
+    _kittyDragOfferStarted = NO;
+    // If a previous gesture's mouseUp was swallowed (a modal panel/alert or menu
+    // tracking opened mid-drag), the drag host still holds the stale pending event.
+    // Tell it to forget it before we drop our own reference, so a program's t=P
+    // cannot start a phantom drag from it.
+    if (_kittyDragGestureEvent) {
+        [self.mouseDelegate mouseHandlerKittyDragGestureDidEnd:self];
+    }
+    _kittyDragGestureEvent = nil;
     if (cmdPressed) {
         if (![self.mouseDelegate mouseHandlerViewHasFocus:self]) {
             if (![self.mouseDelegate mouseHandlerIsInKeyWindow:self]) {
@@ -283,10 +300,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return YES;
     }
 
-    const VT100GridCoord clickPointCoord = [self.mouseDelegate mouseHandler:self
-                                                                 clickPoint:event
-                                                              allowOverflow:YES
-                                                                 firstMouse:_mouseDownWasFirstMouse];
+    // Convert the visual click to a LOGICAL coordinate. The whole selection model
+    // (character drag, word/line/smart ranges, the highlight, and copy) works in
+    // logical space, so every mode begins from the logical coordinate.
+    const VT100GridCoord visualClickPoint = [self.mouseDelegate mouseHandler:self
+                                                                  clickPoint:event
+                                                               allowOverflow:YES
+                                                                  firstMouse:_mouseDownWasFirstMouse];
+    const VT100GridCoord clickPointCoord =
+        [self.mouseDelegate mouseHandler:self logicalCoordForVisualCoord:visualClickPoint];
     const int x = clickPointCoord.x;
     const int y = clickPointCoord.y;
     if ([self.mouseDelegate mouseHandler:self coordIsMutable:VT100GridCoordMake(x, y)] &&
@@ -354,16 +376,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             _imageBeingClickedOn = imageBeingClickedOn;
             _mouseDownOnImage = YES;
             self.selection.appending = NO;
-        } else if (mouseDownOnSelection) {
+        } else if (mouseDownOnSelection &&
+                   (![iTermAdvancedSettingsModel requireCmdForDraggingText] || cmdPressed)) {
             // not holding down shift key but there is an existing selection.
-            // Possibly a drag coming up (if a cmd-drag follows)
+            // Possibly a drag coming up (if a cmd-drag follows). When dragging
+            // text requires Cmd and it isn't held, fall through and start a
+            // new selection instead: otherwise a press on the selection is a
+            // dead end (no drag, no new selection), which reads as selection
+            // being frozen, especially on right-to-left lines where a repeat
+            // drag naturally starts on the previous selection.
             DLog(@"mouse down on selection, returning");
             _mouseDownOnSelection = YES;
             self.selection.appending = NO;
             return YES;
         } else {
             // start a new selection
-            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(x, y + overflow)
+            VT100GridCoord anchor = clickPointCoord;
+            if (mode == kiTermSelectionModeCharacter) {
+                // Character selections are VISUAL: the live range stores the
+                // columns the user actually drags over. iTermSelection
+                // converts to logical cells for the highlight per line and
+                // decomposes into logical subselections when the drag ends.
+                anchor = visualClickPoint;
+            }
+            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(anchor.x, anchor.y + overflow)
                                                 mode:mode
                                               resume:NO
                                               append:(cmdPressed && !altPressed)];
@@ -411,6 +447,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (iTermClickSideEffects)mouseUpImpl:(NSEvent *)event {
     DLog(@"Mouse Up on %@ with event %@, numTouches=%d, mouseDown=%@", self, event, _numTouches, @(_mouseDown));
+    // If we offered a Kitty DnD drag gesture this mouse-down but no native drag
+    // started (which would have consumed the mouseUp and cleared this), the
+    // gesture is over: tell the bridge to forget the stored event so a later t=P
+    // cannot start a phantom drag from it.
+    if (_kittyDragGestureEvent) {
+        _kittyDragGestureEvent = nil;
+        [self.mouseDelegate mouseHandlerKittyDragGestureDidEnd:self];
+    }
     _makingThreeFingerSelection = NO;
     DLog(@"_makingThreeFingerSelection <- NO");
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
@@ -624,16 +668,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else if ([self.mouseDelegate mouseHandler:self getFindOnPageCursor:&findOnPageCursor] &&
                    ![self.selection hasSelection]) {
             const long long overflow = [_mouseDelegate mouseHandlerTotalScrollbackOverflow:self];
-            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordFromCoord(findOnPageCursor, overflow)
-                                                mode:kiTermSelectionModeCharacter
-                                              resume:NO
-                                              append:NO];
-            
-            const VT100GridCoord newEndPoint =
+            const VT100GridCoord visualEndPoint =
             [self.mouseDelegate mouseHandler:self clickPoint:event allowOverflow:YES firstMouse:_mouseDownWasFirstMouse];
-            [self.selection moveSelectionEndpointTo:VT100GridAbsCoordFromCoord(newEndPoint, overflow)];
-            [self.selection endLiveSelection];
-            
+            // BOTH endpoints are VISUAL here: the click obviously is, and the find
+            // cursor is too because the reachable path is "plain click (which cleared
+            // the selection and stored a VISUAL click coord as the find cursor), then
+            // shift-click". Convert both to logical and commit a LOGICAL range, or the
+            // anchor lands on the mirror-image column on a right-to-left line.
+            const VT100GridAbsWindowedRange range =
+            [iTermSelection logicalAbsRangeFromVisualStart:findOnPageCursor
+                                                visualEnd:visualEndPoint
+                                                 overflow:overflow
+                                                converter:^VT100GridCoord(VT100GridCoord visualCoord) {
+                return [self.mouseDelegate mouseHandler:self logicalCoordForVisualCoord:visualCoord];
+            }];
+            [self.selection setSelectedLogicalRange:range mode:kiTermSelectionModeCharacter];
+
             [self.mouseDelegate mouseHandlerResetFindOnPageCursor:self];
             result |= iTermClickSideEffectsMoveFindOnPageCursor | iTermClickSideEffectsModifySelection;
         }
@@ -745,6 +795,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // results, and letting only some events report produced a drag split between the app's selection
     // and a local one. Hold Option to force a local selection while mouse reporting is on. Issues
     // 12953 and 12950.
+    // If a program has enabled Kitty drag-and-drop offers, hand it this gesture
+    // so it can turn the drag into a drag-out. Only in mouse-reporting mode (the
+    // gesture is otherwise a text selection), not for a three-finger drag, not
+    // with Option held, and only once per mouse-down. Done before the report
+    // below so the program learns of the drag as it starts.
+    if ([self.mouseDelegate mouseHandlerHasKittyDragOffer:self]) {
+        DLog(@"Kitty drag offer available. dragThresholdMet=%d makingThreeFingerSelection=%d "
+             @"kittyDragOfferStarted=%d optionHeld=%d reportable=%d",
+             dragThresholdMet, _makingThreeFingerSelection, _kittyDragOfferStarted,
+             (int)(([event modifierFlags] & NSEventModifierFlagOption) != 0),
+             [self mouseEventIsReportable:event]);
+    }
+    if (dragThresholdMet &&
+        !_makingThreeFingerSelection &&
+        !_kittyDragOfferStarted &&
+        !([event modifierFlags] & NSEventModifierFlagOption) &&
+        [self.mouseDelegate mouseHandlerHasKittyDragOffer:self] &&
+        [self mouseEventIsReportable:event]) {
+        DLog(@"Offering Kitty drag gesture to program");
+        if ([self.mouseDelegate mouseHandler:self reportKittyDragGestureWithEvent:event]) {
+            _kittyDragOfferStarted = YES;
+            _kittyDragGestureEvent = event;
+        }
+    }
+
     BOOL dragWasReportable = NO;
     if ([self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:&dragWasReportable]) {
         DLog(@"Reported drag");
@@ -1254,6 +1329,36 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // If thiss changes also update wantsMouseMovementEvents
 - (BOOL)reportMouseEvent:(NSEvent *)event {
     return [self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:NULL];
+}
+
+// A Kitty DnD program turned the drag gesture into a native OS drag. The drag
+// session now owns event tracking, so the real mouseUp that would end this
+// gesture will never arrive. Synthesize the button-release report (so a
+// mouse-reporting program does not think the button is still held) and clear the
+// per-gesture state that mouseUp would otherwise have cleared.
+- (void)kittyDragDidBegin {
+    NSEvent *gesture = _kittyDragGestureEvent;
+    _kittyDragGestureEvent = nil;
+    if (gesture) {
+        NSEvent *release = [NSEvent mouseEventWithType:NSEventTypeLeftMouseUp
+                                              location:gesture.locationInWindow
+                                         modifierFlags:gesture.modifierFlags
+                                             timestamp:gesture.timestamp
+                                          windowNumber:gesture.windowNumber
+                                               context:nil
+                                           eventNumber:0
+                                            clickCount:1
+                                              pressure:0];
+        if (release) {
+            [self reportMouseEvent:release];
+        }
+    }
+    _kittyDragOfferStarted = NO;
+    _committedToDrag = NO;
+    _mouseDown = NO;
+    _mouseDownEvent = nil;
+    dragOk_ = NO;
+    [self.selection endLiveSelection];
 }
 
 // When in doubt this can return YES at the cost of a little CPU when moving the mouse around.

@@ -7,7 +7,6 @@
 
 import WebKit
 
-@available(macOS 11.0, *)
 class iTermBrowserHistoryController {
     private let sessionGuid: String
     private let navigationState: iTermBrowserNavigationState
@@ -44,7 +43,7 @@ class iTermBrowserHistoryController {
                 URLSuggestion(
                     url: displayUrl,
                     displayText: NSAttributedString(string: displayUrl, attributes: attributes),
-                    detail: "Visited \(visit.visitCount) time\(visit.visitCount == 1 ? "" : "s")",
+                    detail: String(localized: "BrowserHistory.VisitCount", defaultValue: "Visited \(visit.visitCount) times", comment: "History suggestion detail; %lld is the number of visits"),
                     type: .history)
             }
 

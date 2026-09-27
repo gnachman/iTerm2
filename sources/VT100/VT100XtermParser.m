@@ -295,6 +295,7 @@ typedef enum {
                // for this in iTerm2.
                @50: @(XTERMCC_SET_KVP),
                @52: @(XTERMCC_PASTE64),
+               @72: @(XTERMCC_KITTY_DND),
                @104: @(XTERMCC_RESET_COLOR),
                
                @(110): @(XTERMCC_RESET_VT100_TEXT_FOREGROUND_COLOR),

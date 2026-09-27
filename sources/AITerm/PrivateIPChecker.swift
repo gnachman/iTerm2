@@ -4,6 +4,26 @@ import Network
 /// Utility for checking if a host is a local or private network address.
 /// Used to determine if an AI provider is self-hosted (no API key required).
 struct PrivateIPChecker {
+    /// The form the comparisons below are made against.
+    ///
+    /// Host names are case-insensitive (RFC 4343) and a URL carries whatever
+    /// case was typed, so compare lowercased: matching verbatim let
+    /// "http://LOCALHOST:1337" pass for a public host, which sent the user's
+    /// real vendor API key to a server on their own machine. A fully qualified
+    /// name may also carry the DNS root dot ("osaurus.local."), which is the
+    /// same host as "osaurus.local" and must not escape these checks by
+    /// failing every suffix test (issue 13021).
+    ///
+    /// Both are safe for the numeric forms: an IPv6 literal's hex digits parse
+    /// either way, and an address never legitimately ends in a dot.
+    private static func normalized(_ host: String) -> String {
+        var host = host.lowercased()
+        while host.hasSuffix(".") {
+            host.removeLast()
+        }
+        return host
+    }
+
     /// Returns true if the host represents a local or private network address.
     /// This includes:
     /// - localhost
@@ -15,6 +35,7 @@ struct PrivateIPChecker {
     /// - IPv6 link-local (fe80::/10)
     /// - IPv6 unique local (fc00::/7)
     static func isLocalOrPrivate(_ host: String) -> Bool {
+        let host = normalized(host)
         if host == "localhost" {
             return true
         }

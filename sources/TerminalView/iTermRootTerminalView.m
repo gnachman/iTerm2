@@ -15,6 +15,7 @@
 #import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSView+iTerm.h"
@@ -47,6 +48,26 @@ const CGFloat kDivisionViewHeight = 1;
 
 const NSInteger iTermRootTerminalViewWindowNumberLabelMargin = 6;
 const NSInteger iTermRootTerminalViewWindowNumberLabelWidth = 40;
+// Padding after the compact proxy icon when no window number follows it.
+static const CGFloat iTermRootTerminalViewCompactProxyIconExtraPadding = 4;
+
+static const CGFloat iTermWindowNameBesideTabsLeftMargin = 6;
+// Wide enough to read as a separator on its own, so the name needs no rule or
+// capsule to divide it from the first tab. A capsule here would read as a tab.
+static const CGFloat iTermWindowNameBesideTabsRightMargin = 14;
+// A long window name must not crowd out the tabs it sits beside, so it is
+// truncated rather than allowed to grow without bound.
+static const CGFloat iTermWindowNameBesideTabsMaximumWidth = 180;
+// Below this the tail ellipsis leaves too few characters to identify a window,
+// so showing nothing is more honest than showing “My…”.
+static const CGFloat iTermWindowNameBesideTabsMinimumWidth = 44;
+// Separates the name from the tab labels beside it by texture rather than
+// color, which not every reader can distinguish.
+static const CGFloat iTermWindowNameBesideTabsTracking = 0.25;
+// Applied to the window number's color to sit the name just below the tab
+// labels. The one place the name's weight is decided: the label's own
+// alphaValue stays at 1 so this does not compound with it.
+static const CGFloat iTermWindowNameBesideTabsAlpha = 0.55;
 
 static const CGFloat kMinimumToolbeltSizeInPoints = 100;
 static const CGFloat kMinimumToolbeltSizeAsFractionOfWindow = 0.05;
@@ -75,7 +96,6 @@ typedef struct {
 
 @end
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermTabBarBacking : NSView<iTermTabBarControlViewContainer>
 @property (nonatomic) BOOL hidesWhenTabBarHidden;
 @property (nonatomic, readonly) NSVisualEffectView *visualEffectView;
@@ -92,9 +112,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         _visualEffectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
         NSVisualEffectState state = NSVisualEffectStateActive;
         if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
-            if (@available(macOS 10.16, *)) {
-                state = NSVisualEffectStateFollowsWindowActiveState;
-            }
+            state = NSVisualEffectStateFollowsWindowActiveState;
         }
         _visualEffectView.state = state;
 
@@ -109,9 +127,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 
 - (void)addWindowColorView {
     if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
-        if (@available(macOS 10.16, *)) {
-            return;
-        }
+        return;
     }
     NSView *windowColorView = [[NSView alloc] initWithFrame:self.bounds];
     windowColorView.wantsLayer = YES;
@@ -136,22 +152,31 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     iTermStandardWindowButtonsView *_standardWindowButtonsView;
     NSMutableDictionary<NSNumber *, NSButton *> *_standardButtons;
     NSString *_windowTitle;
+    // Snapshot of the inputs last used to render _windowTitleLabel. It lets us
+    // skip the expensive attributed-string build + alignment layout when nothing
+    // that affects the rendered label has changed. The title is polled ~once per
+    // second per visible session even while idle, so without this guard many
+    // open windows burn CPU rebuilding an identical label (issue 12982).
+    iTermWindowTitleLabelInputs *_lastRenderedWindowTitleLabelInputs;
     NSNumber *_windowNumber;
     NSTextField *_windowNumberLabel;
+    NSTextField *_windowNameBesideTabsLabel;
+    // Cached measurement; see -windowNameBesideTabsTextWidth.
+    CGFloat _windowNameBesideTabsTextWidth;
+    BOOL _windowNameBesideTabsTextWidthValid;
     iTermFakeWindowTitleLabel *_windowTitleLabel;
-    iTermTabBarBacking *_tabBarBacking NS_AVAILABLE_MAC(10_14);
+    iTermTabBarBacking *_tabBarBacking;
     iTermGenericStatusBarContainer *_statusBarContainer;
     NSDictionary *_desiredToolbeltProportions;
-    iTermWindowSizeView *_windowSizeView NS_AVAILABLE_MAC(10_14);
+    iTermWindowSizeView *_windowSizeView;
 
-    iTermLayerBackedSolidColorView *_titleBackgroundView NS_AVAILABLE_MAC(10_14);
-    NSVisualEffectView *_titleBackgroundVEV NS_AVAILABLE_MAC(10_14);
+    iTermLayerBackedSolidColorView *_titleBackgroundView;
+    NSVisualEffectView *_titleBackgroundVEV;
 
-    iTermWindowBorderView *_windowBorderView NS_AVAILABLE_MAC(10_14);
-    BOOL _cornerRadiusDetectionFailed NS_AVAILABLE_MAC(10_14);
+    iTermWindowBorderView *_windowBorderView;
+    BOOL _cornerRadiusDetectionFailed;
 
-    iTermImageView *_backgroundImage NS_AVAILABLE_MAC(10_14);
-    NSView *_workaroundView;  // 10.14 only. See issue 8701.
+    iTermImageView *_backgroundImage;
     iTermLayerBackedSolidColorView *_notchMask NS_AVAILABLE_MAC(12_0);
     iTermCompactProxyIconView *_compactProxyIconView;
 }
@@ -255,18 +280,29 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         [self updateToolbeltForWindow:nil];
 
         _windowNumberLabel = [NSTextField newLabelStyledTextField];
-        if (@available(macOS 10.16, *)) {
-            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
-        }
+        _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
         _windowNumberLabel.alphaValue = 0.75;
         _windowNumberLabel.hidden = YES;
         _windowNumberLabel.autoresizingMask = (NSViewMaxXMargin | NSViewMinYMargin);
         [self addSubview:_windowNumberLabel];
 
-        _windowTitleLabel = [iTermFakeWindowTitleLabel newLabelStyledTextField];
+        _windowNameBesideTabsLabel = [NSTextField newLabelStyledTextField];
+        // Always the small size: this label only appears when the tab bar is
+        // visible, which is when the window number label is small too.
         if (@available(macOS 10.16, *)) {
-            _windowTitleLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
+            _windowNameBesideTabsLabel.font = [NSFont titleBarFontOfSize:[NSFont smallSystemFontSize]];
+        } else {
+            _windowNameBesideTabsLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         }
+        // Quietness is carried entirely by the text color, so that there is one
+        // number to change rather than two that multiply.
+        _windowNameBesideTabsLabel.alphaValue = 1;
+        _windowNameBesideTabsLabel.hidden = YES;
+        _windowNameBesideTabsLabel.autoresizingMask = (NSViewMaxXMargin | NSViewMinYMargin);
+        [self addSubview:_windowNameBesideTabsLabel];
+
+        _windowTitleLabel = [iTermFakeWindowTitleLabel newLabelStyledTextField];
+        _windowTitleLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
         _windowTitleLabel.alphaValue = 1;
         _windowTitleLabel.alignment = NSTextAlignmentCenter;
         _windowTitleLabel.hidden = YES;
@@ -279,11 +315,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             [iTermAdvancedSettingsModel squareWindowCorners] ? 0 : [iTermWindowCornerRadiusDetector fallbackCornerRadius];
         [self addSubview:_windowBorderView];
 
-        if (@available(macOS 10.15, *)) {} else {
-            // 10.14 only
-            _workaroundView = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) color:[NSColor clearColor]];
-            [self addSubview:_workaroundView];
-        }
         if (@available(macOS 12.0, *)) {
             _notchMask = [[iTermLayerBackedSolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0) color:[NSColor blackColor]];
             _notchMask.hidden = YES;
@@ -303,8 +334,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     _verticalTabBarDragHandle.delegate = nil;
 }
 
-- (void)advancedSettingsDidChange:(NSNotification *)notification NS_AVAILABLE_MAC(10_14) {
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
     [self updateBorderViews];
+    [self updateWindowNameBesideTabs];
 }
 
 - (void)setDelegate:(id<iTermRootTerminalViewDelegate>)delegate {
@@ -322,6 +354,10 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 - (NSView *)hitTest:(NSPoint)point {
     NSView *view = [super hitTest:point];
     if (!_tabBarControlOnLoan && !_windowNumberLabel.hidden && view == _windowNumberLabel && !_tabBarControl.isHidden) {
+        return _tabBarControl;
+    } else if (!_tabBarControlOnLoan && !_windowNameBesideTabsLabel.hidden && view == _windowNameBesideTabsLabel && !_tabBarControl.isHidden) {
+        // Same as the window number: the name is painted over the strip, so
+        // clicks belong to the tab bar underneath it.
         return _tabBarControl;
     } else if (!_windowTitleLabel.hidden && view == _windowTitleLabel) {
         return self;
@@ -467,17 +503,13 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return [self retinaRoundRect:frame];
 }
 
-- (NSRect)frameForWindowNumberLabel {
-    if (_tabBarControlOnLoan) {
-        return NSZeroRect;
-    }
-    [_windowNumberLabel sizeToFit];
-    const NSRect standardButtonsFrame = [self frameForStandardWindowButtons];
+// Vertical origin that centers a label's cap height on the tab bar strip, where
+// the window number and the window name sit side by side.
+- (CGFloat)tabBarStripLabelOriginYForFont:(NSFont *)font {
     const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
     const CGFloat tabBarHeight = (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab) ? 26.0 : _tabBarControl.height;
-    const CGFloat windowNumberHeight = _windowNumberLabel.frame.size.height;
-    const CGFloat baselineOffset = -_windowNumberLabel.font.descender;
-    const CGFloat capHeight = _windowNumberLabel.font.capHeight;
+    const CGFloat baselineOffset = -font.descender;
+    const CGFloat capHeight = font.capHeight;
     const CGFloat myHeight = self.frame.size.height;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     CGFloat shift = (preferredStyle == TAB_STYLE_MINIMAL) ? 0 : 1;
@@ -486,11 +518,197 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             shift = 1;  // Move down by 3 points on macOS 26 for minimal theme
         }
     }
+    return myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset - shift;
+}
+
+- (NSRect)frameForWindowNumberLabel {
+    if (_tabBarControlOnLoan) {
+        return NSZeroRect;
+    }
+    [_windowNumberLabel sizeToFit];
+    const NSRect standardButtonsFrame = [self frameForStandardWindowButtons];
+    const CGFloat windowNumberHeight = _windowNumberLabel.frame.size.height;
     NSRect rect = NSMakeRect(NSMaxX(standardButtonsFrame) + [self compactProxyIconWidthIncludingMargin] + iTermRootTerminalViewWindowNumberLabelMargin,
-                             myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset - shift,
+                             [self tabBarStripLabelOriginYForFont:_windowNumberLabel.font],
                              iTermRootTerminalViewWindowNumberLabelWidth,
                              windowNumberHeight);
     return [self retinaRoundRect:rect];
+}
+
+// Width the tab bar's left inset reserves before the window name: the stoplight
+// buttons, the proxy icon, and either the window number's box or the padding
+// that stands in for it when the number is hidden.
+//
+// -tabBarInsetsForCompactWindow and the name's own frame must both come from
+// here. They are not interchangeable with the real button frame: this reserves
+// -compactTabBarStoplightButtonsWidth (75 by default) where
+// NSMaxX(-frameForStandardWindowButtons) is 69, and 95 again with the stoplight
+// hotbox enabled. Positioning the label from the button frame drew it left of
+// the gap actually reserved for it.
+- (CGFloat)widthOfDecorationsBeforeWindowNameBesideTabs {
+    CGFloat stoplightButtonsWidth = MAX(0, [iTermAdvancedSettingsModel compactTabBarStoplightButtonsWidth]);
+    if (@available(macOS 26, *)) {
+        stoplightButtonsWidth += 3;
+    }
+    const CGFloat proxyIconWidth = [self compactProxyIconWidthIncludingMargin];
+    const CGFloat afterProxyIcon =
+        ([self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible]
+         ? (iTermRootTerminalViewWindowNumberLabelMargin * 2 + iTermRootTerminalViewWindowNumberLabelWidth)
+         : (proxyIconWidth > 0 ? iTermRootTerminalViewCompactProxyIconExtraPadding : 0));
+    return stoplightButtonsWidth + proxyIconWidth + afterProxyIcon;
+}
+
+// X origin of the window name: after the stoplight buttons, the proxy icon and
+// the window number, which together read as the window's identity.
+- (CGFloat)leadingEdgeForWindowNameBesideTabs {
+    return ([self widthOfDecorationsBeforeWindowNameBesideTabs] +
+            iTermWindowNameBesideTabsLeftMargin);
+}
+
+// The per-tab minimum pushed into the tab bar, which is what decides when the
+// bar can no longer fit every tab. Kept in one place because the window name's
+// reservation used to derive it independently and the two picked different
+// advanced settings, so the name took space the tabs needed. The reservation now
+// asks the tab bar instead, which is why this has a single caller.
+- (int)tabBarCellMinWidth {
+    if ([iTermPreferences boolForKey:kPreferenceKeyHideTabNumber]) {
+        return [iTermAdvancedSettingsModel minCompactTabWidth];
+    }
+    return [iTermAdvancedSettingsModel minTabWidth];
+}
+
+// A tab is somewhere to go and the window name is only context for the tabs, so
+// the name gives up its space rather than crowd the tabs out of the bar.
+//
+// It gives up only what a tab can use, though. A scrollable bar keeps every tab
+// at its full width and scrolls, so the tabs past the first would not be laid
+// out in the space the name surrenders to them: asking the bar what fits
+// minimally there hid the name one tab at a time for nothing.
+//
+// The tab bar owns the rule for what fits -- collapsed group chips, pinned tabs,
+// its own margins and the overflow chevron all change the answer -- so ask it
+// rather than re-deriving it here. The estimate this replaced omitted the bar's
+// left margin, counted tab view items rather than cells (overstating what the
+// tabs need whenever a group is collapsed to a chip), and hardcoded the right
+// margin at whatever the style happened to return.
+- (CGFloat)allowanceForWindowNameBesideTabs {
+    // The tab bar's frame is not assigned until after the insets are, so its own
+    // width is a pass stale here. The strip minus the toolbelt is what the
+    // layout calculator starts from.
+    //
+    // Not -_toolbelt.frame: that is not resized until -updateToolbeltFrameForWindow
+    // later in the same pass, so during a live toolbelt drag it lags the width the
+    // tab bar is sized against by the drag delta and the name over-reserves, which
+    // near the overflow boundary squeezes a cell under its minimum for that frame.
+    // -constrainToolbeltWidth has not run yet either, so take the clamp it is about
+    // to apply rather than the raw ivar: this is the value the layout inputs floor.
+    const CGFloat toolbeltWidth = ([self shouldShowToolbelt]
+                                   ? floor([self maximumToolbeltWidthForViewWidth:NSWidth(self.frame)])
+                                   : 0);
+    const CGFloat stripWidth = NSWidth(self.frame) - toolbeltWidth;
+    // -tabBarInsetsForCompactWindow reserves this after the name, so it is space
+    // the tabs never get either. Ignoring it let a large setting crowd the tabs,
+    // which is the one thing this allowance exists to prevent.
+    const CGFloat extraSpace = MAX(0, [iTermAdvancedSettingsModel extraSpaceBeforeCompactTopTabBar]);
+    const CGFloat maximumInset = [self.tabBarControl maximumLeftInsetLeavingTabsUsableForWidth:stripWidth];
+    return (maximumInset -
+            [self leadingEdgeForWindowNameBesideTabs] -
+            iTermWindowNameBesideTabsRightMargin -
+            extraSpace);
+}
+
+// The width the name wants: what the label needs to draw the whole string, not
+// what the glyphs measure. A text field cell insets its text about two points on
+// each side, so a frame sized to the glyphs leaves the cell short and it
+// truncates -- and truncation drops whole characters, so being four points shy
+// cost a good deal more than four points of name. "-zsh" measured 26 and needed
+// 30, and drew as "-…".
+//
+// The cell answers with the attributed string already in it, which carries the
+// same font and kerning -windowNameBesideTabsMetricAttributes measures with.
+- (CGFloat)naturalWindowNameBesideTabsLabelWidth {
+    return ceil([_windowNameBesideTabsLabel.cell cellSize].width);
+}
+
+- (CGFloat)measuredWindowNameBesideTabsTextWidth {
+    if (_tabBarControlOnLoan || _windowNameBesideTabsLabel.stringValue.length == 0) {
+        return 0;
+    }
+    const CGFloat allowance = MIN(iTermWindowNameBesideTabsMaximumWidth,
+                                  [self allowanceForWindowNameBesideTabs]);
+    const CGFloat natural = [self naturalWindowNameBesideTabsLabelWidth];
+    if (natural > allowance) {
+        // The name cannot be shown in full: it is truncated, or hidden when the
+        // allowance drops below the readable minimum. This fires only for a named
+        // window whose name is actually being squeezed -- not on every layout
+        // pass -- so it records the starving state for a field report of "the
+        // window name beside the tabs has no room" without logging in the common
+        // case. The tab count and strip width are the two inputs that starve it.
+        RLog(@"windowNameBesideTabs squeezed: name=%@ natural=%.0f allowance=%.0f cells=%lu cellMinWidth=%d stripWidth=%.0f",
+             _windowNameBesideTabsLabel.stringValue, natural, allowance,
+             (unsigned long)self.tabBarControl.cells.count, self.tabBarControl.cellMinWidth,
+             NSWidth(self.frame));
+    }
+    // The minimum gates truncation, not slack. Applying it to the space left
+    // over hid a name that would have fitted whole: “A” in 30 points of slack
+    // neither truncates nor takes anything the tabs need, so the reason to hide
+    // it -- that the tail ellipsis leaves too little to identify a window by --
+    // does not apply to it.
+    if (natural > allowance && allowance < iTermWindowNameBesideTabsMinimumWidth) {
+        return 0;
+    }
+    return MIN(allowance, natural);
+}
+
+// Drops the cached width so the next read measures again. Call whenever the text
+// or the geometry the allowance depends on could have moved.
+- (void)invalidateWindowNameBesideTabsTextWidth {
+    _windowNameBesideTabsTextWidthValid = NO;
+}
+
+// Cached for the duration of a layout pass. One pass asks three times -- the
+// hidden check in -layoutWindowPaneDecorations, the label's own frame, and the
+// tab bar's inset via -windowNameBesideTabsWidthIncludingMargin -- and each read
+// measures text and walks the whole allowance. -layoutSubviews runs on every
+// resize and drag frame, so the repeat was not free.
+- (CGFloat)windowNameBesideTabsTextWidth {
+    if (!_windowNameBesideTabsTextWidthValid) {
+        _windowNameBesideTabsTextWidth = [self measuredWindowNameBesideTabsTextWidth];
+        _windowNameBesideTabsTextWidthValid = YES;
+    }
+    return _windowNameBesideTabsTextWidth;
+}
+
+- (CGFloat)windowNameBesideTabsWidthIncludingMargin {
+    const CGFloat textWidth = [self windowNameBesideTabsTextWidth];
+    if (textWidth == 0) {
+        return 0;
+    }
+    return (iTermWindowNameBesideTabsLeftMargin +
+            textWidth +
+            iTermWindowNameBesideTabsRightMargin);
+}
+
+- (NSRect)frameForWindowNameBesideTabsLabel {
+    const CGFloat textWidth = [self windowNameBesideTabsTextWidth];
+    if (textWidth == 0) {
+        return NSZeroRect;
+    }
+    [_windowNameBesideTabsLabel sizeToFit];
+    NSRect rect = NSMakeRect([self leadingEdgeForWindowNameBesideTabs],
+                             [self tabBarStripLabelOriginYForFont:_windowNameBesideTabsLabel.font],
+                             textWidth,
+                             _windowNameBesideTabsLabel.frame.size.height);
+    return [self retinaRoundRect:rect];
+}
+
+// The label is painted over the strip and clicks belong to the tab bar
+// underneath it, so this asks about the point rather than hit-testing the view.
+- (BOOL)pointIsInWindowNameBesideTabs:(NSPoint)point {
+    return (!_tabBarControlOnLoan &&
+            !_windowNameBesideTabsLabel.hidden &&
+            !_tabBarControl.isHidden &&
+            NSPointInRect(point, _windowNameBesideTabsLabel.frame));
 }
 
 - (NSRect)frameForWindowTitleLabel {
@@ -748,7 +966,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return NSMakeRect(0, 0, self.bounds.size.width, 1);
 }
 
-- (void)updateTitleAndBorderViews NS_AVAILABLE_MAC(10_14) {
+- (void)updateTitleAndBorderViews {
     const BOOL wantsTitleBackgroundView = [_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
     if (wantsTitleBackgroundView) {
         if (!_titleBackgroundView) {
@@ -772,9 +990,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
                 _titleBackgroundVEV.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
                 NSVisualEffectState state = NSVisualEffectStateActive;
                 if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
-                    if (@available(macOS 10.16, *)) {
-                        state = NSVisualEffectStateFollowsWindowActiveState;
-                    }
+                    state = NSVisualEffectStateFollowsWindowActiveState;
                 }
                 _titleBackgroundVEV.state = state;
                 _titleBackgroundVEV.blendingMode = NSVisualEffectBlendingModeWithinWindow;
@@ -833,7 +1049,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     return [color colorWithAlphaComponent:alpha];
 }
 
-- (NSColor *)resolvedWindowBorderColor NS_AVAILABLE_MAC(10_14) {
+- (NSColor *)resolvedWindowBorderColor {
     NSColor *focused = iTermWindowBorderColorFromSetting([iTermAdvancedSettingsModel windowBorderColor]);
     NSColor *unfocused = iTermWindowBorderColorFromSetting([iTermAdvancedSettingsModel windowBorderColorUnfocused]);
     NSColor *base = self.window.isKeyWindow ? (focused ?: unfocused) : (unfocused ?: focused);
@@ -847,7 +1063,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 // The border is drawn fully inside the window, so updateBorderViews subtracts
 // half the border width to get the stroke's centerline radius. Updated on
 // cache miss by the early-return path in updateBorderViews.
-- (CGFloat)resolvedWindowBorderCornerRadius NS_AVAILABLE_MAC(10_14) {
+- (CGFloat)resolvedWindowBorderCornerRadius {
     if ([iTermAdvancedSettingsModel squareWindowCorners]) {
         return 0;
     }
@@ -859,7 +1075,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     return MAX(0, cached.doubleValue);
 }
 
-- (void)updateBorderViews NS_AVAILABLE_MAC(10_14) {
+- (void)updateBorderViews {
     NSWindow *window = self.window;
 
     // Hide the border until the detector has cached a radius for this window
@@ -916,15 +1132,6 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     }
     _useMetal = useMetal;
     self.tabView.drawsBackground = NO;
-    if (@available(macOS 10.15, *)) { } else {
-        if (useMetal) {
-            self.wantsLayer = YES;
-            self.layer = [[CALayer alloc] init];
-        } else {
-            self.wantsLayer = NO;
-            self.layer = nil;
-        }
-    }
     [self updateTitleAndBorderViews];
 
     [_divisionView removeFromSuperview];
@@ -933,9 +1140,13 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     [self updateDivisionViewAndWindowNumberLabel];
 }
 
-- (void)viewDidChangeEffectiveAppearance NS_AVAILABLE_MAC(10_14) {
+- (void)viewDidChangeEffectiveAppearance {
+    RLog(@"iTermRootTerminalView viewDidChangeEffectiveAppearance -> %@ (window key=%@ main=%@ appActive=%@)",
+         self.effectiveAppearance.name,
+         @(self.window.isKeyWindow), @(self.window.isMainWindow), @(NSApp.isActive));
     // This can be called from within -[NSWindow setStyleMask:]
     dispatch_async(dispatch_get_main_queue(), ^{
+        RLog(@"iTermRootTerminalView appearance-change block -> rootTerminalViewDidChangeEffectiveAppearance");
         [self.delegate rootTerminalViewDidChangeEffectiveAppearance];
     });
     [self updateBorderViews];
@@ -950,6 +1161,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     if (!_windowTitleLabel.hidden) {
         [self layoutWindowPaneDecorations];
     }
+    [self updateWindowNameBesideTabs];
 }
 
 - (void)setSubtitle:(NSString *)subtitle {
@@ -958,8 +1170,119 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                                  icon:_windowTitleLabel.windowIcon];
 }
 
+// The attributes that decide how wide the name draws. Color and truncation do
+// not change its metrics, so the measurement takes only these and the drawn
+// string builds on them: the measured width and the drawn width are then one
+// expression rather than two that have to agree.
+- (NSDictionary *)windowNameBesideTabsMetricAttributes {
+    return @{
+        NSFontAttributeName: _windowNameBesideTabsLabel.font,
+        NSKernAttributeName: @(iTermWindowNameBesideTabsTracking)
+    };
+}
+
+// Rebuilds the label's styled text. The color lives here rather than in
+// -textColor because the tracking forces an attributed string anyway.
+- (void)applyWindowNameBesideTabsAttributes {
+    NSString *name = _windowNameBesideTabsLabel.stringValue;
+    if (name.length == 0) {
+        return;
+    }
+    // An attributed string carries its own truncation, so the label's
+    // lineBreakMode does not reach it.
+    NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+    paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+    // The delegate returns nil when it has no tab bar color to offer, and the
+    // name must still be dimmed in that case: applying the alpha only inside a
+    // nil check drew it at full strength, reading as a peer of the tab titles
+    // rather than as context for them.
+    NSColor *decorationColor = ([self.delegate rootTerminalViewTabBarTextColorForWindowNumber] ?:
+                                [NSColor labelColor]);
+    NSMutableDictionary *attributes = [[self windowNameBesideTabsMetricAttributes] mutableCopy];
+    attributes[NSParagraphStyleAttributeName] = paragraphStyle;
+    attributes[NSForegroundColorAttributeName] = [decorationColor colorWithAlphaComponent:iTermWindowNameBesideTabsAlpha];
+    _windowNameBesideTabsLabel.attributedStringValue = [[NSAttributedString alloc] initWithString:name
+                                                                                      attributes:attributes];
+}
+
+// Returns YES if the name changed, meaning the tab bar insets are now stale.
+- (BOOL)updateWindowNameBesideTabsText {
+    NSString *name = [self.delegate rootTerminalViewWindowNameBesideTabs] ?: @"";
+    if ([name isEqualToString:_windowNameBesideTabsLabel.stringValue]) {
+        return NO;
+    }
+    _windowNameBesideTabsLabel.stringValue = name;
+    _windowNameBesideTabsLabel.toolTip = name.length > 0 ? name : nil;
+    [self applyWindowNameBesideTabsAttributes];
+    [self invalidateWindowNameBesideTabsTextWidth];
+    return YES;
+}
+
+- (void)updateWindowNameBesideTabs {
+    // Called outside a layout pass, so nothing has invalidated the cache yet and
+    // the width is needed both before and after the text changes.
+    [self invalidateWindowNameBesideTabsTextWidth];
+    const CGFloat widthBefore = [self windowNameBesideTabsWidthIncludingMargin];
+    const BOOL textChanged = [self updateWindowNameBesideTabsText];
+    const CGFloat widthAfter = [self windowNameBesideTabsWidthIncludingMargin];
+    // The text alone is not enough to tell whether anything moved. Returning the
+    // tab bar from loan leaves the same string in the label while it is still
+    // latched hidden from when the width was forced to 0, so ask whether it can
+    // be shown at all as well.
+    const BOOL shouldBeHidden = (widthAfter == 0);
+    if (!textChanged && shouldBeHidden == _windowNameBesideTabsLabel.isHidden) {
+        return;
+    }
+    if (widthBefore == widthAfter && !shouldBeHidden && !_windowNameBesideTabsLabel.isHidden) {
+        // The reservation is unchanged, so the tab bar's inset is still right and
+        // only this label's own text moved. In Always mode the name follows the
+        // session's presentation title, which ticks on every job and directory
+        // change; a full layout pass -- tab bar, toolbelt, status bar, division
+        // view, tab style -- for each of those is what this avoids.
+        _windowNameBesideTabsLabel.frame = [self frameForWindowNameBesideTabsLabel];
+        return;
+    }
+    // The name contributes to the tab bar's left inset, so the tabs have to be
+    // laid out again, not just this label.
+    [self layoutSubviews];
+}
+
 - (void)setWindowTitleLabelToString:(NSString *)title subtitle:(NSString *)subtitle icon:(NSImage *)icon {
-    _windowTitleLabel.puaFontProvider = [self.delegate rootTerminalViewPUAFontProvider];
+    id<PSMPUAFontProvider> puaFontProvider = [self.delegate rootTerminalViewPUAFontProvider];
+    _windowTitleLabel.puaFontProvider = puaFontProvider;
+
+    // Short-circuit if nothing that affects the rendered label has changed. The
+    // title is polled ~once per second per visible session even while idle, so
+    // rebuilding an identical label scales CPU with the number of open windows
+    // (issue 12982). The rendered result depends on the content (title/subtitle/
+    // icon), the drawing attributes (text color, font, HTML parsing, and the PUA
+    // fonts resolved from the terminal font), and the alignment, which is a
+    // function of the available width (frame width, toolbelt width, tab bar
+    // insets, whether the tab bar control is on loan, and the macOS 26 minimal
+    // left-align setting). iTermWindowTitleLabelInputs captures all of these.
+    BOOL leftAlignTitleBarMinimalTahoe = NO;
+    if (@available(macOS 26, *)) {
+        leftAlignTitleBarMinimalTahoe = [iTermAdvancedSettingsModel leftAlignTitleBarMinimalTahoe];
+    }
+    iTermWindowTitleLabelInputs *inputs =
+        [[iTermWindowTitleLabelInputs alloc] initWithTitle:title
+                                                  subtitle:subtitle
+                                                      icon:icon
+                                                 textColor:_windowTitleLabel.textColor
+                                                      font:_windowTitleLabel.font
+                                                     width:NSWidth(self.frame)
+                                             toolbeltWidth:[self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0.0
+                                                    insets:[self.delegate tabBarInsets]
+                                       tabBarControlOnLoan:_tabBarControlOnLoan
+                                                 parseHTML:[iTermPreferences boolForKey:kPreferenceKeyHTMLTabTitles]
+                             leftAlignTitleBarMinimalTahoe:leftAlignTitleBarMinimalTahoe
+                                   effectiveAppearanceName:self.effectiveAppearance.name
+                                           puaFontProvider:puaFontProvider];
+    if ([inputs isEqual:_lastRenderedWindowTitleLabelInputs]) {
+        return;
+    }
+    _lastRenderedWindowTitleLabelInputs = inputs;
+
     [_windowTitleLabel setTitle:title subtitle:subtitle icon:icon alignmentProvider:
      ^NSTextAlignment(NSTextField * _Nonnull scratch) {
          BOOL leftAligned = NO;
@@ -1003,6 +1326,17 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     _tabBarControl = tabBarControl;
     [self.tabBarControl updateFlashing];
     _tabBarBacking.hidden = NO;
+    // While the bar was on loan the name was empty: the delegate reported none
+    // and the width was forced to 0. The bar can come back before the delegate
+    // will report one again -- -windowWillExitFullScreen returns it while the
+    // window is still full screen -- so reading it here would read the same
+    // nothing and the name would never return. Ask once the caller's layout has
+    // settled instead, which covers full screen and any other borrow/return.
+    // Deferred for the same reason as issue 12811: callers may be mid-layout.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf updateWindowNameBesideTabs];
+    });
 }
 
 - (void)windowNumberDidChangeTo:(NSNumber *)number {
@@ -1127,6 +1461,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (void)updateTextColors {
     _windowNumberLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForWindowNumber];
+    // Shares the window number's treatment because it shares its strip: the
+    // window name is context for the tabs, not a peer of the tab titles.
+    [self applyWindowNameBesideTabsAttributes];
     _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
 }
 
@@ -1225,17 +1562,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (void)updateWindowNumberFont {
     if ([self tabBarShouldBeVisible]) {
-        if (@available(macOS 10.16, *)) {
-            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont smallSystemFontSize]];
-        } else {
-            _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
-        }
+        _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont smallSystemFontSize]];
     } else {
-        if (@available(macOS 10.16, *)) {
-            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
-        } else {
-            _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-        }
+        _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
     }
 }
 
@@ -1398,8 +1727,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     // window size when it appears.
     [self setLeftTabBarWidthFromPreferredWidth];
 
-    if ([_delegate iTermTabBarWindowIsFullScreen]) {
-        // When in full screen the insets must be reset even though the tab bar is not visible.
+    if ([_delegate iTermTabBarWindowIsFullScreen] || _tabBarControlOnLoan) {
+        // The insets must be reset even though the tab bar isn't laid out by this method:
+        // in full screen because it's not visible here, and whenever the tab bar has been
+        // loaned to the titlebar accessory (macOS 26) because -[PseudoTerminal tabBarInsets]
+        // is full-screen-dependent. Without this, the full-screen inset survives the
+        // exit-fullscreen transition into the windowed titlebar.
         self.tabBarControl.insets = [self.delegate tabBarInsets];
     }
 }
@@ -1563,6 +1896,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 }
 
 - (void)layoutWindowPaneDecorations {
+    // Must precede the tab bar insets, which reserve room for whatever this
+    // leaves in the label.
+    [self updateWindowNameBesideTabsText];
     [self updateTextColors];
     if (_windowTitleLabel.windowIcon) {
         [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle
@@ -1599,6 +1935,18 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     _windowTitleLabel.hidden = hideWindowTitleLabel;
     self.window.movableByWindowBackground = !hideWindowTitleLabel;
     _windowNumberLabel.hidden = ![self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible];
+
+    // The delegate returns nil unless the tab bar is visible, so this and the
+    // title taking the tab bar's place are mutually exclusive.
+    const BOOL hideWindowNameBesideTabs = ([self windowNameBesideTabsTextWidth] == 0);
+    if (!hideWindowNameBesideTabs) {
+        if (_windowNameBesideTabsLabel.superview != self) {
+            [self addSubview:_windowNameBesideTabsLabel];
+        }
+        _windowNameBesideTabsLabel.frame = [self frameForWindowNameBesideTabsLabel];
+    }
+    _windowNameBesideTabsLabel.hidden = hideWindowNameBesideTabs;
+
     _standardWindowButtonsView.frame = [self frameForStandardWindowButtons];
     if (_standardWindowButtonsView && !_compactProxyIconView && [self shouldShowCompactProxyIcon]) {
         [self createCompactProxyIconButtonIfNeeded];
@@ -1615,15 +1963,32 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 - (void)layoutSubviews {
     DLog(@"Before:\n%@", [self iterm_recursiveDescription]);
     [self.delegate rootTerminalViewWillLayoutSubviews];
+    // Everything the window name's width depends on -- our frame, the toolbelt,
+    // the tab bar's settings -- may have moved since the last pass.
+    [self invalidateWindowNameBesideTabsTextWidth];
 
-    if (@available(macOS 10.15, *)) { } else {
-        _workaroundView.frame = NSMakeRect(0, self.bounds.size.height - 1, 1, 1);
-    }
     const BOOL showToolbeltInline = self.shouldShowToolbelt;
     NSWindow *thisWindow = _delegate.window;
     if (!_tabBarControlOnLoan) {
         [self.tabBarControl updateHeightWithDefault:[_delegate rootTerminalViewHeightOfTabBar:self]];
     }
+
+    // Update the tab style. This must precede everything below that asks the tab
+    // bar what fits: -layoutWindowPaneDecorations and the tab bar inset both
+    // derive the space reserved for the window name from these values, so
+    // pushing them afterwards would size the reservation against the previous
+    // pass's settings and leave it a pass behind on every preference change.
+    // Each setter assigns its ivar synchronously and only schedules the relayout,
+    // so moving them earlier changes what the reservation reads, not when the
+    // tab bar lays out.
+    [self.tabBarControl setDisableTabClose:!iTermAdvancedSettingsModel.tabCloseButtonsAlwaysVisible];
+    [self.tabBarControl setCellMinWidth:[self tabBarCellMinWidth]];
+    [self.tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];
+    [self.tabBarControl setStretchCellsToFit:[iTermPreferences boolForKey:kPreferenceKeyStretchTabsToFillBar]];
+    [self.tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
+    [self.tabBarControl setScrollableTabWidth:[iTermAdvancedSettingsModel scrollableTabWidth]];
+    [self.tabBarControl setPinnedTabWidth:[iTermAdvancedSettingsModel pinnedTabWidth]];
+    self.tabBarControl.smartTruncation = [iTermAdvancedSettingsModel tabTitlesUseSmartTruncation];
 
     _backgroundImage.frame = self.bounds;
     _windowBorderView.frame = self.bounds;
@@ -1649,19 +2014,6 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     if (showToolbeltInline) {
         [self updateToolbeltFrameForWindow:thisWindow];
     }
-
-    // Update the tab style.
-    [self.tabBarControl setDisableTabClose:!iTermAdvancedSettingsModel.tabCloseButtonsAlwaysVisible];
-    if ([iTermPreferences boolForKey:kPreferenceKeyHideTabNumber]) {
-        [self.tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minCompactTabWidth]];
-    } else {
-        [self.tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minTabWidth]];
-    }
-    [self.tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];
-    [self.tabBarControl setStretchCellsToFit:[iTermPreferences boolForKey:kPreferenceKeyStretchTabsToFillBar]];
-    [self.tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
-    [self.tabBarControl setPinnedTabWidth:[iTermAdvancedSettingsModel pinnedTabWidth]];
-    self.tabBarControl.smartTruncation = [iTermAdvancedSettingsModel tabTitlesUseSmartTruncation];
 
     DLog(@"repositionWidgets - redraw view");
     // Note: this used to call setNeedsDisplay on each session in the current tab.
@@ -1858,6 +2210,15 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     return [_delegate iTermTabBarCanDragWindow];
 }
 
+- (BOOL)iTermTabBarDoubleClickAtPointInWindow:(NSPoint)pointInWindow {
+    const NSPoint point = [self convertPoint:pointInWindow fromView:nil];
+    if (![self pointIsInWindowNameBesideTabs:point]) {
+        return NO;
+    }
+    [self.delegate rootTerminalViewDidRequestEditWindowName];
+    return YES;
+}
+
 - (void)iTermTabBarDidUpdateProgressBars {
     if ([_delegate respondsToSelector:@selector(iTermTabBarDidUpdateProgressBars)]) {
         [_delegate iTermTabBarDidUpdateProgressBars];
@@ -2006,9 +2367,6 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 @end
 
 BOOL PSMShouldExtendTransparencyIntoMinimalTabBar(void) {
-    if (@available(macOS 10.16, *)) { } else {
-        return NO;
-    }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_MINIMAL:
             return YES;

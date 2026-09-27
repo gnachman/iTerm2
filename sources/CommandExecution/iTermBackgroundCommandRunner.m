@@ -151,7 +151,7 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
                                        identifier:[[NSUUID UUID] UUIDString]
                                          relaunch:nil];
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
-    [entry addOutput:[NSString stringWithFormat:@"Run command:\n%@\n", self.command]
+    [entry addOutput:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"BackgroundCommandRunner.RunCommand", nil, [NSBundle mainBundle], @"Run command:\n%@\n", @"Log header shown before running a background command; %@ is the command text"), self.command]
           completion:^{}];
     [activeRunners addObject:self];
     __weak __typeof(self) weakSelf = self;
@@ -175,7 +175,7 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
     RLog(@"%@", RLogRedact(self, self.redactedDescription));
     [activeRunners removeObject:self];
     if (status) {
-        [entry addOutput:[NSString stringWithFormat:@"\nFinished with status %d", status]
+        [entry addOutput:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"BackgroundCommandRunner.FinishedWithStatus", nil, [NSBundle mainBundle], @"\nFinished with status %d", @"Message showing the exit status of a background command; %d is the numeric exit status"), status]
               completion:^{}];
     }
     [entry stopRunning];
@@ -184,11 +184,9 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
         RLog(@"%@ post notification with identifier %@", RLogRedact(self, self.redactedDescription), entry.identifier);
         [iTermBackgroundCommandRunnerNotificationObserver sharedInstance];
         [self.class maybeNotify:^(NSInteger deferCount) {
-            NSString *detail = [NSString stringWithFormat:@"\nFinished with status %d", status];
+            NSString *detail = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"BackgroundCommandRunner.FinishedWithStatus", nil, [NSBundle mainBundle], @"\nFinished with status %d", @"Message showing the exit status of a background command; %d is the numeric exit status"), status];
             if (deferCount > 1) {
-                detail = [detail stringByAppendingFormat:@", plus %@ other error%@ silenced.",
-                          @(deferCount - 1),
-                          deferCount > 2 ? @"s" : @""];
+                detail = [detail stringByAppendingString:[NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"BackgroundCommand.OtherErrorsSilenced", nil, [NSBundle mainBundle], @", plus %ld other errors silenced.", @"Appended to a background-command notification; %ld is the number of additional silenced errors"), (long)(deferCount - 1)]];
             }
             [[iTermNotificationController sharedInstance] postNotificationWithTitle:self.notificationTitle
                                                                              detail:detail

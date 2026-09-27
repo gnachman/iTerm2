@@ -1,0 +1,21 @@
+{
+  "cwd": "/Users/user/PBaaS",
+  "duration_ms": 85990,
+  "effort": {
+    "level": "high"
+  },
+  "hook_event_name": "PostToolUse",
+  "permission_mode": "auto",
+  "prompt_id": "69c3b319-3793-43d1-ae11-d3eea147f398",
+  "session_id": "7b9d396c-0ffb-4ab9-b36e-074717cc2ca5",
+  "tool_input": {
+    "command": "echo hello",
+    "timeout": 300000
+  },
+  "tool_name": "Bash",
+  "tool_response": {
+    "output": "hello\n"
+  },
+  "tool_use_id": "toolu_01D3XpKhZYKvdxs64npVUEvZ",
+  "transcript_path": "/Users/user/.claude/projects/-Users-todmy-PBaaS/7b9d396c-0ffb-4ab9-b36e-074717cc2ca5.jsonl"
+}

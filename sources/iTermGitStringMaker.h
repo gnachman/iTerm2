@@ -25,6 +25,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly, strong) iTermVariableScope *scope;
 @property (nonatomic, readonly) BOOL onLocalhost;
 @property (nonatomic, readonly, nullable) NSString *branch;
+// The branch name currently on screen, or nil when the label is showing
+// something else instead of a branch: a repo-state word like "Rebasing",
+// a status override, the xcode warning, or nothing because the poller
+// isn't ready yet. Use this to gate features that only make sense when a
+// real branch is displayed.
+@property (nonatomic, readonly, nullable) NSString *displayedBranch;
 @property (nonatomic, readonly, nullable) NSString *xcode;
 @property (nonatomic, readonly, nullable) iTermGitState *currentState;
 

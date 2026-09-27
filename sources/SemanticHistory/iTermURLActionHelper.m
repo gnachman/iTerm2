@@ -212,6 +212,12 @@
         return nil;
     }
     iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
+    // `coord` is LOGICAL. Every caller of this shared method passes a logical
+    // coordinate: the interactive smart drag/extend path converts visual->logical in
+    // the mouse handler, the annotation caller (smartSelectAtX:y:) is logical, and
+    // the visual gesture entry (smartSelectAtAbsoluteCoord:ignoringNewlines:)
+    // converts before calling us. Converting again here double-converted and picked
+    // the mirror-image word on a right-to-left line.
     if (respectDividers) {
         [extractor restrictToLogicalWindowIncludingCoord:coord];
     }
@@ -376,8 +382,8 @@ workingDirectory:(NSString *)workingDirectory
     iTermBackgroundCommandRunner *runner =
         [[iTermBackgroundCommandRunner alloc] initWithCommand:command
                                                         shell:[self.delegate urlActionHelperShell:self]
-                                                        title:@"URL Handler"];
-    runner.notificationTitle = @"URL Handler Command Failed";
+                                                        title:NSLocalizedStringWithDefaultValue(@"URLActionHelper.URLHandlerTitle", nil, [NSBundle mainBundle], @"URL Handler", @"Title of the background runner that executes a URL handler command.")];
+    runner.notificationTitle = NSLocalizedStringWithDefaultValue(@"URLActionHelper.URLHandlerCommandFailed", nil, [NSBundle mainBundle], @"URL Handler Command Failed", @"Notification title shown when a URL handler command fails.");
     [runner run];
 }
 
@@ -446,7 +452,7 @@ workingDirectory:(NSString *)workingDirectory
                 if ([url.scheme isEqualToString:@"file"] &&
                     url.host.length > 0 &&
                     url.path.length > 0 &&
-                    ![url.host isEqualToString:[NSHost fullyQualifiedDomainName]]) {
+                    ![NSHost it_hostnameIsThisMachine:url.host]) {
                     SCPPath *path = [[SCPPath alloc] init];
                     path.path = url.path;
                     path.hostname = url.host;
@@ -516,9 +522,9 @@ workingDirectory:(NSString *)workingDirectory
 
 + (NSString *)usernameToDownloadFileOnHost:(NSString *)host {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = [NSString stringWithFormat:@"Enter username for host %@ to download file with scp", host];
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.messageText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"URLActionHelper.EnterUsernameForHost", nil, [NSBundle mainBundle], @"Enter username for host %@ to download file with scp", @"Prompt asking for the username to use when downloading a file with scp. %@ is the host name."), host];
+    [alert addButtonWithTitle:iTermLocalizedOK()];
+    [alert addButtonWithTitle:iTermLocalizedCancel()];
 
     NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
     [input setStringValue:NSUserName()];
@@ -542,7 +548,24 @@ workingDirectory:(NSString *)workingDirectory
     [self smartSelectAtAbsoluteCoord:coord ignoringNewlines:NO];
 }
 
-- (BOOL)smartSelectAtAbsoluteCoord:(VT100GridAbsCoord)coord ignoringNewlines:(BOOL)ignoringNewlines {
+- (BOOL)smartSelectAtAbsoluteCoord:(VT100GridAbsCoord)visualCoord ignoringNewlines:(BOOL)ignoringNewlines {
+    // The gesture entry points (right-click "Smart Select", pointer-gesture smart
+    // select) hand us a VISUAL coordinate, but the shared 5-arg method works in
+    // LOGICAL space (as do its interactive callers). Convert here, once, so the
+    // gesture path lands on the right token on a right-to-left line. A no-op unless
+    // the line is bidi-reordered.
+    VT100GridAbsCoord coord = visualCoord;
+    if ([iTermPreferences bidiEnabled]) {
+        const long long overflow = [self.delegate urlActionTotalScrollbackOverflow:self];
+        BOOL ok = NO;
+        const VT100GridCoord relativeVisual = VT100GridCoordFromAbsCoord(visualCoord, overflow, &ok);
+        if (ok) {
+            iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
+            extractor.supportBidi = YES;
+            const VT100GridCoord relativeLogical = [extractor logicalCoordForVisualCoord:relativeVisual];
+            coord = VT100GridAbsCoordFromCoord(relativeLogical, overflow);
+        }
+    }
     VT100GridAbsWindowedRange range;
     SmartMatch *smartMatch = [self smartSelectAtAbsoluteCoord:coord
                                                            to:&range
@@ -551,19 +574,13 @@ workingDirectory:(NSString *)workingDirectory
                                               respectDividers:[[iTermUserDefaults userDefaults] boolForKey:kSelectionRespectsSoftBoundariesKey]];
 
     iTermSelection *selection = [self.delegate urlActionHelperSelection:self];
-    [selection beginSelectionAtAbsCoord:range.coordRange.start
-                                   mode:kiTermSelectionModeCharacter
-                                 resume:NO
-                                 append:NO];
-    [selection moveSelectionEndpointTo:range.coordRange.end];
-    if (!ignoringNewlines) {
-        // TODO(georgen): iTermSelection doesn't have a mode for smart selection ignoring newlines.
-        // If that flag is set, it's better to leave the selection in character mode because you can
-        // still extend a selection with shift-click. If we put it in smart mode, extending would
-        // get confused.
-        selection.selectionMode = kiTermSelectionModeSmart;
-    }
-    [selection endLiveSelection];
+    // `range` is LOGICAL. Commit it directly instead of driving a character-mode
+    // live selection and then flipping to smart mode: that left the live range
+    // flagged visual (character + bidi), so on a right-to-left line it was re-mapped
+    // and selected the wrong cells. character mode when ignoring newlines still lets
+    // shift-click extend; smart mode otherwise (see the note that used to live here).
+    const iTermSelectionMode mode = ignoringNewlines ? kiTermSelectionModeCharacter : kiTermSelectionModeSmart;
+    [selection setSelectedLogicalRange:range mode:mode];
     return smartMatch != nil;
 }
 

@@ -29,6 +29,14 @@ struct IT2Context {
     /// ssh authorization prompt implies, are refused in this mode (see runParsedCommand and
     /// RemoteForbiddenCommand). False for the standalone binary running locally on the Mac.
     let isRemote: Bool
+    /// Which machine this invocation is running on, for tmux pane addressing: nil on the Mac,
+    /// otherwise the clientUniqueID of the SSH-integration conductor carrying this invocation.
+    ///
+    /// Supplied by the host in `IT2Embedded.run`, never parsed from arguments, so a remote caller
+    /// cannot name a connection other than the one it arrived on. A pane address ($TMUX) only
+    /// means anything within one machine, so this is what lets a remote `tmux -CC` resolve its own
+    /// panes without a local server being able to answer for them. See TmuxPaneLocator in the app.
+    let originIdentifier: String?
 }
 
 extension IT2Context {
@@ -63,7 +71,8 @@ extension IT2Context {
         },
         makeClient: { try APIClient.connect() },
         installsSignalHandlers: true,
-        isRemote: false
+        isRemote: false,
+        originIdentifier: nil
     )
 }
 

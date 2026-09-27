@@ -140,21 +140,33 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (void)fadeWindowOut:(NSWindow *)window {
-    [window.animator setAlphaValue:0];
-    [window performSelector:@selector(release)
-               withObject:nil
-               afterDelay:[[NSAnimationContext currentContext] duration]];
+    // Fade the animation window out, then take it off screen and release it. Simply releasing the
+    // window is not enough: an on-screen NSWindow is retained by AppKit's window list, so -release
+    // only balances the +1 from -alloc and the (now invisible, alpha-0) window would linger in
+    // -[NSApp orderedWindows] forever. That stray ordered window makes AppKit believe iTerm2 still
+    // has a visible window after the last terminal closes, so a Dock-icon reopen never triggers
+    // -applicationOpenUntitledFile: and no new terminal window opens (issue 12996). -orderOut: is
+    // what actually removes it from the ordered-window list.
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+        window.animator.alphaValue = 0;
+    } completionHandler:^{
+        [window orderOut:nil];
+        [window release];
+    }];
 }
 
 - (AXUIElementRef)downloadsMenuElement {
-    return [self menuElementNamed:@"Downloads"];
+    return [self menuElementWithAXIdentifier:iTermDownloadsMenuAXIdentifier];
 }
 
 - (AXUIElementRef)uploadsMenuElement {
-    return [self menuElementNamed:@"Uploads"];
+    return [self menuElementWithAXIdentifier:iTermUploadsMenuAXIdentifier];
 }
 
-- (AXUIElementRef)menuElementNamed:(NSString *)menuName {
+// Find a top-level menu bar element by its accessibility identifier. We match on the
+// identifier rather than the title because titles are localizable but identifiers are not,
+// so this keeps working when the menu bar is translated.
+- (AXUIElementRef)menuElementWithAXIdentifier:(NSString *)identifier {
     AXUIElementRef appElement = AXUIElementCreateApplication(getpid());
     AXUIElementRef menuBar;
     AXError error = AXUIElementCopyAttributeValue(appElement,
@@ -187,20 +199,21 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
     for (id child in children) {
         AXUIElementRef element = (AXUIElementRef)child;
-        id title;
+        id elementIdentifier;
         error = AXUIElementCopyAttributeValue(element,
-                                              kAXTitleAttribute,
-                                              (CFTypeRef *)&title);
+                                              kAXIdentifierAttribute,
+                                              (CFTypeRef *)&elementIdentifier);
         if (error) {
             continue;
         }
-        BOOL found = [title isEqualToString:menuName];
-        CFRelease(title);
+        BOOL found = [elementIdentifier isEqualToString:identifier];
+        CFRelease(elementIdentifier);
         if (found) {
             return element;
         }
     }
 
+    DLog(@"No menu bar element found with accessibility identifier %@", identifier);
     return NULL;
 }
 
@@ -265,7 +278,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [item setAction:@selector(itemSelected:)];
 
     NSMenu *submenu = [[[NSMenu alloc] init] autorelease];
-    NSMenuItem *subItem = [[[NSMenuItem alloc] initWithTitle:@"Stop"
+    NSMenuItem *subItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"FileTransfer.Stop", nil, [NSBundle mainBundle], @"Stop", @"Menu item to stop an in-progress transfer")
                                                       action:@selector(stop:)
                                                keyEquivalent:@""] autorelease];
     [subItem setTarget:controller];
@@ -273,7 +286,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     controller.stopSubItem = subItem;
 
     if (transferrableFile.isDownloading) {
-        subItem = [[[NSMenuItem alloc] initWithTitle:@"Show in Finder"
+        subItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"FileTransfer.ShowInFinder", nil, [NSBundle mainBundle], @"Show in Finder", @"Menu item to reveal a downloaded file in Finder")
                                               action:@selector(showInFinder:)
                                        keyEquivalent:@""] autorelease];
         [subItem setTarget:controller];
@@ -281,7 +294,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         controller.showInFinderSubItem = subItem;
     }
 
-    subItem = [[[NSMenuItem alloc] initWithTitle:@"Remove from List"
+    subItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"FileTransfer.RemoveFromList", nil, [NSBundle mainBundle], @"Remove from List", @"Menu item to remove a transfer from the transfers list")
                                           action:@selector(removeFromList:)
                                    keyEquivalent:@""] autorelease];
     [subItem setTarget:controller];
@@ -289,7 +302,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     controller.removeFromListSubItem = subItem;
 
     if (transferrableFile.isDownloading) {
-        subItem = [[[NSMenuItem alloc] initWithTitle:@"Open"
+        subItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"General.Open", nil, [NSBundle mainBundle], @"Open", @"Open: used on buttons, menu items and window titles")
                                               action:@selector(open:)
                                        keyEquivalent:@""] autorelease];
         [subItem setTarget:controller];
@@ -297,7 +310,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         controller.openSubItem = subItem;
     }
 
-    subItem = [[[NSMenuItem alloc] initWithTitle:@"Get Info"
+    subItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"FileTransfer.GetInfo", nil, [NSBundle mainBundle], @"Get Info", @"Menu item to show information about a transferred file")
                                           action:@selector(getInfo:)
                                    keyEquivalent:@""] autorelease];
     [subItem setTarget:controller];
@@ -335,7 +348,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 - (void)transferrableFile:(TransferrableFile *)transferrableFile
     didFinishTransmissionWithError:(NSError *)error {
     if (error) {
-        [transferrableFile didFailWithError:error.localizedDescription ?: @"File transfer failed with an unknown error"];
+        [transferrableFile didFailWithError:error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"FileTransfer.UnknownError", nil, [NSBundle mainBundle], @"File transfer failed with an unknown error", @"Error shown when a file transfer fails without a specific reason")];
     } else {
         transferrableFile.status = kTransferrableFileStatusFinishedSuccessfully;
     }
@@ -368,7 +381,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
     // Call the completion block if set (transfer was cancelled)
     if (transferrableFile.completionBlock) {
-        transferrableFile.completionBlock(NO, @"Transfer cancelled");
+        transferrableFile.completionBlock(NO, NSLocalizedStringWithDefaultValue(@"FileTransfer.TransferCancelled", nil, [NSBundle mainBundle], @"Transfer cancelled", @"Message reported when a file transfer was cancelled"));
         transferrableFile.completionBlock = nil;
     }
 }
@@ -379,15 +392,15 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 - (void)transferrableFile:(TransferrableFile *)transferrableFile
         interactivePrompt:(NSString *)prompt
                completion:(void (^)(NSString *password))completion {
-    NSString *text = [NSString stringWithFormat:@"Authenticate %@", transferrableFile.authRequestor];
+    NSString *text = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"FileTransfer.AuthenticateTitle", nil, [NSBundle mainBundle], @"Authenticate %@", @"Title of the authentication dialog; %@ is who is requesting authentication"), transferrableFile.authRequestor];
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = text;
-    alert.informativeText = [NSString stringWithFormat:@"Please enter the %@ for %@ to begin %@.",
+    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"FileTransfer.AuthPrompt", nil, [NSBundle mainBundle], @"Please enter the %1$@ for %2$@ to begin %3$@.", @"Prompt asking for a credential; first %@ is the credential type (e.g. password), second %@ is who is requesting it, third %@ is the operation name"),
                              prompt, transferrableFile.authRequestor,
                              transferrableFile.protocolName];
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
-    [alert addButtonWithTitle:@"Password Manager…"];
+    [alert addButtonWithTitle:iTermLocalizedOK()];
+    [alert addButtonWithTitle:iTermLocalizedCancel()];
+    [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"FileTransfer.PasswordManager", nil, [NSBundle mainBundle], @"Password Manager…", @"Button to open the password manager to fill in credentials")];
 
     NSSecureTextField *input =
         [[[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
@@ -424,8 +437,8 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = title;
     alert.informativeText = message;
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    [alert addButtonWithTitle:iTermLocalizedOK()];
+    [alert addButtonWithTitle:iTermLocalizedCancel()];
 
     [alert layout];
     NSInteger button = [alert runModal];

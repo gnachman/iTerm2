@@ -16,6 +16,6 @@ NSError * _Nullable ObjCTryImpl(void (^NS_NOESCAPE block)(void)) {
                                    code:0
                                userInfo:@{ NSUnderlyingErrorKey: e,
                                            NSDebugDescriptionErrorKey: e.userInfo ?: @{ },
-                                           NSLocalizedFailureReasonErrorKey: (e.reason ?: @"Unknown reason") }];
+                                           NSLocalizedFailureReasonErrorKey: (e.reason ?: NSLocalizedStringWithDefaultValue(@"ObjCExceptions.UnknownReason", nil, [NSBundle mainBundle], @"Unknown reason", @"Fallback failure reason when a caught exception has no reason")) }];
     }
 }

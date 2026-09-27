@@ -127,7 +127,6 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTer
 @class MTLRenderPassDescriptor;
 @protocol CAMetalDrawable;
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalFrameData : NSObject
 @property (atomic, readonly) iTermTexturePool *fullSizeTexturePool;
 @property (atomic, strong, nullable) id<iTermMetalDriverDataSourcePerFrameState> perFrameState;
@@ -144,6 +143,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic) CGSize asciiOffset;
 @property (atomic, strong, nullable) NSString *status;
 @property (atomic, strong) id<MTLDevice> device;
+// The framebuffer/intermediate-texture pixel format for this frame, stamped by
+// the driver from its per-session decision so the intermediate textures match
+// the pipeline states. Defaults to BGRA8Unorm (the non-HDR format).
+@property (atomic) MTLPixelFormat framebufferPixelFormat;
 @property (atomic, strong, readonly) iTermMetalView *view;
 @property (atomic, strong, nullable) NSColorSpace *colorSpace;
 @property (atomic) BOOL extendBackgroundColorIntoMargins;
@@ -166,7 +169,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) BOOL deferCurrentDrawable;
 // Helper to acquire drawable from any thread and validate context before presentation.
 @property (nonatomic, strong, nullable) iTermDrawableAcquisitionHelper *drawableAcquisitionHelper;
-@property (nonatomic, strong, nullable) MTLCaptureDescriptor *captureDescriptor NS_AVAILABLE_MAC(10_15);
+@property (nonatomic, strong, nullable) MTLCaptureDescriptor *captureDescriptor;
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 @property (nonatomic) BOOL textureIsFamiliar;
 #endif  // ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND

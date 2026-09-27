@@ -9,8 +9,10 @@
 class TmuxFormatBuiltInFunction: NSObject {}
 
 extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
+    private static let errorDomain = "com.iterm2.tmux-format"
+
     private static func error(message: String) -> NSError {
-        return NSError(domain: "com.iterm2.tmux-format",
+        return NSError(domain: errorDomain,
                        code: 1,
                        userInfo: [ NSLocalizedDescriptionKey: message])
     }
@@ -30,16 +32,14 @@ extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
             context: .session,
             sideEffectsPlaceholder: nil) {
                 parameters, completion in
-                guard let sessionID = parameters[sessionIDKey] as? String else {
-                    completion(nil, error(message: "Missing \(sessionIDKey). This shouldn't happen so please report a bug."))
-                    return
-                }
-                guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
-                    completion(nil, error(message: "No such session"))
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 errorDomain: errorDomain,
+                                                                 lookup: .inWindow,
+                                                                 completion: completion) else {
                     return
                 }
                 guard let ref = parameters[backingVariableKey] as? iTermVariableReference<AnyObject> else {
-                    completion(nil, error(message: "Type mismatch for \(backingVariableKey). Must be a path reference."))
+                    completion(nil, error(message: String(localized: "TmuxFormat.TypeMismatchBackingVariable", defaultValue: "Type mismatch for \(backingVariableKey). Must be a path reference.", comment: "Error when the backing_var argument is not a path reference")))
                     return
                 }
                 execute(session: session,
@@ -55,7 +55,7 @@ extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
                                 ref: iTermVariableReference<AnyObject>,
                                 completion: iTermBuiltInFunctionCompletionBlock) {
         guard let format else {
-            completion(nil, Self.error(message: "Invalid format"))
+            completion(nil, Self.error(message: String(localized: "TmuxFormat.InvalidFormat", defaultValue: "Invalid format", comment: "Error when the format argument is invalid")))
             return
         }
         do {

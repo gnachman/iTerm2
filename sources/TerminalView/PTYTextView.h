@@ -30,6 +30,8 @@
 
 @class CRunStorage;
 @class iTermAction;
+@class iTermBidiDisplayInfo;
+@class iTermKittyDnDBridge;
 @class iTermExpect;
 @class iTermFindCursorView;
 @class iTermFindOnPageHelper;
@@ -86,6 +88,9 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)xtermMouseReportingAllowMouseWheel;
 - (BOOL)xtermMouseReportingAllowClicksAndDrags;
 - (BOOL)isPasting;
+// YES when the user has asked, via the paste indicator, for keystrokes to go
+// straight to the terminal during a paste instead of being queued.
+- (BOOL)pasteKeystrokePassthroughEnabled;
 - (void)queueKeyDown:(NSEvent *)event;
 - (void)keyDown:(NSEvent *)event;
 - (void)keyUp:(NSEvent *)event;
@@ -213,6 +218,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewSuppressingAllOutput;
 - (BOOL)textViewIsZoomedIn;
 - (BOOL)textViewShouldShowMarkIndicators;
+- (BOOL)textViewShouldUseThemeMarkColors;
 - (BOOL)textViewIsFiltered;
 - (BOOL)textViewInPinnedHotkeyWindow;
 - (BOOL)textViewSessionIsLinkedToAIChat;
@@ -330,6 +336,9 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewIsOnLocalhost;
 // Show the non-text paste dialog for dropped files, same as Cmd+V with files on the pasteboard.
 - (void)textViewShowPasteOptionsForDroppedFiles:(NSArray<NSString *> *)filenames;
+// The session's Kitty drag-and-drop bridge, or nil if the program has not used
+// the protocol. Used to route drags to a program that has opted in.
+- (iTermKittyDnDBridge *)textViewKittyDnDBridge;
 - (void)textViewPerformNaturalLanguageQuery;
 - (BOOL)textViewCanExplainOutputWithAI;
 - (void)textViewExplainOutputWithAI;
@@ -463,6 +472,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 
 // Should smart cursor color be used.
 @property(nonatomic, assign) BOOL useSmartCursorColor;
+@property(nonatomic, assign) BOOL hdrCursorEnabled;
 
 // Transparency level. 0 to 1.
 @property(nonatomic, assign) double transparency;
@@ -604,6 +614,10 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Changes the document cursor, if needed. The event is used to get modifier flags.
 - (void)updateCursor:(NSEvent *)event;
+
+// A Kitty DnD program turned an offered drag gesture into a native OS drag.
+// Forwards to the mouse handler so it can synthesize the button-release report.
+- (void)kittyDragDidBegin;
 
 // Call this to process a mouse-down, bypassing 3-finger-tap-gesture-recognizer. Returns YES if the
 // superview's mouseDown: should be called.
@@ -818,6 +832,30 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 
 - (void)selectCoordRange:(VT100GridCoordRange)range;
 - (void)selectAbsWindowedCoordRange:(VT100GridAbsWindowedRange)windowedRange;
+
+// Find-on-page selects a match and flashes an indicator over it. The selection
+// model is LOGICAL, so it must select the logical match range; only the on-screen
+// indicator uses the visual range. Feeding the visual range to the selection made
+// the logical draw layer re-map it and highlight the mirror-image cells on
+// right-to-left lines. Exposed as a pure decision for testing.
++ (VT100GridCoordRange)findOnPageSelectionRangeForLogicalMatch:(VT100GridCoordRange)logicalMatch
+                                                   visualMatch:(VT100GridCoordRange)visualMatch;
+
+// Accessibility hit-testing derives a VISUAL column from a screen point, but the
+// accessibility text model is LOGICAL. Convert so range-for-position lands on the
+// correct character on right-to-left lines. Identity when there is no bidi info
+// or the column is past the mapped cells. Exposed for testing.
++ (int)accessibilityLogicalXForVisualX:(int)visualX
+                              bidiInfo:(iTermBidiDisplayInfo *)bidiInfo;
+
+// Best-effort VISUAL column span for a LOGICAL column range on one line, for
+// accessibility bounds. A logical range can be visually discontiguous on a bidi
+// line; this returns the tight bounding visual span (correct for VoiceOver focus
+// in the common contiguous case). Identity when there is no bidi info. Exposed
+// for testing.
++ (VT100GridRange)accessibilityVisualColumnSpanForLogicalStartX:(int)startX
+                                                           endX:(int)endX
+                                                       bidiInfo:(iTermBidiDisplayInfo *)bidiInfo;
 
 - (NSRect)frameForCoord:(VT100GridCoord)coord;
 

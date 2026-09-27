@@ -45,6 +45,7 @@ const CGFloat iTermWindowSizeViewMargin = 12;
 }
 
 - (void)setWindowSize:(VT100GridSize)size {
+    // Localization unneeded
     _label.stringValue = [NSString stringWithFormat:@"%@ ⨉ %@", @(size.width), @(size.height)];
     [_label sizeToFit];
 

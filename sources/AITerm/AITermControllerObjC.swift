@@ -51,6 +51,17 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         }
     }
 
+    // Exposes the request-time key policy to the Settings UI so its hints can't
+    // promise a key that a self-hosted endpoint will never receive (issue
+    // 13021). Keyed on the local-endpoint reason specifically: an on-device
+    // model is deliberately excluded, since "add a custom header" is
+    // meaningless for Apple Intelligence, which has no endpoint at all. It
+    // falls through to the generic "No API key is used." instead.
+    @objc(modelWithholdsAPIKeyForLocalEndpointURL:api:)
+    static func modelWithholdsAPIKeyForLocalEndpoint(url: String, api: iTermAIAPI) -> Bool {
+        return AITermController.apiKeyPolicy(url: url, api: api) == .placeholder(.localEndpoint)
+    }
+
     @objc static var apiKey: String? {
         get {
             apiKey(for: LLMMetadata.effectiveVendor)
@@ -335,7 +346,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
          window: NSWindow,
          handler: @escaping (iTermOr<NSString, NSError>) -> ()) {
         let pleaseWait = PleaseWaitWindow(owningWindow: window,
-                                          message: "Thinking…",
+                                          message: String(localized: "AITermControllerObjC.Thinking", defaultValue: "Thinking…", comment: "Progress message shown while waiting for an AI response"),
                                           image: NSImage.it_imageNamed("aiterm", for: AITermControllerObjC.self)!)
         self.pleaseWait = pleaseWait
         var cancel: (() -> ())?
@@ -374,7 +385,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
                                            sideEffectsAllowed: true,
                                            synchronous: false) { maybeResult in
             if let prompt = maybeResult {
-                Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { _ in
+                Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { [self] _ in
                     if !shouldCancel {
                         cancel = { [weak self] in
                             self?.controller.cancel()
@@ -472,7 +483,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
             if let registration {
                 completion(registration)
             } else {
-                handler?(.failure(AIError("AI features are not enabled or the API key is missing.")))
+                handler?(.failure(AIError(String(localized: "AITermControllerObjC.NotEnabled", defaultValue: "AI features are not enabled or the API key is missing.", comment: "Error shown when AI features are disabled or no API key is configured"))))
             }
         }
     }

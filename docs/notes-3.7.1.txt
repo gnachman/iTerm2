@@ -1,0 +1,14 @@
+Version 3.7.1 was built on August 19, 2026
+
+New Features:
+- The OSC 1337 SetColors escape sequence now
+  accepts a palette index as the value, written
+  i:N where N is 0-255. Indices 0-15 track the
+  loaded color preset, so you can set the badge
+  color to follow the preset instead of hardcoding
+  an RGB value. For example, ESC ]1337;
+  SetColors=badge=i:3 ST uses ANSI yellow.
+
+Other Improvements:
+
+Bug Fixes:

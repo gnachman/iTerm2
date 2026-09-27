@@ -98,7 +98,13 @@ enum ChatBlobWireEncoder {
             // multi-text-part content (e.g. a preamble + a .code attachment) would
             // replay as multiple text parts and be rejected.
             return try encoder.encode(
-                round.compactMap { CompletionsMessage($0) }.map { LlamaBodyRequestBuilder.joinText($0) })
+                round.compactMap { CompletionsMessage($0) }.map { message -> CompletionsMessage in
+                    var m = LlamaBodyRequestBuilder.joinText(message)
+                    // Match the live builder: tool messages freeze in Ollama's
+                    // native shape so a replayed blob is byte-identical.
+                    m.ollamaToolFormat = true
+                    return m
+                })
         case .earlyO1:
             // Same map, but o1 replaces the system role with user. A round never
             // contains a system message (system is envelope), so this is a no-op

@@ -13,7 +13,13 @@ class StatusPrioritySettings: NSObject {
     private static let defaultsKey = "StatusPriorities"
     private static let entriesDefaultsKey = "StatusPriorityEntries"
     private static let mergeWorkgroupsDefaultsKey = "StatusMergeWorkgroups"
-    private static let defaultPatterns = ["wait", "work", "idle"]
+
+    /// Default priority patterns. Matching is a lowercased-substring test
+    /// against status text that arrives over the wire protocol, which is
+    /// inherently English, so these stay stable English substrings regardless
+    /// of the app's UI language. Order matches the historical default priority
+    /// (waiting, working, idle).
+    static let defaultPatterns = ["wait", "work", "idle"]
 
     /// When enabled, all sessions in a workgroup collapse to a single row in
     /// the Session Status tool. Defaults to off to preserve prior behavior.
@@ -189,10 +195,10 @@ private class PriorityDataProvider: CRUDDataProvider {
             return
         }
         let alert = NSAlert()
-        alert.messageText = "New Priority Pattern"
-        alert.informativeText = "Enter a substring to match against status text (case-insensitive)."
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = String(localized: "StatusPriority.NewPatternTitle", defaultValue: "New Priority Pattern", comment: "Title of the new priority pattern dialog")
+        alert.informativeText = String(localized: "StatusPriority.NewPatternInfo", defaultValue: "Enter a substring to match against status text (case-insensitive).", comment: "Informative text of the new priority pattern dialog")
+        alert.addButton(withTitle: iTermLocalizedOK())
+        alert.addButton(withTitle: iTermLocalizedCancel())
 
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
         alert.accessoryView = textField
@@ -265,7 +271,7 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: height))
 
         // Instructional label at top
-        let label = NSTextField(wrappingLabelWithString: "Statuses are sorted by priority. Items near the top have higher priority. Drag to reorder. Click to edit.")
+        let label = NSTextField(wrappingLabelWithString: String(localized: "StatusPriority.InstructionsLabel", defaultValue: "Statuses are sorted by priority. Items near the top have higher priority. Drag to reorder. Click to edit.", comment: "Instructional label at the top of the status priority settings"))
         label.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         label.textColor = .secondaryLabelColor
         label.frame = NSRect(x: margin,
@@ -279,7 +285,7 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         // affecting the colored dot or this priority list’s meaning.
         // Pinned to the bottom with the other per-popover switch.
         let toggleY = margin
-        let toggle = NSButton(checkboxWithTitle: "Show status in tab subtitle",
+        let toggle = NSButton(checkboxWithTitle: String(localized: "StatusPriority.ShowStatusInTabSubtitle", defaultValue: "Show status in tab subtitle", comment: "Checkbox to show status in the tab subtitle"),
                               target: self,
                               action: #selector(showSubtitleToggleChanged(_:)))
         toggle.state = iTermUserDefaults.showSessionStatusInTabSubtitle ? .on : .off
@@ -294,11 +300,11 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         // directly above the subtitle toggle so both per-popover switches are
         // grouped together.
         let mergeToggleY = toggleY + toggleHeight + toggleGap
-        let mergeToggle = NSButton(checkboxWithTitle: "Merge workgroup statuses",
+        let mergeToggle = NSButton(checkboxWithTitle: String(localized: "StatusPriority.MergeWorkgroups", defaultValue: "Merge workgroup statuses", comment: "Checkbox to merge workgroup statuses"),
                                    target: self,
                                    action: #selector(mergeWorkgroupsToggleChanged(_:)))
         mergeToggle.state = StatusPrioritySettings.shared.mergeWorkgroups ? .on : .off
-        mergeToggle.toolTip = "When enabled, only the most recent status from each workgroup is shown."
+        mergeToggle.toolTip = String(localized: "StatusPriority.MergeWorkgroupsTooltip", defaultValue: "When enabled, only the most recent status from each workgroup is shown.", comment: "Tooltip for the merge workgroup statuses checkbox")
         mergeToggle.frame = NSRect(x: margin,
                                    y: mergeToggleY,
                                    width: width - 2 * margin,
@@ -309,8 +315,8 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         // +/- segmented control, above the checkboxes and below the table.
         let segmentY = mergeToggleY + toggleHeight + toggleGap
         let addRemove = NSSegmentedControl(images: [
-            NSImage(systemSymbolName: "plus", accessibilityDescription: "Add")!,
-            NSImage(systemSymbolName: "minus", accessibilityDescription: "Remove")!
+            NSImage(systemSymbolName: "plus", accessibilityDescription: iTermLocalizedAdd())!,
+            NSImage(systemSymbolName: "minus", accessibilityDescription: iTermLocalizedRemove())!
         ], trackingMode: .momentary, target: nil, action: nil)
         addRemove.frame = NSRect(x: margin, y: segmentY, width: 60, height: segmentHeight)
         addRemove.autoresizingMask = [.maxXMargin, .maxYMargin]
@@ -330,12 +336,12 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         tv.columnAutoresizingStyle = .noColumnAutoresizing
 
         let patternColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("Pattern"))
-        patternColumn.title = "Pattern"
+        patternColumn.title = String(localized: "StatusPriority.PatternColumn", defaultValue: "Pattern", comment: "Title of the Pattern table column")
         patternColumn.isEditable = true
         tv.addTableColumn(patternColumn)
 
         let notifyColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("Notify"))
-        notifyColumn.title = "Notify"
+        notifyColumn.title = String(localized: "StatusPriority.NotifyColumn", defaultValue: "Notify", comment: "Title of the Notify table column")
         notifyColumn.width = StatusPriorityViewController.notifyColumnWidth
         notifyColumn.minWidth = StatusPriorityViewController.notifyColumnWidth
         notifyColumn.maxWidth = StatusPriorityViewController.notifyColumnWidth

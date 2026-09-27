@@ -4,11 +4,14 @@
 //
 //  Bridges AutoModeClassifier to the AITerm provider infrastructure. The
 //  classifier is backend-agnostic; this adapter runs its one-shot side-query
-//  as a non-streaming AIConversation completion. By default it uses the SAME
-//  model and API key as the user's configured AI conversation. Users who were
-//  grandfathered in under the free on-device path and declined to switch keep
-//  using Apple Intelligence (kPreferenceKeyAISafetyCheckUsesAppleIntelligence);
-//  see iTermMigrationHelper and RemoteCommand.isSafe.
+//  as a non-streaming AIConversation completion. By default it uses the API key
+//  of the user's configured AI conversation but, since a safety check is a
+//  frequent low-stakes judgement, prefers the cheaper same-vendor economy model
+//  (LLMMetadata.economyModel()) when one is available, falling back to the full
+//  configured model otherwise. Users who were grandfathered in under the free
+//  on-device path and declined to switch keep using Apple Intelligence
+//  (kPreferenceKeyAISafetyCheckUsesAppleIntelligence); see iTermMigrationHelper
+//  and RemoteCommand.isSafe.
 //
 
 import Foundation
@@ -63,9 +66,19 @@ struct AISafetyClassifierBackend: AutoModeClassifier.Backend {
                     // Routes through the AITermController Apple Intelligence
                     // bypass (on-device, no API key).
                     conversation.model = AIMetadata.recommendedAppleModel.name
+                } else if let economy = LLMMetadata.economyModel() {
+                    // A safety check is a frequent, low-stakes side-query where a
+                    // cheaper same-vendor model (e.g. Opus -> Haiku) is enough, so
+                    // prefer the economy model when one is available. Set via
+                    // modelOverride (a full model), NOT `model` (a name that gets
+                    // re-resolved to the catalog's public endpoint), so the
+                    // configured transport/auth is preserved and the API key is not
+                    // leaked past a user's custom base URL (proxy/gateway) to the
+                    // public vendor host. See ScreenWatchPoller for the same pattern.
+                    conversation.modelOverride = economy
                 }
-                // Otherwise leave `conversation.model` unset so it uses the
-                // configured chat model.
+                // Otherwise leave `conversation.model`/`modelOverride` unset so it
+                // uses the configured chat model (no economy alternative exists).
                 AIConversation.completeOneShot(conversation) { result in
                     switch result {
                     case .success(let updated):

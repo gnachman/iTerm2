@@ -12,6 +12,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermBackgroundColorRun.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
+#import "iTermCharacterSets.h"
 #import "iTermExternalAttributeIndex.h"
 #import "iTermColorMap.h"
 #import "iTermMutableAttributedStringBuilder.h"
@@ -46,7 +47,8 @@ typedef NS_ENUM(unsigned char, iTermCharacterAttributesUnderline) {
 };
 
 // IMPORTANT: If you add a field here also update the comparison function
-// shouldSegmentWithAttributes:imageAttributes:previousAttributes:previousImageAttributes:combinedAttributesChanged:
+// shouldSegmentWithAttributes:imageAttributes:previousAttributes:previousImageAttributes:mergeColorOnlyChanges:combinedAttributesChanged:
+// (both the changed check and the onlyColorDiffers check).
 typedef struct {
     BOOL initialized;
     BOOL shouldAntiAlias;
@@ -437,6 +439,27 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         unichar code = c.code;
         BOOL isComplex = c.complexChar;
 
+        // UBA rule L4: draw a bidi-mirrorable character as its counterpart when
+        // CoreText resolved it to right-to-left. Driven by the per-cell set
+        // BidiDisplayInfo computed from CoreText's real resolution, so brackets
+        // around an embedded LTR run (e.g. Persian «(English)») are correctly
+        // left un-mirrored. Only simple (non-complex) cells can mirror.
+        BOOL manuallyMirrored = NO;
+        if (!isComplex && [bidiInfo mirrorsSourceCell:i]) {
+            code = iTermBidiMirroredCounterpart(code);
+            manuallyMirrored = YES;
+            // The glyph is now the mirrored counterpart and must be drawn as-is. Mark
+            // the cell left-to-right so it gets an LTR writing-direction override: that
+            // stops CoreText from mirroring it a second time (the double-mirror that drew
+            // "(تهران)" as ")تهران(" when the bracket shared a CoreText run with RTL
+            // letters) and segments it out of the surrounding RTL run so its direction
+            // can differ from the shaped letters around it.
+            c.rtlStatus = RTLStatusLTR;
+        }
+        // Writing direction to draw this cell with. A manually-mirrored cell was
+        // forced LTR above; every other cell follows its resolved rtlStatus.
+        const BOOL charIsRTL = manuallyMirrored ? NO : (c.rtlStatus == RTLStatusRTL);
+
         NSString *charAsString;
 
         CGFloat xPosition;
@@ -460,14 +483,27 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 // This does not apply to ASCII characters, since they can never combine with a
                 // spacing combining mark. That's done for performance in the GPU renderer to avoid
                 // complicating its ASCII fastpath.
+                // The base is normally the preceding cell (i-1). But a double-width
+                // base stores the base at i-2 with a DWC_RIGHT placeholder at i-1, so
+                // for a DWC base the mark's origin is two cells back; using i-1 would
+                // credit the mark to the right half. (Metal looks one cell ahead from
+                // the base and so drops the mark on a DWC base; this keeps Core Text
+                // from drawing it at the wrong, right-half column.)
+                // Test the ACTUAL previous cell, not the loop-carried `predecessor`:
+                // predecessor is assigned at the bottom of the loop, but the spacing-
+                // mark branch continues before that, so on the second of two
+                // consecutive marks predecessor is stale (two cells back). Using it
+                // would wrongly see DWC_RIGHT and credit the mark to the right half.
+                const BOOL previousCellIsDWCRight = (i >= 2) && ScreenCharIsDWC_RIGHT(line[i - 1]);
+                const int baseCell = previousCellIsDWCRight ? (i - 2) : (i - 1);
                 int lastCellDraw;
-                if (bidiLUT && i - 1 < bidiLUTLength) {
-                    lastCellDraw = bidiLUT[i - i];
+                if (bidiLUT && baseCell >= 0 && baseCell < bidiLUTLength) {
+                    lastCellDraw = bidiLUT[baseCell];
                 } else {
-                    lastCellDraw = i - 1;
+                    lastCellDraw = baseCell;
                 }
                 [builder appendString:charAsString
-                                  rtl:c.rtlStatus == RTLStatusRTL
+                                  rtl:charIsRTL
                            sourceCell:i
                            drawInCell:lastCellDraw];
                 const CGFloat lastValue = CTVectorGet(positions, CTVectorCount(positions) - 1);
@@ -530,7 +566,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 [self updateBuilder:builder
                          withString:drawable ? charAsString : @" "
                         orCharacter:code
-                                rtl:c.rtlStatus == RTLStatusRTL
+                                rtl:charIsRTL
                           positions:positions
                              offset:xPosition
                          sourceCell:i
@@ -579,6 +615,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                               imageAttributes:imageAttributes
                            previousAttributes:&previousCharacterAttributes
                       previousImageAttributes:previousImageAttributes
+                        mergeColorOnlyChanges:(bidiInfo != nil)
                      combinedAttributesChanged:&combinedAttributesChanged]) {
             iTermPreciseTimerStatsStartTimer(_stats.buildMutableAttributedString);
             builder.endColumn = i;
@@ -638,7 +675,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             [self updateBuilder:builder
                      withString:drawable ? charAsString : @" "
                     orCharacter:code
-                            rtl:c.rtlStatus == RTLStatusRTL
+                            rtl:charIsRTL
                       positions:positions
                          offset:xPosition
                      sourceCell:i
@@ -799,6 +836,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                     imageAttributes:(NSDictionary *)imageAttributes
                  previousAttributes:(iTermCharacterAttributes *)previousAttributes
             previousImageAttributes:(NSDictionary *)previousImageAttributes
+              mergeColorOnlyChanges:(BOOL)mergeColorOnlyChanges
            combinedAttributesChanged:(BOOL *)combinedAttributesChanged {
     if (unlikely(!previousAttributes->initialized)) {
         // First char of first segment
@@ -828,6 +866,37 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                           newAttributes->drawable != previousAttributes->drawable ||
                                           newAttributes->rtlStatus != previousAttributes->rtlStatus ||
                                           !iTermCharacterAttributesUnderlineColorEqual(newAttributes, previousAttributes));
+            if (*combinedAttributesChanged && mergeColorOnlyChanges) {
+                // A change in foreground color alone (a selection boundary, or an
+                // SGR color change mid-word) must not start a new attributed
+                // string on a bidi line: each string is shaped independently by
+                // CoreText, so splitting inside an Arabic word severs the cursive
+                // joining: selecting «کامل» out of «کاملاً» redrew the letters in
+                // their isolated forms. Instead the caller keeps appending to the
+                // same builder and just swaps its attributes, producing one shaped
+                // string with per-range colors. Underline/strikethrough/URL runs
+                // are excluded because iTermUnderlineLengthAttribute is applied
+                // per built string.
+                const BOOL onlyColorDiffers = (newAttributes->shouldAntiAlias == previousAttributes->shouldAntiAlias &&
+                                               newAttributes->boxDrawing == previousAttributes->boxDrawing &&
+                                               newAttributes->contrastIneligible == previousAttributes->contrastIneligible &&
+                                               [newAttributes->font isEqual:previousAttributes->font] &&
+                                               newAttributes->ligatureLevel == previousAttributes->ligatureLevel &&
+                                               newAttributes->bold == previousAttributes->bold &&
+                                               newAttributes->faint == previousAttributes->faint &&
+                                               newAttributes->fakeItalic == previousAttributes->fakeItalic &&
+                                               newAttributes->underlineType == iTermCharacterAttributesUnderlineNone &&
+                                               previousAttributes->underlineType == iTermCharacterAttributesUnderlineNone &&
+                                               !newAttributes->strikethrough &&
+                                               !previousAttributes->strikethrough &&
+                                               !newAttributes->isURL &&
+                                               !previousAttributes->isURL &&
+                                               newAttributes->drawable == previousAttributes->drawable &&
+                                               newAttributes->rtlStatus == previousAttributes->rtlStatus);
+                if (onlyColorDiffers) {
+                    return NO;
+                }
+            }
         }
         return *combinedAttributesChanged;
     } else if ((imageAttributes == nil) != (previousImageAttributes == nil)) {

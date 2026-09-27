@@ -35,6 +35,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) iTermVariableScope *scope;
 @property (nonatomic, weak, nullable) TmuxController *tmuxController;
 @property (nonatomic) BOOL hideAccessories;
+// Force the AI-completion warning and Engage-AI control hidden even
+// when AI completions are enabled (for hosts with no AI, like the
+// cockpit). The send tip and standard editing stay intact.
+@property (nonatomic) BOOL forceHideAIAccessories;
 @property (nonatomic, weak) IBOutlet id<iTermStatusBarLargeComposerViewControllerDelegate> delegate;
 
 - (void)fetchCompletions;

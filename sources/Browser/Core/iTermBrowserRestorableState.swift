@@ -5,7 +5,6 @@
 //  Created by George Nachman on 6/27/25.
 //
 
-@available(macOS 11, *)
 struct iTermBrowserRestorableState {
     var interactionState: NSData?
 

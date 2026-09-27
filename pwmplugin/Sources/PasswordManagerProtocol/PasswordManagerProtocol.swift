@@ -33,6 +33,35 @@ public enum PasswordManagerProtocol {
         }
     }
 
+    public struct AddAccountToggle: Codable {
+        public var key: String
+        public var label: String
+        public var note: String?
+        public var defaultValue: Bool
+
+        public init(key: String, label: String, note: String?, defaultValue: Bool) {
+            self.key = key
+            self.label = label
+            self.note = note
+            self.defaultValue = defaultValue
+        }
+    }
+
+    // Declares a pre-existing keychain entry whose value should be migrated into
+    // the adapter's master-password slot. The host runs this once, adapter-agnostically:
+    // if the master-password slot is empty it copies the value up, then deletes the
+    // orphaned entry only after the copy is confirmed. Lets an adapter retire an old
+    // credential-storage location without baking adapter specifics into the host.
+    public struct LegacyCredentialMigration: Codable {
+        // The keychain account name of the legacy entry, stored under the adapter's
+        // own service name.
+        public var fromKeychainAccount: String
+
+        public init(fromKeychainAccount: String) {
+            self.fromKeychainAccount = fromKeychainAccount
+        }
+    }
+
     // A custom setting for your adapter.
     public struct SettingsField: Codable {
         public var key: String
@@ -79,9 +108,19 @@ public enum PasswordManagerProtocol {
         public var persistsCredentials: Bool?
         public var customCommands: [CustomCommand]?
         public var settingsFields: [SettingsField]?
+        public var addAccountToggles: [AddAccountToggle]?
+        public var legacyCredentialMigrations: [LegacyCredentialMigration]?
+        /// When true, the adapter can edit a record's fields (title/login/password) in
+        /// place, preserving OTP and custom fields. The host then renames via an in-place
+        /// update instead of delete-then-re-add. nil means false.
+        public var canEditInPlace: Bool?
+        /// When true, Add must be given a non-empty password because the adapter stores the
+        /// password field verbatim (a blank field would persist an empty password). Adapters
+        /// that omit an empty password when adding leave this nil/false.
+        public var requiresPasswordForAdd: Bool?
 
         public init(protocolVersion: Int, name: String, requiresMasterPassword: Bool, canSetPasswords: Bool, userAccounts: [UserAccount]?, needsPathToDatabase: Bool, databaseExtension: String?, needsPathToExecutable: String?,
-                    pathToDatabaseKind: PathKind? = nil, pathToDatabasePrompt: String? = nil, pathToDatabasePlaceholder: String? = nil, masterPasswordLabel: String? = nil, persistsCredentials: Bool? = nil, customCommands: [CustomCommand]? = nil, settingsFields: [SettingsField]? = nil) {
+                    pathToDatabaseKind: PathKind? = nil, pathToDatabasePrompt: String? = nil, pathToDatabasePlaceholder: String? = nil, masterPasswordLabel: String? = nil, persistsCredentials: Bool? = nil, customCommands: [CustomCommand]? = nil, settingsFields: [SettingsField]? = nil, addAccountToggles: [AddAccountToggle]? = nil, legacyCredentialMigrations: [LegacyCredentialMigration]? = nil, canEditInPlace: Bool? = nil, requiresPasswordForAdd: Bool? = nil) {
             self.protocolVersion = protocolVersion
             self.name = name
             self.requiresMasterPassword = requiresMasterPassword
@@ -97,6 +136,10 @@ public enum PasswordManagerProtocol {
             self.persistsCredentials = persistsCredentials
             self.customCommands = customCommands
             self.settingsFields = settingsFields
+            self.addAccountToggles = addAccountToggles
+            self.legacyCredentialMigrations = legacyCredentialMigrations
+            self.canEditInPlace = canEditInPlace
+            self.requiresPasswordForAdd = requiresPasswordForAdd
         }
     }
 
@@ -145,9 +188,12 @@ public enum PasswordManagerProtocol {
 
     public struct ListAccountsResponse: Codable {
         public var accounts: [Account]
+        /// Non-fatal listing issue (e.g. Nested Shared Folder list failed while classic succeeded).
+        public var warning: String?
 
-        public init(accounts: [Account]) {
+        public init(accounts: [Account], warning: String? = nil) {
             self.accounts = accounts
+            self.warning = warning
         }
     }
 
@@ -164,12 +210,20 @@ public enum PasswordManagerProtocol {
         public var userName: String
         public var accountName: String
         public var hasOTP: Bool
+        /// Optional vault/source hint for host display formatting (e.g. "Classic", "Nested").
+        /// Must not be baked into `accountName`, which is a stable identity for matching.
+        public var sourceLabel: String?
 
-        public init(identifier: AccountIdentifier, userName: String, accountName: String, hasOTP: Bool) {
+        public init(identifier: AccountIdentifier,
+                    userName: String,
+                    accountName: String,
+                    hasOTP: Bool,
+                    sourceLabel: String? = nil) {
             self.identifier = identifier
             self.userName = userName
             self.accountName = accountName
             self.hasOTP = hasOTP
+            self.sourceLabel = sourceLabel
         }
     }
 
@@ -202,6 +256,13 @@ public enum PasswordManagerProtocol {
         public var token: String?
         public var accountIdentifier: AccountIdentifier
         public var newPassword: String?
+        /// Optional vault hint from list (`Classic` / `Nested`). Opaque to the host.
+        public var sourceLabel: String?
+        /// Optional in-place field edits. When set, the adapter updates the record's
+        /// title/login on the same record (preserving OTP and other fields) instead of
+        /// only the password. nil means leave that field unchanged.
+        public var newAccountName: String?
+        public var newUserName: String?
     }
 
     public struct SetPasswordResponse: Codable {
@@ -216,6 +277,8 @@ public enum PasswordManagerProtocol {
         public var userAccountID: String?
         public var token: String?
         public var accountIdentifier: AccountIdentifier
+        /// Optional vault hint from list (`Classic` / `Nested`). Opaque to the host.
+        public var sourceLabel: String?
     }
 
     public struct DeleteAccountResponse: Codable {
@@ -232,6 +295,8 @@ public enum PasswordManagerProtocol {
         public var userName: String
         public var accountName: String
         public var password: String?
+
+        public var flags: [String: Bool]?
     }
 
     public struct AddAccountResponse: Codable {
@@ -263,9 +328,16 @@ public enum PasswordManagerProtocol {
 
     public struct ErrorResponse: Codable {
         public var error: String
+        /// When true, the failure is an expired/invalid session (not a generic error). The host
+        /// maps it to a re-authentication that clears the token and logs in again (silently when
+        /// credentials are persisted). Adapters should set this on auth-rejection responses;
+        /// nil/false is treated as an ordinary error. Backward-compatible: older adapters that
+        /// never set it keep the previous behavior.
+        public var needsAuthentication: Bool?
 
-        public init(error: String) {
+        public init(error: String, needsAuthentication: Bool? = nil) {
             self.error = error
+            self.needsAuthentication = needsAuthentication
         }
     }
 }

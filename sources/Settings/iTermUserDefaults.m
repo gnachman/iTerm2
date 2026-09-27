@@ -29,11 +29,13 @@ static NSString *const iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows = @"
 static NSString *const iTermUserDefaultsKeyClaudeCodeWorkgroupUpsellSuppressed = @"ClaudeCodeWorkgroupUpsellSuppressed";
 static NSString *const iTermUserDefaultsKeyClaudeCodeHooksInstalled = @"NoSyncClaudeCodeHooksInstalled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeTriggersInstalled = @"ClaudeCodeTriggersInstalled";
+static NSString *const iTermUserDefaultsKeyClaudeCodeConfigDirPath = @"NoSyncClaudeCodeConfigDirPath";
 static NSString *const iTermUserDefaultsKeyClaudeCodeIntegrationCompleted = @"NoSyncClaudeCodeIntegrationCompleted";
 static NSString *const iTermUserDefaultsKeyShowSessionStatusInTabSubtitle = @"ShowSessionStatusInTabSubtitle";
 NSString *const iTermShowSessionStatusInTabSubtitleDidChange = @"iTermShowSessionStatusInTabSubtitleDidChange";
 static NSString *const iTermUserDefaultsKeyHaveExplainedHowToAddTouchbarControls = @"NoSyncHaveExplainedHowToAddTouchbarControls";
 static NSString *const iTermUserDefaultsKeyHaveWarnedAboutUndoCloseShortcutChange = @"NoSyncHaveWarnedAboutUndoCloseShortcutChange";
+static NSString *const iTermUserDefaultsKeyHaveWarnedAboutUndoKeyChange = @"NoSyncHaveWarnedAboutUndoKeyChange";
 static NSString *const iTermUserDefaultsKeyIgnoreSystemWindowRestoration = @"NoSyncIgnoreSystemWindowRestoration";
 static NSString *const iTermUserDefaultsKeyGlobalSearchMode = @"NoSyncGlobalSearchMode";
 static NSString *const iTermUserDefaultsKeyAddTriggerInstant = @"NoSyncAddTriggerInstant";
@@ -50,8 +52,10 @@ static NSString *const iTermUserDefaultsKeyClaudeCodeDiffModeBackfilled = @"NoSy
 static NSString *const iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled = @"NoSyncClaudeCodeReviewSystemPromptCommandBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeAutoSendClippingsBackfilled = @"NoSyncClaudeCodeAutoSendClippingsBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled = @"NoSyncClaudeCodeAutoRequestReviewBackfilled";
+static NSString *const iTermUserDefaultsKeySuppressPhysicalKeyBindingSuggestion = @"NoSyncSuppressPhysicalKeyBindingSuggestion";
 static NSString *const iTermUserDefaultsKeyAIModelCatalogUpdateConsent = @"NoSyncAIModelCatalogUpdateConsent";
 static NSString *const iTermUserDefaultsKeyAutoProvideConsent = @"NoSyncAutoProvideConsent";
+static NSString *const iTermUserDefaultsKeyHaveShownMacOS13RequirementNotice = @"NoSyncHaveShownMacOS13RequirementNotice";
 
 @implementation iTermUserDefaults
 
@@ -110,16 +114,30 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 }
 
 + (void)performMigrations {
-    id obj = [self.userDefaults objectForKey:iTermUserDefaultsKeySearchHistory];
+    [self performMigrationsInUserDefaults:self.userDefaults];
+}
+
++ (void)performMigrationsInUserDefaults:(NSUserDefaults *)userDefaults {
+    // Migrate the renamed alt-screen bidi setting here rather than from
+    // +[iTermAdvancedSettingsModel initialize]. +initialize fires the first time
+    // anything touches the advanced settings model, which is well before
+    // -applicationDidFinishLaunching reaches iTermPreferences initializeUserDefaults,
+    // where a user’s custom-folder (e.g. Dropbox) prefs are copied down into local
+    // defaults. Running the migration too early would miss a copied-down opt-out and
+    // silently revert it. performMigrations runs after that copy, so the migration
+    // sees the real value. Keep it first so the early return below never skips it.
+    [iTermAdvancedSettingsModel migrateAlternateScreenBidiSettingInUserDefaults:userDefaults];
+
+    id obj = [userDefaults objectForKey:iTermUserDefaultsKeySearchHistory];
     if (!obj) {
         return;
     }
     [self setSearchHistory:obj];
-    [self.userDefaults removeObjectForKey:iTermUserDefaultsKeySearchHistory];
+    [userDefaults removeObjectForKey:iTermUserDefaultsKeySearchHistory];
 
-    id maybeSearchHistory = [self.userDefaults objectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
+    id maybeSearchHistory = [userDefaults objectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
     if (maybeSearchHistory && ![maybeSearchHistory isKindOfClass:[NSNumber class]]) {
-        [self.userDefaults removeObjectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
+        [userDefaults removeObjectForKey:iTermUserDefaultsKeyBuggySecureKeyboardEntry];
     }
 }
 
@@ -232,6 +250,18 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
                         forKey:iTermUserDefaultsKeyClaudeCodeTriggersInstalled];
 }
 
++ (nullable NSString *)claudeCodeConfigDirPath {
+    return [self.userDefaults stringForKey:iTermUserDefaultsKeyClaudeCodeConfigDirPath];
+}
+
++ (void)setClaudeCodeConfigDirPath:(nullable NSString *)path {
+    if (path) {
+        [self.userDefaults setObject:path forKey:iTermUserDefaultsKeyClaudeCodeConfigDirPath];
+    } else {
+        [self.userDefaults removeObjectForKey:iTermUserDefaultsKeyClaudeCodeConfigDirPath];
+    }
+}
+
 + (BOOL)claudeCodeIntegrationCompleted {
     return [self.userDefaults boolForKey:iTermUserDefaultsKeyClaudeCodeIntegrationCompleted];
 }
@@ -268,9 +298,27 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
     return [self.userDefaults boolForKey:iTermUserDefaultsKeyHaveWarnedAboutUndoCloseShortcutChange];
 }
 
++ (BOOL)haveWarnedAboutUndoKeyChange {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyHaveWarnedAboutUndoKeyChange];
+}
+
++ (void)setHaveWarnedAboutUndoKeyChange:(BOOL)haveWarnedAboutUndoKeyChange {
+    [self.userDefaults setBool:haveWarnedAboutUndoKeyChange
+                        forKey:iTermUserDefaultsKeyHaveWarnedAboutUndoKeyChange];
+}
+
 + (void)setHaveWarnedAboutUndoCloseShortcutChange:(BOOL)haveWarnedAboutUndoCloseShortcutChange {
     [self.userDefaults setBool:haveWarnedAboutUndoCloseShortcutChange
                         forKey:iTermUserDefaultsKeyHaveWarnedAboutUndoCloseShortcutChange];
+}
+
++ (BOOL)haveShownMacOS13RequirementNotice {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyHaveShownMacOS13RequirementNotice];
+}
+
++ (void)setHaveShownMacOS13RequirementNotice:(BOOL)haveShownMacOS13RequirementNotice {
+    [self.userDefaults setBool:haveShownMacOS13RequirementNotice
+                        forKey:iTermUserDefaultsKeyHaveShownMacOS13RequirementNotice];
 }
 
 + (BOOL)ignoreSystemWindowRestoration {
@@ -369,6 +417,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setWorkgroupShortcutsBackfilled:(BOOL)value {
     [self.userDefaults setBool:value
                         forKey:iTermUserDefaultsKeyWorkgroupShortcutsBackfilled];
+}
+
++ (BOOL)suppressPhysicalKeyBindingSuggestion {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeySuppressPhysicalKeyBindingSuggestion];
+}
+
++ (void)setSuppressPhysicalKeyBindingSuggestion:(BOOL)value {
+    [self.userDefaults setBool:value
+                        forKey:iTermUserDefaultsKeySuppressPhysicalKeyBindingSuggestion];
 }
 
 + (BOOL)claudeCodeDiffModeBackfilled {

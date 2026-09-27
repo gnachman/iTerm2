@@ -1,0 +1,39 @@
+========================================================================
+ TEST 2: Paragraph direction detection
+ (needs: RTL support ON  +  "Auto-detect paragraph writing direction" ON)
+========================================================================
+A line lays out RTL (content pushed to the right, reading from the right
+edge) when its FIRST strong directional character is RTL, following the
+Unicode bidirectional algorithm (rules P2/P3). Watch which edge each line
+hugs. With auto-detect OFF (the default) every line is LTR-base.
+
+------------------------------------------------------------------------
+2a. Line that OPENS with a Persian word (first strong char is RTL).
+    Lays out RTL / right-justified, even though it embeds an English word.
+------------------------------------------------------------------------
+شهر بزرگی به نام Berlin در آلمان است
+
+------------------------------------------------------------------------
+2b. English sentence containing ONE Persian word (first strong char is LTR).
+    Stays LTR, hugs the left. (Must NOT get right-justified.)
+------------------------------------------------------------------------
+The word سلام means hello in Persian.
+
+------------------------------------------------------------------------
+2c. Line that OPENS with an English word but is mostly Persian.
+    First-strong is LTR, so it lays out LTR, hugging the left. (This is the
+    standard bidi behavior; iTerm2 does not override it with a majority rule.)
+------------------------------------------------------------------------
+Berlin شهری بزرگ در آلمان
+
+------------------------------------------------------------------------
+2d. Pure Persian sentence with a trailing period.
+    Right-justified, and the final period stays attached at the reading
+    (left) end, not detached across the line.
+------------------------------------------------------------------------
+این یک جمله فارسی است.
+
+------------------------------------------------------------------------
+2e. Plain English control (should be unaffected either way).
+------------------------------------------------------------------------
+This line is entirely English and should not move.

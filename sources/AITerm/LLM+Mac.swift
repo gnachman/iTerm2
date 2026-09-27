@@ -82,4 +82,28 @@ struct LLMAuthorizationProvider {
             [:]
         }
     }
+
+    // The header field names this API lane carries its credential in, which
+    // differ per lane (Authorization, x-api-key, api-key on Azure) and are empty
+    // for lanes that send no credential header at all. Derived from `headers`
+    // with a sentinel key rather than a parallel switch, so it cannot drift from
+    // what actually goes on the wire, and so non-credential companions like
+    // anthropic-version are excluded.
+    //
+    // Used to tell a user of an authenticated self-hosted endpoint which header
+    // to add by hand, since iTerm2 sends no key to a private host (issue 13021).
+    static func credentialHeaderNames(url: String, api: iTermAIAPI) -> Set<String> {
+        // Localization unneeded: an internal sentinel, never displayed.
+        let sentinel = "iTerm2CredentialProbe"
+        let model = AIMetadata.Model(name: "",
+                                     contextWindowTokens: 0,
+                                     maxResponseTokens: 0,
+                                     url: url,
+                                     api: api,
+                                     features: [],
+                                     vectorStoreConfig: .disabled,
+                                     vendor: nil)
+        let probe = LLMAuthorizationProvider(provider: LLMProvider(model: model), apiKey: sentinel)
+        return Set(probe.headers.filter { $0.value.contains(sentinel) }.keys)
+    }
 }

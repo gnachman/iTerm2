@@ -94,6 +94,7 @@ struct StatusUpdate: Codable, Equatable {
     enum Reason: String, Codable {
         case stateReached     // a registered state-watcher fired
         case conditionMet     // a plain-English condition watcher fired
+        case timerFired       // a time-based timer reached its scheduled instant
         case watcherDropped   // the watched session is gone (e.g. failed to restore)
         case watchTimedOut    // a screen-observation watcher gave up after its time cap
     }

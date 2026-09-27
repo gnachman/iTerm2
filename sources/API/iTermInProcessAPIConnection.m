@@ -30,6 +30,13 @@
     return _guid;
 }
 
+- (NSString *)libraryVersion {
+    // The in-process runtime ships the current (fixed) library, so it has no
+    // x-iterm2-library-version header and is treated as unaffected by
+    // client-version-gated workarounds.
+    return nil;
+}
+
 - (void)sendBinary:(NSData *)binaryData completion:(void (^)(void))completion {
     if (_responseHandler) {
         _responseHandler(binaryData);

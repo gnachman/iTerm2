@@ -46,17 +46,29 @@ final class CompanionOnboardingRouter: NSObject {
         }
     }
 
-    private enum Destination {
+    enum Destination: Equatable {
         case classicSettings
         case wizard(CompanionWizardWindowController.Screen)
     }
 
     private static func destination() -> Destination {
-        // An administrator policy blocks the feature: the plain window already
-        // explains the block, and the wizard cannot grant something an admin has
-        // forbidden, so send the user there.
-        if !iTermAdvancedSettingsModel.generativeAIAllowed()
-            || !iTermAdvancedSettingsModel.companionPairingAllowed() {
+        return destination(
+            companionPairingAllowed: iTermAdvancedSettingsModel.companionPairingAllowed(),
+            experienced: CompanionPushRegistry.everPaired || CompanionPairingController.shared.hasPairedDevice,
+            companionConfigured: CompanionSetupState.companionConfigured)
+    }
+
+    /// Pure routing decision, split out so it can be tested without touching admin
+    /// settings, the keychain, or the installed plugins.
+    static func destination(companionPairingAllowed: Bool,
+                            experienced: Bool,
+                            companionConfigured: Bool) -> Destination {
+        // An administrator policy blocks companion pairing: the plain window
+        // already explains the block, and the wizard cannot grant something an
+        // admin has forbidden, so send the user there. AI being admin-disabled no
+        // longer forces this: a companion-only setup does not need AI, so such a
+        // user should still get the guided wizard.
+        if !companionPairingAllowed {
             return .classicSettings
         }
         // The wizard is first-run only. A user is "experienced" if they have ever
@@ -65,17 +77,15 @@ final class CompanionOnboardingRouter: NSObject {
         // new and only set on a fresh pairing, so a user who paired in a prior
         // build has pairedPID set but everPaired == false, and without this they
         // would be dropped back into the first-run wizard.
-        if CompanionPushRegistry.everPaired || CompanionPairingController.shared.hasPairedDevice {
+        if experienced {
             return .classicSettings
         }
-        // No AI yet (plugin, consent, or key missing): full setup from screen 1.1.
-        if !CompanionSetupState.aiConfigured {
-            return .wizard(.fullSetup)
-        }
-        // AI is ready but the companion plugin or consent is missing: the shorter
-        // companion-only setup at screen 1.2.
-        if !CompanionSetupState.companionConfigured {
-            return .wizard(.companionOnly)
+        // The companion isn't set up yet: let the user choose whether they want AI
+        // features or terminal viewing/control only (screen 1.0), which routes to
+        // the full (1.1, API key required) or companion-only (1.2) install. AI is
+        // no longer a prerequisite, so we no longer force the full setup first.
+        if !companionConfigured {
+            return .wizard(.chooseMode)
         }
         // Everything is installed and consented but no device has ever paired:
         // skip the install steps and go straight to the phone-app instructions.

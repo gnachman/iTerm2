@@ -45,11 +45,7 @@
 }
 
 - (void)awakeFromNib {
-    if (@available(macOS 10.16, *)) {
-#ifdef MAC_OS_X_VERSION_10_16
-        _tableView.style = NSTableViewStyleInset;
-#endif
-    }
+    _tableView.style = NSTableViewStyleInset;
 }
 
 - (void)loadRows {

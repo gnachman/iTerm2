@@ -1,0 +1,46 @@
+========================================================================
+ TEST 4: Visual mouse selection with logical copy (needs: RTL support ON)
+========================================================================
+These are INTERACTIVE: cat the file, then drag / double-click on the RTL
+line and paste the copy into a plain editor to check the result.
+
+------------------------------------------------------------------------
+4a. Full sweep of a right-justified line -> logical sentence, period attached.
+    Drag from the right edge all the way to the left edge of this line.
+    NEW copy:  کتابخانه (کتابخانهٔ ملی) دو چیزند.
+    (one contiguous highlight, trailing period attached, no stray spaces)
+------------------------------------------------------------------------
+کتابخانه (کتابخانهٔ ملی) دو چیزند.
+
+------------------------------------------------------------------------
+4b. Partial select across an EMBEDDED English island.
+    Drag over the first part of this line so the drag covers "Berlin".
+    NEW: the highlight tracks the pointer contiguously and the copy
+         contains "Berlin" WHOLE, not split into B ... erlin.
+------------------------------------------------------------------------
+متن Berlin شهری بزرگ
+
+------------------------------------------------------------------------
+4c. Double-click a word on a pure-Persian right-justified line.
+    Click any word; THAT word must get selected.
+    OLD (double-conversion bug): clicking the first word selected a
+    different word from the middle/end.
+------------------------------------------------------------------------
+طرف میره پیش دکتر
+
+------------------------------------------------------------------------
+4d. Reachability of the far edge.
+    On this right-justified line, drag starting exactly at the visual
+    RIGHT edge (the reading start). The rightmost cells must be selectable
+    (the old logical-range storage made that edge unreachable).
+------------------------------------------------------------------------
+سلام دنیا خوب روز خوش
+
+------------------------------------------------------------------------
+4e. Multi-line direction-aware extend.
+    Select across BOTH lines below (drag from line 1 into line 2), then
+    paste. Each line's share follows its own direction; extending should
+    keep the anchor line's words rather than dropping them.
+------------------------------------------------------------------------
+سلام دنیا خوب
+روز خوش دوست

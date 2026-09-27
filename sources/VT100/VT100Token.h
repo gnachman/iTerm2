@@ -185,6 +185,7 @@ typedef enum {
     XTERMCC_REPORT_WIN_STATE,
     XTERMCC_REPORT_WIN_POS,
     XTERMCC_REPORT_WIN_PIX_SIZE,
+    XTERMCC_REPORT_CELL_SIZE_PIX,
     XTERMCC_REPORT_WIN_SIZE,
     XTERMCC_REPORT_SCREEN_SIZE,
     XTERMCC_REPORT_ICON_TITLE,
@@ -209,6 +210,7 @@ typedef enum {
     // See comment above XTERMCC_MULTITOKEN_BODY for details.
     XTERMCC_MULTITOKEN_HEADER_SET_KVP,
     XTERMCC_PASTE64,
+    XTERMCC_KITTY_DND,  // OSC 72: Kitty drag-and-drop protocol
     XTERMCC_FINAL_TERM,
     XTERMCC_FRAMER_WRAPPER,
     XTERMCC_RESET_COLOR,
@@ -390,6 +392,12 @@ typedef struct {
 
     // Config snapshot used during conversion
     VT100StringConversionConfig config;
+
+    // How many UTF-16 units of the string were absorbed into buffer[0] by the prepended
+    // space. The mutation thread compares this against how many units the real predecessor
+    // absorbs; if they differ the space was not a faithful stand-in and the buffer cannot
+    // be used. See -[VT100ScreenMutableState appendStringAtCursor:preconvertedData:].
+    int firstClusterLengthInString;
 
     // Whether this data is valid and should be considered by the mutation thread
     BOOL valid;

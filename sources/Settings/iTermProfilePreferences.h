@@ -125,6 +125,36 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 + (NSString * _Nullable)descriptionForKey:(NSString *)key;
 + (id _Nullable)plistValueFromBoundVariableValue:(id)value forKey:(NSString *)key;
 + (NSString * _Nullable)typeHelpForKey:(NSString *)key;
+
+// The single source of truth for which color settings render with alpha. Accepts
+// a base key or a Light/Dark-amended key. Only these colors decode an alpha
+// component; every other color stays opaque.
++ (BOOL)colorKeyHonorsAlpha:(NSString *)key;
+
+// YES if key is a color setting (base or Light/Dark-amended). Used to scope
+// color-only logic like clearing an i:N binding to actual color keys.
++ (BOOL)keyIsColor:(NSString *)key;
+
+// The base color key (strips a trailing (Light)/(Dark) suffix if present).
++ (NSString *)baseColorKeyForKey:(NSString *)key;
+
+// A base color key plus its Light and Dark variants. Single source for the
+// base/Light/Dark triple used when writing or clearing all appearance variants.
++ (NSArray<NSString *> *)colorVariantKeysForBaseKey:(NSString *)baseKey;
+
+// KEY_BINDINGS values. A value is either a plain expression string (user-authored)
+// or a dictionary carrying the expression plus an owner tag. These let callers
+// read the expression uniformly and identify feature-owned (palette) bindings
+// without inspecting the expression text.
++ (NSString * _Nullable)expressionForBindingValue:(id)value;
++ (BOOL)bindingValueIsPaletteOwned:(id)value;
++ (id)paletteBindingValueWithExpression:(NSString *)expression;
+
+// Returns bindings with palette-owned entries removed for the base/Light/Dark
+// variants of baseKey. Returns the same object (by identity) if nothing changed.
+// Single home for the "drop the i:N binding for this color" rule.
++ (NSDictionary *)bindings:(NSDictionary *)bindings
+    byRemovingPaletteBindingsForBaseKey:(NSString *)baseKey;
 + (BOOL)valueIsExplicitlySetForKey:(NSString *)key inProfile:(Profile *)profile;
 
 @end

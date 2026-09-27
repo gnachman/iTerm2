@@ -128,16 +128,40 @@ enum AttachmentLane: String, CaseIterable {
         case .deepseek:
             return try lookup("deepseek-v4-flash")
         case .llama:
-            // Local Ollama, url http://localhost:11434/api/chat. Pinned to
-            // llama3.3:latest: the multimodal llama4 (67GB) does not fit in
-            // 64GB RAM and is unusably slow, and llama3.3 is the llama-family
-            // model in AIMetadata that fits. It is text-only, so the lane
-            // covers the text cells; the binary/image cells stay skipped (see
-            // the matrix). The lane only runs when LLAMA_API_KEY is set (see
-            // keyOrSkipForLane): a record run needs Ollama up; replay serves a
-            // committed cassette and never reaches the network.
-            return try lookup("llama3.3:latest")
+            // Local Ollama, url http://localhost:11434/api/chat. Model name from
+            // LLAMA_MODELS (first non-empty, comma-separated), defaulting to the
+            // small, vision-capable qwen3.5:4b so the lane - including the image
+            // cells - runs without a 70GB download. Ollama models are not in the
+            // static catalog (they're discovered), so synthesize the model directly;
+            // the name is part of the request, so the committed cassettes are keyed
+            // to it. .vision is included so the image cells actually serialize the
+            // image (supportsInlineImageBlock gates the inline-image path on it).
+            let name = AttachmentLane.configuredLlamaModel() ?? "qwen3.5:4b"
+            return AIMetadata.Model(
+                name: name,
+                contextWindowTokens: 131_072,
+                maxResponseTokens: 131_072,
+                url: "http://localhost:11434/api/chat",
+                api: .llama,
+                features: [.streaming, .functionCalling, .vision],
+                vectorStoreConfig: .disabled,
+                vendor: .llama)
         }
+    }
+
+    /// The local Ollama model configured via LLAMA_MODELS (first non-empty entry of
+    /// a comma-separated list), or nil to use the lane default. Read from the live
+    /// config the runner writes.
+    private static func configuredLlamaModel() -> String? {
+        let path = AILiveHarness.configFilePath()
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
+            return nil
+        }
+        return json["LLAMA_MODELS"]?
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .first { !$0.isEmpty }
     }
 
     private func lookup(_ name: String) throws -> AIMetadata.Model {
@@ -313,18 +337,17 @@ enum AttachmentMatrix {
             .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
         ],
 
-        // MARK: llama (local Ollama, llama3.3:latest — text cells only)
+        // MARK: llama (local Ollama, default qwen3.5:4b: text + image cells)
         //
-        // Pinned to the text-only llama3.3 because the multimodal llama4 does
-        // not fit in 64GB RAM. The lane therefore covers the text-shaped cells
-        // (the model reads the text content and echoes the probe); the binary
-        // and image cells are skipped here rather than recorded, since a
-        // text-only model can't meaningfully process them and recording garbled
-        // output adds no signal. If a vision model that fits in RAM is later
-        // pinned (e.g. llava / llama3.2-vision), flip the image cells on and
-        // record them. The text expectations are calibration placeholders: the
-        // record run prints `[live] llama <kind>: expected=.. actual=..`;
-        // reconcile any drift before committing the cassettes.
+        // Driven by a small, vision-capable model (qwen3.5:4b by default; override
+        // via LLAMA_MODELS). Covers the text-shaped cells (the model reads the text
+        // content and echoes the probe) AND the image cells the vision model can
+        // decode: PNG and WEBP read the rendered probe word; HEIC and TIFF are
+        // rejected by Ollama's image loader with HTTP 400. The remaining binary
+        // cells (PDF/DOCX/ZIP/octet) and audio/video stay skipped (no probe / not
+        // meaningfully processed). Outcomes were calibrated from a record run
+        // (`[live] llama <kind>: expected=.. actual=..`); re-run record and reconcile
+        // if a vendor/model change flips a cell.
         .llama: [
             .textPlain:        .acceptsAndExtractsProbe,
             .textMarkdown:     .acceptsAndExtractsProbe,
@@ -332,10 +355,13 @@ enum AttachmentMatrix {
             .applicationXML:   .acceptsAndExtractsProbe,
             .imageSVG:         .acceptsAndExtractsProbe,
             .yamlAsUnknown:    .acceptsAndExtractsProbe,
-            .imagePNG:         .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
-            .imageWEBP:        .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
-            .imageHEIC:        .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
-            .imageTIFF:        .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
+            .imagePNG:         .acceptsAndExtractsProbe,
+            .imageWEBP:        .acceptsAndExtractsProbe,
+            // Ollama's image loader can't decode HEIC/TIFF and returns HTTP 400
+            // ("Failed to load image or audio file"), unlike PNG/WEBP which the
+            // vision model reads fine.
+            .imageHEIC:        .rejectsAtHTTPLayer,
+            .imageTIFF:        .rejectsAtHTTPLayer,
             .applicationPDF:   .skipped(reason: "llama lane pinned to text-only llama3.3; binary cells not covered"),
             .audioMPEG:        .skipped(reason: "synth mp3 fixture has no deterministic content probe; garbled vs. heard is indistinguishable"),
             .videoMP4:         .skipped(reason: "scroll-browser mp4 fixture has no deterministic content probe; garbled vs. seen is indistinguishable"),

@@ -21,11 +21,11 @@ enum WorkgroupPresets {
     static let all: [WorkgroupPreset] = [
         WorkgroupPreset(
             identifier: "codingAgentPlusDiff",
-            displayName: "Coding Agent + Diff",
+            displayName: String(localized: "WorkgroupPresets.CodingAgentPlusDiff", defaultValue: "Coding Agent + Diff", comment: "Preset name: coding agent plus diff"),
             build: buildCodingAgentPlusDiff),
         WorkgroupPreset(
             identifier: "codingAgentPlusDiffPlusCodeReview",
-            displayName: "Coding Agent + Diff + Code Review",
+            displayName: String(localized: "WorkgroupPresets.CodingAgentPlusDiffPlusCodeReview", defaultValue: "Coding Agent + Diff + Code Review", comment: "Preset name: coding agent plus diff plus code review"),
             build: { buildCodingAgentPlusDiffPlusCodeReview() })
     ]
 
@@ -60,13 +60,13 @@ enum WorkgroupPresets {
                            .changedFileSelector,
                            .gitBaseSelector,
                            .navigation(WorkgroupNavigationShortcuts.defaults)],
-            displayName: "Diff",
+            displayName: String(localized: "WorkgroupPresets.Diff", defaultValue: "Diff", comment: "Display name for the diff session in a preset"),
             perFileCommand: "git diff \\(gitBase) -- \\(file)",
             mode: .diff)
 
         return iTermWorkgroup(
             uniqueIdentifier: UUID().uuidString,
-            name: "Coding Agent + Diff",
+            name: String(localized: "WorkgroupPresets.CodingAgentPlusDiff", defaultValue: "Coding Agent + Diff", comment: "Preset name: coding agent plus diff"),
             sessions: [root, diff])
     }
 
@@ -80,7 +80,7 @@ enum WorkgroupPresets {
         rootID: String = UUID().uuidString,
         diffID: String = UUID().uuidString,
         reviewID: String = UUID().uuidString,
-        name: String = "Coding Agent + Diff + Code Review"
+        name: String = String(localized: "WorkgroupPresets.CodingAgentPlusDiffPlusCodeReview", defaultValue: "Coding Agent + Diff + Code Review", comment: "Preset name: coding agent plus diff plus code review")
     ) -> iTermWorkgroup {
         let main = iTermWorkgroupSessionConfig(
             uniqueIdentifier: rootID,
@@ -90,7 +90,7 @@ enum WorkgroupPresets {
             command: "",
             urlString: "",
             toolbarItems: [.modeSwitcher, .gitStatus, .autoRequestReviewWhenIdle],
-            displayName: "Chat")
+            displayName: String(localized: "WorkgroupPresets.Chat", defaultValue: "Chat", comment: "Display name for the chat (main) session in a preset"))
 
         let diff = iTermWorkgroupSessionConfig(
             uniqueIdentifier: diffID,
@@ -103,7 +103,7 @@ enum WorkgroupPresets {
                            .changedFileSelector,
                            .gitBaseSelector,
                            .navigation(WorkgroupNavigationShortcuts.defaults)],
-            displayName: "Diff",
+            displayName: String(localized: "WorkgroupPresets.Diff", defaultValue: "Diff", comment: "Display name for the diff session in a preset"),
             perFileCommand: "git difftool -y -x vimdiff \\(gitBase) -- \\(file)",
             mode: .diff)
 
@@ -122,7 +122,7 @@ enum WorkgroupPresets {
             toolbarItems: [.modeSwitcher,
                            .reload(WorkgroupToolbarShortcut.reloadDefault),
                            .autoSendClippingsWhenIdle],
-            displayName: "Code Review",
+            displayName: String(localized: "WorkgroupPresets.CodeReview", defaultValue: "Code Review", comment: "Display name for the code review session in a preset"),
             mode: .codeReview)
 
         return iTermWorkgroup(

@@ -19,9 +19,9 @@ class iTermBrowserPluginFinder: NSObject, NSOpenSavePanelDelegate {
         panel.canChooseDirectories = true
         panel.canChooseFiles = true
         panel.allowsMultipleSelection = false
-        panel.title = "Select \(allowedBundleName)"
-        panel.prompt = "Choose"
-        panel.message = "Select \(allowedBundleName)."
+        panel.title = String(localized: "BrowserPluginFinder.Title", defaultValue: "Select \(allowedBundleName)", comment: "Open panel window title; the interpolation is the required bundle name")
+        panel.prompt = String(localized: "BrowserPluginFinder.ChoosePrompt", defaultValue: "Choose", comment: "Open panel prompt button title")
+        panel.message = String(localized: "BrowserPluginFinder.Message", defaultValue: "Select \(allowedBundleName).", comment: "Open panel message; the interpolation is the required bundle name")
         panel.allowedContentTypes = [.bundle, .application, .applicationBundle]
         panel.begin { response in
             if response == .OK {
@@ -47,7 +47,7 @@ class iTermBrowserPluginFinder: NSObject, NSOpenSavePanelDelegate {
             throw NSError(domain: NSCocoaErrorDomain,
                           code: NSUserCancelledError,
                           userInfo: [NSLocalizedDescriptionKey:
-                                     "You must select \(allowedBundleName)"])
+                                     String(localized: "BrowserPluginFinder.MustSelect", defaultValue: "You must select \(allowedBundleName)", comment: "Error shown when the user selects the wrong bundle; the interpolation is the required bundle name")])
         }
     }
 }

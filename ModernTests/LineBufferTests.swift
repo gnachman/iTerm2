@@ -2208,17 +2208,17 @@ extension ScreenCharArray {
             modifiedPredecessor!.complexChar = firstChar.complexChar
             bufferOffset += 1
 
-            // Does the augmented result begin with a double-width character? If so skip over the
-            // DWC_RIGHT when appending. I *think* this is redundant with the `predecessorIsDoubleWidth`
-            // test but I'm reluctant to remove it because it could break something.
+            // Mirrors -[VT100ScreenMutableState appendStringAtCursorSlowly:]. The DWC_RIGHT
+            // skipped here is one that already exists after the predecessor, which is what
+            // `doubleWidth` records; a narrow predecessor that widens by absorbing the
+            // incoming code point has none yet, so its second cell has to be written.
+            //
+            // Production additionally declines to write that new right half when the
+            // predecessor is the last cell of a soft-wrapped line, where the spacer would be
+            // orphaned at column 0. This helper has no grid position, so it models the
+            // ordinary case where the predecessor adjoins the cursor.
             if let secondChar = secondChar {
-            let augmentedResultBeginsWithDoubleWidthCharacter = (augmented &&
-                                                                 len > 1 &&
-                                                                 secondChar.code == DWC_RIGHT &&
-                                                                 secondChar.complexChar == 0)
-                if ((augmentedResultBeginsWithDoubleWidthCharacter || predecessor.doubleWidth) &&
-                    len > 1 &&
-                    secondChar.code == DWC_RIGHT) {
+                if predecessor.doubleWidth && len > 1 && secondChar.code == DWC_RIGHT {
                     // Skip over a preexisting DWC_RIGHT in the predecessor.
                     bufferOffset += 1
                 }

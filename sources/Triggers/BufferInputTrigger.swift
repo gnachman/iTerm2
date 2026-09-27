@@ -30,7 +30,7 @@ class BufferInputTrigger: Trigger {
     }
 
     override static var title: String {
-        return "Buffer Input…"
+        return String(localized: "Trigger.BufferInput.Title", defaultValue: "Buffer Input…", comment: "Trigger action name: buffer keyboard input until told to stop")
     }
 
     override func takesParameter() -> Bool {
@@ -64,8 +64,8 @@ class BufferInputTrigger: Trigger {
     }
 
     override func menuItemsForPoupupButton() -> [AnyHashable : Any]? {
-        [ NSNumber(value: Tag.start.rawValue): "Start Buffering Input",
-          NSNumber(value: Tag.stop.rawValue): "Stop Buffering Input" ]
+        [ NSNumber(value: Tag.start.rawValue): String(localized: "Trigger.BufferInput.Param.Start", defaultValue: "Start Buffering Input", comment: "Buffer Input trigger option: begin buffering keyboard input"),
+          NSNumber(value: Tag.stop.rawValue): String(localized: "Trigger.BufferInput.Param.Stop", defaultValue: "Stop Buffering Input", comment: "Buffer Input trigger option: stop buffering and release buffered input") ]
     }
 
     override func performAction(withCapturedStrings strings: [String],

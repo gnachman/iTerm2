@@ -10,7 +10,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermWindowSizeView : NSView
 @property (nullable, nonatomic, readonly) NSString *detail;
 

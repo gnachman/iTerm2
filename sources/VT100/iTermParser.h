@@ -219,12 +219,15 @@ static inline NSString *CSIParamDescription(CSIParam csi) {
     return [parameterStrings componentsJoinedByString:@";"];
 }
 
-static inline void iTermParserAddCSIParameter(CSIParam *csi, int value) {
-    if (csi->count + 1 >= VT100CSIPARAM_MAX) {
+// Appends a parameter. Returns whether it was stored: a caller that adds subparameters must not
+// attach them to the preceding parameter when this returns NO.
+static inline BOOL iTermParserAddCSIParameter(CSIParam *csi, int value) {
+    if (csi->count >= VT100CSIPARAM_MAX) {
         // Avoid exceeding bounds; possibly discard or clamp this value.
-        return;
+        return NO;
     }
     csi->p[csi->count++] = value;
+    return YES;
 }
 
 // Returns the number of subparameters for a particular parameter.
@@ -257,10 +260,10 @@ static inline int iTermParserGetCSISubparameter(CSIParam *csi, int parameter_ind
     int i = 0;
     for (int j = 0; j < csi->num_subparameters; j++) {
         if (csi->subparameters[j].parameter_index == parameter_index) {
-            if (i == 0) {
+            if (i == subparameter_index) {
                 return csi->subparameters[j].value;
             }
-            i--;
+            i++;
         }
     }
     return -1;

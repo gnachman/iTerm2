@@ -3171,6 +3171,7 @@ GPB_FINAL @interface ITMGetPropertyRequest : GPBMessage
  * "grid_size" -> { "width": number, "height": number }
  * "buried" -> boolean
  * "number_of_lines" -> { "overflow": number, "grid": number, "history": number }
+ * "session_note" -> { "text": string, "visible": boolean, "collapsed": boolean }
  *
  * For windows:
  * "frame" -> { "origin": { "x": number, "y": number }, "size": { "width": number, "height": number } }
@@ -3253,6 +3254,8 @@ GPB_FINAL @interface ITMSetPropertyRequest : GPBMessage
  * For sessions:
  * grid_size      { "width": 80, "height": 25 }
  * buried         true
+ * "session_note" -> { "text": string, "visible": boolean, "collapsed": boolean }
+ * Accepts a partial object; omitted keys retain their current values.
  **/
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
 /** Test to see if @c name has been set. */
@@ -5320,6 +5323,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_Window_FieldNumber) {
   ITMListSessionsResponse_Window_FieldNumber_WindowId = 2,
   ITMListSessionsResponse_Window_FieldNumber_Frame = 3,
   ITMListSessionsResponse_Window_FieldNumber_Number = 4,
+  ITMListSessionsResponse_Window_FieldNumber_SelectedTabId = 5,
 };
 
 GPB_FINAL @interface ITMListSessionsResponse_Window : GPBMessage
@@ -5339,6 +5343,14 @@ GPB_FINAL @interface ITMListSessionsResponse_Window : GPBMessage
 @property(nonatomic, readwrite) int32_t number;
 
 @property(nonatomic, readwrite) BOOL hasNumber;
+/**
+ * uniqueId of the selected tab, so clients can determine the current tab
+ * without waiting for a focus notification. Added in protocol 1.18.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *selectedTabId;
+/** Test to see if @c selectedTabId has been set. */
+@property(nonatomic, readwrite) BOOL hasSelectedTabId;
+
 @end
 
 #pragma mark - ITMListSessionsResponse_Tab
@@ -5349,6 +5361,11 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
   ITMListSessionsResponse_Tab_FieldNumber_TmuxWindowId = 4,
   ITMListSessionsResponse_Tab_FieldNumber_TmuxConnectionId = 5,
   ITMListSessionsResponse_Tab_FieldNumber_MinimizedSessionsArray = 6,
+  ITMListSessionsResponse_Tab_FieldNumber_ActiveSessionId = 7,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupId = 8,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupName = 9,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupColor = 10,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupCollapsed = 11,
 };
 
 GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
@@ -5373,6 +5390,37 @@ GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
 /** The number of items in @c minimizedSessionsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger minimizedSessionsArray_Count;
 
+/**
+ * guid of the tab's active session, so clients can determine the current
+ * session without waiting for a focus notification. Added in protocol 1.18.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *activeSessionId;
+/** Test to see if @c activeSessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasActiveSessionId;
+
+/**
+ * Tab group membership. A tab group's identity is a UUID that rides on each
+ * member tab (there is no central registry); all members of a group carry
+ * the same name/color/collapsed values. tab_group_id is unset when the tab
+ * belongs to no group; the other three are meaningful only when it is set.
+ * The color is a hex string as produced by -[NSColor hexStringPreservingColorSpace]
+ * ("#rrggbb" for sRGB, "p3#rrggbbrrggbb" for Display P3). Added in protocol 1.19.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabGroupId;
+/** Test to see if @c tabGroupId has been set. */
+@property(nonatomic, readwrite) BOOL hasTabGroupId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabGroupName;
+/** Test to see if @c tabGroupName has been set. */
+@property(nonatomic, readwrite) BOOL hasTabGroupName;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabGroupColor;
+/** Test to see if @c tabGroupColor has been set. */
+@property(nonatomic, readwrite) BOOL hasTabGroupColor;
+
+@property(nonatomic, readwrite) BOOL tabGroupCollapsed;
+
+@property(nonatomic, readwrite) BOOL hasTabGroupCollapsed;
 @end
 
 #pragma mark - ITMCreateTabRequest

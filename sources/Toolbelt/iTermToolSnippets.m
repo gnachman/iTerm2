@@ -88,6 +88,9 @@ typedef NS_ENUM(NSUInteger, iTermToolSnippetsAction) {
     NSArray<iTermSnippet *> *_unfilteredSnippets;
     NSArray<iTermSnippet *> *_filteredSnippets;
     NSArray *_tree;
+    // The inputs the current model was built from. See -currentSessionDidChange.
+    NSString *_modelQuery;
+    NSArray<NSString *> *_modelTags;
     iTermEditSnippetWindowController *_windowController;
     BOOL _haveTags;
     CGFloat _standardRowHeight;
@@ -99,24 +102,16 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     NSButton *button = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
     [button setButtonType:NSButtonTypeMomentaryPushIn];
     if (imageName) {
-        if (@available(macOS 10.16, *)) {
-            button.image = [NSImage it_imageForSymbolName:imageName accessibilityDescription:title];
-        } else {
-            button.image = [NSImage imageNamed:imageName];
-        }
+        button.image = [NSImage it_imageForSymbolName:imageName accessibilityDescription:title];
     } else {
         button.title = title;
     }
     [button setTarget:target];
     [button setAction:selector];
-    if (@available(macOS 10.16, *)) {
-        button.bezelStyle = NSBezelStyleRegularSquare;
-        button.bordered = NO;
-        button.imageScaling = NSImageScaleProportionallyUpOrDown;
-        button.imagePosition = NSImageOnly;
-    } else {
-        [button setBezelStyle:NSBezelStyleSmallSquare];
-    }
+    button.bezelStyle = NSBezelStyleRegularSquare;
+    button.bordered = NO;
+    button.imageScaling = NSImageScaleProportionallyUpOrDown;
+    button.imagePosition = NSImageOnly;
     [button sizeToFit];
     [button setAutoresizingMask:NSViewMinYMargin];
 
@@ -126,23 +121,14 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        if (@available(macOS 11.0, *)) {
-            _icon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTextBubbleFill) accessibilityDescription:@"Snippet icon"];
-            _folderIcon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolFolderFill) accessibilityDescription:@"Folder icon"];
-        }
-        if (@available(macOS 10.16, *)) {
-            _applyButton = iTermToolSnippetsNewButton(@"play", @"Send", self, @selector(apply:), frame);
-            _addButton = iTermToolSnippetsNewButton(@"plus", @"Add", self, @selector(add:), frame);
-            _removeButton = iTermToolSnippetsNewButton(@"minus", @"Remove", self, @selector(remove:), frame);
-            _editButton = iTermToolSnippetsNewButton(@"square.and.pencil", @"Edit", self, @selector(edit:), frame);
-            _advancedPasteButton = iTermToolSnippetsNewButton(@"rectangle.and.pencil.and.ellipsis", @"Open in Advanced Paste", self, @selector(openInAdvancedPaste:), frame);
-            [self addSubview:_advancedPasteButton];
-        } else {
-            _applyButton = iTermToolSnippetsNewButton(nil, @"Send", self, @selector(apply:), frame);
-            _addButton = iTermToolSnippetsNewButton(NSImageNameAddTemplate, nil, self, @selector(add:), frame);
-            _removeButton = iTermToolSnippetsNewButton(NSImageNameRemoveTemplate, nil, self, @selector(remove:), frame);
-            _editButton = iTermToolSnippetsNewButton(nil, @"✐", self, @selector(edit:), frame);
-        }
+        _icon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTextBubbleFill) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"ToolSnippets.SnippetIconAccessibility", nil, [NSBundle mainBundle], @"Snippet icon", @"Accessibility description for the snippet icon")];
+        _folderIcon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolFolderFill) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"ToolSnippets.FolderIconAccessibility", nil, [NSBundle mainBundle], @"Folder icon", @"Accessibility description for the folder icon")];
+        _applyButton = iTermToolSnippetsNewButton(@"play", NSLocalizedStringWithDefaultValue(@"ToolSnippets.Send", nil, [NSBundle mainBundle], @"Send", @"Button to send a snippet"), self, @selector(apply:), frame);
+        _addButton = iTermToolSnippetsNewButton(@"plus", iTermLocalizedAdd(), self, @selector(add:), frame);
+        _removeButton = iTermToolSnippetsNewButton(@"minus", iTermLocalizedRemove(), self, @selector(remove:), frame);
+        _editButton = iTermToolSnippetsNewButton(@"square.and.pencil", iTermLocalizedEdit(), self, @selector(edit:), frame);
+        _advancedPasteButton = iTermToolSnippetsNewButton(@"rectangle.and.pencil.and.ellipsis", NSLocalizedStringWithDefaultValue(@"ToolSnippets.OpenInAdvancedPaste", nil, [NSBundle mainBundle], @"Open in Advanced Paste", @"Button to open a snippet in Advanced Paste"), self, @selector(openInAdvancedPaste:), frame);
+        [self addSubview:_advancedPasteButton];
         [self addSubview:_applyButton];
         [self addSubview:_addButton];
         [self addSubview:_removeButton];
@@ -180,9 +166,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
         [_help setBezelStyle:NSBezelStyleHelpButton];
         [_help setButtonType:NSButtonTypeMomentaryPushIn];
         [_help setBordered:YES];
-        if (@available(macOS 10.16, *)) {
-            _help.controlSize = NSControlSizeSmall;
-        }
+        _help.controlSize = NSControlSizeSmall;
         [_help sizeToFit];
         _help.target = self;
         _help.action = @selector(help:);
@@ -337,20 +321,14 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
                                          _searchField.frame.size.height);
     _searchField.frame = searchFieldFrame;
 
-    CGFloat fudgeFactor = 1;
-    if (@available(macOS 10.16, *)) {
-        fudgeFactor = 2;
-    }
+    CGFloat fudgeFactor = 2;
     _help.frame = NSMakeRect(NSMaxX(searchFieldFrame) + kMargin, NSMinY(searchFieldFrame) + fudgeFactor, NSWidth(_help.frame), NSHeight(_help.frame));
 
     [_applyButton sizeToFit];
     [_applyButton setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, _applyButton.frame.size.width, kButtonHeight)];
 
     [_advancedPasteButton sizeToFit];
-    CGFloat margin = -1;
-    if (@available(macOS 10.16, *)) {
-        margin = 2;
-    }
+    CGFloat margin = 2;
     _advancedPasteButton.frame = NSMakeRect(NSMaxX(_applyButton.frame) + margin,
                                             frame.size.height - kButtonHeight,
                                             _advancedPasteButton.frame.size.width,
@@ -360,11 +338,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     for (NSButton *button in @[ _addButton, _removeButton, _editButton]) {
         [button sizeToFit];
         CGFloat width;
-        if (@available(macOS 10.16, *)) {
-            width = NSWidth(button.frame);
-        } else {
-            width = MAX(kButtonHeight, button.frame.size.width);
-        }
+        width = NSWidth(button.frame);
         x -= width + margin;
         button.frame = NSMakeRect(x,
                                   frame.size.height - kButtonHeight,
@@ -409,7 +383,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (void)help:(id)sender {
-    [_help it_showWarningWithMarkdown:iTermSnippetHelpMarkdown];
+    [_help it_showWarningWithMarkdown:iTermSnippetHelpMarkdown()];
 }
 
 - (void)doubleClickOnOutlineView:(id)sender {
@@ -465,16 +439,67 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (void)currentSessionDidChange {
+    // Reloading an NSOutlineView permanently leaks its disclosure buttons:
+    // AppKit mints a fresh NSButton (plus its own backing subviews) for every
+    // expandable row on each reloadData and never releases the old ones.
+    // That part is AppKit's bug, but this runs from refreshTools on every tab
+    // switch and every foreground-job change, so over days it strands tens of
+    // thousands of dead views. Those cost more than their own memory: AppKit
+    // unregisters a dying view from the notification center with a sweep whose
+    // cost grows with the number of live views, so stranded views make every
+    // view teardown in the app slower.
+    //
+    // The part we control is not reloading when the result would be identical,
+    // which is the common case here. The model depends only on the query, the
+    // session's snippet tags, and the model's snippet list, so if none of those
+    // changed since the last -updateModel there is nothing to do. Edits to a
+    // snippet's contents arrive through -snippetsDidChange:, which always
+    // rebuilds, so comparing the list by guid is enough here.
+    [self updateModelAndReloadIfNeeded];
+}
+
+// Rebuild and reload only if the inputs the model is built from have changed.
+// Callers that can change a snippet's *contents* must not come through here:
+// -[iTermSnippet isEqual:] compares guids only, so an edited snippet looks
+// unchanged to this test. That is why -snippetsDidChange: reloads
+// unconditionally.
+- (void)updateModelAndReloadIfNeeded {
+    NSArray<NSString *> *tags = [self.toolWrapper.delegate.delegate toolbeltSnippetTags];
+    if ([self modelIsCurrentForQuery:_searchField.stringValue tags:tags]) {
+        return;
+    }
     [self updateModel];
     [_outlineView reloadPreservingExpansionAndScroll];
+}
+
+- (BOOL)modelIsCurrentForQuery:(NSString *)query tags:(NSArray<NSString *> *)tags {
+    if (_unfilteredSnippets == nil) {
+        return NO;
+    }
+    if (![iTermToolSnippets object:query isEqualToObject:_modelQuery]) {
+        return NO;
+    }
+    if (![iTermToolSnippets object:tags isEqualToObject:_modelTags]) {
+        return NO;
+    }
+    return [[[iTermSnippetsModel sharedInstance] snippets] isEqualToArray:_unfilteredSnippets];
+}
+
++ (BOOL)object:(id)lhs isEqualToObject:(id)rhs {
+    if (lhs == rhs) {
+        return YES;
+    }
+    return [lhs isEqual:rhs];
 }
 
 #pragma mark - Private
 
 - (void)updateModel {
+    _modelQuery = [_searchField.stringValue copy];
+    _modelTags = [[self.toolWrapper.delegate.delegate toolbeltSnippetTags] copy];
     _unfilteredSnippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
-    _filteredSnippets = [[iTermSnippetsModel sharedInstance] snippetsMatchingSearchQuery:_searchField.stringValue
-                                                                          additionalTags:[self.toolWrapper.delegate.delegate toolbeltSnippetTags]
+    _filteredSnippets = [[iTermSnippetsModel sharedInstance] snippetsMatchingSearchQuery:_modelQuery
+                                                                          additionalTags:_modelTags
                                                                                tagsFound:&_haveTags];
     [self buildTree];
 }
@@ -556,12 +581,18 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (void)snippetsDidChange:(iTermSnippetsDidChangeNotification *)notif {
-    const BOOL hadTags = _haveTags;
-    if (_haveTags || hadTags) {
-        [self updateModel];
-        [_outlineView reloadPreservingExpansionAndScroll];
-        return;
-    }
+    // Unconditional on purpose. This is the path an edit arrives on, and an
+    // edited snippet keeps its guid, so the currency test in
+    // -updateModelAndReloadIfNeeded would call it unchanged and leave stale
+    // text on screen. Snippets are edited rarely, so reloading every time
+    // costs little.
+    //
+    // This used to take an incremental path for the untagged case, driven by
+    // notif.mutationType and notif.index, and fall back to a full reload once
+    // folders made row indices ambiguous. The incremental half was replaced by
+    // a plain reload when the outline view arrived, which left a branch whose
+    // two arms did the same thing, so it is gone. The notification still
+    // carries mutationType, index and indexSet if that path is ever rebuilt.
     [self updateModel];
     [self updateOutlineView];
 }
@@ -577,6 +608,14 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (void)updateOutlineView {
     // It would be nice to do something fancy like diff the before-and-after trees and update only
     // the necessary rows but the complexity is too great for me to do that tonight.
+    //
+    // If anyone does build that diff, there is a second reason to want it.
+    // -reloadData and -reloadItem:reloadChildren: both permanently strand one
+    // disclosure button, plus its cell and backing views, for every visible
+    // expandable row. The batch API, -insertItemsAtIndexes:inParent:withAnimation:
+    // and -removeItemsAtIndexes:inParent:withAnimation:, does not. So an
+    // incremental path would avoid an AppKit leak as well as the work. See
+    // tests/outline-view-disclosure-button-leak.m.
     [_outlineView reloadPreservingExpansionAndScroll];
 }
 
@@ -594,7 +633,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     iTermToolWrapper *wrapper = self.toolWrapper;
     switch (action) {
         case iTermToolSnippetsActionSend: {
-            iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
+            iTermAction *action = [[iTermAction alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ToolSnippets.SendSnippet", nil, [NSBundle mainBundle], @"Send Snippet", @"Title of the action that sends a snippet")
                                                               action:KEY_ACTION_SEND_SNIPPET
                                                            parameter:snippet.actionKey
                                                             escaping:snippet.escaping
@@ -640,6 +679,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     if (!title.length) {
         return [self valueStringForSnippet:snippet];
     }
+    // Localization unneeded
     return [NSString stringWithFormat:@"%@ — %@", title, [snippet trimmedValue:256]];
 }
 
@@ -649,21 +689,6 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 - (NSString *)valueStringForSnippet:(iTermSnippet *)snippet {
     return [snippet trimmedValue:40];
-}
-
-- (void)update {
-    [_outlineView reloadPreservingExpansionAndScroll];
-    // Updating the table data causes the cursor to change into an arrow!
-    [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
-
-    NSResponder *firstResponder = [[_outlineView window] firstResponder];
-    if (firstResponder != _outlineView) {
-        [_outlineView scrollToEndOfDocument:nil];
-    }
-}
-
-- (void)fixCursor {
-    [self.toolWrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
 - (void)updateEnabled {
@@ -735,6 +760,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     if ([snippet titleEqualsValueUpToLength:40] || !title.length) {
         return highlightedValueAttributedString;
     }
+    // Localization unneeded
     NSAttributedString *emDashAttributedString = [NSAttributedString attributedStringWithString:@" — "
                                                                                      attributes:attributes];
 
@@ -799,10 +825,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (NSTableRowView *)outlineView:(NSOutlineView *)outlineView rowViewForItem:(id)item {
-    if (@available(macOS 10.16, *)) {
-        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
-    }
-    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
+    return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
 }
 
 - (NSView *)outlineView:(NSOutlineView *)outlineView viewForTableColumn:(NSTableColumn *)tableColumn item:(id)item {
@@ -939,6 +962,17 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
                                         object:_unfilteredSnippets];
 }
 
+// NSUndoManager holds targets unretained. pushUndo registers this view on the
+// window's shared undo manager, so if this tool is torn down while the window
+// lives (e.g. the tool is removed from the toolbelt) the registration would
+// dangle and crash the next Undo. Scrub it as we leave the window.
+- (void)viewWillMoveToWindow:(NSWindow *)newWindow {
+    if (newWindow != self.window) {
+        [self.window.undoManager removeAllActionsWithTarget:self];
+    }
+    [super viewWillMoveToWindow:newWindow];
+}
+
 #pragma mark - NSDraggingDestination
 
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
@@ -974,7 +1008,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     NSArray<NSString *> *parts = [string componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
     return [parts objectPassingTest:^BOOL(NSString *element, NSUInteger index, BOOL *stop) {
         return [[element stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] > 0;
-    }] ?: @"Untitled";
+    }] ?: NSLocalizedStringWithDefaultValue(@"ToolSnippets.Untitled", nil, [NSBundle mainBundle], @"Untitled", @"Placeholder title for a snippet with no title");
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
@@ -988,8 +1022,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 #pragma mark - NSSearchFieldDelegate
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
-    [self updateModel];
-    [_outlineView reloadPreservingExpansionAndScroll];
+    [self updateModelAndReloadIfNeeded];
 }
 
 - (void)controlTextDidEndEditing:(NSNotification *)obj {

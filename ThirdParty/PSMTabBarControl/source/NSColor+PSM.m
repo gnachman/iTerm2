@@ -46,4 +46,15 @@ static BOOL PSMAppearanceIsDark(NSAppearance *appearance) {
                 b * b * .068);
 }
 
+- (NSColor *)psmContrastingTextColor {
+    // Rec.601 luma, matching what the tab-group chip renderers historically
+    // used; a catalog color that can't convert counts as mid-brightness.
+    NSColor *rgb = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    const CGFloat brightness = rgb ? (0.299 * rgb.redComponent +
+                                      0.587 * rgb.greenComponent +
+                                      0.114 * rgb.blueComponent)
+                                   : 0.5;
+    return brightness < 0.55 ? [NSColor whiteColor] : [NSColor blackColor];
+}
+
 @end

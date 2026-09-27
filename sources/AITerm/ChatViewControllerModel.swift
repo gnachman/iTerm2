@@ -302,17 +302,39 @@ class ChatViewControllerModel {
         }
     }
 
-    func deleteFrom(index i: Int) {
-        let removed = items.removeLast(items.count - i)
-        let messageIDs = removed.compactMap {
-            switch $0 {
-            case .message(let message):
-                message.message.uniqueID
-            case .date, .agentTyping:
-                nil
+    // The message uniqueIDs from display item `i` to the end - the suffix that a
+    // truncation (edit/delete) removes. Pure: it does not mutate the model. The
+    // caller hands these to the broker, whose fan-out echoes back a
+    // .messagesRemoved that drives removeMessages(withIDs:), so the local model,
+    // the persistent store, and a subscribed phone all converge on one path.
+    func messageIDs(fromIndex i: Int) -> [UUID] {
+        var result = [UUID]()
+        var j = i
+        while j < items.count {
+            if case .message(let message) = items[j] {
+                result.append(message.message.uniqueID)
             }
+            j += 1
         }
-        listModel.delete(chatID: chatID, messageIDs: messageIDs)
+        return result
+    }
+
+    // Apply a broker .messagesRemoved to the display model. Deletion is always a
+    // suffix truncation, so remove from the earliest item that matches an
+    // affected ID through the end (which also drops any trailing date separator
+    // or typing indicator). Does NOT touch listModel - the broker already
+    // updated the store before fanning this out.
+    func removeMessages(withIDs ids: [UUID]) {
+        let idSet = Set(ids)
+        guard let firstIndex = items.firstIndex(where: {
+            if case .message(let message) = $0 {
+                return idSet.contains(message.message.uniqueID)
+            }
+            return false
+        }) else {
+            return
+        }
+        items.removeLast(items.count - firstIndex)
     }
 }
 

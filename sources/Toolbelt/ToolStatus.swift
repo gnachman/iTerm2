@@ -17,6 +17,7 @@ class ToolStatus: NSView {
     private var helpButton: PopoverHelpButton!
     private var settingsButton: NSButton!
     private var notifyButton: NSButton!
+    private var snoozeButton: NSButton!
     private static let buttonHeight: CGFloat = 23
     private static let margin: CGFloat = 5
     static let statusToolLastUseUserDefaultsKey = "NoSyncStatusToolLastUseDate"
@@ -65,6 +66,24 @@ class ToolStatus: NSView {
     private static let debounceInterval: TimeInterval = 0.05
     private var pendingKeys = Set<String>()
     private var pendingFlush: DispatchWorkItem?
+    // Coalesce the shortcut reloads one user action triggers. A single tab
+    // switch posts three of them: iTermSessionBecameKey from both
+    // -[PTYTab setActiveSession:updateActivityCounter:] and
+    // -[PseudoTerminal tabView:didSelectTabViewItem:], plus
+    // iTermSelectedTabDidChange from the latter. They all want the same
+    // thing, so do it once at the end of the current runloop pass rather
+    // than rebuilding every row three times. The async joiner (not the
+    // debounce interval above) keeps the shortcut labels landing in the
+    // same frame as the switch.
+    private let shortcutReloadJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
+    // Set when a shortcut reload was skipped because the tool is not
+    // visible (the toolbelt is hidden, or its window is miniaturized or
+    // ordered out), so it can be honored as soon as it is visible again.
+    var missedShortcutReloadWhileHidden = false
+    // Counts reloads that reached the table, so tests can pin the
+    // coalescing contract. Internal (not private) for the same reason
+    // resolveSessionForReload is.
+    var shortcutReloadCount = 0
     // Session GUIDs the user has snoozed via the row context menu. Transient
     // per-tool UI state (not persisted): snoozed rows sink to the bottom and
     // render dimmed, and auto-un-snooze when their status next changes.
@@ -101,6 +120,18 @@ class ToolStatus: NSView {
         return session
     }
 
+    // Seeds one row per session ID. The real path goes through
+    // windowContains(sessionGUID:), which needs a toolbelt delegate a test
+    // cannot provide. The IDs need not resolve to live sessions:
+    // configureCell(_:for:) blanks a row whose session is gone.
+    func setStatusesForTesting(sessionIDs: [String]) {
+        statuses = sessionIDs.map { sessionID in
+            makeStatus(tabStatus: iTermSessionTabStatus(sessionID: sessionID), sessionID: sessionID)
+        }.sorted()
+        rebuildDisplayed()
+        _tableView?.reloadData()
+    }
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
 
@@ -116,7 +147,7 @@ class ToolStatus: NSView {
         settingsButton.bezelStyle = .regularSquare
         settingsButton.isBordered = false
         settingsButton.image = NSImage(systemSymbolName: "gearshape",
-                                       accessibilityDescription: "Settings")
+                                       accessibilityDescription: String(localized: "ToolStatus.SettingsAccessibility", defaultValue: "Settings", comment: "Accessibility description for the settings button"))
         settingsButton.imagePosition = .imageOnly
         settingsButton.target = self
         settingsButton.action = #selector(showSettings(_:))
@@ -136,6 +167,20 @@ class ToolStatus: NSView {
         notifyButton.autoresizingMask = []
         updateNotifyButtonAppearance()
         addSubview(notifyButton)
+
+        // Snooze toggle — right of the notify button. Enabled only when a row
+        // is selected; toggles snooze on the selected session's workgroup,
+        // exactly like the row's right-click Snooze menu item.
+        snoozeButton = NSButton(frame: NSRect(x: 0, y: 0, width: 22, height: 22))
+        snoozeButton.bezelStyle = .regularSquare
+        snoozeButton.setButtonType(.toggle)
+        snoozeButton.isBordered = false
+        snoozeButton.imagePosition = .imageOnly
+        snoozeButton.target = self
+        snoozeButton.action = #selector(toggleSnoozeButton(_:))
+        snoozeButton.autoresizingMask = []
+        updateSnoozeButtonAppearance()
+        addSubview(snoozeButton)
 
         scrollView = NSScrollView.scrollViewWithTableViewForToolbelt(container: self,
                                                                      insets: NSEdgeInsets(),
@@ -235,6 +280,12 @@ extension ToolStatus: ToolbeltTool {
                                     width: notifyButton.frame.width,
                                     height: notifyButton.frame.height)
 
+        // Snooze toggle — right of the notify button
+        snoozeButton.frame = NSRect(x: notifyButton.frame.maxX + m,
+                                    y: 0,
+                                    width: snoozeButton.frame.width,
+                                    height: snoozeButton.frame.height)
+
         // Scroll view — above buttons
         let scrollY = bh + m
         scrollView!.frame = NSRect(x: 0, y: scrollY, width: frame.width, height: frame.height - scrollY)
@@ -262,6 +313,14 @@ extension ToolStatus {
         pendingFlush?.cancel()
         pendingFlush = nil
         pendingKeys.removeAll()
+        // The joiner has no transient cancel (invalidate() is permanent), so
+        // a shortcut reload already queued for this runloop pass still fires
+        // after the reload below. That costs one redundant pass over a
+        // toolbelt-sized table on a cold path (the tool entering or leaving a
+        // window), which is not worth a new primitive. Same bargain
+        // ChatInputView.layout() makes with its layoutJoiner.
+        missedShortcutReloadWhileHidden = false
+        registerWindowVisibilityObserver()
         statuses = SessionStatusController.instance.statuses.values.compactMap { status in
             let contains = windowContains(sessionGUID: status.sessionID)
             DLog("ToolStatus viewDidMoveToWindow: sessionID=\(status.sessionID) contains=\(contains) hasActive=\(status.hasActiveStatus)")
@@ -275,6 +334,41 @@ extension ToolStatus {
         rebuildDisplayed()
         _tableView?.reloadData()
         updateSelectionWithoutChangingFirstResponder()
+    }
+
+    override func viewDidUnhide() {
+        super.viewDidUnhide()
+        payBackMissedShortcutReload()
+    }
+
+    // viewDidUnhide() covers the toolbelt being shown again, but not the
+    // window itself coming back from being miniaturized or ordered out.
+    // The window's occlusion state changes in both cases. Scoped to our
+    // own window so other windows' changes don't wake this tool.
+    private func registerWindowVisibilityObserver() {
+        let nc = NotificationCenter.default
+        nc.removeObserver(self, name: NSWindow.didChangeOcclusionStateNotification, object: nil)
+        guard let window else {
+            return
+        }
+        nc.addObserver(self,
+                       selector: #selector(windowOcclusionStateDidChange(_:)),
+                       name: NSWindow.didChangeOcclusionStateNotification,
+                       object: window)
+    }
+
+    @objc
+    private func windowOcclusionStateDidChange(_ notification: Notification) {
+        payBackMissedShortcutReload()
+    }
+
+    // Pays back a reload that was skipped while the tool was not visible.
+    private func payBackMissedShortcutReload() {
+        guard missedShortcutReloadWhileHidden, it_isVisible else {
+            return
+        }
+        missedShortcutReloadWhileHidden = false
+        setNeedsShortcutReload()
     }
 }
 
@@ -297,7 +391,7 @@ extension ToolStatus {
         updateSelectionWithoutChangingFirstResponder()
     }
 
-    static let helpMarkdown = """
+    static let helpMarkdown = String(localized: "ToolStatus.HelpMarkdown", defaultValue: """
     ## Session Status
 
     The **Session Status** tool shows the status of sessions across all tabs. Each entry displays the \
@@ -334,7 +428,7 @@ extension ToolStatus {
 
     Right-click a row and choose **Snooze** to move it to the bottom of the list and \
     dim it. A snoozed entry automatically un-snoozes the next time its status changes.
-    """
+    """, comment: "Help text shown for the Session Status toolbelt tool")
 }
 
 // MARK: - Private methods
@@ -354,9 +448,34 @@ private extension ToolStatus {
 
     @objc
     func needsShortcutReload(_ notification: Notification) {
+        setNeedsShortcutReload()
+    }
+
+    // Schedules one reload for the end of the current runloop pass,
+    // collapsing the burst of notifications a single tab switch produces.
+    func setNeedsShortcutReload() {
+        shortcutReloadJoiner.setNeedsUpdate { [weak self] in
+            self?.reloadShortcuts()
+        }
+    }
+
+    private func reloadShortcuts() {
+        // Hiding the toolbelt sets its `hidden` flag rather than taking it
+        // out of the window, so this tool keeps receiving notifications and
+        // `window` stays non-nil - which is why the window check in
+        // activeSessionDidChange(_:) does not cover this case. Neither does
+        // it cover a miniaturized or ordered-out window. Rebuilding rows
+        // nobody can see is pure cost, so remember the debt and pay it in
+        // payBackMissedShortcutReload() once the tool is visible again.
+        if !it_isVisible {
+            missedShortcutReloadWhileHidden = true
+            return
+        }
+        missedShortcutReloadWhileHidden = false
         guard let tableView = _tableView, !displayedStatuses.isEmpty else {
             return
         }
+        shortcutReloadCount += 1
         // Session/tab topology changed (these notifications include
         // session creation/destruction), so resolvability may have too.
         resolvedSessionsForReload.removeAll()
@@ -398,8 +517,9 @@ private extension ToolStatus {
             _tableView?.selectRowIndexes(IndexSet(), byExtendingSelection: false)
         }
         // This programmatic change skips tableViewSelectionDidChange (it's
-        // suppressed by disableSelectionCount), so refresh the bell here.
+        // suppressed by disableSelectionCount), so refresh the buttons here.
         updateNotifyButtonAppearance()
+        updateSnoozeButtonAppearance()
     }
 
     // MARK: - Status-change notifications
@@ -493,15 +613,15 @@ private extension ToolStatus {
         let symbol: SFSymbol = armed ? .bellBadge : .bell
         notifyButton.state = armed ? .on : .off
         notifyButton.image = NSImage(systemSymbolName: symbol.rawValue,
-                                     accessibilityDescription: "Notify on status change")
+                                     accessibilityDescription: String(localized: "ToolStatus.NotifyAccessibility", defaultValue: "Notify on status change", comment: "Accessibility description for the notify button"))
         if armed {
             notifyButton.toolTip = targetingSession
-                ? "Watching the selected session for a status change. An alert will appear on the next change, then turn this off."
-                : "Watching this window for a session status change. An alert will appear on the next change, then turn this off."
+                ? String(localized: "ToolStatus.WatchingTooltipSession", defaultValue: "Watching the selected session for a status change. An alert will appear on the next change, then turn this off.", comment: "Tooltip for the notify button when armed and targeting the selected session")
+                : String(localized: "ToolStatus.WatchingTooltipWindow", defaultValue: "Watching this window for a session status change. An alert will appear on the next change, then turn this off.", comment: "Tooltip for the notify button when armed and watching the whole window")
         } else {
             notifyButton.toolTip = targetingSession
-                ? "Notify with an alert when the selected session’s status changes."
-                : "Notify with an alert when any session in this window changes status."
+                ? String(localized: "ToolStatus.NotifyTooltipSession", defaultValue: "Notify with an alert when the selected session’s status changes.", comment: "Tooltip for the notify button when disarmed and targeting the selected session")
+                : String(localized: "ToolStatus.NotifyTooltipWindow", defaultValue: "Notify with an alert when any session in this window changes status.", comment: "Tooltip for the notify button when disarmed and watching the whole window")
         }
     }
 
@@ -814,9 +934,11 @@ private extension ToolStatus {
             return nil
         }
         if position <= 8 {
+            // Localization unneeded
             return "⌥⇧⌘\(position)"
         }
         if position == port.peerCount {
+            // Localization unneeded
             return "⌥⇧⌘9"
         }
         return nil
@@ -884,7 +1006,7 @@ private extension ToolStatus {
                     let modString = NSString.modifierSymbols(mask: mask)
                     return "\(modString)\(ordinal)"
                 }
-                return "Pane \(ordinal)"
+                return String(localized: "ToolStatus.PaneShortcut", defaultValue: "Pane \(ordinal)", comment: "Shortcut label showing which pane a session is in")
             }
         }
         // Session is in a different tab — show tab shortcut
@@ -897,7 +1019,7 @@ private extension ToolStatus {
             return nil
         }
         if tabTag.rawValue == iTermPreferencesModifierTag.preferenceModifierTagNone.rawValue {
-            return "Tab \(tabIndex)"
+            return String(localized: "ToolStatus.TabShortcut", defaultValue: "Tab \(tabIndex)", comment: "Shortcut label showing which tab a session is in")
         }
         let mask = iTermPreferences.mask(for: tabTag)
         let modString = NSString.modifierSymbols(mask: mask)
@@ -988,7 +1110,7 @@ private extension ToolStatus {
                        dotImage: dotImage,
                        peerLabel: session.peerDisplayLabel,
                        shortcut: shortcutString(for: status.sessionID),
-                       statusText: tabStatus.statusText,
+                       statusText: SetTabStatusTrigger.localizedStatusForDisplay(tabStatus.statusText),
                        statusColor: statusColor,
                        detail: tabStatus.detailText,
                        armed: NotifyOnStatusChangeController.instance.isSessionArmed(forGuid: status.sessionID),
@@ -1036,8 +1158,10 @@ extension ToolStatus: NSTableViewDelegate {
         if disableSelectionCount > 0 {
             return
         }
-        // The bell targets the selected session, so keep it in sync.
+        // The bell and snooze buttons target the selected session, so keep
+        // them in sync.
         updateNotifyButtonAppearance()
+        updateSnoozeButtonAppearance()
         let row = _tableView!.selectedRow
         if row == -1 {
             return
@@ -1073,7 +1197,7 @@ extension ToolStatus: NSMenuDelegate {
         // A merged row stands for a whole workgroup, so its checkmark reflects
         // (and its toggle affects) every member, not just the representative.
         let members = groupMemberSessionIDs(forRepresentative: sessionID)
-        let item = NSMenuItem(title: "Snooze",
+        let item = NSMenuItem(title: String(localized: "ToolStatus.Snooze", defaultValue: "Snooze", comment: "Snooze label/accessibility description"),
                               action: #selector(toggleSnooze(_:)),
                               keyEquivalent: "")
         item.target = self
@@ -1091,6 +1215,43 @@ extension ToolStatus: NSMenuDelegate {
         // un-snooze them all; otherwise snooze them all so the merged row
         // reads as snoozed (a snoozed member only represents when all are).
         setSnoozed(!allSnoozed(members), forSessionIDs: members)
+    }
+
+    // The snooze toolbar button acts on the selected row, doing the same
+    // thing as its right-click Snooze menu item.
+    @objc func toggleSnoozeButton(_ sender: NSButton) {
+        guard let sessionID = selectedRepresentativeSessionID else {
+            return
+        }
+        let members = groupMemberSessionIDs(forRepresentative: sessionID)
+        setSnoozed(!allSnoozed(members), forSessionIDs: members)
+    }
+
+    // The displayed row's session ID for the current selection, or nil when
+    // nothing is selected.
+    private var selectedRepresentativeSessionID: String? {
+        guard let row = _tableView?.selectedRow, row >= 0, row < displayedStatuses.count else {
+            return nil
+        }
+        return displayedStatuses[row].sessionID
+    }
+
+    func updateSnoozeButtonAppearance() {
+        let sessionID = selectedRepresentativeSessionID
+        // Only actionable with a selection, matching the right-click item's
+        // requirement of a clicked row.
+        snoozeButton.isEnabled = sessionID != nil
+        let snoozed = sessionID.map { allSnoozed(groupMemberSessionIDs(forRepresentative: $0)) } ?? false
+        snoozeButton.state = snoozed ? .on : .off
+        snoozeButton.image = NSImage(systemSymbolName: SFSymbol.moonZzz.rawValue,
+                                     accessibilityDescription: String(localized: "ToolStatus.Snooze", defaultValue: "Snooze", comment: "Snooze label/accessibility description"))
+        if sessionID == nil {
+            snoozeButton.toolTip = String(localized: "ToolStatus.SnoozeButtonTooltipSelect", defaultValue: "Select a session to snooze it.", comment: "Tooltip for the snooze button when no session is selected")
+        } else if snoozed {
+            snoozeButton.toolTip = String(localized: "ToolStatus.SnoozeButtonTooltipUnsnooze", defaultValue: "Un-snooze the selected session.", comment: "Tooltip for the snooze button when the selected session is already snoozed")
+        } else {
+            snoozeButton.toolTip = String(localized: "ToolStatus.SnoozeButtonTooltipSnooze", defaultValue: "Snooze the selected session so it sinks to the bottom of the list and dims until its status changes.", comment: "Tooltip for the snooze button when a session is selected and can be snoozed")
+        }
     }
 
     // The session IDs in `statuses` that share the clicked representative's

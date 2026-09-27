@@ -7,6 +7,7 @@
 
 #import "iTermScriptExporter.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermCommandRunner.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermSetupCfgParser.h"
@@ -41,13 +42,14 @@
                completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion {
     NSURL *relativeURL = [self relativeURLFromFullURL:fullURL];
     if (!relativeURL) {
-        completion(@"Invalid location (not under Scripts folder).", nil);
+        completion(NSLocalizedStringWithDefaultValue(@"ScriptExporter.InvalidLocation", nil, [NSBundle mainBundle], @"Invalid location (not under Scripts folder).", @"Error when the selected location is not under the Scripts folder"), nil);
         return;
     }
 
     BOOL fullEnvironment = NO;
     if (![self urlContainsScript:fullURL fullEnvironment:&fullEnvironment]) {
-        completion(@"No found script at selected location.", nil);
+        completion(NSLocalizedStringWithDefaultValue(@"ScriptExporter.NoScriptFound", nil, [NSBundle mainBundle], @"No found script at selected location.", @"Error when no script is found at the selected location"), nil);
+        return;
     }
     NSString *name = [fullURL.path lastPathComponent];
     if (!fullEnvironment) {
@@ -110,7 +112,7 @@
     NSString *absSetupPath = [fullURL URLByAppendingPathComponent:@"setup.cfg"].path;
     iTermSetupCfgParser *setupParser = [[iTermSetupCfgParser alloc] initWithPath:absSetupPath];
     if (setupParser.dependenciesError) {
-        completion(@"Could not parse install_requires in setup.cfg", nil);
+        completion(NSLocalizedStringWithDefaultValue(@"ScriptExporter.SetupCfgParseError", nil, [NSBundle mainBundle], @"Could not parse install_requires in setup.cfg", @"Error when install_requires in setup.cfg cannot be parsed"), nil);
         return;
     }
 
@@ -130,7 +132,7 @@
                   callbackQueue:callbackQueue
                      completion:^(BOOL ok) {
                          if (!ok) {
-                             completion(@"Failed to create zip file.", nil);
+                             completion(NSLocalizedStringWithDefaultValue(@"ScriptExporter.ZipFailed", nil, [NSBundle mainBundle], @"Failed to create zip file.", @"Error when creating the export zip file fails"), nil);
                              return;
                          }
                          if (signingIdentity) {
@@ -169,7 +171,17 @@
 + (void)copySimpleScriptAtURL:(NSURL *)simpleScriptSourceURL
                         named:(NSString *)name
           toFullEnvironmentIn:(NSString *)destination {
-    NSString *pythonVersion = [iTermPythonRuntimeDownloader latestPythonVersion];
+    // latestPythonVersion is nil on a uv-only machine (no legacy runtime installed).
+    // writeSetupCfgToFile asserts on a nil pythonVersion (asserts are on in release),
+    // so fall back to the shared default. The value is only a hint recorded in the
+    // exported setup.cfg; a uv-based import re-resolves it, so any current build imports
+    // this fine. LIMITATION: a LEGACY (pre-uv) build importing this archive asks its
+    // legacy runtime downloader for exactly this minor, and if it is newer than any the
+    // legacy manifest offers (e.g. 3.12 exported from a uv-only machine), that import
+    // fails with RequestedVersionNotFound. We keep the default rather than silently
+    // lowering it (there is no reliable way to know the legacy manifest's set from a
+    // uv-only machine, and lowering it would change the default for the common case).
+    NSString *pythonVersion = [iTermPythonRuntimeDownloader latestPythonVersion] ?: [iTermScriptRuntime defaultPythonVersion];
     [iTermSetupCfgParser writeSetupCfgToFile:[destination stringByAppendingPathComponent:[NSString stringWithFormat:@"setup.cfg"]]
                                         name:name
                                 dependencies:@[]
@@ -204,15 +216,22 @@
         return YES;
     }
     if (isDirectory) {
-        // Legal scripts must have a setup.cfg, iterm2env, and appropriately named source folder and file.
+        // Legal full-environment scripts have a setup.cfg, an appropriately named
+        // source folder and file, and a runtime environment. The runtime is either the
+        // legacy iterm2env tree or (for uv-provisioned/migrated scripts) the
+        // python-runtime.json marker beside a .venv. The environment itself is rebuilt
+        // on import, so it is not part of the archive; here we only need to recognize
+        // the script.
         NSString *setupCfg = [url.path stringByAppendingPathComponent:@"setup.cfg"];
         NSString *iterm2env = [url.path stringByAppendingPathComponent:@"iterm2env"];
+        NSString *uvMarker = [url.path stringByAppendingPathComponent:[iTermScriptRuntime markerFileName]];
         NSString *name = url.path.lastPathComponent;
         NSString *folder = [url.path stringByAppendingPathComponent:name];
         NSString *mainPy = [folder stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"py"]];
 
+        const BOOL hasRuntime = [fileManager fileExistsAtPath:iterm2env] || [fileManager fileExistsAtPath:uvMarker];
         if  ([fileManager fileExistsAtPath:setupCfg] &&
-             [fileManager fileExistsAtPath:iterm2env] &&
+             hasRuntime &&
              [fileManager fileExistsAtPath:mainPy]) {
             if (fullEnvironment) {
                 *fullEnvironment = YES;

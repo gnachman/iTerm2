@@ -34,6 +34,15 @@
                                                             scope:(iTermVariableScope *)scope
                                                            strict:(BOOL)strict;
 
+// When annotateUndefinedVariables is YES, a reference to an undefined variable is rendered inline
+// as "[undefined variable <path>]" instead of being silently replaced with an empty string. This
+// makes typos and unavailable variables obvious while authoring interpolated strings.
++ (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty
+                                                 escapingFunction:(NSString *(^)(NSString *string))escapingFunction
+                                                            scope:(iTermVariableScope *)scope
+                                                           strict:(BOOL)strict
+                                       annotateUndefinedVariables:(BOOL)annotateUndefinedVariables;
+
 // Given an invocation like foo(x: "bar", y: [1, 2]) returns the signature like foo(x,y)
 + (NSString *)signatureForFunctionCallInvocation:(NSString *)invocation
                                            error:(out NSError *__autoreleasing *)error;

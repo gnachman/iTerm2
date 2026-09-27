@@ -177,6 +177,10 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 // converts to the app-standard colorspace
 - (NSString *)hexString;
 
+// Like -hexString but includes an alpha component: #RRGGBBAA (sRGB) or
+// p3#RRRRGGGGBBBBAAAA (Display P3). +colorFromHexString: reads these back.
+- (NSString *)hexStringWithAlpha;
+
 - (NSString *)hexStringPreservingColorSpace;
 
 - (NSString *)humanReadableDescription;
@@ -185,6 +189,13 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 - (NSString *)srgbHexString;
 
 + (instancetype _Nullable)colorFromHexString:(NSString *)hexString;
+
+// When allowingAlpha is YES, an appended alpha component (#RRGGBBAA or
+// p3#RRRRGGGGBBBBAAAA) is honored. Only pass YES for colors that render with
+// alpha (the badge and cursor guide); otherwise those forms are rejected so
+// transparency can't leak into colors that should be opaque.
++ (instancetype _Nullable)colorFromHexString:(NSString *)hexString
+                               allowingAlpha:(BOOL)allowingAlpha;
 
 - (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount;
 

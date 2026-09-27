@@ -214,6 +214,96 @@ final class ChatBlobAssemblerTests: XCTestCase {
                        "truncated blob replay must equal the live builder fed the truncated history")
     }
 
+    // MARK: - wire-format versioning (stale-format refusal)
+
+    // A .llama blob frozen under an OLDER wire format (version 0) must be REFUSED
+    // for replay even though its protocol still matches, because the frozen bytes
+    // are not valid under the current native /api/chat shape. Without the version
+    // gate, safeBlobsForReplay accepts it (protocol matches) and splices
+    // incompatible bytes into a native request.
+    func test_safeBlobsForReplay_refusesStaleWireFormatVersion() throws {
+        let db = try makeTempDB()
+        let stale = ChatBlob(chatID: "A", blobProtocol: .llama, role: .user,
+                             payload: Data("[{\"role\":\"user\",\"content\":\"hi\"}]".utf8),
+                             wireFormatVersion: 0)
+        XCTAssertNotNil(db.appendBlob(stale))
+        XCTAssertNil(ChatBlobAssembler.safeBlobsForReplay(chatID: "A",
+                                                          expectedProtocol: .llama,
+                                                          database: db),
+                     "a stale-wire-format .llama blob must be refused so it is re-frozen, not replayed")
+    }
+
+    // A .llama blob frozen under the CURRENT wire format is replayable.
+    func test_safeBlobsForReplay_acceptsCurrentWireFormatVersion() throws {
+        let db = try makeTempDB()
+        let current = ChatBlob(chatID: "A", blobProtocol: .llama, role: .user,
+                               payload: Data("[{\"role\":\"user\",\"content\":\"hi\"}]".utf8),
+                               wireFormatVersion: ChatBlob.currentWireFormatVersion(for: .llama))
+        XCTAssertNotNil(db.appendBlob(current))
+        XCTAssertNotNil(ChatBlobAssembler.safeBlobsForReplay(chatID: "A",
+                                                             expectedProtocol: .llama,
+                                                             database: db),
+                        "a current-wire-format .llama blob must be replayable")
+    }
+
+    // A chat with pre-native-shape (version 0) .llama blobs must be RE-FROZEN on
+    // the next turn, not left a permanent v0+v1 mix that safeBlobsForReplay
+    // always refuses (which would silently defeat replay forever and leak rows).
+    func test_captureTurn_reFreezesStaleWireFormatVersion() throws {
+        let db = try makeTempDB()
+        let chatID = "V"
+        // An old build's round-1 blob, stamped version 0 by the column migration.
+        let round1Payload = Data("[{\"role\":\"user\",\"content\":\"hi\"}]".utf8)
+        XCTAssertNotNil(db.appendBlob(ChatBlob(chatID: chatID, blobProtocol: .llama,
+                                               role: .user, payload: round1Payload,
+                                               wireFormatVersion: 0)))
+        XCTAssertEqual(db.minStoredBlobWireFormatVersion(inChat: chatID), 0)
+
+        // A new turn (two rounds now) on the same protocol. Without re-freezing,
+        // round 2 would append as v1 onto the v0 round 1 = an unreplayable mix.
+        ChatBlobCapture.captureTurn(chatID: chatID,
+                                    allMessages: plainRound + plainRound,
+                                    api: .llama, modelName: "m",
+                                    hostedTools: HostedTools(), database: db)
+
+        let blobs = db.blobs(inChat: chatID)
+        XCTAssertFalse(blobs.isEmpty)
+        XCTAssertTrue(blobs.allSatisfy { $0.wireFormatVersion == 1 },
+                      "stale v0 blobs were not re-frozen: \(blobs.map { $0.wireFormatVersion })")
+        XCTAssertNotNil(ChatBlobAssembler.safeBlobsForReplay(chatID: chatID,
+                                                             expectedProtocol: .llama,
+                                                             database: db),
+                        "chat should be replayable again after the re-freeze")
+    }
+
+    // The incremental append path (the hot path for an existing chat) must also
+    // refuse to append a current-version round onto stale-format rows, or it
+    // recreates the permanent v0+v1 mix the captureTurn gate was meant to prevent.
+    func test_appendNewRounds_refusesStaleWireFormatVersion() throws {
+        let db = try makeTempDB()
+        let chatID = "AV"
+        XCTAssertNotNil(db.appendBlob(ChatBlob(chatID: chatID, blobProtocol: .llama,
+                                               role: .user,
+                                               payload: Data("[{\"role\":\"user\",\"content\":\"hi\"}]".utf8),
+                                               wireFormatVersion: 0)))
+        let appended = ChatBlobCapture.appendNewRounds(chatID: chatID, newRounds: [plainRound],
+                                                       api: .llama, modelName: "m",
+                                                       hostedTools: HostedTools(), database: db)
+        XCTAssertEqual(appended, 0, "appendNewRounds must refuse to append onto stale-format blobs")
+        XCTAssertTrue(db.blobs(inChat: chatID).allSatisfy { $0.wireFormatVersion == 0 },
+                      "no current-version row should have been appended onto the stale chat")
+    }
+
+    // ChatBlob.init must not default a .llama blob to version 0 (stale on
+    // arrival): a caller that omits the version should get the protocol's current
+    // version, or safeBlobsForReplay would refuse the chat forever.
+    func test_chatBlobInit_defaultsToCurrentWireFormatVersion() {
+        let blob = ChatBlob(chatID: "c", blobProtocol: .llama, role: .user, payload: Data("[]".utf8))
+        XCTAssertEqual(blob.wireFormatVersion, ChatBlob.currentWireFormatVersion(for: .llama))
+        XCTAssertEqual(blob.wireFormatVersion, 1,
+                       "a .llama blob without an explicit version must be current, not stale")
+    }
+
     // MARK: - forkBlobPrefix (fork blob inheritance)
 
     private func blob(_ chatID: String) -> ChatBlob {

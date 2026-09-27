@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "cc-status",
     platforms: [
-        .macOS(.v12)
+        .macOS(.v13)
     ],
     products: [
         .executable(name: "cc-status", targets: ["cc-status"])

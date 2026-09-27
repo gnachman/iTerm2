@@ -54,7 +54,7 @@
             if (error) {
                 *error = [NSError errorWithDomain:@"com.iterm2.call"
                                              code:3
-                                         userInfo:@{ NSLocalizedDescriptionKey: @"Expected function call, not a value" }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ExpressionParser.ExpectedFunctionCallNotValue", nil, [NSBundle mainBundle], @"Expected function call, not a value", @"Error when a function call was expected but a value was found") }];
             }
             return nil;
 
@@ -71,7 +71,7 @@
             if (error) {
                 *error = [NSError errorWithDomain:@"com.iterm2.call"
                                              code:3
-                                         userInfo:@{ NSLocalizedDescriptionKey: @"Expected single function call" }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ExpressionParser.ExpectedSingleFunctionCall", nil, [NSBundle mainBundle], @"Expected single function call", @"Error when a single function call was expected but multiple were found") }];
             }
             return nil;
 
@@ -79,14 +79,14 @@
             if (error) {
                 *error = [NSError errorWithDomain:@"com.iterm2.call"
                                              code:3
-                                         userInfo:@{ NSLocalizedDescriptionKey: @"Expected function call, not nil" }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ExpressionParser.ExpectedFunctionCallNotNil", nil, [NSBundle mainBundle], @"Expected function call, not nil", @"Error when a function call was expected but nil was found") }];
             }
             return nil;
         case iTermParsedExpressionTypeInterpolatedString:
             if (error) {
                 *error = [NSError errorWithDomain:@"com.iterm2.call"
                                              code:3
-                                         userInfo:@{ NSLocalizedDescriptionKey: @"Expected function call, not an interpolated string" }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ExpressionParser.ExpectedFunctionCallNotInterpolatedString", nil, [NSBundle mainBundle], @"Expected function call, not an interpolated string", @"Error when a function call was expected but an interpolated string was found") }];
             }
             return nil;
     }
@@ -270,7 +270,7 @@
 
 - (iTermParsedExpression *)parsedExpressionWithReferenceToPath:(NSString *)path {
     if (![_scope userWritableContainerExistsForPath:path]) {
-        return [[iTermParsedExpression alloc] initWithErrorCode:3 reason:[NSString stringWithFormat:@"Can’t form reference to non-existent or read-only container for variable %@", path]];
+        return [[iTermParsedExpression alloc] initWithErrorCode:3 reason:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionParser.CantFormReference", nil, [NSBundle mainBundle], @"Can’t form reference to non-existent or read-only container for variable %@", @"Error when a reference cannot be formed for a variable; placeholder is the path"), path]];
     }
     iTermVariableReference *ref = [[iTermVariableReference alloc] initWithPath:path
                                                                         vendor:_scope];
@@ -298,7 +298,7 @@
     // The user must write "var?" explicitly to treat undefined as null.
     // The ConditionalExpression '?' rule will optionalize when appropriate.
     NSString *fallbackError;
-    fallbackError = [NSString stringWithFormat:@"Reference to undefined variable \"%@\". Change it to \"%@?\" to treat the undefined value as null.", indirectValue.path, indirectValue.path];
+    fallbackError = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionParser.ReferenceToUndefinedVariable", nil, [NSBundle mainBundle], @"Reference to undefined variable “%1$@”. Change it to “%2$@?” to treat the undefined value as null.", @"Error when referencing an undefined variable; both placeholders are the variable path"), indirectValue.path, indirectValue.path];
     return [[iTermParsedExpression alloc] initWithObject:indirectValue.value
                                               errorReason:fallbackError];
 }
@@ -333,6 +333,18 @@
                                                  escapingFunction:(NSString *(^)(NSString *string))escapingFunction
                                                             scope:(iTermVariableScope *)scope
                                                            strict:(BOOL)strict {
+    return [self parsedExpressionWithInterpolatedString:swifty
+                                       escapingFunction:escapingFunction
+                                                  scope:scope
+                                                 strict:strict
+                             annotateUndefinedVariables:NO];
+}
+
++ (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty
+                                                 escapingFunction:(NSString *(^)(NSString *string))escapingFunction
+                                                            scope:(iTermVariableScope *)scope
+                                                           strict:(BOOL)strict
+                                       annotateUndefinedVariables:(BOOL)annotateUndefinedVariables {
     __block BOOL allLiterals = YES;
     __block NSError *error = nil;
     NSMutableArray *interpolatedParts = [NSMutableArray array];
@@ -352,16 +364,28 @@
             [interpolatedParts addObject:[[iTermParsedExpression alloc] initWithString:escapedString]];
             return;
         }
-        if (!strict &&
-            [iTermAdvancedSettingsModel laxNilPolicyInInterpolatedStrings] &&
+        const BOOL laxNilPolicy = (!strict && [iTermAdvancedSettingsModel laxNilPolicyInInterpolatedStrings]);
+        if ((annotateUndefinedVariables || laxNilPolicy) &&
             expression.expressionType == iTermParsedExpressionTypeError) {
-            // If the expression was a variable reference, replace it with empty string. This works
-            // around the annoyance of remembering to add question marks in interpolated strings,
-            // where you know the result you want is always an empty string.
+            // The expression failed to evaluate. If it was a bare variable reference (as opposed to,
+            // say, a syntax error or a failing function call), that means it referenced an undefined
+            // variable. Reparsing against a placeholder scope tells us whether it was a reference.
             iTermParsedExpression *expressionWithPlaceholders = [parser parse:substring
                                                                         scope:[[iTermVariablePlaceholderScope alloc] init]];
             if ([expressionWithPlaceholders.object conformsToProtocol:@protocol(iTermExpressionParserPlaceholder)]) {
-                expression = [[iTermParsedExpression alloc] initWithString:@""];
+                if (annotateUndefinedVariables) {
+                    // Make the undefined reference obvious inline instead of hiding it. This helps
+                    // when authoring interpolated strings (e.g. status bar components) where a blank
+                    // result is indistinguishable from a typo.
+                    NSString *path = [substring stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                    NSString *annotation = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionParser.UndefAnnotation", nil, [NSBundle mainBundle], @"[undef: %@]", @"Inline annotation shown for an undefined variable reference; placeholder is the path"), path];
+                    expression = [[iTermParsedExpression alloc] initWithString:annotation];
+                } else {
+                    // laxNilPolicy: replace the reference with empty string. This works around the
+                    // annoyance of remembering to add question marks in interpolated strings, where
+                    // you know the result you want is always an empty string.
+                    expression = [[iTermParsedExpression alloc] initWithString:@""];
+                }
             }
         }
         [interpolatedParts addObject:expression];
@@ -411,7 +435,7 @@
     // Succeed iff this is an array dereference, like \(user.myarray[1])
     NSArray *array = [NSArray castFrom:untypedValue];
     if (!array) {
-        NSString *reason = [NSString stringWithFormat:@"Variable “%@” is of type %@, not array", path, NSStringFromClass([untypedValue class])];
+        NSString *reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionParser.VariableNotArray", nil, [NSBundle mainBundle], @"Variable “%1$@” is of type %2$@, not array", @"Error when indexing a variable that is not an array; placeholders are the path and the actual type"), path, NSStringFromClass([untypedValue class])];
         return [[iTermIndirectValue alloc] initWithError:reason path:path];
     }
 
@@ -421,12 +445,14 @@
         NSError *error;
         NSNumber *indexValue = [indexExpression synchronousValueWithSideEffectsAllowed:NO scope:_scope error:&error];
         if (error) {
-            NSString *reason = [NSString stringWithFormat:@"Error evaluating index expression: %@", error.localizedDescription];
+            NSString *reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionParser.ErrorEvaluatingIndex", nil, [NSBundle mainBundle], @"Error evaluating index expression: %@", @"Error when an array index expression fails to evaluate; placeholder is the error description"), error.localizedDescription];
             return [[iTermIndirectValue alloc] initWithError:reason path:path];
         }
         const NSInteger index = indexValue.integerValue;
         if (index < 0 || index >= array.count) {
-            NSString *reason = [NSString stringWithFormat:@"Index %@ out of range of “%@”, which has %@ value%@", @(index), path, @(array.count), array.count == 1 ? @"" : @"s"];
+            NSString *reason = (array.count == 1)
+                ? [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionParser.IndexOutOfRangeOneValue", nil, [NSBundle mainBundle], @"Index %1$@ out of range of “%2$@”, which has 1 value", @"Expression parser error; %1$@ is the index, %2$@ is the path"), @(index), path]
+                : [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionParser.IndexOutOfRange", nil, [NSBundle mainBundle], @"Index %1$@ out of range of “%2$@”, which has %3$@ values", @"Expression parser error; %1$@ is the index, %2$@ is the path, %3$@ is the number of values"), @(index), path, @(array.count)];
             return [[iTermIndirectValue alloc] initWithError:reason path:path];
         }
         return [[iTermIndirectValue alloc] initWithValue:array[index] path:path];
@@ -495,7 +521,7 @@
         if ([path isEqualToString:@"null"]) {
             NSError *error = [NSError errorWithDomain:@"com.iterm2.parser"
                                                  code:2
-                                             userInfo:@{ NSLocalizedDescriptionKey: @"&null is never allowed" }];
+                                             userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ExpressionParser.NullNeverAllowed", nil, [NSBundle mainBundle], @"&null is never allowed", @"Error when &null is used as a pass-by-reference argument") }];
             return [[iTermParsedExpression alloc] initWithError:error];
         }
         [weakSelf indirectValueWithPath:path index:nil];  // just for the recording scope side-effect
@@ -762,7 +788,7 @@
         if (!indexExpression) {
             // Cannot convert index to numeric expression (e.g., NSNull, string, array)
             NSString *path = syntaxTree.children[0];
-            NSString *errorMsg = [NSString stringWithFormat:@"Array index for \"%@\" must be a number, not %@",
+            NSString *errorMsg = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionParser.ArrayIndexMustBeNumber", nil, [NSBundle mainBundle], @"Array index for “%1$@” must be a number, not %2$@", @"Error when an array index is not a number; placeholders are the path and the actual type"),
                                   path, NSStringFromClass([numberParsedExpression.object class])];
             return [[iTermIndirectValue alloc] initWithError:errorMsg path:path];
         }
@@ -797,7 +823,7 @@
 
     NSError *error = [NSError errorWithDomain:@"com.iterm2.parser"
                                          code:2
-                                     userInfo:@{ NSLocalizedDescriptionKey: @"Syntax error" }];
+                                     userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ExpressionParser.SyntaxError", nil, [NSBundle mainBundle], @"Syntax error", @"Error when an expression cannot be parsed") }];
     return [[iTermParsedExpression alloc] initWithError:error];
 }
 
@@ -825,13 +851,13 @@
     didEncounterErrorOnInput:(CPTokenStream *)inputStream
                    expecting:(NSSet *)acceptableTokens {
     NSArray *quotedExpected = [acceptableTokens.allObjects mapWithBlock:^id(id anObject) {
+        // Localization unneeded
         return [NSString stringWithFormat:@"“%@”", anObject];
     }];
     NSString *expectedString = [quotedExpected componentsJoinedByString:@", "];
-    NSString *reason = [NSString stringWithFormat:@"Syntax error at index %@ of “%@”. Expected%@: %@",
-                        @(inputStream.peekToken.characterNumber), _input,
-                        quotedExpected.count > 1 ? @" one of" : @"",
-                        expectedString];
+    NSString *reason = (quotedExpected.count > 1)
+        ? [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionParser.SyntaxErrorExpectedOneOf", nil, [NSBundle mainBundle], @"Syntax error at index %1$@ of “%2$@”. Expected one of: %3$@", @"Expression parser error; %1$@ is the index, %2$@ is the input, %3$@ is the list of expected tokens"), @(inputStream.peekToken.characterNumber), _input, expectedString]
+        : [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ExpressionParser.SyntaxErrorExpected", nil, [NSBundle mainBundle], @"Syntax error at index %1$@ of “%2$@”. Expected: %3$@", @"Expression parser error; %1$@ is the index, %2$@ is the input, %3$@ is the expected token"), @(inputStream.peekToken.characterNumber), _input, expectedString];
     _error = [NSError errorWithDomain:@"com.iterm2.parser"
                                  code:3
                              userInfo:@{ NSLocalizedDescriptionKey: reason }];

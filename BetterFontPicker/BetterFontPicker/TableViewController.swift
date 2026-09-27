@@ -101,12 +101,7 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
         }
         layOutTableView()
 
-        let fudgeFactor: CGFloat
-        if #available(macOS 10.16, *) {
-            fudgeFactor = 5
-        } else {
-            fudgeFactor = 2
-        }
+        let fudgeFactor: CGFloat = 5
         
         typicalHeight = newFontNameCell("X").fittingSize.height + fudgeFactor
         tableView.delegate = self
@@ -146,13 +141,7 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
         tableView.frame = frame
         let starWidth = CGFloat(StarTableViewCell.width)
         let checkmarkWidth = starWidth - 10
-        let fudgeFactor: CGFloat
-        if #available(macOS 10.16, *) {
-            // NSTableView has an .inset style but no way to ask what the inset is, so I guess this is what I'm supposed to do? sigh
-            fudgeFactor = 32
-        } else {
-            fudgeFactor = 0
-        }
+        let fudgeFactor: CGFloat = 32
         let desiredWidths = [
             starColumnIdentifier: starWidth,
             checkmarkColumnIdentifier: checkmarkWidth,

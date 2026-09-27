@@ -28,7 +28,7 @@ class iTermSavePanelItem: NSObject {
     }
 
     @objc var displayName: String {
-        "“\(filename.lastPathComponent)” on \(host.displayName)"
+        String(localized: "ModernSavePanel.RemoteItemDisplayName", defaultValue: "“\(filename.lastPathComponent)” on \(host.displayName)", comment: "Display name for a remote file; first value is the filename and second is the host name")
     }
     @objc var pathExtension: String {
         return filename.pathExtension
@@ -82,12 +82,12 @@ class iTermSavePanelItem: NSObject {
         } else if let endpoint = host.endpoint {
             _ = try await endpoint.replace(filename, content: data)
         } else {
-            iTermWarning.show(withTitle: "No ssh connection to \(host.displayName) is available to upload \(filename.lastPathComponent)",
-                              actions: ["OK"],
+            iTermWarning.show(withTitle: String(localized: "ModernSavePanel.NoSSHConnection", defaultValue: "No ssh connection to \(host.displayName) is available to upload \(filename.lastPathComponent)", comment: "Warning when there is no SSH connection to upload a file; first value is the host and second is the filename"),
+                              actions: [iTermLocalizedOK()],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Upload Failed",
+                              heading: String(localized: "ModernSavePanel.UploadFailedHeading", defaultValue: "Upload Failed", comment: "Heading of the warning shown when an upload fails"),
                               window: nil)
         }
     }
@@ -233,7 +233,7 @@ private extension iTermModernSavePanel {
 
         // Create SSH panel button
         let sshButton = SSHPanelButton()
-        sshButton.title = "Open SSH Panel..."
+        sshButton.title = String(localized: "ModernSavePanel.OpenSSHPanel", defaultValue: "Open SSH Panel…", comment: "Button to open the SSH panel in a save dialog")
         sshButton.target = self
         sshButton.action = #selector(openSSHPanelButtonClicked(_:))
         sshButton.bezelStyle = .rounded

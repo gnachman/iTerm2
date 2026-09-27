@@ -360,6 +360,16 @@ extension iTermMetalView {
     }
 
     @objc
+    public var wantsExtendedDynamicRangeContent: Bool {
+        get {
+            metalLayerBox?.wantsExtendedDynamicRangeContent ?? false
+        }
+        set {
+            metalLayerBox?.wantsExtendedDynamicRangeContent = newValue
+        }
+    }
+
+    @objc
     public var preferredDrawableSize: CGSize {
         doesNotifyOnRecommendedSizeUpdate = true
         return super._recommendedDrawableSize()
@@ -392,7 +402,7 @@ extension iTermMetalView {
         while !timedOut {
             let promise = pendingDrawablePromise ?? iTermPromise<PendingDrawable> { seal in
                 Self.getDrawableQueue.async {
-                    seal.fulfill(PendingDrawable(context, drawable: metalLayerBox.nextDrawableWithoutTimeout()))
+                    seal.fulfill(PendingDrawable(context, drawable: metalLayerBox.nextDrawable()))
                 }
             }
             var result: CAMetalDrawable?
@@ -507,6 +517,15 @@ extension iTermMetalView {
         drawableScaleFactor = CGSize(width: 1.0, height: 1.0)
         wantsLayer = true
         let layer = CAMetalLayer()
+        // Disable the drawable timeout once, here on the main thread. We wait
+        // for drawables on a background queue and impose our own timeout at the
+        // promise level (see fetchDrawable), so the layer itself should block
+        // indefinitely rather than return nil after ~1s. Setting this property
+        // pushes an implicit CATransaction, which aborts if done off the main
+        // thread (CA_ABORT_ON_NON_MAIN_THREAD_TRANSACTION_PUSH on macOS 26), so
+        // it must never be touched from the get-drawable queue. It persists for
+        // the life of the layer, so once here is enough.
+        layer.allowsNextDrawableTimeout = false
         metalLayerBox = iTermMetalLayerBox(metalLayer: layer)
         self.layer = layer
         layerContentsRedrawPolicy = .duringViewResize
@@ -677,7 +696,13 @@ extension iTermMetalView {
 extension iTermMetalView {
     @objc
     func enableHDR() {
-        metalLayerBox?.wantsExtendedDynamicRangeContent = true
+        // The pixel format must match the cached pipeline states and intermediate
+        // textures, which are built from the session's HDR-cursor setting, so this
+        // is called whenever that setting is on (even on a display without
+        // headroom, where the extra fp16 precision is harmless). Whether to
+        // actually engage EDR (the layer's wantsExtendedDynamicRangeContent flag
+        // and an extended color space) is a separate, headroom-gated decision made
+        // in iTermMTKView.
         metalLayerBox?.pixelFormat = .rgba16Float
     }
 

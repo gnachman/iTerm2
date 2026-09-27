@@ -193,13 +193,13 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, assign) int ordinal;
 @property(nonatomic, readonly, nullable) iTermAnnouncementViewController *currentAnnouncement;
 @property(nonatomic, weak, nullable) id<iTermSessionViewDelegate> delegate;
-@property(nonatomic, readonly, nullable) iTermSearchResultsMinimapView *searchResultsMinimap NS_AVAILABLE_MAC(10_14);
-@property(nonatomic, readonly, nullable) iTermIncrementalMinimapView *marksMinimap NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, readonly, nullable) iTermSearchResultsMinimapView *searchResultsMinimap;
+@property(nonatomic, readonly, nullable) iTermIncrementalMinimapView *marksMinimap;
 @property(nonatomic, readonly) PTYScrollView *scrollview;
 @property(nonatomic, readonly, nullable) PTYScroller *verticalScroller;
-@property(nonatomic, readonly, nullable) iTermMetalDriver *driver NS_AVAILABLE_MAC(10_11);
-@property(nonatomic, readonly, nullable) iTermMTKView *metalView NS_AVAILABLE_MAC(10_11);
-@property(nonatomic, readonly) BOOL useMetal NS_AVAILABLE_MAC(10_11);
+@property(nonatomic, readonly, nullable) iTermMetalDriver *driver;
+@property(nonatomic, readonly, nullable) iTermMTKView *metalView;
+@property(nonatomic, readonly) BOOL useMetal;
 
 @property(nonatomic, readonly) BOOL isDropDownSearchVisible;
 @property(nonatomic, weak, nullable) id<iTermFindDriverDelegate> findDriverDelegate;
@@ -208,8 +208,11 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly, nullable) iTermFindDriver *findDriver;
 @property(nonatomic, readonly, nullable) iTermFindDriver *findDriverCreatingIfNeeded;
 @property(nonatomic, readonly) NSSize internalDecorationSize;
+// Vertical space the per-session toolbar (e.g. the workgroups toolbar) reserves at
+// the top, or 0 when there is no toolbar. Parallel to -titleReservedHeight.
+@property(nonatomic, readonly) CGFloat toolbarReservedHeight;
 @property(nonatomic, readonly) iTermSessionViewFindDriver findDriverType;
-@property(nonatomic, weak, nullable) id<iTermSearchResultsMinimapViewDelegate> searchResultsMinimapViewDelegate NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, weak, nullable) id<iTermSearchResultsMinimapViewDelegate> searchResultsMinimapViewDelegate;
 @property(nonatomic, strong, nullable) iTermImageWrapper *image;
 @property(nonatomic) iTermBackgroundImageMode imageMode;
 @property(nonatomic, readonly) BOOL statusBarIsInPaneTitleBar;
@@ -241,6 +244,14 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // the inner edge of the panel area.
 @property (nonatomic) CGFloat actualPanelReservation;
 @property (nonatomic, readonly) BOOL isBrowser;
+
+// The session's per-profile HDR-cursor setting (KEY_HDR_CURSOR). When on, the
+// metal framebuffer is fp16 and EDR is engaged (via the metal view and the HDR
+// engager) so the cursor can render brighter than white. Changing it while the
+// metal renderer is active requires rebuilding the driver (the pixel format is
+// baked into pipeline states); PTYSession does that via -bounceMetal.
+@property (nonatomic) BOOL hdrCursorEnabled;
+
 @property (nonatomic) VT100ScreenProgress progress;
 @property (nonatomic) BOOL enableProgressBars;
 @property (nonatomic) BOOL showInlineProgressBar;
@@ -256,7 +267,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)layoutContentsForNewlyActiveSession;
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(nullable NSString *)initialURL
-                 restorableState:(nullable NSDictionary *)restorableState NS_AVAILABLE_MAC(11_0);
+                 restorableState:(nullable NSDictionary *)restorableState;
 
 - (void)setTerminalBackgroundColor:(nullable NSColor *)color;
 
@@ -266,12 +277,13 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 
 - (void)findViewDidHide;
 - (void)findDriverInvalidateFrame;
-- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11);;
+- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource;;
 - (void)didChangeMetalViewAlpha;
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
                        blend:(CGFloat)blend;
 
 + (double)titleHeight;
++ (CGFloat)toolbarHeight;
 + (NSDate*)lastResizeDate;
 + (void)windowDidResize;
 
@@ -355,11 +367,12 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)smearCursorFrom:(NSRect)from to:(NSRect)to color:(NSColor *)color;
 
 // Uses the Metal debug offscreen rendering path to capture a frame as an NSImage.
-- (nullable NSImage *)drawMetalFrameToImage NS_AVAILABLE_MAC(10_11);
+- (nullable NSImage *)drawMetalFrameToImage;
 
 // Session note
 - (void)showSessionNoteWithModel:(iTermSessionNoteModel *)model;
 - (void)restoreSessionNoteWithModel:(iTermSessionNoteModel *)model;
+- (void)setSessionNoteCollapsed:(BOOL)collapsed;
 - (void)hideSessionNote;
 - (void)hideSessionNoteIfEmpty;
 @property(nonatomic, readonly) BOOL isSessionNoteVisible;

@@ -1,0 +1,9 @@
+{
+  "cwd": "/Users/user/PBaaS",
+  "hook_event_name": "UserPromptSubmit",
+  "permission_mode": "auto",
+  "prompt": "Run echo hello and reply HELLO.",
+  "prompt_id": "e35ce7b2-829d-43f5-b482-2e444b24fcec",
+  "session_id": "35a8f1e3-ef9c-4dfc-8186-75da0b3bc549",
+  "transcript_path": "/Users/user/.claude/projects/-Users-todmy-PBaaS/35a8f1e3-ef9c-4dfc-8186-75da0b3bc549.jsonl"
+}

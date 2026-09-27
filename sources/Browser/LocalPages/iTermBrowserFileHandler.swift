@@ -28,7 +28,7 @@ class iTermBrowserFileHandler: NSObject, iTermBrowserPageHandler {
 
         guard !path.isEmpty else {
             NSLog("iTermBrowserFileHandler.start: path is empty")
-            urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "No path specified"]))
+            urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "BrowserFileHandler.NoPathSpecified", defaultValue: "No path specified", comment: "Error when no file path was given in the URL")]))
             return
         }
 
@@ -49,7 +49,7 @@ class iTermBrowserFileHandler: NSObject, iTermBrowserPageHandler {
 
         guard let data = html.data(using: .utf8) else {
             NSLog("iTermBrowserFileHandler.start: failed to encode HTML")
-            urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to encode HTML"]))
+            urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserManager", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "BrowserFileHandler.FailedToEncodeHTML", defaultValue: "Failed to encode HTML", comment: "Error when the file listing HTML cannot be encoded")]))
             return
         }
 
@@ -67,7 +67,7 @@ class iTermBrowserFileHandler: NSObject, iTermBrowserPageHandler {
         var isDirectory: ObjCBool = false
 
         guard FileManager.default.fileExists(atPath: fileURL.resolvingSymlinksInPath().path, isDirectory: &isDirectory) else {
-            throw NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo: [NSLocalizedDescriptionKey: "File not found: \(path)"])
+            throw NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo: [NSLocalizedDescriptionKey: String(localized: "BrowserFileHandler.FileNotFound", defaultValue: "File not found: \(path)", comment: "Error when a local file cannot be found")])
         }
 
         if isDirectory.boolValue {

@@ -125,6 +125,62 @@ final class AIVendorKeyResolutionTests: XCTestCase {
                        .gemini)
     }
 
+    // Host names are case-insensitive and the URL keeps the case the user
+    // typed, so a vendor host in capitals must not fall through to the
+    // .openAI default and send the user's OpenAI key to another vendor
+    // (issue 13021).
+    func testManualVendor_hostMatchIsCaseInsensitive() {
+        XCTAssertEqual(LLMMetadata.objcManualVendor(api: .chatCompletions,
+                                                    url: "https://API.DEEPSEEK.COM/v1/chat/completions",
+                                                    modelName: "custom"),
+                       .deepSeek)
+        XCTAssertEqual(LLMMetadata.objcManualVendor(api: .chatCompletions,
+                                                    url: "https://API.ANTHROPIC.COM/v1/messages",
+                                                    modelName: "custom"),
+                       .anthropic)
+        XCTAssertEqual(LLMMetadata.objcManualVendor(api: .chatCompletions,
+                                                    url: "https://GENERATIVELANGUAGE.GOOGLEAPIS.COM/v1beta",
+                                                    modelName: "custom"),
+                       .gemini)
+    }
+
+    // A fully qualified name may carry the DNS root dot. It names the same
+    // host, so it must not fall through to the .openAI default and carry the
+    // user's OpenAI key to another vendor (issue 13021).
+    func testManualVendor_trailingRootDotStillMatchesTheVendor() {
+        XCTAssertEqual(LLMMetadata.objcManualVendor(api: .chatCompletions,
+                                                    url: "https://api.deepseek.com./v1/chat/completions",
+                                                    modelName: "custom"),
+                       .deepSeek)
+        XCTAssertEqual(LLMMetadata.objcManualVendor(api: .chatCompletions,
+                                                    url: "https://api.anthropic.com./v1/messages",
+                                                    modelName: "custom"),
+                       .anthropic)
+        XCTAssertEqual(LLMMetadata.objcManualVendor(api: .chatCompletions,
+                                                    url: "https://API.DEEPSEEK.COM./v1",
+                                                    modelName: "custom"),
+                       .deepSeek)
+    }
+
+    func testAzureHeaderSurvivesATrailingRootDot() {
+        XCTAssertEqual(LLMAuthorizationProvider.credentialHeaderNames(
+                        url: "https://myres.openai.azure.com./openai/deployments/x/chat/completions",
+                        api: .chatCompletions),
+                       ["api-key"])
+    }
+
+    // Azure picks the header name as well as the vendor, so an Azure host whose
+    // case or scheme is not the canonical one would otherwise send
+    // Authorization where api-key is required, and 401 against a reachable
+    // server.
+    func testAzureHostMatchIsCaseInsensitive() {
+        let url = URL(string: "https://MYRES.OPENAI.AZURE.COM/openai/deployments/x/chat/completions")
+        XCTAssertTrue(LLMMetadata.hostIsAzureAIAPI(url: url))
+        XCTAssertEqual(LLMAuthorizationProvider.credentialHeaderNames(url: url!.absoluteString,
+                                                                      api: .chatCompletions),
+                       ["api-key"])
+    }
+
     func testManualVendor_nameAndHostHeuristics() {
         XCTAssertEqual(LLMMetadata.objcManualVendor(api: .chatCompletions,
                                                     url: "https://example.com",

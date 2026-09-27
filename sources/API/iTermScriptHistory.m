@@ -47,7 +47,7 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] initWithName:@"Automatic Profile Switching"
+        instance = [[self alloc] initWithName:NSLocalizedStringWithDefaultValue(@"ScriptHistory.APSName", nil, [NSBundle mainBundle], @"Automatic Profile Switching", @"Script Console entry name for automatic profile switching")
                                      fullPath:nil
                                    identifier:@"__APS"
                                      relaunch:nil];
@@ -59,7 +59,7 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] initWithName:@"Dynamic Profiles"
+        instance = [[self alloc] initWithName:NSLocalizedStringWithDefaultValue(@"ScriptHistory.DynamicProfilesName", nil, [NSBundle mainBundle], @"Dynamic Profiles", @"Script Console entry name for dynamic profiles")
                                      fullPath:nil
                                    identifier:@"__DP"
                                      relaunch:nil];
@@ -89,7 +89,7 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] initWithName:@"Smart Selection Actions"
+        instance = [[self alloc] initWithName:NSLocalizedStringWithDefaultValue(@"ScriptHistory.SmartSelectionActionsName", nil, [NSBundle mainBundle], @"Smart Selection Actions", @"Script Console entry name for smart selection actions")
                                      fullPath:nil
                                    identifier:@"__SSA"
                                      relaunch:nil];

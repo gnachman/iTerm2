@@ -380,6 +380,16 @@ class Conductor: NSObject, SSHIdentityProvider {
 
     @objc var autopollEnabled = true
     var _queueWrites = true
+
+    // Set while a pipeline transition is running a handler that could call back in.
+    // handleCommandEnd captures the pipeline's contents from the pattern match, runs the
+    // finished command's handler, and only then writes the remainder back. A re-entrant
+    // send() during that window would see the pre-transition state, legitimately extend the
+    // pipeline and install its own state, which the write-back would then overwrite -- the
+    // new command on the wire with nothing in `state` to attribute its %begin/%end to, and
+    // its handler never firing. While this is set, send() only enqueues. Nothing is delayed
+    // by it: the transition calls dequeue() or amendPipeline() as its next statement.
+    var pipelineTransitionInProgress = false
     var autopoll = ""
     // it2 CLI proxy (see Conductor+IT2). The demux is created lazily on the first
     // %it2 frame; it2Nonce is the per-session secret injected into the remote env
@@ -442,9 +452,6 @@ class Conductor: NSObject, SSHIdentityProvider {
     var currentSearch: Search?
     @objc
     lazy var fileChecker: FileChecker? = {
-        guard #available(macOS 11, *) else {
-            return nil
-        }
         let checker = FileChecker()
         checker.dataSource = self
         return checker
@@ -1647,13 +1654,15 @@ extension Conductor {
             // Only "View" should be remembered. Remembering "Download" could cause
             // repeated download prompts if the download fails or isn't handled.
             let warning = iTermWarning()
-            warning.title = "Download \(path.path.lastPathComponent) or view in browser?"
-            warning.actionLabels = ["Download", "View", "Cancel"]
+            warning.title = String(localized: "Conductor.DownloadOrViewTitle", defaultValue: "Download \(path.path.lastPathComponent) or view in browser?", comment: "Prompt asking whether to download a remote file or view it in the browser")
+            let downloadLabel = String(localized: "Conductor.Download", defaultValue: "Download", comment: "Download button")
+            let cancel = iTermLocalizedCancel()
+            warning.actionLabels = [downloadLabel, String(localized: "Conductor.View", defaultValue: "View", comment: "View button"), cancel]
             warning.identifier = "DownloadOrViewInBrowser_" + mimeType + " " + path.usernameHostnameString
             warning.warningType = .kiTermWarningTypePermanentlySilenceable
-            warning.heading = "Download or View File?"
+            warning.heading = String(localized: "Conductor.DownloadOrViewHeading", defaultValue: "Download or View File?", comment: "Heading for the download-or-view prompt")
             warning.window = window
-            warning.doNotRememberLabels = ["Download", "Cancel"]
+            warning.doNotRememberLabels = [downloadLabel, cancel]
             switch warning.runModal() {
             case .kiTermWarningSelection0:  // Download
                 download(path: path)
@@ -1665,7 +1674,6 @@ extension Conductor {
         }
     }
 
-    @available(macOS 11, *)
     @objc(download:)
     func download(path: SCPPath) {
         let file = ConductorFileTransfer(path: path,
@@ -1679,13 +1687,11 @@ extension Conductor {
         return stream(remotePath: path.path)
     }
 
-    @available(macOS 11, *)
     @objc(uploadFile:to:)
     func upload(file: String, to destinationPath: SCPPath) {
         _ = upload(file: file, to: destinationPath, completion: { _, _ in })
     }
 
-    @available(macOS 11, *)
     @objc(uploadFile:to:withCompletion:)
     func upload(file: String, to destinationPath: SCPPath, completion: @escaping (Bool, String?) -> Void) -> TransferrableFile? {
         let localPath: String
@@ -1854,7 +1860,6 @@ extension Conductor {
         framerSend(data: data, pid: pid)
     }
 
-    @available(macOS 11, *)
     @objc
     func fetchSuggestions(_ request: SuggestionRequest, suggestionOnly: Bool) {
         // Always run the completion block after a spin of the mainloop because
@@ -1871,7 +1876,7 @@ extension Conductor {
             }
             return
         }
-        Task {
+        Task { [self] in
             do {
                 DLog("Request suggestions \(request)")
                 let suggestions = try await self.suggestions(request.inputs)
@@ -1945,7 +1950,6 @@ extension Conductor {
         }
     }
 
-    @available(macOS 11.0, *)
     func framerFile(_ subcommand: FileSubcommand,
                                 highPriority: Bool = false,
                                 completion: @escaping (String, Int32) -> ()) {
@@ -2108,7 +2112,7 @@ extension Conductor {
                 if status == 0 {
                     sendInitialText()
                 } else {
-                    fail("\(executionContext.command.stringValue): Unepected status \(status)")
+                    fail(String(localized: "Conductor.UnexpectedStatus", defaultValue: "\(executionContext.command.stringValue): Unepected status \(String(describing: status))", comment: "Error when a remote command returns an unexpected exit status"))
                 }
             case .abort, .line(_), .sideChannelLine(line: _, channel: _, pid: _), .canceled:
                 break
@@ -2117,7 +2121,7 @@ extension Conductor {
             switch result {
             case .end(let status):
                 if status != 0 {
-                    fail("\(executionContext.command.stringValue): Unepected status \(status)")
+                    fail(String(localized: "Conductor.UnexpectedStatus", defaultValue: "\(executionContext.command.stringValue): Unepected status \(String(describing: status))", comment: "Error when a remote command returns an unexpected exit status"))
                 }
             case .abort, .line(_), .sideChannelLine(line: _, channel: _, pid: _), .canceled:
                 break
@@ -2248,7 +2252,7 @@ extension Conductor {
                 if status == 0 {
                     write(code + "\nEOF\n")
                 } else {
-                    fail("Status \(status) when running python code")
+                    fail(String(localized: "Conductor.PythonCodeStatus", defaultValue: "Status \(String(describing: status)) when running python code", comment: "Error when running remote python code returns a nonzero status"))
                 }
                 return
             }
@@ -2367,7 +2371,7 @@ extension Conductor {
         case .handleBackgroundJob(let output, let completion):
             switch result {
             case .line(_):
-                fail("Unexpected output from \(executionContext.command.stringValue)")
+                fail(String(localized: "Conductor.UnexpectedOutput", defaultValue: "Unexpected output from \(executionContext.command.stringValue)", comment: "Error when a background job produces unexpected output"))
             case .sideChannelLine(line: let line, channel: 1, pid: _):
                 output.strings.append(line)
             case .abort, .sideChannelLine(_, _, _), .canceled:
@@ -2397,7 +2401,7 @@ extension Conductor {
             return
         }
         guard let pid = Int32(lines.string) else {
-            fail("Invalid process ID from remote: \(lines.string)")
+            fail(String(localized: "Conductor.InvalidPID", defaultValue: "Invalid process ID from remote: \(lines.string)", comment: "Error when the remote returns a non-numeric process ID"))
             return
         }
         framedPID = pid
@@ -2430,18 +2434,27 @@ extension Conductor {
 
     @objc func handleUnhook() {
         log("unhook")
+        // Settle the state before notifying anyone, the way forceReturnToGroundState does.
+        // These handlers can call back into send() -- handleCheckForPython's abort arm calls
+        // execLoginShell() -- and a re-entrant send() that saw the pipeline still in `state`
+        // would extend it and write to a conductor being torn down, on a connection whose
+        // framer is gone, after which `state = .unhooked` drops the contexts so those
+        // handlers never fire.
+        var aborted: [ExecutionContext] = []
         switch state {
         case .executingPipeline(let context, _):
-            try? update(executionContext: context, result: .abort)
+            aborted.append(context)
         case .willExecutePipeline(let contexts):
-            try? update(executionContext: contexts.first!, result: .abort)
+            aborted.append(contexts.first!)
         case .ground, .recovered, .unhooked, .recovery:
             break
         }
         log("Abort pending commands")
-        while let pending = queue.first {
-            queue.removeFirst()
-            try? update(executionContext: pending, result: .abort)
+        aborted.append(contentsOf: queue)
+        queue = []
+        state = .unhooked
+        for context in aborted {
+            try? update(executionContext: context, result: .abort)
         }
         // Cancel any in-flight it2 commands so a streaming command (monitor
         // --follow) does not keep looping on a background queue holding an
@@ -2489,7 +2502,9 @@ extension Conductor {
             DLog("Unexpected command end in \(state)")
         case let .willExecutePipeline(contexts):
             do {
-                try update(executionContext: contexts.first!, result: .end(status))
+                try withPipelineTransition {
+                    try update(executionContext: contexts.first!, result: .end(status))
+                }
                 if contexts.count == 1 {
                     DLog("Command ended. Return to ground state.")
                     state = .ground
@@ -2506,7 +2521,9 @@ extension Conductor {
             }
         case let .executingPipeline(context, pending):
             do {
-                try update(executionContext: context, result: .end(status))
+                try withPipelineTransition {
+                    try update(executionContext: context, result: .end(status))
+                }
                 DLog("Command ended. Return to ground state.")
                 if pending.isEmpty {
                     DLog("Command ended. Return to ground state.")
@@ -2606,7 +2623,12 @@ extension Conductor {
             // restoring.
             log("Unexpected input: \(string)")
         case let .willExecutePipeline(contexts):
-            state = .executingPipeline(contexts.first!, Array(contexts.dropFirst()))
+            // The job's own state, not the conductor's: this is backgroundJobs[pid]. Mirrors
+            // the same transition in handle(line:), including delivering the line that
+            // triggered it.
+            backgroundJobs[pid] = .executingPipeline(contexts.first!, Array(contexts.dropFirst()))
+            try? update(executionContext: contexts.first!,
+                        result: .sideChannelLine(line: string, channel: channel, pid: pid))
         case let .executingPipeline(context, _):
             try? update(executionContext: context,
                         result: .sideChannelLine(line: string, channel: channel, pid: pid))
@@ -2657,23 +2679,21 @@ extension Conductor {
     }
 
     private func handleSearchNotif(_ message: String) {
-        if #available(macOS 11.0, *) {
-            DLog("handleSearchNotif: \(message)")
-            guard let space = message.firstIndex(of: " ") else {
-                DLog("Malformed message lacks space")
-                return
+        DLog("handleSearchNotif: \(message)")
+        guard let space = message.firstIndex(of: " ") else {
+            DLog("Malformed message lacks space")
+            return
+        }
+        let id = message[..<space]
+        if let currentSearch, currentSearch.id == id {
+            let json = String(message[message.index(space, offsetBy: 1)...])
+            if let remoteFile = try? remoteFile(json) {
+                DLog("Yielding \(remoteFile) for search \(currentSearch.id), query \(currentSearch.query)")
+                currentSearch.continuation.yield(remoteFile)
             }
-            let id = message[..<space]
-            if let currentSearch, currentSearch.id == id {
-                let json = String(message[message.index(space, offsetBy: 1)...])
-                if let remoteFile = try? remoteFile(json) {
-                    DLog("Yielding \(remoteFile) for search \(currentSearch.id), query \(currentSearch.query)")
-                    currentSearch.continuation.yield(remoteFile)
-                }
-            }
-            Task {
-                try? await performFileOperation(subcommand: .search(.ack(id: String(id), count: 1)))
-            }
+        }
+        Task {
+            try? await performFileOperation(subcommand: .search(.ack(id: String(id), count: 1)))
         }
     }
 
@@ -2792,10 +2812,35 @@ extension Conductor {
             // ack to the queue, just increment the count.
             queue.append(context)
         }
+        guard !pipelineTransitionInProgress else {
+            // A pipeline transition is mid-flight and will dispatch this as soon as the
+            // handler it is running returns. See pipelineTransitionInProgress.
+            log("Defer dispatch: a pipeline transition is in progress")
+            return
+        }
         switch state {
         case .ground, .recovery:
             dequeue()
-        case .willExecutePipeline, .executingPipeline, .unhooked, .recovered:
+        case .willExecutePipeline(let inFlight):
+            // Top up a pipeline that has been written but whose first command has not begun.
+            //
+            // Without this a command enqueued while anything is in flight waits for that
+            // command's %end to come back before it is even written, which is a full round
+            // trip to the remote. Keystrokes are such commands: framerSend is pipelinable
+            // precisely so several can be outstanding at once (issue 11266), but a keystroke
+            // could only join a pipeline still being formed, never one already sent, so
+            // typing faster than the round trip made every key after the first wait one out.
+            // Issue 13013.
+            extendPipeline(inFlight) { contexts in
+                state = .willExecutePipeline(contexts)
+            }
+        case .executingPipeline(let context, let pending):
+            // Same, except `context` has already had its begin parsed, so it stays the
+            // executing one and the new commands join those queued behind it.
+            extendPipeline([context] + pending) { contexts in
+                state = .executingPipeline(context, Array(contexts.dropFirst()))
+            }
+        case .unhooked, .recovered:
             return
         }
     }
@@ -2835,21 +2880,92 @@ extension Conductor {
 
     private func amendPipeline(_ existing: [ExecutionContext]) {
         log("amendPipeline")
-        if let last = existing.last, !last.supportsPipelining {
-            log("Can't pipeline \(last.debugDescription)")
+        extendPipeline(existing) { contexts in
+            state = .willExecutePipeline(contexts)
+        }
+    }
+
+    // Takes whatever queued commands can ride along with the pipeline `existing`, hands the
+    // resulting pipeline to `setState`, and writes the new commands. State is set before
+    // anything is written, as it must be: write() reaches the delegate and, for a nested
+    // conductor, the parent, so the pipeline has to be recorded before we give up control.
+    // `setState` rather than a return value because only the caller knows whether the first
+    // context has already had its begin parsed.
+    private func extendPipeline(_ existing: [ExecutionContext],
+                                setState: ([ExecutionContext]) -> ()) {
+        // takeNextContextPipeline measures `existing` and requires its first element to be
+        // pipelinable. A pipeline of one may hold a command that is not, and nothing can
+        // ride along with such a command anyway.
+        guard existing.allSatisfy(\.supportsPipelining) else {
+            log("Can't pipeline behind \(existing.last?.debugDescription ?? "nothing")")
             return
         }
-        let contexts = takeNextContextPipeline(existing)
-        guard !contexts.isEmpty else {
+        // A nil delegate means nothing can be written, so tear down rather than build. The
+        // in-flight contexts live in `state`, not in `queue`, so they have to be aborted
+        // explicitly: takeNextContext's own nil-delegate branch only drains the queue, and
+        // before send() could reach here from an in-flight state there was never anything
+        // in flight to lose. Dropping one silently strands its handler, and
+        // performFileOperation's continuation is only resumed from that handler, so the
+        // awaiting task would hang forever.
+        guard delegate != nil else {
+            log("delegate is nil. abort everything in flight and queued, and reset state.")
+            var dropped: [DroppedContext] = existing.map { ($0, .abort) }
+            dropped.append(contentsOf: queue.map { ($0, .abort) })
+            queue = []
+            state = .ground
+            for (context, result) in dropped {
+                try? update(executionContext: context, result: result)
+            }
+            return
+        }
+        // Take without notifying anyone. Dropping a canceled or aborted context runs its
+        // handler, and those handlers re-enter the conductor: handleCheckForPython's
+        // cancel arm calls execLoginShell(), which calls send(), and several call fail(),
+        // which calls forceReturnToGroundState(). Running them here, with the pipeline
+        // half-built, would let the re-entrant call install a state that setState below
+        // then overwrites -- leaving commands on the wire that `state` does not know
+        // about, so their responses are attributed to the wrong context and their handlers
+        // never fire -- or resurrect a pipeline that fail() had just torn down. Collect
+        // them and notify once the state is consistent.
+        var dropped: [DroppedContext] = []
+        defer {
+            for (context, result) in dropped {
+                try? update(executionContext: context, result: result)
+            }
+        }
+        let contexts = takeNextContextPipeline(existing, dropped: &dropped)
+        guard contexts.count > existing.count else {
             log("Nothing to take")
             return
         }
-        state = .willExecutePipeline(contexts)
-        for pending in contexts[existing.count...] {
-            willSend(pending)
-            let chunked = encode(pending)
-            write(chunked)
+        // The writes are a mutation window as well. State is already consistent here, so a
+        // re-entrant send() would legitimately extend the pipeline and write immediately,
+        // interleaving with this loop: the wire order would be B, D, C while `state` says
+        // A, B, C, D, so D's %begin/%end would be attributed to C. That is worse than the
+        // windows above, where commands were merely missing from state. Defer instead;
+        // anything enqueued during the writes goes out on the next transition.
+        withPipelineTransition {
+            setState(contexts)
+            for pending in contexts[existing.count...] {
+                willSend(pending)
+                let chunked = encode(pending)
+                write(chunked)
+            }
         }
+    }
+
+    // A context removed from the queue without being sent, plus the result its handler is
+    // owed. See extendPipeline for why these are collected instead of dispatched inline.
+    private typealias DroppedContext = (context: ExecutionContext, result: PartialResult)
+
+    // Runs `body` with pipeline mutation from send() deferred; see
+    // pipelineTransitionInProgress. Nested transitions restore the previous value rather
+    // than clearing the flag outright.
+    private func withPipelineTransition<T>(_ body: () throws -> T) rethrows -> T {
+        let saved = pipelineTransitionInProgress
+        pipelineTransitionInProgress = true
+        defer { pipelineTransitionInProgress = saved }
+        return try body()
     }
 
     private func willSend(_ pending: ExecutionContext) {
@@ -2867,7 +2983,8 @@ extension Conductor {
         }
     }
 
-    private func takeNextContextPipeline(_ existing: [ExecutionContext]) -> [ExecutionContext] {
+    private func takeNextContextPipeline(_ existing: [ExecutionContext],
+                                        dropped: inout [DroppedContext]) -> [ExecutionContext] {
         if let first = existing.first {
             precondition(first.supportsPipelining)
         }
@@ -2875,7 +2992,8 @@ extension Conductor {
         var result = existing
         let maxSize = 1024
         log("Initial size is \(size)")
-        while size < maxSize, let context = takeNextContext(onlyIfSupportsPipelining: !result.isEmpty) {
+        while size < maxSize, let context = takeNextContext(onlyIfSupportsPipelining: !result.isEmpty,
+                                                            dropped: &dropped) {
             log("taking \(context.debugDescription)")
             result.append(context)
             if !context.supportsPipelining {
@@ -2889,12 +3007,15 @@ extension Conductor {
         return result
     }
 
-    private func takeNextContext(onlyIfSupportsPipelining: Bool) -> ExecutionContext? {
+    // Appends to `dropped` rather than notifying handlers directly, so that nothing can
+    // re-enter the conductor while a pipeline is being assembled. The caller notifies.
+    private func takeNextContext(onlyIfSupportsPipelining: Bool,
+                                 dropped: inout [DroppedContext]) -> ExecutionContext? {
         guard delegate != nil else {
             log("delegate is nil. clear queue and reset state.")
             while let pending = queue.first {
                 queue.removeFirst()
-                try? update(executionContext: pending, result: .abort)
+                dropped.append((pending, .abort))
             }
             state = .ground
             return nil
@@ -2902,7 +3023,7 @@ extension Conductor {
         while let pending = queue.first, pending.canceled {
             log("cancel \(pending)")
             queue.removeFirst()
-            try? update(executionContext: pending, result: .canceled)
+            dropped.append((pending, .canceled))
         }
         guard let pending = queue.first else {
             log("queue is empty")

@@ -248,7 +248,7 @@ void TurnOnDebugLoggingSilently(void);
 BOOL TurnOffDebugLoggingSilently(void);
 void TurnOnDebugLoggingAutomatically(void);
 
-void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...);
+void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) NS_FORMAT_FUNCTION(2,3);
 void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 
 _Noreturn NS_INLINE void iTermCrashWithMessage(const char *file,

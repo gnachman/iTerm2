@@ -187,11 +187,26 @@ struct RootView: View {
         } message: {
             Text("This pairing link will connect through the relay:\n\n\(model.pendingPairingRelayDisplay)\n\nOnly continue if you opened it yourself.")
         }
-        .alert("Update iTerm2 on your Mac",
-               isPresented: $model.showRelayMigrationNotice) {
-            Button("OK", role: .cancel) {}
+        // Offered once after a fresh pairing (a soft prompt before the iOS system prompt).
+        // Declining leaves notifications reachable later from Settings.
+        .alert("Receive Notifications?",
+               isPresented: $model.showNotificationOptIn) {
+            Button("Enable") { model.enableNotifications() }
+            Button("Not Now", role: .cancel) {}
         } message: {
-            Text("iTerm2 Buddy has moved to the new relay. For your iPhone and Mac to keep connecting, update iTerm2 on your Mac to the latest version.")
+            Text("Get notified when your agent replies or needs your approval, even when iTerm2 Buddy isn’t open.")
+        }
+        // Settings is a sheet at the root, so it is reachable in every phase - connected
+        // or not (e.g. to email diagnostic logs before pairing).
+        .sheet(isPresented: $model.showSettings) {
+            NavigationStack {
+                SettingsView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { model.showSettings = false }
+                        }
+                    }
+            }
         }
     }
 
@@ -203,9 +218,6 @@ struct RootView: View {
                 .reconnectingBanner(model)
         case .conversation(let chatID):
             ConversationView(chatID: chatID)
-                .reconnectingBanner(model)
-        case .settings:
-            SettingsView()
                 .reconnectingBanner(model)
         case .session(let guid, let title, let originatingChatID):
             SessionView(guid: guid, title: title, originatingChatID: originatingChatID)

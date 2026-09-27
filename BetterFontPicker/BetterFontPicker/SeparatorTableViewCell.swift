@@ -21,11 +21,7 @@ class SeparatorTableViewCell: NSTableRowView {
                           y: retinaRound((self.bounds.size.height - SeparatorTableViewCell.thickness) / 2.0),
                           width: self.bounds.size.width,
                           height: SeparatorTableViewCell.thickness)
-        if #available(macOS 10.14, *) {
-            NSColor.separatorColor.set()
-        } else {
-            NSColor.lightGray.set()
-        }
+        NSColor.separatorColor.set()
         rect.fill()
     }
 

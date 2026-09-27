@@ -680,7 +680,7 @@ extension PTYTextView: ExternalSearchResultsController {
         let firstMaxLength = first.length - first.number(ofTrailingEmptyCellsWhereSpaceIsEmpty: true)
         let lastMaxLength = last.length - last.number(ofTrailingEmptyCellsWhereSpaceIsEmpty: true)
 
-        var mid = " …\(count) line\(count > 1 ? "s" : "")… "
+        var mid = String(localized: "PTYTextView.MidLineCount", defaultValue: " …\(count) lines… ", comment: "Middle-of-range line count marker; %lld is the number of lines. Keep the surrounding ellipses and spaces.")
         if mid.utf16.count + 10 > length {
             mid = "…"
         }
@@ -906,6 +906,12 @@ extension PTYTextView: NSViewContentSelectionInfo {
                                                          0,
                                                          Int64(temp.location) + Int64(temp.length) + offset)
         let visibleAbsLines = (visibleAbsRange.start.y)..<(visibleAbsRange.end.y)
+        // Internal geometry: use raw allSubSelections. During an in-progress bidi
+        // character drag the live range holds visual columns, which is exactly what a
+        // pixel rect wants; logicalSubSelections would decompose it into logical runs.
+        // (In practice this is only ever read against a committed selection, where the
+        // two are identical, but the rule is: logical for external consumers, raw for
+        // geometry.)
         for subselection in selection.allSubSelections {
             let absRange = subselection.absRange
             let selRange = absRange.coordRange.start.y..<(absRange.coordRange.end.y + 1)
@@ -946,11 +952,7 @@ extension PTYTextView {
     @objc(swiftValidateMenuItem:)
     func swiftValidate(menuItem item: NSMenuItem) -> Bool {
         if item.action == #selector(downloadFiles(_:)) {
-            if #available(macOS 11, *) {
-                return !ConductorRegistry.instance.isEmpty
-            } else {
-                return false
-            }
+            return !ConductorRegistry.instance.isEmpty
         } else if item.action == #selector(saveArchive(_:)) {
             return true
         } else if item.action == #selector(toggleBufferInput(_:)) {
@@ -1214,7 +1216,7 @@ extension PTYTextView {
 
         // Line count
         let lineCount = Int(range.upperBound - range.lowerBound)
-        parts.append("…\(lineCount) line\(lineCount > 1 ? "s" : "")…")
+        parts.append(String(localized: "PTYTextView.PartsLineCount", defaultValue: "…\(lineCount) lines…", comment: "Line count marker in a compact description; %lld is the number of lines. Keep the surrounding ellipses."))
 
         // Last command if different
         if let lastCmd = lastMark?.firstLineOfCommand,

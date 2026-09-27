@@ -3,6 +3,7 @@
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCursor.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermSharedImageStore.h"
 #import "NSColor+iTerm.h"
@@ -355,12 +356,22 @@ NS_ASSUME_NONNULL_BEGIN
             1
         }
     };
-    if ([iTermAdvancedSettingsModel hdrCursor] &&
-        color.redComponent == 1 &&
-        color.greenComponent == 1 &&
-        color.blueComponent == 1 &&
-        color.alphaComponent == 1) {
-        CGFloat maxValue = tState.configuration.maximumExtendedDynamicRangeColorComponentValue;
+    if (tState.useHDRCursor) {
+        // Invariant: the glue (iTermMetalPerFrameState) forces cursorColor to white
+        // wherever it sets useHDRWhite, so `color` is white here and we overwrite it
+        // with the boosted maxValue white. We deliberately do not gate on a white
+        // check: color-space conversion nudges the components off exactly 1.0, and
+        // an exact check previously suppressed the glow entirely. Log (without
+        // changing output) if a future path sets useHDRCursor without forcing white
+        // so the split-across-two-files invariant is diagnosable in the field.
+        if (color.redComponent < 0.9 || color.greenComponent < 0.9 || color.blueComponent < 0.9) {
+            DLog(@"HDR cursor override with non-white color (%@, %@, %@); glue should have forced white",
+                 @(color.redComponent), @(color.greenComponent), @(color.blueComponent));
+        }
+        // Cap at the shared maximum so the GPU and legacy renderers request the
+        // same peak brightness regardless of the display's potential headroom.
+        const CGFloat maxValue = MIN(tState.configuration.maximumExtendedDynamicRangeColorComponentValue,
+                                     iTermHDRCursorMaximumBrightness);
         description.color = simd_make_float4(maxValue, maxValue, maxValue, 1);
     }
     return description;
@@ -405,6 +416,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermUnderlineCursorRenderer
 
++ (iTermMetalBlending *)blending {
+    // Composite-source-over so a partial fadeAlpha (smooth blink) does not punch a
+    // hole in the destination alpha. The default straight-alpha blend uses
+    // OneMinusSourceAlpha on the alpha channel, which drops the target's opacity
+    // mid-fade and lets the backing bleed through in light mode. See the note on
+    // iTermBlockCursorRenderer.
+    return [iTermMetalBlending compositeSourceOver];
+}
+
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
 }
@@ -448,6 +468,12 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @implementation iTermBarCursorRenderer
+
++ (iTermMetalBlending *)blending {
+    // Preserve the destination alpha while fading. See the note on
+    // iTermBlockCursorRenderer.
+    return [iTermMetalBlending compositeSourceOver];
+}
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
@@ -517,6 +543,19 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
 
 
 @implementation iTermBlockCursorRenderer
+
+// Composite-source-over instead of the default straight-alpha blend. The default
+// blend's alpha channel uses (srcAlpha=SourceAlpha, dstAlpha=OneMinusSourceAlpha),
+// so filling the cell at a partial fadeAlpha (smooth blink) reduces the render
+// target's alpha to 1 - fade + fade^2 (min 0.75 at fade=0.5). That partial hole
+// lets a light backing show through mid-fade, so a fading black box appears to pass
+// through light gray in light mode instead of going straight to the background
+// color. compositeSourceOver keeps alpha at max(src, dst) = 1 while producing the
+// identical RGB result (applyFadeAlpha premultiplies the color for this blend mode),
+// so the fill stays opaque throughout the fade. Issue 12990.
++ (iTermMetalBlending *)blending {
+    return [iTermMetalBlending compositeSourceOver];
+}
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];

@@ -223,6 +223,15 @@ struct JSONSchema: Codable {
             let type = Swift.type(of: child.value)
             let fieldType = JSONSchema.extractFieldType(type, value: child.value)
 
+            // Strict-mode schemas (OpenAI's Responses API) require that EVERY
+            // key in `properties` also appear in `required`; you express an
+            // optional field by widening its type to include "null", not by
+            // omitting it from `required`. So every property is appended to
+            // `required` below, and optional fields get a nullable type. This
+            // mirrors the hand-authored orchestrator schemas
+            // (nullableString/nullableBoolean in OrchestratorToolDefinitions).
+            let isOptional = Mirror(reflecting: child.value).displayStyle == .optional
+
             var property = Property(type: AnyCodable(fieldType))
             property.description = descriptions[label]
             if (child.value as? JSONSchemaAnyCodable) == JSONSchemaAnyCodable.placeholder {
@@ -250,11 +259,9 @@ struct JSONSchema: Codable {
                 // calling, or layer on the right schema after.
                 guard !array.isEmpty else {
                     property.items = AnyCodable("string")
+                    if isOptional { JSONSchema.makeTypeNullable(&property) }
                     properties[label] = property
-                    if !(child.value is AnyOptional.Type)
-                        && Mirror(reflecting: child.value).displayStyle != .optional {
-                        required.append(label)
-                    }
+                    required.append(label)
                     continue
                 }
                 let elementType = JSONSchema.extractFieldType(Swift.type(of: array[0]),
@@ -276,9 +283,33 @@ struct JSONSchema: Codable {
                     property.items = AnyCodable(elementType)
                 }
             }
+            if isOptional { JSONSchema.makeTypeNullable(&property) }
             properties[label] = property
-            if !(child.value is AnyOptional.Type) && Mirror(reflecting: child.value).displayStyle != .optional {
-                required.append(label)
+            required.append(label)
+        }
+    }
+
+    // Widen a property's `type` to include "null" so an optional Swift field
+    // stays strict-mode valid while remaining in `required`. Idempotent: a
+    // type that already lists "null" (e.g. the JSONSchemaAnyCodable
+    // placeholder union) is left unchanged.
+    private static func makeTypeNullable(_ property: inout Property) {
+        guard let current = property.type?.value else {
+            property.type = AnyCodable("null")
+            return
+        }
+        if let single = current as? String {
+            if single != "null" {
+                property.type = AnyCodable([single, "null"])
+            }
+        } else if let list = current as? [String] {
+            if !list.contains("null") {
+                property.type = AnyCodable(list + ["null"])
+            }
+        } else if let list = current as? [Any] {
+            let strings = list.compactMap { $0 as? String }
+            if !strings.contains("null") {
+                property.type = AnyCodable(strings + ["null"])
             }
         }
     }

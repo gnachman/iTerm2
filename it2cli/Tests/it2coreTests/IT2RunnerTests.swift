@@ -21,7 +21,8 @@ final class IT2RunnerTests: XCTestCase {
         let code = IT2Runner.run(["--version"],
                                  stdout: { out.append($0) },
                                  stderr: { _ in },
-                                 channel: FakeObjCChannel())
+                                 channel: FakeObjCChannel(),
+                                 originIdentifier: nil)
         XCTAssertEqual(code, 0)
         XCTAssertTrue(out.contains("1.0.0"), "got \(out)")
     }
@@ -31,7 +32,8 @@ final class IT2RunnerTests: XCTestCase {
         let code = IT2Runner.run(["bogus-xyz"],
                                  stdout: { _ in },
                                  stderr: { err.append($0) },
-                                 channel: FakeObjCChannel())
+                                 channel: FakeObjCChannel(),
+                                 originIdentifier: nil)
         XCTAssertEqual(code, 64)
         XCTAssertFalse(err.isEmpty)
     }

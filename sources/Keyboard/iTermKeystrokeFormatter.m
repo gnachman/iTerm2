@@ -24,7 +24,7 @@
 
     NSMutableString *result = [[NSString stringForModifiersWithMask:keystroke.modifierFlags] mutableCopy];
     if ((keystroke.modifierFlags & NSEventModifierFlagNumericPad) && !isArrow) {
-        [result appendString: @"num-"];
+        [result appendString: NSLocalizedStringWithDefaultValue(@"KeyName.NumericKeypadPrefix", nil, [NSBundle mainBundle], @"num-", @"Prefix shown before a key name to indicate it is on the numeric keypad, as in “num-5”")];
     }
     [result appendString:charactersAsString];
     return result;
@@ -36,7 +36,7 @@
 
     NSMutableString *result = [[NSString stringForModifiersWithMask:keystroke.modifierFlags] mutableCopy];
     if ((keystroke.modifierFlags & NSEventModifierFlagNumericPad) && !isArrow) {
-        [result appendString: @"num-"];
+        [result appendString: NSLocalizedStringWithDefaultValue(@"KeyName.NumericKeypadPrefix", nil, [NSBundle mainBundle], @"num-", @"Prefix shown before a key name to indicate it is on the numeric keypad, as in “num-5”")];
     }
     [result appendString:charactersAsString];
     return result;
@@ -135,22 +135,13 @@ exit:
             isArrow = YES;
             break;
         case NSDeleteFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Del→",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass:[self class]],
-                                                         @"Key Names");
+            aString = NSLocalizedStringWithDefaultValue(@"KeyName.ForwardDelete", nil, [NSBundle mainBundle], @"Del→", @"Display name for the forward-delete key in a keystroke");
             break;
         case 0x7f:
-            aString = NSLocalizedStringFromTableInBundle(@"←Delete",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass:[self class]],
-                                                         @"Key Names");
+            aString = NSLocalizedStringWithDefaultValue(@"KeyName.Delete", nil, [NSBundle mainBundle], @"←Delete", @"Display name for the backspace/delete key in a keystroke");
             break;
         case NSEndFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"End",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass:[self class]],
-                                                         @"Key Names");
+            aString = NSLocalizedStringWithDefaultValue(@"KeyName.End", nil, [NSBundle mainBundle], @"End", @"Display name for the End key in a keystroke");
             break;
         case NSF1FunctionKey:
         case NSF2FunctionKey:
@@ -175,16 +166,10 @@ exit:
             aString = [NSString stringWithFormat: @"F%d", (character - NSF1FunctionKey + 1)];
             break;
         case NSHelpFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Help",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass:[self class]],
-                                                         @"Key Names");
+            aString = NSLocalizedStringWithDefaultValue(@"KeyName.Help", nil, [NSBundle mainBundle], @"Help", @"Display name for the Help key in a keystroke");
             break;
         case NSHomeFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Home",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass:[self class]],
-                                                         @"Key Names");
+            aString = NSLocalizedStringWithDefaultValue(@"KeyName.Home", nil, [NSBundle mainBundle], @"Home", @"Display name for the Home key in a keystroke");
             break;
 
         // These are standard on Apple en_GB keyboards where ~ and ` go on US keyboards (between esc
@@ -227,20 +212,20 @@ exit:
             aString = @".";
             break;
         case NSClearLineFunctionKey:
-            aString = @"Numlock";
+            aString = NSLocalizedStringWithDefaultValue(@"KeyName.NumLock", nil, [NSBundle mainBundle], @"Numlock", @"Display name for the Num Lock key in a keystroke");
             break;
         case NSPageDownFunctionKey:
-            aString = @"Page Down";
+            aString = NSLocalizedStringWithDefaultValue(@"KeyName.PageDown", nil, [NSBundle mainBundle], @"Page Down", @"Display name for the Page Down key in a keystroke");
             break;
         case NSPageUpFunctionKey:
-            aString = @"Page Up";
+            aString = NSLocalizedStringWithDefaultValue(@"KeyName.PageUp", nil, [NSBundle mainBundle], @"Page Up", @"Display name for the Page Up key in a keystroke");
             break;
         case 0x3: // 'enter' on numeric key pad
             aString = @"↩";
             break;
         case NSInsertFunctionKey:  // Fall through
         case NSInsertCharFunctionKey:
-            aString = @"Insert";
+            aString = NSLocalizedStringWithDefaultValue(@"KeyName.Insert", nil, [NSBundle mainBundle], @"Insert", @"Display name for the Insert key in a keystroke");
             break;
 
         default:
@@ -251,28 +236,28 @@ exit:
                 DLog(@"Is special");
                 switch (character) {
                     case ' ':
-                        aString = @"Space";
+                        aString = NSLocalizedStringWithDefaultValue(@"KeyName.Space", nil, [NSBundle mainBundle], @"Space", @"Display name for the Space bar in a keystroke");
                         break;
 
                     case '\r':
-                        aString = @"Return ↩";
+                        aString = NSLocalizedStringWithDefaultValue(@"KeyName.Return", nil, [NSBundle mainBundle], @"Return ↩", @"Display name for the Return key in a keystroke; keep the ↩ symbol");
                         break;
 
                     case 27:
-                        aString = @"Esc ⎋";
+                        aString = NSLocalizedStringWithDefaultValue(@"KeyName.Escape", nil, [NSBundle mainBundle], @"Esc ⎋", @"Display name for the Escape key in a keystroke; keep the ⎋ symbol");
                         break;
 
                     case '\t':
-                        aString = @"Tab ↦";
+                        aString = NSLocalizedStringWithDefaultValue(@"KeyName.Tab", nil, [NSBundle mainBundle], @"Tab ↦", @"Display name for the Tab key in a keystroke; keep the ↦ symbol");
                         break;
 
                     case 0x19:
                         // back-tab
-                        aString = @"Tab ↤";
+                        aString = NSLocalizedStringWithDefaultValue(@"KeyName.BackTab", nil, [NSBundle mainBundle], @"Tab ↤", @"Display name for the back-tab (Shift-Tab) key in a keystroke; keep the ↤ symbol");
                         break;
 
                     default:
-                        aString = [NSString stringWithFormat: @"Hex Code 0x%x", character];
+                        aString = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyName.HexCode", nil, [NSBundle mainBundle], @"Hex Code 0x%x", @"Display name for an unnamed key shown as its hexadecimal character code; %x is the hex value"), character];
                         break;
                 }
             }

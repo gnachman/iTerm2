@@ -58,7 +58,7 @@ from iterm2.screen import ScreenStreamer, LineContents, ScreenContents
 from iterm2.selection import SelectionMode, SubSelection, Selection
 
 from iterm2.session import (
-    SplitPaneException, Splitter, Session, InvalidSessionId)
+    SplitPaneException, Splitter, Session, SessionNote, InvalidSessionId)
 
 from iterm2.statusbar import (
     StatusBarComponent, CheckboxKnob, StringKnob, PositiveFloatingPointKnob,
@@ -67,6 +67,8 @@ from iterm2.statusbar import (
 from iterm2.transaction import Transaction
 
 from iterm2.tab import Tab, NavigationDirection
+
+from iterm2.tabgroup import TabGroup
 
 from iterm2.tmux import (
     TmuxException, TmuxConnection, async_get_tmux_connections,

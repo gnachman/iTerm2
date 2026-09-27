@@ -11,6 +11,7 @@
 #import "charmaps.h"
 #import "CVector.h"
 #import "DebugLogging.h"
+#import "iTermMalloc.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAttributedStringBuilder.h"
@@ -130,6 +131,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     BOOL _blinkingFound;
 
+    // Set while drawing an HDR cursor so its character is rendered bold, keeping
+    // it legible over the much-brighter-than-white block.
+    BOOL _drawBoldCursorCharacter;
+
     // Drives the smooth cursor blink fade. Lazily created.
     iTermCursorBlinkFadeAnimator *_blinkFadeAnimator;
 
@@ -164,6 +169,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     BOOL _preferSpeedToFullLigatureSupport;
     BOOL _lowFiCombiningMarks;
     NSMutableDictionary<NSNumber *, NSImage *> *_cachedMarks;
+    NSInteger _cachedMarksColorMapGeneration;
 }
 
 - (instancetype)init {
@@ -1310,6 +1316,35 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
 }
 
++ (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type
+                     colorMap:(id<iTermColorMapReading>)colorMap
+               useThemeColors:(BOOL)useThemeColors {
+    if (!useThemeColors || colorMap == nil) {
+        return [self colorForMarkType:type];
+    }
+    int ansiKey = kColorMapAnsiBlue;
+    switch (type) {
+        case iTermMarkIndicatorTypeSuccess:
+        case iTermMarkIndicatorTypeFoldedSuccess:
+            // Success marks are blue by convention (see +successMarkColor).
+            ansiKey = kColorMapAnsiBlue;
+            break;
+        case iTermMarkIndicatorTypeOther:
+        case iTermMarkIndicatorTypeFoldedOther:
+            ansiKey = kColorMapAnsiYellow;
+            break;
+        case iTermMarkIndicatorTypeError:
+        case iTermMarkIndicatorTypeFoldedError:
+            ansiKey = kColorMapAnsiRed;
+            break;
+    }
+    NSColor *color = [colorMap colorForKey:ansiKey];
+    if (color == nil) {
+        return [self colorForMarkType:type];
+    }
+    return [color colorUsingColorSpace:[NSColorSpace it_defaultColorSpace]];
+}
+
 - (BOOL)canDrawLine:(int)line {
     return (line < _linesToSuppress.location ||
             line >= _linesToSuppress.location + _linesToSuppress.length);
@@ -1317,6 +1352,14 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 
 - (void)drawMarksWithBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
                            virtualOffset:(CGFloat)virtualOffset {
+    // The cache is keyed in part by the resolved mark color, which changes with
+    // the color theme (see drawMarkIfNeededOnLine:). Drop stale entries when the
+    // colormap changes so live color editing can't accumulate images without bound.
+    const NSInteger generation = self.colorMap.generation;
+    if (generation != _cachedMarksColorMapGeneration) {
+        _cachedMarksColorMapGeneration = generation;
+        [_cachedMarks removeAllObjects];
+    }
     for (NSInteger i = 0; i < backgroundRunArrays.count; i += 1) {
         [self drawMarkForLine:backgroundRunArrays[i].line
                             y:backgroundRunArrays[i].y
@@ -1346,7 +1389,9 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             NSColor *bgColor = [self defaultBackgroundColor];
             NSColor *merged = [iTermTextDrawingHelper colorForLineStyleMark:[iTermTextDrawingHelper markIndicatorTypeForMark:mark
                                                                                                                       folded:folded]
-                                                            backgroundColor:bgColor];
+                                                            backgroundColor:bgColor
+                                                                   colorMap:self.colorMap
+                                                             useThemeColors:self.useThemeMarkColors];
             [merged set];
             NSRect rect;
             rect.origin.x = 0;
@@ -1375,20 +1420,34 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                                                                     scale:1];
         const iTermMarkIndicatorType type = [iTermTextDrawingHelper markIndicatorTypeForMark:mark
                                                                                       folded:folded];
-        NSImage *image = _cachedMarks[@(type)];
+        const BOOL useThemeColors = self.useThemeMarkColors;
+        // Key by (type, useThemeColors) rather than the resolved color. Within one
+        // colormap generation the color for a given pair is fixed; an actual color
+        // change bumps colorMap.generation and clears the cache in
+        // drawMarksWithBackgroundRunArrays:. So there are at most 12 live entries and
+        // we don't have to hash an NSColor (whose -description isn't a reliable key).
+        NSNumber *cacheKey = @((NSUInteger)type * 2 + (useThemeColors ? 1 : 0));
+        NSImage *image = _cachedMarks[cacheKey];
         if (!image || !NSEqualSizes(image.size, rect.size)) {
-            NSColor *markColor = [iTermTextDrawingHelper colorForMark:mark];
+            NSColor *markColor = [iTermTextDrawingHelper colorForMarkType:type
+                                                                 colorMap:self.colorMap
+                                                           useThemeColors:useThemeColors];
             image = [iTermTextDrawingHelper newImageWithMarkOfColor:markColor
                                                                size:rect.size
                                                              folded:folded];
-            _cachedMarks[@(type)] = image;
+            _cachedMarks[cacheKey] = image;
         }
         [image it_drawInRect:rect virtualOffset:virtualOffset];
     }
 }
 
-+ (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor {
-    NSColor *markColor = [iTermTextDrawingHelper colorForMarkType:type];
++ (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type
+                   backgroundColor:(NSColor *)bgColor
+                          colorMap:(id<iTermColorMapReading>)colorMap
+                    useThemeColors:(BOOL)useThemeColors {
+    NSColor *markColor = [iTermTextDrawingHelper colorForMarkType:type
+                                                         colorMap:colorMap
+                                                   useThemeColors:useThemeColors];
     NSColor *merged = [bgColor blendedWithColor:markColor weight:0.5];
     return merged;
 }
@@ -1524,41 +1583,39 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     NSColor *foreground = [self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:NO];
     NSColor *selectedColor = [self.delegate drawingHelperColorForCode:ALTSEM_SELECTED green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:YES];
 
-    if (@available(macOS 11, *)) {
-        // Draw pill-shaped backgrounds for button groups
-        NSArray<iTermButtonPillInfo *> *pillInfos = [self buttonPillInfos];
-        const CGFloat scale = self.isRetina ? 2.0 : 1.0;
-        for (iTermButtonPillInfo *pillInfo in pillInfos) {
-            NSImage *pillImage = [iTermPillBackgroundGenerator generatePillImageWithSize:pillInfo.rect.size
-                                                                       dividerXPositions:pillInfo.dividerXPositions
-                                                                         backgroundColor:background
-                                                                         foregroundColor:foreground
-                                                                     pressedSegmentIndex:pillInfo.pressedButtonIndex
-                                                                                   scale:scale];
-            // Draw at 1:1 scale (the image is already scaled internally)
-            // Adjust y by 2 points to align with Metal renderer
-            NSRect destRect = pillInfo.rect;
-            destRect.origin.y -= virtualOffset;
-            destRect.origin.y -= 2;
-            [pillImage drawInRect:destRect
-                         fromRect:NSMakeRect(0, 0, pillImage.size.width, pillImage.size.height)
-                        operation:NSCompositingOperationSourceOver
-                         fraction:1.0
-                   respectFlipped:YES
-                            hints:nil];
-        }
+    // Draw pill-shaped backgrounds for button groups
+    NSArray<iTermButtonPillInfo *> *pillInfos = [self buttonPillInfos];
+    const CGFloat scale = self.isRetina ? 2.0 : 1.0;
+    for (iTermButtonPillInfo *pillInfo in pillInfos) {
+        NSImage *pillImage = [iTermPillBackgroundGenerator generatePillImageWithSize:pillInfo.rect.size
+                                                                   dividerXPositions:pillInfo.dividerXPositions
+                                                                     backgroundColor:background
+                                                                     foregroundColor:foreground
+                                                                 pressedSegmentIndex:pillInfo.pressedButtonIndex
+                                                                               scale:scale];
+        // Draw at 1:1 scale (the image is already scaled internally)
+        // Adjust y by 2 points to align with Metal renderer
+        NSRect destRect = pillInfo.rect;
+        destRect.origin.y -= virtualOffset;
+        destRect.origin.y -= 2;
+        [pillImage drawInRect:destRect
+                     fromRect:NSMakeRect(0, 0, pillImage.size.width, pillImage.size.height)
+                    operation:NSCompositingOperationSourceOver
+                     fraction:1.0
+               respectFlipped:YES
+                        hints:nil];
+    }
 
-        // Draw buttons (they now have transparent backgrounds since drawsBackground was set to false)
-        for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
-            if (![self canDrawLine:button.absCoordForDesiredFrame.y - _totalScrollbackOverflow]) {
-                continue;
-            }
-            [button drawWithBackgroundColor:background
-                            foregroundColor:foreground
-                              selectedColor:selectedColor
-                                      frame:button.desiredFrame
-                              virtualOffset:virtualOffset];
+    // Draw buttons (they now have transparent backgrounds since drawsBackground was set to false)
+    for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
+        if (![self canDrawLine:button.absCoordForDesiredFrame.y - _totalScrollbackOverflow]) {
+            continue;
         }
+        [button drawWithBackgroundColor:background
+                        foregroundColor:foreground
+                          selectedColor:selectedColor
+                                  frame:button.desiredFrame
+                          virtualOffset:virtualOffset];
     }
 }
 
@@ -2521,6 +2578,14 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     }
 
     NSData *drawInCellIndex = attributes[iTermDrawInCellIndexAttribute];
+    // Does the string carry more than one foreground color? Runs that differ
+    // only in color are merged into one string so Arabic shaping survives a
+    // selection or SGR boundary; those need per-span fills below. The CTLine
+    // can be a cached layout keyed only on string+font, so colors must come
+    // from this attributed string, never from the line's run attributes.
+    NSRange firstColorRange = NSMakeRange(0, attributedString.length);
+    [attributedString attribute:(NSString *)kCTForegroundColorAttributeName atIndex:0 effectiveRange:&firstColorRange];
+    const BOOL multicolor = NSMaxRange(firstColorRange) < attributedString.length;
     iTermCoreTextLineRenderingHelper *renderingHelper = [[iTermCoreTextLineRenderingHelper alloc] initWithLine:lineRef
                                                                                                         string:attributedString.string
                                                                                                drawInCellIndex:drawInCellIndex];
@@ -2562,17 +2627,42 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                                                     origin.x, ty);
                 CGContextSetTextMatrix(cgContext, restored);
             } else {
-                CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-
                 if (bold && !fakeBold) {
                     CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(runFont);
                     fakeBold = !(traits & kCTFontTraitBold);
                 }
-
-                if (fakeBold && _boldAllowed) {
-                    CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
-                    CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-                    CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                const BOOL doubleStrike = fakeBold && _boldAllowed;
+                // Draw in same-color spans. A single-color string is one span;
+                // a merged multi-color string (shaping preserved across a
+                // selection boundary) sets the fill per span, reading the color
+                // from the attributed string by character index.
+                size_t spanStart = 0;
+                while (spanStart < length) {
+                    size_t spanLength = length - spanStart;
+                    if (multicolor) {
+                        NSRange colorRange = NSMakeRange(0, attributedString.length);
+                        CGColorRef spanColor =
+                        (__bridge CGColorRef)[attributedString attribute:(NSString *)kCTForegroundColorAttributeName
+                                                                 atIndex:glyphIndexToCharacterIndex[spanStart]
+                                                          effectiveRange:&colorRange];
+                        size_t spanEnd = spanStart + 1;
+                        while (spanEnd < length &&
+                               NSLocationInRange((NSUInteger)glyphIndexToCharacterIndex[spanEnd], colorRange)) {
+                            spanEnd += 1;
+                        }
+                        spanLength = spanEnd - spanStart;
+                        if (spanColor) {
+                            CGContextSetFillColorWithColor(cgContext, spanColor);
+                            CGContextSetStrokeColorWithColor(cgContext, spanColor);
+                        }
+                    }
+                    CTFontDrawGlyphs(runFont, buffer + spanStart, (NSPoint *)(positions + spanStart), spanLength, cgContext);
+                    if (doubleStrike) {
+                        CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+                        CTFontDrawGlyphs(runFont, buffer + spanStart, (NSPoint *)(positions + spanStart), spanLength, cgContext);
+                        CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                    }
+                    spanStart += spanLength;
                 }
             }
         } else {
@@ -2878,6 +2968,14 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
         imageMSB = state->previousImageMSB;
     } else if (imageMSB != -1) {
         state->previousImageMSB = imageMSB;
+    }
+    // The third diacritic (the most significant byte of the image id) is
+    // optional while the image id fits in 24 bits. When no cell in the run ever
+    // specified it, treat it as zero rather than leaving the -1 "absent"
+    // sentinel, which would otherwise shift to 0xff000000 and produce a bogus
+    // image id that matches no placement (issue 13027).
+    if (imageMSB == -1) {
+        imageMSB = 0;
     }
     if (coord.y != -1) {
         state->runLength = 1;
@@ -3235,18 +3333,23 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                  element.virtual ? @"YES" : @"NO");
         }
     }
+    // A Unicode placeholder always refers to a virtual placement, so only ever match virtual
+    // placements here; a non-virtual placement of the same image (which is drawn directly at its own
+    // screen position) must never be picked up by a placeholder cell. Issue 13028.
     iTermKittyImageDraw *draw = nil;
     if (placementID != 0) {
-        // Look up by placement ID when specified
+        // Look up by placement ID when specified. Placement ids are unique per image, not globally,
+        // so the image id must match too; otherwise a placement of a different image that happens to
+        // reuse this placement id could be returned.
         draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
-            return element.placementID == placementID;
+            return element.virtual && element.placementID == placementID && element.imageID == imageID;
         }];
         DLog(@"Looked up by placementID, found: %@", draw);
     }
     if (!draw) {
         // Look up placement by image ID. Must include a size.
         draw = [draws objectPassingTest:^BOOL(iTermKittyImageDraw *element, NSUInteger index, BOOL *stop) {
-            return element.imageID == imageID && element.placementSize.width > 0 && element.placementSize.height > 0;
+            return element.virtual && element.imageID == imageID && element.placementSize.width > 0 && element.placementSize.height > 0;
         }];
         DLog(@"Looked up by imageID, found: %@", draw);
     }
@@ -3918,6 +4021,35 @@ typedef struct {
     const iTermCursorInfo cursorInfo = [self cursorInfoForCoord:cursorCoord];
     NSColor *cursorColor = [self cursorColorWithOutline:outline];
 
+    // The HDR cursor hint forces a bright HDR-white cursor when it applies (the
+    // profile's HDR cursor on, a dark background, and an EDR-capable display). The
+    // white is drawn normally and then pushed past reference white with additive
+    // passes,
+    // because this drawRect: backing clamps a color with components > 1 at set
+    // time but accumulates already-written values via plusLighter (the Tahoe tab
+    // outline glows the same way). When the hint does not apply, the cursor draws
+    // normally so cursor boost and smart cursor color still take effect.
+    CGFloat hdrBrightness = 1.0;
+    // A box cursor in an unfocused window is drawn as a hollow frame that keeps its
+    // profile color and is not filled, so forcing it white (and boosting it) would
+    // both lose that color and do nothing useful. The Metal path shares this rule
+    // via hdrCursorForcesWhiteForType:focused:. Underline and vertical cursors are
+    // drawn solid regardless of focus, so they are unaffected.
+    const BOOL forcesWhite = [iTermCursor hdrCursorForcesWhiteForType:_cursorType focused:[self isFocused]];
+    if (!outline && forcesWhite) {
+        // Potential (not current) headroom: on a reference-mode XDR display the
+        // window backing can show values above 1.0 even while the *current*
+        // headroom API reports 1.0. Potential reflects the panel's capability;
+        // the display tonemaps whatever we draw down to what it can show.
+        const CGFloat headroom = _delegate.enclosingScrollView.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
+        if ([iTermCursor shouldUseHDRCursorOnBackground:[self defaultBackgroundColor]
+                                         profileEnabled:self.hdrCursorEnabled
+                                      potentialHeadroom:headroom]) {
+            cursorColor = [NSColor whiteColor];
+            hdrBrightness = headroom;
+        }
+    }
+
     if (_passwordInput) {
         NSImage *keyImage;
         if (backgroundColor.isDark) {
@@ -3949,16 +4081,24 @@ typedef struct {
                                                          faint:NO
                                                   isBackground:NO];
     }
+    cursor.hdrBrightness = hdrBrightness;
+    const BOOL hdrCursor = (hdrBrightness > 1.0);
+    _drawBoldCursorCharacter = hdrCursor;
+    // When the HDR hint applies we force a full-white fill (see above), so smart
+    // cursor color must be suppressed here too: otherwise the box cursor would
+    // pick a smart background color and then get boosted past white, and the
+    // Metal path (which forces white unconditionally) would disagree.
     [cursor drawWithRect:cursorInfo.rect
              doubleWidth:cursorInfo.isDoubleWidth
               screenChar:cursorInfo.screenChar
          backgroundColor:cursorColor
          foregroundColor:cursorTextColor
-                   smart:_useSmartCursorColor
+                   smart:(_useSmartCursorColor && !hdrCursor)
                  focused:[self isFocused]
                    coord:cursorCoord
                  outline:outline
            virtualOffset:virtualOffset];
+    _drawBoldCursorCharacter = NO;
     return cursorInfo.rect;
 }
 
@@ -4417,10 +4557,43 @@ typedef struct {
     NSRect innerRect = [self rectForCoordRange:coordRange];
     iTermRectClip(innerRect, virtualOffset);
 
-    const screen_char_t *line = [self lineAtIndex:row isFirst:nil];
+    BOOL isFirst = NO;
+    const screen_char_t *line = [self lineAtIndex:row isFirst:&isFirst];
     iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:row];
     const BOOL rtlFound = metadata.rtlFound;
     id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
+
+    // For an HDR cursor, draw the character bold so it stays legible over the
+    // much-brighter-than-white block. Copy the line and set the bold bit on the
+    // cursor cell (and its double-width partner) rather than mutating in place:
+    // `line` points into the data source's buffer (or, for the offscreen command
+    // line, a padded ScreenCharArray) that other code may read, so an in-place
+    // set/restore is not safe. This is an O(width) copy per frame while an HDR box
+    // cursor is visible, which is acceptable for one cursor row.
+    screen_char_t *boldLine = NULL;
+    if (_drawBoldCursorCharacter && coord.x >= 0 && coord.x < _gridSize.width) {
+        // A normal grid line is exactly _gridSize.width wide and its backing
+        // ScreenCharArray is valid through the continuation cell at
+        // [_gridSize.width], so copying width + 1 is safe. The offscreen command
+        // line (the only isFirst case) is different: its buffer is built by
+        // -mutableLineData, which allocates exactly `length` cells with no trailing
+        // continuation cell, and a saved command can be shorter than the current
+        // grid width. Pad it to at least the grid width (like the Metal path) so
+        // the copy covers the full drawn range and always includes the cursor cell,
+        // then clamp to the padded length to avoid reading past the buffer.
+        size_t count = (size_t)_gridSize.width + 1;
+        const screen_char_t *source = line;
+        // Kept alive until end of scope: `source` points into its buffer and is
+        // read by the copy below.
+        NS_VALID_UNTIL_END_OF_SCOPE ScreenCharArray *padded = nil;
+        if (isFirst) {
+            padded = [_offscreenCommandLine.characters paddedToAtLeastLength:_gridSize.width];
+            source = padded.line;
+            count = MIN(count, (size_t)padded.length);
+        }
+        boldLine = ScreenCharLineCopyWithBoldCursorCell(source, count, coord.x, width == 2);
+        line = boldLine;
+    }
 
     [self constructAndDrawRunsForLine:line
                              bidiInfo:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:row] : nil
@@ -4439,6 +4612,9 @@ typedef struct {
                         virtualOffset:virtualOffset
                         lineAttribute:metadata.lineAttribute];
 
+    if (boldLine) {
+        free(boldLine);
+    }
     [context restoreGraphicsState];
 }
 

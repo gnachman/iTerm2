@@ -221,7 +221,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
         case iTermParsedExpressionTypeReference:
         case iTermParsedExpressionTypeIndirectValue:
         case iTermParsedExpressionTypeString: {
-            NSString *reason = @"Expected a function call, not a value";
+            NSString *reason = NSLocalizedStringWithDefaultValue(@"ScriptFunctionCall.ExpectedFunctionCallNotValue", nil, [NSBundle mainBundle], @"Expected a function call, not a value", @"Error when a function call was expected but a value was found");
             completion(nil,
                        [NSError errorWithDomain:@"com.iterm2.call"
                                            code:3
@@ -234,7 +234,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
             return nil;
 
         case iTermParsedExpressionTypeNil: {
-            NSString *reason = @"nil not allowed";
+            NSString *reason = NSLocalizedStringWithDefaultValue(@"ScriptFunctionCall.NilNotAllowed", nil, [NSBundle mainBundle], @"nil not allowed", @"Error when nil is used where a function call was expected");
             completion(nil,
                        [NSError errorWithDomain:@"com.iterm2.call"
                                            code:4
@@ -263,7 +263,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                             completion:completion];
             return expression;
         case iTermParsedExpressionTypeInterpolatedString: {
-            NSString *reason = @"interpolated string not allowed";
+            NSString *reason = NSLocalizedStringWithDefaultValue(@"ScriptFunctionCall.InterpolatedStringNotAllowed", nil, [NSBundle mainBundle], @"interpolated string not allowed", @"Error when an interpolated string is used where a function call was expected");
             completion(nil,
                        [NSError errorWithDomain:@"com.iterm2.call"
                                            code:4
@@ -368,7 +368,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                              completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     id<iTermObject> object = [[iTermVariablesIndex sharedInstance] variablesForKey:receiver].owner;
     if (!object) {
-        NSString *reason = [NSString stringWithFormat:@"Object with identifier “%@” not found", receiver];
+        NSString *reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptFunctionCall.ObjectNotFound", nil, [NSBundle mainBundle], @"Object with identifier “%@” not found", @"Error when a method call target object cannot be found; placeholder is the identifier"), receiver];
         completion(nil,
                    [NSError errorWithDomain:@"com.iterm2.call"
                                        code:5
@@ -389,9 +389,9 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                          completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
     NSString *reason;
     if (_remainingArgs.count) {
-         reason = [NSString stringWithFormat:@"Timeout (%@ sec) while evaluating invocation “%@”. The timeout occurred while evaluating the following arguments to %@: %@", @(timeout), invocation, self.fullyQualifiedName, [_remainingArgs.allObjects componentsJoinedByString:@", "]];
+         reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptFunctionCall.TimeoutEvaluatingArgs", nil, [NSBundle mainBundle], @"Timeout (%1$@ sec) while evaluating invocation “%2$@”. The timeout occurred while evaluating the following arguments to %3$@: %4$@", @"Error when a function invocation times out while evaluating arguments; placeholders are the timeout, invocation, function name, and argument list"), @(timeout), invocation, self.fullyQualifiedName, [_remainingArgs.allObjects componentsJoinedByString:@", "]];
     } else {
-        reason = [NSString stringWithFormat:@"Timeout (%@ sec) while evaluating invocation “%@”. The timeout occurred while waiting for %@ to return.",
+        reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptFunctionCall.TimeoutWaitingReturn", nil, [NSBundle mainBundle], @"Timeout (%1$@ sec) while evaluating invocation “%2$@”. The timeout occurred while waiting for %3$@ to return.", @"Error when a function invocation times out waiting for a return value; placeholders are the timeout, invocation, and function name"),
                             @(timeout), invocation, self.name];
     }
     NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
@@ -539,7 +539,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
         NSString *const signature = [self signature];
         NSError *error = [NSError errorWithDomain:iTermAPIHelperErrorDomain
                                              code:iTermAPIHelperErrorCodeAPIDisabled
-                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Undefined function with signature “%@”", signature]}];
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptFunctionCall.UndefinedFunction", nil, [NSBundle mainBundle], @"Undefined function with signature “%@”", @"Error when no function matches the given signature; placeholder is the signature"), signature]}];
         completion(nil, error, nil);
         return;
     }
@@ -657,7 +657,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
     if (error.code == iTermAPIHelperErrorCodeUnregisteredFunction && [error.domain isEqualToString:iTermAPIHelperErrorDomain]) {
         return error;
     }
-    NSString *reason = [NSString stringWithFormat:@"In call to %@: %@", call.name, error.localizedDescription];
+    NSString *reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptFunctionCall.InCallTo", nil, [NSBundle mainBundle], @"In call to %1$@: %2$@", @"Error prefix identifying which function call failed; placeholders are the function name and the underlying error"), call.name, error.localizedDescription];
     NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: reason };
     if (error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection]) {
         userInfo = [userInfo dictionaryBySettingObject:error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection]

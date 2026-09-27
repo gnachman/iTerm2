@@ -172,7 +172,7 @@
         if (error) {
             *error = archiveError ?: [NSError errorWithDomain:@"com.googlecode.iterm2"
                                                          code:-1
-                                                     userInfo:@{ NSLocalizedDescriptionKey: @"Failed to create archive of folder." }];
+                                                     userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"NSData.ArchiveFolderFailed", nil, [NSBundle mainBundle], @"Failed to create archive of folder.", @"Error shown when an archive of a folder could not be created") }];
         }
         return nil;
     }
@@ -190,7 +190,7 @@
         if (error) {
             *error = [NSError errorWithDomain:@"com.googlecode.iterm2"
                                          code:-1
-                                     userInfo:@{ NSLocalizedDescriptionKey: @"Failed to write temporary archive file." }];
+                                     userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"NSData.WriteArchiveFailed", nil, [NSBundle mainBundle], @"Failed to write temporary archive file.", @"Error shown when a temporary archive file could not be written") }];
         }
         return nil;
     }

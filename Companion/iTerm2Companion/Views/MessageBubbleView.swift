@@ -32,18 +32,44 @@ struct MessageBubbleView: View {
     private var bubble: some View {
         HStack {
             if isUser { Spacer(minLength: 48) }
-            content
-                .font(.body)
-                .foregroundStyle(isUser ? .white : .primary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(isUser ? Color.accentColor : Color(.secondarySystemBackground),
-                            in: RoundedRectangle(cornerRadius: 16))
-                .textSelection(.enabled)
-                .environment(\.openURL, OpenURLAction { url in
-                    handleMentionURL(url) ? .handled : .systemAction
-                })
+            styledBubbleContent
             if !isUser { Spacer(minLength: 48) }
+        }
+    }
+
+    // Offer "Delete From Here" only for your own messages, and only when the mac
+    // applies deletion (an older mac would ignore the request, diverging the two
+    // until reconnect). This mirrors the Mac window, which shows Delete next to
+    // the user's own messages.
+    private var canDeleteFromHere: Bool {
+        isUser && model.macSupportsMessageDeletion
+    }
+
+    @ViewBuilder
+    private var styledBubbleContent: some View {
+        let styled = content
+            .font(.body)
+            .foregroundStyle(isUser ? .white : .primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(isUser ? Color.accentColor : Color(.secondarySystemBackground),
+                        in: RoundedRectangle(cornerRadius: 16))
+            .textSelection(.enabled)
+            .environment(\.openURL, OpenURLAction { url in
+                handleMentionURL(url) ? .handled : .systemAction
+            })
+        if canDeleteFromHere {
+            styled.contextMenu {
+                Button(role: .destructive) {
+                    if let chatID = model.openChatID {
+                        model.deleteMessages(fromMessageID: message.uniqueID, inChat: chatID)
+                    }
+                } label: {
+                    Label("Delete From Here", systemImage: "trash")
+                }
+            }
+        } else {
+            styled
         }
     }
 

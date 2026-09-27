@@ -6,8 +6,10 @@ import typing
 
 import iterm2.api_pb2
 import iterm2.capabilities
+import iterm2.color
 import iterm2.rpc
 import iterm2.session
+import iterm2.tabgroup
 import iterm2.util
 
 
@@ -51,7 +53,11 @@ class Tab:
             root,
             tmux_window_id=None,
             tmux_connection_id=None,
-            minimized_sessions=[]):
+            minimized_sessions=[],
+            tab_group_id=None,
+            tab_group_name=None,
+            tab_group_color=None,
+            tab_group_collapsed=False):
         self.connection = connection
         self.__tab_id = tab_id
         self.__root = root
@@ -59,6 +65,10 @@ class Tab:
         self.__tmux_window_id = tmux_window_id
         self.__tmux_connection_id = tmux_connection_id
         self.__minimized_sessions = list(minimized_sessions)
+        self.__tab_group_id = tab_group_id
+        self.__tab_group_name = tab_group_name
+        self.__tab_group_color = tab_group_color
+        self.__tab_group_collapsed = tab_group_collapsed
     # pylint: enable=too-many-arguments
 
     def __repr__(self):
@@ -76,6 +86,12 @@ class Tab:
         """Copies state from another tab into this one."""
         self.__root = other.root
         self.__minimized_sessions = list(other.minimized_sessions)
+        # pylint: disable=protected-access
+        self.__tab_group_id = other._Tab__tab_group_id
+        self.__tab_group_name = other._Tab__tab_group_name
+        self.__tab_group_color = other._Tab__tab_group_color
+        self.__tab_group_collapsed = other._Tab__tab_group_collapsed
+        # pylint: enable=protected-access
 
     def update_session(self, session):
         """Replaces references to a session."""
@@ -92,6 +108,28 @@ class Tab:
         """Returns the window this tab belongs to."""
         assert self.__class__.delegate
         return self.__class__.delegate.tab_delegate_get_window(self)
+
+    @property
+    def tab_group(self) -> typing.Optional['iterm2.tabgroup.TabGroup']:
+        """
+        The tab group this tab belongs to, or `None` if it is not in a group.
+
+        A tab group is a named, colored collection of adjacent tabs. Its members
+        are always kept consecutive in the tab bar; iTerm2 reorders tabs as
+        needed to maintain that invariant.
+
+        :returns: A :class:`~iterm2.tabgroup.TabGroup` or `None`.
+        """
+        if not self.__tab_group_id:
+            return None
+        color = iterm2.color.Color.from_hex(self.__tab_group_color) if (
+            self.__tab_group_color) else None
+        return iterm2.tabgroup.TabGroup(
+            self.connection,
+            self.__tab_group_id,
+            self.__tab_group_name or "",
+            color,
+            self.__tab_group_collapsed)
 
     @property
     def tmux_connection_id(self):
@@ -380,3 +418,51 @@ class Tab:
             raise iterm2.rpc.RPCException(
                 "No such window {}".format(window_id))
         return window
+
+    async def async_add_to_tab_group(
+            self, group: 'iterm2.tabgroup.TabGroup') -> None:
+        """
+        Adds this tab to an existing tab group.
+
+        If the tab already belonged to a different group, it is moved out of
+        that group and into this one. iTerm2 reorders tabs so the group's
+        members remain consecutive.
+
+        The group must be in the same window as this tab.
+
+        :param group: The :class:`~iterm2.tabgroup.TabGroup` to join.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong (for
+            example, if the group is not in this tab's window).
+        """
+        iterm2.capabilities.check_supports_tab_groups(self.connection)
+        window = self.window
+        if window is None:
+            raise iterm2.rpc.RPCException(
+                "Tab {} is not in a window".format(self.tab_id))
+        invocation = iterm2.util.invocation_string(
+            "iterm2.add_tab_to_group",
+            {"tab_id": self.tab_id, "group_id": group.group_id})
+        await iterm2.rpc.async_invoke_method(
+            self.connection, window.window_id, invocation, -1)
+
+    async def async_remove_from_tab_group(self) -> None:
+        """
+        Removes this tab from its tab group, if any.
+
+        iTerm2 moves the tab out of the group so the remaining members stay
+        consecutive. If the tab was the group's only member, the group is
+        dissolved. This is a no-op if the tab is not in a group.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+        """
+        iterm2.capabilities.check_supports_tab_groups(self.connection)
+        window = self.window
+        if window is None:
+            raise iterm2.rpc.RPCException(
+                "Tab {} is not in a window".format(self.tab_id))
+        invocation = iterm2.util.invocation_string(
+            "iterm2.remove_tab_from_group",
+            {"tab_id": self.tab_id})
+        await iterm2.rpc.async_invoke_method(
+            self.connection, window.window_id, invocation, -1)

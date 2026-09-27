@@ -22,6 +22,15 @@ NS_ASSUME_NONNULL_BEGIN
                                       BOOL quiet,
                                       NSURL * _Nullable location))completion;
 
+// Recover backups left by an import interrupted between moving an existing script aside and
+// restoring/cleaning it up: restore the original if it is missing, or delete a leaked
+// backup if the replacement completed. Call once at launch.
++ (void)recoverStaleReplaceBackups;
+
+// Testing seam: run the recovery against a specific directory instead of the real
+// scripts folder.
++ (void)recoverStaleReplaceBackupsInDirectory:(NSString *)scriptsPath;
+
 @end
 
 NS_ASSUME_NONNULL_END

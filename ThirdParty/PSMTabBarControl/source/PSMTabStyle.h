@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol PSMTabStyle <NSObject>
 
 @property(nonatomic, weak, nullable) PSMTabBarControl *tabBar;
-@property(nonatomic, readonly, nullable) NSAppearance *accessoryAppearance NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, readonly, nullable) NSAppearance *accessoryAppearance;
 @property(nonatomic, readonly) CGFloat edgeDragHeight;
 @property(nonatomic, readonly) BOOL supportsMultiLineLabels;
 @property(nonatomic, readonly) CGFloat intercellSpacing;
@@ -44,6 +44,41 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell;
 @optional
 - (nullable NSBezierPath *)progressBarClipPathForTabCell:(PSMTabBarCell *)cell;
+// The shape per-cell accessory subviews (the progress bar, the activity indicator) must stay inside,
+// in the bar's coordinates, or nil if there is none. They draw on top of -drawRect: and so never see
+// the graphics clip this style sets for cells; the bar masks them to this instead. Note this is the
+// accessory's clip, not the cell's: an accessory may be outset past its cell on purpose.
+- (nullable NSBezierPath *)accessoryClipPathForTabBar:(PSMTabBarControl *)bar;
+// YES if this style draws whole-run tab-group decoration itself (in
+// -drawTabBar:), in which case the group chip CELL draws nothing. Styles that
+// return NO keep the basic per-cell chip.
+- (BOOL)usesExternalTabGroupDecoration;
+// Width to reserve for the group chip cell (the name capsule plus the colored
+// area between it and the first tab). Defaults to the basic chip width.
+- (CGFloat)tabGroupChipCellWidthForName:(NSString *)name;
+// Height to reserve for the group chip cell on a vertical bar (the name capsule
+// plus the colored area between it and the first tab). Defaults to the basic
+// vertical chip height.
+- (CGFloat)tabGroupChipCellHeightForName:(NSString *)name;
+// Draw the decoration for whole tab-group runs (the name capsule and the
+// enclosing colored pill around the group's tabs) in -drawTabBar:, since the
+// enclosing pill spans multiple cells.
+- (void)drawTabGroupRunDecorationsForTabBar:(PSMTabBarControl *)bar clipRect:(NSRect)clipRect;
+// How far the enclosing group-run pill extends past the tab cells it wraps.
+// The scrollable-bar viewport clip stops at the last tab, so it must widen by
+// this much or the last group's outline is clipped. Defaults to 0.
+- (CGFloat)tabGroupRunOutset;
+// How far the group pill for `chip` extends past the LEFT (leading) edge of the
+// chip. Unlike -tabGroupRunOutset (a constant), this is 0 when the preceding
+// cell already covers the shared inter-group gap. Used to size a group's drag
+// image so its outline is captured without grabbing the neighbor group's outline.
+// Defaults to 0.
+- (CGFloat)tabGroupChipLeftOutsetForChip:(PSMTabBarCell *)chip bar:(PSMTabBarControl *)bar;
+// Width to reserve for a COLLAPSED group's chip cell: the name capsule plus a
+// member-count badge and a collapse chevron (a collapsed run has no visible
+// member tabs, so the chip is the whole affordance). Defaults to the expanded
+// name-only chip width when unimplemented.
+- (CGFloat)tabGroupCollapsedChipCellWidthForName:(NSString *)name memberCount:(NSInteger)count;
 @required
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell;
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell;

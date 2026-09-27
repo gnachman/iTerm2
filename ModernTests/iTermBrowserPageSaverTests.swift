@@ -9,7 +9,6 @@ import XCTest
 import WebKit
 @testable import iTerm2SharedARC
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserPageSaverTests: XCTestCase {
     private var testHelper: iTermBrowserPageSaverTestHelper!

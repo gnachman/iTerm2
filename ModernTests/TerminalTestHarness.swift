@@ -156,6 +156,31 @@ class TerminalTestHarness {
         return result
     }
 
+    /// Feed a raw escape sequence through the real VT100Parser and execute the
+    /// resulting tokens on the terminal, synchronously, then drain side effects.
+    /// This exercises the actual DECSET/DECRST code path rather than calling a
+    /// delegate method directly.
+    func feedEscapeSequence(_ bytes: [UInt8]) {
+        screen.performBlock(joinedThreads: { terminal, mutableState, _ in
+            guard let terminal = terminal else {
+                return
+            }
+            let parser = VT100Parser()
+            parser.encoding = String.Encoding.utf8.rawValue
+            bytes.withUnsafeBufferPointer { buf in
+                parser.putStreamData(buf.baseAddress, length: Int32(buf.count))
+            }
+            var vector = CVector()
+            CVectorCreate(&vector, 100)
+            _ = parser.addParsedTokens(to: &vector)
+            for i in 0..<CVectorCount(&vector) {
+                let token = CVectorGetObject(&vector, i) as! VT100Token
+                terminal.execute(token)
+            }
+            CVectorDestroy(&vector)
+        })
+    }
+
     /// Synchronize threads and execute pending side effects
     func sync() {
         screen.performBlock(joinedThreads: { _, _, _ in })

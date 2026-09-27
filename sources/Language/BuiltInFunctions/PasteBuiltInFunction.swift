@@ -13,11 +13,7 @@ class PasteBuiltInFunction: NSObject {
 }
 
 extension PasteBuiltInFunction: iTermBuiltInFunctionProtocol {
-    private static func error(message: String) -> NSError {
-        return NSError(domain: "com.iterm2.paste",
-                       code: 1,
-                       userInfo: [ NSLocalizedDescriptionKey: message])
-    }
+    private static let errorDomain = "com.iterm2.paste"
 
     static func register() {
         let builtInFunction = iTermBuiltInFunction(
@@ -26,13 +22,12 @@ extension PasteBuiltInFunction: iTermBuiltInFunctionProtocol {
             optionalArguments: Set(),
             defaultValues: ["session_id": iTermVariableKeySessionID],
             context: .session,
+            // Localization unneeded
             sideEffectsPlaceholder: "[paste]") { parameters, completion in
-                guard let sessionID = parameters["session_id"] as? String else {
-                    completion(nil, error(message: "Missing session_id. This shouldn't happen so please report a bug."))
-                    return
-                }
-                guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
-                    completion(nil, error(message: "No such session"))
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 errorDomain: errorDomain,
+                                                                 lookup: .inWindow,
+                                                                 completion: completion) else {
                     return
                 }
                 session.textview?.paste(nil)

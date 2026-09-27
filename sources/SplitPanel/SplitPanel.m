@@ -27,9 +27,9 @@
         splitPanel.parent = parent;
         splitPanel.isVertical = vertical;
         if (vertical) {
-            [splitPanel.label setStringValue:@"Split current pane vertically with profile:"];
+            [splitPanel.label setStringValue:NSLocalizedStringWithDefaultValue(@"SplitPanel.VerticalPrompt", nil, [NSBundle mainBundle], @"Split current pane vertically with profile:", @"Label prompting the user to pick a profile for a vertical split")];
         } else {
-            [splitPanel.label setStringValue:@"Split current pane horizontally with profile:"];
+            [splitPanel.label setStringValue:NSLocalizedStringWithDefaultValue(@"SplitPanel.HorizontalPrompt", nil, [NSBundle mainBundle], @"Split current pane horizontally with profile:", @"Label prompting the user to pick a profile for a horizontal split")];
         }
         [parent.window beginSheet:splitPanel.window completionHandler:^(NSModalResponse returnCode) {
             // Fires a run-loop turn later, after iTermRunModalForWindowAbortingIfParentCloses

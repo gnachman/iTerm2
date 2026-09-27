@@ -7,7 +7,7 @@
 
 class TerminalCommandCellContainer: NSView {}
 
-class TerminalCommandMessageCellView: MessageCellView {
+class TerminalCommandMessageCellView: MessageCellView, ChatFindableCellView {
     private var url: URL?
     private let bubbleView: TerminalCommandCellContainer = {
         let view = TerminalCommandCellContainer()
@@ -17,16 +17,12 @@ class TerminalCommandMessageCellView: MessageCellView {
     }()
     private let icon: NSImageView = {
         let image: NSImage = {
-            if #available(macOS 11, *) {
-                let image = NSImage(systemSymbolName: SFSymbol.desktopcomputer.rawValue,
-                                    accessibilityDescription: "Command icon")!
-                if #available(macOS 12, *) {
-                    return image.withSymbolConfiguration(.init(paletteColors: [.white, .clear, .black]))!
-                }
-                return image
+            let image = NSImage(systemSymbolName: SFSymbol.desktopcomputer.rawValue,
+                                accessibilityDescription: "Command icon")!
+            if #available(macOS 12, *) {
+                return image.withSymbolConfiguration(.init(paletteColors: [.white, .clear, .black]))!
             }
-            return NSImage.it_imageNamed("CommandIcon",
-                                         for: TerminalCommandMessageCellView.self)!
+            return image
         }()
         let view = NSImageView(image: image)
         view.imageScaling = .scaleProportionallyUpOrDown
@@ -159,6 +155,9 @@ class TerminalCommandMessageCellView: MessageCellView {
         pasteboard.clearContents()
         pasteboard.setString(textLabel.string, forType: .string)
     }
+
+    // One segment: the command text. Matches ChatViewController.findSegments(for:).
+    var findableTextViews: [NSTextView] { [textLabel] }
 
     override func setupViews() {
         updateColors()

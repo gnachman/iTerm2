@@ -36,12 +36,7 @@ class DismissableLinkViewController: NSViewController {
     private let clickToHide: Bool
 
     @objc public func disabled() -> Bool {
-        if #available(macOS 11.0, *) {
-            return iTermUserDefaults.userDefaults().bool(forKey: userDefaultsKey)
-        } else {
-            // Hide pre-big sur because I need SF Symbols.
-            return true
-        }
+        return iTermUserDefaults.userDefaults().bool(forKey: userDefaultsKey)
     }
 
     @objc
@@ -117,14 +112,11 @@ class DismissableLinkViewController: NSViewController {
         if disabled() {
             view.isHidden = true
         }
-        if #available(macOS 11.0, *) {
-            if !clickToHide {
-                addHideButton()
-            }
+        if !clickToHide {
+            addHideButton()
         }
     }
 
-    @available(macOS 11.0, *)
     private func addHideButton() {
         guard close == nil else {
             return
@@ -166,9 +158,7 @@ class DismissableLinkViewController: NSViewController {
 
     @objc func handleClick(_ sender: Any) {
         NSWorkspace.shared.open(url)
-        if #available(macOS 11.0, *) {
-            addHideButton()
-        }
+        addHideButton()
     }
 
     @objc func hide(_ sender: Any) {

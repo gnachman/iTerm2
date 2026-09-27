@@ -44,19 +44,11 @@ class ExpandingTextField: NSTextField {
 
     private static func setImage(button: NSButton, expand: Bool) {
         if expand {
-            if #available(macOS 11, *) {
-                button.image = NSImage(systemSymbolName: SFSymbol.rectangleExpandVertical.rawValue, accessibilityDescription: "Expand")
-                button.imagePosition = .imageOnly
-            } else {
-                button.title = "⇳"
-            }
+            button.image = NSImage(systemSymbolName: SFSymbol.rectangleExpandVertical.rawValue, accessibilityDescription: "Expand")
+            button.imagePosition = .imageOnly
         } else {
-            if #available(macOS 11, *) {
-                button.image = NSImage(systemSymbolName: SFSymbol.rectangleCompressVertical.rawValue, accessibilityDescription: "Expand")
-                button.imagePosition = .imageOnly
-            } else {
-                button.title = "×"
-            }
+            button.image = NSImage(systemSymbolName: SFSymbol.rectangleCompressVertical.rawValue, accessibilityDescription: "Expand")
+            button.imagePosition = .imageOnly
         }
     }
 

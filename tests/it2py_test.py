@@ -73,6 +73,8 @@ def run_scenario(serve_fn, argv):
     t = threading.Thread(target=serve, daemon=True)  # daemon: never wedges the interpreter
     t.start()
     env = dict(os.environ, IT2_SOCK=sock_path, IT2_NONCE="secret", TERM="xterm")
+    # A real tmux server around the test run must not be consulted for its advertised socket.
+    env.pop("TMUX", None)
     try:
         result = subprocess.run([sys.executable, IT2] + argv, env=env,
                                 capture_output=True, text=True, timeout=10)
@@ -154,6 +156,8 @@ def test_broken_stdout_pipe_no_shutdown_traceback():
     t = threading.Thread(target=serve, daemon=True)
     t.start()
     env = dict(os.environ, IT2_SOCK=sock_path, IT2_NONCE="secret", TERM="xterm")
+    # A real tmux server around the test run must not be consulted for its advertised socket.
+    env.pop("TMUX", None)
     # A one-line reader standing in for `head -1`: it reads a single line then exits,
     # closing the read end so it2.py's next stdout write gets a broken pipe.
     reader = subprocess.Popen([sys.executable, "-c", "import sys; sys.stdin.buffer.readline()"],
@@ -239,12 +243,103 @@ def test_recv_exact_total_deadline_bounds_slow_trickle():
         t.join(timeout=2)
 
 
+def _hex(s):
+    return s.encode("utf-8").hex()
+
+
+def _client_line(name, control="1", created=100):
+    return "IT2CLIENT\t%s\t%s\t%s" % (name, control, created)
+
+
+def _option_line(name, record_json):
+    return "@it2_client_%s c_%s" % (_hex(name), _hex(record_json))
+
+
+def test_parse_tmux_client_records():
+    # The wire form TmuxController's advertiseIT2Client writes: one global user option per
+    # attached client, keyed by the hex of its tmux client name, holding c_ + hex(JSON).
+    output = "\n".join([
+        _client_line("/dev/pts/3", created=100),
+        _client_line("/dev/pts/4", created=200),
+        _client_line("/dev/pts/7", control="0", created=300),   # plain client: never counts
+        _client_line("short"),                                   # too few fields
+        _option_line("/dev/pts/3", '{"nonce":"older","sock":"/a.sock"}'),
+        _option_line("/dev/pts/4", '{"nonce":"newer","sock":"/b.sock"}'),
+        _option_line("/dev/pts/7", '{"nonce":"plain","sock":"/c.sock"}'),
+        _option_line("/dev/pts/9", '{"nonce":"stale","sock":"/d.sock"}'),  # not attached
+        "@it2_client_zz c_00",                                   # bad hex name
+        "@it2_client_%s x_%s" % (_hex("/dev/pts/4"), _hex("{}")),   # wrong tag
+        "@it2_client_%s c_abc" % _hex("/dev/pts/3"),             # odd-length hex
+        "@it2_client_%s c_%s" % (_hex("/dev/pts/3"), _hex("[1]")),  # not an object
+        "@it2_client_novalue",
+        "status on",
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check(records == [{"nonce": "newer", "sock": "/b.sock"},
+                      {"nonce": "older", "sock": "/a.sock"}],
+          "attached control clients only, newest first, garbage skipped: got %r" % records)
+    # show-options may quote a value; ours never needs it, but tolerate it.
+    quoted = "\n".join([_client_line("/dev/pts/3"),
+                        '@it2_client_%s "c_%s"' % (_hex("/dev/pts/3"), _hex('{"suite":"x"}'))])
+    check(it2mod.parse_tmux_client_records(quoted) == [{"suite": "x"}], "quoted value accepted")
+    # Very old tmux prints nothing for an unknown format variable; only an explicit 0 rejects.
+    empty_control = "\n".join([_client_line("/dev/pts/3", control=""),
+                               _option_line("/dev/pts/3", '{"suite":"x"}')])
+    check(it2mod.parse_tmux_client_records(empty_control) == [{"suite": "x"}],
+          "empty client_control_mode accepted")
+    check(it2mod.parse_tmux_client_records("") == [], "empty output")
+
+
+def test_tmux_query_uses_one_invocation_with_real_tabs():
+    args = it2mod.tmux_query_arguments("/tmp/od,d,socket")
+    check(args[:3] == ["tmux", "-S", "/tmp/od,d,socket"], "socket passed through verbatim")
+    check(";" in args, "both commands run in one tmux client")
+    fmt = args[args.index("-F") + 1]
+    check(fmt == "IT2CLIENT\t#{client_name}\t#{client_control_mode}\t#{client_created}",
+          "format: %r" % fmt)
+    check("\\t" not in fmt, "tmux does not interpret backslash escapes in formats")
+
+
+def test_connect_to_iterm2_tries_candidates_in_order():
+    # Two candidates whose sockets are dead, then one that is live: the live one is used, with
+    # ITS nonce, never a socket from one record paired with the nonce of another.
+    tmpdir = tempfile.mkdtemp()
+    try:
+        live_path = os.path.join(tmpdir, "live.sock")
+        server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        server.bind(live_path)
+        server.listen(1)
+        dead_path = os.path.join(tmpdir, "dead.sock")
+        candidates = [{"sock": os.path.join(tmpdir, "missing.sock"), "nonce": "missing"},
+                      {"sock": dead_path, "nonce": "dead"},
+                      {"sock": 7, "nonce": "not-a-string"},
+                      {"nonce": "no-sock"},
+                      {"sock": live_path, "nonce": "live"},
+                      {"sock": live_path, "nonce": "never-reached"}]
+        sock, nonce = it2mod.connect_to_iterm2(candidates)
+        check(sock is not None, "connected to the live candidate")
+        check(nonce == "live", "nonce comes from the same record as the socket: %r" % nonce)
+        if sock is not None:
+            sock.close()
+        sock, error = it2mod.connect_to_iterm2(candidates[:2])
+        check(sock is None, "no live candidate: no socket")
+        check(isinstance(error, str) and dead_path in error, "last failure reported: %r" % error)
+        sock, error = it2mod.connect_to_iterm2([])
+        check(sock is None and error is None, "no candidates at all")
+        server.close()
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
 def main():
     test_happy_path()
     test_disconnect_without_exit()
     test_broken_stdout_pipe_no_shutdown_traceback()
     test_write_raw_broken_pipe_before_first_write()
     test_recv_exact_total_deadline_bounds_slow_trickle()
+    test_parse_tmux_client_records()
+    test_tmux_query_uses_one_invocation_with_real_tabs()
+    test_connect_to_iterm2_tries_candidates_in_order()
     print("PASS" if _ok else "FAILED")
     return 0 if _ok else 1
 

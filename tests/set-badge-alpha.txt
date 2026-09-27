@@ -1,0 +1,6 @@
+Alpha palette-binding demo.
+Badge color is bound to ANSI 1 (red) at 50% alpha via
+SetColors=badge=i:1@0.5. The badge should be translucent.
+Change your Color Preset or toggle Dark Mode and the badge
+tracks ANSI 1 while staying half-transparent.
+]1337;SetBadgeFormat=QUxQSEEgMC41]1337;SetColors=badge=i:1@0.75

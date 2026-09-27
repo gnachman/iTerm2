@@ -1,0 +1,11 @@
+#!/bin/sh
+# Manual testing: point ~/.codex/hooks.json at this script. Codex passes no
+# arguments of its own, and cc-status needs --agent codex to take any of the
+# Codex paths, so the flag has to come from somewhere; a wrapper is the one
+# form that works no matter how Codex parses the "command" string.
+#
+# codex-hooks.json next to this file is a ready-made config. Substitute your
+# checkout path and install it:
+#
+#   sed "s|CHECKOUT|$PWD|" tests/codex-hooks.json > ~/.codex/hooks.json
+exec "$(dirname "$0")/../cc-status/bin/cc-status" --agent codex "$@"

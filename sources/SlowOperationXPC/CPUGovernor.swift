@@ -67,8 +67,7 @@ private class AtomicFlag {
         if value <= 0 {
             return
         }
-        // When 10.14 support is dropped we can use DispatchTime.advanced(by:)
-        _gracePeriodEndTime = DispatchTime(uptimeNanoseconds: DispatchTime.now().uptimeNanoseconds + UInt64(value) * NSEC_PER_SEC)
+        _gracePeriodEndTime = DispatchTime.now() + value
     }
 
     @objc public func incr() -> Int {

@@ -713,7 +713,6 @@ class iTermBrowserPageSaverTestHelper {
 
 // MARK: - Simple HTTP Server for Testing
 
-@available(macOS 11.0, *)
 private class iTermTestHTTPServer {
     private let port: Int
     private let documentRoot: URL

@@ -16,6 +16,10 @@
 }
 
 + (instancetype)newPleaseWaitWindowController {
+    return [self newPleaseWaitWindowControllerOrderingFront:YES];
+}
+
++ (instancetype)newPleaseWaitWindowControllerOrderingFront:(BOOL)orderFront {
     iTermBuildingScriptWindowController *pleaseWait = [[self alloc] initWithWindowNibName:@"iTermBuildingScriptWindowController"];
     pleaseWait.window.alphaValue = 0;
     NSScreen *screen = pleaseWait.window.screen;
@@ -28,7 +32,9 @@
     [pleaseWait.window setFrameOrigin:windowOrigin];
     pleaseWait.window.alphaValue = 1;
 
-    [pleaseWait.window makeKeyAndOrderFront:nil];
+    if (orderFront) {
+        [pleaseWait.window makeKeyAndOrderFront:nil];
+    }
     return pleaseWait;
 }
 

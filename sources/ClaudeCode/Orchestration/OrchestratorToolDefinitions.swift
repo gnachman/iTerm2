@@ -54,6 +54,10 @@ private func nullableInteger(_ description: String) -> [String: Any] {
     return ["type": ["integer", "null"], "description": description]
 }
 
+private func nullableNumber(_ description: String) -> [String: Any] {
+    return ["type": ["number", "null"], "description": description]
+}
+
 private func nullableBoolean(_ description: String) -> [String: Any] {
     return ["type": ["boolean", "null"], "description": description]
 }
@@ -142,8 +146,8 @@ extension OrchestratorCommand {
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
                 ("lines", integer("Number of scroll-wheel notches to send. Each notch is one wheel event; how many text lines that moves depends on the app (often 1 or 3). Start small (e.g. 3) and re-read.")),
-                ("direction", string("\u{201C}up\u{201D} reveals OLDER content (the usual choice for paging back through history); \u{201C}down\u{201D} reveals NEWER content. Defaults to \u{201C}up\u{201D}.", enumValues: ["up", "down"])),
-            ], required: ["session_guid", "lines"])),
+                ("direction", nullableString("\u{201C}up\u{201D} reveals OLDER content (the usual choice for paging back through history); \u{201C}down\u{201D} reveals NEWER content. Use null for the default \u{201C}up\u{201D}.", enumValues: ["up", "down"])),
+            ], required: ["session_guid", "lines", "direction"])),
 
         ToolDefinition(
             name: ToolName.listWorkgroupClippings.rawValue,
@@ -221,15 +225,16 @@ extension OrchestratorCommand {
                 // get_state output), but it isn't a transition target;
                 // the dispatcher rejects watch registrations for
                 // "unknown" with a clear error.
-                ("target_state", string("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. \u{201C}unknown\u{201D} is shown by get_state when a session has no tab status yet, but it is not a watchable transition. Mutually exclusive with condition.", enumValues: ["idle", "working", "waiting", "unknown"])),
-                ("condition", string("Plain-English condition to watch for, judged by an AI reading the session's screen, e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}. Describe what will be VISIBLE on screen when the condition holds. Mutually exclusive with target_state.")),
+                ("target_state", nullableString("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. \u{201C}unknown\u{201D} is shown by get_state when a session has no tab status yet, but it is not a watchable transition. Mutually exclusive with condition: set exactly one and null the other.", enumValues: ["idle", "working", "waiting", "unknown"])),
+                ("condition", nullableString("Plain-English condition to watch for, judged by an AI reading the session's screen, e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}. Describe what will be VISIBLE on screen when the condition holds. Mutually exclusive with target_state: set exactly one and null the other.")),
             ] + (CompanionPushRegistry.devicePaired ? [
-                ("notify_user", boolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself.")),
-            ] : []), required: ["session_guid"])),
+                ("notify_user", nullableBoolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself. Use null when not requested.")),
+            ] : []), required: ["session_guid", "target_state", "condition"] + (CompanionPushRegistry.devicePaired ? ["notify_user"] : []))),
 
-        // unregister_watch / list_watches are identical across the orchestration
-        // and session-bound surfaces, so they live in one place and are reused by
-        // both (see sessionBoundWatchToolDefinitions).
+        // register_timer / unregister_watch / list_watches are identical across
+        // the orchestration and session-bound surfaces, so they live in one place
+        // and are reused by both (see sessionBoundWatchToolDefinitions).
+        registerTimerDefinition,
         unregisterWatchDefinition,
         listWatchesDefinition,
 
@@ -253,6 +258,23 @@ extension OrchestratorCommand {
             inputSchema: emptyObjectSchema),
     ] }
 
+    // register_timer, shared verbatim by both surfaces (a timer targets no
+    // session, so unlike register_watch there's no per-surface difference). It's
+    // an async watcher that fires once at a wall-clock time; list_watches and
+    // unregister_watch cover it because a timer is stored as a watcher.
+    static var registerTimerDefinition: ToolDefinition {
+        ToolDefinition(
+            name: ToolName.registerTimer.rawValue,
+            description: "Set an async timer that fires once at a wall-clock time. Supply exactly ONE of delay_seconds (fire this many seconds from now) or fire_at (an absolute ISO-8601 instant, e.g. \u{201C}2026-09-07T17:00:00-07:00\u{201D}). This call returns immediately and does NOT block your turn. When the timer fires, iTerm2 delivers a `<status_update reason=\u{201C}timerFired\u{201D}>...</status_update>` message into the chat as a separate turn; treat that as a system event from iTerm2 (not a new user request) and carry out whatever you scheduled. Put what you intend to do in note so you remember it when the timer fires (your own reasoning may be far up-thread by then). Use this instead of trying to sleep or busy-wait yourself, and do NOT poll the clock. Timers persist across iTerm2 restarts and fire immediately if their time already passed while iTerm2 was not running. A timer reads nothing (no screen, no terminal state) and targets no session; to act on a session when it fires, use your normal tools in that follow-up turn.\(registerWatchNotifyClause)",
+            inputSchema: object([
+                ("delay_seconds", nullableNumber("Seconds from now until the timer fires. Must be positive. Mutually exclusive with fire_at: set exactly one and null the other.")),
+                ("fire_at", nullableString("Absolute time to fire, ISO 8601 with a timezone offset, e.g. \u{201C}2026-09-07T17:00:00-07:00\u{201D}. Must be in the future. Mutually exclusive with delay_seconds: set exactly one and null the other.")),
+                ("note", nullableString("Optional reminder of what to do when the timer fires, echoed back to you verbatim. Use null if you don't need one.")),
+            ] + (CompanionPushRegistry.devicePaired ? [
+                ("notify_user", nullableBoolean("Set true when the user asked to be told/alerted when the timer fires. iTerm2 sends a push notification to their iPhone automatically; you do not need to call notify yourself. Use null when not requested.")),
+            ] : []), required: ["delay_seconds", "fire_at", "note"] + (CompanionPushRegistry.devicePaired ? ["notify_user"] : [])))
+    }
+
     // The unregister_watch / list_watches definitions, shared verbatim by the
     // orchestration surface (allToolDefinitions) and the session-bound surface
     // (sessionBoundWatchToolDefinitions) so the two can't drift.
@@ -272,17 +294,16 @@ extension OrchestratorCommand {
             inputSchema: emptyObjectSchema)
     }
 
-    // The watch tools offered to a session-bound chat (one linked terminal
-    // session). unregister_watch / list_watches are the shared definitions; the
-    // register_watch description is built from the shared spine
-    // (registerWatchDescription) with four session-bound parts: it takes NO
-    // session_guid (the target is the chat's linked session, filled in by the
-    // dispatcher), its blocking clause notes the one-time Ask consent wait, its
-    // form-choice paragraph drops the orchestration-only vocabulary
-    // (list_workgroups, status_source), and its persistence clause matches the
-    // lazy re-arm. request_notification_permission is offered separately by the
-    // provider (it filters on companion state and reuses the shared definition).
-    static var sessionBoundWatchToolDefinitions: [ToolDefinition] { [
+    // The session-bound register_watch definition (one linked terminal session).
+    // Built from the shared spine (registerWatchDescription) with four
+    // session-bound parts: it takes NO session_guid (the target is the chat's
+    // linked session, filled in by the dispatcher), its blocking clause notes the
+    // one-time Ask consent wait, its form-choice paragraph drops the
+    // orchestration-only vocabulary (list_workgroups, status_source), and its
+    // persistence clause matches the lazy re-arm. Offered only when a watch form
+    // is available (see offerWatchers); register_timer is offered regardless
+    // because a timer reads nothing and needs no session.
+    static var sessionBoundRegisterWatchDefinition: ToolDefinition {
         ToolDefinition(
             name: ToolName.registerWatch.rawValue,
             description: registerWatchDescription(
@@ -291,12 +312,21 @@ extension OrchestratorCommand {
                 formChoice: "Choosing the form: use target_state (idle/working/waiting) to fire when the running program reports that transition. Use condition, a plain-English description an AI judge evaluates by periodically reading the session's screen, when what you're waiting for isn't an idle/working/waiting transition (e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}, \u{201C}the build printed a success or failure line\u{201D}, \u{201C}a password prompt appeared\u{201D}); a specific condition is more accurate for those. Screen-judged watches keep watching on their own, polling less often the longer they run, and only time out (reason=\u{201C}watchTimedOut\u{201D}) after several hours; re-register then if you still need to wait.",
                 persistence: "Watchers are saved across iTerm2 restarts and resume when you next return to this chat (if the linked session no longer exists then, you get a status_update with reason=\u{201C}watcherDropped\u{201D}). Do NOT poll yourself."),
             inputSchema: object([
-                ("target_state", string("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. Mutually exclusive with condition.", enumValues: ["idle", "working", "waiting"])),
-                ("condition", string("Plain-English condition to watch for, judged by an AI reading the session's screen, e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}. Describe what will be VISIBLE on screen when the condition holds. Mutually exclusive with target_state.")),
+                ("target_state", nullableString("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. Mutually exclusive with condition: set exactly one and null the other.", enumValues: ["idle", "working", "waiting"])),
+                ("condition", nullableString("Plain-English condition to watch for, judged by an AI reading the session's screen, e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}. Describe what will be VISIBLE on screen when the condition holds. Mutually exclusive with target_state: set exactly one and null the other.")),
             ] + (CompanionPushRegistry.devicePaired ? [
-                ("notify_user", boolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself.")),
-            ] : []), required: [])),
+                ("notify_user", nullableBoolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself. Use null when not requested.")),
+            ] : []), required: ["target_state", "condition"] + (CompanionPushRegistry.devicePaired ? ["notify_user"] : [])))
+    }
 
+    // The full session-bound watch bundle (register_watch + register_timer +
+    // unregister_watch + list_watches). Represents everything offered when a
+    // watch form is available; the provider composes the actual per-chat list
+    // from these pieces (register_timer and the management tools are offered even
+    // when no watch form is available).
+    static var sessionBoundWatchToolDefinitions: [ToolDefinition] { [
+        sessionBoundRegisterWatchDefinition,
+        registerTimerDefinition,
         unregisterWatchDefinition,
         listWatchesDefinition,
     ] }

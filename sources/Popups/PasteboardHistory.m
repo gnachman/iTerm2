@@ -302,8 +302,7 @@
         } else {
             plus = @"";
         }
-        NSString *s = numberOfLines != 1 ? @"s": @"";
-        formattedNumberOfLines = [NSString stringWithFormat:@"%@%@ line%@", @(numberOfLines), plus, s];
+        formattedNumberOfLines = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"PasteHistory.LineCount", nil, [NSBundle mainBundle], @"%1$ld%2$@ lines", @"Line count in the paste history; %1$ld is the count, %2$@ is an optional “+” shown when the count is a lower bound"), (long)numberOfLines, plus];
         return [NSString stringWithFormat:@"%@, %@, %@", formattedNumberOfLines, formattedLength, formattedDate];
     } else {
         // Contents

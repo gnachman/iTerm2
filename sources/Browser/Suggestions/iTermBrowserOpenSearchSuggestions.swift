@@ -7,7 +7,6 @@
 
 import Foundation
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserOpenSearchSuggestions {
     private let attributes: [NSAttributedString.Key: Any]

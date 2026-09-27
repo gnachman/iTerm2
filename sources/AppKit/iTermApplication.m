@@ -774,9 +774,24 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         return YES;
     }
 
+    // No binding (profile or global) claimed this keyDown. This is the single point
+    // per event, so the physical-key-binding offer is decided and presented exactly
+    // once. Pass the session receiving the keystroke (for an in-session banner) or nil
+    // (for a modal) using the same terminal-responder test as handleShortcutWithoutTerminal:.
+    [self maybeSuggestPhysicalKeyBindingsForUnclaimedKeyDown:event];
+
     [self reportKeyDownToAPIClientsIfNeeded:event];
 
     return NO;
+}
+
+- (void)maybeSuggestPhysicalKeyBindingsForUnclaimedKeyDown:(NSEvent *)event {
+    NSWindow *keyWindow = [self keyWindow];
+    PTYSession *session = nil;
+    if ([keyWindow isTerminalWindow] && [[keyWindow firstResponder] it_isTerminalResponder]) {
+        session = [self sessionOfFirstResponder] ?: [[[iTermController sharedInstance] currentTerminal] currentSession];
+    }
+    [PTYSession maybeSuggestPhysicalKeyBindingsForKeyDownEvent:event inSession:session];
 }
 
 - (void)handleScrollWheelEvent:(NSEvent *)event {
@@ -1174,47 +1189,45 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (void)makeCursorSparkles {
-    if (@available(macOS 11.0, *)) {
-        static NSCursor *sparkles;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolSparkles)
-                                       accessibilityDescription:@"Leader pending"];
-            NSImage *black = [image it_imageWithTintColor:[NSColor blackColor]];
-            NSImage *white = [image it_imageWithTintColor:[NSColor whiteColor]];
-            NSSize size = image.size;
-            size.width *= 1.25;
-            size.height *= 1.25;
-            NSImage *composite = [NSImage imageOfSize:NSMakeSize(size.width + 1, size.height + 1)
-                                            drawBlock:^{
-                for (int dx = 0; dx <= 2; dx++) {
-                    for (int dy = 0; dy <= 2; dy++){
-                        if (dx == 1 && dy == 1) {
-                            continue;
-                        }
-                        [white drawInRect:NSMakeRect(dx / 2,
-                                                     dy / 2,
-                                                     size.width,
-                                                     size.height)
-                                 fromRect:NSZeroRect
-                                operation:NSCompositingOperationSourceOver
-                                 fraction:1];
+    static NSCursor *sparkles;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolSparkles)
+                                   accessibilityDescription:NSLocalizedStringWithDefaultValue(@"iTermApplication.LeaderPending", nil, [NSBundle mainBundle], @"Leader pending", @"Accessibility description for the leader-pending sparkles cursor")];
+        NSImage *black = [image it_imageWithTintColor:[NSColor blackColor]];
+        NSImage *white = [image it_imageWithTintColor:[NSColor whiteColor]];
+        NSSize size = image.size;
+        size.width *= 1.25;
+        size.height *= 1.25;
+        NSImage *composite = [NSImage imageOfSize:NSMakeSize(size.width + 1, size.height + 1)
+                                        drawBlock:^{
+            for (int dx = 0; dx <= 2; dx++) {
+                for (int dy = 0; dy <= 2; dy++){
+                    if (dx == 1 && dy == 1) {
+                        continue;
                     }
+                    [white drawInRect:NSMakeRect(dx / 2,
+                                                 dy / 2,
+                                                 size.width,
+                                                 size.height)
+                             fromRect:NSZeroRect
+                            operation:NSCompositingOperationSourceOver
+                             fraction:1];
                 }
-                [black drawInRect:NSMakeRect(1.0 / 2,
-                                             1.0 / 2,
-                                             size.width,
-                                             size.height)
-                         fromRect:NSZeroRect
-                        operation:NSCompositingOperationSourceOver
-                         fraction:1];
-            }];
-            sparkles = [[NSCursor alloc] initWithImage:composite hotSpot:NSMakePoint(size.width / 2.0, size.height / 2.0)];
-        });
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [sparkles set];
-        });
-    }
+            }
+            [black drawInRect:NSMakeRect(1.0 / 2,
+                                         1.0 / 2,
+                                         size.width,
+                                         size.height)
+                     fromRect:NSZeroRect
+                    operation:NSCompositingOperationSourceOver
+                     fraction:1];
+        }];
+        sparkles = [[NSCursor alloc] initWithImage:composite hotSpot:NSMakePoint(size.width / 2.0, size.height / 2.0)];
+    });
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [sparkles set];
+    });
 }
 
 - (void)reportException:(NSException *)exception {

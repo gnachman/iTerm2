@@ -72,16 +72,16 @@ class iTermJobInfoPopoverViewController: NSViewController, NSTableViewDataSource
         view.controller = self
         view.autoresizingMask = [.width, .height]
 
-        let commandHeader = Self.headerLabel("Command")
+        let commandHeader = Self.headerLabel(String(localized: "JobInfoPopover.Command", defaultValue: "Command", comment: "Header for the process's command line"))
         commandValue = Self.valueLabel(fullCommand, wrapping: true)
 
-        let directoryHeader = Self.headerLabel("Working Directory")
-        directoryValue = Self.valueLabel("Loading…", wrapping: true)
+        let directoryHeader = Self.headerLabel(String(localized: "JobInfoPopover.WorkingDirectory", defaultValue: "Working Directory", comment: "Header for the process's working directory"))
+        directoryValue = Self.valueLabel(String(localized: "JobInfoPopover.Loading", defaultValue: "Loading…", comment: "Placeholder shown while the working directory is being fetched"), wrapping: true)
 
-        let pidHeader = Self.headerLabel("Process ID")
+        let pidHeader = Self.headerLabel(String(localized: "JobInfoPopover.ProcessID", defaultValue: "Process ID", comment: "Header for the process ID"))
         pidValue = Self.valueLabel("\(pid)", wrapping: false)
 
-        let startedHeader = Self.headerLabel("Started")
+        let startedHeader = Self.headerLabel(String(localized: "JobInfoPopover.Started", defaultValue: "Started", comment: "Header for the process's start time"))
         startedValue = Self.valueLabel(startedDescription(), wrapping: false)
 
         topFields = [commandHeader, commandValue, directoryHeader, directoryValue,
@@ -101,19 +101,19 @@ class iTermJobInfoPopoverViewController: NSViewController, NSTableViewDataSource
         loadEnvironment()
         loadFileDescriptors()
 
-        environmentHeader = Self.headerLabel("Environment")
+        environmentHeader = Self.headerLabel(String(localized: "JobInfoPopover.Environment", defaultValue: "Environment", comment: "Section header for the environment variables list"))
         view.addSubview(environmentHeader)
         (environmentScrollView, environmentTableView) =
-            makeTableScrollView(columns: [(identifier: "key", title: "Variable", width: 130),
-                                          (identifier: "value", title: "Value", width: 0)])
+            makeTableScrollView(columns: [(identifier: "key", title: String(localized: "JobInfoPopover.Variable", defaultValue: "Variable", comment: "Column title for an environment variable name"), width: 130),
+                                          (identifier: "value", title: String(localized: "JobInfoPopover.Value", defaultValue: "Value", comment: "Column title for an environment variable value"), width: 0)])
         view.addSubview(environmentScrollView)
 
-        fileDescriptorHeader = Self.headerLabel("Open Files & Sockets")
+        fileDescriptorHeader = Self.headerLabel(String(localized: "JobInfoPopover.OpenFilesSockets", defaultValue: "Open Files & Sockets", comment: "Section header for the list of open files and sockets"))
         view.addSubview(fileDescriptorHeader)
         (fileDescriptorScrollView, fileDescriptorTableView) =
-            makeTableScrollView(columns: [(identifier: "fd", title: "FD", width: 36),
-                                          (identifier: "type", title: "Type", width: 58),
-                                          (identifier: "detail", title: "Detail", width: 0)])
+            makeTableScrollView(columns: [(identifier: "fd", title: String(localized: "JobInfoPopover.FD", defaultValue: "FD", comment: "Column title for a file descriptor number"), width: 36),
+                                          (identifier: "type", title: String(localized: "JobInfoPopover.Type", defaultValue: "Type", comment: "Column title for a file descriptor type"), width: 58),
+                                          (identifier: "detail", title: String(localized: "JobInfoPopover.Detail", defaultValue: "Detail", comment: "Column title for file descriptor details"), width: 0)])
         view.addSubview(fileDescriptorScrollView)
 
         self.view = view
@@ -162,13 +162,13 @@ class iTermJobInfoPopoverViewController: NSViewController, NSTableViewDataSource
 
     private func copyButton(action: Selector) -> NSButton {
         let image = NSImage.it_image(forSymbolName: SFSymbol.docOnDoc.rawValue,
-                                     accessibilityDescription: "Copy") ?? NSImage()
+                                     accessibilityDescription: iTermLocalizedCopy()) ?? NSImage()
         let button = NSButton(image: image, target: self, action: action)
         button.isBordered = false
         button.imagePosition = .imageOnly
         button.imageScaling = .scaleProportionallyDown
         button.contentTintColor = .secondaryLabelColor
-        button.toolTip = "Copy"
+        button.toolTip = iTermLocalizedCopy()
         // Clicking the button should not steal first responder (the popover
         // stays keyed off the outline view / space bar).
         button.refusesFirstResponder = true
@@ -233,7 +233,7 @@ class iTermJobInfoPopoverViewController: NSViewController, NSTableViewDataSource
             startTimeFetched = true
         }
         guard let start = startTime else {
-            return "Unknown"
+            return String(localized: "JobInfoPopover.Unknown", defaultValue: "Unknown", comment: "Shown when a value such as the working directory or start time is unknown")
         }
         let absolute = DateFormatter.localizedString(from: start, dateStyle: .medium, timeStyle: .short)
         let formatter = DateComponentsFormatter()
@@ -241,7 +241,7 @@ class iTermJobInfoPopoverViewController: NSViewController, NSTableViewDataSource
         formatter.maximumUnitCount = 2
         formatter.unitsStyle = .abbreviated
         if let elapsed = formatter.string(from: max(0, -start.timeIntervalSinceNow)), !elapsed.isEmpty {
-            return "\(absolute) (\(elapsed) ago)"
+            return String(localized: "JobInfoPopover.StartedAgo", defaultValue: "\(absolute) (\(elapsed) ago)", comment: "Start time followed by how long ago it was, e.g. Jan 1, 2020 (2h ago)")
         }
         return absolute
     }
@@ -257,7 +257,7 @@ class iTermJobInfoPopoverViewController: NSViewController, NSTableViewDataSource
     private func setWorkingDirectory(_ pwd: String?) {
         let hasValue = (pwd?.isEmpty == false)
         workingDirectory = hasValue ? pwd : nil
-        directoryValue.stringValue = hasValue ? pwd! : "Unknown"
+        directoryValue.stringValue = hasValue ? pwd! : String(localized: "JobInfoPopover.Unknown", defaultValue: "Unknown", comment: "Shown when a value such as the working directory or start time is unknown")
         copyDirectoryButton.isEnabled = (workingDirectory != nil)
         // Re-layout to accommodate a possibly multi-line directory.
         relayout(forWidth: view.bounds.width)
@@ -290,7 +290,7 @@ class iTermJobInfoPopoverViewController: NSViewController, NSTableViewDataSource
         }
         let rectInScreen = window.convertToScreen(button.convert(button.bounds, to: nil))
         let topLeft = NSPoint(x: rectInScreen.maxX + 6, y: rectInScreen.maxY)
-        ToastWindowController.showToast(withMessage: "Copied",
+        ToastWindowController.showToast(withMessage: String(localized: "JobInfoPopover.Copied", defaultValue: "Copied", comment: "Toast shown after copying a value to the pasteboard"),
                                         duration: 1,
                                         topLeftScreenCoordinate: topLeft,
                                         pointSize: 12)
@@ -325,6 +325,7 @@ class iTermJobInfoPopoverViewController: NSViewController, NSTableViewDataSource
             if let copyButton {
                 // Vertically center the button on the value's first line.
                 let font = field.font ?? .systemFont(ofSize: 12)
+                // Localization unneeded
                 let lineHeight = ceil(("Ag" as NSString).size(withAttributes: [.font: font]).height)
                 copyButton.frame = NSRect(x: inset + fieldWidth + buttonGap,
                                           y: (field.frame.minY + (lineHeight - buttonSide) / 2).rounded(),

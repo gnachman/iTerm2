@@ -167,8 +167,8 @@ class ClaudeCodeModeController: NSObject {
     }
 
     private func showAnnouncement(on session: PTYSession) {
-        let title = "Claude Code is running. Want to try the Claude Code integration?"
-        let actions = ["Try It Now", "Don't Show Again"]
+        let title = String(localized: "ClaudeCodeMode.OfferTitle", defaultValue: "Claude Code is running. Want to try the Claude Code integration?", comment: "Announcement offering to enable the Claude Code integration")
+        let actions = [String(localized: "ClaudeCodeMode.TryItNow", defaultValue: "Try It Now", comment: "Button to enable the Claude Code integration now"), String(localized: "ClaudeCodeMode.DontShowAgain", defaultValue: "Don't Show Again", comment: "Button to dismiss the offer permanently")]
         let announcement = iTermAnnouncementViewController.announcement(
             withTitle: title,
             style: .kiTermAnnouncementViewStyleQuestion,

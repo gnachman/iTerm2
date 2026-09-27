@@ -225,11 +225,23 @@ extern NSString *const kPreferenceKeyAIManualModelConfigurations;  // NSArray of
 // Name of the manual model the user designated as the "economy" model: a
 // cheaper model used for frequent, low-stakes background judgements (command
 // safety, screen-idle detection). Empty string means none; the catalog's
-// per-model economy pointer is then used instead. See ScreenWatchPoller.
+// per-model economy pointer is then used instead. Resolved by
+// LLMMetadata.economyModel(); consumed by ScreenWatchPoller and
+// AISafetyClassifierBackend.
 extern NSString *const kPreferenceKeyAIEconomyModelName;
 extern NSString *const kPreferenceKeyUseRecommendedAIModel;
 extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor
+// When the built-in Ollama vendor is the default, its models are discovered from
+// the local server rather than a static catalog, so there is no sane automatic
+// choice of which discovered tag to use. These hold the user's explicit picks.
+// Empty string means "not chosen": the regular model then falls back to the
+// lexicographically-first discovered tag, and the economy model falls back to
+// the regular model. See LLMMetadata.recommendedModel(for:) and
+// LLMMetadata.ollamaVendorEconomyModel().
+extern NSString *const kPreferenceKeyAIOllamaRegularModel;
+extern NSString *const kPreferenceKeyAIOllamaEconomyModel;
 extern NSString *const kPreferenceKeyAISafetyCheck;  // boolean
+extern NSString *const kPreferenceKeyAIModelUpdatesEnabled;  // boolean: periodically download the AI model catalog from iterm2.com
 
 // Local (NoSync) flags that govern where the AI command-safety check runs.
 // These form a privacy boundary (on-device vs. configured provider), so they
@@ -243,6 +255,11 @@ extern NSString *const kPreferenceKeyAISafetyCheckProviderMigrationDone;  // boo
 extern NSString *const kPreferenceKeyAISafetyCheckNagComplete;  // boolean: opt-in nag already shown
 extern NSString *const kPreferenceKeyAICustomHeadersEnabled;  // boolean
 extern NSString *const kPreferenceKeyAICustomHeaders;  // NSArray of NSDictionary with "name"/"value" NSString entries
+// boolean: the configured OpenAI org has Zero Data Retention enabled, so the
+// Responses API must never send previous_response_id or rely on server-side
+// stored state (store=false). Global because ZDR is an org-wide property, not
+// something a user would want to configure per manually managed model.
+extern NSString *const kPreferenceKeyAIZeroDataRetention;
 extern NSString *const kPreferenceKeyOpenTmuxWindowsAsTabsInAttachingWindow;  // PHONY
 extern NSString *const kPreferenceKeyOpenUnrecognizedTmuxWindowsIn;  // PHONY
 
@@ -276,6 +293,7 @@ extern NSString *const kPreferenceKeyUIElement;
 extern NSString *const kPreferenceKeyUIElementRequiresHotkeys;
 extern NSString *const kPreferenceKeyFlashTabBarInFullscreen;
 extern NSString *const kPreferenceKeyStretchTabsToFillBar;
+extern NSString *const kPreferenceKeyScrollableSideTabBar;
 extern NSString *const kPreferenceKeyShowWindowNumber;
 extern NSString *const kPreferenceKeyShowJobName_Deprecated;  // DEPRECATED
 extern NSString *const kPreferenceKeyShowProfileName_Deprecated;  // DEPRECATED

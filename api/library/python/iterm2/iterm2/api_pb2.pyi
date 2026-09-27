@@ -2811,6 +2811,7 @@ class GetPropertyRequest(_message.Message):
     "grid_size" -> { "width": number, "height": number }
     "buried" -> boolean
     "number_of_lines" -> { "overflow": number, "grid": number, "history": number }
+    "session_note" -> { "text": string, "visible": boolean, "collapsed": boolean }
 
     For windows:
     "frame" -> { "origin": { "x": number, "y": number }, "size": { "width": number, "height": number } }
@@ -2900,6 +2901,8 @@ class SetPropertyRequest(_message.Message):
     For sessions:
     grid_size      { "width": 80, "height": 25 }
     buried         true
+    "session_note" -> { "text": string, "visible": boolean, "collapsed": boolean }
+    Accepts a partial object; omitted keys retain their current values.
     """
     json_value: _builtins.str
     def __init__(
@@ -5450,8 +5453,13 @@ class ListSessionsResponse(_message.Message):
         WINDOW_ID_FIELD_NUMBER: _builtins.int
         FRAME_FIELD_NUMBER: _builtins.int
         NUMBER_FIELD_NUMBER: _builtins.int
+        SELECTED_TAB_ID_FIELD_NUMBER: _builtins.int
         window_id: _builtins.str
         number: _builtins.int
+        selected_tab_id: _builtins.str
+        """uniqueId of the selected tab, so clients can determine the current tab
+        without waiting for a focus notification. Added in protocol 1.18.
+        """
         @_builtins.property
         def tabs(self) -> _containers.RepeatedCompositeFieldContainer[Global___ListSessionsResponse.Tab]: ...
         @_builtins.property
@@ -5463,10 +5471,11 @@ class ListSessionsResponse(_message.Message):
             window_id: _builtins.str | None = ...,
             frame: Global___Frame | None = ...,
             number: _builtins.int | None = ...,
+            selected_tab_id: _builtins.str | None = ...,
         ) -> None: ...
-        _HasFieldArgType: _TypeAlias = _typing.Literal["frame", b"frame", "number", b"number", "window_id", b"window_id"]  # noqa: Y015
+        _HasFieldArgType: _TypeAlias = _typing.Literal["frame", b"frame", "number", b"number", "selected_tab_id", b"selected_tab_id", "window_id", b"window_id"]  # noqa: Y015
         def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-        _ClearFieldArgType: _TypeAlias = _typing.Literal["frame", b"frame", "number", b"number", "tabs", b"tabs", "window_id", b"window_id"]  # noqa: Y015
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["frame", b"frame", "number", b"number", "selected_tab_id", b"selected_tab_id", "tabs", b"tabs", "window_id", b"window_id"]  # noqa: Y015
         def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
         def WhichOneof(self, oneof_group: _Never) -> None: ...
 
@@ -5479,9 +5488,29 @@ class ListSessionsResponse(_message.Message):
         TMUX_WINDOW_ID_FIELD_NUMBER: _builtins.int
         TMUX_CONNECTION_ID_FIELD_NUMBER: _builtins.int
         MINIMIZED_SESSIONS_FIELD_NUMBER: _builtins.int
+        ACTIVE_SESSION_ID_FIELD_NUMBER: _builtins.int
+        TAB_GROUP_ID_FIELD_NUMBER: _builtins.int
+        TAB_GROUP_NAME_FIELD_NUMBER: _builtins.int
+        TAB_GROUP_COLOR_FIELD_NUMBER: _builtins.int
+        TAB_GROUP_COLLAPSED_FIELD_NUMBER: _builtins.int
         tab_id: _builtins.str
         tmux_window_id: _builtins.str
         tmux_connection_id: _builtins.str
+        active_session_id: _builtins.str
+        """guid of the tab's active session, so clients can determine the current
+        session without waiting for a focus notification. Added in protocol 1.18.
+        """
+        tab_group_id: _builtins.str
+        """Tab group membership. A tab group's identity is a UUID that rides on each
+        member tab (there is no central registry); all members of a group carry
+        the same name/color/collapsed values. tab_group_id is unset when the tab
+        belongs to no group; the other three are meaningful only when it is set.
+        The color is a hex string as produced by -[NSColor hexStringPreservingColorSpace]
+        ("#rrggbb" for sRGB, "p3#rrggbbrrggbb" for Display P3). Added in protocol 1.19.
+        """
+        tab_group_name: _builtins.str
+        tab_group_color: _builtins.str
+        tab_group_collapsed: _builtins.bool
         @_builtins.property
         def root(self) -> Global___SplitTreeNode: ...
         @_builtins.property
@@ -5494,10 +5523,15 @@ class ListSessionsResponse(_message.Message):
             tmux_window_id: _builtins.str | None = ...,
             tmux_connection_id: _builtins.str | None = ...,
             minimized_sessions: _abc.Iterable[Global___SessionSummary] | None = ...,
+            active_session_id: _builtins.str | None = ...,
+            tab_group_id: _builtins.str | None = ...,
+            tab_group_name: _builtins.str | None = ...,
+            tab_group_color: _builtins.str | None = ...,
+            tab_group_collapsed: _builtins.bool | None = ...,
         ) -> None: ...
-        _HasFieldArgType: _TypeAlias = _typing.Literal["root", b"root", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
+        _HasFieldArgType: _TypeAlias = _typing.Literal["active_session_id", b"active_session_id", "root", b"root", "tab_group_collapsed", b"tab_group_collapsed", "tab_group_color", b"tab_group_color", "tab_group_id", b"tab_group_id", "tab_group_name", b"tab_group_name", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
         def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-        _ClearFieldArgType: _TypeAlias = _typing.Literal["minimized_sessions", b"minimized_sessions", "root", b"root", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["active_session_id", b"active_session_id", "minimized_sessions", b"minimized_sessions", "root", b"root", "tab_group_collapsed", b"tab_group_collapsed", "tab_group_color", b"tab_group_color", "tab_group_id", b"tab_group_id", "tab_group_name", b"tab_group_name", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
         def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
         def WhichOneof(self, oneof_group: _Never) -> None: ...
 

@@ -21,12 +21,8 @@ extension NSScrollView {
         let scrollView = NSScrollView(frame: frame)
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = false
-        if #available(macOS 10.16, *) {
-            scrollView.borderType = .lineBorder
-            scrollView.scrollerStyle = .overlay
-        } else {
-            scrollView.borderType = .bezelBorder
-        }
+        scrollView.borderType = .lineBorder
+        scrollView.scrollerStyle = .overlay
         scrollView.autoresizingMask = [.width, .height]
         scrollView.drawsBackground = false
 
@@ -49,12 +45,8 @@ extension NSScrollView {
         let scrollView = NSScrollView(frame: frame)
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = false
-        if #available(macOS 10.16, *) {
-            scrollView.borderType = .lineBorder
-            scrollView.scrollerStyle = .overlay
-        } else {
-            scrollView.borderType = .bezelBorder
-        }
+        scrollView.borderType = .lineBorder
+        scrollView.scrollerStyle = .overlay
         scrollView.autoresizingMask = [.width, .height]
         scrollView.drawsBackground = false
 

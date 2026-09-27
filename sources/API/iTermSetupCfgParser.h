@@ -47,3 +47,10 @@
 // Package is a package name without an operator or version number, like "iterm2".
 - (BOOL)containsPythonPackage:(NSString *)package;
 @end
+
+@interface NSString(SetupCfg)
+// The bare package name from a requirement like "aiohttp>=3.14.3" -> "aiohttp", or nil
+// if the string is not a plain name[+operator+version] requirement. Use this wherever a
+// requirement string is passed somewhere that wants a package name (e.g. pip show).
+- (NSString *)pythonPackage;
+@end

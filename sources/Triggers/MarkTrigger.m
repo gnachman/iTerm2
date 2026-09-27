@@ -20,7 +20,7 @@ typedef enum {
 @implementation MarkTrigger
 
 + (NSString *)title {
-    return @"Set Mark";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Mark.Title", nil, [NSBundle mainBundle], @"Set Mark", @"Trigger action name: set a mark at the matching line");
 }
 
 - (NSString *)description {
@@ -74,8 +74,8 @@ typedef enum {
 
 - (NSDictionary *)menuItemsForPoupupButton
 {
-    return @{ @(kMarkTriggerParamTagKeepScrolling): @"Keep Scrolling",
-              @(kMarkTriggerParamTagStopScrolling): @"Stop Scrolling" };
+    return @{ @(kMarkTriggerParamTagKeepScrolling): NSLocalizedStringWithDefaultValue(@"Trigger.Mark.Param.KeepScrolling", nil, [NSBundle mainBundle], @"Keep Scrolling", @"Set Mark trigger option: keep the terminal scrolling when the mark is set"),
+              @(kMarkTriggerParamTagStopScrolling): NSLocalizedStringWithDefaultValue(@"Trigger.Mark.Param.StopScrolling", nil, [NSBundle mainBundle], @"Stop Scrolling", @"Set Mark trigger option: stop scrolling and hold the view at the mark") };
 }
 
 - (BOOL)shouldStopScrolling {

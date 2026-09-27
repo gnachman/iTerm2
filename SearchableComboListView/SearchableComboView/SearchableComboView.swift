@@ -195,7 +195,7 @@ open class SearchableComboView: NSPopUpButton {
 
     @objc open override var selectedItem: NSMenuItem? {
         let item = NSMenuItem()
-        guard let myItem = listViewController.tableViewController?.selectedItem else {
+        guard let myItem = listViewController.tableViewController?.checkedItem else {
             return nil
         }
         item.title = myItem.label

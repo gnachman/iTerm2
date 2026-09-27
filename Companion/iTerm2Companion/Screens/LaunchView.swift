@@ -60,6 +60,19 @@ struct LaunchView: View {
             }
         }
         .padding(.bottom, 16)
+        // Settings is reachable here too (there is no nav bar on this screen), so you can
+        // email diagnostic logs even before pairing.
+        .overlay(alignment: .topTrailing) {
+            Button {
+                model.beginSettings()
+            } label: {
+                Image(systemName: "gear")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+                    .padding()
+            }
+            .accessibilityLabel("Settings")
+        }
     }
 }
 

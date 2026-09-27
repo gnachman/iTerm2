@@ -780,6 +780,9 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSetCurrentTabColor:(NSColor *)color {
 }
 
+- (void)screenSetColorBinding:(NSString *)expression forProfileKey:(NSString *)profileKey {
+}
+
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
 }
 
@@ -2070,16 +2073,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"ł"]);
 
     XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"🖕🏾"]);
-    BOOL lettersHaveSkin = NO;
-    if (@available(macOS 10.15, *)) { } else {
-        lettersHaveSkin = YES;
-    }
-    if (lettersHaveSkin) {
-        XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g\U0001F3FE"]);  // macOS 10.14 does a silly thing
-    } else {
-        XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g"]);
-        XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
-    }
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"g"]);
+    XCTAssert([ScreenCharToStr(line + i++) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
     XCTAssert(line[i++].code == 0);
 }
 

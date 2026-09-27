@@ -336,9 +336,9 @@ static PreferencePanel *gSessionsPreferencePanel;
     }
     NSString *repr = defaultString;
     if (!repr.length) {
-        repr = @"Empty Default";
+        repr = NSLocalizedStringWithDefaultValue(@"PreferencePanel.EmptyDefault", nil, [NSBundle mainBundle], @"Empty Default", @"Placeholder shown when a preference's default value is an empty string");
     }
-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"Reset to %@", repr]
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PreferencePanel.ResetToDefault", nil, [NSBundle mainBundle], @"Reset to %@", @"Menu item to reset a preference to its default value; %@ is the default value"), repr]
                                                   action:@selector(resetPrefToDefaultValue:)
                                            keyEquivalent:@""];
     item.target = self;
@@ -517,10 +517,8 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     IBOutlet NSToolbarItem *_shortcutsToolbarItem;
 
     NSToolbarItem *_searchFieldToolbarItem;
-#ifdef MAC_OS_X_VERSION_10_16
-    NSSearchToolbarItem *_bigSurSearchFieldToolbarItem NS_AVAILABLE_MAC(10_16);
-    NSMenuItem *_showNonDefaultValuesMenuItem NS_AVAILABLE_MAC(10_16);
-#endif
+    NSSearchToolbarItem *_bigSurSearchFieldToolbarItem;
+    NSMenuItem *_showNonDefaultValuesMenuItem;
     NSDictionary<NSString *, NSString *> *_keywords;
     NSDictionary<NSString *, id<iTermSearchableViewController>> *_keywordToViewController;
     // This class is not well named. It is a view controller for the window
@@ -590,14 +588,14 @@ static iTermPreferencesSearchEngine *gSearchEngine;
         self.window.toolbarStyle = NSWindowToolbarStylePreference;
     }
 
-    _globalToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolGearshape) accessibilityDescription:@"General"];
-    _appearanceToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolEye) accessibilityDescription:@"Appearance"];
-    _keyboardToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolKeyboard) accessibilityDescription:@"Keys"];
-    _arrangementsToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolMacwindowOnRectangle) accessibilityDescription:@"Arrangements"];
-    _profilesToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPerson) accessibilityDescription:@"Profiles"];
-    _mouseToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolCursorarrowMotionlines) accessibilityDescription:@"Pointer"];
-    _advancedToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolGearshape2) accessibilityDescription:@"Advanced"];
-    _shortcutsToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolBoltCircle) accessibilityDescription:@"Shortcuts"];
+    _globalToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolGearshape) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PreferencePanel.ToolbarGeneral", nil, [NSBundle mainBundle], @"General", @"Accessibility description for the General settings toolbar item")];
+    _appearanceToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolEye) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PreferencePanel.ToolbarAppearance", nil, [NSBundle mainBundle], @"Appearance", @"Accessibility description for the Appearance settings toolbar item")];
+    _keyboardToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolKeyboard) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PreferencePanel.ToolbarKeys", nil, [NSBundle mainBundle], @"Keys", @"Accessibility description for the Keys settings toolbar item")];
+    _arrangementsToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolMacwindowOnRectangle) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PreferencePanel.ToolbarArrangements", nil, [NSBundle mainBundle], @"Arrangements", @"Accessibility description for the Arrangements settings toolbar item")];
+    _profilesToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPerson) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PreferencePanel.ToolbarProfiles", nil, [NSBundle mainBundle], @"Profiles", @"Accessibility description for the Profiles settings toolbar item")];
+    _mouseToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolCursorarrowMotionlines) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PreferencePanel.ToolbarPointer", nil, [NSBundle mainBundle], @"Pointer", @"Accessibility description for the Pointer settings toolbar item")];
+    _advancedToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolGearshape2) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PreferencePanel.ToolbarAdvanced", nil, [NSBundle mainBundle], @"Advanced", @"Accessibility description for the Advanced settings toolbar item")];
+    _shortcutsToolbarItem.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolBoltCircle) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"PreferencePanel.ToolbarShortcuts", nil, [NSBundle mainBundle], @"Shortcuts", @"Accessibility description for the Shortcuts settings toolbar item")];
 
     _globalTabViewItem.view = _generalPreferencesViewController.view;
     _appearanceTabViewItem.view = _appearancePreferencesViewController.view;
@@ -616,15 +614,15 @@ static iTermPreferencesSearchEngine *gSearchEngine;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
-        self.window.title = @"Edit Session";
+        self.window.title = NSLocalizedStringWithDefaultValue(@"PreferencePanel.EditSessionWindowTitle", nil, [NSBundle mainBundle], @"Edit Session", @"Window title when editing the current session's settings");
     } else {
         [_toolbar setVisible:YES];
         [self resizeWindowForTabViewItem:_globalTabViewItem animated:NO];
         NSString *suiteName = [iTermUserDefaults customSuiteName];
         if (suiteName.length > 0) {
-            self.window.title = [NSString stringWithFormat:@"Settings: %@", suiteName];
+            self.window.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PreferencePanel.SettingsWindowTitleWithSuite", nil, [NSBundle mainBundle], @"Settings: %@", @"Settings window title including the settings suite name"), suiteName];
         } else {
-            self.window.title = @"Settings";
+            self.window.title = NSLocalizedStringWithDefaultValue(@"PreferencePanel.SettingsWindowTitle", nil, [NSBundle mainBundle], @"Settings", @"Settings window title");
         }
     }
 
@@ -646,11 +644,9 @@ static iTermPreferencesSearchEngine *gSearchEngine;
         [self.window addTitlebarAccessoryViewController:vc];
     }
 
-    if (@available(macOS 11, *)) {
-        if (!_editCurrentSessionMode && iTermUserDefaultsUnsavedController.allowed) {
-            iTermUserDefaultsUnsavedController *unsaved = [[iTermUserDefaultsUnsavedController alloc] init];
-            [self.window addTitlebarAccessoryViewController:unsaved];
-        }
+    if (!_editCurrentSessionMode && iTermUserDefaultsUnsavedController.allowed) {
+        iTermUserDefaultsUnsavedController *unsaved = [[iTermUserDefaultsUnsavedController alloc] init];
+        [self.window addTitlebarAccessoryViewController:unsaved];
     }
     if (!_editCurrentSessionMode) {
         [_profilesViewController selectDefaultProfile];
@@ -853,6 +849,85 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }];
 }
 
+#if ITERM_DEBUG
+// Debug-only: walk every tab (and sub-tab) of the Settings window and report any
+// control whose localized text is truncated in the current UI locale. Findings
+// go to stderr via iTermSettingsTruncationChecker.
+- (void)debugCheckControlTruncation {
+    [self runAndShow:YES];
+    NSWindow *window = self.window;
+
+    [iTermSettingsTruncationChecker beginReport];
+
+    // Detach the outer tab view delegate so selecting tabs doesn't trigger the
+    // usual animated window resize (which would leave geometry in a transient
+    // state while we measure). We drive the resize ourselves, non-animated.
+    id<NSTabViewDelegate> savedDelegate = _tabView.delegate;
+    _tabView.delegate = nil;
+    NSTabViewItem *savedSelection = _tabView.selectedTabViewItem;
+
+    for (NSTabViewItem *item in [_tabView.tabViewItems copy]) {
+        [_tabView selectTabViewItem:item];
+        NSString *topLabel = [self toolbarItemForTabViewItem:item].label ?: item.label ?: @"?";
+
+        // The Profiles tab manages its own inner tab view and per-tab view
+        // controllers, so hand it off to a dedicated helper.
+        if (item == _profilesTabViewItem) {
+            [_profilesViewController debugCheckControlTruncationWithTopLabel:topLabel
+                                                                     window:window];
+            continue;
+        }
+
+        // Size the window for this tab before measuring.
+        [self resizeWindowForTabViewItem:item animated:NO];
+        [window layoutIfNeeded];
+
+        iTermPreferencesBaseViewController *vc = [self viewControllerForTabViewItem:item];
+        NSTabView *inner = vc.tabView;
+        if (inner != nil) {
+            id<NSTabViewDelegate> savedInnerDelegate = inner.delegate;
+            inner.delegate = nil;
+            NSTabViewItem *savedInner = inner.selectedTabViewItem;
+            for (NSTabViewItem *sub in [inner.tabViewItems copy]) {
+                [inner selectTabViewItem:sub];
+                [vc resizeWindowForCurrentTabAnimated:NO];
+                [window layoutIfNeeded];
+                NSString *subLabel = sub.label ?: @"?";
+                [iTermSettingsTruncationChecker check:(sub.view ?: vc.view)
+                                                 path:@[topLabel, subLabel]];
+            }
+            if (savedInner) {
+                [inner selectTabViewItem:savedInner];
+            }
+            inner.delegate = savedInnerDelegate;
+        } else {
+            NSView *root = vc.view ?: item.view;
+            if (root) {
+                [iTermSettingsTruncationChecker check:root path:@[topLabel]];
+            }
+        }
+    }
+
+    // Restore the original selection and delegate, then put the window back to
+    // the size the originally-selected tab needs. During the sweep the delegate
+    // was detached, so nothing resized the window afterward; without this the
+    // window is left at the size of the last (often largest) tab we visited.
+    // This mirrors -tabView:didSelectTabViewItem:.
+    if (savedSelection) {
+        [_tabView selectTabViewItem:savedSelection];
+    }
+    _tabView.delegate = savedDelegate;
+    if (savedSelection == _profilesTabViewItem) {
+        [_profilesViewController resizeWindowForCurrentTabAnimated:NO];
+    } else if (savedSelection) {
+        [self resizeWindowForTabViewItem:savedSelection animated:NO];
+    }
+    [window layoutIfNeeded];
+
+    [iTermSettingsTruncationChecker endReport];
+}
+#endif
+
 #pragma mark - NSWindowController
 
 - (void)windowWillLoad {
@@ -1018,7 +1093,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
         }
 
         NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Search Options"];
-        NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:@"Show indicators for non-default values"
+        NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PreferencePanel.ShowIndicatorsForNonDefaultValues", nil, [NSBundle mainBundle], @"Show indicators for non-default values", @"Search options menu item to show indicators for non-default values")
                                                           action:@selector(toggleIndicateNonDefaultValues:)
                                                    keyEquivalent:@""];
         menuItem.target = self;
@@ -1033,7 +1108,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     return _bigSurSearchFieldToolbarItem;
 }
 
-- (void)toggleIndicateNonDefaultValues:(id)sender NS_AVAILABLE_MAC(10_16) {
+- (void)toggleIndicateNonDefaultValues:(id)sender {
     [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues]
                        forKey:kPreferenceKeyIndicateNonDefaultValues];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermPreferencesDidToggleIndicateNonDefaultValues
@@ -1041,11 +1116,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
-    if (@available(macOS 10.16, *)) {
-        if (menuItem.action == @selector(toggleIndicateNonDefaultValues:)) {
-            menuItem.state = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] ? NSControlStateValueOn: NSControlStateValueOff;
-            return YES;
-        }
+    if (menuItem.action == @selector(toggleIndicateNonDefaultValues:)) {
+        menuItem.state = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] ? NSControlStateValueOn: NSControlStateValueOff;
+        return YES;
     }
     return YES;
 }
@@ -1269,13 +1342,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
 #pragma mark - NSSearchFieldDelegate
 
 - (NSSearchField *)searchField {
-#ifdef MAC_OS_X_VERSION_10_16
-    if (@available(macOS 10.16, *)) {
-        if (self.bigSurSearchFieldToolbarItem) {
-            return self.bigSurSearchFieldToolbarItem.searchField;
-        }
+    if (self.bigSurSearchFieldToolbarItem) {
+        return self.bigSurSearchFieldToolbarItem.searchField;
     }
-#endif
     return (NSSearchField *)_searchFieldToolbarItem.view;
 }
 

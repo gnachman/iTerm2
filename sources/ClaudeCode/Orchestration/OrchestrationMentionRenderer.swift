@@ -51,17 +51,21 @@ enum OrchestrationMentionRenderer {
     // Replaces every @-prefixed session/workgroup mention in `input`
     // with a link to the live entity's name, or "[defunct session]"
     // when the identifier no longer resolves. Returns `input` unchanged
-    // when there are no mentions.
-    static func link(_ input: NSAttributedString, linkColor: NSColor) -> NSAttributedString {
-        return link(input, linkColor: linkColor, resolve: liveResolve)
+    // when there are no mentions. Pass `atSignOptional: true` for text the
+    // AI authored, so a stableID it wrote without the leading "@" still links.
+    static func link(_ input: NSAttributedString,
+                     linkColor: NSColor,
+                     atSignOptional: Bool = false) -> NSAttributedString {
+        return link(input, linkColor: linkColor, atSignOptional: atSignOptional, resolve: liveResolve)
     }
 
     // Testable core: pure aside from the injected `resolve`.
     static func link(_ input: NSAttributedString,
                      linkColor: NSColor,
+                     atSignOptional: Bool = false,
                      resolve: Resolver) -> NSAttributedString {
         let ns = input.string as NSString
-        let mentions = MentionParser.mentions(in: input.string)
+        let mentions = MentionParser.mentions(in: input.string, atSignOptional: atSignOptional)
         guard !mentions.isEmpty else {
             return input
         }
@@ -155,7 +159,7 @@ enum OrchestrationMentionRenderer {
         // Keep the bracketed wording the phone renderers use so the same
         // mention reads consistently across Mac and phone; only the styling
         // (glyph, gray, non-clickable) is Mac-specific.
-        result.append(NSAttributedString(string: "[defunct session]", attributes: attributes))
+        result.append(NSAttributedString(string: String(localized: "OrchestrationMentionRenderer.DefunctSession", defaultValue: "[defunct session]", comment: "Inline text shown in place of a session mention when the session no longer exists"), attributes: attributes))
         return result
     }
 
@@ -167,7 +171,7 @@ enum OrchestrationMentionRenderer {
                                    tint: NSColor,
                                    action: ((NSPoint) -> ())?) -> NSAttributedString? {
         guard let symbol = NSImage(systemSymbolName: "terminal",
-                                   accessibilityDescription: "iTerm2 session") else {
+                                   accessibilityDescription: String(localized: "OrchestrationMentionRenderer.SessionIconLabel", defaultValue: "iTerm2 session", comment: "Accessibility label for the terminal glyph shown next to a session mention")) else {
             return nil
         }
         let dynamicImage = DynamicImage(image: symbol,
@@ -257,7 +261,7 @@ enum OrchestrationMentionRenderer {
             return nil
         }
         let raw = instance.workgroup.name
-        let name = raw.isEmpty ? "Untitled workgroup" : raw
+        let name = raw.isEmpty ? String(localized: "OrchestrationMentionRenderer.UntitledWorkgroup", defaultValue: "Untitled workgroup", comment: "Fallback display name for a workgroup with no name") : raw
         return Resolved(displayName: name,
                         revealGuid: leader.stableID,
                         workgroupID: instanceID)

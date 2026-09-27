@@ -32,10 +32,23 @@ typedef NS_ENUM(int, iTermOpenAnonymousTmuxWindowLocation) {
     iTermOpenAnonymousTmuxWindowLocationTopmostSessionWindow = 2,
 };
 
+// When the window name should appear beside the tabs in compact and minimal
+// themes, which have no title bar to put it in. Stored as the integer value of
+// +showWindowNameBesideTabs. The raw values are persisted in user defaults, so
+// do not renumber them.
+typedef NS_ENUM(int, iTermWindowNameBesideTabsMode) {
+    iTermWindowNameBesideTabsModeNever = 0,
+    iTermWindowNameBesideTabsModeWhenCustom = 1,
+    iTermWindowNameBesideTabsModeAlways = 2,
+};
+
 extern NSString *const kAdvancedSettingIdentifier;
 extern NSString *const kAdvancedSettingType;
 extern NSString *const kAdvancedSettingDefaultValue;
 extern NSString *const kAdvancedSettingDescription;
+// The stable, non-localized category name (e.g. @"Tabs") used to group settings. Its localized
+// form is used only for the display header.
+extern NSString *const kAdvancedSettingCategory;
 extern NSString *const kAdvancedSettingSetter;
 extern NSString *const kAdvancedSettingGetter;
 
@@ -48,6 +61,10 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 
 + (void)enumerateDictionaries:(void (^)(NSDictionary *))block;
 + (void)loadAdvancedSettingsFromUserDefaults;
+
+// One-time migration of the renamed alternateScreenBidi -> disableBidiInAlternateScreen
+// setting. Operates on the given defaults; exposed for testing.
++ (void)migrateAlternateScreenBidiSettingInUserDefaults:(NSUserDefaults *)userDefaults;
 
 #pragma mark - Accessors
 
@@ -64,6 +81,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)browserProxyPort;
 + (void)setBrowserProxyPort:(int)value;
 + (BOOL)acceptOSC7;
++ (void)setAcceptOSC7:(BOOL)value;
 + (double)activeUpdateCadence;
 + (int)adaptiveFrameRateThroughputThreshold;
 + (BOOL)addTabButtonUsesCurrentProfile;
@@ -74,6 +92,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)aiModelCatalogURL;
 + (NSString *)aiModernModelPrefixes;
 + (NSString *)aiProxy;
++ (int)ollamaNumCtx;
++ (NSString *)ollamaKeepAlive;
 + (double)alertTriggerRateLimit;
 + (BOOL)alertsIndicateShortcuts;
 + (BOOL)allowDragOfTabIntoNewWindow;
@@ -100,6 +120,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)anonymousTmuxWindowsOpenInCurrentWindow;
 + (BOOL)appendToExistingDebugLog;
 + (BOOL)aquaSKKBugfixEnabled;
++ (BOOL)aiGeneratedTabTitles;
 + (BOOL)autoLockSessionNameOnEdit;
 + (int)autocompleteMaxOptions;
 + (BOOL)autodetectMouseReportingStuck;
@@ -114,7 +135,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)badgeRightMargin;
 + (int)badgeTopMargin;
 + (double)bellRateLimit;
-+ (BOOL)alternateScreenBidi;
 + (BOOL)bordersOnlyInLightMode;
 + (BOOL)bounceOnInactiveBell;
 + (BOOL)bootstrapDaemon;
@@ -166,10 +186,12 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)defaultIconsUsingLetters;
 + (BOOL)defaultWideMode;
 + (BOOL)detectParagraphDirection;
++ (BOOL)disableBidiInAlternateScreen;
 + (BOOL)detectPasswordInput;
 + (double)detectPasswordInputDebounce;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (BOOL)disableAppNap;
++ (BOOL)preventSleepOnBatteryToo;
 + (BOOL)disableCustomBoxDrawing;
 + (BOOL)disableDECRQCRA;
 + (BOOL)disableDocumentedEditedIndicator;
@@ -187,12 +209,11 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disableWindowSizeSnap;
 + (BOOL)disallowCopyEmptyString;
 + (BOOL)disclaimChildren;
-// Use PTYScrollView.shouldDismember, since disabling dismemberment is 10.15+
-+ (BOOL)dismemberScrollView;
 + (BOOL)disregardDockSettingToOpenTabsInsteadOfWindows;
 + (BOOL)dockIconTogglesWindow DEPRECATED_ATTRIBUTE;
 + (BOOL)doNotSetCtype;
 + (BOOL)doubleClickTabToEdit;
++ (BOOL)duplicatedTabsOpenAdjacentToOriginal;
 + (BOOL)doubleReportScrollWheel;
 + (NSString *)downloadsDirectory;
 + (double)noSyncDownloadPrefsTimeout;
@@ -226,6 +247,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)compactTabBarStoplightButtonsWidth;
 + (double)fakeNotchHeight;
 + (NSString *)fakeFullyQualifiedDomainName;
++ (NSString *)fakeBootSessionUUID;
 + (NSString *)fallbackLCCType;
 + (BOOL)fastForegroundJobUpdates;
 + (BOOL)fastTriggerRegexes;
@@ -256,7 +278,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)gitSearchPath;
 + (double)gitTimeout;
 + (void)setGitTimeout:(double)value;
-+ (BOOL)hdrCursor;
++ (BOOL)allowHDR;
 + (BOOL)hideStuckTooltips;
 + (BOOL)highVisibility;
 + (double)horizontalScrollingSensitivity;
@@ -271,12 +293,14 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)includePasteHistoryInAdvancedPaste;
 + (BOOL)includeShortcutInWindowsMenu;
 + (BOOL)indicateBellsInDockBadgeLabel;
++ (BOOL)showSuiteNameInDockIcon;
 + (double)indicatorFlashInitialAlpha;
 + (BOOL)jiggleTTYSizeOnClearBuffer;
 + (BOOL)killJobsInServersOnQuit;
 + (BOOL)killSessionsOnLogout;
 + (NSString *)lastpassGroups;
 + (BOOL)laxNilPolicyInInterpolatedStrings;
++ (BOOL)pythonRuntimeUsesUV;
 + (BOOL)leftAlignTitleBarMinimalTahoe;
 + (double)lightModeInactiveTabDarkness;
 + (NSString *)llmPlatform;
@@ -288,6 +312,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)logToSyslog;
 + (BOOL)aiChatVerboseConsoleLogging;
 + (BOOL)aiChatRawWireLogging;
++ (BOOL)logAITabTitleCorpus;
 + (BOOL)lowFiCombiningMarks;
 + (double)lowPowerModeFrameRate;
 + (BOOL)makeSomePowerlineSymbolsWide;
@@ -372,6 +397,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)openQuicklyAnimationDuration;
 + (BOOL)openUntitledFile;
 + (int)optimumTabWidth;
++ (int)scrollableTabWidth;
 + (BOOL)oscColorReport16Bits;
 + (BOOL)p3;
 + (int)pasteHistoryMaxOptions;
@@ -408,6 +434,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)promptForPasteWhenNotAtPrompt;
 + (NSString *)pythonRuntimeBetaDownloadURL;
 + (NSString *)pythonRuntimeDownloadURL;
++ (NSString *)uvManifestDownloadURL;
 + (void)setPromptForPasteWhenNotAtPrompt:(BOOL)value;
 + (BOOL)proportionalScrollWheelReporting;
 + (int)quickPasteBytesPerCall;
@@ -461,6 +488,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showSecureKeyboardEntryIndicator;
 + (BOOL)showSessionRestoredBanner;
 + (BOOL)showURLPreviewForSemanticHistory;
++ (int)showWindowNameBesideTabs;
 + (BOOL)showWindowTitleWhenTabBarInvisible;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
 + (BOOL)silentUserNotifications;
@@ -557,6 +585,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)updateScreenParamsDelay;
 + (BOOL)useCustomTabBarFontSize;
 + (BOOL)useDoubleClickDelayForCommandSelection;
++ (BOOL)usePosixSpawn;
 + (BOOL)useRestorableStateController;
 + (BOOL)useSequoiaStyleTabs;
 + (BOOL)useShortcutAccessoryViewController;
@@ -598,6 +627,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)viewManPageCommand;
 + (BOOL)wrapFocus;
 + (BOOL)zeroWidthSpaceAdvancesCursor;
++ (BOOL)stripZeroWidthFormatCharactersOnPaste;
 + (BOOL)zippyTextDrawing;
 
 

@@ -91,7 +91,7 @@ typedef NS_ENUM(NSInteger, ToolNotesMode) {
         mode_ = ToolNotesModeGlobal;
 
         // Mode selector
-        modeControl_ = [NSSegmentedControl segmentedControlWithLabels:@[@"Global", @"Session"]
+        modeControl_ = [NSSegmentedControl segmentedControlWithLabels:@[NSLocalizedStringWithDefaultValue(@"ToolNotes.ModeGlobal", nil, [NSBundle mainBundle], @"Global", @"Segment label for the global notes mode"), NSLocalizedStringWithDefaultValue(@"ToolNotes.ModeSession", nil, [NSBundle mainBundle], @"Session", @"Segment label for the per-session notes mode")]
                                                          trackingMode:NSSegmentSwitchTrackingSelectOne
                                                                target:self
                                                                action:@selector(modeChanged:)];
@@ -102,12 +102,8 @@ typedef NS_ENUM(NSInteger, ToolNotesMode) {
         [self addSubview:modeControl_];
 
         scrollView_ = [[NSScrollView alloc] initWithFrame:NSZeroRect];
-        if (@available(macOS 10.16, *)) {
-            [scrollView_ setBorderType:NSLineBorder];
-            scrollView_.scrollerStyle = NSScrollerStyleOverlay;
-        } else {
-            [scrollView_ setBorderType:NSBezelBorder];
-        }
+        [scrollView_ setBorderType:NSLineBorder];
+        scrollView_.scrollerStyle = NSScrollerStyleOverlay;
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
         scrollView_.drawsBackground = NO;
@@ -157,6 +153,13 @@ typedef NS_ENUM(NSInteger, ToolNotesMode) {
         [nc addObserver:self
                selector:@selector(sessionNoteModelTextDidChange:)
                    name:iTermSessionNoteModel.textDidChangeNotification
+                 object:nil];
+        // A session can swap its model out from under us (the API can clear or create a note without
+        // the user touching this view). -sessionNoteModelDidChange: reloads if the current session's
+        // model is not the one we are holding.
+        [nc addObserver:self
+               selector:@selector(sessionNoteModelDidChange:)
+                   name:iTermSessionNoteModel.modelDidChangeNotification
                  object:nil];
 
         [self relayout];
@@ -578,7 +581,14 @@ typedef NS_ENUM(NSInteger, ToolNotesMode) {
     } else {
         if (!sessionNoteModel_) {
             id<iTermToolbeltViewDelegate> delegate = [[self toolWrapper] delegate].delegate;
-            sessionNoteModel_ = [[delegate toolbeltEnsureCurrentSessionNoteModel] retain];
+            // Creating the model posts modelDidChangeNotification synchronously. Without the ignore
+            // flag, -sessionNoteModelDidChange: would reload the (empty) new model into the text view
+            // mid-keystroke and the character the user just typed would be lost.
+            ignoreSessionNoteNotification_ = YES;
+            iTermSessionNoteModel *model = [delegate toolbeltEnsureCurrentSessionNoteModel];
+            ignoreSessionNoteNotification_ = NO;
+            [sessionNoteModel_ release];
+            sessionNoteModel_ = [model retain];
         }
         if (sessionNoteModel_) {
             ignoreSessionNoteNotification_ = YES;
@@ -727,6 +737,14 @@ typedef NS_ENUM(NSInteger, ToolNotesMode) {
         return;
     }
     [self loadSessionNote];
+}
+
+- (void)sessionNoteModelDidChange:(NSNotification *)notification {
+    if (ignoreSessionNoteNotification_) {
+        // We are the ones replacing the model (see -textDidChange:).
+        return;
+    }
+    [self activeSessionDidChange:notification];
 }
 
 - (void)sessionNoteModelTextDidChange:(NSNotification *)notification {

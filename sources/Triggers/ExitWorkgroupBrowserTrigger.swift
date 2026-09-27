@@ -11,7 +11,7 @@ import Foundation
 @objc(iTermExitWorkgroupBrowserTrigger)
 class ExitWorkgroupBrowserTrigger: Trigger {
     override static var title: String {
-        return "Exit Workgroup"
+        return String(localized: "Trigger.ExitWorkgroupBrowser.Title", defaultValue: "Exit Workgroup", comment: "Trigger action name: exit the active workgroup on the matching browser session")
     }
 
     override var description: String {

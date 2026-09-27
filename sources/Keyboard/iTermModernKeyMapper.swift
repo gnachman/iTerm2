@@ -1100,27 +1100,11 @@ fileprivate struct KeyReport {
                 // Arrow keys: they have no number, they just use a letter.
                 return nil
             } else if enhancementFlags.contains(.reportAlternateKeys) {
-                // Note that the shifted key must be present only if shift is also
-                // present in the modifiers.
-                // We don't bother reporting shifted and base if they're the
-                // same as the unicode code.
-                if event.modifiers.cooked.reportableFlags.contains(.shift) {
-                    if (event.csiUNumber == event.baseLayoutKeyCode &&
-                        (event.shiftedKeyCode == nil ||
-                         event.csiUNumber == event.shiftedKeyCode)) {
-                        return [event.csiUNumber]
-                    } else if event.csiUNumber == event.baseLayoutKeyCode {
-                        return [event.csiUNumber, event.shiftedKeyCode]
-                    } else {
-                        return [event.csiUNumber, event.shiftedKeyCode, event.baseLayoutKeyCode]
-                    }
-                } else {
-                    if (event.csiUNumber == event.baseLayoutKeyCode || event.baseLayoutKeyCode == 0) {
-                        return [event.csiUNumber]
-                    } else {
-                        return [event.csiUNumber, nil, event.baseLayoutKeyCode]
-                    }
-                }
+                return kittyAlternateKeyComponents(
+                    csiUNumber: event.csiUNumber,
+                    shiftedKeyCode: event.shiftedKeyCode,
+                    baseLayoutKeyCode: event.baseLayoutKeyCode,
+                    shiftReported: event.modifiers.cooked.reportableFlags.contains(.shift))
             } else {
                 return [event.csiUNumber]
             }
@@ -1494,6 +1478,97 @@ extension String {
     }
 }
 
+/// Computes the CSI u “unicode-key-code:alternate-key-codes” component list
+/// for a key when the report-alternate-keys enhancement is on.
+///
+/// `csiUNumber` is the primary key code, `shiftedKeyCode` is the shifted
+/// alternate (nil when the key has none), and `baseLayoutKeyCode` is the
+/// PC-101 base-layout alternate (0 when the key has no PC-101 position, such
+/// as an ISO/JIS-only key). An alternate is omitted when it is absent, equal
+/// to the primary code, or (for the base-layout alternate) 0, so it is never
+/// reported as a literal 0.
+func kittyAlternateKeyComponents(csiUNumber: UInt32,
+                                 shiftedKeyCode: UInt32?,
+                                 baseLayoutKeyCode: UInt32,
+                                 shiftReported: Bool) -> [UInt32?] {
+    // A base-layout code of 0 means the key has no PC-101 position (e.g. an
+    // ISO/JIS-only key), so it must be treated as “no base alternate” rather
+    // than reported as a literal 0. The shifted alternate is reported only
+    // when shift is actually present and it differs from the primary code.
+    let hasBase = baseLayoutKeyCode != 0 && baseLayoutKeyCode != csiUNumber
+    if shiftReported {
+        if hasBase {
+            // shiftedKeyCode nil-coalesces to an empty subparam in the
+            // encoder, so [primary, nil, base] emits `primary::base`.
+            return [csiUNumber, shiftedKeyCode, baseLayoutKeyCode]
+        }
+        if let shiftedKeyCode, shiftedKeyCode != csiUNumber {
+            return [csiUNumber, shiftedKeyCode]
+        }
+        return [csiUNumber]
+    }
+    if hasBase {
+        return [csiUNumber, nil, baseLayoutKeyCode]
+    }
+    return [csiUNumber]
+}
+
+/// Returns the unshifted Unicode codepoint at a macOS virtual key’s
+/// physical position in the standard PC-101 layout.
+func pc101BaseLayoutKeyCode(for virtualKeyCode: UInt16) -> UInt32? {
+    switch Int(virtualKeyCode) {
+    case kVK_ANSI_A: return UnicodeScalar("a").value
+    case kVK_ANSI_S: return UnicodeScalar("s").value
+    case kVK_ANSI_D: return UnicodeScalar("d").value
+    case kVK_ANSI_F: return UnicodeScalar("f").value
+    case kVK_ANSI_H: return UnicodeScalar("h").value
+    case kVK_ANSI_G: return UnicodeScalar("g").value
+    case kVK_ANSI_Z: return UnicodeScalar("z").value
+    case kVK_ANSI_X: return UnicodeScalar("x").value
+    case kVK_ANSI_C: return UnicodeScalar("c").value
+    case kVK_ANSI_V: return UnicodeScalar("v").value
+    case kVK_ANSI_B: return UnicodeScalar("b").value
+    case kVK_ANSI_Q: return UnicodeScalar("q").value
+    case kVK_ANSI_W: return UnicodeScalar("w").value
+    case kVK_ANSI_E: return UnicodeScalar("e").value
+    case kVK_ANSI_R: return UnicodeScalar("r").value
+    case kVK_ANSI_Y: return UnicodeScalar("y").value
+    case kVK_ANSI_T: return UnicodeScalar("t").value
+    case kVK_ANSI_1: return UnicodeScalar("1").value
+    case kVK_ANSI_2: return UnicodeScalar("2").value
+    case kVK_ANSI_3: return UnicodeScalar("3").value
+    case kVK_ANSI_4: return UnicodeScalar("4").value
+    case kVK_ANSI_6: return UnicodeScalar("6").value
+    case kVK_ANSI_5: return UnicodeScalar("5").value
+    case kVK_ANSI_Equal: return UnicodeScalar("=").value
+    case kVK_ANSI_9: return UnicodeScalar("9").value
+    case kVK_ANSI_7: return UnicodeScalar("7").value
+    case kVK_ANSI_Minus: return UnicodeScalar("-").value
+    case kVK_ANSI_8: return UnicodeScalar("8").value
+    case kVK_ANSI_0: return UnicodeScalar("0").value
+    case kVK_ANSI_RightBracket: return UnicodeScalar("]").value
+    case kVK_ANSI_O: return UnicodeScalar("o").value
+    case kVK_ANSI_U: return UnicodeScalar("u").value
+    case kVK_ANSI_LeftBracket: return UnicodeScalar("[").value
+    case kVK_ANSI_I: return UnicodeScalar("i").value
+    case kVK_ANSI_P: return UnicodeScalar("p").value
+    case kVK_ANSI_L: return UnicodeScalar("l").value
+    case kVK_ANSI_J: return UnicodeScalar("j").value
+    case kVK_ANSI_Quote: return UnicodeScalar("'").value
+    case kVK_ANSI_K: return UnicodeScalar("k").value
+    case kVK_ANSI_Semicolon: return UnicodeScalar(";").value
+    case kVK_ANSI_Backslash: return UnicodeScalar("\\").value
+    case kVK_ANSI_Comma: return UnicodeScalar(",").value
+    case kVK_ANSI_Slash: return UnicodeScalar("/").value
+    case kVK_ANSI_N: return UnicodeScalar("n").value
+    case kVK_ANSI_M: return UnicodeScalar("m").value
+    case kVK_ANSI_Period: return UnicodeScalar(".").value
+    case kVK_Space: return UnicodeScalar(" ").value
+    case kVK_ANSI_Grave: return UnicodeScalar("`").value
+    default: return nil
+    }
+}
+
 extension NSEvent {
     private var it_functionalKeyCode: UInt32? {
         if let functional = FunctionalKeyDefinition(virtualKeyCode: keyCode) {
@@ -1593,19 +1668,7 @@ extension NSEvent {
         if let functional = it_functionalKeyCode {
             return functional
         }
-        let optionModifiers: NSEvent.ModifierFlags = [
-            .option, .leftOption, .rightOption]
-        if let s = characters(
-            byApplyingModifiers: modifierFlags
-                .subtracting(optionModifiers)
-                .subtracting([.shift, .control])),
-           let c = s.it_firstUnicodeScalarValue {
-            return c
-        }
-        if let code = charactersIgnoringModifiers?.it_firstUnicodeScalarValue {
-            return code
-        }
-        return 0
+        return pc101BaseLayoutKeyCode(for: keyCode) ?? 0
     }
 }
 

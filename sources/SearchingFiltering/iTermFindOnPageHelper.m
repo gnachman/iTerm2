@@ -81,9 +81,9 @@ typedef struct {
 
     iTermFindOnPageCachedCounts _cachedCounts;
 
-    NSMutableIndexSet *_locations NS_AVAILABLE_MAC(10_14);
+    NSMutableIndexSet *_locations;
 
-    BOOL _locationsHaveChanged NS_AVAILABLE_MAC(10_14);
+    BOOL _locationsHaveChanged;
 }
 
 - (instancetype)init {
@@ -96,7 +96,7 @@ typedef struct {
     return self;
 }
 
-- (void)locationsDidChange NS_AVAILABLE_MAC(10_14) {
+- (void)locationsDidChange {
     if (_locationsHaveChanged) {
         return;
     }
@@ -794,11 +794,11 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 #pragma mark - iTermSearchResultsMinimapViewDelegate
 
-- (NSIndexSet *)searchResultsMinimapViewLocations:(iTermSearchResultsMinimapView *)view NS_AVAILABLE_MAC(10_14) {
+- (NSIndexSet *)searchResultsMinimapViewLocations:(iTermSearchResultsMinimapView *)view {
     return _locations;
 }
 
-- (NSRange)searchResultsMinimapViewRangeOfVisibleLines:(iTermSearchResultsMinimapView *)view NS_AVAILABLE_MAC(10_14) {
+- (NSRange)searchResultsMinimapViewRangeOfVisibleLines:(iTermSearchResultsMinimapView *)view {
     return [_delegate findOnPageRangeOfVisibleLines];
 }
 

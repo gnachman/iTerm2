@@ -55,12 +55,18 @@ NS_ASSUME_NONNULL_BEGIN
        fetchSuggestions:(iTermSuggestionRequest *)request
           byUserRequest:(BOOL)byUserRequest;
 - (BOOL)minimalComposerHandleKeyDown:(NSEvent *)event;
-- (NSResponder *)minimalComposerNextResponder;
+- (nullable NSResponder *)minimalComposerNextResponder;
 - (BOOL)minimalComposerShouldForwardCopy:(iTermMinimalComposerViewController *)composer;
 - (void)minimalComposerForwardMenuItem:(NSMenuItem *)menuItem;
 - (NSString * _Nullable)minimalComposer:(iTermMinimalComposerViewController *)composer
              valueOfEnvironmentVariable:(NSString *)name;
 - (void)minimalComposerPreferredOffsetFromTopDidChange:(iTermMinimalComposerViewController *)composer;
+
+@optional
+// Opt-in: fired on every text change (even outside auto-composer mode)
+// when `forwardsTextChangesAlways` is set. The cockpit uses it to drive
+// its @-mention picker. No effect on ordinary composer usage.
+- (void)minimalComposerTextDidChange:(iTermMinimalComposerViewController *)composer;
 @end
 
 @interface iTermMinimalComposerViewController : NSViewController
@@ -72,6 +78,33 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSColor *separatorColor;
 @property (nonatomic, readonly) NSRect cursorFrameInScreenCoordinates;
 @property (nonatomic) CGFloat preferredOffsetFromTop;
+
+// Cockpit hosting hooks. All are opt-in and inert unless the embedder
+// sets them; ordinary composer usage is unaffected.
+
+// When YES, minimalComposerTextDidChange: is delivered on every edit,
+// not just in auto-composer mode.
+@property (nonatomic) BOOL forwardsTextChangesAlways;
+// The current contents including any @-mention attachment tokens.
+@property (nonatomic, readonly) NSAttributedString *attributedStringValue;
+@property (nonatomic, readonly) NSRange composerSelectedRange;
+// The view an @-mention completion popup should anchor to.
+@property (nonatomic, readonly) NSView *completionAnchorView;
+// Replace a character range with an attributed string (e.g. a mention
+// token), going through the text view's change machinery.
+- (void)replaceRange:(NSRange)range withAttributedString:(NSAttributedString *)attributedString;
+// Remove the drag handles, close button, and border and disable
+// dragging so the composer can sit docked inside another view.
+- (void)setDockedChromeHidden:(BOOL)hidden;
+// Allow attachment tokens (e.g. @-mention chips) to survive editing.
+// The composer is plain-text by default (richText=NO in the XIB), which
+// strips attachments; the cockpit turns this on for its instance only.
+- (void)setComposerRichTextEnabled:(BOOL)enabled;
+// Placeholder drawn when the composer holds no typed command. Inert
+// (nil) for ordinary composer usage.
+- (void)setComposerPlaceholder:(nullable NSString *)placeholder;
+// Empty the field.
+- (void)clearComposer;
 
 - (void)updateFrame;
 - (void)makeFirstResponder;

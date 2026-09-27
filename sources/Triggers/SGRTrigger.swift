@@ -14,7 +14,7 @@ class SGRTrigger: Trigger {
     }
 
     override static var title: String {
-        return "Change Style…"
+        return String(localized: "Trigger.SGR.Title", defaultValue: "Change Style…", comment: "Trigger action name: change the text style of the matching text using SGR codes")
     }
 
     override func takesParameter() -> Bool {
@@ -133,7 +133,11 @@ class SGRTrigger: Trigger {
                 }
                 var csi = CSIParam()
                 for subs in subsList {
-                    iTermParserAddCSIParameter(&csi, subs.first ?? -1)
+                    guard iTermParserAddCSIParameter(&csi, subs.first ?? -1) else {
+                        // The parameter list is full. Dropping the subparameters too keeps this
+                        // in step with the terminal's own parser.
+                        continue
+                    }
                     for sub in subs.dropFirst() {
                         iTermParserAddCSISubparameter(&csi, csi.count - 1, sub)
                     }

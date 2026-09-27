@@ -61,6 +61,9 @@ extern NSString *const PTYCommandDidExitUserInfoKeyStartLine;
 extern NSString *const PTYCommandDidExitUserInfoKeyLineCount;
 extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 extern NSString *const PTYSessionArrangementOptionsForDuplication;
+// Transient launch option (not serialized): when set, restoration starts the session in its saved
+// working directory exactly once, rather than via a persistent Custom Directory profile override.
+extern NSString *const PTYSessionArrangementOptionsForceOldCWD;
 extern NSString *const PTYSessionArrangementOptionsUnlimitedHistory;
 extern NSString *const PTYSessionArrangementOptionsArchive;
 extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
@@ -199,8 +202,10 @@ typedef enum {
 // Do two or more panes in this tab have different (non-nil) tab colors?
 - (BOOL)sessionTabHasMultipleDistinctTabColors;
 
-// Session-initiated name change.
-- (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString *)newName;
+// Session-initiated name change. Nullable so implementations cope with a session
+// that has no computed name yet; -[PTYTab updateTabTitleForCurrentSessionName:],
+// which the implementation forwards to, is reached that way from -updateTabTitle.
+- (void)nameOfSession:(PTYSession *)session didChangeTo:(nullable NSString *)newName;
 
 // Session-initiated font size. May cause window size to adjust.
 - (void)sessionDidChangeFontSize:(PTYSession *)session
@@ -296,6 +301,11 @@ typedef enum {
 
 // Whether metal is allowed has changed
 - (void)sessionUpdateMetalAllowed;
+
+// The session's metal framebuffer pixel format changed (its HDR-cursor setting
+// flipped), so the metal driver must be torn down and rebuilt with the new
+// format. Implemented by bouncing metal for the tab.
+- (void)sessionRebuildMetal;
 - (void)sessionDidChangeMetalViewAlphaValue:(PTYSession *)session to:(CGFloat)newValue;
 
 // Amount of transparency changed (perhaps to none!)
@@ -638,6 +648,12 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // symlinks resolved is returned.
 @property(nonatomic, readonly, nullable) NSString *currentLocalWorkingDirectory;
 
+// When the session's requested working directory did not exist at launch (for example, a restored
+// session whose directory was on a drive that is no longer mounted), the launch falls back to the
+// home directory and stashes the unavailable path here so a notice can be shown once the shell
+// starts. Cleared after the notice is displayed. Issue 12955.
+@property(nonatomic, nullable, copy) NSString *unavailableWorkingDirectory;
+
 // Async version of currentLocalWorkingDirectory.
 - (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString * _Nullable pwd))completion;
 
@@ -742,6 +758,19 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // Autodetected dominant color, otherwise configured bg color
 @property(nonatomic, readonly, nullable) NSColor *effectiveUnprocessedBackgroundColor;
 @property(nonatomic, readonly, nullable) NSColor *effectiveProcessedBackgroundColor;
+
+// For browser sessions: the page's background color (from the web view's
+// underPageBackgroundColor). When set, it overrides the profile background color
+// for the minimal theme's light/dark decision and tab tint. Setting it is rate
+// limited internally because propagation triggers a relayout.
+@property(nonatomic, strong, nullable) NSColor *browserBackgroundColor;
+
+// The page background color to use for the minimal-theme browser tint, or nil to use
+// the profile color. Non-nil only for a browser session that has reported a page color
+// while the minimal tab style is active. Single source of the minimal-browser tint
+// decision shared by effectiveUnprocessedBackgroundColor, colorMapShouldBeInDarkMode,
+// and minimalThemeTextColor.
+@property(nonatomic, readonly, nullable) NSColor *minimalBrowserTintColor;
 @property(nonatomic, readonly) BOOL abortBury;
 @property(nonatomic, readonly) BOOL isArchive;
 @property(nonatomic, copy, nullable) NSString *browserTarget;
@@ -769,7 +798,24 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
                        profileMutator:(Profile *(^)(Profile *))profileMutator;
 
+// Variables persisted into a saved arrangement, excluding the AI tab title (which
+// is re-derived on restore, so persisting it is dead data and would leak a model
+// summary of the screen into the plist). Exposed for testing.
+- (NSDictionary *)encodableArrangementVariables;
+
+// Whether the auto-composer drop-down is visible and active - i.e. the running command
+// is captured in the prompt-mark history (recentCommands.last) rather than only recorded
+// at command end. Used by the AI-title context to decide the running-command dedup.
+- (BOOL)haveAutoComposer;
+
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
+
+// Considers offering to enable physical-key key-binding matching for a keyDown that
+// no binding claimed. Call once per keyDown from the app's key-event router. `session`
+// is the terminal session receiving the keystroke, or nil when a non-terminal
+// responder/window is focused (in which case a modal is used instead of a banner).
++ (void)maybeSuggestPhysicalKeyBindingsForKeyDownEvent:(NSEvent *)event
+                                             inSession:(nullable PTYSession *)session;
 + (void)selectMenuItem:(NSString*)theName;
 + (void)registerBuiltInFunctions;
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap;
@@ -881,6 +927,12 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Tries to revive a terminated session. Returns YES on success. It should be re-added to a tab if
 // after reviving.
 - (BOOL)revive;
+
+// Pause/resume the countdown that makes a terminated-but-restorable session stop
+// being restorable, so a modal alert can be shown without the session expiring.
+// The remaining time is preserved across the pause.
+- (void)pauseTerminationTimer;
+- (void)resumeTerminationTimer;
 
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
@@ -1219,6 +1271,12 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Set a value in the session's dictionary without affecting the backing profile.
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues reload:(BOOL)reload;
+// preserveColorBaselines:YES leaves _preEscapeSequenceColors intact for the keys
+// being written. Used by binding observers so applying a bound (i:N) color does
+// not clear the Edit-Session baseline a later reset restores.
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
+                                 reload:(BOOL)reload
+                  preserveColorBaselines:(BOOL)preserveColorBaselines;
 - (NSString *)amendedColorKey:(NSString *)baseKey;
 
 - (void)useTransparencyDidChange;
@@ -1235,8 +1293,8 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 - (void)jumpToLocationWhereCurrentStatusChanged;
 - (void)updateMetalDriver;
-- (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11);
-- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(nullable id)token NS_AVAILABLE_MAC(10_11);
+- (id)temporarilyDisableMetal;
+- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(nullable id)token;
 
 - (BOOL)willEnableMetal;
 - (BOOL)metalAllowed:(out nullable iTermMetalUnavailableReason *)reason;
@@ -1245,6 +1303,14 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Call this when a session moves to a different tab or window to update the session ID.
 - (void)didMoveSession;
 - (void)didInitializeSessionWithName:(NSString *)name;
+// Turn on the session-name title component (unless the profile uses a custom
+// title or already shows the name) so a programmatically assigned name becomes
+// visible in the tab title even when the profile's title shows only the job.
+- (void)enableSessionNameTitleComponentIfPossible;
+
+// Whether a program-set OSC 0/1/2 title should enable TemporarySessionName.
+// Exposed for testing.
++ (BOOL)programOSCTitleShouldEnableTemporaryNameForComponents:(NSUInteger)components;
 - (void)profileNameDidChangeTo:(NSString *)name;
 - (void)profileDidChangeToProfileWithName:(NSString *)name;
 - (void)updateStatusBarStyle;
@@ -1297,6 +1363,14 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // and its iTermExternalAttribute. Exposed as a class method for unit testing.
 + (ITMCellStyle *)protoStyleForCharacter:(screen_char_t)c
                        externalAttributes:(iTermExternalAttribute *)ea;
+
+// Pure transformation: produces the text of a line plus its run-length-encoded
+// code-point counts and cell styles. Exposed as a class method for unit testing.
++ (NSString *)stringForLine:(const screen_char_t *)screenChars
+                     length:(int)length
+                    eaIndex:(iTermExternalAttributeIndex * _Nullable)eaIndex
+                  cppsArray:(NSMutableArray<ITMCodePointsPerCell *> *)cppsArray
+                stylesArray:(NSMutableArray<ITMCellStyle *> *)styleArray;
 
 - (nullable ITMGetBufferResponse *)handleGetBufferRequest:(ITMGetBufferRequest *)request;
 - (void)handleGetPromptRequest:(ITMGetPromptRequest *)request

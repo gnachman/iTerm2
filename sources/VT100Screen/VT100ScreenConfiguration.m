@@ -23,6 +23,8 @@
 @property (nonatomic, readwrite) BOOL clipboardAccessAllowed;
 @property (nonatomic, readwrite) BOOL miniaturized;
 @property (nonatomic, readwrite) NSRect windowFrame;
+@property (nonatomic, readwrite) NSRect globalWindowFrame;
+@property (nonatomic, copy, readwrite) NSArray<NSValue *> *screenFrames;
 @property (nonatomic, readwrite) VT100GridSize theoreticalGridSize;
 @property (nonatomic, copy, readwrite) NSString *iconTitle;
 @property (nonatomic, copy, readwrite) NSString *windowTitle;
@@ -79,6 +81,8 @@
 @synthesize clipboardAccessAllowed = _clipboardAccessAllowed;
 @synthesize miniaturized = _miniaturized;
 @synthesize windowFrame = _windowFrame;
+@synthesize globalWindowFrame = _globalWindowFrame;
+@synthesize screenFrames = _screenFrames;
 @synthesize theoreticalGridSize = _theoreticalGridSize;
 @synthesize iconTitle = _iconTitle;
 @synthesize windowTitle = _windowTitle;
@@ -137,6 +141,8 @@
         _clipboardAccessAllowed = other.clipboardAccessAllowed;
         _miniaturized = other.miniaturized;
         _windowFrame = other.windowFrame;
+        _globalWindowFrame = other.globalWindowFrame;
+        _screenFrames = [other.screenFrames copy];
         _theoreticalGridSize = other.theoreticalGridSize;
         _iconTitle = other.iconTitle;
         _windowTitle = other.windowTitle;
@@ -204,6 +210,8 @@
                             @"clipboardAccessAllowed": @(_clipboardAccessAllowed),
                             @"miniaturized": @(_miniaturized),
                             @"windowFrame": @(_windowFrame),
+                            @"globalWindowFrame": NSStringFromRect(_globalWindowFrame),
+                            @"screenFrames": _screenFrames ?: @[],
                             @"theoreticalGridSize": VT100GridSizeDescription(_theoreticalGridSize),
                             @"iconTitle": _iconTitle ?: @"",
                             @"windowTitle": _windowTitle ?: @"",
@@ -274,6 +282,8 @@
 @dynamic clipboardAccessAllowed;
 @dynamic miniaturized;
 @dynamic windowFrame;
+@dynamic globalWindowFrame;
+@dynamic screenFrames;
 @dynamic theoreticalGridSize;
 @dynamic iconTitle;
 @dynamic windowTitle;

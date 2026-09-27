@@ -134,6 +134,50 @@ NSAttributedString *PSMApplyPUAFonts(NSAttributedString *attributedString,
     return result ?: attributedString;
 }
 
+NSArray<NSFont *> *PSMResolvedPUAFonts(NSString *string, BOOL parseHTML, id<PSMPUAFontProvider> provider) {
+    if (!provider || string.length == 0) {
+        return @[];
+    }
+    // Scan the string that actually renders. When HTML parsing is on the renderer
+    // applies PUA fonts to the decoded text (tags stripped, entities resolved),
+    // so decode the same way here; otherwise the raw markup and the rendered text
+    // could contain different PUA code points.
+    if (parseHTML) {
+        string = [NSAttributedString newAttributedStringWithHTML:string attributes:@{}].string;
+    }
+    NSMutableArray<NSFont *> *fonts = [NSMutableArray array];
+    // Mirror the scan in PSMApplyPUAFonts: same 256 UTF-16 unit limit and
+    // surrogate-pair handling, so the resolved fonts line up with what renders.
+    const NSUInteger limit = MIN(string.length, 256);
+    NSUInteger i = 0;
+    while (i < limit) {
+        UTF32Char codePoint;
+        unichar c = [string characterAtIndex:i];
+        NSUInteger charLen = 1;
+
+        if (CFStringIsSurrogateHighCharacter(c) && i + 1 < string.length) {
+            unichar low = [string characterAtIndex:i + 1];
+            if (CFStringIsSurrogateLowCharacter(low)) {
+                codePoint = CFStringGetLongCharacterForSurrogatePair(c, low);
+                charLen = 2;
+            } else {
+                codePoint = c;
+            }
+        } else {
+            codePoint = c;
+        }
+
+        if (PSMIsPrivateUseAreaCodePoint(codePoint)) {
+            NSFont *font = [provider fontForPUACodePoint:codePoint];
+            if (font) {
+                [fonts addObject:font];
+            }
+        }
+        i += charLen;
+    }
+    return fonts;
+}
+
 @implementation PSMCachedTitle {
     NSAttributedString *_attributedString;
     NSAttributedString *_leftAlignedAttributedString;

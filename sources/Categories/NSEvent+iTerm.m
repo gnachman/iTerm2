@@ -277,8 +277,8 @@ static char iTermEventFunctionPreviouslyPressedAssociatedObjectKey;
         case NSEventTypeKeyUp:
             // -description would include chars="…" unmodchars="…", i.e. the typed
             // characters. Emit only the routing-relevant fields.
-            return [NSString stringWithFormat:@"<%@ type=%@ keyCode=%@ modifierFlags=0x%lx isARepeat=%@ winNum=%@ chars=[redacted]>",
-                    NSStringFromClass(self.class), @(self.type), @(self.keyCode),
+            return [NSString stringWithFormat:@"<%@ type=%@ modifierFlags=0x%lx isARepeat=%@ winNum=%@ chars=[redacted]>",
+                    NSStringFromClass(self.class), @(self.type),
                     (unsigned long)self.modifierFlags, @(self.isARepeat), @(self.windowNumber)];
         case NSEventTypeFlagsChanged:
             return [NSString stringWithFormat:@"<%@ type=FlagsChanged keyCode=%@ modifierFlags=0x%lx winNum=%@>",

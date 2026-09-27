@@ -511,31 +511,6 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
 NSString* ComplexCharToStr(int key);
 BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code);
 
-// YES if the complex char is a lone regional indicator symbol (U+1F1E6..U+1F1FF).
-// A flag emoji is stored as two adjacent regional-indicator cells (one per cell
-// for wcwidth compatibility), so this is used to pair them at draw time.
-BOOL ComplexCharCodeIsRegionalIndicator(unichar code);
-
-// The role of a cell in regional-indicator (flag) pairing.
-typedef struct {
-    BOOL suppress;         // This cell is the closing indicator of a pair; do not draw it.
-    BOOL joinWithNext;     // This cell is an opening indicator paired with a following cell.
-    unichar successorCode; // The paired closing indicator's complex code (valid iff joinWithNext).
-} iTermRegionalIndicatorPairing;
-
-// Greedily pairs regional indicators left to right, matching how CoreText shapes a run:
-// within a maximal run of indicators, cells pair up (first+second, ...) and a trailing odd
-// indicator stands alone. DWC_RIGHT and DWL_SPACER cells are transparent to pairing, so a
-// flag whose indicators are double-width (the fullWidthFlags default, which inserts a
-// DWC_RIGHT after each indicator) pairs across the spacers exactly as the legacy renderer
-// does. `pendingOpen` holds the running parity; initialize it to NO at the start of each
-// line (indicators never pair across a line/wrap boundary) and thread it across successive
-// calls for i = 0..width-1.
-iTermRegionalIndicatorPairing iTermRegionalIndicatorPairingForCell(const screen_char_t *line,
-                                                                   int i,
-                                                                   int width,
-                                                                   BOOL *pendingOpen);
-
 // Return a string with the contents of a screen char, which may or may not
 // be complex.
 NSString* ScreenCharToStr(const screen_char_t *const sct);
@@ -663,6 +638,17 @@ void ScreenCharClearProvisionalFlagForImageWithCode(int code);
 
 NSString *ScreenCharDescription(screen_char_t c);
 void ScreenCharInvert(screen_char_t *c);
+
+// Returns a heap copy (caller must free) of the first `count` cells of `line`
+// with the .bold bit set on the cursor cell at `cursorX` and, when `doubleWidth`
+// is set, its right half at `cursorX + 1`. Writes are bounded by `count`; the
+// caller passes a `count` that does not exceed the source buffer's length. Used
+// by both the legacy and Metal cursor paths to draw the HDR cursor glyph bold so
+// it stays legible over the much-brighter-than-white block.
+screen_char_t *ScreenCharLineCopyWithBoldCursorCell(const screen_char_t *line,
+                                                    size_t count,
+                                                    int cursorX,
+                                                    BOOL doubleWidth);
 
 // Returns true if any RTL was found. Sets the rtlState on all characters in c.
 BOOL AnnotateRightToLeftInScreenChars(screen_char_t *c, int len);

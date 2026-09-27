@@ -50,7 +50,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
         [button setButtonType:NSButtonTypeMomentaryPushIn];
         [button setTarget:self];
         [button setAction:@selector(openInBrowserButtonPressed:)];
-        [button setTitle:[NSString stringWithFormat:@"Open in %@", [self browserName]]];
+        [button setTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"WebViewWrapper.OpenInBrowser", nil, [NSBundle mainBundle], @"Open in %@", @"Title of a button that opens content in a browser; placeholder is the browser name"), [self browserName]]];
         [button setBezelStyle:NSBezelStyleTexturedRounded];
         [button sizeToFit];
         NSRect frame = button.frame;
@@ -94,7 +94,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
             return name;
         }
     }
-    return @"Default Browser";
+    return NSLocalizedStringWithDefaultValue(@"WebViewWrapper.DefaultBrowser", nil, [NSBundle mainBundle], @"Default Browser", @"Name used for the user’s default web browser when its real name is unknown");
 }
 
 - (void)terminateWebView {
@@ -249,6 +249,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
         script = innerScript = [NSString stringWithFormat:@"throw %@", [NSJSONSerialization it_jsonStringForObject:error.localizedDescription]];
     } else {
         innerScript = [NSString stringWithFormat:@"%@(%@)", callback, [NSJSONSerialization it_jsonStringForObject:value]];
+        // Localization unneeded
         script = [NSString stringWithFormat:@"try { %@; } catch(err) { alert('Caught error while sending return value to javascript: ' + err.message + '\\n' + err.stack); }", innerScript];
     }
     __weak id<iTermWebViewDelegate> delegate = [webview.configuration.userContentController it_associatedObjectForKey:&iTermWebViewFactoryUserControllerDelegateKey];

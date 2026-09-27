@@ -7,7 +7,6 @@
 
 import WebKit
 
-@available(macOS 11.0, *)
 class iTermBrowserNavigationState {
     private(set) var lastTransitionType: BrowserTransitionType = .other
     private(set) var lastRequestedURL: URL?

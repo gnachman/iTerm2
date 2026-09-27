@@ -12,7 +12,7 @@ class FoldTrigger: Trigger {
     }
 
     override static var title: String {
-        return "Fold to Named Mark"
+        return String(localized: "Trigger.Fold.Title", defaultValue: "Fold to Named Mark", comment: "Trigger action name: fold the region up to a named mark")
     }
 
     override func takesParameter() -> Bool {

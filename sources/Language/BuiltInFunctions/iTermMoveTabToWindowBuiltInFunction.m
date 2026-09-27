@@ -35,7 +35,7 @@
     if (!tabID) {
         completion(nil, [NSError errorWithDomain:@"com.iterm2.move-tab-to-window"
                                             code:1
-                                        userInfo:@{ NSLocalizedDescriptionKey: @"No such tab" }]);
+                                        userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"MoveTabToWindow.NoSuchTab", nil, [NSBundle mainBundle], @"No such tab", @"Error when no tab matches the given tab_id") }]);
         return;
     }
 
@@ -43,20 +43,21 @@
     if (!term) {
         completion(nil, [NSError errorWithDomain:@"com.iterm2.move-tab-to-window"
                                             code:2
-                                        userInfo:@{ NSLocalizedDescriptionKey: @"Tab has no window" }]);
+                                        userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"MoveTabToWindow.TabHasNoWindow", nil, [NSBundle mainBundle], @"Tab has no window", @"Error when the tab is not in any window") }]);
         return;
     }
 
     if (term.tabs.count < 2) {
         completion(nil, [NSError errorWithDomain:@"com.iterm2.move-tab-to-window"
                                             code:3
-                                        userInfo:@{ NSLocalizedDescriptionKey: @"Window has only one tab" }]);
+                                        userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"MoveTabToWindow.WindowHasOnlyOneTab", nil, [NSBundle mainBundle], @"Window has only one tab", @"Error when the window has only one tab so it cannot be moved out") }]);
+        return;
     }
     PseudoTerminal *newWindowController = [term it_moveTabToNewWindow:tab];
     if (!newWindowController) {
         completion(nil, [NSError errorWithDomain:@"com.iterm2.move-tab-to-window"
                                             code:4
-                                        userInfo:@{ NSLocalizedDescriptionKey: @"Failed to create new window" }]);
+                                        userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"MoveTabToWindow.FailedToCreateWindow", nil, [NSBundle mainBundle], @"Failed to create new window", @"Error when creating a new window for the tab fails") }]);
         return;
     }
 

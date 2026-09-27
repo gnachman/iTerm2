@@ -127,12 +127,12 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
         [_presetsPopup.menu addItem:[NSMenuItem separatorItem]];
     }
     NSMenuItem *item;
-    item = [[NSMenuItem alloc] initWithTitle:@"Import…"
+    item = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"KeyMapping.Import", nil, [NSBundle mainBundle], @"Import…", @"Menu item to import key binding presets")
                                       action:@selector(importMenuItem:)
                                keyEquivalent:@""];
     item.target = self;
     [_presetsPopup.menu addItem:item];
-    item = [[NSMenuItem alloc] initWithTitle:@"Export…"
+    item = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"KeyMapping.Export", nil, [NSBundle mainBundle], @"Export…", @"Menu item to export key binding presets")
                                       action:@selector(exportMenuItem:)
                                keyEquivalent:@""];
     item.target = self;
@@ -146,18 +146,18 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 
 - (void)addViewsToSearchIndex:(iTermPreferencesBaseViewController *)vc {
     [vc addViewToSearchIndex:_addTouchBarItem
-                 displayName:@"Add touch bar item"
+                 displayName:NSLocalizedStringWithDefaultValue(@"KeyMapping.AddTouchBarItem", nil, [NSBundle mainBundle], @"Add touch bar item", @"Search index display name for adding a touch bar item")
                      phrases:@[]
                          key:nil];
     [vc addViewToSearchIndex:_presetsPopup
-                 displayName:@"Key binding presets"
+                 displayName:NSLocalizedStringWithDefaultValue(@"KeyMapping.KeyBindingPresets", nil, [NSBundle mainBundle], @"Key binding presets", @"Search index display name for key binding presets")
                      phrases:@[]
                          key:nil];
     [vc addViewToSearchIndex:_touchBarMitigationsButton
-                 displayName:@"Touch bar mitigations"
-                     phrases:@[ @"Haptic feedback for esc key",
-                                @"Key click sound for esc key",
-                                @"Visual indicator for esc key" ]
+                 displayName:NSLocalizedStringWithDefaultValue(@"KeyMapping.TouchBarMitigations", nil, [NSBundle mainBundle], @"Touch bar mitigations", @"Search index display name for touch bar mitigations")
+                     phrases:@[ NSLocalizedStringWithDefaultValue(@"KeyMapping.HapticFeedbackEsc", nil, [NSBundle mainBundle], @"Haptic feedback for esc key", @"Search phrase for haptic feedback on the esc key"),
+                                NSLocalizedStringWithDefaultValue(@"KeyMapping.KeyClickSoundEsc", nil, [NSBundle mainBundle], @"Key click sound for esc key", @"Search phrase for key click sound on the esc key"),
+                                NSLocalizedStringWithDefaultValue(@"KeyMapping.VisualIndicatorEsc", nil, [NSBundle mainBundle], @"Visual indicator for esc key", @"Search phrase for a visual indicator on the esc key") ]
                          key:_touchBarMitigationsButton.accessibilityIdentifier];
 }
 
@@ -384,6 +384,7 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
                      second:
      ^(iTermTouchbarItem * _Nonnull touchbarItem) {
         iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:dict[touchbarItem.identifier]];
+        // Localization unneeded
         _editActionWindowController.label = action.label ?: @"[bug]";
         _editActionWindowController.touchBarItemID = touchbarItem.identifier;
         binding = dict[touchbarItem.identifier];
@@ -527,14 +528,18 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     }
 }
 
-- (NSNumber *)removeBeforeLoading:(NSString *)thing {
+// The caller passes a complete localized title. We do not compose "before %@" here because the
+// action clause's word order and grammar differ by language.
+- (NSNumber *)removeBeforeLoadingWithTitle:(NSString *)title {
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Remove all key mappings before %@?", thing]
-                               actions:@[ @"Keep", @"Remove", @"Cancel" ]
+    [iTermWarning showWarningWithTitle:title
+                               actions:@[ NSLocalizedStringWithDefaultValue(@"KeyMapping.Keep", nil, [NSBundle mainBundle], @"Keep", @"Button to keep existing key mappings"),
+                                          iTermLocalizedRemove(),
+                                          iTermLocalizedCancel() ]
                              accessory:nil
                             identifier:@"RemoveExistingGlobalKeyMappingsBeforeLoading"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Load Preset"
+                               heading:NSLocalizedStringWithDefaultValue(@"KeyMapping.LoadPresetHeading", nil, [NSBundle mainBundle], @"Load Preset", @"Heading for the load-preset confirmation")
                                 window:self.view.window];
     switch (selection) {
         case kiTermWarningSelection0:

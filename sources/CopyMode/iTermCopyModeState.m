@@ -322,14 +322,27 @@
                                                                         unit:unit];
     _coord = VT100GridCoordFromAbsCoord(range.coordRange.start, overflow, nil);
 
-    // Make a new selection
+    // Make a new selection. _start and _coord are LOGICAL cursor coordinates.
     if (_selecting) {
-        [_textView.selection beginSelectionAtAbsCoord:VT100GridAbsCoordFromCoord(_start, overflow)
-                                                 mode:_mode
-                                               resume:NO
-                                               append:NO];
-        [_textView.selection moveSelectionEndpointTo:VT100GridAbsCoordFromCoord(_coord, overflow)];
-        [_textView.selection endLiveSelection];
+        if (_mode == kiTermSelectionModeCharacter) {
+            // Commit a logical range rather than driving a character-mode live
+            // selection, which with bidi on would treat these as visual columns and
+            // select the wrong cells on right-to-left lines.
+            const VT100GridAbsCoord absStart = VT100GridAbsCoordFromCoord(_start, overflow);
+            const VT100GridAbsCoord absEnd = VT100GridAbsCoordFromCoord(_coord, overflow);
+            [_textView.selection setSelectedLogicalRange:VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(absStart.x, absStart.y, absEnd.x, absEnd.y), 0, 0)
+                                                    mode:_mode];
+        } else {
+            // Line and box modes expand a range to whole lines / column bounds only
+            // while it is a LIVE selection, so keep the live path for them. They are
+            // not character mode, so the live range is never treated as visual.
+            [_textView.selection beginSelectionAtAbsCoord:VT100GridAbsCoordFromCoord(_start, overflow)
+                                                     mode:_mode
+                                                   resume:NO
+                                                   append:NO];
+            [_textView.selection moveSelectionEndpointTo:VT100GridAbsCoordFromCoord(_coord, overflow)];
+            [_textView.selection endLiveSelection];
+        }
     }
     [_textView scrollLineNumberRangeIntoView:VT100GridRangeMake(_coord.y, 1)];
     return !VT100GridCoordEquals(before, _coord);

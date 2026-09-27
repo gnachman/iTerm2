@@ -108,10 +108,7 @@
 }
 
 - (BOOL)shouldUseLargeControls {
-    if (@available(macOS 11.0, *)) {
-        return (iTermAdvancedSettingsModel.statusBarHeight >= 32);
-    }
-    return NO;
+    return (iTermAdvancedSettingsModel.statusBarHeight >= 32);
 }
 
 - (void)updateSubviews {
@@ -157,12 +154,10 @@
 
 - (void)setFont:(NSFont *)font {
     _searchField.font = font;
-    if (@available(macOS 11.0, *)) {
-        if ([self shouldUseLargeControls]) {
-            _searchField.controlSize = NSControlSizeLarge;
-            _arrowsControl.controlSize = NSControlSizeLarge;
-            _closeButton.controlSize = NSControlSizeLarge;
-        }
+    if ([self shouldUseLargeControls]) {
+        _searchField.controlSize = NSControlSizeLarge;
+        _arrowsControl.controlSize = NSControlSizeLarge;
+        _closeButton.controlSize = NSControlSizeLarge;
     }
     [self fixSearchMenuTemplateFonts];
     [self setTintColor:_tintColor];

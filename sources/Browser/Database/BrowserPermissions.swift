@@ -18,17 +18,55 @@ enum BrowserPermissionType: String, CaseIterable, Hashable {
     var displayName: String {
         switch self {
         case .notification:
-            return "Notifications"
+            return String(localized: "BrowserPermissions.Notifications", defaultValue: "Notifications", comment: "Name of the notifications permission")
         case .camera:
-            return "Camera"
+            return String(localized: "BrowserPermissions.Camera", defaultValue: "Camera", comment: "Name of the camera permission")
         case .microphone:
-            return "Microphone"
+            return String(localized: "BrowserPermissions.Microphone", defaultValue: "Microphone", comment: "Name of the microphone permission")
         case .cameraAndMicrophone:
-            return "Camera and Microphone"
+            return String(localized: "BrowserPermissions.CameraAndMicrophone", defaultValue: "Camera and Microphone", comment: "Name of the combined camera and microphone permission")
         case .geolocation:
-            return "Location"
+            return String(localized: "BrowserPermissions.Location", defaultValue: "Location", comment: "Name of the geolocation permission")
         case .audioPlayback:
-            return "Audio Playback"
+            return String(localized: "BrowserPermissions.AudioPlayback", defaultValue: "Audio Playback", comment: "Name of the audio playback permission")
+        }
+    }
+
+    // A complete localized dialog title per permission type. We do not compose "Allow" with the
+    // noun at runtime because that word order and grammar differ by language.
+    var permissionDialogTitle: String {
+        switch self {
+        case .notification:
+            return String(localized: "BrowserPermissions.AllowNotifications", defaultValue: "Allow Notifications", comment: "Title of the dialog asking to allow website notifications")
+        case .camera:
+            return String(localized: "BrowserPermissions.AllowCamera", defaultValue: "Allow Camera", comment: "Title of the dialog asking to allow camera access")
+        case .microphone:
+            return String(localized: "BrowserPermissions.AllowMicrophone", defaultValue: "Allow Microphone", comment: "Title of the dialog asking to allow microphone access")
+        case .cameraAndMicrophone:
+            return String(localized: "BrowserPermissions.AllowCameraAndMicrophone", defaultValue: "Allow Camera and Microphone", comment: "Title of the dialog asking to allow camera and microphone access")
+        case .geolocation:
+            return String(localized: "BrowserPermissions.AllowLocation", defaultValue: "Allow Location", comment: "Title of the dialog asking to allow location access")
+        case .audioPlayback:
+            return String(localized: "BrowserPermissions.AllowAudioPlayback", defaultValue: "Allow Audio Playback", comment: "Title of the dialog asking to allow audio playback")
+        }
+    }
+
+    // A complete localized request message per permission type. The origin is a self-contained value
+    // (a hostname), so interpolating it is safe; the capability noun is not composed at runtime.
+    func accessRequestMessage(forOrigin origin: String) -> String {
+        switch self {
+        case .notification:
+            return String(localized: "BrowserPermissions.NotificationRequest", defaultValue: "The website \(origin) wants to send you notifications.", comment: "Message asking to allow a website to send notifications; the placeholder is a hostname")
+        case .camera:
+            return String(localized: "BrowserPermissions.CameraRequest", defaultValue: "The website \(origin) wants to use your camera.", comment: "Message asking to allow a website to use the camera; the placeholder is a hostname")
+        case .microphone:
+            return String(localized: "BrowserPermissions.MicrophoneRequest", defaultValue: "The website \(origin) wants to use your microphone.", comment: "Message asking to allow a website to use the microphone; the placeholder is a hostname")
+        case .cameraAndMicrophone:
+            return String(localized: "BrowserPermissions.CameraAndMicrophoneRequest", defaultValue: "The website \(origin) wants to use your camera and microphone.", comment: "Message asking to allow a website to use the camera and microphone; the placeholder is a hostname")
+        case .geolocation:
+            return String(localized: "BrowserPermissions.LocationRequest", defaultValue: "The website \(origin) wants to know your location.", comment: "Message asking to allow a website to access location; the placeholder is a hostname")
+        case .audioPlayback:
+            return String(localized: "BrowserPermissions.AudioPlaybackRequest", defaultValue: "The website \(origin) wants to play audio.", comment: "Message asking to allow a website to play audio; the placeholder is a hostname")
         }
     }
 }
@@ -40,9 +78,9 @@ enum BrowserPermissionDecision: String, CaseIterable {
     var displayName: String {
         switch self {
         case .granted:
-            return "Allowed"
+            return String(localized: "BrowserPermissions.Allowed", defaultValue: "Allowed", comment: "Permission decision: granted")
         case .denied:
-            return "Blocked"
+            return String(localized: "BrowserPermissions.Blocked", defaultValue: "Blocked", comment: "Permission decision: denied")
         }
     }
 }

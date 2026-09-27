@@ -75,7 +75,6 @@
 @property(nonatomic, strong) iTermSnippet *snippet;
 @end
 
-NS_AVAILABLE_MAC(11_0)
 @interface iTermOpenQuicklyInvocationItem : iTermOpenQuicklyItem
 @property(nonatomic, strong) iTermVariableScope *scope;
 @end

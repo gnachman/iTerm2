@@ -13,7 +13,7 @@
 @implementation SetDirectoryTrigger
 
 + (NSString *)title {
-  return @"Report Directory";
+  return NSLocalizedStringWithDefaultValue(@"Trigger.SetDirectory.Title", nil, [NSBundle mainBundle], @"Report Directory", @"Trigger action name: report the current directory to iTerm2");
 }
 
 - (NSString *)description {

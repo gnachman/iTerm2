@@ -13,7 +13,6 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermHistogram;
 @protocol MTLBuffer;
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalBufferPoolContext : NSObject
 @property (nonatomic, readonly) iTermHistogram *histogram;
 @property (nonatomic, readonly) iTermHistogram *textureHistogram;
@@ -27,7 +26,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @end
 
 // Creating a new buffer can be very slow. Try to reuse them.
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalBufferPool : NSObject
 
 @property (nonatomic) size_t bufferSize;
@@ -46,7 +44,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 // Keeps up to `capacity` buffers in the pool. If it exceeds that size the smallest ones are released.
 // This might use more texture memory than necessary but it will stabilize quickly and stop creating
 // new buffers, which is terribly slow.
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalMixedSizeBufferPool : NSObject
 @property (nonatomic, copy, readonly) NSString *name;
 

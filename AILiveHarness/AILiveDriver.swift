@@ -143,8 +143,10 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                 streaming: Bool,
                                 thinking: Bool? = nil,
                                 function: AILiveFunctionSpec<T>? = nil,
+                                extraFunctions: [LLM.AnyFunction] = [],
                                 hostedTools: HostedTools = HostedTools(),
                                 trailingVolatileTextProvider: (() -> String?)? = nil,
+                                previousResponseID: String? = nil,
                                 scenarioTag: String = "unspec",
                                 timeout: TimeInterval = 120,
                                 test: XCTestCase) throws -> AILiveRunResult {
@@ -157,8 +159,10 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                        streaming: streaming,
                        thinking: thinking,
                        function: function,
+                       extraFunctions: extraFunctions,
                        hostedTools: hostedTools,
                        trailingVolatileTextProvider: trailingVolatileTextProvider,
+                       previousResponseID: previousResponseID,
                        scenarioTag: scenarioTag,
                        timeout: timeout,
                        test: test)
@@ -170,8 +174,10 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                 streaming: Bool,
                                 thinking: Bool? = nil,
                                 function: AILiveFunctionSpec<T>? = nil,
+                                extraFunctions: [LLM.AnyFunction] = [],
                                 hostedTools: HostedTools = HostedTools(),
                                 trailingVolatileTextProvider: (() -> String?)? = nil,
+                                previousResponseID: String? = nil,
                                 scenarioTag: String = "unspec",
                                 timeout: TimeInterval = 120,
                                 test: XCTestCase) throws -> AILiveRunResult {
@@ -190,8 +196,10 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                    streaming: streaming,
                                    thinking: thinking,
                                    function: function,
+                                   extraFunctions: extraFunctions,
                                    hostedTools: hostedTools,
                                    trailingVolatileTextProvider: trailingVolatileTextProvider,
+                                   previousResponseID: previousResponseID,
                                    scenarioTag: scenarioTag,
                                    timeout: timeout,
                                    test: test)
@@ -213,8 +221,10 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                             streaming: Bool,
                                             thinking: Bool?,
                                             function: AILiveFunctionSpec<T>?,
+                                            extraFunctions: [LLM.AnyFunction],
                                             hostedTools: HostedTools,
                                             trailingVolatileTextProvider: (() -> String?)?,
+                                            previousResponseID: String?,
                                             scenarioTag: String,
                                             timeout: TimeInterval,
                                             test: XCTestCase) throws -> AILiveRunResult {
@@ -226,6 +236,10 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
         controller.providerOverride = LLMProvider(model: model)
         controller.hostedTools = hostedTools
         controller.trailingVolatileTextProvider = trailingVolatileTextProvider
+        // Drive the server-side-history delta path (Responses API): a set
+        // previousResponseID makes the request send only the newest message,
+        // which is exactly where the volatile-context truncation bug lived.
+        controller.previousResponseID = previousResponseID
         if model.features.contains(.configurableThinking), let thinking {
             controller.shouldThink = thinking
         }
@@ -233,6 +247,9 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
             controller.define(function: function.decl,
                               arguments: T.self,
                               implementation: function.implementation)
+        }
+        if !extraFunctions.isEmpty {
+            controller.define(functions: extraFunctions)
         }
         let label = "live AI \(modelName) [stream=\(streaming)]"
         let exp = test.expectation(description: label)
@@ -323,6 +340,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                     thinking: Bool? = nil,
                     hostedTools: HostedTools = HostedTools(),
                     trailingVolatileTextProvider: (() -> String?)? = nil,
+                    previousResponseID: String? = nil,
                     scenarioTag: String = "unspec",
                     timeout: TimeInterval = 120,
                     test: XCTestCase) throws -> AILiveRunResult {
@@ -335,6 +353,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                        function: nilFunction,
                        hostedTools: hostedTools,
                        trailingVolatileTextProvider: trailingVolatileTextProvider,
+                       previousResponseID: previousResponseID,
                        scenarioTag: scenarioTag,
                        timeout: timeout,
                        test: test)
@@ -347,6 +366,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                     thinking: Bool? = nil,
                     hostedTools: HostedTools = HostedTools(),
                     trailingVolatileTextProvider: (() -> String?)? = nil,
+                    previousResponseID: String? = nil,
                     scenarioTag: String = "unspec",
                     timeout: TimeInterval = 120,
                     test: XCTestCase) throws -> AILiveRunResult {
@@ -359,6 +379,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                        function: nilFunction,
                        hostedTools: hostedTools,
                        trailingVolatileTextProvider: trailingVolatileTextProvider,
+                       previousResponseID: previousResponseID,
                        scenarioTag: scenarioTag,
                        timeout: timeout,
                        test: test)

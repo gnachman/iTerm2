@@ -160,7 +160,7 @@ typedef struct {
             }
         }];
     }];
-    [iTermMultiServerConnection getOrCreatePrimaryConnectionWithCallback:callback];
+    [iTermMultiServerConnection getOrCreateConnectionForNewSessionWithCallback:callback];
 }
 
 - (void)queueForkAndExecWithForkRequest:(iTermMultiServerJobManagerForkRequest)forkRequest

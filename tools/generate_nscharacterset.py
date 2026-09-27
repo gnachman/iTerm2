@@ -11,6 +11,8 @@ Data sources:
 - emoji-data.txt: Emoji properties (Emoji, Emoji_Presentation)
 - emoji-sequences.txt: Emoji sequences (for VS16 detection)
 - idn-chars.txt: IDN characters for URL detection
+- HangulSyllableType.txt: Conjoining jamo (L/V/T) that must not start their own cell
+- GraphemeBreakProperty.txt: Regional indicators, which must not start their own cell
 
 Usage:
     python3 tools/generate_nscharacterset.py
@@ -34,6 +36,9 @@ DERIVED_CORE_PROPS_URL = "https://unicode.org/Public/UCD/latest/ucd/DerivedCoreP
 EMOJI_DATA_URL = "https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt"
 EMOJI_SEQUENCES_URL = "https://unicode.org/Public/emoji/latest/emoji-sequences.txt"
 IDN_CHARS_URL = "https://unicode.org/reports/tr36/idn-chars.txt"
+HANGUL_SYLLABLE_TYPE_URL = "https://unicode.org/Public/UCD/latest/ucd/HangulSyllableType.txt"
+BIDI_MIRRORING_URL = "https://unicode.org/Public/UCD/latest/ucd/BidiMirroring.txt"
+GRAPHEME_BREAK_PROPERTY_URL = "https://unicode.org/Public/UCD/latest/ucd/auxiliary/GraphemeBreakProperty.txt"
 
 # Cache directory for downloaded files
 CACHE_DIR = Path(__file__).parent / ".unicode_cache"
@@ -145,6 +150,29 @@ def format_c_supp_ranges(nums, indent="    "):
     for start, end in get_ranges(nums):
         lines.append(f"{indent}{{{hex(start)}, {hex(end)}}},")
     return lines
+
+
+def parse_bidi_mirroring(content: str):
+    """Parse BidiMirroring.txt into a sorted list of (code, mirror) pairs."""
+    pairs = []
+    for line in content.splitlines():
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        left, right = (field.strip() for field in line.split(";"))
+        code = int(left, 16)
+        mirror = int(right, 16)
+        if code > 0xFFFF or mirror > 0xFFFF:
+            # iTermBidiMirroredCounterpart stores pairs as uint16_t. No pair has
+            # ever been outside the BMP; fail loudly if that changes.
+            raise ValueError(f"Non-BMP bidi mirroring pair {left};{right}")
+        pairs.append((code, mirror))
+    return sorted(pairs)
+
+
+def format_bidi_mirroring_pairs(pairs, indent="    "):
+    """Format (code, mirror) pairs as C uint16_t array entries."""
+    return [f"{indent}{{0x{code:04X}, 0x{mirror:04X}}}," for code, mirror in pairs]
 
 
 # ============================================================================
@@ -357,6 +385,9 @@ def main():
     emoji_data_content = get_cached_or_fetch(EMOJI_DATA_URL, "emoji-data.txt")
     emoji_sequences_content = get_cached_or_fetch(EMOJI_SEQUENCES_URL, "emoji-sequences.txt")
     idn_content = get_cached_or_fetch(IDN_CHARS_URL, "idn-chars.txt")
+    hangul_syllable_type_content = get_cached_or_fetch(HANGUL_SYLLABLE_TYPE_URL, "HangulSyllableType.txt")
+    bidi_mirroring_content = get_cached_or_fetch(BIDI_MIRRORING_URL, "BidiMirroring.txt")
+    grapheme_break_content = get_cached_or_fetch(GRAPHEME_BREAK_PROPERTY_URL, "GraphemeBreakProperty.txt")
 
     print("Parsing Unicode data...")
     unicode_data = parse_unicode_data(unicode_data_content)
@@ -422,7 +453,38 @@ def main():
     modifier_letter_codes = set(
         code for code, info in unicode_data.items() if info['gc'] == 'Lm'
     )
-    own_cell_codes = sorted(base_codes | set(spacing_combining_codes) | modifier_letter_codes)
+    # Conjoining Hangul jamo (Hangul_Syllable_Type L, V, T) are Grapheme_Base, so
+    # they land in the own-cell set above. But UAX #29 rules GB6-GB8 forbid breaking
+    # within an L(+)V(+T) sequence, and CFStringGetRangeOfComposedCharactersAtIndex
+    # already groups such a sequence into one grapheme cluster. Letting the own-cell
+    # scan re-split it renders decomposed Hangul (e.g. from HFS+ filenames, printf
+    # '가') as separate letters with the wrong width. Exclude conjoining
+    # jamo so a mid-cluster jamo stays attached. Precomposed syllables (LV/LVT,
+    # U+AC00..U+D7A3) are single code points and keep their own cell.
+    conjoining_jamo = (
+        parse_derived_props(hangul_syllable_type_content, "L")
+        | parse_derived_props(hangul_syllable_type_content, "V")
+        | parse_derived_props(hangul_syllable_type_content, "T")
+    )
+    # Regional indicators are Grapheme_Base for the same reason and need the same
+    # exclusion. UAX #29 rules GB12/GB13 pair them up, so a flag emoji is one cluster that
+    # CFStringGetRangeOfComposedCharactersAtIndex already segments correctly (including a
+    # trailing odd indicator, which stands alone). Letting the own-cell scan re-split a
+    # pair made a flag four columns wide instead of two: each indicator became its own
+    # cell and the fullWidthFlags rule then doubled each one. See issue 13070.
+    #
+    # Note that emoji modifiers (skin tones) are Grapheme_Base too and are NOT excluded
+    # here. They have Grapheme_Cluster_Break=Extend, so Apple attaches one to whatever
+    # precedes it, valid base or not, and CoreText draws a separate swatch glyph when the
+    # sequence is not a real emoji modifier sequence. Excluding them outright would
+    # collapse "A" + modifier into a single cell and overlap the swatch. Suppressing that
+    # split correctly requires an Emoji_Modifier_Base check on the preceding code point.
+    regional_indicators = parse_derived_props(grapheme_break_content, "Regional_Indicator")
+    own_cell_codes = sorted(
+        (base_codes | set(spacing_combining_codes) | modifier_letter_codes)
+        - conjoining_jamo
+        - regional_indicators
+    )
 
     # Split into BMP and supplementary for each set
     ignorable_bmp, ignorable_supp = split_bmp_supp(ignorable_codes)
@@ -430,6 +492,8 @@ def main():
     vs16_bmp, vs16_supp = split_bmp_supp(emoji_vs16_codes)
     rtl_bmp, rtl_supp = split_bmp_supp(rtl_codes)
     own_cell_bmp, own_cell_supp = split_bmp_supp(own_cell_codes)
+
+    bidi_mirroring_pairs = parse_bidi_mirroring(bidi_mirroring_content)
 
     print("Reading C template...")
     c_template = c_template_path.read_text(encoding="utf-8")
@@ -446,6 +510,8 @@ def main():
         "{{EMOJI_VS16_BMP_INIT}}": "\n".join(format_c_bmp_init(vs16_bmp, "sEmojiAcceptingVS16BMP")),
         "{{RTL_BMP_INIT}}": "\n".join(format_c_bmp_init(rtl_bmp, "sRTLBMP")),
         "{{CODE_POINTS_WITH_OWN_CELL_BMP_INIT}}": "\n".join(format_c_bmp_init(own_cell_bmp, "sCodePointsWithOwnCellBMP")),
+        "{{BIDI_MIRRORING_PAIRS}}": "\n".join(format_bidi_mirroring_pairs(bidi_mirroring_pairs)),
+        "{{BIDI_MIRRORING_PAIR_COUNT}}": str(len(bidi_mirroring_pairs)),
     }
 
     c_output = c_template

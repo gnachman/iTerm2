@@ -28,8 +28,11 @@ TEAM = 'H7V7XYVQ7D'
 # availability checks. The app is unreleased and tracks the current OS.
 DEPLOYMENT_TARGET = '26.0'
 # Kept in sync by hand; bump when releasing (mirrors the old Xcode-managed values).
-MARKETING_VERSION = '1.0'
-CURRENT_PROJECT_VERSION = '4'
+# IMPORTANT: bump these HERE, not in the generated .xcodeproj - the next
+# regeneration overwrites the project wholesale, so a version edited only in
+# project.pbxproj is silently reverted (this is how the 1.1 release was lost).
+MARKETING_VERSION = '1.2'
+CURRENT_PROJECT_VERSION = '1'
 PACKAGE_PRODUCTS = %w[CompanionProtocol CompanionNoise CompanionTransport]
 WHISPERKIT_URL = 'https://github.com/argmaxinc/WhisperKit.git'
 WHISPERKIT_MIN_VERSION = '1.0.0'
@@ -73,7 +76,7 @@ SHARED_MAC_SOURCES = %w[
 PUSH_SOURCES = %w[NotificationService.swift NSEFetcher.swift]
 
 # Unit-test sources.
-TEST_SOURCES = %w[AppModelWatchTests.swift SessionWatchStateTests.swift]
+TEST_SOURCES = %w[AppModelWatchTests.swift SessionWatchStateTests.swift AppModelAIAvailabilityTests.swift AppModelSessionTreePushTests.swift]
 
 project = Xcodeproj::Project.new(PROJECT_PATH)
 
@@ -115,6 +118,10 @@ end
 # Referenced so it shows in the navigator; it is imported via the build setting
 # below, not compiled.
 push_group.new_reference(File.join(PUSH_DIR, 'PushService-Bridging-Header.h'))
+# Privacy manifest for the extension (it also uses UserDefaults + file timestamp);
+# bundled at the .appex root.
+push_privacy_ref = push_group.new_reference(File.join(PUSH_DIR, 'PrivacyInfo.xcprivacy'))
+push_target.add_resources([push_privacy_ref])
 PACKAGE_PRODUCTS.each { |product| link_package_product(project, push_target, local_pkg, product) }
 
 push_target.build_configurations.each do |config|
@@ -184,6 +191,12 @@ if include_assets
   icon_ref = app_group.new_reference(icon)
   target.add_resources([icon_ref])
 end
+
+# Privacy manifest (required-reason API declarations: UserDefaults CA92.1 and
+# file timestamp C617.1). Bundled at the app root; not gated by SKIP_ASSETS.
+privacy = File.join(APP_DIR, 'Resources', 'PrivacyInfo.xcprivacy')
+privacy_ref = app_group.new_reference(privacy)
+target.add_resources([privacy_ref])
 
 # Package products: CompanionCore (local) + WhisperKit (remote, for dictation).
 PACKAGE_PRODUCTS.each { |product| link_package_product(project, target, local_pkg, product) }

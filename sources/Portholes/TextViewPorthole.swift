@@ -475,22 +475,22 @@ extension TextViewPorthole: NSTextViewDelegate {
             return false
         }
         if url.scheme == "file" {
-            if iTermWarning.show(withTitle: "Open file at \(url.path)?",
-                                 actions: ["OK", "Cancel"],
+            if iTermWarning.show(withTitle: String(localized: "TextViewPorthole.OpenFileConfirmation", defaultValue: "Open file at \(url.path)?", comment: "Confirmation prompt before opening a file from a Markdown link"),
+                                 actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                                  accessory: nil,
                                  identifier: "NoSyncOpenFileFromMarkdownLink",
                                  silenceable: .kiTermWarningTypePermanentlySilenceable,
-                                 heading: "Confirm",
+                                 heading: String(localized: "TextViewPorthole.ConfirmHeading", defaultValue: "Confirm", comment: "Heading for a confirmation dialog"),
                                  window: textView.window) == .kiTermWarningSelection0 {
                 NSWorkspace.shared.open(url)
             }
         } else {
-            if iTermWarning.show(withTitle: "Open URL \(url.absoluteString)?",
-                                 actions: ["OK", "Cancel"],
+            if iTermWarning.show(withTitle: String(localized: "TextViewPorthole.OpenURLConfirmation", defaultValue: "Open URL \(url.absoluteString)?", comment: "Confirmation prompt before opening a URL from a Markdown link"),
+                                 actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                                  accessory: nil,
                                  identifier: "NoSyncOpenURLFromMarkdownLink",
                                  silenceable: .kiTermWarningTypePermanentlySilenceable,
-                                 heading: "Confirm",
+                                 heading: String(localized: "TextViewPorthole.ConfirmHeading", defaultValue: "Confirm", comment: "Heading for a confirmation dialog"),
                                  window: textView.window) == .kiTermWarningSelection0 {
                 NSWorkspace.shared.open(url)
             }

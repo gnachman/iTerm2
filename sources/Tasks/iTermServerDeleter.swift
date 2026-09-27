@@ -18,7 +18,6 @@ class iTermServerName: NSObject {
 }
 
 @objc
-@available(macOS 10.15, *)
 class iTermServerDeleter: NSObject {
     static var started = false
     @objc static func deleteDisusedServers(in folders: [String],

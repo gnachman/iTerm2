@@ -78,34 +78,34 @@ class iTermBrowserToolbar: NSView {
 
     private func setupButtons() {
         backButton = HoverButton(symbolName: SFSymbol.chevronLeft.rawValue,
-                                 accessibilityDescription: "Back")
+                                 accessibilityDescription: String(localized: "BrowserToolbar.Back", defaultValue: "Back", comment: "Accessibility label for the back navigation button"))
         backButton.target = self
         backButton.action = #selector(backTapped)
         setupLongPressForButton(backButton, action: #selector(showBackHistory))
         addSubview(backButton)
 
         forwardButton = HoverButton(symbolName: SFSymbol.chevronRight.rawValue,
-                                    accessibilityDescription: "Forward")
+                                    accessibilityDescription: String(localized: "BrowserToolbar.Forward", defaultValue: "Forward", comment: "Accessibility label for the forward navigation button"))
         forwardButton.target = self
         forwardButton.action = #selector(forwardTapped)
         setupLongPressForButton(forwardButton, action: #selector(showForwardHistory))
         addSubview(forwardButton)
 
         reloadButton = HoverButton(symbolName: SFSymbol.arrowClockwise.rawValue,
-                                   accessibilityDescription: "Reload")
+                                   accessibilityDescription: String(localized: "BrowserToolbar.Reload", defaultValue: "Reload", comment: "Accessibility label for the reload button"))
         reloadButton.target = self
         reloadButton.action = #selector(reloadTapped)
         addSubview(reloadButton)
         
         stopButton = HoverButton(symbolName: SFSymbol.xmark.rawValue,
-                                 accessibilityDescription: "Stop")
+                                 accessibilityDescription: String(localized: "BrowserToolbar.Stop", defaultValue: "Stop", comment: "Accessibility label for the stop-loading button"))
         stopButton.target = self
         stopButton.action = #selector(stopTapped)
         stopButton.isHidden = true  // Initially hidden, shown during loading
         addSubview(stopButton)
         
         devNullIndicator = HoverButton(symbolName: SFSymbol.eyeSlash.rawValue,
-                                       accessibilityDescription: "Dev Null Mode")
+                                       accessibilityDescription: String(localized: "BrowserToolbar.DevNullMode", defaultValue: "Dev Null Mode", comment: "Accessibility label for the /dev/null private mode indicator"))
         devNullIndicator.target = self
         devNullIndicator.action = #selector(devNullIndicatorTapped)
         devNullIndicator.isHidden = true  // Initially hidden, shown only in /dev/null mode
@@ -119,7 +119,7 @@ class iTermBrowserToolbar: NSView {
         addSubview(indicatorsView)
         
         menuButton = HoverButton(symbolName: SFSymbol.line3Horizontal.rawValue,
-                                 accessibilityDescription: "Menu")
+                                 accessibilityDescription: String(localized: "BrowserToolbar.Menu", defaultValue: "Menu", comment: "Accessibility label for the toolbar menu button"))
         menuButton.target = self
         menuButton.action = #selector(menuTapped)
         addSubview(menuButton)
@@ -314,7 +314,7 @@ class iTermBrowserToolbar: NSView {
             if readerAvailable {
                 // Reader Mode menu item
                 let isReaderModeActive = delegate?.browserToolbarIsReaderModeActive() ?? false
-                let readerModeTitle = isReaderModeActive ? "Exit Reader Mode" : "Reader Mode"
+                let readerModeTitle = isReaderModeActive ? String(localized: "BrowserToolbar.ExitReaderMode", defaultValue: "Exit Reader Mode", comment: "Menu item to exit reader mode") : String(localized: "BrowserToolbar.ReaderMode", defaultValue: "Reader Mode", comment: "Menu item to enter reader mode")
                 let readerModeIcon = isReaderModeActive ? SFSymbol.docTextFill.rawValue : SFSymbol.docText.rawValue
                 let readerModeItem = NSMenuItem(title: readerModeTitle, action: #selector(readerModeMenuItemSelected), keyEquivalent: "")
                 readerModeItem.target = self
@@ -324,7 +324,7 @@ class iTermBrowserToolbar: NSView {
 
                 // Distraction Removal menu item
                 let isDistractionRemovalActive = delegate?.browserToolbarIsDistractionRemovalActive() ?? false
-                let distractionRemovalTitle = isDistractionRemovalActive ? "Exit Distraction Removal" : "Remove Distractions"
+                let distractionRemovalTitle = isDistractionRemovalActive ? String(localized: "BrowserToolbar.ExitDistractionRemoval", defaultValue: "Exit Distraction Removal", comment: "Menu item to exit distraction removal mode") : String(localized: "BrowserToolbar.RemoveDistractions", defaultValue: "Remove Distractions", comment: "Menu item to enter distraction removal mode")
                 let distractionRemovalIcon = isDistractionRemovalActive ? SFSymbol.target.rawValue : SFSymbol.scope.rawValue
                 let distractionRemovalItem = NSMenuItem(title: distractionRemovalTitle, action: #selector(distractionRemovalMenuItemSelected), keyEquivalent: "")
                 distractionRemovalItem.target = self
@@ -334,7 +334,7 @@ class iTermBrowserToolbar: NSView {
 
                 menu.addItem(NSMenuItem.separator())
 
-                let askAIItem = NSMenuItem(title: "Ask AI…", action: #selector(askAIMenuItemSelected), keyEquivalent: "")
+                let askAIItem = NSMenuItem(title: String(localized: "BrowserToolbar.AskAI", defaultValue: "Ask AI…", comment: "Menu item to ask AI about the current page"), action: #selector(askAIMenuItemSelected), keyEquivalent: "")
                 askAIItem.target = self
                 askAIItem.image = NSImage(systemSymbolName: SFSymbol.sparkles.rawValue, accessibilityDescription: nil)
                 menu.addItem(askAIItem)
@@ -342,7 +342,7 @@ class iTermBrowserToolbar: NSView {
             }
 
             if devNullIndicator.isHidden {
-                let bookmarkTitle = isBookmarked ? "Remove Bookmark" : "Add Bookmark"
+                let bookmarkTitle = isBookmarked ? String(localized: "BrowserToolbar.RemoveBookmark", defaultValue: "Remove Bookmark", comment: "Menu item to remove the current page from bookmarks") : String(localized: "BrowserToolbar.AddBookmark", defaultValue: "Add Bookmark", comment: "Menu item to bookmark the current page")
                 let bookmarkIcon = isBookmarked ? SFSymbol.bookmarkFill.rawValue : SFSymbol.bookmark.rawValue
                 let bookmarkItem = NSMenuItem(title: bookmarkTitle, action: #selector(bookmarkMenuItemSelected), keyEquivalent: "")
                 bookmarkItem.target = self
@@ -353,13 +353,13 @@ class iTermBrowserToolbar: NSView {
                 menu.addItem(NSMenuItem.separator())
 
                 // Manage Bookmarks menu item
-                let manageBookmarksItem = NSMenuItem(title: "Manage Bookmarks", action: #selector(manageBookmarksMenuItemSelected), keyEquivalent: "")
+                let manageBookmarksItem = NSMenuItem(title: String(localized: "BrowserToolbar.ManageBookmarks", defaultValue: "Manage Bookmarks", comment: "Menu item to manage bookmarks"), action: #selector(manageBookmarksMenuItemSelected), keyEquivalent: "")
                 manageBookmarksItem.target = self
                 manageBookmarksItem.image = NSImage(systemSymbolName: SFSymbol.book.rawValue, accessibilityDescription: nil)
                 menu.addItem(manageBookmarksItem)
 
                 // History menu item
-                let historyItem = NSMenuItem(title: "History", action: #selector(historyMenuItemSelected), keyEquivalent: "")
+                let historyItem = NSMenuItem(title: String(localized: "BrowserToolbar.History", defaultValue: "History", comment: "Menu item to open browsing history"), action: #selector(historyMenuItemSelected), keyEquivalent: "")
                 historyItem.target = self
                 historyItem.image = NSImage(systemSymbolName: SFSymbol.clock.rawValue, accessibilityDescription: nil)
                 menu.addItem(historyItem)
@@ -369,6 +369,7 @@ class iTermBrowserToolbar: NSView {
 
 #if DEBUG
             // Debug Autofill menu item (debug builds only)
+            // Localization unneeded
             let debugAutofillItem = NSMenuItem(title: "Debug Autofill Fields", action: #selector(debugAutofillMenuItemSelected), keyEquivalent: "")
             debugAutofillItem.target = self
             debugAutofillItem.image = NSImage(systemSymbolName: SFSymbol.magnifyingglassCircle.rawValue, accessibilityDescription: nil)
@@ -380,10 +381,12 @@ class iTermBrowserToolbar: NSView {
             let tuple = await delegate?.browserToolbarPermissionsForCurrentSite()
             if let tuple, !tuple.0.isEmpty {
                 let (permissions, origin) = tuple
-                let sortedPermissionTypes = permissions.keys.sorted { $0.displayName < $1.displayName }
+                let sortedPermissionTypes = permissions.keys.sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
                 for key in sortedPermissionTypes {
                     let value = permissions[key]!
-                    let item = NSMenuItem(title: "Reset " + key.displayName +  " Permission (" + value.displayName + ")",
+                    let item = NSMenuItem(title: String(localized: "BrowserToolbar.ResetPermission",
+                                                        defaultValue: "Reset \(key.displayName) Permission (\(value.displayName))",
+                                                        comment: "Menu item to reset a site permission. %1$@ is the permission name (e.g. Camera); %2$@ is its current value (e.g. Allow)."),
                                           action: #selector(resetPermission(_:)),
                                           keyEquivalent: "")
                     item.image = NSImage(systemSymbolName: SFSymbol.handRaised.rawValue, accessibilityDescription: nil)
@@ -395,7 +398,7 @@ class iTermBrowserToolbar: NSView {
             }
 
             if delegate?.browserToolbarIsCurrentPageMuted() == true {
-                let item = NSMenuItem(title: "Unmute Current Page",
+                let item = NSMenuItem(title: String(localized: "BrowserToolbar.UnmuteCurrentPage", defaultValue: "Unmute Current Page", comment: "Menu item to unmute the current page"),
                                       action: #selector(unmute(_:)),
                                       keyEquivalent: "")
                 item.image = NSImage(systemSymbolName: SFSymbol.speakerSlash.rawValue, accessibilityDescription: nil)
@@ -406,7 +409,7 @@ class iTermBrowserToolbar: NSView {
             }
 
             // Settings menu item
-            let settingsItem = NSMenuItem(title: "Settings", action: #selector(settingsMenuItemSelected), keyEquivalent: "")
+            let settingsItem = NSMenuItem(title: String(localized: "BrowserToolbar.Settings", defaultValue: "Settings", comment: "Menu item to open browser settings"), action: #selector(settingsMenuItemSelected), keyEquivalent: "")
             settingsItem.target = self
             settingsItem.image = NSImage(systemSymbolName: SFSymbol.gearshape.rawValue, accessibilityDescription: nil)
             menu.addItem(settingsItem)
@@ -502,15 +505,15 @@ class iTermBrowserToolbar: NSView {
     }
     
     private func showDevNullInfoPopover() {
-        devNullIndicator.it_showInformativeMessage(withMarkdown: """
+        devNullIndicator.it_showInformativeMessage(withMarkdown: String(localized: "BrowserToolbar.DevNullInfo", defaultValue: """
         ## /dev/null Mode
-        
+
         Your browsing activity is not being saved. No history, bookmarks, or other data will be stored.
-        
+
         This mode is set in the browser’s Profile under **Settings > Profile > Web > Privacy**.
-        
+
         ## 🙈 🙉 🙊
-        """)
+        """, comment: "Markdown popover explaining /dev/null private browsing mode"))
     }
     
     // MARK: - Long Press History

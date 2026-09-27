@@ -248,22 +248,16 @@
     return map[type];
 }
 
-+ (NSImage *)it_imageForSymbolName:(NSString *)name accessibilityDescription:(NSString *)accessibilityDescription NS_AVAILABLE_MAC(10_16) {
++ (NSImage *)it_imageForSymbolName:(NSString *)name accessibilityDescription:(NSString *)accessibilityDescription {
     return [NSImage imageWithSystemSymbolName:name accessibilityDescription:accessibilityDescription];
 }
 
 + (NSImage *)it_imageForSymbolName:(NSString *)name accessibilityDescription:(NSString *)description fallbackImageName:(NSString *)fallbackImageName forClass:(Class)theClass {
-    if (@available(macOS 11, *)) {
-        return [NSImage imageWithSystemSymbolName:name accessibilityDescription:description];
-    }
-    return [NSImage it_imageNamed:fallbackImageName forClass:theClass];
+    return [NSImage imageWithSystemSymbolName:name accessibilityDescription:description];
 }
 
 + (NSImage *)it_hamburgerForClass:(Class)theClass {
-    if (@available(macOS 10.16, *)) {
-        return [self it_imageForSymbolName:SFSymbolGetString(SFSymbolEllipsisCircle) accessibilityDescription:@"Menu"];
-    }
-    return [NSImage it_imageNamed:@"Hamburger" forClass:theClass];
+    return [self it_imageForSymbolName:SFSymbolGetString(SFSymbolEllipsisCircle) accessibilityDescription:@"Menu"];
 }
 
 + (instancetype)it_imageNamed:(NSImageName)name forClass:(Class)theClass {

@@ -21,21 +21,35 @@ import Foundation
         return !value.unicodeScalars.contains { $0 == "\r" || $0 == "\n" || $0 == "\0" }
     }
 
-    static func merged(into base: [String: String]) -> [String: String] {
-        guard iTermPreferences.bool(forKey: kPreferenceKeyAICustomHeadersEnabled),
-              let raw = iTermPreferences.object(forKey: kPreferenceKeyAICustomHeaders) as? [[String: String]] else {
+    // Merges a model's custom headers into `base`. Headers are per-model (each
+    // manual model carries its own list, set in the editor) so an authenticated
+    // self-hosted endpoint can send the auth header it requires without affecting
+    // other models. Each entry is a {"name": ..., "value": ...} dictionary.
+    static func merged(into base: [String: String],
+                       customHeaders: [[String: String]]) -> [String: String] {
+        guard !customHeaders.isEmpty else {
             return base
         }
         var result = base
-        for entry in raw {
+        for entry in customHeaders {
             guard let name = entry["name"], isValidName(name) else { continue }
             let value = entry["value"] ?? ""
             guard isValidValue(value) else {
                 RLog("Skipping AI custom header \"\(name)\" because its value contains a control character")
                 continue
             }
-            if result[name] != nil {
-                RLog("AI custom header overrides existing header field \"\(name)\"")
+            // HTTP field names are case-insensitive, so drop any existing field
+            // that differs from this one only in case before inserting. Leaving
+            // both in the dictionary would send one field whose value depends on
+            // dictionary iteration order: a custom "authorization" would then
+            // only sometimes beat the built-in "Authorization" (issue 13021).
+            // The user's spelling replaces ours.
+            let superseded = result.keys.filter {
+                $0.caseInsensitiveCompare(name) == .orderedSame
+            }
+            for existing in superseded {
+                RLog("AI custom header overrides existing header field \"\(existing)\"")
+                result.removeValue(forKey: existing)
             }
             result[name] = value
         }

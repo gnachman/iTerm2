@@ -70,7 +70,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     DLog(@"Search paths are %@", paths);
     if (!paths.count) {
         if (errorOut) {
-            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"No path found for directory in domain.",
+            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"NSFileManager.NoPathFound", nil, [NSBundle mainBundle], @"No path found for directory in domain.", @"Error shown when no path could be found for a search directory"),
                                         @"NSSearchPathDirectory": @(searchPathDirectory),
                                         @"NSSearchPathDomainMask": @(domainMask) };
             *errorOut = [NSError errorWithDomain:DirectoryLocationDomain
@@ -142,12 +142,12 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     if (result == nil) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating your application support directory. iTerm2 won't work very well until this problem is fixed.\n\nIt should be at ~/Library/Application Support/iTerm2.\n\nThe error was:\n%@", error.localizedDescription]
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"NSFileManager.AppSupportError", nil, [NSBundle mainBundle], @"There was a problem finding or creating your application support directory. iTerm2 won't work very well until this problem is fixed.\n\nIt should be at ~/Library/Application Support/iTerm2.\n\nThe error was:\n%@", @"Error shown when the application support directory could not be created; placeholder is the underlying error message"), error.localizedDescription]
+                                       actions:@[ iTermLocalizedOK() ]
                                      accessory:nil
                                     identifier:@"NoSyncAppSupportFail"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Problem with Application Support Directory"
+                                       heading:NSLocalizedStringWithDefaultValue(@"NSFileManager.AppSupportErrorHeading", nil, [NSBundle mainBundle], @"Problem with Application Support Directory", @"Heading of the application support directory error dialog")
                                         window:nil];
         });
     }
@@ -333,7 +333,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         }
     } else if (!isdir) {
         if (errorPtr) {
-            *errorPtr = [NSError errorWithDomain:@"com.iterm2.createDir" code:1 userInfo:@{ NSLocalizedDescriptionKey: @"File exists but is not a directory." }];
+            *errorPtr = [NSError errorWithDomain:@"com.iterm2.createDir" code:1 userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"NSFileManager.FileExistsNotDirectory", nil, [NSBundle mainBundle], @"File exists but is not a directory.", @"Error shown when a path is expected to be a directory but is a file") }];
         }
         return nil;
     }
@@ -386,12 +386,12 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             RLog(@"Failed to create the config directory: %@", error);
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating the config directory. You can set “Settings > Advanced > Folder for config files“ to set a custom location for this directory. Until this is fixed, some features will be disabled.\n%@", error.localizedDescription]
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"NSFileManager.ConfigFolderError", nil, [NSBundle mainBundle], @"There was a problem finding or creating the config directory. You can set “Settings > Advanced > Folder for config files“ to set a custom location for this directory. Until this is fixed, some features will be disabled.\n%@", @"Error shown when the config directory could not be created; placeholder is the underlying error message"), error.localizedDescription]
+                                       actions:@[ iTermLocalizedOK() ]
                                      accessory:nil
                                     identifier:@"NoSyncErrorCreatingConfigFolder"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Problem Creating Config Folder"
+                                       heading:NSLocalizedStringWithDefaultValue(@"NSFileManager.ConfigFolderErrorHeading", nil, [NSBundle mainBundle], @"Problem Creating Config Folder", @"Heading of the config directory error dialog")
                                         window:nil];
         });
     }

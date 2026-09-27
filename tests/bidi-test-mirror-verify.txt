@@ -1,0 +1,78 @@
+========================================================================
+ MIRRORING VERIFICATION  (cat this in a debug build)
+========================================================================
+Purpose: confirm bidi glyph mirroring (UBA rule L4) is working, i.e. a
+mirrorable character (bracket/paren/brace/angle/guillemet/math) that sits
+inside right-to-left text is drawn as its mirror-image counterpart.
+
+Setup: turn ON "right-to-left text support". Nothing else is needed
+(auto-detect paragraph direction can stay OFF, the default).
+
+Read it like this: each mirrorable character below is wrapped around the
+Persian word تهران. If mirroring works, the marks CURVE AROUND the word
+(they hug it). If mirroring is broken, they point the wrong way (reversed).
+
+IMPORTANT: the brackets must be EMBEDDED between Persian words to mirror.
+A bracket at the very start/end of a line stays at the paragraph's base
+level and does NOT mirror (that is correct, not a bug). Every test line
+below therefore has Persian text on BOTH sides of the mark.
+
+Check both renderers: run once with the GPU (Metal) renderer on and once
+off. They must look identical.
+
+------------------------------------------------------------------------
+1. Parentheses.
+   WORKING:  the parens hug the word ->  (تهران)
+   BROKEN:   reversed              ->  )تهران(
+------------------------------------------------------------------------
+متن (تهران) شهر
+
+------------------------------------------------------------------------
+2. Square brackets.   WORKING: [تهران]      BROKEN: ]تهران[
+------------------------------------------------------------------------
+متن [تهران] شهر
+
+------------------------------------------------------------------------
+3. Braces.            WORKING: {تهران}      BROKEN: }تهران{
+------------------------------------------------------------------------
+متن {تهران} شهر
+
+------------------------------------------------------------------------
+4. Angle brackets (less-than / greater-than mirror to each other).
+   WORKING: <تهران>      BROKEN: >تهران<
+------------------------------------------------------------------------
+متن <تهران> شهر
+
+------------------------------------------------------------------------
+5. Guillemets. These now follow the Unicode algorithm like every other
+   mirrorable character (no special-case), so embedded in RTL they mirror,
+   matching TextEdit/Safari. WORKING: marks reverse to »تهران«.
+------------------------------------------------------------------------
+متن «تهران» شهر
+
+------------------------------------------------------------------------
+6. A math relational operator (also bidi-mirrorable).
+   WORKING: ≤ reverses to ≥ between the two Persian words.
+------------------------------------------------------------------------
+عدد ≤ مقدار
+
+------------------------------------------------------------------------
+7. CONTROL, must NOT mirror: parentheses around an ENGLISH word inside
+   Persian. CoreText resolves these to a left-to-right run (rule N0), so
+   they must stay facing normally: (Google), never )Google(.
+------------------------------------------------------------------------
+مرورگر (Google) را باز کن
+
+------------------------------------------------------------------------
+8. CONTROL, edge brackets do NOT mirror (base level). This line should
+   show the parens as typed, (تهران), because they are at the line edge.
+   (This is why an edge test would not prove anything.)
+------------------------------------------------------------------------
+(تهران)
+
+------------------------------------------------------------------------
+COPY CHECK (mirroring is display-only): select line 1 above, copy, and
+paste into a plain text editor. You must get the ordinary ASCII parens
+"متن (تهران) شهر", NOT the mirrored glyphs. The model keeps the logical
+character; only the drawing is mirrored.
+========================================================================

@@ -800,6 +800,9 @@ static NSInteger gLessLoggingCount;
     profile[KEY_GUID] = ProfileModel.freshGuid;
     profile[KEY_SCROLLBACK_LINES] = @0;
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
+    // Browsers have no job, so the global job-only default title would render
+    // empty. Default to the page title (session name) instead.
+    profile[KEY_TITLE_COMPONENTS] = @(iTermTitleComponentsSessionName);
     [[iTermUserDefaults userDefaults] setObject:profile[KEY_GUID]
                                               forKey:KEY_DEFAULT_BROWSER_GUID];
     [self addBookmark:profile];

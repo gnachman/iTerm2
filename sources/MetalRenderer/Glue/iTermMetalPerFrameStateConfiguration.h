@@ -52,6 +52,11 @@ NS_ASSUME_NONNULL_BEGIN
     NSColor *_defaultTextColor;
     vector_float4 _selectionColor;
     iTermLineStyleMarkColors _lineStyleMarkColors;
+    // Resolved arrow-style mark colors (theme-aware). Used to build the mark
+    // texture array in iTermMarkRenderer.
+    NSColor *_markSuccessColor;
+    NSColor *_markOtherColor;
+    NSColor *_markFailureColor;
     NSColor *_cursorGuideColor;
     NSColorSpace *_colorSpace;
     BOOL _forceRegularBottomMargin;

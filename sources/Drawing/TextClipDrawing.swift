@@ -40,6 +40,7 @@ class TextClipDrawing: NSObject {
         var isFrontTextView: Bool
         var transparencyAlpha: Double
         var drawMarkIndicators: Bool
+        var useThemeMarkColors: Bool
         var showSearchingCursor: Bool
         var copyMode: Bool
         var passwordInput: Bool
@@ -63,6 +64,7 @@ class TextClipDrawing: NSObject {
             isFrontTextView = helper.isFrontTextView
             transparencyAlpha = helper.transparencyAlpha
             drawMarkIndicators = helper.drawMarkIndicators
+            useThemeMarkColors = helper.useThemeMarkColors
             showSearchingCursor = helper.showSearchingCursor
             copyMode = helper.copyMode
             passwordInput = helper.passwordInput
@@ -87,6 +89,7 @@ class TextClipDrawing: NSObject {
             helper.isFrontTextView = isFrontTextView
             helper.transparencyAlpha = transparencyAlpha
             helper.drawMarkIndicators = drawMarkIndicators
+            helper.useThemeMarkColors = useThemeMarkColors
             helper.showSearchingCursor = showSearchingCursor
             helper.copyMode = copyMode
             helper.passwordInput = passwordInput
@@ -307,12 +310,10 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
         return originalDelegate.drawingHelperBidiInfo(forLine: line)
     }
 
-    @available(macOS 11, *)
     func absCoord(for button: TerminalButton) -> VT100GridAbsCoord {
         return VT100GridAbsCoord(x: -1, y: -1)
     }
     
-    @available(macOS 11, *)
     func drawingHelperTerminalButtons() -> [TerminalButton] {
         return []
     }

@@ -129,8 +129,15 @@ class PluginClient {
         }
 
         let config = URLSessionConfiguration.default
+        // Treat the AI timeout as an idle timeout (max gap between bytes), not a
+        // cap on total wall-clock time. timeoutIntervalForRequest resets every
+        // time data arrives, so a healthy but slow generation (a reasoning model
+        // that is still thinking, or a cold local model) keeps running as long as
+        // it makes progress, while a genuinely dead connection still fails. We
+        // deliberately leave timeoutIntervalForResource at its default (7 days),
+        // because using the pref there would kill long-but-healthy requests. See
+        // issue #12995.
         config.timeoutIntervalForRequest = iTermPreferences.double(forKey: kPreferenceKeyAITimeout)
-        config.timeoutIntervalForResource =  iTermPreferences.double(forKey: kPreferenceKeyAITimeout)
         let delegate = HTTPStreamDelegate { [weak self] first, second in
             if second != nil {
                 self?.task.mutableAccess { currentTask in

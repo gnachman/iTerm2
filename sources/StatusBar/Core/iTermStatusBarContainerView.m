@@ -11,6 +11,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermStatusBarBaseComponent.h"
 #import "iTermUnreadCountView.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSImageView+iTerm.h"
@@ -99,6 +100,8 @@ const CGFloat iTermGetStatusBarHeight(void) {
 - (void)updateIconIfNeeded {
     NSImage *icon = _component.statusBarComponentIcon;
     [_component statusBarComponentUpdateColors];
+    // Keep the proxy icon's target directory current even when the glyph itself is unchanged.
+    [self updateProxyIconURL];
     if (icon == _iconImageView.image) {
         return;
     }
@@ -107,7 +110,20 @@ const CGFloat iTermGetStatusBarHeight(void) {
     const BOOL hasIcon = (icon != nil);
     if (hasIcon) {
         icon.template = YES;
-        _iconImageView = [NSImageView imageViewWithImage:icon];
+        if ([_component respondsToSelector:@selector(statusBarComponentProxyIconURL)]) {
+            // Make the icon a drag source (like a title bar proxy icon) while leaving its
+            // appearance untouched.
+            iTermStatusBarProxyIconImageView *proxyIconView = [[iTermStatusBarProxyIconImageView alloc] initWithFrame:NSZeroRect];
+            proxyIconView.image = icon;
+            proxyIconView.imageScaling = NSImageScaleProportionallyUpOrDown;
+            __weak __typeof(self) weakSelf = self;
+            proxyIconView.onClick = ^{
+                [weakSelf proxyIconClicked];
+            };
+            _iconImageView = proxyIconView;
+        } else {
+            _iconImageView = [NSImageView imageViewWithImage:icon];
+        }
         NSColor *tintColor = [self.component statusBarTextColor] ?: [self.component.delegate statusBarComponentDefaultTextColor];
         [_iconImageView it_setTintColor:tintColor];
         [_iconImageView sizeToFit];
@@ -118,6 +134,30 @@ const CGFloat iTermGetStatusBarHeight(void) {
         frame.origin.x = 0;
         frame.origin.y = (area.size.height - frame.size.height) / 2.0;
         _iconImageView.frame = frame;
+        [self updateProxyIconURL];
+    }
+}
+
+// Pushes the component's current proxy icon URL (if any) to the draggable icon view so a drag
+// vends the up-to-date directory.
+- (void)updateProxyIconURL {
+    iTermStatusBarProxyIconImageView *proxyIconView = [iTermStatusBarProxyIconImageView castFrom:_iconImageView];
+    if (!proxyIconView) {
+        return;
+    }
+    NSURL *url = nil;
+    if ([_component respondsToSelector:@selector(statusBarComponentProxyIconURL)]) {
+        url = [_component statusBarComponentProxyIconURL];
+    }
+    proxyIconView.url = url;
+}
+
+// Invoked when the proxy icon is clicked without dragging. Behaves like clicking the component.
+- (void)proxyIconClicked {
+    if ([_component statusBarComponentHandlesMouseDown]) {
+        [_component statusBarComponentMouseDownWithView:_view];
+    } else if ([_component statusBarComponentHandlesClicks]) {
+        [_component statusBarComponentDidClickWithView:_view];
     }
 }
 
@@ -151,7 +191,13 @@ const CGFloat iTermGetStatusBarHeight(void) {
     }
 }
 
-- (void)clickRecognized:(id)sender {
+- (void)clickRecognized:(NSGestureRecognizer *)sender {
+    // If the click landed on a proxy icon, that view already handled it (opening the menu or
+    // starting a drag), so don't handle it here too or the menu would open twice.
+    if ([_iconImageView isKindOfClass:[iTermStatusBarProxyIconImageView class]] &&
+        NSPointInRect([sender locationInView:self], _iconImageView.frame)) {
+        return;
+    }
     [_component statusBarComponentDidClickWithView:_view];
 }
 
@@ -297,11 +343,12 @@ const CGFloat iTermGetStatusBarHeight(void) {
 }
 
 - (void)showContextMenuForEvent:(NSEvent *)event {
+    // Localization unneeded
     NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
     if ([_component respondsToSelector:@selector(statusBarComponentCopyableString)]) {
         NSString *copyableString = [_component statusBarComponentCopyableString];
         if (copyableString.length > 0) {
-            [menu addItemWithTitle:@"Copy"
+            [menu addItemWithTitle:iTermLocalizedCopy()
                             action:@selector(copyComponentValue:)
                      keyEquivalent:@""];
             [menu addItem:[NSMenuItem separatorItem]];
@@ -309,18 +356,18 @@ const CGFloat iTermGetStatusBarHeight(void) {
     }
     if (![_component statusBarComponentIsInternal]) {
         if ([[_component statusBarComponentKnobs] count]) {
-            [menu addItemWithTitle:[NSString stringWithFormat:@"Configure %@", [self.component statusBarComponentShortDescription]]
+            [menu addItemWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"StatusBarContainer.ConfigureComponentFormat", nil, [NSBundle mainBundle], @"Configure %@", @"Menu item to configure a status bar component; %@ is the component name"), [self.component statusBarComponentShortDescription]]
                             action:@selector(configureComponent:)
                      keyEquivalent:@""];
         }
-        [menu addItemWithTitle:[NSString stringWithFormat:@"Hide %@", [self.component statusBarComponentShortDescription]]
+        [menu addItemWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"StatusBarContainer.HideComponentFormat", nil, [NSBundle mainBundle], @"Hide %@", @"Menu item to hide a status bar component; %@ is the component name"), [self.component statusBarComponentShortDescription]]
                         action:@selector(hideComponent:)
                  keyEquivalent:@""];
     }
-    [menu addItemWithTitle:@"Configure Status Bar"
+    [menu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarContainer.ConfigureStatusBar", nil, [NSBundle mainBundle], @"Configure Status Bar", @"Menu item to configure the status bar")
                     action:@selector(configureStatusBar:)
              keyEquivalent:@""];
-    [menu addItemWithTitle:@"Disable Status Bar"
+    [menu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarContainer.DisableStatusBar", nil, [NSBundle mainBundle], @"Disable Status Bar", @"Menu item to disable the status bar")
                     action:@selector(disableStatusBar:)
              keyEquivalent:@""];
     NSDictionary<NSString *, id> *values = [self.component statusBarComponentKnobValues];

@@ -34,6 +34,8 @@ typedef struct {
     BOOL browser;  // Can browser profiles use it?
 } ContextMenuActionDeclaration;
 
+// The English strings here are identity/reference only; user-facing title and parameterLabel are
+// localized at display time by the helpers below, keyed on the (stable) tag. (placeholder is unused.)
 static ContextMenuActionDeclaration gContextMenuActionDeclarations[] = {
     { @"Open File…",               @"Enter file name",          @"File:",      kOpenFileContextMenuAction,             YES },
     { @"Open URL…",                @"Enter URL",                @"URL:",       kOpenUrlContextMenuAction,              YES },
@@ -43,6 +45,34 @@ static ContextMenuActionDeclaration gContextMenuActionDeclarations[] = {
     { @"Run Command in Window…",   @"Enter command",            @"Command:",   kRunCommandInWindowContextMenuAction,   YES },
     { @"Copy",                     @"Enter text",               @"Text:",      kCopyContextMenuAction,                 YES },
 };
+
+// Localized display title per context-menu action, keyed on the stable tag.
+static NSString *LocalizedContextMenuActionTitle(ContextMenuActions tag) {
+    switch (tag) {
+        case kOpenFileContextMenuAction:          return NSLocalizedStringWithDefaultValue(@"ContextMenu.ActionOpenFile", nil, [NSBundle mainBundle], @"Open File…", @"Context-menu action: open a file");
+        case kOpenUrlContextMenuAction:           return NSLocalizedStringWithDefaultValue(@"ContextMenu.ActionOpenURL", nil, [NSBundle mainBundle], @"Open URL…", @"Context-menu action: open a URL");
+        case kRunCommandContextMenuAction:        return NSLocalizedStringWithDefaultValue(@"ContextMenu.ActionRunCommand", nil, [NSBundle mainBundle], @"Run Command…", @"Context-menu action: run a command");
+        case kRunCoprocessContextMenuAction:      return NSLocalizedStringWithDefaultValue(@"ContextMenu.ActionRunCoprocess", nil, [NSBundle mainBundle], @"Run Coprocess…", @"Context-menu action: run a coprocess");
+        case kSendTextContextMenuAction:          return NSLocalizedStringWithDefaultValue(@"ContextMenu.ActionSendText", nil, [NSBundle mainBundle], @"Send text…", @"Context-menu action: send text");
+        case kRunCommandInWindowContextMenuAction: return NSLocalizedStringWithDefaultValue(@"ContextMenu.ActionRunCommandInWindow", nil, [NSBundle mainBundle], @"Run Command in Window…", @"Context-menu action: run a command in a window");
+        case kCopyContextMenuAction:              return NSLocalizedStringWithDefaultValue(@"ContextMenu.ActionCopy", nil, [NSBundle mainBundle], @"Copy", @"Context-menu action: copy");
+    }
+    return @"";
+}
+
+// Localized parameter-field label per context-menu action, keyed on the stable tag.
+static NSString *LocalizedContextMenuParameterLabel(ContextMenuActions tag) {
+    switch (tag) {
+        case kOpenFileContextMenuAction:          return NSLocalizedStringWithDefaultValue(@"ContextMenu.ParamFile", nil, [NSBundle mainBundle], @"File:", @"Label for the file-name parameter field");
+        case kOpenUrlContextMenuAction:           return NSLocalizedStringWithDefaultValue(@"ContextMenu.ParamURL", nil, [NSBundle mainBundle], @"URL:", @"Label for the URL parameter field");
+        case kRunCommandContextMenuAction:
+        case kRunCommandInWindowContextMenuAction: return NSLocalizedStringWithDefaultValue(@"ContextMenu.ParamCommand", nil, [NSBundle mainBundle], @"Command:", @"Label for the command parameter field");
+        case kRunCoprocessContextMenuAction:      return NSLocalizedStringWithDefaultValue(@"ContextMenu.ParamCoprocess", nil, [NSBundle mainBundle], @"Coprocess:", @"Label for the coprocess-command parameter field");
+        case kSendTextContextMenuAction:
+        case kCopyContextMenuAction:              return NSLocalizedStringWithDefaultValue(@"ContextMenu.ParamText", nil, [NSBundle mainBundle], @"Text:", @"Label for the text parameter field");
+    }
+    return @"";
+}
 
 static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMenuActions tag) {
     const NSUInteger actionsCount = sizeof(gContextMenuActionDeclarations) / sizeof(gContextMenuActionDeclarations[0]);
@@ -327,7 +357,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
 
 - (void)updateHelpText {
     if (_useInterpolatedStringsButton.state == NSControlStateValueOn) {
-        NSString *html = @"You can use captured strings from the Smart Selection's regular expression in the parameter. Use \\(matches[i]) where i=0 for the entire match and i>0 for capture groups. For other values, see <a href=\"https://iterm2.com/documentation-scripting-fundamentals.html\">Scripting Fundamentals</a> and <a href=\"https://iterm2.com/documentation-variables.html#session-context\">Variables Reference (Session Context)</a>.";
+        NSString *html = NSLocalizedStringWithDefaultValue(@"ContextMenu.ParameterHelpInterpolated", nil, [NSBundle mainBundle], @"You can use captured strings from the Smart Selection's regular expression in the parameter. Use \\(matches[i]) where i=0 for the entire match and i>0 for capture groups. For other values, see <a href=\"https://iterm2.com/documentation-scripting-fundamentals.html\">Scripting Fundamentals</a> and <a href=\"https://iterm2.com/documentation-variables.html#session-context\">Variables Reference (Session Context)</a>.", @"Help text explaining how to use captured substrings in a context menu action parameter using interpolated-string syntax; preserve the anchor tags and URLs");
         NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
         paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
         _parameterInfoTextField.attributedStringValue = [NSAttributedString attributedStringWithHTML:html
@@ -336,7 +366,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
         _parameterInfoTextField.selectable = YES;
         _parameterInfoTextField.allowsEditingTextAttributes = YES;
     } else {
-        _parameterInfoTextField.stringValue = @"You can use captured strings from the Smart Selection's regular expression in the parameter. Use \\0 for match, \\1…\\9 for match groups, \\d for directory, \\u for user, \\h for host.";
+        _parameterInfoTextField.stringValue = NSLocalizedStringWithDefaultValue(@"ContextMenu.ParameterHelpPlain", nil, [NSBundle mainBundle], @"You can use captured strings from the Smart Selection's regular expression in the parameter. Use \\0 for match, \\1…\\9 for match groups, \\d for directory, \\u for user, \\h for host.", @"Help text explaining how to use captured substrings in a context menu action parameter, non-interpolated syntax");
     }
 }
 
@@ -381,7 +411,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
         if (_browser && !gContextMenuActionDeclarations[i].browser) {
             continue;
         }
-        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:gContextMenuActionDeclarations[i].title
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:LocalizedContextMenuActionTitle(gContextMenuActionDeclarations[i].tag)
                                                       action:nil
                                                keyEquivalent:@""];
         item.tag = gContextMenuActionDeclarations[i].tag;
@@ -412,11 +442,11 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
 
     NSString *title = action[kTitleKey];
     if (title.length == 0) {
-        title = @"Untitled Action";
+        title = NSLocalizedStringWithDefaultValue(@"ContextMenu.UntitledAction", nil, [NSBundle mainBundle], @"Untitled Action", @"Default title shown for a context menu action that has no name");
     }
     NSAttributedString *nameAttributedString = [[NSAttributedString alloc] initWithString:title
                                                                                attributes:self.nameAttributes];
-    NSAttributedString *actionAttributedString = [[NSAttributedString alloc] initWithString:decl.title
+    NSAttributedString *actionAttributedString = [[NSAttributedString alloc] initWithString:LocalizedContextMenuActionTitle(decl.tag)
                                                                                  attributes:self.regularAttributes];
     id parameterAttributedString = nil;
     NSString *parameter = action[kParameterKey];
@@ -507,12 +537,12 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
     _parameter.stringValue = item[kParameterKey] ?: @"";
     NSNumber *action = [NSNumber castFrom:item[kActionKey]] ?: @0;
     [_action selectItemWithTag:action.integerValue];
-    _parameterLabel.stringValue = ContextMenuActionDeclarationForTag(action.integerValue).parameterLabel;
+    _parameterLabel.stringValue = LocalizedContextMenuParameterLabel(action.integerValue);
     _parameterLabel.hidden = NO;
     _parameter.hidden = NO;
     _parameterInfoTextField.hidden = NO;
     if (action.integerValue == kCopyContextMenuAction) {
-        _parameter.placeholderString = @"Leave empty to copy matching text";
+        _parameter.placeholderString = NSLocalizedStringWithDefaultValue(@"ContextMenu.CopyPlaceholder", nil, [NSBundle mainBundle], @"Leave empty to copy matching text", @"Placeholder in the parameter field for the Copy context menu action, indicating an empty value copies the matched text");
     } else {
         _parameter.placeholderString = @"";
     }

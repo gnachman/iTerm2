@@ -217,12 +217,12 @@ class PasteConfiguration:
 
     @property
     def convert_unicode_punctuation(self) -> bool:
-        "Returns whether to convert non-ASCII puncutation to ASCII equivalents when pasting."
+        "Returns whether to convert non-ASCII punctuation to ASCII equivalents when pasting."
         return self.__convert_unicode_punctuation
 
     @convert_unicode_punctuation.setter
     def convert_unicode_punctuation(self, value: bool):
-        "Sets whether to convert non-ASCII puncutation to ASCII equivalents when pasting."
+        "Sets whether to convert non-ASCII punctuation to ASCII equivalents when pasting."
         self.__convert_unicode_punctuation = value
 
     @property

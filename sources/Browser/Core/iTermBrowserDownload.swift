@@ -8,7 +8,6 @@
 import Foundation
 @preconcurrency import WebKit
 
-@available(macOS 11.3, *)
 @objc(iTermBrowserDownload)
 class iTermBrowserDownload: TransferrableFile {
     private let wkDownload: WKDownload
@@ -138,7 +137,6 @@ class iTermBrowserDownload: TransferrableFile {
 
 // MARK: - WKDownloadDelegate
 
-@available(macOS 11.3, *)
 extension iTermBrowserDownload: WKDownloadDelegate {
     func download(_ download: WKDownload, 
                   decideDestinationUsing response: URLResponse, 

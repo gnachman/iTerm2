@@ -13199,6 +13199,7 @@ typedef struct ITMListSessionsResponse__storage_ {
 @dynamic hasWindowId, windowId;
 @dynamic hasFrame, frame;
 @dynamic hasNumber, number;
+@dynamic hasSelectedTabId, selectedTabId;
 
 typedef struct ITMListSessionsResponse_Window__storage_ {
   uint32_t _has_storage_[1];
@@ -13206,6 +13207,7 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
   NSMutableArray *tabsArray;
   NSString *windowId;
   ITMFrame *frame;
+  NSString *selectedTabId;
 } ITMListSessionsResponse_Window__storage_;
 
 // This method is threadsafe because it is initially called
@@ -13250,6 +13252,15 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeInt32,
       },
+      {
+        .name = "selectedTabId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMListSessionsResponse_Window_FieldNumber_SelectedTabId,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Window__storage_, selectedTabId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMListSessionsResponse_Window class]
@@ -13279,6 +13290,11 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
 @dynamic hasTmuxWindowId, tmuxWindowId;
 @dynamic hasTmuxConnectionId, tmuxConnectionId;
 @dynamic minimizedSessionsArray, minimizedSessionsArray_Count;
+@dynamic hasActiveSessionId, activeSessionId;
+@dynamic hasTabGroupId, tabGroupId;
+@dynamic hasTabGroupName, tabGroupName;
+@dynamic hasTabGroupColor, tabGroupColor;
+@dynamic hasTabGroupCollapsed, tabGroupCollapsed;
 
 typedef struct ITMListSessionsResponse_Tab__storage_ {
   uint32_t _has_storage_[1];
@@ -13287,6 +13303,10 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
   NSString *tmuxWindowId;
   NSString *tmuxConnectionId;
   NSMutableArray *minimizedSessionsArray;
+  NSString *activeSessionId;
+  NSString *tabGroupId;
+  NSString *tabGroupName;
+  NSString *tabGroupColor;
 } ITMListSessionsResponse_Tab__storage_;
 
 // This method is threadsafe because it is initially called
@@ -13339,6 +13359,51 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, minimizedSessionsArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "activeSessionId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMListSessionsResponse_Tab_FieldNumber_ActiveSessionId,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, activeSessionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "tabGroupId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMListSessionsResponse_Tab_FieldNumber_TabGroupId,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tabGroupId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "tabGroupName",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMListSessionsResponse_Tab_FieldNumber_TabGroupName,
+        .hasIndex = 6,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tabGroupName),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "tabGroupColor",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMListSessionsResponse_Tab_FieldNumber_TabGroupColor,
+        .hasIndex = 7,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tabGroupColor),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "tabGroupCollapsed",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMListSessionsResponse_Tab_FieldNumber_TabGroupCollapsed,
+        .hasIndex = 8,
+        .offset = 9,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
       },
     };
     GPBDescriptor *localDescriptor =

@@ -48,6 +48,16 @@
 }
 @end
 
+@implementation iTermAnnotatingSwiftyString
+
+- (iTermExpressionEvaluator *)expressionEvaluatorUsingScope:(iTermVariableScope *)scope {
+    return [[iTermExpressionEvaluator alloc] initWithInterpolatedString:self.swiftyString
+                                                                 scope:scope
+                                            annotateUndefinedVariables:YES];
+}
+
+@end
+
 @implementation iTermExpressionObserver
 
 - (iTermExpressionEvaluator *)expressionEvaluatorUsingScope:(iTermVariableScope *)scope {

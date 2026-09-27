@@ -10,6 +10,7 @@
 
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermLaunchExperienceController.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
@@ -24,9 +25,41 @@ static const CGFloat kSponsorSpacing = 16.0;
 // Y origin of the sponsor row, matching the original nib position.
 static const CGFloat kSponsorRowY = 170.0;
 
+// Corner radius shared by the sponsor cards and, on macOS 26, the credits
+// well, so the two containers read as one system. Tahoe's window chrome is
+// rounder than its predecessors', and the containers follow it.
+static const CGFloat kContainerCornerRadiusTahoe = 12.0;
+static const CGFloat kContainerCornerRadiusLegacy = 8.0;
+// Keeps the backer names off the well's rounded corners.
+static const NSSize kCreditsTextInset = { 16.0, 12.0 };
+
+// Before macOS 26, dark themes get a frosted-glass treatment and light themes
+// keep the stock window, so these only ever apply when the theme is dark.
+// Translucent black behind the credits so small text stays legible over the
+// blur. Dark enough to read as a step down from the glass, light enough that
+// the desktop still shows faintly through it.
+static const CGFloat kDarkCreditsScrimAlpha = 0.28;
+static const CGFloat kDarkCreditsScrimCornerRadius = 10.0;
+
+static CGFloat iTermAboutContainerCornerRadius(void) {
+    if (@available(macOS 26, *)) {
+        return kContainerCornerRadiusTahoe;
+    }
+    return kContainerCornerRadiusLegacy;
+}
+
+// One fill for every container in the window, so the sponsor cards and the
+// credits well read as the same surface.
+static NSColor *iTermAboutContainerFillColor(void) {
+    return [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.04]
+                                       darkMode:[NSColor colorWithWhite:1.0 alpha:0.08]];
+}
+
 @interface iTermAboutWindowContentView : NSVisualEffectView
 @end
 
+// Layer properties on the views AppKit manages get reset on the next display
+// pass, so anything that paints a container does it from updateLayer.
 @interface iTermSponsorBoxView : NSView
 @end
 
@@ -34,15 +67,31 @@ static const CGFloat kSponsorRowY = 170.0;
 - (BOOL)wantsUpdateLayer { return YES; }
 - (void)updateLayer {
     [super updateLayer];
-    self.layer.cornerRadius = 8.0;
-    self.layer.borderWidth = 0.5;
-    self.layer.borderColor = [NSColor separatorColor].CGColor;
-    self.layer.backgroundColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.04]
-                                                                    darkMode:[NSColor colorWithWhite:1.0 alpha:0.08]].CGColor;
+    self.layer.cornerRadius = iTermAboutContainerCornerRadius();
+    self.layer.backgroundColor = iTermAboutContainerFillColor().CGColor;
 }
 - (void)resetCursorRects {
     [super resetCursorRects];
     [self addCursorRect:self.bounds cursor:[NSCursor pointingHandCursor]];
+}
+@end
+
+// Sits behind the credits scroll view. On macOS 26 it is a container like the
+// sponsor cards; before that it is the dark scrim over the frosted glass.
+@interface iTermAboutCreditsWellView : NSView
+@end
+
+@implementation iTermAboutCreditsWellView
+- (BOOL)wantsUpdateLayer { return YES; }
+- (void)updateLayer {
+    [super updateLayer];
+    if (@available(macOS 26, *)) {
+        self.layer.cornerRadius = iTermAboutContainerCornerRadius();
+        self.layer.backgroundColor = iTermAboutContainerFillColor().CGColor;
+    } else {
+        self.layer.cornerRadius = kDarkCreditsScrimCornerRadius;
+        self.layer.backgroundColor = [NSColor colorWithWhite:0 alpha:kDarkCreditsScrimAlpha].CGColor;
+    }
 }
 @end
 
@@ -59,6 +108,11 @@ static const CGFloat kSponsorRowY = 170.0;
     IBOutlet NSTextView *_sponsorsHeading;
 
     NSArray<iTermSponsor *> *_sponsors;
+    iTermAboutCreditsWellView *_creditsWell;
+    NSVisualEffectMaterial _stockMaterial;
+    // Set once awakeFromNib has captured the nib's material. Until then there is
+    // no stock material to fall back to and no _creditsWell to toggle.
+    BOOL _ready;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
@@ -67,19 +121,60 @@ static const CGFloat kSponsorRowY = 170.0;
     CGFloat topMargin = oldSize.height - NSMaxY(frame);
     frame.origin.y = self.frame.size.height - topMargin - frame.size.height;
     _bottomAlignedScrollView.frame = frame;
+    _creditsWell.frame = frame;
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+    _stockMaterial = self.material;
+
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.alignment = NSTextAlignmentCenter;
     _sponsorsHeading.selectable = YES;
     _sponsorsHeading.editable = NO;
-    [_sponsorsHeading.textStorage setAttributedString:[NSAttributedString attributedStringWithHTML:_sponsorsHeading.textStorage.string
+    NSString *headingHTML = NSLocalizedStringWithDefaultValue(@"About.BackersHeading", nil, [NSBundle mainBundle], @"iTerm2 is supported by these backers on <a href=\"https://patreon.com/gnachman\">Patreon</a> and <a href=\"https://github.com/sponsors/gnachman\">GitHub Sponsors</a>", @"About window heading. Keep the <a href=...> HTML tags and the URLs. ‘Patreon’ and ‘GitHub Sponsors’ are brand names, keep them. Only translate the prose ‘iTerm2 is supported by these backers on’ and ‘and’.");
+    [_sponsorsHeading.textStorage setAttributedString:[NSAttributedString attributedStringWithHTML:headingHTML
                                                                                               font:_sponsorsHeading.font
                                                                                     paragraphStyle:paragraphStyle]];
 
     _sponsors = [self buildUnifiedSponsorRow];
+
+    _creditsWell = [[iTermAboutCreditsWellView alloc] initWithFrame:_bottomAlignedScrollView.frame];
+    _creditsWell.autoresizingMask = _bottomAlignedScrollView.autoresizingMask;
+    [self addSubview:_creditsWell positioned:NSWindowBelow relativeTo:_bottomAlignedScrollView];
+    NSTextView *creditsTextView = [NSTextView castFrom:_bottomAlignedScrollView.documentView];
+    creditsTextView.textContainerInset = kCreditsTextInset;
+
+    _ready = YES;
+    [self applyAppearanceTreatment];
+}
+
+- (void)viewDidChangeEffectiveAppearance {
+    [super viewDidChangeEffectiveAppearance];
+    // AppKit does not guarantee this fires after awakeFromNib. Applying the
+    // treatment before awakeFromNib has captured the stock material would set a
+    // bogus material and then let awakeFromNib record that bogus value as the
+    // stock one. awakeFromNib does the initial application itself.
+    if (!_ready) {
+        return;
+    }
+    [self applyAppearanceTreatment];
+}
+
+// On macOS 26 the About window is a plain window-background window, the way
+// the system's own About panel is, with the credits in a container like the
+// sponsor cards; the colours are dynamic, so light and dark share one path.
+// Before macOS 26, dark themes get frosted glass with a scrim behind the
+// credits and light themes keep the stock window.
+- (void)applyAppearanceTreatment {
+    if (@available(macOS 26, *)) {
+        self.material = NSVisualEffectMaterialWindowBackground;
+        _creditsWell.hidden = NO;
+        return;
+    }
+    const BOOL dark = self.effectiveAppearance.it_isDark;
+    self.material = dark ? NSVisualEffectMaterialUnderWindowBackground : _stockMaterial;
+    _creditsWell.hidden = !dark;
 }
 
 - (NSView *)makeSponsorBoxWithImageNamed:(NSString *)imageName title:(NSString *)title {
@@ -121,6 +216,7 @@ static const CGFloat kSponsorRowY = 170.0;
 
 - (NSArray<iTermSponsor *> *)buildUnifiedSponsorRow {
     NSArray<NSDictionary *> *sponsorData = @[
+        // Localization unneeded
         @{ @"image": @"whitebox_logo", @"title": @"Whitebox", @"url": @"https://whitebox.so/?utm_source=iTerm2" },
         @{ @"image": @"coderabbitai",  @"url": @"https://coderabbit.ai/" },
         @{ @"image": @"SerpApi",       @"url": @"https://serpapi.com/?utm_source=iterm" },
@@ -196,26 +292,27 @@ static const CGFloat kSponsorRowY = 170.0;
     if (self) {
         NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
         NSString *const versionNumber = myDict[(NSString *)kCFBundleVersionKey];
-        NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", versionNumber];
+        NSString *versionString = [NSString stringWithFormat: NSLocalizedStringWithDefaultValue(@"AboutWindow.BuildVersion", nil, [NSBundle mainBundle], @"Build %@\n\n", @"Build version line in the about window; placeholder is the build number"), versionNumber];
         NSAttributedString *whatsNew = nil;
         if ([versionNumber hasPrefix:@"3.7."] || [versionString isEqualToString:@"unknown"]) {
             whatsNew = [self attributedStringWithLinkToURL:iTermAboutWindowControllerWhatsNewURLString
-                                                     title:@"What’s New in 3.7?\n"];
+                                                     title:NSLocalizedStringWithDefaultValue(@"AboutWindow.WhatsNew", nil, [NSBundle mainBundle], @"What’s New in 3.7?\n", @"Link title in the about window that opens the whats-new page for version 3.7")];
         }
 
         NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://iterm2.com/"
-                                                                       title:@"Home Page"];
+                                                                       title:NSLocalizedStringWithDefaultValue(@"AboutWindow.HomePage", nil, [NSBundle mainBundle], @"Home Page", @"Link title in the about window that opens the iTerm2 home page")];
         NSAttributedString *bugsAString =
                 [self attributedStringWithLinkToURL:@"https://iterm2.com/bugs"
-                                              title:@"Report a bug"];
+                                              title:NSLocalizedStringWithDefaultValue(@"AboutWindow.ReportBug", nil, [NSBundle mainBundle], @"Report a bug", @"Link title in the about window that opens the bug reporting page")];
         NSAttributedString *creditsAString =
                 [self attributedStringWithLinkToURL:@"https://iterm2.com/credits"
-                                              title:@"Credits"];
+                                              title:NSLocalizedStringWithDefaultValue(@"AboutWindow.Credits", nil, [NSBundle mainBundle], @"Credits", @"Link title in the about window that opens the credits page")];
 
         // Force IBOutlets to be bound by creating window.
         [self window];
 
         NSDictionary *versionAttributes = @{ NSForegroundColorAttributeName: [NSColor controlTextColor] };
+        // Localization unneeded
         NSAttributedString *bullet = [[NSAttributedString alloc] initWithString:@" ∙ "
                                                                      attributes:versionAttributes];
         [_dynamicText setLinkTextAttributes:self.linkTextViewAttributes];
@@ -271,7 +368,15 @@ static const CGFloat kSponsorRowY = 170.0;
 
     NSRect rect = _patronsTextView.enclosingScrollView.frame;
     [_patronsTextView sizeToFit];
-    const CGFloat desiredHeight = [_patronsTextView.textStorage heightForWidth:rect.size.width];
+    // heightForWidth: lays the text out in a bare container with no inset, but
+    // the credits text view carries a textContainerInset (see
+    // iTermAboutWindowContentView). Shrink the layout width by the horizontal
+    // inset on both sides and add the vertical inset back to the height, or the
+    // scroll view (which has no scrollers) comes up short and clips the last
+    // backer names.
+    const NSSize textInset = _patronsTextView.textContainerInset;
+    const CGFloat textWidth = rect.size.width - 2 * textInset.width;
+    const CGFloat desiredHeight = [_patronsTextView.textStorage heightForWidth:textWidth] + 2 * textInset.height;
     CGFloat diff = desiredHeight - rect.size.height;
     rect.size.height = desiredHeight;
     rect.origin.y -= diff;
@@ -284,7 +389,7 @@ static const CGFloat kSponsorRowY = 170.0;
 }
 
 - (NSAttributedString *)defaultPatronsString {
-    NSString *string = [NSString stringWithFormat:@"Loading supporters…"];
+    NSString *string = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AboutWindow.LoadingSupporters", nil, [NSBundle mainBundle], @"Loading supporters…", @"Placeholder text shown in the about window while the patron list loads")];
     NSMutableAttributedString *attributedString =
         [[NSMutableAttributedString alloc] initWithString:string
                                                attributes:self.attributes];
@@ -303,7 +408,7 @@ static const CGFloat kSponsorRowY = 170.0;
 
 - (void)setPatrons:(NSArray *)patronNames {
     if (!patronNames.count) {
-        [self setPatronsString:[[NSAttributedString alloc] initWithString:@"Error loading patrons :("
+        [self setPatronsString:[[NSAttributedString alloc] initWithString:NSLocalizedStringWithDefaultValue(@"AboutWindow.ErrorLoadingPatrons", nil, [NSBundle mainBundle], @"Error loading patrons :(", @"Text shown in the about window when the patron list failed to load")
                                                                 attributes:[self attributes]]
                        animate:NO];
         return;
@@ -315,6 +420,7 @@ static const CGFloat kSponsorRowY = 170.0;
     NSMutableAttributedString *attributedString =
         [[NSMutableAttributedString alloc] initWithString:string
                                                attributes:attributes];
+    // Localization unneeded
     NSAttributedString *period = [[NSAttributedString alloc] initWithString:@"."];
     [attributedString appendAttributedString:period];
 

@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex" } ] }
+    ],
+    "SessionEnd": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex", "timeout": 3 } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex" } ] }
+    ],
+    "PreToolUse": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex" } ] }
+    ],
+    "PostToolUse": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex" } ] }
+    ],
+    "PermissionRequest": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex" } ] }
+    ],
+    "StopFailure": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex" } ] }
+    ],
+    "SubagentStart": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex" } ] }
+    ],
+    "SubagentStop": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex" } ] }
+    ],
+    "Interrupt": [
+      { "hooks": [ { "type": "command", "command": "CHECKOUT/tests/cc-status-codex", "timeout": 3 } ] }
+    ]
+  }
+}

@@ -60,4 +60,34 @@
     XCTAssertEqualObjects(url.host, @"xn--r8jz45g.jp");
 }
 
+// Regression test for issue 13063. An OSC 8 hyperlink whose query contains a character outside the
+// BMP (an emoji is two UTF-16 units) used to raise NSInvalidArgumentException on the mutation queue
+// and abort the app: the surrogate pair was split across placeholder ranges, so percent-encoding the
+// resulting lone surrogate returned nil and that nil reached -replaceOccurrencesOfString:withString:.
+- (void)testNonBMPCharacterInQuery {
+    NSString *input = @"https://example.com/search?q=\U0001F389";
+    NSURL *url = [NSURL URLWithUserSuppliedString:input];
+    XCTAssertNotNil(url);
+    XCTAssertEqualObjects(url.scheme, @"https");
+    XCTAssertEqualObjects(url.host, @"example.com");
+    XCTAssertEqualObjects(url.query, @"q=%F0%9F%8E%89");
+}
+
+// Same as above with more than one query item, so the failing replacement runs twice.
+- (void)testNonBMPCharacterInMultipleQueryItems {
+    NSString *input = @"https://example.com/search?q=\U0001F389&b=\U0001F680";
+    NSURL *url = [NSURL URLWithUserSuppliedString:input];
+    XCTAssertNotNil(url);
+    XCTAssertEqualObjects(url.query, @"q=%F0%9F%8E%89&b=%F0%9F%9A%80");
+}
+
+// A non-BMP character in the path must survive too. The character right after it used to be left out
+// of the placeholder map entirely.
+- (void)testNonBMPCharacterInPath {
+    NSString *input = @"file:///Users/me/\U0001F389x/y.txt";
+    NSURL *url = [NSURL URLWithUserSuppliedString:input];
+    XCTAssertNotNil(url);
+    XCTAssertEqualObjects(url.path, @"/Users/me/\U0001F389x/y.txt");
+}
+
 @end

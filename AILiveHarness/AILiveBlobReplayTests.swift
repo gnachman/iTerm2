@@ -607,6 +607,130 @@ extension AILiveHarness {
                       "model must recall the secret across delta-mode turns; got: \(lastAgentText)")
     }
 
+    /// Per-model lastResponseID coverage: `test_chat_responses_deltaModeSurvivesPreReduce`
+    /// proves delta mode works, but only for the FIRST Responses model in the catalog.
+    /// This exercises EVERY Responses-API model (honoring the OPENAI_MODELS override, so a
+    /// scoped run can target just newly added models) and asserts, per model, that
+    /// lastResponseID round-trips: turn 1 carries no previous_response_id, a later turn
+    /// reuses the server-assigned id via previous_response_id (delta mode), all turns are
+    /// accepted, and the server-held context addressed by that id is intact (the model
+    /// recalls a secret from turn 1). A per-model failure is isolated so one bad model
+    /// doesn't hide the others; a transient vendor error skips that model, not the suite.
+    func test_chat_responses_lastResponseIDPerModel() throws {
+        guard let apiKey = Self.blobConfigValue("OPENAI_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No OPENAI_API_KEY")
+        }
+        // Honor the OPENAI_MODELS override (comma-separated) so a scoped run can target
+        // just the newly added models; otherwise sweep every Responses-API model.
+        let override = (Self.blobConfigValue("OPENAI_MODELS") ?? "")
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        let responsesModels = AIMetadata.instance.models.filter { model in
+            model.api == .responses && (override.isEmpty || override.contains(model.name))
+        }
+        guard !responsesModels.isEmpty else {
+            throw XCTSkip("No Responses-API models selected (override=\(override))")
+        }
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        func runOneModel(_ model: AIMetadata.Model) throws {
+            let wire = BlobWireCapture()
+            iTermAIClient.liveObserver = { capture in
+                switch capture.request.body {
+                case .string(let s): wire.requests.append(s)
+                case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+                }
+                if let response = capture.response { wire.responses.append(response.data) }
+                else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+            }
+            defer { iTermAIClient.liveObserver = nil }
+
+            let suffix = UUID().uuidString.prefix(8)
+            let chatID = try broker.create(
+                chatWithTitle: "live lastResponseID \(model.name) \(suffix)",
+                terminalSessionGuid: "lastrespid-\(suffix)",
+                browserSessionGuid: nil,
+                permissions: "",
+                initialMessages: [])
+            defer { try? broker.delete(chatID: chatID) }
+            try broker.listModel.setModel(chatID: chatID, modelName: model.name)
+
+            let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+            let registrationSub = broker.subscribe(chatID: chatID,
+                                                   registrationProvider: registrationProvider) { _ in }
+            defer { registrationSub.unsubscribe() }
+
+            func runTurn(_ body: String) throws {
+                let ended = expectation(description: "turn ends \(model.name)")
+                var done = false
+                let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+                    if case .turnLifecycle(let event) = update, event == .ended, !done {
+                        done = true; ended.fulfill()
+                    }
+                }
+                defer { sub.unsubscribe() }
+                var msg = Message(chatID: chatID, author: .user,
+                                  content: .plainText(body, context: nil),
+                                  sentDate: Date(), uniqueID: UUID())
+                msg.configuration = Message.Configuration(hostedWebSearchEnabled: false,
+                                                          vectorStoreIDs: [],
+                                                          model: model.name,
+                                                          shouldThink: false)
+                try broker.publish(message: msg, toChatID: chatID, partial: false)
+                // Reasoning flagships can take a while on the recall turn.
+                wait(for: [ended], timeout: 240)
+            }
+
+            let secret = "TOPAZ-LYNX-3390"
+            try runTurn("Remember this secret code exactly: \(secret). Reply with only: OK")
+            try runTurn("What is 2 + 2? Reply with only the digit.")
+            try runTurn("What was the secret code I gave you earlier? Reply with only the code.")
+
+            let db = broker.listModel.chatDatabase
+            try Self.skipIfTransientVendorError(
+                broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+
+            // All three turns accepted (a blob is captured only on a successful turn end).
+            XCTAssertEqual(db.blobCount(inChat: chatID), 3,
+                           "[\(model.name)] one blob per accepted round; fewer means a turn was rejected")
+
+            // lastResponseID round-trips: the first turn has no prior response to resume
+            // from; a later turn must reuse the server-assigned id via previous_response_id
+            // (delta mode). Its absence means chaining regressed to a full stateless replay.
+            XCTAssertFalse(wire.requests.isEmpty, "[\(model.name)] no requests captured")
+            XCTAssertFalse(wire.requests[0].contains("previous_response_id"),
+                           "[\(model.name)] first turn must not carry previous_response_id")
+            XCTAssertTrue(wire.requests.dropFirst().contains { $0.contains("previous_response_id") },
+                          "[\(model.name)] a later turn must reuse the lastResponseID via "
+                          + "previous_response_id (delta mode); its absence means server-side "
+                          + "conversation chaining regressed to a full replay")
+
+            // The server-held context addressed by that id is intact: the model recalls the
+            // secret from turn 1 even though later turns omit it from the wire.
+            let messages: [Message] = broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+                .map { Array($0) } ?? []
+            let lastAgentText = messages.reversed().first(where: { $0.author == .agent })
+                .flatMap { Self.blobText($0.content) } ?? ""
+            XCTAssertTrue(lastAgentText.contains(secret),
+                          "[\(model.name)] model must recall the secret across delta-mode turns; "
+                          + "got: \(lastAgentText)")
+            print("[live] openai/\(model.name) lastResponseID -> delta mode OK, recall OK")
+        }
+
+        for model in responsesModels {
+            do {
+                try runOneModel(model)
+            } catch let skip as XCTSkip {
+                // Transient vendor error on this model: skip it, keep exercising the rest.
+                print("[live] openai/\(model.name) lastResponseID -> skipped: \(skip)")
+            } catch {
+                XCTFail("[openai/\(model.name)/lastResponseID] \(error)")
+            }
+        }
+    }
+
     /// Phase 5 (migration, end-to-end): a legacy chat that predates blobs (seeded
     /// history, blobProtocol nil) migrates on its FIRST turn - capture reconstructs
     /// the whole history via translate() and freezes every round - then is blob-native
@@ -990,10 +1114,23 @@ extension AILiveHarness {
         // then persist and break normal chats. Never restore something that small.
         let savedLimit = max(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit), 128000)
         let savedResponseLimit = max(iTermPreferences.int(forKey: kPreferenceKeyAIResponseTokenLimit), 8000)
-        // Big enough that turn 1 (system prompt + one round) fits, small enough that a
-        // handful of ~1000-token rounds exceed it and force head-drops.
-        iTermPreferences.setObject(NSNumber(value: 8000), forKey: kPreferenceKeyAITokenLimit)
-        iTermPreferences.setObject(NSNumber(value: 1000), forKey: kPreferenceKeyAIResponseTokenLimit)
+        // Budget notes (these are deliberately entangled):
+        //  - A terminal-linked chat registers ~25 tool schemas that cost ~5,500
+        //    tokens. maxTokens (the requestTooLarge gate) subtracts BOTH the
+        //    conversation and the tool schemas from AITokenLimit, so the total
+        //    budget must clear that ~5,500-token floor plus the system prompt
+        //    before even turn 1 fits. (An 8,000 limit left no room and every
+        //    turn failed pre-send with requestTooLarge.)
+        //  - truncate() targets maxTotalTokens - maxResponseTokens and counts
+        //    ONLY the conversation, not the tool schemas. For truncation to
+        //    activate BEFORE requestTooLarge rejects the request, maxResponseTokens
+        //    must exceed the tool-schema floor, so AIResponseTokenLimit is raised
+        //    above it here. Otherwise the request is rejected while truncate still
+        //    thinks there is room, and no head-drop ever happens.
+        // With these values turn 1 fits, and the accumulated ~2,000-token rounds
+        // cross the truncate threshold by the last turns, dropping head rounds.
+        iTermPreferences.setObject(NSNumber(value: 16000), forKey: kPreferenceKeyAITokenLimit)
+        iTermPreferences.setObject(NSNumber(value: 7000), forKey: kPreferenceKeyAIResponseTokenLimit)
         addTeardownBlock {
             iTermPreferences.setObject(NSNumber(value: savedLimit), forKey: kPreferenceKeyAITokenLimit)
             iTermPreferences.setObject(NSNumber(value: savedResponseLimit), forKey: kPreferenceKeyAIResponseTokenLimit)

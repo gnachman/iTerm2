@@ -53,6 +53,69 @@ final class MentionParserStableIDTests: XCTestCase {
         XCTAssertTrue(MentionParser.mentions(in: "@\(StableSessionID.generate())Z").isEmpty)
     }
 
+    // MARK: - Optional "@" (AI-authored text)
+
+    func testBareStableIDMatchesWhenAtSignOptional() {
+        let id = StableSessionID.generate()
+        let mentions = MentionParser.mentions(in: "look at \(id) please", atSignOptional: true)
+        XCTAssertEqual(mentions.count, 1)
+        XCTAssertNil(mentions.first?.prefix)
+        XCTAssertEqual(mentions.first?.token, id)
+    }
+
+    func testBareStableIDNotMatchedByDefault() {
+        let id = StableSessionID.generate()
+        XCTAssertTrue(MentionParser.mentions(in: "look at \(id) please").isEmpty)
+    }
+
+    func testAtSignedStillMatchesWhenAtSignOptional() {
+        let id = StableSessionID.generate()
+        let mentions = MentionParser.mentions(in: "see @\(id) now", atSignOptional: true)
+        XCTAssertEqual(mentions.count, 1)
+        XCTAssertEqual(mentions.first?.token, id)
+    }
+
+    func testBareStableIDCanonicalizedWhenAtSignOptional() {
+        let id = StableSessionID.generate()
+        let mentions = MentionParser.mentions(in: "\(id.lowercased())", atSignOptional: true)
+        XCTAssertEqual(mentions.count, 1)
+        XCTAssertEqual(mentions.first?.token, id)  // folded to canonical
+    }
+
+    func testBareUuidNotMatchedEvenWhenAtSignOptional() {
+        // A bare UUID is too common in prose to admit without an "@".
+        let uuid = "01234567-89ab-cdef-0123-456789abcdef"
+        XCTAssertTrue(MentionParser.mentions(in: "run id \(uuid) done", atSignOptional: true).isEmpty)
+    }
+
+    func testBarePrefixedFormsNotMatchedEvenWhenAtSignOptional() {
+        let id = StableSessionID.generate()
+        XCTAssertTrue(MentionParser.mentions(in: "session:\(id)", atSignOptional: true).isEmpty)
+        XCTAssertTrue(MentionParser.mentions(in: "wg-\(id)", atSignOptional: true).isEmpty)
+    }
+
+    func testBareStableIDGluedToPrecedingCharNotMatched() {
+        let id = StableSessionID.generate()
+        // No boundary before the token: not a mention.
+        XCTAssertTrue(MentionParser.mentions(in: "x\(id)", atSignOptional: true).isEmpty)
+    }
+
+    func testBareStableIDWithBadChecksumNotMatched() {
+        // A ptys_-shaped run of the right length (12 body + 1 check) whose check
+        // char is wrong: all-zero body checksums to '0', so any other check char
+        // is invalid. Must not match bare even though it fits the shape.
+        let mangled = "ptys_0000000000001"
+        XCTAssertNil(StableSessionID.canonical(mangled))  // shape-valid but bad checksum
+        XCTAssertTrue(MentionParser.mentions(in: "id \(mangled) x", atSignOptional: true).isEmpty)
+    }
+
+    func testBareStableIDAtStartOfStringMatches() {
+        let id = StableSessionID.generate()
+        let mentions = MentionParser.mentions(in: "\(id) is the one", atSignOptional: true)
+        XCTAssertEqual(mentions.count, 1)
+        XCTAssertEqual(mentions.first?.token, id)
+    }
+
     func testSplitRoundTripsCanonical() {
         let id = StableSessionID.generate()
         XCTAssertEqual(MentionParser.split(identifier: "session:" + id.lowercased())?.token, id)

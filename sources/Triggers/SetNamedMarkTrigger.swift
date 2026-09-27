@@ -12,7 +12,7 @@ class SetNamedMarkTrigger: Trigger {
     }
 
     override static var title: String {
-        return "Set Named Mark"
+        return String(localized: "Trigger.SetNamedMark.Title", defaultValue: "Set Named Mark", comment: "Trigger action name: set a named mark at the matching line")
     }
 
     override func takesParameter() -> Bool {

@@ -4,7 +4,9 @@
 <dict>
 	<!-- Used by: xcodebuild -exportArchive -exportOptionsPlist ExportOptions.plist -->
 	<key>method</key>
-	<string>app-store-connect</string>
+	<!-- "app-store" (legacy name), not "app-store-connect": xcodebuild still honors
+	     it and fastlane's gym only accepts this spelling. -->
+	<string>app-store</string>
 	<key>teamID</key>
 	<string>H7V7XYVQ7D</string>
 	<key>signingStyle</key>

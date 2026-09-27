@@ -29,6 +29,15 @@ struct CompletionsMessage: Codable, Equatable {
     // wire we use a separate single-case ReasoningKey in init(from:).
     var reasoning_content: String?
 
+    // Native Ollama /api/chat needs tool messages in a different shape than the
+    // OpenAI-compatible one: a tool RESULT is {role:"tool", tool_name, content}
+    // and a tool CALL is tool_calls with no id (Ollama returns tool_calls without
+    // ids and ignores the legacy {role:"function", name:...} result shape). Set by
+    // LlamaBodyRequestBuilder so only the .llama path diverges; false everywhere
+    // else keeps the OpenAI-compatible encoding byte-identical. Not in CodingKeys,
+    // so it never serializes and never reads off the wire.
+    var ollamaToolFormat: Bool = false
+
     struct ToolCall: Codable, Equatable {
         var index: Int?
         var id: String?
@@ -55,6 +64,8 @@ struct CompletionsMessage: Codable, Equatable {
         case function_call
         case tool_calls
         case tool_call_id
+        case tool_name  // native Ollama tool-result key; see ollamaToolFormat
+        case images     // native Ollama vision: message.images = [<base64>, ...]
     }
 
     // Read-only side channel for DeepSeek's reasoning_content. Kept out of
@@ -82,6 +93,18 @@ struct CompletionsMessage: Codable, Equatable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
+        // Native Ollama diverges only for tool messages; a non-tool message
+        // (regular text/attachment) returns false here and falls through to the
+        // shared encoding below, so it stays byte-identical across vendors.
+        if ollamaToolFormat {
+            if try encodeOllamaToolMessage(into: &container) {
+                return
+            }
+            if try encodeOllamaImageMessage(into: &container) {
+                return
+            }
+        }
+
         // Modern format requires role="tool" with tool_call_id for function
         // outputs; legacy used role="function" with name. Pick based on
         // whether we have a tool_call_id (we do iff the call originally came
@@ -96,7 +119,16 @@ struct CompletionsMessage: Codable, Equatable {
             try container.encode(functionName, forKey: .functionName)
         }
 
-        try container.encode(content, forKey: .content)
+        // Native Ollama /api/chat unmarshals `content` into a Go string, so a
+        // multipart (.array) content 400s. An assistant preamble that co-arrives
+        // with a tool call reaches here as .array (text parts, no images, so
+        // encodeOllamaImageMessage declined); collapse it to joined text. Non-Ollama
+        // keeps the OpenAI content-parts array unchanged.
+        if ollamaToolFormat {
+            try container.encode(ollamaScalarContent, forKey: .content)
+        } else {
+            try container.encode(content, forKey: .content)
+        }
 
         if let function_call {
             try container.encode(function_call, forKey: .function_call)
@@ -114,6 +146,124 @@ struct CompletionsMessage: Codable, Equatable {
         if let tool_call_id {
             try container.encode(tool_call_id, forKey: .tool_call_id)
         }
+    }
+
+    /// Native Ollama /api/chat encoding for a tool message. Returns true if this
+    /// was a tool message and got encoded here; false for anything else so the
+    /// caller falls through to the shared OpenAI-compatible encoding.
+    private func encodeOllamaToolMessage(
+        into container: inout KeyedEncodingContainer<CodingKeys>) throws -> Bool {
+        // Tool RESULT: init sets functionName (not tool_call_id) because Ollama's
+        // tool_calls carry no id, and there is no assistant call slot on it.
+        if function_call == nil, tool_calls == nil, let functionName, let content {
+            try container.encode("tool", forKey: .role)
+            try container.encode(functionName, forKey: .tool_name)
+            try container.encode(content, forKey: .content)
+            return true
+        }
+        // Tool CALL captured in the legacy function_call slot (again, Ollama gave
+        // no id): re-emit as native tool_calls with no id. Ollama requires
+        // function.arguments to be a JSON OBJECT, not the JSON-in-a-string that
+        // FunctionCall.arguments holds (a string 400s: "Value looks like object,
+        // but can't find closing '}'"), so decode it to a map here.
+        if let function_call, tool_calls == nil {
+            try container.encode(LLM.Role.assistant, forKey: .role)
+            try container.encode([OllamaToolCall(function_call)], forKey: .tool_calls)
+            // Flatten a multipart preamble to a string, like the modern path above:
+            // native /api/chat rejects an array-shaped assistant content.
+            try container.encodeIfPresent(ollamaScalarContent, forKey: .content)
+            return true
+        }
+        return false
+    }
+
+    // The content to send on the native Ollama path: a multipart (.array) content
+    // collapsed to its joined text (images are emitted out-of-band via `images` in
+    // encodeOllamaImageMessage, so only text parts remain here), otherwise the
+    // content unchanged. Ollama's assistant `content` must be a scalar string.
+    private var ollamaScalarContent: Content? {
+        guard case .array(let parts) = content else {
+            return content
+        }
+        return .string(Self.joinedTextParts(parts))
+    }
+
+    // Join the text parts of a content-parts array into one string. Native Ollama
+    // carries images out-of-band (message.images), so flattening keeps only text.
+    // Single source of truth for both the assistant-content scalar (ollamaScalarContent)
+    // and the image message's text (encodeOllamaImageMessage), so they can't diverge.
+    private static func joinedTextParts(_ parts: [ContentPart]) -> String {
+        return parts.compactMap { part -> String? in
+            if case .text(let t) = part { return t.text }
+            return nil
+        }.joined(separator: "\n")
+    }
+
+    // A native Ollama assistant tool call: {type:"function", function:{name,
+    // arguments}} where arguments is a JSON object decoded from the stored
+    // arguments string (empty object when absent or unparseable).
+    private struct OllamaToolCall: Encodable {
+        var type = "function"
+        var function: Function
+
+        struct Function: Encodable {
+            var name: String?
+            var arguments: [String: AnyCodable]
+        }
+
+        init(_ call: LLM.FunctionCall) {
+            let arguments: [String: AnyCodable]
+            if let data = call.arguments?.data(using: .utf8),
+               let decoded = try? JSONDecoder().decode([String: AnyCodable].self, from: data) {
+                arguments = decoded
+            } else {
+                arguments = [:]
+            }
+            function = Function(name: call.name, arguments: arguments)
+        }
+    }
+
+    /// Native Ollama /api/chat vision encoding. Ollama takes images as a separate
+    /// message.images array of raw base64 strings, NOT as OpenAI image_url content
+    /// parts. If this message's content array carries any image, emit
+    /// {role, content: <joined text>, images: [<base64>...]} and return true;
+    /// otherwise return false so a plain message falls through unchanged.
+    private func encodeOllamaImageMessage(
+        into container: inout KeyedEncodingContainer<CodingKeys>) throws -> Bool {
+        guard case .array(let parts) = content else {
+            return false
+        }
+        let images: [String] = parts.compactMap { part in
+            guard case .imageURL(let image) = part else { return nil }
+            return Self.base64Payload(ofDataURL: image.url)
+        }
+        guard !images.isEmpty else {
+            return false
+        }
+        let text = Self.joinedTextParts(parts)
+
+        try container.encode(role, forKey: .role)
+        try container.encode(Content.string(text), forKey: .content)
+        try container.encode(images, forKey: .images)
+        return true
+    }
+
+    // Split "data:<meta>,<payload>" into its meta and base64 payload. Single
+    // source of truth for the prefix/comma parsing that both the Ollama image
+    // path and decodeDataURL(_:) rely on, so the two can't drift.
+    static func splitDataURL(_ string: String) -> (meta: Substring, payload: Substring)? {
+        guard string.hasPrefix("data:"), let comma = string.firstIndex(of: ",") else {
+            return nil
+        }
+        let meta = string[string.index(string.startIndex, offsetBy: 5)..<comma]  // after "data:"
+        let payload = string[string.index(after: comma)...]
+        return (meta, payload)
+    }
+
+    // "data:<mime>;base64,<payload>" -> "<payload>". Falls back to the whole
+    // string if it isn't a data URL (Ollama wants bare base64, not a data URL).
+    private static func base64Payload(ofDataURL url: String) -> String {
+        Self.splitDataURL(url).map { String($0.payload) } ?? url
     }
 
     var approximateTokenCount: Int {
@@ -368,15 +518,15 @@ struct CompletionsMessage: Codable, Equatable {
 
     // Parse "data:<mime>;base64,<payload>" back into its MIME and bytes.
     static func decodeDataURL(_ string: String) -> (String, Data)? {
-        guard string.hasPrefix("data:"), let comma = string.firstIndex(of: ",") else {
+        // .ignoreUnknownCharacters so MIME-line-wrapped (whitespace-embedded) base64
+        // decodes, matching Llama.imagePixelSize's decode leniency: otherwise the
+        // num_ctx sizing path (which tolerates the whitespace) and this history/replay
+        // decode would disagree on the same externally-supplied wrapped payload.
+        guard let (meta, payload) = splitDataURL(string),
+              let data = Data(base64Encoded: String(payload), options: .ignoreUnknownCharacters) else {
             return nil
         }
-        let meta = string[string.index(string.startIndex, offsetBy: 5)..<comma]
-        let payload = String(string[string.index(after: comma)...])
         let mime = meta.split(separator: ";").first.map(String.init) ?? "application/octet-stream"
-        guard let data = Data(base64Encoded: payload) else {
-            return nil
-        }
         return (mime, data)
     }
 }

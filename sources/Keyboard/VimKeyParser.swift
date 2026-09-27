@@ -23,14 +23,14 @@ final class VimKeyParser: NSObject {
         func localizedDescription(_ arg: String?,
                                   range: NSRange,
                                   input: String) -> String {
-            let problem = switch self {
+            // A complete localized sentence per problem (including the index and input) rather than
+            // composing a translated sub-clause into a frame.
+            switch self {
             case .missingClosingBracket:
-                "Missing closing '>'"
+                return String(localized: "VimKeyParser.MissingClosingBracket", defaultValue: "Missing closing '>' at index \(range.location) in \(input)", comment: "Error parsing a vim key; placeholders are the index and the input")
             case .invalidKey:
-                "Invalid key: <\(arg.d)>"
+                return String(localized: "VimKeyParser.InvalidKey", defaultValue: "Invalid key: <\(arg.d)> at index \(range.location) in \(input)", comment: "Error parsing a vim key; placeholders are the key, the index, and the input")
             }
-
-            return "\(problem) at index \(range.location) in \(input)"
         }
     }
 

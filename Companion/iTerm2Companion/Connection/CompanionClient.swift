@@ -56,6 +56,13 @@ actor CompanionClient {
         /// live streaming requires >= CompanionProtocolVersion.streamingRevision).
         var peerRevision: Int
 
+        /// Whether the mac has AI available right now. A pre-13 mac omits the field
+        /// (decoded here as nil -> true): it only ever paired with AI on, so
+        /// "unknown" means "available" and the phone shows its chat surfaces as
+        /// before. When false, the phone disables its chat surfaces with an
+        /// explanation and offers only session browsing/video/keyboard.
+        var aiAvailable: Bool
+
         /// Whether the mac supports live session streaming.
         var supportsStreaming: Bool { peerRevision >= CompanionProtocolVersion.streamingRevision }
     }
@@ -64,12 +71,13 @@ actor CompanionClient {
         let reply = try await session.request(.hello(revision: CompanionProtocolVersion.current,
                                                      minimumPeer: CompanionProtocolVersion.minimumPeer))
         switch reply {
-        case .hello(let revision, let minimumPeer, let wantsNotificationPermission):
+        case .hello(let revision, let minimumPeer, let wantsNotificationPermission, let aiAvailable):
             return HandshakeResult(
                 compatibility: CompanionProtocolVersion.evaluate(peerRevision: revision,
                                                                  peerMinimumPeer: minimumPeer),
                 wantsNotificationPermission: wantsNotificationPermission ?? false,
-                peerRevision: revision)
+                peerRevision: revision,
+                aiAvailable: aiAvailable ?? true)
         case .error(let error):
             throw error
         default:
@@ -106,6 +114,14 @@ actor CompanionClient {
     /// error) afterwards.
     func deleteChat(chatID: String) async throws {
         try await session.send(.deleteChat(chatID: chatID))
+    }
+
+    /// Delete messages from a chat (truncate the log from a chosen message
+    /// onward, so messageIDs is a suffix). Fire-and-forget, like deleteChat; the
+    /// mac echoes a messagesRemoved back. Only send to a mac at
+    /// messageDeletionRevision or newer.
+    func deleteMessages(chatID: String, messageIDs: [UUID]) async throws {
+        try await session.send(.deleteMessages(chatID: chatID, messageIDs: messageIDs))
     }
 
     /// Mute or unmute a chat. The mac persists the muted set and stops sending

@@ -20,11 +20,14 @@ final class iTermArrangementTrustGate: NSObject {
         }
 
         let filename = (path as NSString).lastPathComponent
-        let heading = "Open the arrangement “\(filename)”?"
+        let heading = String(localized: "ArrangementTrustGate.Heading",
+                             defaultValue: "Open the arrangement “\(filename)”?",
+                             comment: "Confirmation dialog heading before opening a saved window arrangement; the interpolated value is the arrangement's file name")
         let body = buildBody(summary: summary)
 
         let selection = iTermWarning.show(withTitle: body,
-                                          actions: ["Cancel", "Open"],
+                                          actions: [iTermLocalizedCancel(),
+                                                    String(localized: "ArrangementTrustGate.Open", defaultValue: "Open", comment: "Button that proceeds to open the window arrangement")],
                                           accessory: nil,
                                           identifier: nil,
                                           silenceable: .kiTermWarningTypePersistent,
@@ -39,16 +42,19 @@ final class iTermArrangementTrustGate: NSObject {
 
     private static func buildBody(summary: RiskSummary) -> String {
         var parts: [String] = []
-        parts.append("Window arrangements embed session profiles, which can run commands, connect to remote hosts, and configure triggers or smart-selection actions that execute when the terminal sees matching output. Opening an arrangement from an untrusted source is equivalent to running a program they gave you.")
+        parts.append(String(localized: "ArrangementTrustGate.Explanation",
+                            defaultValue: "Window arrangements embed session profiles, which can run commands, connect to remote hosts, and configure triggers or smart-selection actions that execute when the terminal sees matching output. Opening an arrangement from an untrusted source is equivalent to running a program they gave you.",
+                            comment: "Explanation of the security risk of opening an untrusted window arrangement"))
         if !summary.findings.isEmpty {
             parts.append("")
-            parts.append("This arrangement contains:")
+            parts.append(String(localized: "ArrangementTrustGate.ContainsHeader", defaultValue: "This arrangement contains:", comment: "Header before the list of risky items an arrangement will do"))
             for finding in summary.findings {
+                // Localization unneeded
                 parts.append("  • " + finding)
             }
         }
         parts.append("")
-        parts.append("Open it only if you trust where it came from.")
+        parts.append(String(localized: "ArrangementTrustGate.TrustAdvice", defaultValue: "Open it only if you trust where it came from.", comment: "Advice line at the end of the untrusted-arrangement warning"))
         return parts.joined(separator: "\n")
     }
 
@@ -112,25 +118,27 @@ enum RiskAnalyzer {
             }
         }
 
+        // Each finding is a complete localized plural sentence (noun and trailing clause folded into
+        // the one/other variants), rather than a generic pluralizer plus a spliced-on clause.
         var findings: [String] = []
         if sessionCount > 0 {
-            findings.append(plural(sessionCount, "embedded session profile"))
+            findings.append(String(localized: "TrustGate.EmbeddedSessionProfiles", defaultValue: "\(sessionCount) embedded session profiles", comment: "Arrangement risk finding; the count of embedded session profiles"))
         }
         let commandTotal = customCommandCount + programCount
         if commandTotal > 0 {
-            findings.append(plural(commandTotal, "custom command") + " that will run when the arrangement opens")
+            findings.append(String(localized: "TrustGate.CustomCommands", defaultValue: "\(commandTotal) custom commands that will run when the arrangement opens", comment: "Arrangement risk finding; the count of custom commands that run on open"))
         }
         if sshCount > 0 {
-            findings.append(plural(sshCount, "SSH connection") + " that will be opened automatically")
+            findings.append(String(localized: "TrustGate.SSHConnections", defaultValue: "\(sshCount) SSH connections that will be opened automatically", comment: "Arrangement risk finding; the count of SSH connections opened automatically"))
         }
         if initialTextCount > 0 {
-            findings.append(plural(initialTextCount, "session") + " with text that will be typed into the terminal on startup")
+            findings.append(String(localized: "TrustGate.SessionsWithInitialText", defaultValue: "\(initialTextCount) sessions with text that will be typed into the terminal on startup", comment: "Arrangement risk finding; the count of sessions that type text on startup"))
         }
         if triggerCount > 0 {
-            findings.append(plural(triggerCount, "trigger") + " that runs actions when matching output appears")
+            findings.append(String(localized: "TrustGate.Triggers", defaultValue: "\(triggerCount) triggers that run actions when matching output appears", comment: "Arrangement risk finding; the count of triggers that run actions on matching output"))
         }
         if smartRuleCount > 0 {
-            findings.append(plural(smartRuleCount, "smart-selection rule") + " with custom actions")
+            findings.append(String(localized: "TrustGate.SmartSelectionRules", defaultValue: "\(smartRuleCount) smart-selection rules with custom actions", comment: "Arrangement risk finding; the count of smart-selection rules with custom actions"))
         }
         return RiskSummary(findings: findings)
     }
@@ -184,10 +192,4 @@ enum RiskAnalyzer {
         }
     }
 
-    private static func plural(_ count: Int, _ noun: String) -> String {
-        if count == 1 {
-            return "1 \(noun)"
-        }
-        return "\(count) \(noun)s"
-    }
 }

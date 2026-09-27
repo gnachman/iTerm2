@@ -58,7 +58,6 @@ typedef NS_OPTIONS(int, iTermASCIITextureParts) {
 @class iTermCharacterBitmap;
 @class iTermCharacterSourceDescriptor;
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermASCIITexture : NSObject
 
 @property (nonatomic, readonly) iTermTextureArray *textureArray;
@@ -91,7 +90,6 @@ NS_INLINE int iTermASCIITextureIndexOfCode(char code, iTermASCIITextureOffset of
 }
 
 // Implements isEqual:
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermASCIITextureGroup : NSObject {
 @public
     iTermASCIITexture *_textures[iTermASCIITextureAttributesMax * 2];

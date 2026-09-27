@@ -8,7 +8,7 @@ struct App: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "app",
         abstract: "Control iTerm2 application.",
-        subcommands: [
+        subcommands: sortedSubcommands([
             Activate.self,
             Hide.self,
             Quit.self,
@@ -16,7 +16,7 @@ struct App: ParsableCommand {
             Theme.self,
             GetFocus.self,
             Broadcast.self,
-        ]
+        ])
     )
 }
 
@@ -298,11 +298,11 @@ extension App {
         static let configuration = CommandConfiguration(
             commandName: "broadcast",
             abstract: "Control input broadcasting.",
-            subcommands: [
+            subcommands: sortedSubcommands([
                 On.self,
                 Off.self,
                 Add.self,
-            ]
+            ])
         )
     }
 }

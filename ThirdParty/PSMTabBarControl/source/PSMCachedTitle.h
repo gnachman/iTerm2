@@ -51,6 +51,22 @@ NSAttributedString *PSMApplyPUAFonts(NSAttributedString *attributedString,
                                      id<PSMPUAFontProvider> provider,
                                      CGFloat fontSize);
 
+/// Returns the fonts the provider resolves for the Private Use Area code points
+/// in `string`, in the order they appear. This lets a caller fingerprint the PUA
+/// font state that PSMApplyPUAFonts would use, so it can tell when a font change
+/// would alter how PUA (Nerd Font / Powerline) glyphs render even though the
+/// string itself is unchanged. Empty if there are no PUA code points or no
+/// provider. Uses the same scan (first 256 UTF-16 units, surrogate-aware) as
+/// PSMApplyPUAFonts so the fingerprint matches what actually renders.
+///
+/// Pass `parseHTML` matching the render path: when set, the string is decoded
+/// with the same +newAttributedStringWithHTML: the renderer uses before scanning,
+/// so the fingerprint sees the same code points PSMApplyPUAFonts does (the
+/// renderer applies PUA fonts to the decoded text, not the raw markup).
+NSArray<NSFont *> *PSMResolvedPUAFonts(NSString *string,
+                                       BOOL parseHTML,
+                                       id<PSMPUAFontProvider> _Nullable provider);
+
 @interface PSMCachedTitle: NSObject
 @property (nonatomic, readonly) PSMCachedTitleInputs *inputs;
 @property (nonatomic, readonly) BOOL isEmpty;

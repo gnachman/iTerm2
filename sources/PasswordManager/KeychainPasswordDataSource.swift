@@ -7,11 +7,25 @@
 
 import AppKit
 
+// Shared by both keychain account types, which cannot edit in place (supportsInPlaceEdit is
+// false, so editInPlace is never actually called). Hoisted so the two identical stubs cannot
+// drift.
+private func keychainInPlaceEditUnsupportedError() -> NSError {
+    return NSError(domain: "Keychain", code: -1,
+                   userInfo: [NSLocalizedDescriptionKey: "In-place edit is not supported."])
+}
+
 // Used to store account name in label and username in account. That was a mistake.
 // Now it stores username and account name in accountName and account name in label (just for looks in keychain access)
 fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
     var hasOTP: Bool { false }
     var sendOTP: Bool { false }
+    var sourceLabel: String? { nil }
+    // Never called: KeychainPasswordDataSource.supportsInPlaceEdit is false, so the host
+    // uses delete-then-re-add. Present only to satisfy the protocol.
+    func editInPlace(accountName: String?, userName: String?, password: String?, context: RecipeExecutionContext, completion: @escaping (Error?) -> ()) {
+        completion(keychainInPlaceEditUnsupportedError())
+    }
     private let accountNameUserNameSeparator = "\u{2002}—\u{2002}"
     let accountName: String
     let userName: String
@@ -133,6 +147,11 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
     private let accountNameUserNameSeparator = "\u{2002}—\u{2002}"
     var hasOTP: Bool { false }
     var sendOTP: Bool { false }
+    var sourceLabel: String? { nil }
+    // Never called: KeychainPasswordDataSource.supportsInPlaceEdit is false.
+    func editInPlace(accountName: String?, userName: String?, password: String?, context: RecipeExecutionContext, completion: @escaping (Error?) -> ()) {
+        completion(keychainInPlaceEditUnsupportedError())
+    }
 
     let accountName: String
     let userName: String
@@ -242,11 +261,20 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
         it_fatalError()
     }
 
+    var addAccountToggleDescriptions: [[String: Any]]? { nil }
+    var supportsInPlaceEdit: Bool { false }
+    var canEditPassword: Bool { true }
+    var requiresPasswordForAdd: Bool { false }
+    func prepareAvailability(_ completion: @escaping () -> ()) { completion() }
+
+    @objc(addUserName:accountName:password:flags:context:completion:)
     func add(userName: String,
              accountName: String,
              password: String,
+             flags: [String: Bool],
              context: RecipeExecutionContext,
              completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        // Keychain has no Add Account toggles, so flags is ignored.
         let account = ModernKeychainAccount(serviceName: serviceName,
                                             accountName: accountName,
                                             userName: userName)

@@ -55,6 +55,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler;
 - (VT100GridCoord)mouseHandlerCoordForPointInWindow:(NSPoint)point;
 - (VT100GridCoord)mouseHandlerCoordForPointInView:(NSPoint)point;
+// Converts a visual grid coordinate (where the mouse physically is) to the
+// logical coordinate the selection model uses. A no-op unless the line is
+// bidi-reordered, so left-to-right text is unaffected.
+- (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
+        logicalCoordForVisualCoord:(VT100GridCoord)visualCoord;
+
 - (NSPoint)mouseHandlerReportablePointForPointInView:(NSPoint)point;
 - (void)mouseHandlerMoveCursorToCoord:(VT100GridCoord)coord
                              forEvent:(NSEvent *)event;
@@ -81,6 +87,17 @@ NS_ASSUME_NONNULL_BEGIN
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             testOnly:(BOOL)testOnly;
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler viewCoordIsReportable:(NSPoint)coord;
+// Whether a program has enabled Kitty drag-and-drop offers. A cheap check used
+// to gate the more expensive reportability test on the drag hot path.
+- (BOOL)mouseHandlerHasKittyDragOffer:(PTYMouseHandler *)handler;
+// If a program has enabled Kitty drag-and-drop offers, tell it a drag gesture
+// started (so it can turn the drag into a drag-out) and return YES. Otherwise
+// return NO.
+- (BOOL)mouseHandler:(PTYMouseHandler *)handler
+    reportKittyDragGestureWithEvent:(NSEvent *)event;
+// A Kitty DnD drag gesture we offered ended without becoming a native drag
+// (mouse released); forget the pending gesture so it cannot start a phantom drag.
+- (void)mouseHandlerKittyDragGestureDidEnd:(PTYMouseHandler *)handler;
 - (BOOL)mouseHandlerCanWriteToTTY:(PTYMouseHandler *)handler;
 - (BOOL)mouseHandlerViewIsFirstResponder:(PTYMouseHandler *)mouseHandler;
 - (BOOL)mouseHandlerShouldReportClicksAndDrags:(PTYMouseHandler *)mouseHandler;
@@ -202,6 +219,11 @@ NS_DESIGNATED_INITIALIZER;
 - (void)didCopyToPasteboardWithControlSequence;
 - (BOOL)wantsScrollWheelMomentumEvents;
 - (BOOL)mouseEventIsReportable:(NSEvent *)event;
+
+// A Kitty DnD program turned the offered drag gesture into a native OS drag.
+// Synthesizes the mouse button-release report and clears the per-gesture state,
+// since the real mouseUp will be swallowed by the drag session.
+- (void)kittyDragDidBegin;
 
 @end
 

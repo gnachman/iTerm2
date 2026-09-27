@@ -8,7 +8,6 @@
 import Foundation
 import WebKit
 
-@available(macOS 11.0, *)
 class iTermBrowserContextMenuHandler {
     private let webView: iTermBrowserWebView
     private weak var parentWindow: NSWindow?

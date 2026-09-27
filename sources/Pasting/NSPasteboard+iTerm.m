@@ -42,17 +42,39 @@
     return results;
 }
 
-- (NSData *)dataForFirstFile {
+// The path that -dataForFirstFile would read, without reading it.
+- (NSString *)pathOfFirstFile {
     NSString *bestType = [self availableTypeFromArray:@[ NSPasteboardTypeFileURL ]];
-
-    if ([bestType isEqualToString:NSPasteboardTypeFileURL]) {
-        NSArray<NSURL *> *urls = [self readObjectsForClasses:@[ [NSURL class] ] options:0];
-        if (urls.count > 0) {
-            NSString *filename = urls.firstObject.path;
-            return [NSData dataWithContentsOfFile:filename];
-        }
+    if (![bestType isEqualToString:NSPasteboardTypeFileURL]) {
+        return nil;
     }
-    return nil;
+    NSArray<NSURL *> *urls = [self readObjectsForClasses:@[ [NSURL class] ] options:0];
+    return urls.firstObject.path;
+}
+
+// Whether -dataForFirstFile would return something, decided from the file's metadata.
+// Menu validation must not read the contents: opening the Edit menu with a huge file on
+// the pasteboard would otherwise read the whole thing on the main thread just to decide
+// whether to enable an item (issue 13024).
+- (BOOL)hasReadableFirstFile {
+    NSString *path = [self pathOfFirstFile];
+    if (!path) {
+        return NO;
+    }
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    BOOL isDirectory = NO;
+    if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory] || isDirectory) {
+        return NO;
+    }
+    return [fileManager isReadableFileAtPath:path];
+}
+
+- (NSData *)dataForFirstFile {
+    NSString *path = [self pathOfFirstFile];
+    if (!path) {
+        return nil;
+    }
+    return [NSData dataWithContentsOfFile:path];
 }
 
 // Returns the UTType identifier for available image data, or nil if none.

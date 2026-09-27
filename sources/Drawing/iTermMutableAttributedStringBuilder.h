@@ -31,6 +31,15 @@ extern NSString *const iTermDrawInCellIndexAttribute;
 // We don't render these characters with CoreText, so they will never get ligatures. This allows
 // much better rendering performance because CoreText is very slow compared to Core Graphics.
 static inline BOOL iTermCharacterSupportsFastPath(unichar code, BOOL asciiLigaturesAvailable) {
+    if (!isascii(code)) {
+        // The fast path skips CoreText shaping, so it draws each character's
+        // isolated glyph. That is fine for scripts that don't shape, but breaks
+        // cursive scripts (Arabic/Persian) whose letters must join. macOS's
+        // isalpha()/isnumber() are locale-aware and return true for non-ASCII
+        // letters/digits, which used to route Persian to this no-shaping path and
+        // render every letter disconnected. Only ASCII is safe on the fast path.
+        return NO;
+    }
     if (asciiLigaturesAvailable) {
         return isalpha(code) || isnumber(code) || code == ' ';
     } else {

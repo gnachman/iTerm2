@@ -369,6 +369,57 @@ final class PreconvertedStringTests: XCTestCase {
         assertScreenCharCodeEqual(pre.pointee.buffer![0], ref.buffer[0])
     }
 
+    // MARK: - The space-augmentation invariant
+
+    /// The parser thread cannot know the predecessor, so it cannot decide whether the
+    /// prepended space was a faithful stand-in. Instead it records how many UTF-16 units of
+    /// the string the space absorbed into buffer[0]; the mutation thread compares that
+    /// against what the real predecessor absorbs and falls back to the slow path when they
+    /// differ. These pin the recorded value for the cases that matter.
+    private func absorbedBySpace(_ s: String) -> Int32? {
+        let parser = makeParser()
+        parser.update(defaultConfig())
+        let strings = stringTokens(parse(Array(s.utf8), parser: parser))
+        guard strings.count == 1 else { return nil }
+        let pre = strings[0].preconvertedStringData
+        guard pre.pointee.valid.boolValue else { return nil }
+        return pre.pointee.firstClusterLengthInString
+    }
+
+    /// A combining mark and a VS16 both cluster with the space, exactly as they would with a
+    /// real predecessor, so one unit is absorbed and the buffer is usable.
+    func testSpaceAbsorbsLeadingCombiningMark() {
+        XCTAssertEqual(absorbedBySpace("\u{0301}你好世"), 1)
+        XCTAssertEqual(absorbedBySpace("\u{FE0F}ééé"), 1)
+    }
+
+    /// Where a real predecessor absorbs more than a space does, the recorded count is the
+    /// smaller one and the mismatch is what sends the mutation thread to the slow path.
+    ///
+    ///   GB12/GB13  " " + RI          -> space takes 0; an indicator takes 2
+    ///   GB11       " " + ZWJ + woman -> space takes 1 (the ZWJ alone); a pictographic
+    ///                                   predecessor takes 3 (ZWJ and the emoji with it)
+    ///   GB6-GB8    " " + V + T       -> space takes 0; an L jamo takes 2
+    func testSpaceAbsorbsLessThanAPredecessorWould() {
+        XCTAssertEqual(absorbedBySpace("\u{1F1FA}\u{1F1F8}"), 0)
+        XCTAssertEqual(absorbedBySpace("\u{200D}\u{1F469}\u{200D}\u{1F467}"), 1)
+        XCTAssertEqual(absorbedBySpace("\u{1161}\u{11A8}ééé"), 0)
+    }
+
+    /// Such strings are still preconverted: the buffer is correct whenever the predecessor
+    /// also absorbs nothing, which is the common case. Bailing out here would force the slow
+    /// path even when there is no predecessor at all.
+    func testStringsThatASpaceCannotAbsorbAreStillPreconverted() {
+        for s in ["\u{1F1FA}\u{1F1F8}", "\u{200D}\u{1F469}\u{200D}\u{1F467}", "\u{1161}\u{11A8}ééé"] {
+            let parser = makeParser()
+            parser.update(defaultConfig())
+            let strings = stringTokens(parse(Array(s.utf8), parser: parser))
+            XCTAssertEqual(strings.count, 1)
+            XCTAssertTrue(strings[0].preconvertedStringData.pointee.valid.boolValue,
+                          "\(s) should still be preconverted")
+        }
+    }
+
     // MARK: - Test 11: Combining mark with no predecessor (column 0)
 
     func testCombiningMarkNoPredecessor() {

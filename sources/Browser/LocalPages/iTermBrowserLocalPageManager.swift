@@ -41,6 +41,7 @@ protocol iTermBrowserLocalPageManagerDelegate: AnyObject {
     func localPageManagerDidNavigateToURL(_ manager: iTermBrowserLocalPageManager, url: String)
     func localPageManagerWebView(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserWebView?
     func localPageManagerExtensionManager(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserExtensionManagerProtocol?
+    func localPageManagerOpenPasswordManager(_ manager: iTermBrowserLocalPageManager)
     
     // Onboarding delegate methods
     func localPageManagerOnboardingEnableAdBlocker(_ manager: iTermBrowserLocalPageManager)
@@ -188,7 +189,7 @@ class iTermBrowserLocalPageManager: NSObject {
     func showFilePage(for path: String, webView: iTermBrowserWebView) {
         // Navigate to iterm2-file:// URL with the file path
         guard let fileURL = URL(string: "\(iTermBrowserSchemes.file)://\(path)") else {
-            showErrorPage(for: iTermError("Invalid file path: \(path)"),
+            showErrorPage(for: iTermError(String(localized: "BrowserLocalPageManager.InvalidFilePath", defaultValue: "Invalid file path: \(path)", comment: "Error shown when a local file path is invalid")),
                           failedURL: URL(fileURLWithPath: path),
                           webView: webView)
             return
@@ -429,6 +430,10 @@ extension iTermBrowserLocalPageManager: iTermBrowserSettingsHandlerDelegate {
     
     func settingsHandlerExtensionManager(_ handler: iTermBrowserSettingsHandler) -> iTermBrowserExtensionManagerProtocol? {
         return delegate?.localPageManagerExtensionManager(self)
+    }
+
+    func settingsHandlerOpenPasswordManager(_ handler: iTermBrowserSettingsHandler) {
+        delegate?.localPageManagerOpenPasswordManager(self)
     }
 }
 

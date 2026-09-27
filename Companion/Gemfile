@@ -1,0 +1,7 @@
+source "https://rubygems.org"
+
+# fastlane is used only for uploading App Store screenshots (see fastlane/Fastfile).
+# Pinned loosely to a version new enough to know the iPhone 6.9" and iPad 13"
+# display sizes. Run tooling through bundler so it uses this gem, not a global
+# install: `cd Companion && bundle install`, then `bundle exec fastlane screenshots`.
+gem "fastlane", ">= 2.222"

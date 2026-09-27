@@ -54,6 +54,14 @@ class KittyImageController: NSObject {
         var image: Image
         var placementId: UInt32
 
+        // The key under which this placement's image lives in _images. An image with no id (i=0) is
+        // addressed only by its image number and is stored under lastImageKey with metadata.identifier
+        // == 0, so its key is not simply its identifier. The delete paths work in _images keys, so
+        // they compare against this rather than metadata.identifier.
+        var imageKey: UInt64 {
+            image.metadata.identifier == 0 ? KittyImageController.lastImageKey : UInt64(image.metadata.identifier)
+        }
+
         struct Displacement {
             var x: Int32
             var y: Int32
@@ -89,7 +97,18 @@ class KittyImageController: NSObject {
             }
         }
 
+        var parentImageIdentifier: UInt32? {
+            switch origin {
+            case .absolute:
+                nil
+            case .relative(parentPlacementIdentifier: _, parentImageIdentifier: let piid, displacement: _):
+                piid
+            }
+        }
+
         var pixelOffset: NSPoint?
+        // The source rectangle from the x/y/w/h keys, resolved against the image at display time and
+        // stored in pixels. It is not re-resolved on retransmit.
         var sourceRect: NSRect?
 
         // Size in cells. If both are nonnil, stretch to fit. If exactly one is nonnil, pick the other
@@ -111,16 +130,15 @@ class KittyImageController: NSObject {
         // on the screen
         var virtual: Bool
 
-        // Placement IDs. When this placement is deleted already remove these.
-        var children = [UInt32]()
-
-        typealias PlacementFinder = ((UInt32) -> Placement?)
+        // Placement ids are unique per image, not globally, so a placement is identified by the
+        // pair (imageId, placementId). The finder takes both.
+        typealias PlacementFinder = ((_ imageId: UInt32, _ placementId: UInt32) -> Placement?)
 
         func parent(finder: PlacementFinder) -> Placement? {
-            guard let pid = parentPlacementIdentifier else {
+            guard let pid = parentPlacementIdentifier, let iid = parentImageIdentifier else {
                 return nil
             }
-            return finder(pid)
+            return finder(iid, pid)
         }
 
 
@@ -157,8 +175,8 @@ class KittyImageController: NSObject {
             case .absolute(let coord):
                 return NSPoint(x: CGFloat(coord.x) * cellSize.width + pixelOffset.x,
                                y: CGFloat(coord.y) * cellSize.height + pixelOffset.y)
-            case .relative(let parentPlacementIdentifier, _, let displacement):
-                guard let parent = finder(parentPlacementIdentifier) else {
+            case .relative(let parentPlacementIdentifier, let parentImageIdentifier, let displacement):
+                guard let parent = finder(parentImageIdentifier, parentPlacementIdentifier) else {
                     return nil
                 }
                 guard let parentOrigin = parent.pixelOrigin(cellSize: cellSize, finder: finder) else {
@@ -242,11 +260,35 @@ class KittyImageController: NSObject {
         var display: KittyImageCommand.ImageDisplay?
     }
 
+    static let defaultImageCacheBudget = 320 * 1024 * 1024
+
     // Identifier -> Image
-    private var _images = LRUDictionary<UInt64, Image>(maximumSize: 320 * 1024 * 1024)
-    private let lastImageKey = UInt64(UInt32.max) + 1
+    private var _images: LRUDictionary<UInt64, Image>
+    // Key under which an image transmitted without an id (i=0, addressed only by its image number I)
+    // is stored. Its metadata.identifier is 0, so it cannot be its own key. Static so Placement can
+    // derive its own _images key (see Placement.imageKey).
+    fileprivate static let lastImageKey = UInt64(UInt32.max) + 1
     private var accumulator: Accumulator?
     private var placements = [Placement]()
+
+    @objc override init() {
+        _images = LRUDictionary<UInt64, Image>(maximumSize: Self.defaultImageCacheBudget)
+        super.init()
+    }
+
+    // Construct with a specific image-cache budget. Production uses init() (the default budget); tests
+    // pass a small budget so eviction can be exercised deterministically.
+    init(imageCacheBudget: Int) {
+        _images = LRUDictionary<UInt64, Image>(maximumSize: imageCacheBudget)
+        super.init()
+    }
+
+    // Whether a placement with the given image id and placement id exists, regardless of whether it
+    // currently resolves to a drawable position (draws() only reports visible ones). Used by tests to
+    // observe placements that are present but not currently drawable; read-only, no side effects.
+    func hasPlacement(imageID: UInt32, placementID: UInt32) -> Bool {
+        return placements.contains { $0.image.metadata.identifier == imageID && $0.placementId == placementID }
+    }
 
     @objc(executeCommand:)
     func execute(command: KittyImageCommand) {
@@ -441,7 +483,7 @@ class KittyImageController: NSObject {
                 if result == nil, let display {
                     DLog("reallyExecuteTransmit: transmission succeeded, executing saved display params")
                     // Use lastImageKey when identifier is 0, matching storage behavior in transmissionDidFinish
-                    let imageKey = modifiedCommand.identifier != 0 ? UInt64(modifiedCommand.identifier) : lastImageKey
+                    let imageKey = modifiedCommand.identifier != 0 ? UInt64(modifiedCommand.identifier) : Self.lastImageKey
                     if let image = _images[imageKey] {
                         DLog("reallyExecuteTransmit: found image for key=\(imageKey) (id=\(modifiedCommand.identifier)), calling executeDisplay")
                         let displayError = executeDisplay(display, image: image)
@@ -550,20 +592,79 @@ class KittyImageController: NSObject {
     }
 
     private func transmissionDidFinish(image: Image, query: Bool) {
+        // Coalesce placements-changed notifications: eviction and re-pointing each mutate placements,
+        // but a single transmission should post one notification, not one per step. Each redundant
+        // notification triggers a full draws() rebuild plus a redraw request in the delegate.
+        var changed = false
         if !query && image.metadata.identifier != 0 {
             DLog("transmissionDidFinish: storing image with identifier=\(image.metadata.identifier) (0x\(String(image.metadata.identifier, radix: 16))) cost=\(image.cost)")
-            handleEvictions(_images.insert(key: UInt64(image.metadata.identifier), value: image, cost: image.cost))
+            let evicted = handleEvictions(_images.insert(key: UInt64(image.metadata.identifier), value: image, cost: image.cost))
+            let repointed = repointPlacements(toReplacementImage: image)
+            changed = evicted || repointed
         } else {
             DLog("transmissionDidFinish: storing image with lastImageKey (query=\(query), identifier=\(image.metadata.identifier))")
-            handleEvictions(_images.insert(key: lastImageKey, value: image, cost: image.cost))
+            changed = handleEvictions(_images.insert(key: Self.lastImageKey, value: image, cost: image.cost))
         }
         DLog("transmissionDidFinish: total images in cache: \(_images.keys.count)")
+        if changed {
+            delegate?.kittyImageControllerPlacementsDidChange()
+        }
     }
 
-    private func handleEvictions(_ kvps: [(UInt64, Image)]) {
+    // Returns whether any placements were removed.
+    private func handleEvictions(_ kvps: [(UInt64, Image)]) -> Bool {
+        var removedAny = false
         for kvp in kvps {
             kvp.1.image.value = nil
+            // Drop the evicted image's OWN placements so they cannot resurrect via repointPlacements
+            // when the id is later reused (their bitmap is gone and they can never draw again). Match
+            // on the evicted Image's unique id, NOT its cache key: several id-less images share the
+            // single lastImageKey slot, so keying on the slot would also remove the still-drawable
+            // placements of earlier id-less images whose bitmaps are still alive. Do NOT use the
+            // relative-child cascade here: eviction is internal memory pressure, not a user delete, so
+            // it must not remove a live placement of a different, still-resident image just because it
+            // was positioned relative to the evicted one (that child simply becomes unanchored until
+            // its parent is displayed again). An explicit a=d delete does cascade.
+            let indexes = placements.indexes { $0.image.uniqueId == kvp.1.uniqueId }
+            if !indexes.isEmpty {
+                placements.remove(at: indexes)
+                removedAny = true
+            }
         }
+        return removedAny
+    }
+
+    // A placement captures the Image value that existed when it was displayed. When a program
+    // retransmits under an image id that is already in use, a VIRTUAL placement (referenced by
+    // Unicode placeholder cells) is a live reference to (imageID, placementID) and must reflect the
+    // new bitmap, so we re-point virtual placements at it. This is the case issue 13028 is about, and
+    // kitty renders it that way (confirmed: tests/kitty-stale-placement.sh).
+    //
+    // NON-virtual placements are deliberately NOT re-pointed: they were drawn at a fixed position as a
+    // snapshot (the cursor advanced past them and later output, including scrollback, was laid out
+    // around them). Re-pointing them would retroactively rewrite scrollback history -- a program that
+    // reuses one id for a sequence of pictures (icat/frame tools hardcoding i=1) would have its whole
+    // scrollback of that id collapse to the newest bitmap. They keep their captured bitmap instead.
+    //
+    // Returns whether any placement was re-pointed. Id-less images (identifier 0) are never
+    // re-pointed because they cannot be retransmitted (there is no id to retransmit under).
+    private func repointPlacements(toReplacementImage image: Image) -> Bool {
+        let identifier = image.metadata.identifier
+        // Only swap the image on virtual placements that have no source crop. A cropped placement's
+        // sourceRect was resolved against the bitmap present at display time; re-pointing it onto a
+        // differently-sized bitmap would leave a stale, possibly out-of-bounds crop, so a cropped
+        // placement keeps its captured bitmap.
+        var changed = false
+        for i in placements.indices where placements[i].virtual
+            && placements[i].sourceRect == nil
+            && placements[i].image.metadata.identifier == identifier {
+            placements[i].image = image
+            changed = true
+        }
+        if changed {
+            DLog("repointPlacements: re-pointed virtual placements of imageID=\(identifier) at the newly transmitted bitmap")
+        }
+        return changed
     }
 
     private func dataByAddingAlphaTo3bppData(_ data: Data, _ alpha: UInt8) -> Data {
@@ -944,7 +1045,7 @@ class KittyImageController: NSObject {
                                  placement: command.placement,
                                  q: command.q)
             }
-        } else if let lastImage = _images[lastImageKey] {
+        } else if let lastImage = _images[Self.lastImageKey] {
             DLog("executeDisplay: using lastImage (identifier=\(lastImage.metadata.identifier) (0x\(String(lastImage.metadata.identifier, radix: 16))))")
             let displayError = executeDisplay(command, image: lastImage)
             DLog("executeDisplay: executeDisplay(command, image:) returned error=\(String(describing: displayError))")
@@ -971,6 +1072,8 @@ class KittyImageController: NSObject {
             } else {
                 nil
             }
+        // The source crop is resolved against the image present at display time and stored in pixels;
+        // it is not re-resolved on retransmit.
         let sourceRect: NSRect? =
             if command.x > 0 || command.y > 0 || command.w > 0 || command.h > 0 {
                 if let image = image.image.value {
@@ -1020,12 +1123,34 @@ class KittyImageController: NSObject {
             RLog("executeDisplay(image): ERROR - parent placement not found")
             return "ENOPARENT"
         }
-        if command.placement != 0 {
+        if placement.virtual {
+            // Virtual placements are resolved purely by (imageID, placementID) at draw time,
+            // with no screen position, so a new one supersedes any existing virtual placement
+            // with the same pair, even when the placement id is the default of 0. Without this,
+            // retransmitting an image under a reused id and displaying it leaves the old placement
+            // behind, and the placeholder finder returns that stale (oldest) placement instead of
+            // the newly transmitted image. Issue 13028.
             let removedCount = placements.count
-            placements.removeAll { $0.placementId == command.placement }
+            placements.removeAll {
+                $0.virtual &&
+                $0.placementId == command.placement &&
+                $0.image.metadata.identifier == placement.image.metadata.identifier
+            }
             let actuallyRemoved = removedCount - placements.count
             if actuallyRemoved > 0 {
-                DLog("executeDisplay(image): removed \(actuallyRemoved) existing placements with placementId=\(command.placement)")
+                DLog("executeDisplay(image): superseded \(actuallyRemoved) existing virtual placements with imageID=\(placement.image.metadata.identifier) placementId=\(command.placement)")
+            }
+        } else if command.placement != 0 {
+            // Placement ids are unique per image, not globally, so only supersede a prior placement
+            // of the same image; a different image reusing this placement id is a distinct placement.
+            let removedCount = placements.count
+            placements.removeAll {
+                $0.placementId == command.placement &&
+                $0.image.metadata.identifier == placement.image.metadata.identifier
+            }
+            let actuallyRemoved = removedCount - placements.count
+            if actuallyRemoved > 0 {
+                DLog("executeDisplay(image): removed \(actuallyRemoved) existing placements with imageID=\(placement.image.metadata.identifier) placementId=\(command.placement)")
             }
         }
         DLog("executeDisplay(image): appending placement - imageID=\(placement.image.metadata.identifier) (0x\(String(placement.image.metadata.identifier, radix: 16))) placementID=\(placement.placementId) virtual=\(placement.virtual) rows=\(String(describing: placement.rows)) columns=\(String(describing: placement.columns)) zIndex=\(placement.zIndex)")
@@ -1058,30 +1183,34 @@ class KittyImageController: NSObject {
     }
 
     private func addingFormsCycle(placement: Placement) -> Bool {
-        if placement.placementId == placement.parentPlacementIdentifier {
-            return true
+        // Parents resolve by (imageId, placementId) with newest-wins (see indexOfPlacement). Once this
+        // placement is appended it becomes the newest of its own pair, so ANY ancestry chain that
+        // reaches its pair will resolve back to it. Therefore, walk the parent chain by pair and
+        // report a cycle if it reaches this placement's own pair. This correctly catches both the
+        // direct self-parent case (P/Q naming this placement's pair) and the indirect case where a
+        // chain loops through the pair this placement is about to become the newest of. Comparing by
+        // resolved index instead would miss these, because the new placement is not in the array yet.
+        let selfImageId = placement.image.metadata.identifier
+        let selfPlacementId = placement.placementId
+        guard var currentImageId = placement.parentImageIdentifier,
+              var currentPlacementId = placement.parentPlacementIdentifier else {
+            return false
         }
-        var currentId = placement.parentPlacementIdentifier
-        let newPlacementId = placement.placementId
-
-        while currentId != nil {
-            if currentId == newPlacementId {
+        // The existing placements are acyclic (this check runs before every insert), so the walk
+        // terminates; bound it by the placement count as defense against a corrupted chain.
+        for _ in 0...placements.count {
+            if currentImageId == selfImageId && currentPlacementId == selfPlacementId {
                 return true
             }
-
-            // Find the parent of the currentId
-            if let parentPlacement = placements.first(where: { $0.placementId == currentId }) {
-                currentId = parentPlacement.parentPlacementIdentifier
-            } else {
+            guard let parent = finder(imageId: currentImageId, placementId: currentPlacementId),
+                  let nextImageId = parent.parentImageIdentifier,
+                  let nextPlacementId = parent.parentPlacementIdentifier else {
                 return false
             }
+            currentImageId = nextImageId
+            currentPlacementId = nextPlacementId
         }
-
-        return false
-    }
-
-    private func find(placement: UInt32) -> Placement? {
-        return placements.first { $0.placementId == placement }
+        return true
     }
 
     private func respondToDisplay(error: String?, identifier: UInt32, placement: UInt32, q: UInt32) {
@@ -1131,10 +1260,20 @@ class KittyImageController: NSObject {
         // TODO
     }
 
-    private func finder(placementId: UInt32) -> Placement? {
-        placements.first { candidate in
-            candidate.placementId == placementId
+    // The index of the placement identified by (imageId, placementId). The pair is NOT unique: two
+    // non-virtual placements of one image with the default placement id 0 can coexist (displaying an
+    // image twice with no p= is normal). When ambiguous, prefer the most recently created placement.
+    private func indexOfPlacement(imageId: UInt32, placementId: UInt32) -> Int? {
+        return placements.lastIndex { candidate in
+            candidate.placementId == placementId && candidate.image.metadata.identifier == imageId
         }
+    }
+
+    private func finder(imageId: UInt32, placementId: UInt32) -> Placement? {
+        guard let index = indexOfPlacement(imageId: imageId, placementId: placementId) else {
+            return nil
+        }
+        return placements[index]
     }
 
     func executeDeleteImage(_ command: KittyImageCommand.DeleteImage) {
@@ -1162,13 +1301,15 @@ class KittyImageController: NSObject {
             // Delete all images with the specified id, specified using the i key. If you specify a
             // p key for the placement id as well, then only the placement with the specified image
             // id and placement id will be deleted.
+            // i=0 addresses id-less images, which live under lastImageKey (their metadata identifier
+            // is 0, not their storage key).
+            let key = command.imageId == 0 ? Self.lastImageKey : UInt64(command.imageId)
             if command.placementId != 0 {
-                removePlacements { placement in
-                    placement.image.metadata.identifier == command.imageId && placement.placementId == command.placementId
-                }
+                let matcher = matchesImage(underKey: key)
+                removePlacements { command.placementId == $0.placementId && matcher($0) }
             } else {
                 // I assume you have to remove dangingling placements, but the spec is silent.
-                removeImage(UInt64(command.imageId), placements: true, notify: false)
+                removeImage(key, placements: true, notify: false)
             }
 
         case "n", "N":
@@ -1185,9 +1326,8 @@ class KittyImageController: NSObject {
                 if command.placementId == 0 {
                     removeImage(identifier, placements: true, notify: false)
                 } else {
-                    removePlacements { placement in
-                        return command.placementId == placement.placementId
-                    }
+                    let matcher = matchesImage(underKey: identifier)
+                    removePlacements { command.placementId == $0.placementId && matcher($0) }
                 }
             }
 
@@ -1196,7 +1336,7 @@ class KittyImageController: NSObject {
             let cursorCoord = delegate.kittyImageControllerCursorCoord()
             let cellSize = delegate.kittyImageControllerCellSize()
             removePlacements { placement in
-                placement.intersects(coord: cursorCoord, cellSize: cellSize, finder: self.finder(placementId:))
+                placement.intersects(coord: cursorCoord, cellSize: cellSize, finder: self.finder(imageId:placementId:))
             }
 
         case "f", "F":
@@ -1211,7 +1351,7 @@ class KittyImageController: NSObject {
                                           y: Int64(command.y) - 1 + offset)
             let cellSize = delegate.kittyImageControllerCellSize()
             removePlacements { placement in
-                placement.intersects(coord: coord, cellSize: cellSize, finder: self.finder(placementId:))
+                placement.intersects(coord: coord, cellSize: cellSize, finder: self.finder(imageId:placementId:))
             }
 
         case "q", "Q":
@@ -1223,7 +1363,7 @@ class KittyImageController: NSObject {
             let cellSize = delegate.kittyImageControllerCellSize()
 
             removePlacements { placement in
-                placement.zIndex == command.z && placement.intersects(coord: coord, cellSize: cellSize, finder: self.finder(placementId:))
+                placement.zIndex == command.z && placement.intersects(coord: coord, cellSize: cellSize, finder: self.finder(imageId:placementId:))
             }
 
         case "r", "R":
@@ -1242,7 +1382,7 @@ class KittyImageController: NSObject {
             // Delete all placements that intersect the specified column, specified using the x key.
             let cellSize = delegate.kittyImageControllerCellSize()
             removePlacements { placement in
-                placement.intersects(column: Int32(clamping: command.x) - 1, cellSize: cellSize, finder: self.finder(placementId:))
+                placement.intersects(column: Int32(clamping: command.x) - 1, cellSize: cellSize, finder: self.finder(imageId:placementId:))
             }
 
         case "y", "Y":
@@ -1250,7 +1390,7 @@ class KittyImageController: NSObject {
             let offset = delegate.kittyImageControllerScreenAbsLine()
             let cellSize = delegate.kittyImageControllerCellSize()
             removePlacements { placement in
-                placement.intersects(row: Int64(command.y) - 1 + offset, cellSize: cellSize, finder: self.finder(placementId:))
+                placement.intersects(row: Int64(command.y) - 1 + offset, cellSize: cellSize, finder: self.finder(imageId:placementId:))
             }
 
         case "z", "Z":
@@ -1273,20 +1413,28 @@ class KittyImageController: NSObject {
 
     private func removePlacements(where test: (Placement) -> Bool) {
         var closure = placements.indexes(where: test)
-        var current = closure
-        while !current.isEmpty {
-            var next = IndexSet()
-            for i in current {
-                for child in placements[i].children {
-                    let childId = Int(child)
-                    if closure.contains(childId) {
-                        continue
-                    }
-                    next.insert(childId)
-                    closure.insert(childId)
+        // Deleting a placement also deletes the relative placements that refer to it, transitively
+        // (kitty spec). Without this, an orphaned child lingers in the array holding its bitmap alive,
+        // and because placements are freely re-created it could resurrect if a new placement later
+        // reused its parent's key. Cascade to a child only when its ACTUAL resolved parent (the one
+        // indexOfPlacement/finder would pick) is being removed, not merely when some placement with
+        // the parent's (imageId, placementId) pair is: that pair is not unique (two non-virtual p=0
+        // placements of one image can coexist), so key-matching would wrongly delete a child that is
+        // positioned relative to the other, still-present placement. Iterate to a fixed point.
+        var frontierChanged = true
+        while frontierChanged {
+            frontierChanged = false
+            for index in placements.indices where !closure.contains(index) {
+                guard let parentImageId = placements[index].parentImageIdentifier,
+                      let parentPlacementId = placements[index].parentPlacementIdentifier,
+                      let parentIndex = indexOfPlacement(imageId: parentImageId, placementId: parentPlacementId) else {
+                    continue
+                }
+                if closure.contains(parentIndex) {
+                    closure.insert(index)
+                    frontierChanged = true
                 }
             }
-            current = next
         }
         DLog("removePlacements: removing \(closure.count) placements at indexes \(closure)")
         for i in closure {
@@ -1297,13 +1445,25 @@ class KittyImageController: NSObject {
         DLog("removePlacements: total placements now \(placements.count)")
     }
 
+    // A predicate matching placements of the image stored under `key`. The shared lastImageKey slot is
+    // occupied by whichever id-less image was transmitted most recently; match that occupant by its
+    // unique id so earlier id-less images' still-live placements are not swept up (mirrors the
+    // eviction path). For a real image id, match by the placement's storage key. Capture this before
+    // deleting the image from the cache, since it reads the current occupant.
+    private func matchesImage(underKey key: UInt64) -> (Placement) -> Bool {
+        if key == Self.lastImageKey {
+            let uniqueId = _images[key]?.uniqueId
+            return { $0.image.uniqueId == uniqueId }
+        }
+        return { $0.imageKey == key }
+    }
+
     private func removeImage(_ id: UInt64, placements removePlacements: Bool, notify: Bool) {
         DLog("removeImage: id=\(id) (0x\(String(id, radix: 16))) removePlacements=\(removePlacements) notify=\(notify)")
+        let matcher = matchesImage(underKey: id)
         _images.delete(forKey: id)
         if removePlacements {
-            self.removePlacements { placement in
-                placement.image.metadata.identifier == id
-            }
+            self.removePlacements(where: matcher)
             if notify {
                 delegate?.kittyImageControllerPlacementsDidChange()
             }
@@ -1324,7 +1484,7 @@ class KittyImageController: NSObject {
             }
         }
         let result = placements.filter { candidate in
-            guard candidate.pixelRect(cellSize: cellSize, finder: finder(placementId:)) != nil else {
+            guard candidate.pixelRect(cellSize: cellSize, finder: finder(imageId:placementId:)) != nil else {
                 DLog("draws(): filtering out placement with nil pixelRect: imageID=\(candidate.image.metadata.identifier)")
                 return false
             }

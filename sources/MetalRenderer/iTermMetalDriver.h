@@ -22,7 +22,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalCursorInfo : NSObject
 @property (nonatomic) BOOL cursorVisible;
 @property (nonatomic) VT100GridCoord coord;
@@ -50,6 +49,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) BOOL copyModeCursorSelecting;
 @property (nonatomic) VT100GridCoord copyModeCursorCoord;
 @property (nonatomic) vector_float4 backgroundColor;
+// YES when the HDR-cursor hint applies (profile KEY_HDR_CURSOR + display headroom
+// + dark background): the cursor is drawn as a bright HDR white and its character
+// bold. Computed once in the glue so the cursor renderer and the bold path agree.
+@property (nonatomic) BOOL useHDRWhite;
 @end
 
 @interface iTermMetalIMEInfo : NSObject
@@ -63,7 +66,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState<NSObject>
 @property (nonatomic, readonly) NSRect adjustedDocumentVisibleRect;
 @property (nonatomic, readonly) VT100GridSize gridSize;
@@ -78,6 +80,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) vector_float4 blockHoverColor;
 @property (nonatomic, readonly) vector_float4 selectedBackgroundColor;
 @property (nonatomic, readonly) iTermLineStyleMarkColors lineStyleMarkColors;
+@property (nonatomic, readonly) NSColor *markSuccessColor;
+@property (nonatomic, readonly) NSColor *markOtherColor;
+@property (nonatomic, readonly) NSColor *markFailureColor;
 @property (nonatomic, readonly) NSImage *badgeImage;
 @property (nonatomic, readonly) CGRect badgeSourceRect;
 @property (nonatomic, readonly) CGRect badgeDestinationRect;
@@ -179,7 +184,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSource<NSObject>
 
 - (BOOL)metalDriverShouldDrawFrame;
@@ -196,7 +200,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @end
 
 // Our platform independent render class
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalDriver : NSObject<iTermMetalViewDelegate>
 
 @property (nullable, nonatomic, weak) id<iTermMetalDriverDataSource> dataSource;
@@ -204,7 +207,12 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (atomic) BOOL captureDebugInfoForNextFrame;
 
 - (instancetype)init NS_UNAVAILABLE;
-- (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
+// framebufferPixelFormat is the format for the framebuffer, pipeline states, and
+// intermediate textures (fp16 when this session's HDR cursor is enabled, else
+// 8-bit). It is fixed for the driver's lifetime; SessionView rebuilds the driver
+// when the setting changes. See iTermMetalFramebufferPixelFormat().
+- (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device
+                    framebufferPixelFormat:(MTLPixelFormat)framebufferPixelFormat NS_DESIGNATED_INITIALIZER;
 
 - (void)setCellSize:(CGSize)cellSize
 cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing

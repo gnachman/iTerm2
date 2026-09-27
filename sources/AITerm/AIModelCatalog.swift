@@ -49,7 +49,10 @@ struct AIModelCatalog {
     // sanely across nightly/beta/adhoc builds). Fail-safe decoding already drops
     // individual unrepresentable entries; this just avoids adopting a catalog
     // that a build couldn't usefully consume.
-    static let appCatalogCompatibilityVersion = 1
+    // 2: added Model.Feature.vision (Ollama vision-capable local models). An older
+    //    app that predates .vision cannot represent a catalog model advertising it,
+    //    so a catalog that uses "vision" must gate itself to this version or newer.
+    static let appCatalogCompatibilityVersion = 2
 
     private static let resourceName = "ai-models"
     private static let resourceExtension = "json"
@@ -290,6 +293,7 @@ private struct ModelDTO: Decodable {
         case "hostedWebSearch": return .hostedWebSearch
         case "hostedCodeInterpreter": return .hostedCodeInterpreter
         case "configurableThinking": return .configurableThinking
+        case "vision": return .vision
         default:
             DLog("Unknown feature \(string); ignoring")
             return nil

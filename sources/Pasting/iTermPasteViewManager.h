@@ -19,6 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)pasteViewManagerUserDidCancel;
 - (iTermVariableScope *)pasteViewManagerScope;
 
+// The user toggled the "send keystrokes to the terminal" control in the paste
+// indicator. When `on`, keystrokes bypass the paste queue and go to the terminal.
+- (void)pasteViewManagerDidSetKeystrokePassthrough:(BOOL)on;
+
 @end
 
 @interface iTermPasteViewManager : NSObject
@@ -31,6 +35,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)startWithViewForDropdown:(NSView *)dropdownSuperview
          statusBarViewController:(iTermStatusBarViewController *)statusBarController;
+
+// Show/hide the "send keystrokes to the terminal" control in whichever paste
+// indicator is currently visible.
+- (void)setWaitingForPrompt:(BOOL)waitingForPrompt;
+
+// Show the "typing is queued" hint pointing at that control.
+- (void)showKeystrokeQueuedHint;
 
 - (void)didStop;
 

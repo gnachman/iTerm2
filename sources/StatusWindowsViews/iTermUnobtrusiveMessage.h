@@ -9,7 +9,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermUnobtrusiveMessage : NSView
 @property (nonatomic) NSTimeInterval duration;
 

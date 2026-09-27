@@ -69,6 +69,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     IBOutlet NSButton *_showTabBarInFullscreen;
 
     IBOutlet NSButton *_stretchTabsToFillBar;
+    IBOutlet NSButton *_scrollableSideTabBar;
     IBOutlet NSButton *_htmlTabTitles;
 
     // Show window number in title bar.
@@ -251,11 +252,11 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         BOOL didChange = NO;
         if (isOn) {
             iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:@"When iTerm2 is excluded from the dock, you can "
+                [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"Appearance.ExcludeFromDockWarning", nil, [NSBundle mainBundle], @"When iTerm2 is excluded from the dock, you can "
                                                    @"always get back to Preferences using the status "
                                                    @"bar item. Look for an iTerm2 icon on the right "
-                                                   @"side of your menu bar."
-                                           actions:@[ @"Exclude From Dock and App Switcher", @"Cancel" ]
+                                                   @"side of your menu bar.", @"Warning shown when the user excludes iTerm2 from the Dock and app switcher")
+                                           actions:@[ NSLocalizedStringWithDefaultValue(@"Appearance.ExcludeFromDockAction", nil, [NSBundle mainBundle], @"Exclude From Dock and App Switcher", @"Button confirming exclusion of iTerm2 from the Dock and app switcher"), iTermLocalizedCancel() ]
                                         identifier:nil
                                        silenceable:kiTermWarningTypePersistent
                                             window:weakSelf.view.window];
@@ -326,6 +327,12 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
     info = [self defineControl:_stretchTabsToFillBar
                            key:kPreferenceKeyStretchTabsToFillBar
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [weakSelf postRefreshNotification]; };
+
+    info = [self defineControl:_scrollableSideTabBar
+                           key:kPreferenceKeyScrollableSideTabBar
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };

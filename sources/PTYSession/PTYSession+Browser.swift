@@ -8,22 +8,62 @@
 import Foundation
 import WebKit
 
-@available(macOS 11.0, *)
 extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
-        view?.findDriver?.viewController.countDidChange()
+        // `viewController` is imported from ObjC as an implicitly-unwrapped optional, so the bare
+        // `.viewController.` below is a hidden force-unwrap. It can legitimately be nil (e.g. a
+        // status-bar find driver created with no search view controller), and a global search
+        // routes a clearFind result-update through here, which force-unwrapped nil and trapped.
+        // The equivalent ObjC call sites are nil-safe no-ops, so match them with optional chaining.
+        view?.findDriver?.viewController?.countDidChange()
+    }
+
+    // True if the session already has a non-blank auto name (seeded from the profile
+    // name, or restored from a saved arrangement's last page title).
+    var hasExistingSessionName: Bool {
+        let existing = (genericScope.value(forVariableName: iTermVariableKeySessionAutoNameFormat) as? String) ?? ""
+        return !existing.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var browserProfileDisplayName: String {
+        profile?[KEY_NAME] as? String ?? iTermBrowserSessionTitle.defaultProfileName
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, didUpdateTitle title: String?) {
-        if let title {
-            setUntrustedIconName(title)
+        // A browser session has no job, so route the page title through the session name.
+        // The session-name title component is guaranteed for browsers by
+        // iTermSessionTitleBuiltInFunction, so this is what renders in the tab and
+        // per-pane title bars. A blank title mid-load is transient (WebKit fires it at
+        // didCommit before the new <title> is parsed), so we keep the current name to
+        // avoid flicker; the host/profile fallback for a genuinely titleless page is
+        // applied once the page settles in browserViewControllerDidFinishNavigation.
+        if let name = iTermBrowserSessionTitle.resolvedName(pageTitle: title,
+                                                            host: nil,
+                                                            profileName: browserProfileDisplayName,
+                                                            navigationSettled: false) {
+            DLog("browserTitle: using page title \(name)")
+            setUntrustedIconName(name)
+        } else {
+            DLog("browserTitle: transient blank page title; keeping current name")
         }
+        // A session restored from a saved arrangement caches its (empty) title from
+        // before the name was known and does not always recompute when the variable
+        // changes, so force a re-evaluation now that the name is set.
+        nameController.setNeedsUpdate()
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, didUpdateFavicon favicon: NSImage?) {
         if let favicon {
             delegate?.sessionDidChangeGraphic(self, shouldShow: true, image: favicon)
         }
+    }
+
+    func browserViewController(_ controller: iTermBrowserViewController, didUpdateBackgroundColor color: NSColor?) {
+        // Feeds the page's background color into the session so the minimal theme's
+        // light/dark decision (and tab tint) tracks the actual page instead of the
+        // profile's static terminal background. Propagation is rate limited in the
+        // setter because it triggers a relayout and appearance recompute.
+        browserBackgroundColor = color
     }
 
     func browserViewController(_ controller: iTermBrowserViewController,
@@ -133,7 +173,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserViewControllerInvoke(_ controller: iTermBrowserViewController, scriptFunction: String) {
         invokeFunctionCall(scriptFunction,
                            scope: genericScope,
-                           origin: "Pointer action")
+                           origin: String(localized: "PTYSessionBrowser.PointerActionOrigin", defaultValue: "Pointer action", comment: "Origin label describing that a function call was invoked by a pointer action"))
     }
 
     func browserViewControllerSmartSelectionRules(_ controller: iTermBrowserViewController) -> [SmartSelectRule] {
@@ -181,7 +221,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
         let guid = ProfileModel.freshGuid()!
         let dict: [AnyHashable: Any] = [
             KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeBrowserValue,
-            KEY_NAME: "Web Browser",
+            KEY_NAME: iTermBrowserSessionTitle.defaultProfileName,
             KEY_GUID: guid
         ]
         ProfileModel.sharedInstance().addBookmark(dict)
@@ -258,12 +298,12 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, runCommand command: String) {
-        guard iTermWarning.show(withTitle: "OK to run:\n\(command)",
-                                actions: ["OK", "Cancel"],
+        guard iTermWarning.show(withTitle: String(localized: "PTYSessionBrowser.OKToRun", defaultValue: "OK to run:\n\(command)", comment: "Confirmation prompt before running a command; placeholder is the command"),
+                                actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                                 accessory: nil,
                                 identifier: nil,
                                 silenceable: .kiTermWarningTypePersistent,
-                                heading: "Run command?",
+                                heading: String(localized: "PTYSessionBrowser.RunCommandHeading", defaultValue: "Run command?", comment: "Heading for a confirmation prompt before running a command"),
                                 window: view?.window) == .kiTermWarningSelection0 else {
             return
         }
@@ -293,12 +333,12 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, openFile file: String) {
-        guard iTermWarning.show(withTitle: "OK to open this file?\n\(file)",
-                                actions: ["OK", "Cancel"],
+        guard iTermWarning.show(withTitle: String(localized: "PTYSessionBrowser.OKToOpenFile", defaultValue: "OK to open this file?\n\(file)", comment: "Confirmation prompt before opening a file; placeholder is the file path"),
+                                actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                                 accessory: nil,
                                 identifier: nil,
                                 silenceable: .kiTermWarningTypePersistent,
-                                heading: "Open file?",
+                                heading: String(localized: "PTYSessionBrowser.OpenFileHeading", defaultValue: "Open file?", comment: "Heading for a confirmation prompt before opening a file"),
                                 window: view?.window) == .kiTermWarningSelection0 else {
             return
         }
@@ -337,6 +377,15 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
 
     func browserViewControllerDidFinishNavigation(_ controller: iTermBrowserViewController) {
         browserIsLoading = false
+        // The page has settled. If it finished loading with no <title>, fall back to the
+        // host (then the profile name) instead of keeping the previous page's title.
+        if let name = iTermBrowserSessionTitle.resolvedName(pageTitle: controller.title,
+                                                            host: controller.currentURL?.host,
+                                                            profileName: browserProfileDisplayName,
+                                                            navigationSettled: true) {
+            setUntrustedIconName(name)
+            nameController.setNeedsUpdate()
+        }
         updateDisplayBecause("browser activity")
     }
 

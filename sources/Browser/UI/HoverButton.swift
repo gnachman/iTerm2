@@ -5,7 +5,6 @@
 //  Created by George Nachman on 7/1/25.
 //
 
-@available(macOS 11, *)
 class HoverButton: NSButton {
     private var trackingArea: NSTrackingArea?
 

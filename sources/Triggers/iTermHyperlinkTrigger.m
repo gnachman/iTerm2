@@ -15,7 +15,7 @@
 @implementation iTermHyperlinkTrigger
 
 + (NSString *)title {
-    return @"Make Hyperlink…";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Hyperlink.Title", nil, [NSBundle mainBundle], @"Make Hyperlink…", @"Trigger action name: turn the matching text into a clickable hyperlink");
 }
 
 - (NSString *)description {

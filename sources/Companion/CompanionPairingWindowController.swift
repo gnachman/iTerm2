@@ -76,6 +76,10 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     private lazy var placeholderQRImage: NSImage = Self.makePlaceholderQRImage()
     private var gateAction: (() -> Void)?
     private var currentGate: CompanionPairingController.Gate?
+    // AI availability last baked into the unpaired ready-to-pair instructions (via
+    // aiAdvisorySuffix). The gate no longer includes AI, so a toggle doesn't change
+    // `currentGate`; tracking this lets refreshGateState notice and rebuild that text.
+    private var lastAdvisoryAIAvailable: Bool?
     // True while the biometric/password sheet for a fresh pairing is up, so a
     // poll or re-key does not stack a second prompt.
     private var pairingAuthInFlight = false
@@ -144,6 +148,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         guard window?.isVisible == true else { return }
         updateSettingsSection()
         let gate = CompanionPairingController.gate()
+        let aiAvailable = CompanionPairingController.aiAvailable()
         if gate == currentGate {
             // Gate unchanged, so the top is already the right kind of view. But
             // the paired state's connected/not-connected text tracks the live
@@ -158,26 +163,30 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
                 if !controller.isConnected, !controller.isListening {
                     controller.resumePairedListeningIfNeeded()
                 }
+                // updatePairedConnectionText re-evaluates the AI advisory each poll.
                 updatePairedConnectionText()
+                lastAdvisoryAIAvailable = aiAvailable
+            } else if gate == .allowed, aiAvailable != lastAdvisoryAIAvailable,
+                      !controller.isListening, !pairingAuthInFlight {
+                // Ready-to-pair (button) state only: the gate doesn't move when AI
+                // toggles, so rebuild here so the baked-in advisory reflects the new
+                // AI state (e.g. the user enables AI in Settings while this window is
+                // open unpaired). GUARDED against an active fresh pairing: while a QR
+                // is being advertised (isListening), a SAS is being confirmed, or the
+                // auth sheet is up (pairingAuthInFlight), showReadyToPair would call
+                // stopAdvertising()/hideTopContent() and silently abort the pairing the
+                // user is in the middle of. In that case we intentionally leave
+                // lastAdvisoryAIAvailable unchanged so the advisory is rebuilt once the
+                // pairing ends and the button state returns.
+                showReadyToPair()
+                lastAdvisoryAIAvailable = aiAvailable
             }
             return
         }
         currentGate = gate
+        lastAdvisoryAIAvailable = aiAvailable
         RLog("Companion pairing window: gate is now \(gate)")
         switch gate {
-        case .aiAdminDisabled:
-            // No remedy to offer: this is an administrator decision.
-            showBlockedTop("Generative AI features have been disabled. Check with your system administrator.")
-        case .aiPluginMissing:
-            showBlockedTop("You must install the AI plugin before you can pair a companion device.",
-                           remedyTitle: "Reveal in Settings") {
-                PreferencePanel.sharedInstance().openToPreference(withKey: kPhonyPreferenceKeyInstallAIPlugin)
-            }
-        case .aiConsentNeeded:
-            showBlockedTop("You must enable AI features in settings before you can pair a companion device.",
-                           remedyTitle: "Reveal") {
-                PreferencePanel.sharedInstance().openToPreference(withKey: kPreferenceKeyEnableAI)
-            }
         case .companionAdminDisabled:
             // No remedy to offer: this is an administrator decision.
             showBlockedTop("Companion device pairing has been disabled. Check with your system administrator.")
@@ -189,7 +198,9 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             if controller.isConnected || controller.hasPairedDevice {
                 showPairedState()
             } else {
-                startFreshPairingFlow()
+                // Never auto-prompt for auth: show the "Show QR Code" button and
+                // wait for a deliberate click before starting the pairing flow.
+                showReadyToPair()
             }
         }
     }
@@ -416,22 +427,51 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         if let remedyTitle {
             // A clean background and a larger default (accent-highlighted) button:
             // the dimmed placeholder QR would camouflage a plain push button.
-            gateButton.title = remedyTitle
-            gateButton.controlSize = .large
-            gateButton.keyEquivalent = "\r"
-            gateButton.sizeToFit()
-            let width = gateButton.frame.width + 48
-            gateButton.frame = NSRect(x: (360 - width) / 2,
-                                      y: 280,
-                                      width: width,
-                                      height: gateButton.frame.height)
-            gateButton.isHidden = false
+            presentPrimaryButton(title: remedyTitle)
         } else {
             // Nothing to click: fill the QR area with the dimmed placeholder.
             qrImageView.image = placeholderQRImage
             qrImageView.alphaValue = 0.18
             qrImageView.isHidden = false
         }
+    }
+
+    /// Present a single prominent default (accent-highlighted) button centered
+    /// in the top area. The caller sets gateAction to what the click should do.
+    private func presentPrimaryButton(title: String) {
+        gateButton.title = title
+        gateButton.controlSize = .large
+        gateButton.keyEquivalent = "\r"
+        gateButton.sizeToFit()
+        let width = gateButton.frame.width + 48
+        gateButton.frame = NSRect(x: (360 - width) / 2,
+                                  y: 280,
+                                  width: width,
+                                  height: gateButton.frame.height)
+        gateButton.isHidden = false
+    }
+
+    /// The allowed-but-unpaired idle state: an explicit “Show QR Code” button
+    /// rather than the pairing flow itself. Authentication (Touch ID / password)
+    /// must only ever happen in response to a deliberate click, so opening this
+    /// window or unpairing a device shows this button and never auto-prompts.
+    private func showReadyToPair() {
+        controller.stopAdvertising()
+        hideTopContent()
+        instructionsLabel.stringValue = "Pair a companion device to use iTerm2 from your iPhone." + aiAdvisorySuffix()
+        setStatus("", color: .secondaryLabelColor)
+        gateAction = { [weak self] in self?.startFreshPairingFlow() }
+        presentPrimaryButton(title: "Show QR Code")
+    }
+
+    /// A short, non-blocking note appended to the pairing instructions when AI is
+    /// off: companion pairing and terminal control still work, but chats are
+    /// unavailable on the phone until AI is turned on. Empty when AI is available,
+    /// so an AI user sees no change. (AI is no longer required to pair, so this is
+    /// informational only, never a blocker.)
+    private func aiAdvisorySuffix() -> String {
+        guard !CompanionPairingController.aiAvailable() else { return "" }
+        return " AI is off, so chats aren’t available on your iPhone; terminal viewing and control still work."
     }
 
     /// Build the placeholder once: a real QR of a throwaway string, Gaussian
@@ -572,11 +612,11 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     /// or dropping while the gate (still .allowed) does not change.
     private func updatePairedConnectionText() {
         if controller.isConnected {
-            instructionsLabel.stringValue = "A companion device is paired and connected."
+            instructionsLabel.stringValue = "A companion device is paired and connected." + aiAdvisorySuffix()
             checkmarkImageView.contentTintColor = .systemGreen
         } else if controller.isListening {
             // Parked at the relay, just waiting for the phone to come back.
-            instructionsLabel.stringValue = "A companion device is paired. Waiting for it to connect."
+            instructionsLabel.stringValue = "A companion device is paired. Waiting for it to connect." + aiAdvisorySuffix()
             checkmarkImageView.contentTintColor = .tertiaryLabelColor
         } else {
             // Not listening at all: the phone cannot reach this Mac. The poll in
@@ -635,7 +675,10 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
 
     @objc private func unpairPressed(_ sender: Any) {
         controller.unpair()
-        startFreshPairingFlow()
+        // Unpairing leaves the gate at .allowed, so refreshGateState won't
+        // re-present the top. Drop to the idle "Show QR Code" state directly
+        // rather than immediately prompting for auth to pair a new device.
+        showReadyToPair()
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -652,6 +695,18 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         }
         // Window dismissed without pairing: stop advertising the QR.
         controller.stopAdvertising()
+    }
+
+    // The Close menu item (Cmd-W) is wired to closeCurrentSession: rather than
+    // performClose:, so this non-terminal window has to handle it explicitly or
+    // the menu item is disabled and the keystroke just beeps.
+    @objc func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        return menuItem.action == #selector(closeCurrentSession(_:))
+    }
+
+    @objc(closeCurrentSession:)
+    func closeCurrentSession(_ sender: Any) {
+        window?.performClose(sender)
     }
 
     // MARK: Layout

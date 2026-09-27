@@ -108,7 +108,7 @@
     self.textView.textColor = [NSColor textColor];
     self.textView.insertionPointColor = [NSColor textColor];
     self.textView.font = [NSFont fontWithName:@"Menlo" size:11];
-    _aiCompletionWarning.hidden = ![[iTermSecureUserDefaults instance] aiCompletionsEnabled] || ![iTermAdvancedSettingsModel generativeAIAllowed];
+    [self updateAIAccessoryVisibility];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(secureUserDefaultDidChange:)
                                                  name:iTermSecureUserDefaults.secureUserDefaultsDidChangeNotificationName
@@ -117,13 +117,21 @@
                                              selector:@selector(commandValidityDidChange:)
                                                  name:iTermLocalFileChecker.commandValidityDidChange
                                                object:nil];
-    if (![iTermAdvancedSettingsModel generativeAIAllowed]) {
-        _engageAI.hidden = YES;
-    }
+}
+
+- (void)setForceHideAIAccessories:(BOOL)forceHideAIAccessories {
+    _forceHideAIAccessories = forceHideAIAccessories;
+    [self updateAIAccessoryVisibility];
+}
+
+- (void)updateAIAccessoryVisibility {
+    const BOOL aiCompletionsOn = [[iTermSecureUserDefaults instance] aiCompletionsEnabled] && [iTermAdvancedSettingsModel generativeAIAllowed];
+    _aiCompletionWarning.hidden = _forceHideAIAccessories || !aiCompletionsOn;
+    _engageAI.hidden = _forceHideAIAccessories || ![iTermAdvancedSettingsModel generativeAIAllowed];
 }
 
 - (void)secureUserDefaultDidChange:(NSNotification *)notification {
-    _aiCompletionWarning.hidden = ![[iTermSecureUserDefaults instance] aiCompletionsEnabled] || ![iTermAdvancedSettingsModel generativeAIAllowed];
+    [self updateAIAccessoryVisibility];
 }
 
 - (void)commandValidityDidChange:(NSNotification *)notification {
@@ -150,11 +158,28 @@
 }
 
 - (void)viewDidLayout {
+    [self reconcileScrollPositionAfterResize];
     // Avoid overlapping text
     if ((!_aiCompletionWarning.isHidden && self.view.bounds.size.width < 418) || self.view.bounds.size.width < 180) {
         _sendTip.hidden = YES;
     } else {
         _sendTip.hidden = NO;
+    }
+}
+
+// When the whole document fits inside the composer, the view must never be
+// scrolled: the top would be clipped for no reason. But editing (and resizing)
+// makes NSTextView scroll to keep the caret visible against a momentarily shorter
+// clip, and NSClipView doesn’t re-clamp that offset back to zero afterward, so a
+// small stale offset survives and truncates the top. Since a document that fits
+// isn’t user-scrollable anyway, unconditionally pin it to the top whenever it
+// fits. When it overflows (a value taller than the composer’s maximum height)
+// leave the caret-driven and user scroll position alone.
+- (void)reconcileScrollPositionAfterResize {
+    const CGFloat clipHeight = NSHeight(_scrollView.contentView.bounds);
+    const CGFloat documentHeight = NSHeight([(NSView *)_scrollView.documentView frame]);
+    if (documentHeight <= clipHeight && _scrollView.contentView.bounds.origin.y != 0) {
+        [self.textView scrollPoint:NSZeroPoint];
     }
 }
 
@@ -298,11 +323,11 @@
             [weakSelf.textView.window makeFirstResponder:weakSelf.textView];
         } second:^(NSError *error) {
             [iTermWarning showWarningWithTitle:error.localizedDescription
-                                       actions:@[ @"OK" ]
+                                       actions:@[ iTermLocalizedOK() ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"AI Error"
+                                       heading:NSLocalizedStringWithDefaultValue(@"LargeComposer.AIErrorHeading", nil, [NSBundle mainBundle], @"AI Error", @"Heading for the AI suggestion error warning")
                                         window:weakSelf.view.window];
         }];
     }];
@@ -334,22 +359,22 @@
     _popoverVC.textView.defaultParagraphStyle = style;
 
     NSArray<NSString*> *lines = @[
-        @"^⇧↑\tAdd cursor above",
-        @"^⇧↓\tAdd cursor below",
-        @"^⇧-click\tAdd cursor",
-        @"⌥-drag\tAdd cursors"
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAddCursorAbove", nil, [NSBundle mainBundle], @"^⇧↑\tAdd cursor above", @"Help line: keystroke followed by a tab then the description for adding a cursor above"),
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAddCursorBelow", nil, [NSBundle mainBundle], @"^⇧↓\tAdd cursor below", @"Help line: keystroke followed by a tab then the description for adding a cursor below"),
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAddCursor", nil, [NSBundle mainBundle], @"^⇧-click\tAdd cursor", @"Help line: keystroke followed by a tab then the description for adding a cursor"),
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAddCursors", nil, [NSBundle mainBundle], @"⌥-drag\tAdd cursors", @"Help line: keystroke followed by a tab then the description for adding cursors")
     ];
     if ([iTermAdvancedSettingsModel generativeAIAllowed]) {
-        lines = [lines arrayByAddingObject:@"⌘Y\tNatural language AI lookup"];
+        lines = [lines arrayByAddingObject:NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAILookup", nil, [NSBundle mainBundle], @"⌘Y\tNatural language AI lookup", @"Help line: keystroke followed by a tab then the description for natural language AI lookup")];
     }
     lines = [lines arrayByAddingObjectsFromArray:@[
-        @"⌘F\tOpen Find bar",
-        @"⌥⌘V\tOpen in Advanced Paste",
-        @"⌘-click\tOpen in explainshell.com",
-        @"⇧↩\tSend contents or selection",
-        @"⌥⇧↩\tSend command at cursor",
-        @"⌥↩\tEnqueue command at cursor",
-        @"⇧⌘;\tView command history"
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpOpenFindBar", nil, [NSBundle mainBundle], @"⌘F\tOpen Find bar", @"Help line: keystroke followed by a tab then the description for opening the find bar"),
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAdvancedPaste", nil, [NSBundle mainBundle], @"⌥⌘V\tOpen in Advanced Paste", @"Help line: keystroke followed by a tab then the description for opening in Advanced Paste"),
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpExplainShell", nil, [NSBundle mainBundle], @"⌘-click\tOpen in explainshell.com", @"Help line: keystroke followed by a tab then the description for opening in explainshell.com"),
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpSendContents", nil, [NSBundle mainBundle], @"⇧↩\tSend contents or selection", @"Help line: keystroke followed by a tab then the description for sending contents or selection"),
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpSendCommandAtCursor", nil, [NSBundle mainBundle], @"⌥⇧↩\tSend command at cursor", @"Help line: keystroke followed by a tab then the description for sending the command at the cursor"),
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpEnqueueCommandAtCursor", nil, [NSBundle mainBundle], @"⌥↩\tEnqueue command at cursor", @"Help line: keystroke followed by a tab then the description for enqueuing the command at the cursor"),
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpViewCommandHistory", nil, [NSBundle mainBundle], @"⇧⌘;\tView command history", @"Help line: keystroke followed by a tab then the description for viewing command history")
     ]];
     [_popoverVC appendString:[lines componentsJoinedByString:@"\n"]];
     [_popoverVC.textView.textStorage addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, _popoverVC.textView.textStorage.string.length)];
@@ -455,6 +480,9 @@
     NSArray<iTermCommandHistoryEntryMO *> *entries =
     [[iTermShellHistoryController sharedInstance] commandHistoryEntriesWithPrefix:prefix
                                                                            onHost:self.host];
+    // Loop-invariant: the format string does not depend on the entry, so look it up once rather than
+    // once per history item inside the map.
+    NSString *lastUsedFormat = NSLocalizedStringWithDefaultValue(@"LargeComposer.LastUsedFormat", nil, [NSBundle mainBundle], @"Last used %@", @"Detail text for a command history completion item; placeholder is a relative time such as “2 days ago”");
     return [[entries subarrayToIndex:maxResults] mapWithBlock:^id _Nullable(iTermCommandHistoryEntryMO * _Nonnull entry) {
         NSString *value;
         if (removePrefix) {
@@ -464,7 +492,7 @@
         }
         NSDate *date = [NSDate dateWithTimeIntervalSinceReferenceDate:entry.timeOfLastUse.doubleValue];
         return [[iTermCompletionItem alloc] initWithValue:value
-                                                   detail:[NSString stringWithFormat:@"Last used %@", [NSDateFormatter dateDifferenceStringFromDate:date
+                                                   detail:[NSString stringWithFormat:lastUsedFormat, [NSDateFormatter dateDifferenceStringFromDate:date
                                                                                                                                             options:iTermDateDifferenceOptionsLowercase]]
                                                      kind:iTermCompletionItemKindHistory];
     }];
@@ -720,7 +748,8 @@
     // Escape filename completions.
     NSArray<iTermCompletionItem *> *completions =
     [[filenameCompletions mapWithBlock:^id _Nullable(iTermCompletionItem *item) {
-        if (item.kind == iTermCompletionItemKindAiSuggestion) {
+        if (item.kind == iTermCompletionItemKindAiSuggestion ||
+            item.kind == iTermCompletionItemKindAiReplacement) {
             // AI generally escapes for us. Don't double escape.
             return item;
         }
@@ -742,20 +771,31 @@
         [self.textView setCompletions:@[] prefix:@""];
         return;
     }
+    // Full-command replacement suggestions do not begin with what the user typed,
+    // so they must never be shown as inline ghost text (that would append a whole
+    // command after the user's text). They appear in the dropdown only.
+    NSArray<iTermCompletionItem *> *inlineCompletions =
+    [completions filteredArrayUsingBlock:^BOOL(iTermCompletionItem *item) {
+        return item.kind != iTermCompletionItemKindAiReplacement;
+    }];
+    NSArray<iTermCompletionItem *> *inlineFilenameCompletions =
+    [filenameCompletions filteredArrayUsingBlock:^BOOL(iTermCompletionItem *item) {
+        return item.kind != iTermCompletionItemKindAiReplacement;
+    }];
     // Pick the shortest suggestion because otherwise it's hard to traverse a deep path since the
     // suggestion will make it easy to skip over intermediate folders.
-    NSString *suggestion = [[completions mapWithBlock:^id _Nullable(iTermCompletionItem *item) {
+    NSString *suggestion = [[inlineCompletions mapWithBlock:^id _Nullable(iTermCompletionItem *item) {
         return item.value;
     }] longestCommonStringPrefix];
     if (!suggestionOnly) {
         if (suggestion.length == 0) {
-            suggestion = completions.firstObject.value;
+            suggestion = inlineCompletions.firstObject.value;
         }
-        if (filenameCompletions.count > 0) {
-            suggestion = filenameCompletions[0].value;
+        if (inlineFilenameCompletions.count > 0) {
+            suggestion = inlineFilenameCompletions[0].value;
         }
     }
-    self.textView.suggestion = suggestion;
+    self.textView.suggestion = suggestion.length > 0 ? suggestion : nil;
     if (suggestionOnly) {
         [self.textView setCompletions:@[] prefix:@""];
     } else {

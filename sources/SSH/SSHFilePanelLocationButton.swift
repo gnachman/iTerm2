@@ -4,7 +4,6 @@
 //
 //  Created by George Nachman on 6/3/25.
 //
-@available(macOS 11, *)
 class SSHFilePanelLocationButton: NSPopUpButton {
     private var pathComponents: [String] = ["/"]
     private(set) var currentPath: String?

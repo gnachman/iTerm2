@@ -105,6 +105,9 @@ extern NSString * const kTriggerVariableValueRegexKey;
 - (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data;
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value;
 - (void)triggerSession:(Trigger *)trigger
+    setSessionSpecificProfileBool:(BOOL)value
+                           forKey:(NSString *)profileKey;
+- (void)triggerSession:(Trigger *)trigger
   showAlertWithMessage:(NSString *)message
              rateLimit:(iTermRateLimitedUpdate *)rateLimit
                disable:(void (^)(void))disable;
@@ -165,6 +168,11 @@ extern NSString * const kTriggerVariableValueRegexKey;
 + (nullable NSSet<NSString *> *)synonyms;
 + (nullable Trigger *)triggerFromUntrustedDict:(NSDictionary *)dict;
 
+// Formats a timeout/threshold like "after 1 second" / "after 2 seconds" (plural catalog
+// form) for whole numbers, and "after 0.5 seconds" (locale-aware decimal) for fractional
+// values so sub-second values are not truncated to "after 0 seconds". Exposed for testing.
++ (NSString *)eventTimingDescriptionForSeconds:(NSNumber *)seconds;
+
 // Subclasses should implement:
 - (NSString *)title;
 - (nullable NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation;
@@ -176,6 +184,8 @@ extern NSString * const kTriggerVariableValueRegexKey;
 - (BOOL)paramIsTwoColorWells;
 - (BOOL)paramIsTwoStrings;
 - (BOOL)paramIsComboBoxAndTwoColorWells;
+// Rendered as an iTermProfileBoolSettingPickerView (searchable setting picker + On/Off).
+- (BOOL)paramIsSettingPicker;
 // Items for the combo box when paramIsComboBoxAndTwoColorWells returns YES.
 - (nullable NSArray<NSString *> *)comboBoxItems;
 // Returns the current combo box string extracted from the parameter.

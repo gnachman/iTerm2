@@ -98,16 +98,28 @@ static vector_float4 VectorForColor(NSColor *color) {
     const CGFloat vmargin = [iTermPreferences topBottomMargins];
     _buttonsBackgroundRects = [drawingHelper.buttonsBackgroundRects shiftedBy:NSMakePoint(0, -textView.visibleRect.origin.y - vmargin)];
 
-    if (@available(macOS 11, *)) {
-        // Pass raw pill infos - the renderer will calculate Y from absLine and margins
-        _buttonPillInfos = [drawingHelper buttonPillInfos];
-    }
+    // Pass raw pill infos - the renderer will calculate Y from absLine and margins
+    _buttonPillInfos = [drawingHelper buttonPillInfos];
 
+    const BOOL useThemeMarkColors = drawingHelper.useThemeMarkColors;
+    NSColor *markBackgroundColor = [drawingHelper defaultBackgroundColor];
+    NSColor *successMarkColor = [iTermTextDrawingHelper colorForMarkType:iTermMarkIndicatorTypeSuccess
+                                                               colorMap:_colorMap
+                                                         useThemeColors:useThemeMarkColors];
+    NSColor *otherMarkColor = [iTermTextDrawingHelper colorForMarkType:iTermMarkIndicatorTypeOther
+                                                             colorMap:_colorMap
+                                                       useThemeColors:useThemeMarkColors];
+    NSColor *errorMarkColor = [iTermTextDrawingHelper colorForMarkType:iTermMarkIndicatorTypeError
+                                                             colorMap:_colorMap
+                                                       useThemeColors:useThemeMarkColors];
     _lineStyleMarkColors = (iTermLineStyleMarkColors) {
-        .success = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper successMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
-        .other = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper otherMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
-        .failure = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper errorMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector
+        .success = [[markBackgroundColor blendedWithColor:successMarkColor weight:0.5] colorUsingColorSpace:colorSpace].vector,
+        .other = [[markBackgroundColor blendedWithColor:otherMarkColor weight:0.5] colorUsingColorSpace:colorSpace].vector,
+        .failure = [[markBackgroundColor blendedWithColor:errorMarkColor weight:0.5] colorUsingColorSpace:colorSpace].vector
     };
+    _markSuccessColor = [successMarkColor colorUsingColorSpace:colorSpace];
+    _markOtherColor = [otherMarkColor colorUsingColorSpace:colorSpace];
+    _markFailureColor = [errorMarkColor colorUsingColorSpace:colorSpace];
 
     _renderInputs.isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
     _renderInputs.unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
@@ -154,11 +166,9 @@ static vector_float4 VectorForColor(NSColor *color) {
                                                                                   cellHeight:_cellSize.height];
     _strikethroughUnderlineDescriptor.thickness = [drawingHelper strikethroughThicknessForFont:_fontTable.asciiFont.font];
 
-    if (@available(macOS 11, *)) {
-        _terminalButtons = [textView.terminalButtons mapWithBlock:^id _Nullable(iTermTerminalButton * _Nonnull button) {
-            return [button clone];
-        }];
-    }
+    _terminalButtons = [textView.terminalButtons mapWithBlock:^id _Nullable(iTermTerminalButton * _Nonnull button) {
+        return [button clone];
+    }];
 
     // Indicators
     NSColor *color = [[textView indicatorFullScreenFlashColor] colorUsingColorSpace:_colorSpace];

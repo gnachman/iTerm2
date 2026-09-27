@@ -1,0 +1,591 @@
+//
+//  PTYTabManualTitleRefreshTests.swift
+//  ModernTests
+//
+//  A tab title the user set by hand (Edit Tab Title, ⌘I) lives in the tab's
+//  titleOverride and must outrank the session name, the way an OSC 2 title
+//  already does. Two code paths set the tab bar's label and they disagreed:
+//  -updateTabTitleForCurrentSessionName: reads the override, while
+//  -tabBarLabel (at the time named -labelForActiveSession) read
+//  activeSession.name. Every caller of the latter
+//  (-_refreshLabels:, reached from -updateAggregatedTabStatus,
+//  -sessionSubtitleDidChange: and kUpdateLabelsNotification) therefore replaced
+//  the user's title with the session name -- which for a hand-named tab is the
+//  profile-name fallback in -[PTYSession name].
+//
+//  The Claude Code integration made this constant: its cc-status hook fires on
+//  ten events, each one a tab-status change, so a tab named "swift" flipped to
+//  the profile name the moment Claude started working. Issue 13072.
+//
+
+import XCTest
+@testable import iTerm2SharedARC
+
+final class PTYTabManualTitleRefreshTests: XCTestCase {
+    private let sessionName = "Mac OS"     // the profile-name fallback
+    private let manualTitle = "swift"      // what the user typed into Edit Tab Title
+
+    // Free text rather than a canonical "work"/"wait"/"idle" wire value:
+    // -localizedStatusForDisplay: passes free text through unchanged, so the
+    // expected subtitle doesn't depend on the test runner's language.
+    private let statusText = "Crunching"
+
+    private var savedShowStatusInSubtitle = true
+
+    /// PTYTab.tabViewItem is weak -- the tab view normally owns the item. Nothing
+    /// here plays that part, so the test has to keep them alive itself.
+    private var tabViewItems = [NSTabViewItem]()
+
+    /// Likewise for the tmux controllers -tmuxTab is keyed off.
+    private var tmuxControllers = [TmuxController]()
+
+    private var tmuxPrefix: String {
+        return iTermAdvancedSettingsModel.tmuxTitlePrefix() ?? ""
+    }
+
+    override func setUp() {
+        super.setUp()
+        savedShowStatusInSubtitle = iTermUserDefaults.showSessionStatusInTabSubtitle
+        iTermUserDefaults.showSessionStatusInTabSubtitle = true
+    }
+
+    override func tearDown() {
+        iTermUserDefaults.showSessionStatusInTabSubtitle = savedShowStatusInSubtitle
+        tabViewItems.removeAll()
+        // -[TmuxController initWithGateway:...] registers the controller with the
+        // shared registry and only -detach removes it. Unregister explicitly so a
+        // gateway-less test controller does not stay visible to the rest of the
+        // process, and so client-name uniquing does not drift between tests.
+        for controller in tmuxControllers {
+            TmuxControllerRegistry.sharedInstance().setController(nil, forClient: controller.clientName)
+        }
+        tmuxControllers.removeAll()
+        super.tearDown()
+    }
+
+    // MARK: - Fixtures
+
+    private func makeSession() -> PTYSession {
+        let session = PTYSession(synthetic: false)!
+        session.view = SessionView(frame: NSRect(x: 0, y: 0, width: 400, height: 300))
+        session.genericScope.setValue(sessionName, forVariableNamed: iTermVariableKeySessionName)
+        return session
+    }
+
+    private func attachTabViewItem(to tab: PTYTab) {
+        let item = NSTabViewItem(identifier: tab)
+        tabViewItems.append(item)
+        tab.tabViewItem = item
+    }
+
+    /// A tab holding one session named `sessionName`, with a tab view item so the
+    /// label the tab bar would draw is readable.
+    private func makeTab() -> (PTYTab, PTYSession) {
+        let session = makeSession()
+        let tab = PTYTab(session: session, parentWindow: nil)!
+        attachTabViewItem(to: tab)
+        tab.name(of: session, didChangeTo: sessionName)
+        return (tab, session)
+    }
+
+    /// Puts the tab in the state ⌘I leaves behind. -setTitleOverride: stores an
+    /// interpolated-string format that an iTermSwiftyString evaluates onto the
+    /// tab's title through a main-queue hop, so wait for the label to catch up
+    /// rather than assuming the assignment was synchronous.
+    private func applyManualTitle(to tab: PTYTab,
+                                  session: PTYSession,
+                                  file: StaticString = #filePath,
+                                  line: UInt = #line) {
+        tab.titleOverride = manualTitle
+        let resolved = expectation(description: "title override evaluated onto the label")
+        let poll = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak tab] timer in
+            guard let tab, tab.tabViewItem?.label.hasPrefix(self.manualTitle) == true else {
+                return
+            }
+            timer.invalidate()
+            resolved.fulfill()
+        }
+        defer { poll.invalidate() }
+        wait(for: [resolved], timeout: 30.0)
+        XCTAssertEqual(titleLine(of: tab), manualTitle, file: file, line: line)
+
+        // Spinning the runloop above also let iTermSessionNameController compute a
+        // title for this profile-less session, which lands on the session's name
+        // variable as " " (its empty-result placeholder). Put the name back so a
+        // failure below reads as the bug the user reported -- the tab reverting to
+        // the profile name -- rather than as a blank. Nothing spins the runloop
+        // after this point, so the name controller cannot clobber it again.
+        session.genericScope.setValue(sessionName, forVariableNamed: iTermVariableKeySessionName)
+        XCTAssertEqual(session.name, sessionName, file: file, line: line)
+    }
+
+    /// The tab bar's label is "<title>\n<subtitle>"; the first line is the title.
+    private func titleLine(of tab: PTYTab,
+                           file: StaticString = #filePath,
+                           line: UInt = #line) -> String {
+        guard let label = tab.tabViewItem?.label else {
+            XCTFail("tab has no tab view item label", file: file, line: line)
+            return ""
+        }
+        return label.components(separatedBy: "\n").first ?? ""
+    }
+
+    /// PTYTab.variablesScope is typed `iTermVariableScope<iTermTabScope> *`, which
+    /// Swift cannot import, and PTYTab has no genericScope the way PTYSession does.
+    /// Its backing iTermVariables is reachable though, and a scope built over that
+    /// writes where the tab's own scope reads.
+    private func scope(of tab: PTYTab) -> iTermVariableScope {
+        let scope = iTermVariableScope()
+        scope.add(tab.variables, toScopeNamed: nil)
+        return scope
+    }
+
+    private func subtitleLine(of tab: PTYTab) -> String {
+        let parts = tab.tabViewItem?.label.components(separatedBy: "\n") ?? []
+        return parts.count > 1 ? parts[1] : ""
+    }
+
+    // MARK: - Tests
+
+    /// Baseline: the override-aware path gets this right, and has all along.
+    func testManualTitleWinsOverSessionName() {
+        let (tab, session) = makeTab()
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+
+        applyManualTitle(to: tab, session: session)
+        XCTAssertEqual(tab.title, manualTitle)
+    }
+
+    /// The regression. A tab-status change refreshes the label, and must not
+    /// launder the user's title into the session name on the way through.
+    func testTabStatusChangeKeepsManualTitle() {
+        let (tab, session) = makeTab()
+        applyManualTitle(to: tab, session: session)
+
+        session.tabStatus?.statusText = statusText
+        tab.sessionTabStatusDidChange(session)
+
+        XCTAssertEqual(titleLine(of: tab), manualTitle,
+                       "a status change must not replace the hand-set tab title with the session name")
+        XCTAssertEqual(subtitleLine(of: tab), statusText,
+                       "the status still belongs in the subtitle")
+    }
+
+    /// Clearing the status refreshes the label again, by the same route.
+    func testClearingTabStatusKeepsManualTitle() {
+        let (tab, session) = makeTab()
+        applyManualTitle(to: tab, session: session)
+
+        session.tabStatus?.statusText = statusText
+        tab.sessionTabStatusDidChange(session)
+        session.tabStatus?.statusText = nil
+        tab.sessionTabStatusDidChange(session)
+
+        XCTAssertEqual(titleLine(of: tab), manualTitle)
+        XCTAssertFalse(subtitleLine(of: tab).contains(statusText),
+                       "the cleared status must be gone from the subtitle")
+    }
+
+    /// The other, older caller of the shared label builder: a subtitle change.
+    func testSubtitleChangeKeepsManualTitle() {
+        let (tab, session) = makeTab()
+        applyManualTitle(to: tab, session: session)
+
+        tab.sessionSubtitleDidChange(session)
+
+        XCTAssertEqual(titleLine(of: tab), manualTitle)
+    }
+
+    /// The whole label, not just its title line, must come out the same whichever
+    /// path assembled it. -updateTabTitleForCurrentSessionName: draws one and
+    /// -tabBarLabel draws the other, and the two drifting apart is what issue
+    /// 13072 was. Exercised with a status present, since that is the part of the
+    /// label the two paths could most plausibly disagree about.
+    func testNameChangeAndRefreshProduceTheSameLabel() {
+        let (tab, session) = makeTab()
+        session.tabStatus?.statusText = statusText
+        tab.sessionTabStatusDidChange(session)
+
+        // What -updateTabTitleForCurrentSessionName: draws.
+        tab.name(of: session, didChangeTo: "zsh")
+        let afterNameChange = tab.tabViewItem?.label
+
+        // What -tabBarLabel draws, with no other input changed.
+        tab.sessionSubtitleDidChange(session)
+        let afterRefresh = tab.tabViewItem?.label
+
+        XCTAssertEqual(afterNameChange, "zsh\n\(statusText)",
+                       "test setup: title line plus the status as subtitle")
+        XCTAssertEqual(afterRefresh, afterNameChange,
+                       "both paths must assemble the identical label, not merely the same title")
+    }
+
+    /// With no override set, the label still follows the session name. The fix
+    /// must not strand tabs on a stale title.
+    func testWithoutOverrideLabelFollowsSessionName() {
+        let (tab, session) = makeTab()
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+
+        session.genericScope.setValue("vim", forVariableNamed: iTermVariableKeySessionName)
+        tab.name(of: session, didChangeTo: "vim")
+        tab.sessionTabStatusDidChange(session)
+
+        XCTAssertEqual(titleLine(of: tab), "vim")
+    }
+
+    /// Instant Replay, Screenshot Mode and clearing a filter all swap a synthetic
+    /// session in and back out again. The way in refreshes the title; the way out
+    /// has to as well, or the label is stuck on the synthetic session's name --
+    /// which differs from the live one whenever the title format names the job or
+    /// command, as the default profile title does.
+    func testTitleFollowsLiveSessionAfterSyntheticSwap() {
+        let (tab, live) = makeTab()
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+
+        let synthetic = makeSession()
+        synthetic.genericScope.setValue("replay", forVariableNamed: iTermVariableKeySessionName)
+        tab.replaceActiveSession(withSyntheticSession: synthetic)
+        tab.name(of: synthetic, didChangeTo: "replay")
+        XCTAssertEqual(titleLine(of: tab), "replay", "test setup: the synthetic session owns the title")
+
+        // The swap spins the runloop, which lets each session's name controller
+        // compute a title for these profile-less sessions and land its " "
+        // placeholder on their name variables. Restore the live session's, and
+        // give it the presentation name a real session would already have, so the
+        // assertions below are about the swap rather than about the fixture.
+        // Nothing spins the runloop after this point.
+        live.genericScope.setValue(sessionName, forVariableNamed: iTermVariableKeySessionName)
+        live.genericScope.setValue(sessionName,
+                                   forVariableNamed: iTermVariableKeySessionPresentationName)
+
+        tab.showLiveSession(live, inPlaceOf: synthetic)
+
+        XCTAssertEqual(titleLine(of: tab), sessionName,
+                       "leaving the synthetic session must put the live session's title back")
+
+        // And it must survive the next refresh, which is the path that used to
+        // repair this by rebuilding from activeSession.name.
+        tab.sessionTabStatusDidChange(live)
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+    }
+
+    /// Entering a swap must set the tab title as synchronously as leaving one does.
+    /// -replaceActiveSessionWithSyntheticSession: asks the synthetic session's name
+    /// controller to update, but that publish lands in -nameOfSession:didChangeTo:
+    /// before activeSession_ has been reassigned, so the guard there drops it and
+    /// only a later main-queue turn would repair the title.
+    func testTitleFollowsSyntheticSessionOnEntry() {
+        let (tab, _) = makeTab()
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+
+        let synthetic = makeSession()
+        synthetic.genericScope.setValue("replay", forVariableNamed: iTermVariableKeySessionName)
+        tab.replaceActiveSession(withSyntheticSession: synthetic)
+
+        // Deliberately no -nameOfSession:didChangeTo: call: the swap itself has to
+        // have set the title. The assertion is "no longer the live session's"
+        // rather than a literal, because the swap's own -setNeedsUpdate recomputes
+        // a name for this profile-less synthetic session while the swap is still in
+        // flight, so the exact text is the name controller's business, not the
+        // tab's. What this pins is that the tab stopped following the live session
+        // synchronously, which is the defect.
+        XCTAssertNotEqual(titleLine(of: tab), sessionName,
+                          "the tab must stop showing the live session's title")
+        XCTAssertNotNil(tab.title, "the swap must leave the tab with a title")
+    }
+
+    /// A terminal session may legitimately clear its name (browsers suppress a
+    /// blank title, terminals honor it). Whatever that draws, the two label
+    /// paths have to draw the same thing -- otherwise which one ran last decides
+    /// what the user sees, which is the whole bug. The chosen behavior is the one
+    /// the tmux branch of -updateTabTitleForCurrentSessionName: already
+    /// implements: fall back to the session's name.
+    func testClearedTitleDrawsTheSameByBothPaths() {
+        let (tab, session) = makeTab()
+
+        // What -updateTabTitleForCurrentSessionName: draws.
+        tab.name(of: session, didChangeTo: nil)
+        let afterNameChange = titleLine(of: tab)
+
+        // What -tabBarLabel draws on the next refresh.
+        tab.sessionTabStatusDidChange(session)
+        let afterRefresh = titleLine(of: tab)
+
+        XCTAssertEqual(afterRefresh, afterNameChange,
+                       "both label paths must agree on what a cleared title draws")
+        XCTAssertEqual(afterNameChange, sessionName,
+                       "a cleared title falls back to the session name, as the tmux branch does")
+    }
+
+    /// The in-the-wild shape: the name controller clears the session's name and
+    /// its presentation name together, so the fallback has nothing but the
+    /// profile name left. Both paths must still agree.
+    func testClearedSessionNameDrawsTheSameByBothPaths() {
+        let (tab, session) = makeTab()
+        session.genericScope.setValue(nil, forVariableNamed: iTermVariableKeySessionName)
+        XCTAssertEqual(session.name, "Untitled",
+                       "test setup: with no name and no profile, PTYSession.name bottoms out here")
+
+        tab.name(of: session, didChangeTo: nil)
+        let afterNameChange = titleLine(of: tab)
+
+        tab.sessionTabStatusDidChange(session)
+        let afterRefresh = titleLine(of: tab)
+
+        XCTAssertEqual(afterRefresh, afterNameChange,
+                       "both label paths must agree when the session name is cleared too")
+        XCTAssertEqual(afterNameChange, "Untitled")
+    }
+
+    /// The empty-string flavor of the same thing: a script title provider may
+    /// return @"" deliberately, and that is honored rather than suppressed.
+    func testEmptySessionNameDrawsTheSameByBothPaths() {
+        let (tab, session) = makeTab()
+        session.genericScope.setValue("", forVariableNamed: iTermVariableKeySessionName)
+
+        tab.name(of: session, didChangeTo: "")
+        let afterNameChange = titleLine(of: tab)
+
+        tab.sessionTabStatusDidChange(session)
+
+        XCTAssertEqual(titleLine(of: tab), afterNameChange,
+                       "both label paths must agree on an empty session name")
+    }
+
+    /// The name controller's empty-result placeholder is a single space, which
+    /// -updateTabTitleForCurrentSessionName: draws as-is. A refresh must draw the
+    /// same thing: falling back here would put the two paths back into the
+    /// disagreement this whole fix is about.
+    func testWhitespaceTabTitleIsDrawnTheSameByBothPaths() {
+        let (tab, session) = makeTab()
+        tab.name(of: session, didChangeTo: " ")
+        XCTAssertEqual(titleLine(of: tab), " ", "test setup: the name-change path draws the placeholder")
+
+        tab.sessionTabStatusDidChange(session)
+
+        XCTAssertEqual(titleLine(of: tab), " ",
+                       "a refresh must agree with the name-change path")
+    }
+
+    /// Switching the active pane. -tabBarLabel is read here while the
+    /// tab title variable still holds the outgoing pane's title, so the label may
+    /// only be assigned once -updateTabTitle has recomputed it. A freshly split
+    /// pane also has no presentation name yet, which is what makes the
+    /// session-name fallback in -updateTabTitleForCurrentSessionName: load-bearing.
+    func testTabTitleFollowsNewlyActivePane() {
+        let (tab, first) = makeTab()
+        let second = makeSession()
+        tab.splitVertically(true, newSession: second, before: false, targetSession: first)
+
+        // The split spins the runloop, so each profile-less session's name
+        // controller has had a chance to land its " " placeholder. Set the names
+        // the panes are meant to have, and clear the presentation names so
+        // -updateTabTitle passes nil -- which is the shape a freshly split pane
+        // has, and the one that makes the session-name fallback load-bearing.
+        for (session, name) in [(first, sessionName), (second, "vim")] {
+            session.genericScope.setValue(name, forVariableNamed: iTermVariableKeySessionName)
+            session.genericScope.setValue(nil,
+                                          forVariableNamed: iTermVariableKeySessionPresentationName)
+        }
+
+        tab.activeSession = second
+        XCTAssertEqual(tab.title, "vim", "the tab title variable must track the new pane")
+        XCTAssertEqual(titleLine(of: tab), "vim", "and so must the label")
+
+        tab.activeSession = first
+        XCTAssertEqual(tab.title, sessionName)
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+    }
+
+    /// -setActiveSession: notifies the rest of the app about the new pane before it
+    /// returns: it posts iTermSessionBecameKey and tells the window, which re-renders
+    /// the touch bar's tab labels. Everything that runs from those hooks must already
+    /// see the incoming pane's title, both in tab.title and on the label. Leaving the
+    /// recompute until the end of the method meant they saw the outgoing pane's
+    /// title, followed by a second render once the title caught up.
+    func testTabTitleIsCurrentWhenSessionBecameKeyIsPosted() {
+        let (tab, first) = makeTab()
+        let second = makeSession()
+        tab.splitVertically(true, newSession: second, before: false, targetSession: first)
+        for (session, name) in [(first, sessionName), (second, "vim")] {
+            session.genericScope.setValue(name, forVariableNamed: iTermVariableKeySessionName)
+            session.genericScope.setValue(nil,
+                                          forVariableNamed: iTermVariableKeySessionPresentationName)
+        }
+
+        var titleWhenKey: String?
+        var labelWhenKey: String?
+        let observer = NotificationCenter.default.addObserver(forName: NSNotification.Name(iTermSessionBecameKey),
+                                                              object: second,
+                                                              queue: nil) { [weak tab] _ in
+            guard let tab else {
+                return
+            }
+            titleWhenKey = tab.title
+            labelWhenKey = tab.tabViewItem?.label.components(separatedBy: "\n").first
+        }
+        defer { NotificationCenter.default.removeObserver(observer) }
+
+        tab.activeSession = second
+
+        XCTAssertEqual(titleWhenKey, "vim",
+                       "tab.title must already track the new pane when iTermSessionBecameKey fires")
+        XCTAssertEqual(labelWhenKey, "vim",
+                       "and so must the label")
+    }
+
+    /// -setActiveSession:nil leaves the tab view item alive and returns early, so
+    /// a title recomputation can land while there is no active session. The tab
+    /// title must not become nil: that both removes tab.title from the scope and
+    /// draws the literal text “(null)” in the tab bar.
+    func testTabTitleWithNoActiveSessionIsNotNull() {
+        let (tab, _) = makeTab()
+        tab.activeSession = nil
+
+        // A public path that funnels into -updateTabTitle. The tab is not a tmux
+        // tab, so this takes the same non-tmux branch every other caller does.
+        tab.tmuxWindowName = "ignored"
+
+        XCTAssertEqual(tab.title, "", "a nil title would be removed from the scope entirely")
+        XCTAssertEqual(titleLine(of: tab), "")
+        // Both halves of the label, not just the title: -[PTYSession subtitle] is
+        // also nil here, and %@ would render it as “(null)”.
+        XCTAssertFalse(tab.tabViewItem?.label.contains("(null)") ?? true,
+                       "neither a nil title nor a nil subtitle may reach the tab bar as text")
+        XCTAssertEqual(subtitleLine(of: tab), "")
+    }
+
+    /// The other way to reach a nil subtitle: a live session that has not had a
+    /// profile applied yet, so its subtitle swifty string does not exist. The
+    /// newline separating title from subtitle is deliberate and must stay (it is
+    /// how a stale subtitle gets erased, issue 10143), so the nil has to be
+    /// coalesced rather than the separator made conditional.
+    func testNilSubtitleIsNotDrawnAsNull() {
+        let (tab, session) = makeTab()
+        XCTAssertNil(session.subtitle,
+                     "test setup: no profile applied, so there is no subtitle swifty string")
+
+        tab.sessionSubtitleDidChange(session)
+
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+        XCTAssertEqual(subtitleLine(of: tab), "")
+        XCTAssertFalse(tab.tabViewItem?.label.contains("(null)") ?? true)
+        XCTAssertTrue(tab.tabViewItem?.label.hasSuffix("\n") ?? false,
+                      "the title/subtitle separator must survive an empty subtitle")
+    }
+
+    /// `-loadTitleFromSession` used to set the label straight from
+    /// `activeSession.name`, which meant the tmux-window-load path laundered a
+    /// title override and dropped the subtitle line. That path calls
+    /// -updateTabTitle now; this pins what it must preserve. (The tmux prefix half
+    /// of that fix needs a live TmuxController, for which there is no test seam.)
+    func testUpdateTabTitleKeepsManualTitleAndSeparator() {
+        let (tab, session) = makeTab()
+        applyManualTitle(to: tab, session: session)
+
+        tab.updateTitle()   // -[PTYTab updateTabTitle], as Swift imports it
+
+        XCTAssertEqual(titleLine(of: tab), manualTitle,
+                       "recomputing the tab title must not fall back to the session name")
+        XCTAssertTrue(tab.tabViewItem?.label.hasSuffix("\n") ?? false,
+                      "and must keep the title/subtitle separator")
+    }
+
+    // MARK: - tmux tabs
+
+    /// Makes `tab` report itself as a tmux tab. -isTmuxTab is just
+    /// `tmuxController_ != nil` and none of the title code messages the controller,
+    /// so one built without a gateway is enough to reach the tmux branch of
+    /// -updateTabTitleForCurrentSessionName:. The ivar has no setter, hence KVC.
+    private func makeTmuxTab(file: StaticString = #filePath,
+                             line: UInt = #line) -> (PTYTab, PTYSession) {
+        let (tab, session) = makeTab()
+        let controller = TmuxController(gateway: nil,
+                                        clientName: "test",
+                                        profile: [:],
+                                        profileModel: nil)!
+        tmuxControllers.append(controller)
+        tab.setValue(controller, forKey: "tmuxController_")
+        XCTAssertTrue(tab.isTmuxTab, "test setup: the tab must take the tmux branch",
+                      file: file, line: line)
+        return (tab, session)
+    }
+
+    /// -[PseudoTerminal loadTmuxLayout:...] recomputes the title before the sessions
+    /// have evaluated one, so the tab has to name itself after the tmux window. This
+    /// is the branch `-loadTitleFromSession` bypassed entirely by assigning
+    /// activeSession.name to the label.
+    func testTmuxTabWithNoSessionNameUsesTmuxWindowName() {
+        let (tab, session) = makeTmuxTab()
+        tab.tmuxWindowName = "editor"
+
+        tab.name(of: session, didChangeTo: nil)
+
+        XCTAssertEqual(tab.title, "\(tmuxPrefix)editor")
+        XCTAssertEqual(titleLine(of: tab), "\(tmuxPrefix)editor")
+    }
+
+    /// Once a session has a name it already carries the marker, because
+    /// -[iTermSessionNameController formattedName:] applied it. The tab must use it
+    /// as-is rather than decorating it a second time.
+    func testTmuxTabDoesNotRedecorateAnAlreadyDecoratedSessionName() {
+        let (tab, session) = makeTmuxTab()
+        tab.tmuxWindowName = "editor"
+
+        tab.name(of: session, didChangeTo: "\(tmuxPrefix)vim")
+
+        XCTAssertEqual(titleLine(of: tab), "\(tmuxPrefix)vim")
+    }
+
+    /// A title override is the tab's own text and has no marker, so the tab adds one
+    /// -- exactly once, however many times the title is recomputed.
+    func testTmuxTabPrefixesTitleOverrideExactlyOnce() {
+        let (tab, _) = makeTmuxTab()
+        // Set the resolved override directly: -setTitleOverride: would also rename
+        // the tmux window, which needs a gateway, and the evaluation it goes through
+        // is the swifty-string machinery rather than anything under test here.
+        scope(of: tab).setValue(manualTitle, forVariableNamed: iTermVariableKeyTabTitleOverride)
+
+        tab.updateTitle()
+        XCTAssertEqual(titleLine(of: tab), "\(tmuxPrefix)\(manualTitle)")
+
+        tab.updateTitle()
+        XCTAssertEqual(titleLine(of: tab), "\(tmuxPrefix)\(manualTitle)",
+                       "recomputing must not stack a second marker")
+    }
+
+    /// The other half of what `-loadTitleFromSession` dropped on this path: it
+    /// assigned a bare session name, so the tab bar lost the subtitle line.
+    func testTmuxTabLabelKeepsSubtitleSeparator() {
+        let (tab, session) = makeTmuxTab()
+        tab.tmuxWindowName = "editor"
+        session.tabStatus?.statusText = statusText
+        tab.sessionTabStatusDidChange(session)
+
+        // Updating the status spins the runloop, which lets this profile-less
+        // session's name controller publish its " " placeholder. Clear it so
+        // -updateTabTitle passes nil and the tmux window name supplies the title --
+        // the shape -[PseudoTerminal loadTmuxLayout:...] is in.
+        session.genericScope.setValue(nil, forVariableNamed: iTermVariableKeySessionPresentationName)
+        tab.updateTitle()
+
+        XCTAssertEqual(subtitleLine(of: tab), statusText)
+        XCTAssertEqual(tab.tabViewItem?.label, "\(tmuxPrefix)editor\n\(statusText)")
+    }
+
+    // MARK: - New tabs
+
+    /// The sequence every ordinary new tab goes through:
+    /// -[PseudoTerminal insertSession:atIndex:] runs -initWithSession:parentWindow:
+    /// (which never computes a title) and then -insertTab:atIndex:, whose
+    /// -setTabViewItem: asks for the label. So the tab has no resolved title yet
+    /// and -tabBarLabel's fallback supplies what the tab is first drawn with.
+    /// Nothing else seeds an initial label, so this must not come out empty.
+    func testLabelBeforeFirstTitleComputationUsesSessionName() {
+        let tab = PTYTab(session: makeSession(), parentWindow: nil)!
+        XCTAssertNil(tab.title, "test setup: no title computed yet")
+
+        attachTabViewItem(to: tab)
+        XCTAssertEqual(titleLine(of: tab), sessionName)
+    }
+}

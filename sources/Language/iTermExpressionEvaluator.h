@@ -39,6 +39,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithInterpolatedString:(NSString *)interpolatedString
                                      scope:(iTermVariableScope *)scope;
 
+// Renders undefined variable references inline as "[undefined variable <path>]" instead of the
+// empty string. Useful for surfacing typos while authoring interpolated strings.
+- (instancetype)initWithInterpolatedString:(NSString *)interpolatedString
+                                     scope:(iTermVariableScope *)scope
+                annotateUndefinedVariables:(BOOL)annotateUndefinedVariables;
+
 // Fails on undefined references
 - (instancetype)initWithStrictInterpolatedString:(NSString *)interpolatedString
                                            scope:(iTermVariableScope *)scope;

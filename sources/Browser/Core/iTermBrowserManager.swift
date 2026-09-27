@@ -20,12 +20,12 @@ struct BrowserAnnouncement<T> {
     var identifier: String
 }
 
-@available(macOS 11.0, *)
 @MainActor
 protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate, iTermBrowserTriggerHandlerDelegate {
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateTitle title: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateFavicon favicon: NSImage?)
+    func browserManager(_ manager: iTermBrowserManager, didUpdateBackgroundColor color: NSColor?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateCanGoBack canGoBack: Bool)
     func browserManager(_ manager: iTermBrowserManager, didUpdateCanGoForward canGoForward: Bool)
     func browserManager(_ manager: iTermBrowserManager, didStartNavigation navigation: WKNavigation?)
@@ -77,7 +77,6 @@ protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate
     func browserManager(_ browserManager: iTermBrowserManager, handleKeyDown event: NSEvent) -> Bool
 }
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserManager)
 @MainActor
 class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler {
@@ -110,6 +109,13 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let readerModeManager = iTermBrowserReaderModeManager()
     let autofillHandler = iTermBrowserAutofillHandler()
     let user: iTermBrowserUser
+    // All HTTP basic-auth handling for the built-in browser. This manager owns the state machine,
+    // the credential store, prompts, and the picker; iTermBrowserManager just forwards its
+    // navigation-delegate callbacks to it. Lazy so it is created after the webView exists (its
+    // hostWindow closure reads webView.window at use time).
+    private lazy var basicAuth = iTermBrowserBasicAuthManager(user: user) { [weak self] in
+        self?.webView?.window
+    }
     private var currentMainFrameHTTPMethod: String?
     let userState: iTermBrowserUserState
     private let handlerProxy = iTermBrowserWebViewHandlerProxy()
@@ -483,6 +489,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         webView.configuration.preferences.setValue(true, forKey: "developerExtrasEnabled")
         // Observe title changes
         webView.addObserver(self, forKeyPath: "title", options: [.new], context: nil)
+        // We intentionally do NOT observe underPageBackgroundColor via KVO. WebKit
+        // reports transient values during load (its light default before the page is
+        // parsed, then the page's real color), which would flip the minimal-theme tab
+        // tint and window appearance on every navigation. Instead the settled color is
+        // read once per load in webView(_:didFinish:), so the tint updates once the
+        // page has resolved a background.
 
         // TODO: This is going to cause problems for extensions. If you open a link with target=_blank then the new webview won't have a content
         // manager. I don't know what will happen if we do not register a webview with the extension manager.
@@ -850,7 +862,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
 // MARK: - iTermBrowserWebViewDelegate
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserWebViewDelegate {
     func webViewDidChangeEffectiveAppearance(_ webView: iTermBrowserWebView) {
@@ -1049,7 +1060,6 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
 
 // MARK: - WKScriptMessageHandler
 
-@available(macOS 11.0, *)
 extension iTermBrowserManager {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         // Handle console.{log,debug,error} messages separately since they come as String
@@ -1185,7 +1195,6 @@ extension iTermBrowserManager {
 
 // MARK: - WKURLSchemeHandler
 
-@available(macOS 11.0, *)
 extension iTermBrowserManager {
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
         guard let url = urlSchemeTask.request.url else {
@@ -1221,7 +1230,6 @@ extension iTermBrowserManager {
 
 // MARK: - WKNavigationDelegate
 
-@available(macOS 11.0, *)
 extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  didReceive challenge: URLAuthenticationChallenge,
@@ -1231,45 +1239,16 @@ extension iTermBrowserManager: WKNavigationDelegate {
         case NSURLAuthenticationMethodHTTPBasic,
              NSURLAuthenticationMethodHTTPDigest,
              NSURLAuthenticationMethodNTLM:
-            promptForCredential(challenge: challenge, completionHandler: completionHandler)
+            basicAuth.handleChallenge(challenge, completionHandler: completionHandler)
         default:
             // Server trust and everything else falls back to system handling.
             completionHandler(.performDefaultHandling, nil)
         }
     }
 
-    private func promptForCredential(
-        challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        // If we already offered a credential and it was rejected, cancel rather
-        // than looping forever on the same bad credential.
-        let protectionSpace = challenge.protectionSpace
-        let host = protectionSpace.host
-        let realm = protectionSpace.realm
-        let promptText: String
-        if let realm, !realm.isEmpty {
-            promptText = "The website “\(host)” requires a user name and password for “\(realm)”."
-        } else {
-            promptText = "The website “\(host)” requires a user name and password."
-        }
-
-        let alert = ModalPasswordAlert(promptText)
-        // A non-nil username makes ModalPasswordAlert show a user name field.
-        alert.username = challenge.proposedCredential?.user ?? ""
-        alert.runAsync(window: webView.window) { password in
-            guard let password else {
-                completionHandler(.cancelAuthenticationChallenge, nil)
-                return
-            }
-            let credential = URLCredential(user: alert.username ?? "",
-                                           password: password,
-                                           persistence: .forSession)
-            completionHandler(.useCredential, credential)
-        }
-    }
-
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         navigationCount += 1
+        basicAuth.didStartProvisionalNavigation(navigation)
         readerModeManager.resetForNavigation()
         delegate?.browserManager(self, didStartNavigation: navigation)
         copyModeHandler?.enabled = false
@@ -1279,7 +1258,13 @@ extension iTermBrowserManager: WKNavigationDelegate {
         self.webView.isEditingText = false
     }
 
+    func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
+        basicAuth.didReceiveServerRedirect(navigation)
+    }
+
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        basicAuth.didCommit(navigation)
+
         // URL is now committed, update UI
         notifyDelegateOfUpdates()
         
@@ -1298,6 +1283,9 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         it_assert(webView === self.webView)
+        // Basic-auth credentials are confirmed and persisted from the main-frame response
+        // (decidePolicyForNavigationResponse) and the context is cleared at didCommit, not here:
+        // a navigation can finish having rendered a 401 error body, which is not an acceptance.
         // Clear failed URL on successful navigation to a real page (not error pages)
         if webView.url != iTermBrowserErrorHandler.errorURL {
             lastFailedURL = nil
@@ -1312,6 +1300,12 @@ extension iTermBrowserManager: WKNavigationDelegate {
         injectMessageHandlersIfNeeded()
 
         notifyDelegateOfUpdates()
+
+        // Emit the page background color once, now that the page has loaded and its
+        // background has settled. This is the single source for the minimal-theme tab
+        // tint; we deliberately don't observe underPageBackgroundColor via KVO to avoid
+        // flipping the appearance on each transient value reported during load.
+        delegate?.browserManager(self, didUpdateBackgroundColor: webView.underPageBackgroundColor)
 
         // Update permission states for geolocation
         if let url = webView.url {
@@ -1338,6 +1332,11 @@ extension iTermBrowserManager: WKNavigationDelegate {
         RLog("🔌 didFailNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
 
+        // This is the POST-commit failure path (the document already committed, then the load
+        // failed - TLS drop, reset, renderer error). The auth context was already cleared at
+        // didCommit and any credential confirmed/persisted from the main-frame response (which
+        // precedes commit), so there is nothing to do for auth here.
+
         navigationState.didCompleteLoading(error: error)
 
         // Don't show error page for download-related cancellations
@@ -1359,6 +1358,11 @@ extension iTermBrowserManager: WKNavigationDelegate {
         let nsError = error as NSError
         let failedURL = navigationState.lastRequestedURL
         NSLog("didFailProvisionalNavigation: url=\(failedURL.d) domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
+
+        // The main-frame load failed before any response, so no main-frame response will arrive to
+        // confirm a credential supplied during it. Tell the manager to drop it (it guards on
+        // navigation identity so a late failure for a superseded load does not wipe the live state).
+        basicAuth.didFailProvisionalNavigation(navigation)
 
         navigationState.didCompleteLoading(error: error)
 
@@ -1399,6 +1403,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
         // Track HTTP method for main frame navigations only
         if navigationAction.targetFrame?.isMainFrame == true {
             currentMainFrameHTTPMethod = navigationAction.request.httpMethod
+            // Record the main-frame target for basic-auth main-vs-subframe classification.
+            basicAuth.recordMainFrameNavigationAction(url: navigationAction.request.url)
         }
         
         if navigationAction.navigationType == .linkActivated {
@@ -1486,10 +1492,13 @@ extension iTermBrowserManager: WKNavigationDelegate {
         decisionHandler(.allow)
     }
 
-    @available(macOS 11, *)
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationResponse: WKNavigationResponse,
                  decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+
+        // The main-frame HTTP response is the authoritative signal for whether a basic-auth
+        // credential we supplied for the main document was accepted (2xx) or rejected (401).
+        basicAuth.handleNavigationResponse(navigationResponse)
 
         // Check if this should be downloaded instead of displayed
         guard let response = navigationResponse.response as? HTTPURLResponse else {
@@ -1504,32 +1513,27 @@ extension iTermBrowserManager: WKNavigationDelegate {
         // Download if:
         // 1. Content-Disposition header indicates attachment
         // 2. Content type is not something WKWebView can display well
-        if #available(macOS 11.3, *) {
-            if contentDisposition.lowercased().contains("attachment") ||
-                !canWebViewDisplay(contentType: contentType) {
-                decisionHandler(.download)
-                return
-            }
+        if contentDisposition.lowercased().contains("attachment") ||
+            !canWebViewDisplay(contentType: contentType) {
+            decisionHandler(.download)
+            return
         }
 
         decisionHandler(.allow)
     }
 
-    @available(macOS 11.3, *)
     func webView(_ webView: WKWebView,
                  navigationAction: WKNavigationAction,
                  didBecome download: WKDownload) {
         handleDownload(download, sourceURL: navigationAction.request.url)
     }
 
-    @available(macOS 11.3, *)
     func webView(_ webView: WKWebView,
                  navigationResponse: WKNavigationResponse,
                  didBecome download: WKDownload) {
         handleDownload(download, sourceURL: navigationResponse.response.url)
     }
 
-    @available(macOS 11.3, *)
     private func canWebViewDisplay(contentType: String) -> Bool {
         let lowerContentType = contentType.lowercased()
 
@@ -1566,10 +1570,10 @@ extension iTermBrowserManager: WKNavigationDelegate {
         return displayableTypes.contains { lowerContentType.hasPrefix($0) }
     }
 
-    @available(macOS 11.3, *)
     private func handleDownload(_ download: WKDownload, sourceURL: URL?) {
         guard let sourceURL = sourceURL else { return }
 
+        // Localization unneeded
         let suggestedFilename = sourceURL.lastPathComponent.isEmpty ?
         "download" : sourceURL.lastPathComponent
 
@@ -1586,7 +1590,6 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
 // MARK: - WKUIDelegate
 
-@available(macOS 11.0, *)
 extension iTermBrowserManager: WKUIDelegate {
     func webView(_ webView: WKWebView,
                  createWebViewWith configuration: WKWebViewConfiguration,
@@ -1605,9 +1608,9 @@ extension iTermBrowserManager: WKUIDelegate {
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         // Handle JavaScript alerts
         let alert = NSAlert()
-        alert.messageText = "Web Page Alert"
+        alert.messageText = String(localized: "BrowserManager.WebPageAlert", defaultValue: "Web Page Alert", comment: "Title for a JavaScript alert dialog")
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: iTermLocalizedOK())
         alert.runModal()
         completionHandler()
     }
@@ -1615,10 +1618,10 @@ extension iTermBrowserManager: WKUIDelegate {
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
         // Handle JavaScript confirmations
         let alert = NSAlert()
-        alert.messageText = "Web Page Confirmation"
+        alert.messageText = String(localized: "BrowserManager.WebPageConfirmation", defaultValue: "Web Page Confirmation", comment: "Title for a JavaScript confirmation dialog")
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: iTermLocalizedOK())
+        alert.addButton(withTitle: iTermLocalizedCancel())
         let response = alert.runModal()
         completionHandler(response == .alertFirstButtonReturn)
     }
@@ -1769,7 +1772,6 @@ extension iTermBrowserManager: WKUIDelegate {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     func localPageManagerDidUpdateAdblockSettings(_ manager: iTermBrowserLocalPageManager) {
@@ -1793,7 +1795,14 @@ extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     func localPageManagerExtensionManager(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserExtensionManagerProtocol? {
         return userState.extensionManager
     }
-    
+
+    func localPageManagerOpenPasswordManager(_ manager: iTermBrowserLocalPageManager) {
+        delegate?.browserManager(self,
+                                 openPasswordManagerForHost: nil,
+                                 forUser: false,
+                                 didSendUserName: nil)
+    }
+
     func localPageManagerOnboardingEnableAdBlocker(_ manager: iTermBrowserLocalPageManager) {
         delegate?.browserManagerOnboardingEnableAdBlocker(self)
     }
@@ -1823,7 +1832,6 @@ extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager {
     // MARK: - Settings Integration
@@ -1863,7 +1871,6 @@ extension iTermBrowserManager {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager {
 
@@ -1873,7 +1880,7 @@ extension iTermBrowserManager {
         if keyPath == "title", let webView = object as? iTermBrowserWebView, webView == self.webView {
             // Title changed - notify delegate
             notifyDelegateOfUpdates()
-            
+
             // Update history with new title if we have a current URL
             if let url = webView.url {
                 historyController.titleDidChange(for: url, title: webView.title)
@@ -1963,7 +1970,6 @@ extension iTermBrowserManager {
 
 // MARK: - iTermBrowserReaderModeManagerDelegate
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserReaderModeManagerDelegate {
     func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeActiveState isActive: Bool) {
@@ -1975,7 +1981,6 @@ extension iTermBrowserManager: iTermBrowserReaderModeManagerDelegate {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
     func autoFillHandler(_ handler: iTermBrowserAutofillHandler,
@@ -2082,12 +2087,12 @@ extension iTermBrowserManager: iTermBrowserAudioHandlerDelegate {
                     case denyAlways
                 }
                 let announcement = BrowserAnnouncement(
-                    message: "Audio was muted. Allow playback by \(origin)?",
+                    message: String(localized: "BrowserManager.AudioMutedPrompt", defaultValue: "Audio was muted. Allow playback by \(origin)?", comment: "Prompt asking whether to allow audio playback from an origin"),
                     style: .kiTermAnnouncementViewStyleQuestion,
-                    options: [.init(title: "Allow _Once", identifier: Action.allowOnce),
-                              .init(title: "Allow _Always", identifier: Action.allowAlways),
-                              .init(title: "_Deny Once", identifier: Action.denyOnce),
-                              .init(title: "De_ny Always", identifier: Action.denyAlways) ],
+                    options: [.init(title: String(localized: "BrowserManager.AllowOnce", defaultValue: "Allow _Once", comment: "Button to allow audio playback once"), identifier: Action.allowOnce),
+                              .init(title: String(localized: "BrowserManager.AllowAlways", defaultValue: "Allow _Always", comment: "Button to always allow audio playback"), identifier: Action.allowAlways),
+                              .init(title: String(localized: "BrowserManager.DenyOnce", defaultValue: "_Deny Once", comment: "Button to deny audio playback once"), identifier: Action.denyOnce),
+                              .init(title: String(localized: "BrowserManager.DenyAlways", defaultValue: "De_ny Always", comment: "Button to always deny audio playback"), identifier: Action.denyAlways) ],
                     identifier: "NoSyncMuteAudio_\(origin)")
                 switch await delegate?.browserManager(self, announce: announcement) {
                 case .allowOnce:

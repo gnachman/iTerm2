@@ -26,6 +26,12 @@
 - (BOOL)iTermTabBarShouldHideBacking;
 @optional
 - (void)iTermTabBarDidUpdateProgressBars;
+
+// A double-click landed on the strip but not on a tab. Return YES if the
+// delegate consumed it; NO to fall back to the window's title-bar double-click
+// action, which is what the whole strip did before anything in it answered a
+// click of its own.
+- (BOOL)iTermTabBarDoubleClickAtPointInWindow:(NSPoint)point;
 @end
 
 // A customized version of PSMTabBarControl.

@@ -47,6 +47,12 @@ void iTermPosixMoveFileDescriptors(int *orig, int count);
 // Combines fork and exec.
 // If fork is true, returns -1 and sets errno on error. If fork is false it does not return.
 // Unlike iTermExec it cannot reset resource limits in children.
+// If `disclaim` is nonzero it calls responsibility_spawnattrs_setdisclaim so TCC
+// attributes the child's use of protected resources to the child rather than to
+// iTerm2 (issue 10360). Disclaiming requires posix_spawn, but using posix_spawn
+// does not require disclaiming, so the two are independent.
+// Unlike execvp, posix_spawn does not search $PATH; iTermSpawn resolves a bare
+// executable name against PATH from newEnviron itself (issue 12770).
 pid_t iTermSpawn(const char *argpath,
                 char *const *argv,
                 const int *fds,
@@ -54,4 +60,5 @@ pid_t iTermSpawn(const char *argpath,
                 const char *initialPwd,
                 char **newEnviron,
                 int errorFd,
+                int disclaim,
                 int fork);

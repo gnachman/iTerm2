@@ -114,7 +114,7 @@ class ContentNavigationShortcutView: NSView, ContentNavigationShortcutViewProtoc
     func animateIn() {
         // For whatever reason, changing the frame after calling animateIn messes up the animation
         // so just do it after a spin.
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [self] in
             self.setAnchorPoint()
             CATransaction.begin()
             CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)

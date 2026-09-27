@@ -46,6 +46,12 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // Parent controller. Always set. Equals one of realParent or fakeParent.
 @property(nonatomic, weak) id<WindowControllerInterface> parentWindow;
 
+// The real window controller (a PseudoTerminal), not the proxy that gets subbed
+// in during instant replay. Prefer this over -parentWindow when you need the
+// actual window controller rather than the proxy. `realParentWindow_` is weak and
+// non-nil only while the parent is a PseudoTerminal*, so callers must handle nil.
+- (NSWindowController<iTermWindowController> *)realParentWindow;
+
 // uniqueId lazily auto-assigns a unique id unless you assign it a value first. It is never 0.
 @property(nonatomic, assign) int uniqueId;
 @property(nonatomic, readonly) BOOL isMaximized;
@@ -90,6 +96,23 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // Set to nil to use the default behavior. This is a swifty string.
 @property (nonatomic, copy) NSString *titleOverride;
 @property(nonatomic, getter=isPinned) BOOL pinned;
+// Identifier of the tab group this tab belongs to, or nil. Source of
+// truth for group membership (persisted in the tab arrangement); the
+// window controller pushes it to the tab bar via
+// -setTabGroupIdentifier:forTabViewItem:.
+@property (nonatomic, copy) NSString *tabGroupID;
+// The tab group's definition (its name and color) travels on every member
+// tab, so it persists and moves across windows with the tabs and there is no
+// separate registry to keep in sync. All tabs sharing a tabGroupID carry the
+// same name/color; membership mutations copy them and rename fans them out.
+// Meaningful only when tabGroupID is non-nil.
+@property (nonatomic, copy) NSString *tabGroupName;
+@property (nonatomic, copy) NSColor *tabGroupColor;
+// Whether this tab's group is collapsed (its members are hidden in the tab bar
+// but remain in the NSTabView). Like name/color it rides every member of the
+// group; the invariant "the active tab is never in a collapsed group" is
+// enforced by PseudoTerminal. Meaningful only when tabGroupID is non-nil.
+@property (nonatomic) BOOL tabGroupCollapsed;
 @property(nonatomic, readonly) NSString *title;  // the effective title
 @property (nonatomic, readonly) iTermVariableScope<iTermTabScope> *variablesScope;
 @property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;
@@ -316,9 +339,12 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
              sessionFinder:(PTYSession *(^NS_NOESCAPE)(SessionView *sessionView))sessionFinder;
 + (NSSplitView *)placeholderSplitViewForSession:(PTYSession *)session;
 
-// Update the tab's title from the active session's name. Needed for initializing the tab's title
-// after setting up tmux tabs.
-- (void)loadTitleFromSession;
+// Recompute the tab's title (honoring a title override, the tmux prefix, and the
+// subtitle) and publish it to tab.title and the tab bar. Call this when something
+// changed an input to the title without going through the session name controller,
+// e.g. after a tmux window's layout is loaded or after the active session is
+// swapped without -setActiveSession:.
+- (void)updateTabTitle;
 
 // Apply a profile's custom-tab-title template to a newly created tmux window's tab. The template is
 // evaluated against this tab's scope so the tmux window is renamed to a concrete value rather than
@@ -334,7 +360,7 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (NSString *)tmuxPerTabSetting;
 - (void)setPerTabSettings:(NSString *)setting;
 
-- (void)updateUseMetal NS_AVAILABLE_MAC(10_11);
+- (void)updateUseMetal;
 - (ITMSplitTreeNode *)rootSplitTreeNode;
 
 - (void)setSizesFromSplitTreeNode:(ITMSplitTreeNode *)node;

@@ -13,24 +13,16 @@ func makeToolbeltButton(imageName: String?, title: String, target: AnyObject, se
     let button = NSButton(frame: NSRect(x: 0.0, y: frame.size.height - buttonHeight, width: frame.width, height: buttonHeight))
     button.setButtonType(.momentaryPushIn)
     if let imageName {
-        if #available(macOS 10.16, *) {
-            button.image = NSImage.it_image(forSymbolName: imageName, accessibilityDescription: title)
-        } else {
-            button.image = NSImage(named: imageName)
-        }
+        button.image = NSImage.it_image(forSymbolName: imageName, accessibilityDescription: title)
     } else {
         button.title = title
     }
     button.target = target
     button.action = selector
-    if #available(macOS 10.16, *) {
-        button.bezelStyle = .regularSquare
-        button.isBordered = false
-        button.imageScaling = .scaleProportionallyUpOrDown
-        button.imagePosition = .imageOnly
-    } else {
-        button.bezelStyle = .smallSquare
-    }
+    button.bezelStyle = .regularSquare
+    button.isBordered = false
+    button.imageScaling = .scaleProportionallyUpOrDown
+    button.imagePosition = .imageOnly
     button.sizeToFit()
     button.autoresizingMask = [.minYMargin]
 
@@ -61,19 +53,19 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
         _tableView!.backgroundColor = .clear
 
         addButton = makeToolbeltButton(imageName: SFSymbol.plus.rawValue,
-                                       title: "Add",
+                                       title: iTermLocalizedAdd(),
                                        target: self,
                                        selector: #selector(add(_:)),
                                        frame: frameRect)
         addSubview(addButton!)
         removeButton = makeToolbeltButton(imageName: SFSymbol.minus.rawValue,
-                                          title: "Remove",
+                                          title: iTermLocalizedRemove(),
                                           target: self,
                                           selector: #selector(remove(_:)),
                                           frame: frameRect)
         addSubview(removeButton!)
         editButton = makeToolbeltButton(imageName: SFSymbol.pencil.rawValue,
-                                        title: "Edit",
+                                        title: iTermLocalizedEdit(),
                                         target: self,
                                         selector: #selector(edit(_:)),
                                         frame: frameRect)
@@ -113,19 +105,11 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
     }
 
     @objc func relayout() {
-        var margin = -1.0
-        if #available(macOS 10.16, *) {
-            margin = 2
-        }
+        let margin = 2.0
         var x = frame.width
         for button in [ addButton!, removeButton!, editButton! ] {
             button.sizeToFit()
-            var width = 0.0
-            if #available(macOS 10.16, *) {
-                width = button.frame.width
-            } else {
-                width = max(buttonHeight, button.frame.width)
-            }
+            let width = button.frame.width
             x -= width + margin
             button.frame = NSRect(x: x, y: frame.height - buttonHeight, width: width, height: buttonHeight)
         }
@@ -177,7 +161,7 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         let cell = tableView.newTableCellViewWithTextField(usingIdentifier: "ToolNamedMarks",
                                                            font: NSFont.it_toolbelt(),
-                                                           string: marks[row].name ?? "(Unnamed)")
+                                                           string: marks[row].name ?? String(localized: "ToolNamedMarks.Unnamed", defaultValue: "(Unnamed)", comment: "Placeholder shown for a named mark that has no name"))
         cell.textField?.isEditable = true
         cell.textField?.delegate = self
         return cell

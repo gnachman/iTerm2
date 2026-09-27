@@ -17,6 +17,7 @@
 #import "iTermParameterPanelWindowController.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermVariableScope.h"
+#import "iTermVariables.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PTYSession.h"
@@ -336,6 +337,26 @@ NS_ASSUME_NONNULL_BEGIN
             DLog(@"pwd was empty. Use home directory of %@", pwd);
         }
     }
+    // If the working directory no longer exists (for example, a restored session whose saved
+    // directory was on a drive that is no longer mounted), fall back to the home directory so the
+    // shell can still launch, and stash the original path so the session can show a notice once it
+    // starts (issue 12955). Skip this in ssh mode, where the path refers to the remote host and
+    // can't be checked against the local filesystem.
+    const BOOL willLaunch = !self.hasServerConnection && self.partialAttachment == nil;
+    if (willLaunch && !self.ssh && pwd.length > 0) {
+        // Check the same path the shell will actually chdir to. PTYTask standardizes PWD (which
+        // expands a leading tilde) before launch, so a custom directory like “~/www” exists on disk
+        // even though the raw string does not. Standardize here too so we don't misreport a valid
+        // tilde/relative directory as unavailable (issue 12997).
+        NSString *resolved = [pwd stringByStandardizingPath];
+        BOOL isDirectory = NO;
+        const BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:resolved isDirectory:&isDirectory];
+        if (!exists || !isDirectory) {
+            DLog(@"Working directory %@ (resolved %@) is unavailable; falling back to home directory", pwd, resolved);
+            self.session.unavailableWorkingDirectory = pwd;
+            pwd = NSHomeDirectory();
+        }
+    }
     _workingDirectory = [pwd copy];
     _environment = [self.environment ?: @{} dictionaryBySettingObject:_workingDirectory
                                                                forKey:@"PWD"];
@@ -450,7 +471,10 @@ NS_ASSUME_NONNULL_BEGIN
             completion(ok);
         }
     }];
-    if ([[[request.windowController window] title] isEqualToString:@"Window"]) {
+    // Set the window title early if this window hasn't had one computed yet (a brand-new
+    // window still shows AppKit's default title, avoiding a flash of it). Test iTerm2's own
+    // window-title variable rather than the display title, which is localized.
+    if ([[request.windowController.scope valueForVariableName:iTermVariableKeyWindowTitle] length] == 0) {
         [request.windowController setWindowTitle];
     }
 }
@@ -475,6 +499,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     _parameterPanelWindowController = [[iTermParameterPanelWindowController alloc] initWithWindowNibName:@"iTermParameterPanelWindowController"];
     [_parameterPanelWindowController window];
+    // Localization unneeded
     [_parameterPanelWindowController.parameterName setStringValue:[NSString stringWithFormat:@"“%@”:", name]];
     [_parameterPanelWindowController.parameterValue setStringValue:@""];
 

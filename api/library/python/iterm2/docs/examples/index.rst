@@ -131,6 +131,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`findps` - This script shows an alert prompting the user to enter a process ID and then reveals the pane that contains it.
 
+:doc:`tab_group_test` — Demonstrates the tab group API: creating groups, adding and removing tabs, and renaming, recoloring, and collapsing groups.
+
 
 ----
 

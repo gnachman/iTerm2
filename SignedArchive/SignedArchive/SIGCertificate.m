@@ -44,20 +44,7 @@
         return _publicKey;
     }
 
-    SecKeyRef key;
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_14
-    if (@available(macOS 10.14, *)) {
-        key = SecCertificateCopyKey(_secCertificate);
-    }
-    else {
-        const OSStatus status = SecCertificateCopyPublicKey(_secCertificate, &key);
-        if (status != noErr) {
-            return nil;
-        }
-    }
-#else
-    key = SecCertificateCopyKey(_secCertificate);
-#endif
+    SecKeyRef key = SecCertificateCopyKey(_secCertificate);
     if (!key) {
         return nil;
     }
@@ -113,19 +100,8 @@
 
 - (NSData *)serialNumber {
     CFErrorRef error = NULL;
-    NSData *value;
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_13
-    if (@available(macOS 10.13, *)) {
-        value = (__bridge_transfer NSData *)SecCertificateCopySerialNumberData(_secCertificate,
-                                                                               &error);
-    } else {
-        value = (__bridge_transfer NSData *)SecCertificateCopySerialNumber(_secCertificate,
-                                                                           &error);
-    }
-#else
-    value = (__bridge_transfer NSData *)SecCertificateCopySerialNumberData(_secCertificate,
-                                                                           &error);
-#endif
+    NSData *value = (__bridge_transfer NSData *)SecCertificateCopySerialNumberData(_secCertificate,
+                                                                                   &error);
     if (value == NULL || error != NULL) {
         return nil;
     }
@@ -142,16 +118,7 @@
 + (BOOL)certificateInArray:(CFArrayRef)array atIndex:(NSInteger)i hasName:(CFDataRef)name {
     SecCertificateRef secCertificate = (SecCertificateRef)CFArrayGetValueAtIndex(array, i);
 
-    CFDataRef subjectContent;
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_12_4
-    if (@available(macOS 10.12.4, *)) {
-        subjectContent = SecCertificateCopyNormalizedSubjectSequence(secCertificate);
-    } else {
-        subjectContent = SecCertificateCopyNormalizedSubjectContent(secCertificate, NULL);
-    }
-#else
-    subjectContent = SecCertificateCopyNormalizedSubjectSequence(secCertificate);
-#endif
+    CFDataRef subjectContent = SecCertificateCopyNormalizedSubjectSequence(secCertificate);
 
     const BOOL result = CFEqual(subjectContent, name);
     if (subjectContent) {

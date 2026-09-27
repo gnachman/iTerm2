@@ -237,6 +237,26 @@ class SearchableComboTableViewController: NSViewController {
         return filteredRows[row].item
     }
 
+    // The item with the check mark. Unlike selectedItem, this reflects the
+    // committed selection, including one made programmatically, and it
+    // survives a filter that hides the selected row.
+    var checkedItem: SearchableComboViewItem? {
+        guard let tag = selectedTag else {
+            return nil
+        }
+        for row in unfilteredRows {
+            switch row {
+            case .group(_, _):
+                break
+            case .item(item: let item, index: _):
+                if item.tag == tag {
+                    return item
+                }
+            }
+        }
+        return nil
+    }
+
     var filter: String {
         get {
             return internalFilter

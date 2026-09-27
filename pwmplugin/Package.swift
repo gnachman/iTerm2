@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "iterm2-password-manager-adapters",
     platforms: [
-        .macOS(.v12)
+        .macOS(.v13)
     ],
     products: [
         .executable(

@@ -10,7 +10,7 @@ class HyperlinkBrowserTrigger: Trigger {
         "Make Hyperlink with URL “\(param as? String ?? "(nil)")”"
     }
     override static var title: String {
-        "Make Hyperlink…"
+        String(localized: "Trigger.HyperlinkBrowser.Title", defaultValue: "Make Hyperlink…", comment: "Trigger action name: turn the matching page text into a clickable hyperlink")
     }
     override func takesParameter() -> Bool {
         true

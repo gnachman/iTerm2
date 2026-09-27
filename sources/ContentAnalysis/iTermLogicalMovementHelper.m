@@ -83,17 +83,24 @@
     const iTermSelectionMode mode = [self selectionModeForExtensionUnit:unit];
 
     if (!sub) {
-        [_selection beginSelectionAtAbsCoord:newRange.coordRange.start
-                                        mode:mode
-                                      resume:NO
-                                      append:NO];
-        if (unit == kPTYTextViewSelectionExtensionUnitCharacter ||
-            unit == kPTYTextViewSelectionExtensionUnitMark) {
-            [_selection moveSelectionEndpointTo:newRange.coordRange.end];
+        if (mode == kiTermSelectionModeCharacter) {
+            // Character mode's live range is visual when bidi is on, but newRange is
+            // LOGICAL; commit it as a logical range so a keyboard-created character
+            // selection anchors on the correct cell on right-to-left lines.
+            [_selection setSelectedLogicalRange:newRange mode:mode];
         } else {
-            [_selection moveSelectionEndpointTo:newRange.coordRange.start];
+            [_selection beginSelectionAtAbsCoord:newRange.coordRange.start
+                                            mode:mode
+                                          resume:NO
+                                          append:NO];
+            if (unit == kPTYTextViewSelectionExtensionUnitCharacter ||
+                unit == kPTYTextViewSelectionExtensionUnitMark) {
+                [_selection moveSelectionEndpointTo:newRange.coordRange.end];
+            } else {
+                [_selection moveSelectionEndpointTo:newRange.coordRange.start];
+            }
+            [_selection endLiveSelection];
         }
-        [_selection endLiveSelection];
     } else if ([_selection absCoord:newRange.coordRange.start isBeforeAbsCoord:newRange.coordRange.end]) {
         // Is a valid range
         [_selection setLastAbsRange:newRange mode:mode];

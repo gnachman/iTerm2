@@ -13,12 +13,14 @@ class FocusBuiltInFunction: NSObject {
 }
 
 extension FocusBuiltInFunction: iTermBuiltInFunctionProtocol {
+    private static let errorDomain = "com.iterm2.focus"
+
     private static func error(message: String) -> NSError {
-        return NSError(domain: "com.iterm2.focus",
+        return NSError(domain: errorDomain,
                        code: 1,
                        userInfo: [ NSLocalizedDescriptionKey: message])
     }
-    
+
     static func register() {
         let builtInFunction = iTermBuiltInFunction(
             name: "focus",
@@ -26,14 +28,12 @@ extension FocusBuiltInFunction: iTermBuiltInFunctionProtocol {
             optionalArguments: Set(),
             defaultValues: ["session_id": iTermVariableKeySessionID],
             context: .session,
+            // Localization unneeded
             sideEffectsPlaceholder: "[focus]") {
                 parameters, completion in
-                guard let sessionID = parameters["session_id"] as? String else {
-                    completion(nil, error(message: "Missing session_id. This shouldn't happen so please report a bug."))
-                    return
-                }
-                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, error(message: "No such session"))
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 errorDomain: errorDomain,
+                                                                 completion: completion) else {
                     return
                 }
                 execute(session: session, completion: completion)

@@ -33,6 +33,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)build;
 - (BOOL)runAutoLaunchScriptsIfNeeded;
+// Re-title/re-target the runtime menu item for the current gate + install state.
+- (void)updateInstallRuntimeMenuItem;
 - (void)revealScriptsInFinder;
 - (void)newPythonScript;
 

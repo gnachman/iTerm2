@@ -419,10 +419,38 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         }
     }
 
-    // The ordered list of toolbar items for a specific peer.
+    // The ordered list of toolbar items for a specific peer. Re-derives
+    // the auto-behavior toggles from their owning session's live flags
+    // first: the item views are built once and cached, but the flags can
+    // change without going through a toggle's own action (arrangement
+    // restore writes autoRequestReviewWhenIdle / autoSendClippingsWhenIdle
+    // directly), so the button state must be re-read from the flag each
+    // time the toolbar is queried for display. Without this the button
+    // shows a stale build-time snapshot (off) while the idle-driven
+    // behavior, which reads the flag live, is on. Mirrors how
+    // syncModeSwitchers keeps the mode switcher current.
     @objc
     func toolbarItems(forPeerID id: String) -> [SessionToolbarGenericView] {
-        return itemsByPeerID[id] ?? []
+        let views = itemsByPeerID[id] ?? []
+        syncAutoBehaviorToggles(in: views, forPeerID: id)
+        return views
+    }
+
+    // The per-session flag is the source of truth (see
+    // maybeAutoRequestReview / maybeAutoSendClippings, which read it live);
+    // reflect it onto the cached toggle button so appearance can't drift
+    // from behavior. setOn does not fire the toggle's delegate, so this
+    // never writes the flag back.
+    private func syncAutoBehaviorToggles(in views: [SessionToolbarGenericView],
+                                         forPeerID id: String) {
+        guard let session = session(forIdentifier: id) else { return }
+        for view in views {
+            if let toggle = view as? WorkgroupAutoRequestReviewToolbarItem {
+                toggle.setOn(session.autoRequestReviewWhenIdle)
+            } else if let toggle = view as? WorkgroupAutoSendClippingsToolbarItem {
+                toggle.setOn(session.autoSendClippingsWhenIdle)
+            }
+        }
     }
 
     // Activate the peer mapped to a ⌥⇧⌘digit shortcut. Returns true

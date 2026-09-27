@@ -5,7 +5,6 @@
 //  Created by George Nachman on 6/19/25.
 //
 
-@available(macOS 11.0, *)
 class iTermBrowserURLTextView: PlaceholderTextView {
     var willBecomeFirstResponder: (() -> ())?
     var willResignFirstResponder: (() -> ())?

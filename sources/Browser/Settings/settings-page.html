@@ -554,6 +554,19 @@
             </div>
         </div>
 
+        <div class="permissions-section">
+            <div class="section">
+                <h2>Saved Passwords</h2>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Manage Saved Passwords</h3>
+                        <p>Open the password manager to view or remove website usernames and passwords, including those remembered for HTTP authentication</p>
+                    </div>
+                    <button class="button small" onclick="openPasswordManager()">Manage Passwords</button>
+                </div>
+            </div>
+        </div>
+
         <div class="link-opening-section">
             <div class="section">
                 <h2>Link Opening</h2>
@@ -765,6 +778,13 @@
         
         function openPermissions() {
             window.location.href = 'iterm2-about:permissions';
+        }
+
+        function openPasswordManager() {
+            window.webkit.messageHandlers['iterm2-about:settings'].postMessage({
+                action: 'openPasswordManager',
+                sessionSecret: sessionSecret
+            });
         }
         
         // Status message functions

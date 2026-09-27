@@ -154,8 +154,25 @@ class ComplexCharRegistry: NSObject {
         guard let string = string else {
             return 0
         }
-        string.getCharacters(destination)
-        return Int32(string.length)
+        // Every ExpandScreenChar caller sizes its destination for at most kMaxParts unichars
+        // per cell; some pass a fixed stack buffer of exactly kMaxParts (e.g.
+        // iTermTextExtractor) and ScreenCharArrayToString allocates lineLength * kMaxParts.
+        // A stored complex-char string longer than kMaxParts should be impossible, but if one
+        // ever slips through, getCharacters would write past the destination and corrupt
+        // memory (heap overflow in ScreenCharArrayToString, stack smash in the extractor). So
+        // clamp to the contract, trimming a trailing high surrogate so we never emit half a
+        // surrogate pair.
+        let maxParts = Int(kMaxParts)
+        var count = string.length
+        if count > maxParts {
+            DLog("Complex char string <<\(string)>> exceeds kMaxParts=\(maxParts); clamping on expand")
+            count = maxParts
+            if UTF16.isLeadSurrogate(string.character(at: count - 1)) {
+                count -= 1
+            }
+        }
+        string.getCharacters(destination, range: NSRange(location: 0, length: count))
+        return Int32(count)
     }
 }
 

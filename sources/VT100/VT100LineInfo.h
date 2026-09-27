@@ -56,6 +56,7 @@ void VT100LineInfoEnableGenerationTracking(void);
 - (NSIndexSet *)dirtyIndexes;
 - (void)setTimestamp:(NSTimeInterval)timestamp;
 - (void)setRTLFound:(BOOL)rtlFound;
+- (BOOL)rtlFound;
 - (void)decodeMetadataArray:(NSArray *)array;
 - (void)resetMetadata;
 - (NSArray *)encodedMetadata;

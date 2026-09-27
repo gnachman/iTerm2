@@ -59,14 +59,14 @@ class SetUserVariableTrigger: Trigger {
 
     override var description: String {
         if let string = param as? String, let (name, value) = variableNameAndValue(string) {
-            return "Set User Variable “\(name)” to “\(value)”"
+            return String(localized: "SetUserVariableTrigger.DescriptionNameValue", defaultValue: "Set User Variable “\(name)” to “\(value)”", comment: "Description of a Set User Variable trigger; first interpolation is the variable name, second is the value")
         } else {
-            return "Set User Variable “\(param ?? "")”"
+            return String(localized: "SetUserVariableTrigger.DescriptionName", defaultValue: "Set User Variable “\(String(describing: param ?? ""))”", comment: "Description of a Set User Variable trigger; interpolated value is the variable name")
         }
     }
 
     override static var title: String {
-        return "Set User Variable…"
+        return String(localized: "SetUserVariableTrigger.Title", defaultValue: "Set User Variable…", comment: "Menu title for the Set User Variable trigger action")
     }
 
     override func takesParameter() -> Bool {
@@ -80,7 +80,7 @@ class SetUserVariableTrigger: Trigger {
     }
 
     override func triggerOptionalParameterPlaceholder(withInterpolation interpolation: Bool) -> String? {
-        return "Value for variable"
+        return String(localized: "SetUserVariableTrigger.ValuePlaceholder", defaultValue: "Value for variable", comment: "Placeholder text for the value field of a Set User Variable trigger")
     }
 
     override func performAction(withCapturedStrings strings: [String],
@@ -113,7 +113,7 @@ class SetUserVariableTrigger: Trigger {
 
     override func paramAttributedString() -> NSAttributedString? {
         if let string = param as? String, let (name, value) = variableNameAndValue(string) {
-            return NSAttributedString(string: "\(name) = \(value)", attributes: regularAttributes())
+            return NSAttributedString(string: String(localized: "SetUserVariableTrigger.NameEqualsValue", defaultValue: "\(name) = \(value)", comment: "Compact display of a Set User Variable trigger; shows variable name = value"), attributes: regularAttributes())
         } else {
             return NSAttributedString(string: (param as? String) ?? "", attributes: regularAttributes())
         }

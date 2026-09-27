@@ -44,6 +44,12 @@ extern NSString *const kMarkAlertActionPostNotification;
 extern NSString *const kMarkAlertActionRingBell;
 extern NSString *const kShowFullscreenTabsSettingDidChange;
 extern NSString *const iTermApplicationWillTerminate;
+
+// Accessibility identifiers for the dynamically-created Downloads and Uploads menu bar
+// items. These are stable and never localized, so code can find the menus by identifier
+// rather than by their (localizable) titles.
+extern NSString *const iTermDownloadsMenuAXIdentifier;
+extern NSString *const iTermUploadsMenuAXIdentifier;
 extern NSString *const iTermDidToggleAlertOnMarksInOffscreenSessionsNotification;
 
 void TurnOnDebugLoggingAutomatically(void);
@@ -85,6 +91,10 @@ void TurnOnDebugLoggingAutomatically(void);
 - (void)didToggleTraditionalFullScreenMode;
 - (void)willRestoreWindow;
 - (void)newTabAtIndex:(NSNumber *)index;
+// As above, but `didMakeSession` runs once the new session and its tab exist
+// (used to add the new tab to a tab group). Not called for the tmux path.
+- (void)newTabAtIndex:(NSNumber *)index
+       didMakeSession:(void (^)(PTYSession *session))didMakeSession;
 
 #pragma mark - Actions
 

@@ -9,6 +9,8 @@ import AppKit
 import SwiftyMarkdown
 import UniformTypeIdentifiers
 
+private let enableOrchestrationButtonTitle = String(localized: "ChatViewController.EnableOrchestration", defaultValue: "Enable Orchestration", comment: "Button to enable orchestration mode")
+
 protocol ChatViewControllerDelegate: AnyObject {
     func chatViewController(_ controller: ChatViewController, revealSessionWithGuid guid: String) -> Bool
     func chatViewControllerDeleteSession(_ controller: ChatViewController)
@@ -258,6 +260,21 @@ class ChatViewController: NSViewController {
     // macOS 26 floating bar; positioned manually in performLayoutNow().
     private var floatingControlsView: NSView?
 
+    // In-conversation find (Cmd-F). The bar is created lazily and hosted
+    // as an overlay at the top of the conversation in performLayoutNow().
+    private var findBar: ChatFindBarView?
+    private lazy var findController: ChatFindController = {
+        let controller = ChatFindController()
+        controller.segmentsProvider = { [weak self] message in
+            self?.findSegments(for: message) ?? []
+        }
+        return controller
+    }()
+    // Coalesces find rescans so a burst of streaming updates in one runloop
+    // turn triggers a single rebuild instead of one per token.
+    private let findRescanJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
+    private var pendingFindModifiedMessageIDs = Set<UUID>()
+
     private var lastTableViewWidth: CGFloat?
 
     // iOS-style deferred layout. AppKit's viewDidLayout (and any other
@@ -311,6 +328,38 @@ class ChatViewController: NSViewController {
             scrollView.frame = scrollFrame
         }
 
+        // Compute the floating-controls (macOS 26) frame first so the find bar
+        // can be placed just beneath it. This is a pure computation; the frame
+        // is applied further down.
+        let floatingFrame: NSRect? = (floatingControlsView as? FloatingChatToolbarView)
+            .map { floating in
+                let preferred = floating.preferredSize()
+                let availableWidth = max(0, bounds.width - 32)
+                let width = min(availableWidth, preferred.width)
+                let height = max(0, preferred.height)
+                let x = floor((bounds.width - width) / 2)
+                let topPadding: CGFloat = 8
+                let y = bounds.height - topPadding - height
+                return NSRect(x: x, y: y, width: width, height: height)
+            }
+
+        // The find bar is a centered, fixed-max-width overlay that sits just
+        // below the top chrome (the floating controls on macOS 26, otherwise
+        // the inline toolbar / titlebar).
+        let findBarFrame: NSRect? = findBar.map { _ in
+            let barHeight = ChatFindBarView.barHeight
+            let gap: CGFloat = 8
+            let topReference = (floatingFrame?.minY ?? (bounds.height - toolbarHeight)) - gap
+            let sideMargin: CGFloat = 16
+            let maxWidth: CGFloat = 640
+            let width = min(maxWidth, max(0, bounds.width - sideMargin * 2))
+            let x = floor((bounds.width - width) / 2)
+            return NSRect(x: x,
+                          y: topReference - barHeight,
+                          width: width,
+                          height: barHeight)
+        }
+
         let inputHeight = inputView.preferredHeight(forContainerWidth: bounds.width)
         let inputFrame = NSRect(x: 0, y: 0, width: bounds.width, height: inputHeight)
         if inputView.frame != inputFrame {
@@ -321,12 +370,18 @@ class ChatViewController: NSViewController {
         // area's height so the last row can scroll above it. iOS
         // pattern: scroll view's contentInset.bottom == hovering view's
         // height, so the content can scroll up out from underneath.
+        // When the find bar is visible it overlays the top of the scroll
+        // view; reserve down to its bottom edge with a top content inset so
+        // no message is hidden behind it (or behind the chrome above it).
+        let topInset: CGFloat = findBarFrame.map { frame in
+            max(0, (bounds.height - toolbarHeight) - frame.minY)
+        } ?? 0
         let currentInsets = scrollView.contentInsets
         if currentInsets.bottom != inputHeight ||
-           currentInsets.top != 0 ||
+           currentInsets.top != topInset ||
            currentInsets.left != 0 ||
            currentInsets.right != 0 {
-            scrollView.contentInsets = NSEdgeInsets(top: 0,
+            scrollView.contentInsets = NSEdgeInsets(top: topInset,
                                                     left: 0,
                                                     bottom: inputHeight,
                                                     right: 0)
@@ -361,18 +416,13 @@ class ChatViewController: NSViewController {
             }
         }
 
-        if let floating = floatingControlsView as? FloatingChatToolbarView {
-            let preferred = floating.preferredSize()
-            let availableWidth = max(0, bounds.width - 32)
-            let width = min(availableWidth, preferred.width)
-            let height = max(0, preferred.height)
-            let x = floor((bounds.width - width) / 2)
-            let topPadding: CGFloat = 8
-            let y = bounds.height - topPadding - height
-            let floatingFrame = NSRect(x: x, y: y, width: width, height: height)
-            if floating.frame != floatingFrame {
-                floating.frame = floatingFrame
-            }
+        if let floating = floatingControlsView, let floatingFrame,
+           floating.frame != floatingFrame {
+            floating.frame = floatingFrame
+        }
+
+        if let findBar, let findBarFrame, findBar.frame != findBarFrame {
+            findBar.frame = findBarFrame
         }
     }
 
@@ -518,16 +568,19 @@ extension ChatViewController {
         .llama
     ]
 
+    // The built-in catalog plus the currently-discovered Ollama models, which live
+    // in the discovery cache rather than the static catalog. Used everywhere the
+    // chat classifies a model by name so a first-class Ollama model resolves and
+    // isn't mistaken for "unknown" (which crosses to the default cloud vendor).
+    private var builtInModels: [AIMetadata.Model] {
+        return AIMetadata.instance.models + LLMMetadata.discoveredOllamaModels()
+    }
+
     private func model(named name: String?) -> AIMetadata.Model? {
-        guard let name else {
-            return nil
-        }
-        // A manual config wins over a built-in that shares the name, matching
-        // how AIConversation resolves the pinned model at request time.
-        if let manual = manualConfiguredModels.first(where: { $0.name == name }) {
-            return manual
-        }
-        return AIMetadata.instance.models.first { $0.name == name }
+        // Shared resolver so the UI, request routing (AIConversation.complete), and
+        // capability gating (ChatAgent) can never disagree: manual/custom models win
+        // over the built-in catalog, and discovered built-in Ollama tags are included.
+        return LLMMetadata.model(named: name)
     }
 
     private var storedChatModel: AIMetadata.Model? {
@@ -643,7 +696,7 @@ extension ChatViewController {
         if manualConfiguredModels.contains(where: { $0.name == name }) {
             return ChatProviderOption.manualModel(name: name).identifier
         }
-        if let builtInVendor = AIMetadata.instance.models.first(where: { $0.name == name })?.vendor {
+        if let builtInVendor = builtInModels.first(where: { $0.name == name })?.vendor {
             return ChatProviderOption.vendorIdentifier(builtInVendor)
         }
         if let effectiveChatProvider {
@@ -661,17 +714,38 @@ extension ChatViewController {
                 manualConfiguredModels.contains { $0.name == modelName }
         }
         if let vendor = ChatProviderOption.vendor(from: identifier) {
-            return AIMetadata.instance.models.contains { $0.name == modelName && $0.vendor == vendor }
+            return builtInModels.contains { $0.name == modelName && $0.vendor == vendor }
         }
         return false
     }
 
     private func providerIsAvailable(_ vendor: iTermAIVendor) -> Bool {
-        guard !LLMMetadata.alternateModels(for: vendor).isEmpty else {
+        return Self.providerIsAvailable(vendor,
+                                        alternateModels: LLMMetadata.alternateModels(for: vendor),
+                                        apiKey: AITermControllerObjC.apiKey(for: vendor))
+    }
+
+    // The pure availability rule, extracted so it's unit-testable without a full
+    // view controller (which needs a live ChatClient/broker). Behavior-preserving:
+    // the instance method above just supplies the inputs.
+    static func providerIsAvailable(_ vendor: iTermAIVendor,
+                                    alternateModels: [AIMetadata.Model],
+                                    apiKey: String?) -> Bool {
+        // The built-in Ollama vendor is self-hosted (default endpoint is localhost)
+        // and intentionally keyless: the request path grants it a placeholder
+        // registration (AITermController.usesPlaceholderAPIKey). It must stay
+        // selectable even before discovery has landed any models
+        // (server-down-at-launch window, the very case the self-healing cache
+        // exists to cover), so it is exempt from
+        // both the empty-models guard and the API-key check below. Remote Ollama
+        // servers are configured as manual entries, not this vendor.
+        if vendor == .llama {
+            return true
+        }
+        guard !alternateModels.isEmpty else {
             return false
         }
-        let key = AITermControllerObjC.apiKey(for: vendor)
-        return key?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        return apiKey?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
     }
 
     private func recommendedModel(for provider: iTermAIVendor) -> AIMetadata.Model? {
@@ -747,7 +821,7 @@ extension ChatViewController {
            let chat = listModel.chat(id: chatID) {
             return chat.title
         }
-        return "AI Chat"
+        return String(localized: "ChatViewController.AIChat", defaultValue: "AI Chat", comment: "Default AI chat title")
     }
 
     func offerLink(to guid: String, terminal: Bool, name: String?) {
@@ -821,6 +895,8 @@ extension ChatViewController {
                 inputView.attributedStringValue = draft.text
                 inputView.setAttachedFiles(draft.attachments)
             }
+            // The find bar's matches belong to the outgoing conversation.
+            closeFindBar()
         }
         ensureCurrentChatHasModel()
         chatToolbar.update()
@@ -830,12 +906,12 @@ extension ChatViewController {
         // window, and clobbering its title with the chat title would be
         // wrong.
         if let windowController = view.window?.windowController as? ChatWindowController {
-            windowController.updateTitle(chat?.title ?? "AI Chat")
+            windowController.updateTitle(chat?.title ?? String(localized: "ChatViewController.AIChat", defaultValue: "AI Chat", comment: "Default AI chat title"))
         } else if isInlinePanel {
             updateInlineToolbarTitle()
         } else {
             // Fallback for compatibility
-            view.window?.title = chat?.title ?? "AI Chat"
+            view.window?.title = chat?.title ?? String(localized: "ChatViewController.AIChat", defaultValue: "AI Chat", comment: "Default AI chat title")
         }
         tableView.reloadData()
         brokerSubscription?.unsubscribe()
@@ -898,6 +974,12 @@ extension ChatViewController {
                         // boundary never yanks a scrolled-up reader to the bottom -
                         // and, at turn end, does not undo the no-scroll intent that
                         // typingStatus(false) just set.
+                        shouldScroll = false
+                    case let .messagesRemoved(ids, _):
+                        // Edit/Delete truncated the log (here, on another window
+                        // showing this chat, or on a companion phone). Drop the
+                        // affected rows; the store was already updated by the broker.
+                        model.removeMessages(withIDs: ids)
                         shouldScroll = false
                     }
                     if shouldScroll {
@@ -1088,11 +1170,11 @@ extension ChatViewController {
         if newPermission == .always,
            let autopopulationWarningText = category.autopopulationWarningText {
             let sel = iTermWarning.show(withTitle: autopopulationWarningText,
-                                        actions: ["Send Automatically", "Ask Each Time", "Never Allow"],
+                                        actions: [String(localized: "ChatViewController.SendAutomatically", defaultValue: "Send Automatically", comment: "Button to always send data automatically"), String(localized: "ChatViewController.AskEachTime", defaultValue: "Ask Each Time", comment: "Button to be asked each time before sending data"), String(localized: "ChatViewController.NeverAllow", defaultValue: "Never Allow", comment: "Button to never allow sending data")],
                                         accessory: nil,
                                         identifier: nil,
                                         silenceable: .kiTermWarningTypePersistent,
-                                        heading: "Confirm Change",
+                                        heading: String(localized: "ChatViewController.ConfirmChange", defaultValue: "Confirm Change", comment: "Heading for the confirm permission change dialog"),
                                         window: view.window)
             switch sel {
             case .kiTermWarningSelection0:
@@ -1153,7 +1235,7 @@ extension ChatViewController {
             completion(nil)
             return
         }
-        pickSessionPromise = SessionSelector.select(terminal: terminal, reason: "Link this session to AI chat?")
+        pickSessionPromise = SessionSelector.select(terminal: terminal, reason: String(localized: "ChatViewController.LinkSessionReason", defaultValue: "Link this session to AI chat?", comment: "Prompt asking the user to link a session to the AI chat"))
         let waitingMessage = Message(chatID: chatID,
                                      author: .agent,
                                      content: .clientLocal(ClientLocal(action: .pickingSession)),
@@ -1205,12 +1287,20 @@ extension ChatViewController {
         } else {
             try model.setBrowserSessionGuid(reference)
         }
-        try client.publishNotice(
-            chatID: chatID,
-            notice: "This chat has been linked to \(terminal ? "terminal" : "web browser") session “\(name?.escapedForMarkdownCode ?? "(Unnamed session)")”")
+        let sessionName = name?.escapedForMarkdownCode ?? String(localized: "ChatViewController.UnnamedSessionParen", defaultValue: "(Unnamed session)", comment: "Fallback shown for a session with no name in the linked-session notice")
+        // A complete localized notice per session kind rather than injecting the translated noun.
+        let notice = terminal
+            ? String(localized: "ChatViewController.LinkedTerminalSessionNotice", defaultValue: "This chat has been linked to terminal session “\(sessionName)”", comment: "Notice shown when a chat is linked to a terminal session")
+            : String(localized: "ChatViewController.LinkedBrowserSessionNotice", defaultValue: "This chat has been linked to web browser session “\(sessionName)”", comment: "Notice shown when a chat is linked to a web browser session")
+        try client.publishNotice(chatID: chatID, notice: notice)
+        // Carry the reference (stableID), NOT the raw guid: the toggle handler
+        // and the button-label renderer both key permissions off
+        // model.terminalSessionGuid/browserSessionGuid, which store `reference`.
+        // Publishing the raw guid here would split the keyspace so the label
+        // read never sees what the toggle write stored.
         try? client.publishClientLocalMessage(
             chatID: chatID,
-            action: .permissions(terminal: terminal, guid: guid))
+            action: .permissions(terminal: terminal, guid: reference))
         try publishUpdatedPermissions()
     }
 
@@ -1250,12 +1340,12 @@ extension ChatViewController {
             stopStreaming()
             return
         }
-        let selection = iTermWarning.show(withTitle: "All terminal content will be sent to AI, which may go to a third party. Ensure this is safe to do before proceeding.",
-                                          actions: ["OK", "Cancel"],
+        let selection = iTermWarning.show(withTitle: String(localized: "ChatViewController.StreamPrivacyMessage", defaultValue: "All terminal content will be sent to AI, which may go to a third party. Ensure this is safe to do before proceeding.", comment: "Warning shown before streaming all terminal content to AI"),
+                                          actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                                           accessory: nil,
                                           identifier: nil,
                                           silenceable: .kiTermWarningTypePersistent,
-                                          heading: "Privacy Warning",
+                                          heading: String(localized: "ChatViewController.PrivacyWarningHeading", defaultValue: "Privacy Warning", comment: "Heading for the streaming privacy warning dialog"),
                                           window: nil)
         if selection == .kiTermWarningSelection0 {
             streaming = true
@@ -1267,7 +1357,7 @@ extension ChatViewController {
     }
 
     @objc private func showLinkedSessionHelp(_ sender: Any) {
-        chatToolbar.sessionButton.it_showWarning(withMarkdown: "When a terminal session is linked to this chat, the AI may view terminal contents and run commands in that session. You will be prompted to grant permission before it is able to view, type to, or modify a terminal session.")
+        chatToolbar.sessionButton.it_showWarning(withMarkdown: String(localized: "ChatViewController.LinkedSessionHelp", defaultValue: "When a terminal session is linked to this chat, the AI may view terminal contents and run commands in that session. You will be prompted to grant permission before it is able to view, type to, or modify a terminal session.", comment: "Help text explaining what linking a terminal session to the chat allows"))
     }
 
     @objc private func deleteChat(_ sender: Any) {
@@ -1322,7 +1412,7 @@ extension ChatViewController {
                 OrchestratorClient.instance?.cancelWatchers(forChatID: chatID)
                 try? client.publishNotice(
                     chatID: chatID,
-                    notice: "This chat is no longer linked to a terminal session.")
+                    notice: String(localized: "ChatViewController.UnlinkedTerminalNotice", defaultValue: "This chat is no longer linked to a terminal session.", comment: "Notice shown when a chat is unlinked from a terminal session"))
                 try publishUpdatedPermissions()
             } catch {
                 DLog("\(error)")
@@ -1336,7 +1426,7 @@ extension ChatViewController {
                 try listModel.setBrowserGuid(for: chatID, to: nil)
                 try? client.publishNotice(
                     chatID: chatID,
-                    notice: "This chat is no longer linked to a web browser session.")
+                    notice: String(localized: "ChatViewController.UnlinkedBrowserNotice", defaultValue: "This chat is no longer linked to a web browser session.", comment: "Notice shown when a chat is unlinked from a browser session"))
                 try publishUpdatedPermissions()
             } catch {
                 DLog("\(error)")
@@ -1404,6 +1494,9 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         }
         let view = view(forItem: model.items[row], isLastMessage: model.indexIsLastMessage(row))
         DLog("Return view of class \(type(of: view)) for row \(row))")
+        if findController.hasQuery {
+            applyFindHighlights(to: view, row: row)
+        }
         return view
     }
 
@@ -1461,12 +1554,16 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
 
     private func edit(_ messageID: UUID) {
         guard let model,
+              let chatID,
               let i = model.index(ofMessageID: messageID),
               case .message(let message) = model.items[i],
               case .plainText(let text, _) = message.message.content else {
             return
         }
-        model.deleteFrom(index: i)
+        // Route through the broker so the truncation reaches the store and any
+        // subscribed companion phone; the fan-out echoes .messagesRemoved back
+        // to our own subscription, which updates the display model.
+        client.deleteMessages(model.messageIDs(fromIndex: i), fromChatID: chatID)
         inputView.stringValue = text
     }
 
@@ -1477,6 +1574,13 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             return
         }
         delegate?.chatViewController(self, forkAtMessageID: messageID, ofChat: chatID)
+    }
+
+    private func delete(_ messageID: UUID) {
+        guard let model, let chatID, let i = model.index(ofMessageID: messageID) else {
+            return
+        }
+        client.deleteMessages(model.messageIDs(fromIndex: i), fromChatID: chatID)
     }
 
     private func configure(cell: MultipartMessageCellView,
@@ -1503,6 +1607,9 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         }
         cell.forkButtonClicked = { [weak self] messageID in
             self?.fork(messageID)
+        }
+        cell.deleteButtonClicked = { [weak self] messageID in
+            self?.delete(messageID)
         }
         let originalMessageID = message.uniqueID
         let chatID = self.chatID
@@ -1725,14 +1832,22 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
                 guard let guid,
                       let session = iTermController.sharedInstance().anySession(forReference: guid) else {
-                    try? client.publishNotice(chatID: chatID, notice: "This chat is not linked to any \(browser ? "web browser" : "terminal") session.")
+                    // A complete localized sentence per session kind rather than injecting the
+                    // translated noun mid-sentence, which breaks agreement in other languages.
+                    let notice = browser
+                        ? String(localized: "ChatViewController.NotLinkedNoticeBrowser", defaultValue: "This chat is not linked to any web browser session.", comment: "Notice shown when a chat has no linked web browser session")
+                        : String(localized: "ChatViewController.NotLinkedNoticeTerminal", defaultValue: "This chat is not linked to any terminal session.", comment: "Notice shown when a chat has no linked terminal session")
+                    try? client.publishNotice(chatID: chatID, notice: notice)
+                    let userNotice = browser
+                        ? String(localized: "ChatViewController.NoLinkedSessionUserNoticeBrowser", defaultValue: "AI attempted to perform an action, but no web browser session is linked to this chat so it failed.", comment: "Notice shown when AI tries to act but no web browser session is linked")
+                        : String(localized: "ChatViewController.NoLinkedSessionUserNoticeTerminal", defaultValue: "AI attempted to perform an action, but no terminal session is linked to this chat so it failed.", comment: "Notice shown when AI tries to act but no terminal session is linked")
                     try? client.respondSuccessfullyToRemoteCommandRequest(
                         inChat: chatID,
                         requestUUID: messageID,
                         message: "The user did not link a \(browser ? "web browser" : "terminal") session to chat, so the function could not be run.",
                         functionCallName: functionCallName,
                         functionCallID: functionCallID,
-                        userNotice: "AI attempted to perform an action, but no \(browser ? "web browser" : "terminal") session is linked to this chat so it failed.")
+                        userNotice: userNotice)
                     return
                 }
                 let allowed: Bool
@@ -2001,7 +2116,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 .attributedStringValue(
                                     linkColor: message.linkColor,
                                     textColor: message.textColor,
-                                    renderMentions: chatIsOrchestration))
+                                    renderMentions: chatIsOrchestration,
+                                    atSignOptional: message.author == .agent))
                     case .markdown(let text):
                         MessageRendition.SubpartContainer(
                             kind: .regular,
@@ -2009,13 +2125,14 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 .attributedStringValue(
                                     linkColor: message.linkColor,
                                     textColor: message.textColor,
-                                    renderMentions: chatIsOrchestration))
+                                    renderMentions: chatIsOrchestration,
+                                    atSignOptional: message.author == .agent))
                     case .context:
                         nil
                     }
                 })
         default:
-                .regular(.init(attributedString: message.attributedStringValue(renderMentions: chatIsOrchestration),
+                .regular(.init(attributedString: message.attributedStringValue(renderMentions: chatIsOrchestration, atSignOptional: message.author == .agent),
                                buttons: message.buttons,
                                enableButtons: enableButtons,
                                keepsButtonsEnabledAfterClick: message.isPermissionsClientLocal))
@@ -2026,6 +2143,29 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 timestamp: timestamp,
                                 isEditable: editable,
                                 linkColor: message.linkColor)
+    }
+
+    // Ordered rendered-plain-text segments for a message, used as the
+    // corpus for in-conversation find. Derived from the same MessageRendition
+    // the cells display, so match ranges map 1:1 onto the cell's
+    // findableTextViews (same order). File-attachment subparts have no text
+    // view and are skipped, matching MultipartMessageCellView.textViews.
+    func findSegments(for message: Message) -> [String] {
+        switch rendition(for: message, isLast: false).flavor {
+        case .regular(let regular):
+            return [regular.attributedString.string]
+        case .command(let command):
+            return [command.command]
+        case .multipart(let subparts):
+            return subparts.compactMap { subpart in
+                switch subpart.kind {
+                case .fileAttachment:
+                    return nil
+                case .regular, .codeAttachment, .statusUpdate:
+                    return subpart.attributedString.string
+                }
+            }
+        }
     }
 }
 
@@ -2330,6 +2470,7 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         estimatedCount += 1
         it_assert(i <= estimatedCount)
         tableView.insertRows(at: IndexSet(integer: i))
+        scheduleFindRescan()
 
         // Disable buttons in message that just became second-to-last.
         if let model,
@@ -2350,6 +2491,7 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         it_assert(range.upperBound <= estimatedCount)
         estimatedCount -= range.count
         tableView.removeRows(at: IndexSet(ranges: [range]))
+        scheduleFindRescan()
         setNeedsLayoutNow()
     }
 
@@ -2371,6 +2513,7 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         tableView.reloadData(forRowIndexes: indexSet,
                               columnIndexes: IndexSet(integer: 0))
         tableView.endUpdates()
+        scheduleFindRescan(modifiedMessageIDs: modifiedMessageIDs(atIndexes: indexSet))
         setNeedsLayoutNow()
     }
 }
@@ -2399,7 +2542,10 @@ fileprivate enum PickSessionButtonIdentifier: String {
 extension Message.Content {
     func attributedStringValue(linkColor: NSColor,
                                textColor: NSColor,
-                               renderMentions: Bool = false) -> NSAttributedString {
+                               renderMentions: Bool = false,
+                               // True for AI-authored text, where the "@" on a
+                               // stableID mention is treated as optional.
+                               atSignOptional: Bool = false) -> NSAttributedString {
         switch self {
         case .multipart:
             it_fatalError()  // TODO: This will be hit. We need a different cell type for multipart messages.
@@ -2412,16 +2558,18 @@ extension Message.Content {
                 .paragraphStyle: paragraphStyle,
                 .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)
             ]
-            return NSAttributedString(string: "A vector store was created", attributes: attributes)
+            return NSAttributedString(string: String(localized: "ChatViewController.VectorStoreCreated", defaultValue: "A vector store was created", comment: "System message shown when a vector store is created"), attributes: attributes)
         case .watcherEvent(let payload):
             // Render with the system-message styling so the user
             // sees it's not their own message. Symbol prefix marks
-            // it as an iTerm2-posted event.
-            return AttributedStringForSystemMessageMarkdown("📡 \(payload.detail)") {}
+            // it as an iTerm2-posted event (a clock for a fired timer,
+            // the antenna for a session watcher).
+            let glyph = (payload.reason == .timerFired) ? "⏰" : "📡"
+            return AttributedStringForSystemMessageMarkdown("\(glyph) \(payload.detail)") {}
         case .unsupported:
             // A message a newer iTerm2 sent that this build can't decode.
             return AttributedStringForSystemMessageMarkdown(
-                "This message requires a newer version of iTerm2 to view.") {}
+                String(localized: "ChatViewController.UnsupportedMessage", defaultValue: "This message requires a newer version of iTerm2 to view.", comment: "Shown for a message that a newer iTerm2 sent that this build cannot decode")) {}
         case .plainText(let string, context: _):
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineBreakMode = .byWordWrapping
@@ -2441,7 +2589,7 @@ extension Message.Content {
             guard renderMentions else {
                 return rendered
             }
-            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
+            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor, atSignOptional: atSignOptional)
         case .markdown(let string), .explanationResponse(_, _, let string):
             let rendered = AttributedStringForGPTMarkdown(
                 ChatViewController.trimLeadingWhitespaceForDisplay(string),
@@ -2454,16 +2602,16 @@ extension Message.Content {
             guard renderMentions else {
                 return rendered
             }
-            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
+            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor, atSignOptional: atSignOptional)
         case .explanationRequest(request: let request):
             let string =
             if let url = request.url {
-                "Explain the output of \(request.subjectMatter) based on [attached terminal content](\(url))."
+                String(localized: "ChatViewController.ExplainWithContent", defaultValue: "Explain the output of \(request.subjectMatter) based on [attached terminal content](\(String(describing: url))).", comment: "Request to explain command output with attached terminal content")
             } else {
-                "Explain the output of \(request.subjectMatter) based on some no-longer-available content."
+                String(localized: "ChatViewController.ExplainWithoutContent", defaultValue: "Explain the output of \(request.subjectMatter) based on some no-longer-available content.", comment: "Request to explain command output when the content is no longer available")
             }
             let epilogue = if request.truncated {
-                "\n*Note: The command output was truncated because it exceeded the maximum number of lines supported by AI Chat*"
+                String(localized: "ChatViewController.OutputTruncatedNote", defaultValue: "\n*Note: The command output was truncated because it exceeded the maximum number of lines supported by AI Chat*", comment: "Note appended when command output was truncated")
             } else {
                 ""
             }
@@ -2475,12 +2623,15 @@ extension Message.Content {
             case .classic(let request):
                 let specific = request.permissionDescription + "."
                 let warning = if safe == false {
-                    "⚠️ **The AI safety check flagged this command as potentially dangerous. Review it with care.**\n\n"
+                    String(localized: "ChatViewController.SafetyFlaggedWarning", defaultValue: "⚠️ **The AI safety check flagged this command as potentially dangerous. Review it with care.**\n\n", comment: "Warning shown when the AI safety check flags a command as dangerous")
                 } else {
                     ""
                 }
-                let general =  "Would you like to grant AI **\(request.content.permissionCategory.rawValue)** permission?"
-                let info = "*If you grant or deny permission, it affects only this chat conversation while linked to this particular terminal session. You can change permissions in the chat Info menu.*"
+                // Carry the fully localized permission title as a trailing complete clause rather
+                // than injecting the deliberately-English Codable rawValue mid-sentence, which
+                // breaks word order and grammar in other languages.
+                let general =  String(localized: "ChatViewController.GrantPermissionQuestion", defaultValue: "Would you like to grant this permission: **\(request.content.permissionCategory.regularTitle)**?", comment: "Question asking whether to grant a permission; the placeholder is a localized permission title such as “AI can Run Commands”")
+                let info = String(localized: "ChatViewController.PermissionScopeInfo", defaultValue: "*If you grant or deny permission, it affects only this chat conversation while linked to this particular terminal session. You can change permissions in the chat Info menu.*", comment: "Explains the scope of a granted or denied permission")
                 return AttributedStringForGPTMarkdown(warning + specific + " " + general + "\n\n" + info,
                                                       linkColor: linkColor,
                                                       textColor: textColor) {}
@@ -2494,7 +2645,7 @@ extension Message.Content {
                 // carries become clickable links (or "[defunct session]"
                 // once the target is gone).
                 let rendered = AttributedStringForSystemMessageMarkdown(ext.markdownDescription) {}
-                return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
+                return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor, atSignOptional: atSignOptional)
             }
         case .remoteCommandResponse(let response, _, _, _):
             switch response {
@@ -2508,7 +2659,7 @@ extension Message.Content {
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession:
-                return AttributedStringForSystemMessageMarkdown("Waiting for a session to be selected…") { }
+                return AttributedStringForSystemMessageMarkdown(String(localized: "ChatViewController.WaitingForSession", defaultValue: "Waiting for a session to be selected…", comment: "System message shown while waiting for the user to select a session")) { }
             case .executingCommand(let command):
                 return AttributedStringForSystemMessageMarkdown(command.markdownDescription) { }
             case .notice(let message):
@@ -2516,35 +2667,25 @@ extension Message.Content {
             case .streamingChanged(let state):
                 return switch state {
                 case .stopped:
-                    AttributedStringForSystemMessageMarkdown("Terminal commands will no longer be sent to AI automatically.") {}
+                    AttributedStringForSystemMessageMarkdown(String(localized: "ChatViewController.StreamStopped", defaultValue: "Terminal commands will no longer be sent to AI automatically.", comment: "System message shown when automatic sending of terminal commands stops")) {}
                 case .active:
-                    AttributedStringForSystemMessageMarkdown("All terminal commands in the linked session will be sent to AI automatically.") {}
+                    AttributedStringForSystemMessageMarkdown(String(localized: "ChatViewController.StreamActive", defaultValue: "All terminal commands in the linked session will be sent to AI automatically.", comment: "System message shown when automatic sending of terminal commands starts")) {}
                 case .stoppedAutomatically:
-                    AttributedStringForSystemMessageMarkdown("Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts or the current chat changes.") {}
+                    AttributedStringForSystemMessageMarkdown(String(localized: "ChatViewController.StreamStoppedAutomatically", defaultValue: "Terminal commands will no longer be sent to AI automatically. Automatic sending always terminates when iTerm2 restarts or the current chat changes.", comment: "System message shown when automatic sending of terminal commands stops on its own")) {}
                 }
             case let .offerLink(terminal: terminal, guid: _, name: name):
-                let displayName = name ?? "Unnamed session"
-                let kind = terminal ? "terminal" : "browser"
-                let body = "**Link this chat to \(kind) session \u{201C}\(displayName)\u{201D}, "
-                    + "or enable orchestration?**\n\n"
-                    + "Linking gives the AI access to this \(kind) session subject to "
-                    + "your per-call permission. **Orchestration** is an alternative "
-                    + "mode where the AI can coordinate multiple sessions. "
-                    + "It uses automatic safety checking and one-time per-session approval instead of "
-                    + "fine-grained permissions."
+                let displayName = name ?? String(localized: "ChatViewController.UnnamedSession", defaultValue: "Unnamed session", comment: "Fallback name for a session with no name")
+                // A complete localized body per session kind rather than injecting the translated
+                // noun “terminal”/“browser” (which recurs mid-sentence and would break agreement).
+                let body = terminal
+                    ? String(localized: "ChatViewController.OfferLinkBodyTerminal", defaultValue: "**Link this chat to terminal session \u{201C}\(displayName)\u{201D}, or enable orchestration?**\n\nLinking gives the AI access to this terminal session subject to your per-call permission. **Orchestration** is an alternative mode where the AI can coordinate multiple sessions. It uses automatic safety checking and one-time per-session approval instead of fine-grained permissions.", comment: "Offer to link the chat to a terminal session or enable orchestration")
+                    : String(localized: "ChatViewController.OfferLinkBodyBrowser", defaultValue: "**Link this chat to browser session \u{201C}\(displayName)\u{201D}, or enable orchestration?**\n\nLinking gives the AI access to this browser session subject to your per-call permission. **Orchestration** is an alternative mode where the AI can coordinate multiple sessions. It uses automatic safety checking and one-time per-session approval instead of fine-grained permissions.", comment: "Offer to link the chat to a browser session or enable orchestration")
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case .offerOrchestration:
-                let body = "**Enable orchestration for this chat?**\n\n"
-                    + "**Orchestration** lets the AI coordinate across "
-                    + "multiple terminal sessions. It can read the contents "
-                    + "of any session, and you grant a one-time approval "
-                    + "before it controls a session instead of approving "
-                    + "every call. It also runs in **auto mode**: each "
-                    + "command the AI proposes is checked for safety by your "
-                    + "AI provider, and anything risky is held for your review."
+                let body = String(localized: "ChatViewController.OfferOrchestrationBody", defaultValue: "**Enable orchestration for this chat?**\n\n**Orchestration** lets the AI coordinate across multiple terminal sessions. It can read the contents of any session, and you grant a one-time approval before it controls a session instead of approving every call. It also runs in **auto mode**: each command the AI proposes is checked for safety by your AI provider, and anything risky is held for your review.", comment: "Offer to enable orchestration mode for the chat")
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case .permissions:
-                return AttributedStringForSystemMessageMarkdown("You can use these buttons or the info button menu at the top of the chat window to control AI permissions for this chat.") {}
+                return AttributedStringForSystemMessageMarkdown(String(localized: "ChatViewController.PermissionsHelp", defaultValue: "You can use these buttons or the info button menu at the top of the chat window to control AI permissions for this chat.", comment: "Explains how to control AI permissions for a chat")) {}
             case let .workgroupPermissionRequest(_, workgroupID, workgroupName, summary):
                 // Three distinct prompt shapes share this content type:
                 //   - "spawn": the orchestrator wants to open a brand-new
@@ -2561,50 +2702,53 @@ extension Message.Content {
                 //   - real workgroup_id: workgroup phrasing.
                 let body: String
                 if workgroupID == WorkgroupIntrospection.spawnWorkgroupID {
-                    body = "**Open a new session?**\n\n\(summary)"
+                    body = String(localized: "ChatViewController.OpenNewSessionPrompt", defaultValue: "**Open a new session?**\n\n\(summary)", comment: "Prompt asking whether to let the orchestrator open a new session")
                 } else if workgroupID == WorkgroupIntrospection.commandApprovalWorkgroupID {
                     // Per-command safety approval: the orchestrator's safety
                     // gate flagged a command (or file write) and is asking the
                     // user to approve it before it runs. The specifics live in
                     // the summary the dispatcher built.
-                    body = "**Run this command?**\n\n\(summary)"
+                    body = String(localized: "ChatViewController.RunCommandPrompt", defaultValue: "**Run this command?**\n\n\(summary)", comment: "Prompt asking whether to let the orchestrator run a command")
                 } else if workgroupID == WorkgroupIntrospection.watchApprovalWorkgroupID {
                     // One-time consent for a session-bound watch to read the
                     // screen repeatedly when View Contents is set to Ask. Details
                     // (which session, what it watches for) live in the summary.
-                    body = "**Allow repeated screen reads?**\n\n\(summary)"
+                    body = String(localized: "ChatViewController.AllowRepeatedReadsPrompt", defaultValue: "**Allow repeated screen reads?**\n\n\(summary)", comment: "Prompt asking whether to allow repeated screen reads for a watch")
                 } else {
-                    let kind = workgroupID.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix)
-                        ? "session"
-                        : "workgroup"
-                    body = "**Allow agent to control \(kind) \u{201C}\(workgroupName)\u{201D}?**\n\n\(summary)"
+                    // A complete localized prompt per kind rather than injecting the translated noun
+                    // “session”/“workgroup” into the sentence.
+                    body = workgroupID.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix)
+                        ? String(localized: "ChatViewController.AllowControlSessionPrompt", defaultValue: "**Allow agent to control session \u{201C}\(workgroupName)\u{201D}?**\n\n\(summary)", comment: "Prompt asking whether to allow the agent to control a session")
+                        : String(localized: "ChatViewController.AllowControlWorkgroupPrompt", defaultValue: "**Allow agent to control workgroup \u{201C}\(workgroupName)\u{201D}?**\n\n\(summary)", comment: "Prompt asking whether to allow the agent to control a workgroup")
                 }
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case .enableOrchestrationRequest:
-                let body = """
+                let body = String(localized: "ChatViewController.EnableOrchestrationRequestBody", defaultValue: """
                 **Enable orchestration?**
 
                 Orchestration mode lets the agent read screen contents from any session. To type \
                 into a session still requires your permission.
-                
+
                 This is a more permissive model than when an agent is linked to \
                 a single session, where there are very fine-grained permission settings.
 
                 Enabling will detach any linked terminal or browser session and switch \
                 the chat to Orchestration mode.
-                """
+                """, comment: "Body of the prompt asking the user to enable orchestration mode")
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case let .orchestrationPermissionGranted(_, name):
-                let body = "**Granted this chat permission to control "
-                    + "\u{201C}\(name)\u{201D}.**\n\n"
-                    + "You @-mentioned it, so the agent can act there "
-                    + "without asking. Revoke to require approval again."
+                let body = String(localized: "ChatViewController.PermissionGrantedBody", defaultValue: "**Granted this chat permission to control \u{201C}\(name)\u{201D}.**\n\nYou @-mentioned it, so the agent can act there without asking. Revoke to require approval again.", comment: "Notice shown when the chat is granted permission to control a mentioned entity")
                 return AttributedStringForSystemMessageMarkdown(body) {}
             }
 
         case .selectSessionRequest(_, terminal: let terminal):
+            // A complete localized sentence per session kind rather than injecting the
+            // translated noun mid-sentence, which breaks agreement in other languages.
+            let needsLiveSession = terminal
+                ? String(localized: "ChatViewController.NeedsLiveSessionTerminal", defaultValue: "The AI agent needs to run commands in a live terminal session, but none is attached to this chat.", comment: "Shown when the AI needs a live terminal session but none is attached")
+                : String(localized: "ChatViewController.NeedsLiveSessionBrowser", defaultValue: "The AI agent needs to run commands in a live web browser session, but none is attached to this chat.", comment: "Shown when the AI needs a live web browser session but none is attached")
             return AttributedStringForGPTMarkdown(
-                "The AI agent needs to run commands in a live \(terminal ? "terminal" : "web browser") session, but none is attached to this chat.",
+                needsLiveSession,
                 linkColor: linkColor,
                 textColor: textColor,
                 didCopy: {})
@@ -2642,12 +2786,12 @@ extension Message {
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession, .executingCommand:
-                return [.init(title: "Cancel", destructive: true, identifier: "")]
+                return [.init(title: iTermLocalizedCancel(), destructive: true, identifier: "")]
             case .notice: return []
             case .streamingChanged(let state):
                 switch state {
                 case .active:
-                    return [.init(title: "Stop", destructive: true, identifier: "")]
+                    return [.init(title: String(localized: "ChatViewController.Stop", defaultValue: "Stop", comment: "Button to stop streaming terminal content to AI"), destructive: true, identifier: "")]
                 case .stopped, .stoppedAutomatically:
                     return []
                 }
@@ -2656,12 +2800,12 @@ extension Message {
                 // handler in configure(cell:RegularMessageCellView,...);
                 // empty-string ids would conflict with the
                 // single-button cases above.
-                return [.init(title: "Link", destructive: false, identifier: "link"),
-                        .init(title: "Enable Orchestration", destructive: false, identifier: "orchestrate")]
+                return [.init(title: String(localized: "ChatViewController.Link", defaultValue: "Link", comment: "Button to link a session to the chat"), destructive: false, identifier: "link"),
+                        .init(title: enableOrchestrationButtonTitle, destructive: false, identifier: "orchestrate")]
             case .offerOrchestration:
                 // Identifier matches the offerOrchestration buttonClicked
                 // handler in configure(cell:RegularMessageCellView,...).
-                return [.init(title: "Enable Orchestration", destructive: false, identifier: "orchestrate")]
+                return [.init(title: enableOrchestrationButtonTitle, destructive: false, identifier: "orchestrate")]
             case let .permissions(terminal: terminal, guid: guid):
                 let rce = RemoteCommandExecutor.instance
                 var buttons = [MessageRendition.Regular.Button]()
@@ -2675,16 +2819,18 @@ extension Message {
                     let state = switch rce.permission(chatID: chatID, inSessionGuid: guid, category: category) {
                     case .always:
                         if category.autopopulatedWhenAlways {
-                            "Provided automatically"
+                            String(localized: "ChatViewController.PermissionProvidedAutomatically", defaultValue: "Provided automatically", comment: "Permission state: data is provided automatically")
                         } else {
-                            "Always"
+                            String(localized: "ChatViewController.PermissionAlways", defaultValue: "Always", comment: "Permission state: always allowed")
                         }
                     case .never:
-                        "Never"
+                        String(localized: "ChatViewController.PermissionNever", defaultValue: "Never", comment: "Permission state: never allowed")
                     case .ask:
-                        "Ask"
+                        String(localized: "ChatViewController.PermissionAsk", defaultValue: "Ask", comment: "Permission state: ask each time")
                     }
-                    buttons.append(.init(title: category.rawValue + ": " + state,
+                    // Display the fully localized title; the identifier keeps the English rawValue
+                    // because it is parsed back as the category's identity by the button handler.
+                    buttons.append(.init(title: category.regularTitle + ": " + state,
                                          destructive: false,
                                          identifier: category.rawValue))
                 }
@@ -2695,19 +2841,19 @@ extension Message {
                 // wires the buttonClicked handler that parses them and
                 // publishes the matching workgroupPermissionResponse.
                 return [
-                    .init(title: "Approve",
+                    .init(title: String(localized: "ChatViewController.Approve", defaultValue: "Approve", comment: "Button to approve a workgroup permission request"),
                           destructive: false,
                           identifier: "workgroupPermission:\(ApprovalChoice.approve.rawValue):\(requestID)"),
-                    .init(title: "Deny",
+                    .init(title: String(localized: "ChatViewController.Deny", defaultValue: "Deny", comment: "Button to deny a workgroup permission request"),
                           destructive: true,
                           identifier: "workgroupPermission:\(ApprovalChoice.deny.rawValue):\(requestID)"),
                 ]
             case let .enableOrchestrationRequest(requestID):
                 return [
-                    .init(title: "Enable Orchestration",
+                    .init(title: enableOrchestrationButtonTitle,
                           destructive: false,
                           identifier: "enableOrchestration:\(ApprovalChoice.approve.rawValue):\(requestID)"),
-                    .init(title: "Not Now",
+                    .init(title: String(localized: "ChatViewController.NotNow", defaultValue: "Not Now", comment: "Button to decline enabling orchestration for now"),
                           destructive: true,
                           identifier: "enableOrchestration:\(ApprovalChoice.deny.rawValue):\(requestID)"),
                 ]
@@ -2717,21 +2863,21 @@ extension Message {
                 // so handleRevokeOrchestrationPermissionButton splits with
                 // maxSplits 1 and keeps everything after it verbatim.
                 return [
-                    .init(title: "Revoke",
+                    .init(title: String(localized: "ChatViewController.Revoke", defaultValue: "Revoke", comment: "Button to revoke an orchestration permission"),
                           destructive: true,
                           identifier: "revokeOrchestrationPermission:\(scope)"),
                 ]
             }
         case .selectSessionRequest:
-            return [.init(title: "Select a Session", destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
-                    .init(title: "Cancel", destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
+            return [.init(title: String(localized: "ChatViewController.SelectASession", defaultValue: "Select a Session", comment: "Button to select a terminal session"), destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
+                    .init(title: iTermLocalizedCancel(), destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
         case .remoteCommandRequest(let payload, safe: _):
             switch payload {
             case .classic:
-                return [.init(title: "Allow Once", destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
-                        .init(title: "Always Allow", destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
-                        .init(title: "Deny this Time", destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
-                        .init(title: "Always Deny", destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
+                return [.init(title: String(localized: "ChatViewController.AllowOnce", defaultValue: "Allow Once", comment: "Button to allow an AI command once"), destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
+                        .init(title: String(localized: "ChatViewController.AlwaysAllow", defaultValue: "Always Allow", comment: "Button to always allow an AI command"), destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
+                        .init(title: String(localized: "ChatViewController.DenyThisTime", defaultValue: "Deny this Time", comment: "Button to deny an AI command this time"), destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
+                        .init(title: String(localized: "ChatViewController.AlwaysDeny", defaultValue: "Always Deny", comment: "Button to always deny an AI command"), destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
             case .external:
                 // Orchestration tool calls aren't per-call gated; no buttons.
                 return []
@@ -2739,10 +2885,11 @@ extension Message {
         }
     }
 
-    func attributedStringValue(renderMentions: Bool) -> NSAttributedString {
+    func attributedStringValue(renderMentions: Bool, atSignOptional: Bool = false) -> NSAttributedString {
         return content.attributedStringValue(linkColor: linkColor,
                                              textColor: textColor,
-                                             renderMentions: renderMentions)
+                                             renderMentions: renderMentions,
+                                             atSignOptional: atSignOptional)
     }
 }
 
@@ -2754,10 +2901,316 @@ extension ChatViewController: NSMenuItemValidation {
             if menuItem.state == .on {
                 menuItem.title = autoTitle
             } else {
-                menuItem.title = "AI can \(category.rawValue)"
+                // Use the fully localized per-category title rather than recomposing it from the
+                // deliberately-English Codable rawValue, which breaks word order in other languages.
+                menuItem.title = category.regularTitle
             }
         }
+        if let action = menuItem.action, isFindAction(action) {
+            return validateFindAction(action, tag: menuItem.tag)
+        }
         return true
+    }
+}
+
+// MARK: - In-conversation find (Cmd-F)
+
+extension ChatViewController: ChatFindBarViewDelegate {
+    // Standard macOS find highlight: the current match uses the system find
+    // color; other matches use a translucent version of it.
+    private static let findHighlightColor = NSColor.findHighlightColor.withAlphaComponent(0.45)
+    private static let currentFindHighlightColor = NSColor.findHighlightColor
+
+    @objc func performFindPanelAction(_ sender: Any?) {
+        guard let menuItem = sender as? NSMenuItem else {
+            showFindBar()
+            return
+        }
+        switch NSFindPanelAction(rawValue: UInt(menuItem.tag)) {
+        case .showFindPanel:
+            showFindBar()
+        case .setFindString:
+            guard let text = selectedFindText() else {
+                return
+            }
+            iTermFindPasteboard.sharedInstance().setStringValueUnconditionally(text)
+            iTermFindPasteboard.sharedInstance().updateObservers(nil, internallyGenerated: true)
+            showFindBar(initialQuery: text)
+        default:
+            break
+        }
+    }
+
+    @objc func findNext(_ sender: Any?) {
+        revealMatch(findController.next())
+    }
+
+    @objc func findPrevious(_ sender: Any?) {
+        revealMatch(findController.previous())
+    }
+
+    // Selectors this controller handles for in-conversation find. Shared so
+    // the focused text views and the window controller can forward and
+    // validate them (a focused NSTextView otherwise claims
+    // performFindPanelAction: for itself and disables the menu item).
+    func isFindAction(_ action: Selector) -> Bool {
+        return action == #selector(performFindPanelAction(_:)) ||
+               action == #selector(findNext(_:)) ||
+               action == #selector(findPrevious(_:))
+    }
+
+    func validateFindAction(_ action: Selector, tag: Int) -> Bool {
+        if action == #selector(performFindPanelAction(_:)) {
+            switch NSFindPanelAction(rawValue: UInt(max(0, tag))) {
+            case .showFindPanel:
+                return model != nil
+            case .setFindString:
+                return selectedFindText() != nil
+            default:
+                return false
+            }
+        }
+        if action == #selector(findNext(_:)) || action == #selector(findPrevious(_:)) {
+            return findController.numberOfResults > 0
+        }
+        return false
+    }
+
+    // MARK: ChatFindBarViewDelegate
+
+    func chatFindBar(_ bar: ChatFindBarView,
+                     didChangeQuery query: String,
+                     mode: iTermFindMode) {
+        runFind(query: query, mode: mode)
+    }
+
+    func chatFindBarFindNext(_ bar: ChatFindBarView) {
+        findNext(nil)
+    }
+
+    func chatFindBarFindPrevious(_ bar: ChatFindBarView) {
+        findPrevious(nil)
+    }
+
+    func chatFindBarClose(_ bar: ChatFindBarView) {
+        closeFindBar()
+    }
+
+    // MARK: Internal
+
+    private func showFindBar(initialQuery: String? = nil) {
+        guard model != nil else {
+            return
+        }
+        findController.model = model
+        // Model mutations while the bar was closed don't refresh the cache, so
+        // rebuild from current rendered text on every open.
+        findController.invalidateCache()
+        let bar: ChatFindBarView
+        if let existing = findBar {
+            bar = existing
+        } else {
+            bar = ChatFindBarView(frame: .zero)
+            bar.delegate = self
+            bar.selectMode(iTermFindDriver.mode())
+            view.addSubview(bar)
+            findBar = bar
+        }
+        let seed = initialQuery ?? nonEmptyOrNil(iTermFindPasteboard.sharedInstance().stringValue)
+        if let seed {
+            bar.query = seed
+        }
+        setNeedsLayoutNow()
+        bar.focusSearchField()
+        runFind(query: bar.query, mode: bar.mode)
+    }
+
+    private func nonEmptyOrNil(_ string: String?) -> String? {
+        guard let string, !string.isEmpty else {
+            return nil
+        }
+        return string
+    }
+
+    func closeFindBar() {
+        guard findBar != nil else {
+            return
+        }
+        findController.clear()
+        refreshVisibleHighlights()
+        findBar?.removeFromSuperview()
+        findBar = nil
+        setNeedsLayoutNow()
+    }
+
+    private func runFind(query: String, mode: iTermFindMode) {
+        findController.model = model
+        findController.search(query, mode: mode)
+        revealMatch(findController.currentMatch)
+    }
+
+    // Schedule a coalesced find rescan after a conversation change. Pass the
+    // uniqueIDs of messages whose content changed in place (from
+    // didModifyItemsAtIndexes); insert/remove pass none (rebuild picks up new
+    // messages on demand and ignores removed ones).
+    func scheduleFindRescan(modifiedMessageIDs: [UUID] = []) {
+        guard findBar != nil else {
+            return
+        }
+        pendingFindModifiedMessageIDs.formUnion(modifiedMessageIDs)
+        findRescanJoiner.setNeedsUpdate { [weak self] in
+            self?.performFindRescan()
+        }
+    }
+
+    private func performFindRescan() {
+        guard findBar != nil else {
+            pendingFindModifiedMessageIDs.removeAll()
+            return
+        }
+        let ids = Array(pendingFindModifiedMessageIDs)
+        pendingFindModifiedMessageIDs.removeAll()
+        findController.model = model
+        findController.rescan(invalidatingMessageIDs: ids)
+        updateFindResultsUI()
+        refreshVisibleHighlights()
+    }
+
+    // Message uniqueIDs at the given item indexes (non-message rows dropped).
+    func modifiedMessageIDs(atIndexes indexSet: IndexSet) -> [UUID] {
+        guard let model else {
+            return []
+        }
+        return indexSet.compactMap { index in
+            guard index < model.items.count,
+                  case .message(let updatable) = model.items[index] else {
+                return nil
+            }
+            return updatable.message.uniqueID
+        }
+    }
+
+    private func revealMatch(_ match: ChatFindController.Match?) {
+        updateFindResultsUI()
+        guard let match else {
+            refreshVisibleHighlights()
+            return
+        }
+        tableView.scrollRowToVisible(match.itemIndex)
+        refreshVisibleHighlights()
+        scrollMatchRangeToVisible(match)
+    }
+
+    private func updateFindResultsUI() {
+        findBar?.updateResults(current: findController.currentIndex,
+                               total: findController.numberOfResults)
+    }
+
+    private func refreshVisibleHighlights() {
+        let visible = tableView.rows(in: tableView.visibleRect)
+        guard visible.length > 0 else {
+            return
+        }
+        for row in visible.location..<(visible.location + visible.length) {
+            guard let cell = tableView.view(atColumn: 0,
+                                            row: row,
+                                            makeIfNecessary: false) else {
+                continue
+            }
+            applyFindHighlights(to: cell, row: row)
+        }
+    }
+
+    fileprivate func applyFindHighlights(to view: NSView, row: Int) {
+        guard let cell = view as? ChatFindableCellView,
+              let model,
+              row < model.items.count,
+              case .message(let updatable) = model.items[row] else {
+            return
+        }
+        let messageID = updatable.message.uniqueID
+        let textViews = cell.findableTextViews
+        for textView in textViews {
+            guard let layoutManager = textView.layoutManager,
+                  let textStorage = textView.textStorage else {
+                continue
+            }
+            layoutManager.removeTemporaryAttribute(
+                .backgroundColor,
+                forCharacterRange: NSRange(location: 0, length: textStorage.length))
+        }
+        guard findController.hasQuery else {
+            return
+        }
+        let current = findController.currentMatch
+        for match in findController.matches(forMessageID: messageID) {
+            guard match.segment < textViews.count,
+                  let textStorage = textViews[match.segment].textStorage,
+                  let layoutManager = textViews[match.segment].layoutManager,
+                  NSMaxRange(match.range) <= textStorage.length else {
+                continue
+            }
+            let color = (match == current)
+                ? Self.currentFindHighlightColor
+                : Self.findHighlightColor
+            layoutManager.addTemporaryAttributes([.backgroundColor: color],
+                                                 forCharacterRange: match.range)
+        }
+    }
+
+    private func scrollMatchRangeToVisible(_ match: ChatFindController.Match) {
+        guard let cell = tableView.view(atColumn: 0,
+                                        row: match.itemIndex,
+                                        makeIfNecessary: true) as? ChatFindableCellView,
+              match.segment < cell.findableTextViews.count else {
+            return
+        }
+        let textView = cell.findableTextViews[match.segment]
+        guard let layoutManager = textView.layoutManager,
+              let container = textView.textContainer,
+              NSMaxRange(match.range) <= (textView.textStorage?.length ?? 0) else {
+            return
+        }
+        let glyphRange = layoutManager.glyphRange(forCharacterRange: match.range,
+                                                  actualCharacterRange: nil)
+        var rect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: container)
+        let origin = textView.textContainerOrigin
+        rect.origin.x += origin.x
+        rect.origin.y += origin.y
+        let rectInTable = textView.convert(rect, to: tableView)
+        tableView.scrollToVisible(rectInTable.insetBy(dx: 0, dy: -20))
+    }
+
+    private func selectedFindText() -> String? {
+        guard let textView = view.window?.firstResponder as? NSTextView else {
+            return nil
+        }
+        let range = textView.selectedRange()
+        guard range.length > 0 else {
+            return nil
+        }
+        return (textView.string as NSString).substring(with: range)
+    }
+
+    // A click landed in a conversation text view. While find is active, anchor
+    // the find cursor there so the next Find Next/Previous navigates relative
+    // to the click instead of the last match.
+    func conversationTextViewDidReceiveClick(_ textView: NSTextView) {
+        guard findBar != nil else {
+            return
+        }
+        let row = tableView.row(for: textView)
+        guard row >= 0,
+              let cell = tableView.view(atColumn: 0,
+                                        row: row,
+                                        makeIfNecessary: false) as? ChatFindableCellView,
+              let segment = cell.findableTextViews.firstIndex(of: textView) else {
+            return
+        }
+        findController.setCursor(ChatFindController.Position(
+            itemIndex: row,
+            segment: segment,
+            location: textView.selectedRange().location))
     }
 }
 
@@ -2865,10 +3318,7 @@ extension ChatViewController: ChatToolbarDataSource {
             if !model.features.contains(.hostedWebSearch) {
                 return false
             }
-            if #available(macOS 11, *) {
-                return iTermUserDefaults.userDefaults().bool(forKey: Self.webSearchUserDefaultsKey)
-            }
-            return false
+            return iTermUserDefaults.userDefaults().bool(forKey: Self.webSearchUserDefaultsKey)
         }
         set {
             return iTermUserDefaults.userDefaults().set(newValue, forKey: Self.webSearchUserDefaultsKey)
@@ -2928,11 +3378,11 @@ extension ChatViewController: ChatToolbarDataSource {
         // disabled (see ChatListModel.setOrchestrationEnabled).
         let orchestrationOn = listModel.chat(id: chatID)?.orchestrationEnabled ?? false
         if orchestrationOn {
-            menu.addItem(withTitle: "Disable Orchestration",
+            menu.addItem(withTitle: String(localized: "ChatViewController.DisableOrchestration", defaultValue: "Disable Orchestration", comment: "Menu item to disable orchestration mode"),
                          action: #selector(disableOrchestration(_:)),
                          target: self)
         } else {
-            menu.addItem(withTitle: "Enable Orchestration",
+            menu.addItem(withTitle: enableOrchestrationButtonTitle,
                          action: #selector(enableOrchestration(_:)),
                          target: self)
         }
@@ -2950,12 +3400,12 @@ extension ChatViewController: ChatToolbarDataSource {
             if let guid = model?.terminalSessionGuid,
                iTermController.sharedInstance().anySession(forReference: guid) != nil {
 
-                menu.addItem(withTitle: "Reveal Linked Terminal Session", action: #selector(revealLinkedTerminalSession(_:)), target: self)
-                menu.addItem(withTitle: "Unlink Terminal Session", action: #selector(unlinkTerminalSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController.RevealLinkedTerminalSession", defaultValue: "Reveal Linked Terminal Session", comment: "Menu item to reveal the linked terminal session"), action: #selector(revealLinkedTerminalSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController.UnlinkTerminalSession", defaultValue: "Unlink Terminal Session", comment: "Menu item to unlink the terminal session"), action: #selector(unlinkTerminalSession(_:)), target: self)
                 // Inline-panel CVCs are already hosted in their session — no
                 // need to offer to put themselves there.
                 if !isInlinePanel {
-                    menu.addItem(withTitle: "Put Chat in Linked Terminal Session",
+                    menu.addItem(withTitle: String(localized: "ChatViewController.PutChatInLinkedTerminalSession", defaultValue: "Put Chat in Linked Terminal Session", comment: "Menu item to move the chat into the linked terminal session"),
                                  action: #selector(putChatInLinkedTerminalSession(_:)),
                                  target: self)
                 }
@@ -2978,7 +3428,7 @@ extension ChatViewController: ChatToolbarDataSource {
                 menu.addItem(NSMenuItem.separator())
 
                 if haveLinkedTerminalSession {
-                    menu.addItem(withTitle: "Send Commands & Output to AI Automatically",
+                    menu.addItem(withTitle: String(localized: "ChatViewController.SendCommandsAutomatically", defaultValue: "Send Commands & Output to AI Automatically", comment: "Menu item to automatically send terminal commands and output to AI"),
                                  action: #selector(toggleStream(_:)),
                                  target: self,
                                  state: streaming ? .on : .off,
@@ -2986,7 +3436,7 @@ extension ChatViewController: ChatToolbarDataSource {
                     menu.addItem(NSMenuItem.separator())
                 }
             } else {
-                menu.addItem(withTitle: "Link Terminal Session", action: #selector(objcLinkTerminalSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController.LinkTerminalSession", defaultValue: "Link Terminal Session", comment: "Menu item to link a terminal session to the chat"), action: #selector(objcLinkTerminalSession(_:)), target: self)
                 menu.addItem(NSMenuItem.separator())
             }
 
@@ -2994,10 +3444,10 @@ extension ChatViewController: ChatToolbarDataSource {
             if let guid = model?.browserSessionGuid,
                iTermController.sharedInstance().anySession(forReference: guid) != nil {
 
-                menu.addItem(withTitle: "Reveal Linked Web Browser Session", action: #selector(revealLinkedBrowserSession(_:)), target: self)
-                menu.addItem(withTitle: "Unlink Web Browser Session", action: #selector(unlinkBrowserSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController.RevealLinkedBrowserSession", defaultValue: "Reveal Linked Web Browser Session", comment: "Menu item to reveal the linked web browser session"), action: #selector(revealLinkedBrowserSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController.UnlinkBrowserSession", defaultValue: "Unlink Web Browser Session", comment: "Menu item to unlink the web browser session"), action: #selector(unlinkBrowserSession(_:)), target: self)
                 if !isInlinePanel {
-                    menu.addItem(withTitle: "Put Chat in Linked Browser Session",
+                    menu.addItem(withTitle: String(localized: "ChatViewController.PutChatInLinkedBrowserSession", defaultValue: "Put Chat in Linked Browser Session", comment: "Menu item to move the chat into the linked browser session"),
                                  action: #selector(putChatInLinkedBrowserSession(_:)),
                                  target: self)
                 }
@@ -3008,7 +3458,7 @@ extension ChatViewController: ChatToolbarDataSource {
                     if !category.isBrowserSpecific {
                         continue
                     }
-                    menu.addItem(withTitle: "AI can \(category.rawValue)",
+                    menu.addItem(withTitle: category.regularTitle,
                                  action: #selector(toggleAlwaysAllow(_:)),
                                  target: self,
                                  state: rce.controlState(chatID: chatID,
@@ -3019,13 +3469,13 @@ extension ChatViewController: ChatToolbarDataSource {
                 }
                 menu.addItem(NSMenuItem.separator())
             } else {
-                menu.addItem(withTitle: "Link Browser Session", action: #selector(objcLinkBrowserSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController.LinkBrowserSession", defaultValue: "Link Browser Session", comment: "Menu item to link a browser session to the chat"), action: #selector(objcLinkBrowserSession(_:)), target: self)
                 menu.addItem(NSMenuItem.separator())
             }
         }
 
 
-        menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
+        menu.addItem(withTitle: String(localized: "ChatViewController.SessionMenuHelp", defaultValue: "Help", comment: "Menu item that shows help about linked sessions"), action: #selector(showLinkedSessionHelp(_:)), target: self)
 
         // Position the menu just below the button
         let location = NSPoint(x: 0, y: sender.bounds.height)
@@ -3275,7 +3725,7 @@ extension ChatViewController: InlineChatToolbarViewDelegate {
         // chatStorage is kept most-recent-first (see ChatListModel).
         for i in 0..<listModel.count {
             let chat = listModel.chat(at: i)
-            let title = chat.title.isEmpty ? "Untitled Chat" : chat.title
+            let title = chat.title.isEmpty ? String(localized: "ChatViewController.UntitledChat", defaultValue: "Untitled Chat", comment: "Fallback title for a chat with no title") : chat.title
             let item = NSMenuItem(title: title,
                                   action: #selector(switchToChatFromMenu(_:)),
                                   keyEquivalent: "")
@@ -3307,7 +3757,7 @@ extension ChatViewController: InlineChatToolbarViewDelegate {
             menu.addItem(item)
         }
         if menu.items.isEmpty {
-            let item = NSMenuItem(title: "No Chats", action: nil, keyEquivalent: "")
+            let item = NSMenuItem(title: String(localized: "ChatViewController.NoChats", defaultValue: "No Chats", comment: "Disabled menu item shown when there are no chats"), action: nil, keyEquivalent: "")
             item.isEnabled = false
             menu.addItem(item)
         }
@@ -3379,9 +3829,9 @@ class InlinePanelCoordinator: NSObject, ChatViewControllerDelegate {
     func chatViewControllerDeleteSession(_ controller: ChatViewController) {
         guard let chatID = controller.chatID else { return }
         let warning = iTermWarning()
-        warning.title = "Are you sure you want to delete this chat? This action cannot be undone."
-        warning.heading = "Delete Chat?"
-        let action = iTermWarningAction(label: "Delete") { [weak self] _ in
+        warning.title = String(localized: "ChatViewController.DeleteChatConfirmMessage", defaultValue: "Are you sure you want to delete this chat? This action cannot be undone.", comment: "Confirmation message when deleting a chat")
+        warning.heading = String(localized: "ChatViewController.DeleteChatHeading", defaultValue: "Delete Chat?", comment: "Heading for the delete chat confirmation dialog")
+        let action = iTermWarningAction(label: String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete: used on buttons, menu items and other controls")) { [weak self] _ in
             // Runs from iTermWarning.runModal() on the main thread.
             MainActor.assumeIsolated {
                 do {
@@ -3400,7 +3850,7 @@ class InlinePanelCoordinator: NSObject, ChatViewControllerDelegate {
             }
         }
         action.destructive = true
-        warning.warningActions = [iTermWarningAction(label: "Cancel"), action]
+        warning.warningActions = [iTermWarningAction(label: iTermLocalizedCancel()), action]
         warning.warningType = .kiTermWarningTypePersistent
         warning.runModal()
     }
@@ -3563,8 +4013,8 @@ extension ChatViewController {
         // stick for the rest of the chat. Users coming from the
         // menu-driven toggle won't know that without being told.
         let alert = NSAlert()
-        alert.messageText = "Enable orchestration mode?"
-        alert.informativeText = """
+        alert.messageText = String(localized: "ChatViewController.EnableOrchestrationModeTitle", defaultValue: "Enable orchestration mode?", comment: "Title of the enable orchestration confirmation dialog")
+        alert.informativeText = String(localized: "ChatViewController.EnableOrchestrationModeBody", defaultValue: """
             Orchestration mode lets the agent coordinate across any iTerm2 sessions. \
             It can read screen contents from any session, but to type into a session requires \
             your permission. This is a more permissive model than when an agent is linked to \
@@ -3572,10 +4022,10 @@ extension ChatViewController {
 
             Enabling will detach any linked terminal or browser session and switch \
             the chat to Orchestration mode.
-            """
+            """, comment: "Explanatory body of the enable orchestration confirmation dialog")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Enable Orchestration")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: enableOrchestrationButtonTitle)
+        alert.addButton(withTitle: iTermLocalizedCancel())
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         setOrchestrationEnabled(true)
     }
@@ -3632,8 +4082,8 @@ extension ChatViewController {
         }
         inputView.refreshPlaceholder()
         let notice = enabled
-            ? "Orchestration enabled. Agent can see content of all sessions."
-            : "Orchestration disabled."
+            ? String(localized: "ChatViewController.OrchestrationEnabledNotice", defaultValue: "Orchestration enabled. Agent can see content of all sessions.", comment: "Notice shown when orchestration is enabled")
+            : String(localized: "ChatViewController.OrchestrationDisabledNotice", defaultValue: "Orchestration disabled.", comment: "Notice shown when orchestration is disabled")
         try? client.publishNotice(chatID: chatID, notice: notice)
     }
 

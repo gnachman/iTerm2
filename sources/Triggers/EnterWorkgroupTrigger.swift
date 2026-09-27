@@ -16,7 +16,7 @@ import Foundation
 @objc(iTermEnterWorkgroupTrigger)
 class EnterWorkgroupTrigger: Trigger {
     override static var title: String {
-        return "Enter Workgroup…"
+        return String(localized: "Trigger.EnterWorkgroup.Title", defaultValue: "Enter Workgroup…", comment: "Trigger action name: enter a workgroup on the matching session")
     }
 
     override var description: String {

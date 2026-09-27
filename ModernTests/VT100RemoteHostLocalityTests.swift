@@ -12,11 +12,12 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class VT100RemoteHostLocalityTests: XCTestCase {
-    // The same value the model's legacy fallback compares against.
+    // A name this machine answers to (gethostname()).
     private var liveLocalName: String { Host.fullyQualifiedDomainName() }
 
-    // A name guaranteed not to equal the live local hostname.
-    private var foreignName: String { liveLocalName + ".not-this-machine.invalid" }
+    // A name guaranteed not to be this machine: its short label ("elsewhere")
+    // differs from ours, so short-label matching can't accidentally claim it.
+    private var foreignName: String { "elsewhere.not-this-machine.invalid" }
 
     // Explicit return types unwrap the bridged implicitly-unwrapped optional
     // initializers, so callers get a plain non-optional VT100RemoteHost.
@@ -38,10 +39,11 @@ final class VT100RemoteHostLocalityTests: XCTestCase {
         XCTAssertEqual(makeHost("me", foreignName).localityState, .unknown)
     }
 
-    func testUnknownLocalityFallsBackToHostnameCompare() {
-        // Unknown locality: behavior matches the legacy string compare.
+    func testUnknownLocalityDecidesLiveByName() {
+        // Unknown locality: -isLocalhost decides live by matching the reported
+        // name against this machine's names.
         XCTAssertTrue(makeHost("me", liveLocalName).isLocalhost,
-                      "unknown host whose name matches the live local name should read as localhost")
+                      "unknown host whose name matches this machine should read as localhost")
         XCTAssertFalse(makeHost("me", foreignName).isLocalhost,
                        "unknown host whose name differs should read as remote")
     }

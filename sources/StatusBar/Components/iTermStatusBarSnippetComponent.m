@@ -22,16 +22,16 @@
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Snippets Menu";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarSnippet.ShortDescription", nil, [NSBundle mainBundle], @"Snippets Menu", @"Short description of the snippets menu status bar component");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"When clicked, opens a menu of snippets. Snippets are saved text strings that can be pasted quickly.";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarSnippet.DetailedDescription", nil, [NSBundle mainBundle], @"When clicked, opens a menu of snippets. Snippets are saved text strings that can be pasted quickly.", @"Detailed description of the snippets menu status bar component");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
-    return @"Snippet…";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarSnippet.Exemplar", nil, [NSBundle mainBundle], @"Snippet…", @"Exemplar shown in the status bar component picker for the snippets menu component");
 }
 
 - (BOOL)statusBarComponentCanStretch {
@@ -39,7 +39,7 @@
 }
 
 - (nullable NSString *)stringValue {
-    return @"Send Snippet…";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarSnippet.StringValue", nil, [NSBundle mainBundle], @"Send Snippet…", @"Label shown in the status bar for the snippets menu component");
 }
 
 - (nullable NSString *)stringValueForCurrentWidth {
@@ -83,7 +83,7 @@
 
     [menu addItem:[NSMenuItem separatorItem]];
 
-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Edit Snippets…" action:@selector(editSnippets:) keyEquivalent:@""];
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarSnippet.EditSnippets", nil, [NSBundle mainBundle], @"Edit Snippets…", @"Menu item to open the snippets editor") action:@selector(editSnippets:) keyEquivalent:@""];
     item.target = self;
     [menu addItem:item];
 

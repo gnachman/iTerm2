@@ -20,6 +20,10 @@ enum WatchMode: String, Codable {
     // watches the screen and fires when it decides the target is reached
     // or when it gives up after a time cap.
     case screenPoll
+    // Not tied to any session at all: fires once at a wall-clock time
+    // (WorkgroupWatcher.fireDate). Reads nothing (no screen, no state) and
+    // needs no permission. Used for "in N minutes / at time T, wake me".
+    case timer
 }
 
 // A registered async watcher. Fires once when sessionGUID's role
@@ -61,6 +65,16 @@ struct WorkgroupWatcher: Codable, Equatable {
     // support existed.
     var notifyUser: Bool? = nil
 
+    // Timer watchers only (mode == .timer): the absolute wall-clock instant to
+    // fire. nil for state/condition watchers, which fire on events, not a clock.
+    var fireDate: Date? = nil
+
+    // Optional free-text reminder the agent attaches when creating a timer, e.g.
+    // "run the deploy command". Echoed back verbatim in the timerFired
+    // status_update so the model knows what it planned to do. nil for other
+    // watcher kinds and for timers created without a note.
+    var note: String? = nil
+
     // Set true when this (session-bound, screen-reading) watch was armed while
     // View Contents was "Ask" and the user gave the one-time consent prompt.
     // It records that repeated background screen reads are allowed to continue
@@ -75,6 +89,8 @@ struct WorkgroupWatcher: Codable, Equatable {
     // Which read categories this watch's mechanism uses, derived from its frozen
     // shape via the single policy below so registration and runtime enforcement
     // can't drift.
+    // A timer reads nothing, so this yields (false, false) for it: no condition,
+    // no targetState, and effectiveMode == .timer is not .screenPoll.
     var readRequirement: (needsScreen: Bool, needsState: Bool) {
         return Self.readRequirement(hasCondition: condition != nil,
                                     hasTargetState: targetState != nil,
@@ -107,6 +123,12 @@ struct WorkgroupWatcher: Codable, Equatable {
     // Human-readable goal for log lines and status_update details:
     // "state 'idle'" or "condition 'emacs has exited'".
     var goalDescription: String {
+        if effectiveMode == .timer {
+            if let fireDate {
+                return "timer for \(ISO8601DateFormatter().string(from: fireDate))"
+            }
+            return "timer"
+        }
         if let condition {
             return "condition '\(condition)'"
         }

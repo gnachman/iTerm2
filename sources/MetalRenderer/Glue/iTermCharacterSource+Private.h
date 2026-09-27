@@ -12,6 +12,7 @@
     NSFont *_font;
     CGContextRef _context;
     BOOL _fakeBold;
+    BOOL _antialiased;
     iTermCharacterSourceDescriptor *_descriptor;
     BOOL _debug;
     BOOL _isEmoji;
@@ -41,6 +42,11 @@
                        offset:(CGPoint)offset
                     iteration:(NSInteger)iteration
                       context:(CGContextRef)context;
+
+// NO when this source could not establish where aliased ink will land, so the caller
+// must not trust -frameFlipped: to bound the drawn pixels. Valid only after
+// -frameFlipped: has been called. Default YES.
+- (BOOL)boundsAreTrustworthy;
 
 - (CGFloat)fakeBoldShift;
 - (NSRect)frameForBoundingRect:(NSRect)frame flipped:(BOOL)flipped;

@@ -72,7 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)drawingHelperShouldPadBackgrounds:(out NSSize *)padding;
 - (NSArray<iTermTerminalButton *> *)drawingHelperTerminalButtons;
-- (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button API_AVAILABLE(macos(11));
+- (VT100GridAbsCoord)absCoordForButton:(iTermTerminalButton *)button;
 - (iTermBidiDisplayInfo * _Nullable)drawingHelperBidiInfoForLine:(int)line;
 
 // Returns YES if the given line is the first line of a LineBuffer block.

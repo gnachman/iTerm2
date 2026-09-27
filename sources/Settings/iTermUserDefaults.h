@@ -25,6 +25,9 @@ extern NSString *const iTermShowSessionStatusInTabSubtitleDidChange;
 
 + (void)performMigrations;
 
+// Exposed for testing. performMigrations forwards to this with self.userDefaults.
++ (void)performMigrationsInUserDefaults:(NSUserDefaults *)userDefaults;
+
 @property (class, nonatomic, copy) NSArray<NSString *> *searchHistory;
 @property (class, nonatomic) BOOL secureKeyboardEntry;
 @property (class, nonatomic) BOOL enableAutomaticProfileSwitchingLogging;
@@ -42,6 +45,13 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 @property (class, nonatomic) BOOL claudeCodeWorkgroupUpsellSuppressed;
 @property (class, nonatomic) BOOL claudeCodeHooksInstalled;
 @property (class, nonatomic) BOOL claudeCodeTriggersInstalled;
+// Absolute path to the directory Claude Code's settings.json was last
+// found in (resolved from $CLAUDE_CONFIG_DIR, defaulting to ~/.claude).
+// Persisted so app-launch's synchronous, main-thread reconciliation of
+// claudeCodeHooksInstalled — which must not spawn a shell to re-resolve
+// $CLAUDE_CONFIG_DIR — has a better guess than ~/.claude to check across
+// restarts. nil until the real (shell-spawning) resolution has run once.
+@property (class, nonatomic, copy, nullable) NSString *claudeCodeConfigDirPath;
 // Sticky flag: set to YES when the user successfully installs the
 // cc-status hook, cleared only by the Uninstall menu flow. Distinct
 // from claudeCodeHooksInstalled, which is reconciled against disk on
@@ -64,6 +74,12 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // performs Undo Close (it formerly toggled Show Tabs in Full Screen, which has
 // moved to ⌘⇧U). NoSync because it is migration state, not a synced setting.
 @property (class, nonatomic) BOOL haveWarnedAboutUndoCloseShortcutChange;
+@property (class, nonatomic) BOOL haveWarnedAboutUndoKeyChange;
+
+// Set to YES after the one-time notice warning macOS 12 users that a future beta
+// will require macOS 13 (Phase 0 of the uv Python-runtime migration). NoSync
+// because it is local notice state, not a synced setting.
+@property (class, nonatomic) BOOL haveShownMacOS13RequirementNotice;
 @property (class, nonatomic) BOOL ignoreSystemWindowRestoration;
 @property (class, nonatomic) NSUInteger globalSearchMode;
 @property (class, nonatomic) BOOL addTriggerInstant;
@@ -102,6 +118,12 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // When Idle toolbar item to the Claude Code workgroup's main (root)
 // session has run. NoSync for the same reason as workgroupShortcutsBackfilled.
 @property (class, nonatomic) BOOL claudeCodeAutoRequestReviewBackfilled;
+
+// Set when the user chooses “Don’t Ask Again” on the offer to interpret key
+// bindings by physical key (shown when a keystroke fails to match a binding but
+// would match on the same physical key, e.g. after an input-method change).
+// NoSync because it is a local dismissal, not a synced setting.
+@property (class, nonatomic) BOOL suppressPhysicalKeyBindingSuggestion;
 
 // Tri-state consent for the AI model catalog updater (AIModelCatalogUpdater) to
 // periodically download a refreshed, signed model list from the network.

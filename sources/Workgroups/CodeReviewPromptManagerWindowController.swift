@@ -52,7 +52,7 @@ final class CodeReviewPromptManagerWindowController: NSWindowController {
             styleMask: [.titled, .closable, .resizable, .miniaturizable],
             backing: .buffered,
             defer: false)
-        window.title = "Code Review Prompts"
+        window.title = String(localized: "CodeReviewPromptManager.WindowTitle", defaultValue: "Code Review Prompts", comment: "Title of the code review prompt manager window")
         window.setFrameAutosaveName("CodeReviewPromptManager")
         window.minSize = NSSize(width: 560, height: 320)
         super.init(window: window)
@@ -135,6 +135,7 @@ final class CodeReviewPromptManagerWindowController: NSWindowController {
             using: .systemFont(ofSize: NSFont.systemFontSize))
 
         let nameColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("Name"))
+        // Localization unneeded
         nameColumn.title = "Name"
         nameColumn.isEditable = true
         nameColumn.width = leftWidth - 4
@@ -146,9 +147,9 @@ final class CodeReviewPromptManagerWindowController: NSWindowController {
 
         let segmented = NSSegmentedControl(images: [
             NSImage(systemSymbolName: "plus",
-                     accessibilityDescription: "Add")!,
+                     accessibilityDescription: iTermLocalizedAdd())!,
             NSImage(systemSymbolName: "minus",
-                     accessibilityDescription: "Remove")!
+                     accessibilityDescription: iTermLocalizedRemove())!
         ], trackingMode: .momentary, target: nil, action: nil)
         segmented.frame = NSRect(x: margin, y: margin,
                                   width: 60, height: segmentHeight)
@@ -160,7 +161,7 @@ final class CodeReviewPromptManagerWindowController: NSWindowController {
         let rightX = margin + leftWidth + margin
         let rightWidth = container.bounds.width - rightX - margin
 
-        let nameLabel = NSTextField(labelWithString: "Name:")
+        let nameLabel = NSTextField(labelWithString: String(localized: "CodeReviewPromptManager.NameLabel", defaultValue: "Name:", comment: "Label above the code review prompt name field"))
         nameLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         nameLabel.textColor = .secondaryLabelColor
         nameLabel.frame = NSRect(x: rightX,
@@ -175,13 +176,13 @@ final class CodeReviewPromptManagerWindowController: NSWindowController {
             y: nameLabel.frame.minY - 24,
             width: rightWidth,
             height: 22))
-        nameInput.placeholderString = "Untitled"
+        nameInput.placeholderString = String(localized: "CodeReviewPromptManager.NamePlaceholder", defaultValue: "Untitled", comment: "Placeholder for the code review prompt name field")
         nameInput.autoresizingMask = [.width, .minYMargin]
         nameInput.delegate = self
         container.addSubview(nameInput)
         nameField = nameInput
 
-        let bodyLabel = NSTextField(labelWithString: "Prompt:")
+        let bodyLabel = NSTextField(labelWithString: String(localized: "CodeReviewPromptManager.BodyLabel", defaultValue: "Prompt:", comment: "Label above the code review prompt body editor"))
         bodyLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         bodyLabel.textColor = .secondaryLabelColor
         bodyLabel.frame = NSRect(x: rightX,
@@ -221,7 +222,7 @@ final class CodeReviewPromptManagerWindowController: NSWindowController {
         bodyScrollView = bodyScroll
 
         let placeholder = NSTextField(wrappingLabelWithString:
-            "Select a prompt on the left to edit it, or click + to add a new prompt.")
+            String(localized: "CodeReviewPromptManager.EmptyPlaceholder", defaultValue: "Select a prompt on the left to edit it, or click + to add a new prompt.", comment: "Placeholder shown when no code review prompt is selected"))
         placeholder.font = .systemFont(ofSize: NSFont.systemFontSize)
         placeholder.textColor = .secondaryLabelColor
         placeholder.alignment = .center
@@ -429,7 +430,7 @@ private final class PromptDataProvider: CRUDDataProvider {
 
     func makeNew(completion: @escaping (Int) -> ()) {
         guard let controller else { return }
-        let name = uniqueName(basedOn: "New Prompt")
+        let name = uniqueName(basedOn: String(localized: "CodeReviewPromptManager.NewPromptName", defaultValue: "New Prompt", comment: "Default name given to a newly created code review prompt"))
         var newIndex = -1
         controller.performLocalMutation {
             controller.crudController?.undoable {

@@ -69,11 +69,7 @@ static CGFloat iTermSessionPreviewLabelsBlockHeight(void) {
 
     NSVisualEffectView *visual = [[NSVisualEffectView alloc] initWithFrame:contentView.bounds];
     visual.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-    if (@available(macOS 10.16, *)) {
-        visual.material = NSVisualEffectMaterialMenu;
-    } else {
-        visual.material = NSVisualEffectMaterialSheet;
-    }
+    visual.material = NSVisualEffectMaterialMenu;
     visual.state = NSVisualEffectStateActive;
     visual.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [contentView addSubview:visual];

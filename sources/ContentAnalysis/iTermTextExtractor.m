@@ -263,7 +263,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 }
 
 // The maximum length is a rough guideline. You might get a word up to twice as long.
-- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)logicalLocation
                            maximumLength:(NSInteger)maximumLength
                                      big:(BOOL)big
                 additionalWordCharacters:(NSString *)additionalWordCharacters
@@ -281,7 +281,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         effectiveAdditionalWordCharacters = additionalWordCharacters;
     }
 
-    return [self rangeForWordAt:visualLocation
+    return [self rangeForWordAt:logicalLocation
                   maximumLength:maximumLength
                             big:big
        additionalWordCharacters:effectiveAdditionalWordCharacters
@@ -289,21 +289,22 @@ const NSInteger kLongMaximumWordLength = 100000;
 }
 
 // Version that accepts custom regex patterns (for testing)
-- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)logicalLocation
                            maximumLength:(NSInteger)maximumLength
                                      big:(BOOL)big
                 additionalWordCharacters:(NSString *)additionalWordCharacters
                            regexPatterns:(NSArray<NSString *> *)regexPatterns {
-    VT100GridCoord location = visualLocation;
-    iTermBidiDisplayInfo *bidi = nil;
-    if (_supportBidi) {
-        ScreenCharArray *sca = [_dataSource screenCharArrayForLine:visualLocation.y];
-        bidi = sca.bidiInfo;
-        if (bidi) {
-            location.x = [bidi logicalForVisual:visualLocation.x];
-        }
-    }
-    iTermWordExtractor *wordExtractor = [[iTermWordExtractor alloc] initWithLocation:location
+    // `logicalLocation` is a LOGICAL coordinate and the returned range is
+    // logical. Word boundaries are found in the logical backing store, so this
+    // must not reorder: no caller reaches here with bidi conversion enabled (the
+    // extractor's supportBidi is NO on every path that calls this), and callers
+    // that begin from a mouse click convert the click from visual to logical
+    // first (see -[PTYTextView getWordForX:] and the mouse handler). Applying
+    // logicalForVisual here would double-apply the bidi reorder map and select a
+    // different word on a right-to-left line (the "double-click selects the wrong
+    // word" bug). The selection model is logical; the highlight maps
+    // logical→visual via the LUT.
+    iTermWordExtractor *wordExtractor = [[iTermWordExtractor alloc] initWithLocation:logicalLocation
                                                                        maximumLength:maximumLength
                                                                                  big:big];
     if (additionalWordCharacters) {
@@ -313,12 +314,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         wordExtractor.regexPatterns = regexPatterns;
     }
     wordExtractor.dataSource = self;
-    VT100GridWindowedRange range = [wordExtractor windowedRange];
-    if (bidi) {
-        // TODO: This is wrong. When a word wraps, we need to select characters from the left side of the start line and the right side of the end line. Selections don't know how to do this currently.
-        return [self visualWindowedRangeForLogical:range];
-    }
-    return range;
+    return [wordExtractor windowedRange];
 }
 
 - (VT100GridCoordRange)visualRangeForLogical:(VT100GridCoordRange)logical {
@@ -1881,6 +1877,85 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     return locatedString;
 }
 
+- (iTermLocatedString *)locatedStringByWalkingForwardFrom:(VT100GridCoord)coord
+                                             characterSet:(NSCharacterSet *)characterSet
+                                                 maxChars:(int)maxChars
+                                      respectHardNewlines:(BOOL)respectHardNewlines {
+    iTermLocatedString *result = [[iTermLocatedString alloc] init];
+    // Enumerate from `coord`'s line to the end of the buffer, letting the shared enumeration handle
+    // soft/hard line boundaries and terminal nulls. `coord` itself is skipped (the caller already
+    // has its character). Each cell is decoded to its actual character(s) and judged against
+    // `characterSet`, so composed graphemes and non-BMP characters are treated exactly as the set
+    // intends. The run ends at the first cell that is not a member, and the eolBlock ends it at a
+    // hard line break when we are respecting hard newlines.
+    NSCharacterSet *const nonMembers = [characterSet invertedSet];
+    // Trailing cleared cells (U+0000) are skipped by the enumeration rather than passed to
+    // charBlock, so judge them the same way the set judges every other character: unless the caller
+    // opts nulls into its set, a run of trailing nulls ends the content on that line and the run
+    // stops there instead of jumping to whatever follows on the next line.
+    const BOOL characterSetIncludesNull = [characterSet characterIsMember:0];
+    // In enumerateCharsInRange: a block returns YES to end the enumeration and NO to continue.
+    const VT100GridWindowedRange range =
+        VT100GridWindowedRangeMake(VT100GridCoordRangeMake(coord.x,
+                                                           coord.y,
+                                                           [_dataSource width],
+                                                           [_dataSource numberOfLines] - 1),
+                                   _logicalWindow.location,
+                                   _logicalWindow.length);
+    [self enumerateCharsInRange:range
+                    supportBidi:NO
+                      charBlock:^BOOL(const screen_char_t *currentLine,
+                                      screen_char_t theChar,
+                                      iTermExternalAttribute *ea,
+                                      VT100GridCoord logicalCoord,
+                                      VT100GridCoord visualCoord) {
+        if (VT100GridCoordEquals(logicalCoord, coord)) {
+            // The starting cell is already the caller's; skip it and keep going.
+            return NO;
+        }
+        if (result.length >= (NSUInteger)maxChars) {
+            return YES;
+        }
+        // An image is never a member of the set, so it ends the run. Test this before comparing
+        // `code` below: for an image `code` is an image number, not a code point, and could happen
+        // to equal a DWC sentinel.
+        if (theChar.image) {
+            return YES;
+        }
+        // Double-width spacers belong to the preceding wide character and carry no character of
+        // their own, so skip them without ending the run.
+        if (!theChar.complexChar && (theChar.code == DWC_RIGHT ||
+                                     theChar.code == DWC_SKIP ||
+                                     theChar.code == DWL_SPACER)) {
+            return NO;
+        }
+        // Decode the cell to its actual character(s) and end the run at anything that is not a
+        // member of the set (an empty cell decodes to no character and ends the run here too).
+        NSString *const string = ScreenCharToStr(&theChar) ?: @"";
+        if (string.length == 0 ||
+            [string rangeOfCharacterFromSet:nonMembers].location != NSNotFound) {
+            return YES;
+        }
+        [result appendString:string at:logicalCoord];
+        return NO;
+    }
+                       eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
+        // Stop where the line's content stopped short: trailing cleared cells mean the writer
+        // ended the line here, so the next line is unrelated text rather than a continuation of the
+        // run. Content that truly wraps fills the line completely, leaving no trailing nulls. This
+        // treats end-of-content nulls the same way the run already treats trailing spaces (an
+        // out-of-set character ends it via charBlock) and is independent of the EOL_HARD/EOL_SOFT
+        // flag, which a full-screen application does not set reliably. A caller that wants to walk
+        // across nulls opts them into its character set.
+        if (numPrecedingNulls > 0 && !characterSetIncludesNull) {
+            return YES;
+        }
+        // Otherwise stop at a hard line break when respecting hard newlines.
+        return respectHardNewlines && code == EOL_HARD;
+    }];
+    return result;
+}
+
 // Convenience: callers that don't need metadata get a wrapper that ignores it.
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
                   supportBidi:(BOOL)supportBidi
@@ -1980,17 +2055,25 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         iTermBidiDisplayInfo *bidi = _supportBidi ? sca.bidiInfo : nil;
         if (charBlock) {
             if (supportBidi && bidi) {
-                const NSRange visualRange = NSMakeRangeFromHalfOpenInterval(MIN(width - 1, MAX(range.columnWindow.location, startx)),
-                                                                            endx);
-                [bidi enumerateLogicalRangesIn:visualRange closure:^(NSRange logicalRange, int visualStart, BOOL *stop) {
-                    for (int i = 0; i < logicalRange.length; i++) {
-                        int x = logicalRange.location + i;
-                        if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y), VT100GridCoordMake(visualStart + i, y), &lineMetadata)) {
-                            *stop = YES;
-                            return;
-                        }
+                // The selection is stored in LOGICAL coordinates (the highlight uses
+                // them too), so emit the logical range in reading order rather than
+                // gathering the cells that happen to fall under a visual span. That
+                // keeps a partial selection on a mixed line a contiguous string (an
+                // English word embedded in right-to-left text (e.g. «Berlin») is
+                // copied whole instead of split into visually-adjacent pieces) while
+                // the bytes stay in the logical order that editors re-render correctly.
+                // Report each cell's visual column via the LUT for callers that use it.
+                // Stop before the trailing nulls/terminal-spaces, exactly like the
+                // non-bidi branch below. They are the reading-order tail (counted in
+                // logical order above), so a logical selection reaching the right
+                // edge of a right-to-left line trims them instead of copying spurious
+                // trailing whitespace.
+                const int lo = MIN(width - 1, MAX(range.columnWindow.location, startx));
+                for (int x = lo; x < endx - numNulls; x++) {
+                    if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y), VT100GridCoordMake([bidi visualForLogical:x], y), &lineMetadata)) {
+                        return;
                     }
-                }];
+                }
             } else {
                 // Iterate over characters up to terminal nulls.
                 for (int x = MIN(width - 1, MAX(range.columnWindow.location, startx)); x < endx - numNulls; x++) {
@@ -2019,11 +2102,6 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         }
         startx = left;
     }
-}
-
-static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger openUpperBound) {
-    assert(lowerBound <= openUpperBound);
-    return NSMakeRange(lowerBound, openUpperBound - lowerBound);
 }
 
 // NOTE: This enumerates in logical order. RTL characters will not actually be reversed.
@@ -2227,6 +2305,12 @@ static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger
 
 - (VT100GridCoord)logicalCoordForVisualCoord:(VT100GridCoord)visualCoord {
     if (!_supportBidi) {
+        return visualCoord;
+    }
+    // An off-screen line (selection auto-scroll passes a negative y; mouse
+    // overflow can pass one past the end) has nothing to reorder. Fetching it
+    // would assert in the line buffer, so treat it as an identity mapping.
+    if (visualCoord.y < 0 || visualCoord.y >= [_dataSource numberOfLines]) {
         return visualCoord;
     }
     iTermBidiDisplayInfo *bidi = nil;

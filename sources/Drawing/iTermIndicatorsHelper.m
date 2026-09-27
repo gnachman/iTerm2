@@ -395,7 +395,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                                          sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
         kiTermIndicatorChannel: [NSString stringWithFormat:@"This command is running within another session.\n * [Return to Enclosing Session](iterm2:pop-channel?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
         kiTermIndicatorBufferingInput: @"Keyboard input is being buffered and will be sent when a trigger stops buffering.",
-        kiTermIndicatorShowRememberedAlerts: @"Showing alerts with remembered selections. Disable via View > Always Show Alerts with Remembered Selections.",
+        kiTermIndicatorShowRememberedAlerts: @"Showing alerts with remembered selections. Disable in iTerm2 > Suppressed Alerts.",
         kiTermIndicatorScreenshotMode: @"In screenshot mode. Close the screenshot panel to return to normal."
     };
     return messages[name];

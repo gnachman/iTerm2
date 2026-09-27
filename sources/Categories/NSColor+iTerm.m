@@ -921,15 +921,19 @@ BOOL iTermSRGBColorFromHexString(NSString *hexString, iTermSRGBColor *colorOut) 
 }
 
 + (NSString *)hexStringForDictionary:(NSDictionary *)dict {
+    // Clamp so a component left slightly outside [0,1] by a gamut conversion can't
+    // widen the fixed-width hex (e.g. 1.08*255=275 -> three digits) and break
+    // parsers that expect 6/12-digit RGB. Rounding policy is unchanged: P3 rounds,
+    // sRGB truncates, matching -srgbHexString and -humanReadableDescription.
     if ([dict[kEncodedColorDictionaryColorSpace] isEqual:kEncodedColorDictionaryP3ColorSpace]) {
-        int red = round([dict[kEncodedColorDictionaryRedComponent] doubleValue] * 65535);
-        int green = round([dict[kEncodedColorDictionaryGreenComponent] doubleValue] * 65535);
-        int blue = round([dict[kEncodedColorDictionaryBlueComponent] doubleValue] * 65535);
+        int red = round(iTermClampToUnitInterval([dict[kEncodedColorDictionaryRedComponent] doubleValue]) * 65535);
+        int green = round(iTermClampToUnitInterval([dict[kEncodedColorDictionaryGreenComponent] doubleValue]) * 65535);
+        int blue = round(iTermClampToUnitInterval([dict[kEncodedColorDictionaryBlueComponent] doubleValue]) * 65535);
         return [NSString stringWithFormat:@"p3#%04x%04x%04x", red, green, blue];
     }
-    int red = [dict[kEncodedColorDictionaryRedComponent] doubleValue] * 255;
-    int green = [dict[kEncodedColorDictionaryGreenComponent] doubleValue] * 255;
-    int blue = [dict[kEncodedColorDictionaryBlueComponent] doubleValue] * 255;
+    int red = iTermClampToUnitInterval([dict[kEncodedColorDictionaryRedComponent] doubleValue]) * 255;
+    int green = iTermClampToUnitInterval([dict[kEncodedColorDictionaryGreenComponent] doubleValue]) * 255;
+    int blue = iTermClampToUnitInterval([dict[kEncodedColorDictionaryBlueComponent] doubleValue]) * 255;
     return [NSString stringWithFormat:@"#%02x%02x%02x", red, green, blue];
 }
 
@@ -946,13 +950,51 @@ BOOL iTermSRGBColorFromHexString(NSString *hexString, iTermSRGBColor *colorOut) 
     return [NSColor hexStringForDictionary:dict];
 }
 
-// Also update +colorWithString: when adding colorspaces here.
+// Also update +colorWithString: when adding colorspaces here. Note: the alpha
+// forms (#RRGGBBAA / p3#....AAAA) are deliberately parsed only through
+// +colorFromHexString:allowingAlpha: and are NOT recognized by +colorWithString:
+// or the default (allowingAlpha:NO) path, so transparency can't leak into the
+// many callers that decode colors which render opaque. To read back a translucent
+// string, use +colorFromHexString:allowingAlpha:.
 + (instancetype)colorFromHexString:(NSString *)fullString {
+    return [self colorFromHexString:fullString allowingAlpha:NO];
+}
+
++ (instancetype)colorFromHexString:(NSString *)fullString allowingAlpha:(BOOL)allowingAlpha {
     NSString *hexString = fullString;
     BOOL p3 = NO;
     if ([hexString hasPrefix:@"p3#"]){
         p3 = YES;
         hexString = [fullString substringFromIndex:2];
+    }
+    // An optional alpha component may be appended: two hex digits for sRGB
+    // (#RRGGBBAA) or four for Display P3 (p3#RRRRGGGGBBBBAAAA). Only a handful of
+    // colors honor alpha (the badge and cursor guide), so callers must opt in with
+    // allowingAlpha; otherwise the alpha forms are rejected as invalid to keep
+    // transparency from leaking into colors that render opaque.
+    CGFloat alpha = 1.0;
+    if (allowingAlpha && [hexString hasPrefix:@"#"]) {
+        NSString *digits = [hexString substringFromIndex:1];
+        NSInteger alphaDigits = 0;
+        if (!p3 && digits.length == 8) {
+            alphaDigits = 2;
+        } else if (p3 && digits.length == 16) {
+            alphaDigits = 4;
+        }
+        if (alphaDigits > 0) {
+            NSString *alphaString = [digits substringFromIndex:digits.length - alphaDigits];
+            NSScanner *scanner = [NSScanner scannerWithString:alphaString];
+            unsigned long long value = 0;
+            // scanHexLongLong: returns YES on a partial scan ("5z" -> 5), so require
+            // the whole fixed-width alpha field was consumed, or a typo in the second
+            // nibble (#ffffff5z) would slip through as a near-invisible color.
+            if (![scanner scanHexLongLong:&value] || !scanner.isAtEnd) {
+                return nil;
+            }
+            const double maximum = (alphaDigits == 2) ? 255.0 : 65535.0;
+            alpha = value / maximum;
+            hexString = [@"#" stringByAppendingString:[digits substringToIndex:digits.length - alphaDigits]];
+        }
     }
     unsigned int red, green, blue;
     if (![hexString getHashColorRed:&red green:&green blue:&blue]) {
@@ -962,13 +1004,29 @@ BOOL iTermSRGBColorFromHexString(NSString *hexString, iTermSRGBColor *colorOut) 
         return [[NSColor colorWithDisplayP3Red:red / 65535.0
                                          green:green / 65535.0
                                           blue:blue / 65535.0
-                                         alpha:1] it_colorInDefaultColorSpace];
+                                         alpha:alpha] it_colorInDefaultColorSpace];
     } else {
         return [[NSColor colorWithSRGBRed:red / 65535.0
                                     green:green / 65535.0
                                      blue:blue / 65535.0
-                                    alpha:1] it_colorInDefaultColorSpace];
+                                    alpha:alpha] it_colorInDefaultColorSpace];
     }
+}
+
+- (NSString *)hexStringWithAlpha {
+    // Encode the RGB half through the shared +hexStringForDictionary: (one
+    // color-space conversion via -dictionaryValue) and append the alpha in the
+    // matching width: #RRGGBBAA (sRGB) or p3#RRRRGGGGBBBBAAAA (Display P3).
+    // dictionaryValue carries alpha for P3; the sRGB dict drops it, so read it from
+    // the color there (alpha is space-independent, so no extra RGB conversion).
+    NSDictionary *dict = [self dictionaryValue];
+    NSString *rgb = [NSColor hexStringForDictionary:dict];
+    NSNumber *alphaNumber = dict[kEncodedColorDictionaryAlphaComponent];
+    const CGFloat alpha = MAX(0.0, MIN(1.0, alphaNumber ? alphaNumber.doubleValue : self.alphaComponent));
+    if ([rgb hasPrefix:@"p3#"]) {
+        return [rgb stringByAppendingFormat:@"%04x", (int)round(alpha * 65535)];
+    }
+    return [rgb stringByAppendingFormat:@"%02x", (int)round(alpha * 255)];
 }
 
 - (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount {

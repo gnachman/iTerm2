@@ -67,7 +67,7 @@
     }
 }
 
-- (iTermPreferencesTabStyle)it_mojaveTabStyle NS_AVAILABLE_MAC(10_14) {
+- (iTermPreferencesTabStyle)it_mojaveTabStyle {
     NSString *name = [self bestMatchFromAppearancesWithNames:@[ NSAppearanceNameAqua,
                                                                 NSAppearanceNameDarkAqua,
                                                                 NSAppearanceNameAccessibilityHighContrastAqua,

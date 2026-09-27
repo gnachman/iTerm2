@@ -466,4 +466,20 @@ static CGFloat iTermAreaOfIntersection(NSRect r1, NSRect r2) {
     return nil;
 }
 
+- (BOOL)it_hasEDRHeadroom {
+    return self.maximumPotentialExtendedDynamicRangeColorComponentValue > 1;
+}
+
+- (CGColorSpaceRef)it_extendedDynamicRangeColorSpace {
+    static CGColorSpaceRef p3;
+    static CGColorSpaceRef srgb;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        p3 = CGColorSpaceCreateWithName(kCGColorSpaceExtendedDisplayP3);
+        srgb = CGColorSpaceCreateWithName(kCGColorSpaceExtendedSRGB);
+    });
+    const BOOL wide = [self canRepresentDisplayGamut:NSDisplayGamutP3];
+    return wide ? p3 : srgb;
+}
+
 @end

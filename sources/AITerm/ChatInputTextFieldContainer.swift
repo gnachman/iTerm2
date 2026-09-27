@@ -349,14 +349,23 @@ class ChatInputTextView: ShiftEnterTextView {
     }
 
     override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        if menuItem.action == #selector(performFindPanelAction(_:)) &&
-            menuItem.tag == NSFindPanelAction.setFindString.rawValue {
-            return selectedRanges.count > 0 || selectedRange.length > 0
+        // The input field lives inside a ChatViewController; route Find
+        // actions to the conversation so Cmd-F isn't claimed (and disabled)
+        // by this text view while it holds focus.
+        if let action = menuItem.action,
+           let controller = enclosingChatViewController,
+           controller.isFindAction(action) {
+            return controller.validateFindAction(action, tag: menuItem.tag)
         }
         return super.validateMenuItem(menuItem)
     }
 
     override func performFindPanelAction(_ sender: Any?) {
+        if let controller = enclosingChatViewController {
+            controller.performFindPanelAction(sender)
+            return
+        }
+        // Fallback when not hosted in a chat: original behavior.
         guard let menuItem = sender as? NSMenuItem else {
             return
         }

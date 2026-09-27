@@ -1077,6 +1077,59 @@ class LineBlockTests: XCTestCase {
         }
     }
 
+    func testRestoreLegacy3611BidiMetadataDoesNotCrash() {
+        // Regression test for a launch-blocking crash restoring 3.6.11 scrollback.
+        // 3.6.11 shipped bidi display info before the lineAttribute metadata scalar
+        // existed, so each of its entries was 10 elements:
+        //   5 base + [timestamp, eaDict, rtlFound] + @[] delimiter + bidiDict
+        // 3.7.0 added lineAttribute, so it reads a 4th metadata scalar and, on a
+        // legacy entry, would read the @[] delimiter as lineAttribute and send it
+        // -intValue, throwing NSInvalidArgumentException, -[__NSArray0 intValue].
+
+        // Given a block with a couple of lines...
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 7)
+        XCTAssertTrue(block.appendLineString(makeLineString("Alpha"), width: 20),
+                      "Precondition: appending 'Alpha' should succeed")
+        XCTAssertTrue(block.appendLineString(makeLineString("Bravo"), width: 20),
+                      "Precondition: appending 'Bravo' should succeed")
+
+        // ...serialized to a dictionary...
+        var dict = block.dictionary()
+        guard let entries = dict["Metadata"] as? [[Any]] else {
+            return XCTFail("Metadata missing or wrong type")
+        }
+
+        // ...whose metadata we rewrite into the legacy 3.6.11 10-element shape.
+        // The bidi dict's contents are irrelevant to the crash, which fires before
+        // the bidi block is parsed.
+        let bidiDict: [String: Any] = ["lut": [Int32](),
+                                       "rtlIndexes": [NSValue](),
+                                       "mirroredIndexes": [NSValue](),
+                                       "paragraphIsRTL": false]
+        let legacyEntries: [[Any]] = entries.map { entry in
+            // Current entry: 5 base + [timestamp, eaDict, rtlFound, lineAttribute].
+            // Drop lineAttribute (index 8) and append the delimiter + bidiDict so the
+            // @[] delimiter lands exactly where lineAttribute would be read.
+            XCTAssertGreaterThanOrEqual(entry.count, 9, "Unexpected metadata layout")
+            var legacy = Array(entry.prefix(8))  // 5 base + timestamp, eaDict, rtlFound
+            legacy.append([Any]())               // @[] delimiter
+            legacy.append(bidiDict)
+            return legacy
+        }
+        dict["Metadata"] = legacyEntries
+
+        // When restored, it must not crash and must preserve content.
+        guard let restored = LineBlock(dictionary: dict, absoluteBlockNumber: 0) else {
+            return XCTFail("Restoring legacy 3.6.11 bidi metadata returned nil")
+        }
+        XCTAssertEqual(restored.numRawLines(), block.numRawLines(),
+                       "numRawLines should be preserved")
+        XCTAssertEqual(restored.screenCharArray(forRawLine: 0).stringValue, "Alpha",
+                       "First raw line content should survive restore")
+        XCTAssertEqual(restored.screenCharArray(forRawLine: 1).stringValue, "Bravo",
+                       "Second raw line content should survive restore")
+    }
+
     // MARK: - Empty Line Counts
 
     func testNumberOfLeadingEmptyLines() {
@@ -4177,5 +4230,40 @@ class LineBlockIncrementalMergeTests: XCTestCase {
         let genKey = "MyKey" + iTermEncoderGraphRecordGenerationKeySuffix
         XCTAssertEqual(dict[genKey] as? Int, 500,
                        "implicitDictionaryValue should inject the child record's generation")
+    }
+
+    // Regression coverage for the copy-on-write mutation-safety instrumentation. Tests build with
+    // BETA defined, so the check is always active. Mutating a block that has a live cowCopy (as a
+    // background search snapshot would hold) must uniquify via copy-on-write before writing, and the
+    // instrumentation must NOT trip on that correct path. If the check false-positived here it would
+    // abort the test process.
+    func testMutationSafetyChecksDoNotTripOnCorrectCopyOnWrite() {
+        let width = Int32(80)
+        let original = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        XCTAssertTrue(original.appendLineString(makeLineString("abc"), width: width))
+
+        // A cowCopy shares original's character buffer and cumulative_line_lengths, exactly like a
+        // search snapshot block. original.hasBeenCopied becomes true and copy is a client.
+        let copy = original.cowCopy()
+        XCTAssertEqual(original.numRawLines(), 1)
+        XCTAssertEqual(copy.numRawLines(), 1)
+
+        // Mutating original must clone (copy-on-write) before touching the shared buffer. The
+        // instrumentation runs inside the mutation-certificate accessors; a false positive aborts.
+        XCTAssertTrue(original.appendLineString(makeLineString("def"), width: width))
+
+        // The copy is untouched (still one line, original allocation), proving the write went to a
+        // uniquified buffer and did not corrupt the shared reader.
+        XCTAssertEqual(original.numRawLines(), 2)
+        XCTAssertEqual(original.rawSpaceUsed(), 6)
+        XCTAssertEqual(copy.numRawLines(), 1)
+        XCTAssertEqual(copy.rawSpaceUsed(), 3)
+
+        // Mutating the copy afterward must likewise uniquify without tripping.
+        XCTAssertTrue(copy.appendLineString(makeLineString("ghij"), width: width))
+        XCTAssertEqual(copy.numRawLines(), 2)
+        XCTAssertEqual(copy.rawSpaceUsed(), 7)
+        XCTAssertEqual(original.numRawLines(), 2)
+        XCTAssertEqual(original.rawSpaceUsed(), 6)
     }
 }

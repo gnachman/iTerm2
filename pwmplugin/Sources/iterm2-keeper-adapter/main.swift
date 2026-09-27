@@ -83,14 +83,21 @@ private func handleHandshake() {
                     isSecret: false,
                     note: "Note: Append /api/v2 in your API URL",
                     persistInKeychain: false),
-                PasswordManagerProtocol.SettingsField(
-                    key: "apiKey",
-                    label: "API key:",
-                    placeholder: "Enter Keeper Commander API key",
-                    isSecret: true,
-                    note: nil,
-                    persistInKeychain: true),
-            ])
+            ],
+            addAccountToggles: [
+                PasswordManagerProtocol.AddAccountToggle(
+                    key: "useClassicPermission",
+                    label: "Use classic permission model",
+                    note: "Limits sharing to basic access levels. Recommended only for compatibility with older workflows.",
+                    defaultValue: false),
+            ],
+            // Pre-round-3 builds stored the API key under settings account "apiKey".
+            // Let the host migrate it into the master-password slot once.
+            legacyCredentialMigrations: [
+                PasswordManagerProtocol.LegacyCredentialMigration(fromKeychainAccount: "apiKey"),
+            ],
+            // record-update edits title/login/password in place, preserving OTP and custom fields.
+            canEditInPlace: true)
         writeOutput(response)
     } catch {
         writeError("Failed to decode handshake: \(error.localizedDescription)")
@@ -107,9 +114,6 @@ private func apiKey(fromHeader header: PasswordManagerProtocol.RequestHeader,
     if let key = decodeToken(token)?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty {
         return key
     }
-    if let key = header.settings?["apiKey"]?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty {
-        return key
-    }
     throw KeeperClientError.message("Invalid or missing API key")
 }
 
@@ -123,7 +127,7 @@ private func handleLogin() {
         let baseURL = try extractServiceURL(from: request.header)
         let key = try apiKey(fromHeader: request.header, token: nil, masterPassword: request.masterPassword)
         let client = KeeperCommanderClient(baseURL: baseURL)
-        _ = try listAccountsRecords(apiKey: key, client: client)
+        try validateApiKey(apiKey: key, client: client)
         let token = Data(key.utf8).base64EncodedString()
         writeOutput(LoginResponse(token: token))
     } catch {
@@ -142,8 +146,8 @@ private func handleListAccounts() {
         let baseURL = try extractServiceURL(from: request.header)
         let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
-        let accounts = try listAccountsRecords(apiKey: apiKey, client: client)
-        writeOutput(ListAccountsResponse(accounts: accounts))
+        let listed = try listAccountsRecords(apiKey: apiKey, client: client)
+        writeOutput(ListAccountsResponse(accounts: listed.accounts, warning: listed.warning))
     } catch {
         writeError(error.localizedDescription)
         exit(1)
@@ -170,7 +174,9 @@ private func handleGetPassword() {
 }
 
 private func handleSetPassword() {
+    KeeperAdapterLog.write("handleSetPassword: invoked")
     guard let data = readStdin() else {
+        KeeperAdapterLog.write("handleSetPassword: no stdin input, aborting")
         writeError("No input provided")
         exit(1)
     }
@@ -180,16 +186,27 @@ private func handleSetPassword() {
         let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
         let uid = request.accountIdentifier.accountID
-        try setPassword(apiKey: apiKey, recordUid: uid, newPassword: request.newPassword, client: client)
+        KeeperAdapterLog.write("handleSetPassword: uid=\(uid), sourceLabel=\(request.sourceLabel ?? "nil"), newPassword.length=\(request.newPassword?.count ?? 0), editName=\(request.newAccountName != nil), editUser=\(request.newUserName != nil)")
+        try setPassword(apiKey: apiKey,
+                        recordUid: uid,
+                        newPassword: request.newPassword,
+                        newAccountName: request.newAccountName,
+                        newUserName: request.newUserName,
+                        sourceLabel: request.sourceLabel,
+                        client: client)
+        KeeperAdapterLog.write("handleSetPassword: success uid=\(uid)")
         writeOutput(SetPasswordResponse())
     } catch {
+        KeeperAdapterLog.write("handleSetPassword: ERROR \(error.localizedDescription)")
         writeError(error.localizedDescription)
         exit(1)
     }
 }
 
 private func handleAddAccount() {
+    KeeperAdapterLog.write("handleAddAccount: invoked")
     guard let data = readStdin() else {
+        KeeperAdapterLog.write("handleAddAccount: no stdin input, aborting")
         writeError("No input provided")
         exit(1)
     }
@@ -198,21 +215,28 @@ private func handleAddAccount() {
         let baseURL = try extractServiceURL(from: request.header)
         let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
+        let useClassicPermission = request.flags?["useClassicPermission"] ?? false
+        KeeperAdapterLog.write("handleAddAccount: useClassicPermission=\(useClassicPermission), accountName=\"\(request.accountName)\", userName=\"\(request.userName)\"")
         let uid = try addRecord(
             apiKey: apiKey,
             userName: request.userName,
             accountName: request.accountName,
             password: request.password,
+            useClassicPermission: useClassicPermission,
             client: client)
+        KeeperAdapterLog.write("handleAddAccount: success uid=\(uid)")
         writeOutput(AddAccountResponse(accountIdentifier: PasswordManagerProtocol.AccountIdentifier(accountID: uid)))
     } catch {
+        KeeperAdapterLog.write("handleAddAccount: ERROR \(error.localizedDescription)")
         writeError(error.localizedDescription)
         exit(1)
     }
 }
 
 private func handleDeleteAccount() {
+    KeeperAdapterLog.write("handleDeleteAccount: invoked")
     guard let data = readStdin() else {
+        KeeperAdapterLog.write("handleDeleteAccount: no stdin input, aborting")
         writeError("No input provided")
         exit(1)
     }
@@ -221,9 +245,15 @@ private func handleDeleteAccount() {
         let baseURL = try extractServiceURL(from: request.header)
         let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
-        try deleteRecord(apiKey: apiKey, recordUid: request.accountIdentifier.accountID, client: client)
+        KeeperAdapterLog.write("handleDeleteAccount: accountID=\(request.accountIdentifier.accountID), sourceLabel=\(request.sourceLabel ?? "nil")")
+        try deleteRecord(apiKey: apiKey,
+                         recordUid: request.accountIdentifier.accountID,
+                         sourceLabel: request.sourceLabel,
+                         client: client)
+        KeeperAdapterLog.write("handleDeleteAccount: success accountID=\(request.accountIdentifier.accountID)")
         writeOutput(DeleteAccountResponse())
     } catch {
+        KeeperAdapterLog.write("handleDeleteAccount: ERROR \(error.localizedDescription)")
         writeError(error.localizedDescription)
         exit(1)
     }

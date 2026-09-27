@@ -148,6 +148,7 @@ actor CompanionSession {
         case .chatCreated: "chatCreated"
         case .history: "history"
         case .delivery: "delivery"
+        case .messagesRemoved: "messagesRemoved"
         case .typingStatus: "typingStatus"
         case .turnLifecycle: "turnLifecycle"
         case .mentionsResolved: "mentionsResolved"
@@ -171,6 +172,7 @@ actor CompanionSession {
         case .selectionText: "selectionText"
         case .selectionRange: "selectionRange"
         case .autoProvideConsent: "autoProvideConsent"
+        case .aiAvailabilityChanged: "aiAvailabilityChanged"
         }
     }
 
