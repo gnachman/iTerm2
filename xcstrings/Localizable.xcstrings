@@ -41886,6 +41886,48 @@
         }
       }
     },
+    "BuiltInFunction.BackgroundTasksAndDelta" : {
+      "comment" : "Error shown when a status update tries to assign and add to the background task count at once",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übergeben Sie background_tasks oder background_tasks_delta, nicht beides."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pass background_tasks or background_tasks_delta, not both."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "background_tasksとbackground_tasks_deltaのどちらか一方のみを指定してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informe background_tasks ou background_tasks_delta, não ambos."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Укажите background_tasks или background_tasks_delta, но не оба сразу."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请传入 background_tasks 或 background_tasks_delta，不要同时传入两者。"
+          }
+        }
+      }
+    },
     "BuiltInFunction.InvalidArgument" : {
       "comment" : "Error when a function is passed an unknown argument; placeholders are argument name and function name",
       "extractionState" : "extracted_with_value",
@@ -102901,48 +102943,6 @@
         }
       }
     },
-    "MoveSession.MissingSessionArgument" : {
-      "comment" : "Error when the session argument is missing",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fehlendes Sitzungsargument"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Missing session argument"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "セッション引数がありません"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Argumento de sessão ausente"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отсутствует аргумент сессии"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "缺少会话参数"
-          }
-        }
-      }
-    },
     "MoveSession.MoveFailed" : {
       "comment" : "Error when moving a session into a new tab fails",
       "extractionState" : "extracted_with_value",
@@ -120585,48 +120585,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新输出"
-          }
-        }
-      }
-    },
-    "PTYTab.Restoring" : {
-      "comment" : "Tab label shown while a tab is being restored",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wird wiederhergestellt…"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Restoring…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "復元中…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restaurando…"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Восстановление…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在恢复…"
           }
         }
       }
@@ -163671,6 +163629,48 @@
         }
       }
     },
+    "SessionIDForTmuxPane.MissingArgument" : {
+      "comment" : "Error when a required argument to session_id_for_tmux_pane is absent",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erforderliches Argument fehlt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Missing required argument"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "必須の引数がありません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Argumento obrigatório ausente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отсутствует обязательный аргумент"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缺少必需的参数"
+          }
+        }
+      }
+    },
     "SessionLauncher.FontNotFoundMessage" : {
       "comment" : "Warning shown when the profile’s font and the fallback font cannot be loaded. %@ is the font name.",
       "extractionState" : "extracted_with_value",
@@ -188188,48 +188188,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "格式无效"
-          }
-        }
-      }
-    },
-    "TmuxFormat.MissingSessionID" : {
-      "comment" : "Error when the session_id argument is missing",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ fehlt. Dies sollte nicht passieren, bitte melden Sie einen Fehler."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Missing %@. This shouldn't happen so please report a bug."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@がありません。これは本来起こらないはずなので、バグとして報告してください。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ ausente. Isso não deveria acontecer, então reporte um bug."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Отсутствует %@. Это не должно происходить, поэтому, пожалуйста, сообщите об ошибке."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "缺少 %@。不应出现这种情况，请报告错误。"
           }
         }
       }
