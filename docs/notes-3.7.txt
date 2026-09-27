@@ -514,6 +514,9 @@ Improvements:
   onto the terminal, turn on “…even to views
   like Search or Composer” under Settings >
   Pointer.
+- Right-clicking a tab now offers Rename Tab,
+  which opens the same dialog as double-clicking
+  the tab.
 
 Bug Fixes:
 - On macOS 26, hiding a hotkey window when no

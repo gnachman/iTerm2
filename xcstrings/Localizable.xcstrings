@@ -145506,6 +145506,18 @@
         }
       }
     },
+    "PseudoTerminal.RenameTab" : {
+      "comment" : "Menu item that renames a tab",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rename Tab…"
+          }
+        }
+      }
+    },
     "PseudoTerminal.RenameTabGroupTitle" : {
       "comment" : "Title of the dialog for renaming a tab group",
       "extractionState" : "extracted_with_value",

@@ -8424,6 +8424,17 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return YES;
     };
 
+    BOOL (^addRenameTab)(void) = ^{
+        NSMenuItem *item;
+
+        item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.RenameTab", nil, [NSBundle mainBundle], @"Rename Tab…", @"Menu item that renames a tab")
+                                           action:@selector(renameTabContextualMenuAction:)
+                                    keyEquivalent:@""] autorelease];
+        [item setRepresentedObject:tabViewItem];
+        [rootMenu addItem:item];
+        return YES;
+    };
+
     BOOL (^addEditSession)(void) = ^{
         NSMenuItem *item;
 
@@ -8583,6 +8594,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     addSeparator();
 
+    addRenameTab();
     addEditSession();
 
     addSeparator();
@@ -8848,6 +8860,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (IBAction)editTabTitle:(id)sender {
+    [self openEditTabTitleWindow];
+}
+
+- (void)renameTabContextualMenuAction:(id)sender {
+    NSTabViewItem *tabViewItem = [sender representedObject];
+    PTYTab *tab = [PTYTab castFrom:tabViewItem.identifier];
+    if (!tab || [self.tabs indexOfObject:tab] == NSNotFound) {
+        // The tab closed while the menu was open.
+        return;
+    }
+    // The title sheet edits the current tab, so make the clicked one current first.
+    [_contentView.tabView selectTabViewItem:tabViewItem];
     [self openEditTabTitleWindow];
 }
 
