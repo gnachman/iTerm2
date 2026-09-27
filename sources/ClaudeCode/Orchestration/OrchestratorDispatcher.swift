@@ -2870,32 +2870,60 @@ final class OrchestratorDispatcher {
     /// from doSendText's perspective via await.
     private static let bracketedPasteSubmitDelayNanos: UInt64 = 75_000_000
 
+    // A trailing newline in the payload is the Return key, not pasted data.
+    //
+    // The tool description tells the model that \n is "newline" and that the
+    // default appends one, so when asked to press Return it naturally sends
+    // text "\n" with append_newline=false. Inside a bracketed paste a bare LF
+    // is inserted as a literal line break (Ink, vim and readline all treat
+    // pasted bytes as data), so that never submitted anything: Claude Code
+    // just gained an empty line in its input box. Peel exactly one trailing
+    // CRLF / LF / CR off the body and turn it into the submit gesture, so it
+    // arrives as a separate \r after the paste exactly as append_newline=true
+    // does. Interior newlines stay in the body since those are real
+    // multi-line content, and only one is peeled so "foo\n\n" still pastes a
+    // line break before submitting. The safety gate already counts any
+    // trailing CR/LF as a submit (containsSubmitNewline); this brings
+    // delivery in line with classification.
+    nonisolated static func splitTrailingSubmit(text: String,
+                                                appendNewline: Bool) -> (body: String, submits: Bool) {
+        guard let last = text.last, isSubmitNewline(last) else {
+            return (text, appendNewline)
+        }
+        return (String(text.dropLast()), true)
+    }
+
     @MainActor
     private static func typeIntoPTY(session: PTYSession,
                                     text: String,
                                     appendNewline: Bool) async {
+        let (body, submits) = splitTrailingSubmit(text: text, appendNewline: appendNewline)
         let inBracketedPasteMode = session.screen.terminalBracketedPasteMode
         // If the payload carries any control byte other than LF, the caller is
         // sending keystrokes (e.g. ESC :q LF to quit vim), not prompt-style
         // content. A paste wrap would neutralize those control bytes by
         // turning them into literal pasted data, so route them through the
         // raw write path even on a BP-mode terminal.
-        let hasControlOtherThanLF = text.unicodeScalars.contains {
+        let hasControlOtherThanLF = body.unicodeScalars.contains {
             $0.value < 0x20 && $0.value != 0x0A
         }
         if inBracketedPasteMode && !hasControlOtherThanLF {
-            let bpStart = "\u{1B}[200~"
-            let bpEnd = "\u{1B}[201~"
-            session.writeTaskNoBroadcast(bpStart + text + bpEnd)
-            if appendNewline {
-                try? await Task.sleep(nanoseconds: bracketedPasteSubmitDelayNanos)
+            if !body.isEmpty {
+                let bpStart = "\u{1B}[200~"
+                let bpEnd = "\u{1B}[201~"
+                session.writeTaskNoBroadcast(bpStart + body + bpEnd)
+            }
+            if submits {
+                if !body.isEmpty {
+                    try? await Task.sleep(nanoseconds: bracketedPasteSubmitDelayNanos)
+                }
                 session.writeTaskNoBroadcast("\r")
             }
         } else {
             // \r, not \n: TTYs accept carriage-return as the Enter key.
             // Sending \n leaves the line in the input buffer without
             // submitting (the user has to press Return themselves).
-            session.writeTaskNoBroadcast(text + (appendNewline ? "\r" : ""))
+            session.writeTaskNoBroadcast(body + (submits ? "\r" : ""))
         }
     }
 
