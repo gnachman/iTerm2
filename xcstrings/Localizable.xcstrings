@@ -41886,6 +41886,18 @@
         }
       }
     },
+    "BuiltInFunction.BackgroundTasksAndDelta" : {
+      "comment" : "Error shown when a status update tries to assign and add to the background task count at once",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pass background_tasks or background_tasks_delta, not both."
+          }
+        }
+      }
+    },
     "BuiltInFunction.InvalidArgument" : {
       "comment" : "Error when a function is passed an unknown argument; placeholders are argument name and function name",
       "extractionState" : "extracted_with_value",
@@ -102903,7 +102915,7 @@
     },
     "MoveSession.MissingSessionArgument" : {
       "comment" : "Error when the session argument is missing",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -120591,7 +120603,7 @@
     },
     "PTYTab.Restoring" : {
       "comment" : "Tab label shown while a tab is being restored",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -142904,6 +142916,18 @@
         }
       }
     },
+    "PseudoTerminal.RenameTab" : {
+      "comment" : "Menu item that renames a tab",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rename Tab…"
+          }
+        }
+      }
+    },
     "PseudoTerminal.RenameTabGroupTitle" : {
       "comment" : "Title of the dialog for renaming a tab group",
       "extractionState" : "extracted_with_value",
@@ -163667,6 +163691,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查看"
+          }
+        }
+      }
+    },
+    "SessionIDForTmuxPane.MissingArgument" : {
+      "comment" : "Error when a required argument to session_id_for_tmux_pane is absent",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Missing required argument"
           }
         }
       }
@@ -188194,7 +188230,7 @@
     },
     "TmuxFormat.MissingSessionID" : {
       "comment" : "Error when the session_id argument is missing",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

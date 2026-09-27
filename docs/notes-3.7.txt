@@ -381,6 +381,9 @@ Improvements:
   every time you switch tabs or the running
   command changes, which had been making windows
   slowly get slower the longer they stayed open.
+- Right-clicking a tab now offers Rename Tab,
+  which opens the same dialog as double-clicking
+  the tab.
 
 Bug Fixes:
 - A tab name you set yourself with Edit Tab Title
