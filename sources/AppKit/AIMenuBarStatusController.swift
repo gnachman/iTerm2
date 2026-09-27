@@ -56,7 +56,7 @@ class AIMenuBarStatusController: NSObject {
                 case .typingStatus(_, let participant):
                     guard participant == .agent else { return }
                     self?.refresh()
-                case .delivery, .turnLifecycle:
+                case .delivery, .turnLifecycle, .messagesRemoved:
                     break
                 }
             }
