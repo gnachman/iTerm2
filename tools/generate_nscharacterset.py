@@ -163,9 +163,11 @@ def parse_bidi_mirroring(content: str):
         code = int(left, 16)
         mirror = int(right, 16)
         if code > 0xFFFF or mirror > 0xFFFF:
-            # iTermBidiMirroredCounterpart stores pairs as uint16_t. No pair has
-            # ever been outside the BMP; fail loudly if that changes.
-            raise ValueError(f"Non-BMP bidi mirroring pair {left};{right}")
+            # iTermBidiMirroredCounterpart maps a unichar to a unichar, and its
+            # callers substitute the result in place, so a pair with either side
+            # outside the BMP can't be applied. Skip the pair in both directions
+            # (e.g., 221D;1DB10 and 1DB10;221D) so the table stays an involution.
+            continue
         pairs.append((code, mirror))
     return sorted(pairs)
 
