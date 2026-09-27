@@ -7213,13 +7213,16 @@ typedef struct {
 - (void)resetLabelAttributesIfAppropriate {
     DLog(@"resetLabelAttributesIfAppropriate");
     BOOL amProcessing = [self isProcessing];
+    const BOOL hasUnreadIndicator = (_state & (kPTYTabIdleState | kPTYTabNewOutputState)) != 0;
     BOOL shouldResetLabel = NO;
     for (PTYSession *aSession in [self sessions]) {
         if (!amProcessing &&
+            !hasUnreadIndicator &&
             !aSession.havePostedNewOutputNotification &&
             !aSession.newOutput) {
             // Avoid calling the potentially expensive -shouldPostUserNotification if there's
-            // nothing to do here, which is normal.
+            // nothing to do here, which is normal. Selecting an idle tab clears the session's
+            // newOutput flag first, but its unread indicator may still need to be reset.
             continue;
         }
         if (![aSession shouldPostUserNotification]) {
