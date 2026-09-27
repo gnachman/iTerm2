@@ -153,6 +153,40 @@ class PeriodicSchedulerDeferredTests: XCTestCase {
         XCTAssertEqual(counter.value, 0, "expedite flushed with nothing armed")
     }
 
+    // Titles remain visible while the terminal is hidden. Expediting one must keep
+    // the short deferral (to coalesce prompt changes), and must not change the period
+    // used by ordinary background output after the title has been delivered.
+    func testExpeditedTitleKeepsOrdinaryBackgroundUpdatesThrottled() {
+        let counter = Counter()
+        let scheduler = makeScheduler(counter)
+
+        scheduler.markNeedsUpdateDeferredByHalfPeriod()
+        scheduler.expedite(within: shortDelay)
+        XCTAssertEqual(counter.value, 0, "title flush lost its deferral")
+        XCTAssertTrue(poll(upTo: 1.0) { counter.value == 1 })
+        XCTAssertEqual(scheduler.period, period)
+
+        scheduler.markNeedsUpdate()
+        poll(upTo: 0.3) { false }
+        XCTAssertEqual(counter.value, 1, "ordinary background work lost its throttle")
+    }
+
+    // A spinner keeps changing while the session remains hidden. Each later title
+    // must pull in the reset armed by the previous flush, not just the first timer.
+    func testRepeatedDeferredTitlesCanExpediteWithoutChangingPeriod() {
+        let counter = Counter()
+        let scheduler = makeScheduler(counter)
+
+        for expected in 1...3 {
+            scheduler.markNeedsUpdateDeferredByHalfPeriod()
+            scheduler.expedite(within: shortDelay)
+            XCTAssertTrue(poll(upTo: 1.0) { counter.value >= expected },
+                          "a later title waited for the background period")
+        }
+        XCTAssertEqual(scheduler.period, period)
+        XCTAssertEqual(counter.value, 3)
+    }
+
     // A request that is not sooner than the armed one rides it rather than pushing the
     // flush out to its own later deadline.
     func testLaterDeferredRequestCoalescesIntoArmedOne() {
