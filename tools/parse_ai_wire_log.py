@@ -620,9 +620,9 @@ def main() -> int:
                         help="Skip the system prompt block in request render.")
     parser.add_argument("--no-tools", action="store_true",
                         help="Skip the tools list in request render.")
-    parser.add_argument("--max-body", type=int, default=4000,
+    parser.add_argument("--max-body", type=int, default=0,
                         help="Truncate text bodies to this many characters "
-                             "(0 = unlimited). Default 4000.")
+                             "(0 = unlimited). Default 0.")
     args = parser.parse_args()
 
     if args.path == "-":
