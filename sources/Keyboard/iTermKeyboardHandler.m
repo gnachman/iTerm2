@@ -170,6 +170,26 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         return;
     }
 
+    // An input method can finish a composition by committing it with
+    // -insertText:replacementRange: and then handing the keystroke back to us as a command
+    // selector. When that happens the key is ours to handle: the composition is already gone
+    // by the time we get here, so the delete would otherwise be dropped and the committed
+    // text left behind. _keyPressHandled distinguishes this from the case where the IME
+    // consumed the keystroke to edit its composition, in which case there is nothing to do.
+    // Issue 13030.
+    if (_keyPressHandled &&
+        _hadMarkedTextBeforeHandlingKeypressEvent &&
+        ![self hasMarkedText] &&
+        _eventBeingHandled &&
+        (aSelector == @selector(deleteBackward:) ||
+         aSelector == @selector(deleteBackwardByDecomposingPreviousCharacter:) ||
+         aSelector == @selector(insertNewline:))) {
+        DLog(@"IME committed and handed back %@; sending to delegate", NSStringFromSelector(aSelector));
+        [self.delegate keyboardHandler:self sendEventToController:_eventBeingHandled];
+        DLog(@"returning from doCommandBySelector:%@", NSStringFromSelector(aSelector));
+        return;
+    }
+
     if ([iTermAdvancedSettingsModel experimentalKeyHandling] || [iTermAdvancedSettingsModel enableCharacterAccentMenu]) {
         // Pass the event to the delegate since doCommandBySelector was called instead of
         // insertText:replacementRange:, unless an IME is in use. An example of when this gets called

@@ -822,3 +822,9 @@ Bug Fixes:
   to change apps without the mouse. This
   affected windows using the older full screen
   style with menu bar hiding turned on.
+- Fixed a bug where pressing Backspace while
+  composing text with an input method such as
+  the Korean 2-Set IME could leave a stray
+  character behind that needed an extra press
+  to remove. Pressing Return while composing
+  now submits the line in one press.
