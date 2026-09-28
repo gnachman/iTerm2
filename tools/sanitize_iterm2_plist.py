@@ -118,12 +118,21 @@ WINDOW ARRANGEMENTS -> session dicts (SESSION_ARRANGEMENT_*)
   Removed:  Contents, Clippings, Clippings Archive, Session Note, Conductor,
             Conductor Parser Tree, Reusable Cookie, Browser State,
             Hostname to Shell, Tmux History, Tmux AltHistory, Tmux State
+            Pending Jumps (SSH reconnection args + directory)
   Redacted: Working Directory, Program.Command, Environment (deep),
             Variables (deep), Substitutions (deep), Commands,
             Foreground Job Ancestors, Name Controller State (deep),
             Server Dict (deep),
             AutoLog File Name, Filter, Browser Target,
-            Code Review Last Prompt, Bookmark (profile), Workgroup (recursed)
+            Code Review Last Prompt, Bookmark (profile), Workgroup (recursed),
+            Key Labels / Key Labels Stack, Tab Status.Status Text,
+            deprecated Session Name / Session Window Title / Session Default
+            Name
+  Directory tracker (iTermSessionDirectoryTracker, flat in the session dict):
+            Last Directory, Last Local Directory, Directories (array),
+            Hosts (array of {Host name, User name, GUID}),
+            Last Directory SSH Identity ({host, hostname, username, port})
+  Labels (aggressive only): Tmux Gateway Session Name
   Kept: Columns, Rows, Session GUID/Stable ID, geometry, flags.
 -----------------------------------------------------------------------------
 """
@@ -180,6 +189,13 @@ CONTENT_KEYS = {
     "Tmux AltHistory": REMOVE,
     "Tmux State": REMOVE,
     "Code Review Last Prompt": REDACT_V,
+    "Key Labels": REDACT_V,               # OSC 1337 SetKeyLabel text (dict/stack)
+    "Key Labels Stack": REDACT_V,
+    "Status Text": REDACT_V,              # tab status text set by a program
+    # Deprecated session-arrangement name keys (still present in old plists).
+    "Session Name": REDACT_V,
+    "Session Window Title": REDACT_V,
+    "Session Default Name": REDACT_V,
     # regexes / patterns
     "regex": REDACT_V,
     "contentregex": REDACT_V,
@@ -188,6 +204,11 @@ CONTENT_KEYS = {
     "PasteSpecialSubstitution": REDACT_V,
     # filesystem paths / directories
     "Working Directory": REDACT_V,
+    # Session directory tracker state (iTermSessionDirectoryTracker), stored
+    # flat in the session arrangement dict.
+    "Last Directory": REDACT_V,
+    "Last Local Directory": REDACT_V,
+    "Directories": REDACT_V,              # array of recent working directories
     "Custom Icon Path": REDACT_V,
     "Background Image Location": REDACT_V,
     "Background Image Folder Location": REDACT_V,
@@ -222,6 +243,16 @@ CONTENT_KEYS = {
     "NoSyncOllamaDiscoveredModels": REMOVE,
     # hosts / URLs
     "Bound Hosts": REDACT_V,
+    "Hosts": REDACT_V,                    # array of VT100RemoteHost dicts
+    "Host name": REDACT_V,                # VT100RemoteHost dictionaryValue
+    "User name": REDACT_V,
+    "Last Directory SSH Identity": REDACT_V,  # SSHIdentity: host/hostname/username
+    "hostname": REDACT_V,
+    "username": REDACT_V,
+    # Array of JSON Data blobs (SSHReconnectionInfo: ssh args + directory).
+    # Removed rather than redacted: redact_value would empty the Data, which
+    # fails to decode on restore anyway.
+    "Pending Jumps": REMOVE,
     "NoSyncKnownHosts": REDACT_V,
     "Hostname to Shell": REMOVE,
     "urlString": REDACT_V,
@@ -307,6 +338,7 @@ LABEL_KEYS = {
     "Title Function": REDACT_V,
     "Dynamic Profile Parent Name": REDACT_V,
     "Default Arrangement Name": REDACT_V,
+    "Tmux Gateway Session Name": REDACT_V,
     "AiModel": REDACT_V,
     "AIEconomyModelName": REDACT_V,
     "TTY": REDACT_V,
