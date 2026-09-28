@@ -28,6 +28,16 @@ class ClaudeCodeModeController: NSObject {
     private static let monitoredJob = "claude"
     private static let announcementIdentifier = "ClaudeCodeWorkgroupUpsell"
 
+    // How long claude must stay in the foreground before we offer the
+    // upsell. Short-lived non-interactive invocations (e.g. `claude
+    // plugin list`, possibly run by a script) finish well within this
+    // and shouldn't be mistaken for an interactive Claude Code session.
+    private static let dwellTime: TimeInterval = 3
+
+    // Per-session pending reconcile, scheduled when claude arrives and
+    // cancelled when it leaves before the dwell time elapses.
+    private var pendingReconciles = [String: DispatchWorkItem]()
+
     private var claudeSessionGUIDs = Set<String>()
 
     // Per-session: whether we've already shown the upsell during
@@ -86,6 +96,7 @@ class ClaudeCodeModeController: NSObject {
         for guid in previous.symmetricDifference(sessions) {
             let claudeLeft = previous.contains(guid) && !sessions.contains(guid)
             if claudeLeft {
+                pendingReconciles.removeValue(forKey: guid)?.cancel()
                 // Clear the "already prompted" flag so the next
                 // claude launch in this session can re-show the
                 // upsell. Without this, anyone who saw the upsell
@@ -104,8 +115,9 @@ class ClaudeCodeModeController: NSObject {
                 // "claude restarts immediately" race doesn't keep
                 // the trial flag dangling on the next entry.
                 autoExitTrialWorkgroupIfNeeded(guid: guid)
+            } else {
+                scheduleReconcile(guid: guid)
             }
-            reconcile(guid: guid)
         }
     }
 
@@ -118,6 +130,7 @@ class ClaudeCodeModeController: NSObject {
         claudeSessionGUIDs.remove(guid)
         shownThisRun.remove(guid)
         trialSessionGUIDs.remove(guid)
+        pendingReconciles.removeValue(forKey: guid)?.cancel()
     }
 
     // Pulled out to keep jobMonitorDidChange readable. The active-
@@ -162,8 +175,24 @@ class ClaudeCodeModeController: NSObject {
 
     private func reconcileAll() {
         for guid in claudeSessionGUIDs {
+            scheduleReconcile(guid: guid)
+        }
+    }
+
+    // Defers reconcile until claude has been running for dwellTime.
+    // reconcile rechecks claudeSessionGUIDs, but cancelling on exit
+    // also keeps a quick exit-then-relaunch from inheriting the first
+    // run's timer.
+    private func scheduleReconcile(guid: String) {
+        pendingReconciles[guid]?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            pendingReconciles.removeValue(forKey: guid)
+            DLog("Claude has been running in \(guid) for \(Self.dwellTime)s; reconciling upsell")
             reconcile(guid: guid)
         }
+        pendingReconciles[guid] = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.dwellTime, execute: item)
     }
 
     private func showAnnouncement(on session: PTYSession) {
