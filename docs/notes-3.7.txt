@@ -171,8 +171,9 @@ New Features:
   available” setting (Profiles > Colors). When
   on, a white cursor renders brighter than white
   on an HDR-capable display, with either the GPU
-  or the legacy renderer. Only sessions that
-  enable it pay the extra fp16 cost.
+  or the legacy renderer. A slider next to it
+  sets how bright the cursor gets. Only sessions
+  that enable it pay the extra fp16 cost.
 - AI command suggestions can now recognize when
   you have typed a plain-English request instead
   of the start of a command. In that case the

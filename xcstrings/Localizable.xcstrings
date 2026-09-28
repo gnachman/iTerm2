@@ -133464,6 +133464,48 @@
         }
       }
     },
+    "ProfilesColors.HDRCursorBrightness" : {
+      "comment" : "Display name for the slider that sets the peak brightness of the HDR cursor, used by settings search",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HDR-Cursor-Helligkeit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "HDR cursor brightness"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HDRカーソルの明るさ"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brilho do cursor HDR"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Яркость HDR-курсора"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HDR 光标亮度"
+          }
+        }
+      }
+    },
     "ProfilesColors.ImportPreset" : {
       "comment" : "Menu item to import a color preset",
       "extractionState" : "extracted_with_value",

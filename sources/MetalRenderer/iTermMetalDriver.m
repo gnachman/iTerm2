@@ -1498,6 +1498,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 tState.useHDRCursor = cursorInfo.useHDRWhite;
+                tState.hdrBrightness = cursorInfo.hdrBrightness;
                 tState.doubleWidth = cursorInfo.doubleWidth;
                 tState.pixelOffset = cursorInfo.pixelOffset;
                 tState.fadeAlpha = cursorFadeAlpha;
@@ -1515,6 +1516,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 tState.useHDRCursor = cursorInfo.useHDRWhite;
+                tState.hdrBrightness = cursorInfo.hdrBrightness;
                 tState.doubleWidth = cursorInfo.doubleWidth;
                 tState.fadeAlpha = cursorFadeAlpha;
 
@@ -1530,6 +1532,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 tState.useHDRCursor = cursorInfo.useHDRWhite;
+                tState.hdrBrightness = cursorInfo.hdrBrightness;
                 tState.pixelOffset = cursorInfo.pixelOffset;
                 tState.fadeAlpha = cursorFadeAlpha;
 

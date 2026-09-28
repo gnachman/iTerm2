@@ -363,6 +363,7 @@ typedef struct {
     _cursorInfo.useHDRWhite = [iTermCursor shouldUseHDRCursorOnBackground:[drawingHelper defaultBackgroundColor]
                                                           profileEnabled:drawingHelper.hdrCursorEnabled
                                                        potentialHeadroom:potentialEDR];
+    _cursorInfo.hdrBrightness = drawingHelper.hdrCursorBrightness;
     _cursorInfo.password = drawingHelper.passwordInput;
     _cursorInfo.copyMode = drawingHelper.copyMode;
     _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,

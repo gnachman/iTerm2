@@ -5850,6 +5850,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     const BOOL hdrCursorEnabled = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_HDR_CURSOR, aDict, dark)
                                                             inProfile:aDict];
     self.textview.hdrCursorEnabled = hdrCursorEnabled;
+    self.textview.hdrCursorBrightness = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_HDR_CURSOR_BRIGHTNESS, aDict, dark)
+                                                                   inProfile:aDict];
     if (_view.hdrCursorEnabled != hdrCursorEnabled) {
         _view.hdrCursorEnabled = hdrCursorEnabled;
         // The metal framebuffer pixel format is fp16 only when the HDR cursor is

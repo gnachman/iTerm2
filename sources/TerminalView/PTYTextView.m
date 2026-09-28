@@ -2045,6 +2045,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     helper.transparencyAffectsOnlyDefaultBackgroundColor = _drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
     helper.useSmartCursorColor = _drawingHelper.useSmartCursorColor;
     helper.hdrCursorEnabled = _drawingHelper.hdrCursorEnabled;
+    helper.hdrCursorBrightness = _drawingHelper.hdrCursorBrightness;
 
     if (forOffscreen) {
         // Offscreen rendering: disable all interactive features
@@ -2712,6 +2713,14 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (BOOL)hdrCursorEnabled {
     return _drawingHelper.hdrCursorEnabled;
+}
+
+- (void)setHdrCursorBrightness:(CGFloat)value {
+    _drawingHelper.hdrCursorBrightness = value;
+}
+
+- (CGFloat)hdrCursorBrightness {
+    return _drawingHelper.hdrCursorBrightness;
 }
 
 - (void)setMinimumContrast:(double)value {

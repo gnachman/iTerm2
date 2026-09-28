@@ -99,6 +99,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSButton *_useUnderlineColor;
     IBOutlet NSButton *_useSmartCursorColor;
     IBOutlet NSButton *_hdrCursor;
+    IBOutlet NSSlider *_hdrCursorBrightness;
     IBOutlet NSButton *_useThemeMarkColors;
     IBOutlet NSButton *_useActivePaneBorder;
     IBOutlet iTermSettingsColorWell *_activePaneBorderColor;
@@ -279,10 +280,16 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
 
-    [self defineControl:_hdrCursor
-                    key:KEY_HDR_CURSOR
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_hdrCursor
+                           key:KEY_HDR_CURSOR
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
+
+    [self defineControl:_hdrCursorBrightness
+                    key:KEY_HDR_CURSOR_BRIGHTNESS
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesColors.HDRCursorBrightness", nil, [NSBundle mainBundle], @"HDR cursor brightness", @"Display name for the slider that sets the peak brightness of the HDR cursor, used by settings search")
+                   type:kPreferenceInfoTypeSlider];
 
     [self defineControl:_useThemeMarkColors
                     key:KEY_USE_THEME_MARK_COLORS
@@ -467,6 +474,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     _selectedTextColor.enabled = [self boolForKey:KEY_USE_SELECTED_TEXT_COLOR];
     _underlineColor.enabled = [self boolForKey:KEY_USE_UNDERLINE_COLOR];
     _activePaneBorderColor.enabled = [self boolForKey:KEY_USE_ACTIVE_PANE_BORDER];
+    _hdrCursorBrightness.enabled = [self boolForKey:KEY_HDR_CURSOR];
 
     const BOOL smartCursorColorSelected = [self boolForKey:KEY_SMART_CURSOR_COLOR];
     const BOOL shouldEnableSmartCursorColor = ([self intForKey:KEY_CURSOR_TYPE] == CURSOR_BOX);

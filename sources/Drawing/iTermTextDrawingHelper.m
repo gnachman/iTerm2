@@ -188,6 +188,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _hdrCursorBrightness = iTermHDRCursorMaximumBrightness;
         iTermPreciseTimerStatsInit(&_stats[TIMER_TOTAL_DRAW_RECT], "Total drawRect");
         iTermPreciseTimerStatsInit(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS], "Construct BG runs");
         iTermPreciseTimerStatsInit(&_stats[TIMER_DRAW_BACKGROUND], "Draw BG");
@@ -4042,7 +4043,8 @@ typedef struct {
     // time but accumulates already-written values via plusLighter (the Tahoe tab
     // outline glows the same way). When the hint does not apply, the cursor draws
     // normally so cursor boost and smart cursor color still take effect.
-    CGFloat hdrBrightness = 1.0;
+    CGFloat hdrComponentValue = 1.0;
+    BOOL hdrCursor = NO;
     // A box cursor in an unfocused window is drawn as a hollow frame that keeps its
     // profile color and is not filled, so forcing it white (and boosting it) would
     // both lose that color and do nothing useful. The Metal path shares this rule
@@ -4059,7 +4061,9 @@ typedef struct {
                                          profileEnabled:self.hdrCursorEnabled
                                       potentialHeadroom:headroom]) {
             cursorColor = [NSColor whiteColor];
-            hdrBrightness = headroom;
+            hdrComponentValue = [iTermCursor hdrCursorComponentValueForRequestedBrightness:self.hdrCursorBrightness
+                                                                                  headroom:headroom];
+            hdrCursor = YES;
         }
     }
 
@@ -4094,8 +4098,7 @@ typedef struct {
                                                          faint:NO
                                                   isBackground:NO];
     }
-    cursor.hdrBrightness = hdrBrightness;
-    const BOOL hdrCursor = (hdrBrightness > 1.0);
+    cursor.hdrComponentValue = hdrComponentValue;
     _drawBoldCursorCharacter = hdrCursor;
     // When the HDR hint applies we force a full-white fill (see above), so smart
     // cursor color must be suppressed here too: otherwise the box cursor would

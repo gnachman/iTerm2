@@ -28105,6 +28105,48 @@
         }
       }
     },
+    "hCs-Sl-Dr2.ibShadowedToolTip" : {
+      "comment" : "Class = \"NSSlider\"; ibShadowedToolTip = \"Peak brightness of the HDR cursor, as a multiple of normal white. The display shows at most what its current HDR headroom allows, so higher values may look the same.\"; ObjectID = \"hCs-Sl-Dr2\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spitzenhelligkeit des HDR-Cursors als Vielfaches des normalen Weiß. Das Display zeigt höchstens das an, was sein aktueller HDR-Spielraum zulässt, daher können höhere Werte gleich aussehen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Peak brightness of the HDR cursor, as a multiple of normal white. The display shows at most what its current HDR headroom allows, so higher values may look the same."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HDRカーソルのピーク輝度（通常の白に対する倍率）。ディスプレイは現在のHDRヘッドルームが許す範囲までしか表示できないため、高い値は同じように見えることがあります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brilho máximo do cursor HDR, como múltiplo do branco normal. O monitor mostra no máximo o que sua margem HDR atual permite, então valores mais altos podem parecer iguais."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пиковая яркость HDR-курсора, кратная обычному белому. Дисплей показывает не больше, чем позволяет его текущий запас HDR, поэтому более высокие значения могут выглядеть одинаково."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HDR 光标的峰值亮度，以普通白色的倍数表示。显示器最多只能显示其当前 HDR 余量所允许的亮度，因此较高的值可能看起来相同。"
+          }
+        }
+      }
+    },
     "hdw-5J-3fP.title" : {
       "comment" : "Class = \"NSButtonCell\"; title = \"Erase All Settings and Data…\"; ObjectID = \"hdw-5J-3fP\";",
       "extractionState" : "extracted_with_value",

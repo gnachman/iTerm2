@@ -154,6 +154,10 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 // dark background; otherwise the cursor draws normally.
 @property(nonatomic) BOOL hdrCursorEnabled;
 
+// The profile's requested peak HDR cursor brightness (KEY_HDR_CURSOR_BRIGHTNESS),
+// in units of reference white. Clamped to the display's headroom when drawn.
+@property(nonatomic) CGFloat hdrCursorBrightness;
+
 // When YES, a blinking cursor fades smoothly in and out (with dwell times at
 // the extremes) instead of toggling abruptly. The durations and curves below
 // are honored only when this is YES.
