@@ -416,6 +416,15 @@ Bug Fixes:
   reached through SSH Integration. They never
   appeared before, and their status went
   unreported to the rest of the app. Issue 13049.
+- In a tmux Integration session, keys such as
+  Shift-Enter are now encoded the same way before
+  and after a detach and reattach. Previously a
+  pane could encode them one way before a detach
+  and another way after, until the app was
+  restarted. With tmux 3.9 or later, iTerm2 lets
+  tmux encode each key for the app in the pane,
+  including with the Kitty keyboard protocol.
+  Issue 13076.
 - The control sequence that resets a tab color to
   the profile’s now restores it correctly when
   the profile has separate light and dark mode

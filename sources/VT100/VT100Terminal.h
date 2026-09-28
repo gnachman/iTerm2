@@ -101,6 +101,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 // Convert input to printable characters.
 @property(nonatomic) BOOL literalMode;
 
+// Always 0 in tmux mode. See the implementation.
 @property(nonatomic, readonly) VT100TerminalKeyReportingFlags keyReportingFlags;
 @property(nonatomic) BOOL sendResizeNotifications;
 @property(nonatomic) BOOL sendUnsolicitedDarkModeDSR;

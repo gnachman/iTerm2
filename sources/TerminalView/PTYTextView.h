@@ -276,6 +276,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewDidHighlightMark;
 - (BOOL)textViewInInteractiveApplication;
 - (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem;
+- (BOOL)textViewCanToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (iTermEmulationLevel)textViewTerminalStateEmulationLevel;
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (void)textViewResetTerminal;

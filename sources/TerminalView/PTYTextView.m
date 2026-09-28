@@ -572,7 +572,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         item.action == @selector(terminalToggleKeyboardMode:) ||
         item.action == @selector(terminalStateToggleLiteralMode:)) {
         item.state = [self.delegate textViewTerminalStateForMenuItem:item] ? NSControlStateValueOn : NSControlStateValueOff;
-        return YES;
+        return [self.delegate textViewCanToggleTerminalStateForMenuItem:item];
     }
     if (item.action == @selector(terminalStateSetEmulationLevel:)) {
         item.state = [self.delegate textViewTerminalStateEmulationLevel] == item.tag;

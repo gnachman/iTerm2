@@ -7472,20 +7472,19 @@ lengthExcludingInBandSignaling:data.length
     // Gracefully degrades to NO on tmux versions that lack bracket_paste_flag.
     [self.terminal setBracketedPasteMode:[state[kStateDictBracketedPasteMode] boolValue]];
 
-    // pane_key_mode is exposed by tmux 3.5+ and reports the per-pane modifyOtherKeys
-    // state of whatever application is running inside the pane. Older tmux versions
-    // return an empty string, which we leave alone.
-    NSString *paneKeyMode = [NSString castFrom:state[kStateDictPaneKeyMode]];
-    int modifyOtherKeysValue = -1;
-    if ([paneKeyMode isEqualToString:@"Ext 1"]) {
-        modifyOtherKeysValue = 1;
-    } else if ([paneKeyMode isEqualToString:@"Ext 2"]) {
-        modifyOtherKeysValue = 2;
-    } else if ([paneKeyMode isEqualToString:@"VT10x"]) {
-        modifyOtherKeysValue = 0;
-    }
-    if (modifyOtherKeysValue >= 0 && self.terminal.sendModifiers.count > 4) {
-        self.terminal.sendModifiers[4] = @(modifyOtherKeysValue);
+    // pane_key_mode is exposed by tmux 3.5+ and reports how the application running
+    // in the pane has asked for keys to be encoded. Older tmux versions return an
+    // empty string, which we leave alone.
+    [self applyTmuxPaneKeyMode:[NSString castFrom:state[kStateDictPaneKeyMode]]];
+}
+
+- (void)applyTmuxPaneKeyMode:(NSString *)paneKeyMode {
+    // Only the modifyOtherKeys level is applied. We never encode keys with the
+    // Kitty keyboard protocol in a tmux pane (see -[VT100Terminal keyReportingFlags]),
+    // so a Kitty value, which carries no modifyOtherKeys level, changes nothing.
+    iTermTmuxPaneKeyMode *mode = [iTermTmuxPaneKeyMode modeForString:paneKeyMode];
+    if (mode && mode.modifyOtherKeys >= 0 && self.terminal.sendModifiers.count > 4) {
+        self.terminal.sendModifiers[4] = @(mode.modifyOtherKeys);
         [self terminalDidChangeSendModifiers];
     }
 }

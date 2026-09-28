@@ -148,4 +148,142 @@ static NSString *NameMeta(UTF32Char c, NSEventModifierFlags m) {
     XCTAssertEqualObjects(iTermTmuxControlModeOtherKeyName('5', NSEventModifierFlagControl, NO, NO), @"C-5");
 }
 
+#pragma mark - All keys (tmux that encodes every key)
+
+// The names were validated against tmux's own encoder: each one, sent with
+// send-keys, comes out as the expected sequence in legacy, modifyOtherKeys and
+// Kitty panes.
+// The pane is in VT10x (or Kitty) mode as far as we know.
+static NSString *AllKeys(UTF32Char c, NSEventModifierFlags m) {
+    return iTermTmuxControlModeKeyName(c, m, NO, NO, NO);
+}
+static NSString *AllKeysMeta(UTF32Char c, NSEventModifierFlags m) {
+    return iTermTmuxControlModeKeyName(c, m, YES, NO, NO);
+}
+static NSString *Keypad(UTF32Char c, NSEventModifierFlags m) {
+    return iTermTmuxControlModeKeyName(c, m, NO, YES, NO);
+}
+// The pane has asked for modifyOtherKeys 1 or 2.
+static NSString *AllKeysMOK(UTF32Char c, NSEventModifierFlags m) {
+    return iTermTmuxControlModeKeyName(c, m, NO, NO, YES);
+}
+
+- (void)testAllKeysNamesUnmodifiedSpecialKeys {
+    // The byte path sends these verbatim, which is wrong for a Kitty pane
+    // (Escape is CSI 27u under disambiguate; all four are CSI u under report-all).
+    XCTAssertEqualObjects(AllKeys('\r', 0), @"Enter");
+    XCTAssertEqualObjects(AllKeys('\t', 0), @"Tab");
+    XCTAssertEqualObjects(AllKeys(0x1b, 0), @"Escape");
+    XCTAssertEqualObjects(AllKeys(0x7f, 0), @"BSpace");
+}
+
+- (void)testAllKeysNamesModifiedSpecialKeys {
+    XCTAssertEqualObjects(AllKeys('\r', NSEventModifierFlagShift), @"S-Enter");
+    XCTAssertEqualObjects(AllKeys('\r', NSEventModifierFlagControl), @"C-Enter");
+    XCTAssertEqualObjects(AllKeys('\r', NSEventModifierFlagControl | NSEventModifierFlagShift), @"C-S-Enter");
+    XCTAssertEqualObjects(AllKeys(0x1b, NSEventModifierFlagShift), @"S-Escape");
+    // Option is a modifier on these keys whatever the option key setting.
+    XCTAssertEqualObjects(AllKeys('\r', NSEventModifierFlagOption), @"M-Enter");
+    XCTAssertEqualObjects(AllKeys(0x7f, NSEventModifierFlagOption), @"M-BSpace");
+}
+
+- (void)testAllKeysShiftTabIsBTab {
+    // S-Tab loses the shift in a legacy pane; BTab comes out as CSI Z there and in
+    // modifyOtherKeys 1, as in xterm, and as Shift+Tab elsewhere.
+    XCTAssertEqualObjects(AllKeys('\t', NSEventModifierFlagShift), @"BTab");
+    XCTAssertEqualObjects(AllKeys('\t', NSEventModifierFlagShift | NSEventModifierFlagControl), @"C-BTab");
+    XCTAssertEqualObjects(AllKeys('\t', NSEventModifierFlagControl), @"C-Tab");
+}
+
+- (void)testAllKeysNamesArrowNavigationAndFunctionKeys {
+    XCTAssertEqualObjects(AllKeys(NSUpArrowFunctionKey, 0), @"Up");
+    XCTAssertEqualObjects(AllKeys(NSDownArrowFunctionKey, NSEventModifierFlagShift), @"S-Down");
+    XCTAssertEqualObjects(AllKeys(NSLeftArrowFunctionKey, NSEventModifierFlagControl), @"C-Left");
+    XCTAssertEqualObjects(AllKeys(NSRightArrowFunctionKey, NSEventModifierFlagOption), @"M-Right");
+    XCTAssertEqualObjects(AllKeys(NSHomeFunctionKey, 0), @"Home");
+    XCTAssertEqualObjects(AllKeys(NSEndFunctionKey, 0), @"End");
+    XCTAssertEqualObjects(AllKeys(NSPageUpFunctionKey, 0), @"PPage");
+    XCTAssertEqualObjects(AllKeys(NSPageDownFunctionKey, 0), @"NPage");
+    XCTAssertEqualObjects(AllKeys(NSInsertFunctionKey, 0), @"IC");
+    XCTAssertEqualObjects(AllKeys(NSDeleteFunctionKey, NSEventModifierFlagControl), @"C-DC");
+    XCTAssertEqualObjects(AllKeys(NSF1FunctionKey, 0), @"F1");
+    XCTAssertEqualObjects(AllKeys(NSF12FunctionKey, 0), @"F12");
+    XCTAssertEqualObjects(AllKeys(NSF1FunctionKey, NSEventModifierFlagShift | NSEventModifierFlagOption), @"M-S-F1");
+    // The Function modifier that macOS sets on these keys is not a modifier to tmux.
+    XCTAssertEqualObjects(AllKeys(NSF5FunctionKey, NSEventModifierFlagFunction), @"F5");
+}
+
+- (void)testAllKeysLeavesUnnameableFunctionKeysOnBytePath {
+    XCTAssertNil(AllKeys(NSHelpFunctionKey, 0));
+    XCTAssertNil(AllKeys(NSClearLineFunctionKey, 0));
+    // tmux drops F13 and up in any mode but Kitty.
+    XCTAssertNil(AllKeys(NSF13FunctionKey, 0));
+    XCTAssertNil(AllKeys(NSF19FunctionKey, NSEventModifierFlagShift));
+}
+
+- (void)testAllKeysLeavesKeypadOnBytePath {
+    // In any mode but Kitty, tmux drops modified keypad keys and sends LF for
+    // keypad Enter.
+    XCTAssertNil(Keypad('5', 0));
+    XCTAssertNil(Keypad('5', NSEventModifierFlagControl));
+    XCTAssertNil(Keypad(NSEnterCharacter, 0));
+    XCTAssertNil(Keypad('=', 0));
+}
+
+- (void)testAllKeysLeavesTextOnBytePath {
+    // Text goes through Cocoa (so input methods and dead keys work) and then the
+    // byte path, which hands printable characters to tmux's key encoder too.
+    XCTAssertNil(AllKeys('a', 0));
+    XCTAssertNil(AllKeys('A', NSEventModifierFlagShift));
+    XCTAssertNil(AllKeys('!', NSEventModifierFlagShift));
+    XCTAssertNil(AllKeys(' ', 0));
+    XCTAssertNil(AllKeys(0xe9, 0));
+    // Option composing a character.
+    XCTAssertNil(AllKeys('a', NSEventModifierFlagOption));
+}
+
+- (void)testAllKeysNamesPrintableKeyCombinations {
+    XCTAssertEqualObjects(AllKeys('c', NSEventModifierFlagControl), @"C-c");
+    XCTAssertEqualObjects(AllKeysMeta('a', NSEventModifierFlagOption), @"M-a");
+    XCTAssertEqualObjects(AllKeys('A', NSEventModifierFlagControl | NSEventModifierFlagShift), @"C-S-A");
+    XCTAssertEqualObjects(AllKeys(' ', NSEventModifierFlagControl), @"C-Space");
+    XCTAssertEqualObjects(AllKeys(';', NSEventModifierFlagControl), @"C-;");
+}
+
+- (void)testAllKeysNamesVT10xUnencodableControlKeysOnlyInModifyOtherKeysMode {
+    // tmux's VT10x encoder has no control code for these bases, and send-keys
+    // types a name the pane's mode cannot encode as literal text. They encode in
+    // modifyOtherKeys 1 and 2, so they are named only once the pane asks for it.
+    const UTF32Char bases[] = { 0x1b, 0x7f, '#', '$', '%', '&', '*' };
+    NSArray<NSString *> *names = @[ @"C-Escape", @"C-BSpace", @"C-#", @"C-$", @"C-%", @"C-&", @"C-*" ];
+    for (NSUInteger i = 0; i < sizeof(bases) / sizeof(*bases); i++) {
+        XCTAssertNil(AllKeys(bases[i], NSEventModifierFlagControl), @"%@", names[i]);
+        XCTAssertNil(AllKeys(bases[i], NSEventModifierFlagControl | NSEventModifierFlagShift), @"%@", names[i]);
+        // Meta doesn't help: tmux writes ESC and then fails the same way.
+        XCTAssertNil(AllKeysMeta(bases[i], NSEventModifierFlagControl | NSEventModifierFlagOption), @"%@", names[i]);
+        XCTAssertEqualObjects(AllKeysMOK(bases[i], NSEventModifierFlagControl), names[i]);
+    }
+    XCTAssertEqualObjects(AllKeysMOK('%', NSEventModifierFlagControl | NSEventModifierFlagShift), @"C-S-%");
+    XCTAssertEqualObjects(AllKeysMOK(0x1b, NSEventModifierFlagControl | NSEventModifierFlagOption), @"C-M-Escape");
+
+    // Without Control the same bases encode in every mode.
+    XCTAssertEqualObjects(AllKeys(0x1b, NSEventModifierFlagShift), @"S-Escape");
+    XCTAssertEqualObjects(AllKeys(0x7f, NSEventModifierFlagOption), @"M-BSpace");
+    XCTAssertNil(AllKeys('%', NSEventModifierFlagShift), @"Shifted printable is text");
+    XCTAssertEqualObjects(AllKeysMeta('%', NSEventModifierFlagOption), @"M-%");
+
+    // Control combinations tmux can encode in VT10x mode stay named regardless.
+    XCTAssertEqualObjects(AllKeys('\r', NSEventModifierFlagControl), @"C-Enter");
+    XCTAssertEqualObjects(AllKeys('\t', NSEventModifierFlagControl), @"C-Tab");
+    XCTAssertEqualObjects(AllKeys('[', NSEventModifierFlagControl), @"C-[");
+    XCTAssertEqualObjects(AllKeys('1', NSEventModifierFlagControl), @"C-1");
+    XCTAssertEqualObjects(AllKeys('!', NSEventModifierFlagControl | NSEventModifierFlagShift), @"C-S-!");
+    XCTAssertEqualObjects(AllKeys(NSDeleteFunctionKey, NSEventModifierFlagControl), @"C-DC");
+}
+
+- (void)testAllKeysIgnoresCommand {
+    XCTAssertEqualObjects(AllKeys(NSUpArrowFunctionKey, NSEventModifierFlagCommand), @"Up");
+    XCTAssertEqualObjects(AllKeys('\r', NSEventModifierFlagCommand), @"Enter");
+}
+
 @end

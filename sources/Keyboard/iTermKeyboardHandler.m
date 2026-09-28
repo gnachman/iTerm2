@@ -469,9 +469,9 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     // code or keypad sequence) to the terminal is exactly what bypass is meant to prevent. Let the
     // event fall through to Cocoa so macOS handles it normally. Issue 12884.
     if (!context.hasBypassKeyMapping && [self shouldAllowPreCocoaKeyMappingForEvent:event]) {
-        // In a tmux -CC pane, hand a modifyOtherKeys "other key" to tmux by name
-        // so it re-encodes it in the pane's own key mode + extended-keys-format,
-        // rather than injecting our own (possibly wrong-format) byte encoding.
+        // In a tmux -CC pane, hand the keystroke to tmux by name so it encodes it
+        // for the pane's own key mode, rather than injecting our own (possibly
+        // wrong-format) byte encoding.
         if ([self.delegate keyboardHandler:self sendTmuxControlModeKeyEvent:event]) {
             return;
         }

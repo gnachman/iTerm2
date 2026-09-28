@@ -675,7 +675,25 @@ static const int kMaxScreenRows = 4096;
     [self.delegate terminalKeyReportingFlagsDidChange:NO];
 }
 
+- (void)setTmuxMode:(BOOL)tmuxMode {
+    if (tmuxMode == _tmuxMode) {
+        return;
+    }
+    _tmuxMode = tmuxMode;
+    // keyReportingFlags depends on tmux mode. This is not a write from the data
+    // stream, so it says nothing about whether the shell cleaned up after itself.
+    [self.delegate terminalKeyReportingFlagsDidChange:NO];
+}
+
 - (VT100TerminalKeyReportingFlags)keyReportingFlags {
+    if (_tmuxMode) {
+        // We never encode keys with the Kitty keyboard protocol for a tmux pane.
+        // Either tmux encodes them itself (see -[TmuxGateway serverEncodesAllKeys])
+        // or it does not support the protocol. This also covers flags carried in
+        // from a restored arrangement or from output parsed before tmux mode was
+        // turned on. Issue 13076.
+        return 0;
+    }
     if (self.currentKeyReportingModeStack.count) {
         return self.currentKeyReportingModeStack.lastObject.intValue;
     }
@@ -2538,6 +2556,28 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_SET_KEY_REPORTING_MODE:
+            // In tmux mode the application's terminal is tmux, not us. tmux forwards a
+            // pane's raw output to control clients verbatim (window_pane_read_callback
+            // writes to both control_write_output and input_parse_pane), so we see the
+            // app's kitty keyboard requests even though they were addressed to tmux.
+            //
+            // Acting on them leaves us holding key reporting state that tmux does not
+            // model and cannot report back, which is then silently lost on detach: the
+            // pane's terminal is reset on attach, there is no tmux format variable to
+            // restore the flags from, and CSI ? u is answered by the terminal rather
+            // than the application, so there is nothing to re-derive it from either.
+            // The result was a pane that encoded keys one way before a detach and
+            // another way after. Issue 13076.
+            //
+            // So we never encode keys with the Kitty protocol in a tmux pane. A tmux
+            // that supports the protocol tracks it per pane (keeping it across a
+            // detach), answers CSI ? u, and encodes each key we send it by name for
+            // the pane's current mode. An older tmux ignores CSI ? u, so an app that
+            // negotiates properly gets no reply and falls back to modifyOtherKeys.
+            if (_tmuxMode) {
+                DLog(@"Ignore set key reporting mode in tmux mode");
+                break;
+            }
             self.dirty = YES;
             {
                 VT100TerminalKeyReportingFlags effective;
@@ -2569,10 +2609,18 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_PUSH_KEY_REPORTING_MODE:
+            if (_tmuxMode) {
+                DLog(@"Ignore push key reporting mode in tmux mode");
+                break;
+            }
             [self pushKeyReportingFlags:token.csi->p[0]];
             break;
 
         case VT100CSI_POP_KEY_REPORTING_MODE:
+            if (_tmuxMode) {
+                DLog(@"Ignore pop key reporting mode in tmux mode");
+                break;
+            }
             [self popKeyReportingModes:token.csi->p[0]];
             break;
 

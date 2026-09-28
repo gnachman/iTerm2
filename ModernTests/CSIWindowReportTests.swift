@@ -14,14 +14,6 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class CSIWindowReportTests: XCTestCase {
-    private func feed(_ harness: TerminalTestHarness, _ string: String) {
-        let bytes = Array(string.utf8).map { CChar(bitPattern: $0) }
-        bytes.withUnsafeBufferPointer { ptr in
-            let raw = UnsafeMutablePointer(mutating: ptr.baseAddress!)
-            harness.screen.threadedReadTask(raw, length: Int32(bytes.count))
-        }
-    }
-
     private func waitForReport(_ harness: TerminalTestHarness,
                                timeout: TimeInterval = 5) -> String? {
         let deadline = Date().addingTimeInterval(timeout)
@@ -39,7 +31,7 @@ final class CSIWindowReportTests: XCTestCase {
     /// it produced no reply at all.
     func testReportCellSize() {
         let harness = TerminalTestHarness(width: 80, height: 24)
-        feed(harness, "\u{1B}[16t")
+        harness.send(Array("\u{1B}[16t".utf8))
         let reply = waitForReport(harness)
 
         XCTAssertNotNil(reply, "CSI 16t must be answered (it was silently unsupported before the fix)")
@@ -55,7 +47,7 @@ final class CSIWindowReportTests: XCTestCase {
     /// accidentally disturbing its neighbor.
     func testReportTextAreaSizeStillWorks() {
         let harness = TerminalTestHarness(width: 80, height: 24)
-        feed(harness, "\u{1B}[14t")
+        harness.send(Array("\u{1B}[14t".utf8))
         let reply = waitForReport(harness)
 
         XCTAssertNotNil(reply, "CSI 14t must be answered")

@@ -5606,6 +5606,7 @@
 		FAD6DE861DB58FBEB8390E1F /* CompanionSessionStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C1A8905A6728CBE90BCD09 /* CompanionSessionStreamer.swift */; };
 		FB47A51FE147AA2BDA2FFFD4 /* SendCompanionNotificationBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24E4996901DA8086C54D1664 /* SendCompanionNotificationBuiltInFunction.swift */; };
 		FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
+		FBA941099D96F7A63231D365 /* TmuxPaneKeyMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FE69A4E5E629BECA95BF11A /* TmuxPaneKeyMode.swift */; };
 		FC58829E571DF07C5902F3EB /* EnterWorkgroupTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23866DFB3D15427C93C0849 /* EnterWorkgroupTrigger.swift */; };
 		FCEDFDBC42D7B491D8603596 /* OllamaModelCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = D36976C2B1759AD6645DBAB6 /* OllamaModelCache.swift */; };
 		FD34D15329745082B47FF48A /* InlineChatToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D24FA729C97DC10CC13FB8C /* InlineChatToolbarView.swift */; };
@@ -6575,6 +6576,7 @@
 		4F11062666A3520744C1AC2B /* iTermTmuxControlModeKeyName.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermTmuxControlModeKeyName.h; sourceTree = "<group>"; };
 		4FA57CDED6D07ADB36D49D4C /* iTermRightGutterPanelRegistry.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermRightGutterPanelRegistry.m; sourceTree = "<group>"; };
 		4FC9620CA37B0A32A763C48A /* iTermWorkgroupInstance.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupInstance.swift; sourceTree = "<group>"; };
+		4FE69A4E5E629BECA95BF11A /* TmuxPaneKeyMode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TmuxPaneKeyMode.swift; sourceTree = "<group>"; };
 		50895C00806C4E1D92E96319 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermScriptInspector.xib; sourceTree = "<group>"; };
 		516BF83D01B179D961D3EDB6 /* iTermImageComparison.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermImageComparison.h; sourceTree = "<group>"; };
 		5192F2D65DCCD7256632E6C0 /* iTermStatusBarProxyIconImageView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermStatusBarProxyIconImageView.swift; sourceTree = "<group>"; };
@@ -13177,6 +13179,7 @@
 				A612E5CD2DAD96870014F159 /* ChannelJobManager.swift */,
 				A6B6C93F2F3BD942006AB7BE /* iTermTmuxClientTracker.swift */,
 				6834C48BEEB505536385AE57 /* TmuxPaneLocator.swift */,
+				4FE69A4E5E629BECA95BF11A /* TmuxPaneKeyMode.swift */,
 			);
 			path = tmux;
 			sourceTree = "<group>";
@@ -22555,6 +22558,7 @@
 				42F2D87F2FE321DC2722C7DA /* iTermTabStatusController.swift in Sources */,
 				49A423BC7B31ED33A13940F8 /* TmuxPaneLocator.swift in Sources */,
 				18B1DEB50CA3C2720B9A4DFF /* BuiltInFunctionSession.swift in Sources */,
+				FBA941099D96F7A63231D365 /* TmuxPaneKeyMode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

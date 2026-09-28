@@ -917,6 +917,17 @@ static NSString *kCommandTimestamp = @"timestamp";
     return [self versionAtLeastDecimalNumberWithString:@"3.2"];
 }
 
+- (BOOL)serverEncodesAllKeys {
+    // This assumes tmux 3.9 includes https://github.com/tmux/tmux/pull/5615 with
+    // the fixes requested there (3.8 does not have it). With them, tmux tracks the
+    // Kitty keyboard protocol per pane and encodes every key it is sent by name
+    // for the pane's current mode (legacy, modifyOtherKeys, or Kitty), and its
+    // send-keys drops a key the pane's mode cannot encode instead of typing its
+    // name as text, which is what makes naming every key safe. Re-verify against
+    // the actual release.
+    return [self versionAtLeastDecimalNumberWithString:@"3.9"];
+}
+
 - (void)sendKeyName:(NSString *)name toWindowPane:(int)windowPane {
     // Quote the name for tmux's command parser. Single quotes are fully literal
     // in tmux: no ';' separator, and no '$' (env) or '#' (format) expansion, both

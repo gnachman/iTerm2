@@ -40,6 +40,38 @@ NSString * _Nullable iTermTmuxControlModeOtherKeyName(UTF32Char codePoint,
                                                       BOOL optionActsAsMeta,
                                                       BOOL isNumericKeypad);
 
+/// Returns the tmux send-keys key name for any keystroke tmux can encode, for a
+/// server that encodes every key itself (see -[TmuxGateway serverEncodesAllKeys]).
+/// Unlike iTermTmuxControlModeOtherKeyName, this also names the keys whose
+/// encoding depends on the pane's mode but which the byte path would send
+/// verbatim: unmodified Enter, Tab, Escape and Backspace, Shift+Tab, and arrow,
+/// navigation and F1-F12 keys. tmux then encodes each one for the pane's current
+/// mode (legacy, modifyOtherKeys, or the Kitty keyboard protocol), which it
+/// tracks per pane and keeps across a detach.
+///
+/// Returns nil to keep the byte path, which also hands printable text to tmux's
+/// key encoder, for:
+///   - text: an unmodified or shifted printable, or option composing a character,
+///   - numeric keypad keys and F13 and up, which tmux drops in any mode but
+///     Kitty,
+///   - keys tmux has no name for, and
+///   - unless modifyOtherKeys is YES, Control with Escape, Backspace or one of
+///     # $ % & *. tmux has no VT10x encoding for those, and send-keys types the
+///     name as text when the pane's mode cannot encode a key (a deliberate
+///     choice, tmux commit 04eee241, shipped in 3.1) rather than dropping it.
+///     They encode fine in modifyOtherKeys mode, which the pane requests through
+///     output we parse as tmux does, so the caller passes YES when the pane has
+///     asked for level 1 or 2 and the keys are named only then.
+///
+/// Option is always reported as M- on the non-text keys, matching the byte path,
+/// which passes it through as a modifier on arrow and function keys whatever the
+/// option key setting. On printable keys it is M- only when option acts as meta.
+NSString * _Nullable iTermTmuxControlModeKeyName(UTF32Char codePoint,
+                                                 NSEventModifierFlags modifiers,
+                                                 BOOL optionActsAsMeta,
+                                                 BOOL isNumericKeypad,
+                                                 BOOL modifyOtherKeys);
+
 // Implemented by the key mappers that can name a modifyOtherKeys "other key"
 // for a tmux -CC pane (the modifyOtherKeys level 1 and level 2 mappers).
 @protocol iTermTmuxControlModeKeyNaming<NSObject>

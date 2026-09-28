@@ -165,6 +165,11 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 // YES if the server is new enough (tmux 3.2+) that send-keys by name is
 // re-encoded through extended-keys rather than collapsed by legacy input_key.
 - (BOOL)serverSupportsExtendedKeys;
+
+// YES if the server encodes every key for the pane's own mode, including the Kitty
+// keyboard protocol, so every keystroke should be sent to it by name. See
+// iTermTmuxControlModeKeyName.
+- (BOOL)serverEncodesAllKeys;
 - (void)detach;
 - (void)forceDetach;
 - (void)doubleAttachDetectedForSessionGUID:(NSString *)sessionGuid;

@@ -29,11 +29,7 @@ final class PromptMarkAidTests: XCTestCase {
     }
 
     private func sendOSC(_ bytes: [UInt8], on harness: TerminalTestHarness) {
-        bytes.withUnsafeBufferPointer { ptr in
-            let chars = UnsafeMutablePointer<CChar>(
-                mutating: UnsafeRawPointer(ptr.baseAddress!).assumingMemoryBound(to: CChar.self))
-            harness.screen.threadedReadTask(chars, length: Int32(bytes.count))
-        }
+        harness.send(bytes)
         harness.sync()
     }
 
