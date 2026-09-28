@@ -571,8 +571,8 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     pre->rtlFound = rtlFound;
     pre->config = config;
     // The space is at index 0, so everything past it in that cluster came from the string.
-    pre->firstClusterLengthInString =
-        (int)[augmented rangeOfComposedCharacterSequenceAtIndex:0].length - 1;
+    // Segment the way StringToScreenChars does, since that decides which cells get written.
+    pre->firstClusterLengthInString = (int)[augmented rangeOfFirstComposedCharacter].length - 1;
     pre->valid = YES;
 }
 

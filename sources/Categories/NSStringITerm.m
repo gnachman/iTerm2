@@ -1843,6 +1843,15 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     free(heapBuf);
 }
 
+- (NSRange)rangeOfFirstComposedCharacter {
+    __block NSRange result = NSMakeRange(0, 0);
+    [self enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
+        result = range;
+        *stop = YES;
+    }];
+    return result;
+}
+
 - (NSString *)firstComposedCharacter:(NSString **)rest {
     __block NSString *first = nil;
     __block NSString *tail = self;

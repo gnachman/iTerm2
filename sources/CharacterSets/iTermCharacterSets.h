@@ -21,10 +21,19 @@ BOOL iTermIsSpacingCombiningMark(uint32_t cp);
 // Check if a code point is an emoji that accepts VS16 (U+FE0F).
 BOOL iTermIsEmojiAcceptingVS16(uint32_t cp);
 
+// Check if a code point is an emoji modifier (Fitzpatrick skin tone, U+1F3FB..U+1F3FF).
+NS_INLINE BOOL iTermIsEmojiModifier(uint32_t cp) {
+    return cp >= 0x1F3FB && cp <= 0x1F3FF;
+}
+
+// Check if a code point has Emoji_Modifier_Base, i.e., an emoji modifier following it
+// forms an emoji modifier sequence.
+BOOL iTermIsEmojiModifierBase(uint32_t cp);
+
 // Check if a code point is a modifier forcing full-width rendition
 // (VS16 or skin tone modifier).
 NS_INLINE BOOL iTermIsModifierForcingFullWidth(uint32_t cp) {
-    return cp == 0xFE0F || (cp >= 0x1F3FB && cp <= 0x1F3FF);
+    return cp == 0xFE0F || iTermIsEmojiModifier(cp);
 }
 
 // Check if a code point is an RTL-indicating code point.
@@ -46,7 +55,9 @@ BOOL iTermIsCodePointWithOwnCell(uint32_t cp);
 
 // Find the first code point with its own cell in a UTF-16 buffer.
 // When aggressive is YES, checks against the full codePointsWithOwnCell set
-// (Grapheme_Base - Default_Ignorable + spacing combining marks + modifier letters).
+// (Grapheme_Base - Default_Ignorable + spacing combining marks + modifier letters),
+// except that an emoji modifier following an Emoji_Modifier_Base does not count.
+// chars[start - 1] must be valid; it is the start of the grapheme cluster being split.
 // When aggressive is NO, only checks for 0xFF9E and 0xFF9F.
 // Returns the UTF-16 index of the first match, or kCFNotFound.
 CFIndex iTermFindFirstCodePointWithOwnCell(const UniChar *chars,

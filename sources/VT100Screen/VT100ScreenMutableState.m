@@ -1024,9 +1024,13 @@ static BOOL sOSC7DisabledWarningShown;
         // merged into the predecessor cell. The parser thread cannot tell -- the predecessor
         // is what it cannot see -- so it recorded what the space absorbed and the comparison
         // happens here.
+        //
+        // Both sides segment with -enumerateComposedCharacters:, as StringToScreenChars does,
+        // not with Apple's grapheme clusters. They can disagree: Apple attaches an emoji
+        // modifier to a space and to U+1F44D alike, but only the latter keeps it in the same
+        // cell (issue 13079), so comparing Apple's clusters would miss the difference.
         NSString *predecessorAugmented = [predecessorString stringByAppendingString:string];
-        const NSRange mergedFirstCluster =
-            [predecessorAugmented rangeOfComposedCharacterSequenceAtIndex:0];
+        const NSRange mergedFirstCluster = [predecessorAugmented rangeOfFirstComposedCharacter];
         const NSInteger absorbedByPredecessor =
             (NSInteger)mergedFirstCluster.length - (NSInteger)predecessorString.length;
         if (absorbedByPredecessor < 0 ||

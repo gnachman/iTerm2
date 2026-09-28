@@ -743,8 +743,11 @@ Bug Fixes:
   width other terminals report for it, so the
   advanced setting “Lone regional indicators
   render full-width” no longer affects flags.
-  Skin-toned emoji are still affected and will
-  be fixed separately.
+- Fixed a bug where a skin-toned emoji like 👍🏻
+  was drawn as the plain emoji followed by a
+  separate color swatch, taking four columns.
+  It is now a single emoji two columns wide,
+  matching other modern terminals.
 - Fixed a bug where a character that combined
   with the one before it could come out the
   wrong width when the two halves arrived in

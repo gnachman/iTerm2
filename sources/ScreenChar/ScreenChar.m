@@ -473,6 +473,27 @@ static BOOL iTermComposedCharIsFlag(NSString *s, UTF32Char baseChar) {
     return iTermCodePointIsRegionalIndicator(DecodeSurrogatePair(high, [s characterAtIndex:3]));
 }
 
+// YES if `s` begins with an emoji modifier sequence: an Emoji_Modifier_Base followed by
+// a skin tone modifier, as in U+1F44D U+1F3FB, optionally with a U+FE0F between them to
+// match iTermFindFirstCodePointWithOwnCell. `baseChar` is the already-decoded first code
+// point and `next` is the UTF-16 index just past it.
+static BOOL iTermComposedCharIsEmojiModifierSequence(NSString *s, UTF32Char baseChar, NSInteger next) {
+    if (!iTermIsEmojiModifierBase(baseChar)) {
+        return NO;
+    }
+    if ((NSUInteger)next < s.length && [s characterAtIndex:next] == 0xFE0F) {
+        next += 1;
+    }
+    if (s.length < (NSUInteger)next + 2) {
+        return NO;
+    }
+    const unichar high = [s characterAtIndex:next];
+    if (!IsHighSurrogate(high)) {
+        return NO;
+    }
+    return iTermIsEmojiModifier(DecodeSurrogatePair(high, [s characterAtIndex:next + 1]));
+}
+
 // Convert a string into an array of screen characters, dealing with surrogate
 // pairs, combining marks, nonspacing marks, and double-width characters.
 void StringToScreenChars(NSString *s,
@@ -598,6 +619,16 @@ void StringToScreenChars(NSString *s,
                 // gave before flags became a single cluster. A single narrow cell would put
                 // a program's cursor arithmetic out of step with the grid. A lone indicator
                 // is not a flag and keeps the width those settings give it.
+                isDoubleWidth = YES;
+                disambiguated = YES;
+            }
+            if (!disambiguated && iTermComposedCharIsEmojiModifierSequence(composedOrNonBmpChar, baseChar, next)) {
+                // An emoji modifier sequence is one emoji glyph, so it occupies two columns
+                // even when the base alone is narrow (e.g., U+261D). This is deliberately
+                // not gated on the alternate screen the way VS16 widening is: every emoji
+                // modifier sequence gets the same width everywhere. Note that wcwidth sums
+                // the two code points (4 columns for U+1F44D U+1F3FB), so a program that
+                // measures with it will disagree. See issue 13079.
                 isDoubleWidth = YES;
                 disambiguated = YES;
             }

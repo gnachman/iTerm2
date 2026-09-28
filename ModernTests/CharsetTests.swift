@@ -17,6 +17,13 @@ private func stringFromCodePoints(_ codePoints: [UInt32]) -> String {
 }
 
 
+/// The string held by a single cell, including a complex char's full contents.
+private func cellString(_ c: screen_char_t) -> String? {
+    var c = c
+    return ScreenCharToStr(&c)
+}
+
+
 /// Call StringToScreenChars and return the result buffer, length, and rtlFound flag.
 private func callStringToScreenChars(
     _ s: String,
@@ -451,18 +458,16 @@ final class StringToScreenCharsTests: XCTestCase {
     }
 
     /// 2.6.4 Index pointing up + skin tone modifier.
-    /// With aggressive base character detection, the skin tone modifier (U+1F3FB)
-    /// is in codePointsWithOwnCell and gets split from the base emoji. Each becomes
-    /// its own cell(s).
+    /// U+261D is a narrow Emoji_Modifier_Base. The emoji modifier sequence is one
+    /// double-width cell, in the alternate screen as well, unlike VS16 widening.
     func testEmojiVS16_indexPointingUpSkinTone() {
         let s = stringFromCodePoints([0x261D, 0x1F3FB])
-        let (buf, len, _) = callStringToScreenChars(s, softAlternateScreenMode: false)
-        // Aggressive mode splits them: 261D (possibly double-width) + 1F3FB (double-width)
-        XCTAssertGreaterThanOrEqual(len, 2)
-        // Verify at least one cell contains the base emoji
-        let firstIsComplex = buf[0].complexChar != 0
-        if !firstIsComplex {
-            XCTAssertEqual(buf[0].code, unichar(0x261D))
+        for softAlternateScreenMode in [false, true] {
+            let (buf, len, _) = callStringToScreenChars(s, softAlternateScreenMode: softAlternateScreenMode)
+            XCTAssertEqual(len, 2, "softAlternateScreenMode=\(softAlternateScreenMode)")
+            XCTAssertNotEqual(buf[0].complexChar, 0)
+            XCTAssertEqual(cellString(buf[0]), s)
+            XCTAssertTrue(ScreenCharIsDWC_RIGHT(buf[1]))
         }
     }
 
@@ -484,34 +489,74 @@ final class StringToScreenCharsTests: XCTestCase {
 
     // MARK: 2.7 Skin Tone Modifiers
 
-    // With aggressive base character detection, skin tone modifiers (U+1F3FB-1F3FF)
-    // are in codePointsWithOwnCell and get split from the base emoji during
-    // enumerateComposedCharacters. Each part gets its own cell(s).
+    // Skin tone modifiers (U+1F3FB-1F3FF) are Grapheme_Base, so they are in
+    // codePointsWithOwnCell. After an Emoji_Modifier_Base they form an emoji modifier
+    // sequence and stay in the base's cell (issue 13079). After anything else they are
+    // drawn as a separate swatch and keep their own cell.
 
-    /// 2.7.1 Hand + medium skin tone (split by aggressive mode).
+    /// Asserts `codePoints` becomes exactly one double-width cell holding all of them.
+    private func assertOneDoubleWidthCell(_ codePoints: [UInt32],
+                                          file: StaticString = #filePath,
+                                          line: UInt = #line) {
+        let s = stringFromCodePoints(codePoints)
+        let (buf, len, _) = callStringToScreenChars(s, softAlternateScreenMode: false)
+        XCTAssertEqual(len, 2, file: file, line: line)
+        XCTAssertNotEqual(buf[0].complexChar, 0, file: file, line: line)
+        XCTAssertEqual(cellString(buf[0]), s, file: file, line: line)
+        XCTAssertTrue(ScreenCharIsDWC_RIGHT(buf[1]), file: file, line: line)
+    }
+
+    /// 2.7.1 Hand + medium skin tone.
     func testSkinTone_medium() {
-        let s = stringFromCodePoints([0x270B, 0x1F3FD])
-        let (buf, len, _) = callStringToScreenChars(s, softAlternateScreenMode: false)
-        // 270B and 1F3FD are split; each may be double-width
-        XCTAssertGreaterThanOrEqual(len, 2)
-        // Verify the base emoji is present
-        XCTAssertTrue(buf[0].code == unichar(0x270B) || buf[0].complexChar != 0)
+        assertOneDoubleWidthCell([0x270B, 0x1F3FD])
     }
 
-    /// 2.7.2 Hand + lightest skin tone (split by aggressive mode).
+    /// 2.7.2 Hand + lightest skin tone.
     func testSkinTone_lightest() {
-        let s = stringFromCodePoints([0x270B, 0x1F3FB])
-        let (buf, len, _) = callStringToScreenChars(s, softAlternateScreenMode: false)
-        XCTAssertGreaterThanOrEqual(len, 2)
-        XCTAssertTrue(buf[0].code == unichar(0x270B) || buf[0].complexChar != 0)
+        assertOneDoubleWidthCell([0x270B, 0x1F3FB])
     }
 
-    /// 2.7.3 Hand + darkest skin tone (split by aggressive mode).
+    /// 2.7.3 Hand + darkest skin tone.
     func testSkinTone_darkest() {
-        let s = stringFromCodePoints([0x270B, 0x1F3FF])
+        assertOneDoubleWidthCell([0x270B, 0x1F3FF])
+    }
+
+    /// 2.7.4 Thumbs up + light skin tone, both supplementary. Issue 13079.
+    func testSkinTone_thumbsUp() {
+        assertOneDoubleWidthCell([0x1F44D, 0x1F3FB])
+    }
+
+    /// 2.7.4a A VS16 between the base and the skin tone does not separate them, whether the
+    /// base is narrow (U+261D) or wide (U+1F44D). CoreText draws each as one glyph.
+    func testSkinTone_afterVS16() {
+        assertOneDoubleWidthCell([0x261D, 0xFE0F, 0x1F3FB])
+        assertOneDoubleWidthCell([0x1F44D, 0xFE0F, 0x1F3FB])
+    }
+
+    /// 2.7.5 A skin tone inside a ZWJ sequence stays with its base (man + tone + ZWJ + laptop).
+    func testSkinTone_inZWJSequence() {
+        assertOneDoubleWidthCell([0x1F468, 0x1F3FB, 0x200D, 0x1F4BB])
+    }
+
+    /// 2.7.6 A skin tone after a letter is not an emoji modifier sequence. CoreText draws a
+    /// swatch for it, so it keeps its own cell rather than overlapping the letter.
+    func testSkinTone_afterNonBaseIsSplit() {
+        let s = stringFromCodePoints([0x41, 0x1F3FB])
         let (buf, len, _) = callStringToScreenChars(s, softAlternateScreenMode: false)
-        XCTAssertGreaterThanOrEqual(len, 2)
-        XCTAssertTrue(buf[0].code == unichar(0x270B) || buf[0].complexChar != 0)
+        XCTAssertEqual(len, 3)
+        XCTAssertEqual(buf[0].code, unichar(0x41))
+        XCTAssertEqual(buf[0].complexChar, 0)
+        XCTAssertEqual(cellString(buf[1]), stringFromCodePoints([0x1F3FB]))
+        XCTAssertTrue(ScreenCharIsDWC_RIGHT(buf[2]))
+    }
+
+    /// 2.7.7 A second modifier follows a modifier, not a base, so only the first attaches.
+    func testSkinTone_secondModifierIsSplit() {
+        let s = stringFromCodePoints([0x1F44D, 0x1F3FB, 0x1F3FF])
+        let (buf, len, _) = callStringToScreenChars(s, softAlternateScreenMode: false)
+        XCTAssertEqual(len, 4)
+        XCTAssertEqual(cellString(buf[0]), stringFromCodePoints([0x1F44D, 0x1F3FB]))
+        XCTAssertEqual(cellString(buf[2]), stringFromCodePoints([0x1F3FF]))
     }
 
     // MARK: 2.8 RTL Detection
@@ -927,21 +972,23 @@ final class UAX29NoBreakTests: XCTestCase {
         XCTAssertEqual(buf[2].code, unichar(0x41))
     }
 
-    // MARK: Emoji modifier sequences are deliberately left alone
+    // MARK: Emoji modifier sequences
 
-    /// Emoji modifiers are Grapheme_Base too, so the own-cell scan splits them off their
-    /// base and each half is double-width. That makes a skin-toned emoji four columns.
-    /// It is NOT fixed by excluding modifiers from the set the way regional indicators
-    /// are: a modifier has Grapheme_Cluster_Break=Extend, so Apple attaches one to
-    /// whatever precedes it, and CoreText draws a separate swatch glyph when the base
-    /// cannot take a modifier. Collapsing "A" + modifier into one cell would overlap it.
-    /// These tests pin the current behavior so a future fix has to be deliberate.
-    func testSkinToneStillSplitsFromItsBase() {
-        let (_, bmpLen, _) = callStringToScreenChars(stringFromCodePoints([0x270B, mediumSkin]))
-        XCTAssertEqual(bmpLen, 4, "✋🏽 currently occupies four columns")
+    /// Emoji modifiers are Grapheme_Base too, so the own-cell scan used to split them off
+    /// their base, making a skin-toned emoji four columns drawn as two glyphs (issue 13079).
+    /// They are not excluded from the set the way regional indicators are: a modifier has
+    /// Grapheme_Cluster_Break=Extend, so Apple attaches one to whatever precedes it, and
+    /// CoreText draws a separate swatch glyph when the base cannot take a modifier. The scan
+    /// keeps a modifier only when it follows an Emoji_Modifier_Base.
+    func testSkinToneStaysWithItsBase() {
+        assertSingleDoubleWidthCell([0x270B, mediumSkin])
+        assertSingleDoubleWidthCell([0x1F44D, mediumSkin])
+    }
 
-        let (_, suppLen, _) = callStringToScreenChars(stringFromCodePoints([0x1F44D, mediumSkin]))
-        XCTAssertEqual(suppLen, 4, "👍🏽 currently occupies four columns")
+    /// Collapsing "A" + modifier into one cell would overlap the swatch.
+    func testSkinToneAfterNonBaseStillSplits() {
+        let (_, len, _) = callStringToScreenChars(stringFromCodePoints([0x41, mediumSkin]))
+        XCTAssertEqual(len, 3, "A🏽 occupies three columns")
     }
 
     // MARK: The rules this must not disturb

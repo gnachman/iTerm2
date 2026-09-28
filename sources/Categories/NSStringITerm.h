@@ -246,6 +246,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
                                               BOOL *stop))block;
 
 - (NSString *)firstComposedCharacter:(NSString * _Nullable * _Nullable)rest;
+// The range of the first cell-sized unit as segmented by -enumerateComposedCharacters:, which can
+// be shorter than -rangeOfComposedCharacterSequenceAtIndex:0. {0, 0} for an empty string.
+- (NSRange)rangeOfFirstComposedCharacter;
 - (NSString *)lastComposedCharacter;
 - (NSInteger)numberOfComposedCharacters;
 - (NSString * _Nullable)byTruncatingComposedCharactersInCenter:(NSInteger)count;
