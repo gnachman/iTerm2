@@ -85,11 +85,11 @@ PROFILE fields (inside New Bookmarks[*], Default Bookmark, and profiles
 embedded in arrangements under Bookmark / Initial Profile)
   Command, Initial Text, Initial URL, Working Directory, Badge Text,
   Subtitle, Custom Window Title, Custom Tab Title, Answerback String,
-  Custom Icon Path, Background Image Location, Background Image Folder
-  Location, AWDS Window/Tab/Pane Directory, Log Directory, Log Filename
-  Format, Archive Directory, Browser Extensions Root, Dynamic Profile
-  Filename, Custom Locale, Bound Hosts, Jobs to Ignore, Snippets Filter,
-  tmux Pane Title
+  Custom Icon Path, Bell Sound, Background Image Location, Background Image
+  Folder Location, AWDS Window/Tab/Pane Directory, Log Directory, Log
+  Filename Format, Archive Directory, Browser Extensions Root, Dynamic
+  Profile Filename, Custom Locale, Bound Hosts, Jobs to Ignore, Snippets
+  Filter, tmux Pane Title
   Nested: Triggers, Smart Selection Rules, Keyboard Map, Touch Bar Map,
           SSH, Semantic History, Status Bar Layout, Bindings
   Kept (NOT sensitive): Custom Command / Custom Directory / AWDS *Option
@@ -189,6 +189,7 @@ CONTENT_KEYS = {
     # filesystem paths / directories
     "Working Directory": REDACT_V,
     "Custom Icon Path": REDACT_V,
+    "Bell Sound": REDACT_V,
     "Background Image Location": REDACT_V,
     "Background Image Folder Location": REDACT_V,
     "AWDS Window Directory": REDACT_V,

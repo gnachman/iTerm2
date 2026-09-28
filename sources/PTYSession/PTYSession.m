@@ -19144,7 +19144,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         if (audibleBell) {
             notified = YES;
             DLog(@"Beep: ring audible bell");
-            NSBeep();
+            [[iTermBellSoundPlayer sharedInstance] playProfileValue:[iTermProfilePreferences stringForKey:KEY_BELL_SOUND
+                                                                                                inProfile:self.profile]];
         }
         if (showBellIndicator) {
             notified = YES;

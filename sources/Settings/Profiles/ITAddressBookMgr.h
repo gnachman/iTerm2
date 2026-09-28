@@ -222,6 +222,9 @@
 #define KEY_USE_HFS_PLUS_MAPPING              @"Use HFS Plus Mapping"  // DEPRECATED
 #define KEY_UNICODE_NORMALIZATION             @"Unicode Normalization"
 #define KEY_SILENCE_BELL                      @"Silence Bell"
+// Empty for the system alert sound, the name of an installed sound, or the path to an
+// audio file. See iTermBellSound.
+#define KEY_BELL_SOUND                        @"Bell Sound"
 #define KEY_VISUAL_BELL                       @"Visual Bell"
 #define KEY_FLASHING_BELL                     @"Flashing Bell"
 #define KEY_PREVENT_SLEEP                     @"Prevent Sleep"
