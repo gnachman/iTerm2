@@ -953,6 +953,13 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 
 - (void)applicationDidChangeScreenParameters:(NSNotification *)aNotification
 {
+    // Tell location-locked windows to stop trusting their frames right now, not
+    // after the delay below. The delay exists because it isn't safe to *act* on a
+    // screen change immediately, but macOS does its window shuffling inside it, so
+    // waiting to start *distrusting* one would miss the shuffle entirely.
+    for (PseudoTerminal *term in [self terminals]) {
+        [term locationLockDisplaysDidChange];
+    }
     // The screens' -visibleFrame is not updated when this is called. Doing a delayed perform with
     // a delay of 0 is usually, but not always enough. Not that 1 second is always enough either,
     // I suppose, but I don't want to die on this hill.

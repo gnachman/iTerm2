@@ -560,7 +560,16 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)terminalAppendSixelData:(nullable NSData *)sixelData;
 
 - (void)terminalDidChangeSendModifiers;
-- (void)terminalKeyReportingFlagsDidChange;
+// wholeValueReplaced is YES only when the write set the effective flags outright - CSI = flags ; 1 u,
+// or a sequence that zeroes the flags and empties both mode stacks. It is NO for the merge forms
+// (modes 2 and 3), for push and pop, and for a change that comes from switching screen buffers.
+// Only a whole-value write clears whatever an app left behind, which is what lets a shell that
+// makes one be trusted to clean up after its own commands. See 13032.
+- (void)terminalKeyReportingFlagsDidChange:(BOOL)wholeValueReplaced;
+
+// iTerm2 reset the key reporting mode itself. Distinct because this write came from iTerm2, not
+// from the data stream, so it says nothing about how the shell treats the mode. See 13032.
+- (void)terminalDidResetKeyReportingLocally;
 - (void)terminalClearCapturedOutput;
 
 - (BOOL)terminalIsInAlternateScreenMode;

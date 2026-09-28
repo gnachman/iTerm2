@@ -25,14 +25,22 @@ public struct IT2IO {
 /// code). Nothing is written to the real process stdio and the process is never
 /// terminated, which is what makes it safe to call inside iTerm2.
 public enum IT2Embedded {
-    public static func run(arguments: [String], io: IT2IO, channel: APIChannel) -> Int32 {
+    /// `originIdentifier` names the ssh connection this invocation arrived on (the conductor's
+    /// clientUniqueID). It reaches tmux pane addressing, where it identifies the machine the
+    /// caller's $TMUX was collected on. The host supplies it; it is never taken from `arguments`,
+    /// which the remote side controls.
+    public static func run(arguments: [String],
+                           io: IT2IO,
+                           channel: APIChannel,
+                           originIdentifier: String?) -> Int32 {
         let context = IT2Context(
             out: io.stdout,
             err: io.stderr,
             confirm: io.confirm,
             makeClient: { APIClient(channel: channel) },
             installsSignalHandlers: false,
-            isRemote: true
+            isRemote: true,
+            originIdentifier: originIdentifier
         )
         return runToExitCode(arguments, context)
     }

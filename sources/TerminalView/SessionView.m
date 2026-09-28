@@ -3090,7 +3090,14 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     [self ensureSessionNoteViewWithModel:model];
 }
 
+- (void)setSessionNoteCollapsed:(BOOL)collapsed {
+    _sessionNoteView.isCollapsed = collapsed;
+}
+
 - (void)ensureSessionNoteViewWithModel:(iTermSessionNoteModel *)model {
+    // Mirror visibility into the model so it can be saved in an arrangement. This is the one place a
+    // note view gets created, and the hide paths below are the only places one gets destroyed.
+    model.isVisible = YES;
     if (_sessionNoteView) {
         return;
     }
@@ -3115,6 +3122,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (void)hideSessionNoteIfEmpty {
     if (_sessionNoteView && !_sessionNoteView.hasContent) {
+        _sessionNoteView.model.isVisible = NO;
         [_sessionNoteView removeFromSuperview];
         _sessionNoteView = nil;
     }
@@ -3122,6 +3130,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (void)hideSessionNote {
     if (_sessionNoteView) {
+        _sessionNoteView.model.isVisible = NO;
         [_sessionNoteView syncModelFrame];
         [_sessionNoteView removeFromSuperview];
         _sessionNoteView = nil;

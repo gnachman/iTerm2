@@ -409,3 +409,95 @@ public func preconditionFailure(
 }
 
 extension iTermLogger: BrowserExtensionLogger {}
+
+// MARK: - Budgeted retrospective logging
+
+/// RLog the first time each distinct `key` is seen, then DLog.
+///
+/// RLog is always on and feeds a capped ring buffer that a debug log pulls from. Some conditions
+/// are both worth recording and reached on a hot path -- anything driven by a hook that runs once
+/// per event will repeat for as long as the condition lasts -- and left unbudgeted they push real
+/// history out of that window. One loud line per distinct situation is all the information there
+/// is; the rest is repetition.
+///
+/// `budget` caps how many distinct keys are remembered, PER GROUP. The group is the part of `key`
+/// before its first colon, so callers namespace themselves by writing keys like "veto:<address>"
+/// or "gateway-status:<guid>". Without that, one call site whose keys vary a lot would exhaust the
+/// allowance of every other one, permanently silencing situations that were never noisy -- the set
+/// is never pruned.
+///
+/// Past the budget everything in that group goes to DLog: running out of room means stop being
+/// loud, never stop remembering, because taking the loud branch for a key that cannot be recorded
+/// would log unboundedly.
+///
+/// `key` may derive from untrusted input (a script-supplied address, say). Both dimensions are
+/// bounded, so that holds however a caller composes the key: the number of remembered groups is
+/// capped as well as the keys within each, and anything past either cap goes to DLog. A caller
+/// that passed an untrusted value with no colon in it would make the whole thing one group per
+/// value, which is why the group count has to be enforced rather than left to convention.
+func RLogOncePerKey(_ key: String,
+                    budget: Int = 64,
+                    _ message: @autoclosure () -> String,
+                    file: String = #file,
+                    line: Int = #line,
+                    function: String = #function) {
+    guard iTermRLogKeyBudget.shared.claim(key, budget: budget) else {
+        // Forward the call site. These paths repeat, so the DLog branch is the common one, and
+        // attributing it here instead of to the caller would make the repeated lines the hardest
+        // ones to trace.
+        DLog(message(), file: file, line: line, function: function)
+        return
+    }
+    // RLogMessage is built from a string literal, so wrap the computed text in one.
+    RLog("\(message())", file: file, line: line, function: function)
+}
+
+/// Tracks which keys have already been logged loudly, budgeted per group. Locked: built-in
+/// functions complete on whatever queue their caller used, so this is not reliably main-thread.
+///
+/// Internal rather than private, with a usable init, so tests can drive the real implementation
+/// instead of restating the algorithm.
+class iTermRLogKeyBudget {
+    static let shared = iTermRLogKeyBudget()
+    private var seenByGroup = [String: Set<String>]()
+    private let lock = NSLock()
+
+    /// The part of a key before its first colon, or the whole key when it has none.
+    static func group(for key: String) -> String {
+        guard let colon = key.firstIndex(of: ":") else {
+            return key
+        }
+        return String(key[key.startIndex..<colon])
+    }
+
+    /// How many distinct groups to remember. Callers are expected to use a literal prefix, of
+    /// which there are a handful, so this is headroom rather than a limit anyone should reach --
+    /// but it is enforced because the alternative is a map that grows with untrusted input.
+    private static let maxGroups = 32
+
+    /// True if this call should log loudly.
+    func claim(_ key: String, budget: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        let group = Self.group(for: key)
+        guard var seen = seenByGroup[group] else {
+            // A group we have not seen. Refusing to record it past the cap also means refusing to
+            // be loud about it: going loud for something that cannot be remembered would log on
+            // every call forever, which is worse than not logging at all.
+            guard seenByGroup.count < Self.maxGroups else {
+                return false
+            }
+            seenByGroup[group] = [key]
+            return true
+        }
+        if seen.contains(key) {
+            return false
+        }
+        guard seen.count < budget else {
+            return false
+        }
+        seen.insert(key)
+        seenByGroup[group] = seen
+        return true
+    }
+}

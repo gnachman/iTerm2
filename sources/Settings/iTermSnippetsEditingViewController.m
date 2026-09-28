@@ -56,7 +56,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     [menu addItem:[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"SnippetsEditing.Duplicate", nil, [NSBundle mainBundle], @"Duplicate", @"Menu item to duplicate the selected snippets")
                                              action:@selector(duplicateSnippets:)
                                       keyEquivalent:@""]];
-    [menu addItem:[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"General.Delete", nil, [NSBundle mainBundle], @"Delete", @"Delete menu item")
+    [menu addItem:[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"General.Delete", nil, [NSBundle mainBundle], @"Delete", @"Delete: used on buttons, menu items and other controls")
                                              action:@selector(deleteSnippets:)
                                       keyEquivalent:@""]];
     [menu addItem:[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"SnippetsEditing.AddAbove", nil, [NSBundle mainBundle], @"Add Above", @"Menu item to add a snippet above the selection")

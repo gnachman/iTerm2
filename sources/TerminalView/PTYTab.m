@@ -732,13 +732,31 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return result;
 }
 
-- (NSString *)labelForActiveSession {
-    NSString *title = [[self activeSession] name];
+// The label to put on the tab bar: the tab's resolved title plus the subtitle line.
+- (NSString *)tabBarLabel {
+    // Not activeSession.name. A tab title the user set by hand (Edit Tab Title) or
+    // one from a profile's custom tab title belongs to the tab, not to any session,
+    // and -updateTabTitleForCurrentSessionName: already resolves it into
+    // iTermVariableKeyTabTitle. Reading the session name here is what let every
+    // caller of -_refreshLabels: (a tab-status change, a subtitle change,
+    // kUpdateLabelsNotification) replace the user's title with the profile name.
+    // Issue 13072.
+    //
+    // The fallback covers the window before any title has been computed: every new
+    // tab is drawn once from -setTabViewItem: before its name controller first
+    // fires. It is nil-only on purpose -- an empty or whitespace-only title is a
+    // value -updateTabTitleForCurrentSessionName: resolved and meant, so
+    // second-guessing it here would recreate the disagreement this fix removes.
+    NSString *title = self.title ?: [[self activeSession] name];
     return [self stringByAppendingSubtitleForActiveSession:title];
 }
 
 - (NSString *)stringByAppendingSubtitleForActiveSession:(NSString *)title {
-    NSString *subtitle = self.activeSession.subtitle;
+    // Coalesce rather than guard: subtitle is nil when there is no active session
+    // and %@ would draw the literal text “(null)”. The newline must stay
+    // unconditional -- PSM splits the label on it, so "title\n" is how a stale
+    // subtitle gets erased (issue 10143).
+    NSString *subtitle = self.activeSession.subtitle ?: @"";
     NSString *statusText = [iTermSetTabStatusTrigger localizedStatusForDisplay:_aggregatedTabStatus.statusText];
     if (statusText.length > 0 && iTermUserDefaults.showSessionStatusInTabSubtitle) {
         if (subtitle.length > 0) {
@@ -752,7 +770,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)_refreshLabels:(id)sender {
     if ([self activeSession]) {
-        [tabViewItem_ setLabel:[self labelForActiveSession]];
+        [tabViewItem_ setLabel:[self tabBarLabel]];
         [parentWindow_ setWindowTitle];
     }
 }
@@ -807,10 +825,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                              isDark:isDark];
 }
 
-- (void)loadTitleFromSession {
-    tabViewItem_.label = self.activeSession.name;
-}
-
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString*)newName {
     if ([self activeSession] == session) {
         [self updateTabTitleForCurrentSessionName:newName];
@@ -828,16 +842,34 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             } else if (tmuxWindowName.length) {
                 value = [tmuxPrefix stringByAppendingString:tmuxWindowName];
             } else {
-                value = [tmuxPrefix stringByAppendingString:self.activeSession.name];
+                // activeSession can be nil (see the non-tmux branch below).
+                value = [tmuxPrefix stringByAppendingString:self.activeSession.name ?: @""];
             }
         } else {
-            value = newName ?: @"";
+            // Fall back to the session's name rather than storing an empty tab
+            // title, as the tmux branch above already does. newName is nil until
+            // the session's name controller first evaluates -- a freshly split
+            // pane, a tab still being built -- and an empty title would both draw
+            // a blank tab and disagree with -tabBarLabel, whose only source used
+            // to be -[PTYSession name]. Issue 13072.
+            //
+            // A session that deliberately blanks its title does not come through
+            // here: -[iTermSessionNameController valueForInvocation:withResult:error:]
+            // maps a blank result to @" ", a resolved value that is drawn as-is.
+            //
+            // -[PTYSession name] is never nil, but self.activeSession can be
+            // (-setActiveSession:nil returns early and leaves tabViewItem_ alive),
+            // and a nil value would remove tab.title from the scope and draw the
+            // literal text “(null)” in the tab bar.
+            value = newName.length ? newName : (self.activeSession.name ?: @"");
         }
     } else if (self.tmuxTab && ![value hasPrefix:tmuxPrefix]) {
         value = [tmuxPrefix stringByAppendingString:value];
     }
     [self.variablesScope setValue:value forVariableNamed:iTermVariableKeyTabTitle];
-    [tabViewItem_ setLabel:[self stringByAppendingSubtitleForActiveSession:value]];  // PSM uses bindings to bind the label to its title
+    // Derive the label through -tabBarLabel rather than assembling it from `value`:
+    // two derivations that can drift apart is how issue 13072 happened.
+    [tabViewItem_ setLabel:[self tabBarLabel]];  // PSM uses bindings to bind the label to its title
     [self.realParentWindow tabTitleDidChange:self];
 }
 
@@ -918,9 +950,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeyTabCurrentSession];
         return;
     }
+    // Recompute the title (and the label) before anything below observes the
+    // change: -setWindowTitle reads it, and so do the iTermSessionBecameKey
+    // observers and -[PseudoTerminal tabActiveSessionDidChange], which re-renders
+    // the touch bar's tab labels. Issue 13072.
+    [self updateTabTitle];
     if (changed) {
         [parentWindow_ setWindowTitle];
-        [tabViewItem_ setLabel:[self labelForActiveSession]];
         if ([realParentWindow_ currentTab] == self) {
             // If you set a textview in a non-current tab to the first responder and
             // then close that tab, it crashes with NSTextInput calling
@@ -984,7 +1020,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         DLog(@"Clear dead state");
         [self setState:0 reset:kPTYTabDeadState];
     }
-    [self updateTabTitle];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermCurrentSessionDidChange
                                                         object:activeSession_
                                                       userInfo:nil];
@@ -1269,7 +1304,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (theTabViewItem != nil) {
         // While Lion-restoring windows, there may be no active session.
         if ([self activeSession]) {
-            [tabViewItem_ setLabel:[self labelForActiveSession]];
+            [tabViewItem_ setLabel:[self tabBarLabel]];
         } else {
             [tabViewItem_ setLabel:@""];
         }
@@ -1810,6 +1845,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self fitSessionToCurrentViewSize:newSession];
     }
     [newView layoutContentsForNewlyActiveSession];
+
+    // The -setNeedsUpdate above makes the synthetic session compute its own name,
+    // but its synchronous publish cannot reach the tab title: it lands in
+    // -nameOfSession:didChangeTo:, which drops anything that isn't from the active
+    // session, and activeSession_ was still the live session at that point. Only
+    // the dispatch_async that -setNeedsReevaluation schedules would eventually
+    // repair it, a main-queue turn later, so the tab bar could draw one frame
+    // holding the live session's title. Recompute here, now that the synthetic
+    // session is active, so entering a swap is as synchronous as leaving one.
+    // Issue 13072.
+    [self updateTabTitle];
 }
 
 - (int)tabNumberForItermSessionId {
@@ -1902,6 +1948,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     RLog(@"IR exit swap (refit): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@",
          liveSession, liveSession.columns, liveSession.rows,
          NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame));
+
+    // This method assigns activeSession_ directly rather than going through
+    // -setActiveSession:, so it misses that method's -updateTabTitle and the tab
+    // title would keep holding the synthetic session's. Its counterpart
+    // -replaceActiveSessionWithSyntheticSession: ends with the same call, for the
+    // same reason; entering and leaving a swap are symmetric. Issue 13072.
+    [self updateTabTitle];
 }
 
 #pragma mark - Screenshot Mode
@@ -3603,7 +3656,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     [theTab setParentWindow:term];
     theTab.delegate = term;
-    [theTab->tabViewItem_ setLabel:NSLocalizedStringWithDefaultValue(@"PTYTab.Restoring", nil, [NSBundle mainBundle], @"Restoring…", @"Tab label shown while a tab is being restored")];
 
     [theTab setObjectCount:[term numberOfTabs] + 1];
 

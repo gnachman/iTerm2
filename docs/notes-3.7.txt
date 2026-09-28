@@ -1,5 +1,9 @@
 Version TBD (unreleased; built off master)
 
+Credit to Nimanou (nuved) for the
+right-to-left rendering, selection, and copy
+improvements in this release.
+
 Major New Features:
 - iTerm2 is now localized: the interface follows
   your Mac’s language and is available in
@@ -7,6 +11,51 @@ Major New Features:
   and Simplified Chinese.
 
 New Features:
+- `it2` can now target a session by the tmux pane
+  it is showing. From inside a tmux Integration
+  pane, pass --tmux "$TMUX" --tmux-pane
+  "$TMUX_PANE" to session set-status, get-status,
+  set-var or get-var; a program running there
+  cannot otherwise learn which session it is in.
+  This works the same on a host reached through
+  SSH Integration. (Claude Code’s own status hook
+  is not yet installed on remote hosts, so its
+  status is only reported automatically for
+  sessions on this Mac.)
+  Claude Code’s status is no longer reported from
+  a pane of a plain tmux session (one not using
+  tmux Integration), since iTerm2 cannot tell
+  which tab, if any, is showing that pane.
+- New `it2 session get-status` prints a session’s
+  status indicator as JSON. `set-status` no
+  longer requires --session and defaults to the
+  active session.
+- New Python API functions set_session_status and
+  get_session_status read and write a session’s
+  status indicator by session ID, and
+  session_id_for_tmux_pane finds the session
+  showing a tmux pane.
+- The Python API can now read, show, hide, and
+  update a session’s Session Note.
+- The Session Status tool can now follow Codex
+  CLI as well as Claude Code. There is no
+  installer for Codex yet. Write a small shell
+  script that runs the hook program inside
+  iTerm2.app (Contents/Resources/utilities/
+  cc-status) with the argument --agent codex,
+  then in ~/.codex/hooks.json point each event
+  at that script and set timeout to 3 on the
+  Interrupt and SessionEnd hooks. Codex allows
+  those two events one second by default, which
+  is not always enough for the hook to finish.
+  The status dot then tracks the agent through
+  a turn, names what a permission request wants
+  to do, clears when you interrupt with Esc, and
+  keeps showing work in progress while a
+  detached sub-agent runs on after the turn
+  that started it. The tab gets a progress
+  indicator too, which Codex does not draw for
+  itself.
 - Right-clicking your own message in AI chat now
   offers Delete, which removes that message and
   everything after it. Edit, Fork, and Delete are
@@ -171,6 +220,33 @@ New Features:
   style but has no title bar or window controls,
   which is how Centered windows looked before
   3.7.0.
+- Window > Lock Location pins a window to the
+  display and position it has when you turn it
+  on. If anything moves the window it goes right
+  back, and when that display is disconnected, as
+  happens while a laptop sleeps, the window waits
+  and returns when the display comes back.
+  Dragging the window turns the lock off. Styles
+  that fill or attach to the screen, such as
+  Maximized, Centered, and the top, bottom, left,
+  and right styles, keep their usual shape and
+  are held to their display instead. Note that
+  macOS puts a returning window on whichever
+  Space its display is showing at the time, which
+  may not be the Space it left.
+- A session status can now be told when it
+  stops being true. Along with the status,
+  a program says what the status should
+  become once the work it describes is
+  over, and iTerm2 makes the change when
+  the program reports that the work
+  finished. It keeps a status from
+  outliving the thing it was reporting on
+  when a program is stopped partway
+  through. Set it with the --expires-on
+  option of it2 set-status, or the
+  expires_on argument of the Python API’s
+  set_status.
 - Each profile can now choose what its bell
   sounds like, in Settings > Profiles > Terminal >
   Bell sound. Pick one of the sounds installed on
@@ -305,8 +381,44 @@ Improvements:
   Files that fail to upload are left out of what
   is pasted. Local paths are no longer offered
   there, since they name nothing on that host.
+- Fixed a source of main-thread stalls that built
+  up in windows left open for days.
+- The Snippets tool no longer rebuilds its list
+  every time you switch tabs or the running
+  command changes, which had been making windows
+  slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- A tab name you set yourself with Edit Tab Title
+  is no longer replaced by the session’s name
+  whenever the tab’s subtitle changes or its
+  label is otherwise refreshed. Issue 13072.
+- When a tmux integration window first loads, its
+  tab now shows the finished title right away.
+  It used to briefly show a bare session name,
+  with neither the “↣” marker that flags a tmux
+  tab nor the second line under the title.
+- Interrupting Claude Code with Esc now
+  returns its Session Status to idle. The
+  tab kept reading “working”, or “waiting”
+  if a permission prompt was open, until
+  the next thing you asked it to do.
+- After iTerm2 restarted with your sessions
+  restored, which happens after an update, a
+  crash, or a force quit, commands in newly
+  opened sessions could fail to reach devices on
+  your local network with “No route to host”
+  until you quit and reopened iTerm2. New
+  sessions now get local network access right
+  away. Sessions restored from before the restart
+  still need to be restarted to regain it.
+  Issue 12106.
+- The Session Status toolbelt tool now lists
+  Claude Code sessions running inside tmux
+  Integration panes, on this Mac or on a host
+  reached through SSH Integration. They never
+  appeared before, and their status went
+  unreported to the rest of the app. Issue 13049.
 - The control sequence that resets a tab color to
   the profile’s now restores it correctly when
   the profile has separate light and dark mode
@@ -349,11 +461,9 @@ Bug Fixes:
   iTerm2 while several Claude Code sessions were
   running.
 - Stopped falsely offering to reset the key
-  reporting mode after every command when using
-  Fish with oh-my-posh, which together emit a
-  duplicate command-finished mark after
-  re-enabling the keyboard protocol for the next
-  prompt.
+  reporting mode after every command when your
+  shell manages the keyboard protocol itself,
+  as Fish 4 and prompt tools like oh-my-posh do.
 - Fixed a performance regression from 3.7.0 that
   made typing lag or arrive in bursts when using
   terminal multiplexers (such as tmux -CC) and

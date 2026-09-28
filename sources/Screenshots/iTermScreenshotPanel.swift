@@ -532,7 +532,7 @@ class iTermScreenshotPanel: NSPanel {
         largeScreenshotWarningLabel.isHidden = true
         contentView.addSubview(largeScreenshotWarningLabel)
 
-        let saveButton = NSButton(title: String(localized: "General.Save", defaultValue: "Save", comment: "Save button"), target: self, action: #selector(saveClicked(_:)))
+        let saveButton = NSButton(title: String(localized: "General.Save", defaultValue: "Save", comment: "Save: used on buttons and menu items"), target: self, action: #selector(saveClicked(_:)))
         saveButton.keyEquivalent = "\r" // Return
         saveButton.bezelStyle = .rounded
         saveButton.translatesAutoresizingMaskIntoConstraints = false

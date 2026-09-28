@@ -115,7 +115,7 @@ class MessageCellView: NSView {
     }
 
     private func makeDeleteItem() -> NSMenuItem {
-        let item = NSMenuItem(title: String(localized: "General.Delete", defaultValue: "Delete", comment: "Label for a Delete control"), action: #selector(deleteMenuItemClicked(_:)), keyEquivalent: "")
+        let item = NSMenuItem(title: String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete: used on buttons, menu items and other controls"), action: #selector(deleteMenuItemClicked(_:)), keyEquivalent: "")
         item.target = self
         return item
     }

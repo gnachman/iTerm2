@@ -48,7 +48,7 @@ class SessionNoteView: NSView, NSTextViewDelegate {
     @objc weak var delegate: SessionNoteViewDelegate?
     @objc var hasContent: Bool { !model.text.isEmpty }
 
-    private let model: SessionNoteModel
+    @objc let model: SessionNoteModel
     private let textView: SessionNoteTextView
     private let scrollView: NSScrollView
     private let clipView: NSView
@@ -63,6 +63,7 @@ class SessionNoteView: NSView, NSTextViewDelegate {
     private var frameOriginAtDragStart = NSPoint.zero
 
     private var isAnimatingCollapse = false
+    private var collapseAnimationTimer: Timer?
     private var isResizing = false
     private var resizeLeft = false
     private var resizeRight = false
@@ -86,8 +87,10 @@ class SessionNoteView: NSView, NSTextViewDelegate {
                 // Expanding: save expanded frame before the model changes.
                 // (expandedHeight was captured when we collapsed.)
             } else {
-                // Collapsing: capture expanded frame into model before shrinking.
-                model.noteFrame = frame
+                // Collapsing: capture expanded frame into model before shrinking. If an expand is
+                // still animating, the frame is a transient interpolated one, so rebuild the
+                // expanded frame from the last real height instead of saving the transient rect.
+                model.noteFrame = isAnimatingCollapse ? expandedFrameKeepingTopEdge() : frame
             }
             model.isCollapsed = newValue
             animateCollapseChange()
@@ -252,6 +255,15 @@ class SessionNoteView: NSView, NSTextViewDelegate {
         NotificationCenter.default.removeObserver(self)
     }
 
+    override func viewWillMove(toSuperview newSuperview: NSView?) {
+        super.viewWillMove(toSuperview: newSuperview)
+        if newSuperview == nil {
+            // The note is being hidden. Don't keep animating a detached view.
+            collapseAnimationTimer?.invalidate()
+            collapseAnimationTimer = nil
+        }
+    }
+
     // MARK: - Layout
 
     override func resizeSubviews(withOldSize oldSize: NSSize) {
@@ -334,11 +346,17 @@ class SessionNoteView: NSView, NSTextViewDelegate {
         // Keep top edge (origin.y + height) fixed throughout.
         let topEdge = frame.origin.y + frame.size.height
         let startFrame = frame
+        // Mid-animation the height is a transient interpolated value, so a fast
+        // collapse/expand/collapse would record that as the expanded height and shrink the note for
+        // good. Keep the last real one instead.
+        let wasAnimating = isAnimatingCollapse
 
         isAnimatingCollapse = true
 
         if model.isCollapsed {
-            expandedHeight = frame.size.height
+            if !wasAnimating {
+                expandedHeight = frame.size.height
+            }
             let endFrame = NSRect(x: frame.origin.x,
                                   y: topEdge - Self.titleBarHeight,
                                   width: frame.size.width,
@@ -370,6 +388,12 @@ class SessionNoteView: NSView, NSTextViewDelegate {
     private func animateFrame(from startFrame: NSRect, to endFrame: NSRect,
                               duration: TimeInterval = 0.2,
                               completion: @escaping () -> Void) {
+        // A collapse or expand can begin while one is still in flight, either from two API calls in a
+        // row or from fast clicking. Leaving the old timer running lets both write self.frame, and the
+        // older completion then fires partway through the newer animation: a collapse completing
+        // during an expand hides the scroll view on a note that ends up full height, with no way back
+        // except collapsing and expanding by hand.
+        collapseAnimationTimer?.invalidate()
         let startTime = CACurrentMediaTime()
         let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] timer in
             guard let self else {
@@ -390,9 +414,11 @@ class SessionNoteView: NSView, NSTextViewDelegate {
 
             if t >= 1.0 {
                 timer.invalidate()
+                self.collapseAnimationTimer = nil
                 completion()
             }
         }
+        collapseAnimationTimer = timer
         RunLoop.main.add(timer, forMode: .common)
     }
 
@@ -513,17 +539,24 @@ class SessionNoteView: NSView, NSTextViewDelegate {
 
     /// Keep model.noteFrame as the expanded frame, even when collapsed.
     @objc func syncModelFrame() {
-        if model.isCollapsed {
-            // Non-flipped: the collapsed view's top edge is origin.y + titleBarHeight.
-            // Reconstruct the expanded frame keeping the same top edge.
-            let topEdge = frame.origin.y + frame.size.height
-            model.noteFrame = NSRect(x: frame.origin.x,
-                                     y: topEdge - expandedHeight,
-                                     width: frame.size.width,
-                                     height: expandedHeight)
+        // Mid-animation the frame is a transient interpolated one. That includes an expand, where
+        // model.isCollapsed is already false, so hiding the note then would otherwise save a
+        // half-grown frame as its real size.
+        if model.isCollapsed || isAnimatingCollapse {
+            model.noteFrame = expandedFrameKeepingTopEdge()
         } else {
             model.noteFrame = frame
         }
+    }
+
+    /// The expanded frame implied by the current frame's top edge and `expandedHeight`. Non-flipped
+    /// coordinates, so the top edge is origin.y + height.
+    private func expandedFrameKeepingTopEdge() -> NSRect {
+        let topEdge = frame.origin.y + frame.size.height
+        return NSRect(x: frame.origin.x,
+                      y: topEdge - expandedHeight,
+                      width: frame.size.width,
+                      height: expandedHeight)
     }
 
     // MARK: - Resize Handles
@@ -617,6 +650,7 @@ class SessionNoteView: NSView, NSTextViewDelegate {
         if textView.string != model.text {
             textView.string = model.text
         }
+        updateTitleLabel()
     }
 
     // MARK: - Key Handling

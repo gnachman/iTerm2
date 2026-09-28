@@ -339,9 +339,12 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
              sessionFinder:(PTYSession *(^NS_NOESCAPE)(SessionView *sessionView))sessionFinder;
 + (NSSplitView *)placeholderSplitViewForSession:(PTYSession *)session;
 
-// Update the tab's title from the active session's name. Needed for initializing the tab's title
-// after setting up tmux tabs.
-- (void)loadTitleFromSession;
+// Recompute the tab's title (honoring a title override, the tmux prefix, and the
+// subtitle) and publish it to tab.title and the tab bar. Call this when something
+// changed an input to the title without going through the session name controller,
+// e.g. after a tmux window's layout is loaded or after the active session is
+// swapped without -setActiveSession:.
+- (void)updateTabTitle;
 
 // Apply a profile's custom-tab-title template to a newly created tmux window's tab. The template is
 // evaluated against this tab's scope so the tmux window is renamed to a concrete value rather than

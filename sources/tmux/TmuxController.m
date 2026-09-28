@@ -62,6 +62,11 @@ static NSString *const iTermTmuxControllerEncodingPrefixBuriedIndexes = @"b_";
 static NSString *const iTermTmuxControllerEncodingPrefixOrigins = @"o_";
 static NSString *const iTermTmuxControllerEncodingPrefixHidden = @"i_";
 static NSString *const iTermTmuxControllerEncodingPrefixUserVars = @"u_";
+// Value of an @it2_client_* option: c_ followed by hex of a JSON record. See advertiseIT2Client.
+static NSString *const iTermTmuxControllerEncodingPrefixIT2Client = @"c_";
+// One per attached iTerm2, suffixed with the hex-encoded tmux client name. Read by it2 in a pane;
+// keep in step with it2.py and it2cli's TmuxOwnership.swift.
+static NSString *const iTermTmuxControllerIT2ClientOptionPrefix = @"@it2_client_";
 
 // terminalGuid:settings;terminalGuid:settings;…
 // Where `settings` is key=value&key=value&…
@@ -125,7 +130,23 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
 @implementation iTermTmuxWindowState
 @end
 
+static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
+
 @implementation TmuxController {
+    // Backs the serverIsLocal property, which has a hand-written getter below.
+    BOOL _serverIsLocal;
+    // Whether the serverIsLocal lookup has ever produced an answer, as opposed to failing. See
+    // -determineServerLocality.
+    BOOL _serverLocalityKnown;
+    // When the last locality attempt ran, so repeated reads of a genuinely remote server do not
+    // turn into one sysctl per read.
+    NSTimeInterval _lastServerLocalityAttempt;
+    // How many times the lookup has been tried since the pid arrived. Settling on "remote"
+    // requires at least one retry to have actually happened.
+    NSInteger _serverLocalityAttempts;
+    // When the server pid first became known, so retries can be bounded. See
+    // -refreshServerLocalityIfUnknown.
+    NSTimeInterval _serverPidLearnedAt;
     TmuxGateway *gateway_;
     NSMutableDictionary *windowPanes_;  // paneId -> PTYSession *
     NSMutableDictionary<NSNumber *, iTermTmuxWindowState *> *_windowStates;      // Key is window number
@@ -219,6 +240,13 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
     // font size changes are finished happening.
     NSMutableDictionary<NSString *, NSValue *> *_savedFrames;
     BOOL _phonyCommandOutstanding;
+
+    // What tmux calls this control-mode client (#{client_name}, the tty path). Nil until the
+    // reply to loadTmuxClientName arrives. Keys this controller's it2 client record and the OSC
+    // query tracker.
+    NSString *_tmuxClientName;
+    // initializeClientTracker ran before the client name was known; create the tracker when it is.
+    BOOL _wantsClientTracker;
 
     // OSC query support for tmux 3.6+
     iTermTmuxClientTracker *_clientTracker;
@@ -1303,21 +1331,326 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
          responseSelector:nil];
 }
 
-- (void)loadServerPID {
-    if (gateway_.minimumServerVersion.doubleValue < 2.1) {
+// Decide whether the server's pid names a process on THIS machine.
+//
+// A nil name is not evidence of remoteness -- sysctl reports nothing for a pid it cannot resolve
+// at that instant, the same as for a pid that lives on another host -- so leave locality unknown
+// and let it be asked again. Caching a failed lookup as "remote" made one unlucky sysctl disable
+// tmux pane addressing for the whole connection.
+//
+// Matched on a "tmux" PREFIX rather than equality: p_comm is the executable basename, so a server
+// installed as tmux-3.5a or through a wrapper is still local.
+- (void)determineServerLocality {
+    if (_serverPid <= 0) {
         return;
     }
-    [gateway_ sendCommand:@"display-message -p \"#{pid}\""
-           responseTarget:self
-         responseSelector:@selector(didLoadServerPID:)];
+    _serverLocalityAttempts += 1;
+    _lastServerLocalityAttempt = [NSDate timeIntervalSinceReferenceDate];
+    NSString *name = [iTermLSOF nameOfProcessWithPid:_serverPid isForeground:NULL];
+    if (name == nil) {
+        _serverLocalityKnown = NO;
+        return;
+    }
+    _serverLocalityKnown = YES;
+    _serverIsLocal = [name hasPrefix:@"tmux"];
+    if (_serverLocalityAttempts > 1) {
+        // The connect-time log line recorded the locality as unknown; record the answer so a debug
+        // log does not leave a local server looking remote.
+        RLog(@"Tmux server pid %@ resolved on attempt %@: isLocal=%@",
+             @(_serverPid), @(_serverLocalityAttempts), @(_serverIsLocal));
+    }
 }
 
-- (void)didLoadServerPID:(NSString *)pidString {
-    pid_t pid = [pidString integerValue];
-    if (pid > 0) {
-        NSString *name = [iTermLSOF nameOfProcessWithPid:pid isForeground:NULL];
-        _serverIsLocal = [name isEqualToString:@"tmux"];
+- (void)refreshServerLocalityIfUnknown {
+    if (_serverLocalityKnown) {
+        return;
     }
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+
+    // Retrying is bounded, not indefinite. The lookup cannot tell "sysctl missed this instant"
+    // from "this pid lives on another host", and pids are recycled: keep asking for the life of a
+    // remote connection and eventually some local process is assigned that pid. If it happens to
+    // be named tmux, the controller would latch onto local -- permanently, since the answer is
+    // then known -- and start matching local pane addresses against a remote server, which is the
+    // cross-machine misdelivery TmuxPaneLocator exists to prevent.
+    //
+    // A transient failure clears within a second or two. Anything still unresolved after the
+    // window is a pid that is not on this machine, so settle on remote and stop looking.
+    // Expire only once a retry has actually been spent. Retries happen on read, and nothing
+    // guarantees a reader arrives inside the window -- a control-mode session whose windows are
+    // all created before the first title tick may not be read for far longer. Without this, the
+    // first read after the window would settle on "remote" having never re-run the lookup, which
+    // is the permanent misclassification the window exists to avoid. The timer armed below
+    // guarantees the retry even when no reader ever comes.
+    if (_serverPidLearnedAt > 0 &&
+        _serverLocalityAttempts > 1 &&
+        now - _serverPidLearnedAt > kTmuxServerLocalityRetryWindow) {
+        _serverLocalityKnown = YES;
+        RLog(@"Tmux server pid %@ never resolved to a local process within %@s; treating the server as remote.",
+             @(_serverPid), @(kTmuxServerLocalityRetryWindow));
+        return;
+    }
+
+    // Throttle within the window so repeated reads do not each pay a syscall.
+    if (now - _lastServerLocalityAttempt < 1) {
+        return;
+    }
+    // determineServerLocality records the attempt time.
+    [self determineServerLocality];
+}
+
+// Retry on a timer as well as on read, so healing does not depend on someone happening to ask
+// inside the window.
+- (void)armServerLocalityRetry {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_serverLocalityKnown) {
+            return;
+        }
+        // Through -refreshServerLocalityIfUnknown, never straight to -determineServerLocality:
+        // the retry window lives there, and calling the lookup directly would poll a genuinely
+        // remote server every 2s for the life of the connection -- and, worse, could still latch
+        // onto a recycled local pid long after the window was supposed to have closed. Its 1s
+        // throttle is shorter than this period, so it never suppresses the attempt.
+        [strongSelf refreshServerLocalityIfUnknown];
+        if (!strongSelf->_serverLocalityKnown) {
+            [strongSelf armServerLocalityRetry];
+        }
+    });
+}
+
+// Self-healing on read, so every reader benefits rather than only the one that remembers to ask.
+// Besides the tmux pane lookup, -loadTmuxProcessID, -didFetchTmuxPid: and
+// -sessionProcessInfoProvider all branch on this, and a locality test that failed once at connect
+// time would otherwise leave job names degraded and process-info routed to the gateway for the
+// life of the connection.
+- (BOOL)serverIsLocal {
+    [self refreshServerLocalityIfUnknown];
+    return _serverIsLocal;
+}
+
+- (BOOL)serverLocalityKnown {
+    [self refreshServerLocalityIfUnknown];
+    return _serverLocalityKnown;
+}
+
+- (NSString *)serverOriginIdentifier {
+    // Asked of the delegate every time rather than cached at connect: an SSH recovery replaces the
+    // conductor, and a stale identifier would silently stop matching (or, worse, match the wrong
+    // connection) for the rest of the session.
+    id<TmuxGatewayDelegate> delegate = gateway_.delegate;
+    if (![delegate respondsToSelector:@selector(tmuxGatewayOriginIdentifier)]) {
+        return nil;
+    }
+    return [delegate tmuxGatewayOriginIdentifier];
+}
+
+- (void)loadServerPID {
+    if (gateway_.minimumServerVersion.doubleValue < 2.1) {
+        // No #{pid} on this server, so serverPid stays 0 for the life of the connection and pane
+        // lookups against it never match. Nothing else is owed: an unidentified controller simply
+        // is not a candidate.
+        return;
+    }
+    // #{socket_path} arrived in tmux 2.2. It plus #{pid}, plus the session id that
+    // %session-changed gives us, are the three fields of $TMUX -- the string tmux puts in every
+    // pane's environment to name the server and session it belongs to. Storing them lets us map a
+    // pane back to its PTYSession (see TmuxPaneLocator). tmux builds $TMUX from the same
+    // socket_path global that #{socket_path} reads, so the strings match byte for byte.
+    NSString *command;
+    if ([self versionAtLeastDecimalNumberWithString:@"2.2"]) {
+        command = @"display-message -p \"#{socket_path},#{pid}\"";
+    } else {
+        command = @"display-message -p \"#{pid}\"";
+    }
+    [gateway_ sendCommand:command
+           responseTarget:self
+         responseSelector:@selector(didLoadServerIdentity:)];
+}
+
+#pragma mark - it2 client advertisement
+
+// Tell this server's panes how to reach the iTerm2 that is showing them.
+//
+// `it2` run inside a pane cannot use its own environment for that. A pane's IT2_SOCK and
+// IT2_NONCE (or IT2_SUITE, locally) are frozen into the tmux server's environment when the server
+// starts and inherited by every pane after that, so they name whichever connection happened to
+// start the server. After a detach and a reattach from another ssh connection, or an iTerm2
+// relaunch, that connection is gone or is not the one driving the server, and the pane's update
+// would go nowhere or fail the locator's origin check.
+//
+// So each attached controller publishes its own record as a global user option keyed by its tmux
+// client name: @it2_client_<hex of client name> = c_<hex of JSON>. One option per attacher, so two
+// controllers attaching at once never overwrite each other and there is no read-modify-write. it2
+// lists the server's attached control-mode clients, keeps only the records whose client is still
+// attached, and tries the most recently attached first; a record whose client has gone is ignored
+// even if it was never removed. The controller does remove records: its own on a clean detach, and
+// any other client's when tmux reports that client detached (%client-detached), which covers a
+// crashed iTerm2 or a dead ssh connection. That is what keeps a live connection reachable after a
+// later attacher leaves: the survivor's record is still there and its client is still listed.
+//
+// Global rather than per-session: a pane id is unique across the server and this controller
+// drives all of it. A user option rather than an environment variable so the record does not
+// propagate into every new pane's process environment, and so the hex encoding, shared with
+// @tab_colors and friends, sidesteps tmux quoting entirely.
+//
+// The nonce was already readable by anyone who can open the tmux socket, which by default is only
+// this user and root, so this exposes nothing new to them. A server whose socket has deliberately
+// been shared with another user (chmod, or server-access in tmux 3.3+) does expose it to that
+// user, who could already drive this user's panes anyway.
+- (void)advertiseIT2Client {
+    if (_tmuxClientName.length == 0) {
+        DLog(@"No tmux client name yet; cannot advertise");
+        return;
+    }
+    id<TmuxGatewayDelegate> delegate = gateway_.delegate;
+    if (![delegate respondsToSelector:@selector(tmuxGatewayIT2ClientRecord)]) {
+        return;
+    }
+    NSDictionary<NSString *, NSString *> *record = [delegate tmuxGatewayIT2ClientRecord];
+    if (record.count == 0) {
+        DLog(@"No it2 client record to advertise");
+        return;
+    }
+    NSString *command = [TmuxController commandAdvertisingIT2ClientRecord:record
+                                                            tmuxClientName:_tmuxClientName];
+    if (!command) {
+        RLog(@"Could not encode it2 client record");
+        return;
+    }
+    [gateway_ sendCommand:command
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+    // Keys only: the values are a socket path under $HOME and a secret.
+    RLog(@"Advertised it2 client record for tmux client %@ with keys %@",
+         _tmuxClientName, [record.allKeys sortedArrayUsingSelector:@selector(compare:)]);
+}
+
+// Remove this controller's own record. Called before a clean detach, while the connection is
+// still up; see -[PTYSession tmuxDetach]. Best effort: if it never runs (crash, dropped ssh), the
+// other attached controllers prune the record when tmux announces the detach, and it2 ignores a
+// record whose client is not attached regardless.
+- (void)withdrawIT2ClientRecord {
+    if (_tmuxClientName.length == 0 || !gateway_) {
+        return;
+    }
+    [self withdrawIT2ClientRecordForTmuxClientName:_tmuxClientName];
+}
+
+- (void)withdrawIT2ClientRecordForTmuxClientName:(NSString *)clientName {
+    [gateway_ sendCommand:[TmuxController commandWithdrawingIT2ClientRecordForTmuxClientName:clientName]
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+    RLog(@"Withdrew it2 client record for tmux client %@", clientName);
+}
+
+// The option name is the client name hex-encoded, so no character of a tty path has to survive as
+// part of an option name and the mapping is lossless in both directions: it2 recovers the client
+// name from the option name to match it against list-clients, and the %client-detached handler
+// rebuilds the name to prune.
++ (NSString *)it2ClientOptionNameForTmuxClientName:(NSString *)clientName {
+    return [iTermTmuxControllerIT2ClientOptionPrefix stringByAppendingString:
+            [[clientName dataUsingEncoding:NSUTF8StringEncoding] it_hexEncoded]];
+}
+
+// set -g <option> "c_<hex of JSON record>". Keys sorted so the wire form is stable for tests and
+// logs. Returns nil if the record cannot be serialized, which cannot happen for string values.
++ (NSString *)commandAdvertisingIT2ClientRecord:(NSDictionary<NSString *, NSString *> *)record
+                                 tmuxClientName:(NSString *)clientName {
+    NSError *error = nil;
+    // Slashes unescaped so a socket path reads back as itself in a debug log; both readers accept
+    // either form.
+    NSData *json = [NSJSONSerialization dataWithJSONObject:record
+                                                   options:NSJSONWritingSortedKeys | NSJSONWritingWithoutEscapingSlashes
+                                                     error:&error];
+    if (!json) {
+        DLog(@"Failed to serialize it2 client record: %@", error);
+        return nil;
+    }
+    NSString *value = [iTermTmuxControllerEncodingPrefixIT2Client stringByAppendingString:[json it_hexEncoded]];
+    return [NSString stringWithFormat:@"set -g %@ \"%@\"",
+            [self it2ClientOptionNameForTmuxClientName:clientName], value];
+}
+
++ (NSString *)commandWithdrawingIT2ClientRecordForTmuxClientName:(NSString *)clientName {
+    return [NSString stringWithFormat:@"set -gu %@",
+            [self it2ClientOptionNameForTmuxClientName:clientName]];
+}
+
+// Ask tmux what it calls this client. Needed both for the it2 client record and for the OSC query
+// tracker; the tracker is created from the response if it was requested before the name arrived.
+- (void)loadTmuxClientName {
+    [gateway_ sendCommand:@"display-message -p '#{client_name}'"
+           responseTarget:self
+         responseSelector:@selector(didLoadTmuxClientName:)
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)didLoadTmuxClientName:(NSString *)response {
+    NSString *tmuxClientName = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    RLog(@"didLoadTmuxClientName: %@", tmuxClientName);
+    if (tmuxClientName.length == 0) {
+        return;
+    }
+    _tmuxClientName = [tmuxClientName copy];
+    [self advertiseIT2Client];
+    if (_wantsClientTracker) {
+        [self createClientTracker];
+    }
+}
+
+// Response is "<socket path>,<pid>" on tmux 2.2+, or bare "<pid>" below that. A socket path is an
+// arbitrary filename and may itself contain commas, so split on the LAST one.
+- (void)didLoadServerIdentity:(NSString *)response {
+    // Only one identity request is ever sent, but guard against a second reply anyway: re-running
+    // this would restart the locality retry window and arm a second, independent 2s retry chain,
+    // so the bounded-retry reasoning in refreshServerLocalityIfUnknown would no longer hold.
+    if (_serverPid != 0) {
+        return;
+    }
+    NSString *trimmed = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSString *pidString = trimmed;
+    if (trimmed.length > 0) {
+        const NSRange lastComma = [trimmed rangeOfString:@"," options:NSBackwardsSearch];
+        if (lastComma.location != NSNotFound) {
+            // An empty socket path means the format expanded to nothing, which is the same "we
+            // learned nothing" state as a server too old to have #{socket_path}. Store nil for it:
+            // callers tolerate an unknown socket path, but @"" would compare unequal to every real
+            // one and reject every pane on this server.
+            NSString *path = [trimmed substringToIndex:lastComma.location];
+            _serverSocketPath = path.length > 0 ? [path copy] : nil;
+            pidString = [trimmed substringFromIndex:NSMaxRange(lastComma)];
+        }
+    }
+    const pid_t pid = [pidString integerValue];
+    if (pid > 0) {
+        _serverPid = pid;
+        _serverPidLearnedAt = [NSDate timeIntervalSinceReferenceDate];
+        [self determineServerLocality];
+        if (!_serverLocalityKnown) {
+            [self armServerLocalityRetry];
+        }
+    } else {
+        RLog(@"Tmux server identity reply was unusable (%@); pane lookups for this server will not match.",
+             response);
+    }
+    // Socket path to DLog only: it reflects whatever `tmux -S` was given, often under $HOME and
+    // sometimes carrying a user or project name, and the retrospective ring ships in
+    // user-submitted debug logs. Whether we learned one is the part that matters there.
+    // Locality is a tri-state here: the first lookup can miss for a local server, in which case a
+    // retry settles it later and logs the answer from determineServerLocality.
+    RLog(@"Tmux server identity: pid=%@ locality=%@ haveSocketPath=%@",
+         @(_serverPid),
+         _serverLocalityKnown ? (_serverIsLocal ? @"local" : @"remote") : @"unknown",
+         @(_serverSocketPath != nil));
+    DLog(@"Tmux server socketPath=%@", _serverSocketPath);
 }
 
 - (void)loadDefaultTerminal {
@@ -1691,6 +2024,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     RLog(@"didGuessVersion");
     [self enablePauseModeIfPossible];
     [self loadServerPID];
+    // The reply advertises this client's it2 record; see advertiseIT2Client.
+    [self loadTmuxClientName];
     [self loadTitleFormat];
     _versionKnown = YES;
     if (_wantsOpenWindowsInitial) {
@@ -1752,29 +2087,39 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)clientDetached:(NSString *)clientName {
     [_clientTracker handleClientDetached:clientName];
-}
-
-- (void)initializeClientTracker {
-    if (!_clientTracker && [self shouldHandleOSC4Queries]) {
-        RLog(@"Initialize client tracker");
-        // Query our tmux client name first, then create the tracker
-        [gateway_ sendCommand:@"display-message -p '#{client_name}'"
-               responseTarget:self
-             responseSelector:@selector(didGetTmuxClientName:)
-               responseObject:nil
-                        flags:kTmuxGatewayCommandShouldTolerateErrors];
+    // Prune the departed client's it2 record, whether it was another iTerm2 that crashed or lost
+    // its ssh connection, or a plain client that never had one (unsetting a missing user option
+    // is tolerated). Our own name never arrives here: by the time tmux announces our detach we
+    // are gone. A name can be recycled by a later client, so in principle a late notification
+    // could remove a record a new attacher just wrote; the window is milliseconds against
+    // seconds, and the cost is only that the new attacher's panes are unreachable until it
+    // reattaches, since it2 also ignores records whose client is not attached.
+    if (![clientName isEqualToString:_tmuxClientName]) {
+        [self withdrawIT2ClientRecordForTmuxClientName:clientName];
     }
 }
 
-- (void)didGetTmuxClientName:(NSString *)response {
-    NSString *tmuxClientName = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
- RLog(@"didGetTmuxClientName: %@", tmuxClientName);
-    if (tmuxClientName.length == 0) {
+- (void)initializeClientTracker {
+    if (_clientTracker || ![self shouldHandleOSC4Queries]) {
+        return;
+    }
+    RLog(@"Initialize client tracker");
+    if (_tmuxClientName) {
+        [self createClientTracker];
+    } else {
+        // loadTmuxClientName has been sent from didGuessVersion; its reply creates the tracker.
+        _wantsClientTracker = YES;
+    }
+}
+
+- (void)createClientTracker {
+    _wantsClientTracker = NO;
+    if (_clientTracker) {
         return;
     }
     _clientTracker = [[iTermTmuxClientTracker alloc] initWithGateway:gateway_
                                                            sessionID:sessionId_
-                                                      tmuxClientName:tmuxClientName];
+                                                      tmuxClientName:_tmuxClientName];
     [_clientTracker updateClientsWithCompletion:^{}];
 }
 

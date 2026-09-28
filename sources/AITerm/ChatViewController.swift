@@ -3831,7 +3831,7 @@ class InlinePanelCoordinator: NSObject, ChatViewControllerDelegate {
         let warning = iTermWarning()
         warning.title = String(localized: "ChatViewController.DeleteChatConfirmMessage", defaultValue: "Are you sure you want to delete this chat? This action cannot be undone.", comment: "Confirmation message when deleting a chat")
         warning.heading = String(localized: "ChatViewController.DeleteChatHeading", defaultValue: "Delete Chat?", comment: "Heading for the delete chat confirmation dialog")
-        let action = iTermWarningAction(label: String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete button")) { [weak self] _ in
+        let action = iTermWarningAction(label: String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete: used on buttons, menu items and other controls")) { [weak self] _ in
             // Runs from iTermWarning.runModal() on the main thread.
             MainActor.assumeIsolated {
                 do {

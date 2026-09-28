@@ -302,7 +302,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     controller.removeFromListSubItem = subItem;
 
     if (transferrableFile.isDownloading) {
-        subItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"General.Open", nil, [NSBundle mainBundle], @"Open", @"Open button")
+        subItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"General.Open", nil, [NSBundle mainBundle], @"Open", @"Open: used on buttons, menu items and window titles")
                                               action:@selector(open:)
                                        keyEquivalent:@""] autorelease];
         [subItem setTarget:controller];

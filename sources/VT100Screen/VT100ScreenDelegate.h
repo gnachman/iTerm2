@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermColorMap.h"
 #import "PTYTextViewDataSource.h"
+#import "VT100ScreenProgress.h"
 #import "VT100Terminal.h"
 #import "VT100TerminalDelegate.h"
 #import "VT100Token.h"
@@ -429,7 +430,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenPushKeyLabels:(NSString * _Nonnull)value;
 - (void)screenPopKeyLabels:(NSString * _Nonnull)value;
 - (void)screenSendModifiersDidChange;
-- (void)screenKeyReportingFlagsDidChange;
+- (void)screenKeyReportingFlagsDidChange:(BOOL)wholeValueReplaced;
+
+// iTerm2 reset the key reporting mode itself. See terminalDidResetKeyReportingLocally.
+- (void)screenDidResetKeyReportingLocally;
 
 - (void)screenTerminalAttemptedPasteboardAccess;
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus;
@@ -558,5 +562,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                                 guid:(NSString * _Nonnull)savedTreeMainGuid;
 
 - (void)screenSetTabStatus:(VT100TabStatusUpdate * _Nonnull)status;
+
+// The program used the progress protocol (OSC 9;4) to report the state of an
+// operation. Unlike the screen's progress property, which also changes when
+// the terminal is reset, this fires only for what the program itself said, so
+// it can be trusted to mean that an operation the program announced has
+// started or ended.
+- (void)screenProgressProtocolDidReportProgress:(VT100ScreenProgress)progress;
 
 @end

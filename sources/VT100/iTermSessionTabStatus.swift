@@ -1,3 +1,19 @@
+// Why a status that was true when it was set can stop being true on its own.
+// A program that reports status out of band has no way to announce every way
+// its work can end, since an interrupt in particular may run no hook at all,
+// so it can instead say up front what should happen when the terminal sees
+// the work finish.
+@objc(VT100TabStatusExpirationReason)
+enum VT100TabStatusExpirationReason: Int {
+    // The status stands until something replaces it. The default.
+    case never = 0
+
+    // The status was scoped to an operation the program announced through the
+    // progress protocol (OSC 9;4), and stops being true when that operation
+    // ends.
+    case progressEnd = 1
+}
+
 // An incremental update from OSC 21337. Each field may be not set (omitted),
 // cleared (empty value), or set to a value.
 @objc(VT100TabStatusUpdate)
@@ -8,6 +24,11 @@ class VT100TabStatusUpdate: NSObject {
         update.statusPresence = .cleared
         update.statusColorPresence = .cleared
         update.detailPresence = .cleared
+        // The count and the turn flag are left alone on purpose. A terminal
+        // reset wipes the display, but the sub-agents cc-status counted and
+        // the turn it is tracking are still running: zeroing the count here
+        // would make the next Stop read zero and report idle through live
+        // background work, and nothing after that would correct it.
         return update
     }
     @objc var indicatorPresence: VT100TabStatusUpdateFieldPresence = .notSet
@@ -28,6 +49,53 @@ class VT100TabStatusUpdate: NSObject {
     // count back instead of keeping state of their own on disk.
     @objc var backgroundTasksPresence: VT100TabStatusUpdateFieldPresence = .notSet
     @objc var backgroundTasks: Int = 0
+
+    // When this status should expire on its own, and what to apply in its
+    // place when it does. The fallback is a plain update, so an expiring
+    // status can hand off to another status rather than only disappearing.
+    // Ignored unless expiresOn is something other than .never.
+    @objc var expiresOn: VT100TabStatusExpirationReason = .never
+    @objc var expirationFallback: VT100TabStatusUpdate?
+
+    // Whether this update says anything about what the session is doing, as
+    // opposed to only parking bookkeeping such as the background-task count.
+    // Only a real assertion supersedes the previous one's expiration: a
+    // program that updates its task count mid-operation has not changed its
+    // mind about what should happen when the operation ends.
+    @objc var assertsStatus: Bool {
+        return statusPresence != .notSet ||
+               indicatorPresence != .notSet ||
+               statusColorPresence != .notSet ||
+               detailPresence != .notSet ||
+               expiresOn != .never
+    }
+
+    // Add to the count instead of assigning it, clamped at zero. nil means no
+    // change. This exists because a caller that has to compute the count
+    // itself would otherwise read it, add one, and write it back, and two hook
+    // processes doing that at once lose an increment. Applying the delta here
+    // makes it one step, so concurrent callers cannot race. Ignored when
+    // backgroundTasksPresence is anything but .notSet: assigning and adding in
+    // the same update has no sensible meaning.
+    @objc var backgroundTasksDelta: NSNumber? = nil
+
+    // Whether the status-reporting program is in the middle of a turn. Like
+    // backgroundTasks this is parked here for cc-status, whose Codex hooks get
+    // no Stop when a detached sub-agent finishes after the turn that started
+    // it; SubagentStop reads this back to decide whether reporting idle would
+    // cut off a turn that is still going. Cleared means unknown again. RAM
+    // only, never written to an arrangement.
+    @objc var turnOpenPresence: VT100TabStatusUpdateFieldPresence = .notSet
+    @objc var turnOpen: Bool = false
+
+    // Preconditions: when set, the whole update is dropped unless the flag
+    // and the count already hold these values. cc-status decides to write
+    // idle from a status it read a round trip earlier; a prompt submitted in
+    // between reopens the turn, and an idle written on the strength of the
+    // old reading would cover a running turn. Checking here, where the
+    // update is applied, closes that window. nil means no precondition.
+    @objc var requiredTurnOpen: NSNumber? = nil
+    @objc var requiredBackgroundTasks: NSNumber? = nil
 
     override var description: String {
         var parts = [String]()
@@ -77,6 +145,27 @@ class VT100TabStatusUpdate: NSObject {
             parts.append("background-tasks=\(backgroundTasks)")
         @unknown default: break
         }
+        if expiresOn != .never {
+            parts.append("expires-on=\(expiresOn)")
+            parts.append("then=\(expirationFallback?.description ?? "nothing")")
+        }
+        if let backgroundTasksDelta {
+            parts.append("background-tasks-delta=\(backgroundTasksDelta)")
+        }
+        switch turnOpenPresence {
+        case .notSet: break
+        case .cleared:
+            parts.append("turn-open=cleared")
+        case .set:
+            parts.append("turn-open=\(turnOpen)")
+        @unknown default: break
+        }
+        if let requiredTurnOpen {
+            parts.append("if-turn-open=\(requiredTurnOpen.boolValue)")
+        }
+        if let requiredBackgroundTasks {
+            parts.append("if-background-tasks=\(requiredBackgroundTasks)")
+        }
         if parts.isEmpty {
             return "VT100TabStatusUpdate{empty}"
         }
@@ -101,12 +190,21 @@ class iTermSessionTabStatus: NSObject {
         var hasStatusTextColor: Bool = false
         var statusTextColor: iTermSRGBColor = iTermSRGBColor(r: 0, g: 0, b: 0)
         var detailText: String? = nil
-        // Last background-task count reported via set_status. RAM only:
-        // deliberately excluded from arrangementDictionary() so it never
-        // reaches disk (see that method).
-        var backgroundTasks: Int = 0
     }
+    // Only what is displayed lives in State: apply() compares it before and
+    // after to decide whether anything changed, and a change is what makes
+    // PTYSession repaint the tab, reload the Session Status tool and bump the
+    // recency that picks a workgroup's representative. The bookkeeping below
+    // is kept outside State so that parking a count or a turn flag, which
+    // cc-status does on events that change nothing visible, does none of that.
     private var state = State()
+    // Last background-task count reported via set_status. RAM only:
+    // deliberately excluded from arrangementDictionary() so it never
+    // reaches disk (see that method).
+    @objc var backgroundTasks: Int = 0
+    // Whether the reporting program is mid-turn, or nil when it has not
+    // said. RAM only for the same reason as backgroundTasks.
+    var turnOpen: Bool? = nil
     // Whether mutations post the global iTermSessionTabStatusDidChange
     // notification. True for a real per-session status (the one
     // SessionStatusController tracks by sessionID). False for the
@@ -166,14 +264,6 @@ class iTermSessionTabStatus: NSObject {
             state.detailText = newValue
         }
     }
-    @objc var backgroundTasks: Int {
-        get {
-            state.backgroundTasks
-        }
-        set {
-            state.backgroundTasks = newValue
-        }
-    }
 
     @objc var hasActiveStatus: Bool {
         return hasIndicator || statusText != nil
@@ -195,7 +285,36 @@ class iTermSessionTabStatus: NSObject {
         super.init()
     }
 
+    // What an update says should happen when the status stops being true is
+    // not kept here. iTermTabStatusController owns that, along with
+    // the timing that decides when it happens, so this stays a plain record of
+    // what the session is showing: something that can be copied for the tab
+    // aggregate and written to an arrangement without dragging live state
+    // along.
+    /// Whether the update's preconditions hold. An unknown flag satisfies
+    /// nothing: cc-status treats a flag it was never told as unknown rather
+    /// than closed, and the check here has to agree with it. apply() checks
+    /// this itself; iTermTabStatusController also asks first, so an update
+    /// that is going to be dropped does not disturb an armed expiration.
+    @objc func preconditionsHold(for update: VT100TabStatusUpdate) -> Bool {
+        if let required = update.requiredTurnOpen, turnOpen != required.boolValue {
+            return false
+        }
+        if let required = update.requiredBackgroundTasks, backgroundTasks != required.intValue {
+            return false
+        }
+        return true
+    }
+
+    /// Applies the update and returns whether anything visible changed. The
+    /// background-task count and the turn flag are always stored but never
+    /// count as a change on their own (see State). An update whose
+    /// preconditions do not hold is dropped whole and changes nothing.
     @objc func apply(_ update: VT100TabStatusUpdate) -> Bool {
+        guard preconditionsHold(for: update) else {
+            DLog("Dropping \(update) because its preconditions do not hold: turnOpen=\(String(describing: turnOpen)) backgroundTasks=\(backgroundTasks)")
+            return false
+        }
         let before = state
         switch update.indicatorPresence {
         case .notSet:
@@ -247,11 +366,31 @@ class iTermSessionTabStatus: NSObject {
 
         switch update.backgroundTasksPresence {
         case .notSet:
-            break
+            if let delta = update.backgroundTasksDelta {
+                // The delta comes straight from a CLI argument, so it can be
+                // anything; a plain + would trap on overflow and take the app
+                // down with it. Saturate instead.
+                let (sum, overflow) = backgroundTasks.addingReportingOverflow(delta.intValue)
+                if overflow {
+                    backgroundTasks = delta.intValue > 0 ? Int.max : 0
+                } else {
+                    backgroundTasks = Swift.max(0, sum)
+                }
+            }
         case .cleared:
             backgroundTasks = 0
         case .set:
             backgroundTasks = update.backgroundTasks
+        @unknown default:
+            break
+        }
+        switch update.turnOpenPresence {
+        case .notSet:
+            break
+        case .cleared:
+            turnOpen = nil
+        case .set:
+            turnOpen = update.turnOpen
         @unknown default:
             break
         }
@@ -270,6 +409,7 @@ class iTermSessionTabStatus: NSObject {
         statusTextColor = iTermSRGBColor(r: 0, g: 0, b: 0)
         detailText = nil
         backgroundTasks = 0
+        turnOpen = nil
         notify()
     }
 
@@ -327,11 +467,12 @@ class iTermSessionTabStatus: NSObject {
     private static let arrangementStatusTextColorKey = "Status Text Color"
     private static let arrangementDetailTextKey = "Detail Text"
 
-    // backgroundTasks is deliberately NOT encoded here: it exists so
-    // stateless hook invocations (cc-status) can park a count in RAM
+    // backgroundTasks and turnOpen are deliberately NOT encoded here: they
+    // exist so stateless hook invocations (cc-status) can park state in RAM
     // between events, and it must not leak to disk via arrangements.
     // It would also be wrong after a restore, since the tasks it
-    // counted died with the original session's program.
+    // counted and the turn it tracked died with the original session's
+    // program.
     @objc func arrangementDictionary() -> NSDictionary? {
         guard hasActiveStatus else {
             return nil
@@ -386,6 +527,7 @@ class iTermSessionTabStatus: NSObject {
         copy.statusTextColor = statusTextColor
         copy.detailText = detailText
         copy.backgroundTasks = backgroundTasks
+        copy.turnOpen = turnOpen
         return copy
     }
 }

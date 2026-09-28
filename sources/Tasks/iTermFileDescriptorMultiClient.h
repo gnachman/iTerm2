@@ -51,6 +51,12 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
 @property (nonatomic, weak) id<iTermFileDescriptorMultiClientDelegate> delegate;
 @property (nonatomic, readonly) pid_t serverPID;
 
+// YES if this client object forked the server it is talking to, as opposed to attaching to
+// one that was already running. Only meaningful for this client: a server outlives its
+// client, so the process-scoped question is answered by iTermForkedServerRegistry. See
+// -[iTermMultiServerConnection launchedByThisProcess] and issue 12106.
+@property (atomic, readonly) BOOL didLaunchDaemon;
+
 - (instancetype)initWithPath:(NSString *)path NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 

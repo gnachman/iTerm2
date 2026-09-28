@@ -331,8 +331,9 @@ CFIndex iTermFindFirstCodePointWithOwnCell(const UniChar *chars,
 // ============================================================================
 
 // (code point, Bidi_Mirroring_Glyph counterpart) sorted by code point.
-// Every pair in BidiMirroring.txt is in the BMP; the generator fails if a
-// future Unicode version breaks that assumption.
+// Only pairs with both sides in the BMP are included, since callers substitute
+// one unichar for another. Pairs involving supplementary code points (added in
+// Unicode 18) are omitted, so those characters are not mirrored.
 static const uint16_t sBidiMirroringPairs[][2] = {
 {{BIDI_MIRRORING_PAIRS}}
 };

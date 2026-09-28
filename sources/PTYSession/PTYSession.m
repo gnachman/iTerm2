@@ -449,6 +449,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     NSString *_termVariable;
 
+    // Highest note-model generation this session has ever installed. See -setSessionNoteModel:.
+    NSInteger _sessionNoteGenerationFloor;
+
     // Has the underlying connection been closed?
     BOOL _exited;
 
@@ -534,13 +537,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     VT100GridAbsCoordRange _lastOrCurrentlyRunningCommandAbsRange;
 
-    // Key reporting flags when the most recent command started executing.
-    // Used to detect when an app enables CSI u mode but fails to clean up.
-    VT100TerminalKeyReportingFlags _keyReportingFlagsAtCommandStart;
-
-    // True after screenDidExecuteCommand: is called. Used to avoid false positives
-    // in maybeOfferToResetKeyReportingModeWithFlags: when a shell sends OSC 133;D before OSC 133;C.
-    BOOL _haveCommandStart;
+    // Decides whether a command left the kitty keyboard protocol enabled behind it. See 13032.
+    iTermStuckKeyReportingDetector *_stuckKeyReportingDetector;
 
     NSTimeInterval _timeOfLastScheduling;
 
@@ -650,7 +648,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermSwiftyString *_subtitleSwiftyString;
     iTermSwiftyString *_backgroundImageSwiftyString;
 
-    iTermSessionTabStatus *_tabStatus;
+    // Owns the session's tab status and when a status scoped to an operation
+    // stops being true.
+    iTermTabStatusController *_tabStatusController;
 
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     // Used to render the background behind a screenshot with transparency forced off.
@@ -1234,7 +1234,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_badgeSwiftyString release];
     [_backgroundImageSwiftyString release];
     [_subtitleSwiftyString release];
-    [_tabStatus release];
+    [_tabStatusController release];
     [_autoNameSwiftyString release];
     [_statusBarViewController release];
     [_backgroundDrawingHelper release];
@@ -1318,6 +1318,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_localFileChecker release];
     [_pendingConductor release];
     [_appSwitchingPreventionDetector release];
+    [_stuckKeyReportingDetector release];
     [_queuedConnectingSSH release];
     [_hostStack release];
     [_defaultPointer release];
@@ -1902,15 +1903,13 @@ ITERM_WEAKLY_REFERENCEABLE
     aSession.cursorTypeOverride = arrangement[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE];
     NSDictionary *tabStatusDict = arrangement[SESSION_ARRANGEMENT_TAB_STATUS];
     if (tabStatusDict) {
-        aSession->_tabStatus = [[iTermSessionTabStatus fromArrangementDictionary:tabStatusDict
-                                                                       sessionID:aSession.guid] retain];
-        if (aSession->_tabStatus) {
-            [[iTermSessionStatusController instance] tabStatusDidChange:aSession->_tabStatus];
+        iTermSessionTabStatus *restoredTabStatus =
+            [iTermSessionTabStatus fromArrangementDictionary:tabStatusDict
+                                                   sessionID:aSession.guid];
+        if (restoredTabStatus) {
+            [aSession.tabStatusController adoptRestoredStatus:restoredTabStatus];
+            [[iTermSessionStatusController instance] tabStatusDidChange:restoredTabStatus];
         }
-    }
-    NSDictionary *sessionNoteDict = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SESSION_NOTE]];
-    if (sessionNoteDict) {
-        aSession.sessionNoteModel = [iTermSessionNoteModel fromArrangement:sessionNoteDict];
     }
     if (didRestoreContents && attachedToServer) {
         if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
@@ -1932,7 +1931,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                          VT100ScreenMutableState *mutableState,
                                                          id<VT100ScreenDelegate> delegate) {
-            [terminal resetSendModifiersWithSideEffects:YES];
+            [terminal resetKeyReportingModeLocally];
         }];
     }
     if (state) {
@@ -1981,9 +1980,31 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([_foundingArrangement[SESSION_ARRANGEMENT_FILTER] length] > 0) {
         [self.delegate session:self setFilter:_foundingArrangement[SESSION_ARRANGEMENT_FILTER]];
     }
-    if (_sessionNoteModel.hasContent) {
+    // A note is encoded whenever it has text, including one the user hid or one that only ever
+    // existed in the Notes toolbelt, so restoring unconditionally would float a note that was not
+    // showing when the arrangement was saved.
+    if (_sessionNoteModel.hasContent && _sessionNoteModel.isVisible) {
         [_view restoreSessionNoteWithModel:_sessionNoteModel];
     }
+}
+
+- (void)setSessionNoteModel:(iTermSessionNoteModel *)sessionNoteModel {
+    if (sessionNoteModel == _sessionNoteModel) {
+        return;
+    }
+    // The arrangement encoder reuses the saved note record whenever the generation it is handed equals
+    // the record's, and a fresh model starts counting from zero. Clearing a note and then creating
+    // another could therefore hand it the same generation the old note was saved at, and the stale
+    // text would win. Keep a floor across replacements so the counter never restarts.
+    _sessionNoteGenerationFloor = MAX(_sessionNoteGenerationFloor, _sessionNoteModel.generation);
+    [_sessionNoteModel release];
+    _sessionNoteModel = [sessionNoteModel retain];
+    [_sessionNoteModel advanceGenerationPast:_sessionNoteGenerationFloor];
+    // The Notes toolbelt holds onto the model it is editing and only reloads when the key session or
+    // its mode changes. Without this it would keep editing a model this session has dropped, and the
+    // user's next keystroke there would go nowhere.
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionNoteModel.modelDidChangeNotification
+                                                        object:self];
 }
 
 - (PTYSession *)newSessionForChannelID:(NSString *)channelID command:(NSString *)command {
@@ -2030,6 +2051,10 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.foundingArrangement = [arrangement dictionaryByRemovingObjectForKey:SESSION_ARRANGEMENT_CONTENTS];
     aSession.view = sessionView;
+    NSDictionary *sessionNoteDict = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SESSION_NOTE]];
+    if (sessionNoteDict) {
+        [aSession hydrateSessionNoteFromArrangement:sessionNoteDict];
+    }
 
     // Record the saved foreground-job ancestry now, synchronously and before any (re)attach, and
     // begin buffering live ancestry updates so a process-cache notification arriving during the
@@ -3936,6 +3961,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _tmuxController = nil;
     [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
     [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
+    // No -formattingDescriptorDidChange here: this session is going away, and
+    // republishing its undecorated title would rewrite the tab title, re-render
+    // the touch bar, and rebuild the session menu for a pane that is being torn
+    // down. The surviving pane's title is recomputed by -[PTYTab setActiveSession:].
 
     // The source pane may have just exited. Dogs and cats living together!
     // Mass hysteria!
@@ -4310,6 +4339,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         }
         [self.variablesScope setValue:dict[key] forVariableNamed:key];
     }
+    // -sessionNameControllerFormattingDescriptor keys off _tmuxController, and the
+    // name controller applies that formatting when it evaluates rather than when it
+    // is read. Without this the presentation name keeps the undecorated title until
+    // something unrelated changes the base name. Issue 13072.
+    [_nameController formattingDescriptorDidChange];
 }
 
 - (void)handleKeypressInTmuxGateway:(NSEvent *)event {
@@ -4731,8 +4765,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // Drop the cached tab-status instance so that if the session restarts and
     // gets a new guid, the next status update creates a fresh instance keyed by
     // the current guid instead of the stale one captured here at init time.
-    [_tabStatus release];
-    _tabStatus = nil;
+    [_tabStatusController programDidExit];
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [_delegate updateLabelAttributes];
@@ -7484,7 +7517,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
 
     if (includeContents) {
-        NSDictionary *tabStatusDict = [_tabStatus arrangementDictionary];
+        NSDictionary *tabStatusDict = [_tabStatusController.statusIfPresent arrangementDictionary];
         if (tabStatusDict) {
             result[SESSION_ARRANGEMENT_TAB_STATUS] = tabStatusDict;
         }
@@ -10250,6 +10283,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                                  profileModel:model];
 
     [self.variablesScope setValue:_tmuxController.clientName forVariableNamed:iTermVariableKeySessionTmuxClientName];
+    // Gateway mode and the controller are both descriptor inputs and neither goes
+    // through -setTmuxController:, so republish here. See -setTmuxController:.
+    [_nameController formattingDescriptorDidChange];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     _tmuxController.unicodeVersion = _unicodeVersion;
 
@@ -10309,6 +10345,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     [self printTmuxMessage:@"Detaching..."];
+    // Before the detach goes out, so the record leaves with us rather than lingering until another
+    // attached controller hears we left.
+    [_tmuxController withdrawIT2ClientRecord];
     [_tmuxGateway detach];
 }
 
@@ -10743,6 +10782,30 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return self.guid;
 }
 
+- (NSString *)tmuxGatewayOriginIdentifier {
+    // nil for a local gateway, which is what makes "same machine" decidable without a machine ID:
+    // the conductor identifies one ssh connection. Two connections to the same host get two
+    // identifiers, so this is a same-connection test, and tmuxGatewayIT2ClientRecord is what makes
+    // that sufficient: a pane's it2 call is routed to the connection that attached last, which is
+    // this one. A gateway reached by plain ssh (no integration) has no conductor and so reports
+    // nil, which is why the locator keeps its serverIsLocal check on the local branch -- that is
+    // the case where the server is remote but nothing here can say so.
+    return self.conductor.clientUniqueID;
+}
+
+- (NSDictionary<NSString *, NSString *> *)tmuxGatewayIT2ClientRecord {
+    iTermConductor *conductor = self.conductor;
+    if (conductor) {
+        // Nil until the proxy has been set up, in which case there is nothing worth advertising:
+        // a remote it2 could not reach this connection anyway.
+        return conductor.it2ClientRecord;
+    }
+    // No conductor: a local server, or one reached by plain ssh where no it2 exists to read this.
+    // The local it2 finds its socket by suite, so a second instance running under -suite can be
+    // told apart from the main one.
+    return @{ @"suite": [iTermUserDefaults customSuiteName] ?: @"iTerm2" };
+}
+
 - (void)tmuxDidOpenInitialWindows {
     if (_hideAfterTmuxWindowOpens) {
         _hideAfterTmuxWindowOpens = NO;
@@ -10928,6 +10991,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     self.tmuxMode = TMUX_NONE;
     [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
     [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
+    // Take the gateway decoration off now rather than a main-queue turn later.
+    [_nameController formattingDescriptorDidChange];
 }
 
 - (void)tmuxCannotSendCharactersInSupplementaryPlanes:(NSString *)string windowPane:(int)windowPane {
@@ -14758,6 +14823,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             case 14:
             case 15:
             case 16:
+                // This is iTerm2's own write, not the shell's, but it needs no exclusion from
+                // the stuck key reporting detector: toggling one bit is a merge, which the
+                // detector already ignores. Wrapping it in ignoringOurOwnWrites: would not
+                // work anyway, because the change notification is a joined side effect that
+                // the joined block drains only after this block returns. See 13032.
                 [terminal toggleKeyReportingFlag:1 << (tag - 12)];
                 [self updateKeyMapper];
                 break;
@@ -18188,35 +18258,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if ([iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:self.profile]) {
         return;
     }
-    // Only check if we've seen a command start - otherwise _keyReportingFlagsAtCommandStart
-    // is just the uninitialized default value (0), not the actual flags at command start.
-    // This avoids false positives when Fish sends OSC 133;D before OSC 133;C on startup.
-    if (!_haveCommandStart) {
+    if (![[self stuckKeyReportingDetector] commandDidEndWithKeyReportingFlags:keyReportingFlags]) {
         return;
     }
-    // Consume the command start now, before any flag-based early return. Each FTCS D closes at most
-    // one command, so a subsequent FTCS D that arrives without an intervening FTCS C must not be
-    // evaluated against the prior command's start flags. Some setups (e.g. Fish + oh-my-posh) emit a
-    // duplicate/stray FTCS D as part of the next prompt's sequence, after the shell has already
-    // re-enabled key reporting for that prompt. Consuming the flag here means the first D handles the
-    // real command exit and the stray D is ignored rather than misread as an app leaving key
-    // reporting stuck on. See 13032. (The FTCS-D-time snapshot from 13015 alone is insufficient here
-    // because the re-enable precedes the second D.)
-    _haveCommandStart = NO;
-
-    // Check if key reporting flags are non-zero. Use the value snapshotted when the FTCS D token
-    // was processed rather than the live value: a shell like Fish 4.x re-enables key reporting for
-    // its next prompt right after FTCS D, and reading the live value here would misread that as an
-    // app leaving key reporting stuck on. See 13015.
-    if (keyReportingFlags == 0) {
-        return;
-    }
-    // Only warn if flags were off when the command started but are on now.
-    // This avoids false positives for shells like Fish 4.0+ that legitimately use progressive enhancements.
-    if (_keyReportingFlagsAtCommandStart != 0) {
-        return;
-    }
-
     // Ask nagging controller - it handles user defaults and showing the nag
     if ([self.naggingController shouldResetKeyReportingMode]) {
         [self naggingControllerResetKeyReportingMode];
@@ -18591,6 +18635,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (iTermStuckKeyReportingDetector *)stuckKeyReportingDetector {
+    if (!_stuckKeyReportingDetector) {
+        _stuckKeyReportingDetector = [[iTermStuckKeyReportingDetector alloc] init];
+    }
+    return _stuckKeyReportingDetector;
+}
+
 - (iTermAppSwitchingPreventionDetector *)appSwitchingPreventionDetector {
     if (!_appSwitchingPreventionDetector) {
         _appSwitchingPreventionDetector = [[iTermAppSwitchingPreventionDetector alloc] init];
@@ -18606,11 +18657,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                            mark:(id<VT100ScreenMarkReading>)mark
               keyReportingFlags:(VT100TerminalKeyReportingFlags)keyReportingFlags
                          paused:(BOOL)paused {
-    // Save key reporting flags at command start to detect apps that enable CSI u but don't clean up.
-    // Use the value snapshotted when the FTCS C token was processed, not the live value, so it is
-    // consistent with the flags snapshotted at command exit. See 13015.
-    _haveCommandStart = YES;
-    _keyReportingFlagsAtCommandStart = keyReportingFlags;
+    [[self stuckKeyReportingDetector] commandDidStart:command keyReportingFlags:keyReportingFlags];
     if (_eventTriggerEvaluator.hasLongRunningCommandTrigger) {
         [_eventTriggerEvaluator commandStartedWithCommand:command];
     }
@@ -19584,7 +19631,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
-- (void)screenKeyReportingFlagsDidChange {
+- (void)screenDidResetKeyReportingLocally {
+    __weak __typeof(self) weakSelf = self;
+    [[self stuckKeyReportingDetector] ignoringOurOwnWrites:^{
+        [weakSelf screenKeyReportingFlagsDidChange:YES];
+    }];
+}
+
+- (void)screenKeyReportingFlagsDidChange:(BOOL)wholeValueReplaced {
+    // Recorded ahead of the profile gate below so it stays correct for profiles that don't allow
+    // modifyOtherKeys. See 13032.
+    [[self stuckKeyReportingDetector] keyReportingFlagsDidChangeWithWholeValueReplaced:wholeValueReplaced];
+
     const BOOL allowed = [iTermProfilePreferences boolForKey:KEY_ALLOW_MODIFY_OTHER_KEYS
                                                    inProfile:self.profile];
     if (!allowed) {
@@ -24025,7 +24083,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                  VT100ScreenMutableState *mutableState,
                                                  id<VT100ScreenDelegate> delegate) {
-            [terminal resetSendModifiersWithSideEffects:YES];
+            [terminal resetKeyReportingModeLocally];
         }];
     });
 }
@@ -25661,24 +25719,36 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 }
 
 - (iTermSessionTabStatus *)tabStatus {
-    if (!_tabStatus) {
-        _tabStatus = [[iTermSessionTabStatus alloc] initWithSessionID:self.guid];
+    return self.tabStatusController.status;
+}
+
+// Created lazily, since PTYSession has several init paths and a session may
+// never have a status at all.
+- (iTermTabStatusController *)tabStatusController {
+    if (!_tabStatusController) {
+        __weak __typeof(self) weakSelf = self;
+        _tabStatusController =
+            [[iTermTabStatusController alloc] initWithSessionID:^NSString * {
+                return weakSelf.guid ?: @"";
+            } didChange:^(NSString * _Nullable previousStatusText) {
+                [weakSelf tabStatusDidChangeFromStatusText:previousStatusText];
+            }];
     }
-    return _tabStatus;
+    return _tabStatusController;
+}
+
+- (void)tabStatusDidChangeFromStatusText:(NSString *)previousStatusText {
+    [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
+    // Read from the status rather than from whatever update caused the change:
+    // a status that expires on its own has no update to read, and the variable
+    // would otherwise keep reporting what the program last said.
+    self.variablesScope.status = self.tabStatus.statusText;
+    [_delegate sessionTabStatusDidChange:self];
 }
 
 - (void)screenSetTabStatus:(VT100TabStatusUpdate *)status {
     DLog(@"%@ screenSetTabStatus: %@", self, status.description);
-    NSString *previousStatusText = self.tabStatus.statusText;
-    if (![self.tabStatus apply:status]) {
-        DLog(@"No change");
-        return;
-    }
-    [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
-    if (status.statusPresence != VT100TabStatusUpdateFieldNotSet) {
-        self.variablesScope.status = status.status;
-    }
-    [_delegate sessionTabStatusDidChange:self];
+    [self.tabStatusController apply:status];
 }
 
 - (void)maybePostTabStatusNotificationWithPreviousStatusText:(NSString *)previousStatusText {
@@ -25701,13 +25771,16 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 }
 
 - (void)clearTabStatus {
-    if (!_tabStatus || !_tabStatus.hasActiveStatus) {
+    if (![_tabStatusController clearStatus]) {
         return;
     }
-    [_tabStatus clear];
     [[iTermDockBadgeController sharedInstance] sessionDidLeaveWaiting:_guid];
     self.variablesScope.status = nil;
     [_delegate sessionTabStatusDidChange:self];
+}
+
+- (void)screenProgressProtocolDidReportProgress:(VT100ScreenProgress)progress {
+    [self.tabStatusController progressProtocolDidReport:progress];
 }
 
 @end

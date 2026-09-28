@@ -667,6 +667,19 @@ extension Conductor {
         return framing && it2Nonce != nil && it2ListenSucceeded
     }
 
+    // What a remote `it2` needs to reach iTerm2 over THIS connection: the same socket path and
+    // nonce the login shell received as IT2_SOCK and IT2_NONCE. A tmux -CC controller publishes
+    // this record on its server so a program in a pane can find the connection currently showing
+    // it, instead of the one that happened to start the server (see TmuxController's
+    // advertiseIT2Client). Nil until activateIT2Proxy has minted them. The keys are what it2.py
+    // reads back.
+    @objc var it2ClientRecord: [String: String]? {
+        guard let socketPath = it2SocketPath, let nonce = it2Nonce else {
+            return nil
+        }
+        return ["sock": socketPath, "nonce": nonce]
+    }
+
     // Checkmark state for the menu item: whether this connection currently has an explicit
     // grant (from the announcement or a previous menu toggle). A nil/denied decision is
     // unchecked. Kept distinct from it2Authorized (an optional tri-state) so the ObjC menu

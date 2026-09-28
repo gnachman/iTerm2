@@ -381,7 +381,7 @@ extension SSHFilePanel {
     }
 
     private func setupWindow() {
-        window?.title = String(localized: "General.Open", defaultValue: "Open", comment: "Open button")
+        window?.title = String(localized: "General.Open", defaultValue: "Open", comment: "Open: used on buttons, menu items and window titles")
         window?.center()
         window?.isRestorable = false
         window?.delegate = self
@@ -798,7 +798,7 @@ extension SSHFilePanel {
 
         openButton = NSButton()
         openButton.translatesAutoresizingMaskIntoConstraints = false
-        openButton.title = isSavePanel ? String(localized: "General.Save", defaultValue: "Save", comment: "Save button") : String(localized: "General.Open", defaultValue: "Open", comment: "Open button")
+        openButton.title = isSavePanel ? String(localized: "General.Save", defaultValue: "Save", comment: "Save: used on buttons and menu items") : String(localized: "General.Open", defaultValue: "Open", comment: "Open: used on buttons, menu items and window titles")
         openButton.bezelStyle = .rounded
         openButton.keyEquivalent = "\r" // Return
         openButton.isEnabled = false

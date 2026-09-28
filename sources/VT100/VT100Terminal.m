@@ -430,9 +430,21 @@ static const int kMaxScreenRows = 4096;
     [self.delegate terminalDidReset];
 }
 
+- (void)resetKeyReportingModeLocally {
+    DLog(@"reset key reporting mode locally");
+    [self resetSendModifiersWithSideEffects:NO];
+    [self.delegate terminalDidChangeSendModifiers];
+    [self.delegate terminalDidResetKeyReportingLocally];
+}
+
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects {
     DLog(@"reset send modifiers with side effects=%@", @(sideEffects));
     self.dirty = YES;
+    // CSI >m and CSI >4m with no parameters land here, so this is the same sequence family as the
+    // parameterized branches in -executeToken: and needs the same before/after test. Resetting a
+    // mode that is already off changes nothing, and reporting it anyway would be read as the shell
+    // writing the mode. See 13032.
+    const VT100TerminalKeyReportingFlags beforeReset = self.keyReportingFlags;
     for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
         _sendModifiers[i] = @-1;
     }
@@ -442,6 +454,9 @@ static const int kMaxScreenRows = 4096;
     [_alternateKeyReportingModeStack removeAllObjects];
     if (sideEffects) {
         [self.delegate terminalDidChangeSendModifiers];
+        if (beforeReset != self.keyReportingFlags) {
+            [self.delegate terminalKeyReportingFlagsDidChange:YES];
+        }
     }
 }
 
@@ -657,7 +672,7 @@ static const int kMaxScreenRows = 4096;
     } else {
         _keyReportingFlags ^= flag;
     }
-    [self.delegate terminalKeyReportingFlagsDidChange];
+    [self.delegate terminalKeyReportingFlagsDidChange:NO];
 }
 
 - (VT100TerminalKeyReportingFlags)keyReportingFlags {
@@ -2548,8 +2563,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 } else {
                     _keyReportingFlags = effective;
                 }
+                // Mode 1 assigns the whole value; 2 and 3 only set or clear the named bits.
+                [self.delegate terminalKeyReportingFlagsDidChange:(token.csi->p[1] == 1)];
             }
-            [self.delegate terminalKeyReportingFlagsDidChange];
             break;
 
         case VT100CSI_PUSH_KEY_REPORTING_MODE:
@@ -2980,8 +2996,14 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
                 _sendModifiers[resource] = @-1;
                 self.dirty = YES;
+                // Emptying the stack changes the effective flags whenever it was non-empty, so
+                // compare the getter across the change rather than assuming. See 13032.
+                const VT100TerminalKeyReportingFlags before = self.keyReportingFlags;
                 [self.currentKeyReportingModeStack removeAllObjects];
                 [self.delegate terminalDidChangeSendModifiers];
+                if (before != self.keyReportingFlags) {
+                    [self.delegate terminalKeyReportingFlagsDidChange:NO];
+                }
             }
             self.dirty = YES;
             break;
@@ -3006,6 +3028,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             self.dirty = YES;
             _sendModifiers[resource] = @(value);
+            // Zeroing the flags and emptying the stack below both change what the getter returns.
+            // Compare across the whole change and notify once. See 13032.
+            const VT100TerminalKeyReportingFlags beforeSetModifiers = self.keyReportingFlags;
             _keyReportingFlags = 0;
             // The protocol described here:
             // https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
@@ -3015,6 +3040,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             self.dirty = YES;
             [self.currentKeyReportingModeStack removeAllObjects];
             [self.delegate terminalDidChangeSendModifiers];
+            if (beforeSetModifiers != self.keyReportingFlags) {
+                [self.delegate terminalKeyReportingFlagsDidChange:YES];
+            }
             break;
         }
 
@@ -3219,7 +3247,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     [self.currentKeyReportingModeStack addObject:@(flags)];
     [self pruneKeyReportingModeStack:self.currentKeyReportingModeStack];
     DLog(@"Stack:\n%@", self.currentKeyReportingModeStack);
-    [self.delegate terminalKeyReportingFlagsDidChange];
+    [self.delegate terminalKeyReportingFlagsDidChange:NO];
 }
 
 - (void)popKeyReportingModes:(int)count {
@@ -3233,7 +3261,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         [self.currentKeyReportingModeStack removeLastObject];
     }
     DLog(@"Stack:\n%@", self.currentKeyReportingModeStack);
-    [self.delegate terminalKeyReportingFlagsDidChange];
+    [self.delegate terminalKeyReportingFlagsDidChange:NO];
 }
 
 - (void)executeRequestTermcapTerminfo:(VT100Token *)token {
@@ -4601,6 +4629,10 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
     if (!payload) {
         return;
     }
+    [_delegate terminalSetTabStatus:[self tabStatusUpdateForOSC21337Payload:payload]];
+}
+
+- (VT100TabStatusUpdate *)tabStatusUpdateForOSC21337Payload:(NSString *)payload {
 
     // Parse the payload into tokens split on unescaped semicolons.
     VT100TabStatusUpdate *status = [[VT100TabStatusUpdate alloc] init];
@@ -4627,6 +4659,8 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
     }
     [tokens addObject:[currentToken copy]];
 
+    static NSString *const thenPrefix = @"then-";
+    VT100TabStatusUpdate *fallback = nil;
     for (NSString *kvString in tokens) {
         NSRange eqRange = [kvString rangeOfString:@"="];
         NSString *key;
@@ -4639,47 +4673,95 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
             value = [kvString substringFromIndex:eqRange.location + 1];
         }
 
-        if ([key isEqualToString:@"indicator"]) {
-            if (value.length == 0) {
-                status.indicatorPresence = VT100TabStatusUpdateFieldCleared;
-            } else {
-                NSArray<NSNumber *> *components = [self xtermParseColorArgument:value];
-                if (components) {
-                    status.indicatorPresence = VT100TabStatusUpdateFieldSet;
-                    iTermSRGBColor c = { components[0].doubleValue, components[1].doubleValue, components[2].doubleValue };
-                    status.indicator = c;
-                }
+        if ([key isEqualToString:@"expires-on"]) {
+            // The status is only true while some operation is; say which one.
+            if ([value isEqualToString:@"progress-end"]) {
+                status.expiresOn = VT100TabStatusExpirationReasonProgressEnd;
+            } else if (value.length == 0) {
+                status.expiresOn = VT100TabStatusExpirationReasonNever;
             }
-        } else if ([key isEqualToString:@"status"]) {
-            if (value.length > 0) {
-                status.statusPresence = VT100TabStatusUpdateFieldSet;
-                status.status = value;
-            } else {
-                status.statusPresence = VT100TabStatusUpdateFieldCleared;
-            }
-        } else if ([key isEqualToString:@"status-color"]) {
-            if (value.length == 0) {
-                status.statusColorPresence = VT100TabStatusUpdateFieldCleared;
-            } else {
-                NSArray<NSNumber *> *components = [self xtermParseColorArgument:value];
-                if (components) {
-                    status.statusColorPresence = VT100TabStatusUpdateFieldSet;
-                    iTermSRGBColor c = { components[0].doubleValue, components[1].doubleValue, components[2].doubleValue };
-                    status.statusColor = c;
-                }
-            }
-        } else if ([key isEqualToString:@"detail"]) {
-            if (value.length > 0) {
-                status.detailPresence = VT100TabStatusUpdateFieldSet;
-                status.detail = value;
-            } else {
-                status.detailPresence = VT100TabStatusUpdateFieldCleared;
-            }
+            continue;
         }
+
+        // then-* names the status to leave behind when this one expires. The
+        // fields are the same ones, so they parse the same way. An
+        // unrecognized then- key is ignored like any other unknown key, and
+        // must not conjure an empty fallback: that would turn “expire and
+        // clear” into “expire and do nothing,” making a typo worse than
+        // leaving the key out.
+        if ([key hasPrefix:thenPrefix]) {
+            VT100TabStatusUpdate *candidate = fallback ?: [[VT100TabStatusUpdate alloc] init];
+            if ([self setTabStatusField:[key substringFromIndex:thenPrefix.length]
+                                  value:value
+                                     on:candidate]) {
+                fallback = candidate;
+            }
+            continue;
+        }
+
         // Unknown keys are silently ignored
+        [self setTabStatusField:key value:value on:status];
     }
 
-    [_delegate terminalSetTabStatus:status];
+    if (status.expiresOn != VT100TabStatusExpirationReasonNever) {
+        // No then-* fields means the status just goes away.
+        status.expirationFallback = fallback ?: [VT100TabStatusUpdate clear];
+    }
+
+    return status;
+}
+
+// Applies one key=value pair from an OSC 21337 payload to `update`. An empty
+// value clears the field. Returns whether the pair set anything: NO for a key
+// that is not a status field, and NO for a value that could not be parsed.
+// Recognizing the key is not enough, because the caller decides from this
+// whether a then-* fallback exists at all, and a fallback that sets no field
+// would turn “expire and clear” into “expire and do nothing.”
+- (BOOL)setTabStatusField:(NSString *)key
+                    value:(NSString *)value
+                       on:(VT100TabStatusUpdate *)update {
+    if ([key isEqualToString:@"indicator"]) {
+        if (value.length == 0) {
+            update.indicatorPresence = VT100TabStatusUpdateFieldCleared;
+        } else {
+            NSArray<NSNumber *> *components = [self xtermParseColorArgument:value];
+            if (!components) {
+                return NO;
+            }
+            update.indicatorPresence = VT100TabStatusUpdateFieldSet;
+            iTermSRGBColor c = { components[0].doubleValue, components[1].doubleValue, components[2].doubleValue };
+            update.indicator = c;
+        }
+    } else if ([key isEqualToString:@"status"]) {
+        if (value.length > 0) {
+            update.statusPresence = VT100TabStatusUpdateFieldSet;
+            update.status = value;
+        } else {
+            update.statusPresence = VT100TabStatusUpdateFieldCleared;
+        }
+    } else if ([key isEqualToString:@"status-color"]) {
+        if (value.length == 0) {
+            update.statusColorPresence = VT100TabStatusUpdateFieldCleared;
+        } else {
+            NSArray<NSNumber *> *components = [self xtermParseColorArgument:value];
+            if (!components) {
+                return NO;
+            }
+            update.statusColorPresence = VT100TabStatusUpdateFieldSet;
+            iTermSRGBColor c = { components[0].doubleValue, components[1].doubleValue, components[2].doubleValue };
+            update.statusColor = c;
+        }
+    } else if ([key isEqualToString:@"detail"]) {
+        if (value.length > 0) {
+            update.detailPresence = VT100TabStatusUpdateFieldSet;
+            update.detail = value;
+        } else {
+            update.detailPresence = VT100TabStatusUpdateFieldCleared;
+        }
+    } else {
+        return NO;
+    }
+    return YES;
 }
 
 // This is based on a misbegotten linux console control sequence:

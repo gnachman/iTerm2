@@ -12193,6 +12193,18 @@
         }
       }
     },
+    "Qd4-Vm-7xR.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Centered, No Title Bar\"; ObjectID = \"Qd4-Vm-7xR\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Centered, No Title Bar"
+          }
+        }
+      }
+    },
     "Qef-e2-NCc.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Install Claude Code Integration\"; ObjectID = \"Qef-e2-NCc\";",
       "extractionState" : "extracted_with_value",

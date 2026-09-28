@@ -28,21 +28,32 @@ sign_binary() {
     fi
 }
 
+# Where swift build puts the product moved between toolchains (it used to be
+# <scratch>/<triple>/release), and both lipo and cp will happily take whatever
+# stale copy is still sitting at the old path, so ask for the path rather than
+# assuming it.
+build_arch() {
+    local arch="$1"
+    local scratch="$2"
+    echo "Building for $arch..." >&2
+    # This function runs inside $(...), where bash drops set -e, so a failed
+    # build has to fail loudly on its own or a stale product would be shipped.
+    swift build -c release --arch "$arch" --scratch-path "$scratch" --disable-sandbox >&2 || exit 1
+    swift build -c release --arch "$arch" --scratch-path "$scratch" --disable-sandbox --show-bin-path
+}
+
 if [ "${UNIVERSAL:-0}" = "1" ]; then
     echo "Building it2 as universal binary..."
 
-    echo "Building for arm64..."
-    swift build -c release --arch arm64 --scratch-path .build-arm64 --disable-sandbox
-
-    echo "Building for x86_64..."
-    swift build -c release --arch x86_64 --scratch-path .build-x86_64 --disable-sandbox
+    ARM64_BIN="$(build_arch arm64 .build-arm64)"
+    X86_64_BIN="$(build_arch x86_64 .build-x86_64)"
 
     mkdir -p .build/release
 
     echo "Creating universal binary..."
     lipo -create \
-        .build-arm64/arm64-apple-macosx/release/it2 \
-        .build-x86_64/x86_64-apple-macosx/release/it2 \
+        "$ARM64_BIN/it2" \
+        "$X86_64_BIN/it2" \
         -output .build/release/it2
 
     sign_binary "it2"
@@ -52,10 +63,10 @@ if [ "${UNIVERSAL:-0}" = "1" ]; then
     lipo -archs .build/release/it2
 else
     echo "Building it2 for $NATIVE_ARCH..."
-    swift build -c release --arch "$NATIVE_ARCH" --scratch-path ".build-$NATIVE_ARCH" --disable-sandbox
+    NATIVE_BIN="$(build_arch "$NATIVE_ARCH" ".build-$NATIVE_ARCH")"
 
     mkdir -p .build/release
-    cp ".build-$NATIVE_ARCH/${NATIVE_ARCH}-apple-macosx/release/it2" ".build/release/it2"
+    cp "$NATIVE_BIN/it2" ".build/release/it2"
 
     sign_binary "it2"
 

@@ -312,7 +312,7 @@ class CodeReviewPromptView: iTermLayerBackedSolidColorView {
         alert.messageText = String(localized: "CodeReviewPrompt.SaveTitle", defaultValue: "Name this prompt", comment: "Title of the dialog for saving a code review prompt")
         alert.informativeText =
             String(localized: "CodeReviewPrompt.SaveInformative", defaultValue: "Saved prompts can be re-loaded from the Prompts pulldown.", comment: "Explanatory text in the dialog for saving a code review prompt")
-        alert.addButton(withTitle: String(localized: "General.Save", defaultValue: "Save", comment: "Save button"))
+        alert.addButton(withTitle: String(localized: "General.Save", defaultValue: "Save", comment: "Save: used on buttons and menu items"))
         alert.addButton(withTitle: iTermLocalizedCancel())
 
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))

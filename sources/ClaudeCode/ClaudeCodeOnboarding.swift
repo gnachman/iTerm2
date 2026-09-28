@@ -1161,7 +1161,7 @@ class ClaudeCodeOnboarding: NSObject {
         doItButton.isHidden = false
 
         if isLastStep {
-            nextButton.title = String(localized: "General.Close", defaultValue: "Close", comment: "Close button")
+            nextButton.title = String(localized: "General.Close", defaultValue: "Close", comment: "Close: used on buttons and menu items")
             nextButton.isEnabled = true
         } else {
             nextButton.title = String(localized: "ClaudeCodeOnboarding.Next", defaultValue: "Next", comment: "Button to advance to the next onboarding step")

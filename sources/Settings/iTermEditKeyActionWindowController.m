@@ -208,7 +208,7 @@ const CGFloat sideMarginWidth = 40;
 
             case KEY_ACTION_COPY_MODE:
                 _parameterHidden = NO;
-                _parameterPlaceholder = NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionCopyModeCommands", nil, [NSBundle mainBundle], @"Copy Mode Commands", @"Copy mode commands label/placeholder");
+                _parameterPlaceholder = NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionCopyModeCommands", nil, [NSBundle mainBundle], @"Copy Mode Commands", @"Copy Mode Commands: the action name in the picker, and the placeholder in its parameter field");
                 _applyHidden = NO;
                 _helpString = NSLocalizedStringWithDefaultValue(@"EditKeyAction.HelpCopyMode", nil, [NSBundle mainBundle], @"Enter copy mode commands to move cursor, toggle selection, and so on. This key binding enters Copy Mode and then acts as though you had pressed the keys listed here. [See a list of all the commands](https://iterm2.com/documentation-copymode.html). Use vim syntax for control, option, and function keys (e.g., `<C-x>` or `<Up>`.", @"Help text for the Copy Mode action");
                 break;
@@ -477,7 +477,7 @@ const CGFloat sideMarginWidth = 40;
             [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionCopyOrSend", nil, [NSBundle mainBundle], @"Copy or Send ^C", @"Action name: Copy or Send Control-C") tag:KEY_ACTION_COPY_OR_SEND],
             [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionPasteOrSend", nil, [NSBundle mainBundle], @"Paste or Send ^V", @"Action name: Paste or Send Control-V") tag:KEY_ACTION_PASTE_OR_SEND],
             [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionCopyInterpolatedString", nil, [NSBundle mainBundle], @"Copy Interpolated String", @"Action name: Copy Interpolated String") tag:KEY_ACTION_COPY_INTERPOLATED_STRING],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionCopyModeCommands", nil, [NSBundle mainBundle], @"Copy Mode Commands", @"Action name: Copy Mode Commands") tag:KEY_ACTION_COPY_MODE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionCopyModeCommands", nil, [NSBundle mainBundle], @"Copy Mode Commands", @"Copy Mode Commands: the action name in the picker, and the placeholder in its parameter field") tag:KEY_ACTION_COPY_MODE],
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.GroupToggles", nil, [NSBundle mainBundle], @"Toggles", @"Action group: Toggles") items:[@[

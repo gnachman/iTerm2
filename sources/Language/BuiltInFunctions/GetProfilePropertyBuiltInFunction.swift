@@ -13,11 +13,7 @@ class GetProfilePropertyBuiltInFunction: NSObject {
 }
 
 extension GetProfilePropertyBuiltInFunction: iTermBuiltInFunctionProtocol {
-    private static func error(message: String) -> NSError {
-        return NSError(domain: "com.iterm2.get-profile-property",
-                       code: 1,
-                       userInfo: [ NSLocalizedDescriptionKey: message])
-    }
+    private static let errorDomain = "com.iterm2.get-profile-property"
 
     static func register() {
         let keyArgName = "key"
@@ -30,12 +26,9 @@ extension GetProfilePropertyBuiltInFunction: iTermBuiltInFunctionProtocol {
             defaultValues: [sessionIDArgName: iTermVariableKeySessionID],
             context: .session,
             sideEffectsPlaceholder: nil) { parameters, completion in
-                guard let sessionID = parameters[sessionIDArgName] as? String else {
-                    completion(nil, error(message: String(localized: "BuiltInFunction.MissingSessionID", defaultValue: "Missing session_id. This shouldn’t happen so please report a bug.", comment: "Error shown when the session_id argument is unexpectedly missing (should not happen)")))
-                    return
-                }
-                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, error(message: String(localized: "BuiltInFunction.NoSuchSession", defaultValue: "No such session", comment: "Error shown when a function is called with a session ID that does not exist")))
+                guard let session = iTermBuiltInFunction.session(for: parameters,
+                                                                 errorDomain: errorDomain,
+                                                                 completion: completion) else {
                     return
                 }
                 let key = parameters[keyArgName] as! String
