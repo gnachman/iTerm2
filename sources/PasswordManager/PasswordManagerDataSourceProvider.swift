@@ -247,6 +247,72 @@ class PasswordManagerDataSourceProvider: NSObject {
             requireEveryOpen: SecureUserDefaults.instance.requireAuthEveryOpenPasswordmanager.value)
     }
 
+    // The settings menu presents the three stored authentication settings as one
+    // set of mutually exclusive choices. Every-open takes precedence over
+    // after-screen-locks because it already prompts on the first open after a lock.
+    // Pure so it can be unit-tested.
+    @objc static func authenticationMode(authRequired: Bool,
+                                         afterScreenLocks: Bool,
+                                         everyOpen: Bool) -> PasswordManagerAuthenticationMode {
+        guard authRequired else {
+            return .never
+        }
+        if everyOpen {
+            return .everyOpen
+        }
+        if afterScreenLocks {
+            return .oncePerLaunchAndAfterScreenLocks
+        }
+        return .oncePerLaunch
+    }
+
+    @objc static var currentAuthenticationMode: PasswordManagerAuthenticationMode {
+        return authenticationMode(
+            authRequired: SecureUserDefaults.instance.requireAuthToOpenPasswordmanager.value,
+            afterScreenLocks: iTermUserDefaults.requireAuthenticationAfterScreenLocks,
+            everyOpen: SecureUserDefaults.instance.requireAuthEveryOpenPasswordmanager.value)
+    }
+
+    // Whether a screen lock should revoke the cached authentication and close an
+    // open password manager window. True for every mode that prompts again after a
+    // lock: with every-open, a window left open across a lock would show passwords
+    // to whoever unlocks the screen without authenticating. Pure so it can be
+    // unit-tested.
+    @objc static func requiresAuthenticationAfterScreenLock(mode: PasswordManagerAuthenticationMode) -> Bool {
+        switch mode {
+        case .oncePerLaunchAndAfterScreenLocks, .everyOpen:
+            return true
+        case .never, .oncePerLaunch:
+            return false
+        }
+    }
+
+    @objc static var requiresAuthenticationAfterScreenLock: Bool {
+        return requiresAuthenticationAfterScreenLock(mode: currentAuthenticationMode)
+    }
+
+    // Stores the settings for `mode`. Changing whether authentication is required,
+    // or whether it is required on every open, prompts for an administrator
+    // password (once, even if both change). If that fails or is canceled the
+    // settings are left as they were.
+    @objc static func setAuthenticationMode(_ mode: PasswordManagerAuthenticationMode) {
+        DLog("Set password manager authentication mode to \(mode.rawValue)")
+        do {
+            try SecureUserDefaults.setPasswordManagerAuthentication(required: mode != .never,
+                                                                    everyOpen: mode == .everyOpen)
+        } catch {
+            RLog("Failed to set password manager authentication mode to \(mode.rawValue): \(error)")
+            SecureUserDefault<Bool>.showSaveFailedWarning(error)
+            return
+        }
+        let afterScreenLocks = (mode == .oncePerLaunchAndAfterScreenLocks)
+        // This setting syncs, so don't write it needlessly: a user who loads settings
+        // from a custom folder may be asked to save them after any change.
+        if iTermUserDefaults.requireAuthenticationAfterScreenLocks != afterScreenLocks {
+            iTermUserDefaults.requireAuthenticationAfterScreenLocks = afterScreenLocks
+        }
+    }
+
     @objc func requestAuthenticationIfNeeded(_ completion: @escaping (Bool) -> ()) {
         if authenticated && mayReuseAuthenticationOnOpen {
             completion(true)
@@ -365,3 +431,14 @@ class PasswordManagerDataSourceProvider: NSObject {
     }
 }
 
+// How often the password manager asks for Touch ID or the login password. This is
+// stored in three independent settings (see
+// PasswordManagerDataSourceProvider.authenticationMode) for compatibility with
+// earlier versions.
+@objc(iTermPasswordManagerAuthenticationMode)
+enum PasswordManagerAuthenticationMode: Int {
+    case never
+    case oncePerLaunch
+    case oncePerLaunchAndAfterScreenLocks
+    case everyOpen
+}

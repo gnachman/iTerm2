@@ -138,11 +138,13 @@ New Features:
   navigation; matches are highlighted in place.
   Supports smart-case, case-sensitive, and regular
   expression modes.
-- New setting “Require Authentication on Every
-  Open” re-prompts for Touch ID or your password
-  each time the password manager opens, instead
-  of reusing the first unlock until the screen
-  locks.
+- The password manager’s settings menu now offers
+  one choice of how often to ask for Touch ID or
+  your password: never, once per launch, once per
+  launch and after the screen locks, or every
+  time it opens. The last option is new, and it
+  also closes the password manager when the
+  screen locks.
 - The Session Status toolbelt tool has a
   snooze button next to the notify button
   that toggles snooze on the selected
