@@ -84,6 +84,15 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
                                         iTermKittyUnicodePlaceholderInfo *info);
 
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
+
+// Whether a spacing combining mark in the cell after `base` combines with it. Spacing marks
+// get their own cell; when the base can host one, the mark is drawn together with the base
+// and its own cell draws nothing. ASCII can't combine with a spacing mark, and box-drawing
+// characters and images are drawn as paths or bitmaps rather than shaped text, so a mark
+// after any of them is drawn on its own. The attributed string builder, the drawability
+// check, and the Metal glyph keys must all agree on this or the Metal renderer shapes a
+// box-drawing or image string (issue 13073).
+BOOL iTermScreenCharCanHostSpacingMark(const screen_char_t *base, BOOL useNativePowerlineGlyphs);
 NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor);
 
 extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
@@ -504,7 +513,8 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
                                                          BOOL blinkingItemsVisible,
                                                          BOOL blinkAllowed,
                                                          BOOL preferSpeedToFullLigatureSupport,
-                                                         BOOL isURL) {
+                                                         BOOL isURL,
+                                                         BOOL useNativePowerlineGlyphs) {
     const unichar code = c->code;
     if (c->image) {
         return YES;
@@ -524,8 +534,8 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
             return NO;
         }
     } else if (predecessor && ComplexCharCodeIsSpacingCombiningMark(c->code)) {
-        if (predecessor->complexChar || predecessor->code > 127) {
-            // A spacing combining mark that has a non-ascii predecessor is not visible because the predecessor draws it.
+        if (iTermScreenCharCanHostSpacingMark(predecessor, useNativePowerlineGlyphs)) {
+            // The predecessor draws this spacing combining mark, so its own cell draws nothing.
             return NO;
         }
     }

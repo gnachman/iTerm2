@@ -204,6 +204,20 @@ final class FlagAcrossWritesTests: XCTestCase {
         XCTAssertEqual(cells.first, "e\u{0301}")
     }
 
+    /// A run of spacing combining marks arriving in a later write clusters with the
+    /// predecessor, and aggressive base-character detection gives each mark its own cell.
+    /// The fast path converted that cluster into a fixed eight-cell stack buffer, so more
+    /// than seven marks overran it (issue 13073, notcurses-demo's uniblock demo).
+    func testManySpacingMarksAfterPredecessorAcrossWrites() {
+        let screen = makeScreen()
+        let marks = String(repeating: "\u{093E}", count: 12)
+        append(["\u{0915}", marks], to: screen)
+        let (cursorX, cells) = row0(screen)
+        XCTAssertEqual(cursorX, 13, "the base and each spacing mark get their own cell")
+        XCTAssertEqual(cell(cells, 0), "\u{0915}")
+        XCTAssertEqual(cell(cells, 12), "\u{093E}")
+    }
+
     // MARK: A narrow predecessor that widens on merge
 
     /// When a lone indicator is narrow -- which it is whenever iTermIsFlagCharacter says no,

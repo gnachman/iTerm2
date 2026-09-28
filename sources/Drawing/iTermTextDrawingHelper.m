@@ -78,6 +78,19 @@ typedef struct {
     CGImageRef alphaMask;
 } iTermUnderlineContext;
 
+BOOL iTermScreenCharCanHostSpacingMark(const screen_char_t *base, BOOL useNativePowerlineGlyphs) {
+    if (base->image) {
+        return NO;
+    }
+    if (!base->complexChar && base->code < 128) {
+        return NO;
+    }
+    const UTF32Char code = base->complexChar ? BaseCharacterForComplexChar(base->code) : base->code;
+    NSCharacterSet *boxSet =
+        [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:useNativePowerlineGlyphs];
+    return ![boxSet longCharacterIsMember:code];
+}
+
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index) {
     int theIndex = index / 8;
     int mask = 1 << (index & 7);

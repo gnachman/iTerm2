@@ -319,9 +319,6 @@ NS_ASSUME_NONNULL_BEGIN
 // invalidated if dropExcessLinesWithWidth is called.
 - (void)setCursor:(int)x;
 
-// Append text in reverse video to the end of the line buffer.
-- (void)appendMessage:(NSString * _Nonnull)message;
-
 - (void)beginResizing;
 - (void)endResizing;
 

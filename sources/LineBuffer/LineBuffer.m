@@ -58,7 +58,6 @@ static NSString *const kLineBufferMayHaveDWCKey = @"May Have Double Width Charac
 static NSString *const kLineBufferBlockWrapperKey = @"Block Wrapper";
 
 static const int kLineBufferVersion = 1;
-static const NSInteger kUnicodeVersion = 9;
 
 // The way in which LineBuffer objects are shared is kinda complicated. Each LineBuffer is meant
 // to be used by one dispatch queue. Each LineBuffer has its own private LineBlockArray. Each
@@ -1980,42 +1979,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         kLineBufferNumDroppedBlocksKey: @(num_dropped_blocks),
         kLineBufferDroppedCharsKey: @(droppedChars),
         kLineBufferMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter) }];
-}
-
-- (void)appendMessage:(NSString *)message {
-    if (!_lineBlocks.count) {
-        [self _addBlockOfSize:message.length];
-    }
-    screen_char_t defaultBg = { 0 };
-    screen_char_t buffer[message.length];
-    int len;
-    screen_char_t fg = { 0 };
-    screen_char_t bg = { 0 };
-    fg.foregroundColor = ALTSEM_SYSTEM_MESSAGE;
-    fg.backgroundColorMode = ColorModeAlternate;
-    bg.backgroundColor = ALTSEM_SYSTEM_MESSAGE;
-    bg.backgroundColorMode = ColorModeAlternate;
-    StringToScreenChars(message, buffer, fg, bg, &len, NO, NULL, NULL, NO, kUnicodeVersion, NO, NULL);
-    [self appendLine:buffer
-              length:0
-             partial:NO
-               width:num_wrapped_lines_width > 0 ?: 80
-            metadata:iTermMetadataMakeImmutable(iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate]))
-        continuation:defaultBg];
-
-    [self appendLine:buffer
-              length:len
-             partial:NO
-               width:num_wrapped_lines_width > 0 ?: 80
-            metadata:iTermMetadataMakeImmutable(iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate]))
-        continuation:bg];
-
-    [self appendLine:buffer
-              length:0
-             partial:NO
-               width:num_wrapped_lines_width > 0 ?: 80
-            metadata:iTermMetadataMakeImmutable(iTermMetadataTemporaryWithTimestamp([NSDate timeIntervalSinceReferenceDate]))
-        continuation:defaultBg];
 }
 
 // Note that the current implementation restores appends but not other kinds of
