@@ -386,6 +386,11 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- Make Text Bigger works again when you type it
+  as ⌘⇧= (the way you type ⌘+). Since 3.7.0,
+  that keystroke opened the Clippings panel
+  instead, because Show Clippings had claimed it.
+  Show Clippings is now ⌘⇧⌥G. Issue 13022.
 - A tab name you set yourself with Edit Tab Title
   is no longer replaced by the session’s name
   whenever the tab’s subtitle changes or its
