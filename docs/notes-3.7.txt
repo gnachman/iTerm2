@@ -69,3 +69,8 @@ Bug Fixes:
 - Fixed a crash with the GPU renderer that
   could happen when switching to or from
   battery power.
+- Make Text Bigger works again when you type it
+  as ⌘⇧= (the way you type ⌘+). Since 3.7.0,
+  that keystroke opened the Clippings panel
+  instead, because Show Clippings had claimed it.
+  Show Clippings is now ⌘⇧⌥G. Issue 13022.
