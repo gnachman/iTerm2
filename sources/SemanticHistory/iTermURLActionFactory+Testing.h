@@ -26,6 +26,14 @@ NS_ASSUME_NONNULL_BEGIN
                                   extractor:(iTermTextExtractor *)extractor
     NS_SWIFT_NAME(urlLikeString(at:respectHardNewlines:extractor:));
 
+// Whether +urlForUserSuppliedString:guessingScheme: would consider `url` openable. Consults
+// profiles bound to schemes, the urlHandlerCommand advanced setting, and LaunchServices.
++ (BOOL)urlHasOpenableScheme:(NSURL *)url;
+
+// Replaces the openability check with `block` (nil restores the real one) so tests don't
+// depend on which apps are installed on the machine running them.
++ (void)setURLOpenabilityOverrideForTesting:(nullable BOOL (^)(NSURL *url))block;
+
 @end
 
 NS_ASSUME_NONNULL_END

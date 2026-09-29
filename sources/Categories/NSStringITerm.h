@@ -170,6 +170,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 //    "*http://example.com" -> "http://example.com"
 - (NSRange)rangeOfURLInString;
 
+// Like -rangeOfURLInString, but when assumeScheme is NO the first colon is not taken to end a
+// scheme, so scheme-less text with a port like example.com:8080/path is kept whole rather than
+// being cut down to com:8080/path.
+- (NSRange)rangeOfURLInStringAssumingScheme:(BOOL)assumeScheme;
+
 - (NSString *)stringByRemovingSuffix:(NSString *)suffix;
 - (NSString *)stringByRemovingPrefix:(NSString *)prefix;
 

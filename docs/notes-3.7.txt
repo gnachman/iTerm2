@@ -391,6 +391,10 @@ Bug Fixes:
   that keystroke opened the Clippings panel
   instead, because Show Clippings had claimed it.
   Show Clippings is now ⌘⇧⌥G. Issue 13022.
+- “Open Selection as URL” now works on links
+  without a scheme, like example.com/path, and
+  is hidden when the selection isn’t a URL.
+  Issue 13092.
 - A tab name you set yourself with Edit Tab Title
   is no longer replaced by the session’s name
   whenever the tab’s subtitle changes or its
