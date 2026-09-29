@@ -176,6 +176,10 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     // window opening is version-dependent (to avoid triggering bugs in tmux 1.8).
     BOOL _versionKnown;
     BOOL _wantsOpenWindowsInitial;
+    // Window opens requested before the version was known, from the tmux dashboard, the API
+    // (iTermAPIHelper) or a buried session being restored. Replayed by didGuessVersion, dropped by
+    // detach.
+    NSMutableArray<void (^)(void)> *_windowOpensAwaitingVersion;
 
     // Maps a window id string to a dictionary of window flags defined by TmuxWindowOpener (see the
     // top of its header file)
@@ -303,6 +307,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         self.clientName = [[TmuxControllerRegistry sharedInstance] uniqueClientNameBasedOn:clientName];
         _windowOpenerOptions = [[NSMutableDictionary alloc] init];
         _pendingWindows = [[NSMutableDictionary alloc] init];
+        _windowOpensAwaitingVersion = [[NSMutableArray alloc] init];
         _currentWindowID = -1;
         _userVars = [[NSMutableDictionary alloc] init];
         _when = [[NSMutableDictionary alloc] init];
@@ -963,6 +968,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_setClipboardMonitor invalidate];
     _setClipboardMonitor = nil;
     detached_ = YES;
+    [_windowOpensAwaitingVersion removeAllObjects];
     [self closeAllPanes];
     gateway_ = nil;
     [_when enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, void (^ _Nonnull obj)(PTYSession<iTermTmuxControllerSession> *), BOOL * _Nonnull stop) {
@@ -2028,9 +2034,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [self loadTmuxClientName];
     [self loadTitleFormat];
     _versionKnown = YES;
+    // Before any pane is captured, since a capture can contain lines that look like %exit. Window
+    // opens wait for _versionKnown (below and in openWindowsInitial), so no capture precedes this.
+    [gateway_.delegate tmuxServerMayOmitEndGuardBeforeExit:[gateway_ serverMayOmitEndGuardBeforeExit]];
     if (_wantsOpenWindowsInitial) {
         _wantsOpenWindowsInitial = NO;
         [self openWindowsInitial];
+    }
+    NSArray<void (^)(void)> *deferredOpens = [_windowOpensAwaitingVersion copy];
+    [_windowOpensAwaitingVersion removeAllObjects];
+    for (void (^open)(void) in deferredOpens) {
+        open();
     }
 }
 
@@ -2772,6 +2786,22 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
               affinities:(NSArray *)affinities
              intentional:(BOOL)intentional
                  profile:(Profile *)profile {
+    if (!_versionKnown) {
+        // Opening a window captures its panes, and the parser only handles a capture safely once
+        // didGuessVersion has told it what the server is (see VT100TmuxParser). A %window-add
+        // cannot arrive this early because notifications are not accepted until the initial
+        // windows open, but the tmux dashboard, the API and buried-session restoration can all
+        // ask for a window before then.
+        DLog(@"Defer opening window %d until the version is known", windowId);
+        __weak __typeof(self) weakSelf = self;
+        [_windowOpensAwaitingVersion addObject:^{
+            [weakSelf openWindowWithId:windowId
+                            affinities:affinities
+                           intentional:intentional
+                               profile:profile];
+        }];
+        return;
+    }
     if (intentional) {
         DLog(@"open intentional: Remove this window ID from hidden: %d", windowId);
         if (!_pendingWindows[@(windowId)]) {

@@ -91,6 +91,9 @@ typedef NS_ENUM(NSInteger, VT100DCSState) {
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelTmuxRecoveryMode;
 
+// Forwarded to the tmux hook, if that is what is hooked. See VT100TmuxParser.
+- (void)setTmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit;
+
 - (void)startConductorRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelConductorRecoveryMode;
 

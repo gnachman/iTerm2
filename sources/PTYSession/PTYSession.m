@@ -11037,6 +11037,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     _tmuxSecureLogging = secureLogging;
 }
 
+- (void)tmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit {
+    DLog(@"%@: tmux server may omit end guard before exit: %@", self, @(mayOmit));
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [terminal.parser setTmuxServerMayOmitEndGuardBeforeExit:mayOmit];
+    }];
+}
+
 - (void)tmuxWriteString:(NSString *)string {
     if (_exited) {
         return;

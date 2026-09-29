@@ -400,6 +400,14 @@ Bug Fixes:
   It used to briefly show a bare session name,
   with neither the “↣” marker that flags a tmux
   tab nor the second line under the title.
+- Attaching with tmux Integration no longer fails
+  when a pane’s scrollback contains raw tmux
+  control-mode text (for example, from an earlier
+  tmux -CC run in a terminal without tmux
+  Integration). iTerm2 mistook a %exit line in
+  that text for tmux quitting, dropped the
+  connection, and printed the rest of the
+  protocol stream into the window.
 - Interrupting Claude Code with Esc now
   returns its Session Status to idle. The
   tab kept reading “working”, or “waiting”

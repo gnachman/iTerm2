@@ -733,6 +733,10 @@ static NSString *kCommandTimestamp = @"timestamp";
     return ([self.minimumServerVersion compare:version] != NSOrderedAscending);
 }
 
+- (BOOL)serverMayOmitEndGuardBeforeExit {
+    return ![self versionAtLeastDecimalNumberWithString:@"1.9"];
+}
+
 - (void)pauseTokenExecution {
     _tokenExecutionPauseCount++;
     DLog(@"Pause token execution (count=%@)", @(_tokenExecutionPauseCount));
@@ -778,8 +782,12 @@ static NSString *kCommandTimestamp = @"timestamp";
     }
     // Work around a bug in tmux 1.8: if unlink-window causes the current
     // session to be destroyed, no end guard is printed but %exit may be
-    // received.
+    // received. Servers from 1.9 on always close the block first, so for them a
+    // %exit line inside a response is data (for example capture-pane output from
+    // a pane whose scrollback holds control-mode text) and must not end the
+    // command. An unknown version is treated as possibly 1.8.
     if (currentCommand_ &&
+        [self serverMayOmitEndGuardBeforeExit] &&
         ([command hasPrefix:@"%exit "] ||
          [command isEqualToString:@"%exit"])) {
       // Work around the bug by ending the command so the %exit can be

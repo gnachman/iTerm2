@@ -89,6 +89,10 @@ extern NSString * const kTmuxGatewayErrorDomain;
 // Client tracking for OSC query support (tmux 3.6+)
 - (void)tmuxClientSessionChanged:(NSString *)clientName;
 - (void)tmuxClientDetached:(NSString *)clientName;
+// Called once the server version is known. mayOmit is YES only for tmux 1.8, which could send
+// %exit inside a %begin/%end block; the delegate forwards it to the parser so a %exit line inside
+// a block from a newer server is treated as response data. See VT100TmuxParser.
+- (void)tmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit;
 @end
 
 typedef NS_ENUM(NSInteger, ControlCommand) {
@@ -117,6 +121,8 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 - (instancetype)init NS_UNAVAILABLE;
 
 - (BOOL)versionAtLeastDecimalNumberWithString:(NSString *)string;
+// YES until the server is known to be 1.9 or later. See the delegate method of the same name.
+- (BOOL)serverMayOmitEndGuardBeforeExit;
 
 // Returns any unconsumed data if tmux mode is exited.
 // The token must be TMUX_xxx.
