@@ -251,7 +251,7 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
         cellRenderer.draw(
             with: transientState,
             renderEncoder: renderEncoder,
-            numberOfVertices: 6 * 4,
+            numberOfVertices: 6 * 2,  // Must match the size of twoQuadVerticesPool's buffers.
             numberOfPIUs: 0,
             vertexBuffers: [ NSNumber(value: iTermVertexInputIndexVertices.rawValue): transientState.vertexBuffer ],
             fragmentBuffers: [ NSNumber(value: iTermFragmentBufferIndexMarginColor.rawValue): colorBuffer ],
