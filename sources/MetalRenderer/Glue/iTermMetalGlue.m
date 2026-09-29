@@ -119,6 +119,10 @@ NS_ASSUME_NONNULL_BEGIN
     return self.delegate.metalGlueContext != nil;
 }
 
+- (nullable NSString *)metalDriverPostProcessingShader {
+    return [self.delegate metalGluePostProcessingShader];
+}
+
 - (nullable id<iTermMetalDriverDataSourcePerFrameState>)metalDriverWillBeginDrawingFrame {
     if (!self.textView.drawingHelperIsValid) {
         return nil;

@@ -1,0 +1,70 @@
+// Prepended by iTerm2 to every post-processing shader before it is compiled.
+// See iTermPostProcessRenderer.swift.
+//
+// A shader defines:
+//
+//   float4 mainImage(float2 fragCoord,        // pixels, origin at bottom left
+//                    float2 iResolution,      // pixels
+//                    float iTime,             // seconds (wall clock mod 3600, so all windows are in phase)
+//                    float iScale,            // backing scale factor (2 on Retina)
+//                    texture2d<float> iChannel0);  // the rendered terminal, premultiplied alpha
+//
+// and returns a premultiplied color. Use texture(iChannel0, uv) to sample with a
+// bottom-left origin, as in Shadertoy and Ghostty. vec2/vec3/vec4 and mod() are
+// provided to ease porting GLSL.
+
+#include <metal_stdlib>
+using namespace metal;
+
+typedef struct {
+    float2 resolution;
+    float time;
+    float scale;
+} iTermPostProcessUniforms;
+
+typedef struct {
+    float4 position [[position]];
+} iTermPostProcessVertexOut;
+
+// One oversized triangle that covers the whole viewport.
+vertex iTermPostProcessVertexOut
+iTermPostProcessVertexShader(uint vertexID [[ vertex_id ]]) {
+    const float2 p = float2((vertexID << 1) & 2, vertexID & 2);
+    iTermPostProcessVertexOut out;
+    out.position = float4(p * 2.0 - 1.0, 0.0, 1.0);
+    return out;
+}
+
+constexpr sampler iTermPostProcessSampler(coord::normalized,
+                                          address::clamp_to_edge,
+                                          filter::linear);
+
+static inline float4 iTermPostProcessTexture(texture2d<float> tex, float2 uv) {
+    return tex.sample(iTermPostProcessSampler, float2(uv.x, 1.0 - uv.y));
+}
+
+float4 mainImage(float2 fragCoord,
+                 float2 iResolution,
+                 float iTime,
+                 float iScale,
+                 texture2d<float> iChannel0);
+
+fragment float4
+iTermPostProcessFragmentShader(iTermPostProcessVertexOut in [[ stage_in ]],
+                               texture2d<float> source [[ texture(0) ]],
+                               constant iTermPostProcessUniforms &uniforms [[ buffer(0) ]]) {
+    const float2 fragCoord = float2(in.position.x, uniforms.resolution.y - in.position.y);
+    return mainImage(fragCoord, uniforms.resolution, uniforms.time, uniforms.scale, source);
+}
+
+typedef float2 vec2;
+typedef float3 vec3;
+typedef float4 vec4;
+
+template <typename T>
+static inline T mod(T x, T y) {
+    return x - y * floor(x / y);
+}
+
+// Defined last so it doesn't clash with [[ texture(n) ]] attributes above.
+#define texture(tex, uv) iTermPostProcessTexture(tex, uv)

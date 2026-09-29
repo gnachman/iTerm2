@@ -250,6 +250,12 @@ New Features:
   option of it2 set-status, or the
   expires_on argument of the Python API’s
   set_status.
+- Profiles can run a shader over the terminal,
+  such as the built-in Amber CRT effect
+  (scanlines, curvature, and glow) or your own
+  Metal shader file. Choose one in Settings >
+  Profiles > Window > Shader. Shaders apply when
+  GPU rendering is in use.
 
 Improvements:
 - iTerm2 now recognizes when a terminal is
