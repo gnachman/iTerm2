@@ -840,3 +840,8 @@ Bug Fixes:
   cleanup now applies to automatic session log
   filenames, which used to handle only slashes.
   Issue 13094.
+- In Settings > General > Selection, the tooltip
+  on “When pasting a dropped filename, wrap it in
+  double quotes” now describes that setting. It
+  used to repeat the tooltip for command
+  selection. Issue 13086.

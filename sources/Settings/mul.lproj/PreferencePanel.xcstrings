@@ -45806,43 +45806,43 @@
       }
     },
     "ZlO-15-adn.ibShadowedToolTip" : {
-      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"When this is enabled, you can click on a command or its output to restrict Find and Filter to its output. The selected command gets highlighted and other commands get dimmed. This requires shell integration to be installed.\"; ObjectID = \"ZlO-15-adn\";",
+      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"When this is enabled, dragging a file into the terminal pastes its path wrapped in double quotes so that spaces and special characters are preserved. When disabled, special characters in the path are escaped with backslashes instead.\"; ObjectID = \"ZlO-15-adn\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wenn dies aktiviert ist, können Sie auf einen Befehl oder dessen Ausgabe klicken, um Suchen und Filtern auf diese Ausgabe zu beschränken. Der ausgewählte Befehl wird hervorgehoben und andere Befehle werden abgedunkelt. Dies erfordert, dass die Shell-Integration installiert ist."
+            "value" : "Wenn dies aktiviert ist, wird beim Ziehen einer Datei in das Terminal ihr Pfad in doppelten Anführungszeichen eingefügt, damit Leerzeichen und Sonderzeichen erhalten bleiben. Wenn dies deaktiviert ist, werden Sonderzeichen im Pfad stattdessen mit Backslashes maskiert."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "When this is enabled, you can click on a command or its output to restrict Find and Filter to its output. The selected command gets highlighted and other commands get dimmed. This requires shell integration to be installed."
+            "value" : "When this is enabled, dragging a file into the terminal pastes its path wrapped in double quotes so that spaces and special characters are preserved. When disabled, special characters in the path are escaped with backslashes instead."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "これを有効にすると、コマンドまたはその出力をクリックして、検索とフィルタをその出力に制限できます。選択したコマンドはハイライト表示され、他のコマンドは薄く表示されます。これにはシェル統合のインストールが必要です。"
+            "value" : "これを有効にすると、ファイルをターミナルにドラッグしたときに、スペースや特殊文字が保持されるようにパスが二重引用符で囲まれて貼り付けられます。無効にすると、代わりにパス内の特殊文字がバックスラッシュでエスケープされます。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quando ativado, você pode clicar em um comando ou em sua saída para restringir Buscar e Filtrar à sua saída. O comando selecionado fica destacado e os outros comandos ficam esmaecidos. Isto requer que a Shell Integration esteja instalada."
+            "value" : "Quando ativado, arrastar um arquivo para o terminal cola seu caminho entre aspas duplas para que espaços e caracteres especiais sejam preservados. Quando desativado, os caracteres especiais do caminho são escapados com barras invertidas."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Если этот параметр включён, вы можете щёлкнуть по команде или её выводу, чтобы ограничить поиск и фильтрацию её выводом. Выбранная команда выделяется, а остальные команды затемняются. Для этого требуется установленная интеграция с оболочкой."
+            "value" : "Если этот параметр включён, при перетаскивании файла в терминал его путь вставляется в двойных кавычках, чтобы сохранить пробелы и специальные символы. Если параметр выключен, специальные символы в пути экранируются обратными косыми чертами."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "启用后，你可以点按命令或其输出，将查找和筛选限制在其输出范围内。选中的命令会高亮，其他命令会变暗。这需要安装 Shell 集成。"
+            "value" : "启用后，将文件拖入终端时会把其路径用双引号括起来粘贴，以保留空格和特殊字符。禁用时，路径中的特殊字符会改用反斜杠转义。"
           }
         }
       }

@@ -8073,7 +8073,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZlO-15-adn">
                                                 <rect key="frame" x="211" y="19" width="605" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <string key="toolTip">When this is enabled, you can click on a command or its output to restrict Find and Filter to its output. The selected command gets highlighted and other commands get dimmed. This requires shell integration to be installed.</string>
+                                                <string key="toolTip">When this is enabled, dragging a file into the terminal pastes its path wrapped in double quotes so that spaces and special characters are preserved. When disabled, special characters in the path are escaped with backslashes instead.</string>
                                                 <buttonCell key="cell" type="check" title="When pasting a dropped filename, wrap it in double quotes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="ydH-wX-BJI">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
