@@ -38,3 +38,12 @@ extension NSString {
         return size
     }
 }
+
+@objc
+extension NSString {
+    // See String.it_sanitizedForFilename(maxBytes:).
+    @objc(it_sanitizedForFilename)
+    func it_sanitizedForFilename() -> String {
+        return (self as String).it_sanitizedForFilename()
+    }
+}

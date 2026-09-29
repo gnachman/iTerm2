@@ -828,3 +828,15 @@ Bug Fixes:
   character behind that needed an extra press
   to remove. Pressing Return while composing
   now submits the line in one press.
+- Archive Sessions on Closure failed with “The
+  file doesn’t exist” whenever the session’s
+  name contained a slash, such as a title that
+  shows the tty or the current directory. Slashes
+  and other characters that can’t appear in a
+  filename are now replaced with underscores, the
+  time in the archive name uses periods instead
+  of colons so Finder shows it correctly, and
+  very long names are shortened to fit. The same
+  cleanup now applies to automatic session log
+  filenames, which used to handle only slashes.
+  Issue 13094.
