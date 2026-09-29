@@ -235,7 +235,7 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
         guard let renderEncoder = frameData.renderEncoder else {
             return
         }
-        initializeRegularVertexBuffer(tState: transientState, draw: draw)
+        let numberOfVertices = initializeRegularVertexBuffer(tState: transientState, draw: draw)
         var color = transientState.regularHorizontalColor
         if iTermTextIsMonochrome() {
             color.x *= color.w
@@ -251,7 +251,7 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
         cellRenderer.draw(
             with: transientState,
             renderEncoder: renderEncoder,
-            numberOfVertices: 6 * 2,  // Must match the size of twoQuadVerticesPool's buffers.
+            numberOfVertices: numberOfVertices,
             numberOfPIUs: 0,
             vertexBuffers: [ NSNumber(value: iTermVertexInputIndexVertices.rawValue): transientState.vertexBuffer ],
             fragmentBuffers: [ NSNumber(value: iTermFragmentBufferIndexMarginColor.rawValue): colorBuffer ],
@@ -345,15 +345,19 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
         case leftAndRight
         case underLegacyScrollbar
     }
+    // Fills tState.vertexBuffer with the quads for `draw` and returns the number
+    // of vertices written, which is what the draw call must use. The buffer comes
+    // from twoQuadVerticesPool so at most two quads fit.
     private func initializeRegularVertexBuffer(tState: iTermMarginRendererTransientState,
-                                               draw: Draw) {
+                                               draw: Draw) -> Int {
         let size = CGSize(
             width: CGFloat(tState.configuration.viewportSize.x),
             height: CGFloat(tState.configuration.viewportSize.y))
         let margins = tState.margins
         var vertices = [vector_float2](repeating: .zero, count: 6 * 2)
-        vertices.withUnsafeMutableBufferPointer { buf in
-            var v = buf.baseAddress!
+        let numberOfVertices = vertices.withUnsafeMutableBufferPointer { buf -> Int in
+            let start = buf.baseAddress!
+            var v = start
             switch draw {
             case .topAndBottom:
                 // Top
@@ -397,11 +401,15 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
                            height: innerHeight),
                     to: v)
             }
+            return start.distance(to: v)
         }
         tState.vertexBuffer = twoQuadVerticesPool.requestBuffer(
             from: tState.poolContext,
             withBytes: vertices,
             checkIfChanged: true)
+        it_assert(numberOfVertices * MemoryLayout<vector_float2>.stride <= tState.vertexBuffer.length,
+                  "Vertex buffer is smaller than the number of vertices to draw")
+        return numberOfVertices
     }
 
     @discardableResult
