@@ -61,7 +61,6 @@ extern NSNotificationName const iTermApplicationCharacterAccentMenuVisibilityDid
 
 // Sets the return value for -currentEvent. Only for testing.
 @property(atomic, retain) NSEvent *fakeCurrentEvent;
-@property(nonatomic, readonly) NSStatusItem *statusBarItem;
 @property(nonatomic) BOOL isUIElement;
 @property(nonatomic) BOOL localAuthenticationDialogOpen;
 @property(nonatomic) BOOL it_characterPanelIsOpen;
