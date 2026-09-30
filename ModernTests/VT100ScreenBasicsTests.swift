@@ -2194,12 +2194,13 @@ class VT100ScreenBasicsTests: XCTestCase {
         XCTAssertEqual(screen.cursorX(), 3)
     }
 
-    // Suspected root cause: -[ScreenCharArray paddedToLength:eligibleForDWC:] in
-    // sources/ScreenChar/ScreenCharArray.m. Commit ca0dd907f copies the continuation cell into
-    // the padding, and for a soft-wrapped history line the continuation's code is EOL_SOFT
-    // (1), so the later `buffer[length - 1].code == 0 && eligibleForDWC` check that restores
+    // Regression test for -[ScreenCharArray paddedToLength:eligibleForDWC:] in
+    // sources/ScreenChar/ScreenCharArray.m. Commit ca0dd907f started copying the continuation
+    // cell into the padding for its colors, but the continuation's code is the EOL type, so
+    // for a soft-wrapped history line every padding cell got code EOL_SOFT (which equals
+    // DWC_SKIP) and the `buffer[length - 1].code == 0 && eligibleForDWC` check that restores
     // DWC_SKIP + EOL_DWC on the last history line before a grid starting with a DWC never
-    // fires. The last cell still reads as DWC_SKIP only because DWC_SKIP == EOL_SOFT == 1.
+    // fired. The padding now keeps the continuation's colors with a null code.
     func testScreenCharArrayForLastHistoryLineBeforeGridStartingWithDWC() {
         let screen = self.screen(width: 6, height: 3)
         appendLines(["abcdeＦghi"], screen: screen)
@@ -2224,9 +2225,7 @@ class VT100ScreenBasicsTests: XCTestCase {
         sca = screen.screenCharArray(forLine: 0)
         XCTAssertEqual(sca.line[0].code, unichar(UInt8(ascii: "a")))
         XCTAssertTrue(ScreenCharIsDWC_SKIP(sca.line[5]))
-        XCTExpectFailure("paddedToLength:eligibleForDWC: fills the padding with the EOL_SOFT continuation, so the DWC_SKIP/EOL_DWC restoration never fires (ScreenCharArray.m, commit ca0dd907f)") {
-            XCTAssertEqual(sca.eol, Int32(EOL_DWC))
-        }
+        XCTAssertEqual(sca.eol, Int32(EOL_DWC))
     }
 
     // Suspected root cause: the backward wrap-around in sources/SearchingFiltering/
