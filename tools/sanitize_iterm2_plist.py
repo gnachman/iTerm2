@@ -79,7 +79,7 @@ TOP-LEVEL keys
   PasteSpecialRegex, PasteSpecialSubstitution
   SessionEndMessageText, SessionRestartedMessageText,
     SessionFinishedMessageText, TmuxTitlePrefix, NoSyncVariablesToReport,
-    AlternateMouseScrollStringForUp/ForDown  user text
+    AlternateMouseScrollStringForUp/ForDown, MenuBarItemString  user text
 
 PROFILE fields (inside New Bookmarks[*], Default Bookmark, and profiles
 embedded in arrangements under Bookmark / Initial Profile)
@@ -257,6 +257,7 @@ CONTENT_KEYS = {
     "NoSyncCompanionMainRelayOrigin": REDACT_V,  # may be a self-hosted relay URL
     # interpolated user text / labels that are effectively content
     "Badge Text": REDACT_V,
+    "MenuBarItemString": REDACT_V,  # menu bar item interpolated string
     "Subtitle": REDACT_V,
     "Custom Window Title": REDACT_V,
     "Custom Tab Title": REDACT_V,

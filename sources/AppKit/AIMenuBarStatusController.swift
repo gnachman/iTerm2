@@ -1,104 +1,149 @@
 import AppKit
 import Foundation
 
+// Publishes session status counts as application-scope variables
+// (iterm2.workingSessionCount, iterm2.waitingSessionCount).
+@objc(iTermSessionStatusCountVariables)
+class SessionStatusCountVariables: NSObject {
+    @objc(sharedInstance) static let instance = SessionStatusCountVariables()
+
+    private var observerToken: NotifyingDictionaryObserverToken?
+    private var published: (working: Int, waiting: Int)?
+
+    // Must be called on the main thread.
+    @objc func start() {
+        guard observerToken == nil else { return }
+        observerToken = SessionStatusController.instance.addObserver { [weak self] _, _, _ in
+            DispatchQueue.main.async {
+                self?.publish()
+            }
+        }
+        publish()
+    }
+
+    private func publish() {
+        MainActor.assumeIsolated {
+            var working = 0
+            var waiting = 0
+            for status in SessionStatusController.instance.statuses.values {
+                // Text only: an indicator with no text is not a reported state.
+                switch WorkgroupIntrospection.reportedState(forTabStatus: status) {
+                case .working: working += 1
+                case .waiting: waiting += 1
+                default: break
+                }
+            }
+            if let published, published == (working, waiting) {
+                return
+            }
+            published = (working, waiting)
+            let globals = iTermVariables.globalInstance()
+            globals.setValue(NSNumber(value: working), forVariableNamed: iTermVariableKeyApplicationWorkingSessionCount)
+            globals.setValue(NSNumber(value: waiting), forVariableNamed: iTermVariableKeyApplicationWaitingSessionCount)
+        }
+    }
+}
+
+// Owns the menu bar status item. Its content is the interpolated string in the
+// menuBarItemString advanced setting, evaluated in the global scope.
 @objc(iTermAIMenuBarStatusController)
-class AIMenuBarStatusController: NSObject {
+class AIMenuBarStatusController: NSObject, NSMenuDelegate {
     @objc(sharedInstance) static let instance = AIMenuBarStatusController()
 
     private var statusItem: NSStatusItem?
-    // Count currently drawn into the button, or nil when there is no item.
-    private var renderedCount: Int?
-    private let baseImage: NSImage?
-    private var sessionStatusObserverToken: NotifyingDictionaryObserverToken?
-    private let defaultsObserver = iTermUserDefaultsObserver()
-    private var brokerSubscription: ChatBroker.Subscription?
-
-    private override init() {
+    private var swiftyString: iTermSwiftyString?
+    private var evaluatedValue = ""
+    private var started = false
+    private lazy var baseImage: NSImage? = {
         let image = NSImage(named: "StatusItem")
         image?.isTemplate = true
-        self.baseImage = image
-        super.init()
+        return image
+    }()
 
+    // Must be called on the main thread.
+    @objc func start() {
+        guard !started else { return }
+        started = true
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(refresh),
-            name: NSNotification.Name("iTermProcessTypeDidChangeNotification"),
+            name: NSNotification.Name(iTermAdvancedSettingsDidChange),
             object: nil)
-
-        // Only the keys that feed shouldShow, so unrelated defaults writes cost nothing.
-        for key in [kPreferenceKeyUIElement,
-                    "ShowMenuBarItem",
-                    "StatusBarIcon"] {
-            defaultsObserver.observeKey(key) { [weak self] in
-                self?.refresh()
-            }
-        }
-
-        sessionStatusObserverToken = SessionStatusController.instance.addObserver { [weak self] _, _, _ in
-            self?.refresh()
-        }
-
-        subscribeToBrokerIfPossible()
-    }
-
-    private func subscribeToBrokerIfPossible() {
-        // Called from init on the main thread, and the retry below re-enters on main.
-        MainActor.assumeIsolated {
-            guard brokerSubscription == nil else { return }
-            guard let broker = ChatBroker.instance else {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                    self?.subscribeToBrokerIfPossible()
-                }
-                return
-            }
-            brokerSubscription = broker.subscribe(chatID: nil, registrationProvider: nil) { [weak self] update in
-                switch update {
-                case .typingStatus(_, let participant):
-                    guard participant == .agent else { return }
-                    self?.refresh()
-                case .delivery, .turnLifecycle, .messagesRemoved:
-                    break
-                }
-            }
-        }
-    }
-
-    @objc func start() {
-        refresh()
+        refreshOnMain()
     }
 
     @objc func refresh() {
         DispatchQueue.main.async { [weak self] in
-            self?.refreshOnMain()
+            guard let self, self.started else { return }
+            self.refreshOnMain()
         }
     }
 
     private func refreshOnMain() {
-        let prefOn = iTermAdvancedSettingsModel.showMenuBarItem()
+        let template = iTermAdvancedSettingsModel.menuBarItemString() ?? ""
         // The effective UI-element state, not the raw preference: with
         // UIElementRequiresHotkeys set, updateProcessType turns it off while
-        // ordinary windows are open, and the legacy item went away with it.
+        // ordinary windows are open.
         let legacyMode = iTermApplication.shared().isUIElement &&
             iTermAdvancedSettingsModel.statusBarIcon()
-        let shouldShow = prefOn || legacyMode
-        if shouldShow {
-            installStatusItemIfNeeded()
-            updateImage()
-        } else {
-            removeStatusItem()
+        if template.isEmpty {
+            stopEvaluating()
+            if legacyMode {
+                installStatusItemIfNeeded()
+                render()
+            } else {
+                removeStatusItem()
+            }
+            return
         }
+        installStatusItemIfNeeded()
+        startEvaluating(template)
+        render()
+    }
+
+    private func startEvaluating(_ template: String) {
+        if swiftyString?.swiftyString == template {
+            return
+        }
+        stopEvaluating()
+        // Globals are reachable both bare and as iterm2.*, the name badges and titles use.
+        let scope = iTermVariableScope()
+        scope.add(iTermVariables.globalInstance(), toScopeNamed: nil)
+        scope.add(iTermVariables.globalInstance(), toScopeNamed: iTermVariableKeyGlobalScopeName)
+        swiftyString = iTermSwiftyString(string: template,
+                                         scope: scope,
+                                         sideEffectsAllowed: false,
+                                         observer: { [weak self] newValue, error in
+            if let error {
+                RLog("Menu bar item string failed to evaluate: \(error)")
+                return newValue
+            }
+            self?.evaluatedValue = (newValue as? String) ?? ""
+            self?.render()
+            return newValue
+        })
+        evaluatedValue = swiftyString?.evaluatedString ?? ""
+    }
+
+    private func stopEvaluating() {
+        swiftyString?.invalidate()
+        swiftyString = nil
+        evaluatedValue = ""
     }
 
     private func installStatusItemIfNeeded() {
         guard statusItem == nil else { return }
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.title = ""
+        item.button?.image = baseImage
+        item.button?.imagePosition = .imageLeading
         (item.button?.cell as? NSButtonCell)?.highlightsBy = .changeBackgroundCellMask
         if let delegate = NSApp.delegate as? iTermApplicationDelegate {
-            item.menu = delegate.statusBarMenu()
+            let menu = delegate.statusBarMenu()
+            menu?.delegate = self
+            item.menu = menu
         }
         statusItem = item
-        renderedCount = nil
     }
 
     private func removeStatusItem() {
@@ -106,43 +151,42 @@ class AIMenuBarStatusController: NSObject {
             NSStatusBar.system.removeStatusItem(item)
         }
         statusItem = nil
-        renderedCount = nil
     }
 
-    // WorkgroupIntrospection and TypingStatusModel are @MainActor; this only runs
-    // from refreshOnMain().
-    private func busyCount() -> Int {
-        MainActor.assumeIsolated {
-            // hasIndicator is set independently of the status text, and agents such
-            // as Claude Code keep the dot set while idle, so classify on the text.
-            let workingSessionIDs = SessionStatusController.instance.statuses.values
-                .filter { WorkgroupIntrospection.state(forTabStatus: $0) == .working }
-                .map { $0.sessionID }
-            let busyChatIDs = TypingStatusModel.instance.chatIDs(forParticipant: .agent)
-            var unique = Set<String>()
-            for id in workingSessionIDs { unique.insert("session:\(id)") }
-            for id in busyChatIDs { unique.insert("chat:\(id)") }
-            return unique.count
-        }
-    }
-
-    private func updateImage() {
+    private func render() {
         guard let button = statusItem?.button else { return }
-        let count = busyCount()
-        guard count != renderedCount else { return }
-        renderedCount = count
-        if count == 0 {
-            button.image = baseImage
-            button.image?.isTemplate = true
-        } else {
-            let image = Self.renderActiveImage(count: count, baseImage: baseImage)
-            image.isTemplate = false
-            button.image = image
+        let value = evaluatedValue
+        if iTermAdvancedSettingsModel.menuBarItemDrawsBadge(),
+           let label = Self.badgeLabel(for: value) {
+            button.title = ""
+            if let label {
+                let image = Self.renderBadgeImage(label: label, baseImage: baseImage)
+                image.isTemplate = false
+                button.image = image
+            } else {
+                button.image = baseImage
+            }
+            return
         }
+        button.image = baseImage
+        button.title = value
     }
 
-    private static func renderActiveImage(count: Int, baseImage: NSImage?) -> NSImage {
-        let label = count > 9 ? "+" : "\(count)"
+    // nil: cannot be drawn as a badge. .some(nil): plain icon. .some(label): badge.
+    private static func badgeLabel(for value: String) -> String?? {
+        if value.isEmpty || value == "0" {
+            return .some(nil)
+        }
+        if let number = Int(value), number > 9 {
+            return "+"
+        }
+        if value.count == 1 {
+            return value
+        }
+        return nil
+    }
+
+    private static func renderBadgeImage(label: String, baseImage: NSImage?) -> NSImage {
         let color = NSColor.systemOrange
         let size = baseImage?.size ?? NSSize(width: 28, height: 16)
         return NSImage(size: size, flipped: false) { rect in
@@ -177,4 +221,16 @@ class AIMenuBarStatusController: NSObject {
             return true
         }
     }
+
+    // MARK: - NSMenuDelegate
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        // Re-copy the main menu on open so it never shows stale items.
+        guard let item = menu.items.first(where: { $0.identifier == Self.mainMenuItemIdentifier }) else {
+            return
+        }
+        item.submenu = NSApp.mainMenu?.deepCopy()
+    }
+
+    static let mainMenuItemIdentifier = NSUserInterfaceItemIdentifier("iTermStatusMenuMainMenu")
 }

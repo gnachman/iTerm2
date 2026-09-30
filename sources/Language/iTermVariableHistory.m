@@ -154,6 +154,8 @@
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationLocalhostName inContext:iTermVariablesSuggestionContextApp];
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationEffectiveTheme inContext:iTermVariablesSuggestionContextApp];
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationBundlePath inContext:iTermVariablesSuggestionContextApp];
+    [self recordUseOfVariableNamed:iTermVariableKeyApplicationWorkingSessionCount inContext:iTermVariablesSuggestionContextApp];
+    [self recordUseOfVariableNamed:iTermVariableKeyApplicationWaitingSessionCount inContext:iTermVariablesSuggestionContextApp];
 }
 
 + (NSSet<NSString *> * _Nonnull (^)(NSString * _Nonnull))pathSourceForContext:(iTermVariablesSuggestionContext)context {
