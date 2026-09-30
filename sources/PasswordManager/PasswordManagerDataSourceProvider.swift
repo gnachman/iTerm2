@@ -84,6 +84,23 @@ class PasswordManagerDataSourceProvider: NSObject {
         set {
             iTermUserDefaults.userDefaults().set(newValue.rawValue, forKey: dataSourceNameUserDefaultsKey)
             _dataSource = nil
+            prefetchAdapterEnvironmentIfNeeded()
+        }
+    }
+
+    // Adapter CLIs run with the user’s shell PATH, which takes a shell launch to read. Start
+    // that as soon as an adapter is the chosen source so it is cached by the time the first
+    // adapter command runs. Keychain, 1Password and LastPass users pay nothing.
+    private func prefetchAdapterEnvironmentIfNeeded() {
+        switch preferredDataSource {
+        case .keePassXC, .bitwarden, .keeper:
+            AdapterShellEnvironment.shared.prefetch()
+        #if ITERM_DEBUG
+        case .testAdapter:
+            AdapterShellEnvironment.shared.prefetch()
+        #endif
+        case .keychain, .onePassword, .lastPass:
+            break
         }
     }
 
@@ -314,6 +331,7 @@ class PasswordManagerDataSourceProvider: NSObject {
     }
 
     @objc func requestAuthenticationIfNeeded(_ completion: @escaping (Bool) -> ()) {
+        prefetchAdapterEnvironmentIfNeeded()
         if authenticated && mayReuseAuthenticationOnOpen {
             completion(true)
             return

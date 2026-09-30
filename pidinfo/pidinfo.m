@@ -8,6 +8,7 @@
 #import "pidinfo.h"
 
 #import "iTermDirectoryEntry.h"
+#import "iTermShellArguments.h"
 #import "iTermFileDescriptorServerShared.h"
 #import "iTermGitClient.h"
 #import "iTermOpenDirectory.h"
@@ -66,7 +67,7 @@
 
 - (void)runShellScript:(NSString *)script
                  shell:(NSString *)shell
-           interactive:(BOOL)interactive
+                  mode:(iTermShellRunMode)mode
              withReply:(void (^)(NSData * _Nullable, NSData * _Nullable, int))reply {
     // 20s watchdog: above reallyRunShellScript's own 15s deadline, so in the
     // normal wedge case that method terminates the shell and replies first, and
@@ -79,9 +80,9 @@
             syslog(LOG_WARNING, "pidinfo wedged while running script");
             return;
         }
-        [self reallyRunShellScript:script shell:shell interactive:interactive completion:^(NSData *output,
-                                                                                           NSData *error,
-                                                                                           int status) {
+        [self reallyRunShellScript:script shell:shell mode:mode completion:^(NSData *output,
+                                                                             NSData *error,
+                                                                             int status) {
             if (!completion()) {
                 syslog(LOG_INFO, "runShellScript finished after timing out");
                 return;
@@ -152,13 +153,15 @@ static DrainResult DrainFDNonBlocking(int fd, NSMutableData * _Nullable sink) {
     return DrainResultPending;  // hit the per-call budget; more may remain
 }
 
-// Runs `script` in the user's login shell. When `interactive` is YES the shell
-// runs with -i so it sources the user's interactive rc files (.zshrc/.bashrc/
-// config.fish/etc.), where CLAUDE_CONFIG_DIR and similar are usually set; a bare
-// -c shell sources none of those (zsh sources only .zshenv, bash nothing). Pass
-// NO for the fast path (PATH/SSH_AUTH_SOCK come from the exported environment),
-// since sourcing a heavy rc costs seconds and, with no controlling tty, also
-// prints job-control complaints to stderr.
+// Runs `script` in the user's shell. `mode` picks the startup files (see
+// iTermShellRunMode): bare sources almost nothing (zsh only .zshenv, bash
+// nothing); interactive runs the rc files (.zshrc/.bashrc/config.fish/.tcshrc),
+// where CLAUDE_CONFIG_DIR and similar are usually set; login-interactive also
+// runs the profile files, where PATH is usually set (a login bash then reads
+// .bash_profile and only what it sources, not .bashrc by itself). Prefer bare
+// when the exported environment suffices (SSH_AUTH_SOCK), since heavy startup
+// files cost seconds and, with no controlling tty, also print job-control
+// complaints to stderr.
 //
 // Either way, the command's OWN stdout is redirected to a private FIFO in an
 // unguessable 0700 mkdtemp directory. In interactive mode this is essential: rc
@@ -178,7 +181,7 @@ static DrainResult DrainFDNonBlocking(int fd, NSMutableData * _Nullable sink) {
 // -1 for the >1 MB-output kill, and -2 for everything else we abort ourselves
 // (setup failure of temp dir / FIFO / launch, the 15s deadline kill, or a select
 // error), versus the shell's own >= 0 exit status on success.
-- (void)reallyRunShellScript:(NSString *)script shell:(NSString *)shell interactive:(BOOL)interactive completion:(void (^)(NSData * _Nullable, NSData * _Nullable, int))completion {
+- (void)reallyRunShellScript:(NSString *)script shell:(NSString *)shell mode:(iTermShellRunMode)mode completion:(void (^)(NSData * _Nullable, NSData * _Nullable, int))completion {
     // Unguessable, private (0700) working directory holding both the script file
     // and the output FIFO. mkdtemp gives us the unguessable name and tight perms.
     NSString *dirTemplate =
@@ -262,7 +265,9 @@ static DrainResult DrainFDNonBlocking(int fd, NSMutableData * _Nullable sink) {
 
             task = [[NSTask alloc] init];
             task.launchPath = shell;
-            task.arguments = interactive ? @[ @"-i", @"-c", scriptPath ] : @[ @"-c", scriptPath ];
+            task.arguments = [iTermShellArguments argumentsForShell:shell
+                                                               mode:mode
+                                                         scriptPath:scriptPath];
             // Null stdin: an interactive shell must not block trying to read input.
             task.standardInput = [NSFileHandle fileHandleWithNullDevice];
             NSPipe *outputPipe = [[NSPipe alloc] init];  // rc/banner noise: drained and discarded

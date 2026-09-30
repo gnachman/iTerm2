@@ -54,6 +54,7 @@
 #import "iTermCoreTextLineRenderingHelper.h"
 #import "iTermDatabase.h"
 #import "iTermDirectoryEntry.h"
+#import "iTermShellArguments.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermExpressionParser.h"

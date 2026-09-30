@@ -121,23 +121,44 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
     // MARK: - Helper Methods
 
+    // Encodes `request` and builds the adapter command with the user’s shell environment.
+    // The environment is cached after the first fetch, so this is usually immediate.
+    private func makeCommand<Request: Encodable>(
+        _ subcommand: String,
+        request: Request,
+        completion: @escaping (Result<CommandLinePasswordDataSourceExecutableCommand, Error>) -> ()
+    ) {
+        guard let inputData = try? JSONEncoder().encode(request) else {
+            completion(.failure(AdapterError.badOutput))
+            return
+        }
+        AdapterShellEnvironment.shared.environment { [adapterPath] environment in
+            completion(.success(CommandRequestWithInput(command: adapterPath,
+                                                        args: [subcommand],
+                                                        env: environment,
+                                                        input: inputData)))
+        }
+    }
+
     private func runAdapterCommand<Request: Encodable, Response: Decodable>(
         _ subcommand: String,
         request: Request,
         completion: @escaping (Result<Response, Error>) -> ()
     ) {
-        let encoder = JSONEncoder()
-        guard let inputData = try? encoder.encode(request) else {
-            completion(.failure(AdapterError.badOutput))
-            return
+        makeCommand(subcommand, request: request) { result in
+            switch result {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let command):
+                Self.execute(command, completion: completion)
+            }
         }
+    }
 
-        let command = CommandRequestWithInput(
-            command: adapterPath,
-            args: [subcommand],
-            env: [:],
-            input: inputData)
-
+    private static func execute<Response: Decodable>(
+        _ command: CommandLinePasswordDataSourceExecutableCommand,
+        completion: @escaping (Result<Response, Error>) -> ()
+    ) {
         command.execAsync { output, error in
             DispatchQueue.main.async {
                 if let error = error {
@@ -638,19 +659,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         userAccountID: self.userAccountID,
                         token: self.authToken)
 
-                    let encoder = JSONEncoder()
-                    guard let inputData = try? encoder.encode(request) else {
-                        completion(.failure(AdapterError.badOutput))
-                        return
-                    }
-
-                    let command = CommandRequestWithInput(
-                        command: self.adapterPath,
-                        args: ["list-accounts"],
-                        env: [:],
-                        input: inputData)
-
-                    completion(.success(command))
+                    self.makeCommand("list-accounts", request: request, completion: completion)
                 }
             },
             recovery: { [weak self] error, completion in
@@ -723,19 +732,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         token: self.authToken,
                         accountIdentifier: AccountIdentifierEntry(accountID: accountIdentifier.value))
 
-                    let encoder = JSONEncoder()
-                    guard let inputData = try? encoder.encode(request) else {
-                        completion(.failure(AdapterError.badOutput))
-                        return
-                    }
-
-                    let command = CommandRequestWithInput(
-                        command: self.adapterPath,
-                        args: ["get-password"],
-                        env: [:],
-                        input: inputData)
-
-                    completion(.success(command))
+                    self.makeCommand("get-password", request: request, completion: completion)
                 }
             },
             recovery: { [weak self] error, completion in
@@ -797,19 +794,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         newAccountName: setPasswordRequest.newAccountName,
                         newUserName: setPasswordRequest.newUserName)
 
-                    let encoder = JSONEncoder()
-                    guard let inputData = try? encoder.encode(request) else {
-                        completion(.failure(AdapterError.badOutput))
-                        return
-                    }
-
-                    let command = CommandRequestWithInput(
-                        command: self.adapterPath,
-                        args: ["set-password"],
-                        env: [:],
-                        input: inputData)
-
-                    completion(.success(command))
+                    self.makeCommand("set-password", request: request, completion: completion)
                 }
             },
             recovery: { [weak self] error, completion in
@@ -859,19 +844,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         accountIdentifier: AccountIdentifierEntry(accountID: accountIdentifier.value),
                         sourceLabel: accountIdentifier.sourceLabel)
 
-                    let encoder = JSONEncoder()
-                    guard let inputData = try? encoder.encode(request) else {
-                        completion(.failure(AdapterError.badOutput))
-                        return
-                    }
-
-                    let command = CommandRequestWithInput(
-                        command: self.adapterPath,
-                        args: ["delete-account"],
-                        env: [:],
-                        input: inputData)
-
-                    completion(.success(command))
+                    self.makeCommand("delete-account", request: request, completion: completion)
                 }
             },
             recovery: { [weak self] error, completion in
@@ -924,19 +897,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         password: addRequest.password,
                         flags: addRequest.flags.isEmpty ? nil : addRequest.flags)
 
-                    let encoder = JSONEncoder()
-                    guard let inputData = try? encoder.encode(request) else {
-                        completion(.failure(AdapterError.badOutput))
-                        return
-                    }
-
-                    let command = CommandRequestWithInput(
-                        command: self.adapterPath,
-                        args: ["add-account"],
-                        env: [:],
-                        input: inputData)
-
-                    completion(.success(command))
+                    self.makeCommand("add-account", request: request, completion: completion)
                 }
             },
             recovery: { [weak self] error, completion in

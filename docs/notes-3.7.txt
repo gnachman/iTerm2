@@ -899,3 +899,10 @@ Bug Fixes:
   SQLite’s write-ahead logging, which had been
   silently disabled. This reduces disk syncing
   while iTerm2 saves its state.
+- The Bitwarden, KeePassXC, and Keeper password
+  manager integrations now find command-line
+  tools installed by Homebrew or npm. Homebrew’s
+  “bw” is a script that needs “node”, which the
+  integration could not locate, so Bitwarden
+  showed an empty list. The password manager now
+  runs these tools with your shell’s search path.
