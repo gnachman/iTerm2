@@ -172,21 +172,18 @@ final class TermkeyKeyMapperTests: XCTestCase, iTermTermkeyKeyMapperDelegate {
         verify("\u{e6}", ignoringModifiers: "\u{e4}", modifiers: 0x80040, keyCode: kVK_ANSI_Quote, expected: escPlus("\u{e4}"))
     }
 
-    // Suspected bug in iTermTermkeyKeyMapper (sources/Keyboard/iTermTermkeyKeyMapper.m),
-    // present since the mapper was added in 0ac126e7c. With Option configured as Meta,
-    // termkeySequenceForCodePoint:modifiers:keyCode: calls dataForOptionModifiedKeypress,
-    // which correctly produces the single byte 0xe2 ("b" | 0x80), but then re-decodes it
-    // with -[NSString initWithData:encoding:] using the profile encoding (UTF-8). A lone
-    // byte >= 0x80 is not valid UTF-8, so that returns nil, postCocoaData returns nil, and
-    // PTYSession sends nothing: the keypress is dropped. iTermStandardKeyMapper returns the
-    // NSData directly and sends the meta byte (see CompanionKeyInjectionTests). The legacy
-    // ObjC test masked this because its expected value went through the same lossy decode
-    // and compared nil to nil.
+    // Regression test: with Option configured as Meta, iTermTermkeyKeyMapper used to drop
+    // Option+ASCII keypresses. Since the mapper was added in 0ac126e7c,
+    // termkeySequenceForCodePoint:modifiers:keyCode: took the 8-bit meta byte from
+    // dataForOptionModifiedKeypress (0xe2 for "b") and re-decoded it as a UTF-8 NSString; a
+    // lone byte >= 0x80 is invalid UTF-8, so the string was nil, postCocoaData returned nil,
+    // and nothing was sent. The mapper now returns the raw meta byte, matching
+    // iTermStandardKeyMapper (see CompanionKeyInjectionTests). The legacy ObjC test masked
+    // this because its expected value went through the same lossy decode and compared nil
+    // to nil.
     func testMetaAscii() {
         optionKeyBehavior = .OPT_META
-        XCTExpectFailure("iTermTermkeyKeyMapper drops Option+ASCII when Option is Meta: termkeySequenceForCodePoint re-decodes the 8-bit meta byte as UTF-8 and gets nil") {
-            verifyBytes("\u{222b}", ignoringModifiers: "b", modifiers: 0x80140, keyCode: kVK_ANSI_B, expected: [UInt8(ascii: "b") | 0x80])
-        }
+        verifyBytes("\u{222b}", ignoringModifiers: "b", modifiers: 0x80140, keyCode: kVK_ANSI_B, expected: [UInt8(ascii: "b") | 0x80])
     }
 
     func testBang() {
