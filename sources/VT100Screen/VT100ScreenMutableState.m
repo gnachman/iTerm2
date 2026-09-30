@@ -1253,7 +1253,17 @@ static BOOL sOSC7DisabledWarningShown;
             // above, which is not a representable grid state.
             const BOOL predecessorAdjoinsCursor = (pred.y == self.currentGrid.cursorY &&
                                                    pred.x + 1 == self.currentGrid.cursorX);
-            if ((predecessorIsDoubleWidth || !predecessorAdjoinsCursor) && mergedIsDoubleWidth) {
+            // The cursor can also sit on the predecessor's own DWC_RIGHT (issue 9852). Stepping
+            // back from there does not cross a DWC_RIGHT, so predecessorIsDoubleWidth is NO
+            // even though the spacer already exists on the grid at the cursor. Skip the merged
+            // buffer's spacer in that case too; writing at the cursor then replaces the spacer
+            // and erases the orphaned left half, as an overwrite of a DWC_RIGHT always does.
+            const BOOL cursorIsOnPredecessorsDWCRight =
+                (predecessorAdjoinsCursor &&
+                 ScreenCharIsDWC_RIGHT([self.currentGrid characterAt:self.currentGrid.cursor]));
+            if ((predecessorIsDoubleWidth ||
+                 cursorIsOnPredecessorsDWCRight ||
+                 !predecessorAdjoinsCursor) && mergedIsDoubleWidth) {
                 // Skip a DWC_RIGHT that already exists on the grid, or one we cannot place.
                 bufferOffset++;
             }

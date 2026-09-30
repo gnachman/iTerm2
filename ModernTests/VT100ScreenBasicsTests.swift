@@ -2165,14 +2165,14 @@ class VT100ScreenBasicsTests: XCTestCase {
     // production code is believed to have regressed. The failing assertions are wrapped in
     // XCTExpectFailure so an unexpected pass flags itself once the bug is fixed.
 
-    // Suspected root cause: -[VT100ScreenMutableState appendStringAtCursorSlowly:] in
-    // sources/VT100Screen/VT100ScreenMutableState.m, the predecessorAdjoinsCursor /
-    // mergedIsDoubleWidth test introduced by commit 4c8d54a8d. When the cursor sits on the
-    // DWC_RIGHT of its predecessor, coordinateBefore:movedBackOverDoubleWidth: does not step
-    // over a DWC_RIGHT, so predecessorIsDoubleWidth is NO even though the predecessor already
-    // owns a DWC_RIGHT on the grid at the cursor. The merged buffer's DWC_RIGHT is then written
-    // at the cursor instead of being skipped. The original issue 9852 fix (commit f0ed6987f)
-    // covered this with augmentedResultBeginsWithDoubleWidthCharacter, which 4c8d54a8d removed.
+    // Regression test for issue 9852. Appending with the cursor on the DWC_RIGHT of its
+    // predecessor must skip the merged buffer's spacer (the grid already has it at the cursor)
+    // so the appended text replaces the spacer, erases the orphaned left half and leaves the
+    // following character intact. The original fix (commit f0ed6987f) was lost when commit
+    // 4c8d54a8d rewrote the predecessor merge in appendStringAtCursorSlowly: and only
+    // consulted predecessorIsDoubleWidth, which coordinateBefore:movedBackOverDoubleWidth:
+    // leaves NO when the cursor is on the spacer itself. It used to produce
+    // [null][DWC_RIGHT][|][DWC_RIGHT] with the cursor at column 4.
     func testIssue9852AppendingOverDWCRightErasesLeftHalfAndKeepsFollowingCharacter() {
         useUnicodeVersion(9)
         let screen = self.screen(width: 4, height: 1)
@@ -2189,12 +2189,9 @@ class VT100ScreenBasicsTests: XCTestCase {
         let line = screen.screenCharArray(forLine: 0).line
         XCTAssertEqual(line[0].code, 0)
         XCTAssertTrue(ScreenCharIsDWC_RIGHT(line[3]))
-        // Today the line reads [null][DWC_RIGHT][|][DWC_RIGHT] with the cursor at column 4.
-        XCTExpectFailure("Issue 9852 regression: appendStringAtCursorSlowly: writes the merged DWC_RIGHT at a cursor that sits on the predecessor's DWC_RIGHT (VT100ScreenMutableState.m, commit 4c8d54a8d)") {
-            XCTAssertEqual(line[1].code, unichar(UInt8(ascii: "|")))
-            XCTAssertEqual(ScreenCharToStr(line + 2), "😃")
-            XCTAssertEqual(screen.cursorX(), 3)
-        }
+        XCTAssertEqual(line[1].code, unichar(UInt8(ascii: "|")))
+        XCTAssertEqual(ScreenCharToStr(line + 2), "😃")
+        XCTAssertEqual(screen.cursorX(), 3)
     }
 
     // Suspected root cause: -[ScreenCharArray paddedToLength:eligibleForDWC:] in
