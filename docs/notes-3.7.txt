@@ -883,3 +883,19 @@ Bug Fixes:
   the screen on its own. The animation now plays
   only for cursor jumps that follow your own
   keyboard or mouse input.
+- Semantic History sent TextMate, BBEdit and
+  MacVim the wrong path when the clicked file’s
+  path contained a space (unless a line number
+  was also present) or an ampersand.
+- With “Report keys using CSI u” turned on and
+  Option set to Meta, pressing Option with a
+  letter sent nothing at all. It now sends the
+  meta byte, as it does without CSI u.
+- Resizing a window while only blank space was
+  selected left behind an empty selection, so
+  Copy and other selection-based actions acted
+  on nothing.
+- Restorable session state is again saved with
+  SQLite’s write-ahead logging, which had been
+  silently disabled. This reduces disk syncing
+  while iTerm2 saves its state.
