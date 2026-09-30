@@ -73,6 +73,7 @@
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
 #import "VT100ScreenMutableState+Resizing.h"
+#import "VT100ScreenMutableState+TerminalDelegate.h"
 #import "VT100ScreenMutableState.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
@@ -1065,6 +1066,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(foregroundJobAncestorsDidChange:)
                                                      name:iTermProcessCacheForegroundJobAncestorsDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(tmuxServerLocalityDidBecomeKnown:)
+                                                     name:kTmuxControllerServerLocalityDidBecomeKnown
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(sessionContentsChanged:)
@@ -3354,6 +3359,25 @@ ITERM_WEAKLY_REFERENCEABLE
     completion([@[ program ] arrayByAddingObjectsFromArray:arguments ]);
 }
 
++ (void)applyIT2AppPathTo:(NSMutableDictionary *)env
+                suiteName:(nullable NSString *)suiteName
+           settingEnabled:(BOOL)settingEnabled
+               bundlePath:(NSString *)bundlePath {
+    // A suite means more than one instance is running by definition, so the ambiguity this
+    // variable exists to resolve is always present and the user should not have to ask for it.
+    if (settingEnabled || suiteName.length > 0) {
+        env[@"IT2_APP_PATH"] = bundlePath;
+        return;
+    }
+    // Remove rather than leave alone. Whatever is here was inherited from the process that
+    // started this one: a parent tab running another build, or a tmux server started days and
+    // several builds ago, whose environment every pane inherits. A stale value is worse than
+    // none, because it2 then asks THAT iTerm2 for a cookie and this one rejects it, so every
+    // hook fails with "Authentication failed" having set nothing. With no value at all, it2
+    // targets plain "iTerm2", which is correct whenever only one is running.
+    [env removeObjectForKey:@"IT2_APP_PATH"];
+}
+
 - (NSDictionary *)environmentForNewJobFromEnvironment:(NSDictionary *)environment
                                         substitutions:(NSDictionary *)substitutions
                                           arrangement:(NSString *)arrangementName
@@ -3384,9 +3408,10 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"IT2_SUITE"] = suiteName;
     }
 
-    if ([iTermAdvancedSettingsModel setIT2AppPath]) {
-        env[@"IT2_APP_PATH"] = [[NSBundle mainBundle] bundlePath];
-    }
+    [PTYSession applyIT2AppPathTo:env
+                        suiteName:suiteName
+                   settingEnabled:[iTermAdvancedSettingsModel setIT2AppPath]
+                       bundlePath:[[NSBundle mainBundle] bundlePath]];
 
     if ([iTermAdvancedSettingsModel addUtilitiesToPATH]) {
         NSString *sshPath = [iTermPathToSSH() stringByDeletingLastPathComponent];
@@ -7828,7 +7853,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if ([_delegate sessionIsActiveInTab:self]) {
         [self maybeUpdateTitles];
     } else {
-        [self setCurrentForegroundJobProcessInfo:[self.sessionProcessInfoProvider cachedProcessInfoIfAvailable]];
+        [self refreshForegroundJobFromCacheIfAvailable];
         [self.view setTitle:_nameController.presentationSessionTitle];
     }
     // Runs for inactive sessions too: a background tab is exactly the one whose
@@ -7953,6 +7978,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (NSString *)jobName {
     return [self.variablesScope valueForVariableName:iTermVariableKeySessionJob];
+}
+
+// The cheap refresh an inactive session gets on each display update. Nothing in the cache is the
+// normal state for a cold cache, and was the permanent state for a tmux pane until its task
+// looked the pane pid up: it must leave the job alone, not clear it. GlobalJobMonitor cannot tell
+// "cleared" from "exited", and an empty ancestry fires the leader-only Exit Workgroup trigger.
+- (void)refreshForegroundJobFromCacheIfAvailable {
+    iTermProcessInfo *processInfo = [self.sessionProcessInfoProvider cachedProcessInfoIfAvailable];
+    if (!processInfo) {
+        return;
+    }
+    [self setCurrentForegroundJobProcessInfo:processInfo];
 }
 
 - (void)setCurrentForegroundJobProcessInfo:(iTermProcessInfo *)processInfo {
@@ -10252,6 +10289,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
+// The controller settled whether its server is local after this session became a client, so the
+// one pane pid fetch in reallySetTmuxMode: was skipped (see loadTmuxProcessID). Ask again.
+- (void)tmuxServerLocalityDidBecomeKnown:(NSNotification *)notification {
+    if (notification.object != _tmuxController || self.tmuxMode != TMUX_CLIENT) {
+        return;
+    }
+    DLog(@"%@: tmux server locality settled; fetching the pane pid", self);
+    [self loadTmuxProcessID];
+}
+
 - (void)didFetchTmuxPid:(NSString *)pidString {
     if (pidString && self.tmuxMode == TMUX_CLIENT && _tmuxController.serverIsLocal) {
         NSNumber *pid = @([pidString integerValue]);
@@ -10988,8 +11035,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
     // No conductor: a local server, or one reached by plain ssh where no it2 exists to read this.
     // The local it2 finds its socket by suite, so a second instance running under -suite can be
-    // told apart from the main one.
-    return @{ @"suite": [iTermUserDefaults customSuiteName] ?: @"iTerm2" };
+    // told apart from the main one, and it asks THIS bundle for a cookie rather than whatever
+    // IT2_APP_PATH the tmux server froze into every pane when some other build started it.
+    return @{ @"suite": [iTermUserDefaults customSuiteName] ?: @"iTerm2",
+              @"app": [[NSBundle mainBundle] bundlePath] };
 }
 
 - (void)tmuxDidOpenInitialWindows {
@@ -26974,6 +27023,18 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         [_programStatusController otherWriterDidSetStatus];
     }
     [self.tabStatusController apply:status];
+    if (status.progressPresence == VT100TabStatusUpdateFieldSet) {
+        // The ring goes through the screen exactly as OSC 9;4 does, so the tab bar draws it and
+        // the delegate hears that the program reported it (the status controller's cue that an
+        // operation ended). The status controller was told first, above, so an update that both
+        // asserts a status and stops the ring arms the expiration before the end that fires it.
+        const VT100ScreenProgress progress = status.progress;
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                        VT100ScreenMutableState *mutableState,
+                                        id<VT100ScreenDelegate> delegate) {
+            [mutableState setProgressFromProtocol:progress];
+        }];
+    }
 }
 
 // Created lazily: most programs never report through OSC 7501.

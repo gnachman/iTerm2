@@ -63,7 +63,22 @@ New Features:
 - New `it2 session get-status` prints a session’s
   status indicator as JSON. `set-status` no
   longer requires --session and defaults to the
-  active session.
+  active session, and its new --progress option
+  starts or stops the tab’s progress indicator
+  for a program that reports through hooks but
+  does not draw the indicator itself. The
+  set_session_status Python API function takes
+  the same progress argument.
+- The Claude Code hook program is now
+  `it2 handle-agent-hook`, so the hook works
+  wherever it2 does. Existing installs keep
+  working; reinstalling the integration updates
+  the hook entries.
+- `it2 session add-clipping` and
+  `archive-clippings` accept --tmux and
+  --tmux-pane, and every addressing option
+  accepts an empty value as “not given”, so a
+  script can pass all of them and let it2 pick.
 - New Python API functions set_session_status and
   get_session_status read and write a session’s
   status indicator by session ID, and
@@ -73,12 +88,11 @@ New Features:
   update a session’s Session Note.
 - The Session Status tool can now follow Codex
   CLI as well as Claude Code. There is no
-  installer for Codex yet. Write a small shell
-  script that runs the hook program inside
-  iTerm2.app (Contents/Resources/utilities/
-  cc-status) with the argument --agent codex,
-  then in ~/.codex/hooks.json point each event
-  at that script and set timeout to 3 on the
+  installer for Codex yet. In ~/.codex/hooks.json
+  point each event at the command
+  “it2 handle-agent-hook --agent codex” (it2 is
+  in iTerm2.app under Contents/Resources/
+  utilities) and set timeout to 3 on the
   Interrupt and SessionEnd hooks. Codex allows
   those two events one second by default, which
   is not always enough for the hook to finish.
@@ -760,6 +774,13 @@ Bug Fixes:
   away. Sessions restored from before the restart
   still need to be restarted to regain it.
   Issue 12106.
+- Claude Code running in a tmux Integration split
+  pane that was not the active pane could drop
+  out of the Session Status tool and have its
+  workgroup torn down on every screen update.
+- A tmux Integration pane whose server was not
+  yet known to be local when the pane opened
+  never learned which program it was running.
 - The Session Status toolbelt tool now lists
   Claude Code sessions running inside tmux
   Integration panes, on this Mac or on a host

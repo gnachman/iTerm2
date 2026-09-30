@@ -1,5 +1,9 @@
 # Manual test plan: Session Status in tmux control-mode panes
 
+The hook program is `it2 handle-agent-hook` (installed as `"<dotdir>/it2" handle-agent-hook`);
+`cc-status` remains only as a shim that execs it for installs made before the rename. Where this
+plan says cc-status, read the hook.
+
 Covers the addressing change that lets `cc-status` reach the session showing a tmux pane instead of
 the control-mode gateway (issue 13049).
 
@@ -249,46 +253,83 @@ it2 session set-status --tmux "$TMUX" --tmux-pane "$TMUX_PANE" --status working;
 
 Exit 0, and the status lands on the remote pane's own tab.
 
-### 11c. Two ssh connections, one host
+### 11c. Two tmux sessions on one remote server
 
-1. ssh to a host (connection A) and start `tmux -CC`. Run `claude` in a pane.
-2. Leave connection A open. From a second iTerm2 tab, ssh to the same host (connection B) and
-   `tmux -CC attach` to the same session.
-3. Detach the controller on A, so only B's controller remains.
-4. Send `claude` a prompt.
+Attaching the SAME tmux session twice is not possible: iTerm2 refuses a double attach. The case
+that matters, and the one that actually broke, is two DIFFERENT sessions on one server, each
+attached over its own ssh connection.
 
-The row updates. The pane's own `IT2_SOCK` still names A's framer socket, but B's controller
-published its own socket and nonce on the server on attach, and `it2` prefers a record whose
-client is attached, so the call arrives over B and B's controller places the pane. Check from the
-pane:
+1. ssh to a host (connection A) and `tmux -CC new -s one`. Run something in a pane; note its pane
+   id with `echo $TMUX_PANE`.
+2. From a second iTerm2 tab, ssh to the same host (connection B) and `tmux -CC new -s two`.
+3. Back in the pane from step 1:
 
 ```
-tmux show-options -g | grep @it2_client_   # exactly one record, B's; A's was removed on detach
-tmux list-clients -F '#{client_name} #{client_control_mode}'
+it2 session set-status --tmux "$TMUX" --tmux-pane "$TMUX_PANE" --status working; echo $?
 ```
 
-Then reattach from A. The row keeps updating: A published a fresh record, and it is now the
-newest attached client.
+Exit 0, and the status lands on that pane's tab. This is the regression fixed on 2026-09-28: `it2`
+picks the newest attached `@it2_client_*` record, which after step 2 is B's, so the lookup arrives
+over B while the pane is held by A's controller. Matching only the caller's own connection dropped
+it with "No session is showing that tmux pane."
 
-With BOTH controllers attached at once, the one that attached last owns the pane's updates; the
-other shows nothing for it. That is the intended rule, not a misdelivery: nothing must ever be
-written to a session on the other connection.
+What makes it work is the routing, not a wider search. `it2` asks the server which tmux session
+holds `$TMUX_PANE` and which session each attached client is on, then prefers the client attached
+to the pane's session (`#{client_session}` and `#{session_id}`; see TmuxOwnership and it2.py). So
+the call arrives on the one connection whose controller can place the pane, and the lookup still
+only considers controllers on the caller's own connection.
+
+That narrowness is deliberate: a pane id is unique per server, but a socket path and pid are only
+unique per MACHINE. Two hosts sharing a uid have the same default socket path and their pids can
+collide, so a search across every controller attached to "that server" could return a pane on the
+wrong host.
+
+Check the routing directly with debug logging on: the `session_id_for_tmux_pane` invocation should
+carry the origin of the connection showing the pane, not whichever attached last.
+
+Check both directions: a pane in session `two` must also resolve, and neither must ever write to a
+session belonging to the other.
+
+```
+tmux show-options -g | grep @it2_client_   # two records, one per connection
+```
+
+### 11c-1. The owning connection goes away
+
+Since a double attach is refused, the handoff is tested by detaching rather than by overlapping.
+
+1. As in 11b: connection A, `tmux -CC`, a pane.
+2. Detach, then attach from a second connection B (`tmux -CC attach`).
+3. From the pane, run the `set-status` command above.
+
+It keeps working. The pane's own `IT2_SOCK` still names A's framer socket, but A's record was
+removed on detach and B published its own on attach, so `it2` routes over B. This is the case the
+single-inherited-value scheme could never survive.
 
 ### 11c-2. The later attacher leaves, the earlier one stays
 
-1. As in 11c: A attaches `tmux -CC`, then B attaches to the same session. Leave A attached.
-2. Detach B (or kill B's ssh connection, or quit B's iTerm2 outright).
-3. Send `claude` a prompt in the pane.
+Same correction as 11c: two different sessions, not the same one twice.
 
-The row on A updates. B's record is gone (removed by B on a clean detach, or by A when tmux
-announced B's detach), and even if it were still there `it2` would skip it because B's client is
-no longer in `list-clients`. A's record is present because A never left. With the old single-value
-scheme this case failed permanently: the server still named B's dead socket and `it2` had no
-fallback.
+1. As in 11c: A attaches `tmux -CC new -s one`, then B attaches `tmux -CC new -s two` on the same
+   server. Leave A attached.
+2. Detach B (or kill B's ssh connection, or quit B's iTerm2 outright).
+3. From a pane in session `one`, run the `set-status` command from 11c.
+
+It works. B's record is gone (removed by B on a clean detach, or by A when tmux announced B's
+detach), and even if it were still there `it2` would skip it because B's client is no longer in
+`list-clients`. A's record is present because A never left, so the call routes over A, which is
+also the controller holding the pane.
+
+With the old single-value scheme this case failed permanently: the server still named B's dead
+socket and `it2` had no fallback.
 
 ```
 tmux show-options -g | grep @it2_client_   # only A's record remains
 ```
+
+Worth also doing the reverse, which is the two-pass rule's real exercise: leave BOTH attached and
+set status from a pane in `one` while B is the newest attacher. The call arrives over B and must
+still be placed by A's controller.
 
 ### 11d. Reattach after relaunching iTerm2, remote
 

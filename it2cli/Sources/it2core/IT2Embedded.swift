@@ -29,10 +29,16 @@ public enum IT2Embedded {
     /// clientUniqueID). It reaches tmux pane addressing, where it identifies the machine the
     /// caller's $TMUX was collected on. The host supplies it; it is never taken from `arguments`,
     /// which the remote side controls.
+    ///
+    /// `stdin` and `environment` are what the remote it2 sent along: the payload a hook received
+    /// and the allowlisted variables that say which session it belongs to. They reach commands
+    /// through the context, never through the process, which in-process would be iTerm2's own.
     public static func run(arguments: [String],
                            io: IT2IO,
                            channel: APIChannel,
-                           originIdentifier: String?) -> Int32 {
+                           originIdentifier: String?,
+                           stdin: Data = Data(),
+                           environment: [String: String] = [:]) -> Int32 {
         let context = IT2Context(
             out: io.stdout,
             err: io.stderr,
@@ -40,7 +46,9 @@ public enum IT2Embedded {
             makeClient: { APIClient(channel: channel) },
             installsSignalHandlers: false,
             isRemote: true,
-            originIdentifier: originIdentifier
+            originIdentifier: originIdentifier,
+            stdin: { stdin },
+            environment: environment
         )
         return runToExitCode(arguments, context)
     }

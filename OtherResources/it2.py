@@ -203,18 +203,30 @@ TMUX_IT2_CLIENT_RECORD_TAG = "c_"
 # Marks list-clients lines in the combined query output so they cannot be confused with
 # show-options lines.
 TMUX_CLIENT_LINE_PREFIX = "IT2CLIENT"
+# Marks the one line naming the tmux session that holds this pane.
+TMUX_PANE_SESSION_LINE_PREFIX = "IT2PANESESSION"
 
 
-def tmux_query_arguments(socket_path):
-    """argv for one tmux invocation that lists attached clients and dumps global options.
+def tmux_query_arguments(socket_path, pane):
+    """argv for one tmux invocation: the attached clients, the global options, and which
+    tmux session holds `pane` (skipped when there is no pane).
 
-    A bare ";" argument separates commands in a sequence, so both run in one client. The
-    format carries real tab characters: tmux does not interpret backslash escapes in a
+    A bare ";" argument separates commands in a sequence, so they all run in one client. The
+    formats carry real tab characters: tmux does not interpret backslash escapes in a
     format string.
+
+    client_session is what lets the caller reach the connection that can actually place its
+    pane. A tmux server can have several attached control-mode clients, each driving a
+    DIFFERENT tmux session over its own ssh connection, and only the one attached to the
+    pane's session can show it.
     """
     fmt = "\t".join([TMUX_CLIENT_LINE_PREFIX, "#{client_name}", "#{client_control_mode}",
-                     "#{client_created}"])
-    return ["tmux", "-S", socket_path, "list-clients", "-F", fmt, ";", "show-options", "-g"]
+                     "#{client_created}", "#{client_session}"])
+    args = ["tmux", "-S", socket_path, "list-clients", "-F", fmt, ";", "show-options", "-g"]
+    if pane:
+        args += [";", "display-message", "-p", "-t", pane,
+                 TMUX_PANE_SESSION_LINE_PREFIX + "\t#{session_id}"]
+    return args
 
 
 def parse_tmux_client_records(output):
@@ -226,14 +238,23 @@ def parse_tmux_client_records(output):
     malformed is skipped: a record is advisory and must not take down the lookup for the
     well-formed ones next to it.
     """
-    attached_at = {}   # client name -> attach time, attached control-mode clients only
-    records = {}       # client name -> record dict
+    attached_at = {}      # client name -> attach time, attached control-mode clients only
+    client_session = {}   # client name -> the tmux session it is attached to
+    records = {}          # client name -> record dict
+    pane_session = None   # the tmux session holding this pane, when it could be determined
     for line in output.splitlines():
+        if line.startswith(TMUX_PANE_SESSION_LINE_PREFIX + "\t"):
+            pane_session = line.split("\t", 1)[1].strip()
+            continue
         if line.startswith(TMUX_CLIENT_LINE_PREFIX + "\t"):
             fields = line.split("\t")
             if len(fields) < 4:
                 continue
             name, control_mode, created = fields[1], fields[2], fields[3]
+            # Absent on tmux too old for #{client_session}; then nothing is preferred and
+            # the newest-attacher order below stands on its own.
+            if len(fields) >= 5 and fields[4]:
+                client_session[name] = fields[4]
             # A missing client_control_mode (very old tmux prints nothing for an unknown
             # format) is accepted; only an explicit 0 rejects.
             if control_mode == "0":
@@ -263,6 +284,16 @@ def parse_tmux_client_records(output):
             records[name] = record
     # Newest attach first; name as a tiebreaker so the order is deterministic.
     ordered = sorted(attached_at, key=lambda n: (-attached_at[n], n))
+    # Then float the clients attached to the session that holds this pane. Only those can
+    # place it: a client attached to another session of the same server will answer "no
+    # session is showing that tmux pane" however recently it attached. Newest-first was the
+    # whole rule before, which is why creating a second tmux session silently redirected
+    # every call to a connection that could not serve it (2026-09-28).
+    #
+    # A stable sort, so newest-first still orders within each group, and the others stay as
+    # fallbacks rather than being dropped: the preferred client's socket may be gone.
+    if pane_session:
+        ordered.sort(key=lambda n: 0 if client_session.get(n) == pane_session else 1)
     return [records[n] for n in ordered if n in records]
 
 
@@ -294,13 +325,16 @@ def tmux_advertised_client_records():
         return []
     try:
         result = subprocess.run(
-            tmux_query_arguments(socket_path),
+            tmux_query_arguments(socket_path, os.environ.get("TMUX_PANE", "")),
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
             timeout=2)
     except (OSError, subprocess.SubprocessError):
         return []
-    if result.returncode != 0:
-        return []
+    # Parse whatever came back, even on a nonzero exit. The pane query is part of the same
+    # invocation, so a stale or closed $TMUX_PANE makes tmux exit nonzero, and bailing here
+    # would throw away the client records the earlier commands already printed -- turning a
+    # pane that merely went away into "no iTerm2 is attached". Errors go to stderr, which is
+    # discarded, and the parser skips anything it does not recognize.
     return parse_tmux_client_records(result.stdout.decode("utf-8", "replace"))
 
 

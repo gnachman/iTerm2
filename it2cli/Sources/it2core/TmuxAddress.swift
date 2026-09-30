@@ -172,7 +172,11 @@ struct TmuxPaneOptions: ParsableArguments {
     }
 
     var resolution: Resolution {
-        if tmux == nil && tmuxPane == nil {
+        // Empty strings count as absent: a caller that always passes every addressing option,
+        // with "" for the ones it does not have, has not asked for tmux addressing. The
+        // code-review prompt does exactly that so the agent never has to work out which form
+        // applies. A half-empty pair is still a mistake, exactly like a half-missing one.
+        if (tmux ?? "").isEmpty && (tmuxPane ?? "").isEmpty {
             return .notRequested
         }
         guard let tmux, let tmuxPane, let address = TmuxAddress(tmux: tmux, pane: tmuxPane) else {
@@ -302,7 +306,9 @@ extension APIClient {
                           tmuxOptions: TmuxPaneOptions,
                           allowAll: Bool = false,
                           origin: String? = nil) throws -> String? {
-        if let sessionId {
+        // An empty --session is the same as none (see TmuxPaneOptions.resolution for why): it
+        // must never be handed on as a target, which would fail as "no such session".
+        if let sessionId, !sessionId.isEmpty {
             return try tmuxOptions.explicitTarget(sessionId, allowAll: allowAll)
         }
         switch tmuxOptions.resolution {

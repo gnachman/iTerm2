@@ -196,7 +196,7 @@ extension ClaudeWatcher {
             case .accept:
                 RLog("ClaudeWatcher user accepted")
                 iTermUserDefaults.userDefaults().set(true, forKey: Self.disabledUserDefaultsKey)
-                self?.userDidAccept()
+                self?.userDidAccept(session: session)
             case .askLater:
                 RLog("ClaudeWatcher user chose ask later")
                 if let self {
@@ -209,7 +209,7 @@ extension ClaudeWatcher {
         }
     }
 
-    func userDidAccept() {
-        ClaudeCodeOnboarding.show()
+    func userDidAccept(session: PTYSession?) {
+        ClaudeCodeOnboarding.show(session: session)
     }
 }

@@ -23,6 +23,10 @@
 @class EquivalenceClassSet;
 
 // Posted just before sessions change (names, addition, deletion)
+// Posted with the controller as object when the serverIsLocal determination first succeeds. A
+// pane session fetches its pane pid only for a local server and asks once, when it becomes a
+// client; if locality had not settled by then, this is its cue to ask again.
+extern NSNotificationName const kTmuxControllerServerLocalityDidBecomeKnown;
 extern NSString *const kTmuxControllerSessionsWillChange;
 // Posted when sessions change (names, addition, deletion)
 extern NSString *const kTmuxControllerSessionsDidChange;
@@ -113,6 +117,9 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 // and cached, a single unlucky lookup used to mark a local server remote for the life of the
 // connection. Cheap and a no-op once the answer is known.
 - (void)refreshServerLocalityIfUnknown;
+// The reply to loadServerPID: "<socket path>,<pid>" on tmux 2.2+, bare "<pid>" below that.
+// Exposed so tests can drive the locality determination without a gateway.
+- (void)didLoadServerIdentity:(NSString *)response;
 @property(nonatomic, readonly) NSString *defaultTerminal;
 @property(nonatomic) NSRect initialWindowHint;
 @property(nonatomic, readonly) BOOL detached;

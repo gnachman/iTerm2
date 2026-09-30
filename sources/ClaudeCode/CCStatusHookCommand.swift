@@ -7,14 +7,17 @@
 
 import Foundation
 
-/// Finds and resolves references to cc-status in a Claude Code hook command.
+/// Finds and resolves references to iTerm2’s agent hook in a Claude Code hook command. The hook is
+/// `it2 handle-agent-hook`, which the installer writes as `"<dot dir>/it2" handle-agent-hook`;
+/// older installs ran `cc-status`, which is now a shim that runs it. Both count as the hook, and
+/// "cc-status" in the names below means either.
 ///
 /// Claude Code does not inspect a hook’s `command`: it runs it with `/bin/sh -c`, so users may
 /// write `$HOME/.config/iterm2/cc-status`, `~/…/cc-status`, or a wrapper such as
 /// `[ -x "$HOME/…/cc-status" ] || exit 0; exec "$HOME/…/cc-status"` (issue 13099). This splits
 /// the command into words roughly the way sh does and reports each word whose last path
-/// component is `cc-status`. Install, uninstall and the health check all use it so they agree on
-/// which entries are ours.
+/// component is `cc-status`, and each `it2` run with `handle-agent-hook` as its first argument.
+/// Install, uninstall and the health check all use it so they agree on which entries are ours.
 ///
 /// Resolution expands `~`, `$NAME` and `${NAME}` from a supplied environment, which should be the
 /// user’s shell environment since Claude Code passes its own environment to hooks. Anything that
@@ -47,12 +50,52 @@ enum CCStatusHookCommand {
         }
     }
 
+    /// True if `command` runs the hook of the iTerm2 whose dot dir is `dotDir`. Every iTerm2
+    /// writes the same command apart from its dot dir, which is per suite, so recognizing the
+    /// command is not enough: an instance that took another's entries as its own would strip or
+    /// rewrite them (2026-09-27, a dev build and a release one sharing ~/.claude/settings.json).
+    ///
+    /// The command is this instance's when some reference to the hook, with `~` and variables
+    /// expanded from `environment`, is a path in `dotDir`, or when none is an explicit path
+    /// anywhere else: a bare name found through PATH, or a reference that can’t be resolved
+    /// without running the shell, counts as this instance's, as such commands count as working
+    /// (issue 13099). One naming a path elsewhere, such as another instance's dot dir, is not.
+    static func isOwned(_ command: String, byDotDir dotDir: String, environment: [String: String]) -> Bool {
+        let words = ccStatusWords(in: command)
+        guard !words.isEmpty else {
+            return false
+        }
+        let owner = normalizedDirectory(dotDir)
+        var namesPathElsewhere = false
+        for word in words {
+            guard let path = expanded(word, environment: environment), path.hasPrefix("/") else {
+                continue
+            }
+            if normalizedDirectory((path as NSString).deletingLastPathComponent) == owner {
+                return true
+            }
+            namesPathElsewhere = true
+        }
+        return !namesPathElsewhere
+    }
+
+    /// A directory path in a form two spellings of the same directory agree on. Only string
+    /// normalization: it must not stat, because these paths may not exist yet. Compares whole
+    /// directories, so "<dotdir>-2" is not "<dotdir>".
+    static func normalizedDirectory(_ path: String) -> String {
+        var result = (path as NSString).standardizingPath
+        while result.count > 1 && result.hasSuffix("/") {
+            result = String(result.dropLast())
+        }
+        return result
+    }
+
     /// True if resolving a cc-status reference in `command` depends on the environment: it uses
     /// `~` or a variable, or is a bare name looked up through PATH. Callers use this to avoid
     /// launching the user’s shell when no hook command needs its environment.
     static func needsEnvironment(_ command: String) -> Bool {
         return ccStatusWords(in: command).contains { word in
-            if word.parts == [.literal(name)] {
+            if word.parts == [.literal(name)] || word.parts == [.literal(it2Name)] {
                 return true
             }
             return word.parts.contains { part in
@@ -72,13 +115,35 @@ enum CCStatusHookCommand {
     /// working.
     static func runsOnlyCCStatus(_ command: String) -> Bool {
         let words = Lexer.words(in: command)
-        guard words.contains(where: namesCCStatus) else {
+        guard words.indices.contains(where: { namesHook(at: $0, in: words) }) else {
             return false
         }
         return Dictionary(grouping: words, by: \.commandIndex).values.allSatisfy(runsCCStatusOrGuard)
     }
 
-    /// True if `command` is exactly one unquoted absolute path, the form the installer writes.
+    /// True if `command` is a form an installer writes, which a reinstall may replace whatever it
+    /// points at: `"<absolute path>" handle-agent-hook`, optionally with `--agent codex`, or, from
+    /// before it2 handled hooks, one unquoted absolute path to cc-status.
+    static func isInstallerForm(_ command: String) -> Bool {
+        if isPlainAbsolutePath(command) {
+            return true
+        }
+        let words = Lexer.words(in: command)
+        guard words.count >= 2,
+              words.allSatisfy({ $0.commandIndex == 0 && !$0.isRedirectTarget }),
+              words.allSatisfy({ $0.parts.count == 1 }),
+              case .literal(let path) = words[0].parts[0],
+              path.hasPrefix("/"),
+              command.hasPrefix("\"" + path + "\" "),
+              words[1].parts == [.literal(hookSubcommand)] else {
+            return false
+        }
+        let rest = words.dropFirst(2).map(\.literalTail)
+        return rest.isEmpty || rest == ["--agent", "codex"]
+    }
+
+    /// True if `command` is exactly one unquoted absolute path, the form the installer wrote before
+    /// it2 handled hooks.
     static func isPlainAbsolutePath(_ command: String) -> Bool {
         let words = Lexer.words(in: command)
         guard words.count == 1, words[0].parts.count == 1,
@@ -148,6 +213,8 @@ enum CCStatusHookCommand {
     }
 
     private static let name = "cc-status"
+    private static let it2Name = "it2"
+    private static let hookSubcommand = "handle-agent-hook"
 
     // Programs that only test, look up a program, or exit, as in `[ -x … ] || exit 0`. `fi`
     // ends an `if`, whose other keywords keep command position (see keepsCommandPosition).
@@ -155,7 +222,28 @@ enum CCStatusHookCommand {
                                                      "type", "which", "fi"]
 
     private static func ccStatusWords(in command: String) -> [Word] {
-        return Lexer.words(in: command).filter(namesCCStatus)
+        let words = Lexer.words(in: command)
+        return words.indices.filter { namesHook(at: $0, in: words) }.map { words[$0] }
+    }
+
+    /// Whether the word at `index` refers to the hook: it names cc-status, or it is the program of
+    /// a simple command that runs it2 with handle-agent-hook as its first argument.
+    private static func namesHook(at index: Int, in words: [Word]) -> Bool {
+        let word = words[index]
+        if namesCCStatus(word) {
+            return true
+        }
+        guard word.isCommand, !word.isRedirectTarget, !Lexer.keepsCommandPosition(word) else {
+            return false
+        }
+        let tail = word.literalTail
+        let namesIt2 = (tail == it2Name && word.parts.count == 1) || tail.hasSuffix("/" + it2Name)
+        guard namesIt2, index + 1 < words.count else {
+            return false
+        }
+        let next = words[index + 1]
+        return next.commandIndex == word.commandIndex && !next.isRedirectTarget &&
+            next.parts == [.literal(hookSubcommand)]
     }
 
     private static func namesCCStatus(_ word: Word) -> Bool {
@@ -175,14 +263,14 @@ enum CCStatusHookCommand {
     // True if the simple command made of `words` runs cc-status or is a guard.
     private static func runsCCStatusOrGuard(_ words: [Word]) -> Bool {
         // Command substitution outside a cc-status path runs code of the user's.
-        let substitutes = words.contains { word in
-            !namesCCStatus(word) && word.parts.contains(.substitution)
+        let substitutes = words.indices.contains { index in
+            !namesHook(at: index, in: words) && words[index].parts.contains(.substitution)
         }
         guard !substitutes else {
             return false
         }
         let programIndex = words.firstIndex { $0.isCommand && !Lexer.keepsCommandPosition($0) }
-        if let programIndex, namesCCStatus(words[programIndex]) {
+        if let programIndex, namesHook(at: programIndex, in: words) {
             return true
         }
         // A guard's redirections may only discard output or duplicate a descriptor. Anything
@@ -212,9 +300,8 @@ enum CCStatusHookCommand {
         return guardPrograms.contains(text)
     }
 
-    private static func resolve(_ word: Word,
-                                environment: [String: String],
-                                isExecutable: (String) -> Bool) -> Resolution {
+    /// The word with `~` and variables expanded, or nil if that needs the shell.
+    private static func expanded(_ word: Word, environment: [String: String]) -> String? {
         var path = ""
         for part in word.parts {
             switch part {
@@ -222,26 +309,35 @@ enum CCStatusHookCommand {
                 path += text
             case .variable(let variable):
                 guard let value = environment[variable] else {
-                    return .unresolvable
+                    return nil
                 }
                 path += value
             case .home:
                 guard let home = environment["HOME"], !home.isEmpty else {
-                    return .unresolvable
+                    return nil
                 }
                 path += home
             case .unsupported, .substitution:
-                return .unresolvable
+                return nil
             }
         }
-        if path == name {
+        return path
+    }
+
+    private static func resolve(_ word: Word,
+                                environment: [String: String],
+                                isExecutable: (String) -> Bool) -> Resolution {
+        guard let path = expanded(word, environment: environment) else {
+            return .unresolvable
+        }
+        if path == name || path == it2Name {
             // sh searches PATH for a name without a slash. A miss is not proof the hook fails:
             // Claude Code’s PATH may differ from the one supplied (it may have been launched from
             // an IDE, or the environment came from a shell that skipped the login files), and an
             // empty or relative entry, or an unset PATH, makes sh search places we can’t check.
             let directories = (environment["PATH"] ?? "").components(separatedBy: ":")
             for directory in directories where directory.hasPrefix("/") {
-                let candidate = (directory as NSString).appendingPathComponent(name)
+                let candidate = (directory as NSString).appendingPathComponent(path)
                 if isExecutable(candidate) {
                     return .executable(candidate)
                 }

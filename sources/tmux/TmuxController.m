@@ -42,6 +42,7 @@
 #import "TmuxWindowOpener.h"
 #import "TSVParser.h"
 
+NSNotificationName const kTmuxControllerServerLocalityDidBecomeKnown = @"kTmuxControllerServerLocalityDidBecomeKnown";
 NSString *const kTmuxControllerSessionsWillChange = @"kTmuxControllerSessionsWillChange";
 NSString *const kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
 NSString *const kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
@@ -1547,6 +1548,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         RLog(@"Tmux server pid %@ resolved on attempt %@: isLocal=%@",
              @(_serverPid), @(_serverLocalityAttempts), @(_serverIsLocal));
     }
+    // Pane sessions that became clients before this settled skipped their pane pid fetch and
+    // never ask again on their own (see -[PTYSession loadTmuxProcessID]).
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerServerLocalityDidBecomeKnown
+                                                        object:self];
 }
 
 - (void)refreshServerLocalityIfUnknown {

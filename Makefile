@@ -77,6 +77,7 @@ help:
 	@echo "  make run          Build and launch Development build"
 	@echo "  make run-keychain Signed dev build w/ keychain entitlement (test migration)"
 	@echo "  make purge-keychain-test  Wipe the app's data-protection keychain (test reset)"
+	@echo "  make reset-suite  Erase the dev suite's settings, keeping the dev-only advanced settings on"
 	@echo "  make watch        Build and launch with interactive r=reload q=quit loop"
 	@echo "  make test         Run unit tests"
 	@echo "  make install      Build Deployment and install to /Applications"
@@ -367,6 +368,24 @@ run-nobuild: force
 	trap 'kill $$pid 2>/dev/null' INT TERM; \
 	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
 	wait $$pid
+
+# Erase every setting of this checkout's suite (the main and .private defaults
+# domains for $(SUITE)) and turn back on the two advanced settings a dev build
+# should always have: SetIT2AppPath, so the it2 CLI asks this instance for its
+# cookie rather than whichever iTerm2 owns the bundle identifier, and
+# AiChatRawWireLogging. The suite must not be running: cfprefsd would hand the
+# live instance's cached settings straight back on quit. Advanced-setting keys
+# are the setting names with the first letter capitalized.
+reset-suite: force
+	@if pgrep -f -- "-suite $(SUITE)( |$$)" >/dev/null; then \
+	  echo "reset-suite: an iTerm2 with -suite $(SUITE) is running; quit it first" >&2; \
+	  exit 1; \
+	fi
+	-defaults delete "$(SUITE)" 2>/dev/null
+	-defaults delete "$(SUITE).private" 2>/dev/null
+	defaults write "$(SUITE)" SetIT2AppPath -bool YES
+	defaults write "$(SUITE)" AiChatRawWireLogging -bool YES
+	@echo "reset-suite: $(SUITE) erased; SetIT2AppPath and AiChatRawWireLogging are on"
 
 # Regenerate sources/Localizable.xcstrings from the current sources. Swift strings come
 # from the per-file .stringsdata the build emits (SWIFT_EMIT_LOC_STRINGS=YES); Objective-C

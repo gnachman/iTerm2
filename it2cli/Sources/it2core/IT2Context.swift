@@ -37,6 +37,14 @@ struct IT2Context {
     /// means anything within one machine, so this is what lets a remote `tmux -CC` resolve its own
     /// panes without a local server being able to answer for them. See TmuxPaneLocator in the app.
     let originIdentifier: String?
+    /// The invocation's standard input, read to EOF on first use. For the standalone binary that
+    /// is the process's stdin; embedded in iTerm2 it is whatever the remote it2 sent, which is
+    /// how a hook's JSON payload reaches `handle-agent-hook`.
+    let stdin: () -> Data
+    /// The invocation's environment. For the standalone binary that is the process's; embedded in
+    /// iTerm2 it is the allowlisted subset the remote it2 forwarded. Commands read this rather
+    /// than `ProcessInfo`, which in-process would be iTerm2's own environment.
+    let environment: [String: String]
 }
 
 extension IT2Context {
@@ -72,7 +80,16 @@ extension IT2Context {
         makeClient: { try APIClient.connect() },
         installsSignalHandlers: true,
         isRemote: false,
-        originIdentifier: nil
+        originIdentifier: nil,
+        stdin: {
+            // Only read when asked, and only when something is piped in: reading a tty would
+            // block waiting for the user.
+            if isatty(FileHandle.standardInput.fileDescriptor) != 0 {
+                return Data()
+            }
+            return FileHandle.standardInput.readDataToEndOfFile()
+        },
+        environment: ProcessInfo.processInfo.environment
     )
 }
 

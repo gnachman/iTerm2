@@ -10,7 +10,9 @@ import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via t
 /// commands. The transport (socket vs. in-process) varies via the injected
 /// channel, not via subclassing.
 final class APIClient {
-    private let channel: APIChannel
+    /// Internal so a caller that runs several commands back to back can lend the same connection
+    /// to each (see SharedAPIClientFactory).
+    let channel: APIChannel
     private var requestId: Int64 = 0
 
     init(channel: APIChannel) {

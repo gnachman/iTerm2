@@ -23,6 +23,12 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class ClaudeCodeOnboardingTests: XCTestCase {
+    // Our hook entries have to live in THIS instance's dot dir to count as ours; a path
+    // elsewhere belongs to another install and must be left alone.
+    private var dotDir: String {
+        return FileManager.default.homeDirectoryDotDir() ?? "/tmp/no-dot-dir"
+    }
+
 
     // MARK: - parseCLAUDE_CONFIG_DIR
 
@@ -98,7 +104,7 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         let settings: [String: Any] = [
             "hooks": [
                 "Stop": [
-                    ["hooks": [["type": "command", "command": "/x/y/cc-status"]]]
+                    ["hooks": [["type": "command", "command": "\(dotDir)/cc-status"]]]
                 ]
             ]
         ]
@@ -115,7 +121,7 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
             "hooks": [
                 "Stop": [
                     ["hooks": [
-                        ["type": "command", "command": "/x/y/cc-status"],
+                        ["type": "command", "command": "\(dotDir)/cc-status"],
                         ["type": "command", "command": "/usr/local/bin/other-hook"],
                     ]]
                 ]
@@ -136,8 +142,9 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
     }
 
     func testStripRemovesWrapperButKeepsCompoundCommand() {
-        let wrapper = "[ -x \"$HOME/x/cc-status\" ] || exit 0; exec \"$HOME/x/cc-status\""
-        let compound = "$HOME/x/cc-status && /usr/local/bin/notify"
+        // In this instance's dot dir: another instance's entries are never ours to strip.
+        let wrapper = "[ -x \"\(dotDir)/cc-status\" ] || exit 0; exec \"\(dotDir)/cc-status\""
+        let compound = "\(dotDir)/cc-status && /usr/local/bin/notify"
         let redirect = "echo done > /tmp/cc-status"
         let settings: [String: Any] = [
             "hooks": [
@@ -167,18 +174,18 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
     // which is also what the next launch's reconcile reads. After a strip it
     // must report exactly the commands left behind, or the menu flips back.
     func testInstalledStateAfterStrip() {
-        let compound = "~/.config/iterm2/cc-status && say done"
+        let compound = "\(dotDir)/cc-status && say done"
         func settings(_ commands: [String]) -> [String: Any] {
             let entries = commands.map { ["type": "command", "command": $0] }
             return ["hooks": ["Stop": [["hooks": entries]], "Notification": [["hooks": entries]]]]
         }
 
-        let removed = makeTempSettings(settings(["/x/y/cc-status", "/usr/local/bin/other-hook"]))
+        let removed = makeTempSettings(settings(["\(dotDir)/cc-status", "/usr/local/bin/other-hook"]))
         XCTAssertTrue(ClaudeCodeOnboarding.hooksInstalled(atSettingsURL: removed))
         XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: removed), .success)
         XCTAssertFalse(ClaudeCodeOnboarding.hooksInstalled(atSettingsURL: removed))
 
-        let kept = makeTempSettings(settings(["/x/y/cc-status", compound]))
+        let kept = makeTempSettings(settings(["\(dotDir)/cc-status", compound]))
         XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: kept), .success)
         XCTAssertTrue(ClaudeCodeOnboarding.hooksInstalled(atSettingsURL: kept))
         let remaining = readJSON(kept).map(ClaudeCodeOnboarding.ccStatusCommands(inSettings:))
@@ -216,7 +223,7 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
             "model": "opus",
             "hooks": [
                 "Stop": [
-                    ["hooks": [["type": "command", "command": "/x/y/cc-status"]]]
+                    ["hooks": [["type": "command", "command": "\(dotDir)/cc-status"]]]
                 ]
             ]
         ]
@@ -263,7 +270,11 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         return url
     }
 
-    private let mergeCCStatusPath = "/Users/test/.config/iterm2/cc-status"
+    // In this instance's dot dir, or the merge would treat the entries it writes as another
+    // install's.
+    private var mergeCCStatusPath: String {
+        return (dotDir as NSString).appendingPathComponent("cc-status")
+    }
 
     private func merge(_ url: URL) -> ClaudeCodeInstallHooksResult {
         return ClaudeCodeOnboarding.mergeCCStatusHooks(intoSettingsURL: url,

@@ -118,6 +118,28 @@ final class CommandParsingTests: XCTestCase {
         })
     }
 
+    /// The progress ring is an argument of the update (see SetStatusProgressArgumentTests in
+    /// ModernTests), so a hook that draws the ring for an agent asks for it in the same call.
+    func testSetStatusParsesProgress() throws {
+        let running = try Session.SetStatus.parse(["-s", "session-id", "--progress", "running"])
+        XCTAssertEqual(running.options.progress, .running)
+        let stopped = try SetStatusShortcut.parse(["-s", "session-id", "--progress", "stopped"])
+        XCTAssertEqual(stopped.options.progress, .stopped)
+        XCTAssertNil(try Session.SetStatus.parse(["-s", "session-id"]).options.progress)
+        XCTAssertThrowsError(try Session.SetStatus.parse(["-s", "session-id", "--progress", "spinning"]))
+        XCTAssertTrue(try Session.SetStatus.parse(["-s", "s", "--progress=running"]).options.invocationArguments
+                        .contains("progress: \"running\""))
+    }
+
+    func testHandleAgentHookParses() throws {
+        let plain = try IT2.parseAsRoot(["handle-agent-hook"])
+        XCTAssertTrue(plain is HandleAgentHook, "expected HandleAgentHook, got \(type(of: plain))")
+        let codex = try XCTUnwrap(IT2.parseAsRoot(["handle-agent-hook", "--agent", "codex"]) as? HandleAgentHook)
+        XCTAssertEqual(codex.agent, .codex)
+        XCTAssertEqual(try XCTUnwrap(plain as? HandleAgentHook).agent, .claude)
+        XCTAssertThrowsError(try IT2.parseAsRoot(["handle-agent-hook", "--agent", "gemini"]))
+    }
+
     func testGetStatusParses() throws {
         let command = try IT2.parseAsRoot(["session", "get-status", "-s", "session-id"])
         XCTAssertTrue(command is Session.GetStatus, "expected Session.GetStatus, got \(type(of: command))")

@@ -12,8 +12,15 @@
 
 @implementation PTYTask (ProcessInfo)
 
+// A tmux pane session's task never forks anything itself; the only pid it has is the pane pid
+// tmux reported. Both lookups below must use the same pid, or the poll path and the event path
+// describe two different processes for the same session.
+- (pid_t)processInfoPID {
+    return self.tmuxClientProcessID ? self.tmuxClientProcessID.intValue : self.pid;
+}
+
 - (void)fetchProcessInfoForCurrentJobWithCompletion:(void (^)(iTermProcessInfo *))completion {
-    const pid_t pid = self.tmuxClientProcessID ? self.tmuxClientProcessID.intValue : self.pid;
+    const pid_t pid = self.processInfoPID;
     iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid];
     DLog(@"%@ fetch process info for %@", self, @(pid));
     if (info.name) {
@@ -41,13 +48,14 @@
 }
 
 - (iTermProcessInfo *)cachedProcessInfoIfAvailable {
-    const pid_t pid = self.pid;
+    const pid_t pid = self.processInfoPID;
     iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid];
     if (info.name) {
         return info;
     }
 
-    if (pid > 0 && _haveBumpedProcessCache) {
+    // Ask for an update the first time the cache has nothing for us, as the fetch above does.
+    if (pid > 0 && !_haveBumpedProcessCache) {
         _haveBumpedProcessCache = YES;
         [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
     }

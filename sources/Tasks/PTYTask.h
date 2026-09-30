@@ -171,6 +171,10 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 @property(nonatomic, readonly) BOOL passwordInput;
 @property(nonatomic) unichar pendingHighSurrogate;
 @property(nonatomic, copy) NSNumber *tmuxClientProcessID;
+// The pid process info is looked up under: the tmux pane pid when this task stands for a tmux
+// pane, otherwise the task's own. Both the cached and the fetched lookups (PTYTask+ProcessInfo)
+// use it.
+@property(nonatomic, readonly) pid_t processInfoPID;
 // This is used by tmux clients as a way to route data from %output in to the taskNotifier. Like
 // the name says you can't write to it.
 @property(atomic) int readOnlyFileDescriptor;

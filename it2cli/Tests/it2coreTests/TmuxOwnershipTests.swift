@@ -103,11 +103,11 @@ final class TmuxOwnershipTests: XCTestCase {
     }
 
     func testQueryUsesOneTmuxInvocationWithRealTabs() {
-        let args = TmuxOwnership.queryArguments(socketPath: "/tmp/od,d,socket")
+        let args = TmuxOwnership.queryArguments(socketPath: "/tmp/od,d,socket", pane: nil)
         XCTAssertEqual(args.prefix(3), ["tmux", "-S", "/tmp/od,d,socket"])
         XCTAssertTrue(args.contains(";"), "both commands must run in one client")
         let format = args[args.firstIndex(of: "-F")! + 1]
-        XCTAssertEqual(format, "IT2CLIENT\t#{client_name}\t#{client_control_mode}\t#{client_created}")
+        XCTAssertEqual(format, "IT2CLIENT\t#{client_name}\t#{client_control_mode}\t#{client_created}\t#{client_session}")
         XCTAssertFalse(format.contains("\\t"), "tmux does not interpret backslash escapes")
     }
 

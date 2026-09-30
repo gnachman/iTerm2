@@ -261,6 +261,8 @@ final class AllSessionsTargetTests: XCTestCase {
             ["session", "set-var", "--", "user.foo", "bar"],
             ["session", "get-var", "--", "user.foo"],
             ["session", "get-background-tasks"],
+            ["session", "add-clipping", "--", "Type", "Title", "Detail"],
+            ["session", "archive-clippings"],
             ["set-status", "--status=idle"],
         ]
         for args in addressable {
@@ -491,5 +493,71 @@ final class TmuxAddressOriginTests: XCTestCase {
 
         XCTAssertEqual(resolved, "GUID-4")
         XCTAssertEqual(channel.sent.count, 1, "the lookup must reach iTerm2, not be refused locally")
+    }
+}
+
+// A caller that always passes every addressing option, with empty strings for the ones it does
+// not have, must be understood as not having passed them. The code-review prompt does exactly
+// that so the agent never has to work out which form applies: locally TERM_SESSION_ID is set, in
+// a pane the tmux pair is, and on a remote host all three may be empty.
+final class EmptyTargetTests: XCTestCase {
+    private func options(_ args: [String]) throws -> TmuxPaneOptions {
+        let command = try IT2.parseAsRoot(["session", "get-status"] + args)
+        return try XCTUnwrap(command as? Session.GetStatus).tmuxOptions
+    }
+
+    func testEmptyTmuxPairIsNotRequested() throws {
+        let opts = try options(["--tmux", "", "--tmux-pane", ""])
+        guard case .notRequested = opts.resolution else {
+            return XCTFail("expected .notRequested, got \(opts.resolution)")
+        }
+        XCTAssertFalse(opts.usesTmuxAddressing)
+    }
+
+    // Half a pair is still a mistake, whether the other half is missing or empty.
+    func testHalfEmptyPairIsRejected() {
+        XCTAssertThrowsError(try options(["--tmux", "", "--tmux-pane", "%0"]))
+        XCTAssertThrowsError(try options(["--tmux", "/tmp/d,99,0", "--tmux-pane", ""]))
+    }
+
+    private func paneReply(guid: String, id: Int64 = 1) -> ITMServerOriginatedMessage {
+        let message = ITMServerOriginatedMessage()
+        message.id_p = id
+        let invoke = ITMInvokeFunctionResponse()
+        let success = ITMInvokeFunctionResponse_Success()
+        success.jsonResult = "\"\(guid)\""
+        invoke.success = success
+        message.invokeFunctionResponse = invoke
+        return message
+    }
+
+    func testEmptySessionYieldsToTheTmuxAddress() throws {
+        let channel = FakeChannel()
+        channel.responses = [paneReply(guid: "GUID-1")]
+        let client = APIClient(channel: channel)
+        let opts = try options(["--tmux", "/private/tmp/tmux-501/default,52533,0", "--tmux-pane", "%3"])
+
+        let resolved = try client.resolveSessionId("", tmuxOptions: opts)
+
+        XCTAssertEqual(resolved, "GUID-1")
+    }
+
+    // With nothing else to go on, an empty --session means the same as no --session: the active
+    // session, which is looked up through the focus state.
+    func testEmptySessionWithNoTmuxUsesTheActiveSessionLookup() throws {
+        let channel = FakeChannel()
+        let client = APIClient(channel: channel)
+        let opts = try options(["--tmux", "", "--tmux-pane", ""])
+
+        XCTAssertThrowsError(try client.resolveSessionId("", tmuxOptions: opts),
+                             "the fake has no focus reply, so the lookup fails; the point is that it was attempted")
+        XCTAssertEqual(channel.sent.count, 1)
+        XCTAssertNotNil(channel.sent.first?.focusRequest, "must ask for the focus state rather than target \"\"")
+    }
+
+    func testEmptySessionWithAllowAllStillMeansUnset() throws {
+        let opts = try options([])
+        XCTAssertThrowsError(try APIClient(channel: FakeChannel()).resolveSessionId("", tmuxOptions: opts, allowAll: true),
+                             "must not return \"\" as a target")
     }
 }

@@ -828,6 +828,16 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 
 #pragma mark - methods
 
+// Decide IT2_APP_PATH for a new job's environment, in place.
+//
+// The variable names the iTerm2 that the it2 CLI asks for a cookie by AppleScript, which
+// only matters when several builds share a bundle identifier. Exposed as a class method so
+// the rule can be tested without building a session; see SessionIT2AppPathTests.
++ (void)applyIT2AppPathTo:(NSMutableDictionary *)env
+                suiteName:(nullable NSString *)suiteName
+           settingEnabled:(BOOL)settingEnabled
+               bundlePath:(NSString *)bundlePath;
+
 + (BOOL)arrangement:(NSDictionary *)arrangement
          passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure;
 + (NSDictionary *)modifiedArrangement:(NSDictionary *)arrangement
@@ -1176,6 +1186,9 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 // Call refresh on the textview and schedule a timer if anything is blinking.
 - (void)refresh;
+// The cheap job refresh an inactive session gets on each display update: applies the process
+// cache's answer for this session's job if it has one, and leaves the job alone if it does not.
+- (void)refreshForegroundJobFromCacheIfAvailable;
 
 // Force a jiggle (re-layout) of the session view so triggers have a chance to fire.
 - (void)setNeedsJiggle:(BOOL)needsJiggle;

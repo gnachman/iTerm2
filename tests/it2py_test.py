@@ -247,8 +247,15 @@ def _hex(s):
     return s.encode("utf-8").hex()
 
 
-def _client_line(name, control="1", created=100):
-    return "IT2CLIENT\t%s\t%s\t%s" % (name, control, created)
+def _client_line(name, control="1", created=100, session=None):
+    line = "IT2CLIENT\t%s\t%s\t%s" % (name, control, created)
+    if session is not None:
+        line += "\t%s" % session
+    return line
+
+
+def _pane_session_line(session):
+    return "IT2PANESESSION\t%s" % session
 
 
 def _option_line(name, record_json):
@@ -291,13 +298,94 @@ def test_parse_tmux_client_records():
 
 
 def test_tmux_query_uses_one_invocation_with_real_tabs():
-    args = it2mod.tmux_query_arguments("/tmp/od,d,socket")
+    args = it2mod.tmux_query_arguments("/tmp/od,d,socket", "")
     check(args[:3] == ["tmux", "-S", "/tmp/od,d,socket"], "socket passed through verbatim")
     check(";" in args, "both commands run in one tmux client")
     fmt = args[args.index("-F") + 1]
-    check(fmt == "IT2CLIENT\t#{client_name}\t#{client_control_mode}\t#{client_created}",
+    check(fmt == "IT2CLIENT\t#{client_name}\t#{client_control_mode}\t#{client_created}\t#{client_session}",
           "format: %r" % fmt)
     check("\\t" not in fmt, "tmux does not interpret backslash escapes in formats")
+    check("display-message" not in args, "no pane, nothing to ask about it")
+
+
+def test_tmux_query_asks_which_session_holds_the_pane():
+    args = it2mod.tmux_query_arguments("/tmp/s", "%7")
+    check("display-message" in args, "the pane's session is asked for in the same invocation")
+    i = args.index("display-message")
+    check(args[i:i + 4] == ["display-message", "-p", "-t", "%7"], "targets the pane: %r" % args[i:i + 4])
+    check(args[i + 4] == "IT2PANESESSION\t#{session_id}", "format: %r" % args[i + 4])
+
+
+def test_client_showing_the_pane_is_preferred_over_the_newest():
+    # The 2026-09-28 failure. Two iTerm2 connections attached to one server, each driving a
+    # different tmux session. The pane lives in $9, held by the OLDER client; the newer one
+    # cannot place it. Newest-first alone sent every call to the wrong connection, which
+    # answered "No session is showing that tmux pane".
+    output = "\n".join([
+        _client_line("/dev/pts/3", created=100, session="$9"),
+        _client_line("/dev/pts/4", created=200, session="$10"),
+        _option_line("/dev/pts/3", '{"nonce":"holds-the-pane","sock":"/a.sock"}'),
+        _option_line("/dev/pts/4", '{"nonce":"newest","sock":"/b.sock"}'),
+        _pane_session_line("$9"),
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check(records[0] == {"nonce": "holds-the-pane", "sock": "/a.sock"},
+          "the client attached to the pane's session goes first: %r" % records)
+    # The other is kept as a fallback rather than dropped: it may still be reachable when the
+    # preferred one's socket is gone.
+    check(len(records) == 2 and records[1]["nonce"] == "newest", "others still offered: %r" % records)
+
+
+def test_newest_first_still_breaks_ties_within_the_preferred_group():
+    # A window can be linked into two sessions, so two clients can both hold the pane.
+    output = "\n".join([
+        _client_line("/dev/pts/3", created=100, session="$9"),
+        _client_line("/dev/pts/4", created=200, session="$9"),
+        _option_line("/dev/pts/3", '{"nonce":"older"}'),
+        _option_line("/dev/pts/4", '{"nonce":"newer"}'),
+        _pane_session_line("$9"),
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check([r["nonce"] for r in records] == ["newer", "older"],
+          "newest first among clients that can all place it: %r" % records)
+
+
+def test_falls_back_to_newest_when_the_pane_session_is_unknown():
+    # Old tmux, a stale TMUX_PANE, or a display-message that failed: no IT2PANESESSION line.
+    # The previous rule is the fallback, not an error.
+    output = "\n".join([
+        _client_line("/dev/pts/3", created=100, session="$9"),
+        _client_line("/dev/pts/4", created=200, session="$10"),
+        _option_line("/dev/pts/3", '{"nonce":"older"}'),
+        _option_line("/dev/pts/4", '{"nonce":"newer"}'),
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check([r["nonce"] for r in records] == ["newer", "older"],
+          "unknown pane session falls back to newest first: %r" % records)
+
+
+def test_records_survive_a_partial_query():
+    # A stale $TMUX_PANE makes display-message fail, so tmux exits nonzero after the earlier
+    # commands have already printed. The records must survive that: the pane going away does
+    # not mean no iTerm2 is attached.
+    output = "\n".join([
+        _client_line("/dev/pts/4", created=200, session="$10"),
+        _option_line("/dev/pts/4", '{"nonce":"newer"}'),
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check([r["nonce"] for r in records] == ["newer"], "partial output still parses: %r" % records)
+
+
+def test_no_client_holds_the_pane():
+    # iTerm2 is attached, but to a session that does not contain this pane. Every record is a
+    # fallback; none is preferred.
+    output = "\n".join([
+        _client_line("/dev/pts/4", created=200, session="$10"),
+        _option_line("/dev/pts/4", '{"nonce":"newer"}'),
+        _pane_session_line("$9"),
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check([r["nonce"] for r in records] == ["newer"], "still offered as a fallback: %r" % records)
 
 
 def test_connect_to_iterm2_tries_candidates_in_order():

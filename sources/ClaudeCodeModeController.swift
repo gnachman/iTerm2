@@ -200,10 +200,16 @@ class ClaudeCodeModeController: NSObject {
                         // to add. Deferred so the upsell's dismiss
                         // animation and the workgroup-entry UI
                         // churn settle before the installer takes key.
-                        if !ClaudeCodeOnboarding.hooksAlreadyInstalled() {
-                            DispatchQueue.main.async {
-                                ClaudeCodeOnboarding.show()
+                        // Check the directory this session's claude actually reads, from disk,
+                        // rather than a cached flag: the flag is reconciled from the
+                        // recorded-or-default path and reads true when another instance's hooks
+                        // happen to be sitting there, in which case the installer never opens and
+                        // nothing ever reports status.
+                        ClaudeCodeOnboarding.hooksHealthyForSession(session) { [weak session] healthy in
+                            guard !healthy else {
+                                return
                             }
+                            ClaudeCodeOnboarding.show(session: session)
                         }
                     }
                 case 1:

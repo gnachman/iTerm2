@@ -86,7 +86,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
               !sessions.isEmpty else {
             return
         }
-        evaluateAndPromptIfBroken()
+        evaluateAndPromptIfBroken(sessionGUIDs: sessions)
     }
 
     // Two-phase: cheap checks + disk-read kickoff stay on the main
@@ -94,7 +94,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
     // dispatches back to main. Flip hasEvaluated and alertInFlight
     // *before* dispatching so notifications that arrive while the
     // background read is in flight don't queue a second one.
-    private func evaluateAndPromptIfBroken() {
+    private func evaluateAndPromptIfBroken(sessionGUIDs: Set<String>) {
         guard !hasEvaluated else { return }
         guard !alertInFlight else {
             DLog("Health: alert already in flight, skipping")
@@ -127,11 +127,11 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         // shell is launched only if a hook command uses $HOME or
         // the like (see ClaudeCodeOnboarding.withHookEnvironment).
         ClaudeCodeOnboarding.checkHooksHealth(on: diskQueue) { [weak self] healthy in
-            self?.diskCheckCompleted(healthy: healthy)
+            self?.diskCheckCompleted(healthy: healthy, sessionGUIDs: sessionGUIDs)
         }
     }
 
-    private func diskCheckCompleted(healthy: Bool) {
+    private func diskCheckCompleted(healthy: Bool, sessionGUIDs: Set<String>) {
         if healthy {
             alertInFlight = false
             return
@@ -171,7 +171,12 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         warning.runModalAsync { [weak self] selection, _ in
             self?.alertInFlight = false
             if selection == .kiTermWarningSelection0 {
-                ClaudeCodeOnboarding.show()
+                // Any of the sessions running claude will do: the reinstall
+                // resolves CLAUDE_CONFIG_DIR for that session's profile.
+                let session = sessionGUIDs.lazy
+                    .compactMap { iTermController.sharedInstance().session(withGUID: $0) }
+                    .first
+                ClaudeCodeOnboarding.show(session: session)
             }
         }
     }
