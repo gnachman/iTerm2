@@ -359,19 +359,13 @@ final class GraphDatabaseCodingTests: XCTestCase {
 
     // MARK: - Journal mode
 
-    // iTermGraphDatabase createTables: (sources/StateRestoration/iTermGraphDatabase.m) issues
-    // `PRAGMA journal_mode=WAL` through executeQuery and closes the result set without
-    // calling next. FMDB's executeQuery only prepares and binds; sqlite3_step happens in
-    // FMResultSet next, so the pragma never runs and a fresh database stays in the default
-    // rollback-journal (delete) mode. Introduced by commit fc83f8a5c, which switched the
-    // statement from executeUpdate (which did step) to executeQuery. doHousekeeping has the
-    // same pattern for `pragma wal_checkpoint`.
+    // Regression: commit fc83f8a5c switched `PRAGMA journal_mode=WAL` in iTermGraphDatabase
+    // createTables: from executeUpdate to executeQuery and closed the result set without
+    // stepping it. FMDB's executeQuery only prepares the statement, so the pragma never ran
+    // and fresh databases stayed in rollback-journal (delete) mode.
     func testFreshDatabaseUsesWALJournalMode() throws {
         _ = openGraphDatabase()
-        let mode = try journalMode()
-        XCTExpectFailure("iTermGraphDatabase createTables: runs PRAGMA journal_mode=WAL via executeQuery without next, so the pragma never executes (commit fc83f8a5c)") {
-            XCTAssertEqual(mode, "wal")
-        }
+        XCTAssertEqual(try journalMode(), "wal")
     }
 
     // MARK: - iTermGraphEncoderAdapter
