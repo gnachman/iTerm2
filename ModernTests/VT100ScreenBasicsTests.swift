@@ -2159,11 +2159,7 @@ class VT100ScreenBasicsTests: XCTestCase {
                          startPosition: savedPosition)
         assertResults(results, [result(0, 7, 2, 7)])
     }
-    // MARK: - Regression tests for suspected production bugs
-    //
-    // Each of these asserts the behavior the legacy VT100ScreenTest.m expected and that the
-    // production code is believed to have regressed. The failing assertions are wrapped in
-    // XCTExpectFailure so an unexpected pass flags itself once the bug is fixed.
+    // MARK: - Regression tests for production bugs found while porting VT100ScreenTest.m
 
     // Regression test for issue 9852. Appending with the cursor on the DWC_RIGHT of its
     // predecessor must skip the merged buffer's spacer (the grid already has it at the cursor)
@@ -2246,21 +2242,19 @@ class VT100ScreenBasicsTests: XCTestCase {
                                       result(3, 0, 0, 1)])
     }
 
-    // Suspected root cause: -[VT100ScreenMutableState runByTrimmingNullsFromRun:] in
+    // Regression tests for a selection of nothing but nulls surviving a resize. Since commit
+    // 5e401d357, -[VT100ScreenMutableState runByTrimmingNullsFromRun:] in
     // sources/VT100Screen/VT100ScreenMutableState+Resizing.m only trims nulls on the run's
-    // first and last lines since commit 5e401d357 (the 2013 version walked across line
-    // boundaries and returned a zero-length run for an all-null run). A selection of nothing
-    // but nulls therefore trims to a single null cell, positionRangeForCoordRange: succeeds,
-    // and didResizeToSize: re-adds an empty sub-selection instead of dropping it, so
-    // hasSelection stays YES with no selected content.
+    // first and last lines, so an all-null multi-line selection trimmed to a null cell,
+    // positionRangeForCoordRange: succeeded, and didResizeToSize: re-added a phantom
+    // sub-selection with no content, leaving hasSelection YES. The resize now drops any
+    // sub-selection that contains no non-null character before converting it.
     func testResizeWithSelectionOfJustNullsInMainScreenClearsSelection() {
         let screen = self.screen(width: 5, height: 4)
         setSelectionRange(VT100GridCoordRangeMake(1, 1, 2, 2), width: screen.width())
         XCTAssertTrue(session.selection.hasSelection)
         screen.size = VT100GridSizeMake(4, 4)
-        XCTExpectFailure("A selection of only nulls survives a resize as an empty sub-selection (runByTrimmingNullsFromRun: in VT100ScreenMutableState+Resizing.m, commit 5e401d357)") {
-            XCTAssertFalse(session.selection.hasSelection)
-        }
+        XCTAssertFalse(session.selection.hasSelection)
     }
 
     func testResizeWithSelectionOfJustNullsInAltScreenClearsSelection() {
@@ -2271,8 +2265,20 @@ class VT100ScreenBasicsTests: XCTestCase {
         setSelectionRange(VT100GridCoordRangeMake(1, 1, 2, 2), width: screen.width())
         XCTAssertTrue(session.selection.hasSelection)
         screen.size = VT100GridSizeMake(4, 4)
-        XCTExpectFailure("A selection of only nulls survives a resize as an empty sub-selection (runByTrimmingNullsFromRun: in VT100ScreenMutableState+Resizing.m, commit 5e401d357)") {
-            XCTAssertFalse(session.selection.hasSelection)
-        }
+        XCTAssertFalse(session.selection.hasSelection)
+    }
+
+    // A selection whose first and last lines are nulls but whose middle line holds text must
+    // still survive the resize.
+    func testResizeWithSelectionOfNullsAroundTextKeepsSelection() {
+        let screen = self.screen(width: 5, height: 4)
+        moveCursor(screen, toX: 1, y: 2)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: "ab")
+        })
+        setSelectionRange(VT100GridCoordRangeMake(1, 0, 2, 3), width: screen.width())
+        XCTAssertTrue(session.selection.hasSelection)
+        screen.size = VT100GridSizeMake(4, 4)
+        XCTAssertTrue(session.selection.hasSelection)
     }
 }

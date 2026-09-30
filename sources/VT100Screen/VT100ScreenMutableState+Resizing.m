@@ -208,6 +208,35 @@
     return result;
 }
 
+// Whether any cell in `range` (whose end is exclusive) holds a non-null character. A
+// selection of nothing but nulls has no content to preserve across a resize, and since
+// commit 5e401d357 runByTrimmingNullsFromRun: only trims within the run's first and last
+// lines, so such a selection would otherwise survive as a degenerate sub-selection. Lines
+// are addressed with getLineAtIndex: exactly as runByTrimmingNullsFromRun: does, so this is
+// valid wherever that is.
+- (BOOL)coordRangeContainsNonNullCharacter:(VT100GridCoordRange)range {
+    const int width = self.width;
+    const int numberOfLines = self.numberOfLines;
+    VT100GridCoord end = range.end;
+    // Make the end inclusive.
+    end.x--;
+    if (end.x < 0) {
+        end.x = width - 1;
+        end.y--;
+    }
+    for (int y = MAX(0, range.start.y); y <= end.y && y < numberOfLines; y++) {
+        const screen_char_t *line = [self getLineAtIndex:y];
+        const int firstX = (y == range.start.y) ? MAX(0, range.start.x) : 0;
+        const int lastX = (y == end.y) ? MIN(end.x, width - 1) : width - 1;
+        for (int x = firstX; x <= lastX; x++) {
+            if (line[x].code != 0) {
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
 static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     if (py1 == py2) {
         return px1 < px2;
@@ -409,6 +438,10 @@ static void SwapInt(int *a, int *b) {
         VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
                                               self.cumulativeScrollbackOverflow,
                                               ^(VT100GridCoordRange range) {
+            if (![self coordRangeContainsNonNullCharacter:range]) {
+                DLog(@"Drop all-null selection on alt screen %@", VT100GridCoordRangeDescription(range));
+                return;
+            }
             LineBufferPositionRange *positionRange =
             [self positionRangeForCoordRange:range
                                 inLineBuffer:lineBufferWithAltScreen
@@ -588,6 +621,10 @@ static void SwapInt(int *a, int *b) {
         VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
                                               overflow,
                                               ^(VT100GridCoordRange range) {
+            if (![self coordRangeContainsNonNullCharacter:range]) {
+                DLog(@"Drop all-null selection %@", VT100GridCoordRangeDescription(range));
+                return;
+            }
             VT100GridCoordRange newSelection;
             const BOOL ok = [self convertRange:range
                                        toWidth:newWidth
