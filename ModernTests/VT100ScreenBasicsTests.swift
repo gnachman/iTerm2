@@ -2228,25 +2228,22 @@ class VT100ScreenBasicsTests: XCTestCase {
         XCTAssertEqual(sca.eol, Int32(EOL_DWC))
     }
 
-    // Suspected root cause: the backward wrap-around in sources/SearchingFiltering/
-    // SearchEngine.swift (Positions/stopPosition uses the initial start as the stop) together
-    // with -[LineBuffer findSubstring:stopAt:] in sources/LineBuffer/LineBuffer.m, which
-    // excludes a match at the stop position for a forward search (position >= stopAt) but
-    // keeps it for a backward one (position < stopAt). With offset 0 the pre-wrap pass already
-    // reported the match at the starting coordinate, so the wrapped pass reports it again.
-    // The forward equivalent (testFind_Offset0) does not duplicate.
+    // Regression test for the backward wrap-around in SearchRequest.stopPosition
+    // (sources/SearchingFiltering/SearchEngine.swift). -[LineBuffer findSubstring:stopAt:]
+    // keeps a backward match that starts exactly at the stop, and the wrapped pass used the
+    // initial start as its stop regardless of the offset, so with offset 0 the match at the
+    // starting coordinate (already reported by the first pass) was reported a second time.
+    // The forward equivalent (testFind_Offset0) never duplicated.
     func testFind_BackwardOffset0WrapsAroundWithoutDuplicatingStartMatch() {
-        XCTExpectFailure("Backward search with offset 0 reports the match at the start coordinate twice after wrapping (SearchEngine.swift stop position vs. LineBuffer findSubstring:stopAt: backward inclusivity)") {
-            assertSearchInLines(findLines,
-                                for: "de",
-                                forward: false,
-                                mode: .caseSensitiveSubstring,
-                                startX: 0,
-                                startY: 2,
-                                offset: 0,
-                                matches: [result(0, 2, 1, 2),
-                                          result(3, 0, 0, 1)])
-        }
+        assertSearchInLines(findLines,
+                            for: "de",
+                            forward: false,
+                            mode: .caseSensitiveSubstring,
+                            startX: 0,
+                            startY: 2,
+                            offset: 0,
+                            matches: [result(0, 2, 1, 2),
+                                      result(3, 0, 0, 1)])
     }
 
     // Suspected root cause: -[VT100ScreenMutableState runByTrimmingNullsFromRun:] in
