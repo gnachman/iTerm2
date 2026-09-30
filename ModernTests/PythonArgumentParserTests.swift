@@ -97,32 +97,24 @@ final class PythonArgumentParserTests: XCTestCase {
 
     // MARK: - Header nullability
 
-    // sources/API/iTermPythonArgumentParser.h declares script, module and statement as nonnull
-    // (they sit inside NS_ASSUME_NONNULL, since 8ebd2c753) but the implementation leaves them nil
-    // unless the matching argument was parsed. Swift trusts the annotation and bridges the nil
-    // NSString to “”, so a Swift caller cannot tell “absent” from “empty”. Once the header marks
-    // them nullable the `as String?` casts below become real optionals and these assertions pass.
+    // Regression: iTermPythonArgumentParser.h used to declare script, module and statement as
+    // nonnull although they are nil unless the matching argument was parsed, so Swift callers
+    // saw “” instead of nil. The properties are nullable now, so these casts are real optionals.
     func testScriptIsNilWhenNoScriptArgumentWasGiven() {
         let p = parser(["python", "-c", "statement"])
         XCTAssertNil(p.value(forKey: "script"))
-        XCTExpectFailure("iTermPythonArgumentParser.h declares script nonnull but it is nil when absent, so Swift sees an empty string") {
-            XCTAssertNil(p.script as String?)
-        }
+        XCTAssertNil(p.script as String?)
     }
 
     func testModuleIsNilWhenNoModuleArgumentWasGiven() {
         let p = parser(["python", "script"])
         XCTAssertNil(p.value(forKey: "module"))
-        XCTExpectFailure("iTermPythonArgumentParser.h declares module nonnull but it is nil when absent, so Swift sees an empty string") {
-            XCTAssertNil(p.module as String?)
-        }
+        XCTAssertNil(p.module as String?)
     }
 
     func testStatementIsNilWhenNoStatementArgumentWasGiven() {
         let p = parser(["python", "script"])
         XCTAssertNil(p.value(forKey: "statement"))
-        XCTExpectFailure("iTermPythonArgumentParser.h declares statement nonnull but it is nil when absent, so Swift sees an empty string") {
-            XCTAssertNil(p.statement as String?)
-        }
+        XCTAssertNil(p.statement as String?)
     }
 }
