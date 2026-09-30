@@ -652,8 +652,17 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
 
+    // MacVim, TextMate and BBEdit all split the query on & and =, percent-decode
+    // each half exactly once, and then treat the url value as a file URL whose
+    // path is taken verbatim. So the query value must be the raw file URL
+    // (file:// plus the unescaped path) percent-encoded exactly once, with the
+    // query delimiters & = + # and the escape character % themselves escaped.
+    // URLQueryAllowedCharacterSet leaves & = + and # unescaped, which would
+    // truncate the url value at an ampersand in the path, and encoding
+    // fileURL.absoluteString (already percent-escaped) would double-encode
+    // spaces as %2520.
     NSMutableCharacterSet *queryCharset = [[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy];
-    [queryCharset removeCharactersInString:@"/"];
+    [queryCharset removeCharactersInString:@"&=+#%"];
     NSString *(^percentEncoded)(NSString *) = ^NSString *(NSString *string) {
         return [string stringByAddingPercentEncodingWithAllowedCharacters:queryCharset];
     };
@@ -661,14 +670,15 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     urlComponents.host = @"open";
     urlComponents.path = nil;
     urlComponents.scheme = [iTermSemanticHistoryPrefsController schemeForEditor:identifier];
-    NSURL *fileURL = [NSURL fileURLWithPath:path];
-    urlComponents.percentEncodedQueryItems = @[ [NSURLQueryItem queryItemWithName:@"url"
-                                                                            value:percentEncoded(fileURL.absoluteString)] ];
+    NSString *fileURLString = [@"file://" stringByAppendingString:path];
+    NSArray<NSURLQueryItem *> *queryItems = @[ [NSURLQueryItem queryItemWithName:@"url"
+                                                                           value:percentEncoded(fileURLString)] ];
     if (lineNumber) {
         NSURLQueryItem *lineItem = [NSURLQueryItem queryItemWithName:@"line"
                                                                value:percentEncoded(lineNumber)];
-        urlComponents.percentEncodedQueryItems = [urlComponents.queryItems arrayByAddingObject:lineItem];
+        queryItems = [queryItems arrayByAddingObject:lineItem];
     }
+    urlComponents.percentEncodedQueryItems = queryItems;
     NSURL *url = urlComponents.URL;
     DLog(@"Open url %@", url);
     // BBEdit and TextMate share a URL scheme, so identifier disambiguates.

@@ -288,23 +288,18 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
                 workingDirectorySubstitutionKey: workingDirectory]
     }
 
-    // The URL the controller composes for scheme-based editors. Without a
-    // line number the slashes of the file URL are percent-encoded. Adding a
-    // line number goes through NSURLComponents.queryItems, which hands back
-    // the decoded value, so the file URL then appears with literal slashes.
-    // Both forms are what the legacy test expected. For a path made only of
-    // unreserved characters they are equivalent; see the Editor URL encoding
-    // tests below for paths where the two branches disagree.
+    // The URL the controller composes for scheme-based editors. The url query
+    // value is the raw file URL percent-encoded exactly once; for a path made
+    // only of unreserved characters that is the file URL verbatim, with
+    // literal slashes, whether or not a line number is present. (The legacy
+    // test expected %2F for the slashes in the no-line form; the decoded
+    // query value is the same.) See the Editor URL encoding tests below for
+    // paths that need escaping.
     private func editorURL(scheme: String, path: String, lineNumber: String?) -> URL? {
         if let lineNumber = lineNumber {
             return URL(string: "\(scheme)://open?url=file://\(path)&line=\(lineNumber)")
         }
-        var allowed = CharacterSet.urlQueryAllowed
-        allowed.remove(charactersIn: "/")
-        guard let encodedFile = "file://\(path)".addingPercentEncoding(withAllowedCharacters: allowed) else {
-            return nil
-        }
-        return URL(string: "\(scheme)://open?url=\(encodedFile)")
+        return URL(string: "\(scheme)://open?url=file://\(path)")
     }
 
     // MARK: - Get Full Path
@@ -816,24 +811,21 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
                         URLQueryItem(name: "line", value: "12")])
     }
 
-    // Suspected bug: iTermSemanticHistoryController.m
+    // Regression test: iTermSemanticHistoryController.m
     // -openFile:inEditorWithBundleId:lineNumber:columnNumber: (commit 8d5f938e1)
-    // percent-encodes fileURL.absoluteString, which already contains %20 for
-    // the space, so the space is double-encoded (%2520) when no line number is
-    // present. With a line number the code round-trips through
-    // NSURLComponents.queryItems, which decodes once, so that branch is
-    // single-encoded. The two branches disagree, and the double-encoded form
-    // makes TextMate look for “/file%20with%20space/x.txt”.
+    // used to percent-encode fileURL.absoluteString, which already contained
+    // %20 for the space, so the space was double-encoded (%2520) when no line
+    // number was present, and TextMate looked for “/file%20with%20space/x.txt”.
+    // The with-line branch went through NSURLComponents.queryItems and was
+    // single-encoded, so the two branches disagreed.
     func testEditorURLWithoutLineNumberEncodesSpaceOnce() {
         let components = editorURLComponents(identifier: macVimIdentifier,
                                              path: fileWithSpace,
                                              lineNumber: nil)
         XCTAssertEqual(components?.scheme, "mvim")
         XCTAssertEqual(components?.host, "open")
-        XCTExpectFailure("iTermSemanticHistoryController.m openFile:inEditorWithBundleId: double-encodes the file URL when there is no line number (%2520 for a space)") {
-            XCTAssertEqual(decodedQueryItems(components),
-                           [URLQueryItem(name: "url", value: "file://" + fileWithSpace)])
-        }
+        XCTAssertEqual(decodedQueryItems(components),
+                       [URLQueryItem(name: "url", value: "file://" + fileWithSpace)])
     }
 
     // Same root cause as testEditorURLWithoutLineNumberEncodesSpaceOnce, seen
@@ -845,43 +837,38 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
                                              lineNumber: nil)
         XCTAssertEqual(components?.scheme, "txmt")
         XCTAssertEqual(components?.host, "open")
-        XCTExpectFailure("iTermSemanticHistoryController.m openFile:inEditorWithBundleId: double-encodes the file URL when there is no line number (%2520 for a space)") {
-            XCTAssertEqual(decodedQueryItems(components),
-                           [URLQueryItem(name: "url", value: "file://" + fileWithSpace)])
-        }
+        XCTAssertEqual(decodedQueryItems(components),
+                       [URLQueryItem(name: "url", value: "file://" + fileWithSpace)])
     }
 
-    // Suspected bug: iTermSemanticHistoryController.m
+    // Regression test: iTermSemanticHistoryController.m
     // -openFile:inEditorWithBundleId:lineNumber:columnNumber: (commit 8d5f938e1)
-    // builds the url query value with NSCharacterSet.URLQueryAllowedCharacterSet
-    // (minus “/”), and that set allows “&” and “=”, so an ampersand in the path
-    // is emitted raw and splits the query: url=file:///file&/x.txt&line=12
-    // is read by every editor as url=file:///file plus a junk “/x.txt” item.
+    // used to build the url query value with
+    // NSCharacterSet.URLQueryAllowedCharacterSet (minus “/”), and that set
+    // allows “&” and “=”, so an ampersand in the path was emitted raw and split
+    // the query: url=file:///file&/x.txt&line=12 was read by every editor as
+    // url=file:///file plus a junk “/x.txt” item.
     func testEditorURLWithLineNumberEncodesAmpersand() {
         let components = editorURLComponents(identifier: macVimIdentifier,
                                              path: fileWithAmpersand,
                                              lineNumber: "12")
         XCTAssertEqual(components?.scheme, "mvim")
         XCTAssertEqual(components?.host, "open")
-        XCTExpectFailure("iTermSemanticHistoryController.m openFile:inEditorWithBundleId: leaves & unencoded in the url query item, splitting the query") {
-            XCTAssertEqual(decodedQueryItems(components),
-                           [URLQueryItem(name: "url", value: "file://" + fileWithAmpersand),
-                            URLQueryItem(name: "line", value: "12")])
-        }
+        XCTAssertEqual(decodedQueryItems(components),
+                       [URLQueryItem(name: "url", value: "file://" + fileWithAmpersand),
+                        URLQueryItem(name: "line", value: "12")])
     }
 
     // Same root cause as testEditorURLWithLineNumberEncodesAmpersand; the
-    // no-line-number branch uses the same character set.
+    // no-line-number branch used the same character set.
     func testEditorURLWithoutLineNumberEncodesAmpersand() {
         let components = editorURLComponents(identifier: macVimIdentifier,
                                              path: fileWithAmpersand,
                                              lineNumber: nil)
         XCTAssertEqual(components?.scheme, "mvim")
         XCTAssertEqual(components?.host, "open")
-        XCTExpectFailure("iTermSemanticHistoryController.m openFile:inEditorWithBundleId: leaves & unencoded in the url query item, splitting the query") {
-            XCTAssertEqual(decodedQueryItems(components),
-                           [URLQueryItem(name: "url", value: "file://" + fileWithAmpersand)])
-        }
+        XCTAssertEqual(decodedQueryItems(components),
+                       [URLQueryItem(name: "url", value: "file://" + fileWithAmpersand)])
     }
 
     // Note there is no test for textmate 2 because it is not directly selectable from the menu and it
