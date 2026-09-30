@@ -308,7 +308,8 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
                              KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE,
                              KEY_SUBTITLE, KEY_CUSTOM_LOCALE, KEY_INITIAL_URL,
                              KEY_BROWSER_EXTENSIONS_ROOT,
-                             KEY_PROGRESS_BAR_COLOR_SCHEME];
+                             KEY_PROGRESS_BAR_COLOR_SCHEME,
+                             KEY_POST_PROCESSING_SHADER];
 
         NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
                             KEY_LINK_COLOR, KEY_MATCH_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,
@@ -802,6 +803,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
             KEY_INITIAL_USE_TRANSPARENCY:                           @"Whether new sessions start with transparency enabled",
             KEY_BLUR:                                               @"Whether to blur the background behind transparent windows",
             KEY_BLUR_RADIUS:                                        @"Radius of background blur effect",
+            KEY_POST_PROCESSING_SHADER:                             @"Shader applied to the rendered terminal: empty for none, a built-in name, or a path to a shader file",
             KEY_BACKGROUND_IMAGE_MODE:                              @"How background image is displayed: stretch, tile, scale, or fill",
             KEY_BACKGROUND_IMAGE_SOURCE_MODE:                       @"Whether background uses a single image or rotates images from a folder",
             KEY_BACKGROUND_IMAGE_LOCATION:                          @"Path to background image file",
@@ -1157,6 +1159,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
                   KEY_INITIAL_USE_TRANSPARENCY: @YES,
                   KEY_BLUR: @NO,
                   KEY_BLUR_RADIUS: @2.0,
+                  KEY_POST_PROCESSING_SHADER: @"",
                   KEY_BACKGROUND_IMAGE_MODE: @(iTermBackgroundImageModeStretch),
                   KEY_BACKGROUND_IMAGE_SOURCE_MODE: @(iTermBackgroundImageSourceModeSingleImage),
                   KEY_BACKGROUND_IMAGE_LOCATION: [NSNull null],

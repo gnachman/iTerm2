@@ -1423,6 +1423,19 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Blur Radius", value)
 
+    def set_post_processing_shader(self, value: str):
+        """
+        Sets the shader applied to the rendered terminal when GPU rendering is
+        in use.
+
+        Use an empty string for none, the name of a built-in shader such as
+        "amber-crt", or the path to a Metal shader file that defines
+        mainImage().
+
+        :param value: A str
+        """
+        return self._simple_set("Post-Processing Shader", value)
+
     def set_background_image_mode(self, value: BackgroundImageMode):
         """
         Sets how the background image is drawn.
@@ -3480,6 +3493,19 @@ class WriteOnlyProfile:
         The value is between 0 and 30.
         """
         return await self._async_simple_set("Blur Radius", value)
+
+    async def async_set_post_processing_shader(self, value: str):
+        """
+        Sets the shader applied to the rendered terminal when GPU rendering is
+        in use.
+
+        Use an empty string for none, the name of a built-in shader such as
+        "amber-crt", or the path to a Metal shader file that defines
+        mainImage().
+
+        :param value: A str
+        """
+        return await self._async_simple_set("Post-Processing Shader", value)
 
     async def async_set_background_image_mode(self, value: BackgroundImageMode):
         """
@@ -5687,6 +5713,17 @@ class Profile(WriteOnlyProfile):
         :returns: A float
         """
         return self._simple_get("Blur Radius")
+
+    @property
+    def post_processing_shader(self) -> str:
+        """
+        Returns the shader applied to the rendered terminal when GPU rendering
+        is in use: an empty string for none, the name of a built-in shader,
+        or the path to a shader file.
+
+        :returns: A str
+        """
+        return self._simple_get("Post-Processing Shader")
 
     @property
     def background_image_mode(self) -> BackgroundImageMode:

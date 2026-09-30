@@ -54,6 +54,8 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     IBOutlet NSButton *_useBlur;
     IBOutlet NSButton *_initialUseTransparency;
     IBOutlet NSSlider *_blurRadius;
+    IBOutlet NSPopUpButton *_postProcessingShader;
+    IBOutlet NSTextField *_postProcessingShaderPath;
     IBOutlet NSButton *_useBackgroundImage;
     IBOutlet NSPopUpButton *_backgroundImageSourceMode;
     IBOutlet NSTextField *_backgroundImageLabel;  // text swaps between "Image:" and "Folder:"
@@ -188,6 +190,8 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
         strongSelf->_blurRadius.enabled = (strongSelf->_useBlur.state == NSControlStateValueOn) && haveTransparency;
         [strongSelf updateBlurRadiusWarning];
     };
+
+    [self definePostProcessingShaderControl];
 
     _blurRadius.maxValue = iTermMaxBlurRadius();
     info = [self defineControl:_blurRadius
@@ -757,6 +761,100 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
         [self setInteger:minimumInterval forKey:KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL];
         _backgroundImageFolderIntervalField.integerValue = minimumInterval;
     }
+}
+
+#pragma mark - Post-Processing Shader
+
+// Tags of items in the shader popup.
+typedef NS_ENUM(NSInteger, iTermShaderPopupTag) {
+    iTermShaderPopupTagNone = 0,
+    iTermShaderPopupTagAmberCRT = 1,
+    iTermShaderPopupTagCustom = 2,
+    iTermShaderPopupTagChooseFile = 3
+};
+
+// The profile value for the built-in CRT shader. Names a bundled resource.
+static NSString *const iTermAmberCRTShaderName = @"amber-crt";  // Localization unneeded
+
+- (void)definePostProcessingShaderControl {
+    __weak __typeof(self) weakSelf = self;
+    [self defineControl:_postProcessingShader
+                    key:KEY_POST_PROCESSING_SHADER
+            displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.Shader", nil, [NSBundle mainBundle], @"Shader applied to the terminal", @"Display name for the popup that picks a post-processing shader, such as a CRT effect, for the terminal.")
+                   type:kPreferenceInfoTypePopup
+         settingChanged:^(id sender) {
+        [weakSelf postProcessingShaderPopupDidChange];
+    }
+                 update:^BOOL{
+        [weakSelf updatePostProcessingShaderControls];
+        return YES;
+    }];
+}
+
+- (void)postProcessingShaderPopupDidChange {
+    switch ((iTermShaderPopupTag)_postProcessingShader.selectedTag) {
+        case iTermShaderPopupTagNone:
+            [self setString:@"" forKey:KEY_POST_PROCESSING_SHADER];
+            break;
+        case iTermShaderPopupTagAmberCRT:
+            [self setString:iTermAmberCRTShaderName forKey:KEY_POST_PROCESSING_SHADER];
+            break;
+        case iTermShaderPopupTagCustom:
+            // Already the current shader.
+            break;
+        case iTermShaderPopupTagChooseFile:
+            [self choosePostProcessingShaderFile];
+            break;
+    }
+    [self updatePostProcessingShaderControls];
+}
+
+- (void)updatePostProcessingShaderControls {
+    NSString *shader = [self stringForKey:KEY_POST_PROCESSING_SHADER] ?: @"";
+    const BOOL isCustom = shader.length > 0 && ![shader isEqualToString:iTermAmberCRTShaderName];
+    NSMenuItem *customItem = [_postProcessingShader.menu itemWithTag:iTermShaderPopupTagCustom];
+    customItem.hidden = !isCustom;
+    customItem.title = isCustom ? shader.lastPathComponent : @"";
+    iTermShaderPopupTag tag = iTermShaderPopupTagNone;
+    if (isCustom) {
+        tag = iTermShaderPopupTagCustom;
+    } else if (shader.length > 0) {
+        tag = iTermShaderPopupTagAmberCRT;
+    }
+    [_postProcessingShader selectItemWithTag:tag];
+    _postProcessingShaderPath.hidden = !isCustom;
+    _postProcessingShaderPath.stringValue = isCustom ? [shader stringByAbbreviatingWithTildeInPath] : @"";
+    _postProcessingShaderPath.toolTip = isCustom ? shader : nil;
+}
+
+- (void)choosePostProcessingShaderFile {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseDirectories = NO;
+    panel.canChooseFiles = YES;
+    panel.allowsMultipleSelection = NO;
+    panel.message = NSLocalizedStringWithDefaultValue(@"Profiles.Window.ShaderPickerMessage", nil, [NSBundle mainBundle], @"Choose a Metal shader file that defines mainImage().", @"Prompt in the open panel for choosing a post-processing shader file. mainImage() is the name of a function and should not be translated.");
+    NSMutableArray<UTType *> *types = [NSMutableArray array];
+    for (NSString *extension in @[ @"metal", @"metalsrc" ]) {  // Localization unneeded
+        UTType *type = [UTType typeWithFilenameExtension:extension];
+        if (type) {
+            [types addObject:type];
+        }
+    }
+    panel.allowedContentTypes = types;
+
+    __weak __typeof(self) weakSelf = self;
+    [panel beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse result) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        NSString *path = panel.URLs.firstObject.path;
+        if (result == NSModalResponseOK && path.length > 0) {
+            [strongSelf setString:path forKey:KEY_POST_PROCESSING_SHADER];
+        }
+        // Either way, show the current shader rather than “Choose Shader File…”.
+        [strongSelf updatePostProcessingShaderControls];
+    }];
 }
 
 - (void)updateBlurRadiusWarning {
