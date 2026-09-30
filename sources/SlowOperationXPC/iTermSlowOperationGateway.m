@@ -269,7 +269,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 
 - (void)exfiltrateEnvironmentVariableNamed:(NSString *)name
                                      shell:(NSString *)shell
-                                completion:(void (^)(NSString * _Nonnull))completion {
+                                completion:(void (^)(NSString * _Nullable))completion {
     // Non-interactive: PATH/SSH_AUTH_SOCK come from the exported environment, so
     // there's no need to pay the interactive rc-sourcing cost.
     [[_connectionToService remoteObjectProxy] runShellScript:[NSString stringWithFormat:@"echo $%@", name]

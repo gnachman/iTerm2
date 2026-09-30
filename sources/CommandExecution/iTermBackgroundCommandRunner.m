@@ -124,7 +124,7 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
     DLog(@"Exfiltrate path");
     [[iTermSlowOperationGateway sharedInstance] exfiltrateEnvironmentVariableNamed:@"PATH"
                                                                              shell:self.shell
-                                                                        completion:^(NSString * _Nonnull value) {
+                                                                        completion:^(NSString * _Nullable value) {
         self.path = value ?: @"";
         DLog(@"%@", self);
         dispatch_async(dispatch_get_main_queue(), ^{

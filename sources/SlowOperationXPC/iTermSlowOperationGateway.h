@@ -52,7 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 // runCommandInUserShell:interactive:YES:completion:.
 - (void)exfiltrateEnvironmentVariableNamed:(NSString *)name
                                      shell:(NSString *)shell
-                                completion:(void (^)(NSString *value))completion;
+                                completion:(void (^)(NSString * _Nullable value))completion;
 
 // Runs a single command in the user's login shell (non-interactive). rc/banner
 // output is stripped; the reply is the command's own stdout, delivered on the
