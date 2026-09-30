@@ -14520,6 +14520,48 @@
         }
       }
     },
+    "AdvancedSetting.cursorAnimationInputWindow" : {
+      "comment" : "Advanced setting: cursorAnimationInputWindow",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn animierte Cursorbewegung aktiviert ist, nur Bewegungen animieren, die innerhalb dieser Anzahl von Sekunden nach Ihrem letzten Tastendruck oder Ihrer letzten Mausaktion erfolgen.\nDadurch hinterlassen Programme, die den Bildschirm selbstständig neu zeichnen, wie etwa top, keine Streifen auf dem Bildschirm. Erhöhen Sie den Wert, wenn Sie eine langsame Verbindung verwenden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When animated cursor movement is enabled, only animate a movement that happens within this many seconds of your last keystroke or mouse action.\nThis keeps programs that redraw the screen on their own, like top, from drawing streaks across the screen. Raise it if you use a slow connection."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カーソル移動のアニメーションが有効な場合、最後のキー入力またはマウス操作からこの秒数以内に起きた移動のみアニメーションを実行します。\nこれにより、top のように自動で画面を再描画するプログラムが画面上に筋を描くのを防ぎます。接続が遅い場合は値を大きくしてください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando o movimento animado do cursor está ativado, só animar um movimento que ocorra dentro deste número de segundos após sua última tecla pressionada ou ação do mouse.\nIsso evita que programas que redesenham a tela por conta própria, como o top, deixem rastros pela tela. Aumente o valor se você usa uma conexão lenta."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Когда включена анимация перемещения курсора, анимировать только перемещения, произошедшие в течение указанного числа секунд после последнего нажатия клавиши или действия мышью.\nЭто не даёт программам, которые сами перерисовывают экран, например top, оставлять полосы на экране. Увеличьте значение, если у вас медленное соединение."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当启用动画光标移动时，只对在您最后一次按键或鼠标操作后这么多秒内发生的移动执行动画。\n这可以防止 top 之类自行重绘屏幕的程序在屏幕上划出拖影。如果您使用的连接较慢，请调大此值。"
+          }
+        }
+      }
+    },
     "AdvancedSetting.cursorAnimationMinDistance" : {
       "comment" : "Advanced setting: cursorAnimationMinDistance",
       "extractionState" : "extracted_with_value",
