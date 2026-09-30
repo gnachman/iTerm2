@@ -16,6 +16,11 @@
 - (BOOL)it_isTerminalResponder;
 // FFM won't cause focus to be taken to controlling terminal except on mouse exit.
 - (BOOL)it_focusFollowsMouseImmune;
+// Override to return YES while this responder should keep keyboard focus even when FFM would
+// otherwise move it to another pane or window.
+- (BOOL)it_focusFollowsMouseHoldsFocus;
+// YES if the receiver or one of its superviews holds focus against FFM.
+- (BOOL)it_focusFollowsMouseHoldsFocusInHierarchy;
 @end
 
 @interface NSResponder (iTermFirstResponder)

@@ -1559,7 +1559,15 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     return _delegate.desiredRightExtra;
 }
 
-- (SessionViewTrackingMode)desiredTrackingMode {
+- (NSView *)focusedImmuneOverlay {
+    NSView *view = [NSView castFrom:self.window.firstResponder];
+    while (view != nil && view.superview != self) {
+        view = view.superview;
+    }
+    return [view it_focusFollowsMouseImmune] ? view : nil;
+}
+
+- (SessionViewTrackingMode)desiredTrackingModeWithImmuneOverlay:(NSView *)immuneOverlay {
     DLog(@"desiredTrackingMode %@", self);
     if (![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
         DLog(@"ffm off");
@@ -1570,23 +1578,13 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         DLog(@"mouse in terminal");
         return SessionViewTrackingModeNormal;
     }
-    // Walk firstResponderView up to the children of SessionView.
-    while (firstResponderView != nil && firstResponderView.superview != self) {
-        firstResponderView = firstResponderView.superview;
-    }
-    if (firstResponderView == nil) {
-        DLog(@"first responder not subview of SessionView");
-        return SessionViewTrackingModeNormal;
-    }
-    const BOOL firstResponderHasImmunity = [firstResponderView it_focusFollowsMouseImmune];
-    if (!firstResponderHasImmunity) {
+    if (immuneOverlay == nil) {
         DLog(@"Mouse in non-immune view %@", firstResponderView);
         return SessionViewTrackingModeNormal;
     }
     const NSPoint mouseLocation = [self.window convertPointFromScreen:[NSEvent mouseLocation]];
-    const NSRect firstResponderRect = [firstResponderView convertRect:firstResponderView.bounds
-                                                               toView:nil];
-    const BOOL mouseInFirstResponder = NSPointInRect(mouseLocation, firstResponderRect);
+    const NSRect immuneOverlayRect = [immuneOverlay convertRect:immuneOverlay.bounds toView:nil];
+    const BOOL mouseInImmuneOverlay = NSPointInRect(mouseLocation, immuneOverlayRect);
     NSView *hitTest = [self.window.contentView hitTest:[self.window.contentView convertPoint:mouseLocation fromView:nil]];
     const BOOL mouseInTerminal = hitTest.it_isTerminalResponder;
     if (mouseInTerminal) {
@@ -1595,8 +1593,8 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         // Don't track any rects.
         return SessionViewTrackingModeTrackTerminalFragile;
     }
-    if (mouseInFirstResponder) {
-        DLog(@"Mouse in first responder %@ - track only first responder", firstResponderView);
+    if (mouseInImmuneOverlay) {
+        DLog(@"Mouse in immune overlay %@ - track its outer bounds", immuneOverlay);
         // Mouse is in the subview of the terminal. Make terminal first responder when it exits.
         return SessionViewTrackingModeTrackFirstResponderFragile;
     }
@@ -1614,7 +1612,11 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (void)updateTrackingAreasOnMouseExit:(BOOL)onMouseExit {
     [super updateTrackingAreas];
-    if ([self window] && (onMouseExit || [self shouldUpdateTrackingAreas])) {
+    NSView *immuneOverlay = onMouseExit ? nil : [self focusedImmuneOverlay];
+    const SessionViewTrackingMode mode = onMouseExit ? SessionViewTrackingModeNormal :
+        [self desiredTrackingModeWithImmuneOverlay:immuneOverlay];
+    if ([self window] && (onMouseExit || [self shouldUpdateTrackingAreasForMode:mode
+                                                                  immuneOverlay:immuneOverlay])) {
         while (self.trackingAreas.count) {
             [self removeTrackingArea:self.trackingAreas[0]];
         }
@@ -1622,7 +1624,6 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         iTermTrackingAreaSpec specs[SessionViewNumberOfTrackingAreas];
         [self getDesiredTrackingRectFrames:specs];
 
-        const SessionViewTrackingMode mode = onMouseExit ? SessionViewTrackingModeNormal : [self desiredTrackingMode];
         switch (mode) {
             case SessionViewTrackingModeTrackTerminalFragile:
                 DLog(@"falling through");
@@ -1638,9 +1639,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
                 break;
             case SessionViewTrackingModeTrackFirstResponderFragile: {
                 DLog(@"Create tracking area for first responder view");
-                // Mouse is in find view and find view is first responder.
-                NSView *firstResponderView = [NSView castFrom:self.window.firstResponder];
-                const NSRect rect = [self convertRect:firstResponderView.bounds fromView:firstResponderView];
+                const NSRect rect = [self convertRect:immuneOverlay.bounds fromView:immuneOverlay];
                 NSTrackingArea *trackingArea =
                     [[NSTrackingArea alloc] initWithRect:rect
                                                  options:(NSTrackingMouseEnteredAndExited |
@@ -1654,12 +1653,23 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     }
 }
 
-- (BOOL)shouldUpdateTrackingAreas {
-    iTermTrackingAreaSpec specs[SessionViewNumberOfTrackingAreas];
+- (BOOL)shouldUpdateTrackingAreasForMode:(SessionViewTrackingMode)desiredMode
+                           immuneOverlay:(NSView *)immuneOverlay {
+    if (desiredMode == SessionViewTrackingModeTrackFirstResponderFragile) {
+        if (self.trackingAreas.count != 1) {
+            return YES;
+        }
+        NSTrackingArea *area = self.trackingAreas.firstObject;
+        const NSRect expectedRect = [self convertRect:immuneOverlay.bounds fromView:immuneOverlay];
+        return !NSEqualRects(area.rect, expectedRect) ||
+            area.options != (NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways) ||
+            [area.userInfo[@"mode"] unsignedIntegerValue] != desiredMode;
+    }
     if (self.trackingAreas.count != SessionViewNumberOfTrackingAreas) {
         DLog(@"Must initialize tracking areas");
         return YES;
     }
+    iTermTrackingAreaSpec specs[SessionViewNumberOfTrackingAreas];
     [self getDesiredTrackingRectFrames:specs];
     for (NSInteger i = 0; i < SessionViewNumberOfTrackingAreas; i++) {
         NSTrackingArea *area = self.trackingAreas[i];
@@ -1669,6 +1679,10 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         }
         if (area.options != specs[i].options) {
             DLog(@"Found unequal options");
+            return YES;
+        }
+        if ([area.userInfo[@"mode"] unsignedIntegerValue] != desiredMode) {
+            DLog(@"Found unequal tracking mode");
             return YES;
         }
     }
@@ -1682,7 +1696,18 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (void)mouseEntered:(NSEvent *)theEvent {
     DLog(@"mouseEntered %@", self);
-    switch ([theEvent.trackingArea.userInfo[@"mode"] unsignedIntegerValue]) {
+    if (![self.trackingAreas containsObject:theEvent.trackingArea]) {
+        DLog(@"Ignore entry from removed tracking area");
+        return;
+    }
+    const SessionViewTrackingMode eventMode = [theEvent.trackingArea.userInfo[@"mode"] unsignedIntegerValue];
+    const SessionViewTrackingMode currentMode = [self desiredTrackingModeWithImmuneOverlay:[self focusedImmuneOverlay]];
+    if (eventMode != currentMode) {
+        DLog(@"Ignore stale entry from mode %ld; current mode is %ld", (long)eventMode, (long)currentMode);
+        [self updateTrackingAreas];
+        return;
+    }
+    switch (eventMode) {
         case SessionViewTrackingModeTrackTerminalFragile:
         case SessionViewTrackingModeTrackFirstResponderFragile:
             DLog(@"Ignore");
@@ -1696,7 +1721,12 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (void)mouseExited:(NSEvent *)theEvent {
     DLog(@"mouseExited %@", self);
-    switch ([theEvent.trackingArea.userInfo[@"mode"] unsignedIntegerValue]) {
+    const SessionViewTrackingMode eventMode = [theEvent.trackingArea.userInfo[@"mode"] unsignedIntegerValue];
+    if (![self.trackingAreas containsObject:theEvent.trackingArea]) {
+        DLog(@"Ignore exit from removed tracking area");
+        return;
+    }
+    switch (eventMode) {
         case SessionViewTrackingModeTrackFirstResponderFragile:
         case SessionViewTrackingModeTrackTerminalFragile:
             DLog(@"Mouse exited with mode immune or none");
