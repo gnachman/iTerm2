@@ -1564,6 +1564,25 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return dx > 0 && dx <= cellWidth * (maxCells + 0.5);  // Allow small tolerance
 }
 
+// The smear exists so your eye can follow the cursor after a jump you caused. A
+// program that redraws the screen on its own, like top, moves the cursor just as
+// far without any input, and a frame drawn in the middle of that redraw would
+// smear a streak across the screen. So only animate shortly after user input.
+// This gate varies from frame to frame, so it only decides whether to start an
+// animation, never whether to track the cursor. Issue 13034.
+- (BOOL)smearGateIsOpen {
+    if (self.animateMovementOnlyInInteractiveApps && !self.delegate.textViewInInteractiveApplication) {
+        DLog(@"Not in interactive app");
+        return NO;
+    }
+    const NSTimeInterval sinceInput = [self.delegate textViewTimeSinceLastUserInput];
+    if (sinceInput > [iTermAdvancedSettingsModel cursorAnimationInputWindow]) {
+        DLog(@"No user input in the last %0.2f seconds", sinceInput);
+        return NO;
+    }
+    return YES;
+}
+
 - (void)smearCursorIfNeededWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper {
     [self smearCursorIfNeededWithDrawingHelper:drawingHelper
                                     legacyView:nil
@@ -1584,13 +1603,17 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         return;
     }
 
-    const BOOL smearEnabled = (self.animateMovement &&
-                               !(self.animateMovementOnlyInInteractiveApps &&
-                                 !self.delegate.textViewInInteractiveApplication));
+    // animateMovement is the profile switch for “Animate large movements”. It
+    // alone decides whether cursor positions are tracked from frame to frame;
+    // everything that can change while the session runs lives in the gate.
+    const BOOL smearPreferred = self.animateMovement;
     const BOOL smoothSlideEnabled = self.cursorSmoothSlide;
     const BOOL isLegacyPath = (legacyView != nil);
 
-    if (!smearEnabled && !smoothSlideEnabled) {
+    // Keep tracking _previousCursorFrame whenever the smear is preferred, even
+    // while the gate is closed, so the first animation after it reopens starts
+    // from where the cursor actually was on the previous frame.
+    if (!smearPreferred && !smoothSlideEnabled) {
         DLog(@"No cursor animation enabled");
         return;
     }
@@ -1635,7 +1658,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                 // Metal renderer: track animation state, Metal will draw cursor at interpolated position
                 [_cursorSlideAnimator beginMetalAnimationFrom:from to:to];
             }
-        } else if (smearEnabled) {
+        } else if (smearPreferred && [self smearGateIsOpen]) {
             [self.delegate textViewSmearCursorFrom:from
                                                 to:to
                                              color:drawingHelper.cursorColor];

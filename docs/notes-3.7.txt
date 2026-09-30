@@ -867,3 +867,9 @@ Bug Fixes:
   double quotes” now describes that setting. It
   used to repeat the tooltip for command
   selection. Issue 13086.
+- The “Animate large movements” cursor option no
+  longer streaks a cursor-colored trail across
+  the screen when a program such as top redraws
+  the screen on its own. The animation now plays
+  only for cursor jumps that follow your own
+  keyboard or mouse input.

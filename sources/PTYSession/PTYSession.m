@@ -475,6 +475,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // Time since reference date when last keypress was received.
     NSTimeInterval _lastInput;
 
+    // Monotonic (it_timeSinceBoot) time the user last sent input to the session.
+    // Bumped by noteUserInput. The write path treats a broadcastable write as a
+    // keystroke (it silences the bell and scrolls to the bottom), and this
+    // piggybacks on the same convention, so keystrokes, pastes, snippets,
+    // Composer commands, and the like are covered without each caller opting in.
+    // User routes that deliberately do not broadcast (mouse reports, password
+    // entry, the companion keyboard) call noteUserInput explicitly. Never bumped
+    // by anti-idle keepalives. Zero until the first input. Drives the cursor
+    // animation gate.
+    NSTimeInterval _lastUserInput;
+
     // Time since reference date when the tab label was last updated.
     NSTimeInterval _lastUpdate;
 
@@ -4222,6 +4233,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             // beautiful here, but in that case we want to turn off the bell and scroll to the
             // bottom.
             [self setBell:NO];
+            [self noteUserInput];
             PTYScroller *verticalScroller = [_view.scrollview ptyVerticalScroller];
             [verticalScroller setUserScroll:NO];
         }
@@ -4446,6 +4458,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // write path stay in sync.
 - (void)didSendKeystrokeToTmuxClient {
     [self setBell:NO];
+    [self noteUserInput];
     PTYScroller *ptys = (PTYScroller *)[_view.scrollview verticalScroller];
     [ptys setUserScroll:NO];
 }
@@ -12169,6 +12182,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             }
             NSString *text = [NSString castFrom:action.parameter];
             if (text.length > 0) {
+                // This write does not broadcast, so the write path will not
+                // note it as user input; do so here.
+                [self noteUserInput];
                 [self writeTask:[self escapedText:text mode:action.vimEscaping]
                        encoding:_screen.terminalEncoding
                   forceEncoding:NO
@@ -14138,6 +14154,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             // letter, emoji, dead-key result). Its fallback key code would be mis-encoded
             // by the CSI-u key mapper, so write the correct character literally - but
             // through the same broadcast-suppressed, already-gated path as the mapped keys.
+            [self noteUserInput];
             [self writeTaskNoBroadcast:literalText];
         } else {
             // Route through the real key-down path so profile key bindings (e.g. Delete
@@ -14226,6 +14243,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)writeMouseReport:(NSData *)data {
+    [self noteUserInput];
     if ([iTermAdvancedSettingsModel autodetectMouseReportingStuck] &&
         ![iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration] &&
         ![self hasAnnouncementWithIdentifier:kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier]) {
@@ -14804,6 +14822,21 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)textViewInInteractiveApplication {
     return _screen.terminalSoftAlternateScreenMode;
+}
+
+// Records that the user just sent input to this session. Called by the write
+// path for broadcastable writes and explicitly by no-broadcast user routes.
+// See _lastUserInput.
+- (void)noteUserInput {
+    _lastUserInput = [NSDate it_timeSinceBoot];
+    DLog(@"User input noted for %@", self);
+}
+
+- (NSTimeInterval)textViewTimeSinceLastUserInput {
+    if (_lastUserInput == 0) {
+        return INFINITY;
+    }
+    return [NSDate it_timeSinceBoot] - _lastUserInput;
 }
 
 - (iTermEmulationLevel)textViewTerminalStateEmulationLevel {
@@ -23101,6 +23134,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 #pragma mark - iTermEchoProbeDelegate
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string {
+    [self noteUserInput];
     if (self.tmuxMode == TMUX_GATEWAY) {
         return;
     }
@@ -23115,6 +23149,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data {
+    [self noteUserInput];
     if (self.tmuxMode == TMUX_GATEWAY) {
         return;
     }

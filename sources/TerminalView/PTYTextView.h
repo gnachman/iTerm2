@@ -275,6 +275,10 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewShouldDrawRect;
 - (void)textViewDidHighlightMark;
 - (BOOL)textViewInInteractiveApplication;
+// Seconds since the user last sent input to this session by any route: a
+// keystroke, paste, snippet, Composer command, mouse report, or a mouse action
+// that sends keystrokes. INFINITY if that has never happened.
+- (NSTimeInterval)textViewTimeSinceLastUserInput;
 - (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (BOOL)textViewCanToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (iTermEmulationLevel)textViewTerminalStateEmulationLevel;
