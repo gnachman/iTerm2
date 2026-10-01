@@ -396,6 +396,10 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- Find now matches searches with spaces in text
+  where the program moved the cursor between
+  words instead of printing spaces, as Claude
+  Code does. Issue 13101.
 - Make Text Bigger works again when you type it
   as ⌘⇧= (the way you type ⌘+). Since 3.7.0,
   that keystroke opened the Clippings panel

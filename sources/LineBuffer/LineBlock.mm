@@ -2316,6 +2316,23 @@ firstSurvivorPartialOffset:(int *)firstSurvivorPartialOffset {
                                    backingStore:&charHaystack
                                          deltas:&deltas];
 
+    // A cell the cursor skipped over holds a null but is drawn and copied as a space, so search
+    // it as one. Trailing nulls are not part of the line's text and stay as they are.
+    int lastNonNull = (int)haystack.length - 1;
+    while (lastNonNull >= 0 && charHaystack[lastNonNull] == 0) {
+        lastNonNull--;
+    }
+    BOOL replacedNull = NO;
+    for (int i = 0; i < lastNonNull; i++) {
+        if (charHaystack[i] == 0) {
+            charHaystack[i] = ' ';
+            replacedNull = YES;
+        }
+    }
+    if (replacedNull) {
+        haystack = CharArrayToString(charHaystack, (int)haystack.length);
+    }
+
 #ifdef DEBUG_SEARCH
     SearchLog(@"Searching rawline %@", [self prettyRawLine:_characterBuffer.pointer + rawOffset
                                                     length:raw_line_length]);
