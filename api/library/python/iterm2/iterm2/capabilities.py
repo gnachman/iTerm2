@@ -250,3 +250,15 @@ def check_supports_session_note(connection):
             "This version of iTerm2 is too old to read or write Session " +
             "Notes via the Python API. You should upgrade to run this " +
             "script.")
+
+def supports_browser_scripting(connection):
+    """Can you run JavaScript in, or enable Web Inspector for, browser sessions?"""
+    min_ver = (1, 21)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_browser_scripting(connection):
+    if not supports_browser_scripting(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to run JavaScript in browser " +
+            "sessions via the Python API. You should upgrade to run this " +
+            "script.")

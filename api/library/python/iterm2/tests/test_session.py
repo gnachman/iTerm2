@@ -172,3 +172,49 @@ def test_set_session_note_requires_app_support():
 
     with pytest.raises(iterm2.capabilities.AppVersionTooOld):
         asyncio.run(session.async_set_session_note(text="remember this"))
+
+
+def test_eval_javascript_invokes_builtin_and_decodes_json(monkeypatch):
+    """The page's JSON-encoded result comes back as a Python value."""
+    session, connection = make_session(protocol_version=(1, 21))
+    calls = []
+
+    async def async_invoke_method(actual_connection, session_id, invocation, timeout):
+        calls.append((actual_connection, session_id, invocation, timeout))
+        return json.dumps({"title": "Example Domain", "count": 2})
+
+    monkeypatch.setattr(iterm2.rpc, "async_invoke_method", async_invoke_method)
+
+    result = asyncio.run(session.async_eval_javascript('return "a" + "b"'))
+
+    assert result == {"title": "Example Domain", "count": 2}
+    assert calls == [(connection, "session-id",
+                      'iterm2.browser_eval_js(js: "return \\"a\\" + \\"b\\"")', -1)]
+
+
+def test_set_browser_inspectable_sends_a_number(monkeypatch):
+    """A bare Python True would be parsed as a variable reference, so 1/0 is sent."""
+    session, _ = make_session(protocol_version=(1, 21))
+    invocations = []
+
+    async def async_invoke_method(actual_connection, session_id, invocation, timeout):
+        invocations.append(invocation)
+        return True
+
+    monkeypatch.setattr(iterm2.rpc, "async_invoke_method", async_invoke_method)
+
+    asyncio.run(session.async_set_browser_inspectable(True))
+    asyncio.run(session.async_set_browser_inspectable(False))
+
+    assert invocations == ["iterm2.browser_set_inspectable(enabled: 1)",
+                           "iterm2.browser_set_inspectable(enabled: 0)"]
+
+
+def test_browser_scripting_requires_app_support():
+    """An iTerm2 too old for browser scripting reports that, not an RPC failure."""
+    session, _ = make_session(protocol_version=(1, 20))
+
+    with pytest.raises(iterm2.capabilities.AppVersionTooOld):
+        asyncio.run(session.async_eval_javascript("return 1"))
+    with pytest.raises(iterm2.capabilities.AppVersionTooOld):
+        asyncio.run(session.async_set_browser_inspectable(True))
