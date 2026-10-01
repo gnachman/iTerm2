@@ -871,6 +871,87 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
                        [URLQueryItem(name: "url", value: "file://" + fileWithAmpersand)])
     }
 
+    // After the editor decodes the url query value once it parses the result as a URL (MacVim
+    // does [NSURL URLWithString:] on it and opens its path). So the once-decoded value has to be
+    // a well-formed file URL, which means the path inside it must itself be percent-escaped:
+    // exactly what -[NSURL fileURLWithPath:].absoluteString produces. Sending the raw path
+    // (commit 07b59768a) breaks any path that contains a character with URL meaning:
+    // a “#” or “?” becomes a fragment or query and truncates the path, and a literal “%XX” is
+    // decoded a second time. Spaces only work because URLWithString: on macOS 14 or later
+    // escapes them itself.
+    private func pathOpenedByEditorAfterOneDecode(_ path: String,
+                                                  lineNumber: String? = nil,
+                                                  file: StaticString = #filePath,
+                                                  line: UInt = #line) -> String? {
+        let components = editorURLComponents(identifier: macVimIdentifier,
+                                             path: path,
+                                             lineNumber: lineNumber,
+                                             file: file,
+                                             line: line)
+        guard let value = decodedQueryItems(components)?.first(where: { $0.name == "url" })?.value else {
+            XCTFail("No url query item", file: file, line: line)
+            return nil
+        }
+        guard let fileURL = URL(string: value), fileURL.isFileURL else {
+            XCTFail("Decoded url value is not a file URL: \(value)", file: file, line: line)
+            return nil
+        }
+        return fileURL.path
+    }
+
+    func testEditorURLValueIsAFileURLForPathWithHash() {
+        let path = "/dir/a#b.txt"
+        // Build the URL outside the expected-failure block so only the path comparison is
+        // allowed to fail.
+        let opened = pathOpenedByEditorAfterOneDecode(path)
+        XCTExpectFailure("Semantic History sends the raw path in the url query value, so after one decode it is not a well-formed file URL (commit 07b59768a)") {
+            XCTAssertEqual(opened, path)
+        }
+    }
+
+    func testEditorURLValueIsAFileURLForPathWithQuestionMark() {
+        let path = "/dir/a?b.txt"
+        // Build the URL outside the expected-failure block so only the path comparison is
+        // allowed to fail.
+        let opened = pathOpenedByEditorAfterOneDecode(path)
+        XCTExpectFailure("Semantic History sends the raw path in the url query value, so after one decode it is not a well-formed file URL (commit 07b59768a)") {
+            XCTAssertEqual(opened, path)
+        }
+    }
+
+    func testEditorURLValueIsAFileURLForPathWithLiteralPercentEscape() {
+        let path = "/dir/%41.txt"
+        // Build the URL outside the expected-failure block so only the path comparison is
+        // allowed to fail.
+        let opened = pathOpenedByEditorAfterOneDecode(path)
+        XCTExpectFailure("Semantic History sends the raw path in the url query value, so after one decode it is not a well-formed file URL (commit 07b59768a)") {
+            XCTAssertEqual(opened, path)
+        }
+    }
+
+    func testEditorURLValueIsAFileURLForPathWithHashAndLineNumber() {
+        let path = "/dir/a#b.txt"
+        let opened = pathOpenedByEditorAfterOneDecode(path, lineNumber: "12")
+        XCTExpectFailure("Semantic History sends the raw path in the url query value, so after one decode it is not a well-formed file URL (commit 07b59768a)") {
+            XCTAssertEqual(opened, path)
+        }
+    }
+
+    // A strict URL parser (an editor linked against an SDK older than macOS 14) rejects a
+    // literal space, so the once-decoded value must carry the space escaped, as
+    // fileURLWithPath:.absoluteString does. This intentionally conflicts with
+    // testEditorURLWithoutLineNumberEncodesSpaceOnce, which pins the raw-path form; one of
+    // the two has to change when the format is settled.
+    func testEditorURLValueIsTheEscapedFileURLForPathWithSpace() {
+        let components = editorURLComponents(identifier: macVimIdentifier,
+                                             path: fileWithSpace,
+                                             lineNumber: nil)
+        let value = decodedQueryItems(components)?.first(where: { $0.name == "url" })?.value
+        XCTExpectFailure("Semantic History sends the raw path in the url query value, so after one decode it is not a well-formed file URL (commit 07b59768a)") {
+            XCTAssertEqual(value, URL(fileURLWithPath: fileWithSpace).absoluteString)
+        }
+    }
+
     // Note there is no test for textmate 2 because it is not directly selectable from the menu and it
     // uses the same scheme as textmate, even though its identifier is different.
 
