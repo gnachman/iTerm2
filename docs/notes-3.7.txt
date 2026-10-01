@@ -704,7 +704,9 @@ Bug Fixes:
   first. It follows the current theme and
   updates live when you switch between light and
   dark; before macOS 26, dark themes get a
-  frosted-glass look.
+  frosted-glass look. On macOS 26 the window,
+  sponsor cards and backer well use Liquid
+  Glass.
 - Fixed the Screen setting in Settings >
   Profiles > Window. Choosing “Main Screen”
   left the popup blank and showed no checkmark

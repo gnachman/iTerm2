@@ -143,16 +143,41 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
 @end
 
 @implementation iTermSponsorBoxView
-- (BOOL)wantsUpdateLayer { return YES; }
+- (instancetype)initWithFrame:(NSRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        if (@available(macOS 26, *)) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+            NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:self.bounds];
+            glassView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+            glassView.style = NSGlassEffectViewStyleClear;
+            glassView.tintColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.04]
+                                                       darkMode:[NSColor colorWithWhite:1.0 alpha:0.08]];
+#pragma clang diagnostic pop
+            NSView *contentView = [[NSView alloc] initWithFrame:self.bounds];
+            contentView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+            glassView.contentView = contentView;
+            [self addSubview:glassView];
+            self.wantsLayer = YES;
+            self.layer.cornerRadius = iTermAboutContainerCornerRadius();
+            self.layer.masksToBounds = YES;
+        }
+    }
+    return self;
+}
+
 - (void)updateLayer {
     [super updateLayer];
-    self.layer.cornerRadius = iTermAboutContainerCornerRadius();
-    self.layer.backgroundColor = (self.bakedBackgroundColor ?: iTermAboutContainerFillColor()).CGColor;
-    // A hairline keeps a tile readable as a card whatever colour it turned out
-    // to be: a white tile on the light window, a dark one on the dark window.
-    self.layer.borderWidth = 1.0;
-    self.layer.borderColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.08]
-                                                         darkMode:[NSColor colorWithWhite:1.0 alpha:0.10]].CGColor;
+    if (!@available(macOS 26, *)) {
+        self.layer.cornerRadius = iTermAboutContainerCornerRadius();
+        self.layer.backgroundColor = (self.bakedBackgroundColor ?: iTermAboutContainerFillColor()).CGColor;
+        // A hairline keeps a tile readable as a card whatever colour it turned out
+        // to be: a white tile on the light window, a dark one on the dark window.
+        self.layer.borderWidth = 1.0;
+        self.layer.borderColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.08]
+                                                             darkMode:[NSColor colorWithWhite:1.0 alpha:0.10]].CGColor;
+    }
 }
 - (void)resetCursorRects {
     [super resetCursorRects];
@@ -166,13 +191,34 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
 @end
 
 @implementation iTermAboutBackersWellView
-- (BOOL)wantsUpdateLayer { return YES; }
+- (instancetype)initWithFrame:(NSRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        if (@available(macOS 26, *)) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+            NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:self.bounds];
+            glassView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+            glassView.style = NSGlassEffectViewStyleClear;
+            glassView.tintColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.04]
+                                                       darkMode:[NSColor colorWithWhite:1.0 alpha:0.08]];
+#pragma clang diagnostic pop
+            NSView *contentView = [[NSView alloc] initWithFrame:self.bounds];
+            contentView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+            glassView.contentView = contentView;
+            [self addSubview:glassView];
+            self.wantsLayer = YES;
+            self.layer.cornerRadius = iTermAboutContainerCornerRadius();
+            self.layer.masksToBounds = YES;
+        }
+    }
+    return self;
+}
+
 - (void)updateLayer {
     [super updateLayer];
     self.layer.cornerRadius = iTermAboutContainerCornerRadius();
-    if (@available(macOS 26, *)) {
-        self.layer.backgroundColor = iTermAboutContainerFillColor().CGColor;
-    } else {
+    if (!@available(macOS 26, *)) {
         self.layer.backgroundColor = [NSColor colorWithWhite:0 alpha:kDarkBackersScrimAlpha].CGColor;
     }
 }
@@ -218,6 +264,7 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
     // Set once awakeFromNib has captured the nib's material. Until then there is
     // no stock material to fall back to and no _backersWell to toggle.
     BOOL _ready;
+    NSView *_glassEffectView;
 }
 
 - (void)awakeFromNib {
@@ -262,9 +309,43 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
                                          value:[NSColor secondaryLabelColor]
                                          range:NSMakeRange(0, _sponsorsHeading.textStorage.length)];
 
+    if (@available(macOS 26, *)) {
+        [self setupGlassEffectView];
+    }
+
     _ready = YES;
     [self applyAppearanceTreatment];
     [self layoutContent];
+}
+
+- (void)setupGlassEffectView {
+    if (!@available(macOS 26, *)) {
+        return;
+    }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+    NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:self.bounds];
+    glassView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    glassView.style = NSGlassEffectViewStyleClear;
+    glassView.tintColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:1.0 alpha:0.15]
+                                                       darkMode:[NSColor colorWithWhite:0.0 alpha:0.35]];
+#pragma clang diagnostic pop
+
+    NSView *contentView = [[NSView alloc] initWithFrame:self.bounds];
+    contentView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+
+    NSArray *subviews = [self.subviews copy];
+    for (NSView *subview in subviews) {
+        if (subview != _backersWell) {
+            [self addSubview:subview positioned:NSWindowAbove relativeTo:contentView];
+        }
+    }
+    [contentView addSubview:_backersWell];
+
+    glassView.contentView = contentView;
+    _glassEffectView = glassView;
+    [self addSubview:_glassEffectView positioned:NSWindowBelow relativeTo:nil];
 }
 
 - (NSButton *)makeButtonWithTitle:(NSString *)title action:(SEL)action {
@@ -334,6 +415,11 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
+    if (@available(macOS 26, *)) {
+        if (_glassEffectView) {
+            _glassEffectView.frame = self.bounds;
+        }
+    }
     [self layoutContent];
 }
 
@@ -407,14 +493,18 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
     }
 }
 
-// On macOS 26 the About window is a plain window-background window, the way
-// the system's own About panel is, with the backers in a container like the
-// sponsor cards; the colours are dynamic, so light and dark share one path.
-// Before macOS 26, dark themes get frosted glass with a scrim behind the
-// backers and light themes keep the stock window.
+// On macOS 26 the About window uses Liquid Glass, with the backers in a container
+// like the sponsor cards. Before macOS 26, dark themes get frosted glass with a
+// scrim behind the backers and light themes keep the stock window.
 - (void)applyAppearanceTreatment {
     if (@available(macOS 26, *)) {
-        self.material = NSVisualEffectMaterialWindowBackground;
+        if (_glassEffectView) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+            ((NSGlassEffectView *)_glassEffectView).tintColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:1.0 alpha:0.15]
+                                                                                                    darkMode:[NSColor colorWithWhite:0.0 alpha:0.35]];
+#pragma clang diagnostic pop
+        }
         _backersWell.hidden = NO;
         return;
     }
@@ -433,6 +523,15 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
         return;
     }
     [self applyAppearanceTreatment];
+    if (@available(macOS 26, *)) {
+        if (_glassEffectView) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+            ((NSGlassEffectView *)_glassEffectView).tintColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:1.0 alpha:0.15]
+                                                                                                darkMode:[NSColor colorWithWhite:0.0 alpha:0.35]];
+#pragma clang diagnostic pop
+        }
+    }
 }
 
 - (NSView *)makeSponsorBoxWithImageNamed:(NSString *)imageName title:(NSString *)title {
@@ -463,11 +562,25 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
     }
 
     iTermSponsorBoxView *box = [[iTermSponsorBoxView alloc] initWithFrame:NSMakeRect(0, 0, boxWidth, boxHeight)];
-    box.wantsLayer = YES;
     box.bakedBackgroundColor = iTermAboutBakedBackgroundColorOfImage(image);
-    [box addSubview:imageView];
-    if (label) {
-        [box addSubview:label];
+
+    if (@available(macOS 26, *)) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+        NSView *contentView = box.subviews.firstObject;
+        if ([contentView isKindOfClass:[NSGlassEffectView class]]) {
+            contentView = [(NSGlassEffectView *)contentView contentView];
+        }
+#pragma clang diagnostic pop
+        [contentView addSubview:imageView];
+        if (label) {
+            [contentView addSubview:label];
+        }
+    } else {
+        [box addSubview:imageView];
+        if (label) {
+            [box addSubview:label];
+        }
     }
 
     return box;
