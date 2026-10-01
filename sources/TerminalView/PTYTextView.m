@@ -1638,7 +1638,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
         // Check if this should use smooth slide:
         // - cursorSmoothSlide preference is enabled
-        // - cursor type supports it (underscore or vertical bar, not block)
+        // - cursor type supports it (drawingHelper.cursorSupportsSmoothSlide)
         // - 1-cell horizontal move
         const BOOL useSmoothSlide = (smoothSlideEnabled &&
                                      drawingHelper.cursorSupportsSmoothSlide &&
