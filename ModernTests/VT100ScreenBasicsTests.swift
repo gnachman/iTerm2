@@ -2281,4 +2281,44 @@ class VT100ScreenBasicsTests: XCTestCase {
         screen.size = VT100GridSizeMake(4, 4)
         XCTAssertTrue(session.selection.hasSelection)
     }
+
+    // Review finding on ecf71a7e7: the all-null check in
+    // subSelectionsWithConvertedRangesFromSelection:newWidth: runs after reallySetSize: has
+    // appended the primary grid to the line buffer. When the height shrinks, only some of the
+    // grid's rows are appended, and getLineAtIndex: then serves rows past the line buffer's end
+    // from the top of the grid. For a selection below the cursor the check therefore reads the
+    // text rows at the top of the screen and wrongly reports content (confirmed by
+    // instrumenting the check). The selection is still dropped today, but only because
+    // convertRange:toWidth:to:inLineBuffer:tolerateEmpty: cannot convert a range that lies
+    // past the appended rows. This pins that outcome so it keeps holding if either the check
+    // or the conversion changes.
+    func testResizeWithSelectionOfJustNullsBelowCursorAndTextAboveClearsSelection() {
+        let screen = self.screen(width: 5, height: 24)
+        appendLines(["abcd", "abcd", "abcd"], screen: screen)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: "efgh")
+        })
+        XCTAssertEqual(screen.cursorY(), 4)
+        setSelectionRange(VT100GridCoordRangeMake(1, 5, 2, 6), width: screen.width())
+        XCTAssertTrue(session.selection.hasSelection)
+        screen.size = VT100GridSizeMake(4, 23)
+        XCTAssertFalse(session.selection.hasSelection)
+    }
+
+    // Width-only version of the test above: the shape that reproduced the original bug. When
+    // the height does not shrink, appendScreen:toScrollback:withUsedHeight:newHeight: appends
+    // the whole grid, so the selected rows are inside the line buffer, the range converts, and
+    // only the all-null check keeps the phantom selection from surviving.
+    func testWidthOnlyResizeWithSelectionOfJustNullsBelowCursorAndTextAboveClearsSelection() {
+        let screen = self.screen(width: 5, height: 24)
+        appendLines(["abcd", "abcd", "abcd"], screen: screen)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: "efgh")
+        })
+        XCTAssertEqual(screen.cursorY(), 4)
+        setSelectionRange(VT100GridCoordRangeMake(1, 5, 2, 6), width: screen.width())
+        XCTAssertTrue(session.selection.hasSelection)
+        screen.size = VT100GridSizeMake(4, 24)
+        XCTAssertFalse(session.selection.hasSelection)
+    }
 }

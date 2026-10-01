@@ -211,9 +211,17 @@
 // Whether any cell in `range` (whose end is exclusive) holds a non-null character. A
 // selection of nothing but nulls has no content to preserve across a resize, and since
 // commit 5e401d357 runByTrimmingNullsFromRun: only trims within the run's first and last
-// lines, so such a selection would otherwise survive as a degenerate sub-selection. Lines
-// are addressed with getLineAtIndex: exactly as runByTrimmingNullsFromRun: does, so this is
-// valid wherever that is.
+// lines, so such a selection would otherwise survive as a degenerate sub-selection.
+//
+// Lines are addressed with getLineAtIndex:, which is only accurate for rows that are in the
+// line buffer when this runs. The main-screen caller runs after the primary grid has been
+// appended to the line buffer. When the height does not shrink the whole grid is appended
+// and every row is read correctly. When the height shrinks only some rows are appended, and
+// a row past them is served from the top of the grid instead, so this can wrongly return
+// YES for an all-null range down there. That is harmless today only because
+// convertRange:toWidth:to:inLineBuffer:tolerateEmpty: cannot convert a range past the
+// appended rows and the selection is dropped anyway. Do not rely on this for rows that may
+// not have been appended; filter before appending the grid if that is ever needed.
 - (BOOL)coordRangeContainsNonNullCharacter:(VT100GridCoordRange)range {
     const int width = self.width;
     const int numberOfLines = self.numberOfLines;
