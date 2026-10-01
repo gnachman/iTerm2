@@ -188,6 +188,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)defaultWideMode;
 + (BOOL)detectParagraphDirection;
 + (BOOL)disableBidiInAlternateScreen;
++ (BOOL)honorBidiSupportModeEscapeSequence;
 + (BOOL)detectPasswordInput;
 + (double)detectPasswordInputDebounce;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;

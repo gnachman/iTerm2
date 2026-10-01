@@ -173,6 +173,15 @@ int64_t VT100LineInfoAllocateGenerationBlock(int64_t count) {
     return _metadata.rtlFound;
 }
 
+- (void)setBidiDirection:(iTermBidiDirection)bidiDirection {
+    _metadata.bidiDirection = bidiDirection;
+    _cachedEncodedMetadata = nil;
+}
+
+- (iTermBidiDirection)bidiDirection {
+    return _metadata.bidiDirection;
+}
+
 - (void)decodeMetadataArray:(NSArray *)array {
     iTermMetadataRelease(_metadata);
     iTermMetadataInitFromArray(&_metadata, array);

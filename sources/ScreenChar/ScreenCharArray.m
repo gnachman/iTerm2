@@ -683,6 +683,7 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
         .externalAttributes = nil,
         .rtlFound = _metadata.rtlFound,
         .lineAttribute = _metadata.lineAttribute,
+        .bidiDirection = _metadata.bidiDirection,
     };
     iTermExternalAttributeIndex *modified = [original subAttributesInRange:range];
     iTermMetadataSetExternalAttributes(&result, modified);
@@ -707,6 +708,7 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
                       other->_metadata.rtlFound,
                       eaIndex,
                       _metadata.lineAttribute);
+    combined.bidiDirection = (_metadata.bidiDirection != iTermBidiDirectionDefault) ? _metadata.bidiDirection : other->_metadata.bidiDirection;
     ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:copy
                                                              length:combinedLength
                                                            metadata:iTermMetadataMakeImmutable(combined)

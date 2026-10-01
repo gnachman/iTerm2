@@ -21,6 +21,8 @@ typedef struct {
     void * _Nullable externalAttributes;
     BOOL rtlFound;
     iTermLineAttribute lineAttribute;
+    // Base direction for bidi analysis, from SCP. Only meaningful when rtlFound.
+    iTermBidiDirection bidiDirection;
 } iTermMetadata;
 
 // I'd like to make these const to keep users well-behaved but C++ makes structs with const fields
@@ -35,6 +37,7 @@ typedef struct {
     void * _Nullable externalAttributes;
     BOOL rtlFound;
     iTermLineAttribute lineAttribute;
+    iTermBidiDirection bidiDirection;
 } iTermImmutableMetadata;
 
 NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
@@ -42,7 +45,8 @@ NS_INLINE iTermImmutableMetadata iTermMetadataMakeImmutable(iTermMetadata obj) {
         .timestamp = obj.timestamp,
         .externalAttributes = obj.externalAttributes,
         .rtlFound = obj.rtlFound,
-        .lineAttribute = obj.lineAttribute
+        .lineAttribute = obj.lineAttribute,
+        .bidiDirection = obj.bidiDirection
     };
     return result;
 }

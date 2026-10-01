@@ -250,6 +250,16 @@ New Features:
   option of it2 set-status, or the
   expires_on argument of the Python API’s
   set_status.
+- Apps can now control right-to-left text
+  reordering with the BDSM and SCP escape
+  sequences. CSI 8 l enters explicit mode,
+  in which text is drawn exactly as written,
+  and CSI 8 h returns to implicit mode. This
+  keeps full-screen apps that lay out their
+  own text from being scrambled. CSI 1 SP k
+  and CSI 2 SP k make reordered lines
+  left-to-right or right-to-left, and
+  CSI 0 SP k restores the default.
 
 Improvements:
 - iTerm2 now recognizes when a terminal is

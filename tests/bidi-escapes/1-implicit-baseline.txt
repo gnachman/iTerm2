@@ -1,0 +1,6 @@
+Implicit mode (the default). The two rows whose sidebar item is only Hebrew
+get scrambled: the popup digit jumps left of the Hebrew and the borders shift.
+    ■ Kapitel 9    │   │       │ 3 : Commands    │
+    ■ Kapiשלםtel 2 │   │       │ 4 : Library     │
+    ■ שלם      │   │       │ 5 : Deck        │
+    ■ שלם      │   │       │ 6 : Study       │

@@ -37,7 +37,8 @@ class VT100GridTests: XCTestCase {
                              ansi: false,
                              insert: false,
                              externalAttributeIndex: nil,
-                             rtlFound: false,
+                             rtlUpdate: .none,
+                             bidiDirection: .default,
                              dwcFree: false)
             if newline {
                 grid.cursorX = 0
@@ -590,7 +591,8 @@ class VT100GridTests: XCTestCase {
                          ansi: false,
                          insert: false,
                          externalAttributeIndex: nil,
-                         rtlFound: false,
+                         rtlUpdate: .none,
+                         bidiDirection: .default,
                          dwcFree: false)
 
         // After wraparound:
@@ -2806,7 +2808,8 @@ class VT100GridTests: XCTestCase {
                                                ansi: ansi,
                                                insert: insert,
                                                externalAttributeIndex: nil,
-                                               rtlFound: false,
+                                               rtlUpdate: .none,
+                                               bidiDirection: .default,
                                                dwcFree: false)
 
         XCTAssertEqual(grid.allLinesAsStrings, expectedLinesArray)
@@ -3312,7 +3315,8 @@ class VT100GridTests: XCTestCase {
                          ansi: false,
                          insert: false,
                          externalAttributeIndex: nil,
-                         rtlFound: false,
+                         rtlUpdate: .none,
+                         bidiDirection: .default,
                          dwcFree: false)
 
         let before = grid.coordinate(
@@ -3801,7 +3805,8 @@ class VT100GridTests: XCTestCase {
                          ansi: false,
                          insert: false,
                          externalAttributeIndex: nil,
-                         rtlFound: false,
+                         rtlUpdate: .none,
+                         bidiDirection: .default,
                          dwcFree: false)
 
         XCTAssertEqual(grid.allLinesAsStrings, [
@@ -3909,7 +3914,8 @@ class VT100GridTests: XCTestCase {
                              ansi: false,
                              insert: false,
                              externalAttributeIndex: nil,
-                             rtlFound: false,
+                             rtlUpdate: .none,
+                             bidiDirection: .default,
                              dwcFree: false)
             grid.moveCursorToLeftMargin()
             grid.moveCursorDown(1)
@@ -3936,7 +3942,8 @@ class VT100GridTests: XCTestCase {
                              ansi: false,
                              insert: false,
                              externalAttributeIndex: nil,
-                             rtlFound: false,
+                             rtlUpdate: .none,
+                             bidiDirection: .default,
                              dwcFree: false)
             grid.moveCursorToLeftMargin()
             grid.moveCursorDown(1)

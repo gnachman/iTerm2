@@ -17,6 +17,7 @@ void iTermMetadataInit(iTermMetadata *obj,
     obj->timestamp = timestamp;
     obj->rtlFound = rtlFound;
     obj->lineAttribute = lineAttribute;
+    obj->bidiDirection = iTermBidiDirectionDefault;
     obj->externalAttributes = [(id)externalAttributes retain];
 }
 
@@ -50,7 +51,8 @@ iTermMetadata iTermImmutableMetadataMutableCopy(iTermImmutableMetadata obj) {
         .timestamp = obj.timestamp,
         .rtlFound = obj.rtlFound,
         .externalAttributes = index,
-        .lineAttribute = obj.lineAttribute
+        .lineAttribute = obj.lineAttribute,
+        .bidiDirection = obj.bidiDirection
     };
 }
 
@@ -108,7 +110,8 @@ NSArray *iTermImmutableMetadataEncodeToArray(iTermImmutableMetadata obj) {
     return @[ @(obj.timestamp),
               [eaIndex dictionaryValue] ?: @{},
               @(obj.rtlFound),
-              @(obj.lineAttribute) ];
+              @(obj.lineAttribute),
+              @(obj.bidiDirection) ];
 }
 
 NSArray *iTermMetadataEncodeToArray(iTermMetadata obj) {
@@ -171,6 +174,9 @@ void iTermMetadataInitFromArray(iTermMetadata *obj, NSArray *array) {
                       [array[2] boolValue],
                       [[[iTermExternalAttributeIndex alloc] initWithDictionary:array[1]] autorelease],
                       lineAttr);
+    if (array.count >= 5) {
+        obj->bidiDirection = (iTermBidiDirection)[array[4] intValue];
+    }
 }
 
 void iTermMetadataAppend(iTermMetadata *lhs,
@@ -179,6 +185,10 @@ void iTermMetadataAppend(iTermMetadata *lhs,
                          int rhsLength) {
     lhs->timestamp = rhs->timestamp;
     lhs->rtlFound |= rhs->rtlFound;
+    // The paragraph direction belongs to the line that starts it.
+    if (lhs->bidiDirection == iTermBidiDirectionDefault) {
+        lhs->bidiDirection = rhs->bidiDirection;
+    }
     // Preserve lhs lineAttribute — the line attribute was set on the original
     // row (start of the logical line); continuations are typically normal-width.
     if (!rhs->externalAttributes) {
@@ -204,6 +214,7 @@ void iTermMetadataInitByConcatenation(iTermMetadata *obj,
                                                 with:iTermMetadataGetExternalAttributesIndex(*rhs)
                                           length:rhsLength];
     iTermMetadataInit(obj, rhs->timestamp, lhs->rtlFound || rhs->rtlFound, eaIndex, lhs->lineAttribute);
+    obj->bidiDirection = (lhs->bidiDirection != iTermBidiDirectionDefault) ? lhs->bidiDirection : rhs->bidiDirection;
 }
 
 void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
@@ -217,13 +228,15 @@ void iTermMetadataInitCopyingSubrange(iTermMetadata *obj,
                       source->rtlFound,
                       eaIndex,
                       source->lineAttribute);
+    obj->bidiDirection = source->bidiDirection;
 }
 
 iTermMetadata iTermMetadataDefault(void) {
     return (iTermMetadata){ .timestamp = 0,
         .externalAttributes = NULL,
         .rtlFound = NO,
-        .lineAttribute = iTermLineAttributeSingleWidth
+        .lineAttribute = iTermLineAttributeSingleWidth,
+        .bidiDirection = iTermBidiDirectionDefault
     };
 }
 
@@ -235,15 +248,17 @@ void iTermMetadataReset(iTermMetadata *obj) {
     obj->timestamp = 0;
     obj->rtlFound = NO;
     obj->lineAttribute = iTermLineAttributeSingleWidth;
+    obj->bidiDirection = iTermBidiDirectionDefault;
     iTermMetadataSetExternalAttributes(obj, NULL);
 }
 
 NSString *iTermMetadataShortDescription(iTermMetadata metadata, int length) {
-    return [NSString stringWithFormat:@"<timestamp=%@ ea=%@ rtl=%@ lineAttr=%d>",
+    return [NSString stringWithFormat:@"<timestamp=%@ ea=%@ rtl=%@ lineAttr=%d dir=%d>",
             @(metadata.timestamp),
             iTermMetadataGetExternalAttributesIndex(metadata),
             @(metadata.rtlFound),
-            (int)metadata.lineAttribute];
+            (int)metadata.lineAttribute,
+            (int)metadata.bidiDirection];
 }
 
 NSArray *iTermMetadataArrayFromData(NSData *data) {
@@ -261,6 +276,10 @@ NSArray *iTermMetadataArrayFromData(NSData *data) {
     int lineAttr = 0;
     if ([decoder decodeInt:&lineAttr]) {
         temp.lineAttribute = (iTermLineAttribute)lineAttr;
+    }
+    int bidiDirection = 0;
+    if ([decoder decodeInt:&bidiDirection]) {
+        temp.bidiDirection = (iTermBidiDirection)bidiDirection;
     }
     iTermExternalAttributeIndex *attr = [iTermExternalAttributeIndex fromData:attrData];
     iTermMetadataSetExternalAttributes(&temp, attr);
@@ -280,6 +299,7 @@ NSData *iTermImmutableMetadataEncodeToData(iTermImmutableMetadata metadata) {
     [encoder encodeData:[attr data] ?: [NSData data]];
     [encoder encodeBool:metadata.rtlFound];
     [encoder encodeInt:(int)metadata.lineAttribute];
+    [encoder encodeInt:(int)metadata.bidiDirection];
     return encoder.data;
 }
 
@@ -298,6 +318,10 @@ iTermMetadata iTermMetadataDecodedFromData(NSData *data) {
     int lineAttr = 0;
     if ([decoder decodeInt:&lineAttr]) {
         temp.lineAttribute = (iTermLineAttribute)lineAttr;
+    }
+    int bidiDirection = 0;
+    if ([decoder decodeInt:&bidiDirection]) {
+        temp.bidiDirection = (iTermBidiDirection)bidiDirection;
     }
     iTermExternalAttributeIndex *attr = [iTermExternalAttributeIndex fromData:attrData];
     iTermMetadataSetExternalAttributes(&temp, attr);

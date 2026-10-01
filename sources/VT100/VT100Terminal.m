@@ -90,6 +90,8 @@ NSString *const kTerminalStateWraparoundModeKey = @"Wraparound Mode";
 NSString *const kTerminalStateReverseWraparoundModeKey = @"Reverse Wraparound Mode";
 NSString *const kTerminalStateIsAnsiKey = @"Is ANSI";
 NSString *const kTerminalStateAutorepeatModeKey = @"Autorepeat Mode";
+NSString *const kTerminalStateBidiSupportModeKey = @"Bidi Support Mode";
+NSString *const kTerminalStateBidiDirectionHintKey = @"Bidi Direction Hint";
 NSString *const kTerminalStateInsertModeKey = @"Insert Mode";
 NSString *const kTerminalStateSendReceiveModeKey = @"Send/Receive Mode";
 NSString *const kTerminalStateCharsetKey = @"Charset";
@@ -149,6 +151,8 @@ typedef NS_ENUM(NSUInteger, VT100TerminalCopyMode) {
 @property(nonatomic, assign) BOOL moreFix;
 @property(nonatomic, assign) BOOL isAnsi;
 @property(nonatomic, assign) BOOL autorepeatMode;
+@property(nonatomic, assign) BOOL bidiSupportMode;
+@property(nonatomic, assign) iTermBidiDirection bidiDirectionHint;
 @property(nonatomic, assign) int charset;
 @property(nonatomic, assign) BOOL allowColumnMode;
 @property(nonatomic, assign) BOOL columnMode;  // YES=132 Column, NO=80 Column
@@ -251,6 +255,8 @@ static const int kMaxScreenRows = 4096;
         _wraparoundMode = YES;
         _reverseWraparoundMode = NO;
         _autorepeatMode = YES;
+        _bidiSupportMode = YES;
+        _bidiDirectionHint = iTermBidiDirectionDefault;
         VT100GraphicRenditionInitialize(&graphicRendition_);
         _mouseMode = MOUSE_REPORTING_NONE;
         _previousMouseMode = MOUSE_REPORTING_NORMAL;
@@ -392,6 +398,8 @@ static const int kMaxScreenRows = 4096;
     self.wraparoundMode = YES;
     self.reverseWraparoundMode = NO;
     self.autorepeatMode = YES;
+    self.bidiSupportMode = YES;
+    self.bidiDirectionHint = iTermBidiDirectionDefault;
     self.keypadMode = NO;
     self.sixelDisplayMode = NO;
     self.reportKeyUp = NO;
@@ -2300,6 +2308,14 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                     case 4:
                         self.insertMode = mode;
                         break;
+                    case 8:  // BDSM
+                        if ([iTermAdvancedSettingsModel honorBidiSupportModeEscapeSequence]) {
+                            DLog(@"BDSM: %@ mode", mode ? @"implicit" : @"explicit");
+                            self.bidiSupportMode = mode;
+                        } else {
+                            DLog(@"Ignoring BDSM because the advanced setting is off");
+                        }
+                        break;
                     case 12:
                         self.sendReceiveMode = !mode;
                         break;
@@ -2334,6 +2350,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case VT100CSI_DECSTR:
             [self softReset];
+            break;
+
+        case VT100CSI_SCP:
+            [self executeSelectCharacterPath:token.csi->p[0]];
             break;
 
         case VT100CSI_DECSCUSR:
@@ -5227,6 +5247,26 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     [self.delegate terminalBackIndex];
 }
 
+// SCP. The second parameter (how to apply the change to existing content) is
+// accepted and ignored, as the terminal-wg recommendation allows.
+- (void)executeSelectCharacterPath:(int)direction {
+    if (![iTermAdvancedSettingsModel honorBidiSupportModeEscapeSequence]) {
+        DLog(@"Ignoring SCP because the advanced setting is off");
+        return;
+    }
+    switch (direction) {
+        case iTermBidiDirectionDefault:
+        case iTermBidiDirectionLeftToRight:
+        case iTermBidiDirectionRightToLeft:
+            DLog(@"SCP: direction %d", direction);
+            self.bidiDirectionHint = (iTermBidiDirection)direction;
+            break;
+        default:
+            DLog(@"Ignoring SCP with unknown direction %d", direction);
+            break;
+    }
+}
+
 - (void)executeANSIRequestMode:(int)mode {
     const iTermDECRPMSetting setting = [self settingForANSIRequestMode:mode];
     [self.delegate terminalSendReport:[self decrpmForMode:mode setting:setting ansi:YES]];
@@ -5724,6 +5764,11 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     switch (mode) {
         case 4:
             return VT100TerminalDECRPMSettingFromBoolean(self.insertMode);
+        case 8:  // BDSM
+            if ([iTermAdvancedSettingsModel honorBidiSupportModeEscapeSequence]) {
+                return VT100TerminalDECRPMSettingFromBoolean(self.bidiSupportMode);
+            }
+            break;
         case 12:
             return VT100TerminalDECRPMSettingFromBoolean(self.sendReceiveMode);
     }
@@ -6056,6 +6101,8 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStateReverseWraparoundModeKey: @(self.reverseWraparoundMode),
            kTerminalStateIsAnsiKey: @(self.isAnsi),
            kTerminalStateAutorepeatModeKey: @(self.autorepeatMode),
+           kTerminalStateBidiSupportModeKey: @(self.bidiSupportMode),
+           kTerminalStateBidiDirectionHintKey: @(self.bidiDirectionHint),
            kTerminalStateInsertModeKey: @(self.insertMode),
            kTerminalStateSendReceiveModeKey: @(self.sendReceiveMode),
            kTerminalStateCharsetKey: @(self.charset),
@@ -6126,6 +6173,10 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     self.reverseWraparoundMode = [dict[kTerminalStateReverseWraparoundModeKey] boolValue];
     self.isAnsi = [dict[kTerminalStateIsAnsiKey] boolValue];
     self.autorepeatMode = [dict[kTerminalStateAutorepeatModeKey] boolValue];
+    // Older state dictionaries lack the key; the default is implicit mode.
+    NSNumber *bidiSupportMode = dict[kTerminalStateBidiSupportModeKey];
+    self.bidiSupportMode = bidiSupportMode ? bidiSupportMode.boolValue : YES;
+    self.bidiDirectionHint = (iTermBidiDirection)[dict[kTerminalStateBidiDirectionHintKey] intValue];
     self.insertMode = [dict[kTerminalStateInsertModeKey] boolValue];
     self.sendReceiveMode = [dict[kTerminalStateSendReceiveModeKey] boolValue];
     self.charset = [dict[kTerminalStateCharsetKey] intValue];

@@ -994,7 +994,9 @@ static BOOL sOSC7DisabledWarningShown;
     screen_char_t *buffer = pre->buffer;
     len = pre->length;
     BOOL dwc = pre->foundDwc;
-    BOOL rtlFound = pre->rtlFound;
+    // In BDSM explicit mode the app laid the text out visually, so the line
+    // must not be flagged for reordering. This is the per-line snapshot of the mode.
+    BOOL rtlFound = pre->rtlFound && [self bidiReorderingAllowedByTerminal];
 
     if (needColorFixup) {
         // Medium path: character codes and DWC_RIGHT markers are correct but colors differ.
@@ -1087,19 +1089,7 @@ static BOOL sOSC7DisabledWarningShown;
             [self appendStringAtCursorSlowly:string];
             return;
         }
-        if (rtlFound) {
-            VT100Grid *grid = self.currentGrid;
-            VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
-            if (!predLineInfo.rtlFound) {
-                // Only on the NO->YES transition: rtlFound is serialized in
-                // per-line metadata; markLineDidChange: dirties the line (so
-                // copyDirtyFromGrid: copies the changed metadata) and bumps the
-                // content generation. Guarding avoids O(width) dirtying + a bump
-                // per append while RTL text streams over an already-RTL line.
-                [predLineInfo setRTLFound:YES];
-                [grid markLineDidChange:pred.y];
-            }
-        }
+        [self applyRTLUpdateForWriteWithRTLFound:rtlFound toLine:pred.y];
         const screen_char_t current = [self.currentGrid characterAt:pred];
         if (current.code != predecessorCode || current.complexChar != predecessorComplexChar) {
             [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
@@ -1189,6 +1179,10 @@ static BOOL sOSC7DisabledWarningShown;
                         self.config.unicodeVersion,
                         self.terminal.softAlternateScreenMode,
                         &rtlFound);
+    if (rtlFound && ![self bidiReorderingAllowedByTerminal]) {
+        // BDSM explicit mode: the app laid the text out visually. See the fast path.
+        rtlFound = NO;
+    }
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
         // Whether the merged character is wider than the predecessor was. `buffer` holds the
@@ -1220,33 +1214,14 @@ static BOOL sOSC7DisabledWarningShown;
             buffer[0] = merged;
             buffer[1] = merged;
             ScreenCharSetDWC_RIGHT(&buffer[1]);
-            // The character lands on the next line, so that is where RTL was found.
-            if (rtlFound) {
-                VT100Grid *grid = self.currentGrid;
-                const int landingLine = MIN(pred.y + 1, grid.size.height - 1);
-                VT100LineInfo *landingLineInfo = [grid lineInfoAtLineNumber:landingLine];
-                if (!landingLineInfo.rtlFound) {
-                    [landingLineInfo setRTLFound:YES];
-                    [grid markLineDidChange:landingLine];
-                }
-            }
+            // The character lands on the next line, so that is the line this write touches.
+            [self applyRTLUpdateForWriteWithRTLFound:rtlFound
+                                              toLine:MIN(pred.y + 1, self.currentGrid.size.height - 1)];
             // bufferOffset stays 0 so buffer[0] (the merged character) is what gets
             // written, starting at the predecessor's column.
             self.currentGrid.cursorX = pred.x;
         } else {
-            if (rtlFound) {
-                VT100Grid *grid = self.currentGrid;
-                VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
-                if (!predLineInfo.rtlFound) {
-                    // Only on the NO->YES transition: rtlFound is serialized in
-                    // per-line metadata; markLineDidChange: dirties the line (so
-                    // copyDirtyFromGrid: copies the changed metadata) and bumps the
-                    // content generation. Guarding avoids O(width) dirtying + a bump
-                    // per append while RTL text streams over an already-RTL line.
-                    [predLineInfo setRTLFound:YES];
-                    [grid markLineDidChange:pred.y];
-                }
-            }
+            [self applyRTLUpdateForWriteWithRTLFound:rtlFound toLine:pred.y];
             const screen_char_t current = [self.currentGrid characterAt:pred];
             if (current.code != buffer[0].code || current.complexChar != buffer[0].complexChar) {
                 // This handles the rare case where we receive a combining mark at the beginning of
@@ -1372,7 +1347,8 @@ static BOOL sOSC7DisabledWarningShown;
                                                                    ansi:self.ansi
                                                                  insert:self.insert
                                                  externalAttributeIndex:actualExternalAttributes
-                                                               rtlFound:rtlFound
+                                                              rtlUpdate:[self rtlUpdateForWriteWithRTLFound:rtlFound]
+                                                          bidiDirection:self.terminal.bidiDirectionHint
                                                                 dwcFree:dwcFree]];
 
         if (self.config.publishing) {
@@ -1459,6 +1435,57 @@ static BOOL sOSC7DisabledWarningShown;
                                rtlFound:NO
                                 dwcFree:YES];
     STOPWATCH_LAP(appendAsciiDataAtCursor);
+}
+
+// NO while the terminal is in BDSM explicit mode (CSI 8 l): text written then is
+// never flagged as RTL, so neither the grid nor the line buffer reorders it. A
+// missing terminal means no app could have asked for explicit mode.
+- (BOOL)bidiReorderingAllowedByTerminal {
+    VT100Terminal *terminal = self.terminal;
+    return terminal == nil || terminal.bidiSupportMode;
+}
+
+// What a write does to the RTL state of the lines it touches. `rtlFound` is
+// whether the written text contains right-to-left characters. In explicit mode
+// every write clears the state, RTL text or not, because the flag is sticky and
+// a line that held RTL text in implicit mode would otherwise still be reordered.
+- (VT100GridRTLUpdate)rtlUpdateForWriteWithRTLFound:(BOOL)rtlFound {
+    if (![self bidiReorderingAllowedByTerminal]) {
+        return VT100GridRTLUpdateClear;
+    }
+    return rtlFound ? VT100GridRTLUpdateFound : VT100GridRTLUpdateNone;
+}
+
+// For a write that edits a line without going through the grid's append: a
+// combining mark merged into its predecessor.
+- (void)applyRTLUpdateForWriteWithRTLFound:(BOOL)rtlFound toLine:(int)line {
+    VT100Grid *grid = self.currentGrid;
+    switch ([self rtlUpdateForWriteWithRTLFound:rtlFound]) {
+        case VT100GridRTLUpdateNone:
+            break;
+        case VT100GridRTLUpdateFound:
+            // Only when something changed: the flag and direction are serialized
+            // in per-line metadata, and markLineDidChange: dirties the whole line
+            // and bumps the content generation. Guarding avoids doing that per
+            // append while RTL text streams over an already-RTL line.
+            if ([grid setRTLFoundInLine:line bidiDirection:self.terminal.bidiDirectionHint]) {
+                [grid markLineDidChange:line];
+            }
+            break;
+        case VT100GridRTLUpdateClear:
+            [grid clearRTLStateInLine:line];
+            break;
+    }
+}
+
+// Drops a grid line's bidi info. The per-cell RTL status is only meaningful
+// alongside a reorder table, so it goes too; left behind, the renderer would
+// still force a right-to-left writing direction on those cells.
+- (void)dropBidiInfoForLine:(int)line inGrid:(VT100Grid *)grid {
+    [grid setBidiInfo:nil forLine:line];
+    if ([grid resetRTLStatusInLine:line]) {
+        [grid markLineDidChange:line];
+    }
 }
 
 - (BOOL)shouldConvertCharactersToGraphicsCharacterSetInTerminal:(VT100Terminal *)terminal {
@@ -6294,7 +6321,7 @@ lengthExcludingInBandSignaling:data.length
         // already order it for display. Reordering it again fights their layout,
         // so leave alternate-screen lines unreordered. Clear any stale bidi info.
         for (int i = 0; i < grid.size.height; i++) {
-            [grid setBidiInfo:nil forLine:i];
+            [self dropBidiInfoForLine:i inGrid:grid];
         }
         return;
     }
@@ -6305,7 +6332,7 @@ lengthExcludingInBandSignaling:data.length
         }
         if (![grid mayContainRTLInRange:NSMakeRange(line, scas.count)]) {
             for (int i = 0; i < scas.count; i++) {
-                [grid setBidiInfo:nil forLine:line + i];
+                [self dropBidiInfoForLine:line + i inGrid:grid];
             }
             return;
         }
