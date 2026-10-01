@@ -66,7 +66,7 @@ class AttributedStringSaver: NSObject {
             let range = NSRange(location: 0, length: attributedString.length)
             let rtfData = try attributedString.data(from: range,
                                                     documentAttributes: documentAttributes)
-            Task {
+            _ = Task {
                 try await rtfData.writeTo(saveItem: item)
             }
         } catch {

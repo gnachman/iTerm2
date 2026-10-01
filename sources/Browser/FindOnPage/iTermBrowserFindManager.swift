@@ -265,7 +265,7 @@ class iTermBrowserFindManager: NSObject {
             generation = generation + 1
             let thisGeneration = generation
 
-            Task {
+            _ = Task {
                 try await mutex.sync {
                     if generation != thisGeneration {
                         DLog("Not searching for \(searchTerm) because there is a more recent term")
@@ -285,7 +285,7 @@ class iTermBrowserFindManager: NSObject {
 
         func findNext(sharedState: Shared) {
             guard isSearchActive else { return }
-            Task {
+            _ = Task {
                 try await executeJavaScript(command: ["action": "findNext"], sharedState: sharedState)
             }
         }
@@ -294,7 +294,7 @@ class iTermBrowserFindManager: NSObject {
             guard isSearchActive else {
                 return
             }
-            Task {
+            _ = Task {
                 try await executeJavaScript(command: ["action": "findPrevious"],
                                             sharedState: sharedState)
             }

@@ -128,7 +128,7 @@ class ContentNavigationShortcutView: NSView, ContentNavigationShortcutViewProtoc
             animation.values = scales
             animation.keyTimes = [0.0, 0.3, 1.0]
             animation.duration = 0.2
-            CATransaction.setCompletionBlock { [weak self] in
+            CATransaction.setCompletionBlock { [weak self = self] in
                 // For some reason the anchor point gets set to 0,0 (perhaps by the animation?)
                 self?.setAnchorPoint()
             }

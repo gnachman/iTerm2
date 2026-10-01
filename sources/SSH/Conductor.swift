@@ -1870,7 +1870,7 @@ extension Conductor {
             do {
                 DLog("Request suggestions \(request)")
                 let suggestions = try await self.suggestions(request.inputs)
-                DispatchQueue.main.async { [weak self] in
+                DispatchQueue.main.async { [weak self = self] in
                     let items = suggestions.map {
                         CompletionItem(value: $0, detail: $0, kind: .file)
                     }
@@ -1880,7 +1880,7 @@ extension Conductor {
                     request.completion(suggestionOnly, items)
                 }
             } catch {
-                DispatchQueue.main.async { [weak self] in
+                DispatchQueue.main.async { [weak self = self] in
                     self?.suggestionCache.insert(inputs: request.inputs, suggestions: [])
                     request.completion(suggestionOnly, [])
                 }

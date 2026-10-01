@@ -1172,7 +1172,7 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
             return
         }
         BookmarkDialogViewController.show(window: window) { [weak self] name in
-            Task { @MainActor in
+            _ = Task { @MainActor in
                 guard let self else { return }
                 try await self.browserManager.namedMarkManager?.add(with: name,
                                                                     webView: self.browserManager.webView,
@@ -1400,7 +1400,7 @@ extension iTermBrowserViewController {
             return
         }
         BookmarkDialogViewController.show(window: window) { [weak self] name in
-            Task { @MainActor in
+            _ = Task { @MainActor in
                 guard let self else {
                     return
                 }

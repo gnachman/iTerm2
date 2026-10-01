@@ -448,7 +448,7 @@ final class SpecialExceptionsWindowController: NSWindowController {
             if response == .OK, let item {
                 let encoder = JSONEncoder()
                 if let data = try? encoder.encode(config) {
-                    Task {
+                    _ = Task {
                         try await data.writeTo(saveItem: item)
                         item.revealInFinderIfLocal()
                     }

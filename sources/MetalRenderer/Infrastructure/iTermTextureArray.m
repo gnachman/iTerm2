@@ -232,6 +232,14 @@ static NSUInteger iTermTextureBytesPerSampleForMetalPixelFormat(MTLPixelFormat p
         case MTLPixelFormatBGR5A1Unorm:
             return 2;
 
+#ifdef MAC_OS_VERSION_27_0
+        case MTLPixelFormatRGB8Unorm:
+        case MTLPixelFormatRGB8Snorm:
+        case MTLPixelFormatRGB8Uint:
+        case MTLPixelFormatRGB8Sint:
+            return 3;
+#endif  // MAC_OS_VERSION_27_0
+
         case MTLPixelFormatR32Uint:
         case MTLPixelFormatR32Sint:
         case MTLPixelFormatR32Float:
@@ -256,6 +264,15 @@ static NSUInteger iTermTextureBytesPerSampleForMetalPixelFormat(MTLPixelFormat p
         case MTLPixelFormatBGR10_XR_sRGB:
             return 4;
 
+#ifdef MAC_OS_VERSION_27_0
+        case MTLPixelFormatRGB16Unorm:
+        case MTLPixelFormatRGB16Snorm:
+        case MTLPixelFormatRGB16Uint:
+        case MTLPixelFormatRGB16Sint:
+        case MTLPixelFormatRGB16Float:
+            return 6;
+#endif  // MAC_OS_VERSION_27_0
+
         case MTLPixelFormatRG32Uint:
         case MTLPixelFormatRG32Sint:
         case MTLPixelFormatRG32Float:
@@ -267,6 +284,13 @@ static NSUInteger iTermTextureBytesPerSampleForMetalPixelFormat(MTLPixelFormat p
         case MTLPixelFormatBGRA10_XR:
         case MTLPixelFormatBGRA10_XR_sRGB:
             return 8;
+
+#ifdef MAC_OS_VERSION_27_0
+        case MTLPixelFormatRGB32Uint:
+        case MTLPixelFormatRGB32Sint:
+        case MTLPixelFormatRGB32Float:
+            return 12;
+#endif  // MAC_OS_VERSION_27_0
 
             /* Normal 128 bit formats */
 

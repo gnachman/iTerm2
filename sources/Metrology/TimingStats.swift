@@ -21,7 +21,7 @@ class TimingStats: NSObject {
         lastTimestamp = CFAbsoluteTimeGetCurrent()
         super.init()
         DispatchQueue.main.async {
-            self.timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+            self.timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self = self] timer in
                 guard let self else {
                     timer.invalidate()
                     return

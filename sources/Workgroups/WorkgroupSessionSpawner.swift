@@ -368,7 +368,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                 // once this closure unwinds and would dealloc before
                 // the poller's first update, silently no-opping the
                 // launch.
-                session.pendingDiffLaunch = { [weak session] in
+                session.pendingDiffLaunch = { [weak session = session] in
                     guard let session else { return }
                     let base = session.workgroupInstance?.currentGitBase
                         ?? CCGitBaseSelectorItem.defaultBase

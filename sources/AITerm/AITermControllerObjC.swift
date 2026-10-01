@@ -376,7 +376,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
             if let prompt = maybeResult {
                 Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { _ in
                     if !shouldCancel {
-                        cancel = { [weak self] in
+                        cancel = { [weak self = self] in
                             self?.controller.cancel()
                         }
                         self.controller.request(query: prompt)
