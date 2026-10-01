@@ -19,10 +19,7 @@ class TerminalCommandMessageCellView: MessageCellView, ChatFindableCellView {
         let image: NSImage = {
             let image = NSImage(systemSymbolName: SFSymbol.desktopcomputer.rawValue,
                                 accessibilityDescription: "Command icon")!
-            if #available(macOS 12, *) {
-                return image.withSymbolConfiguration(.init(paletteColors: [.white, .clear, .black]))!
-            }
-            return image
+            return image.withSymbolConfiguration(.init(paletteColors: [.white, .clear, .black]))!
         }()
         let view = NSImageView(image: image)
         view.imageScaling = .scaleProportionallyUpOrDown

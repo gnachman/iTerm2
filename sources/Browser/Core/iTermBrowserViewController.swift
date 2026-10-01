@@ -340,25 +340,19 @@ extension iTermBrowserViewController {
 
     private var interactionState: NSObject? {
         get {
-            if #available(macOS 12, *) {
-                if let deferred = browserManager.webView.deferrableInteractionState {
-                    return deferred as? NSData
-                }
-                return browserManager.webView.interactionState as? NSData
-            } else {
-                return nil
+            if let deferred = browserManager.webView.deferrableInteractionState {
+                return deferred as? NSData
             }
+            return browserManager.webView.interactionState as? NSData
         }
         set {
-            if #available(macOS 12, *) {
-                // Check if we should defer setting interaction state during restoration
-                if shouldDeferLoading() {
-                    browserManager.webView.deferrableInteractionState = newValue
-                    return
-                }
-
-                browserManager.webView.interactionState = newValue
+            // Check if we should defer setting interaction state during restoration
+            if shouldDeferLoading() {
+                browserManager.webView.deferrableInteractionState = newValue
+                return
             }
+
+            browserManager.webView.interactionState = newValue
         }
     }
 
@@ -898,9 +892,7 @@ extension iTermBrowserViewController {
     }
     
     func loadDeferredURLIfNeeded() {
-        if #available(macOS 12.0, *) {
-            browserManager.webView.applyDeferredInteractionStateIfNeeded()
-        }
+        browserManager.webView.applyDeferredInteractionStateIfNeeded()
 
         if let url = deferredURL {
             deferredURL = nil

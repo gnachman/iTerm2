@@ -1757,7 +1757,6 @@ extension iTermBrowserManager: WKUIDelegate {
     
     // MARK: - Media Capture Permissions
     
-    @available(macOS 12.0, *)
     func webView(_ webView: WKWebView,
                  decideMediaCapturePermissionsFor origin: WKSecurityOrigin,
                  initiatedBy frame: WKFrameInfo,

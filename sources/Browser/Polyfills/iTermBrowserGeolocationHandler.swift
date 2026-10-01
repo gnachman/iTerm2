@@ -12,16 +12,12 @@ import WebKit
 class iTermBrowserGeolocationHandler: NSObject {
     private static var instances = [iTermBrowserUser: iTermBrowserGeolocationHandler]()
     static func instance(for user: iTermBrowserUser) -> iTermBrowserGeolocationHandler? {
-        if #available(macOS 12, *) {
-            if let existing = instances[user] {
-                return existing
-            }
-            let instance = iTermBrowserGeolocationHandler(user: user)
-            instances[user] = instance
-            return instance
-        } else {
-            return nil
+        if let existing = instances[user] {
+            return existing
         }
+        let instance = iTermBrowserGeolocationHandler(user: user)
+        instances[user] = instance
+        return instance
     }
 
     static let messageHandlerName = "iTermGeolocation"
