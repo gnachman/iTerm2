@@ -3232,6 +3232,47 @@ class LineBlockTests: XCTestCase {
                        "includesPartialLastLine should be false for hard-EOL lines")
     }
 
+    func testFindSubstringMatchesSpaceAgainstNullCellInsideLine() {
+        // Moving the cursor over a cell without writing to it leaves a null there. It is drawn as
+        // a blank, so a space in the query should match it.
+        //
+        // Given a raw line "gamma<null>delta<null><null>"
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 0)
+        let lineString = makeLineString("gamma\u{0}delta\u{0}\u{0}", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(lineString, width: 80),
+                      "Precondition: appending the line should succeed")
+
+        func find(_ needle: String, mode: iTermFindMode) -> [ResultRange] {
+            let results = NSMutableArray()
+            var includesPartialLastLine = ObjCBool(false)
+            block.findSubstring(needle,
+                                options: [.multipleResults],
+                                mode: mode,
+                                atOffset: 0,
+                                results: results,
+                                multipleResults: true,
+                                includesPartialLastLine: &includesPartialLastLine,
+                                multiLinePriorState: nil,
+                                continuationState: nil,
+                                crossBlockResultCount: nil)
+            return results as! [ResultRange]
+        }
+
+        // When the query has a space where the line has a null, then it matches
+        let plain = find("gamma delta", mode: .caseSensitiveSubstring)
+        XCTAssertEqual(plain.count, 1, "A space should match a null cell inside the line")
+        XCTAssertEqual(plain.first?.position, 0, "Match should start at offset 0")
+        XCTAssertEqual(plain.first?.length, 11, "Match should span one cell per character")
+
+        // And a regex wildcard still matches that cell
+        XCTAssertEqual(find("gamma.delta", mode: .caseSensitiveRegex).count, 1,
+                       "A regex wildcard should match a null cell inside the line")
+
+        // And nulls after the last written cell do not match a space
+        XCTAssertEqual(find("delta ", mode: .caseSensitiveSubstring).count, 0,
+                       "A space should not match a null after the last written cell")
+    }
+
     func testConvertPositionDoubleWidthBranch() {
         // This test exercises the branch in `convertPosition(_:withWidth:wrapOnEOL:toX:toY:)`
         // that is taken when the target offset falls after a double-width character
