@@ -800,94 +800,20 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
     private let fileWithSpace = "/file with space/x.txt"
     private let fileWithAmpersand = "/file&/x.txt"
 
-    func testEditorURLWithLineNumberEncodesSpaceOnce() {
-        let components = editorURLComponents(identifier: macVimIdentifier,
-                                             path: fileWithSpace,
-                                             lineNumber: "12")
-        XCTAssertEqual(components?.scheme, "mvim")
-        XCTAssertEqual(components?.host, "open")
-        XCTAssertEqual(decodedQueryItems(components),
-                       [URLQueryItem(name: "url", value: "file://" + fileWithSpace),
-                        URLQueryItem(name: "line", value: "12")])
-    }
-
-    // Regression test: iTermSemanticHistoryController.m
-    // -openFile:inEditorWithBundleId:lineNumber:columnNumber: (commit 8d5f938e1)
-    // used to percent-encode fileURL.absoluteString, which already contained
-    // %20 for the space, so the space was double-encoded (%2520) when no line
-    // number was present, and TextMate looked for “/file%20with%20space/x.txt”.
-    // The with-line branch went through NSURLComponents.queryItems and was
-    // single-encoded, so the two branches disagreed.
-    func testEditorURLWithoutLineNumberEncodesSpaceOnce() {
-        let components = editorURLComponents(identifier: macVimIdentifier,
-                                             path: fileWithSpace,
-                                             lineNumber: nil)
-        XCTAssertEqual(components?.scheme, "mvim")
-        XCTAssertEqual(components?.host, "open")
-        XCTAssertEqual(decodedQueryItems(components),
-                       [URLQueryItem(name: "url", value: "file://" + fileWithSpace)])
-    }
-
-    // Same root cause as testEditorURLWithoutLineNumberEncodesSpaceOnce, seen
-    // from the editor that actually breaks: TextMate strips “file:///” and uses
-    // the remainder as the path without decoding it again.
-    func testTextMateURLWithoutLineNumberEncodesSpaceOnce() {
-        let components = editorURLComponents(identifier: textmateIdentifier,
-                                             path: fileWithSpace,
-                                             lineNumber: nil)
-        XCTAssertEqual(components?.scheme, "txmt")
-        XCTAssertEqual(components?.host, "open")
-        XCTAssertEqual(decodedQueryItems(components),
-                       [URLQueryItem(name: "url", value: "file://" + fileWithSpace)])
-    }
-
-    // Regression test: iTermSemanticHistoryController.m
-    // -openFile:inEditorWithBundleId:lineNumber:columnNumber: (commit 8d5f938e1)
-    // used to build the url query value with
-    // NSCharacterSet.URLQueryAllowedCharacterSet (minus “/”), and that set
-    // allows “&” and “=”, so an ampersand in the path was emitted raw and split
-    // the query: url=file:///file&/x.txt&line=12 was read by every editor as
-    // url=file:///file plus a junk “/x.txt” item.
-    func testEditorURLWithLineNumberEncodesAmpersand() {
-        let components = editorURLComponents(identifier: macVimIdentifier,
-                                             path: fileWithAmpersand,
-                                             lineNumber: "12")
-        XCTAssertEqual(components?.scheme, "mvim")
-        XCTAssertEqual(components?.host, "open")
-        XCTAssertEqual(decodedQueryItems(components),
-                       [URLQueryItem(name: "url", value: "file://" + fileWithAmpersand),
-                        URLQueryItem(name: "line", value: "12")])
-    }
-
-    // Same root cause as testEditorURLWithLineNumberEncodesAmpersand; the
-    // no-line-number branch used the same character set.
-    func testEditorURLWithoutLineNumberEncodesAmpersand() {
-        let components = editorURLComponents(identifier: macVimIdentifier,
-                                             path: fileWithAmpersand,
-                                             lineNumber: nil)
-        XCTAssertEqual(components?.scheme, "mvim")
-        XCTAssertEqual(components?.host, "open")
-        XCTAssertEqual(decodedQueryItems(components),
-                       [URLQueryItem(name: "url", value: "file://" + fileWithAmpersand)])
-    }
-
-    // After the editor decodes the url query value once it parses the result as a URL (MacVim
-    // does [NSURL URLWithString:] on it and opens its path). So the once-decoded value has to be
-    // a well-formed file URL, which means the path inside it must itself be percent-escaped:
-    // exactly what -[NSURL fileURLWithPath:].absoluteString produces. Sending the raw path
-    // (commit 07b59768a) breaks any path that contains a character with URL meaning:
-    // a “#” or “?” becomes a fragment or query and truncates the path, and a literal “%XX” is
-    // decoded a second time. Spaces only work because URLWithString: on macOS 14 or later
-    // escapes them itself.
-    private func pathOpenedByEditorAfterOneDecode(_ path: String,
-                                                  lineNumber: String? = nil,
-                                                  file: StaticString = #filePath,
-                                                  line: UInt = #line) -> String? {
+    // What MacVim opens: it percent-decodes the url query value once, parses the result with
+    // URLWithString:, and takes the path. Its parser documents the double encoding this
+    // implies (mvim://open?url=file:///tmp/file%2520name.txt) as the canonical form.
+    private func pathMacVimWouldOpen(_ path: String,
+                                     lineNumber: String? = nil,
+                                     file: StaticString = #filePath,
+                                     line: UInt = #line) -> String? {
         let components = editorURLComponents(identifier: macVimIdentifier,
                                              path: path,
                                              lineNumber: lineNumber,
                                              file: file,
                                              line: line)
+        XCTAssertEqual(components?.scheme, "mvim", file: file, line: line)
+        XCTAssertEqual(components?.host, "open", file: file, line: line)
         guard let value = decodedQueryItems(components)?.first(where: { $0.name == "url" })?.value else {
             XCTFail("No url query item", file: file, line: line)
             return nil
@@ -899,57 +825,136 @@ final class SemanticHistoryControllerTests: XCTestCase, iTermObject, iTermSemant
         return fileURL.path
     }
 
-    func testEditorURLValueIsAFileURLForPathWithHash() {
-        let path = "/dir/a#b.txt"
-        // Build the URL outside the expected-failure block so only the path comparison is
-        // allowed to fail.
-        let opened = pathOpenedByEditorAfterOneDecode(path)
-        XCTExpectFailure("Semantic History sends the raw path in the url query value, so after one decode it is not a well-formed file URL (commit 07b59768a)") {
-            XCTAssertEqual(opened, path)
+    // What TextMate opens: it percent-decodes the url query value once, strips the file://
+    // prefix, and uses the rest verbatim as the path. BBEdit is sent the same txmt URL.
+    private func pathTextMateWouldOpen(_ path: String,
+                                       identifier: String,
+                                       lineNumber: String? = nil,
+                                       file: StaticString = #filePath,
+                                       line: UInt = #line) -> String? {
+        let components = editorURLComponents(identifier: identifier,
+                                             path: path,
+                                             lineNumber: lineNumber,
+                                             file: file,
+                                             line: line)
+        XCTAssertEqual(components?.scheme, "txmt", file: file, line: line)
+        XCTAssertEqual(components?.host, "open", file: file, line: line)
+        guard let value = decodedQueryItems(components)?.first(where: { $0.name == "url" })?.value else {
+            XCTFail("No url query item", file: file, line: line)
+            return nil
         }
+        let prefix = "file://"
+        guard value.hasPrefix(prefix) else {
+            XCTFail("Decoded url value does not start with file://: \(value)", file: file, line: line)
+            return nil
+        }
+        return String(value.dropFirst(prefix.count))
     }
 
-    func testEditorURLValueIsAFileURLForPathWithQuestionMark() {
-        let path = "/dir/a?b.txt"
-        // Build the URL outside the expected-failure block so only the path comparison is
-        // allowed to fail.
-        let opened = pathOpenedByEditorAfterOneDecode(path)
-        XCTExpectFailure("Semantic History sends the raw path in the url query value, so after one decode it is not a well-formed file URL (commit 07b59768a)") {
-            XCTAssertEqual(opened, path)
-        }
-    }
+    private let fileWithHash = "/dir/a#b.txt"
+    private let fileWithQuestionMark = "/dir/a?b.txt"
+    private let fileWithLiteralPercentEscape = "/dir/%41.txt"
 
-    func testEditorURLValueIsAFileURLForPathWithLiteralPercentEscape() {
-        let path = "/dir/%41.txt"
-        // Build the URL outside the expected-failure block so only the path comparison is
-        // allowed to fail.
-        let opened = pathOpenedByEditorAfterOneDecode(path)
-        XCTExpectFailure("Semantic History sends the raw path in the url query value, so after one decode it is not a well-formed file URL (commit 07b59768a)") {
-            XCTAssertEqual(opened, path)
-        }
-    }
+    // MARK: MacVim gets an escaped file URL
 
-    func testEditorURLValueIsAFileURLForPathWithHashAndLineNumber() {
-        let path = "/dir/a#b.txt"
-        let opened = pathOpenedByEditorAfterOneDecode(path, lineNumber: "12")
-        XCTExpectFailure("Semantic History sends the raw path in the url query value, so after one decode it is not a well-formed file URL (commit 07b59768a)") {
-            XCTAssertEqual(opened, path)
-        }
-    }
-
-    // A strict URL parser (an editor linked against an SDK older than macOS 14) rejects a
-    // literal space, so the once-decoded value must carry the space escaped, as
-    // fileURLWithPath:.absoluteString does. This intentionally conflicts with
-    // testEditorURLWithoutLineNumberEncodesSpaceOnce, which pins the raw-path form; one of
-    // the two has to change when the format is settled.
-    func testEditorURLValueIsTheEscapedFileURLForPathWithSpace() {
+    // Regression tests. Commit 8d5f938e1 sent MacVim a double-encoded value without a line
+    // number and a single-encoded one with a line number, and left “&” raw in both, which
+    // split the query. Commit 07b59768a then sent the raw path in both branches, which is
+    // not a well-formed file URL once decoded: “#” and “?” truncated the path, a literal
+    // “%41” was decoded twice, and a space was rejected by older MacVim builds.
+    func testMacVimURLValueIsTheEscapedFileURLForPathWithSpace() {
         let components = editorURLComponents(identifier: macVimIdentifier,
                                              path: fileWithSpace,
                                              lineNumber: nil)
-        let value = decodedQueryItems(components)?.first(where: { $0.name == "url" })?.value
-        XCTExpectFailure("Semantic History sends the raw path in the url query value, so after one decode it is not a well-formed file URL (commit 07b59768a)") {
-            XCTAssertEqual(value, URL(fileURLWithPath: fileWithSpace).absoluteString)
-        }
+        XCTAssertEqual(decodedQueryItems(components),
+                       [URLQueryItem(name: "url", value: URL(fileURLWithPath: fileWithSpace).absoluteString)])
+        XCTAssertEqual(components?.percentEncodedQuery, "url=file:///file%2520with%2520space/x.txt")
+    }
+
+    func testMacVimURLValueIsTheSameWithALineNumber() {
+        let components = editorURLComponents(identifier: macVimIdentifier,
+                                             path: fileWithSpace,
+                                             lineNumber: "12")
+        XCTAssertEqual(decodedQueryItems(components),
+                       [URLQueryItem(name: "url", value: URL(fileURLWithPath: fileWithSpace).absoluteString),
+                        URLQueryItem(name: "line", value: "12")])
+    }
+
+    func testMacVimOpensPathWithSpace() {
+        XCTAssertEqual(pathMacVimWouldOpen(fileWithSpace), fileWithSpace)
+    }
+
+    func testMacVimOpensPathWithAmpersand() {
+        XCTAssertEqual(pathMacVimWouldOpen(fileWithAmpersand), fileWithAmpersand)
+    }
+
+    func testMacVimOpensPathWithAmpersandAndLineNumber() {
+        XCTAssertEqual(pathMacVimWouldOpen(fileWithAmpersand, lineNumber: "12"), fileWithAmpersand)
+    }
+
+    func testMacVimOpensPathWithHash() {
+        XCTAssertEqual(pathMacVimWouldOpen(fileWithHash), fileWithHash)
+    }
+
+    func testMacVimOpensPathWithHashAndLineNumber() {
+        XCTAssertEqual(pathMacVimWouldOpen(fileWithHash, lineNumber: "12"), fileWithHash)
+    }
+
+    func testMacVimOpensPathWithQuestionMark() {
+        XCTAssertEqual(pathMacVimWouldOpen(fileWithQuestionMark), fileWithQuestionMark)
+    }
+
+    func testMacVimOpensPathWithLiteralPercentEscape() {
+        XCTAssertEqual(pathMacVimWouldOpen(fileWithLiteralPercentEscape), fileWithLiteralPercentEscape)
+    }
+
+    // MARK: TextMate and BBEdit get the raw path
+
+    // TextMate does not decode the path a second time, so an escaped file URL would make it
+    // look for a file literally named “file%20with%20space”. That is what the no-line-number
+    // branch did between commits 8d5f938e1 and 07b59768a.
+    func testTextMateURLValueIsTheRawPathForPathWithSpace() {
+        let components = editorURLComponents(identifier: textmateIdentifier,
+                                             path: fileWithSpace,
+                                             lineNumber: nil)
+        XCTAssertEqual(decodedQueryItems(components),
+                       [URLQueryItem(name: "url", value: "file://" + fileWithSpace)])
+        XCTAssertEqual(components?.percentEncodedQuery, "url=file:///file%20with%20space/x.txt")
+    }
+
+    func testTextMateOpensPathWithSpaceAndLineNumber() {
+        XCTAssertEqual(pathTextMateWouldOpen(fileWithSpace, identifier: textmateIdentifier, lineNumber: "12"),
+                       fileWithSpace)
+    }
+
+    func testTextMateOpensPathWithAmpersand() {
+        XCTAssertEqual(pathTextMateWouldOpen(fileWithAmpersand, identifier: textmateIdentifier),
+                       fileWithAmpersand)
+    }
+
+    func testTextMateOpensPathWithAmpersandAndLineNumber() {
+        XCTAssertEqual(pathTextMateWouldOpen(fileWithAmpersand, identifier: textmateIdentifier, lineNumber: "12"),
+                       fileWithAmpersand)
+    }
+
+    func testTextMateOpensPathWithHash() {
+        XCTAssertEqual(pathTextMateWouldOpen(fileWithHash, identifier: textmateIdentifier), fileWithHash)
+    }
+
+    func testTextMateOpensPathWithQuestionMark() {
+        XCTAssertEqual(pathTextMateWouldOpen(fileWithQuestionMark, identifier: textmateIdentifier),
+                       fileWithQuestionMark)
+    }
+
+    func testTextMateOpensPathWithLiteralPercentEscape() {
+        XCTAssertEqual(pathTextMateWouldOpen(fileWithLiteralPercentEscape, identifier: textmateIdentifier),
+                       fileWithLiteralPercentEscape)
+    }
+
+    // BBEdit is closed source and is sent TextMate's scheme, so it gets TextMate's form. This
+    // pins that choice; it has not been verified against BBEdit itself.
+    func testBBEditGetsTheSameFormAsTextMate() {
+        XCTAssertEqual(pathTextMateWouldOpen(fileWithSpace, identifier: bbEditIdentifier), fileWithSpace)
     }
 
     // Note there is no test for textmate 2 because it is not directly selectable from the menu and it

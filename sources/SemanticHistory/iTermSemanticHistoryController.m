@@ -652,15 +652,24 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
 
-    // MacVim, TextMate and BBEdit all split the query on & and =, percent-decode
-    // each half exactly once, and then treat the url value as a file URL whose
-    // path is taken verbatim. So the query value must be the raw file URL
-    // (file:// plus the unescaped path) percent-encoded exactly once, with the
-    // query delimiters & = + # and the escape character % themselves escaped.
-    // URLQueryAllowedCharacterSet leaves & = + and # unescaped, which would
-    // truncate the url value at an ampersand in the path, and encoding
-    // fileURL.absoluteString (already percent-escaped) would double-encode
-    // spaces as %2520.
+    // The url query value holds a file URL, and the editors disagree about its form.
+    //
+    // MacVim percent-decodes the value once and then parses the result with
+    // +[NSURL URLWithString:], so the decoded value has to be a well-formed file URL
+    // whose path is itself percent-escaped, as -[NSURL absoluteString] produces. Its
+    // parser documents this double encoding as the canonical form, for example
+    // mvim://open?url=file:///tmp/file%2520name.txt. A raw path breaks on “#” and “?”
+    // (they start a fragment or query), on a literal “%XX” (decoded a second time), and
+    // on spaces in MacVim builds whose URL parser rejects them.
+    //
+    // TextMate percent-decodes the value once, strips the file:// prefix, and uses the
+    // rest verbatim as the path, so it needs the raw path. BBEdit is reached through
+    // TextMate’s scheme and gets the same form.
+    //
+    // Either way the value is then percent-encoded exactly once for the query, with
+    // the delimiters & = + # and the escape character % escaped as well.
+    // URLQueryAllowedCharacterSet leaves & = + and # unescaped, which would truncate
+    // the url value at an ampersand in the path.
     NSMutableCharacterSet *queryCharset = [[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy];
     [queryCharset removeCharactersInString:@"&=+#%"];
     NSString *(^percentEncoded)(NSString *) = ^NSString *(NSString *string) {
@@ -670,7 +679,10 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     urlComponents.host = @"open";
     urlComponents.path = nil;
     urlComponents.scheme = [iTermSemanticHistoryPrefsController schemeForEditor:identifier];
-    NSString *fileURLString = [@"file://" stringByAppendingString:path];
+    const BOOL editorParsesValueAsURL = [identifier isEqualToString:kMacVimIdentifier];
+    NSString *fileURLString = (editorParsesValueAsURL ?
+                               [NSURL fileURLWithPath:path].absoluteString :
+                               [@"file://" stringByAppendingString:path]);
     NSArray<NSURLQueryItem *> *queryItems = @[ [NSURLQueryItem queryItemWithName:@"url"
                                                                            value:percentEncoded(fileURLString)] ];
     if (lineNumber) {
