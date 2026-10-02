@@ -1,6 +1,8 @@
 from collections.abc import Awaitable, Callable
 from types import TracebackType
-from typing import Any, Self
+from typing import Any
+
+from typing_extensions import Self
 
 from .app import App
 from .connection import Connection

@@ -1,10 +1,16 @@
 from collections.abc import Awaitable, Callable, Coroutine
-from typing import Any, Protocol
+from typing import Any, Protocol, TypeVar
+
+from typing_extensions import ParamSpec, TypeAlias
 
 from . import api_pb2
 from .connection import Connection
 from .notifications import NotificationToken
 from .statusbar import StatusBarComponent
+
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+_R_co = TypeVar("_R_co", covariant=True)
 
 async def generic_handle_rpc(
     coro: Callable[..., Awaitable[Any]],
@@ -16,17 +22,17 @@ class Reference:
     name: str
     def __init__(self, name: str) -> None: ...
 
-class _RegisteredFunction[**P, R](Protocol):
+class _RegisteredFunction(Protocol[_P, _R_co]):
     rpc_token: NotificationToken
     rpc_connection: Connection
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Coroutine[Any, Any, R]: ...
+    def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> Coroutine[Any, Any, _R_co]: ...
 
-class _RPCFunction[**P, R](_RegisteredFunction[P, R], Protocol):
+class _RPCFunction(_RegisteredFunction[_P, _R_co], Protocol[_P, _R_co]):
     async def async_register(
         self, connection: Connection, timeout: float | None = None
     ) -> None: ...
 
-class _ContextMenuProviderRPCFunction[**P, R](_RegisteredFunction[P, R], Protocol):
+class _ContextMenuProviderRPCFunction(_RegisteredFunction[_P, _R_co], Protocol[_P, _R_co]):
     async def async_register(
         self,
         connection: Connection,
@@ -35,7 +41,7 @@ class _ContextMenuProviderRPCFunction[**P, R](_RegisteredFunction[P, R], Protoco
         timeout: float | None = None,
     ) -> None: ...
 
-class _TitleProviderRPCFunction[**P, R](_RegisteredFunction[P, R], Protocol):
+class _TitleProviderRPCFunction(_RegisteredFunction[_P, _R_co], Protocol[_P, _R_co]):
     async def async_register(
         self,
         connection: Connection,
@@ -44,7 +50,7 @@ class _TitleProviderRPCFunction[**P, R](_RegisteredFunction[P, R], Protocol):
         timeout: float | None = None,
     ) -> None: ...
 
-class _StatusBarRPCFunction[**P, R](_RegisteredFunction[P, R], Protocol):
+class _StatusBarRPCFunction(_RegisteredFunction[_P, _R_co], Protocol[_P, _R_co]):
     async def async_register(
         self,
         connection: Connection,
@@ -52,15 +58,15 @@ class _StatusBarRPCFunction[**P, R](_RegisteredFunction[P, R], Protocol):
         timeout: float | None = None,
     ) -> None: ...
 
-StatusBarRPCFunction = _StatusBarRPCFunction
+StatusBarRPCFunction: TypeAlias = _StatusBarRPCFunction[_P, _R]
 
-def RPC[**P, R](func: Callable[P, Coroutine[Any, Any, R]]) -> _RPCFunction[P, R]: ...
-def ContextMenuProviderRPC[**P, R](
-    func: Callable[P, Coroutine[Any, Any, R]],
-) -> _ContextMenuProviderRPCFunction[P, R]: ...
-def TitleProviderRPC[**P, R](
-    func: Callable[P, Coroutine[Any, Any, R]],
-) -> _TitleProviderRPCFunction[P, R]: ...
-def StatusBarRPC[**P, R](
-    func: Callable[P, Coroutine[Any, Any, R]],
-) -> _StatusBarRPCFunction[P, R]: ...
+def RPC(func: Callable[_P, Coroutine[Any, Any, _R]]) -> _RPCFunction[_P, _R]: ...
+def ContextMenuProviderRPC(
+    func: Callable[_P, Coroutine[Any, Any, _R]],
+) -> _ContextMenuProviderRPCFunction[_P, _R]: ...
+def TitleProviderRPC(
+    func: Callable[_P, Coroutine[Any, Any, _R]],
+) -> _TitleProviderRPCFunction[_P, _R]: ...
+def StatusBarRPC(
+    func: Callable[_P, Coroutine[Any, Any, _R]],
+) -> _StatusBarRPCFunction[_P, _R]: ...

@@ -1,7 +1,9 @@
 import asyncio
 from enum import Enum
 from types import TracebackType
-from typing import Any, Self
+from typing import Any
+
+from typing_extensions import Self
 
 from . import api_pb2
 from .api_pb2 import URL as ProtoURL

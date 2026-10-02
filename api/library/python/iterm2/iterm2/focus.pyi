@@ -1,6 +1,6 @@
 import enum
 from types import TracebackType
-from typing import Self
+from typing_extensions import Self
 
 from . import api_pb2
 from .connection import Connection

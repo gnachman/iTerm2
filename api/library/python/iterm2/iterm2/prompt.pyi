@@ -1,6 +1,8 @@
 from enum import Enum
 from types import TracebackType
-from typing import Any, Literal, Self, overload
+from typing import Any, Literal, overload
+
+from typing_extensions import Self
 
 from google.protobuf.internal.containers import RepeatedScalarFieldContainer
 
