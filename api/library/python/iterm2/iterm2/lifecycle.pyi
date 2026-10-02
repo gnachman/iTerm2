@@ -1,0 +1,56 @@
+from collections.abc import Awaitable, Callable
+from types import TracebackType
+from typing import Any
+
+from typing_extensions import Self
+
+from .app import App
+from .connection import Connection
+
+class EachSessionOnceMonitor:
+    def __init__(self, app: App) -> None: ...
+    @staticmethod
+    async def async_foreach_session_create_task(
+        app: App, task: Callable[[str], Awaitable[Any]]
+    ) -> None: ...
+    async def __aenter__(self) -> Self: ...
+    async def async_get(self) -> str: ...
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: TracebackType | None,
+    ) -> None: ...
+
+class SessionTerminationMonitor:
+    def __init__(self, connection: Connection) -> None: ...
+    async def __aenter__(self) -> Self: ...
+    async def async_get(self) -> str: ...
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: TracebackType | None,
+    ) -> None: ...
+
+class LayoutChangeMonitor:
+    def __init__(self, connection: Connection) -> None: ...
+    async def __aenter__(self) -> Self: ...
+    async def async_get(self) -> None: ...
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: TracebackType | None,
+    ) -> None: ...
+
+class NewSessionMonitor:
+    def __init__(self, connection: Connection) -> None: ...
+    async def __aenter__(self) -> Self: ...
+    async def async_get(self) -> str: ...
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: TracebackType | None,
+    ) -> None: ...
