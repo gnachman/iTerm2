@@ -1,0 +1,13 @@
+from .connection import Connection
+
+class SavedArrangementException(Exception): ...
+
+class Arrangement:
+    @staticmethod
+    async def async_save(connection: Connection, name: str) -> None: ...
+    @staticmethod
+    async def async_restore(
+        connection: Connection, name: str, window_id: str | None = None
+    ) -> None: ...
+    @staticmethod
+    async def async_list(connection: Connection) -> list[str]: ...
