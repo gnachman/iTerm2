@@ -1,12 +1,16 @@
 from collections.abc import Awaitable, Callable, Collection, Iterable, Mapping
-from typing import Any, TypeAlias
+from typing import Any, TypeVar
+
+from typing_extensions import TypeAlias
 
 from . import api_pb2
 from .connection import Connection
 from .keyboard import KeystrokePattern
 from .statusbar import StatusBarComponent
 
-type NotificationCallback[N] = Callable[[Connection, N], Awaitable[Any]]
+_N = TypeVar("_N")
+
+NotificationCallback: TypeAlias = Callable[[Connection, _N], Awaitable[Any]]
 NotificationToken: TypeAlias = tuple[tuple[Any, ...], Callable[..., Any]]
 
 RPC_ROLE_GENERIC: api_pb2.RPCRegistrationRequest.Role.ValueType
