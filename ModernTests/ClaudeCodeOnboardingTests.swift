@@ -2,8 +2,8 @@
 //  ClaudeCodeOnboardingTests.swift
 //  iTerm2 ModernTests
 //
-//  Offline coverage for the two pure helpers behind the Claude Code
-//  integration's CLAUDE_CONFIG_DIR support:
+//  Offline coverage for the pure helpers behind the Claude Code
+//  integration's settings.json handling:
 //
 //  - parseCLAUDE_CONFIG_DIR(from:) extracts the variable from `/usr/bin/env`
 //    output. Returning nil for "absent" is load-bearing: the caller falls back
@@ -12,6 +12,9 @@
 //    from a settings.json, pruning emptied containers and leaving unrelated
 //    hooks intact. It backs both Uninstall and the reinstall-into-a-new-dir
 //    cleanup, so its result codes and pruning behavior matter.
+//  - ccStatusPaths(inHookCommand:) decides which hook commands are ours and
+//    where their cc-status lives. Install, Uninstall and the health check all
+//    rely on it, so a command it misses gets duplicated or reported as broken.
 //
 
 import XCTest
@@ -128,5 +131,58 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         }
         let commands = entries.compactMap { $0["command"] as? String }
         XCTAssertEqual(commands, ["/usr/local/bin/other-hook"])
+    }
+
+    private let wrapped = "[ -x \"$HOME/.config/iterm2/cc-status\" ] || exit 0; exec \"$HOME/.config/iterm2/cc-status\""
+
+    func testStripRemovesWrappedCCStatusCommand() {
+        let settings: [String: Any] = [
+            "hooks": [
+                "Stop": [
+                    ["hooks": [["type": "command", "command": wrapped]]]
+                ]
+            ]
+        ]
+        let url = makeTempSettings(settings)
+        XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: url), .success)
+        XCTAssertNil(readJSON(url)?["hooks"])
+    }
+
+    // MARK: - ccStatusPaths
+
+    private func paths(_ command: String) -> Set<String> {
+        return ClaudeCodeOnboarding.ccStatusPaths(inHookCommand: command, homeDirectory: "/Users/me")
+    }
+
+    func testCCStatusPathsLiteralPath() {
+        XCTAssertEqual(paths("/x/y/cc-status"), ["/x/y/cc-status"])
+    }
+
+    func testCCStatusPathsExpandsHome() {
+        let expected: Set = ["/Users/me/.config/iterm2/cc-status"]
+        XCTAssertEqual(paths("$HOME/.config/iterm2/cc-status"), expected)
+        XCTAssertEqual(paths("${HOME}/.config/iterm2/cc-status"), expected)
+        XCTAssertEqual(paths("~/.config/iterm2/cc-status"), expected)
+        XCTAssertEqual(paths("\"$HOME/.config/iterm2/cc-status\""), expected)
+        XCTAssertEqual(paths("\"$HOME\"/.config/iterm2/cc-status"), expected)
+    }
+
+    func testCCStatusPathsWrappedCommand() {
+        XCTAssertTrue(paths(wrapped).contains("/Users/me/.config/iterm2/cc-status"))
+    }
+
+    func testCCStatusPathsCommandWithArguments() {
+        XCTAssertEqual(paths("/x/y/cc-status --verbose"), ["/x/y/cc-status"])
+    }
+
+    func testCCStatusPathsKeepsPathContainingSpaces() {
+        XCTAssertTrue(paths("/Users/John Smith/cc-status").contains("/Users/John Smith/cc-status"))
+        XCTAssertTrue(paths("\"/Users/John Smith/cc-status\"").contains("/Users/John Smith/cc-status"))
+    }
+
+    func testCCStatusPathsIgnoresOtherCommands() {
+        XCTAssertEqual(paths("/usr/local/bin/other-hook"), [])
+        XCTAssertEqual(paths("/x/y/not-cc-status"), [])
+        XCTAssertEqual(paths("cc-status"), [])
     }
 }
