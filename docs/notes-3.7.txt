@@ -712,6 +712,13 @@ Bug Fixes:
   it could fail with a certificate error even
   though the same download succeeded in a
   browser.
+- iTerm2 no longer reports the Claude Code
+  Integration as broken when its entries in
+  Claude Code’s settings.json use $HOME or ~, or
+  wrap the command in other shell syntax.
+  Reinstalling no longer adds a second copy of
+  such an entry, and leaves a working one as you
+  wrote it. Issue 13099.
 - Installing the Claude Code Integration now
   honors $CLAUDE_CONFIG_DIR, so per-tab status
   indicators work for people who keep Claude

@@ -142,6 +142,25 @@ class ClaudeCodeOnboarding: NSObject {
         return result
     }
 
+    // The cc-status paths a hook command may name, with a leading ~/, $HOME/ or
+    // ${HOME}/ expanded. Claude Code runs hook commands through a shell, so a
+    // working command may be quoted, take arguments, or wrap cc-status in other
+    // shell syntax. Empty when the command does not run cc-status.
+    // internal (not private) for unit testing via @testable import.
+    static func ccStatusPaths(inHookCommand command: String,
+                              homeDirectory: String = NSHomeDirectory()) -> Set<String> {
+        let unquoted = command.components(separatedBy: CharacterSet(charactersIn: "\"'")).joined()
+        let separators = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: ";|&()<>"))
+        // The whole command is a candidate too, so a path containing spaces still counts.
+        let candidates = [unquoted] + unquoted.components(separatedBy: separators)
+        return Set(candidates.filter { $0.hasSuffix("/cc-status") }.map { path in
+            for prefix in ["~/", "$HOME/", "${HOME}/"] where path.hasPrefix(prefix) {
+                return (homeDirectory as NSString).appendingPathComponent(String(path.dropFirst(prefix.count)))
+            }
+            return path
+        })
+    }
+
     // Strip every cc-status hook entry from the given settings.json. Returns
     // .success for the file-missing and no-cc-status-entries cases; returns a
     // specific failure (.unreadable / .malformed / .writeFailed) when something
@@ -190,7 +209,7 @@ class ClaudeCodeOnboarding: NSObject {
                 let before = entries.count
                 entries.removeAll { entry in
                     guard let command = entry["command"] as? String else { return false }
-                    return command.hasSuffix("/cc-status")
+                    return !ccStatusPaths(inHookCommand: command).isEmpty
                 }
                 if entries.count != before {
                     groupsChanged = true
@@ -474,15 +493,14 @@ class ClaudeCodeOnboarding: NSObject {
             for group in groups {
                 guard let entries = group["hooks"] as? [[String: Any]] else { continue }
                 for entry in entries {
-                    guard let command = entry["command"] as? String,
-                          command.hasSuffix("/cc-status") else {
+                    guard let command = entry["command"] as? String else {
                         continue
                     }
                     // Follows symlinks; a dangling symlink fails
                     // both isExecutableFile and fileExists. The
                     // executable bit matters because Claude Code
                     // would refuse to invoke a non-executable hook.
-                    if fm.isExecutableFile(atPath: command) {
+                    if ccStatusPaths(inHookCommand: command).contains(where: { fm.isExecutableFile(atPath: $0) }) {
                         ok = true
                         break
                     }
@@ -515,7 +533,7 @@ class ClaudeCodeOnboarding: NSObject {
                 guard let entries = group["hooks"] as? [[String: Any]] else { continue }
                 for entry in entries {
                     if let command = entry["command"] as? String,
-                       command.hasSuffix("/cc-status") {
+                       !ccStatusPaths(inHookCommand: command).isEmpty {
                         return true
                     }
                 }
@@ -1627,11 +1645,13 @@ class ClaudeCodeOnboarding: NSObject {
                 var groupChanged = false
                 for entryIndex in groupHooks.indices {
                     guard let command = groupHooks[entryIndex]["command"] as? String,
-                          command.hasSuffix("/cc-status") else {
+                          case let paths = ccStatusPaths(inHookCommand: command),
+                          !paths.isEmpty else {
                         continue
                     }
                     foundCCStatus = true
-                    if command != ccStatusPath {
+                    // A command that already runs the current cc-status keeps its spelling.
+                    if !paths.contains(ccStatusPath) {
                         groupHooks[entryIndex]["command"] = ccStatusPath
                         groupChanged = true
                         DLog("Onboarding: updated stale cc-status hook for \(eventName) from \(command) to \(ccStatusPath)")
