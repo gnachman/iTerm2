@@ -244,6 +244,13 @@ class TokenExecutor: NSObject {
         impl.addDeferredSideEffect(task)
     }
 
+    // A tab title remains visible even when its terminal contents are hidden.
+    // Keep the deferred FIFO and its prompt coalescing, but bound the title latency.
+    @objc
+    func expediteSideEffectsForTitleChange() {
+        impl.expediteSideEffectsForTitleChange()
+    }
+
     // Any queue. True if a report may be sent without first pausing+syncing.
     @objc
     var reportsMaySkipSync: Bool {
@@ -588,6 +595,10 @@ private class TokenExecutorImpl {
         noteStateSideEffectScheduled()
         sideEffects.append(task)
         sideEffectScheduler.markNeedsUpdateDeferredByHalfPeriod()
+    }
+
+    func expediteSideEffectsForTitleChange() {
+        sideEffectScheduler.expedite(within: Self.foregroundSideEffectPeriod)
     }
 
     // Any queue
