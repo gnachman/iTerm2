@@ -140,9 +140,14 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
 // The logo's own background when it has one baked in, so the card becomes a
 // tile of that colour and the image's edge disappears into it.
 @property (nonatomic, strong) NSColor *bakedBackgroundColor;
+// Content view inside the glass background on macOS 26, nil otherwise. Add the
+// logo and label here rather than assuming where the glass view sits.
+- (NSView *)glassContentView;
 @end
 
-@implementation iTermSponsorBoxView
+@implementation iTermSponsorBoxView {
+    NSView *_glassView;
+}
 - (BOOL)wantsUpdateLayer { return YES; }
 - (void)updateLayer {
     [super updateLayer];
@@ -166,11 +171,7 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
                                         darkMode:[NSColor colorWithWhite:1.0 alpha:0.08]];
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunguarded-availability-new"
-        for (NSView *subview in self.subviews) {
-            if ([subview isKindOfClass:[NSGlassEffectView class]]) {
-                ((NSGlassEffectView *)subview).tintColor = tint;
-            }
-        }
+        ((NSGlassEffectView *)_glassView).tintColor = tint;
 #pragma clang diagnostic pop
     }
 }
@@ -190,12 +191,23 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
             contentView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
             glassView.contentView = contentView;
             [self addSubview:glassView];
+            _glassView = glassView;
             self.wantsLayer = YES;
             self.layer.cornerRadius = iTermAboutContainerCornerRadius();
             self.layer.masksToBounds = YES;
         }
     }
     return self;
+}
+
+- (NSView *)glassContentView {
+    if (@available(macOS 26, *)) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+        return ((NSGlassEffectView *)_glassView).contentView;
+#pragma clang diagnostic pop
+    }
+    return nil;
 }
 - (void)resetCursorRects {
     [super resetCursorRects];
@@ -353,13 +365,9 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
 
     NSView *contentView = [[NSView alloc] initWithFrame:self.bounds];
     contentView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-
-    NSArray *subviews = [self.subviews copy];
-    for (NSView *subview in subviews) {
-        if (subview != _backersWell) {
-            [self addSubview:subview positioned:NSWindowAbove relativeTo:contentView];
-        }
-    }
+    // The backer well is the only content that needs to live inside the glass;
+    // everything else is already a subview and stays above the glass because
+    // the glass is added below.
     [contentView addSubview:_backersWell];
 
     glassView.contentView = contentView;
@@ -517,6 +525,7 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
 // scrim behind the backers and light themes keep the stock window.
 - (void)applyAppearanceTreatment {
     if (@available(macOS 26, *)) {
+        self.material = NSVisualEffectMaterialWindowBackground;
         if (_glassEffectView) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunguarded-availability-new"
@@ -542,15 +551,6 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
         return;
     }
     [self applyAppearanceTreatment];
-    if (@available(macOS 26, *)) {
-        if (_glassEffectView) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunguarded-availability-new"
-            ((NSGlassEffectView *)_glassEffectView).tintColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:1.0 alpha:0.15]
-                                                                                                darkMode:[NSColor colorWithWhite:0.0 alpha:0.35]];
-#pragma clang diagnostic pop
-        }
-    }
 }
 
 - (NSView *)makeSponsorBoxWithImageNamed:(NSString *)imageName title:(NSString *)title {
@@ -581,25 +581,13 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
     }
 
     iTermSponsorBoxView *box = [[iTermSponsorBoxView alloc] initWithFrame:NSMakeRect(0, 0, boxWidth, boxHeight)];
+    box.wantsLayer = YES;
     box.bakedBackgroundColor = iTermAboutBakedBackgroundColorOfImage(image);
 
-    if (@available(macOS 26, *)) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunguarded-availability-new"
-        NSView *contentView = box.subviews.firstObject;
-        if ([contentView isKindOfClass:[NSGlassEffectView class]]) {
-            contentView = [(NSGlassEffectView *)contentView contentView];
-        }
-#pragma clang diagnostic pop
-        [contentView addSubview:imageView];
-        if (label) {
-            [contentView addSubview:label];
-        }
-    } else {
-        [box addSubview:imageView];
-        if (label) {
-            [box addSubview:label];
-        }
+    NSView *contentView = [box glassContentView] ?: box;
+    [contentView addSubview:imageView];
+    if (label) {
+        [contentView addSubview:label];
     }
 
     return box;
@@ -659,11 +647,11 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
     if (self) {
         NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
         NSString *const versionNumber = myDict[(NSString *)kCFBundleVersionKey];
-        NSString *versionString = [NSString stringWithFormat: NSLocalizedStringWithDefaultValue(@"AboutWindow.BuildVersion", nil, [NSBundle mainBundle], @"Build %@", @"Build version line in the about window; placeholder is the build number"), versionNumber];
+        NSString *versionString = [NSString stringWithFormat: NSLocalizedStringWithDefaultValue(@"AboutWindow.BuildVersionLine", nil, [NSBundle mainBundle], @"Build %@", @"Build version line in the about window; placeholder is the build number"), versionNumber];
         NSAttributedString *whatsNew = nil;
         if ([versionNumber hasPrefix:@"3.7."] || [versionString isEqualToString:@"unknown"]) {
             whatsNew = [self attributedStringWithLinkToURL:iTermAboutWindowControllerWhatsNewURLString
-                                                     title:NSLocalizedStringWithDefaultValue(@"AboutWindow.WhatsNew", nil, [NSBundle mainBundle], @"What’s New in 3.7?", @"Link title in the about window that opens the whats-new page for version 3.7")];
+                                                     title:NSLocalizedStringWithDefaultValue(@"AboutWindow.WhatsNewLine", nil, [NSBundle mainBundle], @"What’s New in 3.7?", @"Link title in the about window that opens the whats-new page for version 3.7")];
         }
 
         // Force IBOutlets to be bound by creating window.
