@@ -143,6 +143,37 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
 @end
 
 @implementation iTermSponsorBoxView
+- (BOOL)wantsUpdateLayer { return YES; }
+- (void)updateLayer {
+    [super updateLayer];
+    self.layer.cornerRadius = iTermAboutContainerCornerRadius();
+    if (!@available(macOS 26, *)) {
+        self.layer.backgroundColor = (self.bakedBackgroundColor ?: iTermAboutContainerFillColor()).CGColor;
+        // A hairline keeps a tile readable as a card whatever colour it turned out
+        // to be: a white tile on the light window, a dark one on the dark window.
+        self.layer.borderWidth = 1.0;
+        self.layer.borderColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.08]
+                                                             darkMode:[NSColor colorWithWhite:1.0 alpha:0.10]].CGColor;
+    }
+}
+// A logo with a flat colour baked in becomes the glass tint on macOS 26, so the
+// card stays a tile of that colour instead of falling back to the neutral fill.
+- (void)setBakedBackgroundColor:(NSColor *)bakedBackgroundColor {
+    _bakedBackgroundColor = bakedBackgroundColor;
+    if (@available(macOS 26, *)) {
+        NSColor *tint = bakedBackgroundColor ?:
+            [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.04]
+                                        darkMode:[NSColor colorWithWhite:1.0 alpha:0.08]];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+        for (NSView *subview in self.subviews) {
+            if ([subview isKindOfClass:[NSGlassEffectView class]]) {
+                ((NSGlassEffectView *)subview).tintColor = tint;
+            }
+        }
+#pragma clang diagnostic pop
+    }
+}
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
@@ -166,19 +197,6 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
     }
     return self;
 }
-
-- (void)updateLayer {
-    [super updateLayer];
-    if (!@available(macOS 26, *)) {
-        self.layer.cornerRadius = iTermAboutContainerCornerRadius();
-        self.layer.backgroundColor = (self.bakedBackgroundColor ?: iTermAboutContainerFillColor()).CGColor;
-        // A hairline keeps a tile readable as a card whatever colour it turned out
-        // to be: a white tile on the light window, a dark one on the dark window.
-        self.layer.borderWidth = 1.0;
-        self.layer.borderColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.08]
-                                                             darkMode:[NSColor colorWithWhite:1.0 alpha:0.10]].CGColor;
-    }
-}
 - (void)resetCursorRects {
     [super resetCursorRects];
     [self addCursorRect:self.bounds cursor:[NSCursor pointingHandCursor]];
@@ -191,6 +209,7 @@ static NSColor *iTermAboutBakedBackgroundColorOfImage(NSImage *image) {
 @end
 
 @implementation iTermAboutBackersWellView
+- (BOOL)wantsUpdateLayer { return YES; }
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
