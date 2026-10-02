@@ -1120,6 +1120,44 @@ class Session:
         await iterm2.rpc.async_invoke_method(
             self.connection, self.session_id, invocation, -1)
 
+    async def async_eval_javascript(self, js: str) -> typing.Any:
+        """
+        Run JavaScript in the page shown by a browser session and return its result.
+
+        ``js`` is the body of an async function: it may use ``await`` and must
+        ``return`` the value it wants back. The value is JSON-encoded in the page
+        and decoded here, so it must be JSON-serializable.
+
+        The first time a script runs JavaScript on a domain, the user is asked
+        to approve it. Once approved, that domain is remembered.
+
+        :param js: The function body to run in the page.
+        :returns: The decoded return value.
+
+        :raises: :class:`~iterm2.rpc.RPCException` if the session is not a
+            browser session, the JavaScript throws, or the user denies permission.
+        """
+        iterm2.capabilities.check_supports_browser_scripting(self.connection)
+        invocation = iterm2.util.invocation_string(
+            "iterm2.browser_eval_js",
+            {"js": js})
+        result = await iterm2.rpc.async_invoke_method(
+            self.connection, self.session_id, invocation, -1)
+        return json.loads(result) if isinstance(result, str) else result
+
+    async def async_set_browser_inspectable(self, enabled: bool) -> None:
+        """
+        Allow (or forbid) Safari's Web Inspector to attach to a browser session.
+
+        :param enabled: Whether the page may be inspected.
+        """
+        iterm2.capabilities.check_supports_browser_scripting(self.connection)
+        invocation = iterm2.util.invocation_string(
+            "iterm2.browser_set_inspectable",
+            {"enabled": 1 if enabled else 0})
+        await iterm2.rpc.async_invoke_method(
+            self.connection, self.session_id, invocation, -1)
+
     async def async_move_to_new_tab(
             self,
             window: typing.Optional['iterm2.window.Window'] = None,
