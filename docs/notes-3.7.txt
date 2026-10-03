@@ -260,6 +260,11 @@ New Features:
   and CSI 2 SP k make reordered lines
   left-to-right or right-to-left, and
   CSI 0 SP k restores the default.
+- The Python API can now resize a split pane to
+  an exact size in points with
+  Session.async_set_split_pane_size. Only the
+  divider beside the pane moves, so the window
+  keeps its size.
 
 Improvements:
 - iTerm2 now recognizes when a terminal is

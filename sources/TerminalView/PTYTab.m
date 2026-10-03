@@ -238,6 +238,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     NSInteger _numberOfSplitViewDragsInProgress;
 
+    // YES while session:setSplitPaneSize:vertical: moves a divider to an exact position, so it
+    // is not quantized to character cells.
+    BOOL _settingExactSplitPanePosition;
+
     // If YES then force metal off. Does a hard reset when changing screens.
     BOOL _bounceMetal;
     NSString *_temporarilyUnmaximizedSessionGUID;
@@ -917,6 +921,90 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
     return [parentWindow_ sessionInitiatedResize:session width:width height:height];
+}
+
+// Finds the nearest split view whose dividers run in the given direction and the index of
+// its child that contains the session. Returns nil if there is none.
+- (PTYSplitView *)splitViewWithDividersBorderingSession:(PTYSession *)session
+                                               vertical:(BOOL)vertical
+                                             childIndex:(NSInteger *)childIndexOut {
+    NSView *child = session.view;
+    PTYSplitView *splitView = [PTYSplitView castFrom:child.superview];
+    while (splitView && splitView.isVertical != vertical) {
+        child = splitView;
+        splitView = [PTYSplitView castFrom:splitView.superview];
+    }
+    const NSInteger index = splitView ? [splitView.subviews indexOfObject:child] : NSNotFound;
+    if (index == NSNotFound || splitView.subviews.count < 2) {
+        return nil;
+    }
+    *childIndexOut = index;
+    return splitView;
+}
+
+// Moves the divider next to the child at `index` so the child becomes `size` points along
+// the split view's axis, within the neighbors' minimum sizes.
+- (void)setSizeOfChildAtIndex:(NSInteger)index
+                  ofSplitView:(PTYSplitView *)splitView
+                       toSize:(CGFloat)size {
+    const BOOL vertical = splitView.isVertical;
+    const NSRect frame = splitView.subviews[index].frame;
+    const CGFloat minEdge = vertical ? NSMinX(frame) : NSMinY(frame);
+    const CGFloat maxEdge = vertical ? NSMaxX(frame) : NSMaxY(frame);
+    // Prefer the divider after the pane. The last pane only has one before it.
+    const BOOL useDividerAfter = (index + 1 < splitView.subviews.count);
+    const NSInteger dividerIndex = useDividerAfter ? index : index - 1;
+    const CGFloat proposed = round(useDividerAfter ? minEdge + size : maxEdge - size - splitView.dividerThickness);
+    // Respect the minimum sizes of the panes on both sides, as a drag would. If they cannot
+    // both be met, the divider stays put.
+    const CGFloat lowest = ceil([self splitView:splitView constrainMinCoordinate:proposed ofSubviewAt:dividerIndex]);
+    const CGFloat highest = floor([self splitView:splitView constrainMaxCoordinate:proposed ofSubviewAt:dividerIndex]);
+    if (lowest > highest) {
+        DLog(@"No room to move divider %@ (allowed %@…%@)", @(dividerIndex), @(lowest), @(highest));
+        return;
+    }
+    const CGFloat position = MAX(lowest, MIN(highest, proposed));
+    DLog(@"Move divider %@ to %@ (proposed %@, allowed %@…%@)",
+         @(dividerIndex), @(position), @(proposed), @(lowest), @(highest));
+    // Go through the same begin/end hooks as a drag so its side effects apply here too.
+    const NSRect before = splitView.subviews[dividerIndex].frame;
+    [self splitView:splitView draggingWillBeginOfSplit:(int)dividerIndex];
+    _settingExactSplitPanePosition = YES;
+    [splitView setPosition:position ofDividerAtIndex:dividerIndex];
+    _settingExactSplitPanePosition = NO;
+    const NSRect after = splitView.subviews[dividerIndex].frame;
+    [self splitView:splitView
+        draggingDidEndOfSplit:(int)dividerIndex
+                       pixels:NSMakeSize(vertical ? NSWidth(after) - NSWidth(before) : 0,
+                                         vertical ? 0 : NSHeight(after) - NSHeight(before))];
+}
+
+- (BOOL)session:(PTYSession *)session setSplitPaneWidth:(NSNumber *)width height:(NSNumber *)height {
+    DLog(@"Set split pane size of %@ to %@ x %@", session, width, height);
+    if (self.isTmuxTab) {
+        // tmux owns the layout of its panes.
+        return NO;
+    }
+    // Resolve both directions before moving anything so a failure changes nothing.
+    NSInteger widthIndex = NSNotFound;
+    NSInteger heightIndex = NSNotFound;
+    PTYSplitView *widthSplitView = width ? [self splitViewWithDividersBorderingSession:session
+                                                                              vertical:YES
+                                                                            childIndex:&widthIndex] : nil;
+    PTYSplitView *heightSplitView = height ? [self splitViewWithDividersBorderingSession:session
+                                                                                vertical:NO
+                                                                              childIndex:&heightIndex] : nil;
+    if ((width && !widthSplitView) || (height && !heightSplitView)) {
+        DLog(@"No divider borders the session in a requested direction");
+        return NO;
+    }
+    if (widthSplitView) {
+        [self setSizeOfChildAtIndex:widthIndex ofSplitView:widthSplitView toSize:width.doubleValue];
+    }
+    if (heightSplitView) {
+        [self setSizeOfChildAtIndex:heightIndex ofSplitView:heightSplitView toSize:height.doubleValue];
+    }
+    return YES;
 }
 
 - (void)addSession:(PTYSession *)session toRestorableSession:(iTermRestorableSession *)restorableSession {
@@ -6960,7 +7048,7 @@ typedef struct {
 - (CGFloat)splitView:(NSSplitView *)splitView
         constrainSplitPosition:(CGFloat)proposedPosition
                    ofSubviewAt:(NSInteger)dividerIndex {
-    if (tmuxOriginatedResizeInProgress_) {
+    if (tmuxOriginatedResizeInProgress_ || _settingExactSplitPanePosition) {
         return proposedPosition;
     }
     PtyLog(@"PTYTab splitView:constraintSplitPosition%f divider:%d case ", (float)proposedPosition, (int)dividerIndex);

@@ -23825,6 +23825,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                    target:self
                                                    action:@selector(loadURLWithCompletion:url:connectionKey:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"set_split_pane_size"
+                                            defaultValues:@{}
+                                                    types:@{ @"width": [NSNumber class],
+                                                             @"height": [NSNumber class] }
+                                        optionalArguments:[NSSet setWithArray:@[ @"width", @"height" ]]
+                                                  context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[set_split_pane_size]"
+                                                   target:self
+                                                   action:@selector(setSplitPaneSizeWithCompletion:width:height:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
 }
@@ -23984,6 +23995,35 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)performLoadURL:(NSURL *)url completion:(void (^)(id, NSError *))completion {
     [self openURL:url];
     completion(@YES, nil);
+}
+
+#pragma mark - set_split_pane_size
+
+// Resizes this session's split pane, in points, by moving a divider. The window keeps its
+// size; the neighboring panes give or take the difference. Returns the pane's resulting
+// frame size as {width, height}.
+- (void)setSplitPaneSizeWithCompletion:(void (^)(id, NSError *))completion
+                                 width:(NSNumber *)width
+                                height:(NSNumber *)height {
+    NSError *(^error)(NSString *) = ^NSError *(NSString *message) {
+        return [NSError errorWithDomain:@"com.iterm2.set-split-pane-size"
+                                   code:1
+                               userInfo:@{ NSLocalizedDescriptionKey: message }];
+    };
+    if (!width && !height) {
+        completion(nil, error(@"Specify width, height, or both"));
+        return;
+    }
+    if ((width && width.doubleValue <= 0) || (height && height.doubleValue <= 0)) {
+        completion(nil, error(@"Sizes must be positive"));
+        return;
+    }
+    if (![_delegate session:self setSplitPaneWidth:width height:height]) {
+        completion(nil, error(@"No split pane divider can change this session’s size in the requested direction"));
+        return;
+    }
+    completion(@{ @"width": @(_view.frame.size.width),
+                  @"height": @(_view.frame.size.height) }, nil);
 }
 
 - (void)setStatusBarComponentUnreadCountWithCompletion:(void (^)(id, NSError *))completion
