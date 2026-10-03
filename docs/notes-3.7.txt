@@ -883,10 +883,10 @@ Bug Fixes:
   the screen on its own. The animation now plays
   only for cursor jumps that follow your own
   keyboard or mouse input.
-- Semantic History sent TextMate, BBEdit and
-  MacVim the wrong path when the clicked file’s
-  path contained a space (unless a line number
-  was also present) or an ampersand.
+- Semantic History could open the wrong file in
+  TextMate, BBEdit or MacVim when the path
+  contained a space, an ampersand, or another
+  character with special meaning in a URL.
 - With “Report keys using CSI u” turned on and
   Option set to Meta, pressing Option with a
   letter sent nothing at all. It now sends the
