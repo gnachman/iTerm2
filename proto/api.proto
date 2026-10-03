@@ -1646,6 +1646,14 @@ message ListSessionsResponse {
     repeated FloatingPane floating_panes = 12;
     // Whether the tab's floating panes are hidden. Added in protocol 1.21.
     optional bool floating_panes_hidden = 13;
+    // When the tab's group is a sub-group, the definition of its parent group.
+    // Nesting is one level deep. All of a parent's sub-group tabs carry the
+    // same parent values. tab_group_parent_id is unset for a top-level group;
+    // the other three are meaningful only when it is set. Added in protocol 1.24.
+    optional string tab_group_parent_id = 14;
+    optional string tab_group_parent_name = 15;
+    optional string tab_group_parent_color = 16;
+    optional bool tab_group_parent_collapsed = 17;
   }
   repeated Window windows = 1;
   repeated SessionSummary buried_sessions = 2;

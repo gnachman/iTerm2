@@ -5539,6 +5539,10 @@ class ListSessionsResponse(_message.Message):
         TAB_GROUP_COLLAPSED_FIELD_NUMBER: _builtins.int
         FLOATING_PANES_FIELD_NUMBER: _builtins.int
         FLOATING_PANES_HIDDEN_FIELD_NUMBER: _builtins.int
+        TAB_GROUP_PARENT_ID_FIELD_NUMBER: _builtins.int
+        TAB_GROUP_PARENT_NAME_FIELD_NUMBER: _builtins.int
+        TAB_GROUP_PARENT_COLOR_FIELD_NUMBER: _builtins.int
+        TAB_GROUP_PARENT_COLLAPSED_FIELD_NUMBER: _builtins.int
         tab_id: _builtins.str
         tmux_window_id: _builtins.str
         tmux_connection_id: _builtins.str
@@ -5559,6 +5563,15 @@ class ListSessionsResponse(_message.Message):
         tab_group_collapsed: _builtins.bool
         floating_panes_hidden: _builtins.bool
         """Whether the tab's floating panes are hidden. Added in protocol 1.21."""
+        tab_group_parent_id: _builtins.str
+        """When the tab's group is a sub-group, the definition of its parent group.
+        Nesting is one level deep. All of a parent's sub-group tabs carry the
+        same parent values. tab_group_parent_id is unset for a top-level group;
+        the other three are meaningful only when it is set. Added in protocol 1.24.
+        """
+        tab_group_parent_name: _builtins.str
+        tab_group_parent_color: _builtins.str
+        tab_group_parent_collapsed: _builtins.bool
         @_builtins.property
         def root(self) -> Global___SplitTreeNode: ...
         @_builtins.property
@@ -5584,10 +5597,14 @@ class ListSessionsResponse(_message.Message):
             tab_group_collapsed: _builtins.bool | None = ...,
             floating_panes: _abc.Iterable[Global___FloatingPane] | None = ...,
             floating_panes_hidden: _builtins.bool | None = ...,
+            tab_group_parent_id: _builtins.str | None = ...,
+            tab_group_parent_name: _builtins.str | None = ...,
+            tab_group_parent_color: _builtins.str | None = ...,
+            tab_group_parent_collapsed: _builtins.bool | None = ...,
         ) -> None: ...
-        _HasFieldArgType: _TypeAlias = _typing.Literal["active_session_id", b"active_session_id", "floating_panes_hidden", b"floating_panes_hidden", "root", b"root", "tab_group_collapsed", b"tab_group_collapsed", "tab_group_color", b"tab_group_color", "tab_group_id", b"tab_group_id", "tab_group_name", b"tab_group_name", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
+        _HasFieldArgType: _TypeAlias = _typing.Literal["active_session_id", b"active_session_id", "floating_panes_hidden", b"floating_panes_hidden", "root", b"root", "tab_group_collapsed", b"tab_group_collapsed", "tab_group_color", b"tab_group_color", "tab_group_id", b"tab_group_id", "tab_group_name", b"tab_group_name", "tab_group_parent_collapsed", b"tab_group_parent_collapsed", "tab_group_parent_color", b"tab_group_parent_color", "tab_group_parent_id", b"tab_group_parent_id", "tab_group_parent_name", b"tab_group_parent_name", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
         def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-        _ClearFieldArgType: _TypeAlias = _typing.Literal["active_session_id", b"active_session_id", "floating_panes", b"floating_panes", "floating_panes_hidden", b"floating_panes_hidden", "minimized_sessions", b"minimized_sessions", "root", b"root", "tab_group_collapsed", b"tab_group_collapsed", "tab_group_color", b"tab_group_color", "tab_group_id", b"tab_group_id", "tab_group_name", b"tab_group_name", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["active_session_id", b"active_session_id", "floating_panes", b"floating_panes", "floating_panes_hidden", b"floating_panes_hidden", "minimized_sessions", b"minimized_sessions", "root", b"root", "tab_group_collapsed", b"tab_group_collapsed", "tab_group_color", b"tab_group_color", "tab_group_id", b"tab_group_id", "tab_group_name", b"tab_group_name", "tab_group_parent_collapsed", b"tab_group_parent_collapsed", "tab_group_parent_color", b"tab_group_parent_color", "tab_group_parent_id", b"tab_group_parent_id", "tab_group_parent_name", b"tab_group_parent_name", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
         def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
         def WhichOneof(self, oneof_group: _Never) -> None: ...
 

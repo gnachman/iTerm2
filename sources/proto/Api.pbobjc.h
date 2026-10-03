@@ -5414,6 +5414,10 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
   ITMListSessionsResponse_Tab_FieldNumber_TabGroupCollapsed = 11,
   ITMListSessionsResponse_Tab_FieldNumber_FloatingPanesArray = 12,
   ITMListSessionsResponse_Tab_FieldNumber_FloatingPanesHidden = 13,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupParentId = 14,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupParentName = 15,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupParentColor = 16,
+  ITMListSessionsResponse_Tab_FieldNumber_TabGroupParentCollapsed = 17,
 };
 
 GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
@@ -5481,6 +5485,27 @@ GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
 @property(nonatomic, readwrite) BOOL floatingPanesHidden;
 
 @property(nonatomic, readwrite) BOOL hasFloatingPanesHidden;
+/**
+ * When the tab's group is a sub-group, the definition of its parent group.
+ * Nesting is one level deep. All of a parent's sub-group tabs carry the
+ * same parent values. tab_group_parent_id is unset for a top-level group;
+ * the other three are meaningful only when it is set. Added in protocol 1.24.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabGroupParentId;
+/** Test to see if @c tabGroupParentId has been set. */
+@property(nonatomic, readwrite) BOOL hasTabGroupParentId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabGroupParentName;
+/** Test to see if @c tabGroupParentName has been set. */
+@property(nonatomic, readwrite) BOOL hasTabGroupParentName;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabGroupParentColor;
+/** Test to see if @c tabGroupParentColor has been set. */
+@property(nonatomic, readwrite) BOOL hasTabGroupParentColor;
+
+@property(nonatomic, readwrite) BOOL tabGroupParentCollapsed;
+
+@property(nonatomic, readwrite) BOOL hasTabGroupParentCollapsed;
 @end
 
 #pragma mark - ITMCreateTabRequest

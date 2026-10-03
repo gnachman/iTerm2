@@ -369,7 +369,8 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         }
         let newPinned = !tab.isPinned
         DLog("togglePinTab: tab=\(tab) newPinned=\(newPinned) group=\(tab.tabGroupID ?? "(none)")")
-        if let gid = tab.tabGroupID, !gid.isEmpty {
+        // The block is the whole top-level group, sub-groups included.
+        if let gid = tab.tabGroupTopLevelID, !gid.isEmpty {
             let members = tabs(inGroup: gid) ?? []
             DLog("togglePinTab: toggling group members \(members)")
             // Pin/unpin the whole group as a block so it stays entirely pinned or

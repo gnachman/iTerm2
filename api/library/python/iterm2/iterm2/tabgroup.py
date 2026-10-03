@@ -20,6 +20,11 @@ class TabGroup:
     Its members are always kept consecutive in the tab bar: iTerm2 reorders
     tabs as needed to maintain that invariant when membership changes.
 
+    A group may be nested in another group (one level deep): its
+    :attr:`parent_group_id` names the parent, and its tabs are kept consecutive
+    inside the parent's tabs. A parent group's members include its sub-groups'
+    tabs, so collapsing, renaming, or recoloring applies per level.
+
     Don't create this yourself. Instead, get one from :attr:`iterm2.Tab.tab_group`
     or :attr:`iterm2.Window.tab_groups`, or create one with
     :meth:`iterm2.Window.async_create_tab_group`.
@@ -36,12 +41,14 @@ class TabGroup:
         name: str,
         color: Color | None,
         collapsed: bool,
+        parent_group_id: str | None = None,
     ) -> None:
         self.connection: Connection = connection
         self.__group_id = group_id
         self.__name = name
         self.__color = color
         self.__collapsed = collapsed
+        self.__parent_group_id = parent_group_id
 
     def __repr__(self):
         return f"<TabGroup id={self.__group_id} name={self.__name!r}>"
@@ -87,6 +94,20 @@ class TabGroup:
             bar).
         """
         return self.__collapsed
+
+    @property
+    def parent_group_id(self) -> str | None:
+        """
+        The identifier of the group this one is nested in, or `None` for a
+        top-level group.
+
+        Tab groups nest one level deep, so a parent never has a parent. Create
+        a sub-group with :meth:`iterm2.Window.async_create_tab_group` and its
+        `parent` argument.
+
+        :returns: The parent group's identifier, or `None`.
+        """
+        return self.__parent_group_id
 
     async def async_set_name(self, name: str) -> None:
         """

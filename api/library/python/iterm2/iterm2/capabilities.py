@@ -294,6 +294,20 @@ def check_supports_tab_groups(connection: Connection) -> None:
         )
 
 
+def supports_nested_tab_groups(connection: Connection) -> bool:
+    """Can you create a tab group nested in another one?"""
+    min_ver = (1, 24)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+
+def check_supports_nested_tab_groups(connection: Connection) -> None:
+    if not supports_nested_tab_groups(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to nest tab groups via "
+            + "the Python API. You should upgrade to run this script."
+        )
+
+
 def supports_session_note(connection: Connection) -> bool:
     """Can you read and write a session's Session Note?"""
     min_ver = (1, 20)

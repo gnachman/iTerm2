@@ -42,6 +42,13 @@ New Features:
   Window > Split Pane and can cycle among them.
   In tmux integration, floating a pane needs
   tmux 3.8.
+- Tab groups can now be nested one level deep.
+  Right-click a tab in a group and choose “Move
+  Tab to New Sub-group…”. A sub-group gets its
+  own chip inside its parent's run, and each
+  level collapses on its own. In the Python API,
+  pass parent= to create_tab_group; a TabGroup
+  reports its parent_group_id.
 - The Code Review session’s toolbar in the
   Claude Code workgroup has a model picker.
   Choose Fable, Opus, Sonnet, Haiku, or type any

@@ -19,11 +19,19 @@ final class iTermTabGroup: NSObject, PSMTabGroup {
     @objc let uniqueIdentifier: String
     @objc let name: String
     @objc let color: NSColor
+    // The group this one is nested in, or nil for a top-level group. Nesting is
+    // one level deep.
+    @objc let parentIdentifier: String?
 
-    @objc init(uniqueIdentifier: String, name: String, color: NSColor) {
+    @objc init(uniqueIdentifier: String, name: String, color: NSColor, parentIdentifier: String?) {
         self.uniqueIdentifier = uniqueIdentifier
         self.name = name
         self.color = color
+        self.parentIdentifier = parentIdentifier
         super.init()
+    }
+
+    @objc convenience init(uniqueIdentifier: String, name: String, color: NSColor) {
+        self.init(uniqueIdentifier: uniqueIdentifier, name: name, color: color, parentIdentifier: nil)
     }
 }

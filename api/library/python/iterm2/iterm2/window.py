@@ -8,7 +8,10 @@ from typing import TYPE_CHECKING, Any
 
 from . import api_pb2
 from .arrangement import SavedArrangementException
-from .capabilities import check_supports_tab_groups
+from .capabilities import (
+    check_supports_nested_tab_groups,
+    check_supports_tab_groups,
+)
 from .profile import LocalWriteOnlyProfile, Profile
 from .rpc import (
     RPCException,
@@ -186,6 +189,18 @@ class Window:
                 tab.tab_group_collapsed,
                 floating_sessions,
                 tab.floating_panes_hidden,
+                tab.tab_group_parent_id if tab.HasField("tab_group_parent_id") else None,
+                (
+                    tab.tab_group_parent_name
+                    if tab.HasField("tab_group_parent_name")
+                    else None
+                ),
+                (
+                    tab.tab_group_parent_color
+                    if tab.HasField("tab_group_parent_color")
+                    else None
+                ),
+                tab.tab_group_parent_collapsed,
             )
             # protocol 1.18+ reports the active session here, so current_session
             # is correct straight from a list-sessions refresh without waiting
@@ -303,22 +318,28 @@ class Window:
         """
         The distinct tab groups in this window, in tab order.
 
-        A tab group is a named, colored collection of adjacent tabs.
+        A tab group is a named, colored collection of adjacent tabs. A parent
+        group is listed before its sub-groups, including a parent whose tabs are
+        all in sub-groups.
 
         :returns: A list of :class:`~iterm2.tabgroup.TabGroup`.
         """
         result: list[TabGroup] = []
         seen: set[str] = set()
         for tab in self.__tabs:
-            group = tab.tab_group
-            if group is None or group.group_id in seen:
-                continue
-            seen.add(group.group_id)
-            result.append(group)
+            for group in (tab.tab_group_parent, tab.tab_group):
+                if group is None or group.group_id in seen:
+                    continue
+                seen.add(group.group_id)
+                result.append(group)
         return result
 
     async def async_create_tab_group(
-        self, name: str, tabs: Iterable[Tab], color: Color | None = None
+        self,
+        name: str,
+        tabs: Iterable[Tab],
+        color: Color | None = None,
+        parent: TabGroup | None = None,
     ) -> TabGroup:
         """
         Creates a new tab group from the given tabs.
@@ -331,6 +352,10 @@ class Window:
         :param tabs: The tabs to place in the group. Must be non-empty and all
             in this window.
         :param color: The group's color, or `None` to have iTerm2 pick one.
+        :param parent: A top-level group in this window to nest the new group
+            in, or `None` for a top-level group. Tab groups nest one level
+            deep. The new group's tabs are kept consecutive inside the
+            parent's tabs. Requires iTerm2 with API protocol 1.24 or later.
 
         :returns: The newly created :class:`~iterm2.tabgroup.TabGroup`. Its
             `color` is `None` when iTerm2 picked one automatically; re-fetch the
@@ -340,18 +365,26 @@ class Window:
             example, if a tab is not in this window).
         """
         check_supports_tab_groups(self.connection)
-        invocation = invocation_string(
-            "iterm2.create_tab_group",
-            {
-                "tab_ids": [tab.tab_id for tab in tabs],
-                "name": name,
-                "color": color.hex if color else "",
-            },
-        )
+        args: dict[str, Any] = {
+            "tab_ids": [tab.tab_id for tab in tabs],
+            "name": name,
+            "color": color.hex if color else "",
+        }
+        if parent is not None:
+            check_supports_nested_tab_groups(self.connection)
+            args["parent_group_id"] = parent.group_id
+        invocation = invocation_string("iterm2.create_tab_group", args)
         group_id = await async_invoke_method(
             self.connection, self.__window_id, invocation, -1
         )
-        return TabGroup(self.connection, group_id, name, color, False)
+        return TabGroup(
+            self.connection,
+            group_id,
+            name,
+            color,
+            False,
+            parent.group_id if parent is not None else None,
+        )
 
     @property
     def current_tab(self) -> Tab | None:
