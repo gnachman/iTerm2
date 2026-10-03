@@ -115,73 +115,125 @@ func writeError(_ message: String) {
     writeOutput(ErrorResponse(error: message))
 }
 
-func runCommand(_ command: String, args: [String], input: String? = nil, env: [String: String]? = nil) -> (output: String, exitCode: Int32) {
+struct CommandResult {
+    var stdout: String
+    var stderr: String
+    var exitCode: Int32
+
+    /// The most useful text to show when the command failed: bw writes errors to stderr, but
+    /// fall back to stdout in case a version prints them there.
+    var errorMessage: String {
+        let err = stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !err.isEmpty {
+            return err
+        }
+        let out = stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+        return out.isEmpty ? "exit status \(exitCode)" : out
+    }
+}
+
+func runCommand(_ command: String, args: [String], input: String? = nil, env: [String: String]? = nil) -> CommandResult {
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
     process.arguments = [command] + args
 
-    // Set environment variables if provided
-    if let env = env {
-        var environment = ProcessInfo.processInfo.environment
-        for (key, value) in env {
-            environment[key] = value
-        }
-        process.environment = environment
+    var environment = ProcessInfo.processInfo.environment
+    for (key, value) in env ?? [:] {
+        environment[key] = value
     }
+    process.environment = environment
 
     let outputPipe = Pipe()
     let errorPipe = Pipe()
     process.standardOutput = outputPipe
     process.standardError = errorPipe
 
-    if let input = input {
-        let inputPipe = Pipe()
-        process.standardInput = inputPipe
-        if let data = input.data(using: .utf8) {
-            inputPipe.fileHandleForWriting.write(data)
-            try? inputPipe.fileHandleForWriting.close()
-        }
+    // Never let bw inherit our stdin. It is the pipe iTerm2 wrote the request to, already at
+    // EOF, and if bw prompts for anything it would read it (or crash on it) instead.
+    let inputPipe: Pipe?
+    if input != nil {
+        let pipe = Pipe()
+        process.standardInput = pipe
+        inputPipe = pipe
+    } else {
+        process.standardInput = FileHandle.nullDevice
+        inputPipe = nil
     }
 
     do {
         try process.run()
-        process.waitUntilExit()
-
-        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-
-        let output = String(data: outputData, encoding: .utf8) ?? ""
-        let errorOutput = String(data: errorData, encoding: .utf8) ?? ""
-
-        let combined = output + errorOutput
-
-        return (combined, process.terminationStatus)
     } catch {
-        return ("Failed to run command: \(error.localizedDescription)", -1)
+        return CommandResult(stdout: "", stderr: "Failed to run \(command): \(error.localizedDescription)", exitCode: -1)
     }
+
+    // Write input and drain both outputs concurrently. Doing them one after another deadlocks
+    // once any of them exceeds the pipe buffer, which a large vault listing easily does.
+    let group = DispatchGroup()
+    var outputData = Data()
+    var errorData = Data()
+    DispatchQueue.global().async(group: group) {
+        outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+    }
+    DispatchQueue.global().async(group: group) {
+        errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+    }
+    if let inputPipe, let input {
+        DispatchQueue.global().async(group: group) {
+            // bw can exit without reading its input (a locked vault is checked first), so the
+            // write may fail with EPIPE. SIGPIPE is ignored in main(), and this form of write
+            // throws instead of raising, so that is harmless; bw’s exit status reports why.
+            try? inputPipe.fileHandleForWriting.write(contentsOf: Data(input.utf8))
+            try? inputPipe.fileHandleForWriting.close()
+        }
+    }
+    group.wait()
+    process.waitUntilExit()
+
+    return CommandResult(stdout: String(data: outputData, encoding: .utf8) ?? "",
+                         stderr: String(data: errorData, encoding: .utf8) ?? "",
+                         exitCode: process.terminationStatus)
 }
 
-func runBitwardenCommand(_ path: String?, args: [String], session: String? = nil, env: [String: String]? = nil, input: String? = nil) -> (output: String, exitCode: Int32) {
+func runBitwardenCommand(_ path: String?, args: [String], session: String? = nil, env: [String: String]? = nil, input: String? = nil) -> CommandResult {
     let command = path ?? "bw"
-    var fullArgs = args
+    // --nointeraction makes bw fail with an error instead of prompting, since there is nobody
+    // to answer a prompt here.
+    let fullArgs = ["--nointeraction"] + args
 
-    // Add session if provided
-    if let session = session, !session.isEmpty {
-        fullArgs = ["--session", session] + fullArgs
-    }
-
-    // Ensure HOME is set - bw needs this to find its config directory
     var fullEnv = env ?? [:]
+    // Pass the session in the environment rather than with --session, which would expose it
+    // to anyone who can list processes.
+    if let session = session, !session.isEmpty {
+        fullEnv["BW_SESSION"] = session
+    }
+    // Ensure HOME is set - bw needs this to find its config directory
     if fullEnv["HOME"] == nil {
-        if let home = ProcessInfo.processInfo.environment["HOME"] {
-            fullEnv["HOME"] = home
-        } else {
-            // Fallback to getting home directory from password database
-            fullEnv["HOME"] = NSHomeDirectory()
-        }
+        fullEnv["HOME"] = ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory()
     }
 
     return runCommand(command, args: fullArgs, input: input, env: fullEnv)
+}
+
+/// Whether a failed bw command means the session is no longer usable, so iTerm2 should unlock
+/// again rather than show the error.
+func isSessionRejection(_ result: CommandResult) -> Bool {
+    let message = result.errorMessage.lowercased()
+    return message.contains("vault is locked") || message.contains("master password is required")
+}
+
+/// Writes an error for a failed bw command, flagging a rejected session so iTerm2 unlocks again.
+func writeBitwardenError(_ prefix: String, _ result: CommandResult) {
+    writeOutput(ErrorResponse(error: "\(prefix): \(result.errorMessage)",
+                              needsAuthentication: isSessionRejection(result) ? true : nil))
+}
+
+let wrongMasterPasswordMessage = "Incorrect master password."
+
+/// Whether a failed unlock means the master password was wrong. Recent versions of bw report it
+/// as a failure to decrypt the key with the password; older ones say “Invalid master password.”
+func isWrongMasterPassword(_ result: CommandResult) -> Bool {
+    let message = result.errorMessage.lowercased()
+    return message.contains("decryption operation failed") || message.contains("invalid master password")
 }
 
 /// Securely unlock the vault using an environment variable for the password
@@ -192,15 +244,16 @@ func unlockVault(_ path: String?, password: String) -> (sessionKey: String?, err
     let result = runBitwardenCommand(path, args: ["unlock", "--passwordenv", envVarName, "--raw"], env: env)
 
     if result.exitCode != 0 {
-        let errorMsg = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
-        if errorMsg.isEmpty {
-            return (nil, "Invalid master password")
-        } else {
-            return (nil, "Failed to unlock vault: \(errorMsg)")
+        if isWrongMasterPassword(result) {
+            return (nil, wrongMasterPasswordMessage)
         }
+        return (nil, "Failed to unlock vault: \(result.errorMessage)")
     }
 
-    let sessionKey = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+    let sessionKey = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+    if sessionKey.isEmpty {
+        return (nil, "Failed to unlock vault: bw did not return a session key")
+    }
     return (sessionKey, nil)
 }
 
@@ -229,64 +282,81 @@ func modeTag(from mode: PasswordManagerProtocol.RequestHeader.Mode) -> String? {
     }
 }
 
-func getBitwardenStatus(_ path: String?) -> BitwardenStatus? {
+func getBitwardenStatus(_ path: String?) -> Result<BitwardenStatus, BitwardenError> {
     let result = runBitwardenCommand(path, args: ["status"])
     guard result.exitCode == 0 else {
-        return nil
+        return .failure(BitwardenError(result.errorMessage))
     }
-
-    let decoder = JSONDecoder()
-    guard let data = result.output.data(using: .utf8),
-          let status = try? decoder.decode(BitwardenStatus.self, from: data) else {
-        return nil
+    guard let status = try? JSONDecoder().decode(BitwardenStatus.self, from: Data(result.stdout.utf8)) else {
+        return .failure(BitwardenError("Could not understand the output of “bw status”"))
     }
-
-    return status
+    return .success(status)
 }
 
-func getFolderId(named folderName: String, path: String?, session: String) -> String? {
+struct BitwardenError: Error {
+    var message: String
+    var result: CommandResult?
+
+    init(_ message: String, result: CommandResult? = nil) {
+        self.message = message
+        self.result = result
+    }
+}
+
+enum FolderLookup {
+    case found(String)
+    case missing
+}
+
+func getFolderId(named folderName: String, path: String?, session: String) -> Result<FolderLookup, BitwardenError> {
     let result = runBitwardenCommand(path, args: ["list", "folders"], session: session)
     guard result.exitCode == 0 else {
-        return nil
+        return .failure(BitwardenError("Failed to list folders", result: result))
     }
-
-    let decoder = JSONDecoder()
-    guard let data = result.output.data(using: .utf8),
-          let folders = try? decoder.decode([BitwardenFolder].self, from: data) else {
-        return nil
+    guard let folders = try? JSONDecoder().decode([BitwardenFolder].self, from: Data(result.stdout.utf8)) else {
+        return .failure(BitwardenError("Could not understand the folder list from bw"))
     }
-
-    return folders.first { $0.name == folderName }?.id
+    if let id = folders.first(where: { $0.name == folderName })?.id, !id.isEmpty {
+        return .success(.found(id))
+    }
+    return .success(.missing)
 }
 
-func createFolder(named folderName: String, path: String?, session: String) -> String? {
-    // Create folder JSON and encode it
-    let folderJson = "{\"name\":\"\(folderName)\"}"
-    guard let encodedFolder = folderJson.data(using: .utf8)?.base64EncodedString() else {
-        return nil
+func createFolder(named folderName: String, path: String?, session: String) -> Result<String, BitwardenError> {
+    guard let folderData = try? JSONSerialization.data(withJSONObject: ["name": folderName]) else {
+        return .failure(BitwardenError("Failed to encode folder"))
     }
-
     // Pass encoded JSON via stdin to avoid exposing it on command line
-    let result = runBitwardenCommand(path, args: ["create", "folder"], session: session, input: encodedFolder)
+    let result = runBitwardenCommand(path, args: ["create", "folder"], session: session,
+                                     input: folderData.base64EncodedString())
     guard result.exitCode == 0 else {
-        return nil
+        return .failure(BitwardenError("Failed to create folder “\(folderName)”", result: result))
     }
-
-    // Parse the created folder to get its ID
-    let decoder = JSONDecoder()
-    guard let data = result.output.data(using: .utf8),
-          let folder = try? decoder.decode(BitwardenFolder.self, from: data) else {
-        return nil
+    guard let folder = try? JSONDecoder().decode(BitwardenFolder.self, from: Data(result.stdout.utf8)),
+          let id = folder.id else {
+        return .failure(BitwardenError("Could not understand the new folder from bw"))
     }
-
-    return folder.id
+    return .success(id)
 }
 
-func getOrCreateFolderId(named folderName: String, path: String?, session: String) -> String? {
-    if let existingId = getFolderId(named: folderName, path: path, session: session) {
-        return existingId
+func getOrCreateFolderId(named folderName: String, path: String?, session: String) -> Result<String, BitwardenError> {
+    switch getFolderId(named: folderName, path: path, session: session) {
+    case .failure(let error):
+        return .failure(error)
+    case .success(.found(let id)):
+        return .success(id)
+    case .success(.missing):
+        return createFolder(named: folderName, path: path, session: session)
     }
-    return createFolder(named: folderName, path: path, session: session)
+}
+
+/// Writes an error response for `error`, flagging a rejected session so iTerm2 unlocks again.
+func writeBitwardenError(_ error: BitwardenError) {
+    if let result = error.result {
+        writeBitwardenError(error.message, result)
+    } else {
+        writeError(error.message)
+    }
 }
 
 // MARK: - Command Handlers
@@ -342,8 +412,12 @@ func handleLogin() {
         }
 
         // Check Bitwarden status first
-        guard let status = getBitwardenStatus(path) else {
-            writeError("Failed to get Bitwarden status. Is the bw CLI installed?")
+        let status: BitwardenStatus
+        switch getBitwardenStatus(path) {
+        case .success(let value):
+            status = value
+        case .failure(let error):
+            writeError("Failed to get Bitwarden status: \(error.message)")
             exit(1)
         }
 
@@ -358,7 +432,9 @@ func handleLogin() {
             // Unlock the vault with the master password
             let unlockResult = unlockVault(path, password: password)
             if let error = unlockResult.error {
-                writeError(error)
+                // A wrong password is flagged so iTerm2 asks for it again.
+                writeOutput(ErrorResponse(error: error,
+                                          needsAuthentication: error == wrongMasterPasswordMessage ? true : nil))
                 exit(1)
             }
             sessionKey = unlockResult.sessionKey!
@@ -369,7 +445,9 @@ func handleLogin() {
             // We'll unlock again to get a fresh session key
             let unlockResult = unlockVault(path, password: password)
             if let error = unlockResult.error {
-                writeError(error)
+                // A wrong password is flagged so iTerm2 asks for it again.
+                writeOutput(ErrorResponse(error: error,
+                                          needsAuthentication: error == wrongMasterPasswordMessage ? true : nil))
                 exit(1)
             }
             sessionKey = unlockResult.sessionKey!
@@ -379,11 +457,18 @@ func handleLogin() {
             exit(1)
         }
 
-        // Sync the vault to ensure we have the latest data
-        let syncResult = runBitwardenCommand(path, args: ["sync"], session: sessionKey)
-        if syncResult.exitCode != 0 {
-            // Sync failure is not fatal, but log it
-            // The vault might still be usable with cached data
+        // Sync the vault to ensure we have the latest data. A sync failure is not fatal (offline,
+        // the cached vault still works). Note that sync succeeds even with an invalid session,
+        // so it can’t be used to check the session.
+        _ = runBitwardenCommand(path, args: ["sync"], session: sessionKey)
+
+        // Make sure bw accepts the session it just issued, using a command that needs it. If it
+        // doesn’t, nothing else will work, and logging in again won’t help either, so say so
+        // now rather than failing on the next command.
+        let checkResult = runBitwardenCommand(path, args: ["list", "folders"], session: sessionKey)
+        if checkResult.exitCode != 0 && isSessionRejection(checkResult) {
+            writeError("The Bitwarden CLI unlocked the vault but then rejected its own session (\(checkResult.errorMessage)). This usually means its saved state is damaged. In a terminal, run “bw logout” and then “bw login”, and make sure the Bitwarden CLI is up to date.")
+            exit(1)
         }
 
         // Encode the session key as the token
@@ -420,12 +505,16 @@ func handleListAccounts() {
 
         if let folderName = modeFolder {
             // Terminal mode: filter by iTerm2 folder
-            if let folderId = getFolderId(named: folderName, path: path, session: session) {
+            switch getFolderId(named: folderName, path: path, session: session) {
+            case .failure(let error):
+                writeBitwardenError(error)
+                exit(1)
+            case .success(.found(let folderId)):
                 listArgs.append(contentsOf: ["--folderid", folderId])
-            } else {
-                // Folder doesn't exist yet, return empty list
-                let response = ListAccountsResponse(accounts: [])
-                writeOutput(response)
+            case .success(.missing):
+                // Nothing has been added from iTerm2 yet. Say why the list is empty.
+                let warning = "iTerm2 shows only Bitwarden items in a folder named “\(folderName)”, and your vault has no such folder yet. Items you add from iTerm2 are saved there, or you can move existing items into it."
+                writeOutput(ListAccountsResponse(accounts: [], warning: warning))
                 return
             }
         } else {
@@ -436,13 +525,12 @@ func handleListAccounts() {
         let result = runBitwardenCommand(path, args: listArgs, session: session)
 
         if result.exitCode != 0 {
-            writeError("Failed to list accounts: \(result.output)")
+            writeBitwardenError("Failed to list accounts", result)
             exit(1)
         }
 
         // Parse the JSON output
-        guard let itemsData = result.output.data(using: .utf8),
-              let items = try? decoder.decode([BitwardenItem].self, from: itemsData) else {
+        guard let items = try? decoder.decode([BitwardenItem].self, from: Data(result.stdout.utf8)) else {
             writeError("Failed to parse Bitwarden items")
             exit(1)
         }
@@ -490,17 +578,17 @@ func handleGetPassword() {
         // Get the password
         let passwordResult = runBitwardenCommand(path, args: ["get", "password", itemId], session: session)
         if passwordResult.exitCode != 0 {
-            writeError("Failed to get password: \(passwordResult.output)")
+            writeBitwardenError("Failed to get password", passwordResult)
             exit(1)
         }
 
-        let passwordValue = passwordResult.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        let passwordValue = passwordResult.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Try to get TOTP if available
         var otpValue: String? = nil
         let totpResult = runBitwardenCommand(path, args: ["get", "totp", itemId], session: session)
         if totpResult.exitCode == 0 {
-            let totp = totpResult.output.trimmingCharacters(in: .whitespacesAndNewlines)
+            let totp = totpResult.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
             if !totp.isEmpty {
                 otpValue = totp
             }
@@ -541,12 +629,12 @@ func handleSetPassword() {
         // First, get the current item
         let getResult = runBitwardenCommand(path, args: ["get", "item", itemId], session: session)
         if getResult.exitCode != 0 {
-            writeError("Failed to get item: \(getResult.output)")
+            writeBitwardenError("Failed to get item", getResult)
             exit(1)
         }
 
         // Parse and modify the item
-        guard let itemData = getResult.output.data(using: .utf8),
+        guard let itemData = getResult.stdout.data(using: .utf8),
               var item = try? JSONSerialization.jsonObject(with: itemData, options: .mutableContainers) as? [String: Any],
               var login = item["login"] as? [String: Any] else {
             writeError("Failed to parse item data")
@@ -569,7 +657,7 @@ func handleSetPassword() {
         // Update the item - pass encoded JSON via stdin to avoid exposing password on command line
         let editResult = runBitwardenCommand(path, args: ["edit", "item", itemId], session: session, input: encodedItem)
         if editResult.exitCode != 0 {
-            writeError("Failed to set password: \(editResult.output)")
+            writeBitwardenError("Failed to set password", editResult)
             exit(1)
         }
 
@@ -604,9 +692,11 @@ func handleAddAccount() {
 
         if let folderName = modeFolder {
             // Terminal mode: create in iTerm2 folder
-            folderId = getOrCreateFolderId(named: folderName, path: path, session: session)
-            if folderId == nil {
-                writeError("Failed to create or find folder: \(folderName)")
+            switch getOrCreateFolderId(named: folderName, path: path, session: session) {
+            case .success(let id):
+                folderId = id
+            case .failure(let error):
+                writeBitwardenError(error)
                 exit(1)
             }
         }
@@ -637,12 +727,12 @@ func handleAddAccount() {
         // Create the item - pass encoded JSON via stdin to avoid exposing password on command line
         let createResult = runBitwardenCommand(path, args: ["create", "item"], session: session, input: encodedItem)
         if createResult.exitCode != 0 {
-            writeError("Failed to add account: \(createResult.output)")
+            writeBitwardenError("Failed to add account", createResult)
             exit(1)
         }
 
         // Parse the created item to get its ID
-        guard let createdItemData = createResult.output.data(using: .utf8),
+        guard let createdItemData = createResult.stdout.data(using: .utf8),
               let createdItem = try? decoder.decode(BitwardenItem.self, from: createdItemData) else {
             writeError("Failed to parse created item response")
             exit(1)
@@ -678,7 +768,7 @@ func handleDeleteAccount() {
         // Delete the item (soft delete by default, moves to trash)
         let deleteResult = runBitwardenCommand(path, args: ["delete", "item", itemId], session: session)
         if deleteResult.exitCode != 0 {
-            writeError("Failed to delete account: \(deleteResult.output)")
+            writeBitwardenError("Failed to delete account", deleteResult)
             exit(1)
         }
 
@@ -693,6 +783,10 @@ func handleDeleteAccount() {
 // MARK: - Main
 
 func main() {
+    // Writing to a bw that exited early must fail with EPIPE, not kill the adapter before it
+    // can report bw’s error.
+    signal(SIGPIPE, SIG_IGN)
+
     let args = CommandLine.arguments
 
     guard args.count >= 2 else {

@@ -104,7 +104,8 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
 
 struct Output: CustomDebugStringConvertible {
     var debugDescription: String {
-        "stderr=\(stderr.stringOrHex)\nstdout=\(stdout.stringOrHex)\nreturnCode=\(returnCode)"
+        // stdout is not shown: it carries passwords and session tokens.
+        "stderr=\(stderr.stringOrHex)\nstdout=[\(stdout.count) bytes]\nreturnCode=\(returnCode)"
     }
     let stderr: Data
     let stdout: Data
@@ -180,10 +181,13 @@ class CommandLinePasswordDataSource: NSObject {
         var args: [String]
         var env: [String: String]
         var input: Data
+        /// Passed through to the command’s Output, for the caller’s bookkeeping.
+        var userData: [String: String]? = nil
         private var request: InteractiveCommandRequest {
             var request = InteractiveCommandRequest(command: command,
                                                     args: args,
                                                     env: env)
+            request.userData = userData
             request.callbacks = InteractiveCommandRequest.Callbacks(
                 callbackQueue: InteractiveCommandRequest.ioQueue,
                 handleStdout: nil,
@@ -302,18 +306,13 @@ class CommandLinePasswordDataSource: NSObject {
                     guard let data = data else {
                         return "stdout:[eof]"
                     }
-                    guard let string = String(data: data, encoding: .utf8) else {
-                        return "stdout:[not utf-8]"
-                    }
-                    return "stdout:\(string)"
+                    // Contents are not logged: stdout carries passwords and session tokens.
+                    return "stdout:[\(data.count) bytes]"
                 case .readError(let data):
                     guard let data = data else {
                         return "stderr:[eof]"
                     }
-                    guard let string = String(data: data, encoding: .utf8) else {
-                        return "stderr:[not utf-8]"
-                    }
-                    return "stderr:\(string)"
+                    return "stderr:[\(data.count) bytes]"
                 case .terminated(let code, let reason):
                     return "terminated(code=\(code), reason=\(reason))"
                 }
@@ -563,7 +562,8 @@ class CommandLinePasswordDataSource: NSObject {
                 return
             }
             let count = data.count
-            log("\(request.command) \(request.args) wants to write \(data.count) bytes: \(String(data: data, encoding: .utf8) ?? "(non-utf-8")")
+            // Only the size: stdin carries master passwords and new passwords.
+            log("\(request.command) \(request.args) wants to write \(data.count) bytes")
             data.withUnsafeBytes { pointer in
                 channel.write(offset: 0,
                               data: DispatchData(bytes: pointer),
@@ -595,7 +595,7 @@ class CommandLinePasswordDataSource: NSObject {
                     data.withUnsafeMutableBytes {
                         _ = region.copyBytes(to: $0)
                     }
-                    self.log("stdin> \(String(data: data, encoding: .utf8) ?? "(non-UTF8)")")
+                    self.log("stdin> \(data.count) bytes")
                 }
             } else if error != 0 {
                 self.log("stdin error: \(error)")
@@ -660,46 +660,52 @@ class CommandLinePasswordDataSource: NSObject {
         func transformAsync(context: RecipeExecutionContext,
                             inputs: Inputs,
                             completion: @escaping (Outputs?, Error?) -> ()) {
+            run(context: context, inputs: inputs, retriesLeft: 3, completion: completion)
+        }
+
+        // Builds the command from `inputs` and runs it. After a recoverable failure the command
+        // is built again rather than rerun: recovery typically replaces a rejected token, and
+        // the old command still carries the old one (in its stdin or environment), so rerunning
+        // it would fail the same way every time.
+        private func run(context: RecipeExecutionContext,
+                         inputs: Inputs,
+                         retriesLeft: Int,
+                         completion: @escaping (Outputs?, Error?) -> ()) {
             asyncInputTransformer(context, inputs) { result in
                 switch result {
                 case .success(let command):
                     DLog("\(inputs) -> \(command)")
-                    execAsync(command, retriesLeft: 3, completion: completion)
-                    return
-                case .failure(let error):
-                    completion(nil, error)
-                }
-            }
-        }
-
-        private func execAsync(_ command: CommandLinePasswordDataSourceExecutableCommand,
-                               retriesLeft: Int,
-                               completion: @escaping (Outputs?, Error?) -> ()) {
-            command.execAsync { output, error in
-                DispatchQueue.main.async {
-                    if let output = output {
-                        asyncOutputTransformer(output) { result in
-                            switch result {
-                            case .success(let outputs):
-                                completion(outputs, nil)
+                    command.execAsync { output, error in
+                        DispatchQueue.main.async {
+                            guard let output else {
+                                completion(nil, error ?? CommandLineRecipeError.noOutput)
                                 return
-                            case .failure(let error):
-                                guard retriesLeft > 0 else {
-                                    completion(nil, error)
-                                    return
-                                }
-                                asyncRecovery(error) { maybeError in
-                                    if let error = maybeError {
+                            }
+                            asyncOutputTransformer(output) { result in
+                                switch result {
+                                case .success(let outputs):
+                                    completion(outputs, nil)
+                                case .failure(let error):
+                                    guard retriesLeft > 0 else {
                                         completion(nil, error)
                                         return
                                     }
-                                    self.execAsync(command,
-                                                   retriesLeft: retriesLeft - 1,
-                                                   completion: completion)
+                                    asyncRecovery(error) { maybeError in
+                                        if let maybeError {
+                                            completion(nil, maybeError)
+                                            return
+                                        }
+                                        run(context: context,
+                                            inputs: inputs,
+                                            retriesLeft: retriesLeft - 1,
+                                            completion: completion)
+                                    }
                                 }
                             }
                         }
                     }
+                case .failure(let error):
+                    completion(nil, error)
                 }
             }
         }
@@ -888,6 +894,8 @@ class CommandLinePasswordDataSource: NSObject {
 
     enum CommandLineRecipeError: Error {
         case unsupported(reason: String)
+        /// The command produced no output and no error, which should not happen.
+        case noOutput
     }
 
     struct UnsupportedRecipe<Inputs, Outputs>: Recipe {
@@ -1109,4 +1117,39 @@ extension termios {
                        c_ispeed: speed_t(B38400),
                        c_ospeed: speed_t(B38400))
     }()
+}
+
+// These are interpolated into debug logs (the recipe logs its inputs and the command it built),
+// so they describe themselves without secrets: no passwords, no environment values (which hold
+// session tokens), and no stdin contents.
+
+extension CommandLinePasswordDataSource.AddRequest: CustomStringConvertible {
+    var description: String {
+        "AddRequest(userName: \(userName), accountName: \(accountName), password: [redacted], flags: \(flags))"
+    }
+}
+
+extension CommandLinePasswordDataSource.SetPasswordRequest: CustomStringConvertible {
+    var description: String {
+        let password = newPassword == nil ? "nil" : "[redacted]"
+        return "SetPasswordRequest(accountIdentifier: \(accountIdentifier), newPassword: \(password), newAccountName: \(newAccountName ?? "nil"), newUserName: \(newUserName ?? "nil"))"
+    }
+}
+
+extension CommandLinePasswordDataSource.Password: CustomStringConvertible {
+    var description: String {
+        "Password([redacted], otp: \(otp == nil ? "nil" : "[redacted]"))"
+    }
+}
+
+extension CommandLinePasswordDataSource.CommandRequestWithInput: CustomStringConvertible {
+    var description: String {
+        "CommandRequestWithInput(command: \(command), args: \(args), env keys: \(env.keys.sorted()), input: \(input.count) bytes)"
+    }
+}
+
+extension CommandLinePasswordDataSource.InteractiveCommandRequest: CustomStringConvertible {
+    var description: String {
+        "InteractiveCommandRequest(command: \(command), args: \(args), env keys: \(env.keys.sorted()))"
+    }
 }

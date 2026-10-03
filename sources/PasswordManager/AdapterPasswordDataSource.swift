@@ -15,7 +15,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         case runtime(String)
         case loginFailed(String)
 
-        case needsAuthentication
+        /// The adapter says the session was rejected. Carries its explanation when it gave one.
+        case needsAuthentication(String?)
         case badOutput
         case canceledByUser
         case handshakeFailed
@@ -29,7 +30,10 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 return message
             case .loginFailed(let message):
                 return String(localized: "AdapterPassword.LoginFailed", defaultValue: "Could not log in: \(message)", comment: "Error shown when login fails; placeholder is the underlying failure message")
-            case .needsAuthentication:
+            case .needsAuthentication(let message):
+                if let message, !message.isEmpty {
+                    return message
+                }
                 return String(localized: "AdapterPassword.NotAuthenticated", defaultValue: "Not authenticated.", comment: "Error shown when the user is not authenticated")
             case .badOutput:
                 return String(localized: "AdapterPassword.InvalidOutput", defaultValue: "Invalid output.", comment: "Error shown when the adapter produces invalid output")
@@ -55,8 +59,10 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         // other response is an ordinary .runtime error. Adapters that never set the flag behave
         // as before (all errors are .runtime).
         static func from(_ response: PasswordManagerProtocol.ErrorResponse) -> AdapterError {
+            // Adapter stdout is not logged because it can hold secrets, but error messages don’t.
+            DLog("Adapter error: \(response.error) needsAuthentication=\(response.needsAuthentication ?? false)")
             if response.needsAuthentication == true {
-                return .needsAuthentication
+                return .needsAuthentication(response.error)
             }
             return .runtime(response.error)
         }
@@ -97,7 +103,9 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     private let browser: Bool
     private let adapterPath: String
     private var handshakeInfo: HandshakeResponse?
-    private var authToken: String?
+    /// The current login session and the rules for recovering when it is rejected.
+    private var session = AdapterSession()
+    private var authToken: String? { session.token }
     private var userAccountID: String?
     private let iTermVersion: String
     private let identifier: String
@@ -123,9 +131,12 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
     // Encodes `request` and builds the adapter command with the user’s shell environment.
     // The environment is cached after the first fetch, so this is usually immediate.
+    // `generation` is the session the request’s token belongs to. It travels with the command
+    // into its output so a rejection can be matched to the right session (see AdapterSession).
     private func makeCommand<Request: Encodable>(
         _ subcommand: String,
         request: Request,
+        generation: Int? = nil,
         completion: @escaping (Result<CommandLinePasswordDataSourceExecutableCommand, Error>) -> ()
     ) {
         guard let inputData = try? JSONEncoder().encode(request) else {
@@ -133,11 +144,22 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             return
         }
         AdapterShellEnvironment.shared.environment { [adapterPath] environment in
-            completion(.success(CommandRequestWithInput(command: adapterPath,
-                                                        args: [subcommand],
-                                                        env: environment,
-                                                        input: inputData)))
+            var command = CommandRequestWithInput(command: adapterPath,
+                                                  args: [subcommand],
+                                                  env: environment,
+                                                  input: inputData)
+            if let generation {
+                command.userData = [Self.generationKey: String(generation)]
+            }
+            completion(.success(command))
         }
+    }
+
+    private static let generationKey = "authGeneration"
+
+    // The session generation a command was built with, or nil if it didn’t record one.
+    private static func generation(of output: Output) -> Int? {
+        return output.userData?[generationKey].flatMap { Int($0) }
     }
 
     private func runAdapterCommand<Request: Encodable, Response: Decodable>(
@@ -287,12 +309,55 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         return true
     }
 
-    private func requestPathToExecutable(_ name: String) -> Bool {
-        if let saved = iTermUserDefaults.userDefaults().string(forKey: "PathToExecutable_\(identifier)") {
-            pathToExecutable = saved
-            return true
-        }
+    private var pathToExecutableKey: String {
+        "PathToExecutable_\(identifier)"
+    }
 
+    // Finds the adapter’s CLI and sets pathToExecutable, calling back with false if the user
+    // canceled. In order: a location the user chose earlier, if it still exists; the first
+    // match on the user’s shell PATH, which survives upgrades and needs no questions; and
+    // finally an open panel.
+    private func locateExecutable(_ name: String, completion: @escaping (Bool) -> ()) {
+        if let saved = iTermUserDefaults.userDefaults().string(forKey: pathToExecutableKey) {
+            if FileManager.default.isExecutableFile(atPath: saved) {
+                pathToExecutable = saved
+                completion(true)
+                return
+            }
+            // Uninstalled or upgraded away. Forget it rather than fail with a missing file.
+            DLog("Saved \(identifier) CLI at \(saved) is gone")
+            iTermUserDefaults.userDefaults().removeObject(forKey: pathToExecutableKey)
+        }
+        AdapterShellEnvironment.shared.environment { [weak self] environment in
+            guard let self else { return }
+            if let found = Self.findExecutable(named: name, searchPath: environment["PATH"] ?? "") {
+                // Not saved: looking it up each time follows the user to a new install.
+                DLog("Found \(self.identifier) CLI on PATH at \(found)")
+                self.pathToExecutable = found
+                completion(true)
+                return
+            }
+            completion(self.requestPathToExecutable(name))
+        }
+    }
+
+    // The first executable file named `name` in the colon-separated `searchPath`, or nil.
+    static func findExecutable(named name: String,
+                               searchPath: String,
+                               fileManager: FileManager = .default) -> String? {
+        for directory in searchPath.components(separatedBy: ":") where !directory.isEmpty {
+            let candidate = (directory as NSString).appendingPathComponent(name)
+            var isDirectory = ObjCBool(false)
+            if fileManager.fileExists(atPath: candidate, isDirectory: &isDirectory),
+               !isDirectory.boolValue,
+               fileManager.isExecutableFile(atPath: candidate) {
+                return candidate
+            }
+        }
+        return nil
+    }
+
+    private func requestPathToExecutable(_ name: String) -> Bool {
         class AdapterCLIFinderOpenPanelDelegate: NSObject, NSOpenSavePanelDelegate {
             private let name: String
             init(name: String) {
@@ -305,9 +370,9 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 if url.lastPathComponent == name {
                     return true
                 }
-                // NSOpenPanel may resolve symlinks before calling this delegate.
-                // Homebrew’s ‘bw’ is a chain of symlinks ending at build/bw.js,
-                // so accept names like bw.js as well.
+                // In case the panel resolves symlinks despite resolvesAliases being off:
+                // Homebrew’s ‘bw’ is a chain of symlinks ending at build/bw.js, so accept
+                // names like bw.js as well.
                 return url.deletingPathExtension().lastPathComponent == name
             }
         }
@@ -316,6 +381,9 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         openPanel.canChooseDirectories = false
         openPanel.canChooseFiles = true
         openPanel.allowsMultipleSelection = false
+        // Keep the path the user picked. Resolving a symlink like /opt/homebrew/bin/bw would
+        // pin one installed version, which breaks when a package manager upgrades it.
+        openPanel.resolvesAliases = false
         openPanel.message = String(localized: "AdapterPassword.LocateCLI", defaultValue: "Locate the CLI for \(identifier) named \(name)", comment: "Open panel prompt to locate a password manager CLI; first placeholder is the adapter identifier, second is the CLI name")
 
         let delegate = AdapterCLIFinderOpenPanelDelegate(name: name)
@@ -325,9 +393,9 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             guard response == .OK, let selectedURL = openPanel.url else {
                 return false
             }
-
+            DLog("User chose \(selectedURL.path) for the \(identifier) CLI")
             pathToExecutable = selectedURL.path
-            iTermUserDefaults.userDefaults().set(selectedURL.path, forKey: "PathToExecutable_\(identifier)")
+            iTermUserDefaults.userDefaults().set(selectedURL.path, forKey: pathToExecutableKey)
             return true
         }
     }
@@ -508,32 +576,38 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 }
             }
 
-            if let executableName = handshake.needsPathToExecutable, pathToExecutable == nil {
-                if !requestPathToExecutable(executableName) {
+            guard let executableName = handshake.needsPathToExecutable, self.pathToExecutable == nil else {
+                self.continueAuthentication(handshake: handshake, window: window, completion)
+                return
+            }
+            self.locateExecutable(executableName) { [weak self] found in
+                guard let self else { return }
+                guard found else {
                     completion(AdapterError.canceledByUser)
                     return
                 }
+                self.continueAuthentication(handshake: handshake, window: window, completion)
             }
-
-            // If we restored a master password from keychain, auto-login without prompting.
-            // When masterPassword is nil (e.g., first launch or requiresMasterPassword is false),
-            // this falls through to the normal login() path which prompts the user.
-            if handshake.persistsCredentials == true,
-               let saved = self.masterPassword, !saved.isEmpty {
-                let loginInputs = LoginInputs(window: window,
-                                              name: handshake.name,
-                                              completion: completion,
-                                              requiresMasterPassword: handshake.requiresMasterPassword)
-                self.completeEnsureAuthentication(masterPassword: saved, loginInputs: loginInputs)
-                return
-            }
-
-            let loginInputs = LoginInputs(window: window,
-                                          name: handshake.name,
-                                          completion: completion,
-                                          requiresMasterPassword: handshake.requiresMasterPassword)
-            login(loginInputs)
         }
+    }
+
+    // The rest of ensureAuthentication, once the database and executable are known.
+    private func continueAuthentication(handshake: HandshakeResponse,
+                                        window: NSWindow?,
+                                        _ completion: @escaping (Error?) -> ()) {
+        let loginInputs = LoginInputs(window: window,
+                                      name: handshake.name,
+                                      completion: completion,
+                                      requiresMasterPassword: handshake.requiresMasterPassword)
+        // If we restored a master password from keychain, auto-login without prompting.
+        // When masterPassword is nil (e.g., first launch or requiresMasterPassword is false),
+        // this falls through to the normal login() path which prompts the user.
+        if handshake.persistsCredentials == true,
+           let saved = masterPassword, !saved.isEmpty {
+            completeEnsureAuthentication(masterPassword: saved, loginInputs: loginInputs)
+            return
+        }
+        login(loginInputs)
     }
 
     private func login(_ loginInputs: LoginInputs) {
@@ -552,12 +626,14 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         var requiresMasterPassword: Bool
     }
 
-    private func requestPassword(_ loginInputs: LoginInputs) {
+    // `problem` explains why the previous attempt failed, such as a mistyped password.
+    private func requestPassword(_ loginInputs: LoginInputs, problem: String? = nil) {
         let label = handshakeInfo?.masterPasswordLabel ?? "master password"
+        let alert = ModalPasswordAlert("Enter \(label) for \(loginInputs.name):")
+        alert.detail = problem
         // Use runAsync because macOS 26 is buggy garbage and doesn’t draw an insertion point
         // in an alert’s accessory in a sheet modal.
-        ModalPasswordAlert("Enter \(label) for \(loginInputs.name):")
-            .runAsync(window: loginInputs.window) { [weak self] masterPassword in
+        alert.runAsync(window: loginInputs.window) { [weak self] masterPassword in
                 if let masterPassword {
                     self?.completeEnsureAuthentication(masterPassword: masterPassword,
                                                        loginInputs: loginInputs)
@@ -574,7 +650,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     // off the adapter's connectivity/timeout/wedged-worker messages.
     private static func errorIsServiceUnavailable(_ error: Error) -> Bool {
         // A structurally-classified auth rejection is definitely NOT a service problem.
-        if case AdapterError.needsAuthentication = error { return false }
+        if case AdapterError.needsAuthentication(_) = error { return false }
         let s = ((error as? AdapterError)?.reason ?? error.localizedDescription).lowercased()
         let markers = [
             "timed out", "timeout", "never started processing", "worker appears",
@@ -597,7 +673,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
             switch result {
             case .success(let response):
-                self.authToken = response.token
+                self.session.loggedIn(token: response.token)
                 if self.handshakeInfo?.persistsCredentials == true, let masterPassword {
                     self.masterPassword = masterPassword
                     self.persistCredentialsToKeychain(masterPassword)
@@ -611,6 +687,15 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 if !Self.errorIsServiceUnavailable(error) {
                     self.masterPassword = nil
                     self.deletePersistedCredentials()
+                }
+
+                // A login that fails with needsAuthentication means the password manager
+                // rejected the credential itself, most likely a typo. Ask again, saying why,
+                // rather than showing an error the user has to dismiss first.
+                if case let .needsAuthentication(message) = error as? AdapterError,
+                   loginInputs.requiresMasterPassword {
+                    self.requestPassword(loginInputs, problem: message)
+                    return
                 }
 
                 if case let .runtime(description) = error as? AdapterError {
@@ -638,6 +723,43 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
     // MARK: - Recipe Builders
 
+    // Applies the session rules to an error from a recipe command. Any error other than a
+    // session rejection proves the command’s session works. A rejection of an older session is
+    // retried with the current one. A rejection of the current session drops it and retries,
+    // which logs in again, unless the session came straight from a login and never worked: then
+    // another login would be rejected the same way, prompting for the master password each
+    // time, so the error is shown instead.
+    private func classify(_ error: AdapterError, output: Output) -> AdapterError {
+        let generation = Self.generation(of: output)
+        guard case .needsAuthentication(let message) = error else {
+            session.noteAccepted(generation: generation)
+            return error
+        }
+        switch session.noteRejected(generation: generation) {
+        case .retry:
+            return error
+        case .stop:
+            let explanation = String(localized: "AdapterPassword.FreshSessionRejected",
+                                     defaultValue: "\(identifier) rejected the session it created when you logged in, so iTerm2 stopped trying to log in again.",
+                                     comment: "Shown after a password manager rejects a login session it just issued; the placeholder is the password manager’s name, such as Bitwarden")
+            if let message, !message.isEmpty {
+                return .runtime(message + "\n\n" + explanation)
+            }
+            return .runtime(explanation)
+        }
+    }
+
+    // Recovery shared by every recipe. classify has already decided: a rejection that is still
+    // flagged needsAuthentication should be retried, and the retry builds the command again
+    // with whatever session is current, logging in first if there is none.
+    private func recover(from error: Error, completion: @escaping (Error?) -> ()) {
+        if case AdapterError.needsAuthentication = error {
+            completion(nil)
+        } else {
+            completion(error)
+        }
+    }
+
     private func makeListAccountsRecipe() -> AnyRecipe<Void, [CommandLinePasswordDataSource.Account]> {
         // Per-adapter so silencing one adapter's list warning does not silence every adapter's.
         let listWarningIdentifier = "NoSyncAdapterListWarning_\(identifier)"
@@ -659,24 +781,22 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         userAccountID: self.userAccountID,
                         token: self.authToken)
 
-                    self.makeCommand("list-accounts", request: request, completion: completion)
+                    self.makeCommand("list-accounts", request: request, generation: self.session.generation, completion: completion)
                 }
             },
             recovery: { [weak self] error, completion in
-                // If authentication failed, clear token and retry
-                if case AdapterError.needsAuthentication = error {
-                    self?.authToken = nil
-                    completion(nil)
-                } else {
+                guard let self else {
                     completion(error)
+                    return
                 }
+                self.recover(from: error, completion: completion)
             },
-            outputTransformer: { output, completion in
+            outputTransformer: { [weak self] output, completion in
                 let decoder = JSONDecoder()
 
                 // Check for error response
                 if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
-                    completion(.failure(error))
+                    completion(.failure(self?.classify(error, output: output) ?? error))
                     return
                 }
 
@@ -708,6 +828,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     }
                 }
 
+                self?.session.noteAccepted(generation: AdapterPasswordDataSource.generation(of: output))
                 completion(.success(accounts))
             }))
     }
@@ -732,22 +853,21 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         token: self.authToken,
                         accountIdentifier: AccountIdentifierEntry(accountID: accountIdentifier.value))
 
-                    self.makeCommand("get-password", request: request, completion: completion)
+                    self.makeCommand("get-password", request: request, generation: self.session.generation, completion: completion)
                 }
             },
             recovery: { [weak self] error, completion in
-                if case AdapterError.needsAuthentication = error {
-                    self?.authToken = nil
-                    completion(nil)
-                } else {
+                guard let self else {
                     completion(error)
+                    return
                 }
+                self.recover(from: error, completion: completion)
             },
-            outputTransformer: { output, completion in
+            outputTransformer: { [weak self] output, completion in
                 let decoder = JSONDecoder()
 
                 if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
-                    completion(.failure(error))
+                    completion(.failure(self?.classify(error, output: output) ?? error))
                     return
                 }
 
@@ -756,6 +876,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     return
                 }
 
+                self?.session.noteAccepted(generation: AdapterPasswordDataSource.generation(of: output))
                 completion(.success(CommandLinePasswordDataSource.Password(password: response.password, otp: response.otp)))
             }))
     }
@@ -794,22 +915,21 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         newAccountName: setPasswordRequest.newAccountName,
                         newUserName: setPasswordRequest.newUserName)
 
-                    self.makeCommand("set-password", request: request, completion: completion)
+                    self.makeCommand("set-password", request: request, generation: self.session.generation, completion: completion)
                 }
             },
             recovery: { [weak self] error, completion in
-                if case AdapterError.needsAuthentication = error {
-                    self?.authToken = nil
-                    completion(nil)
-                } else {
+                guard let self else {
                     completion(error)
+                    return
                 }
+                self.recover(from: error, completion: completion)
             },
-            outputTransformer: { output, completion in
+            outputTransformer: { [weak self] output, completion in
                 let decoder = JSONDecoder()
 
                 if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
-                    completion(.failure(error))
+                    completion(.failure(self?.classify(error, output: output) ?? error))
                     return
                 }
 
@@ -819,6 +939,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     return
                 }
 
+                self?.session.noteAccepted(generation: AdapterPasswordDataSource.generation(of: output))
                 completion(.success(()))
             }))
     }
@@ -844,22 +965,21 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         accountIdentifier: AccountIdentifierEntry(accountID: accountIdentifier.value),
                         sourceLabel: accountIdentifier.sourceLabel)
 
-                    self.makeCommand("delete-account", request: request, completion: completion)
+                    self.makeCommand("delete-account", request: request, generation: self.session.generation, completion: completion)
                 }
             },
             recovery: { [weak self] error, completion in
-                if case AdapterError.needsAuthentication = error {
-                    self?.authToken = nil
-                    completion(nil)
-                } else {
+                guard let self else {
                     completion(error)
+                    return
                 }
+                self.recover(from: error, completion: completion)
             },
-            outputTransformer: { output, completion in
+            outputTransformer: { [weak self] output, completion in
                 let decoder = JSONDecoder()
 
                 if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
-                    completion(.failure(error))
+                    completion(.failure(self?.classify(error, output: output) ?? error))
                     return
                 }
 
@@ -870,6 +990,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
                 // The list cache is invalidated by the shared CommandLineProvidedAccount.delete
                 // completion, which owns invalidation for every data source.
+                self?.session.noteAccepted(generation: AdapterPasswordDataSource.generation(of: output))
                 completion(.success(()))
             }))
     }
@@ -897,22 +1018,21 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         password: addRequest.password,
                         flags: addRequest.flags.isEmpty ? nil : addRequest.flags)
 
-                    self.makeCommand("add-account", request: request, completion: completion)
+                    self.makeCommand("add-account", request: request, generation: self.session.generation, completion: completion)
                 }
             },
             recovery: { [weak self] error, completion in
-                if case AdapterError.needsAuthentication = error {
-                    self?.authToken = nil
-                    completion(nil)
-                } else {
+                guard let self else {
                     completion(error)
+                    return
                 }
+                self.recover(from: error, completion: completion)
             },
-            outputTransformer: { output, completion in
+            outputTransformer: { [weak self] output, completion in
                 let decoder = JSONDecoder()
 
                 if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
-                    completion(.failure(error))
+                    completion(.failure(self?.classify(error, output: output) ?? error))
                     return
                 }
 
@@ -923,6 +1043,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
                 // The list cache is invalidated by standardAdd's completion, which owns
                 // invalidation for every data source.
+                self?.session.noteAccepted(generation: AdapterPasswordDataSource.generation(of: output))
                 completion(.success(CommandLinePasswordDataSource.AccountIdentifier(value: response.accountIdentifier.accountID)))
             }))
     }
@@ -973,10 +1094,10 @@ extension AdapterPasswordDataSource {
     @objc func resetConfiguration() {
         pathToDatabase = nil
         pathToExecutable = nil
-        authToken = nil
+        session.clear()
         masterPassword = nil
         iTermUserDefaults.userDefaults().removeObject(forKey: "PathToDatabase_\(identifier)")
-        iTermUserDefaults.userDefaults().removeObject(forKey: "PathToExecutable_\(identifier)")
+        iTermUserDefaults.userDefaults().removeObject(forKey: pathToExecutableKey)
         deletePersistedCredentials()
         deleteAllSettingsFieldStorage()
         handshakeInfo = nil
@@ -1048,7 +1169,7 @@ extension AdapterPasswordDataSource {
     func resetErrors() {
         // Clear the session token to allow retry. When persistsCredentials is true,
         // the saved masterPassword will auto-login without prompting on the next attempt.
-        authToken = nil
+        session.clear()
     }
 
     func reload(_ completion: () -> ()) {
@@ -1160,7 +1281,7 @@ extension AdapterPasswordDataSource: AdapterCapabilities {
         // re-logs in. Do this only on an actual change: the settings sheet re-saves every field
         // on OK, and clearing the live token for an unchanged value forces a needless re-login.
         if previous != trimmed {
-            authToken = nil
+            session.clear()
         }
     }
 }

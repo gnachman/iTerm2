@@ -906,3 +906,18 @@ Bug Fixes:
   integration could not locate, so Bitwarden
   showed an empty list. The password manager now
   runs these tools with your shell’s search path.
+- The Bitwarden integration now reports the
+  Bitwarden CLI’s own error message instead of
+  showing an empty list or a vague error. It
+  lists only items in a Bitwarden folder named
+  “iTerm2”, and now says so when your vault has
+  no such folder.
+- Debug logs no longer include passwords sent
+  to or received from password manager
+  integrations.
+- Password manager integrations that use a
+  command-line tool, like Bitwarden’s “bw”, now
+  find it on your shell’s search path instead
+  of asking you to locate it. If you do pick it
+  by hand, iTerm2 keeps the path you chose, so
+  it keeps working after the tool is upgraded.
