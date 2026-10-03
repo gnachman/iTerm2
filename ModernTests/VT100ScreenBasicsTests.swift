@@ -2242,6 +2242,39 @@ class VT100ScreenBasicsTests: XCTestCase {
                                       result(3, 0, 0, 1)])
     }
 
+    // For a backward search with offset 0 the wrapped pass stops one cell past the initial
+    // start (SearchRequest.stopPosition). When the initial start is the last character in the
+    // line buffer, that position is the buffer's end position, which is valid and equals
+    // lastPosition(), so the fallback to the initial start itself is not taken and the match
+    // in the final cell is reported once. These pin that: if the position one past the end
+    // ever stopped being valid, the fallback would stop on the initial start and
+    // findSubstring:stopAt: would report the match a second time.
+    func testFind_BackwardOffset0FromMatchInFinalCellDoesNotDuplicate() {
+        // The last character is the x in the last column of the last line.
+        assertSearchInLines("abcd!\nefgx!",
+                            for: "x",
+                            forward: false,
+                            mode: .caseSensitiveSubstring,
+                            startX: 3,
+                            startY: 1,
+                            offset: 0,
+                            matches: [result(3, 1, 3, 1)])
+    }
+
+    // Same, with a null cell after the final character, and an earlier match so the wrapped
+    // pass has something else to find.
+    func testFind_BackwardOffset0FromMatchAtLastCharacterBeforeTrailingNullDoesNotDuplicate() {
+        assertSearchInLines("zbcd.!\nefgz.!",
+                            for: "z",
+                            forward: false,
+                            mode: .caseSensitiveSubstring,
+                            startX: 3,
+                            startY: 1,
+                            offset: 0,
+                            matches: [result(3, 1, 3, 1),
+                                      result(0, 0, 0, 0)])
+    }
+
     // Regression tests for a selection of nothing but nulls surviving a resize. Since commit
     // 5e401d357, -[VT100ScreenMutableState runByTrimmingNullsFromRun:] in
     // sources/VT100Screen/VT100ScreenMutableState+Resizing.m only trims nulls on the run's
