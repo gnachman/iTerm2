@@ -163,7 +163,15 @@ class Window:
                 tab.tab_group_name if tab.HasField("tab_group_name") else None,
                 tab.tab_group_color if tab.HasField("tab_group_color") else None,
                 tab.tab_group_collapsed if tab.HasField(
-                    "tab_group_collapsed") else None)
+                    "tab_group_collapsed") else None,
+                tab.tab_group_parent_id if tab.HasField(
+                    "tab_group_parent_id") else None,
+                tab.tab_group_parent_name if tab.HasField(
+                    "tab_group_parent_name") else None,
+                tab.tab_group_parent_color if tab.HasField(
+                    "tab_group_parent_color") else None,
+                tab.tab_group_parent_collapsed if tab.HasField(
+                    "tab_group_parent_collapsed") else None)
             # protocol 1.18+ reports the active session here, so current_session
             # is correct straight from a list-sessions refresh without waiting
             # for a focus notification. Older servers leave it unset.
@@ -279,25 +287,28 @@ class Window:
         """
         The distinct tab groups in this window, in tab order.
 
-        A tab group is a named, colored collection of adjacent tabs.
+        A tab group is a named, colored collection of adjacent tabs. A parent
+        group is listed before its sub-groups, including a parent whose tabs are
+        all in sub-groups.
 
         :returns: A list of :class:`~iterm2.tabgroup.TabGroup`.
         """
         result: typing.List[iterm2.tabgroup.TabGroup] = []
         seen: typing.Set[str] = set()
         for tab in self.__tabs:
-            group = tab.tab_group
-            if group is None or group.group_id in seen:
-                continue
-            seen.add(group.group_id)
-            result.append(group)
+            for group in (tab.tab_group_parent, tab.tab_group):
+                if group is None or group.group_id in seen:
+                    continue
+                seen.add(group.group_id)
+                result.append(group)
         return result
 
     async def async_create_tab_group(
             self,
             name: str,
             tabs: typing.List[iterm2.tab.Tab],
-            color: typing.Optional[iterm2.color.Color] = None) -> (
+            color: typing.Optional[iterm2.color.Color] = None,
+            parent: typing.Optional[iterm2.tabgroup.TabGroup] = None) -> (
                 iterm2.tabgroup.TabGroup):
         """
         Creates a new tab group from the given tabs.
@@ -310,6 +321,10 @@ class Window:
         :param tabs: The tabs to place in the group. Must be non-empty and all
             in this window.
         :param color: The group's color, or `None` to have iTerm2 pick one.
+        :param parent: A top-level group in this window to nest the new group
+            in, or `None` for a top-level group. Tab groups nest one level
+            deep. The new group's tabs are kept consecutive inside the
+            parent's tabs. Requires iTerm2 with API protocol 1.21 or later.
 
         :returns: The newly created :class:`~iterm2.tabgroup.TabGroup`. Its
             `color` is `None` when iTerm2 picked one automatically; re-fetch the
@@ -319,15 +334,20 @@ class Window:
             example, if a tab is not in this window).
         """
         iterm2.capabilities.check_supports_tab_groups(self.connection)
+        args = {"tab_ids": list(map(lambda tab: tab.tab_id, tabs)),
+                "name": name,
+                "color": color.hex if color else ""}
+        if parent is not None:
+            iterm2.capabilities.check_supports_nested_tab_groups(
+                self.connection)
+            args["parent_group_id"] = parent.group_id
         invocation = iterm2.util.invocation_string(
-            "iterm2.create_tab_group",
-            {"tab_ids": list(map(lambda tab: tab.tab_id, tabs)),
-             "name": name,
-             "color": color.hex if color else ""})
+            "iterm2.create_tab_group", args)
         group_id = await iterm2.rpc.async_invoke_method(
             self.connection, self.__window_id, invocation, -1)
         return iterm2.tabgroup.TabGroup(
-            self.connection, group_id, name, color, False)
+            self.connection, group_id, name, color, False,
+            parent.group_id if parent is not None else None)
 
     @property
     def current_tab(self) -> typing.Optional[iterm2.tab.Tab]:

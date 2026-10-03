@@ -82,6 +82,9 @@ static os_log_t PSMTabDragLog(void) {
     // drag. _draggedGroupMembers are the group's member tab cells (draggedCell is
     // members.firstObject); held so the drop can restore them to the source bar.
     NSString *_draggedGroupID;
+    // The dragged group's parent when it is a sub-group (it may then be dropped
+    // inside its parent's run), else nil.
+    NSString *_draggedGroupParentID;
     NSArray<PSMTabBarCell *> *_draggedGroupMembers;
 
     // While the cursor is over a COLLAPSED group's chip during a single-tab drag,
@@ -226,6 +229,7 @@ static os_log_t PSMTabDragLog(void) {
     [_sineCurveWidths release];
     [_targetCell release];
     [_draggedGroupID release];
+    [_draggedGroupParentID release];
     [_draggedGroupMembers release];
     [_temporarilyHiddenWindow release];
 #if PSM_DEBUG_DRAG_PERFORMANCE
@@ -509,6 +513,8 @@ static os_log_t PSMTabDragLog(void) {
     [self setDraggedCell:first];
     [_draggedGroupID release];
     _draggedGroupID = [[chip tabGroupIdentifier] copy];
+    [_draggedGroupParentID release];
+    _draggedGroupParentID = [[chip tabGroupParentIdentifier] copy];
     [_draggedGroupMembers release];
     _draggedGroupMembers = [members copy];
 
@@ -1395,6 +1401,8 @@ static os_log_t PSMTabDragLog(void) {
     [self setDraggedCell:nil];
     [_draggedGroupID release];
     _draggedGroupID = nil;
+    [_draggedGroupParentID release];
+    _draggedGroupParentID = nil;
     [_draggedGroupMembers release];
     _draggedGroupMembers = nil;
     [self resetCollapsedDragTargetingState];
@@ -2586,15 +2594,17 @@ static os_log_t PSMTabDragLog(void) {
             if (c.isPlaceholder) {
                 continue;  // a drop slot is transparent to the run (as elsewhere)
             }
-            if ([c isTabGroupChip] ||
-                ![c.tabGroupIdentifier isEqualToString:chip.tabGroupIdentifier]) {
+            if (![c continuesRunOfTabGroup:chip.tabGroupIdentifier]) {
                 break;
+            }
+            if ([c isTabGroupChip]) {
+                continue;  // a sub-group's chip inside this run
             }
             if (memberCount == 0) {
                 frame = [c frame];
             }
             memberCount++;
-            if (!c.isCollapsedHidden) {
+            if (![c isCollapsedByTabGroup:chip.tabGroupIdentifier]) {
                 allCollapsed = NO;
             }
         }
@@ -2660,11 +2670,15 @@ static os_log_t PSMTabDragLog(void) {
                     if ([cj isPlaceholder]) {
                         continue;
                     }
-                    if ([cj isTabGroupChip] ||
-                        ![cj.tabGroupIdentifier isEqualToString:chipGid]) {
+                    if (![cj continuesRunOfTabGroup:chipGid]) {
                         break;  // reached the next group -> this group has no member here
                     }
-                    firstMemberCollapsed = [cj isCollapsedHidden];
+                    if ([cj isTabGroupChip]) {
+                        continue;  // a sub-group's chip; its tabs are this group's too
+                    }
+                    // A sub-group's tab is hidden by THIS group only when its
+                    // parent (this group) is collapsed.
+                    firstMemberCollapsed = [cj isCollapsedByTabGroup:chipGid];
                     break;
                 }
                 PSMTabBarCell *slot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
@@ -2823,14 +2837,30 @@ static os_log_t PSMTabDragLog(void) {
     // slot -- or another member -- between members). Landing before the chip
     // (next real cell is the chip) is outside, so the "drop before the group"
     // slot doesn't join.
-    if (!afterReal || afterReal.isTabGroupChip || afterReal.tabGroupIdentifier.length == 0) {
+    //
+    // With nested groups each side is a group path and the drop joins the
+    // deepest group both sides share. The cell after a drop slot contributes the
+    // groups the slot is INSIDE of: a tab, its full path; a sub-group's chip, only
+    // its parent (landing just before a sub-group's chip is inside the parent but
+    // not the sub-group); a top-level chip, nothing. The cell before contributes
+    // its full path, a chip included (landing just after a chip is inside it).
+    if (!afterReal || !beforeReal) {
         return nil;
     }
-    NSString *gid = afterReal.tabGroupIdentifier;
-    if (beforeReal && [beforeReal.tabGroupIdentifier isEqualToString:gid]) {
-        return gid;
+    NSArray<NSString *> *afterPath = [afterReal tabGroupPath];
+    if (afterReal.isTabGroupChip && afterPath.count > 0) {
+        // Only the groups that enclose the chip, not the chip's own group.
+        afterPath = [afterPath subarrayWithRange:NSMakeRange(0, afterPath.count - 1)];
     }
-    return nil;
+    NSArray<NSString *> *beforePath = [beforeReal tabGroupPath];
+    NSString *joined = nil;
+    for (NSUInteger level = 0; level < MIN(afterPath.count, beforePath.count); level++) {
+        if (![afterPath[level] isEqualToString:beforePath[level]]) {
+            break;
+        }
+        joined = afterPath[level];
+    }
+    return joined;
 }
 
 // The nearest cell to one side of the given index that is not a group chip
@@ -2875,7 +2905,7 @@ static os_log_t PSMTabDragLog(void) {
             continue;
         }
         // Scanning right, cells still in THIS group's run are not the neighbor.
-        if (step > 0 && ![c isTabGroupChip] && [c.tabGroupIdentifier isEqualToString:gid]) {
+        if (step > 0 && [c continuesRunOfTabGroup:gid]) {
             continue;
         }
         if ([c isTabGroupChip]) {
@@ -2890,7 +2920,9 @@ static os_log_t PSMTabDragLog(void) {
         if (![c isCollapsedHidden]) {
             return NSNotFound;
         }
-        NSString *neighborGid = c.tabGroupIdentifier;
+        // The pill is the outermost collapsed group: the parent when it is the
+        // one collapsed.
+        NSString *neighborGid = c.isTabGroupParentCollapsed ? c.tabGroupParentIdentifier : c.tabGroupIdentifier;
         for (NSInteger k = j - 1; k >= 0; k--) {
             if ([cells[k] isTabGroupChip] && [cells[k].tabGroupIdentifier isEqualToString:neighborGid]) {
                 return k;
@@ -2906,13 +2938,13 @@ static os_log_t PSMTabDragLog(void) {
     NSString *gid = [cells[ci] tabGroupIdentifier];
     for (NSInteger j = ci + 1; j < (NSInteger)cells.count; j++) {
         PSMTabBarCell *c = cells[j];
-        if ([c isTabGroupChip]) {
+        if ([c isTabGroupChip] && ![c continuesRunOfTabGroup:gid]) {
             return nil;  // hit the next group's chip with no between-slot
         }
         if (c.isCollapsedGroupJoinSlot) {
             continue;  // this group's front/detector slot
         }
-        if (![c isPlaceholder] && [c.tabGroupIdentifier isEqualToString:gid]) {
+        if (![c isPlaceholder] && [c continuesRunOfTabGroup:gid]) {
             continue;  // a member of this group
         }
         if ([c isPlaceholder]) {
@@ -2921,10 +2953,10 @@ static os_log_t PSMTabDragLog(void) {
             BOOL memberAhead = NO;
             for (NSInteger k = j + 1; k < (NSInteger)cells.count; k++) {
                 PSMTabBarCell *cc = cells[k];
-                if ([cc isTabGroupChip]) {
+                if ([cc isTabGroupChip] && ![cc continuesRunOfTabGroup:gid]) {
                     break;
                 }
-                if (![cc isPlaceholder] && [cc.tabGroupIdentifier isEqualToString:gid]) {
+                if (![cc isPlaceholder] && [cc continuesRunOfTabGroup:gid]) {
                     memberAhead = YES;
                     break;
                 }
@@ -2961,12 +2993,16 @@ static os_log_t PSMTabDragLog(void) {
             continue;
         }
         NSString *gid = cells[c].tabGroupIdentifier;
+        if (_draggedGroupParentID.length > 0 && [gid isEqualToString:_draggedGroupParentID]) {
+            // A sub-group may move around inside its own parent's run.
+            continue;
+        }
         NSInteger last = c;
         for (NSInteger j = c + 1; j < (NSInteger)cells.count; j++) {
             if ([cells[j] isPlaceholder]) {
                 continue;
             }
-            if ([cells[j] isTabGroupChip] || ![cells[j].tabGroupIdentifier isEqualToString:gid]) {
+            if (![cells[j] continuesRunOfTabGroup:gid]) {
                 break;
             }
             last = j;
@@ -3034,6 +3070,7 @@ static os_log_t PSMTabDragLog(void) {
     // placeholder, the chip re-derives before the second member, and the slot
     // jumps from right of the chip to left of it with no animation.
     pc.tabGroupIdentifier = cell.tabGroupIdentifier;
+    pc.tabGroupParentIdentifier = cell.tabGroupParentIdentifier;
     // A group's edge member keeps the flanking placeholder on its outward side:
     // the chip anchors before pc (above), so that placeholder becomes the "drop
     // before/after the group" slot. Removing it, as for every other cell, would

@@ -2418,6 +2418,12 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                 tabMessage.tabGroupName = tab.tabGroupName ?: @"";
                 tabMessage.tabGroupColor = [(tab.tabGroupColor ?: [NSColor systemBlueColor]) hexStringPreservingColorSpace];
                 tabMessage.tabGroupCollapsed = tab.tabGroupCollapsed;
+                if (tab.tabGroupParentID.length > 0) {
+                    tabMessage.tabGroupParentId = tab.tabGroupParentID;
+                    tabMessage.tabGroupParentName = tab.tabGroupParentName ?: @"";
+                    tabMessage.tabGroupParentColor = [(tab.tabGroupParentColor ?: [NSColor systemBlueColor]) hexStringPreservingColorSpace];
+                    tabMessage.tabGroupParentCollapsed = tab.tabGroupParentCollapsed;
+                }
             }
             [windowMessage.tabsArray addObject:tabMessage];
         }

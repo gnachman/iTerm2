@@ -113,6 +113,39 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // group; the invariant "the active tab is never in a collapsed group" is
 // enforced by PseudoTerminal. Meaningful only when tabGroupID is non-nil.
 @property (nonatomic) BOOL tabGroupCollapsed;
+// When this tab's group (tabGroupID) is a sub-group, the definition of its
+// parent group. Nesting is one level deep: a parent never has a parent. Like
+// the fields above, the parent's definition rides every tab of every one of its
+// sub-groups (and its own direct members carry it as their tabGroupID/Name/...),
+// so a parent with no direct members still exists through its sub-groups.
+// tabGroupParentID is nil for a top-level group; the others are meaningful only
+// when it is set.
+@property (nonatomic, copy) NSString *tabGroupParentID;
+@property (nonatomic, copy) NSString *tabGroupParentName;
+@property (nonatomic, copy) NSColor *tabGroupParentColor;
+@property (nonatomic) BOOL tabGroupParentCollapsed;
+// tabGroupParentID when the tab is grouped and its group is a sub-group, else
+// nil. Use this, not tabGroupParentID, wherever a stale parent on an ungrouped
+// tab must not count.
+@property (nonatomic, readonly) NSString *nestedTabGroupParentID;
+// The outermost group this tab belongs to: its parent group if it is in a
+// sub-group, else tabGroupID.
+@property (nonatomic, readonly) NSString *tabGroupTopLevelID;
+// YES if the tab belongs to `groupID` directly or through a sub-group of it.
+- (BOOL)isInTabGroup:(NSString *)groupID;
+// YES if the tab is hidden in the tab bar because its group or its group's
+// parent is collapsed.
+@property (nonatomic, readonly) BOOL tabGroupHidden;
+// Read and write the definition of `groupID` as carried by this tab, which may
+// be its own group or its group's parent. No-op/nil/NO if the tab is not in it.
+- (NSString *)nameOfTabGroup:(NSString *)groupID;
+- (NSColor *)colorOfTabGroup:(NSString *)groupID;
+- (BOOL)isTabGroupCollapsed:(NSString *)groupID;
+- (void)setName:(NSString *)name ofTabGroup:(NSString *)groupID;
+- (void)setColor:(NSColor *)color ofTabGroup:(NSString *)groupID;
+- (void)setCollapsed:(BOOL)collapsed ofTabGroup:(NSString *)groupID;
+// Clear the parent-group fields (the tab's group becomes top-level).
+- (void)clearTabGroupParent;
 @property(nonatomic, readonly) NSString *title;  // the effective title
 @property (nonatomic, readonly) iTermVariableScope<iTermTabScope> *variablesScope;
 @property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;

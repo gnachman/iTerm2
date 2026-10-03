@@ -47,11 +47,43 @@ class iTermTabGroupOrdering: NSObject {
         return compacted(pinnedIndexes) + compacted(unpinnedIndexes)
     }
 
+    // Nested variant: `parentIDs[i]` is the parent group of tab i's group (nil
+    // for a top-level group or an ungrouped tab). Every top-level group (a
+    // parent together with its sub-groups and direct members) is compacted into
+    // one block, and within that block each sub-group is compacted into one run
+    // anchored at its first member, so a sub-group's run is contiguous inside its
+    // parent's run. With no parents this is exactly canonicalOrder(groupIDs:pinned:).
+    // Both passes are idempotent, so the composition is too.
+    static func canonicalOrder(groupIDs: [String?], parentIDs: [String?], pinned: [Bool]) -> [Int] {
+        it_assert(groupIDs.count == pinned.count && groupIDs.count == parentIDs.count,
+                  "parallel arrays required")
+        let topLevel: [String?] = groupIDs.indices.map { i in
+            guard groupIDs[i] != nil else {
+                return nil
+            }
+            return parentIDs[i] ?? groupIDs[i]
+        }
+        // First compact by top-level group, then compact sub-groups within it.
+        let outer = canonicalOrder(groupIDs: topLevel, pinned: pinned)
+        let innerKeys: [String?] = outer.map { i in parentIDs[i] != nil ? groupIDs[i] : nil }
+        let inner = canonicalOrder(groupIDs: innerKeys, pinned: outer.map { pinned[$0] })
+        return inner.map { outer[$0] }
+    }
+
     // ObjC bridge: `groupIDs` elements are NSString group ids or NSNull for
     // ungrouped tabs.
     @objc(canonicalOrderForGroupIDs:pinned:)
     static func canonicalOrder(groupIDs: [Any], pinned: [NSNumber]) -> [NSNumber] {
         return canonicalOrder(groupIDs: groupIDs.map { $0 as? String },
+                              pinned: pinned.map { $0.boolValue }).map { NSNumber(value: $0) }
+    }
+
+    // ObjC bridge for the nested variant. `parentIDs` is parallel to `groupIDs`,
+    // NSString or NSNull.
+    @objc(canonicalOrderForGroupIDs:parentIDs:pinned:)
+    static func canonicalOrder(groupIDs: [Any], parentIDs: [Any], pinned: [NSNumber]) -> [NSNumber] {
+        return canonicalOrder(groupIDs: groupIDs.map { $0 as? String },
+                              parentIDs: parentIDs.map { $0 as? String },
                               pinned: pinned.map { $0.boolValue }).map { NSNumber(value: $0) }
     }
 
@@ -225,6 +257,82 @@ class iTermTabGroupOrdering: NSObject {
         var order = identity
         order.swapAt(s, neighbor)
         return SingleTabMove(order: order, newGroupID: nil, changesMembership: false)
+    }
+
+    // Nested groups: one keyboard step INSIDE a top-level group's run, where
+    // singleTabMove (run on top-level ids) would plainly swap and let the
+    // canonical order snap a split sub-group back together, undoing the move.
+    // `groupIDs[i]` is tab i's own group, `parentIDs[i]` that group's parent (nil
+    // for a top-level group). Rules for the selected tab and the neighbor it would
+    // cross, when both are in the same top-level group:
+    //   - both in the same sub-group: swap.
+    //   - the tab is in a sub-group and the neighbor is not: leave the sub-group
+    //     for its parent, in place (membership -> the parent).
+    //   - the tab is a direct member and the neighbor is in a sub-group: jump the
+    //     whole sub-group run, so a sub-group is never split.
+    // Returns nil when these rules don't apply (neighbor outside the top-level
+    // group, or both direct members); the caller then uses singleTabMove.
+    static func nestedSingleTabMove(groupIDs: [String?],
+                                    parentIDs: [String?],
+                                    selectedIndex s: Int,
+                                    offset: Int) -> SingleTabMove? {
+        let n = groupIDs.count
+        guard parentIDs.count == n, n >= 2, s >= 0, s < n, offset != 0 else {
+            return nil
+        }
+        let dir = offset > 0 ? 1 : -1
+        let neighbor = s + dir
+        guard neighbor >= 0, neighbor < n else {
+            return nil
+        }
+        func topLevel(_ i: Int) -> String? {
+            guard let gid = groupIDs[i] else {
+                return nil
+            }
+            return parentIDs[i] ?? gid
+        }
+        func subgroup(_ i: Int) -> String? {
+            return parentIDs[i] != nil ? groupIDs[i] : nil
+        }
+        guard let top = topLevel(s), topLevel(neighbor) == top else {
+            return nil
+        }
+        let identity = Array(0..<n)
+        if let mine = subgroup(s) {
+            if subgroup(neighbor) == mine {
+                var order = identity
+                order.swapAt(s, neighbor)
+                return SingleTabMove(order: order, newGroupID: nil, changesMembership: false)
+            }
+            return SingleTabMove(order: identity, newGroupID: top, changesMembership: true)
+        }
+        guard let theirs = subgroup(neighbor) else {
+            return nil
+        }
+        // The far end of the neighbor's sub-group run.
+        var end = neighbor
+        while end + dir >= 0 && end + dir < n && subgroup(end + dir) == theirs {
+            end += dir
+        }
+        var order = identity
+        order.remove(at: s)
+        // Moving right, removing `s` shifts the run left by one, so inserting at
+        // `end` lands just past it; moving left, `end` is the run's first index.
+        order.insert(s, at: end)
+        return SingleTabMove(order: order, newGroupID: nil, changesMembership: false)
+    }
+
+    // ObjC bridge for the nested step; elements are NSString or NSNull. Returns
+    // nil when the caller should fall back to singleTabMove.
+    @objc(nestedSingleTabMoveForGroupIDs:parentIDs:selectedIndex:offset:)
+    static func nestedSingleTabMove(groupIDs: [Any],
+                                    parentIDs: [Any],
+                                    selectedIndex: Int,
+                                    offset: Int) -> SingleTabMove? {
+        return nestedSingleTabMove(groupIDs: groupIDs.map { $0 as? String },
+                                   parentIDs: parentIDs.map { $0 as? String },
+                                   selectedIndex: selectedIndex,
+                                   offset: offset)
     }
 
     // ObjC bridge for -[PseudoTerminal moveCurrentTabByOffset:]. `groupIDs`

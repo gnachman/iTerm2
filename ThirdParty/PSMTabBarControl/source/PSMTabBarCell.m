@@ -246,6 +246,37 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     [_delayedStringValueTimer invalidate];
 }
 
+- (BOOL)isInTabGroup:(NSString *)groupID {
+    if (groupID.length == 0) {
+        return NO;
+    }
+    return [self.tabGroupIdentifier isEqualToString:groupID] ||
+           [self.tabGroupParentIdentifier isEqualToString:groupID];
+}
+
+- (BOOL)continuesRunOfTabGroup:(NSString *)groupID {
+    if (self.isTabGroupChip) {
+        return groupID.length > 0 && [self.tabGroupParentIdentifier isEqualToString:groupID];
+    }
+    return [self isInTabGroup:groupID];
+}
+
+- (BOOL)isCollapsedByTabGroup:(NSString *)groupID {
+    if (groupID.length > 0 && [self.tabGroupParentIdentifier isEqualToString:groupID]) {
+        return self.isTabGroupParentCollapsed;
+    }
+    return self.isCollapsedHidden;
+}
+
+- (NSArray<NSString *> *)tabGroupPath {
+    NSString *gid = self.tabGroupIdentifier;
+    if (gid.length == 0) {
+        return @[];
+    }
+    NSString *parent = self.tabGroupParentIdentifier;
+    return parent.length > 0 ? @[ parent, gid ] : @[ gid ];
+}
+
 - (NSString *)description {
     id identifier = nil;
     if ([self.representedObject respondsToSelector:@selector(identifier)]) {

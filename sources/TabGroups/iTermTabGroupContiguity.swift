@@ -38,10 +38,50 @@ class iTermTabGroupContiguity: NSObject {
         return nil
     }
 
+    // Nested variant. `parents[i]` is the parent group of tab i's group, or nil.
+    // Each neighbor is seen as a path (parent, group); the dropped tab joins the
+    // deepest group both neighbors share. So landing between two members of a
+    // sub-group joins the sub-group; landing between a parent's direct member and
+    // one of its sub-groups (or between two of its sub-groups) joins the parent
+    // directly; anything else leaves every group. With no parents this matches
+    // resolvedGroup(forTabAt:order:).
+    static func resolvedGroup(forTabAt index: Int, order: [String?], parents: [String?]) -> String? {
+        guard index >= 0, index < order.count, order.count == parents.count else {
+            return nil
+        }
+        func path(_ i: Int) -> [String] {
+            guard i >= 0, i < order.count, let gid = order[i] else {
+                return []
+            }
+            if let parent = parents[i] {
+                return [parent, gid]
+            }
+            return [gid]
+        }
+        let left = path(index - 1)
+        let right = path(index + 1)
+        var shared: String? = nil
+        for (l, r) in zip(left, right) {
+            guard l == r else {
+                break
+            }
+            shared = l
+        }
+        return shared
+    }
+
     // ObjC bridge: `order` elements are NSString group ids or NSNull for
     // ungrouped tabs. Returns the resolved group id, or nil for ungrouped.
     @objc(resolvedGroupForTabAt:order:)
     static func resolvedGroup(forTabAt index: Int, order: [Any]) -> String? {
         return resolvedGroup(forTabAt: index, order: order.map { $0 as? String })
+    }
+
+    // ObjC bridge for the nested variant; `parents` is parallel to `order`.
+    @objc(resolvedGroupForTabAt:order:parents:)
+    static func resolvedGroup(forTabAt index: Int, order: [Any], parents: [Any]) -> String? {
+        return resolvedGroup(forTabAt: index,
+                             order: order.map { $0 as? String },
+                             parents: parents.map { $0 as? String })
     }
 }

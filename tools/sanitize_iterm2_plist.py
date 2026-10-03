@@ -293,6 +293,7 @@ CONTENT_KEYS = {
     "Custom Tab Title": REDACT_V,
     "Title Override": REDACT_V,
     "Tab Group Name": REDACT_V,
+    "Tab Group Parent Name": REDACT_V,
     "tmux Pane Title": REDACT_V,
     "Custom Locale": REDACT_V,
     "Jobs to Ignore": REDACT_V,
