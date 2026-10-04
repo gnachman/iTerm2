@@ -13,6 +13,35 @@
 
 #import "iTermEditKeyActionWindowController.h"
 #import "iTermKeystroke.h"
+#import "PTYSession.h"
+
+// Record dialog requests without presenting a modal sheet in the test host.
+@interface EditTabTitleTestDelegate : NSObject
+@property (nonatomic) NSUInteger dialogRequests;
+@end
+
+@implementation EditTabTitleTestDelegate
+- (id)realParentWindow {
+    return self;
+}
+- (void)editTabTitle:(id)sender {
+    self.dialogRequests++;
+}
+@end
+
+@interface EditTabTitleTestSession : PTYSession
+@property (nonatomic, strong) EditTabTitleTestDelegate *titleDelegate;
+@end
+
+@implementation EditTabTitleTestSession
+- (id<PTYSessionDelegate>)delegate {
+    return (id)self.titleDelegate;
+}
+@end
+
+@interface PTYSession (KeyBindingTests)
++ (BOOL)performKeyBindingAction:(iTermKeyBindingAction *)action event:(NSEvent *)event;
+@end
 
 // ok: is an IBAction wired up in the xib, so it isn't in the public header.
 @interface iTermEditKeyActionWindowController (Testing)
@@ -23,6 +52,48 @@
 @end
 
 @implementation EditKeyActionMenuItemTests
+
+- (void)testEditTabTitleBindingSurvivesEditingTheKeystroke {
+    iTermEditKeyActionWindowController *controller =
+        [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession
+                                                              mode:iTermEditKeyActionWindowControllerModeKeyboardShortcut
+                                                       profileType:ProfileTypeTerminal];
+    [controller setAction:KEY_ACTION_EDIT_TAB_TITLE parameter:@"" applyMode:iTermActionApplyModeCurrentSession];
+    controller.currentKeystroke = [iTermKeystroke withCharacter:'r'
+                                                  modifierFlags:NSEventModifierFlagCommand | NSEventModifierFlagShift];
+    (void)controller.window;
+    controller.currentKeystroke = [iTermKeystroke withCharacter:'t'
+                                                  modifierFlags:NSEventModifierFlagCommand | NSEventModifierFlagShift];
+    [controller ok:nil];
+
+    XCTAssertTrue(controller.ok);
+    XCTAssertEqual(controller.action, KEY_ACTION_EDIT_TAB_TITLE);
+    XCTAssertEqual(controller.applyMode, iTermActionApplyModeCurrentSession);
+}
+
+- (void)testEditTabTitleBindingRequestsTheDialogFromTheSessionsWindow {
+    EditTabTitleTestSession *session = [[EditTabTitleTestSession alloc] initSynthetic:NO];
+    EditTabTitleTestDelegate *delegate = [[EditTabTitleTestDelegate alloc] init];
+    session.titleDelegate = delegate;
+    iTermKeyBindingAction *action = [iTermKeyBindingAction withAction:KEY_ACTION_EDIT_TAB_TITLE
+                                                         parameter:@""
+                                                          escaping:iTermSendTextEscapingNone
+                                                         applyMode:iTermActionApplyModeCurrentSession];
+
+    [session performKeyBindingAction:action event:nil];
+
+    XCTAssertEqual(delegate.dialogRequests, 1u);
+    session.titleDelegate = nil;
+}
+
+- (void)testEditTabTitleBindingRequiresATerminalSession {
+    iTermKeyBindingAction *action = [iTermKeyBindingAction withAction:KEY_ACTION_EDIT_TAB_TITLE
+                                                         parameter:@""
+                                                          escaping:iTermSendTextEscapingNone
+                                                         applyMode:iTermActionApplyModeCurrentSession];
+
+    XCTAssertFalse([PTYSession performKeyBindingAction:action event:nil]);
+}
 
 // Finds a menu item in the app's main menu so the test only runs against a
 // menu that really contains the item it binds to.

@@ -222,6 +222,9 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_MOVE_TAB_RIGHT:
             actionString = NSLocalizedStringWithDefaultValue(@"KeyBindingAction.MoveTabRight", nil, [NSBundle mainBundle], @"Move Tab Right", @"Key binding action name");
             break;
+        case KEY_ACTION_EDIT_TAB_TITLE:
+            actionString = NSLocalizedStringWithDefaultValue(@"KeyBindingAction.EditTabTitle", nil, [NSBundle mainBundle], @"Edit Tab Title", @"Key binding action that opens the tab title dialog");
+            break;
         case KEY_ACTION_NEXT_MRU_TAB:
             actionString = NSLocalizedStringWithDefaultValue(@"KeyBindingAction.CycleTabsForward", nil, [NSBundle mainBundle], @"Cycle Tabs Forward", @"Key binding action name");
             break;
@@ -574,6 +577,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_NEXT_MRU_TAB:
         case KEY_ACTION_MOVE_TAB_LEFT:
         case KEY_ACTION_MOVE_TAB_RIGHT:
+        case KEY_ACTION_EDIT_TAB_TITLE:
         case KEY_ACTION_FIND_REGEX:
         case KEY_ACTION_SET_PROFILE:
         case KEY_ACTION_PREVIOUS_MRU_TAB:
@@ -661,6 +665,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_NEXT_MRU_TAB:
         case KEY_ACTION_MOVE_TAB_LEFT:
         case KEY_ACTION_MOVE_TAB_RIGHT:
+        case KEY_ACTION_EDIT_TAB_TITLE:
         case KEY_ACTION_FIND_REGEX:
         case KEY_ACTION_SET_PROFILE:
         case KEY_ACTION_PREVIOUS_MRU_TAB:

@@ -11923,6 +11923,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
         case KEY_ACTION_MOVE_TAB_LEFT:
         case KEY_ACTION_MOVE_TAB_RIGHT:
+        case KEY_ACTION_EDIT_TAB_TITLE:
         case KEY_ACTION_NEXT_MRU_TAB:
         case KEY_ACTION_PREVIOUS_MRU_TAB:
         case KEY_ACTION_NEXT_PANE:
@@ -12102,6 +12103,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             break;
         case KEY_ACTION_MOVE_TAB_RIGHT:
             [[_delegate realParentWindow] moveTabRight:nil];
+            break;
+        case KEY_ACTION_EDIT_TAB_TITLE:
+            [windowController editTabTitle:nil];
             break;
         case KEY_ACTION_NEXT_MRU_TAB:
             [[[_delegate realParentWindow] tabView] cycleKeyDownWithModifiers:[event it_modifierFlags]
