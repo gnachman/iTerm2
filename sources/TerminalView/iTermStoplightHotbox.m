@@ -11,7 +11,13 @@
     NSTrackingArea *_trackingArea;
     NSBezierPath *_fillPath;
     NSBezierPath *_strokePath;
-    BOOL _inside;
+    BOOL _mouseInside;
+}
+
+- (void)setSlideOffset:(CGFloat)slideOffset {
+    _slideOffset = slideOffset;
+    [self setBoundsOrigin:NSMakePoint(slideOffset, 0)];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
@@ -48,37 +54,64 @@
 
 - (void)updateTrackingAreas {
     [super updateTrackingAreas];
+    // Created only once. It tracks the visible rect, so it follows changes to
+    // the frame without being replaced and ignores the bounds origin, which
+    // slideOffset changes. Replacing it while the mouse is inside (as happens
+    // on every frame of a slide) would send a spurious mouseEntered:.
     if (_trackingArea != nil) {
-        [self removeTrackingArea:_trackingArea];
+        return;
     }
-    
-    _trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds
-                                                 options:(NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways | NSTrackingCursorUpdate)
+    _trackingArea = [[NSTrackingArea alloc] initWithRect:NSZeroRect
+                                                 options:(NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways | NSTrackingCursorUpdate | NSTrackingInVisibleRect)
                                                    owner:self
                                                 userInfo:nil];
     [self addTrackingArea:_trackingArea];
 }
 
+// AppKit doesn't send mouseExited: when the view is hidden or leaves the window
+// with the mouse inside it, so forget the mouse then. Otherwise the next
+// mouseEntered: would be ignored as a duplicate.
+- (void)viewDidHide {
+    [super viewDidHide];
+    [self forgetMouse];
+}
+
+- (void)viewWillMoveToWindow:(NSWindow *)newWindow {
+    [super viewWillMoveToWindow:newWindow];
+    [self forgetMouse];
+}
+
+- (void)forgetMouse {
+    _mouseInside = NO;
+    _revealed = NO;
+}
+
 - (void)cursorUpdate:(NSEvent *)event {
-    if (_inside) {
+    if (_revealed) {
         [[NSCursor arrowCursor] set];
     }
 }
 
 - (void)mouseEntered:(NSEvent *)event {
     [super mouseEntered:event];
+    if (_mouseInside) {
+        return;
+    }
+    _mouseInside = YES;
     if ([NSEvent pressedMouseButtons]) {
         return;
     }
-    _inside = [self.delegate stoplightHotboxMouseEnter];
+    _revealed = [self.delegate stoplightHotboxMouseEnter];
 }
 
 - (void)mouseExited:(NSEvent *)event {
     [super mouseExited:event];
-    if (_inside) {
-        [self.delegate stoplightHotboxMouseExit];
-        _inside = NO;
+    if (!_mouseInside) {
+        return;
     }
+    _mouseInside = NO;
+    _revealed = NO;
+    [self.delegate stoplightHotboxMouseExit];
 }
 
 - (BOOL)mouseDownCanMoveWindow {
@@ -90,7 +123,7 @@
 }
 
 - (NSView *)hitTest:(NSPoint)point {
-    if (_inside) {
+    if (_revealed) {
         return [super hitTest:point];
     } else {
         return nil;

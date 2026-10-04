@@ -947,3 +947,11 @@ Bug Fixes:
   opening. Before, a badge such as
   \(user.host_name) stayed empty until the shell
   showed its second prompt. Issue 13006.
+- With the Minimal or Compact theme and no tab
+  bar at the top, the window buttons that appear
+  when you point at the window’s top-left corner
+  no longer cover a status bar or Workgroup
+  toolbar there, which made its leftmost item
+  impossible to click. A small arrow appears in
+  the corner instead; click it to show or hide
+  the window buttons. Issue 13100.

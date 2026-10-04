@@ -4580,6 +4580,7 @@
 		B526853D585AF3C43FB31FF4 /* SessionCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7F8E4B139D63B87BBCC27AC /* SessionCommand.swift */; };
 		B661B16FF0C20DC268588314 /* iTermMacOS13RequirementNotice.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1A9F00EB0A2E18AD334E88 /* iTermMacOS13RequirementNotice.swift */; };
 		B6F107C3AFA77C36642979FC /* CompanionPushRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A955B14FF6B89D29018C2AEA /* CompanionPushRegistry.swift */; };
+		B7CCF9DB53324385520BEA88 /* iTermValueAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C62271A692704C38AB76426 /* iTermValueAnimation.swift */; };
 		B7D24BCC35360983559E530C /* iTermSuppressedAlerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DB0124F2AA65D7F51AD4A32 /* iTermSuppressedAlerts.swift */; };
 		B80BB2D6C74CAD9750556804 /* AILiveLlamaToolCallTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E84D570B65467F50B49267 /* AILiveLlamaToolCallTests.swift */; };
 		B89533C4F0E3E8C415065AAC /* iTermLayoutResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D079EA4C9132883E833B9974 /* iTermLayoutResolver.swift */; };
@@ -5924,6 +5925,7 @@
 		8A2C1B2F615C047DFEEA6404 /* iTermCursorBlinkFadeAnimator.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermCursorBlinkFadeAnimator.h; sourceTree = "<group>"; };
 		8BC80D4DB06ABEDF5FADC6B9 /* WorkgroupAutoSendClippingsToolbarItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupAutoSendClippingsToolbarItem.swift; sourceTree = "<group>"; };
 		8C03B517BF192DE503AF37D1 /* IT2Runner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IT2Runner.swift; path = it2cli/Sources/it2core/IT2Runner.swift; sourceTree = "<group>"; };
+		8C62271A692704C38AB76426 /* iTermValueAnimation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermValueAnimation.swift; sourceTree = "<group>"; };
 		8CF5407AF82C45539CD8EFD9 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/FindView.xcstrings; sourceTree = "<group>"; };
 		8DFBEB0BA2384A3E8FF256E3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermTextPopoverViewController.xib; sourceTree = "<group>"; };
 		8F06ECF8A1AE910A311E3128 /* AIExplanationResponse+Mac.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AIExplanationResponse+Mac.swift"; sourceTree = "<group>"; };
@@ -10323,6 +10325,7 @@
 				BCBB83E64BDE6C3824D5CEF6 /* iTermSuppressedAlertsWindowController.swift */,
 				ED1A9F00EB0A2E18AD334E88 /* iTermMacOS13RequirementNotice.swift */,
 				AD8B537066646E118AD6D9D0 /* iTermSuiteDockTileView.swift */,
+				8C62271A692704C38AB76426 /* iTermValueAnimation.swift */,
 			);
 			path = AppKit;
 			sourceTree = "<group>";
@@ -19951,6 +19954,7 @@
 				4430972E2BB5286E0A0ADFDD /* CCStatusHookCommand.swift in Sources */,
 				FF3B684ED38B492D80D4A595 /* TmuxDroppedOutputScanner.swift in Sources */,
 				92A29632EF0D9D0E455E2AA6 /* UserVariableAssignment.swift in Sources */,
+				B7CCF9DB53324385520BEA88 /* iTermValueAnimation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
