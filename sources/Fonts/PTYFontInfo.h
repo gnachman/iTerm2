@@ -20,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong, nullable) PTYFontInfo *italicVersion;
 @property(nonatomic, strong, nullable) PTYFontInfo *boldItalicVersion;
 @property(nonatomic, readonly) NSInteger ligatureLevel;
+// The font's -it_metalFontID, computed once because looking it up is slow.
+@property(nonatomic, readonly) int metalFontID;
 @property(nonatomic, readonly) BOOL hasDefaultLigatures;
 
 + (PTYFontInfo *)fontInfoWithFont:(NSFont *)font;

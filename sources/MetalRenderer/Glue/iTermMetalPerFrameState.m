@@ -1089,6 +1089,16 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
     return i + 1;
 }
 
+// The -it_metalFontID of attributes[NSFontAttributeName]. iTermAttributedStringBuilder stores it
+// alongside the font because looking it up is slow.
+NS_INLINE int iTermMetalFontIDFromAttributes(NSDictionary *attributes) {
+    NSNumber *fontID = attributes[iTermMetalFontIDAttribute];
+    if (fontID) {
+        return fontID.intValue;
+    }
+    return [attributes[NSFontAttributeName] it_metalFontID];
+}
+
 NS_INLINE int iTermGlyphKeyEmitDecomposedFromCheap(iTermCachedGlyphKeysBuffer *buf,
                                                    BOOL bold,
                                                    BOOL italic,
@@ -1122,7 +1132,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromCheap(iTermCachedGlyphKeysBuffer *b
                                                  fakeItalic,
                                                  gk,
                                                  logicalIndex,
-                                                 font,
+                                                 iTermMetalFontIDFromAttributes(cheapString.attributes),
                                                  glyphs,
                                                  cheapString.length,
                                                  thinStrokes,
@@ -1139,7 +1149,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromGlyphs(iTermCachedGlyphKeysBuffer *
                                                     BOOL fakeItalic,
                                                     int gk,
                                                     int logicalIndex,
-                                                    NSFont *font,
+                                                    int fontID,
                                                     CGGlyph *glyphs,
                                                     NSUInteger length,
                                                     BOOL thinStrokes,
@@ -1154,7 +1164,7 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromGlyphs(iTermCachedGlyphKeysBuffer *
                                                   italic,
                                                   fakeBold,
                                                   fakeItalic,
-                                                  font.it_metalFontID,
+                                                  fontID,
                                                   glyphs[i],
                                                   CGPointZero,
                                                   gk + i,
@@ -1223,6 +1233,8 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermCachedGlyph
                             attributes);
         return gk;
     }
+    NSFont *attributedFont = attributes[NSFontAttributeName];
+    const int attributedFontID = iTermMetalFontIDFromAttributes(attributes);
 
     static iTermLRUDictionary<iTermAttributedStringProxy *, id> *cache;
     static dispatch_once_t onceToken;
@@ -1253,7 +1265,9 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermCachedGlyph
                                                           size_t length,
                                                           BOOL *stop) {
         iTermCachedGlyphKeysBufferEnsureSize(buf, o + length);
-        const int fontID = [(__bridge NSFont *)font it_metalFontID];
+        // A run's font is the string's own font unless CoreText substituted a fallback font
+        // (e.g., for emoji or CJK), which needs a real lookup.
+        const int fontID = ((__bridge NSFont *)font == attributedFont) ? attributedFontID : [(__bridge NSFont *)font it_metalFontID];
         for (int i = 0; i < length; i++) {
             const CFIndex characterIndex = glyphIndexToCharacterIndex[i];
             const int sourceCell = characterIndexToSourceCell ? characterIndexToSourceCell[characterIndex] : (logicalIndex + characterIndex);

@@ -56,6 +56,9 @@ extern NSString *const iTermBoldAttribute;
 extern NSString *const iTermFaintAttribute;
 extern NSString *const iTermFakeBoldAttribute;
 extern NSString *const iTermFakeItalicAttribute;
+// NSNumber: the -it_metalFontID of the NSFontAttributeName font, so the GPU renderer doesn't
+// have to look it up.
+extern NSString *const iTermMetalFontIDAttribute;
 extern NSString *const iTermImageCodeAttribute;
 extern NSString *const iTermImageColumnAttribute;
 extern NSString *const iTermImageLineAttribute;

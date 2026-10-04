@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "FontSizeEstimator.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSFont+iTerm.h"
 #import "NSObject+iTerm.h"
 
 @implementation NSFont(PTYFontInfo)
@@ -123,6 +124,7 @@
     copy->_underlineOffset = _underlineOffset;
     copy->_boldItalicVersion = [_boldItalicVersion copy];
     copy->_ligatureLevel = _ligatureLevel;
+    copy->_metalFontID = _metalFontID;
     copy->_hasDefaultLigatures = _hasDefaultLigatures;
     return copy;
 }
@@ -186,6 +188,7 @@
     font_ = font;
 
     _ligatureLevel = font.it_ligatureLevel;
+    _metalFontID = font.it_metalFontID;
     _hasDefaultLigatures = font.it_defaultLigatures;
 
     _baselineOffset = [self computedBaselineOffset];

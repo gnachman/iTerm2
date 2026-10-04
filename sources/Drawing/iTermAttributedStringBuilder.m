@@ -56,6 +56,7 @@ typedef struct {
     BOOL boxDrawing;
     BOOL contrastIneligible;
     NSFont *font;
+    int metalFontID;  // font's -it_metalFontID
     BOOL bold;
     BOOL faint;
     BOOL fakeBold;
@@ -75,6 +76,7 @@ NSString *const iTermBoldAttribute = @"iTermBoldAttribute";
 NSString *const iTermFaintAttribute = @"iTermFaintAttribute";
 NSString *const iTermFakeBoldAttribute = @"iTermFakeBoldAttribute";
 NSString *const iTermFakeItalicAttribute = @"iTermFakeItalicAttribute";
+NSString *const iTermMetalFontIDAttribute = @"iTermMetalFontIDAttribute";
 NSString *const iTermImageCodeAttribute = @"iTermImageCodeAttribute";
 NSString *const iTermImageColumnAttribute = @"iTermImageColumnAttribute";
 NSString *const iTermImageLineAttribute = @"iTermImageLineAttribute";
@@ -779,6 +781,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                                    remapped:remapped];
 
     attributes->font = fontInfo.font;
+    attributes->metalFontID = fontInfo.metalFontID;
     attributes->ligatureLevel = fontInfo.ligatureLevel;
     if (_preferSpeedToFullLigatureSupport) {
         if (!c->complexChar &&
@@ -857,6 +860,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                           newAttributes->boxDrawing != previousAttributes->boxDrawing ||
                                           newAttributes->contrastIneligible != previousAttributes ->contrastIneligible ||
                                           ![newAttributes->font isEqual:previousAttributes->font] ||
+                                          newAttributes->metalFontID != previousAttributes->metalFontID ||
                                           newAttributes->ligatureLevel != previousAttributes->ligatureLevel ||
                                           newAttributes->bold != previousAttributes->bold ||
                                           newAttributes->faint != previousAttributes->faint ||
@@ -882,6 +886,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                                newAttributes->boxDrawing == previousAttributes->boxDrawing &&
                                                newAttributes->contrastIneligible == previousAttributes->contrastIneligible &&
                                                [newAttributes->font isEqual:previousAttributes->font] &&
+                                               newAttributes->metalFontID == previousAttributes->metalFontID &&
                                                newAttributes->ligatureLevel == previousAttributes->ligatureLevel &&
                                                newAttributes->bold == previousAttributes->bold &&
                                                newAttributes->faint == previousAttributes->faint &&
@@ -1024,6 +1029,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     NSDictionary *result = @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
               (NSString *)kCTForegroundColorAttributeName: (id)[attributes->foregroundColor CGColor],
               NSFontAttributeName: attributes->font,
+              iTermMetalFontIDAttribute: @(attributes->metalFontID),
               iTermAntiAliasAttribute: @(attributes->shouldAntiAlias),
               iTermIsBoxDrawingAttribute: @(attributes->boxDrawing),
               iTermFakeBoldAttribute: @(attributes->fakeBold),

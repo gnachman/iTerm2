@@ -423,6 +423,9 @@ Bug Fixes:
 - Sessions closed shortly before quitting are
   now always archived if their profile archives
   sessions on close.
+- Fixed a crash with the GPU renderer that
+  could happen after changing the font size
+  with Cmd-+ or Cmd--.
 - Fixed a crash that could happen after using
   Find when the window got narrower before the
   match was highlighted.
