@@ -429,6 +429,48 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
         }
     }
 
+    /// A value the alert asks for, which on the mac is a control in the alert's
+    /// accessory view. The phone shows an editable field and sends what the user
+    /// entered back with the answer.
+    struct Input: Codable, Equatable, Sendable {
+        /// `kind` values. A string, not an enum, so a kind added by a later mac
+        /// does not make the whole status undecodable. Treat an unknown kind as
+        /// text.
+        static let textKind = "text"
+        static let integerKind = "integer"
+
+        /// Echoed as the key in `.answerModalAlert`'s `inputs`.
+        var id: String
+        /// The mac's label for the control, or nil if it has none (the alert's
+        /// text says what is being asked).
+        var label: String?
+        var kind: String
+        /// What the control holds on the mac right now, as text.
+        var value: String
+        /// The range an integer must fall in. nil for text.
+        var minimum: Int?
+        var maximum: Int?
+
+        init(id: String, label: String?, kind: String, value: String, minimum: Int? = nil, maximum: Int? = nil) {
+            self.id = id
+            self.label = label
+            self.kind = kind
+            self.value = value
+            self.minimum = minimum
+            self.maximum = maximum
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            id = try c.decode(String.self, forKey: .id)
+            label = try c.decodeIfPresent(String.self, forKey: .label)
+            kind = try c.decodeIfPresent(String.self, forKey: .kind) ?? Self.textKind
+            value = try c.decodeIfPresent(String.self, forKey: .value) ?? ""
+            minimum = try c.decodeIfPresent(Int.self, forKey: .minimum)
+            maximum = try c.decodeIfPresent(Int.self, forKey: .maximum)
+        }
+    }
+
     /// Identifies this showing of the alert. Echoed in `.answerModalAlert`.
     var id: String
     var heading: String
@@ -437,8 +479,10 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
     var buttons: [Button]
     /// The label of the alert's "don't ask again" checkbox, or nil if it has none.
     var suppressionLabel: String?
-    /// The mac shows an extra view (details, an input field) with this alert
-    /// that is not carried here.
+    /// The values this alert asks for, in the mac's order. Usually empty.
+    var inputs: [Input]
+    /// The mac shows an extra view (details, a control) with this alert that is
+    /// not carried here. False when `inputs` covers everything in it.
     var hasAccessory: Bool
     /// False for a sheet that does not block the mac: the mac keeps serving
     /// requests while it is up, so the phone need not interrupt for it.
@@ -449,6 +493,7 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
          body: String,
          buttons: [Button],
          suppressionLabel: String?,
+         inputs: [Input] = [],
          hasAccessory: Bool,
          isAppModal: Bool) {
         self.id = id
@@ -456,6 +501,7 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
         self.body = body
         self.buttons = buttons
         self.suppressionLabel = suppressionLabel
+        self.inputs = inputs
         self.hasAccessory = hasAccessory
         self.isAppModal = isAppModal
     }
@@ -467,6 +513,7 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
         body = try c.decodeIfPresent(String.self, forKey: .body) ?? ""
         buttons = try c.decodeIfPresent([Button].self, forKey: .buttons) ?? []
         suppressionLabel = try c.decodeIfPresent(String.self, forKey: .suppressionLabel)
+        inputs = try c.decodeIfPresent([Input].self, forKey: .inputs) ?? []
         hasAccessory = try c.decodeIfPresent(Bool.self, forKey: .hasAccessory) ?? false
         isAppModal = try c.decodeIfPresent(Bool.self, forKey: .isAppModal) ?? true
     }
@@ -784,12 +831,15 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// `alertID` is the `id` from the `CompanionModalAlert` being answered and
     /// `buttonIndex` indexes its `buttons`. `suppress` asks the mac to also check
     /// the alert's "don't ask again" box; the mac ignores it when the alert has
-    /// no such box or that button's choice may not be remembered. No reply. On
-    /// success the alert goes away and the mac sends `.macStatusChanged`. If the
-    /// mac could not press the button (the alert is already gone, or something
-    /// the phone cannot see is in front of it) it sends
+    /// no such box or that button's choice may not be remembered. `inputs` maps
+    /// the `id` of each of the alert's `inputs` to the value the user entered;
+    /// the mac puts each into its control before pressing the button, and leaves
+    /// a control alone if its id is absent. No reply. On success the alert goes
+    /// away and the mac sends `.macStatusChanged`. If the mac could not press
+    /// the button (the alert is already gone, something the phone cannot see is
+    /// in front of it, or a value is not acceptable) it sends
     /// `.modalAlertAnswerRejected` and then its current status.
-    case answerModalAlert(alertID: String, buttonIndex: Int, suppress: Bool)
+    case answerModalAlert(alertID: String, buttonIndex: Int, suppress: Bool, inputs: [String: String]? = nil)
 
     /// Discriminators this build knows. MUST list every case above (except
     /// `.unsupported` is included so a peer that literally sends it round-trips).

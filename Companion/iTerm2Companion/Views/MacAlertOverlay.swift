@@ -23,10 +23,13 @@ import CompanionProtocol
 struct MacAlertCard: View {
     let alert: CompanionModalAlert
     let state: AppModel.MacAlertPresentation.CardState
-    let onAnswer: (_ buttonIndex: Int, _ suppress: Bool) -> Void
+    let onAnswer: (_ buttonIndex: Int, _ suppress: Bool, _ inputs: [String: String]) -> Void
     let onNotNow: () -> Void
 
     @State private var suppress = false
+    /// What the user has typed into each input, by id. An input that has not
+    /// been touched is absent, and shows what the Mac's control holds.
+    @State private var entered: [String: String] = [:]
 
     private var canAnswer: Bool { state == .ready }
 
@@ -57,6 +60,10 @@ struct MacAlertCard: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            ForEach(alert.inputs, id: \.id) { input in
+                inputField(input)
             }
 
             if state == .answerOnMac {
@@ -107,6 +114,48 @@ struct MacAlertCard: View {
         .padding(24)
     }
 
+    private func text(for input: CompanionModalAlert.Input) -> Binding<String> {
+        return Binding(get: { entered[input.id] ?? input.value },
+                       set: { entered[input.id] = $0 })
+    }
+
+    /// The same value as a number, for the stepper. Reads through the rule the
+    /// answer uses, so the stepper starts from what would actually be sent.
+    private func number(for input: CompanionModalAlert.Input) -> Binding<Int> {
+        return Binding(
+            get: { Int(AppModel.valueToSend(for: input, entered: entered[input.id] ?? input.value)) ?? 0 },
+            set: { entered[input.id] = String($0) })
+    }
+
+    @ViewBuilder
+    private func inputField(_ input: CompanionModalAlert.Input) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if let label = input.label, !label.isEmpty {
+                Text(verbatim: label)
+                    .font(.subheadline)
+            }
+            if input.kind == CompanionModalAlert.Input.integerKind {
+                HStack(spacing: 12) {
+                    TextField("", text: text(for: input))
+                        .keyboardType(.numberPad)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 90)
+                    Stepper("", value: number(for: input),
+                            in: (input.minimum ?? Int.min)...max(input.minimum ?? Int.min, input.maximum ?? Int.max))
+                        .labelsHidden()
+                    Spacer(minLength: 0)
+                }
+            } else {
+                TextField("", text: text(for: input))
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .disabled(!canAnswer)
+    }
+
     private var bodyText: some View {
         Text(verbatim: alert.body)
             .font(.subheadline)
@@ -118,7 +167,15 @@ struct MacAlertCard: View {
     private func answerButton(index: Int, button: CompanionModalAlert.Button) -> some View {
         let label = Text(verbatim: button.title)
             .frame(maxWidth: .infinity)
-        let action = { onAnswer(index, suppress) }
+        // Every input is sent, touched or not, so the Mac acts on exactly what
+        // this card shows.
+        let action = {
+            var values: [String: String] = [:]
+            for input in alert.inputs {
+                values[input.id] = entered[input.id] ?? input.value
+            }
+            onAnswer(index, suppress, values)
+        }
         // Index 0 is the Mac alert's default button.
         if index == 0 {
             Button(role: button.isDestructive ? .destructive : nil, action: action) { label }
@@ -145,7 +202,7 @@ private struct MacAlertOverlayRoot: View {
                     .ignoresSafeArea()
                 MacAlertCard(alert: alert,
                              state: state,
-                             onAnswer: { model.answerMacAlert(buttonIndex: $0, suppress: $1) },
+                             onAnswer: { model.answerMacAlert(buttonIndex: $0, suppress: $1, inputs: $2) },
                              onNotNow: { model.dismissMacAlert() })
                     // A different alert is a different card: start its toggle off.
                     .id(alert.id)
@@ -160,6 +217,9 @@ final class MacAlertWindowPresenter {
     static let shared = MacAlertWindowPresenter()
 
     private var window: UIWindow?
+    /// The window that was key before the card took over, to hand key status
+    /// back to.
+    private weak var previousKeyWindow: UIWindow?
 
     /// Whether the card's window is on screen.
     var isShowing: Bool {
@@ -169,14 +229,14 @@ final class MacAlertWindowPresenter {
     /// Show or hide the card to match the model. Call whenever
     /// `macAlertPresentation` may have changed, and when the app becomes active.
     func update(model: AppModel) {
-        if case .overlay = model.macAlertPresentation {
-            show(model: model)
+        if case .overlay(let alert, _) = model.macAlertPresentation {
+            show(model: model, needsKeyboard: !alert.inputs.isEmpty)
         } else {
             hide()
         }
     }
 
-    private func show(model: AppModel) {
+    private func show(model: AppModel, needsKeyboard: Bool) {
         if window == nil {
             let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
             guard let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first else {
@@ -198,10 +258,21 @@ final class MacAlertWindowPresenter {
                                             to: nil, from: nil, for: nil)
         }
         window?.isHidden = false
+        // A text field only gets the keyboard in the key window. Take key status
+        // only for a card that has one, and remember whom to give it back to.
+        if needsKeyboard, let window, !window.isKeyWindow {
+            previousKeyWindow = window.windowScene?.keyWindow
+            window.makeKey()
+        }
     }
 
     private func hide() {
+        let wasKey = window?.isKeyWindow ?? false
         window?.isHidden = true
         window = nil
+        if wasKey {
+            previousKeyWindow?.makeKey()
+        }
+        previousKeyWindow = nil
     }
 }

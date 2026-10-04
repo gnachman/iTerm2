@@ -225,6 +225,54 @@ final class AppModelMacStatusTests: XCTestCase {
         XCTAssertFalse(model.macIsBlocked)
     }
 
+    // MARK: Inputs
+
+    private func alertWithInputs() -> CompanionModalAlert {
+        var alert = alert("A")
+        alert.inputs = [
+            .init(id: "name", label: nil, kind: CompanionModalAlert.Input.textKind, value: "draft"),
+            .init(id: "spaces", label: "Tab size in spaces:", kind: CompanionModalAlert.Input.integerKind,
+                  value: "4", minimum: 0, maximum: 100),
+        ]
+        return alert
+    }
+
+    func test_answerCarriesWhatWasEnteredForTheAlertsInputs() {
+        let model = connectedModel(status([alertWithInputs()]))
+        model.answerMacAlert(buttonIndex: 0, suppress: false,
+                             inputs: ["name": "requests", "spaces": "8", "notAnInput": "x"])
+        XCTAssertEqual(model.testSentAlertAnswers,
+                       [.init(alertID: "A", buttonIndex: 0, suppress: false,
+                              inputs: ["name": "requests", "spaces": "8"])],
+                       "only the inputs the alert has are sent")
+    }
+
+    func test_answerWithoutInputsSendsNone() {
+        let model = connectedModel(status([alertWithInputs()]))
+        model.answerMacAlert(buttonIndex: 0, suppress: false)
+        XCTAssertEqual(model.testSentAlertAnswers, [.init(alertID: "A", buttonIndex: 0, suppress: false)])
+    }
+
+    /// The Mac refuses the whole answer if a number is out of range or not a
+    /// number, so the phone never sends one.
+    func test_numbersAreMadeAcceptableBeforeTheyAreSent() {
+        let spaces = alertWithInputs().inputs[1]
+        XCTAssertEqual(AppModel.valueToSend(for: spaces, entered: "8"), "8")
+        XCTAssertEqual(AppModel.valueToSend(for: spaces, entered: " 8 "), "8")
+        XCTAssertEqual(AppModel.valueToSend(for: spaces, entered: "250"), "100", "clamped to the maximum")
+        XCTAssertEqual(AppModel.valueToSend(for: spaces, entered: "-3"), "0", "clamped to the minimum")
+        XCTAssertEqual(AppModel.valueToSend(for: spaces, entered: ""), "4", "falls back to the Mac's value")
+        XCTAssertEqual(AppModel.valueToSend(for: spaces, entered: "eight"), "4")
+
+        let name = alertWithInputs().inputs[0]
+        XCTAssertEqual(AppModel.valueToSend(for: name, entered: " as typed "), " as typed ")
+        XCTAssertEqual(AppModel.valueToSend(for: name, entered: ""), "")
+
+        let model = connectedModel(status([alertWithInputs()]))
+        model.answerMacAlert(buttonIndex: 0, suppress: false, inputs: ["spaces": "999"])
+        XCTAssertEqual(model.testSentAlertAnswers.first?.inputs, ["spaces": "100"])
+    }
+
     // MARK: Unpairing
 
     /// The status belongs to the Mac it came from. Once unpaired, nothing of it

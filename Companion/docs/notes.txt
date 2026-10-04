@@ -4,7 +4,8 @@ New Features:
 - When iTerm2 on your Mac shows a warning and
   waits for an answer, iTerm2 Buddy now shows it
   and lets you answer from your phone, including
-  “don’t ask again” when the warning offers it.
+  “don’t ask again” when the warning offers it
+  and any value the warning asks you to fill in.
   Before, the app lost its connection until
   someone dismissed the warning at the Mac. If the
   Mac is showing a dialog that can’t be answered

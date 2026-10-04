@@ -29,6 +29,20 @@ struct ModalAlertSnapshot: Equatable, Sendable {
         let rememberable: Bool
     }
 
+    /// A value the alert asks for: a control in its accessory view.
+    struct Input: Equatable, Sendable {
+        enum Kind: Equatable, Sendable {
+            case text
+            case integer(minimum: Int, maximum: Int)
+        }
+        let id: String
+        /// The control's label, or nil if it has none.
+        let label: String?
+        let kind: Kind
+        /// What the control held when the alert was registered.
+        let value: String
+    }
+
     let id: UUID
     let heading: String
     let body: String
@@ -36,12 +50,32 @@ struct ModalAlertSnapshot: Equatable, Sendable {
     let buttons: [Button]
     /// The label of the "don't ask again" checkbox, or nil if the alert has none.
     let suppressionLabel: String?
-    /// The alert shows an extra view (details, an input field) that is not
-    /// described here.
+    /// The values the alert asks for. Usually empty.
+    let inputs: [Input]
+    /// The alert shows an extra view (details, a control) that is not described
+    /// here. False when `inputs` covers everything in it.
     let hasAccessory: Bool
     /// False for a sheet shown without a nested run loop, which does not freeze
     /// the main queue.
     let isAppModal: Bool
+
+    init(id: UUID,
+         heading: String,
+         body: String,
+         buttons: [Button],
+         suppressionLabel: String?,
+         inputs: [Input] = [],
+         hasAccessory: Bool,
+         isAppModal: Bool) {
+        self.id = id
+        self.heading = heading
+        self.body = body
+        self.buttons = buttons
+        self.suppressionLabel = suppressionLabel
+        self.inputs = inputs
+        self.hasAccessory = hasAccessory
+        self.isAppModal = isAppModal
+    }
 }
 
 /// The registry as its off-main consumer sees it. A protocol so tests can
@@ -62,9 +96,18 @@ protocol ModalAlertSource: AnyObject, Sendable {
     /// run loop has the main queue frozen. Returns false, pressing nothing, if
     /// that alert is no longer the one on top, the index is out of range, or
     /// something that is not registered here (a plain NSAlert, an open panel)
-    /// is in front of it. `suppress` checks the alert's "don't ask again" box
-    /// first, when it has one and the button allows it.
-    func answer(id: UUID, buttonIndex: Int, suppress: Bool) async -> Bool
+    /// is in front of it, or a value in `inputs` is not acceptable. `suppress`
+    /// checks the alert's "don't ask again" box first, when it has one and the
+    /// button allows it. `inputs` maps the id of each of the alert's inputs to
+    /// the value to put in its control first; a control whose id is absent is
+    /// left as it is.
+    func answer(id: UUID, buttonIndex: Int, suppress: Bool, inputs: [String: String]) async -> Bool
+}
+
+extension ModalAlertSource {
+    func answer(id: UUID, buttonIndex: Int, suppress: Bool) async -> Bool {
+        return await answer(id: id, buttonIndex: buttonIndex, suppress: suppress, inputs: [:])
+    }
 }
 
 /// Describes an alert being registered. Objective-C friendly.
@@ -85,10 +128,32 @@ final class ModalAlertDescriptor: NSObject {
         }
     }
 
+    /// A value the alert asks for.
+    @objc(iTermModalAlertInput)
+    final class Input: NSObject {
+        @objc let identifier: String
+        @objc let label: String?
+        @objc let isInteger: Bool
+        /// The range for an integer. Ignored for text.
+        @objc let minimum: Int
+        @objc let maximum: Int
+        @objc let value: String
+
+        @objc init(identifier: String, label: String?, isInteger: Bool, minimum: Int, maximum: Int, value: String) {
+            self.identifier = identifier
+            self.label = label
+            self.isInteger = isInteger
+            self.minimum = minimum
+            self.maximum = maximum
+            self.value = value
+        }
+    }
+
     @objc let heading: String
     @objc let body: String
     @objc let buttons: [Button]
     @objc let suppressionLabel: String?
+    @objc let inputs: [Input]
     @objc let hasAccessory: Bool
     @objc let isAppModal: Bool
 
@@ -96,14 +161,26 @@ final class ModalAlertDescriptor: NSObject {
                body: String,
                buttons: [Button],
                suppressionLabel: String?,
+               inputs: [Input],
                hasAccessory: Bool,
                isAppModal: Bool) {
         self.heading = heading
         self.body = body
         self.buttons = buttons
         self.suppressionLabel = suppressionLabel
+        self.inputs = inputs
         self.hasAccessory = hasAccessory
         self.isAppModal = isAppModal
+    }
+
+    convenience init(heading: String,
+                     body: String,
+                     buttons: [Button],
+                     suppressionLabel: String?,
+                     hasAccessory: Bool,
+                     isAppModal: Bool) {
+        self.init(heading: heading, body: body, buttons: buttons, suppressionLabel: suppressionLabel,
+                  inputs: [], hasAccessory: hasAccessory, isAppModal: isAppModal)
     }
 }
 
@@ -135,7 +212,7 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
         /// what-is-in-front check.
         let hasWindow: Bool
         weak var window: NSWindow?
-        let press: (Int, Bool) -> Bool
+        let press: (Int, Bool, [String: String]) -> Bool
     }
 
     /// The alerts on screen, bottom to top, with what is needed to press their
@@ -157,14 +234,15 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
     ///
     /// - window: the alert's own window, used to check that it is still the
     ///   one in front when an answer arrives.
-    /// - press: clicks the button at an index, first checking the "don't ask
-    ///   again" box if asked. Called on the main thread, inside the alert's
-    ///   modal run loop. Returns false if it could not.
+    /// - press: clicks the button at an index, first putting the given values
+    ///   into the alert's input controls and checking the "don't ask again" box
+    ///   if asked. Called on the main thread, inside the alert's modal run loop.
+    ///   Returns false if it could not.
     @MainActor
     @objc(registerAlert:window:press:)
     func register(_ descriptor: ModalAlertDescriptor,
                   window: NSWindow?,
-                  press: @escaping (_ buttonIndex: Int, _ suppress: Bool) -> Bool) -> ModalAlertRegistration {
+                  press: @escaping (_ buttonIndex: Int, _ suppress: Bool, _ inputs: [String: String]) -> Bool) -> ModalAlertRegistration {
         let snapshot = ModalAlertSnapshot(
             id: UUID(),
             heading: descriptor.heading,
@@ -176,6 +254,13 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
                                           rememberable: $0.rememberable)
             },
             suppressionLabel: descriptor.suppressionLabel,
+            inputs: descriptor.inputs.map {
+                ModalAlertSnapshot.Input(
+                    id: $0.identifier,
+                    label: $0.label,
+                    kind: $0.isInteger ? .integer(minimum: $0.minimum, maximum: $0.maximum) : .text,
+                    value: $0.value)
+            },
             hasAccessory: descriptor.hasAccessory,
             isAppModal: descriptor.isAppModal)
         let entry = Entry(snapshot: snapshot, hasWindow: window != nil, window: window, press: press)
@@ -215,6 +300,16 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
         observers.notify()
     }
 
+    /// For an alert with no inputs.
+    @MainActor
+    func register(_ descriptor: ModalAlertDescriptor,
+                  window: NSWindow?,
+                  press: @escaping (_ buttonIndex: Int, _ suppress: Bool) -> Bool) -> ModalAlertRegistration {
+        return register(descriptor, window: window) { buttonIndex, suppress, _ in
+            press(buttonIndex, suppress)
+        }
+    }
+
     /// Whether an alert may be answered right now, given what is in front.
     ///
     /// An app-modal alert must itself be the running modal session. A sheet
@@ -236,7 +331,7 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
     }
 
     @MainActor
-    private func press(id: UUID, buttonIndex: Int, suppress: Bool) -> Bool {
+    private func press(id: UUID, buttonIndex: Int, suppress: Bool, inputs: [String: String]) -> Bool {
         // Looked up here, on the main thread, at the moment of the click: an
         // answer for an alert the user already dismissed finds nothing.
         guard let top = entries.last, top.snapshot.id == id else {
@@ -257,7 +352,7 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
                 return false
             }
         }
-        return top.press(buttonIndex, suppress)
+        return top.press(buttonIndex, suppress, inputs)
     }
 
     // MARK: ModalAlertSource
@@ -270,7 +365,7 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
         return observers.add(changed)
     }
 
-    func answer(id: UUID, buttonIndex: Int, suppress: Bool) async -> Bool {
+    func answer(id: UUID, buttonIndex: Int, suppress: Bool, inputs: [String: String]) async -> Bool {
         return await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             // A run loop block in the common modes is one of the few things
             // that still runs on the main thread inside a modal run loop that
@@ -278,7 +373,7 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
             // @MainActor tasks do not.
             CFRunLoopPerformBlock(CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue) {
                 let pressed = MainActor.assumeIsolated {
-                    self.press(id: id, buttonIndex: buttonIndex, suppress: suppress)
+                    self.press(id: id, buttonIndex: buttonIndex, suppress: suppress, inputs: inputs)
                 }
                 continuation.resume(returning: pressed)
             }

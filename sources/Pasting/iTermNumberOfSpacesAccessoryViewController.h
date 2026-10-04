@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class iTermWarningRemoteInput;
+
 // Controls the "NumberOfSpacesAccessoryView", used in a modal alert shown when
 // pasting a string with tabs in it.
 @interface iTermNumberOfSpacesAccessoryViewController : NSViewController
@@ -17,5 +19,9 @@
 
 // Write number of spaces to user defaults.
 - (void)saveToUserDefaults;
+
+// Describes the number-of-spaces field so the companion app can show and set it when it answers
+// the warning this view is the accessory of.
+- (iTermWarningRemoteInput *)remoteInput;
 
 @end

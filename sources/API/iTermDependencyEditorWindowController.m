@@ -348,6 +348,11 @@
     warning.title = NSLocalizedStringWithDefaultValue(@"DependencyEditor.AddDependencyMessage", nil, [NSBundle mainBundle], @"What dependency would you like to add?", @"Prompt asking which dependency to add");
     warning.actionLabels = @[ iTermLocalizedOK(), iTermLocalizedCancel() ];
     warning.accessory = textField;
+    // The field has no label of its own: the warning's text asks the question.
+    // Localization unneeded: the identifier is not shown.
+    warning.remoteInputs = @[ [iTermWarningRemoteInput textInputWithIdentifier:@"dependency"
+                                                                         label:nil
+                                                                     textField:textField] ];
     warning.warningType = kiTermWarningTypePersistent;
     warning.window = self.window;
     warning.initialFirstResponder = textField;

@@ -305,14 +305,52 @@ final class CompanionStreamMessagesTests: XCTestCase {
 
     func testAnswerModalAlertRoundTrip() throws {
         let data = try encoder().encode(ClientEnvelope(
-            requestID: nil, payload: .answerModalAlert(alertID: "A1", buttonIndex: 2, suppress: true)))
-        guard case let .answerModalAlert(alertID, buttonIndex, suppress) =
+            requestID: nil, payload: .answerModalAlert(alertID: "A1", buttonIndex: 2, suppress: true,
+                                                       inputs: ["spaces": "8"])))
+        guard case let .answerModalAlert(alertID, buttonIndex, suppress, inputs) =
                 try decoder().decode(ClientEnvelope.self, from: data).payload else {
             return XCTFail("expected .answerModalAlert")
         }
         XCTAssertEqual(alertID, "A1")
         XCTAssertEqual(buttonIndex, 2)
         XCTAssertTrue(suppress)
+        XCTAssertEqual(inputs, ["spaces": "8"])
+    }
+
+    // An answer to an alert that asks for nothing carries no inputs, and one
+    // sent without the field at all still decodes.
+    func testAnswerModalAlertWithoutInputs() throws {
+        let json = """
+        {"payload":{"answerModalAlert":{"alertID":"A1","buttonIndex":0,"suppress":false}}}
+        """
+        guard case let .answerModalAlert(_, _, _, inputs) =
+                try decoder().decode(ClientEnvelope.self, from: Data(json.utf8)).payload else {
+            return XCTFail("expected .answerModalAlert")
+        }
+        XCTAssertNil(inputs)
+    }
+
+    // The values an alert asks for travel with it, and survive a mac that sends
+    // a kind this phone has not heard of.
+    func testModalAlertInputsRoundTripAndTolerateUnknownFields() throws {
+        var alert = sampleAlert()
+        alert.inputs = [
+            .init(id: "name", label: nil, kind: CompanionModalAlert.Input.textKind, value: ""),
+            .init(id: "spaces", label: "Tab size in spaces:", kind: CompanionModalAlert.Input.integerKind,
+                  value: "4", minimum: 0, maximum: 100),
+        ]
+        let status = CompanionMacStatus(modalAlerts: [alert], mainBlocked: false)
+        guard case let .macStatusChanged(decoded) = try roundTripHost(.macStatusChanged(status: status)) else {
+            return XCTFail("expected .macStatusChanged")
+        }
+        XCTAssertEqual(decoded, status)
+
+        let json = """
+        {"modalAlerts":[{"id":"A1","inputs":[{"id":"x","kind":"slider","future":1}]}]}
+        """
+        let future = try decoder().decode(CompanionMacStatus.self, from: Data(json.utf8))
+        XCTAssertEqual(future.modalAlerts.first?.inputs,
+                       [.init(id: "x", label: nil, kind: "slider", value: "")])
     }
 
     // A status from a future mac that drops or adds fields must still decode,

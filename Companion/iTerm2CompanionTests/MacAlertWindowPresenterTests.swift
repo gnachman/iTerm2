@@ -77,6 +77,35 @@ final class MacAlertWindowPresenterTests: XCTestCase {
         XCTAssertEqual(alertLevelWindows().count, 0)
     }
 
+    /// A text field only gets the keyboard in the key window. A card with an
+    /// input takes key status, and gives it back when it goes away. A card
+    /// without one leaves the key window alone.
+    func test_cardWithAnInputTakesKeyStatusAndReturnsIt() throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let appWindow = UIWindow(windowScene: scene)
+        appWindow.rootViewController = UIViewController()
+        appWindow.makeKeyAndVisible()
+        defer { appWindow.isHidden = true }
+        XCTAssertTrue(appWindow.isKeyWindow)
+
+        let presenter = MacAlertWindowPresenter()
+        let plain = model(showing: [alert("A")])
+        presenter.update(model: plain)
+        XCTAssertTrue(appWindow.isKeyWindow, "a card with nothing to type into does not need the keyboard")
+        plain.testHandleHostEvent(.macStatusChanged(status: CompanionMacStatus(modalAlerts: [], mainBlocked: false)))
+        presenter.update(model: plain)
+
+        var asking = alert("B")
+        asking.inputs = [.init(id: "name", label: nil, kind: CompanionModalAlert.Input.textKind, value: "")]
+        let withInput = model(showing: [asking])
+        presenter.update(model: withInput)
+        XCTAssertFalse(appWindow.isKeyWindow, "the card took key status so its field can be typed into")
+
+        withInput.testHandleHostEvent(.macStatusChanged(status: CompanionMacStatus(modalAlerts: [], mainBlocked: false)))
+        presenter.update(model: withInput)
+        XCTAssertTrue(appWindow.isKeyWindow, "key status went back where it came from")
+    }
+
     /// The whole path, as the app runs it: the root view is on screen, the Mac
     /// reports an alert, and the card's window appears without anything else
     /// asking for it. Then the alert goes away and so does the window.

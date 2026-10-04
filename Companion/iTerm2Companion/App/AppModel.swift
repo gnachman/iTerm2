@@ -786,9 +786,27 @@ final class AppModel {
         rejectedAlertID = alertID
     }
 
+    /// What to send the Mac for one of an alert's inputs, given what the user
+    /// typed. Text goes as typed. A number is clamped to the range the Mac
+    /// accepts, and anything that is not a whole number falls back to what the
+    /// Mac's control already holds, so a slip of the finger cannot make the Mac
+    /// refuse the whole answer.
+    static func valueToSend(for input: CompanionModalAlert.Input, entered: String) -> String {
+        guard input.kind == CompanionModalAlert.Input.integerKind else {
+            return entered
+        }
+        guard let number = Int(entered.trimmingCharacters(in: .whitespaces)) else {
+            return input.value
+        }
+        let lowerBound = input.minimum ?? Int.min
+        let upperBound = max(lowerBound, input.maximum ?? Int.max)
+        return String(min(max(number, lowerBound), upperBound))
+    }
+
     /// Press a button on the alert being shown. `suppress` is the state of the
-    /// “don’t ask again” toggle.
-    func answerMacAlert(buttonIndex: Int, suppress: Bool) {
+    /// “don’t ask again” toggle. `inputs` is what the user entered for the
+    /// alert's inputs, by id; an input left out keeps what it holds on the Mac.
+    func answerMacAlert(buttonIndex: Int, suppress: Bool, inputs: [String: String] = [:]) {
         guard macRevision >= CompanionProtocolVersion.modalAlertRevision,
               let alert = topMacAlert,
               alert.buttons.indices.contains(buttonIndex),
@@ -802,12 +820,20 @@ final class AppModel {
             && alert.suppressionLabel != nil
             && alert.buttons[buttonIndex].rememberable
         let alertID = alert.id
+        // Only the inputs this alert has, each in a form the Mac will accept.
+        var valuesToSend: [String: String] = [:]
+        for input in alert.inputs {
+            if let entered = inputs[input.id] {
+                valuesToSend[input.id] = Self.valueToSend(for: input, entered: entered)
+            }
+        }
         answeringAlertID = alertID
-        companionLog("Answering Mac alert \(alertID): button \(buttonIndex), suppress=\(effectiveSuppress)")
+        companionLog("Answering Mac alert \(alertID): button \(buttonIndex), suppress=\(effectiveSuppress), \(valuesToSend.count) input(s)")
         #if DEBUG
         testSentAlertAnswers.append(TestAlertAnswer(alertID: alertID,
                                                     buttonIndex: buttonIndex,
-                                                    suppress: effectiveSuppress))
+                                                    suppress: effectiveSuppress,
+                                                    inputs: valuesToSend))
         #endif
         // The Mac reports success only by the alert going away. If its click
         // had no effect, or it cannot run it yet, nothing would ever arrive.
@@ -822,7 +848,8 @@ final class AppModel {
             do {
                 try await client.answerModalAlert(alertID: alertID,
                                                   buttonIndex: buttonIndex,
-                                                  suppress: effectiveSuppress)
+                                                  suppress: effectiveSuppress,
+                                                  inputs: valuesToSend)
             } catch {
                 companionLog("Sending the answer to Mac alert \(alertID) failed: \(String(describing: error))")
                 guard let self, self.answeringAlertID == alertID else { return }
@@ -888,6 +915,7 @@ final class AppModel {
         var alertID: String
         var buttonIndex: Int
         var suppress: Bool
+        var inputs: [String: String] = [:]
     }
     private(set) var testSentAlertAnswers: [TestAlertAnswer] = []
 

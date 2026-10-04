@@ -189,10 +189,14 @@ actor CompanionClient {
     /// Press a button on a modal alert showing on the mac. Fire-and-forget: the
     /// mac reports the outcome through its status (the alert goes away) or a
     /// `.modalAlertAnswerRejected` event.
-    func answerModalAlert(alertID: String, buttonIndex: Int, suppress: Bool) async throws {
+    func answerModalAlert(alertID: String,
+                          buttonIndex: Int,
+                          suppress: Bool,
+                          inputs: [String: String]) async throws {
         try await session.send(.answerModalAlert(alertID: alertID,
                                                  buttonIndex: buttonIndex,
-                                                 suppress: suppress))
+                                                 suppress: suppress,
+                                                 inputs: inputs.isEmpty ? nil : inputs))
     }
 
     func sendRemoteCommandDecision(chatID: String,

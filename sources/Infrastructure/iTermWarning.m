@@ -118,6 +118,92 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
 
 @end
 
+@implementation iTermWarningRemoteInput {
+    NSString *(^_get)(void);
+    void (^_set)(NSString *);
+}
+
+- (instancetype)initWithIdentifier:(NSString *)identifier
+                             label:(NSString *)label
+                         isInteger:(BOOL)isInteger
+                           minimum:(NSInteger)minimum
+                           maximum:(NSInteger)maximum
+                               get:(NSString *(^)(void))get
+                               set:(void (^)(NSString *))set {
+    self = [super init];
+    if (self) {
+        _identifier = [identifier copy];
+        _label = [label copy];
+        _isInteger = isInteger;
+        _minimum = minimum;
+        _maximum = maximum;
+        _get = [get copy];
+        _set = [set copy];
+    }
+    return self;
+}
+
++ (instancetype)textInputWithIdentifier:(NSString *)identifier
+                                  label:(NSString *)label
+                              textField:(NSTextField *)textField {
+    // Weak: the warning's caller owns the control and may outlive or predecease this object.
+    __weak NSTextField *weakTextField = textField;
+    return [[self alloc] initWithIdentifier:identifier
+                                      label:label
+                                  isInteger:NO
+                                    minimum:0
+                                    maximum:0
+                                        get:^NSString *{
+        return weakTextField.stringValue ?: @"";
+    }
+                                        set:^(NSString *value) {
+        weakTextField.stringValue = value;
+    }];
+}
+
++ (instancetype)integerInputWithIdentifier:(NSString *)identifier
+                                     label:(NSString *)label
+                                   minimum:(NSInteger)minimum
+                                   maximum:(NSInteger)maximum
+                                    getter:(NSInteger (^)(void))getter
+                                    setter:(void (^)(NSInteger))setter {
+    return [[self alloc] initWithIdentifier:identifier
+                                      label:label
+                                  isInteger:YES
+                                    minimum:minimum
+                                    maximum:maximum
+                                        get:^NSString *{
+        return [@(getter()) stringValue];
+    }
+                                        set:^(NSString *value) {
+        setter(value.integerValue);
+    }];
+}
+
+- (NSString *)currentValue {
+    return _get();
+}
+
+- (BOOL)acceptsValue:(NSString *)value {
+    if (!_isInteger) {
+        return YES;
+    }
+    // The whole string must be a number: "12abc" and "" are not.
+    NSScanner *scanner = [NSScanner scannerWithString:value];
+    scanner.charactersToBeSkipped = nil;
+    NSInteger number = 0;
+    if (![scanner scanInteger:&number] || !scanner.isAtEnd) {
+        return NO;
+    }
+    return number >= _minimum && number <= _maximum;
+}
+
+- (void)applyValue:(NSString *)value {
+    _set(value);
+}
+
+@end
+
 @interface iTermWarning()<NSAlertDelegate>
 @end
 
@@ -219,11 +305,53 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
                                       heading:(NSString *)heading
                                   cancelLabel:(NSString *)cancelLabel
                                        window:(NSWindow *)window {
+    return [self showWarningWithTitle:title
+                              actions:actions
+                        actionMapping:actionToSelectionMap
+                            accessory:accessory
+                         remoteInputs:nil
+                           identifier:identifier
+                          silenceable:warningType
+                              heading:heading
+                          cancelLabel:cancelLabel
+                               window:window];
+}
+
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                    accessory:(NSView *)accessory
+                                 remoteInputs:(NSArray<iTermWarningRemoteInput *> *)remoteInputs
+                                   identifier:(NSString *)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                       window:(NSWindow *)window {
+    return [self showWarningWithTitle:title
+                              actions:actions
+                        actionMapping:nil
+                            accessory:accessory
+                         remoteInputs:remoteInputs
+                           identifier:identifier
+                          silenceable:warningType
+                              heading:nil
+                          cancelLabel:iTermWarningDefaultCancelLabel()
+                               window:window];
+}
+
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                actionMapping:(NSArray<NSNumber *> *)actionToSelectionMap
+                                    accessory:(NSView *)accessory
+                                 remoteInputs:(NSArray<iTermWarningRemoteInput *> *)remoteInputs
+                                   identifier:(NSString *)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                      heading:(NSString *)heading
+                                  cancelLabel:(NSString *)cancelLabel
+                                       window:(NSWindow *)window {
     iTermWarning *warning = [[iTermWarning alloc] init];
     warning.title = title;
     warning.actionLabels = actions;
     warning.actionToSelectionMap = actionToSelectionMap;
     warning.accessory = accessory;
+    warning.remoteInputs = remoteInputs;
     warning.identifier = identifier;
     warning.warningType = warningType;
     warning.heading = heading;
@@ -645,11 +773,23 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
                                               isDestructive:action.destructive
                                                rememberable:[self shouldRememberAction:action]];
     }];
+    NSArray<iTermModalAlertInput *> *inputs = [_remoteInputs mapWithBlock:^id(iTermWarningRemoteInput *input) {
+        return [[iTermModalAlertInput alloc] initWithIdentifier:input.identifier
+                                                          label:input.label
+                                                      isInteger:input.isInteger
+                                                        minimum:input.minimum
+                                                        maximum:input.maximum
+                                                          value:[input currentValue]];
+    }];
+    // Remote inputs stand for everything in the accessory that matters to the answer, so with them
+    // there is nothing more to see on the Mac.
+    const BOOL hasUndescribedAccessory = _accessory != nil && inputs.count == 0;
     return [[iTermModalAlertDescriptor alloc] initWithHeading:alert.messageText
                                                          body:alert.informativeText
                                                       buttons:buttons ?: @[]
                                              suppressionLabel:alert.showsSuppressionButton ? alert.suppressionButton.title : nil
-                                                 hasAccessory:_accessory != nil
+                                                       inputs:inputs ?: @[]
+                                                 hasAccessory:hasUndescribedAccessory
                                                    isAppModal:appModal];
 }
 
@@ -672,10 +812,10 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
     return [self makeAlert];
 }
 
-- (BOOL (^)(NSInteger, BOOL))modalAlertPressBlockForAlert:(NSAlert *)alert {
+- (BOOL (^)(NSInteger, BOOL, NSDictionary<NSString *, NSString *> *))modalAlertPressBlockForAlert:(NSAlert *)alert {
     __weak NSAlert *weakAlert = alert;
     __weak __typeof(self) weakSelf = self;
-    return ^BOOL(NSInteger buttonIndex, BOOL suppress) {
+    return ^BOOL(NSInteger buttonIndex, BOOL suppress, NSDictionary<NSString *, NSString *> *inputs) {
         NSAlert *strongAlert = weakAlert;
         iTermWarning *strongSelf = weakSelf;
         if (!strongAlert || !strongSelf) {
@@ -691,6 +831,20 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
         NSButton *button = strongAlert.buttons[buttonIndex];
         if (!button.isEnabled || button.isHidden) {
             return NO;
+        }
+        // Check every value before changing any control, so a refused press changes nothing.
+        NSArray<iTermWarningRemoteInput *> *remoteInputs = strongSelf.remoteInputs;
+        for (iTermWarningRemoteInput *input in remoteInputs) {
+            NSString *value = inputs[input.identifier];
+            if (value && ![input acceptsValue:value]) {
+                return NO;
+            }
+        }
+        for (iTermWarningRemoteInput *input in remoteInputs) {
+            NSString *value = inputs[input.identifier];
+            if (value) {
+                [input applyValue:value];
+            }
         }
         // -handleResult:alert: reads the box's state when it handles the click, and would persist
         // the choice even for a warning that shows no box. So check it only when the warning has

@@ -116,6 +116,7 @@ final class CompanionLinkTests: XCTestCase {
             let id: UUID
             let buttonIndex: Int
             let suppress: Bool
+            var inputs: [String: String] = [:]
         }
         private struct State: Sendable {
             var alerts: [ModalAlertSnapshot] = []
@@ -177,10 +178,10 @@ final class CompanionLinkTests: XCTestCase {
             return NSObject()
         }
 
-        func answer(id: UUID, buttonIndex: Int, suppress: Bool) async -> Bool {
+        func answer(id: UUID, buttonIndex: Int, suppress: Bool, inputs: [String: String]) async -> Bool {
             await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
                 let resumeNow = state.withLock { state -> Bool in
-                    state.answers.append(Answer(id: id, buttonIndex: buttonIndex, suppress: suppress))
+                    state.answers.append(Answer(id: id, buttonIndex: buttonIndex, suppress: suppress, inputs: inputs))
                     if state.holdsAnswers {
                         state.held.append(continuation)
                         return false
@@ -753,6 +754,43 @@ final class CompanionLinkTests: XCTestCase {
                 hasAccessory: false,
                 isAppModal: false)],
             mainBlocked: false))
+    }
+
+    /// An alert that asks for values: the phone is told what to ask for, and
+    /// what it sends back reaches the alert with the answer.
+    func testInputsAreSentWithTheAlertAndReturnedWithTheAnswer() async throws {
+        let fixture = makeFixture()
+        let id = UUID()
+        let snapshot = ModalAlertSnapshot(
+            id: id,
+            heading: "Paste",
+            body: "",
+            buttons: [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: true)],
+            suppressionLabel: nil,
+            inputs: [.init(id: "name", label: nil, kind: .text, value: "draft"),
+                     .init(id: "spaces", label: "Tab size in spaces:", kind: .integer(minimum: 0, maximum: 100),
+                           value: "4")],
+            hasAccessory: false,
+            isAppModal: true)
+        fixture.alerts.show([snapshot])
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        guard case .hello(_, _, _, _, let macStatus) = try await fixture.phone.nextEnvelope().payload else {
+            return XCTFail("expected hello")
+        }
+        XCTAssertEqual(macStatus?.modalAlerts.first?.inputs, [
+            .init(id: "name", label: nil, kind: "text", value: "draft"),
+            .init(id: "spaces", label: "Tab size in spaces:", kind: "integer", value: "4", minimum: 0, maximum: 100),
+        ])
+
+        try await fixture.phone.send(.answerModalAlert(alertID: id.uuidString, buttonIndex: 0, suppress: false,
+                                                       inputs: ["name": "requests", "spaces": "8"]))
+        try await FrozenMainQueue.withFailsafe("the answer to reach the alert source") {
+            while fixture.alerts.answers.isEmpty {
+                await Task.yield()
+            }
+        }
+        XCTAssertEqual(fixture.alerts.answers, [.init(id: id, buttonIndex: 0, suppress: false,
+                                                     inputs: ["name": "requests", "spaces": "8"])])
     }
 
     func testOlderPhoneGetsNoMacStatus() async throws {

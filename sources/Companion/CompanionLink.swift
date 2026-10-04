@@ -414,7 +414,7 @@ actor CompanionLink {
                      requestID: requestID)
             }
             eventsContinuation.yield(.envelope(envelope, handledByLink: true))
-        case .answerModalAlert(let alertID, let buttonIndex, let suppress):
+        case .answerModalAlert(let alertID, let buttonIndex, let suppress, let inputs):
             eventsContinuation.yield(.envelope(envelope, handledByLink: true))
             // Only a phone that was told about the alert can mean to answer it:
             // one that completed hello at a revision that carries the status and
@@ -427,7 +427,10 @@ actor CompanionLink {
             // if that is busy in a way that keeps even a run loop block from
             // running, the receive loop must go on answering everything else.
             Task {
-                await self.answerAlert(alertID: alertID, buttonIndex: buttonIndex, suppress: suppress)
+                await self.answerAlert(alertID: alertID,
+                                       buttonIndex: buttonIndex,
+                                       suppress: suppress,
+                                       inputs: inputs ?? [:])
             }
         case .sendKey, .pasteText:
             // Terminal input is only meaningful now. Forwarded while the main
@@ -532,6 +535,22 @@ actor CompanionLink {
                                                rememberable: $0.rememberable)
                 },
                 suppressionLabel: snapshot.suppressionLabel,
+                inputs: snapshot.inputs.map { input in
+                    switch input.kind {
+                    case .text:
+                        return CompanionModalAlert.Input(id: input.id,
+                                                         label: input.label,
+                                                         kind: CompanionModalAlert.Input.textKind,
+                                                         value: input.value)
+                    case .integer(let minimum, let maximum):
+                        return CompanionModalAlert.Input(id: input.id,
+                                                         label: input.label,
+                                                         kind: CompanionModalAlert.Input.integerKind,
+                                                         value: input.value,
+                                                         minimum: minimum,
+                                                         maximum: maximum)
+                    }
+                },
                 hasAccessory: snapshot.hasAccessory,
                 isAppModal: snapshot.isAppModal)
         }
@@ -544,10 +563,10 @@ actor CompanionLink {
         send(.macStatusChanged(status: status), requestID: nil)
     }
 
-    private func answerAlert(alertID: String, buttonIndex: Int, suppress: Bool) async {
+    private func answerAlert(alertID: String, buttonIndex: Int, suppress: Bool, inputs: [String: String]) async {
         let pressed: Bool
         if let id = UUID(uuidString: alertID) {
-            pressed = await alerts.answer(id: id, buttonIndex: buttonIndex, suppress: suppress)
+            pressed = await alerts.answer(id: id, buttonIndex: buttonIndex, suppress: suppress, inputs: inputs)
         } else {
             pressed = false
         }

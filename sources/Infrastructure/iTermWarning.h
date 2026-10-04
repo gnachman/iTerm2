@@ -55,6 +55,47 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
 @end
 
+// Describes one control in a warning's accessory view whose value the paired companion app may set
+// before it presses a button, so a warning that asks for input can be answered completely from
+// the phone. The phone shows a field with `label` and the control's current value, and sends back
+// what the user entered.
+@interface iTermWarningRemoteInput : NSObject
+
+// Stable name for this input within its warning. Not shown to the user.
+@property(nonatomic, readonly) NSString *identifier;
+// The control's label, already localized, or nil if the warning's text says what is being asked.
+@property(nonatomic, readonly, nullable) NSString *label;
+// YES for a whole number in [minimum, maximum]; NO for free text.
+@property(nonatomic, readonly) BOOL isInteger;
+@property(nonatomic, readonly) NSInteger minimum;
+@property(nonatomic, readonly) NSInteger maximum;
+
+// What the control holds now.
+- (NSString *)currentValue;
+// Whether `value` could be put in the control. Text always can; an integer must parse and be in
+// range.
+- (BOOL)acceptsValue:(NSString *)value;
+// Put `value` in the control, as if the user had typed it. Only call with an accepted value.
+- (void)applyValue:(NSString *)value;
+
+// A free-text input backed by `textField`.
++ (instancetype)textInputWithIdentifier:(NSString *)identifier
+                                  label:(NSString * _Nullable)label
+                              textField:(NSTextField *)textField;
+
+// A whole-number input. `getter` reads the current value and `setter` stores a new one; the
+// setter is only called with a value in [minimum, maximum].
++ (instancetype)integerInputWithIdentifier:(NSString *)identifier
+                                     label:(NSString * _Nullable)label
+                                   minimum:(NSInteger)minimum
+                                   maximum:(NSInteger)maximum
+                                    getter:(NSInteger (^)(void))getter
+                                    setter:(void (^)(NSInteger value))setter;
+
+- (instancetype)init NS_UNAVAILABLE;
+
+@end
+
 // Recommended usage:
 /*
     iTermWarningAction *cancel = [iTermWarningAction warningActionWithLabel:@"Cancel" block:nil];
@@ -176,6 +217,15 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
                        completion:(void (^)(iTermWarningSelection selection,
                                             iTermWarning *warning))completion;
 
+// As above, with the accessory's controls described for the companion app (see remoteInputs).
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                    accessory:(NSView * _Nullable)accessory
+                                 remoteInputs:(NSArray<iTermWarningRemoteInput *> * _Nullable)remoteInputs
+                                   identifier:(NSString * _Nullable)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                       window:(NSWindow * _Nullable)window;
+
 // If you prefer you can set the properties you care about and then invoke runModal.
 
 // Main text to display.
@@ -217,10 +267,16 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // phone unless its call site sets this to NO. No call site does yet. Set it to NO for a warning
 // that must be answered at this Mac.
 //
-// The accessory view is never sent: the phone is told only that one exists, and can still press
-// any button. For a warning whose accessory takes input, that means confirming contents the user
-// has not seen.
+// The accessory view itself is never sent. If it holds controls whose values matter to the answer,
+// describe them in remoteInputs so the phone can show and set them. Otherwise the phone is told
+// only that an accessory exists, and can still press any button, which for an accessory that takes
+// input means confirming contents the user has not seen.
 @property(nonatomic) BOOL remotelyAnswerable;
+
+// The controls in `accessory` that the companion app may set before pressing a button. Setting
+// this declares that they are everything in the accessory that matters to the answer, so the phone
+// does not tell the user that more is shown on the Mac.
+@property(nullable, nonatomic, copy) NSArray<iTermWarningRemoteInput *> *remoteInputs;
 
 @property(nonatomic, retain) NSWindow * _Nullable window;
 @property(nonatomic, retain) NSView * _Nullable initialFirstResponder;
@@ -243,10 +299,12 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
 // The block iTermModalAlertRegistry calls to press a button on `alert` (which must be one this
 // warning made). It checks the suppression box first if `suppress` is set, the alert has one, and
-// that button's choice may be remembered; then it clicks the button. Returns NO, clicking nothing,
-// if the index is not one of this warning's actions, the button is disabled or hidden, or the alert
-// is gone. Holds the alert weakly.
-- (BOOL (^)(NSInteger buttonIndex, BOOL suppress))modalAlertPressBlockForAlert:(NSAlert *)alert;
+// that button's choice may be remembered; then it clicks the button. Before either, it puts each
+// value in `inputs` (keyed by remote input identifier) into its control; an input whose identifier
+// is absent keeps what it holds. Returns NO, changing and clicking nothing, if the index is not one
+// of this warning's actions, the button is disabled or hidden, a value is not acceptable to its
+// input, or the alert is gone. Holds the alert weakly.
+- (BOOL (^)(NSInteger buttonIndex, BOOL suppress, NSDictionary<NSString *, NSString *> *inputs))modalAlertPressBlockForAlert:(NSAlert *)alert;
 
 @end
 

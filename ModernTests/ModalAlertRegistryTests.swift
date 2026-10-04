@@ -167,6 +167,34 @@ final class ModalAlertRegistryTests: XCTestCase {
         XCTAssertEqual(presses.all, [.init(buttonIndex: 1, suppress: true, onMainThread: true)])
     }
 
+    func testInputsAreListedAndPassedToThePress() async throws {
+        let registry = ModalAlertRegistry(modalWindow: { nil })
+        let received = OSAllocatedUnfairLock(initialState: [[String: String]]())
+        let id = await MainActor.run { () -> UUID in
+            let descriptor = ModalAlertDescriptor(
+                heading: "Paste",
+                body: "",
+                buttons: [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: true)],
+                suppressionLabel: nil,
+                inputs: [.init(identifier: "name", label: nil, isInteger: false, minimum: 0, maximum: 0, value: "draft"),
+                         .init(identifier: "spaces", label: "Tab size in spaces:", isInteger: true,
+                               minimum: 0, maximum: 100, value: "4")],
+                hasAccessory: false,
+                isAppModal: true)
+            return registry.register(descriptor, window: nil) { _, _, inputs in
+                received.withLock { $0.append(inputs) }
+                return true
+            }.identifier
+        }
+        XCTAssertEqual(registry.currentAlerts().first?.inputs, [
+            .init(id: "name", label: nil, kind: .text, value: "draft"),
+            .init(id: "spaces", label: "Tab size in spaces:", kind: .integer(minimum: 0, maximum: 100), value: "4"),
+        ])
+        let accepted = await registry.answer(id: id, buttonIndex: 0, suppress: false, inputs: ["spaces": "8"])
+        XCTAssertTrue(accepted)
+        XCTAssertEqual(received.withLock { $0 }, [["spaces": "8"]])
+    }
+
     func testAnswerIsRefusedForAStaleIDOrABadIndexOrAnAlertThatIsNotOnTop() async throws {
         let registry = ModalAlertRegistry(modalWindow: { nil })
         let presses = Presses()

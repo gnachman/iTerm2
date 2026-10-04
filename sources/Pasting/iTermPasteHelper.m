@@ -907,6 +907,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PasteHelper.PasteWithTabsTitle", nil, [NSBundle mainBundle], @"You're about to paste a string with tabs.", @"Title of the warning shown before pasting text containing tabs")
                                        actions:@[ iTermLocalizedOK(), iTermLocalizedCancel(), NSLocalizedStringWithDefaultValue(@"PasteHelper.ConvertTabsToSpaces", nil, [NSBundle mainBundle], @"Convert tabs to spaces", @"Button that converts tabs to spaces when pasting"), NSLocalizedStringWithDefaultValue(@"PasteHelper.Advanced", nil, [NSBundle mainBundle], @"Advanced…", @"Button that opens the advanced paste dialog") ]
                                      accessory:accessoryController.view
+                                  remoteInputs:@[ accessoryController.remoteInput ]
                                     identifier:@"AboutToPasteTabsWithCancel"
                                    silenceable:kiTermWarningTypePermanentlySilenceable
                                         window:self.delegate.pasteHelperViewForIndicator.window];

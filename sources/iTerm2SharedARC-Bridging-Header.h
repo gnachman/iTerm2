@@ -89,6 +89,7 @@
 #import "iTermMouseCursor.h"
 #import "iTermNaggingController.h"
 #import "iTermParsedExpression.h"
+#import "iTermNumberOfSpacesAccessoryViewController.h"
 #import "iTermPasteHelper.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPreciseTimer.h"

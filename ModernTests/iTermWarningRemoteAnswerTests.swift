@@ -171,7 +171,8 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
     private func pressFixture(type: iTermWarningType = .kiTermWarningTypePermanentlySilenceable,
                               identifier: String?,
                               configure: ((iTermWarning) -> Void)? = nil)
-        -> (alert: NSAlert, spy: ClickSpy, press: (Int, Bool) -> Bool, warning: iTermWarning) {
+        -> (alert: NSAlert, spy: ClickSpy, press: (Int, Bool) -> Bool, warning: iTermWarning,
+            pressWithInputs: (Int, Bool, [String: String]) -> Bool) {
         let warning = makeWarning(type: type, identifier: identifier)
         configure?(warning)
         let alert = warning.makeAlertForRemoteAnswer()
@@ -181,7 +182,7 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
             button.action = #selector(ClickSpy.clicked(_:))
         }
         let press = warning.modalAlertPressBlock(for: alert)
-        return (alert, spy, { press($0, $1) }, warning)
+        return (alert, spy, { press($0, $1, [:]) }, warning, { press($0, $1, $2) })
     }
 
     @MainActor
@@ -267,9 +268,115 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
         var press: ((Int, Bool) -> Bool)?
         autoreleasepool {
             let alert = warning.makeAlertForRemoteAnswer()
-            press = warning.modalAlertPressBlock(for: alert)
+            let block = warning.modalAlertPressBlock(for: alert)
+            press = { block($0, $1, [:]) }
         }
         XCTAssertEqual(press?(0, false), false, "the block must not keep a dismissed alert alive")
+    }
+
+    // MARK: Inputs
+
+    /// A warning whose accessory is a text field, like the one that asks for a
+    /// Python dependency's name.
+    @MainActor
+    private func textInputFixture() -> (field: NSTextField,
+                                        fixture: (alert: NSAlert, spy: ClickSpy, press: (Int, Bool) -> Bool,
+                                                  warning: iTermWarning,
+                                                  pressWithInputs: (Int, Bool, [String: String]) -> Bool)) {
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        field.stringValue = "draft"
+        let fixture = pressFixture(type: .kiTermWarningTypePersistent, identifier: nil) { warning in
+            warning.accessory = field
+            warning.remoteInputs = [iTermWarningRemoteInput.textInput(withIdentifier: "name", label: nil, textField: field)]
+        }
+        return (field, fixture)
+    }
+
+    @MainActor
+    func testRemoteInputsAreDescribedAndStandInForTheAccessory() throws {
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        field.stringValue = "draft"
+        let spaces = OSAllocatedUnfairLock(initialState: 4)
+        let warning = makeWarning(type: .kiTermWarningTypePersistent, identifier: nil)
+        warning.accessory = field
+        warning.remoteInputs = [
+            iTermWarningRemoteInput.textInput(withIdentifier: "name", label: "Name:", textField: field),
+            iTermWarningRemoteInput.integerInput(withIdentifier: "spaces", label: nil, minimum: 0, maximum: 100,
+                                                 getter: { spaces.withLock { $0 } },
+                                                 setter: { value in spaces.withLock { $0 = value } }),
+        ]
+        let descriptor = try XCTUnwrap(warning.modalAlertDescriptor(whenAppModal: true))
+        XCTAssertEqual(descriptor.inputs.map { $0.identifier }, ["name", "spaces"])
+        XCTAssertEqual(descriptor.inputs.map { $0.label }, ["Name:", nil])
+        XCTAssertEqual(descriptor.inputs.map { $0.isInteger }, [false, true])
+        XCTAssertEqual(descriptor.inputs.map { $0.value }, ["draft", "4"], "the controls' current contents")
+        XCTAssertEqual(descriptor.inputs[1].minimum, 0)
+        XCTAssertEqual(descriptor.inputs[1].maximum, 100)
+        XCTAssertFalse(descriptor.hasAccessory,
+                       "the inputs are everything in the accessory, so there is nothing more to see on the Mac")
+    }
+
+    @MainActor
+    func testPressPutsTheValuesInTheControlsBeforeClicking() {
+        let (field, fixture) = textInputFixture()
+        XCTAssertTrue(fixture.pressWithInputs(0, false, ["name": "requests"]))
+        XCTAssertEqual(field.stringValue, "requests")
+        XCTAssertEqual(fixture.spy.clickedTitles, ["Allow"])
+    }
+
+    @MainActor
+    func testAnInputThatIsNotSentKeepsWhatItHolds() {
+        let (field, fixture) = textInputFixture()
+        XCTAssertTrue(fixture.pressWithInputs(0, false, ["somethingElse": "ignored"]))
+        XCTAssertEqual(field.stringValue, "draft")
+        XCTAssertEqual(fixture.spy.clickedTitles, ["Allow"])
+    }
+
+    /// A number that is not a number, or is out of range, refuses the whole
+    /// press: no control changes and nothing is clicked.
+    @MainActor
+    func testUnacceptableIntegerRefusesThePressAndChangesNothing() {
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        field.stringValue = "draft"
+        let spaces = OSAllocatedUnfairLock(initialState: 4)
+        let fixture = pressFixture(type: .kiTermWarningTypePersistent, identifier: nil) { warning in
+            warning.accessory = field
+            warning.remoteInputs = [
+                iTermWarningRemoteInput.textInput(withIdentifier: "name", label: nil, textField: field),
+                iTermWarningRemoteInput.integerInput(withIdentifier: "spaces", label: nil, minimum: 0, maximum: 100,
+                                                     getter: { spaces.withLock { $0 } },
+                                                     setter: { value in spaces.withLock { $0 = value } }),
+            ]
+        }
+        for bad in ["101", "-1", "eight", "8 spaces", "", "8.5"] {
+            XCTAssertFalse(fixture.pressWithInputs(0, false, ["name": "changed", "spaces": bad]),
+                           "“\(bad)” must be refused")
+        }
+        XCTAssertEqual(field.stringValue, "draft", "a refused press must not change the other control either")
+        XCTAssertEqual(spaces.withLock { $0 }, 4)
+        XCTAssertEqual(fixture.spy.clickedTitles, [])
+
+        XCTAssertTrue(fixture.pressWithInputs(0, false, ["name": "changed", "spaces": "100"]))
+        XCTAssertEqual(field.stringValue, "changed")
+        XCTAssertEqual(spaces.withLock { $0 }, 100)
+    }
+
+    /// The real accessory for the “paste with tabs” warning.
+    @MainActor
+    func testNumberOfSpacesAccessoryDescribesAndAppliesItsField() throws {
+        let controller = iTermNumberOfSpacesAccessoryViewController()
+        let input = try XCTUnwrap(controller.remoteInput())
+        XCTAssertTrue(input.isInteger)
+        XCTAssertEqual(input.minimum, 0)
+        XCTAssertEqual(input.maximum, 100)
+        XCTAssertEqual(input.label?.isEmpty, false, "it takes its label from the field's own, in the nib")
+        XCTAssertEqual(input.currentValue(), "\(controller.numberOfSpaces)")
+
+        XCTAssertTrue(input.acceptsValue("8"))
+        XCTAssertFalse(input.acceptsValue("101"))
+        input.applyValue("8")
+        XCTAssertEqual(controller.numberOfSpaces, 8)
+        XCTAssertEqual(input.currentValue(), "8")
     }
 
     // MARK: End to end, headless
@@ -399,6 +506,50 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
         XCTAssertTrue(outcome.answerAccepted)
         XCTAssertEqual(outcome.selection, .kiTermWarningSelection2)
         XCTAssertFalse(iTermWarning.identifierIsSilenced(identifier))
+    }
+
+    /// A warning that asks for a value, answered completely from another thread:
+    /// the registry lists the input, the answer carries a value, and by the
+    /// time runModal returns the control holds it, as if typed at the Mac.
+    func testWarningWithAnInputIsAnsweredCompletelyFromAnotherThread() async throws {
+        let registry = ModalAlertRegistry.shared
+        let (changes, changesContinuation) = AsyncStream<Void>.makeStream()
+        let token = registry.addObserver { changesContinuation.yield() }
+        defer { _ = token }
+        let (finished, finishedContinuation) = AsyncStream<String>.makeStream()
+
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+                let warning = self.makeWarning(actions: ["OK", "Cancel"],
+                                               type: .kiTermWarningTypePersistent,
+                                               identifier: nil)
+                warning.accessory = field
+                warning.remoteInputs = [iTermWarningRemoteInput.textInput(withIdentifier: "name", label: nil,
+                                                                          textField: field)]
+                let selection = warning.runModal()
+                finishedContinuation.yield("selection \(selection.rawValue), field “\(field.stringValue)”")
+            }
+        }
+
+        let outcome = try await endingHeadlessModalsOnFailure { () -> String in
+            let snapshot = try await nextRegisteredAlert(changes)
+            XCTAssertEqual(snapshot.inputs, [.init(id: "name", label: nil, kind: .text, value: "")])
+            XCTAssertFalse(snapshot.hasAccessory)
+            let accepted = await registry.answer(id: snapshot.id, buttonIndex: 0, suppress: false,
+                                                 inputs: ["name": "requests"])
+            XCTAssertTrue(accepted)
+            if !accepted {
+                Self.cancelHeadlessModals()
+            }
+            return try await FrozenMainQueue.withFailsafe("runModal to return") {
+                for await outcome in finished {
+                    return outcome
+                }
+                throw CancellationError()
+            }
+        }
+        XCTAssertEqual(outcome, "selection 0, field “requests”")
     }
 
     /// A stale answer (the alert was already dismissed) presses nothing on the
