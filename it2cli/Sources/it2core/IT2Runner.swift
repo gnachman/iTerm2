@@ -50,12 +50,15 @@ public final class IT2Runner: NSObject {
     // NOT preprocessed, so a stdout:/stderr: selector here would never match the
     // preprocessed ObjC call site and would crash with an unrecognized selector at
     // runtime. Keep the Swift parameter labels as stdout/stderr for natural Swift use.
-    @objc(runArguments:stdoutHandler:stderrHandler:channel:originIdentifier:)
+    @objc(runArguments:stdoutHandler:stderrHandler:channel:originIdentifier:originSessionID:stdinData:environment:)
     public static func run(_ arguments: [String],
                            stdout: @escaping (String) -> Void,
                            stderr: @escaping (String) -> Void,
                            channel: IT2ObjCChannel,
-                           originIdentifier: String?) -> Int32 {
+                           originIdentifier: String?,
+                           originSessionID: String?,
+                           stdinData: Data?,
+                           environment: [String: String]) -> Int32 {
         // There is no interactive prompt back to the remote it2.py, so a confirm-gated
         // command (e.g. `it2 app quit`) cannot ask. Rather than silently auto-decline and
         // print a bare "Aborted!", explain and point at --force, then decline.
@@ -66,7 +69,10 @@ public final class IT2Runner: NSObject {
         return IT2Embedded.run(arguments: arguments,
                                io: io,
                                channel: ObjCChannelAdapter(channel),
-                               originIdentifier: originIdentifier)
+                               originIdentifier: originIdentifier,
+                               originSessionID: originSessionID,
+                               stdin: stdinData ?? Data(),
+                               environment: environment)
     }
 }
 

@@ -827,6 +827,22 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     return [iTermPreferences boolForKey:kPreferenceKeyEnableAPIServer];
 }
 
+#if DEBUG
++ (void)debugStartInProcessOnlyServer {
+    iTermAPIHelper *helper = [self sharedInstance];
+    @synchronized (helper) {
+        if (helper->_apiServer) {
+            return;
+        }
+    }
+    iTermAPIServer *server = [[iTermAPIServer alloc] initWithoutListening];
+    server.delegate = helper;
+    @synchronized (helper) {
+        helper->_apiServer = server;
+    }
+}
+#endif
+
 + (void)whenSocketReadyRunBlock:(void (^)(BOOL ready))block {
     iTermAPIHelper *helper = [self sharedInstanceIfEnabled];
     if (!helper || !helper->_apiServer) {

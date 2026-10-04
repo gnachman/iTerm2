@@ -26771,9 +26771,20 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     return IT2AuthorizationAnnouncementIdentifier(guid);
 }
 
+#if DEBUG
+- (BOOL)debugAnswerIT2AuthorizationForConductorGUID:(NSString *)guid selection:(int)index {
+    iTermAnnouncementViewController *announcement = _announcements[IT2AuthorizationAnnouncementIdentifier(guid)];
+    if (!announcement) {
+        return NO;
+    }
+    [announcement debugSelectActionAtIndex:index];
+    return YES;
+}
+#endif
+
 - (void)conductorRequestIT2AuthorizationWithGUID:(NSString *)guid
                                      displayName:(NSString *)displayName
-                                      completion:(void (^)(BOOL granted, BOOL remember))completion {
+                                      completion:(void (^)(BOOL granted, BOOL remember, BOOL alwaysForHost))completion {
     NSString *who = displayName.length ? displayName : NSLocalizedStringWithDefaultValue(@"PTYSession.ARemoteSession", nil, [NSBundle mainBundle], @"A remote session", @"Generic name for an unnamed remote session");
     NSString *title =
         [NSString stringWithFormat:
@@ -26781,15 +26792,16 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     iTermAnnouncementViewController *announcement =
         [iTermAnnouncementViewController announcementWithTitle:title
                                                          style:kiTermAnnouncementViewStyleWarning
-                                                   withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.Allow", nil, [NSBundle mainBundle], @"Allow", @"Button that allows an action"), NSLocalizedStringWithDefaultValue(@"PTYSession.Deny", nil, [NSBundle mainBundle], @"Deny", @"Button that denies an action") ]
+                                                   withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.Allow", nil, [NSBundle mainBundle], @"Allow", @"Button that allows an action"),
+                                                                  NSLocalizedStringWithDefaultValue(@"PTYSession.AlwaysAllowThisHost", nil, [NSBundle mainBundle], @"Always Allow This Host", @"Button that allows a remote host to control iTerm2 on this and every future connection, not just this one"),
+                                                                  NSLocalizedStringWithDefaultValue(@"PTYSession.Deny", nil, [NSBundle mainBundle], @"Deny", @"Button that denies an action") ]
                                                     completion:^(int selection) {
-            // 0 = Allow, 1 = Deny: explicit choices we remember for the connection.
-            // Closing (-1) or dismissing (-2) is not a choice, so deny just this request
-            // without remembering; the next it2 command prompts again. There is no
-            // default action, so a stray Return in the pane cannot grant access.
-            const BOOL granted = (selection == 0);
-            const BOOL remember = (selection == 0 || selection == 1);
-            completion(granted, remember);
+            // The button order above must match iTermIT2AuthorizationOutcome's indices, which
+            // are tested; mapping them here would put the one fragile part where no test sees
+            // it. There is no default action, so a stray Return cannot grant access.
+            iTermIT2AuthorizationOutcome *outcome =
+                [[[iTermIT2AuthorizationOutcome alloc] initWithSelection:selection] autorelease];
+            completion(outcome.granted, outcome.remember, outcome.alwaysForHost);
         }];
     [self queueAnnouncement:announcement
                  identifier:IT2AuthorizationAnnouncementIdentifier(guid)];

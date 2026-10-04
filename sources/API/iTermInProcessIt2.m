@@ -154,6 +154,9 @@
 + (void)runWithArguments:(NSArray<NSString *> *)arguments
         originIdentifier:(NSString *)originIdentifier
        originDisplayName:(NSString *)originDisplayName
+         originSessionID:(nullable NSString *)originSessionID
+               stdinData:(nullable NSData *)stdinData
+             environment:(NSDictionary<NSString *, NSString *> *)environment
            stdoutHandler:(void (^)(NSString *))stdoutBlock
            stderrHandler:(void (^)(NSString *))stderrBlock
      cancellationHandler:(void (^)(dispatch_block_t))cancellationHandler
@@ -199,7 +202,10 @@
                                            stdoutHandler:stdoutBlock
                                            stderrHandler:stderrBlock
                                                  channel:channel
-                                        originIdentifier:originIdentifier];
+                                        originIdentifier:originIdentifier
+                                         originSessionID:originSessionID
+                                               stdinData:stdinData
+                                             environment:environment];
         // Unregister even if the command never opened a client (e.g. --version),
         // which would otherwise leave the synthetic connection registered.
         // Idempotent with the client's own disconnect on the command path.

@@ -880,6 +880,13 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // cannot cross-cancel each other's prompt. Exposed for testing.
 + (NSString *)it2AuthorizationAnnouncementIdentifierForGUID:(NSString *)guid;
 
+#if DEBUG
+// Presses button `index` of the it2 authorization announcement for conductor `guid`, exactly as a
+// click would. Development builds only, for the ssh integration live harness, which has no other
+// way to answer the prompt. Returns NO when no such announcement is pending.
+- (BOOL)debugAnswerIT2AuthorizationForConductorGUID:(NSString *)guid selection:(int)index;
+#endif
+
 // Register the contents in the arrangement so that if the session is later
 // restored from an arrangement with the same guid as |arrangement|, the
 // contents will be copied over.

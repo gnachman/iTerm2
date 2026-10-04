@@ -25,9 +25,11 @@ protocol ConductorDelegate: Any {
     // `guid` keys the announcement per conductor so two conductors that share an ssh
     // identity in one session cannot cross-cancel each other's prompt; `displayName` is
     // only the human-readable title.
+    // `alwaysForHost` means the user chose to allow this host on every future connection, not
+    // just this one; the conductor then mints a grant (see IT2HostGrants).
     @objc(conductorRequestIT2AuthorizationWithGUID:displayName:completion:)
     func conductorRequestIT2Authorization(guid: String, displayName: String,
-                                          completion: @escaping (_ granted: Bool, _ remember: Bool) -> Void)
+                                          completion: @escaping (_ granted: Bool, _ remember: Bool, _ alwaysForHost: Bool) -> Void)
     // Dismiss the it2 authorization announcement for `guid` still on screen (e.g. the
     // connection was resolved/torn down before the user answered). No-op if none.
     @objc(conductorDismissIT2AuthorizationPromptWithGUID:)
@@ -2026,7 +2028,7 @@ extension Conductor {
         send(.framerGetenv(name), .handleGetenv(name, StringArray()))
     }
 
-    private func framerExecPythonStatements(statements: String,
+    func framerExecPythonStatements(statements: String,
                                             completion: @escaping (Bool, String) -> ()) {
         send(.framerExecPythonStatements(statements), .handleEphemeralCompletion(StringArray(), .init({ string, code in
             completion(code == 0, string)

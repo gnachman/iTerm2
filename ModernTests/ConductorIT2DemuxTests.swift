@@ -76,9 +76,21 @@ final class ConductorIT2DemuxTests: XCTestCase {
     }
 
     private static func helloBytes(nonce: String, argv: [String],
-                                   cwd: String = "/home/u", isatty: Bool = true) -> Data {
-        let json: [String: Any] = ["nonce": nonce, "argv": argv, "cwd": cwd,
+                                   cwd: String = "/home/u", isatty: Bool = true,
+                                   stdin: Data? = nil,
+                                   env: [String: String]? = nil,
+                                   protocolVersion: Any? = nil) -> Data {
+        var json: [String: Any] = ["nonce": nonce, "argv": argv, "cwd": cwd,
                                    "term": "xterm", "isatty": isatty, "cols": 80, "rows": 24]
+        if let protocolVersion {
+            json["protocol"] = protocolVersion
+        }
+        if let stdin {
+            json["stdin"] = stdin.base64EncodedString()
+        }
+        if let env {
+            json["env"] = env
+        }
         let payload = try! JSONSerialization.data(withJSONObject: json)
         return upFrame(UInt8(ascii: "H"), payload)
     }
@@ -112,6 +124,142 @@ final class ConductorIT2DemuxTests: XCTestCase {
     }
 
     // MARK: - Tests
+
+    // MARK: - Protocol version
+
+    private func exitCode(_ frames: [(UInt8, Data)]) -> Int? {
+        guard let last = frames.last, last.0 == UInt8(ascii: "X") else {
+            return nil
+        }
+        return (try? JSONSerialization.jsonObject(with: last.1) as? [String: Any])?["code"] as? Int
+    }
+
+    func testCurrentProtocolRuns() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["session", "list"],
+                                                      protocolVersion: ConductorIT2Demux.protocolVersion)))
+        XCTAssertEqual(h.runs.count, 1)
+    }
+
+    // Every it2.py shipped before the field existed omits it, and must keep working.
+    func testMissingProtocolIsAnOlderClientAndRuns() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["session", "list"])))
+        XCTAssertEqual(h.runs.count, 1)
+    }
+
+    // A newer client may depend on fields this build would silently ignore, so refuse it and
+    // say why rather than run it half-understood.
+    func testNewerProtocolIsRefusedWithAnExplanation() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["session", "list"],
+                                                      protocolVersion: ConductorIT2Demux.protocolVersion + 1)))
+        pumpMainQueue()
+        XCTAssertEqual(h.runs.count, 0)
+        let frames = h.downFrames("c1")
+        XCTAssertEqual(frames.first?.0, UInt8(ascii: "E"))
+        let message = String(decoding: frames.first?.1 ?? Data(), as: UTF8.self)
+        XCTAssertTrue(message.contains("iTerm2"), "got \(message)")
+        XCTAssertEqual(exitCode(frames), 2)
+    }
+
+    // Hooks never complain (see IT2RunPolicy): same refusal, but silent and successful.
+    func testNewerProtocolHookExitsSilently() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["handle-agent-hook"],
+                                                      protocolVersion: ConductorIT2Demux.protocolVersion + 1)))
+        pumpMainQueue()
+        XCTAssertEqual(h.runs.count, 0)
+        let frames = h.downFrames("c1")
+        XCTAssertFalse(frames.contains { $0.0 == UInt8(ascii: "E") })
+        XCTAssertEqual(exitCode(frames), 0)
+    }
+
+    // Not a number is not something this build understands either.
+    func testNonIntegerProtocolIsRefused() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["session", "list"],
+                                                      protocolVersion: "2")))
+        pumpMainQueue()
+        XCTAssertEqual(h.runs.count, 0)
+        XCTAssertEqual(exitCode(h.downFrames("c1")), 2)
+    }
+
+    // The version is checked only after the nonce, so an unauthenticated caller learns nothing.
+    func testNonceIsCheckedBeforeProtocol() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: "wrong", argv: ["session", "list"],
+                                                      protocolVersion: ConductorIT2Demux.protocolVersion + 1)))
+        pumpMainQueue()
+        XCTAssertEqual(exitCode(h.downFrames("c1")), 1, "authorization failure, not a version error")
+    }
+
+    // MARK: - Stdin and environment (3b)
+
+    // A hook's payload arrives on stdin, so a remote `it2 handle-agent-hook` is useless without
+    // this. It rides in the HELLO rather than a later frame because startCommand launches the
+    // command as soon as HELLO lands, so a second frame would race it.
+    func testStdinFromHelloReachesTheCommand() {
+        let h = Harness()
+        let payload = Data(#"{"hook_event_name":"PreToolUse"}"#.utf8)
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce,
+                                                       argv: ["handle-agent-hook"],
+                                                       stdin: payload)))
+        XCTAssertEqual(h.runs.first?.context.stdin, payload)
+    }
+
+    func testNoStdinKeyMeansNoPayload() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["session", "list"])))
+        XCTAssertNil(h.runs.first?.context.stdin)
+    }
+
+    // Garbage in the stdin field must not take the command down; it simply has no payload.
+    func testUndecodableStdinIsIgnored() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        let json: [String: Any] = ["nonce": kNonce, "argv": ["handle-agent-hook"], "cwd": "/",
+                                   "term": "xterm", "isatty": false, "cols": 80, "rows": 24,
+                                   "stdin": "!!!not base64!!!"]
+        let payload = try! JSONSerialization.data(withJSONObject: json)
+        h.demux.handle(dataEvent("c1", Self.upFrame(UInt8(ascii: "H"), payload)))
+        XCTAssertEqual(h.runs.count, 1, "the command still runs")
+        XCTAssertNil(h.runs.first?.context.stdin)
+    }
+
+    func testAllowlistedEnvironmentReachesTheCommand() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["session", "list"],
+                                                       env: ["TMUX": "/tmp/s,1,0",
+                                                             "TMUX_PANE": "%3"])))
+        XCTAssertEqual(h.runs.first?.context.environment["TMUX"], "/tmp/s,1,0")
+        XCTAssertEqual(h.runs.first?.context.environment["TMUX_PANE"], "%3")
+    }
+
+    // The allowlist is enforced AGAIN here, not trusted. it2.py applies it, but a remote host is
+    // not a trust boundary we control: anything else it sends must be dropped on arrival rather
+    // than reaching a command's environment.
+    func testUnlistedEnvironmentIsDroppedOnArrival() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["session", "list"],
+                                                       env: ["TMUX": "/tmp/s,1,0",
+                                                             "AWS_SECRET_ACCESS_KEY": "leak",
+                                                             "PATH": "/evil/bin"])))
+        let environment = h.runs.first?.context.environment ?? [:]
+        XCTAssertEqual(environment["TMUX"], "/tmp/s,1,0")
+        XCTAssertNil(environment["AWS_SECRET_ACCESS_KEY"], "got \(environment)")
+        XCTAssertNil(environment["PATH"], "PATH especially must never arrive this way")
+    }
 
     func testHappyPathStreamsAndExits() {
         let h = Harness()

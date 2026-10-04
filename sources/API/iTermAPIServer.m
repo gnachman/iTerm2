@@ -169,6 +169,16 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 }
 
 - (instancetype)init {
+    return [self initListening:YES];
+}
+
+#if DEBUG
+- (instancetype)initWithoutListening {
+    return [self initListening:NO];
+}
+#endif
+
+- (instancetype)initListening:(BOOL)listening {
     self = [super init];
     if (self) {
         _lockFd = -1;
@@ -183,7 +193,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         _queue = dispatch_queue_create("com.iterm2.apisockets", NULL);
         _executionQueue = dispatch_queue_create("com.iterm2.apiexec", DISPATCH_QUEUE_SERIAL);
 
-        if (![self listenOnUnixSocket]) {
+        if (listening && ![self listenOnUnixSocket]) {
             return nil;
         }
     }

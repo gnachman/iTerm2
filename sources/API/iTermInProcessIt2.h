@@ -30,9 +30,18 @@ NS_ASSUME_NONNULL_BEGIN
 // command that is waiting on the API server (e.g. `monitor --follow`) so it
 // unwinds and returns promptly; harmless to call after completion. This is how a
 // remote Ctrl-C tears down a streaming command.
+// `stdinData` is what the remote it2 read from its own stdin, for a command whose payload
+// arrives there (a Claude Code hook's JSON). Nil when there was none.
+// `environment` is the ALLOWLISTED slice of the remote's environment; see
+// IT2ClientContext.allowedEnvNames. Never the whole thing.
+// `originSessionID` is the iTerm2 session this connection belongs to, which a remote command
+// with no explicit target addresses. A remote host cannot name a session itself.
 + (void)runWithArguments:(NSArray<NSString *> *)arguments
         originIdentifier:(NSString *)originIdentifier
        originDisplayName:(NSString *)originDisplayName
+         originSessionID:(nullable NSString *)originSessionID
+               stdinData:(nullable NSData *)stdinData
+             environment:(NSDictionary<NSString *, NSString *> *)environment
            stdoutHandler:(void (^)(NSString *line))stdoutBlock
            stderrHandler:(void (^)(NSString *line))stderrBlock
      cancellationHandler:(void (^ _Nullable)(dispatch_block_t cancel))cancellationHandler

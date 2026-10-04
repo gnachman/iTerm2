@@ -2107,6 +2107,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     IBOutlet NSPopUpButton *_apiPermission;
     IBOutlet NSButton *_browserScriptingPermissions;
     iTermBrowserScriptingPermissionsWindowController *_browserScriptingPermissionsWindowController;
+    // "Remote Hosts Allowed to Control iTerm2…": opens the list of hosts granted Always Allow
+    // for it2 over ssh integration. Enabled only while the Python API is on, since that is the
+    // only thing a grant lets a host use.
+    IBOutlet NSButton *_remoteHostGrantsButton;
 
     // Enable bonjour
     IBOutlet NSButton *_enableBonjour;
@@ -2448,6 +2452,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             __typeof(self) strongSelf = weakSelf;
             if (strongSelf) {
                 strongSelf->_enableAPI.state = NSControlStateValueOn;
+                [strongSelf updateRemoteHostGrantsButtonEnabled];
             }
         }
     }];
@@ -2518,6 +2523,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     };
 
 
+    [self updateRemoteHostGrantsButtonEnabled];
+    if (_remoteHostGrantsButton) {
+        [self addViewToSearchIndex:_remoteHostGrantsButton
+                       displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.RemoteHostGrants", nil, [NSBundle mainBundle], @"API access over ssh", @"Search index name for the button that lists remote hosts always allowed to use the iTerm2 API over SSH integration; matches that button’s title")
+                           phrases:@[ @"ssh", @"it2", @"remote", @"always allow", @"api" ]
+                               key:nil];
+    }
     [self addViewToSearchIndex:_advancedGPUPrefsButton
                    displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.AdvancedGPUSettings", nil, [NSBundle mainBundle], @"Advanced GPU settings", @"Search index display name for advanced GPU settings")
                        phrases:@[ _advancedGPUWindowController.viewController.disableWhenDisconnected.title,
@@ -3926,7 +3938,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (void)updateAPIEnabledState {
     _enableAPI.state = [self boolForKey:kPreferenceKeyEnableAPIServer];
     [_apiPermission selectItemWithTag:[iTermAPIHelper requireApplescriptAuth] ? 0 : 1];
+    [self updateRemoteHostGrantsButtonEnabled];
     [self updateEnabledState];
+}
+
+- (void)updateRemoteHostGrantsButtonEnabled {
+    _remoteHostGrantsButton.enabled = [self boolForKey:kPreferenceKeyEnableAPIServer];
+}
+
+- (IBAction)showRemoteHostGrants:(id)sender {
+    [iTermIT2HostGrantsWindowController presentSheetFor:self.view.window];
 }
 
 - (BOOL)shouldEnableAlwaysOpenWindowAtStartup {
@@ -3957,6 +3978,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (BOOL)enableAPISettingDidChange {
     const BOOL result = [self reallyEnableAPISettingDidChange];
+    [self updateRemoteHostGrantsButtonEnabled];
     [self updateEnabledState];
     return result;
 }

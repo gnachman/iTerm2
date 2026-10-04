@@ -53678,6 +53678,42 @@
         }
       }
     },
+    "ClaudeCodeOnboarding.ConfigDirFromLoginShell" : {
+      "comment" : "One line of the settings-location question; the first value is a directory, the second the path of the login shell that reported it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is what your login shell, %2$@, reports."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.ConfigDirFromProfileShell" : {
+      "comment" : "One line of the settings-location question; the first value is a directory, the second the path of the shell the session’s profile runs",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is what this session’s shell, %2$@, reports."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.ConfigDirFromRunningJob" : {
+      "comment" : "One line of the settings-location question; the first value is a directory, the second the name of the program running in the session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is what %2$@, running in this session now, was started with."
+          }
+        }
+      }
+    },
     "ClaudeCodeOnboarding.ConfigResolutionFailedBody" : {
       "comment" : "Body of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user’s shell",
       "extractionState" : "extracted_with_value",
@@ -55102,6 +55138,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "• iTerm2 的 Python API 已启用\n• 已向 ~/.claude/settings.json 添加 cc-status 钩子\n• 显示工具箱\n• 已向 iTerm2 的设置添加 Claude Code 工作组\n• 已为你选择的配置文件添加进入/退出工作组触发器"
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.WhichConfigDirTitle" : {
+      "comment" : "Title of the question asked when the shells that could start claude in this session report different CLAUDE_CONFIG_DIR values",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Which Settings Location Should the Claude Code Hook Be Installed In?"
           }
         }
       }
@@ -88552,6 +88600,18 @@
         }
       }
     },
+    "GeneralPrefs.RemoteHostGrants" : {
+      "comment" : "Search index name for the button that lists remote hosts always allowed to use the iTerm2 API over SSH integration; matches that button’s title",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "API access over ssh"
+          }
+        }
+      }
+    },
     "GeneralPrefs.RestartRequired" : {
       "comment" : "Warning that a setting change requires restarting iTerm2",
       "extractionState" : "extracted_with_value",
@@ -90093,6 +90153,90 @@
         }
       }
     },
+    "IT2HostGrants.Done" : {
+      "comment" : "Button that closes the list of remote hosts always allowed to use the iTerm2 API",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "IT2HostGrants.Empty" : {
+      "comment" : "Shown in place of the list when no remote hosts are always allowed to use the iTerm2 API",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No remote hosts are always allowed. Choose Always Allow This Host when a remote host asks to control iTerm2."
+          }
+        }
+      }
+    },
+    "IT2HostGrants.Explanation" : {
+      "comment" : "Explanation at the top of the list of remote hosts always allowed to use the iTerm2 API",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "These hosts can use the iTerm2 API over SSH integration without asking first. Removing a host makes it ask again the next time it connects."
+          }
+        }
+      }
+    },
+    "IT2HostGrants.GrantedColumn" : {
+      "comment" : "Column header for when a remote host was first always allowed to use the iTerm2 API",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Allowed Since"
+          }
+        }
+      }
+    },
+    "IT2HostGrants.HostColumn" : {
+      "comment" : "Column header for the remote host in the list of hosts always allowed to use the iTerm2 API",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Host"
+          }
+        }
+      }
+    },
+    "IT2HostGrants.Remove" : {
+      "comment" : "Button that stops always allowing the selected remote hosts to use the iTerm2 API",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove"
+          }
+        }
+      }
+    },
+    "IT2HostGrants.WindowTitle" : {
+      "comment" : "Title of the sheet listing remote hosts always allowed to use the iTerm2 API over SSH integration",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remote Hosts Allowed to Control iTerm2"
+          }
+        }
+      }
+    },
     "IT2Proxy.APINotEnabled" : {
       "comment" : "Error when the iTerm2 Python API is disabled",
       "extractionState" : "extracted_with_value",
@@ -90215,6 +90359,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "it2: 请求格式错误"
+          }
+        }
+      }
+    },
+    "IT2Proxy.NewerProtocol" : {
+      "comment" : "Error when a remote it2 client speaks a newer protocol than this iTerm2 understands",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "it2: this it2 is newer than the iTerm2 it is connected to. Upgrade iTerm2."
           }
         }
       }
@@ -122391,6 +122547,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此 iTerm2 实例已附加到此会话"
+          }
+        }
+      }
+    },
+    "PTYSession.AlwaysAllowThisHost" : {
+      "comment" : "Button that allows a remote host to control iTerm2 on this and every future connection, not just this one",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Always Allow This Host"
           }
         }
       }
@@ -174734,6 +174902,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知的 expires_on “%@”。唯一支持的值是 progress-end。"
+          }
+        }
+      }
+    },
+    "SetStatus.UnknownProgress" : {
+      "comment" : "Error when the progress argument is not one of the two supported states. The placeholder is the value the caller passed.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unknown progress “%@”. The supported values are running and stopped."
           }
         }
       }

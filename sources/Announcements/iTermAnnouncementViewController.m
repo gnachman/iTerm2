@@ -91,6 +91,12 @@
     }
 }
 
+#if DEBUG
+- (void)debugSelectActionAtIndex:(int)index {
+    [(iTermAnnouncementView *)self.view selectIndex:index];
+}
+#endif
+
 - (BOOL)handleKeyDown:(NSEvent *)event {
     if (_dismissing) {
         // The view stays current while it animates away. Keys typed then belong to the

@@ -37,19 +37,30 @@ public enum IT2Embedded {
                            io: IT2IO,
                            channel: APIChannel,
                            originIdentifier: String?,
+                           originSessionID: String? = nil,
                            stdin: Data = Data(),
                            environment: [String: String] = [:]) -> Int32 {
         let context = IT2Context(
             out: io.stdout,
             err: io.stderr,
             confirm: io.confirm,
-            makeClient: { APIClient(channel: channel) },
+            makeClient: {
+                let client = APIClient(channel: channel)
+                // A remote command with no explicit target addresses its own pane when the
+                // environment names one, and otherwise the session it arrived on.
+                client.originSessionID = originSessionID
+                client.callerEnvironment = environment
+                client.originIdentifier = originIdentifier
+                return client
+            },
             installsSignalHandlers: false,
             isRemote: true,
             originIdentifier: originIdentifier,
+            originSessionID: originSessionID,
             stdin: { stdin },
             environment: environment
         )
+        IT2Context.captureForTesting?(context)
         return runToExitCode(arguments, context)
     }
 }

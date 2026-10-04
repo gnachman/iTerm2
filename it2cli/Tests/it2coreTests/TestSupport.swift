@@ -35,6 +35,7 @@ final class OutputCapture {
                  confirm: @escaping (String) -> Bool = { _ in false },
                  isRemote: Bool = false,
                  originIdentifier: String? = nil,
+                 originSessionID: String? = nil,
                  stdin: Data = Data(),
                  environment: [String: String] = [:]) -> IT2Context {
         return IT2Context(
@@ -45,6 +46,7 @@ final class OutputCapture {
             installsSignalHandlers: false,  // embedded-like: no process to own
             isRemote: isRemote,
             originIdentifier: originIdentifier,
+            originSessionID: originSessionID,
             stdin: { stdin },
             environment: environment
         )

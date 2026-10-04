@@ -22,7 +22,10 @@ final class IT2RunnerTests: XCTestCase {
                                  stdout: { out.append($0) },
                                  stderr: { _ in },
                                  channel: FakeObjCChannel(),
-                                 originIdentifier: nil)
+                                 originIdentifier: nil,
+                                 originSessionID: nil,
+                                 stdinData: nil,
+                                 environment: [:])
         XCTAssertEqual(code, 0)
         XCTAssertTrue(out.contains("1.0.0"), "got \(out)")
     }
@@ -33,7 +36,10 @@ final class IT2RunnerTests: XCTestCase {
                                  stdout: { _ in },
                                  stderr: { err.append($0) },
                                  channel: FakeObjCChannel(),
-                                 originIdentifier: nil)
+                                 originIdentifier: nil,
+                                 originSessionID: nil,
+                                 stdinData: nil,
+                                 environment: [:])
         XCTAssertEqual(code, 64)
         XCTAssertFalse(err.isEmpty)
     }

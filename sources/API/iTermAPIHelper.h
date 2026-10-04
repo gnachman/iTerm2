@@ -85,6 +85,13 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
 
 + (void)setEnabled:(BOOL)enabled;
 + (BOOL)isEnabled;
+
+#if DEBUG
+// Gives the shared helper an API server that serves in-process connections without listening on
+// the API socket, so in-process it2 commands can run inside the test host, where no server is
+// normally created. Development builds only, for live harnesses.
++ (void)debugStartInProcessOnlyServer;
+#endif
 + (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window;
 
 // Waits for the API server socket to be ready before calling the completion block.

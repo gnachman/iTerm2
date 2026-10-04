@@ -37,6 +37,12 @@ struct IT2Context {
     /// means anything within one machine, so this is what lets a remote `tmux -CC` resolve its own
     /// panes without a local server being able to answer for them. See TmuxPaneLocator in the app.
     let originIdentifier: String?
+    /// The iTerm2 session this invocation arrived over, for a remote call, or nil locally.
+    ///
+    /// Host-supplied and never from arguments, like originIdentifier: a remote controls its own
+    /// argv, so a value taken from there would let it name any session. See
+    /// APIClient.originSessionID for why a remote call needs this at all.
+    let originSessionID: String?
     /// The invocation's standard input, read to EOF on first use. For the standalone binary that
     /// is the process's stdin; embedded in iTerm2 it is whatever the remote it2 sent, which is
     /// how a hook's JSON payload reaches `handle-agent-hook`.
@@ -48,6 +54,11 @@ struct IT2Context {
 }
 
 extension IT2Context {
+    /// Set by a test to observe the context a run was given. The alternative is asserting
+    /// through a command's side effects, which cannot distinguish "the value never arrived"
+    /// from "the command ignored it" -- and the first is the failure mode that matters here.
+    static var captureForTesting: ((IT2Context) -> Void)?
+
     /// Serialize to pretty-printed JSON and write it to stdout.
     func printJSON(_ object: Any) {
         if let data = try? JSONSerialization.data(withJSONObject: object, options: .prettyPrinted),
@@ -77,10 +88,17 @@ extension IT2Context {
             }
             return false
         },
-        makeClient: { try APIClient.connect() },
+        makeClient: {
+            let client = try APIClient.connect()
+            // So a command with no explicit target can tell which session it is running in,
+            // rather than falling back to whatever the user is looking at.
+            client.callerEnvironment = ProcessInfo.processInfo.environment
+            return client
+        },
         installsSignalHandlers: true,
         isRemote: false,
         originIdentifier: nil,
+        originSessionID: nil,
         stdin: {
             // Only read when asked, and only when something is piped in: reading a tty would
             // block waiting for the user.

@@ -34717,6 +34717,18 @@
         }
       }
     },
+    "nN8-UW-Jff.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"API access over ssh…\"; ObjectID = \"nN8-UW-Jff\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "API access over ssh…"
+          }
+        }
+      }
+    },
     "NtK-Fc-1Kb.ibShadowedToolTip" : {
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"When “Force keyboard” is on, iTerm2 continuously forces the selected layout while it is active, so you cannot switch to another layout within a session. Turn this on to force the layout only once, the first time a newly created terminal receives keyboard focus, leaving you free to change it afterward.\"; ObjectID = \"NtK-Fc-1Kb\";",
       "extractionState" : "extracted_with_value",

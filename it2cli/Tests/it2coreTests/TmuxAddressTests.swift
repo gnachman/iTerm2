@@ -561,3 +561,126 @@ final class EmptyTargetTests: XCTestCase {
                              "must not return \"\" as a target")
     }
 }
+
+
+// MARK: - Default target for a remote call (3c)
+
+/// A remote `it2` with no --session and no tmux pane has nothing to address: TERM_SESSION_ID is
+/// never injected on a remote host, so "the current session" cannot be derived there. But the
+/// call arrived over one conductor, and that conductor belongs to exactly one iTerm2 session, so
+/// the app knows the answer even though the caller cannot.
+///
+/// The fallback it replaces is "the key window's focused session", which on a remote call means
+/// whatever the user happens to be looking at. That is the misdelivery this whole feature exists
+/// to prevent.
+final class RemoteDefaultTargetTests: XCTestCase {
+    private func client(originSessionID: String?) -> APIClient {
+        let c = APIClient(channel: FakeChannel())
+        c.originSessionID = originSessionID
+        return c
+    }
+
+    func testNoTargetUsesTheSessionTheCallArrivedOn() throws {
+        let resolved = try client(originSessionID: "ABC-123").resolveSessionId(nil)
+        XCTAssertEqual(resolved, "ABC-123")
+    }
+
+    // An explicit target always wins; the default is only for "I did not say".
+    func testAnExplicitTargetStillWins() throws {
+        let resolved = try client(originSessionID: "ABC-123").resolveSessionId("w0t0p0:DEF-456")
+        XCTAssertEqual(resolved, "DEF-456", "and it is normalized")
+    }
+
+    // The hook runs its work through sub-commands, each given a FRESH client over one shared
+    // channel. Anything not carried across is lost, and losing this one sends a remote hook's
+    // updates to whatever the user is looking at.
+    func testSubCommandClientsInheritTheOriginSession() throws {
+        let base = client(originSessionID: "ABC-123")
+        let factory = SharedAPIClientFactory(base: { base })
+        let child = try factory.make()
+        XCTAssertEqual(child.originSessionID, "ABC-123")
+        XCTAssertEqual(child.callerEnvironment, base.callerEnvironment,
+                       "the environment decides the pane, so it must cross too")
+        XCTAssertEqual(child.originIdentifier, base.originIdentifier)
+        XCTAssertEqual(try child.resolveSessionId(nil), "ABC-123")
+    }
+
+    // A local call has no origin session, so it keeps the focused-session behaviour. Asserted by
+    // the request actually going out rather than by the answer, which needs a live app.
+    func testALocalCallStillAsksTheApp() {
+        let channel = FakeChannel()
+        let c = APIClient(channel: channel)
+        XCTAssertNil(c.originSessionID)
+        _ = try? c.resolveSessionId(nil)
+        XCTAssertFalse(channel.sent.isEmpty, "with no origin session it must still ask iTerm2")
+    }
+}
+
+
+// MARK: - Default target from the caller's own environment
+
+/// With no explicit target, the focused session is nearly always the wrong answer: it is
+/// whatever the user happens to be looking at, which has no relationship to where the command
+/// was typed. The caller's environment usually says exactly where it is, so that comes first and
+/// focus state is demoted to a genuine last resort.
+///
+/// The precedence that matters, and why:
+///   1. TMUX + TMUX_PANE  - inside tmux this is the ONLY trustworthy signal
+///   2. TERM_SESSION_ID   - only outside tmux
+///   3. origin session    - a remote call, where the environment says nothing useful
+///   4. focus state       - the caller is not in an iTerm2 session at all
+///
+/// TERM_SESSION_ID is deliberately ignored inside tmux. A pane inherits whatever the server had
+/// when it started, which can be a session in a DIFFERENT terminal emulator entirely if the tmux
+/// session was created there and later attached from iTerm2.
+final class DefaultTargetPrecedenceTests: XCTestCase {
+    private func sessionId(environment: [String: String]) -> String? {
+        return APIClient.sessionIdFromEnvironment(environment)
+    }
+
+    func testTermSessionIdIsUsedOutsideTmux() {
+        XCTAssertEqual(sessionId(environment: ["TERM_SESSION_ID": "w0t0p0:ABC-123"]), "ABC-123")
+    }
+
+    // The case George raised: the tmux session was created in another terminal emulator and
+    // later attached from iTerm2, so the pane's TERM_SESSION_ID names a session in a different
+    // app. Using it would address something that is not even ours.
+    func testTermSessionIdIsIgnoredInsideTmux() {
+        XCTAssertNil(sessionId(environment: ["TMUX": "/tmp/s,1,0",
+                                             "TMUX_PANE": "%3",
+                                             "TERM_SESSION_ID": "w0t0p0:FROM-ANOTHER-APP"]),
+                     "inside tmux the pane must be resolved, never TERM_SESSION_ID")
+    }
+
+    // Half-set is still inside tmux, so TERM_SESSION_ID stays untrusted. The pane cannot be
+    // resolved either, so this falls through to the later signals rather than guessing.
+    func testHalfSetTmuxStillRejectsTermSessionId() {
+        XCTAssertNil(sessionId(environment: ["TMUX": "/tmp/s,1,0",
+                                             "TERM_SESSION_ID": "w0t0p0:ABC-123"]))
+    }
+
+    func testEmptyTmuxIsNotInsideTmux() {
+        XCTAssertEqual(sessionId(environment: ["TMUX": "", "TERM_SESSION_ID": "w0t0p0:ABC-123"]),
+                       "ABC-123")
+    }
+
+    func testNothingUsableYieldsNil() {
+        XCTAssertNil(sessionId(environment: [:]))
+        XCTAssertNil(sessionId(environment: ["TERM_SESSION_ID": "no-colon-here"]))
+    }
+
+    // The pane address, when it is well formed, is what gets looked up. Parsed here rather than
+    // resolved, since resolving needs a live app.
+    func testPaneAddressIsExtractedWhenWellFormed() throws {
+        let address = try XCTUnwrap(APIClient.paneAddressFromEnvironment(
+            ["TMUX": "/private/tmp/tmux-501/default,52533,0", "TMUX_PANE": "%7"]))
+        XCTAssertEqual(address.socketPath, "/private/tmp/tmux-501/default")
+        XCTAssertEqual(address.serverPID, 52533)
+        XCTAssertEqual(address.pane, 7)
+    }
+
+    func testMalformedPaneAddressIsNotUsed() {
+        XCTAssertNil(APIClient.paneAddressFromEnvironment(["TMUX": "nonsense", "TMUX_PANE": "%0"]))
+        XCTAssertNil(APIClient.paneAddressFromEnvironment(["TMUX": "/tmp/s,1,0", "TMUX_PANE": "7"]))
+    }
+}

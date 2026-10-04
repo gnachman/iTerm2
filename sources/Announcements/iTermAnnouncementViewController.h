@@ -36,6 +36,11 @@
 
 - (void)dismiss;
 
+#if DEBUG
+// Acts as though button `index` were clicked. Development builds only, for live harnesses.
+- (void)debugSelectActionAtIndex:(int)index;
+#endif
+
 // Amount of time announcement will stay onscreen before autodismissing.
 - (void)setTimeout:(NSTimeInterval)timeout;
 

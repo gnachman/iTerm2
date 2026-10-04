@@ -347,6 +347,12 @@ New Features:
   settings menu, or double-click the file.
   Settings > General > Export All Settings and
   Data can also include them.
+- When a host reached through SSH Integration
+  asks to use it2, you can now choose “Always
+  Allow This Host” so it is not asked again on
+  later connections. Review or remove these hosts
+  in Settings > General > Magic > API access
+  over ssh.
 
 Improvements:
 - Pausing a spinning progress indicator with
@@ -584,6 +590,16 @@ Improvements:
   address field. The phone’s keyboard comes up
   when a text field on the page has focus.
   Requires an up-to-date iTerm2 Buddy.
+- On a host reached through SSH Integration, it2
+  is now a real command in ~/.iterm2/bin rather
+  than a shell function, so scripts, sh -c, and
+  tools such as Claude Code’s Bash tool can run
+  it, not just an interactive shell. Commands
+  that read standard input now receive it.
+- On a host reached through SSH Integration, an
+  it2 command that names no session now acts on
+  the session it runs in rather than the focused
+  one.
 
 Bug Fixes:
 - In an AI chat with an empty message field, the

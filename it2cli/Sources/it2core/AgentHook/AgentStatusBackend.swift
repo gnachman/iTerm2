@@ -298,6 +298,9 @@ final class It2AgentStatusBackend: AgentStatusBackend {
             installsSignalHandlers: false,
             isRemote: parent.isRemote,
             originIdentifier: parent.originIdentifier,
+            // Inherited, or the hook's own sub-invocations would lose the default target and
+            // fall back to whatever the user is looking at.
+            originSessionID: parent.originSessionID,
             stdin: { Data() },
             environment: parent.environment
         )
@@ -329,7 +332,15 @@ final class SharedAPIClientFactory {
         if shared == nil {
             shared = try base()
         }
-        return APIClient(channel: NonDisconnectingChannel(shared!.channel))
+        let client = APIClient(channel: NonDisconnectingChannel(shared!.channel))
+        // Each sub-command gets a FRESH client over the shared channel, so anything that is not
+        // carried here is silently lost. originSessionID is how a remote call with no explicit
+        // target finds the session it arrived on; without it the hook's own sub-invocations
+        // would fall back to the focused session, which is the misdelivery this prevents.
+        client.originSessionID = shared!.originSessionID
+        client.callerEnvironment = shared!.callerEnvironment
+        client.originIdentifier = shared!.originIdentifier
+        return client
     }
 
     func disconnect() {

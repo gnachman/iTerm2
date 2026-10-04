@@ -15,6 +15,26 @@ final class APIClient {
     let channel: APIChannel
     private var requestId: Int64 = 0
 
+    /// The iTerm2 session this invocation arrived over, for a remote call.
+    ///
+    /// A remote host has no way to name a session: TERM_SESSION_ID is never injected there, so
+    /// "the current session" is not something the caller can know. The app does know, because
+    /// the call came in over one conductor and a conductor belongs to exactly one session.
+    ///
+    /// Supplied by the host (IT2Embedded), never from arguments, for the same reason as
+    /// IT2Context.originIdentifier: the remote controls its argv.
+    ///
+    /// Nil for a local call, which keeps the focused-session default.
+    var originSessionID: String?
+
+    /// The environment of whoever invoked it2: the local process's for a local call, the
+    /// allowlisted slice that crossed the wire for a remote one. Used to work out which session
+    /// the caller is in when it did not say.
+    var callerEnvironment: [String: String] = [:]
+
+    /// Which machine the caller is on, for pane addressing. See TmuxPaneLocator.
+    var originIdentifier: String?
+
     init(channel: APIChannel) {
         self.channel = channel
     }
@@ -50,16 +70,62 @@ final class APIClient {
         }
     }
 
-    /// Resolve an optional session ID to a concrete UUID.
+    /// The pane this caller is in, from its environment, or nil when it is not in tmux or the
+    /// address is malformed.
+    static func paneAddressFromEnvironment(_ environment: [String: String]) -> TmuxAddress? {
+        guard let tmux = environment["TMUX"], !tmux.isEmpty else {
+            return nil
+        }
+        return TmuxAddress(tmux: tmux, pane: environment["TMUX_PANE"] ?? "")
+    }
+
+    /// The session this caller is in, from its environment alone, or nil.
+    ///
+    /// TERM_SESSION_ID is used ONLY outside tmux. A tmux pane inherits whatever the server had
+    /// when it started, which is not this pane and need not even be an iTerm2 session: a tmux
+    /// session created in another terminal emulator and later attached from iTerm2 hands its
+    /// panes that app's value. Inside tmux the pane address is the only trustworthy signal, and
+    /// when it does not resolve the caller falls through rather than guessing.
+    static func sessionIdFromEnvironment(_ environment: [String: String]) -> String? {
+        if let tmux = environment["TMUX"], !tmux.isEmpty {
+            return nil
+        }
+        guard let raw = environment["TERM_SESSION_ID"],
+              let colon = raw.firstIndex(of: ":") else {
+            return nil
+        }
+        let guid = String(raw[raw.index(after: colon)...])
+        return guid.isEmpty ? nil : guid
+    }
+
+    /// Resolve an optional session ID to a concrete UUID.    /// Resolve an optional session ID to a concrete UUID.
     /// If nil, queries iTerm2 for the currently focused session.
     func resolveSessionId(_ sessionId: String?) throws -> String {
         if let id = sessionId {
             return APIClient.normalizeSessionId(id)
         }
+        // The caller's own environment usually says exactly where it is, and that beats the
+        // focused session, which is merely whatever the user happens to be looking at.
+        if let address = APIClient.paneAddressFromEnvironment(callerEnvironment),
+           let guid = (try? sessionIdForTmuxPane(address, origin: originIdentifier)) ?? nil,
+           !guid.isEmpty {
+            return guid
+        }
+        if let fromEnvironment = APIClient.sessionIdFromEnvironment(callerEnvironment) {
+            return fromEnvironment
+        }
+        // A remote call defaults to the session it arrived on, not to whatever the user is
+        // looking at. Falling through to focus state would let a command typed on a remote host
+        // land on an unrelated local tab, which is the misdelivery this addressing exists to
+        // prevent; and the remote has no way to name its own session to avoid it.
+        if let originSessionID, !originSessionID.isEmpty {
+            return APIClient.normalizeSessionId(originSessionID)
+        }
 
-        // Use focus state to find the key window's selected tab, then its
-        // active session via ListSessions. That can be a floating pane, which
-        // is not in the tab's tree.
+        // Last resort: the caller is not in an iTerm2 session we can identify at all (cron, the
+        // Finder, another terminal app), or its pane did not resolve. Use focus state to find
+        // the key window's selected tab, then its active session via ListSessions. That can be a
+        // floating pane, which is not in the tab's tree.
         let focus = try fetchFocusState(client: self)
         guard let keyWindowId = focus.keyWindowId else {
             throw IT2Error.targetNotFound("No key window found")
