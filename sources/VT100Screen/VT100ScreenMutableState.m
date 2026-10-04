@@ -1006,8 +1006,22 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         // Take the first character from the predecessor-augmented string: computing it from
         // the bare `string` would give a third answer, matching neither conversion.
         NSString *augmented = [predecessorAugmented substringWithRange:mergedFirstCluster];
-        screen_char_t firstChars[8] = { 0 };
-        int firstLen = 8;
+        // One cluster usually converts to a cell or two, but it has no length limit and
+        // aggressive base-character detection gives each spacing combining mark in it its
+        // own cell, so size the buffer from the cluster (issue 13073). The static buffer
+        // covers any cluster no longer than a stored complex character (emoji with
+        // modifiers, ZWJ sequences) so only pathological runs reach the heap.
+        const NSUInteger firstCharsCapacity = iTermStringToScreenCharsCapacity(augmented.length);
+        // Not zeroed: this is on the mutation thread's hot path, StringToScreenChars
+        // initializes every cell it writes, and only cells below firstLen are read.
+        screen_char_t firstCharsStatic[iTermStringToScreenCharsCapacity(kMaxParts)];
+        screen_char_t *firstCharsDynamic = NULL;
+        screen_char_t *firstChars = firstCharsStatic;
+        if (firstCharsCapacity > sizeof(firstCharsStatic) / sizeof(*firstCharsStatic)) {
+            firstCharsDynamic = iTermCalloc(firstCharsCapacity, sizeof(screen_char_t));
+            firstChars = firstCharsDynamic;
+        }
+        int firstLen = 0;
         BOOL firstDwc = NO;
         // After color fixup, buffer[0] has correct fg+bg fields.
         StringToScreenChars(augmented,
@@ -1022,6 +1036,11 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
                             self.config.unicodeVersion,
                             self.terminal.softAlternateScreenMode,
                             NULL);
+        const unichar predecessorCode = firstLen > 0 ? firstChars[0].code : 0;
+        const BOOL predecessorComplexChar = firstLen > 0 ? firstChars[0].complexChar : NO;
+        const BOOL mergedIsDoubleWidth = (firstLen > 1 && ScreenCharIsDWC_RIGHT(firstChars[1]));
+        free(firstCharsDynamic);
+
         // If the predecessor widens by absorbing the incoming code point, its new right
         // half has to be written, and the space-augmented buffer has no DWC_RIGHT for it:
         // buffer[0] is the prepended space plus any leading marks and buffer[1] is the
@@ -1029,9 +1048,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         // with the predecessor being the last cell of a soft-wrapped line. Hand the whole
         // string to the slow path instead, which converts predecessor + string in one go.
         // Nothing has been mutated yet.
-        if (firstLen > 1 &&
-            ScreenCharIsDWC_RIGHT(firstChars[1]) &&
-            !predecessorIsDoubleWidth) {
+        if (mergedIsDoubleWidth && !predecessorIsDoubleWidth) {
             [self appendStringAtCursorSlowly:string];
             return;
         }
@@ -1039,8 +1056,6 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
             [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
         }
         const screen_char_t current = [self.currentGrid characterAt:pred];
-        const unichar predecessorCode = firstChars[0].code;
-        const BOOL predecessorComplexChar = firstChars[0].complexChar;
         if (current.code != predecessorCode || current.complexChar != predecessorComplexChar) {
             [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
                                               dwcFree:YES
@@ -1083,18 +1098,6 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     const int kStaticBufferElements = 1024;
     screen_char_t staticBuffer[kStaticBufferElements];
     string = [string normalized:self.normalization];
-    int len = [string length];
-    if (3 * len >= kStaticBufferElements) {
-        buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(3 * len,
-                                                               sizeof(screen_char_t));
-        assert(buffer);
-        if (!buffer) {
-            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
-            return;
-        }
-    } else {
-        buffer = staticBuffer;
-    }
 
 // `predecessorIsDoubleWidth` will be true if the cursor is over a double-width character
 // but NOT if it's over a DWC_RIGHT.
@@ -1110,6 +1113,21 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     // Prepend a space so we can detect if the first character is a combining mark.
         augmentedString = [@" " stringByAppendingString:string];
     }
+
+    // Size the buffer for what is converted, predecessor included.
+    const NSUInteger capacity = iTermStringToScreenCharsCapacity(augmentedString.length);
+    if (capacity > kStaticBufferElements) {
+        buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(capacity,
+                                                               sizeof(screen_char_t));
+        assert(buffer);
+        if (!buffer) {
+            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
+            return;
+        }
+    } else {
+        buffer = staticBuffer;
+    }
+    int len = 0;
 
     // Add DWC_RIGHT after each double-width character, build complex characters out of surrogates
     // and combining marks, replace private codes with replacement characters, swallow zero-

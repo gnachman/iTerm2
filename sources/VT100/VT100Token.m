@@ -548,7 +548,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     // cannot occur in either the space-augmented or predecessor-augmented path.
     NSString *normalized = [string normalized:config.normalization];
     NSString *augmented = [@" " stringByAppendingString:normalized];
-    const int capacity = (int)(augmented.length * 3);
+    const int capacity = (int)iTermStringToScreenCharsCapacity(augmented.length);
 
     if (capacity <= kStaticPreconvertedScreenCharsCount) {
         pre->buffer = pre->staticBuffer;
