@@ -64,8 +64,8 @@
     [super dealloc];
 }
 
-- (int)lengthForMetadata:(NSArray<id<DVREncodable>> *)metadata {
-    __block int sum = 0;
+- (long long)lengthForMetadata:(NSArray<id<DVREncodable>> *)metadata {
+    __block long long sum = 0;
     [metadata enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         // Payload length, payload
         sum += sizeof(int) + [obj dvrEncodableData].length;
@@ -81,11 +81,13 @@
     if (readOnly_) {
         return;
     }
-    const int length = screenCharLength + [self lengthForMetadata:metadata];
-    if (length > [buffer_ capacity] / 2) {
+    // Summed in 64 bits: a huge grid plus its metadata can exceed INT_MAX.
+    const long long totalLength = (long long)screenCharLength + [self lengthForMetadata:metadata];
+    if (totalLength > [buffer_ capacity] / 2) {
         // Protect the buffer from overflowing if you have a really big window.
         return;
     }
+    const int length = (int)totalLength;
     _empty = NO;
     int prevFirst = [buffer_ firstKey];
     if ([encoder_ reserve:length]) {

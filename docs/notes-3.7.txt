@@ -396,6 +396,10 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- Fixed Tab.async_update_layout in the Python
+  API making a browser pane many times too big,
+  squeezing the panes beside it, and sometimes
+  crashing iTerm2.
 - Make Text Bigger works again when you type it
   as ⌘⇧= (the way you type ⌘+). Since 3.7.0,
   that keystroke opened the Clippings panel
