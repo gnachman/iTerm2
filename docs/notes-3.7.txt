@@ -3,3 +3,6 @@ Version 3.7.4
 Bug Fixes:
 - Fixed a crash when opening a new tab next to a
   tab in a tab group.
+- Fixed a crash that could happen when the GPU
+  renderer had been running for several weeks
+  without restarting iTerm2. Issue 13103.
