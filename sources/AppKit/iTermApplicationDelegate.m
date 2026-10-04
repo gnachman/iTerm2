@@ -2832,9 +2832,11 @@ static iTermKeyEventReplayer *gReplayer;
     void (^didMakeSession)(PTYSession *) = nil;
     if (groupID.length > 0) {
         __weak PseudoTerminal *weakTerm = term;
-        didMakeSession = ^(PTYSession *session) {
+        // This file is not ARC, so the literal must be copied explicitly or
+        // it dies at the end of this scope.
+        didMakeSession = [[^(PTYSession *session) {
             [weakTerm addTabForSession:session toGroupWithID:groupID];
-        };
+        } copy] autorelease];
     }
     [self newTabAtIndex:index didMakeSession:didMakeSession];
 }
