@@ -15,7 +15,10 @@ New Features:
   session. Type “/g” and some text to list the
   sessions that contain it, with the matching
   line; press Return to switch to a session and
-  scroll to the match.
+  scroll to the match. Sessions running Claude
+  Code also match text from the whole
+  conversation, including text no longer on
+  screen.
 - `it2` can now target a session by the tmux pane
   it is showing. From inside a tmux Integration
   pane, pass --tmux "$TMUX" --tmux-pane

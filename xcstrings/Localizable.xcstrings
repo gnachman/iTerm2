@@ -23088,6 +23088,18 @@
         }
       }
     },
+    "AdvancedSetting.openQuicklySearchesClaudeCodeTranscripts" : {
+      "comment" : "Advanced setting: openQuicklySearchesClaudeCodeTranscripts",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When searching session contents in Open Quickly (“/g”), also search the conversation of Claude Code running in a session.\nClaude Code redraws its interface in place, so much of a conversation is never in the scrollback. Its transcript in ~/.claude has the full text."
+          }
+        }
+      }
+    },
     "AdvancedSetting.openUntitledFile" : {
       "comment" : "Advanced setting: openUntitledFile",
       "extractionState" : "extracted_with_value",
