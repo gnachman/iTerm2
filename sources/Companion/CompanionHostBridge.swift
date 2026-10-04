@@ -18,6 +18,12 @@
 //  produced: replies never interleave with each other, and streamed .append
 //  deltas cannot arrive scrambled.
 //
+//  The bridge does no network I/O itself. CompanionLink owns the transport,
+//  the receive loop, and the outbox drain, off the main actor, and answers
+//  hello and ping on its own, so the connection stays alive while the main
+//  actor is frozen (e.g. by a modal alert). The bridge consumes the link's
+//  events in wire order and simply lags during such a freeze.
+//
 
 import Foundation
 import QuartzCore
@@ -26,13 +32,12 @@ import CompanionNoise
 
 @MainActor
 final class CompanionHostBridge {
-    private let transport: MessageTransport
-    private var receiveTask: Task<Void, Never>?
+    let link: CompanionLink
+    private var linkEventsTask: Task<Void, Never>?
     private var subscriptions: [String: ChatBroker.Subscription] = [:]
     /// Control frames drain ahead of media so input/replies never wait behind a
     /// video backlog; media is never dropped (see CompanionPriorityOutbox).
-    private var outbox: CompanionPriorityOutbox<HostEnvelope>?
-    private var outboxTask: Task<Void, Never>?
+    private var outbox: CompanionPriorityOutbox<HostEnvelope> { link.outbox }
 
     /// One live video stream and the main-thread timer driving it.
     private final class StreamContext {
@@ -121,77 +126,27 @@ final class CompanionHostBridge {
     /// .peerMustUpgrade -> upgrade the phone app; .selfMustUpgrade -> upgrade
     /// iTerm2. Not called when compatible.
     var onVersionIncompatible: (@MainActor (_ verdict: CompanionProtocolVersion.Compatibility) -> Void)?
-    /// Set once an incompatible hello is seen: the bridge then serves nothing but
-    /// a re-hello, so a stale peer cannot drive an out-of-date protocol.
+    /// Mirrors the link's verdict on the peer's last hello (see
+    /// CompanionLink.Event.helloCompleted). The link refuses an incompatible
+    /// peer's requests itself and drops anything sent to it; this copy only lets
+    /// the bridge skip building pushes that would be thrown away.
     private var versionBlocked = false
 
-    /// The AI availability last advertised to this phone (seeded by the hello it
-    /// was sent). updateAIAvailability emits an aiAvailabilityChanged event only
-    /// when the value actually differs, so unrelated settings writes on the mac do
-    /// not spam the phone. nil until the first hello is sent.
-    private var lastAIAvailable: Bool?
-
-    init(transport: MessageTransport) {
-        self.transport = transport
+    init(link: CompanionLink) {
+        self.link = link
     }
 
     func start() {
         ChatBroker.instance?.ensureServiceRunning()
         RLog("bridge start (phone connected, bridge live)")
 
-        let outbox = CompanionPriorityOutbox<HostEnvelope>()
-        self.outbox = outbox
-        outboxTask = Task { [transport] in
-            // Diagnostic counters/heartbeat. If a send wedges
-            // (half-open splice), the heartbeat below stops logging while the
-            // bridge believes it is still connected -- the signal we need.
-            var mediaFrames = 0
-            var mediaBytes = 0
-            var controlFrames = 0
-            var lastHeartbeat = CACurrentMediaTime()
-            RLog("bridge outbox drain started")
-            drain: while true {
-                let data: Data
-                let isMedia: Bool
-                switch await outbox.next() {
-                case .finished:
-                    break drain
-                case .control(let envelope):
-                    isMedia = false
-                    do {
-                        data = try WireCoding.encode(envelope)
-                    } catch {
-                        RLog("Companion bridge: DROPPING unencodable envelope: \(error)")
-                        continue
-                    }
-                case .media(let payload):
-                    isMedia = true
-                    // Control frames stay bare JSON; media frames carry the marker.
-                    data = CompanionFrameChannel.frameMedia(payload)
-                }
-                do {
-                    try await transport.send(data)
-                } catch {
-                    RLog("bridge outbox send FAILED (outbox dead) after \(mediaFrames) media/\(controlFrames) control: \(error)")
-                    break drain
-                }
-                if isMedia {
-                    mediaFrames += 1
-                    mediaBytes += data.count
-                } else {
-                    controlFrames += 1
-                }
-                let now = CACurrentMediaTime()
-                if now - lastHeartbeat >= 5 {
-                    RLog("bridge outbox alive: sent \(mediaFrames) media (\(mediaBytes) B), \(controlFrames) control")
-                    lastHeartbeat = now
-                }
+        // Explicitly @MainActor: events are consumed one at a time, in the order
+        // the link produced them, which is the order they arrived on the wire.
+        linkEventsTask = Task { @MainActor [weak self, link] in
+            for await event in link.events {
+                guard let self, !Task.isCancelled else { return }
+                self.consume(event)
             }
-            RLog("bridge outbox drained/exited: \(mediaFrames) media, \(controlFrames) control total")
-        }
-
-        receiveTask = Task { [weak self] in
-            await self?.runReceiveLoop()
         }
 
         // Keep the phone's chat list fresh: any list-level change (rename,
@@ -351,31 +306,20 @@ final class CompanionHostBridge {
         for (_, waiter) in waiters {
             waiter.resume(returning: nil)
         }
-        send(.unpaired, requestID: nil)
-        outbox?.finish()
-        outbox = nil
-        // Drain: the outbox task exits once it has sent everything enqueued
-        // before finish(), including the farewell.
-        await outboxTask?.value
-        outboxTask = nil
-        DLog("Companion bridge: farewell flushed; closing transport")
-        // Tear down the receive side only AFTER the farewell is on the wire:
-        // cancelling the receive task cancels the underlying connection (its
-        // onCancel treats cancellation as abandoning the transport), which
-        // would kill the farewell if done first.
-        receiveTask?.cancel()
-        receiveTask = nil
-        await transport.close()
+        linkEventsTask?.cancel()
+        linkEventsTask = nil
+        // The link sends the farewell, waits until it is on the wire, and only
+        // then closes the transport, so the two cannot race.
+        await link.sendFarewellAndClose()
     }
 
     func stop() {
         // A user-initiated stop is not a remote disconnect; don't report one.
         onClose = nil
-        receiveTask?.cancel()
-        receiveTask = nil
+        linkEventsTask?.cancel()
+        linkEventsTask = nil
         teardownStreams()
-        let transport = self.transport
-        Task { await transport.close() }
+        link.close()
     }
 
     private func teardownStreams() {
@@ -396,10 +340,6 @@ final class CompanionHostBridge {
             subscription.unsubscribe()
         }
         subscriptions.removeAll()
-        outbox?.finish()
-        outbox = nil
-        outboxTask?.cancel()
-        outboxTask = nil
         let waiters = permissionWaiters
         permissionWaiters.removeAll()
         for (_, waiter) in waiters {
@@ -426,65 +366,56 @@ final class CompanionHostBridge {
         }
     }
 
-    // MARK: Receive loop
+    // MARK: Link events
 
-    private func runReceiveLoop() async {
-        // If the relay splice goes half-open during streaming, receive()
-        // can block forever -- we'd see "started" but never "receive FAILED" or
-        // "exited", confirming the wedge (no teardown, no re-park).
-        RLog("bridge receiveLoop started")
-        var dropError: Error?
-        while true {
-            let frame: Data
-            do {
-                frame = try await transport.receive()
-            } catch {
-                RLog("bridge receiveLoop receive() FAILED (drop detected): \(error)")
-                dropError = error
-                break
-            }
-            guard let envelope = try? WireCoding.decode(ClientEnvelope.self, from: frame) else {
-                // A frame we cannot decode (newer phone) is dropped, not fatal.
-                continue
-            }
-            handle(envelope)
+    private func consume(_ event: CompanionLink.Event) {
+        // Classify the connection on its first request (for the presence
+        // warning), before anything else, so a request that is then refused
+        // (AI off) or fails still counts. See connectionClassification.
+        if let classification = Self.connectionClassification(
+            for: event,
+            nonceIsOutstanding: { CompanionPushNonceRegistry.shared.contains($0) }) {
+            classifyOnce(solicited: classification == .solicited)
         }
-        RLog("bridge receiveLoop exited -> teardownStreams + onClose (will re-park)")
-        teardownStreams()
-        onClose?(dropError)
+        switch event {
+        case .envelope(let envelope, let handledByLink):
+            if !handledByLink {
+                handle(envelope)
+            }
+        case .helloCompleted(let peerRevision, let blocked):
+            versionBlocked = blocked
+            // Persist the peer's revision ONLY for a compatible handshake. Push-time
+            // capability checks (canSendAlertsToPhone / supportsContentlessWakeup) key
+            // off the stored revision, so persisting a too-new peer's revision while we
+            // have declared ourselves incompatible (.selfMustUpgrade) would enable the
+            // alert UI and send wakeups to a peer we just refused to talk to. On
+            // incompatibility we reset it to 0 so those gates read false.
+            // Done here, not in the link, so the defaults write happens on the
+            // main thread.
+            CompanionPushRegistry.setPeerRevision(blocked ? 0 : peerRevision)
+        case .versionIncompatible(let verdict):
+            // The presence toast is suppressed for an incompatible peer (it was
+            // classified as solicited above); the alert is the user-facing signal.
+            onVersionIncompatible?(verdict)
+        case .closed(let error):
+            RLog("bridge: link closed (\(error.map { "\($0)" } ?? "locally")) -> teardownStreams + onClose")
+            linkEventsTask = nil
+            teardownStreams()
+            onClose?(error)
+        }
     }
 
+    /// Dispatch a request the link forwarded. The link has already refused a
+    /// version-blocked peer and answered hello and ping, so neither reaches here.
     private func handle(_ envelope: ClientEnvelope) {
         let requestID = envelope.requestID
-        // An incompatible peer is served nothing but a re-hello: the phone shows
-        // an upgrade panel and disconnects, but refuse here too so a stale peer
-        // cannot drive an out-of-date protocol.
-        if versionBlocked {
-            if case .hello(let revision, let minimumPeer) = envelope.payload {
-                handleHello(peerRevision: revision, peerMinimumPeer: minimumPeer, requestID: requestID)
-            } else {
-                send(.error(CompanionError(code: .badRequest, message: "Companion app upgrade required")),
-                     requestID: requestID)
-            }
-            return
-        }
-        // Classify the connection on its first request (for the presence
-        // warning). messagesSince classifies itself based on its nonce; .hello is
-        // a control handshake (neutral); every other request is interactive
-        // presence -> unsolicited.
-        switch envelope.payload {
-        case .messagesSince, .syncSince, .hello:
-            break  // messagesSince/syncSince classify after their nonce check; hello is neutral
-        default:
-            classifyOnce(solicited: false)
-        }
         // Single AI gate: an AI-only request is refused when AI is off. `.open`
         // requests (session browsing, video, keyboard, and persistence/cleanup like
         // mute/unsubscribe) always run; `.mixed` requests (listChatsAndSessions,
         // messagesSince, syncSince) are served partially by their handlers, which do
-        // their own AI check AFTER classifying the connection. Classifying above
-        // still happens before this refusal, so an interactive phone that sends an
-        // AI-only request is still recorded as interactive. See aiRequirement.
+        // their own AI check. The connection was classified in consume(_:), before
+        // this refusal, so an interactive phone that sends an AI-only request is
+        // still recorded as interactive. See aiRequirement.
         if Self.aiRequirement(of: envelope.payload) == .aiOnly {
             guard requireAI(requestID) else { return }
         }
@@ -496,8 +427,9 @@ final class CompanionHostBridge {
             RLog("Companion bridge: unsupported client message (peer is newer)")
             send(.error(CompanionError(code: .badRequest, message: "Unsupported request; app upgrade required")),
                  requestID: requestID)
-        case .hello(let revision, let minimumPeer):
-            handleHello(peerRevision: revision, peerMinimumPeer: minimumPeer, requestID: requestID)
+        case .hello, .ping:
+            // Answered by CompanionLink, off the main actor.
+            break
         case .listChatsAndSessions:
             // Mixed request: the session list works with or without AI, but chats
             // are AI content. When AI is off, return the sessions and an empty chat
@@ -585,8 +517,6 @@ final class CompanionHostBridge {
         case .notificationPermissionResponse(let permissionRequestID, let authorization):
             permissionWaiters.removeValue(forKey: permissionRequestID)?
                 .resume(returning: authorization)
-        case .ping:
-            send(.pong, requestID: requestID)
         case .relayRoomSecret(let secret):
             // Persist the couriered room secret so the mac can sign its relay
             // parks, then ack so the phone may register its verifier. Idempotent
@@ -1133,8 +1063,8 @@ final class CompanionHostBridge {
         // Latest-wins state: ride the coalescing lane so a fast drag's updates
         // collapse to the newest and never starve the media frame that actually
         // shows the selection. Keyed per stream.
-        outbox?.enqueueCoalescingControl(HostEnvelope(requestID: nil, payload: .selectionRange(streamID: streamID, range: range)),
-                                         key: "selectionRange.\(streamID)")
+        outbox.enqueueCoalescingControl(HostEnvelope(requestID: nil, payload: .selectionRange(streamID: streamID, range: range)),
+                                        key: "selectionRange.\(streamID)")
     }
 
     private func handleCopySelection(guid: String, requestID: UInt64?) {
@@ -1197,14 +1127,14 @@ final class CompanionHostBridge {
             maxFrameRate: frameRate,
             bitrateCeiling: bitrateCeiling,
             onConfig: { config in
-                outboxRef?.enqueueControl(HostEnvelope(requestID: nil, payload: .streamConfig(config)))
+                outboxRef.enqueueControl(HostEnvelope(requestID: nil, payload: .streamConfig(config)))
             },
             onMedia: { frame in
-                outboxRef?.enqueueMedia(frame.encoded(version: mediaVersion))
+                outboxRef.enqueueMedia(frame.encoded(version: mediaVersion))
             },
             onExtentChanged: { firstAbsLine, totalLines in
                 // Latest-wins on the coalescing lane: only the newest window matters.
-                outboxRef?.enqueueCoalescingControl(
+                outboxRef.enqueueCoalescingControl(
                     HostEnvelope(requestID: nil,
                                  payload: .streamExtent(streamID: streamID, firstAbsLine: firstAbsLine, totalLines: totalLines)),
                     key: "streamExtent.\(streamID)")
@@ -1378,41 +1308,6 @@ final class CompanionHostBridge {
         }
     }
 
-    /// Relay-push: resolve the opaque per-chat collapse token back to a chat,
-    /// fetch its messages with seq > the phone's watermark, and reply with short
-    /// attachment-free previews + the chat's title + its max seq. Any
-    /// unresolvable case (no room secret, chat system unavailable, token matches
-    /// no chat) replies with empty previews, which the NSE renders as the generic
-    /// fallback. See docs/push.txt section 2.
-    /// Version handshake. Always reply with our hello (so the phone can evaluate
-    /// from its side), then evaluate from ours; on incompatibility, block further
-    /// service and ask the mac to show an upgrade alert.
-    private func handleHello(peerRevision: Int, peerMinimumPeer: Int, requestID: UInt64?) {
-        let aiAvailable = CompanionPairingController.aiAvailable()
-        lastAIAvailable = aiAvailable
-        send(.hello(revision: CompanionProtocolVersion.current,
-                    minimumPeer: CompanionProtocolVersion.minimumPeer,
-                    wantsNotificationPermission: CompanionPushRegistry.alertsEverEnabled,
-                    aiAvailable: aiAvailable),
-             requestID: requestID)
-        let verdict = CompanionProtocolVersion.evaluate(peerRevision: peerRevision,
-                                                        peerMinimumPeer: peerMinimumPeer)
-        versionBlocked = (verdict != .compatible)
-        // Persist the peer's revision ONLY for a compatible handshake. Push-time
-        // capability checks (canSendAlertsToPhone / supportsContentlessWakeup) key
-        // off the stored revision, so persisting a too-new peer's revision while we
-        // have declared ourselves incompatible (.selfMustUpgrade) would enable the
-        // alert UI and send wakeups to a peer we just refused to talk to. On
-        // incompatibility we reset it to 0 so those gates read false.
-        CompanionPushRegistry.setPeerRevision(verdict == .compatible ? peerRevision : 0)
-        RLog("Companion bridge: hello peer(rev=\(peerRevision), min=\(peerMinimumPeer)) -> \(verdict)")
-        guard verdict != .compatible else { return }
-        // Don't also pop the presence toast for an incompatible peer; the alert
-        // is the user-facing signal. (solicited:true suppresses the toast.)
-        classifyOnce(solicited: true)
-        onVersionIncompatible?(verdict)
-    }
-
     /// token -> chatID for the CURRENT room secret, so resolving a pushed collapse
     /// token is O(1) amortized rather than an HMAC over every chat on every fetch
     /// (repeated on retries). Main-actor-isolated (the whole class is), so no lock.
@@ -1444,26 +1339,30 @@ final class CompanionHostBridge {
         return rebuilt()[token]   // miss: a chat may be new; rebuild once and retry
     }
 
+    /// Relay-push: resolve the opaque per-chat collapse token back to a chat,
+    /// fetch its messages with seq > the phone's watermark, and reply with short
+    /// attachment-free previews + the chat's title + its max seq. Any
+    /// unresolvable case (no room secret, chat system unavailable, token matches
+    /// no chat) replies with empty previews, which the NSE renders as the generic
+    /// fallback. See docs/push.txt section 2.
     private func handleMessagesSince(collapseToken: String,
                                      seq: Int64,
                                      limit rawLimit: Int,
                                      nonce: String?,
                                      requestID: UInt64?) {
-        // Classify FIRST, before any early return: a connection that presents a
-        // valid one-time push nonce is the mac's OWN solicited NSE fetch (no
-        // presence warning); a missing/forged nonce is unsolicited (warn), even
-        // if the fetch then errors. Use a NON-consuming peek here: the transient
-        // error paths below leave the watermark untouched so the NSE retries the
-        // SAME push, and the nonce must still be recognized on that retry - so it
-        // is consumed only past the transient guards, on a path that actually
-        // serves a reply. (consume is single-use to block replay after serving.)
-        let solicited = nonce.map { CompanionPushNonceRegistry.shared.contains($0) } ?? false
-        classifyOnce(solicited: solicited)
+        // The connection was already classified in consume(_:), before any early
+        // return here: a connection that presents a valid one-time push nonce is
+        // the mac's OWN solicited NSE fetch (no presence warning); a missing/forged
+        // nonce is unsolicited (warn), even if the fetch then errors. That check is
+        // a NON-consuming peek: the transient error paths below leave the watermark
+        // untouched so the NSE retries the SAME push, and the nonce must still be
+        // recognized on that retry - so it is consumed only past the transient
+        // guards, on a path that actually serves a reply. (consume is single-use to
+        // block replay after serving.)
 
         // messagesSince is a chat-only push (per-chat message previews), so it has
-        // nothing to serve when AI is off. Gate here, AFTER classifyOnce, rather than
-        // at the dispatch switch, so a background NSE wakeup still classifies the
-        // connection as solicited instead of being escalated to interactive.
+        // nothing to serve when AI is off. Gate here rather than at the dispatch
+        // switch, so the request is `.mixed` there and reaches this handler.
         guard requireAI(requestID) else { return }
 
         // Clamp the wire-supplied limit before any arithmetic or prefix(): it is
@@ -1578,9 +1477,7 @@ final class CompanionHostBridge {
                                  limit rawLimit: Int,
                                  nonce: String?,
                                  requestID: UInt64?) {
-        let solicited = nonce.map { CompanionPushNonceRegistry.shared.contains($0) } ?? false
-        classifyOnce(solicited: solicited)
-
+        // Classified in consume(_:), like messagesSince.
         let limit = min(max(rawLimit, 1), 500)
         RLog("Companion bridge: syncSince request (messageSeq=\(messageSeq), alertSeq=\(alertSeq), limit=\(limit))")
 
@@ -2209,34 +2106,28 @@ final class CompanionHostBridge {
 
     // MARK: Sending
 
-    /// Enqueue one envelope. Synchronous: enqueue order (main-actor order) is
-    /// transmit order among control frames, which always precede pending media.
-    /// Tell the connected phone that the mac's AI availability changed, but only
-    /// when it differs from what this bridge last advertised (in its hello or a
-    /// prior change event). Called by CompanionPairingController when a settings
-    /// change may have flipped aiAvailable(); the dedupe keeps unrelated settings
-    /// writes from emitting redundant events. A no-op before the first hello.
+    /// The mac's AI availability may have changed. Called by
+    /// CompanionPairingController, after it has published the new value to
+    /// CompanionAIAvailabilityCache, when a settings change may have flipped
+    /// aiAvailable(). The link tells the phone, but only when the value differs
+    /// from what it last advertised (in its hello or a prior change event), so
+    /// unrelated settings writes do not emit redundant events, and never before
+    /// the hello reply.
     func updateAIAvailability(_ available: Bool) {
-        // No-op before the first hello: lastAIAvailable is nil until handleHello
-        // seeds it, and the hello reply carries the current availability, so there is
-        // nothing to update (and an aiAvailabilityChanged frame must not precede the
-        // hello reply). After hello, only send when the value actually changed.
-        guard let lastAIAvailable, lastAIAvailable != available else { return }
-        self.lastAIAvailable = available
-        RLog("Companion bridge: AI availability changed to \(available); notifying phone")
         if !available {
-            // AI was just turned off (consent revoked or admin policy). The gate no
-            // longer drops the bridge, so tear down live chat subscriptions here;
-            // otherwise ChatBroker would keep pushing chat deltas, typing status, and
-            // turn lifecycle to a phone that has hidden its chat UI. Session browsing,
+            // AI is off (consent revoked or admin policy). The gate no longer drops
+            // the bridge, so tear down live chat subscriptions here; otherwise
+            // ChatBroker would keep pushing chat deltas, typing status, and turn
+            // lifecycle to a phone that has hidden its chat UI. Session browsing,
             // video, and keyboard keep working. (The phone can't detach itself: its
             // .unsubscribe would arrive after its own UI is already disabled.)
+            // Subscribing requires AI, so this is a no-op when it was already off.
             for subscription in subscriptions.values {
                 subscription.unsubscribe()
             }
             subscriptions.removeAll()
         }
-        send(.aiAvailabilityChanged(available: available), requestID: nil)
+        link.poke(.aiAvailability)
     }
 
     /// Gate an AI-only request (chat, agent, orchestrator) on AI actually being
@@ -2311,8 +2202,10 @@ final class CompanionHostBridge {
         return peerRevision >= CompanionProtocolVersion.aiDecouplingRevision
     }
 
+    /// Enqueue one envelope. Synchronous: enqueue order (main-actor order) is
+    /// transmit order among control frames, which always precede pending media.
     private func send(_ payload: CompanionHostMessage, requestID: UInt64?) {
-        outbox?.enqueueControl(HostEnvelope(requestID: requestID, payload: payload))
+        link.send(payload, requestID: requestID)
     }
 }
 

@@ -1,0 +1,560 @@
+//
+//  CompanionLinkTests.swift
+//  iTerm2 ModernTests
+//
+//  CompanionLink is the off-main endpoint of a phone connection. These tests
+//  drive it the way a phone would, over an in-memory transport, and pin:
+//
+//    - It keeps answering hello and ping while the main queue is frozen by a
+//      modal run loop started from a main-queue callout (the bug: iTerm2 Buddy
+//      went dead whenever such an alert was up).
+//    - What it answers itself versus what it forwards to the bridge, and that
+//      forwarding preserves wire order with `.closed` last.
+//    - The ordering guarantees the bridge used to get from running on the main
+//      actor: no aiAvailabilityChanged before the hello reply, nothing but
+//      hello/error/unpaired to a version-blocked peer, farewell before close.
+//    - How link events classify a connection for the presence warning.
+//
+//  ModernTests can't link the CompanionProtocol module, so revisions are
+//  spelled out: this build's protocol accepts a peer at revision 13 that
+//  requires at least 11, and a peer that requires revision 9999 is too new.
+//
+
+import XCTest
+import os
+@testable import iTerm2SharedARC
+
+final class CompanionLinkTests: XCTestCase {
+    // MARK: Fixture
+
+    /// The phone's end of the connection.
+    private final class Phone {
+        let transport: CompanionLoopbackTransport
+
+        init(transport: CompanionLoopbackTransport) {
+            self.transport = transport
+        }
+
+        private static func encoder() -> JSONEncoder {
+            let e = JSONEncoder(); e.dateEncodingStrategy = .millisecondsSince1970; return e
+        }
+        private static func decoder() -> JSONDecoder {
+            let d = JSONDecoder(); d.dateDecodingStrategy = .millisecondsSince1970; return d
+        }
+
+        func send(_ payload: CompanionClientMessage, requestID: UInt64? = nil) async throws {
+            let envelope = ClientEnvelope(requestID: requestID, payload: payload)
+            try await transport.send(try Self.encoder().encode(envelope))
+        }
+
+        func sendRaw(_ data: Data) async throws {
+            try await transport.send(data)
+        }
+
+        /// The next frame the Mac sent, described. Fails rather than hangs if
+        /// nothing arrives.
+        func next() async throws -> String {
+            let transport = self.transport
+            let data = try await FrozenMainQueue.withFailsafe("the next frame from the Mac") {
+                try await transport.receive()
+            }
+            let envelope = try Self.decoder().decode(HostEnvelope.self, from: data)
+            return CompanionLinkTests.describe(envelope)
+        }
+
+        /// Asserts the connection is closed with nothing further queued.
+        func expectClosed(file: StaticString = #filePath, line: UInt = #line) async {
+            let transport = self.transport
+            do {
+                let data = try await FrozenMainQueue.withFailsafe("the connection to close") {
+                    try await transport.receive()
+                }
+                let text = String(data: data, encoding: .utf8) ?? "\(data.count) bytes"
+                XCTFail("expected the connection to be closed, but received: \(text)", file: file, line: line)
+            } catch {
+                XCTAssertFalse(error is FrozenMainQueue.Timeout,
+                               "the connection never closed", file: file, line: line)
+            }
+        }
+
+        func close() async {
+            await transport.close()
+        }
+    }
+
+    private struct Fixture {
+        let link: CompanionLink
+        let phone: Phone
+        let ai: CompanionAIAvailabilityCache
+    }
+
+    private func makeFixture(aiAvailable: Bool = true,
+                             wantsNotificationPermission: Bool = false,
+                             start: Bool = true) -> Fixture {
+        let (macEnd, phoneEnd) = CompanionLoopbackTransport.makePair()
+        let ai = CompanionAIAvailabilityCache(aiAvailable)
+        let link = CompanionLink(transport: macEnd,
+                                 aiAvailability: ai,
+                                 wantsNotificationPermission: { wantsNotificationPermission })
+        if start {
+            link.start()
+        }
+        return Fixture(link: link, phone: Phone(transport: phoneEnd), ai: ai)
+    }
+
+    private static let compatibleHello = CompanionClientMessage.hello(revision: 13, minimumPeer: 11)
+    private static let incompatibleHello = CompanionClientMessage.hello(revision: 9999, minimumPeer: 9999)
+
+    // MARK: Describing frames and events
+
+    private static func tag(_ requestID: UInt64?) -> String {
+        return requestID.map { "#\($0)" } ?? ""
+    }
+
+    private static func describe(_ envelope: HostEnvelope) -> String {
+        let name: String
+        switch envelope.payload {
+        case .hello(_, _, let wantsNotificationPermission, let aiAvailable):
+            let wants = wantsNotificationPermission.map { "\($0)" } ?? "nil"
+            let ai = aiAvailable.map { "\($0)" } ?? "nil"
+            name = "hello(wantsNotificationPermission=\(wants), ai=\(ai))"
+        case .pong:
+            name = "pong"
+        case .error:
+            name = "error"
+        case .unpaired:
+            name = "unpaired"
+        case .aiAvailabilityChanged(let available):
+            name = "aiAvailabilityChanged(\(available))"
+        case .chatListChanged:
+            name = "chatListChanged"
+        default:
+            name = "other"
+        }
+        return name + tag(envelope.requestID)
+    }
+
+    private static func describe(_ payload: CompanionClientMessage) -> String {
+        switch payload {
+        case .hello(let revision, _):
+            return "hello(\(revision))"
+        case .ping:
+            return "ping"
+        case .listChatsAndSessions:
+            return "listChatsAndSessions"
+        case .unsubscribe(let chatID):
+            return "unsubscribe(\(chatID))"
+        case .messagesSince:
+            return "messagesSince"
+        case .syncSince:
+            return "syncSince"
+        default:
+            return "other"
+        }
+    }
+
+    private static func describe(_ event: CompanionLink.Event) -> String {
+        switch event {
+        case .envelope(let envelope, let handledByLink):
+            return (handledByLink ? "handled " : "forwarded ") + describe(envelope.payload) + tag(envelope.requestID)
+        case .helloCompleted(let peerRevision, let blocked):
+            return "helloCompleted(\(peerRevision), blocked=\(blocked))"
+        case .versionIncompatible:
+            return "versionIncompatible"
+        case .closed(let error):
+            return error == nil ? "closed(locally)" : "closed(dropped)"
+        }
+    }
+
+    /// Every event the link emitted, up to the end of its stream.
+    private func allEvents(_ link: CompanionLink) async throws -> [CompanionLink.Event] {
+        return try await FrozenMainQueue.withFailsafe("the link's event stream to end") {
+            var events: [CompanionLink.Event] = []
+            for await event in link.events {
+                events.append(event)
+            }
+            return events
+        }
+    }
+
+    private func allEventDescriptions(_ link: CompanionLink) async throws -> [String] {
+        return try await allEvents(link).map { Self.describe($0) }
+    }
+
+    // MARK: The bug: answering while the main queue is frozen
+
+    func testHelloIsAnsweredWhileMainQueueIsFrozen() async throws {
+        let fixture = makeFixture(aiAvailable: true)
+        try await FrozenMainQueue.run { _ in
+            try await fixture.phone.send(Self.compatibleHello, requestID: 7)
+            let reply = try await fixture.phone.next()
+            XCTAssertEqual(reply, "hello(wantsNotificationPermission=false, ai=true)#7")
+        }
+    }
+
+    func testPingIsAnsweredWhileMainQueueIsFrozen() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        try await FrozenMainQueue.run { _ in
+            try await fixture.phone.send(.ping, requestID: 2)
+            let reply = try await fixture.phone.next()
+            XCTAssertEqual(reply, "pong#2")
+        }
+    }
+
+    /// A link created and started on the main thread, in the same callout that
+    /// then freezes, must still come up: nothing in start() may wait for a
+    /// main-actor hop.
+    func testLinkStartedInsideTheFreezingCalloutStillAnswers() async throws {
+        let fixture = makeFixture(start: false)
+        try await FrozenMainQueue.run(setup: {
+            fixture.link.start()
+        }) { _ in
+            try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+            let reply = try await fixture.phone.next()
+            XCTAssertEqual(reply, "hello(wantsNotificationPermission=false, ai=true)#1")
+        }
+    }
+
+    /// A poke and a send made on the main thread just before it freezes must
+    /// still reach the phone during the freeze.
+    func testPokeAndSendMadeInsideTheFreezingCalloutReachThePhone() async throws {
+        let fixture = makeFixture(aiAvailable: true)
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        try await FrozenMainQueue.run(setup: {
+            fixture.link.send(.chatListChanged(chats: []), requestID: nil)
+            fixture.ai.value = false
+            fixture.link.poke(.aiAvailability)
+        }) { _ in
+            let first = try await fixture.phone.next()
+            let second = try await fixture.phone.next()
+            XCTAssertEqual(first, "chatListChanged")
+            XCTAssertEqual(second, "aiAvailabilityChanged(false)")
+        }
+    }
+
+    // MARK: Hello
+
+    func testHelloReplyCarriesCachedAIAvailabilityAndNotificationWish() async throws {
+        let fixture = makeFixture(aiAvailable: false, wantsNotificationPermission: true)
+        try await fixture.phone.send(Self.compatibleHello, requestID: 3)
+        let reply = try await fixture.phone.next()
+        XCTAssertEqual(reply, "hello(wantsNotificationPermission=true, ai=false)#3")
+    }
+
+    func testCompatibleHelloEmitsEnvelopeThenHelloCompleted() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        await fixture.phone.close()
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events, ["handled hello(13)#1",
+                                "helloCompleted(13, blocked=false)",
+                                "closed(dropped)"])
+    }
+
+    // MARK: AI availability ordering
+
+    func testAIAvailabilityChangeBeforeHelloSendsNothing() async throws {
+        let fixture = makeFixture(aiAvailable: true)
+        fixture.ai.value = false
+        fixture.link.poke(.aiAvailability)
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        // Whichever of the poke and the hello the link sees first, the phone's
+        // first frame is the hello reply carrying the current value, and no
+        // change event follows it.
+        let first = try await fixture.phone.next()
+        XCTAssertEqual(first, "hello(wantsNotificationPermission=false, ai=false)#1")
+        try await fixture.phone.send(.ping, requestID: 2)
+        let second = try await fixture.phone.next()
+        XCTAssertEqual(second, "pong#2")
+    }
+
+    func testAIAvailabilityChangeAfterHelloIsSentOnceAndDeduped() async throws {
+        let fixture = makeFixture(aiAvailable: true)
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+
+        // An unchanged value sends nothing; a changed one sends exactly one
+        // event no matter how many pokes announce it.
+        fixture.link.poke(.aiAvailability)
+        fixture.ai.value = false
+        fixture.link.poke(.aiAvailability)
+        fixture.link.poke(.aiAvailability)
+        let first = try await fixture.phone.next()
+        XCTAssertEqual(first, "aiAvailabilityChanged(false)")
+
+        // Pokes are processed in order, so a duplicate "false" would have to
+        // come out before this "true".
+        fixture.ai.value = true
+        fixture.link.poke(.aiAvailability)
+        let second = try await fixture.phone.next()
+        XCTAssertEqual(second, "aiAvailabilityChanged(true)")
+    }
+
+    // MARK: Version-blocked peers
+
+    func testVersionBlockedPeerGetsErrorsAndNothingIsForwarded() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.incompatibleHello, requestID: 1)
+        let helloReply = try await fixture.phone.next()
+        XCTAssertEqual(helloReply, "hello(wantsNotificationPermission=false, ai=true)#1")
+
+        try await fixture.phone.send(.listChatsAndSessions, requestID: 2)
+        let refusal = try await fixture.phone.next()
+        XCTAssertEqual(refusal, "error#2")
+        // Even ping is refused: a blocked peer is served nothing but a re-hello.
+        try await fixture.phone.send(.ping, requestID: 3)
+        let pingRefusal = try await fixture.phone.next()
+        XCTAssertEqual(pingRefusal, "error#3")
+
+        await fixture.phone.close()
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events, ["handled hello(9999)#1",
+                                "helloCompleted(9999, blocked=true)",
+                                "versionIncompatible",
+                                "closed(dropped)"])
+    }
+
+    func testBlockedPeerIsUnblockedByALaterCompatibleHello() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.incompatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 2)
+        let helloReply = try await fixture.phone.next()
+        XCTAssertEqual(helloReply, "hello(wantsNotificationPermission=false, ai=true)#2")
+        try await fixture.phone.send(.ping, requestID: 3)
+        let pong = try await fixture.phone.next()
+        XCTAssertEqual(pong, "pong#3")
+
+        await fixture.phone.close()
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events, ["handled hello(9999)#1",
+                                "helloCompleted(9999, blocked=true)",
+                                "versionIncompatible",
+                                "handled hello(13)#2",
+                                "helloCompleted(13, blocked=false)",
+                                "handled ping#3",
+                                "closed(dropped)"])
+    }
+
+    /// The bridge learns that the peer is blocked through an event, which lags
+    /// while the main actor is busy. In that gap it may still push; the link
+    /// must drop the push. The unpair farewell is the exception: a blocked phone
+    /// still has to learn it was unpaired.
+    func testPushesToBlockedPeerAreDroppedButTheFarewellIsDelivered() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.incompatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+
+        fixture.link.send(.chatListChanged(chats: []), requestID: nil)
+        fixture.link.send(.aiAvailabilityChanged(available: false), requestID: nil)
+        await fixture.link.sendFarewellAndClose()
+
+        let frame = try await fixture.phone.next()
+        XCTAssertEqual(frame, "unpaired")
+        await fixture.phone.expectClosed()
+    }
+
+    // MARK: Forwarding
+
+    func testEnvelopesAreForwardedInWireOrderAndClosedIsLast() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        try await fixture.phone.send(.listChatsAndSessions, requestID: 2)
+        try await fixture.phone.send(.ping, requestID: 3)
+        try await fixture.phone.send(.unsubscribe(chatID: "a"))
+        try await fixture.phone.send(.unsubscribe(chatID: "b"))
+        // The two replies the link owes prove it has read that far.
+        let helloReply = try await fixture.phone.next()
+        let pong = try await fixture.phone.next()
+        XCTAssertEqual(helloReply, "hello(wantsNotificationPermission=false, ai=true)#1")
+        XCTAssertEqual(pong, "pong#3")
+        await fixture.phone.close()
+
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events, ["handled hello(13)#1",
+                                "helloCompleted(13, blocked=false)",
+                                "forwarded listChatsAndSessions#2",
+                                "handled ping#3",
+                                "forwarded unsubscribe(a)",
+                                "forwarded unsubscribe(b)",
+                                "closed(dropped)"])
+    }
+
+    func testUndecodableFrameIsDroppedAndTheLinkKeepsGoing() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.sendRaw(Data("not json".utf8))
+        try await fixture.phone.send(.ping, requestID: 1)
+        let pong = try await fixture.phone.next()
+        XCTAssertEqual(pong, "pong#1")
+        await fixture.phone.close()
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events, ["handled ping#1", "closed(dropped)"])
+    }
+
+    // MARK: Sending and shutdown
+
+    func testSendsReachThePhoneInCallOrder() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        fixture.link.send(.pong, requestID: 10)
+        fixture.link.send(.chatListChanged(chats: []), requestID: nil)
+        fixture.link.send(.pong, requestID: 11)
+        let first = try await fixture.phone.next()
+        let second = try await fixture.phone.next()
+        let third = try await fixture.phone.next()
+        XCTAssertEqual([first, second, third], ["pong#10", "chatListChanged", "pong#11"])
+    }
+
+    func testFarewellIsTheLastFrameAndThenTheConnectionCloses() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+
+        fixture.link.send(.chatListChanged(chats: []), requestID: nil)
+        await fixture.link.sendFarewellAndClose()
+
+        let first = try await fixture.phone.next()
+        let second = try await fixture.phone.next()
+        XCTAssertEqual([first, second], ["chatListChanged", "unpaired"])
+        await fixture.phone.expectClosed()
+
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events.last, "closed(locally)")
+    }
+
+    func testCloseEndsTheConnectionAndReportsALocalClose() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(.ping, requestID: 1)
+        _ = try await fixture.phone.next()
+
+        fixture.link.close()
+        fixture.link.close()  // idempotent
+
+        await fixture.phone.expectClosed()
+        let link = fixture.link
+        let error = try await FrozenMainQueue.withFailsafe("waitUntilClosed") {
+            await link.waitUntilClosed()
+        }
+        XCTAssertNil(error, "a deliberate close is not a drop")
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events, ["handled ping#1", "closed(locally)"])
+    }
+
+    /// Closing a link that was never started must still close the transport,
+    /// or the underlying connection would stay open with nothing reading it.
+    func testCloseBeforeStartClosesTheTransport() async throws {
+        let fixture = makeFixture(start: false)
+        fixture.link.close()
+
+        await fixture.phone.expectClosed()
+        let link = fixture.link
+        let error = try await FrozenMainQueue.withFailsafe("waitUntilClosed") {
+            await link.waitUntilClosed()
+        }
+        XCTAssertNil(error)
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events, ["closed(locally)"])
+        // A late start() must not revive it.
+        fixture.link.start()
+        await fixture.phone.expectClosed()
+    }
+
+    func testRemoteCloseIsReportedAsADrop() async throws {
+        let fixture = makeFixture()
+        await fixture.phone.close()
+        let link = fixture.link
+        let error = try await FrozenMainQueue.withFailsafe("waitUntilClosed") {
+            await link.waitUntilClosed()
+        }
+        XCTAssertNotNil(error, "the phone going away is a drop")
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events, ["closed(dropped)"])
+    }
+
+    func testWaitUntilClosedReturnsImmediatelyOnceClosed() async throws {
+        let fixture = makeFixture()
+        await fixture.phone.close()
+        let link = fixture.link
+        for _ in 0..<2 {
+            let error = try await FrozenMainQueue.withFailsafe("waitUntilClosed") {
+                await link.waitUntilClosed()
+            }
+            XCTAssertNotNil(error)
+        }
+    }
+
+    // MARK: Classification for the presence warning
+
+    /// What the bridge would report for this connection: the first event that
+    /// classifies it.
+    private func classification(of events: [CompanionLink.Event],
+                                outstandingNonces: Set<String> = []) -> CompanionConnectionClassification? {
+        for event in events {
+            if let result = CompanionHostBridge.connectionClassification(
+                for: event, nonceIsOutstanding: { outstandingNonces.contains($0) }) {
+                return result
+            }
+        }
+        return nil
+    }
+
+    private func eventsAfterSending(_ messages: [CompanionClientMessage]) async throws -> [CompanionLink.Event] {
+        let fixture = makeFixture()
+        for (index, message) in messages.enumerated() {
+            try await fixture.phone.send(message, requestID: UInt64(index + 1))
+        }
+        await fixture.phone.close()
+        return try await allEvents(fixture.link)
+    }
+
+    func testPingAnsweredByTheLinkStillClassifiesAsUnsolicited() async throws {
+        let events = try await eventsAfterSending([.ping])
+        XCTAssertEqual(classification(of: events), .unsolicited)
+    }
+
+    func testHelloAloneDoesNotClassify() async throws {
+        let events = try await eventsAfterSending([Self.compatibleHello])
+        XCTAssertEqual(events.count, 3, "hello envelope, helloCompleted, closed")
+        XCTAssertNil(classification(of: events))
+    }
+
+    /// The phone's notification extension says hello and then fetches with the
+    /// one-time nonce from the push. That must stay solicited, so the Mac does
+    /// not warn the user about its own fetch.
+    func testHelloThenFetchWithOutstandingNonceClassifiesAsSolicited() async throws {
+        let messagesSince = try await eventsAfterSending(
+            [Self.compatibleHello, .messagesSince(collapseToken: "t", seq: 0, limit: 10, nonce: "good")])
+        XCTAssertEqual(classification(of: messagesSince, outstandingNonces: ["good"]), .solicited)
+
+        let syncSince = try await eventsAfterSending(
+            [Self.compatibleHello, .syncSince(messageSeq: 0, alertSeq: 0, limit: 10, nonce: "good")])
+        XCTAssertEqual(classification(of: syncSince, outstandingNonces: ["good"]), .solicited)
+    }
+
+    func testFetchWithMissingOrUnknownNonceClassifiesAsUnsolicited() async throws {
+        let unknown = try await eventsAfterSending(
+            [Self.compatibleHello, .messagesSince(collapseToken: "t", seq: 0, limit: 10, nonce: "forged")])
+        XCTAssertEqual(classification(of: unknown, outstandingNonces: ["good"]), .unsolicited)
+
+        let missing = try await eventsAfterSending(
+            [Self.compatibleHello, .syncSince(messageSeq: 0, alertSeq: 0, limit: 10, nonce: nil)])
+        XCTAssertEqual(classification(of: missing, outstandingNonces: ["good"]), .unsolicited)
+    }
+
+    func testOtherRequestsClassifyAsUnsolicited() async throws {
+        let events = try await eventsAfterSending([Self.compatibleHello, .listChatsAndSessions])
+        XCTAssertEqual(classification(of: events), .unsolicited)
+    }
+
+    /// Existing behavior: an incompatible peer is reported as solicited so the
+    /// presence toast does not pile onto the upgrade alert.
+    func testIncompatibleHelloClassifiesAsSolicited() async throws {
+        let events = try await eventsAfterSending([Self.incompatibleHello])
+        XCTAssertEqual(classification(of: events), .solicited)
+    }
+}

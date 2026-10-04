@@ -439,10 +439,12 @@ final class CompanionPairingController: NSObject {
             // The gate no longer reads AI settings, so an AI toggle keeps the gate
             // open (the connection is NOT dropped). Instead, tell a live phone that
             // AI availability changed so it enables/disables its chat surfaces
-            // without reconnecting. The bridge dedupes against what it last
+            // without reconnecting. The link dedupes against what it last
             // advertised (seeded by its hello), so unrelated settings writes here
-            // do not emit a redundant event.
-            bridge?.updateAIAvailability(Self.aiAvailable())
+            // do not emit a redundant event. It reads the value from the cache.
+            let aiAvailable = Self.aiAvailable()
+            CompanionAIAvailabilityCache.shared.value = aiAvailable
+            bridge?.updateAIAvailability(aiAvailable)
             resumePairedListeningIfNeeded()
             return
         }
@@ -1421,7 +1423,14 @@ final class CompanionPairingController: NSObject {
                 }
                 relayLog("acceptLoop: handshake COMPLETE; creating bridge")
 
-                let newBridge = CompanionHostBridge(transport: channel)
+                // The link reads AI availability from the cache (it runs off the
+                // main actor), so make sure the copy is current before it can
+                // answer the phone's hello.
+                CompanionAIAvailabilityCache.shared.value = Self.aiAvailable()
+                let link = CompanionLink(transport: channel,
+                                         aiAvailability: .shared,
+                                         wantsNotificationPermission: { CompanionPushRegistry.alertsEverEnabled })
+                let newBridge = CompanionHostBridge(link: link)
                 newBridge.onClose = { [weak self, weak newBridge] error in
                     guard let self, let newBridge, self.bridge === newBridge else {
                         // A stale bridge must not tear down its replacement.
@@ -1453,6 +1462,7 @@ final class CompanionPairingController: NSObject {
                     self?.showVersionIncompatibleAlert(verdict)
                 }
                 newBridge.start()
+                link.start()
                 let staleBridge = bridge
                 bridge = newBridge
                 if let staleBridge {
