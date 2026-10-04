@@ -25,3 +25,6 @@ Bug Fixes:
 - Fixed a crash that could happen after using
   Find when the window got narrower before the
   match was highlighted.
+- Fixed a crash with the GPU renderer that
+  could happen after changing the font size
+  with Cmd-+ or Cmd--.

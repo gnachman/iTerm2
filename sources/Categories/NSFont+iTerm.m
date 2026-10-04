@@ -8,6 +8,8 @@
 
 #import "NSFont+iTerm.h"
 
+#import <os/lock.h>
+
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermBijection.h"
@@ -109,25 +111,32 @@ static iTermBijection<NSNumber *, NSFont *> *iTermMetalFontBijection(void) {
     return bijection;
 }
 
+// Guards iTermMetalFontBijection.
+static os_unfair_lock gMetalFontLock = OS_UNFAIR_LOCK_INIT;
+
+// This computes the font's identity from its descriptor, which is slow. Callers on hot paths
+// should get the ID from PTYFontInfo, or from the iTermMetalFontIDAttribute that travels with
+// the font in attributed strings, and call this only for fonts that don't come from there
+// (such as CoreText's fallback fonts).
 - (int)it_metalFontID {
     iTermBijection<NSNumber *, NSFont *> *bijection = iTermMetalFontBijection();
-    @synchronized(bijection) {
-        NSNumber *number = [bijection objectForRight:self];
-        if (number) {
-            return number.intValue;
-        }
+    os_unfair_lock_lock(&gMetalFontLock);
+    NSNumber *number = [bijection objectForRight:self];
+    if (!number) {
         static int nextNumber;
-        const int newNumber = nextNumber++;
-        [bijection link:@(newNumber) to:self];
-        return newNumber;
+        number = @(nextNumber++);
+        [bijection link:number to:self];
     }
+    os_unfair_lock_unlock(&gMetalFontLock);
+    return number.intValue;
 }
 
 + (instancetype)it_fontWithMetalID:(int)metalID {
     iTermBijection<NSNumber *, NSFont *> *bijection = iTermMetalFontBijection();
-    @synchronized(bijection) {
-        return [bijection objectForLeft:@(metalID)];
-    }
+    os_unfair_lock_lock(&gMetalFontLock);
+    NSFont *font = [bijection objectForLeft:@(metalID)];
+    os_unfair_lock_unlock(&gMetalFontLock);
+    return font;
 }
 
 - (CGSize)it_pitch {
