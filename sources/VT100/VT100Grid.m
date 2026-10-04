@@ -1527,7 +1527,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                       ansi:(BOOL)ansi
                     insert:(BOOL)insert
     externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes
-                  rtlFound:(BOOL)rtlFound
+                 rtlUpdate:(VT100GridRTLUpdate)rtlUpdate
+             bidiDirection:(iTermBidiDirection)bidiDirection
                    dwcFree:(BOOL)dwcFree {
     int numDropped = 0;
     assert(buffer);
@@ -1624,9 +1625,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                     newCursorX--;
                 }
 
-                if (rtlFound && cursor_.y != lastY) {
+                if (rtlUpdate != VT100GridRTLUpdateNone && cursor_.y != lastY) {
                     lastY = cursor_.y;
-                    [[self lineInfoAtLineNumber:cursor_.y] setRTLFound:rtlFound];
+                    [self applyRTLUpdate:rtlUpdate bidiDirection:bidiDirection toLine:cursor_.y];
                 }
                 screen_char_t *line = VT100GridScreenCharsAtLine(self, cursor_.y);
                 if (rightMargin == size_.width) {
@@ -1712,9 +1713,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         }
 
         const int lineNumber = cursor_.y;
-        if (rtlFound && cursor_.y != lastY) {
+        if (rtlUpdate != VT100GridRTLUpdateNone && cursor_.y != lastY) {
             lastY = cursor_.y;
-            [[self lineInfoAtLineNumber:cursor_.y] setRTLFound:rtlFound];
+            [self applyRTLUpdate:rtlUpdate bidiDirection:bidiDirection toLine:cursor_.y];
         }
         aLine = VT100GridScreenCharsAtLine(self, lineNumber);
         iTermExternalAttributeIndex *eaIndex = VT100GridGetExternalAttributes(self, lineNumber, attributes != nil);
@@ -2081,6 +2082,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             const BOOL sourceRTL = sourceMetadata.rtlFound;
             if (rect.origin.x == 0 && rect.size.width == size_.width) {
                 [[self lineInfoAtLineNumber:destIndex] setRTLFound:sourceRTL];
+                [[self lineInfoAtLineNumber:destIndex] setBidiDirection:sourceMetadata.bidiDirection];
                 // The DECDWL/DECDHL attribute describes how this line's cells
                 // are laid out (each character followed by a DWL_SPACER) and how
                 // they are drawn, so it has to move with them. Only whole-line
@@ -2092,6 +2094,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                 [self setLineAttribute:sourceMetadata.lineAttribute onLine:destIndex];
             } else if (sourceRTL) {
                 [[self lineInfoAtLineNumber:destIndex] setRTLFound:YES];
+                [[self lineInfoAtLineNumber:destIndex] setBidiDirection:sourceMetadata.bidiDirection];
             }
 
             sourceIndex -= direction;
@@ -2942,6 +2945,60 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                                                  length:self.size.width
                                                metadata:[self immutableMetadataAtLineNumber:line]
                                            continuation:chars[self.size.width]];
+}
+
+// Applies a write's effect on the RTL state of a line it touches. A write
+// dirties the cells it changes, which carries the line's metadata along, so
+// Found needs no extra marking here.
+- (void)applyRTLUpdate:(VT100GridRTLUpdate)rtlUpdate
+         bidiDirection:(iTermBidiDirection)bidiDirection
+                toLine:(int)line {
+    switch (rtlUpdate) {
+        case VT100GridRTLUpdateNone:
+            break;
+        case VT100GridRTLUpdateFound:
+            [self setRTLFoundInLine:line bidiDirection:bidiDirection];
+            break;
+        case VT100GridRTLUpdateClear:
+            [self clearRTLStateInLine:line];
+            break;
+    }
+}
+
+- (BOOL)setRTLFoundInLine:(int)line bidiDirection:(iTermBidiDirection)bidiDirection {
+    VT100LineInfo *info = [self lineInfoAtLineNumber:line];
+    if (info.rtlFound && info.bidiDirection == bidiDirection) {
+        return NO;
+    }
+    [info setRTLFound:YES];
+    [info setBidiDirection:bidiDirection];
+    return YES;
+}
+
+- (void)clearRTLStateInLine:(int)line {
+    VT100LineInfo *info = [self lineInfoAtLineNumber:line];
+    if (!info.rtlFound) {
+        // Cells only carry an RTL status on lines that were flagged and analyzed.
+        return;
+    }
+    [info setRTLFound:NO];
+    [info setBidiDirection:iTermBidiDirectionDefault];
+    [self resetRTLStatusInLine:line];
+    // Cells outside the range this write touches changed too, and the line may
+    // scroll into history before the next bidi pass, so mark the whole line now.
+    [self markLineDidChange:line];
+}
+
+- (BOOL)resetRTLStatusInLine:(int)line {
+    screen_char_t *chars = [self screenCharsAtLineNumber:line];
+    BOOL changed = NO;
+    for (int i = 0; i < size_.width; i++) {
+        if (chars[i].rtlStatus != RTLStatusUnknown) {
+            chars[i].rtlStatus = RTLStatusUnknown;
+            changed = YES;
+        }
+    }
+    return changed;
 }
 
 - (BOOL)mayContainRTLInRange:(NSRange)range {

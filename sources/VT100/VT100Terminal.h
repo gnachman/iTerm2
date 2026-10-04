@@ -45,6 +45,18 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, assign) BOOL reverseWraparoundMode;
 @property(nonatomic, readonly) BOOL isAnsi;
 @property(nonatomic, readonly) BOOL autorepeatMode;
+// BDSM (Bi-Directional Support Mode, ECMA-48 ANSI mode 8 as used by the
+// terminal-wg BiDi recommendation). YES (the default) is implicit mode: the
+// terminal reorders right-to-left text. NO is explicit mode: the app laid its
+// text out visually and the screen must not reorder it. CSI 8 h / CSI 8 l
+// change it only when the honorBidiSupportModeEscapeSequence advanced setting
+// is on. Each line snapshots this as it is written; see rtlFound.
+@property(nonatomic, readonly) BOOL bidiSupportMode;
+// SCP (Select Character Path, CSI Ps SP k): the base direction for bidi
+// reordering, recorded on lines as right-to-left text is written to them.
+// Default means use the paragraph-direction detection setting. Honored only
+// when the same advanced setting as bidiSupportMode is on.
+@property(nonatomic, readonly) iTermBidiDirection bidiDirectionHint;
 @property(nonatomic, assign) BOOL insertMode;
 @property(nonatomic, assign) BOOL sendReceiveMode;  // TODO: This is not actually used. It is a write-only variable. I guess I should add support for it but I doubt it's used much.
 @property(nonatomic, readonly) int charset;  // G0 through G3
@@ -101,6 +113,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 // Convert input to printable characters.
 @property(nonatomic) BOOL literalMode;
 
+// Always 0 in tmux mode. See the implementation.
 @property(nonatomic, readonly) VT100TerminalKeyReportingFlags keyReportingFlags;
 @property(nonatomic) BOOL sendResizeNotifications;
 @property(nonatomic) BOOL sendUnsolicitedDarkModeDSR;

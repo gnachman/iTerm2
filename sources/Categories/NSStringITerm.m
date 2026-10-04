@@ -1098,6 +1098,10 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSRange)rangeOfURLInString {
+    return [self rangeOfURLInStringAssumingScheme:YES];
+}
+
+- (NSRange)rangeOfURLInStringAssumingScheme:(BOOL)assumeScheme {
     NSString *trimmedURLString;
 
     // Trim whitespace
@@ -1107,7 +1111,7 @@ int decode_utf8_char(const unsigned char *datap,
         return NSMakeRange(NSNotFound, 0);
     }
 
-    NSRange range = [trimmedURLString rangeOfString:@":"];
+    const NSRange range = assumeScheme ? [trimmedURLString rangeOfString:@":"] : NSMakeRange(NSNotFound, 0);
     if (range.location != NSNotFound) {
         // Search backward to find the start of the scheme.
         NSMutableCharacterSet *schemeCharacterSet = [NSMutableCharacterSet alphanumericCharacterSet];
@@ -1841,6 +1845,15 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         index = NSMaxRange(range);
     } while (NSMaxRange(range) < (NSUInteger)len);
     free(heapBuf);
+}
+
+- (NSRange)rangeOfFirstComposedCharacter {
+    __block NSRange result = NSMakeRange(0, 0);
+    [self enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
+        result = range;
+        *stop = YES;
+    }];
+    return result;
 }
 
 - (NSString *)firstComposedCharacter:(NSString **)rest {

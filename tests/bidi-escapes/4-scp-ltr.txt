@@ -1,0 +1,6 @@
+Turn on the advanced setting that auto-detects paragraph direction first.
+Without SCP, a Hebrew-first line is detected as right-to-left:
+שלום abc 123
+[1 kWith SCP 1 (CSI 1 SP k) the same line is forced left-to-right:
+שלום abc 123
+[0 k

@@ -40,6 +40,7 @@
     self = [super init];
     if (self) {
         _line = [[NSMutableData alloc] init];
+        _serverMayOmitEndGuardBeforeExit = YES;
     }
     return self;
 }
@@ -110,13 +111,12 @@
 
     BOOL unhook = NO;
     if (_inResponseBlock) {
-        if ([command hasPrefix:@"%exit"]) {
+        if (self.serverMayOmitEndGuardBeforeExit && [command hasPrefix:@"%exit"]) {
             // Work around a bug in tmux 1.8: if unlink-window causes the current
             // session to be destroyed, no end guard is printed but %exit may be
-            // received.
-            // I submitted a patch to tmux on 4/6/13, but it's not clear how long the
-            // workaround should stick around.
-            // TODO: test tmux 1.9 and make sure this code can be removed, then remove it.
+            // received. Later servers never do this, and for them a %exit line
+            // inside a block is pane content (see serverMayOmitEndGuardBeforeExit),
+            // so this only applies until the server is known to be newer.
             result->type = TMUX_EXIT;
             _inResponseBlock = NO;
             unhook = YES;

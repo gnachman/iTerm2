@@ -400,10 +400,14 @@ final class PreconvertedStringTests: XCTestCase {
     ///   GB11       " " + ZWJ + woman -> space takes 1 (the ZWJ alone); a pictographic
     ///                                   predecessor takes 3 (ZWJ and the emoji with it)
     ///   GB6-GB8    " " + V + T       -> space takes 0; an L jamo takes 2
+    ///   modifier   " " + skin tone   -> space takes 0; an Emoji_Modifier_Base takes 2.
+    ///                                   Apple's clusters say 2 for both, but only the base
+    ///                                   keeps it in the same cell (issue 13079).
     func testSpaceAbsorbsLessThanAPredecessorWould() {
         XCTAssertEqual(absorbedBySpace("\u{1F1FA}\u{1F1F8}"), 0)
         XCTAssertEqual(absorbedBySpace("\u{200D}\u{1F469}\u{200D}\u{1F467}"), 1)
         XCTAssertEqual(absorbedBySpace("\u{1161}\u{11A8}ééé"), 0)
+        XCTAssertEqual(absorbedBySpace("\u{1F3FB}ééé"), 0)
     }
 
     /// Such strings are still preconverted: the buffer is correct whenever the predecessor

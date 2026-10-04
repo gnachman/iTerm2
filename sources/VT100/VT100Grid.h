@@ -345,6 +345,20 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 // Copy everything from another grid if needed.
 - (void)copyDirtyFromGrid:(VT100Grid *)otherGrid didScroll:(BOOL)didScroll;
 
+// Per-line RTL state, for writes that edit a line without going through
+// appendCharsAtCursor (a combining mark merged into its predecessor) and for the
+// bidi analysis pass. These change metadata or cells only; the first and last
+// return whether anything changed so the caller can mark the line changed.
+//
+// Flags the line as containing right-to-left text written under `bidiDirection`.
+- (BOOL)setRTLFoundInLine:(int)line bidiDirection:(iTermBidiDirection)bidiDirection;
+// Makes the line look like it never held right-to-left text: clears the flag,
+// the direction and every cell's RTL status, and marks the line changed.
+- (void)clearRTLStateInLine:(int)line;
+// Resets every cell's RTL status to unknown. Used when a line's bidi info is
+// dropped, since the status is only meaningful alongside a reorder table.
+- (BOOL)resetRTLStatusInLine:(int)line;
+
 // Append a string starting from the cursor's current position.
 // Returns number of scrollback lines dropped from lineBuffer.
 - (int)appendCharsAtCursor:(const screen_char_t *)buffer
@@ -356,7 +370,8 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                       ansi:(BOOL)ansi
                     insert:(BOOL)insert
     externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)attributes
-                  rtlFound:(BOOL)rtlFound
+                 rtlUpdate:(VT100GridRTLUpdate)rtlUpdate
+             bidiDirection:(iTermBidiDirection)bidiDirection  // SCP direction to record when rtlUpdate is Found
                    dwcFree:(BOOL)dwcFree;
 
 // Delete some number of chars starting at a given location, moving chars to the right of them back.

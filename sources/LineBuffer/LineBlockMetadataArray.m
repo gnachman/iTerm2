@@ -115,6 +115,7 @@
                           value->lineMetadata.rtlFound,
                           indexCopy,
                           value->lineMetadata.lineAttribute);
+        destination->lineMetadata.bidiDirection = value->lineMetadata.bidiDirection;
 
         destination->continuation = value->continuation;
         destination->number_of_wrapped_lines = 0;
@@ -234,7 +235,7 @@
             eaIndex = [[iTermExternalAttributeIndex alloc] initWithDictionary:encodedExternalAttributes];
         }
     }
-    // rtlFound and lineAttribute are optional trailing scalars. The metadata
+    // rtlFound, lineAttribute and bidiDirection are optional trailing scalars. The metadata
     // section is followed by an optional bidi block introduced by an empty-array
     // delimiter (@[]). Older versions wrote fewer metadata scalars: 3.6.11 shipped
     // bidi before lineAttribute existed, so its entries have the delimiter sitting
@@ -243,12 +244,14 @@
     // scalars are never arrays, so an NSArray here means we've reached the delimiter.
     NSNumber *rtlFound = (components.count > j && ![components[j] isKindOfClass:[NSArray class]]) ? components[j++] : @NO;
     NSNumber *lineAttribute = (components.count > j && ![components[j] isKindOfClass:[NSArray class]]) ? components[j++] : @0;
+    NSNumber *bidiDirection = (components.count > j && ![components[j] isKindOfClass:[NSArray class]]) ? components[j++] : @0;
 
     iTermMetadataInit(&_guts->_array[i].lineMetadata,
                       timestamp.doubleValue,
                       rtlFound.boolValue,
                       eaIndex,
                       (iTermLineAttribute)lineAttribute.intValue);
+    _guts->_array[i].lineMetadata.bidiDirection = (iTermBidiDirection)bidiDirection.intValue;
     _guts->_array[i].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
         _guts->_array[i].doubleWidthCharacters = nil;
@@ -351,6 +354,7 @@
                       value->lineMetadata.rtlFound,
                       indexCopy,
                       value->lineMetadata.lineAttribute);
+    destination->lineMetadata.bidiDirection = value->lineMetadata.bidiDirection;
 
     destination->continuation = value->continuation;
     destination->number_of_wrapped_lines = 0;
@@ -471,6 +475,10 @@
     iTermMetadataSetExternalAttributes(&_guts->_array[_guts->_numEntries - 1].lineMetadata,
                                        eaIndex);
 
+}
+
+- (iTermBidiDisplayInfo *)bidiInfoAtIndex:(int)i {
+    return [self metadataAtIndex:i]->bidi_display_info;
 }
 
 - (void)setRTLFound:(BOOL)rtlFound atIndex:(NSInteger)index {

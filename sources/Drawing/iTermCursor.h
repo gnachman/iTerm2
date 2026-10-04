@@ -22,12 +22,12 @@ typedef NS_ENUM(NSInteger, ITermCursorType) {
 
 @end
 
-// The maximum HDR cursor brightness, in units of reference white (so 1.0 is no
-// boost). Shared by the legacy additive-boost path (iTermCursor) and the Metal
-// cursor renderer so both request the same peak regardless of the display's
-// potential headroom, which would otherwise make the cursor change brightness
-// when the GPU renderer is toggled. The display tonemaps this down to what it can
-// actually show.
+// The maximum HDR cursor brightness, as a linear multiple of reference white (so
+// 1.0 is no boost). These are the same units as NSScreen's EDR headroom. It is
+// also the default for the profile's KEY_HDR_CURSOR_BRIGHTNESS, and is at least
+// the potential headroom of current displays, so the default is as bright as the
+// display allows. Shared by the legacy additive-boost path (iTermCursor) and the
+// Metal cursor renderer so both request the same peak.
 extern const CGFloat iTermHDRCursorMaximumBrightness;
 
 @interface iTermCursor : NSObject
@@ -39,10 +39,11 @@ extern const CGFloat iTermHDRCursorMaximumBrightness;
 // the caller via CGContextSetAlpha around -drawWithRect:. Defaults to 1.
 @property (nonatomic) CGFloat fadeAlpha;
 
-// Target brightness for a solid HDR cursor, in units of reference white (so 1.0
-// means no boost). When greater than 1, the solid fill is pushed past white with
-// additive passes so it renders as HDR on an EDR display. Defaults to 1.
-@property (nonatomic) CGFloat hdrBrightness;
+// Target component value for a solid HDR cursor in the extended (gamma-encoded)
+// color space, as returned by +hdrCursorComponentValueForRequestedBrightness:headroom:
+// (so 1.0 means no boost). When greater than 1, the solid fill is pushed past
+// white with additive passes so it renders as HDR on an EDR display. Defaults to 1.
+@property (nonatomic) CGFloat hdrComponentValue;
 
 + (iTermCursor *)cursorOfType:(ITermCursorType)theType;
 + (instancetype)itermCopyModeCursorInSelectionState:(BOOL)selecting;
@@ -87,5 +88,15 @@ extern const CGFloat iTermHDRCursorMaximumBrightness;
 // color, so it is NOT forced white; underline and vertical cursors are always
 // filled. Defined once so the legacy and Metal paths cannot drift on this rule.
 + (BOOL)hdrCursorForcesWhiteForType:(ITermCursorType)type focused:(BOOL)focused;
+
+// The color component value to draw an HDR cursor with. `requested` is the
+// profile's KEY_HDR_CURSOR_BRIGHTNESS and `headroom` is what the display can
+// take, both linear multiples of reference white. The cursor is drawn in an
+// extended sRGB-curve color space (extended sRGB or Display P3), where a
+// component value is gamma encoded: 2.0 is already about 5x white. So the
+// clamped linear brightness is encoded with the sRGB transfer function. Both
+// renderers use this so they agree on the peak.
++ (CGFloat)hdrCursorComponentValueForRequestedBrightness:(CGFloat)requested
+                                                headroom:(CGFloat)headroom;
 
 @end

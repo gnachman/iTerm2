@@ -980,6 +980,12 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (void)injectSynthesizedKeyEvent:(NSEvent *)event literalText:(nullable NSString *)literalText
     NS_SWIFT_NAME(injectSynthesizedKeyEvent(_:literalText:));
 
+// Records that the user just sent input to this session. Broadcastable writes
+// call this themselves; call it explicitly only for a user-initiated write that
+// deliberately does not broadcast, such as password entry. Drives the cursor
+// movement animation gate.
+- (void)noteUserInput;
+
 // Inject a mouse scroll-wheel report into the session as if the user
 // scrolled the wheel `lines` notches over the middle of the screen.
 // up=YES scrolls toward older content (MOUSE_BUTTON_SCROLLUP), up=NO

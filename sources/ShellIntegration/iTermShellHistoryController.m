@@ -162,7 +162,9 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
 // vacuum a database after changing the setting to in-memory. It doesn't make sense to vacuum RAM,
 // after all.
 - (BOOL)initializeCoreDataWithRetry:(BOOL)retry vacuum:(BOOL)vacuum {
-    NSURL *modelURL = [[NSBundle bundleForClass:self.class] URLForResource:@"Model" withExtension:@"momd"];
+    // Look the model up by the base class so a test subclass living in another bundle still finds
+    // it in the app bundle.
+    NSURL *modelURL = [[NSBundle bundleForClass:[iTermShellHistoryController class]] URLForResource:@"Model" withExtension:@"momd"];
     assert(modelURL);
 
     NSManagedObjectModel *managedObjectModel =

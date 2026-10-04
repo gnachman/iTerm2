@@ -190,6 +190,7 @@
 #import "iTermTextExtractor.h"
 #import "iTermTheme.h"
 #import "iTermThroughputEstimator.h"
+#import "iTermTmuxControlModeKeyName.h"
 #import "iTermTmuxOptionMonitor.h"
 #import "iTermTmuxStatusBarMonitor.h"
 #import "iTermURLStore.h"
@@ -474,6 +475,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // Time since reference date when last keypress was received.
     NSTimeInterval _lastInput;
 
+    // Monotonic (it_timeSinceBoot) time the user last sent input to the session.
+    // Bumped by noteUserInput. The write path treats a broadcastable write as a
+    // keystroke (it silences the bell and scrolls to the bottom), and this
+    // piggybacks on the same convention, so keystrokes, pastes, snippets,
+    // Composer commands, and the like are covered without each caller opting in.
+    // User routes that deliberately do not broadcast (mouse reports, password
+    // entry, the companion keyboard) call noteUserInput explicitly. Never bumped
+    // by anti-idle keepalives. Zero until the first input. Drives the cursor
+    // animation gate.
+    NSTimeInterval _lastUserInput;
+
     // Time since reference date when the tab label was last updated.
     NSTimeInterval _lastUpdate;
 
@@ -664,6 +676,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermTmuxOptionMonitor *_tmuxTitleMonitor;
     iTermTmuxOptionMonitor *_tmuxForegroundJobMonitor;
     iTermTmuxOptionMonitor *_paneIndexMonitor;
+    iTermTmuxOptionMonitor *_paneKeyModeMonitor;
+    // The key mode tmux reports for this pane, for display in the Terminal State
+    // menu. nil if tmux has not reported one we recognize.
+    iTermTmuxPaneKeyMode *_tmuxPaneKeyMode;
 
     iTermGraphicSource *_graphicSource;
     iTermVariableReference *_jobPidRef;
@@ -1246,6 +1262,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxForegroundJobMonitor release];
     [_paneIndexMonitor invalidate];
     [_paneIndexMonitor release];
+    [_paneKeyModeMonitor invalidate];
+    [_paneKeyModeMonitor release];
+    [_tmuxPaneKeyMode release];
     if (_metalContext) {
         CGContextRelease(_metalContext);
     }
@@ -4214,6 +4233,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             // beautiful here, but in that case we want to turn off the bell and scroll to the
             // bottom.
             [self setBell:NO];
+            [self noteUserInput];
             PTYScroller *verticalScroller = [_view.scrollview ptyVerticalScroller];
             [verticalScroller setUserScroll:NO];
         }
@@ -4438,6 +4458,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // write path stay in sync.
 - (void)didSendKeystrokeToTmuxClient {
     [self setBell:NO];
+    [self noteUserInput];
     PTYScroller *ptys = (PTYScroller *)[_view.scrollview verticalScroller];
     [ptys setUserScroll:NO];
 }
@@ -5850,6 +5871,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     const BOOL hdrCursorEnabled = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_HDR_CURSOR, aDict, dark)
                                                             inProfile:aDict];
     self.textview.hdrCursorEnabled = hdrCursorEnabled;
+    self.textview.hdrCursorBrightness = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_HDR_CURSOR_BRIGHTNESS, aDict, dark)
+                                                                   inProfile:aDict];
     if (_view.hdrCursorEnabled != hdrCursorEnabled) {
         _view.hdrCursorEnabled = hdrCursorEnabled;
         // The metal framebuffer pixel format is fp16 only when the HDR cursor is
@@ -10196,6 +10219,29 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                                            variableName:iTermVariableKeySessionTmuxWindowPaneIndex
                                                                   block:nil];
     [_paneIndexMonitor updateOnce];
+
+    // tmux is the authority on how the app in this pane wants keys encoded, since
+    // tmux is its terminal. This keeps the Terminal State menu showing that. It is
+    // for display only: tmux reports changes at most once a second, which is too
+    // late to decide how to encode a keystroke. That is why keys go to tmux by
+    // name (see -tmuxControlModeKeyNameForEvent:beforeInputMethod:). Issue 13076.
+    __weak __typeof(self) weakSelf = self;
+    _paneKeyModeMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:_tmuxController.gateway
+                                                                   scope:self.variablesScope
+                                                    fallbackVariableName:nil
+                                                                  format:@"#{pane_key_mode}"
+                                                                  target:[NSString stringWithFormat:@"%%%@", @(self.tmuxPane)]
+                                                            variableName:nil
+                                                                   block:^(NSString * _Nonnull paneKeyMode) {
+        [weakSelf setTmuxPaneKeyModeString:paneKeyMode];
+    }];
+    [_paneKeyModeMonitor updateOnce];
+}
+
+- (void)setTmuxPaneKeyModeString:(NSString *)paneKeyMode {
+    DLog(@"tmux pane key mode is %@", paneKeyMode);
+    [_tmuxPaneKeyMode autorelease];
+    _tmuxPaneKeyMode = [[iTermTmuxPaneKeyMode modeForString:paneKeyMode] retain];
 }
 
 // NOTE: Despite the name, this doesn't continuously monitor because that is
@@ -11004,6 +11050,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     _tmuxSecureLogging = secureLogging;
 }
 
+- (void)tmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit {
+    DLog(@"%@: tmux server may omit end guard before exit: %@", self, @(mayOmit));
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [terminal.parser setTmuxServerMayOmitEndGuardBeforeExit:mayOmit];
+    }];
+}
+
 - (void)tmuxWriteString:(NSString *)string {
     if (_exited) {
         return;
@@ -11187,6 +11240,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)setTmuxState:(NSDictionary *)state {
+    [self setTmuxPaneKeyModeString:[NSString castFrom:state[kStateDictPaneKeyMode]]];
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                              VT100ScreenMutableState *mutableState,
                                              id<VT100ScreenDelegate> delegate) {
@@ -11502,7 +11556,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return accept;
 }
 
+// Called before the event goes to Cocoa, and so to any input method.
 - (BOOL)textViewSendTmuxControlModeKeyEvent:(NSEvent *)event {
+    return [self sendTmuxControlModeKeyEvent:event beforeInputMethod:YES];
+}
+
+- (BOOL)sendTmuxControlModeKeyEvent:(NSEvent *)event beforeInputMethod:(BOOL)beforeInputMethod {
     // The pre-Cocoa hook runs before insertText:'s _exited guard, so drop keys
     // for a dead pane here too (the gateway can outlive the pane, e.g. after
     // cleanUpAfterBrokenPipe leaves tmuxMode set).
@@ -11532,19 +11591,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if ([[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
         return NO;
     }
-    // Only the modifyOtherKeys mappers (level 1 and 2) adopt the naming protocol,
-    // and deliberately so: their encoding is a fixed CSI-27 form that can mismatch
-    // the pane's negotiated extended-keys-format (the bug this fixes), so tmux
-    // must re-encode. The other mappers are intentionally left on the byte path
-    // because their bytes are already what the pane wants: iTermModernKeyMapper
-    // emits the kitty flags the app itself enabled, and iTermTermkeyKeyMapper
-    // emits the CSI-u form the profile selected -- injecting those verbatim is
-    // correct. If a new mapper has a format that can diverge from tmux, it should
-    // adopt iTermTmuxControlModeKeyNaming.
-    if (![_keyMapper conformsToProtocol:@protocol(iTermTmuxControlModeKeyNaming)]) {
-        return NO;
-    }
-    NSString *name = [(id<iTermTmuxControlModeKeyNaming>)_keyMapper tmuxControlModeKeyNameForEvent:event];
+    NSString *name = [self tmuxControlModeKeyNameForEvent:event beforeInputMethod:beforeInputMethod];
     if (!name) {
         return NO;
     }
@@ -11554,6 +11601,102 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // the delegated send-keys path would otherwise skip.
     [self didSendKeystrokeToTmuxClient];
     return YES;
+}
+
+// Returns the name to send tmux for this keystroke, or nil to use the byte path.
+- (NSString *)tmuxControlModeKeyNameForEvent:(NSEvent *)event beforeInputMethod:(BOOL)beforeInputMethod {
+    if ([[_tmuxController gateway] serverEncodesAllKeys]) {
+        // Multi-character or dead-key input is text.
+        if (event.type != NSEventTypeKeyDown || event.charactersIgnoringModifiers.length != 1) {
+            return nil;
+        }
+        // Before the input method, take only the keys the byte path would also
+        // take there (such as Control combinations and Shift+Tab); otherwise the
+        // key mapper would send them as bytes right after we decline. Everything
+        // else (Enter, Escape, arrows, and so on) must reach the input method
+        // first: it may be composing text, or use the key itself. If it doesn't,
+        // the key comes back through the post-Cocoa call.
+        if (beforeInputMethod && ![_keyMapper keyMapperStringForPreCocoaEvent:event]) {
+            return nil;
+        }
+        // tmux is the application's terminal and knows the pane's current key
+        // mode, including the Kitty keyboard protocol, which it keeps across a
+        // detach. We don't: we learn of changes late, if at all. So hand tmux
+        // every key it can name and let it do the encoding. Issue 13076.
+        //
+        // The exception is a mode the user chose that tmux has no equivalent for,
+        // CSI u (the profile's libtickit setting) or raw key reporting. Those keep
+        // the byte path so the user gets the encoding they asked for.
+        //
+        // The modifyOtherKeys level is the one piece of the pane's key mode we do
+        // know promptly: the pane requests it through output tmux forwards to us
+        // and we parse as tmux does, and on attach it is applied from
+        // pane_key_mode before any key is sent. A few Control combinations are
+        // named only when the pane has asked for it; see iTermTmuxControlModeKeyName.
+        BOOL modifyOtherKeys;
+        switch (_keyMappingMode) {
+            case iTermKeyMappingModeStandard:
+                modifyOtherKeys = NO;
+                break;
+            case iTermKeyMappingModeModifyOtherKeys1:
+            case iTermKeyMappingModeModifyOtherKeys2:
+                modifyOtherKeys = YES;
+                break;
+            case iTermKeyMappingModeCSIu:
+            case iTermKeyMappingModeRaw:
+                return nil;
+        }
+        return iTermTmuxControlModeKeyName([self tmuxControlModeCodePointForEvent:event],
+                                           [self tmuxControlModeModifiersForEvent:event],
+                                           [self tmuxControlModeOptionActsAsMetaForEvent:event],
+                                           event.it_isNumericKeypadKey,
+                                           modifyOtherKeys);
+    }
+    // Only the modifyOtherKeys mappers (level 1 and 2) adopt the naming protocol,
+    // and deliberately so: their encoding is a fixed CSI-27 form that can mismatch
+    // the pane's negotiated extended-keys-format (the bug this fixes), so tmux
+    // must re-encode. The other mappers are intentionally left on the byte path
+    // because their bytes are already what the pane wants: iTermModernKeyMapper
+    // is never used in a tmux pane, and iTermTermkeyKeyMapper emits the CSI-u form
+    // the profile selected -- injecting that verbatim is correct. If a new mapper
+    // has a format that can diverge from tmux, it should adopt
+    // iTermTmuxControlModeKeyNaming.
+    if (![_keyMapper conformsToProtocol:@protocol(iTermTmuxControlModeKeyNaming)]) {
+        return nil;
+    }
+    return [(id<iTermTmuxControlModeKeyNaming>)_keyMapper tmuxControlModeKeyNameForEvent:event];
+}
+
+- (UTF32Char)tmuxControlModeCodePointForEvent:(NSEvent *)event {
+    if (event.keyCode == kVK_Tab) {
+        // Shift+Tab reports a different character.
+        return '\t';
+    }
+    if (event.it_isControlCodeWithOption) {
+        // Keyboards like Spanish ISO need option to type some control codes
+        // (ctrl+opt++ for C-]). Name the key the control code belongs to.
+        return [event.characters characterAtIndex:0] + '@';
+    }
+    NSString *const characters = event.charactersIgnoringModifiers;
+    return characters.length == 1 ? [characters characterAtIndex:0] : 0;
+}
+
+- (NSEventModifierFlags)tmuxControlModeModifiersForEvent:(NSEvent *)event {
+    NSEventModifierFlags flags = event.it_modifierFlags;
+    if (event.it_isControlCodeWithOption) {
+        // Option was only needed to reach the control code; don't report it.
+        flags &= ~NSEventModifierFlagOption;
+    }
+    return flags;
+}
+
+- (BOOL)tmuxControlModeOptionActsAsMetaForEvent:(NSEvent *)event {
+    const NSEventModifierFlags flags = event.it_modifierFlags;
+    if (!(flags & NSEventModifierFlagOption)) {
+        return NO;
+    }
+    const BOOL right = (flags & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    return (right ? self.rightOptionKey : self.optionKey) != OPT_NORMAL;
 }
 
 - (BOOL)shouldReportOrFilterKeystrokesForAPI {
@@ -12039,6 +12182,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             }
             NSString *text = [NSString castFrom:action.parameter];
             if (text.length > 0) {
+                // This write does not broadcast, so the write path will not
+                // note it as user input; do so here.
+                [self noteUserInput];
                 [self writeTask:[self escapedText:text mode:action.vimEscaping]
                        encoding:_screen.terminalEncoding
                   forceEncoding:NO
@@ -12676,15 +12822,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (_textview.keyboardHandler.performsTextReplacement) {
         [self performTextReplacement];
     }
-    // In a tmux -CC pane, hand a modifyOtherKeys "other key" to tmux by name so
-    // it re-encodes it in the pane's own extended-keys-format. This post-Cocoa
-    // site backstops keystrokes that never reach the pre-Cocoa hook: option-as-
-    // meta keys (keyMapperShouldBypassPreCocoaForEvent returns YES for them, so
-    // shouldSendEventToController routes them to the controller before the
-    // pre-Cocoa block runs), plus the marked-text and Bypass-Terminal cases where
-    // that block is skipped. Ctrl/Shift "other keys" are consumed at the pre-
-    // Cocoa hook and don't reach here.
-    if ([self textViewSendTmuxControlModeKeyEvent:event]) {
+    // In a tmux -CC pane, hand the keystroke to tmux by name so it encodes it for
+    // the pane's own key mode (see -tmuxControlModeKeyNameForEvent:beforeInputMethod:).
+    // This post-Cocoa site backstops keystrokes that never reach the pre-Cocoa
+    // hook: option-as-meta keys (keyMapperShouldBypassPreCocoaForEvent returns YES
+    // for them, so shouldSendEventToController routes them to the controller
+    // before the pre-Cocoa block runs), plus the marked-text and Bypass-Terminal
+    // cases where that block is skipped. It is also where keys the pre-Cocoa hook
+    // leaves for the input method arrive when the input method doesn't use them.
+    if ([self sendTmuxControlModeKeyEvent:event beforeInputMethod:NO]) {
         return;
     }
     NSData *const dataToSend = [_keyMapper keyMapperDataForPostCocoaEvent:event];
@@ -14008,6 +14154,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             // letter, emoji, dead-key result). Its fallback key code would be mis-encoded
             // by the CSI-u key mapper, so write the correct character literally - but
             // through the same broadcast-suppressed, already-gated path as the mapped keys.
+            [self noteUserInput];
             [self writeTaskNoBroadcast:literalText];
         } else {
             // Route through the real key-down path so profile key bindings (e.g. Delete
@@ -14096,6 +14243,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)writeMouseReport:(NSData *)data {
+    [self noteUserInput];
     if ([iTermAdvancedSettingsModel autodetectMouseReportingStuck] &&
         ![iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration] &&
         ![self hasAnnouncementWithIdentifier:kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier]) {
@@ -14676,12 +14824,88 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _screen.terminalSoftAlternateScreenMode;
 }
 
+// Records that the user just sent input to this session. Called by the write
+// path for broadcastable writes and explicitly by no-broadcast user routes.
+// See _lastUserInput.
+- (void)noteUserInput {
+    _lastUserInput = [NSDate it_timeSinceBoot];
+    DLog(@"User input noted for %@", self);
+}
+
+- (NSTimeInterval)textViewTimeSinceLastUserInput {
+    if (_lastUserInput == 0) {
+        return INFINITY;
+    }
+    return [NSDate it_timeSinceBoot] - _lastUserInput;
+}
+
 - (iTermEmulationLevel)textViewTerminalStateEmulationLevel {
     return _screen.terminalEmulationLevel;
 }
 
+// When tmux encodes this pane's keys, the key mode it reports for the pane, which
+// is what the Terminal State menu should show. nil to show our own state, which
+// is also the case when the user chose a mode tmux has no equivalent for.
+- (iTermTmuxPaneKeyMode *)tmuxPaneKeyModeForDisplay {
+    if (self.tmuxMode != TMUX_CLIENT || ![[_tmuxController gateway] serverEncodesAllKeys]) {
+        return nil;
+    }
+    switch (_keyMappingMode) {
+        case iTermKeyMappingModeStandard:
+        case iTermKeyMappingModeModifyOtherKeys1:
+        case iTermKeyMappingModeModifyOtherKeys2:
+            return _tmuxPaneKeyMode;
+        case iTermKeyMappingModeCSIu:
+        case iTermKeyMappingModeRaw:
+            return nil;
+    }
+    return nil;
+}
+
+- (BOOL)textViewCanToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem {
+    switch (menuItem.tag) {
+        case 8:
+        case 9:
+            // modifyOtherKeys. When tmux encodes the keys it follows the pane's
+            // mode, which only the app in the pane can change. Standard (7) stays
+            // enabled as the way back from CSI u or raw mode.
+            return ![[_tmuxController gateway] serverEncodesAllKeys];
+
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+        case 16:
+            // Kitty keyboard protocol flags are always off in a tmux pane. See
+            // -[VT100Terminal keyReportingFlags].
+            return self.tmuxMode != TMUX_CLIENT;
+
+        default:
+            return YES;
+    }
+}
+
 // NOTE: Make sure to update both the context menu and the main menu when modifying these.
 - (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem {
+    iTermTmuxPaneKeyMode *tmuxPaneKeyMode = [self tmuxPaneKeyModeForDisplay];
+    if (tmuxPaneKeyMode) {
+        switch (menuItem.tag) {
+            case 7:
+                return tmuxPaneKeyMode.modifyOtherKeys == 0;
+            case 8:
+                return tmuxPaneKeyMode.modifyOtherKeys == 1;
+            case 9:
+                return tmuxPaneKeyMode.modifyOtherKeys == 2;
+            case 12:
+            case 13:
+            case 14:
+            case 15:
+            case 16:
+                return !!(tmuxPaneKeyMode.kittyFlags & (1 << (menuItem.tag - 12)));
+            default:
+                break;
+        }
+    }
     switch (menuItem.tag) {
         case 1:
             return _screen.showingAlternateScreen;
@@ -22911,6 +23135,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 #pragma mark - iTermEchoProbeDelegate
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string {
+    [self noteUserInput];
     if (self.tmuxMode == TMUX_GATEWAY) {
         return;
     }
@@ -22925,6 +23150,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data {
+    [self noteUserInput];
     if (self.tmuxMode == TMUX_GATEWAY) {
         return;
     }

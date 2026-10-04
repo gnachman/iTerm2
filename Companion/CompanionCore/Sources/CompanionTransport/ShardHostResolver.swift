@@ -24,9 +24,26 @@ public protocol ShardHostResolving: Sendable {
     /// blocks on a fresh map fetch, for a re-resolve after an HTTP 421 / WS 4421
     /// (§6.9), where the cached map is known stale.
     func relayOrigin(for code: PairingCode, forceFresh: Bool) async throws -> String
+
+    /// What the latest map fetch has found so far (see
+    /// ShardMapLoader.failureSoFar), for a caller whose own timeout cut the
+    /// resolve short. Nil if unknown.
+    func failureSoFar() async -> ShardMapFetchError?
+
+    /// Every URL the map is fetched from, primary first, for naming them when
+    /// a resolve fails with nothing else to report. Empty if unknown.
+    func mapSourceURLs() async -> [String]
 }
 
 public extension ShardHostResolving {
+    func failureSoFar() async -> ShardMapFetchError? {
+        nil
+    }
+
+    func mapSourceURLs() async -> [String] {
+        []
+    }
+
     /// Steady-state resolve: cached host immediately, refresh in the background.
     func relayOrigin(for code: PairingCode) async throws -> String {
         try await relayOrigin(for: code, forceFresh: false)
@@ -44,11 +61,15 @@ public struct ShardHostResolver: ShardHostResolving {
     ///   outbound path), and a `URLSessionShardMapFetcher()` default would let a
     ///   Mac call site bypass the consent plugin without noticing. The phone
     ///   passes URLSession explicitly (it has no plugin).
+    /// - mirrorTiming: when to start fetching the map's mirrors (see
+    ///   ShardMapMirrorTiming).
     public init(resolverURL: String,
                 fetcher: ShardMapFetching,
+                mirrorTiming: ShardMapMirrorTiming = .afterDelay,
                 initialHighestVersion: Int? = nil,
                 floorStore: ShardMapVersionFloorStore? = nil) {
         self.loader = ShardMapLoader(resolverURL: resolverURL,
+                                     mirrorTiming: mirrorTiming,
                                      fetcher: fetcher,
                                      initialHighestVersion: initialHighestVersion,
                                      floorStore: floorStore)
@@ -106,6 +127,15 @@ public struct ShardHostResolver: ShardHostResolving {
         CompanionLog.log("shardresolve: bucket \(bucket) -> https://\(host)")
         return "https://\(host)"
     }
+
+    /// See ShardMapLoader.failureSoFar.
+    public func failureSoFar() async -> ShardMapFetchError? {
+        await loader.failureSoFar()
+    }
+
+    public func mapSourceURLs() async -> [String] {
+        loader.sourceURLs
+    }
 }
 
 /// A per-session cache of one ShardHostResolver, keyed by (resolver URL, egress
@@ -126,14 +156,18 @@ public struct ShardResolverCache {
     ///   so it is NOT part of the cache key; it is applied when a resolver is built.
     ///   Seeds the loader's floor from persisted state and receives every adopted
     ///   version, so the highest-seen version survives a relaunch.
+    /// - mirrorTiming: when to start fetching the map's mirrors. Like the floor
+    ///   store, a per-app constant, so not part of the cache key.
     public mutating func resolver(resolverURL: String,
                                   token: ObjectIdentifier?,
                                   fetcher: ShardMapFetching,
+                                  mirrorTiming: ShardMapMirrorTiming = .afterDelay,
                                   floorStore: ShardMapVersionFloorStore? = nil) -> ShardHostResolver {
         if let cached, cached.resolverURL == resolverURL, cached.token == token {
             return cached.resolver
         }
-        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher, floorStore: floorStore)
+        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher,
+                                         mirrorTiming: mirrorTiming, floorStore: floorStore)
         cached = (resolverURL, token, resolver)
         return resolver
     }

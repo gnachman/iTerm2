@@ -13,14 +13,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) NSArray<NSString *> *args;
 
-@property (nonatomic, readonly) NSString *script;
-@property (nonatomic, readonly) NSString *module;
-@property (nonatomic, readonly) NSString *statement;
+@property (nonatomic, readonly, nullable) NSString *script;
+@property (nonatomic, readonly, nullable) NSString *module;
+@property (nonatomic, readonly, nullable) NSString *statement;
 @property (nonatomic, readonly) NSString *fullPythonPath;
 
-@property (nonatomic, readonly) NSString *escapedScript;
-@property (nonatomic, readonly) NSString *escapedModule;
-@property (nonatomic, readonly) NSString *escapedStatement;
+@property (nonatomic, readonly, nullable) NSString *escapedScript;
+@property (nonatomic, readonly, nullable) NSString *escapedModule;
+@property (nonatomic, readonly, nullable) NSString *escapedStatement;
 @property (nonatomic, readonly) NSString *escapedFullPythonPath;
 @property (nonatomic, readonly) BOOL repl;
 

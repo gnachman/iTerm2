@@ -170,6 +170,26 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         return;
     }
 
+    // An input method can finish a composition by committing it with
+    // -insertText:replacementRange: and then handing the keystroke back to us as a command
+    // selector. When that happens the key is ours to handle: the composition is already gone
+    // by the time we get here, so the delete would otherwise be dropped and the committed
+    // text left behind. _keyPressHandled distinguishes this from the case where the IME
+    // consumed the keystroke to edit its composition, in which case there is nothing to do.
+    // Issue 13030.
+    if (_keyPressHandled &&
+        _hadMarkedTextBeforeHandlingKeypressEvent &&
+        ![self hasMarkedText] &&
+        _eventBeingHandled &&
+        (aSelector == @selector(deleteBackward:) ||
+         aSelector == @selector(deleteBackwardByDecomposingPreviousCharacter:) ||
+         aSelector == @selector(insertNewline:))) {
+        DLog(@"IME committed and handed back %@; sending to delegate", NSStringFromSelector(aSelector));
+        [self.delegate keyboardHandler:self sendEventToController:_eventBeingHandled];
+        DLog(@"returning from doCommandBySelector:%@", NSStringFromSelector(aSelector));
+        return;
+    }
+
     if ([iTermAdvancedSettingsModel experimentalKeyHandling] || [iTermAdvancedSettingsModel enableCharacterAccentMenu]) {
         // Pass the event to the delegate since doCommandBySelector was called instead of
         // insertText:replacementRange:, unless an IME is in use. An example of when this gets called
@@ -469,9 +489,9 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     // code or keypad sequence) to the terminal is exactly what bypass is meant to prevent. Let the
     // event fall through to Cocoa so macOS handles it normally. Issue 12884.
     if (!context.hasBypassKeyMapping && [self shouldAllowPreCocoaKeyMappingForEvent:event]) {
-        // In a tmux -CC pane, hand a modifyOtherKeys "other key" to tmux by name
-        // so it re-encodes it in the pane's own key mode + extended-keys-format,
-        // rather than injecting our own (possibly wrong-format) byte encoding.
+        // In a tmux -CC pane, hand the keystroke to tmux by name so it encodes it
+        // for the pane's own key mode, rather than injecting our own (possibly
+        // wrong-format) byte encoding.
         if ([self.delegate keyboardHandler:self sendTmuxControlModeKeyEvent:event]) {
             return;
         }

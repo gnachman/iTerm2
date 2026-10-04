@@ -100,7 +100,12 @@ launchProfileInCurrentTerminal:(Profile *)profile
                       style:(iTermOpenStyle)style
    smartSelectionActionsOnly:(BOOL)smartSelectionActionsOnly;
 
-- (void)findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background style:(iTermOpenStyle)style;
+// Opens the URL found in aURLString, if any app can open it. With guessScheme, scheme-less
+// text like example.com/path gets the default scheme the way ⌘-click guesses it.
+- (void)findUrlInString:(NSString *)aURLString
+    andOpenInBackground:(BOOL)background
+                  style:(iTermOpenStyle)style
+         guessingScheme:(BOOL)guessScheme;
 
 - (void)downloadFileAtSecureCopyPath:(SCPPath *)scpPath
                          displayName:(NSString *)name

@@ -554,3 +554,72 @@ extension String {
         return out
     }
 }
+
+// MARK: - Filenames
+
+extension String {
+    // Characters that are illegal or troublesome in a single path component.
+    // "/" is the POSIX separator and NUL is illegal everywhere. ":" is legal on
+    // APFS but Finder displays it as "/". The rest are rejected on SMB shares
+    // and on exFAT or NTFS volumes, which archive and log folders often live on.
+    private static let it_charactersUnsafeInFilenames: CharacterSet = {
+        var set = CharacterSet(charactersIn: "/:\\*?\"<>|")
+        set.insert(charactersIn: Unicode.Scalar(0)...Unicode.Scalar(0x1f))  // C0 controls
+        set.insert(charactersIn: Unicode.Scalar(0x7f)...Unicode.Scalar(0x9f))  // DEL and C1 controls
+        return set
+    }()
+
+    // The longest suffix we are willing to treat as an extension when truncating.
+    private static let it_maximumPreservedExtensionBytes = 32
+
+    // Returns a string that is safe to use as a single filename on macOS and on
+    // common non-native volumes. Unsafe characters become underscores, leading
+    // and trailing whitespace is dropped, a leading dot is replaced so the file
+    // is not hidden, and the result is truncated to `maxBytes` of UTF-8 on a
+    // grapheme boundary, keeping a short path extension intact. APFS limits a
+    // filename to 255 bytes, hence the default.
+    func it_sanitizedForFilename(maxBytes: Int = 255) -> String {
+        var name = unicodeScalars.map { scalar -> String in
+            if String.it_charactersUnsafeInFilenames.contains(scalar) {
+                return "_"
+            }
+            return String(scalar)
+        }.joined()
+        name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if name.hasPrefix(".") {
+            name = "_" + name.dropFirst()
+        }
+        if name.isEmpty {
+            return "_"
+        }
+        if name.utf8.count <= maxBytes {
+            return name
+        }
+
+        let ext = name.pathExtension
+        let extensionSuffix = ext.isEmpty ? "" : "." + ext
+        let extensionBytes = extensionSuffix.utf8.count
+        if extensionBytes > 0 && extensionBytes <= String.it_maximumPreservedExtensionBytes && extensionBytes < maxBytes {
+            let stem = String(name.dropLast(extensionSuffix.count))
+            return stem.it_truncated(toUTF8Bytes: maxBytes - extensionBytes) + extensionSuffix
+        }
+        return name.it_truncated(toUTF8Bytes: maxBytes)
+    }
+
+    // Drops trailing Characters until the UTF-8 encoding fits in `maxBytes`.
+    // Cutting on Character boundaries keeps emoji sequences and combining
+    // marks whole.
+    private func it_truncated(toUTF8Bytes maxBytes: Int) -> String {
+        var bytes = 0
+        var end = startIndex
+        for i in indices {
+            let width = self[i].utf8.count
+            if bytes + width > maxBytes {
+                break
+            }
+            bytes += width
+            end = index(after: i)
+        }
+        return String(self[startIndex..<end])
+    }
+}

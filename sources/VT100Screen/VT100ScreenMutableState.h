@@ -592,6 +592,11 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
 
 - (void)setTmuxState:(NSDictionary *)state;
 
+// Applies the modifyOtherKeys level from a tmux #{pane_key_mode} value. A value
+// that does not describe one (including the empty string from tmux before 3.5)
+// leaves it alone.
+- (void)applyTmuxPaneKeyMode:(nullable NSString *)paneKeyMode;
+
 #pragma mark - SSH
 
 - (NSString *)sshEndBannerTerminatingCount:(NSInteger)count newLocation:(NSString *)sshLocation;

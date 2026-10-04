@@ -26,9 +26,7 @@
     const LineBlockMetadata *metadata = [_metadataArray metadataAtIndex:i];
     iTermBidiDisplayInfo *actual = metadata->bidi_display_info;
     if (actual) {
-        MutableScreenCharArray *msca = [[MutableScreenCharArray alloc] initWithLine:_characterBuffer.pointer + [self _lineRawOffset:i]
-                                                                             length:[self _lineLength:i]
-                                                                       continuation:metadata->continuation];
+        MutableScreenCharArray *msca = [self mutableScreenCharArrayForRawLine:i];
         iTermBidiDisplayInfo *expected = [[iTermBidiDisplayInfo alloc] initUnpaddedWithScreenCharArray:msca];
         ITAssertWithMessage([actual isEqual:expected], @"actual=%@ expected=%@", actual, expected);
     }
@@ -50,10 +48,12 @@
     return NO;
 }
 
+// Carries the line's metadata so the bidi analysis can read its SCP direction.
 - (MutableScreenCharArray *)mutableScreenCharArrayForRawLine:(int)i {
     const LineBlockMetadata *md = [_metadataArray metadataAtIndex:i];
     return [[MutableScreenCharArray alloc] initWithLine:_characterBuffer.pointer + [self _lineRawOffset:i]
                                                  length:[self _lineLength:i]
+                                               metadata:iTermMetadataMakeImmutable(md->lineMetadata)
                                            continuation:md->continuation];
 }
 
@@ -77,6 +77,15 @@
     } else if (md->bidi_display_info == nil) {
         // It's already nil so return to avoid making a CoW of _metadataArray for nothing.
         return;
+    } else {
+        // Dropping the line's bidi info. The per-cell RTL status the last analysis
+        // wrote is only meaningful alongside it, so reset the cells too.
+        msca = [self mutableScreenCharArrayForRawLine:i];
+        const int length = msca.length;
+        screen_char_t *line = msca.mutableLine;
+        for (int j = 0; j < length; j++) {
+            line[j].rtlStatus = RTLStatusUnknown;
+        }
     }
 
     DLog(@"Block recomputed bidi for raw line %d: %@. string=%@", i, bidiInfo, [msca stringValue]);

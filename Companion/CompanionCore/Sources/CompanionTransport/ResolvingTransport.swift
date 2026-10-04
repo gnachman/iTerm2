@@ -33,8 +33,10 @@ struct ResolvingTransportConnector: TransportConnector {
         // inner connect only the remaining budget so the total stays within
         // `timeout`.
         let start = Date()
-        let relayOrigin = try await withResolveTimeout(timeout) {
-            try await resolver.relayOrigin(for: code)
+        // The scope ties failureSoFar() to this connect's own map fetch: the
+        // resolver is shared, and another caller's fetch may overlap this one.
+        let relayOrigin = try await ShardMapFetchScope.$current.withValue(ShardMapFetchScope()) {
+            try await resolveRelayOrigin(timeout: timeout)
         }
         let remaining = max(1, timeout - Date().timeIntervalSince(start))
         CompanionLog.log("resolved connect: joining \(relayOrigin) (\(Int(remaining))s left of \(Int(timeout))s)")
@@ -51,6 +53,37 @@ struct ResolvingTransportConnector: TransportConnector {
                                                 nonDisplacing: nonDisplacing,
                                                 webSocketFactory: webSocketFactory)
         return try await connector.connect(to: rendezvous, timeout: remaining)
+    }
+
+    /// The relay host for `code`, within `timeout`. A map that cannot be
+    /// fetched is thrown as TransportError.shardMapUnavailable.
+    private func resolveRelayOrigin(timeout: TimeInterval) async throws -> String {
+        do {
+            return try await withResolveTimeout(timeout) {
+                try await resolver.relayOrigin(for: code)
+            }
+        } catch let error as ShardMapFetchError {
+            // Every source failed: say what went wrong with each rather than
+            // surface a raw URL error.
+            CompanionLog.log("resolved connect: shard map unavailable: \(error.details)")
+            throw TransportError.shardMapUnavailable(summary: error.summary, details: error.details)
+        } catch is ResolveTimeoutError {
+            // Keep whatever already went wrong (e.g. the primary failed DNS while
+            // only the mirror was still waiting) rather than claiming that no
+            // source responded.
+            if let partial = await resolver.failureSoFar() {
+                CompanionLog.log("resolved connect: shard map timed out: \(partial.details)")
+                throw TransportError.shardMapUnavailable(summary: partial.summary, details: partial.details)
+            }
+            // Name the sources the resolver really uses; failing that, the one
+            // every resolved-mode code has.
+            let known = await resolver.mapSourceURLs()
+            let urls = known.isEmpty ? [code.resolverURL].compactMap { $0 } : known
+            let summary = ShardMapFetchError.noAnswerSummary(urls: urls, within: timeout)
+            let details = ShardMapFetchError.noAnswerDetails(urls: urls, within: timeout)
+            CompanionLog.log("resolved connect: shard map timed out: \(summary)")
+            throw TransportError.shardMapUnavailable(summary: summary, details: details)
+        }
     }
 }
 

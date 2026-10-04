@@ -53,6 +53,8 @@ NS_ASSUME_NONNULL_BEGIN
 // + dark background): the cursor is drawn as a bright HDR white and its character
 // bold. Computed once in the glue so the cursor renderer and the bold path agree.
 @property (nonatomic) BOOL useHDRWhite;
+// The profile's requested peak HDR brightness (KEY_HDR_CURSOR_BRIGHTNESS).
+@property (nonatomic) CGFloat hdrBrightness;
 @end
 
 @interface iTermMetalIMEInfo : NSObject

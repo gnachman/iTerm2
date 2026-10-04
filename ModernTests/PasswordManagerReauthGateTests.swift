@@ -36,4 +36,43 @@ final class PasswordManagerReauthGateTests: XCTestCase {
         XCTAssertTrue(PasswordManagerDataSourceProvider.mayReuseAuthentication(authRequired: false,
                                                                                requireEveryOpen: false))
     }
+
+    // The settings menu shows the three stored settings as one exclusive choice.
+    private func mode(_ authRequired: Bool,
+                      _ afterScreenLocks: Bool,
+                      _ everyOpen: Bool) -> PasswordManagerAuthenticationMode {
+        return PasswordManagerDataSourceProvider.authenticationMode(authRequired: authRequired,
+                                                                    afterScreenLocks: afterScreenLocks,
+                                                                    everyOpen: everyOpen)
+    }
+
+    func testModeIsNeverWhenAuthNotRequired() {
+        // Leftover sub-settings from before authentication was turned off don't matter.
+        XCTAssertEqual(mode(false, false, false), .never)
+        XCTAssertEqual(mode(false, true, false), .never)
+        XCTAssertEqual(mode(false, false, true), .never)
+        XCTAssertEqual(mode(false, true, true), .never)
+    }
+
+    func testModeOncePerLaunch() {
+        XCTAssertEqual(mode(true, false, false), .oncePerLaunch)
+    }
+
+    func testModeOncePerLaunchAndAfterScreenLocks() {
+        XCTAssertEqual(mode(true, true, false), .oncePerLaunchAndAfterScreenLocks)
+    }
+
+    func testEveryOpenTakesPrecedenceOverAfterScreenLocks() {
+        XCTAssertEqual(mode(true, false, true), .everyOpen)
+        XCTAssertEqual(mode(true, true, true), .everyOpen)
+    }
+
+    func testScreenLockRequiresAuthenticationOnlyForModesThatPromptAfterALock() {
+        // These modes revoke the cached authentication and close an open window
+        // when the screen locks.
+        XCTAssertTrue(PasswordManagerDataSourceProvider.requiresAuthenticationAfterScreenLock(mode: .oncePerLaunchAndAfterScreenLocks))
+        XCTAssertTrue(PasswordManagerDataSourceProvider.requiresAuthenticationAfterScreenLock(mode: .everyOpen))
+        XCTAssertFalse(PasswordManagerDataSourceProvider.requiresAuthenticationAfterScreenLock(mode: .oncePerLaunch))
+        XCTAssertFalse(PasswordManagerDataSourceProvider.requiresAuthenticationAfterScreenLock(mode: .never))
+    }
 }

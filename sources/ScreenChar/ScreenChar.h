@@ -563,11 +563,19 @@ NSString* CharArrayToString(unichar* charHaystack, int o);
 
 void DumpScreenCharArray(screen_char_t* screenChars, int lineLength);
 
+// The number of screen_char_t elements StringToScreenChars may write for a string of
+// `length` UTF-16 code units. The worst case is two per code unit: each code unit becomes at
+// most one cell, plus a DWC_RIGHT if it is double-width. StringToScreenChars does not
+// normalize (callers do that first), so it never produces more cells than that. The third
+// cell per code unit is headroom that existing callers already allocated; do not rely on it
+// to absorb in-converter normalization, which can expand one code unit into many.
+// A macro rather than a function so it can size a stack array.
+#define iTermStringToScreenCharsCapacity(length) ((length) * 3)
+
 // Convert a string into screen_char_t. This deals with padding out double-
 // width characters, joining combining marks, and skipping zero-width spaces.
 //
-// The buffer size must be at least twice the length of the string (worst case:
-//   every character is double-width).
+// The buffer must hold at least iTermStringToScreenCharsCapacity(s.length) elements.
 // Pass prototype foreground and background colors in fg and bg.
 // *len is filled in with the number of elements of *buf that were set.
 // encoding is currently ignored and it's assumed to be UTF-16.

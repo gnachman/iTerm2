@@ -156,19 +156,14 @@
 
 - (void)findUrlInString:(NSString *)aURLString
     andOpenInBackground:(BOOL)background
-                  style:(iTermOpenStyle)style {
-    DLog(@"findUrlInString:%@", aURLString);
-    NSRange range = [aURLString rangeOfURLInString];
-    if (range.location == NSNotFound) {
-        DLog(@"No URL found");
+                  style:(iTermOpenStyle)style
+         guessingScheme:(BOOL)guessScheme {
+    DLog(@"findUrlInString:%@ guessingScheme:%@", aURLString, @(guessScheme));
+    NSURL *url = [iTermURLActionFactory urlForUserSuppliedString:aURLString guessingScheme:guessScheme];
+    if (!url) {
+        DLog(@"No openable URL found");
         return;
     }
-    NSString *trimmedURLString = [aURLString substringWithRange:range];
-    if (!trimmedURLString) {
-        DLog(@"string is empty");
-        return;
-    }
-    NSURL *url = [NSURL URLWithUserSuppliedString:trimmedURLString];
     [self openURL:url target:nil inBackground:background workingDirectory:nil style:style];
 }
 
@@ -440,9 +435,13 @@ workingDirectory:(NSString *)workingDirectory
                                        suffix:extendedSuffix
                                    completion:^(BOOL ok) {
                                        if (!ok) {
+                                           // The file couldn't be opened, so see if the text is a URL
+                                           // with an explicit scheme. Don't guess one: src/main.c is a
+                                           // missing file, not a website.
                                            [weakSelf findUrlInString:action.string
                                                  andOpenInBackground:openInBackground
-                                           style:style];
+                                                               style:style
+                                                      guessingScheme:NO];
                                        }
                                    }];
                 break;

@@ -255,21 +255,32 @@ private func replacingNulWithSpace(_ s: NSString) -> NSString {
     return changed ? NSString(characters: buf, length: n) : s
 }
 
+// The base direction: an SCP direction recorded on the line wins; otherwise
+// detect from the first strong character when that setting is on; otherwise
+// left-to-right.
+fileprivate func paragraphIsRTL(_ string: NSString, direction: iTermBidiDirection) -> Bool {
+    switch direction {
+    case .leftToRight:
+        return false
+    case .rightToLeft:
+        return true
+    case .default:
+        return iTermAdvancedSettingsModel.detectParagraphDirection() && detectedParagraphIsRTL(string)
+    @unknown default:
+        return false
+    }
+}
+
 // Make a lookup table that maps source cell to display cell.
 fileprivate func makeLookupTable(_ string: NSString,
                                  deltas: UnsafePointer<Int32>,
-                                 count: Int) -> ([Int32], IndexSet, IndexSet, Bool) {
-    let paragraphIsRTL: Bool =
-        iTermAdvancedSettingsModel.detectParagraphDirection() &&
-        detectedParagraphIsRTL(string)
+                                 count: Int,
+                                 direction: iTermBidiDirection) -> ([Int32], IndexSet, IndexSet, Bool) {
+    let paragraphIsRTL = paragraphIsRTL(string, direction: direction)
     // Lay the CTLine out with the same base direction the line is justified
     // with, so justification and the neutrals' resolved positions agree.
     let paragraphStyle = NSMutableParagraphStyle()
-    if iTermAdvancedSettingsModel.detectParagraphDirection() {
-        paragraphStyle.baseWritingDirection = paragraphIsRTL ? .rightToLeft : .leftToRight
-    } else {
-        paragraphStyle.baseWritingDirection = .leftToRight
-    }
+    paragraphStyle.baseWritingDirection = paragraphIsRTL ? .rightToLeft : .leftToRight
     let attributedString = NSAttributedString(string: string as String,
                                               attributes: [.paragraphStyle: paragraphStyle])
     // Create a CTLine from the attributed string
@@ -869,7 +880,8 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         let laidOut = Self.sanitized(string as NSString)
         (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(laidOut,
                                                                             deltas: deltas!,
-                                                                            count: Int(nonEmptyCount))
+                                                                            count: Int(nonEmptyCount),
+                                                                            direction: sca.metadata.bidiDirection)
         if rtlIndexes.isEmpty {
             return nil
         }
@@ -879,7 +891,8 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         let laidOut = Self.sanitized(deltaString.unsafeString)
         (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(laidOut,
                                                                             deltas: deltaString.deltas,
-                                                                            count: usedCount)
+                                                                            count: usedCount,
+                                                                            direction: .default)
         if rtlIndexes.isEmpty {
             return nil
         }

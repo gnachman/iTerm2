@@ -123,6 +123,7 @@ typedef enum {
     VT100CSI_SM,                    // Set Mode
     VT100CSI_TBC,                   // Tabulation Clear
     VT100CSI_DECSCUSR,              // Select the Style of the Cursor
+    VT100CSI_SCP,                   // Select Character Path (CSI Ps1 ; Ps2 SP k), the bidi base direction
     VT100CSI_DECSTR,                // Soft reset
     VT100CSI_DECDSR,                // Device Status Report (DEC specific)
     VT100CSI_SET_MODIFIERS,         // CSI > Ps; Pm m (Whether to set modifiers for different kinds of key presses; no official name)

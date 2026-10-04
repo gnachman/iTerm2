@@ -204,6 +204,20 @@ final class FlagAcrossWritesTests: XCTestCase {
         XCTAssertEqual(cells.first, "e\u{0301}")
     }
 
+    /// A run of spacing combining marks arriving in a later write clusters with the
+    /// predecessor, and aggressive base-character detection gives each mark its own cell.
+    /// The fast path converted that cluster into a fixed eight-cell stack buffer, so more
+    /// than seven marks overran it (issue 13073, notcurses-demo's uniblock demo).
+    func testManySpacingMarksAfterPredecessorAcrossWrites() {
+        let screen = makeScreen()
+        let marks = String(repeating: "\u{093E}", count: 12)
+        append(["\u{0915}", marks], to: screen)
+        let (cursorX, cells) = row0(screen)
+        XCTAssertEqual(cursorX, 13, "the base and each spacing mark get their own cell")
+        XCTAssertEqual(cell(cells, 0), "\u{0915}")
+        XCTAssertEqual(cell(cells, 12), "\u{093E}")
+    }
+
     // MARK: A narrow predecessor that widens on merge
 
     /// When a lone indicator is narrow -- which it is whenever iTermIsFlagCharacter says no,
@@ -532,5 +546,66 @@ final class FlagAcrossWritesTests: XCTestCase {
             XCTAssertEqual(actual.cells, expected.cells,
                            "fullWidthFlags=\(flags) unicodeVersion=\(version)")
         }
+    }
+
+    // MARK: Emoji modifier sequences
+
+    /// Issue 13079: thumbs up then a skin tone in separate writes must be one two-column
+    /// cell, the same as one write. The second write is too short to be preconverted.
+    func testSkinToneSplitAcrossWrites() {
+        let screen = makeScreen()
+        append(["\u{1F44D}", "\u{1F3FB}"], to: screen)
+        let (cursorX, cells) = row0(screen)
+        XCTAssertEqual(cursorX, 2, "a toned emoji occupies two columns")
+        XCTAssertEqual(cells.first, "\u{1F44D}\u{1F3FB}")
+    }
+
+    /// The same with a preconverted tail. Apple clusters the skin tone with the prepended
+    /// space just as it does with the thumbs up, so a comparison of Apple's clusters would
+    /// accept the buffer, in which the skin tone has its own cell, and write it a second
+    /// time after merging it into the predecessor.
+    func testSkinToneWithPreconvertedTailSplitAcrossWrites() {
+        let oneWrite = makeScreen()
+        append(["\u{1F44D}\u{1F3FB}ééé"], to: oneWrite)
+        let expected = row0(oneWrite)
+        XCTAssertEqual(expected.cursorX, 5)
+
+        let twoWrites = makeScreen()
+        append(["\u{1F44D}", "\u{1F3FB}ééé"], to: twoWrites)
+        let actual = row0(twoWrites)
+
+        XCTAssertEqual(actual.cursorX, expected.cursorX,
+                       "a skin tone must merge into the predecessor, not be written twice")
+        XCTAssertEqual(actual.cells, expected.cells)
+    }
+
+    /// A narrow base (U+261D) widens when the skin tone arrives in a later write.
+    func testSkinToneWidensNarrowBaseAcrossWrites() {
+        for tail in ["\u{1F3FB}", "\u{1F3FB}ééé"] {
+            let oneWrite = makeScreen()
+            append(["\u{261D}" + tail], to: oneWrite)
+            let expected = row0(oneWrite)
+
+            let twoWrites = makeScreen()
+            append(["\u{261D}", tail], to: twoWrites)
+            let actual = row0(twoWrites)
+
+            XCTAssertEqual(actual.cursorX, expected.cursorX, "tail=\(tail)")
+            XCTAssertEqual(actual.cells, expected.cells, "tail=\(tail)")
+            for x in 0..<expected.cursorX {
+                XCTAssertEqual(isDWCRight(twoWrites, x), isDWCRight(oneWrite, x),
+                               "tail=\(tail) cell \(x)")
+            }
+        }
+    }
+
+    /// A skin tone after a letter keeps its own cell regardless of the write boundary.
+    func testSkinToneAfterLetterAcrossWrites() {
+        let screen = makeScreen()
+        append(["A", "\u{1F3FB}ééé"], to: screen)
+        let (cursorX, cells) = row0(screen)
+        XCTAssertEqual(cursorX, 6)
+        XCTAssertEqual(cell(cells, 0), "A")
+        XCTAssertEqual(cell(cells, 1), "\u{1F3FB}")
     }
 }

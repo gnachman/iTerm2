@@ -701,6 +701,13 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 }
 
+- (void)setTmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit {
+    if ([_hook isKindOfClass:[VT100TmuxParser class]]) {
+        DLog(@"serverMayOmitEndGuardBeforeExit <- %@", @(mayOmit));
+        [(VT100TmuxParser *)_hook setServerMayOmitEndGuardBeforeExit:mayOmit];
+    }
+}
+
 - (void)startConductorRecoveryModeWithID:(NSString *)dcsID {
     // Put the state machine in the passthrough mode.
     char *fakeControlSequence = "\eP2000p";

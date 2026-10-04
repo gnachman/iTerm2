@@ -733,6 +733,10 @@ static NSString *kCommandTimestamp = @"timestamp";
     return ([self.minimumServerVersion compare:version] != NSOrderedAscending);
 }
 
+- (BOOL)serverMayOmitEndGuardBeforeExit {
+    return ![self versionAtLeastDecimalNumberWithString:@"1.9"];
+}
+
 - (void)pauseTokenExecution {
     _tokenExecutionPauseCount++;
     DLog(@"Pause token execution (count=%@)", @(_tokenExecutionPauseCount));
@@ -778,8 +782,12 @@ static NSString *kCommandTimestamp = @"timestamp";
     }
     // Work around a bug in tmux 1.8: if unlink-window causes the current
     // session to be destroyed, no end guard is printed but %exit may be
-    // received.
+    // received. Servers from 1.9 on always close the block first, so for them a
+    // %exit line inside a response is data (for example capture-pane output from
+    // a pane whose scrollback holds control-mode text) and must not end the
+    // command. An unknown version is treated as possibly 1.8.
     if (currentCommand_ &&
+        [self serverMayOmitEndGuardBeforeExit] &&
         ([command hasPrefix:@"%exit "] ||
          [command isEqualToString:@"%exit"])) {
       // Work around the bug by ending the command so the %exit can be
@@ -915,6 +923,17 @@ static NSString *kCommandTimestamp = @"timestamp";
     // collapses modified keys via legacy input_key (e.g. C-j -> 0x0a), so the
     // caller should keep the byte path instead of delegating.
     return [self versionAtLeastDecimalNumberWithString:@"3.2"];
+}
+
+- (BOOL)serverEncodesAllKeys {
+    // This assumes tmux 3.9 includes https://github.com/tmux/tmux/pull/5615 with
+    // the fixes requested there (3.8 does not have it). With them, tmux tracks the
+    // Kitty keyboard protocol per pane and encodes every key it is sent by name
+    // for the pane's current mode (legacy, modifyOtherKeys, or Kitty), and its
+    // send-keys drops a key the pane's mode cannot encode instead of typing its
+    // name as text, which is what makes naming every key safe. Re-verify against
+    // the actual release.
+    return [self versionAtLeastDecimalNumberWithString:@"3.9"];
 }
 
 - (void)sendKeyName:(NSString *)name toWindowPane:(int)windowPane {

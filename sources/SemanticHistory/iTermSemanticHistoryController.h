@@ -131,7 +131,8 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
 #pragma mark - Testing
 
 // Tests can subclass and override -fileManager to fake the filesystem. The following methods are
-// called: fileExistsAtPathLocally:additionalNetworkPaths:, fileExistsAtPath:, fileExistsAtPath:isDirectory:
+// called: fileExistsAtPathLocally:additionalNetworkPaths:, fileExistsAtPath:, fileExistsAtPath:isDirectory:,
+// destinationOfSymbolicLinkAtPath:error:
 @property (nonatomic, readonly) NSFileManager *fileManager;
 
 // Tests can subclass and override these methods to avoid interacting with the filesystem.

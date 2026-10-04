@@ -433,10 +433,56 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     [args addObject:path];
 
-    NSString *xedPath = @"/usr/bin/xed";
+    NSString *xedPath = [self xedPath];
 
     DLog(@"Launch Xcode: `%@ %@`", xedPath, args);
     [self launchTaskWithPath:xedPath arguments:args completion:nil];
+}
+
+// /usr/bin/xed is only the xcode-select shim: it re-executes usr/bin/xed inside the active
+// developer directory. When that xed exists, use the shim so the user's xcode-select choice is
+// honored. When it doesn't, typically because the developer directory is a Command Line Tools
+// install, the shim would fail (issue 13091), so use the real xed bundled inside whichever Xcode
+// LaunchServices knows about. Fall back to the shim if that can't be found either.
+- (NSString *)xedPath {
+    NSString *const shim = @"/usr/bin/xed";
+    NSString *developerDirectory = [self activeDeveloperDirectory];
+    NSString *shimTarget = [developerDirectory stringByAppendingPathComponent:@"usr/bin/xed"];
+    if (shimTarget && [self.fileManager fileExistsAtPath:shimTarget]) {
+        DLog(@"Active developer directory has %@. Use %@", shimTarget, shim);
+        return shim;
+    }
+    NSString *xcodePath = [self absolutePathForAppBundleWithIdentifier:kXcodeAppIdentifier];
+    if (!xcodePath) {
+        DLog(@"Developer directory is %@ and Xcode not found by bundle ID. Use %@", developerDirectory, shim);
+        return shim;
+    }
+    NSString *bundledXed = [xcodePath stringByAppendingPathComponent:@"Contents/Developer/usr/bin/xed"];
+    if (![self.fileManager fileExistsAtPath:bundledXed]) {
+        DLog(@"Developer directory is %@ and no xed at %@. Use %@", developerDirectory, bundledXed, shim);
+        return shim;
+    }
+    DLog(@"Developer directory is %@. Use %@", developerDirectory, bundledXed);
+    return bundledXed;
+}
+
+// The developer directory xcode-select points at, read from the symlink it maintains. Returns
+// nil if none is set.
+- (NSString *)activeDeveloperDirectory {
+    NSString *const symlink = @"/var/db/xcode_select_link";
+    NSError *error = nil;
+    NSString *destination = [self.fileManager destinationOfSymbolicLinkAtPath:symlink error:&error];
+    if (!destination) {
+        DLog(@"Could not read %@: %@", symlink, error);
+        return nil;
+    }
+    // xcode-select always writes an absolute destination. Anything else is unexpected, and
+    // resolving it correctly would require walking the real filesystem, so give up.
+    if (!destination.isAbsolutePath) {
+        DLog(@"%@ has non-absolute destination %@", symlink, destination);
+        return nil;
+    }
+    return destination;
 }
 
 - (void)openDocumentInCursor:(NSString *)path line:(NSString *)line column:(NSString *)column {
@@ -606,8 +652,26 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
 
+    // The url query value holds a file URL, and the editors disagree about its form.
+    //
+    // MacVim percent-decodes the value once and then parses the result with
+    // +[NSURL URLWithString:], so the decoded value has to be a well-formed file URL
+    // whose path is itself percent-escaped, as -[NSURL absoluteString] produces. Its
+    // parser documents this double encoding as the canonical form, for example
+    // mvim://open?url=file:///tmp/file%2520name.txt. A raw path breaks on “#” and “?”
+    // (they start a fragment or query), on a literal “%XX” (decoded a second time), and
+    // on spaces in MacVim builds whose URL parser rejects them.
+    //
+    // TextMate percent-decodes the value once, strips the file:// prefix, and uses the
+    // rest verbatim as the path, so it needs the raw path. BBEdit is reached through
+    // TextMate’s scheme and gets the same form.
+    //
+    // Either way the value is then percent-encoded exactly once for the query, with
+    // the delimiters & = + # and the escape character % escaped as well.
+    // URLQueryAllowedCharacterSet leaves & = + and # unescaped, which would truncate
+    // the url value at an ampersand in the path.
     NSMutableCharacterSet *queryCharset = [[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy];
-    [queryCharset removeCharactersInString:@"/"];
+    [queryCharset removeCharactersInString:@"&=+#%"];
     NSString *(^percentEncoded)(NSString *) = ^NSString *(NSString *string) {
         return [string stringByAddingPercentEncodingWithAllowedCharacters:queryCharset];
     };
@@ -615,14 +679,18 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     urlComponents.host = @"open";
     urlComponents.path = nil;
     urlComponents.scheme = [iTermSemanticHistoryPrefsController schemeForEditor:identifier];
-    NSURL *fileURL = [NSURL fileURLWithPath:path];
-    urlComponents.percentEncodedQueryItems = @[ [NSURLQueryItem queryItemWithName:@"url"
-                                                                            value:percentEncoded(fileURL.absoluteString)] ];
+    const BOOL editorParsesValueAsURL = [identifier isEqualToString:kMacVimIdentifier];
+    NSString *fileURLString = (editorParsesValueAsURL ?
+                               [NSURL fileURLWithPath:path].absoluteString :
+                               [@"file://" stringByAppendingString:path]);
+    NSArray<NSURLQueryItem *> *queryItems = @[ [NSURLQueryItem queryItemWithName:@"url"
+                                                                           value:percentEncoded(fileURLString)] ];
     if (lineNumber) {
         NSURLQueryItem *lineItem = [NSURLQueryItem queryItemWithName:@"line"
                                                                value:percentEncoded(lineNumber)];
-        urlComponents.percentEncodedQueryItems = [urlComponents.queryItems arrayByAddingObject:lineItem];
+        queryItems = [queryItems arrayByAddingObject:lineItem];
     }
+    urlComponents.percentEncodedQueryItems = queryItems;
     NSURL *url = urlComponents.URL;
     DLog(@"Open url %@", url);
     // BBEdit and TextMate share a URL scheme, so identifier disambiguates.

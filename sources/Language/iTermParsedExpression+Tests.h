@@ -5,6 +5,8 @@
 //  Created by George Nachman on 6/12/18.
 //
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface iTermParsedExpression()
 
 @property (nonatomic, readwrite) BOOL optional;
@@ -18,3 +20,4 @@
 
 @end
 
+NS_ASSUME_NONNULL_END

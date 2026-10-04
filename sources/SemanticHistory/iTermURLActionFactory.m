@@ -14,6 +14,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCancelable.h"
+#import "iTermLaunchServices.h"
 #import "iTermLocatedString.h"
 #import "iTermPathFinder.h"
 #import "iTermSemanticHistoryController.h"
@@ -62,6 +63,18 @@ typedef enum {
 @end
 
 static NSMutableArray<iTermURLActionFactory *> *sFactories;
+
+// A dotted-quad IPv4 address.
+static NSString *const iTermIPv4AddressRegex = @"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])";
+// A hostname with at least two components. Labels may use any letter or digit so that
+// internationalized domain names like 例子.测试 qualify; they get IDN-encoded later.
+static NSString *const iTermDottedHostnameRegex = @"(([\\p{L}\\p{N}]|[\\p{L}\\p{N}][\\p{L}\\p{N}\\-]*[\\p{L}\\p{N}])\\.)+([\\p{L}\\p{N}]|[\\p{L}\\p{N}][\\p{L}\\p{N}\\-]*[\\p{L}\\p{N}])";
+// A TCP port number.
+static NSString *const iTermPortRegex = @"[1-9][0-9]{0,4}";
+
+static NSString *iTermAnchored(NSString *regex) {
+    return [NSString stringWithFormat:@"^%@$", regex];
+}
 
 @implementation iTermURLActionFactory {
     BOOL _finished;
@@ -723,17 +736,15 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 
     if ([iTermAdvancedSettingsModel conservativeURLGuessing]) {
         DLog(@"Using conservative URL guessing");
-        if (![self stringLooksLikeURL:stringWithoutNearbyPunctuation]) {
+        if (![iTermURLActionFactory stringLooksLikeURL:stringWithoutNearbyPunctuation]) {
             DLog(@"Doesn't look URL-like to me, abort");
             return nil;
         }
 
         NSString *schemeRegex = @"^[a-z]+://";
-        // Hostname with two components
-        NSString *hostnameRegex = @"(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])";
-        NSString *portRegex = @"(:[1-9][0-9]{0,4})?";
+        NSString *portRegex = [NSString stringWithFormat:@"(:%@)?", iTermPortRegex];
         NSString *pathRegex = @"(/|$)";
-        NSString *urlRegex = [NSString stringWithFormat:@"%@%@%@%@", schemeRegex, hostnameRegex, portRegex, pathRegex];
+        NSString *urlRegex = [NSString stringWithFormat:@"%@%@%@%@", schemeRegex, iTermDottedHostnameRegex, portRegex, pathRegex];
         if ([stringWithoutNearbyPunctuation rangeOfRegex:urlRegex].location != NSNotFound) {
             DLog(@"LGTM, using %@ with range %@ and prefix %d", stringWithoutNearbyPunctuation, NSStringFromRange(rangeWithoutNearbyPunctuation), prefixChars);
             return [self urlActionForString:stringWithoutNearbyPunctuation
@@ -757,7 +768,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         // Only try to use HTTP if the string has something especially HTTP URL-like about it, such as
         // containing a slash. This helps reduce the number of random strings that are misinterpreted
         // as URLs.
-        looksLikeURL = [self stringLooksLikeURL:stringWithoutNearbyPunctuation];
+        looksLikeURL = [iTermURLActionFactory stringLooksLikeURL:stringWithoutNearbyPunctuation];
 
         if (looksLikeURL) {
             if (!self.workingDirectoryIsLocal && ![stringWithoutNearbyPunctuation containsString:@"/"]) {
@@ -765,15 +776,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
                 return nil;
             }
             DLog(@"There's no colon but it seems like it could be an HTTP URL. Let's give that a try.");
-            NSString *defaultScheme;
-            if ([self stringIsSingleDomainWord:[self hostnameInSchemelessPossibleURL:stringWithoutNearbyPunctuation]]) {
-                DLog(@"Use http because it's a single word");
-                defaultScheme = @"http://";
-            } else {
-                defaultScheme = [[iTermAdvancedSettingsModel defaultURLScheme] stringByAppendingString:@"://"];
-                DLog(@"Use default scheme of %@", defaultScheme);
-            }
-            stringWithoutNearbyPunctuation = [defaultScheme stringByAppendingString:stringWithoutNearbyPunctuation];
+            stringWithoutNearbyPunctuation = [iTermURLActionFactory stringByPrependingDefaultScheme:stringWithoutNearbyPunctuation];
         } else {
             DLog(@"Doesn't look enough like a URL to guess that it's an HTTP URL");
         }
@@ -790,15 +793,151 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     return nil;
 }
 
-- (NSString *)hostnameInSchemelessPossibleURL:(NSString *)url {
-    const NSInteger index = [url rangeOfString:@"/"].location;
-    if (index == NSNotFound) {
-        return url;
-    }
-    return [url substringToIndex:index];
+// Returns the host and optional port of a scheme-less URL-like string, without any path.
++ (NSString *)hostAndPortInSchemelessPossibleURL:(NSString *)url {
+    const NSInteger slashIndex = [url rangeOfString:@"/"].location;
+    return (slashIndex == NSNotFound) ? url : [url substringToIndex:slashIndex];
 }
 
-- (BOOL)stringIsSingleDomainWord:(NSString *)string {
+// Returns the host part of a scheme-less URL-like string, without any path or port.
++ (NSString *)hostnameInSchemelessPossibleURL:(NSString *)url {
+    NSString *hostAndPort = [self hostAndPortInSchemelessPossibleURL:url];
+    const NSInteger colonIndex = [hostAndPort rangeOfString:@":"].location;
+    if (colonIndex == NSNotFound) {
+        return hostAndPort;
+    }
+    return [hostAndPort substringToIndex:colonIndex];
+}
+
+static BOOL (^sURLOpenabilityOverrideForTesting)(NSURL *);
+
++ (void)setURLOpenabilityOverrideForTesting:(BOOL (^)(NSURL *url))block {
+    sURLOpenabilityOverrideForTesting = [block copy];
+}
+
+// Mirrors what -[iTermURLActionHelper openURL:target:inBackground:workingDirectory:style:]
+// can open: a URL bound to a profile, file: and iterm2: URLs, anything when a URL handler
+// command is configured, and otherwise whatever LaunchServices has an app for.
++ (BOOL)urlHasOpenableScheme:(NSURL *)url {
+    NSString *scheme = url.scheme;
+    if (scheme.length == 0) {
+        return NO;
+    }
+    if (sURLOpenabilityOverrideForTesting) {
+        return sURLOpenabilityOverrideForTesting(url);
+    }
+    if ([[iTermLaunchServices sharedInstance] profileForScheme:scheme]) {
+        return YES;
+    }
+    if ([scheme isEqualToString:@"file"] || [scheme isEqualToString:@"iterm2"]) {
+        return YES;
+    }
+    if ([iTermAdvancedSettingsModel urlHandlerCommand].length > 0) {
+        return YES;
+    }
+    return [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil;
+}
+
+// Whether scheme-less selected text is worth guessing a scheme for. This is stricter than
+// stringLooksLikeURL: because, unlike ⌘-click, the text has not first been checked against
+// the filesystem: it must name a dotted host, an IP address, or localhost, and a colon before
+// the path may only introduce a port (colons in the path, as in wiki/Category:Physics, are
+// fine). That keeps sources/Foo.m, gemini://host/path (a scheme nothing can open), and
+// git@github.com:user/repo.git from turning into web URLs.
++ (BOOL)schemelessStringLooksLikeWebURL:(NSString *)string {
+    if (![self stringLooksLikeURL:string]) {
+        return NO;
+    }
+    if ([string containsString:@"://"]) {
+        DLog(@"Already has a scheme; don't guess another");
+        return NO;
+    }
+    NSString *hostAndPort = [self hostAndPortInSchemelessPossibleURL:string];
+    NSString *hostAndPortRegex = [NSString stringWithFormat:@"^[^:]+(:%@)?$", iTermPortRegex];
+    if ([hostAndPort rangeOfRegex:hostAndPortRegex].location == NSNotFound) {
+        DLog(@"Colon before the path is not a port; don't guess");
+        return NO;
+    }
+    NSString *host = [self hostnameInSchemelessPossibleURL:string];
+    if ([host caseInsensitiveCompare:@"localhost"] == NSOrderedSame) {
+        return YES;
+    }
+    return ([host rangeOfRegex:iTermAnchored(iTermIPv4AddressRegex)].location != NSNotFound ||
+            [host rangeOfRegex:iTermAnchored(iTermDottedHostnameRegex)].location != NSNotFound);
+}
+
+// Prepends the scheme to guess for a URL-like string that has none: http for a
+// single-word host (localhost/foo) and the defaultURLScheme advanced setting otherwise.
++ (NSString *)stringByPrependingDefaultScheme:(NSString *)string {
+    NSString *defaultScheme;
+    if ([self stringIsSingleDomainWord:[self hostnameInSchemelessPossibleURL:string]]) {
+        DLog(@"Use http because it's a single word");
+        defaultScheme = @"http://";
+    } else {
+        defaultScheme = [[iTermAdvancedSettingsModel defaultURLScheme] stringByAppendingString:@"://"];
+        DLog(@"Use default scheme of %@", defaultScheme);
+    }
+    return [defaultScheme stringByAppendingString:string];
+}
+
++ (NSString *)trimmedURLInString:(NSString *)string assumingScheme:(BOOL)assumeScheme {
+    const NSRange range = [string rangeOfURLInStringAssumingScheme:assumeScheme];
+    if (range.location == NSNotFound) {
+        return nil;
+    }
+    NSString *trimmed = [string substringWithRange:range];
+    return trimmed.length > 0 ? trimmed : nil;
+}
+
++ (NSURL *)urlForUserSuppliedString:(NSString *)string guessingScheme:(BOOL)guessScheme {
+    DLog(@"urlForUserSuppliedString:%@ guessingScheme:%@", string, @(guessScheme));
+    NSString *trimmed = [self trimmedURLInString:string assumingScheme:YES];
+    if (!trimmed) {
+        DLog(@"No URL found");
+        return nil;
+    }
+    NSURL *url = [NSURL URLWithUserSuppliedString:trimmed];
+    if ([trimmed containsString:@"://"]) {
+        // An explicit scheme. Never guess a different one on top of it.
+        return [self urlHasOpenableScheme:url] ? url : nil;
+    }
+    // Without ://, the text before the first colon may not be a scheme at all: it could be a
+    // host with a port (localhost:8080/foo, or example.com:8080/path, which the first pass
+    // cut down to com:8080/path) or a word in the path (example.com/contact/mailto:alice).
+    // So prefer a web URL guessed from the whole text and only fall back to the first pass's
+    // scheme (mailto:alice, or foo:bar when a URL handler command takes every scheme) if no
+    // guess can be made. Issue 13092.
+    if (guessScheme && ![iTermAdvancedSettingsModel conservativeURLGuessing]) {
+        NSURL *guessed = [self guessedWebURLInString:string];
+        if (guessed) {
+            return guessed;
+        }
+    }
+    if ([self urlHasOpenableScheme:url]) {
+        return url;
+    }
+    DLog(@"No openable scheme");
+    return nil;
+}
+
+// Re-trims `string` without treating a colon as a scheme delimiter and, if the result looks like
+// a web address, gives it the default scheme the way ⌘-click does. Returns nil otherwise.
++ (NSURL *)guessedWebURLInString:(NSString *)string {
+    NSString *schemeless = [self trimmedURLInString:string assumingScheme:NO];
+    if (!schemeless || ![self schemelessStringLooksLikeWebURL:schemeless]) {
+        DLog(@"Doesn't look like a web URL; not guessing a scheme");
+        return nil;
+    }
+    NSURL *url = [NSURL URLWithUserSuppliedString:[self stringByPrependingDefaultScheme:schemeless]];
+    if (![self urlHasOpenableScheme:url]) {
+        DLog(@"Not openable after applying the default scheme: %@", url);
+        return nil;
+    }
+    DLog(@"Applied default scheme, giving %@", url);
+    return url;
+}
+
++ (BOOL)stringIsSingleDomainWord:(NSString *)string {
     static NSCharacterSet *nonAlnum;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -901,7 +1040,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 
 #pragma mark - Helpers
 
-- (BOOL)stringLooksLikeURL:(NSString*)s {
++ (BOOL)stringLooksLikeURL:(NSString *)s {
     // This is much harder than it sounds.
     // [NSURL URLWithString] is supposed to do this, but it doesn't accept IDN-encoded domains like
     // http://例子.测试
@@ -927,14 +1066,12 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         return NO;
     }
 
-    NSString *ipRegex = @"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
-    if ([s rangeOfRegex:ipRegex].location != NSNotFound) {
+    if ([s rangeOfRegex:iTermAnchored(iTermIPv4AddressRegex)].location != NSNotFound) {
         // IP addresses as dotted quad
         return YES;
     }
 
-    NSString *hostnameRegex = @"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$";
-    if ([s rangeOfRegex:hostnameRegex].location != NSNotFound) {
+    if ([s rangeOfRegex:iTermAnchored(iTermDottedHostnameRegex)].location != NSNotFound) {
         // A hostname with at least two components.
         return YES;
     }

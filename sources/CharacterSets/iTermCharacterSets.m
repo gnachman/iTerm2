@@ -34,6 +34,10 @@ NS_INLINE BOOL testBit(const BMPBitmap *bmp, uint32_t cp) {
     return (bmp->bits[cp >> 6] & (1ULL << (cp & 63))) != 0;
 }
 
+NS_INLINE uint32_t decodeSurrogatePair(UniChar high, UniChar low) {
+    return 0x10000 + ((uint32_t)(high - 0xD800) << 10) + (low - 0xDC00);
+}
+
 NS_INLINE void setRange(BMPBitmap *bmp, uint32_t start, uint32_t count) {
     for (uint32_t i = start; i < start + count; i++) {
         setBit(bmp, i);
@@ -781,6 +785,54 @@ static const CharRange sCodePointsWithOwnCellSupp[] = {
 };
 static const int sCodePointsWithOwnCellSuppCount =
     sizeof(sCodePointsWithOwnCellSupp) / sizeof(sCodePointsWithOwnCellSupp[0]);
+
+// Emoji_Modifier_Base ranges from emoji-data.txt, BMP and supplementary together.
+// The set is small and only consulted when an emoji modifier is found, so it
+// gets no bitmap.
+static const CharRange sEmojiModifierBase[] = {
+    {0x261d, 0x261d},
+    {0x26f9, 0x26f9},
+    {0x270a, 0x270d},
+    {0x1f385, 0x1f385},
+    {0x1f3c2, 0x1f3c4},
+    {0x1f3c7, 0x1f3c7},
+    {0x1f3ca, 0x1f3cc},
+    {0x1f442, 0x1f443},
+    {0x1f446, 0x1f450},
+    {0x1f466, 0x1f478},
+    {0x1f47c, 0x1f47c},
+    {0x1f481, 0x1f483},
+    {0x1f485, 0x1f487},
+    {0x1f48f, 0x1f48f},
+    {0x1f491, 0x1f491},
+    {0x1f4aa, 0x1f4aa},
+    {0x1f574, 0x1f575},
+    {0x1f57a, 0x1f57a},
+    {0x1f590, 0x1f590},
+    {0x1f595, 0x1f596},
+    {0x1f645, 0x1f647},
+    {0x1f64b, 0x1f64f},
+    {0x1f6a3, 0x1f6a3},
+    {0x1f6b4, 0x1f6b6},
+    {0x1f6c0, 0x1f6c0},
+    {0x1f6cc, 0x1f6cc},
+    {0x1f90c, 0x1f90c},
+    {0x1f90f, 0x1f90f},
+    {0x1f918, 0x1f91f},
+    {0x1f926, 0x1f926},
+    {0x1f930, 0x1f939},
+    {0x1f93c, 0x1f93e},
+    {0x1f977, 0x1f977},
+    {0x1f9b5, 0x1f9b6},
+    {0x1f9b8, 0x1f9b9},
+    {0x1f9bb, 0x1f9bb},
+    {0x1f9cd, 0x1f9cf},
+    {0x1f9d1, 0x1f9dd},
+    {0x1fac3, 0x1fac5},
+    {0x1faf0, 0x1faf8},
+};
+static const int sEmojiModifierBaseCount =
+    sizeof(sEmojiModifierBase) / sizeof(sEmojiModifierBase[0]);
 
 // ============================================================================
 // Initialization
@@ -1540,6 +1592,10 @@ BOOL iTermIsRTLCodePoint(uint32_t cp) {
     return inRanges(cp, sRTLSupp, sRTLSuppCount);
 }
 
+BOOL iTermIsEmojiModifierBase(uint32_t cp) {
+    return inRanges(cp, sEmojiModifierBase, sEmojiModifierBaseCount);
+}
+
 BOOL iTermIsCodePointWithOwnCell(uint32_t cp) {
     iTermCharacterSetsInit();
     if (cp < 0x10000) {
@@ -1559,7 +1615,7 @@ NS_INLINE uint32_t decodeUTF16(const UniChar *chars, CFIndex len, CFIndex *i) {
         UniChar low = chars[*i + 1];
         if (low >= 0xDC00 && low <= 0xDFFF) {
             *i += 2;
-            return 0x10000 + ((uint32_t)(c - 0xD800) << 10) + (low - 0xDC00);
+            return decodeSurrogatePair(c, low);
         }
     }
     *i += 1;
@@ -1658,6 +1714,38 @@ BOOL iTermStringContainsModifierForcingFullWidth(CFStringRef s) {
     return NO;
 }
 
+// YES if `cp`, which begins at chars[i], is an emoji modifier (skin tone) that follows an
+// Emoji_Modifier_Base, forming an emoji modifier sequence such as U+1F44D U+1F3FB. That
+// sequence is drawn as one glyph, so the modifier must not start its own cell. A modifier
+// after anything else is drawn by CoreText as a separate swatch and keeps its own cell.
+// A single U+FE0F between the base and the modifier is allowed: some text contains it and
+// CoreText still draws one glyph. Only chars[lowerBound..<i] are considered to precede
+// the modifier. See issue 13079.
+static BOOL iTermIsModifierOfPrecedingEmoji(const UniChar *chars,
+                                            CFIndex lowerBound,
+                                            CFIndex i,
+                                            uint32_t cp) {
+    if (!iTermIsEmojiModifier(cp)) {
+        return NO;
+    }
+    // End (exclusive) of the code point that should be the base.
+    CFIndex end = i;
+    if (end > lowerBound && chars[end - 1] == 0xFE0F) {
+        end--;
+    }
+    if (end <= lowerBound) {
+        return NO;
+    }
+    uint32_t preceding = chars[end - 1];
+    if (preceding >= 0xDC00 && preceding <= 0xDFFF && end - 2 >= lowerBound) {
+        const UniChar high = chars[end - 2];
+        if (high >= 0xD800 && high <= 0xDBFF) {
+            preceding = decodeSurrogatePair(high, preceding);
+        }
+    }
+    return iTermIsEmojiModifierBase(preceding);
+}
+
 CFIndex iTermFindFirstCodePointWithOwnCell(const UniChar *chars,
                                            CFIndex start,
                                            CFIndex length,
@@ -1685,8 +1773,9 @@ CFIndex iTermFindFirstCodePointWithOwnCell(const UniChar *chars,
             // Surrogate pair
             UniChar low = chars[i + 1];
             if (low >= 0xDC00 && low <= 0xDFFF) {
-                uint32_t cp = 0x10000 + ((uint32_t)(c - 0xD800) << 10) + (low - 0xDC00);
-                if (inRanges(cp, sCodePointsWithOwnCellSupp, sCodePointsWithOwnCellSuppCount)) {
+                uint32_t cp = decodeSurrogatePair(c, low);
+                if (inRanges(cp, sCodePointsWithOwnCellSupp, sCodePointsWithOwnCellSuppCount) &&
+                    !iTermIsModifierOfPrecedingEmoji(chars, start - 1, i, cp)) {
                     return i;
                 }
                 i += 2;

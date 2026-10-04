@@ -28,6 +28,10 @@ struct PairingView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
+                if let details = model.pairingErrorDetails {
+                    PairingErrorDetailsView(details: details)
+                        .padding(.horizontal, 32)
+                }
             } else if let sasCode = model.sasCode {
                 // SAS confirmation: the user types this code on the Mac. Shown
                 // big enough to read across the room.
@@ -65,6 +69,17 @@ struct PairingView: View {
                 Text(model.activeIsReconnect ? "Connecting to iTerm2…" : "Pairing with iTerm2…")
                     .font(.headline)
                 statusLine
+                if let problem = model.reconnectProblem {
+                    Text(problem)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                    if let details = model.reconnectProblemDetails {
+                        PairingErrorDetailsView(details: details)
+                            .padding(.horizontal, 32)
+                    }
+                }
             }
 
             Spacer()
@@ -105,5 +120,27 @@ struct PairingView: View {
                     .monospacedDigit()
             }
         }
+    }
+}
+
+/// The technical side of a pairing error (each server tried and what went
+/// wrong with it), collapsed by default and selectable so it can be copied into
+/// a bug report.
+private struct PairingErrorDetailsView: View {
+    let details: String
+    @State private var expanded = false
+
+    var body: some View {
+        DisclosureGroup("Details", isExpanded: $expanded) {
+            ScrollView {
+                Text(details)
+                    .font(.footnote)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 200)
+        }
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
     }
 }

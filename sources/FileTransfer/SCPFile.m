@@ -79,7 +79,7 @@ static NSError *SCPFileError(NSString *description) {
         DLog(@"Try to get the value of $SSH_AUTH_SOCK");
         [[iTermSlowOperationGateway sharedInstance] exfiltrateEnvironmentVariableNamed:@"SSH_AUTH_SOCK"
                                                                                  shell:shell
-                                                                            completion:^(NSString * _Nonnull value) {
+                                                                            completion:^(NSString * _Nullable value) {
             @synchronized(self) {
                 self->_authSock = value;
             }

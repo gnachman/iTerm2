@@ -407,12 +407,27 @@ fileprivate extension SearchRequest {
                       overflow: Int64,
                       hasWrapped: Bool = false) -> LineBufferPosition? {
         let initialStartRel = initialStart.relative(overflow: overflow)
-        let initialStartPosition: LineBufferPosition? = if let initialStartRel {
-            lineBuffer.position(forCoordinate: initialStartRel, width: width, offset: 0)
-        } else {
-            nil
+        var initialStartPosition: LineBufferPosition? = nil
+        if hasWrapped, let initialStartRel {
+            // The wrapped pass stops where the first pass began. The first pass started
+            // `offset` cells from the initial start, and findSubstring:stopAt: excludes a
+            // match starting at the stop for a forward search but keeps it for a backward
+            // one, so a backward stop goes one cell past the first pass's start: offset 1
+            // stops on the initial start itself (the match there was skipped and is found
+            // last), while offset 0 stops one cell beyond it, since the first pass already
+            // reported the match at the starting coordinate.
+            if direction == .backwards {
+                initialStartPosition = lineBuffer.position(forCoordinate: initialStartRel,
+                                                           width: width,
+                                                           offset: 1 - offset)
+            }
+            if initialStartPosition == nil {
+                initialStartPosition = lineBuffer.position(forCoordinate: initialStartRel,
+                                                           width: width,
+                                                           offset: 0)
+            }
         }
-        var stopAt = hasWrapped ? initialStartPosition : nil
+        var stopAt = initialStartPosition
         guard let absLineRange, !absLineRange.isEmpty else {
             if let stopAt {
                 return stopAt

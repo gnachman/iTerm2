@@ -11,6 +11,9 @@ class ModalPasswordAlert {
     private let prompt: String
     var username: String?
 
+    // Optional explanation shown under the prompt, such as why the last attempt failed.
+    var detail: String?
+
     // Optional initial value for the password field (e.g. a remembered password that
     // just failed, so the user can correct it). Nil leaves the field empty.
     var initialPassword: String?
@@ -159,6 +162,9 @@ class ModalPasswordAlert {
     private func makeAlert() -> Views {
         let alert = NSAlert()
         alert.messageText = prompt
+        if let detail {
+            alert.informativeText = detail
+        }
         alert.addButton(withTitle: iTermLocalizedOK())
         alert.addButton(withTitle: iTermLocalizedCancel())
         if showPasswordManagerButton {

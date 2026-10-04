@@ -3202,6 +3202,8 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
                  forceEncoding:(BOOL)forceEncoding {
     for (PTYSession *aSession in [self broadcastSessions]) {
         if (![aSession isTmuxGateway]) {
+            // Broadcast input is the user typing into every one of these panes.
+            [aSession noteUserInput];
             [aSession writeTaskNoBroadcast:string encoding:optionalEncoding forceEncoding:forceEncoding reporting:NO];
         }
     }

@@ -45,6 +45,11 @@ public enum TransportError: Error, Equatable, LocalizedError {
     /// same limit, so the caller must back off long and tell the user, rather
     /// than spinning the routine fast-retry path.
     case quotaExceeded
+    /// No source (the resolver or any mirror) produced a shard map, so there is
+    /// no relay host to connect to. `summary` names each server tried and why
+    /// it failed; `details` explains each failure and its usual causes, for
+    /// users who debug their own networks.
+    case shardMapUnavailable(summary: String, details: String)
     /// The host does not own this pairing's bucket (HTTP 421 / WS 4421, §6.9): the
     /// client's shard map is stale, so it must re-resolve and connect to the host
     /// the map now names, NOT retry this one. `ownerHint` is the relay's
@@ -58,7 +63,22 @@ public enum TransportError: Error, Equatable, LocalizedError {
     /// caller must back off LONG before reclaiming, so the two instances settle.
     case displaced
 
+    /// The summary alone: this is what localizedDescription returns, which
+    /// callers put in one-line status text. Show `details` separately.
     public var errorDescription: String? {
+        summary
+    }
+
+    /// Technical details to show alongside the summary, if any.
+    public var details: String? {
+        if case let .shardMapUnavailable(_, details) = self, !details.isEmpty {
+            return details
+        }
+        return nil
+    }
+
+    /// A one-paragraph description for the user, without technical details.
+    public var summary: String {
         switch self {
         case .closed:
             return "The connection was closed"
@@ -74,6 +94,8 @@ public enum TransportError: Error, Equatable, LocalizedError {
             return "This relay no longer serves the pairing; re-resolving to the current host"
         case .displaced:
             return "Another connection took over this pairing's slot"
+        case .shardMapUnavailable(let summary, _):
+            return summary
         }
     }
 }

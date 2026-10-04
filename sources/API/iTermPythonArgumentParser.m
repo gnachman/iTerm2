@@ -128,11 +128,11 @@ NS_ASSUME_NONNULL_BEGIN
     _statement = arg;
 }
 
-- (NSString *)escapedScript {
+- (nullable NSString *)escapedScript {
     return [_script stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
 }
 
-- (NSString *)escapedStatement {
+- (nullable NSString *)escapedStatement {
     return [_statement stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
 }
 

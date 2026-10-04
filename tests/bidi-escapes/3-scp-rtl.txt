@@ -1,0 +1,7 @@
+[2 kSCP 2 (CSI 2 SP k). These lines start with Latin but contain Hebrew, so
+they are laid out as right-to-left paragraphs: right-justified, with
+the Latin word at the right end. Pure-ASCII lines are unaffected.
+abc שלום עולם
+Total: 42 שקלים
+plain ascii line
+[0 k

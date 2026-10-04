@@ -181,6 +181,18 @@ class TerminalTestHarness {
         })
     }
 
+    /// Feed a raw byte stream through the real parser, as the pty would.
+    func send(_ bytes: [UInt8]) {
+        bytes.withUnsafeBufferPointer { ptr in
+            guard let base = ptr.baseAddress else {
+                return
+            }
+            let chars = UnsafeMutablePointer<CChar>(
+                mutating: UnsafeRawPointer(base).assumingMemoryBound(to: CChar.self))
+            screen.threadedReadTask(chars, length: Int32(bytes.count))
+        }
+    }
+
     /// Synchronize threads and execute pending side effects
     func sync() {
         screen.performBlock(joinedThreads: { _, _, _ in })

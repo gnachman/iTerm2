@@ -275,7 +275,12 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewShouldDrawRect;
 - (void)textViewDidHighlightMark;
 - (BOOL)textViewInInteractiveApplication;
+// Seconds since the user last sent input to this session by any route: a
+// keystroke, paste, snippet, Composer command, mouse report, or a mouse action
+// that sends keystrokes. INFINITY if that has never happened.
+- (NSTimeInterval)textViewTimeSinceLastUserInput;
 - (BOOL)textViewTerminalStateForMenuItem:(NSMenuItem *)menuItem;
+- (BOOL)textViewCanToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (iTermEmulationLevel)textViewTerminalStateEmulationLevel;
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem;
 - (void)textViewResetTerminal;
@@ -473,6 +478,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 // Should smart cursor color be used.
 @property(nonatomic, assign) BOOL useSmartCursorColor;
 @property(nonatomic, assign) BOOL hdrCursorEnabled;
+@property(nonatomic, assign) CGFloat hdrCursorBrightness;
 
 // Transparency level. 0 to 1.
 @property(nonatomic, assign) double transparency;

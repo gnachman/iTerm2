@@ -1506,6 +1506,9 @@ extension PTYSession {
             KEY_HDR_CURSOR: nullValue,
             KEY_HDR_CURSOR + COLORS_LIGHT_MODE_SUFFIX: nullValue,
             KEY_HDR_CURSOR + COLORS_DARK_MODE_SUFFIX: nullValue,
+            KEY_HDR_CURSOR_BRIGHTNESS: nullValue,
+            KEY_HDR_CURSOR_BRIGHTNESS + COLORS_LIGHT_MODE_SUFFIX: nullValue,
+            KEY_HDR_CURSOR_BRIGHTNESS + COLORS_DARK_MODE_SUFFIX: nullValue,
             KEY_ANSI_0_COLOR: nullValue,
             KEY_ANSI_0_COLOR + COLORS_LIGHT_MODE_SUFFIX: nullValue,
             KEY_ANSI_0_COLOR + COLORS_DARK_MODE_SUFFIX: nullValue,
@@ -1688,9 +1691,13 @@ extension PTYSession {
 
         let dateTime = formatter.string(from: now)
             .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "\u{202f}", with: "_")  // narrow no-break space before AM/PM
             .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: ":", with: ".")
             .replacingOccurrences(of: ",", with: "")
-        let filename = "\(dateTime) - \(name).itermarchive"
+        // The session name can contain slashes, colons, control characters, or
+        // be far too long to be a filename. Issue 13094.
+        let filename = "\(dateTime) - \(name).itermarchive".it_sanitizedForFilename()
         let url = URL(fileURLWithPath: destination).appendingPathComponent(filename)
         saveArchive(to: iTermSavePanelItem(filename: url.path, host: .localhost), term: term)
     }

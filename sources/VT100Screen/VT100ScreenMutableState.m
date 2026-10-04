@@ -994,7 +994,9 @@ static BOOL sOSC7DisabledWarningShown;
     screen_char_t *buffer = pre->buffer;
     len = pre->length;
     BOOL dwc = pre->foundDwc;
-    BOOL rtlFound = pre->rtlFound;
+    // In BDSM explicit mode the app laid the text out visually, so the line
+    // must not be flagged for reordering. This is the per-line snapshot of the mode.
+    BOOL rtlFound = pre->rtlFound && [self bidiReorderingAllowedByTerminal];
 
     if (needColorFixup) {
         // Medium path: character codes and DWC_RIGHT markers are correct but colors differ.
@@ -1024,9 +1026,13 @@ static BOOL sOSC7DisabledWarningShown;
         // merged into the predecessor cell. The parser thread cannot tell -- the predecessor
         // is what it cannot see -- so it recorded what the space absorbed and the comparison
         // happens here.
+        //
+        // Both sides segment with -enumerateComposedCharacters:, as StringToScreenChars does,
+        // not with Apple's grapheme clusters. They can disagree: Apple attaches an emoji
+        // modifier to a space and to U+1F44D alike, but only the latter keeps it in the same
+        // cell (issue 13079), so comparing Apple's clusters would miss the difference.
         NSString *predecessorAugmented = [predecessorString stringByAppendingString:string];
-        const NSRange mergedFirstCluster =
-            [predecessorAugmented rangeOfComposedCharacterSequenceAtIndex:0];
+        const NSRange mergedFirstCluster = [predecessorAugmented rangeOfFirstComposedCharacter];
         const NSInteger absorbedByPredecessor =
             (NSInteger)mergedFirstCluster.length - (NSInteger)predecessorString.length;
         if (absorbedByPredecessor < 0 ||
@@ -1037,8 +1043,22 @@ static BOOL sOSC7DisabledWarningShown;
         // Take the first character from the predecessor-augmented string: computing it from
         // the bare `string` would give a third answer, matching neither conversion.
         NSString *augmented = [predecessorAugmented substringWithRange:mergedFirstCluster];
-        screen_char_t firstChars[8] = { 0 };
-        int firstLen = 8;
+        // One cluster usually converts to a cell or two, but it has no length limit and
+        // aggressive base-character detection gives each spacing combining mark in it its
+        // own cell, so size the buffer from the cluster (issue 13073). The static buffer
+        // covers any cluster no longer than a stored complex character (emoji with
+        // modifiers, ZWJ sequences) so only pathological runs reach the heap.
+        const NSUInteger firstCharsCapacity = iTermStringToScreenCharsCapacity(augmented.length);
+        // Not zeroed: this is on the mutation thread's hot path, StringToScreenChars
+        // initializes every cell it writes, and only cells below firstLen are read.
+        screen_char_t firstCharsStatic[iTermStringToScreenCharsCapacity(kMaxParts)];
+        screen_char_t *firstCharsDynamic = NULL;
+        screen_char_t *firstChars = firstCharsStatic;
+        if (firstCharsCapacity > sizeof(firstCharsStatic) / sizeof(*firstCharsStatic)) {
+            firstCharsDynamic = iTermCalloc(firstCharsCapacity, sizeof(screen_char_t));
+            firstChars = firstCharsDynamic;
+        }
+        int firstLen = 0;
         BOOL firstDwc = NO;
         // After color fixup, buffer[0] has correct fg+bg fields.
         StringToScreenChars(augmented,
@@ -1053,6 +1073,11 @@ static BOOL sOSC7DisabledWarningShown;
                             self.config.unicodeVersion,
                             self.terminal.softAlternateScreenMode,
                             NULL);
+        const unichar predecessorCode = firstLen > 0 ? firstChars[0].code : 0;
+        const BOOL predecessorComplexChar = firstLen > 0 ? firstChars[0].complexChar : NO;
+        const BOOL mergedIsDoubleWidth = (firstLen > 1 && ScreenCharIsDWC_RIGHT(firstChars[1]));
+        free(firstCharsDynamic);
+
         // If the predecessor widens by absorbing the incoming code point, its new right
         // half has to be written, and the space-augmented buffer has no DWC_RIGHT for it:
         // buffer[0] is the prepended space plus any leading marks and buffer[1] is the
@@ -1060,28 +1085,12 @@ static BOOL sOSC7DisabledWarningShown;
         // with the predecessor being the last cell of a soft-wrapped line. Hand the whole
         // string to the slow path instead, which converts predecessor + string in one go.
         // Nothing has been mutated yet.
-        if (firstLen > 1 &&
-            ScreenCharIsDWC_RIGHT(firstChars[1]) &&
-            !predecessorIsDoubleWidth) {
+        if (mergedIsDoubleWidth && !predecessorIsDoubleWidth) {
             [self appendStringAtCursorSlowly:string];
             return;
         }
-        if (rtlFound) {
-            VT100Grid *grid = self.currentGrid;
-            VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
-            if (!predLineInfo.rtlFound) {
-                // Only on the NO->YES transition: rtlFound is serialized in
-                // per-line metadata; markLineDidChange: dirties the line (so
-                // copyDirtyFromGrid: copies the changed metadata) and bumps the
-                // content generation. Guarding avoids O(width) dirtying + a bump
-                // per append while RTL text streams over an already-RTL line.
-                [predLineInfo setRTLFound:YES];
-                [grid markLineDidChange:pred.y];
-            }
-        }
+        [self applyRTLUpdateForWriteWithRTLFound:rtlFound toLine:pred.y];
         const screen_char_t current = [self.currentGrid characterAt:pred];
-        const unichar predecessorCode = firstChars[0].code;
-        const BOOL predecessorComplexChar = firstChars[0].complexChar;
         if (current.code != predecessorCode || current.complexChar != predecessorComplexChar) {
             [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
                                               dwcFree:YES
@@ -1124,18 +1133,6 @@ static BOOL sOSC7DisabledWarningShown;
     const int kStaticBufferElements = 1024;
     screen_char_t staticBuffer[kStaticBufferElements];
     string = [string normalized:self.normalization];
-    int len = [string length];
-    if (3 * len >= kStaticBufferElements) {
-        buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(3 * len,
-                                                               sizeof(screen_char_t));
-        assert(buffer);
-        if (!buffer) {
-            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
-            return;
-        }
-    } else {
-        buffer = staticBuffer;
-    }
 
     // `predecessorIsDoubleWidth` will be true if the cursor is over a double-width character
     // but NOT if it's over a DWC_RIGHT.
@@ -1152,6 +1149,21 @@ static BOOL sOSC7DisabledWarningShown;
         augmentedString = [@" " stringByAppendingString:string];
     }
 
+    // Size the buffer for what is converted, predecessor included.
+    const NSUInteger capacity = iTermStringToScreenCharsCapacity(augmentedString.length);
+    if (capacity > kStaticBufferElements) {
+        buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(capacity,
+                                                               sizeof(screen_char_t));
+        assert(buffer);
+        if (!buffer) {
+            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
+            return;
+        }
+    } else {
+        buffer = staticBuffer;
+    }
+    int len = 0;
+
     // Add DWC_RIGHT after each double-width character, build complex characters out of surrogates
     // and combining marks, replace private codes with replacement characters, swallow zero-
     // width spaces, and set fg/bg colors and attributes.
@@ -1167,6 +1179,10 @@ static BOOL sOSC7DisabledWarningShown;
                         self.config.unicodeVersion,
                         self.terminal.softAlternateScreenMode,
                         &rtlFound);
+    if (rtlFound && ![self bidiReorderingAllowedByTerminal]) {
+        // BDSM explicit mode: the app laid the text out visually. See the fast path.
+        rtlFound = NO;
+    }
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
         // Whether the merged character is wider than the predecessor was. `buffer` holds the
@@ -1198,33 +1214,14 @@ static BOOL sOSC7DisabledWarningShown;
             buffer[0] = merged;
             buffer[1] = merged;
             ScreenCharSetDWC_RIGHT(&buffer[1]);
-            // The character lands on the next line, so that is where RTL was found.
-            if (rtlFound) {
-                VT100Grid *grid = self.currentGrid;
-                const int landingLine = MIN(pred.y + 1, grid.size.height - 1);
-                VT100LineInfo *landingLineInfo = [grid lineInfoAtLineNumber:landingLine];
-                if (!landingLineInfo.rtlFound) {
-                    [landingLineInfo setRTLFound:YES];
-                    [grid markLineDidChange:landingLine];
-                }
-            }
+            // The character lands on the next line, so that is the line this write touches.
+            [self applyRTLUpdateForWriteWithRTLFound:rtlFound
+                                              toLine:MIN(pred.y + 1, self.currentGrid.size.height - 1)];
             // bufferOffset stays 0 so buffer[0] (the merged character) is what gets
             // written, starting at the predecessor's column.
             self.currentGrid.cursorX = pred.x;
         } else {
-            if (rtlFound) {
-                VT100Grid *grid = self.currentGrid;
-                VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
-                if (!predLineInfo.rtlFound) {
-                    // Only on the NO->YES transition: rtlFound is serialized in
-                    // per-line metadata; markLineDidChange: dirties the line (so
-                    // copyDirtyFromGrid: copies the changed metadata) and bumps the
-                    // content generation. Guarding avoids O(width) dirtying + a bump
-                    // per append while RTL text streams over an already-RTL line.
-                    [predLineInfo setRTLFound:YES];
-                    [grid markLineDidChange:pred.y];
-                }
-            }
+            [self applyRTLUpdateForWriteWithRTLFound:rtlFound toLine:pred.y];
             const screen_char_t current = [self.currentGrid characterAt:pred];
             if (current.code != buffer[0].code || current.complexChar != buffer[0].complexChar) {
                 // This handles the rare case where we receive a combining mark at the beginning of
@@ -1256,7 +1253,17 @@ static BOOL sOSC7DisabledWarningShown;
             // above, which is not a representable grid state.
             const BOOL predecessorAdjoinsCursor = (pred.y == self.currentGrid.cursorY &&
                                                    pred.x + 1 == self.currentGrid.cursorX);
-            if ((predecessorIsDoubleWidth || !predecessorAdjoinsCursor) && mergedIsDoubleWidth) {
+            // The cursor can also sit on the predecessor's own DWC_RIGHT (issue 9852). Stepping
+            // back from there does not cross a DWC_RIGHT, so predecessorIsDoubleWidth is NO
+            // even though the spacer already exists on the grid at the cursor. Skip the merged
+            // buffer's spacer in that case too; writing at the cursor then replaces the spacer
+            // and erases the orphaned left half, as an overwrite of a DWC_RIGHT always does.
+            const BOOL cursorIsOnPredecessorsDWCRight =
+                (predecessorAdjoinsCursor &&
+                 ScreenCharIsDWC_RIGHT([self.currentGrid characterAt:self.currentGrid.cursor]));
+            if ((predecessorIsDoubleWidth ||
+                 cursorIsOnPredecessorsDWCRight ||
+                 !predecessorAdjoinsCursor) && mergedIsDoubleWidth) {
                 // Skip a DWC_RIGHT that already exists on the grid, or one we cannot place.
                 bufferOffset++;
             }
@@ -1350,7 +1357,8 @@ static BOOL sOSC7DisabledWarningShown;
                                                                    ansi:self.ansi
                                                                  insert:self.insert
                                                  externalAttributeIndex:actualExternalAttributes
-                                                               rtlFound:rtlFound
+                                                              rtlUpdate:[self rtlUpdateForWriteWithRTLFound:rtlFound]
+                                                          bidiDirection:self.terminal.bidiDirectionHint
                                                                 dwcFree:dwcFree]];
 
         if (self.config.publishing) {
@@ -1437,6 +1445,57 @@ static BOOL sOSC7DisabledWarningShown;
                                rtlFound:NO
                                 dwcFree:YES];
     STOPWATCH_LAP(appendAsciiDataAtCursor);
+}
+
+// NO while the terminal is in BDSM explicit mode (CSI 8 l): text written then is
+// never flagged as RTL, so neither the grid nor the line buffer reorders it. A
+// missing terminal means no app could have asked for explicit mode.
+- (BOOL)bidiReorderingAllowedByTerminal {
+    VT100Terminal *terminal = self.terminal;
+    return terminal == nil || terminal.bidiSupportMode;
+}
+
+// What a write does to the RTL state of the lines it touches. `rtlFound` is
+// whether the written text contains right-to-left characters. In explicit mode
+// every write clears the state, RTL text or not, because the flag is sticky and
+// a line that held RTL text in implicit mode would otherwise still be reordered.
+- (VT100GridRTLUpdate)rtlUpdateForWriteWithRTLFound:(BOOL)rtlFound {
+    if (![self bidiReorderingAllowedByTerminal]) {
+        return VT100GridRTLUpdateClear;
+    }
+    return rtlFound ? VT100GridRTLUpdateFound : VT100GridRTLUpdateNone;
+}
+
+// For a write that edits a line without going through the grid's append: a
+// combining mark merged into its predecessor.
+- (void)applyRTLUpdateForWriteWithRTLFound:(BOOL)rtlFound toLine:(int)line {
+    VT100Grid *grid = self.currentGrid;
+    switch ([self rtlUpdateForWriteWithRTLFound:rtlFound]) {
+        case VT100GridRTLUpdateNone:
+            break;
+        case VT100GridRTLUpdateFound:
+            // Only when something changed: the flag and direction are serialized
+            // in per-line metadata, and markLineDidChange: dirties the whole line
+            // and bumps the content generation. Guarding avoids doing that per
+            // append while RTL text streams over an already-RTL line.
+            if ([grid setRTLFoundInLine:line bidiDirection:self.terminal.bidiDirectionHint]) {
+                [grid markLineDidChange:line];
+            }
+            break;
+        case VT100GridRTLUpdateClear:
+            [grid clearRTLStateInLine:line];
+            break;
+    }
+}
+
+// Drops a grid line's bidi info. The per-cell RTL status is only meaningful
+// alongside a reorder table, so it goes too; left behind, the renderer would
+// still force a right-to-left writing direction on those cells.
+- (void)dropBidiInfoForLine:(int)line inGrid:(VT100Grid *)grid {
+    [grid setBidiInfo:nil forLine:line];
+    if ([grid resetRTLStatusInLine:line]) {
+        [grid markLineDidChange:line];
+    }
 }
 
 - (BOOL)shouldConvertCharactersToGraphicsCharacterSetInTerminal:(VT100Terminal *)terminal {
@@ -6272,7 +6331,7 @@ lengthExcludingInBandSignaling:data.length
         // already order it for display. Reordering it again fights their layout,
         // so leave alternate-screen lines unreordered. Clear any stale bidi info.
         for (int i = 0; i < grid.size.height; i++) {
-            [grid setBidiInfo:nil forLine:i];
+            [self dropBidiInfoForLine:i inGrid:grid];
         }
         return;
     }
@@ -6283,7 +6342,7 @@ lengthExcludingInBandSignaling:data.length
         }
         if (![grid mayContainRTLInRange:NSMakeRange(line, scas.count)]) {
             for (int i = 0; i < scas.count; i++) {
-                [grid setBidiInfo:nil forLine:line + i];
+                [self dropBidiInfoForLine:line + i inGrid:grid];
             }
             return;
         }
@@ -7450,20 +7509,19 @@ lengthExcludingInBandSignaling:data.length
     // Gracefully degrades to NO on tmux versions that lack bracket_paste_flag.
     [self.terminal setBracketedPasteMode:[state[kStateDictBracketedPasteMode] boolValue]];
 
-    // pane_key_mode is exposed by tmux 3.5+ and reports the per-pane modifyOtherKeys
-    // state of whatever application is running inside the pane. Older tmux versions
-    // return an empty string, which we leave alone.
-    NSString *paneKeyMode = [NSString castFrom:state[kStateDictPaneKeyMode]];
-    int modifyOtherKeysValue = -1;
-    if ([paneKeyMode isEqualToString:@"Ext 1"]) {
-        modifyOtherKeysValue = 1;
-    } else if ([paneKeyMode isEqualToString:@"Ext 2"]) {
-        modifyOtherKeysValue = 2;
-    } else if ([paneKeyMode isEqualToString:@"VT10x"]) {
-        modifyOtherKeysValue = 0;
-    }
-    if (modifyOtherKeysValue >= 0 && self.terminal.sendModifiers.count > 4) {
-        self.terminal.sendModifiers[4] = @(modifyOtherKeysValue);
+    // pane_key_mode is exposed by tmux 3.5+ and reports how the application running
+    // in the pane has asked for keys to be encoded. Older tmux versions return an
+    // empty string, which we leave alone.
+    [self applyTmuxPaneKeyMode:[NSString castFrom:state[kStateDictPaneKeyMode]]];
+}
+
+- (void)applyTmuxPaneKeyMode:(NSString *)paneKeyMode {
+    // Only the modifyOtherKeys level is applied. We never encode keys with the
+    // Kitty keyboard protocol in a tmux pane (see -[VT100Terminal keyReportingFlags]),
+    // so a Kitty value, which carries no modifyOtherKeys level, changes nothing.
+    iTermTmuxPaneKeyMode *mode = [iTermTmuxPaneKeyMode modeForString:paneKeyMode];
+    if (mode && mode.modifyOtherKeys >= 0 && self.terminal.sendModifiers.count > 4) {
+        self.terminal.sendModifiers[4] = @(mode.modifyOtherKeys);
         [self terminalDidChangeSendModifiers];
     }
 }
