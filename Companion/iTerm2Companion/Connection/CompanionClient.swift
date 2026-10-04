@@ -63,6 +63,11 @@ actor CompanionClient {
         /// explanation and offers only session browsing/video/keyboard.
         var aiAvailable: Bool
 
+        /// Which alerts the phone may answer on the mac, and whether the mac can
+        /// serve requests right now. nil from a pre-14 mac, read as "no alerts,
+        /// not blocked".
+        var macStatus: CompanionMacStatus?
+
         /// Whether the mac supports live session streaming.
         var supportsStreaming: Bool { peerRevision >= CompanionProtocolVersion.streamingRevision }
     }
@@ -71,13 +76,14 @@ actor CompanionClient {
         let reply = try await session.request(.hello(revision: CompanionProtocolVersion.current,
                                                      minimumPeer: CompanionProtocolVersion.minimumPeer))
         switch reply {
-        case .hello(let revision, let minimumPeer, let wantsNotificationPermission, let aiAvailable, _):
+        case .hello(let revision, let minimumPeer, let wantsNotificationPermission, let aiAvailable, let macStatus):
             return HandshakeResult(
                 compatibility: CompanionProtocolVersion.evaluate(peerRevision: revision,
                                                                  peerMinimumPeer: minimumPeer),
                 wantsNotificationPermission: wantsNotificationPermission ?? false,
                 peerRevision: revision,
-                aiAvailable: aiAvailable ?? true)
+                aiAvailable: aiAvailable ?? true,
+                macStatus: macStatus)
         case .error(let error):
             throw error
         default:
@@ -178,6 +184,15 @@ actor CompanionClient {
                                                       originalMessage: originalMessage,
                                                       sessionGuid: sessionGuid,
                                                       terminal: terminal))
+    }
+
+    /// Press a button on a modal alert showing on the mac. Fire-and-forget: the
+    /// mac reports the outcome through its status (the alert goes away) or a
+    /// `.modalAlertAnswerRejected` event.
+    func answerModalAlert(alertID: String, buttonIndex: Int, suppress: Bool) async throws {
+        try await session.send(.answerModalAlert(alertID: alertID,
+                                                 buttonIndex: buttonIndex,
+                                                 suppress: suppress))
     }
 
     func sendRemoteCommandDecision(chatID: String,

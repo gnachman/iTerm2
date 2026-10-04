@@ -1,6 +1,16 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 New Features:
+- When iTerm2 on your Mac shows a warning and
+  waits for an answer, iTerm2 Buddy now shows it
+  and lets you answer from your phone, including
+  “don’t ask again” when the warning offers it.
+  Before, the app lost its connection until
+  someone dismissed the warning at the Mac. If the
+  Mac is showing a dialog that can’t be answered
+  from the phone, a banner says so and the app
+  waits instead of disconnecting. Requires an
+  up-to-date Mac.
 - iTerm2 Buddy now works with Macs that have AI
   turned off. You can pair for terminal viewing
   and control alone: browse sessions, watch live

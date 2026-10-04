@@ -101,6 +101,9 @@ struct iTerm2CompanionApp: App {
                     companionLog("scenePhase \(oldPhase) -> \(newPhase)")
                     if newPhase == .active {
                         model.checkConnectionOnForeground()
+                        // A Mac alert that arrived with no active scene to put
+                        // its window in is shown now.
+                        MacAlertWindowPresenter.shared.update(model: model)
                     }
                 }
                 .task {
@@ -179,6 +182,12 @@ struct RootView: View {
         }
         }
         .animation(.smooth(duration: 0.35), value: model.phase)
+        // The Mac alert card lives in its own window (see MacAlertOverlay), so it
+        // is shown and hidden from here rather than declared as a sheet. This is
+        // in a View body, not the App's, so that reading the model is observed.
+        .onChange(of: model.macAlertPresentation, initial: true) {
+            MacAlertWindowPresenter.shared.update(model: model)
+        }
         .alert("Pair with this Mac?",
                isPresented: Binding(get: { model.pendingExternalPairing != nil },
                                     set: { presented in if !presented { model.cancelExternalPairing() } })) {
@@ -233,9 +242,11 @@ struct RootView: View {
 // navigation bar) rather than onto the NavigationStack, where it would share
 // the safe-area band with the bar title and render text on text.
 //
-// Two mutually exclusive states: a relay daily-limit teardown (not transient,
-// so it gets a distinct orange banner with a Reconnect now override) takes
-// precedence over the ordinary yellow "reconnecting" pill.
+// Mutually exclusive states, in order of precedence: a relay daily-limit
+// teardown (not transient, so it gets a distinct orange banner with a Reconnect
+// now override); the ordinary yellow "reconnecting" pill; and, while connected,
+// what the Mac reports about itself: an alert waiting for an answer, or that it
+// is not responding because of something this phone cannot answer.
 private struct ReconnectingBanner: ViewModifier {
     let model: AppModel
 
@@ -267,6 +278,30 @@ private struct ReconnectingBanner: ViewModifier {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(.yellow, in: Capsule())
+                    .padding(.top, 4)
+            } else if case .pill = model.macAlertPresentation {
+                Button {
+                    model.showMacAlert()
+                } label: {
+                    Label("Your Mac needs a response", systemImage: "macbook.and.iphone")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.orange, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+            } else if model.macAlertPresentation == .blockedBanner {
+                Label("Your Mac is busy or showing a dialog that can’t be answered from here",
+                      systemImage: "hourglass")
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(.black)
+                    .multilineTextAlignment(.leading)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.yellow, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .padding(.horizontal, 12)
                     .padding(.top, 4)
             }
         }

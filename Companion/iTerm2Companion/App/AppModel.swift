@@ -659,10 +659,221 @@ final class AppModel {
     /// keyboard remain.
     private(set) var aiAvailable = true
 
+    // MARK: Mac status (alerts on the Mac, and whether it can serve requests)
+
+    /// How a Mac alert should be shown right now.
+    enum MacAlertPresentation: Equatable {
+        enum CardState: Equatable {
+            /// The buttons can be tapped.
+            case ready
+            /// An answer was sent; waiting for the Mac to act on it.
+            case sending
+            /// The Mac could not press the button for us. The user has to
+            /// answer at the Mac.
+            case answerOnMac
+        }
+        case none
+        /// The full card, in front of everything.
+        case overlay(CompanionModalAlert, CardState)
+        /// A compact reminder that opens the card: for an alert the user set
+        /// aside with “Not now”, or one that is not blocking the Mac.
+        case pill(CompanionModalAlert)
+        /// The Mac is not answering because of something this phone cannot
+        /// see or answer.
+        case blockedBanner
+    }
+
+    /// The Mac's last reported status. Empty until a revision-14 Mac reports one.
+    private(set) var macStatus = CompanionMacStatus(modalAlerts: [], mainBlocked: false)
+    /// The alert an answer was sent for and not yet acted on by the Mac.
+    private var answeringAlertID: String?
+    /// The alert the Mac could not press a button on for us.
+    private var rejectedAlertID: String?
+    /// Alerts the user set aside with “Not now”.
+    private var dismissedAlertIDs: Set<String> = []
+    /// Alerts the user opened from the pill.
+    private var openedAlertIDs: Set<String> = []
+
+    /// Holds request timeouts while the Mac cannot answer.
+    @ObservationIgnored private let macWatchdog = MacRequestWatchdog()
+    /// Pings the Mac while requests are being held, so a connection that really
+    /// died is still noticed.
+    @ObservationIgnored private lazy var macLivenessProbe = MacLivenessProbe(
+        ping: { [weak self] in await self?.livenessPing() ?? true },
+        onDead: { [weak self] in await self?.livenessProbeFoundDeadConnection() })
+
+    /// The alert in front on the Mac: the only one that can be answered.
+    private var topMacAlert: CompanionModalAlert? {
+        return macStatus.modalAlerts.last
+    }
+
+    /// What to show for the Mac's alerts.
+    var macAlertPresentation: MacAlertPresentation {
+        guard let alert = topMacAlert else {
+            return macStatus.mainBlocked ? .blockedBanner : .none
+        }
+        // An alert that blocks the Mac interrupts, unless the user set it aside.
+        // One that does not block it waits behind the pill until asked for.
+        let showCard = openedAlertIDs.contains(alert.id)
+            || (alert.isAppModal && !dismissedAlertIDs.contains(alert.id))
+        guard showCard else {
+            return .pill(alert)
+        }
+        if rejectedAlertID == alert.id {
+            return .overlay(alert, .answerOnMac)
+        }
+        return .overlay(alert, answeringAlertID == alert.id ? .sending : .ready)
+    }
+
+    /// Whether requests to the Mac should hold their timeouts: its main thread
+    /// is not responding, or an alert that blocks it is up (which counts even
+    /// before the Mac's own stall detector has noticed).
+    var macIsBlocked: Bool {
+        return macStatus.mainBlocked || macStatus.modalAlerts.contains { $0.isAppModal }
+    }
+
+    private func applyMacStatus(_ status: CompanionMacStatus) {
+        let alertsChanged = status.modalAlerts != macStatus.modalAlerts
+        macStatus = status
+        let ids = Set(status.modalAlerts.map { $0.id })
+        dismissedAlertIDs.formIntersection(ids)
+        openedAlertIDs.formIntersection(ids)
+        if let answeringAlertID, !ids.contains(answeringAlertID) {
+            self.answeringAlertID = nil
+        }
+        // A rejection stands while the Mac keeps reporting the same alerts (it
+        // repeats its status right after rejecting). Any change means whatever
+        // was in the way may be gone.
+        if alertsChanged {
+            rejectedAlertID = nil
+        }
+        companionLog("Mac status: \(status.modalAlerts.count) alert(s), mainBlocked=\(status.mainBlocked)")
+        macBlockedStateDidChange()
+    }
+
+    private func macBlockedStateDidChange() {
+        let blocked = macIsBlocked
+        macWatchdog.setBlocked(blocked)
+        macLivenessProbe.setActive(blocked && client != nil)
+    }
+
+    /// Forget the Mac's status: the connection it described is gone.
+    private func clearMacStatus() {
+        applyMacStatus(CompanionMacStatus(modalAlerts: [], mainBlocked: false))
+    }
+
+    private func macRejectedAnswer(alertID: String) {
+        guard topMacAlert?.id == alertID else {
+            return
+        }
+        companionLog("Mac rejected the answer to alert \(alertID)")
+        answeringAlertID = nil
+        rejectedAlertID = alertID
+    }
+
+    /// Press a button on the alert being shown. `suppress` is the state of the
+    /// “don’t ask again” toggle.
+    func answerMacAlert(buttonIndex: Int, suppress: Bool) {
+        guard macRevision >= CompanionProtocolVersion.modalAlertRevision,
+              let alert = topMacAlert,
+              alert.buttons.indices.contains(buttonIndex),
+              answeringAlertID != alert.id,
+              rejectedAlertID != alert.id else {
+            return
+        }
+        // The toggle applies only where the Mac's own checkbox would: the alert
+        // has one, and this button's choice may be remembered.
+        let effectiveSuppress = suppress
+            && alert.suppressionLabel != nil
+            && alert.buttons[buttonIndex].rememberable
+        let alertID = alert.id
+        answeringAlertID = alertID
+        companionLog("Answering Mac alert \(alertID): button \(buttonIndex), suppress=\(effectiveSuppress)")
+        #if DEBUG
+        testSentAlertAnswers.append(TestAlertAnswer(alertID: alertID,
+                                                    buttonIndex: buttonIndex,
+                                                    suppress: effectiveSuppress))
+        #endif
+        guard let client else {
+            return
+        }
+        Task { [weak self] in
+            do {
+                try await client.answerModalAlert(alertID: alertID,
+                                                  buttonIndex: buttonIndex,
+                                                  suppress: effectiveSuppress)
+            } catch {
+                companionLog("Sending the answer to Mac alert \(alertID) failed: \(String(describing: error))")
+                guard let self, self.answeringAlertID == alertID else { return }
+                self.answeringAlertID = nil
+            }
+        }
+    }
+
+    /// “Not now”: set the alert aside. It stays reachable from the pill.
+    func dismissMacAlert() {
+        guard let alert = topMacAlert else {
+            return
+        }
+        dismissedAlertIDs.insert(alert.id)
+        openedAlertIDs.remove(alert.id)
+    }
+
+    /// Open the card for the alert the pill stands for.
+    func showMacAlert() {
+        guard let alert = topMacAlert else {
+            return
+        }
+        openedAlertIDs.insert(alert.id)
+        dismissedAlertIDs.remove(alert.id)
+    }
+
+    /// A timeout for a request the Mac's main thread has to serve. Held while
+    /// the Mac reports that it cannot answer; see MacRequestWatchdog.
+    private func withMacTimeout<T: Sendable>(_ seconds: TimeInterval,
+                                             _ label: String,
+                                             _ body: @escaping @Sendable () async throws -> T) async throws -> T {
+        return try await macWatchdog.run(timeout: seconds, label: label, body)
+    }
+
+    /// One strict ping. The Mac answers pings without its main thread, so this
+    /// is never held.
+    private func livenessPing() async -> Bool {
+        guard let client else {
+            return true
+        }
+        do {
+            try await withTimeout(5, "Liveness check") {
+                try await client.ping()
+            }
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    private func livenessProbeFoundDeadConnection() {
+        companionLog("Liveness check failed while the Mac was blocked -> treating connection as lost and reconnecting")
+        connectionLost()
+    }
+
     #if DEBUG
     /// Test override for this phone build's own revision, so a test can simulate a
     /// future (turnLifecycleRevision) build while `current` is still below it.
     var testLocalRevisionOverride: Int?
+
+    /// Every alert answer this model sent to the Mac, for tests.
+    struct TestAlertAnswer: Equatable {
+        var alertID: String
+        var buttonIndex: Int
+        var suppress: Bool
+    }
+    private(set) var testSentAlertAnswers: [TestAlertAnswer] = []
+
+    /// Test hook: apply a version handshake as the connect path does.
+    func testApplyHandshake(_ handshake: CompanionClient.HandshakeResult) {
+        applyHandshake(handshake, reconnect: false)
+    }
     #endif
     /// This phone build's own protocol revision.
     private var localRevision: Int {
@@ -985,7 +1196,7 @@ final class AppModel {
     func refreshSessionBrowser() async {
         do {
             let client = try await currentClient(label: "Session tree")
-            sessionTree = try await withTimeout(15, "Loading sessions") {
+            sessionTree = try await withMacTimeout(15, "Loading sessions") {
                 try await client.sessionTree()
             }
             sessionTreeError = nil
@@ -1797,6 +2008,9 @@ final class AppModel {
         macRevision = handshake.peerRevision
         aiAvailable = handshake.aiAvailable
         moveOffChatsTabIfAIUnavailable()
+        // Before anything else is asked of the Mac: a blocked Mac will not
+        // answer the list requests that follow, and they must know to wait.
+        applyMacStatus(handshake.macStatus ?? CompanionMacStatus(modalAlerts: [], mainBlocked: false))
         companionLog("Version handshake\(reconnect ? " (reconnect)" : ""): macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) aiAvailable=\(aiAvailable) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
     }
 
@@ -1813,7 +2027,7 @@ final class AppModel {
     private func refreshLists() async throws {
         let client = try await currentClient(label: "Refresh lists")
         companionLog("Requesting chat and session lists…")
-        let (chats, sessions) = try await withTimeout(15, "Chat list request") {
+        let (chats, sessions) = try await withMacTimeout(15, "Chat list request") {
             try await client.listChatsAndSessions()
         }
         companionLog("Received \(chats.count) chat(s), \(sessions.count) session(s)")
@@ -1899,6 +2113,9 @@ final class AppModel {
             companionLog("Connection lost (no transport error; e.g. the foreground connection-check ping failed)")
         }
         client = nil
+        // The status described the connection that just ended. Requests held
+        // for a blocked Mac get their timeouts back and fail with it.
+        clearMacStatus()
         // The stream id belongs to the dead connection; drop it (neutralizing the tile
         // throttle first) but keep the live-watch intent so it restarts after reconnect.
         neutralizeDeadStream()
@@ -2519,7 +2736,7 @@ final class AppModel {
         companionLog("Loading conversation \(chatID)")
         do {
             let client = try await currentClient(label: "Load conversation")
-            let history = try await withTimeout(15, "Loading the conversation") {
+            let history = try await withMacTimeout(15, "Loading the conversation") {
                 try await client.subscribe(chatID: chatID)
             }
             // The user may have popped back (or opened another chat) while the
@@ -2944,7 +3161,7 @@ final class AppModel {
         // Time-bound the createChat like the other client calls: a hung Mac must
         // not park this (coalesced) resolution forever, which would stick the
         // pendingChatResolution slot and block all future sends for this session.
-        let entry = try await withTimeout(15, "Creating a chat") {
+        let entry = try await withMacTimeout(15, "Creating a chat") {
             try await client.createChat(title: "New Chat", mode: .session(guid: guid))
         }
         if !chatExists(entry.chat.id) {
@@ -3811,7 +4028,7 @@ final class AppModel {
 
     func sessionScreenInfo(guid: String) async throws -> CompanionSessionScreenInfo {
         let client = try await currentClient(label: "Session info")
-        return try await withTimeout(15, "Loading session info") {
+        return try await withMacTimeout(15, "Loading session info") {
             try await client.sessionScreenInfo(guid: guid)
         }
     }
@@ -3840,14 +4057,14 @@ final class AppModel {
 
     func sessionContent(guid: String, firstLine: Int, lineCount: Int) async throws -> CompanionSessionContent {
         let client = try await currentClient(label: "Session content")
-        return try await withTimeout(20, "Loading session content") {
+        return try await withMacTimeout(20, "Loading session content") {
             try await client.sessionContent(guid: guid, firstLine: firstLine, lineCount: lineCount)
         }
     }
 
     func workgroupInfo(id: String) async throws -> CompanionWorkgroupInfo {
         let client = try await currentClient(label: "Workgroup info")
-        return try await withTimeout(15, "Loading workgroup info") {
+        return try await withMacTimeout(15, "Loading workgroup info") {
             try await client.workgroupInfo(id: id)
         }
     }
@@ -4029,6 +4246,10 @@ final class AppModel {
                     await self.resubscribeMountedConversations()
                 }
             }
+        case .macStatusChanged(let status):
+            applyMacStatus(status)
+        case .modalAlertAnswerRejected(let alertID):
+            macRejectedAnswer(alertID: alertID)
         default:
             break
         }
@@ -4427,7 +4648,7 @@ final class AppModel {
                 }
             }
             do {
-                let tile = try await withTimeout(historyTileTimeout, "History tile") {
+                let tile = try await withMacTimeout(historyTileTimeout, "History tile") {
                     try await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
                                                  lineCount: lineCount, generationId: generation)
                 }

@@ -294,6 +294,15 @@ Improvements:
   its group pops it out of the group, and moving
   an ungrouped tab into a neighboring group adds
   it to that group.
+- A warning that iTerm2 shows while you are away
+  from your Mac no longer cuts off your paired
+  iPhone. The iTerm2 Buddy app stays connected,
+  shows the warning, and lets you answer it,
+  including “don’t ask again”. Other kinds of
+  dialogs can’t be answered from the phone, but
+  it now says the Mac is waiting instead of
+  appearing disconnected. Requires an up-to-date
+  iTerm2 Buddy.
 - Pairing a companion iPhone no longer requires
   AI. The setup wizard (iTerm2 > Companion Device
   Settings) now lets you choose “Terminal viewing
