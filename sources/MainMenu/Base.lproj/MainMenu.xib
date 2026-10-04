@@ -1904,8 +1904,8 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Tab" id="cX5-Da-13x">
                                     <items>
-                                        <menuItem title="Edit Tab Title" identifier="Edit Tab Title" id="o4x-qQ-aC9">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        <menuItem title="Edit Tab Title" keyEquivalent="R" identifier="Edit Tab Title" id="o4x-qQ-aC9">
+                                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                             <connections>
                                                 <action selector="editTabTitle:" target="-1" id="tXR-UH-8S7"/>
                                             </connections>
