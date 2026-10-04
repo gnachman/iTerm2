@@ -209,7 +209,10 @@ final class CompanionPairingController: NSObject {
 
     // Set by the window controller; all invoked on the main actor.
     var onPaired: (@MainActor () -> Void)?
-    var onFailed: (@MainActor (String) -> Void)?
+    /// A failure to show: a short message that fits a status line, plus an
+    /// optional longer explanation (each server tried and what went wrong)
+    /// for a tooltip.
+    var onFailed: (@MainActor (_ message: String, _ details: String?) -> Void)?
     var onDisconnect: (@MainActor () -> Void)?
     var onStatus: (@MainActor (String) -> Void)?
     /// A fresh pairing finished its handshake and needs the user to type the
@@ -751,7 +754,7 @@ final class CompanionPairingController: NSObject {
             onPairingCodeChanged?(code)
         } catch {
             RLog("Companion: could not regenerate pairing code: \(error)")
-            onFailed?(Self.userFacingDescription(of: error))
+            reportFailure(error)
         }
     }
 
@@ -1050,6 +1053,7 @@ final class CompanionPairingController: NSObject {
                 let resolver = shardResolverCache.resolver(resolverURL: resolverURL,
                                                            token: shardClientID,
                                                            fetcher: shardFetcher,
+                                                           mirrorTiming: Self.shardMapMirrorTiming,
                                                            floorStore: shardMapFloorStore)
                 let resolveCode = PairingCode(responderStaticPublicKey: keyPair.publicKey,
                                               pairingID: pairingID,
@@ -1150,7 +1154,7 @@ final class CompanionPairingController: NSObject {
     private func parkSetupDidFail(_ error: Error, what: String) {
         if freshPairingActive, bridge == nil {
             relayLog("parkAndAccept: fresh-pairing \(what) failed: \(error); surfacing and regenerating")
-            onFailed?(Self.userFacingDescription(of: error))
+            reportFailure(error)
             scheduleFreshPairingRegeneration(reason: "\(what)-failed")
         } else {
             relayLog("parkAndAccept: \(what) failed: \(error); scheduling retry")
@@ -1162,6 +1166,10 @@ final class CompanionPairingController: NSObject {
     /// URL + plugin client identity so a plugin reload rebuilds against the new
     /// egress.
     private var shardResolverCache = ShardResolverCache()
+    /// The Mac re-resolves on every park and reconnect, so it only asks the
+    /// GitHub Pages mirror when the primary is slow or failing, to stay clear
+    /// of its rate limits.
+    private static let shardMapMirrorTiming = ShardMapMirrorTiming.afterDelay
 
     /// Durable per-resolver version floor (§6.4), so the highest shard-map version
     /// this mac has adopted survives a relaunch: a freshly launched mac must not
@@ -1237,6 +1245,7 @@ final class CompanionPairingController: NSObject {
         let resolver = shardResolverCache.resolver(resolverURL: resolverURL,
                                                    token: ObjectIdentifier(plugin.client),
                                                    fetcher: plugin.shardMapFetcher(),
+                                                   mirrorTiming: Self.shardMapMirrorTiming,
                                                    floorStore: shardMapFloorStore)
         let code = PairingCode(responderStaticPublicKey: keyPair.publicKey,
                                pairingID: pairingID, resolverURL: resolverURL)
@@ -1288,7 +1297,7 @@ final class CompanionPairingController: NSObject {
                         // "Waiting for your iPhone…" up.
                         onStatus?("Reconnecting to the relay…")
                     } else {
-                        onFailed?(Self.userFacingDescription(of: error))
+                        reportFailure(error)
                     }
                     scheduleFreshPairingRegeneration(reason: "park-closed")
                     return
@@ -1338,7 +1347,7 @@ final class CompanionPairingController: NSObject {
                 // dark. A closed park is routine churn, so retry quietly and
                 // surface only real faults (e.g. a connection/DNS failure).
                 if !routineClose {
-                    onFailed?(Self.userFacingDescription(of: error))
+                    reportFailure(error)
                 }
                 scheduleListenerRetry()
                 return
@@ -1510,11 +1519,41 @@ final class CompanionPairingController: NSObject {
         }
     }
 
+    /// Tell the window about a failure. The full explanation also goes to the
+    /// in-memory log, since the window shows it only in a tooltip.
+    private func reportFailure(_ error: Error) {
+        let failure = Self.userFacingFailure(of: error)
+        if let details = failure.details {
+            RLog("Companion: pairing failed: \(failure.message)\n\(details)")
+        }
+        onFailed?(failure.message, failure.details)
+    }
+
+    /// Convert an error into a short message for a status line (a few lines
+    /// at most) plus any longer explanation.
+    private static func userFacingFailure(of error: Error) -> (message: String, details: String?) {
+        if let fetchError = error as? ShardMapFetchError {
+            // The per-server summary is too long for the status line; keep the
+            // advice there and put the rest in the details. The details are
+            // diagnostics composed in CompanionCore, which has no string
+            // catalog, so they stay in English.
+            let message = fetchError.isNetworkFailure
+                ? String(localized: "Companion.Status.RelayListUnavailableTryAnotherNetwork",
+                         defaultValue: "Couldn’t get the list of relay servers. Try another network or a VPN.",
+                         comment: "Pairing failure shown when the list of relay servers could not be downloaded because of a network problem")
+                : String(localized: "Companion.Status.RelayListUnavailable",
+                         defaultValue: "Couldn’t get the list of relay servers.",
+                         comment: "Pairing failure shown when the list of relay servers could not be downloaded")
+            return (message, "\(fetchError.summary)\n\n\(fetchError.details)")
+        }
+        if let transport = error as? TransportError {
+            return (transport.summary, transport.details)
+        }
+        return (userFacingDescription(of: error), nil)
+    }
+
     /// Convert transport errors into actionable text.
     private static func userFacingDescription(of error: Error) -> String {
-        if let transport = error as? TransportError {
-            return transport.errorDescription ?? "\(error)"
-        }
         // Surface the real failure, not bridged-NSError boilerplate.
         if let nwError = error as? NWError {
             switch nwError {

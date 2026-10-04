@@ -35,7 +35,13 @@ struct PluginShardMapFetcher: ShardMapFetching {
         if response.error.hasPrefix("HTTP "), let code = Int(response.error.dropFirst(5)) {
             throw ShardMapLoaderError.httpStatus(code)
         }
-        throw ShardMapLoaderError.badResponse
+        // Rebuild URLSession's error so the failure is explained as specifically
+        // as on the phone (a DNS failure vs. a timeout); otherwise keep the text.
+        let failure = CompanionPluginHTTPError.decode(response.error)
+        if let urlError = failure.urlError {
+            throw urlError
+        }
+        throw ShardMapLoaderError.requestFailed(failure.message)
     }
 }
 
@@ -181,6 +187,6 @@ struct PluginRelayHTTPClient: RelayHTTPClient {
         }
         // A transport-level failure (no HTTP status): surface it so the caller's
         // best-effort wrapper can log and move on.
-        throw RelayAttestationError.http(-1, response.error)
+        throw RelayAttestationError.http(-1, CompanionPluginHTTPError.decode(response.error).message)
     }
 }

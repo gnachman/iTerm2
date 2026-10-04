@@ -675,6 +675,13 @@ Bug Fixes:
   in the popup, so choosing a provider
   other than the current default no longer
   stores the key under the wrong service.
+- Pairing a companion iPhone no longer fails on
+  networks that can’t reach iterm2.com. iTerm2
+  now falls back to a second copy of its list
+  of relay servers. If neither can be reached,
+  the pairing window says so and suggests
+  another network; hover over the message to
+  see what went wrong with each server.
 - Added a reply to CSI 16 t (report character
   cell size), which was previously ignored.
 - Fixed the workgroup toolbar’s

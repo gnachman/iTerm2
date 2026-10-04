@@ -347,7 +347,10 @@ extension CompanionPluginClient: URLSessionWebSocketDelegate {
         }
         egressSession.dataTask(with: request) { data, response, error in
             if let error {
-                completion(String(data: data ?? Data(), encoding: .utf8) ?? "", error.localizedDescription)
+                // Encoded so callers can rebuild the URLError (see
+                // CompanionPluginHTTPError); the JS forwards it verbatim.
+                completion(String(data: data ?? Data(), encoding: .utf8) ?? "",
+                           CompanionPluginHTTPError.encode(error))
                 return
             }
             let status = (response as? HTTPURLResponse)?.statusCode ?? -1

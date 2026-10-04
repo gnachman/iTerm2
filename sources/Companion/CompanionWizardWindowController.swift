@@ -191,9 +191,12 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         button.frame = NSRect(x: (Self.contentWidth - width) / 2, y: y, width: width, height: 32)
     }
 
-    private func setStatus(_ text: String, color: NSColor) {
+    /// - details: a longer explanation, shown as the label's tooltip since the
+    ///   label holds only a few lines. Nil clears it.
+    private func setStatus(_ text: String, color: NSColor, details: String? = nil) {
         activeStatusLabel?.stringValue = text
         activeStatusLabel?.textColor = color
+        activeStatusLabel?.toolTip = details
     }
 
     // MARK: Screen 1.0 - choose mode
@@ -886,13 +889,14 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                   self.currentScreen == .showCode || self.currentScreen == .sasEntry else { return }
             self.setStatus(status, color: .secondaryLabelColor)
         }
-        controller.onFailed = { [weak self] message in
+        controller.onFailed = { [weak self] message, details in
             guard let self, self.isShowing,
                   self.currentScreen == .showCode || self.currentScreen == .sasEntry else { return }
             self.setStatus(String(localized: "Companion.Status.PairingFailed",
                                   defaultValue: "Pairing failed: \(message)",
                                   comment: "Error status when pairing fails; the placeholder is the failure detail"),
-                           color: .systemRed)
+                           color: .systemRed,
+                           details: details)
         }
         controller.onPaired = { [weak self] in
             guard let self, self.isShowing else { return }

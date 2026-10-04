@@ -155,9 +155,16 @@ final class ShardMapLoaderTests: XCTestCase {
         stub.responses[mapURL] = .success(mapJSON(39))
         let loader = ShardMapLoader(resolverURL: resolver, fetcher: stub,
                                     initialHighestVersion: 40)
-        let map = try await loader.refresh()
+        do {
+            _ = try await loader.refresh()
+            XCTFail("expected a throw")
+        } catch let error as ShardMapFetchError {
+            // It says why, rather than leaving the caller with no map and no
+            // explanation.
+            XCTAssertEqual(error.attempts.first?.error as? ShardMapLoaderError,
+                           .outdatedMap(served: 39, latestSeen: 40))
+        }
 
-        XCTAssertNil(map)
         let current = await loader.current
         XCTAssertNil(current)
     }
@@ -194,8 +201,10 @@ final class ShardMapLoaderTests: XCTestCase {
 
         let seeded = await loader.highestVersion
         XCTAssertEqual(seeded, 41)   // seeded from the store, not the served map
-        let map = try await loader.refresh()
-        XCTAssertNil(map)
+        await XCTAssertThrowsErrorAsync(try await loader.refresh()) {
+            XCTAssertEqual(soleAttemptError($0) as? ShardMapLoaderError,
+                           .outdatedMap(served: 40, latestSeen: 41))
+        }
         let current = await loader.current
         XCTAssertNil(current)
     }
@@ -239,7 +248,7 @@ final class ShardMapLoaderTests: XCTestCase {
         stub.responses[mapURL] = .success(Data("{ broken".utf8))
         let loader = ShardMapLoader(resolverURL: resolver, fetcher: stub)
         await XCTAssertThrowsErrorAsync(try await loader.refresh()) {
-            XCTAssertEqual($0 as? ShardMapLoaderError, .malformedMap)
+            XCTAssertEqual(soleAttemptError($0) as? ShardMapLoaderError, .malformedMap)
         }
     }
 
@@ -256,7 +265,7 @@ final class ShardMapLoaderTests: XCTestCase {
           "ranges": [ { "low": 0, "high": 100, "host": "relay1.iterm2.com" } ] }
         """.utf8))
         await XCTAssertThrowsErrorAsync(try await loader.refresh()) {
-            XCTAssertEqual($0 as? ShardMap.ValidationError, .gapOrOverlap)
+            XCTAssertEqual(soleAttemptError($0) as? ShardMap.ValidationError, .gapOrOverlap)
         }
         let highest = await loader.highestVersion
         let currentVersion = await loader.current?.version
@@ -264,11 +273,25 @@ final class ShardMapLoaderTests: XCTestCase {
         XCTAssertEqual(currentVersion, 37)
     }
 
+    func testCancellationReportedByTheFetcherIsAFetchFailure() async throws {
+        // The Mac's plugin reports a reload mid-fetch as URLError(.cancelled)
+        // though nobody cancelled the caller. It must fail like any other
+        // error, and the fetch must not be left looking as if it still waits.
+        let stub = StubFetcher()
+        stub.responses[mapURL] = .failure(URLError(.cancelled))
+        let loader = ShardMapLoader(resolverURL: resolver, fetcher: stub)
+        await XCTAssertThrowsErrorAsync(try await loader.refresh()) {
+            XCTAssertEqual((soleAttemptError($0) as? URLError)?.code, .cancelled)
+        }
+        let report = await loader.failureSoFar()
+        XCTAssertNil(report)
+    }
+
     func testHttpErrorThrows() async throws {
         let stub = StubFetcher()   // no response registered -> stub throws httpStatus(404)
         let loader = ShardMapLoader(resolverURL: resolver, fetcher: stub)
         await XCTAssertThrowsErrorAsync(try await loader.refresh()) {
-            XCTAssertEqual($0 as? ShardMapLoaderError, .httpStatus(404))
+            XCTAssertEqual(soleAttemptError($0) as? ShardMapLoaderError, .httpStatus(404))
         }
     }
 
@@ -289,6 +312,17 @@ final class ShardMapLoaderTests: XCTestCase {
             XCTAssertEqual(stub.requested, [url], url)
         }
     }
+}
+
+/// The underlying error of a single-source fetch failure, which the loader
+/// reports as a ShardMapFetchError with one attempt.
+private func soleAttemptError(_ error: Error, file: StaticString = #filePath, line: UInt = #line) -> Error? {
+    guard let fetchError = error as? ShardMapFetchError else {
+        XCTFail("expected ShardMapFetchError, got \(error)", file: file, line: line)
+        return nil
+    }
+    XCTAssertEqual(fetchError.attempts.count, 1, file: file, line: line)
+    return fetchError.attempts.first?.error
 }
 
 // Small async throwing-assertion helper (XCTAssertThrowsError is sync-only).
