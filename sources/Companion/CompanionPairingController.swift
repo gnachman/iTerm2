@@ -1477,7 +1477,9 @@ final class CompanionPairingController: NSObject {
                 let link = CompanionLink(transport: channel,
                                          aiAvailability: .shared,
                                          wantsNotificationPermission: { CompanionPushRegistry.alertsEverEnabled },
-                                         storeRoomSecret: CompanionLink.storeRoomSecretIfChanged)
+                                         storeRoomSecret: CompanionLink.storeRoomSecretIfChanged,
+                                         alerts: ModalAlertRegistry.shared,
+                                         mainStall: CompanionMainThreadMonitor.shared)
                 installBridge(for: link)
                 link.start()
                 // Persist so future reconnects authenticate. Pin the phone static
@@ -1646,7 +1648,9 @@ final class CompanionPairingController: NSObject {
                 CompanionLink(transport: channel,
                               aiAvailability: .shared,
                               wantsNotificationPermission: { CompanionPushRegistry.alertsEverEnabled },
-                              storeRoomSecret: CompanionLink.storeRoomSecretIfChanged)
+                              storeRoomSecret: CompanionLink.storeRoomSecretIfChanged,
+                              alerts: ModalAlertRegistry.shared,
+                              mainStall: CompanionMainThreadMonitor.shared)
             },
             sleep: { try await Task.sleep(nanoseconds: $0) },
             // Full-jitter delay for a re-park after a reshard evict (§7.3 /
@@ -1679,6 +1683,14 @@ final class CompanionPairingController: NSObject {
                 // phone got in but before the main actor heard about it.
                 relayLog("supervisor linkUp after stop; closing the link")
                 link.close()
+                return
+            }
+            guard !link.isClosed else {
+                // Already gone. While the main actor was frozen, a phone that
+                // does not know to wait (an older Buddy) may have connected,
+                // timed out, and reconnected many times. Each attempt is a
+                // link-up event here; only a live one gets a bridge.
+                relayLog("supervisor linkUp for a link that already closed; skipping")
                 return
             }
             relayLog("supervisor linkUp; creating bridge")

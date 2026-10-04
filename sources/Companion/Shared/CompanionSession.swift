@@ -173,6 +173,8 @@ actor CompanionSession {
         case .selectionRange: "selectionRange"
         case .autoProvideConsent: "autoProvideConsent"
         case .aiAvailabilityChanged: "aiAvailabilityChanged"
+        case .macStatusChanged: "macStatusChanged"
+        case .modalAlertAnswerRejected: "modalAlertAnswerRejected"
         }
     }
 

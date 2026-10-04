@@ -10,7 +10,9 @@
 //  goes silent for the whole time such an alert is up. The link owns the parts
 //  that must keep working regardless: the receive loop, the outbox drain, and
 //  the few messages that can be answered without app state (hello, ping, and
-//  the relay room secret a connecting phone sends before its hello).
+//  the relay room secret a connecting phone sends before its hello). It also
+//  tells the phone which alerts are showing and whether the main thread is
+//  blocked, and passes the phone's answer to an alert along.
 //  Everything else is forwarded, in wire order, to the bridge through `events`,
 //  where it simply waits until the main actor runs again.
 //
@@ -53,7 +55,8 @@ enum CompanionConnectionClassification: Equatable {
 actor CompanionLink {
     enum Event {
         /// A decoded message from the phone, in wire order. `handledByLink` is
-        /// true when the link already answered it (hello, ping, relayRoomSecret);
+        /// true when the link already handled it (hello, ping, relayRoomSecret,
+        /// answerModalAlert);
         /// the bridge then only does its bookkeeping and must not answer again.
         case envelope(ClientEnvelope, handledByLink: Bool)
         /// The link answered a hello. `blocked` is true when the peer is
@@ -71,6 +74,9 @@ actor CompanionLink {
     /// duplicated or reordered poke is harmless.
     enum Poke: Sendable {
         case aiAvailability
+        /// The alerts the phone may answer, or whether the main thread is
+        /// blocked, may have changed.
+        case macStatus
     }
 
     /// Outbound frames. Lock-protected, so main-actor code and encoder threads
@@ -98,10 +104,15 @@ actor CompanionLink {
     }
 
     private nonisolated let shared = OSAllocatedUnfairLock(initialState: Shared())
+    /// Keeps the link subscribed to the alert registry and the stall monitor
+    /// for as long as it is open.
+    private nonisolated let subscriptions = OSAllocatedUnfairLock(uncheckedState: [AnyObject]())
     private nonisolated let transport: MessageTransport
     private nonisolated let aiAvailability: CompanionAIAvailabilityCache
     private nonisolated let wantsNotificationPermission: @Sendable () -> Bool
     private nonisolated let storeRoomSecret: @Sendable (Data) throws -> Void
+    private nonisolated let alerts: ModalAlertSource
+    private nonisolated let mainStall: CompanionMainStallSource
     private nonisolated let eventsContinuation: AsyncStream<Event>.Continuation
     private nonisolated let pokes: AsyncStream<Poke>
     private nonisolated let pokesContinuation: AsyncStream<Poke>.Continuation
@@ -112,11 +123,19 @@ actor CompanionLink {
     /// The AI availability last advertised to this phone (seeded by the hello
     /// reply). nil until the first hello is answered.
     private var lastSentAIAvailable: Bool?
+    /// The status last sent to this phone (seeded by the hello reply). nil while
+    /// the phone gets no status: before its hello, or because it is too old to
+    /// understand it, or version-blocked.
+    private var lastSentStatus: CompanionMacStatus?
 
     init(transport: MessageTransport,
          aiAvailability: CompanionAIAvailabilityCache,
          wantsNotificationPermission: @escaping @Sendable () -> Bool,
-         storeRoomSecret: @escaping @Sendable (Data) throws -> Void) {
+         storeRoomSecret: @escaping @Sendable (Data) throws -> Void,
+         alerts: ModalAlertSource,
+         mainStall: CompanionMainStallSource) {
+        self.alerts = alerts
+        self.mainStall = mainStall
         self.transport = transport
         self.aiAvailability = aiAvailability
         self.wantsNotificationPermission = wantsNotificationPermission
@@ -154,6 +173,14 @@ actor CompanionLink {
             return false
         }
         guard !alreadyStarted else { return }
+        // The observers only poke: they are called on a main thread that may be
+        // about to freeze (the registry's) or on a background thread (the
+        // monitor's), and poke() is a synchronous yield either way.
+        let tokens = [
+            alerts.addObserver { [weak self] in self?.poke(.macStatus) },
+            mainStall.addObserver { [weak self] in self?.poke(.macStatus) },
+        ]
+        subscriptions.withLockUnchecked { $0 = tokens }
         Task.detached { [self] in
             await self.receiveLoop()
         }
@@ -214,6 +241,11 @@ actor CompanionLink {
         if drainTask == nil {
             finish(error: nil)
         }
+    }
+
+    /// Whether the connection has ended.
+    nonisolated var isClosed: Bool {
+        return shared.withLock { $0.finished }
     }
 
     /// Suspends until the connection has ended, then returns what `.closed`
@@ -371,6 +403,14 @@ actor CompanionLink {
                      requestID: requestID)
             }
             eventsContinuation.yield(.envelope(envelope, handledByLink: true))
+        case .answerModalAlert(let alertID, let buttonIndex, let suppress):
+            eventsContinuation.yield(.envelope(envelope, handledByLink: true))
+            // Not awaited here. Pressing the button needs the main thread, and
+            // if that is busy in a way that keeps even a run loop block from
+            // running, the receive loop must go on answering everything else.
+            Task {
+                await self.answerAlert(alertID: alertID, buttonIndex: buttonIndex, suppress: suppress)
+            }
         default:
             eventsContinuation.yield(.envelope(envelope, handledByLink: false))
         }
@@ -389,11 +429,19 @@ actor CompanionLink {
         // change events are compared against. handle(_: Poke) does nothing until
         // helloSent, so an aiAvailabilityChanged can never precede this reply.
         lastSentAIAvailable = aiAvailable
+        // The status rides the reply, so the phone knows it before it sends the
+        // requests that would time out against a blocked mac. Only for a phone
+        // that understands it; handle(_: Poke) sends changes only while this is
+        // non-nil.
+        let status: CompanionMacStatus? =
+            (!blocked && peerRevision >= CompanionProtocolVersion.modalAlertRevision) ? currentStatus() : nil
+        lastSentStatus = status
         helloSent = true
         send(.hello(revision: CompanionProtocolVersion.current,
                     minimumPeer: CompanionProtocolVersion.minimumPeer,
                     wantsNotificationPermission: wantsNotificationPermission(),
-                    aiAvailable: aiAvailable),
+                    aiAvailable: aiAvailable,
+                    macStatus: status),
              requestID: envelope.requestID)
         RLog("Companion link: hello peer(rev=\(peerRevision), min=\(peerMinimumPeer)) -> \(verdict)")
         eventsContinuation.yield(.envelope(envelope, handledByLink: true))
@@ -417,7 +465,57 @@ actor CompanionLink {
             self.lastSentAIAvailable = available
             RLog("Companion link: AI availability changed to \(available); notifying phone")
             send(.aiAvailabilityChanged(available: available), requestID: nil)
+        case .macStatus:
+            // Like AI availability: nothing before the hello reply, which
+            // carries the status, and afterwards only actual changes.
+            guard let lastSentStatus else { return }
+            let status = currentStatus()
+            guard status != lastSentStatus else { return }
+            sendStatus(status)
         }
+    }
+
+    // MARK: Mac status
+
+    private func currentStatus() -> CompanionMacStatus {
+        let modalAlerts = alerts.currentAlerts().map { snapshot in
+            CompanionModalAlert(
+                id: snapshot.id.uuidString,
+                heading: snapshot.heading,
+                body: snapshot.body,
+                buttons: snapshot.buttons.map {
+                    CompanionModalAlert.Button(title: $0.title,
+                                               isCancel: $0.isCancel,
+                                               isDestructive: $0.isDestructive,
+                                               rememberable: $0.rememberable)
+                },
+                suppressionLabel: snapshot.suppressionLabel,
+                hasAccessory: snapshot.hasAccessory,
+                isAppModal: snapshot.isAppModal)
+        }
+        return CompanionMacStatus(modalAlerts: modalAlerts, mainBlocked: mainStall.isMainBlocked())
+    }
+
+    private func sendStatus(_ status: CompanionMacStatus) {
+        lastSentStatus = status
+        RLog("Companion link: mac status: \(status.modalAlerts.count) alert(s), mainBlocked=\(status.mainBlocked)")
+        send(.macStatusChanged(status: status), requestID: nil)
+    }
+
+    private func answerAlert(alertID: String, buttonIndex: Int, suppress: Bool) async {
+        let pressed: Bool
+        if let id = UUID(uuidString: alertID) {
+            pressed = await alerts.answer(id: id, buttonIndex: buttonIndex, suppress: suppress)
+        } else {
+            pressed = false
+        }
+        RLog("Companion link: answer to alert \(alertID) button \(buttonIndex): \(pressed ? "pressed" : "REJECTED")")
+        // When the button was pressed the alert goes away, and the registry's
+        // observer reports that. When it was not, say so, and repeat the status
+        // (changed or not) so the phone is certain of what is showing.
+        guard !pressed, lastSentStatus != nil else { return }
+        send(.modalAlertAnswerRejected(alertID: alertID), requestID: nil)
+        sendStatus(currentStatus())
     }
 
     // MARK: Ending
@@ -435,6 +533,7 @@ actor CompanionLink {
             return waiters
         }
         guard let waiters else { return }
+        subscriptions.withLockUnchecked { $0 = [] }
         eventsContinuation.yield(.closed(error))
         eventsContinuation.finish()
         pokesContinuation.finish()

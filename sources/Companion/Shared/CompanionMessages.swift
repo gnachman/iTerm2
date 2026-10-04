@@ -398,6 +398,106 @@ struct CompanionStreamConfig: Codable, Equatable {
     }
 }
 
+/// One modal alert showing on the mac that the phone may answer (revision 14+).
+/// The mac's own strings, already localized: show them verbatim.
+struct CompanionModalAlert: Codable, Equatable, Sendable {
+    struct Button: Codable, Equatable, Sendable {
+        var title: String
+        /// The alert's Cancel/dismiss action.
+        var isCancel: Bool
+        var isDestructive: Bool
+        /// Whether this button's choice may be remembered. The "don't ask again"
+        /// option applies only to such buttons.
+        var rememberable: Bool
+
+        init(title: String, isCancel: Bool, isDestructive: Bool, rememberable: Bool) {
+            self.title = title
+            self.isCancel = isCancel
+            self.isDestructive = isDestructive
+            self.rememberable = rememberable
+        }
+
+        // Custom decode so a flag added or dropped by another revision cannot
+        // make the whole status undecodable. Synthesized Decodable throws
+        // keyNotFound for an absent key.
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            title = try c.decode(String.self, forKey: .title)
+            isCancel = try c.decodeIfPresent(Bool.self, forKey: .isCancel) ?? false
+            isDestructive = try c.decodeIfPresent(Bool.self, forKey: .isDestructive) ?? false
+            rememberable = try c.decodeIfPresent(Bool.self, forKey: .rememberable) ?? false
+        }
+    }
+
+    /// Identifies this showing of the alert. Echoed in `.answerModalAlert`.
+    var id: String
+    var heading: String
+    var body: String
+    /// In the mac's order. Index 0 is the default button.
+    var buttons: [Button]
+    /// The label of the alert's "don't ask again" checkbox, or nil if it has none.
+    var suppressionLabel: String?
+    /// The mac shows an extra view (details, an input field) with this alert
+    /// that is not carried here.
+    var hasAccessory: Bool
+    /// False for a sheet that does not block the mac: the mac keeps serving
+    /// requests while it is up, so the phone need not interrupt for it.
+    var isAppModal: Bool
+
+    init(id: String,
+         heading: String,
+         body: String,
+         buttons: [Button],
+         suppressionLabel: String?,
+         hasAccessory: Bool,
+         isAppModal: Bool) {
+        self.id = id
+        self.heading = heading
+        self.body = body
+        self.buttons = buttons
+        self.suppressionLabel = suppressionLabel
+        self.hasAccessory = hasAccessory
+        self.isAppModal = isAppModal
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        heading = try c.decodeIfPresent(String.self, forKey: .heading) ?? ""
+        body = try c.decodeIfPresent(String.self, forKey: .body) ?? ""
+        buttons = try c.decodeIfPresent([Button].self, forKey: .buttons) ?? []
+        suppressionLabel = try c.decodeIfPresent(String.self, forKey: .suppressionLabel)
+        hasAccessory = try c.decodeIfPresent(Bool.self, forKey: .hasAccessory) ?? false
+        isAppModal = try c.decodeIfPresent(Bool.self, forKey: .isAppModal) ?? true
+    }
+}
+
+/// Whether the mac can serve requests right now, and why not (revision 14+).
+/// Always the complete current state, never a delta.
+struct CompanionMacStatus: Codable, Equatable, Sendable {
+    /// The alerts showing on the mac that the phone may answer, bottom to top.
+    /// Only the last one can be answered: it is in front of the others.
+    var modalAlerts: [CompanionModalAlert]
+    /// The mac's main thread has not responded for a couple of seconds, so
+    /// requests that need app state (chat and session lists, sending keys,
+    /// video) will not be answered until it does. With `modalAlerts` non-empty
+    /// the cause is an alert the phone can answer; with it empty, it is
+    /// something the phone cannot answer (another kind of dialog, or the mac is
+    /// busy). The phone should hold its request timeouts while this is true.
+    var mainBlocked: Bool
+
+    init(modalAlerts: [CompanionModalAlert], mainBlocked: Bool) {
+        self.modalAlerts = modalAlerts
+        self.mainBlocked = mainBlocked
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        modalAlerts = try c.decodeIfPresent([CompanionModalAlert].self, forKey: .modalAlerts) ?? []
+        mainBlocked = try c.decodeIfPresent(Bool.self, forKey: .mainBlocked) ?? false
+    }
+}
+
 /// Why a live stream ended.
 enum CompanionStreamEndReason: String, Codable, Equatable {
     case stoppedByClient
@@ -680,6 +780,17 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// consent modal, before the message that should include them. No reply.
     case grantAutoProvideConsent(chatID: String)
 
+    /// Press a button on a modal alert showing on the mac (revision 14+).
+    /// `alertID` is the `id` from the `CompanionModalAlert` being answered and
+    /// `buttonIndex` indexes its `buttons`. `suppress` asks the mac to also check
+    /// the alert's "don't ask again" box; the mac ignores it when the alert has
+    /// no such box or that button's choice may not be remembered. No reply. On
+    /// success the alert goes away and the mac sends `.macStatusChanged`. If the
+    /// mac could not press the button (the alert is already gone, or something
+    /// the phone cannot see is in front of it) it sends
+    /// `.modalAlertAnswerRejected` and then its current status.
+    case answerModalAlert(alertID: String, buttonIndex: Int, suppress: Bool)
+
     /// Discriminators this build knows. MUST list every case above (except
     /// `.unsupported` is included so a peer that literally sends it round-trips).
     /// Add a line here whenever a case is added.
@@ -695,7 +806,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "updateStreamParams", "streamAck", "reportScrollWheel",
         "selectionGesture", "clearSelection", "copySelection",
         "selectAllInStream", "pasteText", "sendKey", "resizeSession",
-        "fetchAutoProvideConsent", "grantAutoProvideConsent",
+        "fetchAutoProvideConsent", "grantAutoProvideConsent", "answerModalAlert",
     ]
 }
 
@@ -723,7 +834,15 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// cross-version compatibility: a pre-13 mac omits it, decoding as nil, which
     /// the phone reads as `true` - such a mac only ever paired with AI on, so
     /// "unknown" means "available" and existing users see no change.
-    case hello(revision: Int, minimumPeer: Int, wantsNotificationPermission: Bool?, aiAvailable: Bool?)
+    ///
+    /// `macStatus` (revision 14+, sent only to a phone at revision 14+) is whether
+    /// the mac can serve requests right now and which alerts the phone may answer.
+    /// It rides the hello reply, rather than a following event, so the phone knows
+    /// it BEFORE it issues the requests that would otherwise time out against a
+    /// blocked mac. Optional for cross-version compatibility: an older mac omits
+    /// it, which the phone reads as "not blocked, no alerts".
+    case hello(revision: Int, minimumPeer: Int, wantsNotificationPermission: Bool?, aiAvailable: Bool?,
+               macStatus: CompanionMacStatus?)
 
     /// Reply to `.listChatsAndSessions`.
     case chatsAndSessions(chats: [CompanionChatListEntry], sessions: [CompanionSessionSummary])
@@ -866,6 +985,20 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// unknown discriminator to `.unsupported` and ignores it, so this is additive.
     case aiAvailabilityChanged(available: Bool)
 
+    /// Unsolicited (revision 14+): the mac's status changed while the phone was
+    /// connected: an alert the phone may answer appeared or went away, or the
+    /// mac's main thread stopped or resumed responding. Carries the complete
+    /// current status. Sent only to a phone at revision 14+; an older phone would
+    /// decode the unknown discriminator as `.unsupported` and ignore it.
+    case macStatusChanged(status: CompanionMacStatus)
+
+    /// Unsolicited (revision 14+): the mac could not press the button a
+    /// `.answerModalAlert` asked for. The alert may already be gone, or something
+    /// the phone cannot see (another kind of dialog) may be in front of it. A
+    /// `.macStatusChanged` with the current status follows. If the alert is still
+    /// listed there, the user has to answer it at the mac.
+    case modalAlertAnswerRejected(alertID: String)
+
     /// Discriminators this build knows. Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "chatsAndSessions", "chatCreated", "history",
@@ -875,7 +1008,8 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "unpaired", "messagesSince", "syncSince", "error",
         "streamStarted", "streamConfig", "streamEnded", "selectionText",
         "selectionRange", "historyTile", "streamExtent", "autoProvideConsent",
-        "turnLifecycle", "aiAvailabilityChanged",
+        "turnLifecycle", "aiAvailabilityChanged", "macStatusChanged",
+        "modalAlertAnswerRejected",
     ]
 }
 

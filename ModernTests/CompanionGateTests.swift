@@ -104,6 +104,8 @@ final class CompanionGateTests: XCTestCase {
         XCTAssertEqual(req(.fetchSessionTree), .open)
         XCTAssertEqual(req(.sendKey(sessionGuid: "g", event: CompanionKeyEvent(key: .text("x")))), .open)
         XCTAssertEqual(req(.ping), .open)
+        // Answering a mac alert has nothing to do with AI.
+        XCTAssertEqual(req(.answerModalAlert(alertID: "a", buttonIndex: 0, suppress: false)), .open)
         // Mixed: partially served with AI off; must classify before gating.
         XCTAssertEqual(req(.listChatsAndSessions), .mixed)
         XCTAssertEqual(req(.messagesSince(collapseToken: "t", seq: 0, limit: 1, nonce: nil)), .mixed)

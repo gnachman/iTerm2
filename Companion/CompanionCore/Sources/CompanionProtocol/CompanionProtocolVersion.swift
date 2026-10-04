@@ -125,7 +125,21 @@ public enum CompanionProtocolVersion {
     /// pre-13 phone. minimumPeer stays at 11. Each side self-gates on
     /// `aiDecouplingRevision`: the mac sends the typed `.aiUnavailable` error only
     /// to a phone that can decode it (an older phone gets a generic error instead).
-    public static let current = 13
+    ///
+    /// Revision 14 lets the phone see and answer modal alerts showing on the mac,
+    /// and tells it when the mac cannot serve requests. A modal alert can stop the
+    /// mac's main thread from serving anything until it is dismissed; the mac's
+    /// connection now survives that, and reports it. The mac's hello reply gains
+    /// `macStatus` (the alerts the phone may answer, and whether the main thread is
+    /// blocked), with a live `macStatusChanged` event when either changes. The
+    /// phone presses a button with `answerModalAlert`; the mac sends
+    /// `modalAlertAnswerRejected` if it could not. Additive and backward-compatible:
+    /// the hello field is optional and omitted for an older phone, the new host
+    /// events decode as `.unsupported` on a pre-14 phone, and a pre-14 mac answers
+    /// the new client message with an error it never has cause to receive (the
+    /// phone only answers alerts a mac told it about). minimumPeer stays at 11.
+    /// Each side self-gates on `modalAlertRevision`.
+    public static let current = 14
 
     /// The oldest peer revision this build accepts. Raised to 11 (lockstep with
     /// `current`) for the sharded resolver: peers older than revision 11 stay on
@@ -198,6 +212,14 @@ public enum CompanionProtocolVersion {
     /// chat-disabled UI on the mac's advertised AI availability, which older macs
     /// (always AI-on when paired) implicitly report as available.
     public static let aiDecouplingRevision = 13
+
+    /// The first revision that carries the mac's status: `macStatus` in the hello
+    /// reply, the `macStatusChanged` and `modalAlertAnswerRejected` host events,
+    /// and the `answerModalAlert` client message. The mac sends its status only to
+    /// a phone at least here; the phone shows mac alerts, and holds its request
+    /// timeouts while the mac reports itself blocked, only for a mac at least
+    /// here.
+    public static let modalAlertRevision = 14
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {

@@ -71,7 +71,7 @@ actor CompanionClient {
         let reply = try await session.request(.hello(revision: CompanionProtocolVersion.current,
                                                      minimumPeer: CompanionProtocolVersion.minimumPeer))
         switch reply {
-        case .hello(let revision, let minimumPeer, let wantsNotificationPermission, let aiAvailable):
+        case .hello(let revision, let minimumPeer, let wantsNotificationPermission, let aiAvailable, _):
             return HandshakeResult(
                 compatibility: CompanionProtocolVersion.evaluate(peerRevision: revision,
                                                                  peerMinimumPeer: minimumPeer),

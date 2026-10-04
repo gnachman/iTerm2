@@ -186,6 +186,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .resizeSession(sessionGuid: "g", columns: 80, rows: 24),
         .fetchAutoProvideConsent(sessionGuid: "g"),
         .grantAutoProvideConsent(chatID: "c"),
+        .answerModalAlert(alertID: "a", buttonIndex: 0, suppress: false),
     ]
 
     /// EXHAUSTIVE: a new case breaks the build here. When it does, add a branch,
@@ -234,12 +235,14 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .resizeSession: return "resizeSession"
         case .fetchAutoProvideConsent: return "fetchAutoProvideConsent"
         case .grantAutoProvideConsent: return "grantAutoProvideConsent"
+        case .answerModalAlert: return "answerModalAlert"
         }
     }
 
     private static let hostReps: [CompanionHostMessage] = [
         .unsupported,
-        .hello(revision: 1, minimumPeer: 1, wantsNotificationPermission: false, aiAvailable: true),
+        .hello(revision: 1, minimumPeer: 1, wantsNotificationPermission: false, aiAvailable: true,
+               macStatus: nil),
         .chatsAndSessions(chats: [], sessions: []),
         .chatCreated(entry: CompanionChatListEntry(chat: Chat(title: "t", permissions: ""), snippet: nil)),
         .history(chatID: "c", messages: [], maxSeq: 0),
@@ -275,6 +278,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .autoProvideConsent(satisfied: true),
         .turnLifecycle(event: .started, chatID: "c"),
         .aiAvailabilityChanged(available: false),
+        .macStatusChanged(status: CompanionMacStatus(modalAlerts: [], mainBlocked: false)),
+        .modalAlertAnswerRejected(alertID: "a"),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -320,6 +325,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .autoProvideConsent: return "autoProvideConsent"
         case .turnLifecycle: return "turnLifecycle"
         case .aiAvailabilityChanged: return "aiAvailabilityChanged"
+        case .macStatusChanged: return "macStatusChanged"
+        case .modalAlertAnswerRejected: return "modalAlertAnswerRejected"
         }
     }
 

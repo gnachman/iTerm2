@@ -428,7 +428,7 @@ final class CompanionHostBridge {
             RLog("Companion bridge: unsupported client message (peer is newer)")
             send(.error(CompanionError(code: .badRequest, message: "Unsupported request; app upgrade required")),
                  requestID: requestID)
-        case .hello, .ping, .relayRoomSecret:
+        case .hello, .ping, .relayRoomSecret, .answerModalAlert:
             // Answered by CompanionLink, off the main actor.
             break
         case .listChatsAndSessions:
@@ -2166,7 +2166,7 @@ final class CompanionHostBridge {
              .stopSessionStream, .requestKeyframe, .updateStreamParams, .streamAck,
              .reportScrollWheel, .selectionGesture, .clearSelection, .copySelection,
              .selectAllInStream, .pasteText, .sendKey, .resizeSession,
-             .setChatMuted, .unsubscribe:
+             .setChatMuted, .unsubscribe, .answerModalAlert:
             return .open
         // Partly served when AI is off; the handler decides (session list without
         // chats; alerts without chat messages). These also classify the connection

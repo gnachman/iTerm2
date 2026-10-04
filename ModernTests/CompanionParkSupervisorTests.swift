@@ -208,7 +208,9 @@ private final class FakeRelay: @unchecked Sendable {
                 return CompanionLink(transport: transport,
                                      aiAvailability: CompanionAIAvailabilityCache(true),
                                      wantsNotificationPermission: { false },
-                                     storeRoomSecret: { _ in })
+                                     storeRoomSecret: { _ in },
+                                     alerts: ModalAlertRegistry(modalWindow: { nil }),
+                                     mainStall: CompanionMainThreadMonitor(ticksAutomatically: false))
             },
             sleep: { nanoseconds in
                 self.lock.lock(); self._sleeps.append(nanoseconds); self.lock.unlock()
@@ -611,7 +613,9 @@ final class CompanionParkSupervisorTests: XCTestCase {
         let link = CompanionLink(transport: macEnd,
                                  aiAvailability: CompanionAIAvailabilityCache(true),
                                  wantsNotificationPermission: { false },
-                                 storeRoomSecret: { _ in })
+                                 storeRoomSecret: { _ in },
+                                 alerts: ModalAlertRegistry(modalWindow: { nil }),
+                                 mainStall: CompanionMainThreadMonitor(ticksAutomatically: false))
         link.start()
         fixture.supervisor.send(.adopt(link, fixture.recipe))
 

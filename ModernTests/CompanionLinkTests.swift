@@ -59,6 +59,15 @@ final class CompanionLinkTests: XCTestCase {
             return CompanionLinkTests.describe(envelope)
         }
 
+        /// The next frame the Mac sent, decoded.
+        func nextEnvelope() async throws -> HostEnvelope {
+            let transport = self.transport
+            let data = try await FrozenMainQueue.withFailsafe("the next frame from the Mac") {
+                try await transport.receive()
+            }
+            return try Self.decoder().decode(HostEnvelope.self, from: data)
+        }
+
         /// Asserts the connection is closed with nothing further queued.
         func expectClosed(file: StaticString = #filePath, line: UInt = #line) async {
             let transport = self.transport
@@ -100,33 +109,151 @@ final class CompanionLinkTests: XCTestCase {
         }
     }
 
+    /// Stands in for ModalAlertRegistry: the alerts "on screen", and what
+    /// happens when one is answered.
+    private final class FakeAlertSource: ModalAlertSource {
+        struct Answer: Equatable, Sendable {
+            let id: UUID
+            let buttonIndex: Int
+            let suppress: Bool
+        }
+        private struct State: Sendable {
+            var alerts: [ModalAlertSnapshot] = []
+            var observers: [@Sendable () -> Void] = []
+            var answers: [Answer] = []
+            var accepts = true
+            /// When set, answer() suspends until release() is called.
+            var holdsAnswers = false
+            var held: [CheckedContinuation<Void, Never>] = []
+        }
+        private let state = OSAllocatedUnfairLock(initialState: State())
+
+        var answers: [Answer] { state.withLock { $0.answers } }
+
+        static func alert(_ heading: String, id: UUID = UUID(), isAppModal: Bool = true) -> ModalAlertSnapshot {
+            return ModalAlertSnapshot(
+                id: id,
+                heading: heading,
+                body: "Body of \(heading)",
+                buttons: [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: true),
+                          .init(title: "Cancel", isCancel: true, isDestructive: false, rememberable: false)],
+                suppressionLabel: "Remember my choice",
+                hasAccessory: false,
+                isAppModal: isAppModal)
+        }
+
+        /// Change what is on screen and tell the observers, as the registry does.
+        func show(_ alerts: [ModalAlertSnapshot]) {
+            let observers = state.withLock { state -> [@Sendable () -> Void] in
+                state.alerts = alerts
+                return state.observers
+            }
+            observers.forEach { $0() }
+        }
+
+        /// Tell the observers although nothing changed.
+        func notifyWithoutChange() {
+            state.withLock { $0.observers }.forEach { $0() }
+        }
+
+        func rejectAnswers() { state.withLock { $0.accepts = false } }
+        func holdAnswers() { state.withLock { $0.holdsAnswers = true } }
+        func releaseAnswers() {
+            let held = state.withLock { state -> [CheckedContinuation<Void, Never>] in
+                state.holdsAnswers = false
+                let held = state.held
+                state.held = []
+                return held
+            }
+            held.forEach { $0.resume() }
+        }
+
+        func currentAlerts() -> [ModalAlertSnapshot] {
+            return state.withLock { $0.alerts }
+        }
+
+        func addObserver(_ changed: @escaping @Sendable () -> Void) -> AnyObject {
+            state.withLock { $0.observers.append(changed) }
+            return NSObject()
+        }
+
+        func answer(id: UUID, buttonIndex: Int, suppress: Bool) async -> Bool {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                let resumeNow = state.withLock { state -> Bool in
+                    state.answers.append(Answer(id: id, buttonIndex: buttonIndex, suppress: suppress))
+                    if state.holdsAnswers {
+                        state.held.append(continuation)
+                        return false
+                    }
+                    return true
+                }
+                if resumeNow {
+                    continuation.resume()
+                }
+            }
+            return state.withLock { $0.accepts }
+        }
+    }
+
+    /// Stands in for CompanionMainThreadMonitor.
+    private final class FakeStallSource: CompanionMainStallSource {
+        private let state = OSAllocatedUnfairLock(initialState: (blocked: false, observers: [@Sendable () -> Void]()))
+
+        func setBlocked(_ blocked: Bool) {
+            let observers = state.withLock { state -> [@Sendable () -> Void] in
+                state.blocked = blocked
+                return state.observers
+            }
+            observers.forEach { $0() }
+        }
+
+        func isMainBlocked() -> Bool {
+            return state.withLock { $0.blocked }
+        }
+
+        func addObserver(_ changed: @escaping @Sendable () -> Void) -> AnyObject {
+            state.withLock { $0.observers.append(changed) }
+            return NSObject()
+        }
+    }
+
     private struct Fixture {
         let link: CompanionLink
         let phone: Phone
         let ai: CompanionAIAvailabilityCache
         let roomSecrets: RoomSecretStore
+        let alerts: FakeAlertSource
+        let stall: FakeStallSource
     }
 
     private func makeFixture(aiAvailable: Bool = true,
                              wantsNotificationPermission: Bool = false,
+                             alertSource: ModalAlertSource? = nil,
                              start: Bool = true) -> Fixture {
         let (macEnd, phoneEnd) = CompanionLoopbackTransport.makePair()
         let ai = CompanionAIAvailabilityCache(aiAvailable)
         let roomSecrets = RoomSecretStore()
+        let alerts = FakeAlertSource()
+        let stall = FakeStallSource()
         let link = CompanionLink(transport: macEnd,
                                  aiAvailability: ai,
                                  wantsNotificationPermission: { wantsNotificationPermission },
-                                 storeRoomSecret: { try roomSecrets.store($0) })
+                                 storeRoomSecret: { try roomSecrets.store($0) },
+                                 alerts: alertSource ?? alerts,
+                                 mainStall: stall)
         if start {
             link.start()
         }
-        return Fixture(link: link, phone: Phone(transport: phoneEnd), ai: ai, roomSecrets: roomSecrets)
+        return Fixture(link: link, phone: Phone(transport: phoneEnd), ai: ai, roomSecrets: roomSecrets,
+                       alerts: alerts, stall: stall)
     }
 
     private static let compatibleHello = CompanionClientMessage.hello(
         revision: CompanionProtocolVersion.current,
         minimumPeer: CompanionProtocolVersion.minimumPeer)
     private static let incompatibleHello = CompanionClientMessage.hello(revision: 9999, minimumPeer: 9999)
+    /// A phone from before the mac-status revision. Still compatible.
+    private static let revision13Hello = CompanionClientMessage.hello(revision: 13, minimumPeer: 11)
 
     // MARK: Describing frames and events
 
@@ -137,7 +264,7 @@ final class CompanionLinkTests: XCTestCase {
     private static func describe(_ envelope: HostEnvelope) -> String {
         let name: String
         switch envelope.payload {
-        case .hello(_, _, let wantsNotificationPermission, let aiAvailable):
+        case .hello(_, _, let wantsNotificationPermission, let aiAvailable, _):
             let wants = wantsNotificationPermission.map { "\($0)" } ?? "nil"
             let ai = aiAvailable.map { "\($0)" } ?? "nil"
             name = "hello(wantsNotificationPermission=\(wants), ai=\(ai))"
@@ -151,12 +278,31 @@ final class CompanionLinkTests: XCTestCase {
             name = "unpaired"
         case .aiAvailabilityChanged(let available):
             name = "aiAvailabilityChanged(\(available))"
+        case .macStatusChanged(let status):
+            name = "macStatus(" + describe(status) + ")"
+        case .modalAlertAnswerRejected(let alertID):
+            name = "answerRejected(\(alertID))"
         case .chatListChanged:
             name = "chatListChanged"
         default:
             name = "other"
         }
         return name + tag(envelope.requestID)
+    }
+
+    private static func describe(_ status: CompanionMacStatus?) -> String {
+        guard let status else {
+            return "none"
+        }
+        return "alerts=\(status.modalAlerts.map { $0.heading }), blocked=\(status.mainBlocked)"
+    }
+
+    /// The status a hello reply carried.
+    private static func helloStatus(_ envelope: HostEnvelope) -> String {
+        guard case .hello(_, _, _, _, let macStatus) = envelope.payload else {
+            return "not a hello: " + describe(envelope)
+        }
+        return describe(macStatus)
     }
 
     private static func describe(_ payload: CompanionClientMessage) -> String {
@@ -167,6 +313,8 @@ final class CompanionLinkTests: XCTestCase {
             return "ping"
         case .relayRoomSecret:
             return "relayRoomSecret"
+        case .answerModalAlert:
+            return "answerModalAlert"
         case .listChatsAndSessions:
             return "listChatsAndSessions"
         case .unsubscribe(let chatID):
@@ -555,6 +703,7 @@ final class CompanionLinkTests: XCTestCase {
 
     func testWaitUntilClosedReturnsImmediatelyOnceClosed() async throws {
         let fixture = makeFixture()
+        XCTAssertFalse(fixture.link.isClosed)
         await fixture.phone.close()
         let link = fixture.link
         for _ in 0..<2 {
@@ -563,6 +712,261 @@ final class CompanionLinkTests: XCTestCase {
             }
             XCTAssertNotNil(error)
         }
+        XCTAssertTrue(fixture.link.isClosed)
+    }
+
+    // MARK: Mac status
+
+    func testHelloReplyCarriesTheMacStatus() async throws {
+        let fixture = makeFixture()
+        fixture.alerts.show([FakeAlertSource.alert("Bottom"), FakeAlertSource.alert("Top")])
+        fixture.stall.setBlocked(true)
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        let reply = try await fixture.phone.nextEnvelope()
+        XCTAssertEqual(Self.helloStatus(reply), "alerts=[\"Bottom\", \"Top\"], blocked=true")
+        // The status was already in the hello, so no change event follows it.
+        try await fixture.phone.send(.ping, requestID: 2)
+        let next = try await fixture.phone.next()
+        XCTAssertEqual(next, "pong#2")
+    }
+
+    func testAlertIsDescribedInFull() async throws {
+        let fixture = makeFixture()
+        let id = UUID()
+        fixture.alerts.show([FakeAlertSource.alert("Heading", id: id, isAppModal: false)])
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        guard case .hello(_, _, _, _, let macStatus) = try await fixture.phone.nextEnvelope().payload else {
+            return XCTFail("expected hello")
+        }
+        XCTAssertEqual(macStatus, CompanionMacStatus(
+            modalAlerts: [CompanionModalAlert(
+                id: id.uuidString,
+                heading: "Heading",
+                body: "Body of Heading",
+                buttons: [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: true),
+                          .init(title: "Cancel", isCancel: true, isDestructive: false, rememberable: false)],
+                suppressionLabel: "Remember my choice",
+                hasAccessory: false,
+                isAppModal: false)],
+            mainBlocked: false))
+    }
+
+    func testOlderPhoneGetsNoMacStatus() async throws {
+        let fixture = makeFixture()
+        fixture.alerts.show([FakeAlertSource.alert("A")])
+        try await fixture.phone.send(Self.revision13Hello, requestID: 1)
+        let reply = try await fixture.phone.nextEnvelope()
+        XCTAssertEqual(Self.helloStatus(reply), "none")
+        // Nor any change event it could not decode.
+        fixture.alerts.show([])
+        fixture.stall.setBlocked(true)
+        try await fixture.phone.send(.ping, requestID: 2)
+        let next = try await fixture.phone.next()
+        XCTAssertEqual(next, "pong#2")
+    }
+
+    func testVersionBlockedPhoneGetsNoMacStatus() async throws {
+        let fixture = makeFixture()
+        fixture.alerts.show([FakeAlertSource.alert("A")])
+        try await fixture.phone.send(Self.incompatibleHello, requestID: 1)
+        let reply = try await fixture.phone.nextEnvelope()
+        XCTAssertEqual(Self.helloStatus(reply), "none")
+        fixture.alerts.show([])
+        try await fixture.phone.send(.ping, requestID: 2)
+        let next = try await fixture.phone.next()
+        XCTAssertEqual(next, "error#2")
+    }
+
+    func testStatusChangesArePushedOnceEach() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+
+        fixture.alerts.notifyWithoutChange()
+        fixture.alerts.show([FakeAlertSource.alert("A")])
+        fixture.alerts.notifyWithoutChange()
+        let first = try await fixture.phone.next()
+        XCTAssertEqual(first, "macStatus(alerts=[\"A\"], blocked=false)")
+
+        // Pokes are handled in order, so a duplicate of the first status would
+        // have to come out before this one.
+        fixture.stall.setBlocked(true)
+        let second = try await fixture.phone.next()
+        XCTAssertEqual(second, "macStatus(alerts=[\"A\"], blocked=true)")
+
+        fixture.alerts.show([])
+        let third = try await fixture.phone.next()
+        XCTAssertEqual(third, "macStatus(alerts=[], blocked=true)")
+    }
+
+    func testStatusChangeBeforeHelloIsNotPushedSeparately() async throws {
+        let fixture = makeFixture()
+        fixture.alerts.show([FakeAlertSource.alert("A")])
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        // Whichever of the change and the hello the link sees first, the first
+        // frame is the hello reply carrying the status, and no event follows.
+        let reply = try await fixture.phone.nextEnvelope()
+        XCTAssertEqual(reply.requestID, 1)
+        XCTAssertEqual(Self.helloStatus(reply), "alerts=[\"A\"], blocked=false")
+        try await fixture.phone.send(.ping, requestID: 2)
+        let next = try await fixture.phone.next()
+        XCTAssertEqual(next, "pong#2")
+    }
+
+    /// The real registry: an alert registered on the main thread, in the same
+    /// callout that then freezes, must reach the phone during the freeze. This
+    /// is what an iTermWarning shown from a main-queue callout does.
+    func testAlertRegisteredInsideTheFreezingCalloutReachesThePhone() async throws {
+        let registry = ModalAlertRegistry(modalWindow: { nil })
+        let fixture = makeFixture(alertSource: registry)
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        try await FrozenMainQueue.run(setup: {
+            let descriptor = ModalAlertDescriptor(heading: "Frozen", body: "", buttons: [],
+                                                  suppressionLabel: nil, hasAccessory: false, isAppModal: true)
+            _ = registry.register(descriptor, window: nil) { _, _ in true }
+        }) { _ in
+            let pushed = try await fixture.phone.next()
+            XCTAssertEqual(pushed, "macStatus(alerts=[\"Frozen\"], blocked=false)")
+        }
+    }
+
+    // MARK: Answering an alert
+
+    func testAnswerIsPassedToTheAlertSource() async throws {
+        let fixture = makeFixture()
+        let id = UUID()
+        fixture.alerts.show([FakeAlertSource.alert("A", id: id)])
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+
+        try await fixture.phone.send(.answerModalAlert(alertID: id.uuidString, buttonIndex: 1, suppress: true))
+        // Accepted answers get no reply of their own. The ping is a sync point:
+        // a rejection would have been sent before the pong.
+        try await fixture.phone.send(.ping, requestID: 2)
+        var next = try await fixture.phone.next()
+        if next != "pong#2" {
+            XCTFail("unexpected frame after an accepted answer: \(next)")
+            next = try await fixture.phone.next()
+        }
+        // The answer runs apart from the receive loop, so wait for it.
+        try await FrozenMainQueue.withFailsafe("the answer to reach the alert source") {
+            while fixture.alerts.answers.isEmpty {
+                await Task.yield()
+            }
+        }
+        XCTAssertEqual(fixture.alerts.answers, [.init(id: id, buttonIndex: 1, suppress: true)])
+    }
+
+    /// End to end with the real registry, while the main queue is frozen: the
+    /// phone learns of the alert, answers it, and the press lands on the main
+    /// thread.
+    func testPhoneAnswersAnAlertWhileMainQueueIsFrozen() async throws {
+        let registry = ModalAlertRegistry(modalWindow: { nil })
+        let fixture = makeFixture(alertSource: registry)
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        let (presses, pressesContinuation) = AsyncStream<String>.makeStream()
+        try await FrozenMainQueue.run(setup: {
+            let descriptor = ModalAlertDescriptor(
+                heading: "Frozen", body: "",
+                buttons: [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: true),
+                          .init(title: "Cancel", isCancel: true, isDestructive: false, rememberable: false)],
+                suppressionLabel: "Remember", hasAccessory: false, isAppModal: true)
+            _ = registry.register(descriptor, window: nil) { index, suppress in
+                pressesContinuation.yield("pressed \(index) suppress=\(suppress) main=\(Thread.isMainThread)")
+                return true
+            }
+        }) { _ in
+            guard case .macStatusChanged(let status) = try await fixture.phone.nextEnvelope().payload,
+                  let alert = status.modalAlerts.last else {
+                return XCTFail("expected the alert to be pushed")
+            }
+            try await fixture.phone.send(.answerModalAlert(alertID: alert.id, buttonIndex: 1, suppress: true))
+            let press = try await FrozenMainQueue.withFailsafe("the button press") { () -> String? in
+                for await press in presses {
+                    return press
+                }
+                return nil
+            }
+            XCTAssertEqual(press, "pressed 1 suppress=true main=true")
+        }
+    }
+
+    func testRejectedAnswerSendsARejectionAndThenTheCurrentStatus() async throws {
+        let fixture = makeFixture()
+        let id = UUID()
+        fixture.alerts.show([FakeAlertSource.alert("A", id: id)])
+        fixture.alerts.rejectAnswers()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+
+        try await fixture.phone.send(.answerModalAlert(alertID: id.uuidString, buttonIndex: 0, suppress: false))
+        let rejection = try await fixture.phone.next()
+        let status = try await fixture.phone.next()
+        XCTAssertEqual(rejection, "answerRejected(\(id.uuidString))")
+        XCTAssertEqual(status, "macStatus(alerts=[\"A\"], blocked=false)",
+                       "the status is sent again, though unchanged, so the phone is certain of what is showing")
+    }
+
+    func testAnswerWithAMalformedIDIsRejectedWithoutAskingTheAlertSource() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        try await fixture.phone.send(.answerModalAlert(alertID: "not a uuid", buttonIndex: 0, suppress: false))
+        let rejection = try await fixture.phone.next()
+        let status = try await fixture.phone.next()
+        XCTAssertEqual(rejection, "answerRejected(not a uuid)")
+        XCTAssertEqual(status, "macStatus(alerts=[], blocked=false)")
+        XCTAssertEqual(fixture.alerts.answers, [])
+    }
+
+    /// Pressing the button needs the main thread. If the main thread is busy in
+    /// a way that keeps even that from running, the link must go on answering
+    /// everything else.
+    func testAPendingAnswerDoesNotHoldUpOtherRequests() async throws {
+        let fixture = makeFixture()
+        let id = UUID()
+        fixture.alerts.show([FakeAlertSource.alert("A", id: id)])
+        fixture.alerts.holdAnswers()
+        fixture.alerts.rejectAnswers()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+
+        try await fixture.phone.send(.answerModalAlert(alertID: id.uuidString, buttonIndex: 0, suppress: false))
+        try await fixture.phone.send(.ping, requestID: 2)
+        let pong = try await fixture.phone.next()
+        XCTAssertEqual(pong, "pong#2", "the ping was answered while the answer was still pending")
+
+        fixture.alerts.releaseAnswers()
+        let rejection = try await fixture.phone.next()
+        XCTAssertEqual(rejection, "answerRejected(\(id.uuidString))")
+    }
+
+    func testAnswerIsForwardedAsHandledAndClassifiesAsUnsolicited() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(.answerModalAlert(alertID: UUID().uuidString, buttonIndex: 0, suppress: false),
+                                     requestID: 9)
+        try await fixture.phone.send(.ping, requestID: 10)
+        _ = try await fixture.phone.next()
+        await fixture.phone.close()
+        let events = try await allEvents(fixture.link)
+        XCTAssertEqual(Array(events.map { Self.describe($0) }.prefix(2)),
+                       ["handled answerModalAlert#9", "handled ping#10"])
+        XCTAssertEqual(classification(of: events), .unsolicited)
+    }
+
+    func testVersionBlockedPhoneCannotAnswerAnAlert() async throws {
+        let fixture = makeFixture()
+        let id = UUID()
+        fixture.alerts.show([FakeAlertSource.alert("A", id: id)])
+        try await fixture.phone.send(Self.incompatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        try await fixture.phone.send(.answerModalAlert(alertID: id.uuidString, buttonIndex: 0, suppress: false),
+                                     requestID: 2)
+        let reply = try await fixture.phone.next()
+        XCTAssertEqual(reply, "error#2")
+        XCTAssertEqual(fixture.alerts.answers, [])
     }
 
     // MARK: Classification for the presence warning
