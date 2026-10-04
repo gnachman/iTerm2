@@ -133,10 +133,20 @@
         [completion invokeWithObject:@NO];
         return YES;
     }
-    if (self.updating && !sync) {
-        DLogCyclic(_log, @"Already updating and asynchronous, do nothing.");
-        return NO;
+    if (self.updating) {
+        if (!sync) {
+            DLogCyclic(_log, @"Already updating and asynchronous, do nothing.");
+            return NO;
+        }
+        // Never let two saves overlap. Each save is a delta against self.record, which the
+        // previous save only publishes when it finishes on _thread. Building this encoder now
+        // would diff against the same base as the pending save, so both would insert every
+        // node that is new since then, leaving duplicate sibling rows that break later saves.
+        // Wait for the pending save to finish and publish its result first.
+        RLog(@"Synchronous save requested while a save is pending. Waiting for it to finish.");
+        [_thread dispatchSync:^(iTermGraphDatabaseState *state) {}];
     }
+    ITBetaAssert(!self.updating, @"Save still pending after draining the graph database thread");
     DLogCyclic(_log, @"beginUpdate");
     [self beginUpdate];
     // You have to wait for loading to complete before initializing the delta encoder or you can end

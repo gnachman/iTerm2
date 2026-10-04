@@ -17,3 +17,8 @@ Bug Fixes:
   that had text you had edited.
 - Fixed a crash when Cmd-hovering over a line
   containing right-to-left text.
+- Fixed a crash that could recur every time
+  iTerm2 saved window state. Quitting while a
+  save was in progress could store duplicate
+  entries in the saved-state database, which
+  later saves could not handle.

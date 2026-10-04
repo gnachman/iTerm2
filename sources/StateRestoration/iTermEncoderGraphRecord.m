@@ -213,7 +213,13 @@ NSString *const iTermEncoderGraphRecordGenerationKeySuffix = @"_Generation";
     for (iTermEncoderGraphRecord *element in _graphRecords) {
         iTermTuple<NSString *, NSString *> *key = [iTermTuple tupleWithObject:element.key
                                                                     andObject:element.identifier];
-        _index[key] = element;
+        // If a database contains duplicate siblings, the first one must win, as it does in the
+        // unindexed lookup above, in iTermGraphDeltaEncoder's save enumeration, and in
+        // restoration. Otherwise the delta encoder builds a record from one duplicate and the
+        // save pairs it with the other, which skips inserts or mismatches rowids.
+        if (!_index[key]) {
+            _index[key] = element;
+        }
     }
 }
 
