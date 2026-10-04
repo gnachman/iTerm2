@@ -1000,6 +1000,7 @@
 		6525DAAA19CCA2BCAF26D083 /* iTermAPICreateTabFocusDeferral.h in Sources */ = {isa = PBXBuildFile; fileRef = DF2961C37EC2E8B987F3D400 /* iTermAPICreateTabFocusDeferral.h */; };
 		65DA44D4F51DFFD1F2DDD380 /* iTermSleepPreventionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6D8E06662B0A02D1CA8875 /* iTermSleepPreventionCoordinator.swift */; };
 		65EE211B60CDAF7B6FC925B2 /* CompanionPushNonceRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1F7DEDB57FDB370787B646 /* CompanionPushNonceRegistry.swift */; };
+		6694FCCBD604D6D56D6649F9 /* iTermUndoCloseArchives.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753287DA1D6ED8E34A191526 /* iTermUndoCloseArchives.swift */; };
 		66ACA31A7AD33D24EE498F7C /* ai-models.json in Resources */ = {isa = PBXBuildFile; fileRef = DF18C01510605DB0C639038F /* ai-models.json */; };
 		67C47D5F2F8DF88F92E26984 /* LLM+Mac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BF2267B1164F44724EB0853 /* LLM+Mac.swift */; };
 		6A01F4220CBCC9D9258D0138 /* iTermAttributedStringBuilderBenchmark.h in Sources */ = {isa = PBXBuildFile; fileRef = B017AB697F0D773A08D2C2E5 /* iTermAttributedStringBuilderBenchmark.h */; };
@@ -5860,6 +5861,7 @@
 		747097BB93FD0DED35E72C39 /* iTermWorkgroupController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupController.swift; sourceTree = "<group>"; };
 		7470EB5997704A4C869F9AF6 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/Autocomplete.xcstrings; sourceTree = "<group>"; };
 		751FAD7033C9A3DC31ABE2F3 /* CompanionPriorityOutbox.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPriorityOutbox.swift; sourceTree = "<group>"; };
+		753287DA1D6ED8E34A191526 /* iTermUndoCloseArchives.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermUndoCloseArchives.swift; sourceTree = "<group>"; };
 		756C32AB2597AC2E0047B3A9 /* iTermImage+Sixel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermImage+Sixel.h"; sourceTree = "<group>"; };
 		756C32AC2597AC2E0047B3A9 /* iTermImage+Sixel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermImage+Sixel.m"; sourceTree = "<group>"; };
 		756C32C12597AC9C0047B3A9 /* libaprutil-1.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libaprutil-1.tbd"; path = "Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libaprutil-1.tbd"; sourceTree = DEVELOPER_DIR; };
@@ -12853,6 +12855,7 @@
 				A6C120781E39C3A4004021BB /* iTermBuriedSessions.h */,
 				A6C537C21939507100A08C18 /* iTermRestorableSession.m */,
 				A6C120791E39C3A4004021BB /* iTermBuriedSessions.m */,
+				753287DA1D6ED8E34A191526 /* iTermUndoCloseArchives.swift */,
 			);
 			path = BuriedSessions;
 			sourceTree = "<group>";
@@ -19963,6 +19966,7 @@
 				B7CCF9DB53324385520BEA88 /* iTermValueAnimation.swift in Sources */,
 				6B0F860CE2205BBF69551BA6 /* iTermKeyBindingFormatMigration.swift in Sources */,
 				F8CE449366C8E4E273D52810 /* iTermKeyCodeZeroCharacters.swift in Sources */,
+				6694FCCBD604D6D56D6649F9 /* iTermUndoCloseArchives.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

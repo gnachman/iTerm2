@@ -887,6 +887,11 @@ backgroundColor:(nullable NSColor *)backgroundColor;
                          workingDirectory:(NSString *)workingDirectory
                                      size:(VT100GridSize)size;
 + (nullable NSString *)guidInArrangement:(NSDictionary *)arrangement;
+// Returns a copy of the arrangement of a session archived at `path` that is
+// restored as an archive even when no archive option is given. A tab
+// arrangement containing it can be restored without a live session for it.
++ (NSDictionary *)arrangement:(NSDictionary *)arrangement markedAsArchiveAtPath:(NSString *)path;
++ (BOOL)arrangementIsMarkedAsArchive:(NSDictionary *)arrangement;
 
 // The canonicalized stableID stored in an arrangement, or nil if the
 // arrangement predates the stableID (or carries a malformed one).
@@ -927,6 +932,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Tries to revive a terminated session. Returns YES on success. It should be re-added to a tab if
 // after reviving.
 - (BOOL)revive;
+
+// Make a terminated session stop being revivable now rather than when its
+// undo window runs out.
+- (void)hardStop;
 
 // Pause/resume the countdown that makes a terminated-but-restorable session stop
 // being restorable, so a modal alert can be shown without the session expiring.

@@ -4112,7 +4112,8 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
             }
         }
         if (!session) {
-            return NO;
+            // An archived session is created from its arrangement.
+            return [PTYSession arrangementIsMarkedAsArchive:arrangement[TAB_ARRANGEMENT_SESSION]];
         }
         sessionMap[sessionGuid] = session;
         return YES;

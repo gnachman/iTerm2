@@ -286,6 +286,8 @@ static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_DE
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_WINDOW_TITLE_DEPRECATED = @"Session Window Title";  // server-set window name
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_NAME_DEPRECATED = @"Session Name";  // server-set "icon" (tab) name
 static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly unique ID.
+// Not saved. Set on an archived session's arrangement to restore it as an archive.
+static NSString *const SESSION_ARRANGEMENT_RESTORE_AS_ARCHIVE = @"Restore As Archive";  // Path of the archive
 static NSString *const SESSION_ARRANGEMENT_STABLE_ID = @"Session Stable ID";  // Reload/restore-durable identity, see iTermStableSessionID.
 static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
@@ -738,6 +740,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     NSTimeInterval _pausedHardStopRemaining;
     BOOL _hardStopPaused;
 
+    // If this session was restored by undo close from an archive, the path of
+    // that archive. When it can no longer be revived, undo restores it from
+    // the same archive.
+    NSString *_restoredArchivePath;
+
     // If positive focus reports will not be sent.
     NSInteger _disableFocusReporting;
 
@@ -1149,6 +1156,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
     [_restoreSavedForegroundJobAncestors release];
+    [_restoredArchivePath release];
     [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
     NSString *guid = [_guid copy];
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -2049,6 +2057,9 @@ ITERM_WEAKLY_REFERENCEABLE
                     partialAttachments:(NSDictionary *)partialAttachments
                                options:(NSDictionary *)options {
     RLog(@"Restoring session from arrangement");
+    if ([self arrangementIsMarkedAsArchive:arrangement] && !options[PTYSessionArrangementOptionsArchive]) {
+        options = [(options ?: @{}) dictionaryBySettingObject:@YES forKey:PTYSessionArrangementOptionsArchive];
+    }
 
     Profile *theBookmark =
     [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
@@ -2277,6 +2288,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [aSession.variablesScope setValue:[aSession bestGuessAtUserShellWithPath:NO] forVariableNamed:iTermVariableKeyShell];
     const BOOL isArchive = options[PTYSessionArrangementOptionsArchive] != nil;
     aSession->_isArchive = isArchive;
+    aSession->_restoredArchivePath = [[NSString castFrom:arrangement[SESSION_ARRANGEMENT_RESTORE_AS_ARCHIVE]] copy];
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
@@ -3800,6 +3812,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (self.isBrowserSession) {
         return;
     }
+    if (_isArchive) {
+        // An archive runs no command. It is exited as soon as it is restored.
+        return;
+    }
     if (self.workgroupInstance != nil) {
         return;
     }
@@ -3891,6 +3907,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     DLog(@"Restart session %@", self);
     assert(self.isRestartable);
     _isArchive = NO;
+    [_restoredArchivePath release];
+    _restoredArchivePath = nil;
     [_naggingController willRecycleSession];
 
     if (_conductor) {
@@ -4103,15 +4121,24 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 // Not undoable. Kill the process. However, you can replace the terminated shell after this.
 - (void)hardStop {
+    // This may be called before the delayed perform fires. Don't let it run again.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(hardStop)
+                                               object:nil];
     [_hardStopDeadline release];
     _hardStopDeadline = nil;
     _hardStopPaused = NO;
-    if (!self.isTmuxClient &&
-        !_isArchive &&
-        [iTermProfilePreferences boolForKey:KEY_ARCHIVE inProfile:self.profile]) {
-        [self saveArchive];
+    NSString *archivePath = nil;
+    if (_restoredArchivePath) {
+        // Its contents are already in that archive.
+        archivePath = _restoredArchivePath;
+    } else if (!self.isTmuxClient &&
+               !_isArchive &&
+               [iTermProfilePreferences boolForKey:KEY_ARCHIVE inProfile:self.profile]) {
+        archivePath = [self saveArchive];
     }
-    [[iTermController sharedInstance] removeSessionFromRestorableSessions:self];
+    [[iTermController sharedInstance] removeSessionFromRestorableSessions:self
+                                                              archivePath:archivePath];
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [terminal.parser forceUnhookDCS:nil];
     }];
@@ -7609,6 +7636,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         result[SESSION_ARRANGEMENT_KEYBOARD_MAP_OVERRIDES] = [[keyboardMapOverrides copy] autorelease];
     }
     return result;
+}
+
++ (NSDictionary *)arrangement:(NSDictionary *)arrangement markedAsArchiveAtPath:(NSString *)path {
+    return [arrangement dictionaryBySettingObject:path forKey:SESSION_ARRANGEMENT_RESTORE_AS_ARCHIVE];
+}
+
++ (BOOL)arrangementIsMarkedAsArchive:(NSDictionary *)arrangement {
+    return [NSString castFrom:arrangement[SESSION_ARRANGEMENT_RESTORE_AS_ARCHIVE]] != nil;
 }
 
 + (NSString *)guidInArrangement:(NSDictionary *)arrangement {

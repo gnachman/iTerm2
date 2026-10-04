@@ -159,6 +159,7 @@ static NSString *const kURLStoreRestorableStateKey = @"kURLStoreRestorableStateK
 static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";  // deprecated
 static NSString *const kHotkeyWindowsRestorableStates = @"kHotkeyWindowsRestorableState";  // deprecated
 static NSString *const iTermBuriedSessionState = @"iTermBuriedSessionState";
+static NSString *const iTermUndoCloseState = @"iTermUndoCloseState";
 static NSString *const kPortholeRestorableStateKey = @"kPortholeRestorableStateKey";
 static NSString *const kSessionActivityCounterKey = @"kSessionActivityCounter";  // NSNumber (NSInteger) high-water mark.
 
@@ -1112,6 +1113,9 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         // If jobs aren't run in servers, they'll just die normally.
         [[iTermController sharedInstance] killRestorableSessions];
     }
+    // Stop sessions whose closing could still be undone, archiving them if
+    // their profiles say to.
+    [[iTermController sharedInstance] hardStopRestorableSessions];
 
     // Last chance before windows get closed.
     DLog(@"Post applicationWillTerminate which triggers saving restorable state.");
@@ -1229,6 +1233,10 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count]) {
         [coder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] forKey:iTermBuriedSessionState];
     }
+    NSArray<NSDictionary *> *undoCloseState = [[iTermController sharedInstance] undoCloseRestorableState];
+    if (undoCloseState.count) {
+        [coder encodeObject:undoCloseState forKey:iTermUndoCloseState];
+    }
     [coder encodeObject:@([iTermFocusOrder sharedInstance].highWaterMark)
                  forKey:kSessionActivityCounterKey];
     DLog(@"Time to save app restorable state: %@",
@@ -1277,6 +1285,9 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     }
 
     _buriedSessionsState = [[coder decodeObjectForKey:iTermBuriedSessionState] retain];
+    // Hand these over right away so a save made before windows finish
+    // restoring includes them. Their tabs are looked up on undo.
+    [[iTermController sharedInstance] restoreUndoCloseFromState:[NSArray castFrom:[coder decodeObjectForKey:iTermUndoCloseState]]];
     if (finishedLaunching_) {
         [self restoreBuriedSessionsState];
     }
@@ -1295,6 +1306,10 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         [log writeToFile:[NSString stringWithFormat:@"/tmp/statesize.app-%p.txt", self] atomically:NO encoding:NSUTF8StringEncoding error:nil];
     }
     DLog(@"application:didDecodeRestorableState: finished");
+}
+
+- (void)saveRestorableState {
+    [_restorableStateController saveRestorableState];
 }
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification {
@@ -3221,6 +3236,11 @@ static iTermKeyEventReplayer *gReplayer;
     iTermController *controller = [iTermController sharedInstance];
     iTermRestorableSession *restorableSession = [controller popRestorableSession];
     if (restorableSession) {
+        // Sessions whose undo window ran out are restored from their archives.
+        iTermUndoCloseArchives *archives = nil;
+        if (restorableSession.archivePathsBySessionGUID.count > 0) {
+            archives = [[[iTermUndoCloseArchives alloc] initWithPathsBySessionGUID:restorableSession.archivePathsBySessionGUID] autorelease];
+        }
         PseudoTerminal *term;
         PTYTab *tab;
 
@@ -3242,11 +3262,15 @@ static iTermKeyEventReplayer *gReplayer;
                         [term recreateTab:tab
                           withArrangement:restorableSession.arrangement
                                  sessions:restorableSession.sessions
+                                 archives:archives
                                    revive:YES];
                     } else {
                         // Create a new tab and add the session to it.
-                        [restorableSession.sessions[0] revive];
-                        [term addRevivedSession:restorableSession.sessions[0]];
+                        for (PTYSession *session in restorableSession.sessions) {
+                            [session revive];
+                            [term addRevivedSession:session];
+                        }
+                        [term addTabsForArchives:archives];
                     }
                 } else {
                     DLog(@"Create a new window");
@@ -3260,8 +3284,11 @@ static iTermKeyEventReplayer *gReplayer;
                     if (term) {
                         [[iTermController sharedInstance] addTerminalWindow:term];
                         term.terminalGuid = restorableSession.terminalGuid;
-                        [restorableSession.sessions[0] revive];
-                        [term addRevivedSession:restorableSession.sessions[0]];
+                        for (PTYSession *session in restorableSession.sessions) {
+                            [session revive];
+                            [term addRevivedSession:session];
+                        }
+                        [term addTabsForArchives:archives];
                         [term fitWindowToTabs];
                     }
                 }
@@ -3290,6 +3317,7 @@ static iTermKeyEventReplayer *gReplayer;
                 [term addTabWithArrangement:restorableSession.arrangement
                                    uniqueId:restorableSession.tabUniqueId
                                    sessions:restorableSession.sessions
+                                   archives:archives
                                predecessors:restorableSession.predecessors];
                 if (fitTermToTabs) {
                     [term fitWindowToTabs];
@@ -3302,6 +3330,7 @@ static iTermKeyEventReplayer *gReplayer;
                 term = [PseudoTerminal terminalWithArrangement:restorableSession.arrangement
                                                          named:nil
                                                       sessions:restorableSession.sessions
+                                                      archives:archives
                                       forceOpeningHotKeyWindow:YES];
                 [[iTermController sharedInstance] addTerminalWindow:term];
                 term.terminalGuid = restorableSession.terminalGuid;
@@ -3319,6 +3348,11 @@ static iTermKeyEventReplayer *gReplayer;
         // removal is driven exclusively by the window close notification.
         if (term && term.numberOfTabs == 0) {
             [[term window] close];
+        }
+        if (archives) {
+            // The entry was removed from saved state's undo close list. Save
+            // now that the restored session is in a window to take its place.
+            [self saveRestorableState];
         }
     }
 
@@ -4210,6 +4244,10 @@ static iTermKeyEventReplayer *gReplayer;
             // TODO: Why doesn't this encode window content?
             [encoder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] key:iTermBuriedSessionState];
         }
+        NSArray<NSDictionary *> *undoCloseState = [[iTermController sharedInstance] undoCloseRestorableState];
+        if (undoCloseState.count) {
+            [encoder encodeObject:undoCloseState key:iTermUndoCloseState];
+        }
         [encoder encodeObject:@([iTermFocusOrder sharedInstance].highWaterMark)
                           key:kSessionActivityCounterKey];
         DLog(@"Time to save app restorable state: %@",
@@ -4262,6 +4300,9 @@ static iTermKeyEventReplayer *gReplayer;
     }
 
     _buriedSessionsState = [[NSArray fromGraphRecord:app withKey:iTermBuriedSessionState] retain];
+    // Hand these over right away so a save made before windows finish
+    // restoring includes them. Their tabs are looked up on undo.
+    [[iTermController sharedInstance] restoreUndoCloseFromState:[NSArray fromGraphRecord:app withKey:iTermUndoCloseState]];
 
     NSNumber *sessionActivityCounter = [NSNumber fromGraphRecord:app withKey:kSessionActivityCounterKey];
     if (sessionActivityCounter) {

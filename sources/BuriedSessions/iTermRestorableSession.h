@@ -34,6 +34,15 @@ typedef NS_ENUM(NSInteger, iTermRestorableSessionGroup) {
 @property(nonatomic, copy) NSString *channelParentGuid;
 // tab unique IDs of tabs that come before this one in the window.
 @property(nonatomic, copy) NSArray *predecessors;
+// Maps the GUID of each session in this group whose undo window ran out and
+// that was archived to the path of its archive. `sessions` holds the ones that
+// are still alive. Undo restores both.
+@property(nonatomic, copy) NSDictionary<NSString *, NSString *> *archivePathsBySessionGUID;
+// Set on entries restored after a restart, when tab unique IDs are no longer
+// valid. They identify `tabUniqueId` and `predecessors` by tab GUID until the
+// tabs are looked up.
+@property(nonatomic, copy) NSString *tabGUID;
+@property(nonatomic, copy) NSArray<NSString *> *predecessorTabGUIDs;
 
 - (instancetype)initWithRestorableState:(NSDictionary *)restorableState;
 - (NSDictionary *)restorableState;

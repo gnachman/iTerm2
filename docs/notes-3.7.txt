@@ -262,6 +262,13 @@ New Features:
   CSI 0 SP k restores the default.
 
 Improvements:
+- If a profile archives sessions when they close
+  (Settings > Profiles > Session), Undo Close
+  keeps working after its time limit runs out.
+  Archived sessions come back from their archives
+  in their original split panes, tabs, and
+  windows. The last 20 can be undone even after
+  restarting iTerm2.
 - The built-in AI model list is up to date. It
   adds GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol,
   GPT-6 Luna, GPT-5.4 Pro, GPT-5.4 mini, Gemini
@@ -407,6 +414,15 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- Closing an archived session soon after opening
+  it no longer warns that the session ended very
+  soon after starting.
+- Archiving split panes with the same name when
+  their window closes no longer saves only one of
+  them.
+- Sessions closed shortly before quitting are
+  now always archived if their profile archives
+  sessions on close.
 - Fixed Tab.async_update_layout in the Python
   API making a browser pane many times too big,
   squeezing the panes beside it, and sometimes

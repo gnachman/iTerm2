@@ -82,6 +82,9 @@ void TurnOnDebugLoggingAutomatically(void);
 
 - (void)makeHotKeyWindowKeyIfOpen;
 
+// Saves restorable state now if this app manages its own state restoration.
+- (void)saveRestorableState;
+
 // Call this when the user has any nontrivial interaction with a session, such as typing in it or closing a window.
 - (void)userDidInteractWithASession;
 
