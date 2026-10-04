@@ -811,6 +811,14 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     }];
 }
 
++ (void)stopAcceptingConnections {
+    iTermAPIHelper *helper = sAPIHelperInstance;
+    if (!helper) {
+        return;
+    }
+    [helper->_apiServer stopAcceptingConnections];
+}
+
 - (void)stop {
     // _apiServer is read on the it2 background (QOS_UTILITY) queue in the in-process
     // register/dispatch/unregister methods; capture-and-nil under a lock so that path

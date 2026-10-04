@@ -85,6 +85,10 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
 // or NO if it timed out waiting.
 + (void)whenSocketReadyRunBlock:(void (^)(BOOL ready))block;
 
+// Refuses new API socket connections from now on, without creating the helper if it does not
+// already exist. Existing connections are unaffected. Called when the app begins to quit.
++ (void)stopAcceptingConnections;
+
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 
 // In-process API dispatch for the embedded it2 command tree (SSH integration).

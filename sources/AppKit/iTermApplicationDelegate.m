@@ -1092,6 +1092,15 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         iTermRestorableStateController.forceDiscardState = YES;
     }
 
+    // Closing sessions below hangs up their jobs, and hooks those jobs run on the way out (such as
+    // Claude Code's SessionEnd hook running it2) try to reach the API. A client that gets in now
+    // goes on to request a cookie over AppleScript, and if that Apple event arrives after this
+    // process has exited it relaunches iTerm2 mid-quit. During a logout or restart, that
+    // short-lived instance is then quit by loginwindow and its empty window list replaces the saved
+    // state, so nothing is restored at the next login. Refusing new connections makes those
+    // clients fail fast instead. Existing connections are unaffected.
+    [iTermAPIHelper stopAcceptingConnections];
+
     // Ensure [iTermController dealloc] is called before prefs are saved
     [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
 

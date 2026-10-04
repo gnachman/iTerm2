@@ -975,3 +975,9 @@ Bug Fixes:
   impossible to click. A small arrow appears in
   the corner instead; click it to show or hide
   the window buttons. Issue 13100.
+- Restarting or logging out of macOS while
+  Claude Code was running in iTerm2 could cause
+  your windows not to be restored at the next
+  login. Claude Code’s status updates could
+  relaunch iTerm2 just as it was quitting, and
+  that brief launch replaced the saved windows.
