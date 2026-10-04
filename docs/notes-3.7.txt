@@ -506,6 +506,8 @@ Bug Fixes:
   inserts its path again on VPN or Tailscale
   networks, where it had instead been offering
   to upload the file.
+- Fixed a crash when opening a new tab next to a
+  tab in a tab group.
 - Fixed a crash when editing a dynamic profile
   whose file had been changed on disk.
 - Fixed a crash when clicking the bookmark
