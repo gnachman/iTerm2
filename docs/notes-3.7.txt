@@ -6,3 +6,14 @@ Bug Fixes:
 - Fixed a crash that could happen when the GPU
   renderer had been running for several weeks
   without restarting iTerm2. Issue 13103.
+- Fixed a crash when a program printed a
+  letter followed by many spacing marks (such
+  as Devanagari vowel signs) in a later write.
+- Fixed a crash in Find when the scrollback
+  contained an unusually long composed
+  character.
+- Fixed a crash when pressing Cmd-Z after
+  closing a pane, toolbelt tool, or other view
+  that had text you had edited.
+- Fixed a crash when Cmd-hovering over a line
+  containing right-to-left text.
