@@ -15,13 +15,10 @@
 //      hello/error/unpaired to a version-blocked peer, farewell before close.
 //    - How link events classify a connection for the presence warning.
 //
-//  ModernTests can't link the CompanionProtocol module, so revisions are
-//  spelled out: this build's protocol accepts a peer at revision 13 that
-//  requires at least 11, and a peer that requires revision 9999 is too new.
-//
 
 import XCTest
 import os
+import CompanionProtocol
 @testable import iTerm2SharedARC
 
 final class CompanionLinkTests: XCTestCase {
@@ -82,10 +79,32 @@ final class CompanionLinkTests: XCTestCase {
         }
     }
 
+    /// Stands in for the keychain-backed room secret store.
+    private final class RoomSecretStore: Sendable {
+        struct Unwritable: Error {}
+        private let state = OSAllocatedUnfairLock(initialState: (stored: [Data](), fails: false))
+
+        var stored: [Data] { state.withLock { $0.stored } }
+        func failWrites() { state.withLock { $0.fails = true } }
+
+        func store(_ secret: Data) throws {
+            let fails = state.withLock { state -> Bool in
+                if !state.fails {
+                    state.stored.append(secret)
+                }
+                return state.fails
+            }
+            if fails {
+                throw Unwritable()
+            }
+        }
+    }
+
     private struct Fixture {
         let link: CompanionLink
         let phone: Phone
         let ai: CompanionAIAvailabilityCache
+        let roomSecrets: RoomSecretStore
     }
 
     private func makeFixture(aiAvailable: Bool = true,
@@ -93,16 +112,20 @@ final class CompanionLinkTests: XCTestCase {
                              start: Bool = true) -> Fixture {
         let (macEnd, phoneEnd) = CompanionLoopbackTransport.makePair()
         let ai = CompanionAIAvailabilityCache(aiAvailable)
+        let roomSecrets = RoomSecretStore()
         let link = CompanionLink(transport: macEnd,
                                  aiAvailability: ai,
-                                 wantsNotificationPermission: { wantsNotificationPermission })
+                                 wantsNotificationPermission: { wantsNotificationPermission },
+                                 storeRoomSecret: { try roomSecrets.store($0) })
         if start {
             link.start()
         }
-        return Fixture(link: link, phone: Phone(transport: phoneEnd), ai: ai)
+        return Fixture(link: link, phone: Phone(transport: phoneEnd), ai: ai, roomSecrets: roomSecrets)
     }
 
-    private static let compatibleHello = CompanionClientMessage.hello(revision: 13, minimumPeer: 11)
+    private static let compatibleHello = CompanionClientMessage.hello(
+        revision: CompanionProtocolVersion.current,
+        minimumPeer: CompanionProtocolVersion.minimumPeer)
     private static let incompatibleHello = CompanionClientMessage.hello(revision: 9999, minimumPeer: 9999)
 
     // MARK: Describing frames and events
@@ -120,6 +143,8 @@ final class CompanionLinkTests: XCTestCase {
             name = "hello(wantsNotificationPermission=\(wants), ai=\(ai))"
         case .pong:
             name = "pong"
+        case .relayRoomSecretStored:
+            name = "relayRoomSecretStored"
         case .error:
             name = "error"
         case .unpaired:
@@ -140,6 +165,8 @@ final class CompanionLinkTests: XCTestCase {
             return "hello(\(revision))"
         case .ping:
             return "ping"
+        case .relayRoomSecret:
+            return "relayRoomSecret"
         case .listChatsAndSessions:
             return "listChatsAndSessions"
         case .unsubscribe(let chatID):
@@ -235,6 +262,56 @@ final class CompanionLinkTests: XCTestCase {
         }
     }
 
+    /// A reconnecting phone couriers the relay room secret BEFORE it says
+    /// hello, and waits for the ack. If that waited for the main actor, the
+    /// phone could not get as far as hello while the main queue was frozen.
+    func testRoomSecretIsStoredAndAckedWhileMainQueueIsFrozen() async throws {
+        let fixture = makeFixture()
+        let secret = Data(repeating: 7, count: 32)
+        try await FrozenMainQueue.run { _ in
+            try await fixture.phone.send(.relayRoomSecret(secret), requestID: 4)
+            let ack = try await fixture.phone.next()
+            XCTAssertEqual(ack, "relayRoomSecretStored#4")
+            try await fixture.phone.send(Self.compatibleHello, requestID: 5)
+            let hello = try await fixture.phone.next()
+            XCTAssertEqual(hello, "hello(wantsNotificationPermission=false, ai=true)#5")
+        }
+        XCTAssertEqual(fixture.roomSecrets.stored, [secret])
+    }
+
+    // MARK: Room secret
+
+    func testRoomSecretStoreFailureWithholdsTheAck() async throws {
+        let fixture = makeFixture()
+        fixture.roomSecrets.failWrites()
+        try await fixture.phone.send(.relayRoomSecret(Data(repeating: 7, count: 32)), requestID: 4)
+        let reply = try await fixture.phone.next()
+        XCTAssertEqual(reply, "error#4", "the phone retries on its next connection")
+        XCTAssertEqual(fixture.roomSecrets.stored, [])
+    }
+
+    /// The link answers the courier, but the bridge still sees it, because it
+    /// classifies the connection as interactive just as it did before.
+    func testRoomSecretIsForwardedAsHandledAndClassifiesAsUnsolicited() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(.relayRoomSecret(Data(repeating: 7, count: 32)), requestID: 4)
+        _ = try await fixture.phone.next()
+        await fixture.phone.close()
+        let events = try await allEvents(fixture.link)
+        XCTAssertEqual(events.map { Self.describe($0) }, ["handled relayRoomSecret#4", "closed(dropped)"])
+        XCTAssertEqual(classification(of: events), .unsolicited)
+    }
+
+    func testVersionBlockedPeerCannotStoreARoomSecret() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.incompatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        try await fixture.phone.send(.relayRoomSecret(Data(repeating: 7, count: 32)), requestID: 2)
+        let reply = try await fixture.phone.next()
+        XCTAssertEqual(reply, "error#2")
+        XCTAssertEqual(fixture.roomSecrets.stored, [])
+    }
+
     // MARK: Hello
 
     func testHelloReplyCarriesCachedAIAvailabilityAndNotificationWish() async throws {
@@ -250,8 +327,8 @@ final class CompanionLinkTests: XCTestCase {
         _ = try await fixture.phone.next()
         await fixture.phone.close()
         let events = try await allEventDescriptions(fixture.link)
-        XCTAssertEqual(events, ["handled hello(13)#1",
-                                "helloCompleted(13, blocked=false)",
+        XCTAssertEqual(events, ["handled hello(\(CompanionProtocolVersion.current))#1",
+                                "helloCompleted(\(CompanionProtocolVersion.current), blocked=false)",
                                 "closed(dropped)"])
     }
 
@@ -334,8 +411,8 @@ final class CompanionLinkTests: XCTestCase {
         XCTAssertEqual(events, ["handled hello(9999)#1",
                                 "helloCompleted(9999, blocked=true)",
                                 "versionIncompatible",
-                                "handled hello(13)#2",
-                                "helloCompleted(13, blocked=false)",
+                                "handled hello(\(CompanionProtocolVersion.current))#2",
+                                "helloCompleted(\(CompanionProtocolVersion.current), blocked=false)",
                                 "handled ping#3",
                                 "closed(dropped)"])
     }
@@ -375,8 +452,8 @@ final class CompanionLinkTests: XCTestCase {
         await fixture.phone.close()
 
         let events = try await allEventDescriptions(fixture.link)
-        XCTAssertEqual(events, ["handled hello(13)#1",
-                                "helloCompleted(13, blocked=false)",
+        XCTAssertEqual(events, ["handled hello(\(CompanionProtocolVersion.current))#1",
+                                "helloCompleted(\(CompanionProtocolVersion.current), blocked=false)",
                                 "forwarded listChatsAndSessions#2",
                                 "handled ping#3",
                                 "forwarded unsubscribe(a)",

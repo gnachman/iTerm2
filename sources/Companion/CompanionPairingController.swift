@@ -21,6 +21,7 @@ import Security
 import CompanionProtocol
 import CompanionNoise
 import CompanionTransport
+import os
 
 @MainActor
 @objc(iTermCompanionPairingController)
@@ -59,8 +60,26 @@ final class CompanionPairingController: NSObject {
     /// this window is treated as interactive (a silent lurker is warn-worthy).
     private static let classificationGraceNanos: UInt64 = 3_000_000_000
 
+    // Fresh pairing (a QR is showing, SAS entry) parks here, on the main actor,
+    // because it needs UI. An ESTABLISHED pairing is parked by the supervisor
+    // below instead.
     private var listener: TransportListener?
     private var acceptTask: Task<Void, Never>?
+
+    /// Parks, accepts, and re-parks an established pairing OFF the main actor,
+    /// so a paired phone can reconnect even while a modal alert has the main
+    /// queue frozen. See CompanionParkSupervisor.
+    private lazy var supervisor: CompanionParkSupervisor = makeSupervisor()
+    /// Whether the supervisor has been asked to keep the established pairing
+    /// parked (true from `.start`/`.adopt` until `.stop` or it reports it is no
+    /// longer allowed to park). While true it owns re-parking: nothing on the
+    /// main actor may also park, or the two would displace each other.
+    private var supervisorActive = false
+    /// Whether parking is still allowed, readable by the supervisor from its own
+    /// actor before every park. True only between a resume that passed every
+    /// check (gate, plugin, complete pairing) and the next stopAdvertising().
+    private let parkEligibility = OSAllocatedUnfairLock(initialState: false)
+
     private var bridge: CompanionHostBridge? {
         didSet {
             // Mirrored where the (nonisolated) tool-registration path can
@@ -289,7 +308,7 @@ final class CompanionPairingController: NSObject {
     /// just waiting for the phone" state from "paired but not listening at all"
     /// (the phone cannot reconnect). Both have bridge == nil and would otherwise
     /// look identical in the UI.
-    var isListening: Bool { acceptTask != nil || pairedListenerRetry.isPending }
+    var isListening: Bool { acceptTask != nil || pairedListenerRetry.isPending || supervisorActive }
 
     /// When the mac's CONTINUOUS relay presence began (it parked, or a phone
     /// bridged), or nil while not connected. Stays set across park -> phone
@@ -458,7 +477,7 @@ final class CompanionPairingController: NSObject {
         // Pending retry/regeneration tasks count as serving: left alone they
         // would re-park (or mint a new QR) after the gate closed.
         guard bridge != nil || acceptTask != nil || pairedListenerRetry.isPending
-                || freshPairingRegen.isPending else { return }
+                || freshPairingRegen.isPending || supervisorActive else { return }
         RLog("Companion: gate closed; dropping any live connection and stopping listener")
         if bridge != nil {
             bridge?.stop()
@@ -559,10 +578,14 @@ final class CompanionPairingController: NSObject {
         // pid): an externally triggered resume (the gate-change notifications
         // fire on every settings write) must not re-park the pid being retired,
         // sidestepping the failure backoff.
-        guard acceptTask == nil, bridge == nil, !freshPairingRegen.isPending,
+        // While the supervisor is active it owns the established pairing's park
+        // and re-parks by itself when the connection drops, so there is nothing
+        // to do here either.
+        guard acceptTask == nil, bridge == nil, !supervisorActive, !freshPairingRegen.isPending,
               let pid = desiredListeningPID else {
             relayLog("resume: SKIP guard "
                      + "(acceptTaskNil=\(acceptTask == nil) bridgeNil=\(bridge == nil) "
+                     + "supervisorActive=\(supervisorActive) "
                      + "regenPending=\(freshPairingRegen.isPending) "
                      + "hasPID=\(desiredListeningPID != nil))")
             return
@@ -576,6 +599,23 @@ final class CompanionPairingController: NSObject {
         // suspenders for a re-pair over an existing pairing).
         if !freshPairingActive, case .incomplete(let missing) = pairingCompleteness() {
             relayLog("resume: SKIP - pairing incomplete (missing: \(missing.joined(separator: ", "))); re-pair required, not parking")
+            return
+        }
+        // An established pairing goes to the supervisor, which parks off the main
+        // actor. Everything checked above (gate, plugin, complete pairing) is what
+        // parkEligibility stands for until the next stopAdvertising().
+        if pid == pairedPID, let recipe = parkRecipe(pairingID: pid) {
+            relayLog("resume: handing pid \(pid) to the park supervisor")
+            // The link the supervisor creates reads AI availability from the
+            // cache, so make sure the copy is current.
+            CompanionAIAvailabilityCache.shared.value = Self.aiAvailable()
+            parkEligibility.withLock { $0 = true }
+            supervisorActive = true
+            // Record the attempt for the settings "last try…" timer.
+            lastRelayAttempt = Date()
+            notifyPresenceChanged()
+            supervisor.send(.start(recipe))
+            RLog("Companion: resumed listening for paired device (pid \(pid))")
             return
         }
         do {
@@ -923,6 +963,13 @@ final class CompanionPairingController: NSObject {
         acceptTask = nil
         listener?.stop()
         listener = nil
+        // The established-pairing lane: stop parking. A link the supervisor was
+        // watching is left open, so unpair can still say farewell on it.
+        parkEligibility.withLock { $0 = false }
+        if supervisorActive {
+            supervisorActive = false
+            supervisor.send(.stop)
+        }
         // The park is gone: no relay presence to time. A later resume re-parks and
         // restarts the timer from a fresh, accurate instant.
         relayConnectedSince = nil
@@ -1429,49 +1476,10 @@ final class CompanionPairingController: NSObject {
                 CompanionAIAvailabilityCache.shared.value = Self.aiAvailable()
                 let link = CompanionLink(transport: channel,
                                          aiAvailability: .shared,
-                                         wantsNotificationPermission: { CompanionPushRegistry.alertsEverEnabled })
-                let newBridge = CompanionHostBridge(link: link)
-                newBridge.onClose = { [weak self, weak newBridge] error in
-                    guard let self, let newBridge, self.bridge === newBridge else {
-                        // A stale bridge must not tear down its replacement.
-                        DLog("Companion: stale bridge closed; ignoring")
-                        self?.relayLog("bridge.onClose: STALE bridge closed; ignoring")
-                        return
-                    }
-                    RLog("Companion: bridge closed; resuming listening for reconnect")
-                    self.relayLog("bridge.onClose: LIVE bridge closed; nil-ing bridge + resuming")
-                    self.bridge = nil
-                    self.onDisconnect?()
-                    // The relay tore the live connection down for its daily quota:
-                    // re-parking now just trips the same limit, so back off long and
-                    // let the settings UI explain it instead of the routine re-park.
-                    if (error as? TransportError) == .quotaExceeded {
-                        self.enterRelayQuotaBackoff(reason: "live bridge closed")
-                        return
-                    }
-                    self.resumePairedListeningIfNeeded()
-                }
-                newBridge.onPeerUnpaired = { [weak self] in
-                    self?.peerDidUnpair()
-                }
-                newBridge.onConnectionClassified = { [weak self, weak newBridge] solicited in
-                    guard let self, let newBridge else { return }
-                    self.connectionDidClassify(newBridge, solicited: solicited)
-                }
-                newBridge.onVersionIncompatible = { [weak self] verdict in
-                    self?.showVersionIncompatibleAlert(verdict)
-                }
-                newBridge.start()
+                                         wantsNotificationPermission: { CompanionPushRegistry.alertsEverEnabled },
+                                         storeRoomSecret: CompanionLink.storeRoomSecretIfChanged)
+                installBridge(for: link)
                 link.start()
-                let staleBridge = bridge
-                bridge = newBridge
-                if let staleBridge {
-                    // The phone reconnected while the previous TCP session
-                    // still looked alive here (e.g. its wifi was off). The new
-                    // handshake supersedes it.
-                    DLog("Companion: replacing stale bridge with the new connection")
-                    staleBridge.stop()
-                }
                 // Persist so future reconnects authenticate. Pin the phone static
                 // FIRST and confirm it actually landed, then record the pid that
                 // gates the SAS skip. The two stores (Keychain + UserDefaults) are
@@ -1514,8 +1522,15 @@ final class CompanionPairingController: NSObject {
                 // resumePairedListeningIfNeeded above. (When Bonjour returns as a
                 // parallel transport, this can keep accepting again.)
                 acceptTask = nil
+                // From here on the pairing is established: hand the live link to
+                // the supervisor, which re-parks off the main actor when it drops.
+                if let recipe = parkRecipe(pairingID: code.pairingID) {
+                    parkEligibility.withLock { $0 = true }
+                    supervisorActive = true
+                    supervisor.send(.adopt(link, recipe))
+                }
                 relayLog("acceptLoop EXIT: connected, bridge up, stopped accepting "
-                         + "(reconnect now driven by bridge.onClose)")
+                         + "(reconnect now driven by the park supervisor)")
                 return
             } catch {
                 RLog("Companion pairing: handshake failed: \(error); still listening")
@@ -1560,6 +1575,138 @@ final class CompanionPairingController: NSObject {
             return (transport.summary, transport.details)
         }
         return (userFacingDescription(of: error), nil)
+    /// Create the bridge for a newly connected link and make it the current
+    /// connection, replacing (and stopping) any previous one. Does not start
+    /// the link.
+    private func installBridge(for link: CompanionLink) {
+        let newBridge = CompanionHostBridge(link: link)
+        newBridge.onClose = { [weak self, weak newBridge] error in
+            guard let self, let newBridge, self.bridge === newBridge else {
+                // A stale bridge must not tear down its replacement.
+                DLog("Companion: stale bridge closed; ignoring")
+                self?.relayLog("bridge.onClose: STALE bridge closed; ignoring")
+                return
+            }
+            RLog("Companion: bridge closed")
+            self.relayLog("bridge.onClose: LIVE bridge closed; nil-ing bridge")
+            self.bridge = nil
+            self.onDisconnect?()
+            // The supervisor saw the same link close, off the main actor, and
+            // has already decided when to park again (including the long wait
+            // after a quota teardown). Parking from here too would displace it.
+            guard !self.supervisorActive else { return }
+            // The relay tore the live connection down for its daily quota:
+            // re-parking now just trips the same limit, so back off long and
+            // let the settings UI explain it instead of the routine re-park.
+            if (error as? TransportError) == .quotaExceeded {
+                self.enterRelayQuotaBackoff(reason: "live bridge closed")
+                return
+            }
+            self.resumePairedListeningIfNeeded()
+        newBridge.onPeerUnpaired = { [weak self] in
+            self?.peerDidUnpair()
+        newBridge.onConnectionClassified = { [weak self, weak newBridge] solicited in
+            guard let self, let newBridge else { return }
+            self.connectionDidClassify(newBridge, solicited: solicited)
+        newBridge.onVersionIncompatible = { [weak self] verdict in
+            self?.showVersionIncompatibleAlert(verdict)
+        newBridge.start()
+        let staleBridge = bridge
+        bridge = newBridge
+        if let staleBridge {
+            // The phone reconnected while the previous session still looked
+            // alive here (e.g. its wifi was off, or the main actor was frozen
+            // when the old connection dropped). The new one supersedes it.
+            DLog("Companion: replacing stale bridge with the new connection")
+            staleBridge.stop()
+    // MARK: Park supervisor
+    /// What the supervisor needs to park for the established pairing, or nil if
+    /// a credential cannot be read right now.
+    private func parkRecipe(pairingID: String) -> CompanionParkRecipe? {
+        guard let keyPair = try? CompanionMacIdentity.keyPair(),
+              let pinned = pairedPhoneStatic else {
+            return nil
+        return CompanionParkRecipe(pairingID: pairingID,
+                                   keyPair: keyPair,
+                                   pinnedPhoneStatic: pinned,
+                                   resolverURL: Self.configuredResolverURL(),
+                                   relayOrigin: Self.configuredRelayOrigin())
+    private func makeSupervisor() -> CompanionParkSupervisor {
+        let eligibility = parkEligibility
+        let listenerFactory = CompanionParkListenerFactory(floorStore: shardMapFloorStore)
+        let reconnectBackoff = self.reconnectBackoff
+        let environment = CompanionParkEnvironment(
+            isEligible: { eligibility.withLock { $0 } },
+            makeListener: { recipe, forceFreshResolve, onParked in
+                try await listenerFactory.makeListener(recipe: recipe,
+                                                       forceFreshResolve: forceFreshResolve,
+                                                       onParked: onParked)
+            },
+            makeLink: { channel in
+                CompanionLink(transport: channel,
+                              aiAvailability: .shared,
+                              wantsNotificationPermission: { CompanionPushRegistry.alertsEverEnabled },
+                              storeRoomSecret: CompanionLink.storeRoomSecretIfChanged)
+            },
+            sleep: { try await Task.sleep(nanoseconds: $0) },
+            // Full-jitter delay for a re-park after a reshard evict (§7.3 /
+            // Appendix C), so a whole-fleet reshard does not have every mac
+            // re-park in lockstep.
+            jitteredReparkNanos: { UInt64(reconnectBackoff.delay(consecutiveFailures: 1) * 1_000_000_000) })
+        let supervisor = CompanionParkSupervisor(environment: environment)
+        // Events pile up while the main actor is frozen and are handled here,
+        // in order, once it runs again.
+        Task { @MainActor [weak self] in
+            for await event in supervisor.events {
+                self?.handle(event)
+            }
+        return supervisor
+    private func handle(_ event: CompanionParkSupervisor.Event) {
+        switch event {
+        case .parked:
+            // The park succeeded, so any prior quota teardown is behind us:
+            // clear the backoff marker so the UI leaves the quota state.
+            relayQuotaBackoffUntil = nil
+            onStatus?("Waiting for your iPhone…")
+            // Parked = admitted to the relay room = reachable. Start the
+            // connected timer (if a bridge hasn't already), for the settings UI.
+            guard relayConnectedSince == nil else { return }
+            relayConnectedSince = Date()
+            notifyPresenceChanged()
+        case .linkUp(let link):
+            guard supervisorActive else {
+                // The supervisor was stopped (unpair, gate closed) after this
+                // phone got in but before the main actor heard about it.
+                relayLog("supervisor linkUp after stop; closing the link")
+                link.close()
+                return
+            }
+            relayLog("supervisor linkUp; creating bridge")
+            installBridge(for: link)
+            onPaired?()
+        case .linkDown:
+            // The bridge clears itself when it sees its link close. Nothing to
+            // do for the park: the supervisor is already on it.
+            lastRelayAttempt = Date()
+            notifyPresenceChanged()
+        case .retryScheduled(let nanoseconds, let failure):
+            // Not connected and waiting to try again: end the connected timer
+            // so settings shows "reconnecting" with the last-attempt time.
+            relayConnectedSince = nil
+            lastRelayAttempt = Date()
+            if failure == .quota {
+                relayQuotaBackoffUntil = Date().addingTimeInterval(TimeInterval(nanoseconds) / 1_000_000_000)
+                relayLog("relay daily quota exceeded; supervisor backing off \(nanoseconds / 60_000_000_000)m before re-parking")
+            }
+            notifyPresenceChanged()
+        case .fault(let error):
+            reportFailure(error)
+        case .stopped(let reason):
+            guard reason == .notEligible else { return }
+            relayLog("supervisor stopped: parking is no longer allowed")
+            supervisorActive = false
+            relayConnectedSince = nil
+            notifyPresenceChanged()
     }
 
     /// Convert transport errors into actionable text.
@@ -1675,5 +1822,66 @@ private final class RelayRetryScheduler {
             self.task = nil
             action()
         }
+    }
+}
+
+/// Builds the relay listener for one park of an established pairing: resolves
+/// the owning relay host (resolved mode) and parks through the consent plugin.
+/// Called by the park supervisor, off the main actor.
+private final class CompanionParkListenerFactory: Sendable {
+    /// The shard resolver cache, keyed by resolver URL + plugin client identity
+    /// so a plugin reload rebuilds against the new egress.
+    private let resolverCache = OSAllocatedUnfairLock(uncheckedState: ShardResolverCache())
+    private let floorStore: ShardMapVersionFloorStore
+
+    init(floorStore: ShardMapVersionFloorStore) {
+        self.floorStore = floorStore
+    }
+
+    func makeListener(recipe: CompanionParkRecipe,
+                      forceFreshResolve: Bool,
+                      onParked: @escaping @Sendable () -> Void) async throws -> TransportListener {
+        // All egress (relay traffic and, in resolved mode, the shard-map fetch)
+        // MUST go through the consent plugin, the feature's only sanctioned
+        // outbound path. If it is unavailable, fail CLOSED (do not park) rather
+        // than fall back to a raw URLSession that would carry traffic around the
+        // consent gate.
+        guard case .success(let plugin) = CompanionPlugin.instance() else {
+            throw TransportError.connectionFailed("companion consent plugin unavailable")
+        }
+        let publicKey = recipe.keyPair.publicKey
+        let relayOrigin: String?
+        if let resolverURL = recipe.resolverURL {
+            // Resolved mode: look the owning host up in the shard map, exactly as
+            // the phone does, so both land on the same box. After a reshard
+            // evict the cached map names the old (rejecting) host, so fetch a
+            // fresh one.
+            let fetcher = plugin.shardMapFetcher()
+            let token = ObjectIdentifier(plugin.client)
+            let floorStore = self.floorStore
+            let resolver = resolverCache.withLockUnchecked {
+                $0.resolver(resolverURL: resolverURL,
+                            token: token,
+                            fetcher: fetcher,
+                            floorStore: floorStore)
+            }
+            let code = PairingCode(responderStaticPublicKey: publicKey,
+                                   pairingID: recipe.pairingID,
+                                   resolverURL: resolverURL)
+            relayOrigin = try await resolver.relayOrigin(for: code, forceFresh: forceFreshResolve)
+        } else {
+            relayOrigin = recipe.relayOrigin
+        }
+        let hasRoomSecret = CompanionMacIdentity.pairedRoomSecret() != nil
+        RLog("Companion park: pid=\(recipe.pairingID) relayOrigin=\(relayOrigin ?? "nil") roomSecret=\(hasRoomSecret ? "present" : "MISSING")")
+        return try CompanionTransports.listener(
+            pairingID: recipe.pairingID,
+            responderStaticPublicKey: publicKey,
+            relayOrigin: relayOrigin,
+            webSocketFactory: plugin.webSocketFactory(),
+            onParked: onParked,
+            // Sign the mac's park once the phone has couriered the room secret
+            // and the room is established; nil keeps an open-mode park.
+            roomSecret: { CompanionMacIdentity.pairedRoomSecret() })
     }
 }

@@ -9,7 +9,8 @@
 //  @MainActor because its handlers read and write app state, so on its own it
 //  goes silent for the whole time such an alert is up. The link owns the parts
 //  that must keep working regardless: the receive loop, the outbox drain, and
-//  the few messages that can be answered without app state (hello, ping).
+//  the few messages that can be answered without app state (hello, ping, and
+//  the relay room secret a connecting phone sends before its hello).
 //  Everything else is forwarded, in wire order, to the bridge through `events`,
 //  where it simply waits until the main actor runs again.
 //
@@ -52,8 +53,8 @@ enum CompanionConnectionClassification: Equatable {
 actor CompanionLink {
     enum Event {
         /// A decoded message from the phone, in wire order. `handledByLink` is
-        /// true when the link already answered it (hello, ping); the bridge then
-        /// only does its bookkeeping and must not answer again.
+        /// true when the link already answered it (hello, ping, relayRoomSecret);
+        /// the bridge then only does its bookkeeping and must not answer again.
         case envelope(ClientEnvelope, handledByLink: Bool)
         /// The link answered a hello. `blocked` is true when the peer is
         /// version-incompatible. Follows that hello's `.envelope`.
@@ -100,6 +101,7 @@ actor CompanionLink {
     private nonisolated let transport: MessageTransport
     private nonisolated let aiAvailability: CompanionAIAvailabilityCache
     private nonisolated let wantsNotificationPermission: @Sendable () -> Bool
+    private nonisolated let storeRoomSecret: @Sendable (Data) throws -> Void
     private nonisolated let eventsContinuation: AsyncStream<Event>.Continuation
     private nonisolated let pokes: AsyncStream<Poke>
     private nonisolated let pokesContinuation: AsyncStream<Poke>.Continuation
@@ -113,12 +115,23 @@ actor CompanionLink {
 
     init(transport: MessageTransport,
          aiAvailability: CompanionAIAvailabilityCache,
-         wantsNotificationPermission: @escaping @Sendable () -> Bool) {
+         wantsNotificationPermission: @escaping @Sendable () -> Bool,
+         storeRoomSecret: @escaping @Sendable (Data) throws -> Void) {
         self.transport = transport
         self.aiAvailability = aiAvailability
         self.wantsNotificationPermission = wantsNotificationPermission
+        self.storeRoomSecret = storeRoomSecret
         (events, eventsContinuation) = AsyncStream<Event>.makeStream()
         (pokes, pokesContinuation) = AsyncStream<Poke>.makeStream()
+    }
+
+    /// The production room secret store. The phone re-sends the secret on every
+    /// connect, so skip the keychain write when it is the one already held.
+    static let storeRoomSecretIfChanged: @Sendable (Data) throws -> Void = { secret in
+        if CompanionMacIdentity.pairedRoomSecret() == secret {
+            return
+        }
+        try CompanionMacIdentity.storePairedRoomSecret(secret)
     }
 
     // MARK: Nonisolated entry points
@@ -339,6 +352,24 @@ actor CompanionLink {
             handleHello(envelope, peerRevision: revision, peerMinimumPeer: minimumPeer)
         case .ping:
             send(.pong, requestID: requestID)
+            eventsContinuation.yield(.envelope(envelope, handledByLink: true))
+        case .relayRoomSecret(let secret):
+            // A connecting phone couriers this BEFORE its hello and waits for
+            // the ack, so it has to be answered here or the phone could never
+            // reach hello while the main actor is frozen.
+            // Persist the secret so the mac can sign its relay parks, then ack so
+            // the phone may register its verifier. Idempotent (re-sent every
+            // connect); a store failure simply withholds the ack, and the phone
+            // retries on the next connection.
+            do {
+                try storeRoomSecret(secret)
+                RLog("Companion link: stored relay room secret")
+                send(.relayRoomSecretStored, requestID: requestID)
+            } catch {
+                RLog("Companion link: failed to store room secret: \(error)")
+                send(.error(CompanionError(code: .internalError, message: "\(error)")),
+                     requestID: requestID)
+            }
             eventsContinuation.yield(.envelope(envelope, handledByLink: true))
         default:
             eventsContinuation.yield(.envelope(envelope, handledByLink: false))

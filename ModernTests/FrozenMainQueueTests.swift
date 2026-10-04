@@ -11,6 +11,7 @@
 
 import XCTest
 import os
+import CompanionProtocol
 @testable import iTerm2SharedARC
 
 final class FrozenMainQueueTests: XCTestCase {

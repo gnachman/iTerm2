@@ -20,9 +20,10 @@
 //
 //  The bridge does no network I/O itself. CompanionLink owns the transport,
 //  the receive loop, and the outbox drain, off the main actor, and answers
-//  hello and ping on its own, so the connection stays alive while the main
-//  actor is frozen (e.g. by a modal alert). The bridge consumes the link's
-//  events in wire order and simply lags during such a freeze.
+//  hello, ping, and the room-secret courier on its own, so the connection
+//  stays alive (and a phone can connect) while the main actor is frozen (e.g.
+//  by a modal alert). The bridge consumes the link's events in wire order and
+//  simply lags during such a freeze.
 //
 
 import Foundation
@@ -427,7 +428,7 @@ final class CompanionHostBridge {
             RLog("Companion bridge: unsupported client message (peer is newer)")
             send(.error(CompanionError(code: .badRequest, message: "Unsupported request; app upgrade required")),
                  requestID: requestID)
-        case .hello, .ping:
+        case .hello, .ping, .relayRoomSecret:
             // Answered by CompanionLink, off the main actor.
             break
         case .listChatsAndSessions:
@@ -517,20 +518,6 @@ final class CompanionHostBridge {
         case .notificationPermissionResponse(let permissionRequestID, let authorization):
             permissionWaiters.removeValue(forKey: permissionRequestID)?
                 .resume(returning: authorization)
-        case .relayRoomSecret(let secret):
-            // Persist the couriered room secret so the mac can sign its relay
-            // parks, then ack so the phone may register its verifier. Idempotent
-            // (re-sent every connect); a store failure simply withholds the ack,
-            // and the phone retries on the next connection.
-            do {
-                try CompanionMacIdentity.storePairedRoomSecret(secret)
-                RLog("Companion bridge: stored relay room secret")
-                send(.relayRoomSecretStored, requestID: requestID)
-            } catch {
-                RLog("Companion bridge: failed to store room secret: \(error)")
-                send(.error(CompanionError(code: .internalError, message: "\(error)")),
-                     requestID: requestID)
-            }
         case .messagesSince(let collapseToken, let seq, let limit, let nonce):
             // Mixed: handleMessagesSince classifies the connection from its nonce
             // FIRST, then serves nothing if AI is off (a chat-only push). Gating here
