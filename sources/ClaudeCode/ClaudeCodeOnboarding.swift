@@ -190,7 +190,7 @@ class ClaudeCodeOnboarding: NSObject {
                 let before = entries.count
                 entries.removeAll { entry in
                     guard let command = entry["command"] as? String else { return false }
-                    return command.hasSuffix("/cc-status")
+                    return CCStatusHookCommand.refersToCCStatus(command)
                 }
                 if entries.count != before {
                     groupsChanged = true
@@ -437,8 +437,8 @@ class ClaudeCodeOnboarding: NSObject {
 
     // Strict health check used by the broken-install detector.
     // Stronger than hooksInstalledOnDisk: every event in
-    // hookEventNames must have a cc-status entry, AND the command
-    // path must point at an executable file. Catches the cases
+    // hookEventNames must have a cc-status entry, AND that entry's
+    // command must plausibly run. Catches the cases
     // hooksInstalledOnDisk doesn't:
     //   • partial removal (Claude Code rewrote settings.json and
     //     dropped some events but not others)
@@ -451,45 +451,147 @@ class ClaudeCodeOnboarding: NSObject {
     // false on a partial install would incorrectly hide the menu's
     // Uninstall item.
     //
+    // Claude Code runs a hook's command with /bin/sh -c and never
+    // checks it beforehand, so the command may use $HOME, ~, or a
+    // wrapper (issue 13099). Variables in the command are expanded
+    // from the environment withHookEnvironment provides (see
+    // CCStatusHookCommand). An entry is healthy if any of its
+    // references to cc-status resolves to an executable, or can't be
+    // resolved without running the shell: like Claude Code, we can't
+    // know whether such a command works, and a false alarm on every
+    // launch is worse than missing a rare real breakage.
+    //
     // The new-hook-event migration case (a future iTerm2 adds a
     // 10th event) returns false here, which prompts the user to
     // Reinstall — doInstallHook is idempotent and just adds the
     // missing event.
     //
-    // Reads disk and follows symlinks; call off the main thread.
-    @objc
-    static func hooksHealthyOnDiskForHealthCheck() -> Bool {
-        let settingsURL = claudeSettingsURL()
-        guard let data = try? Data(contentsOf: settingsURL),
-              let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let hooks = parsed["hooks"] as? [String: Any] else {
+    // Reads settings.json and follows symlinks on `queue`, which must not be
+    // the main queue: a wedged network mount could block forever. Launches
+    // the user's shell only if some cc-status command needs its environment
+    // (see withHookEnvironment). Calls completion on the main thread.
+    static func checkHooksHealth(on queue: DispatchQueue, completion: @escaping (Bool) -> Void) {
+        queue.async {
+            guard let settings = loadSettings(at: claudeSettingsURL()) else {
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+                return
+            }
+            withHookEnvironment(for: settings, queue: queue) { environment in
+                let healthy = hooksHealthy(inSettings: settings, environment: environment) {
+                    // Follows symlinks; a dangling symlink fails. The
+                    // executable bit matters because sh can't run a
+                    // non-executable file.
+                    FileManager.default.isExecutableFile(atPath: $0)
+                }
+                DispatchQueue.main.async {
+                    completion(healthy)
+                }
+            }
+        }
+    }
+
+    private static func loadSettings(at url: URL) -> [String: Any]? {
+        guard let data = try? Data(contentsOf: url) else {
+            return nil
+        }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+    }
+
+    // The cc-status hook commands in settings.json, across all our events.
+    private static func ccStatusCommands(inSettings settings: [String: Any]) -> [String] {
+        guard let hooks = settings["hooks"] as? [String: Any] else {
+            return []
+        }
+        return hookEventNames.flatMap { eventName -> [String] in
+            let groups = hooks[eventName] as? [[String: Any]] ?? []
+            return groups.flatMap { group -> [String] in
+                let entries = group["hooks"] as? [[String: Any]] ?? []
+                return entries.compactMap { entry in
+                    guard let command = entry["command"] as? String,
+                          CCStatusHookCommand.refersToCCStatus(command) else {
+                        return nil
+                    }
+                    return command
+                }
+            }
+        }
+    }
+
+    // The environment for judging the cc-status commands in `settings`. The
+    // health check and the installer both get it here, so they agree on
+    // whether a command works: if they didn't, the health check could call
+    // a command broken that Reinstall then keeps, and the warning would
+    // return on every launch.
+    //
+    // When no command needs an environment (the usual case: the installer
+    // writes a plain absolute path) this is empty and no shell is launched.
+    // Otherwise it is /usr/bin/env from a login, interactive shell, which is
+    // what a terminal session, and so a claude started in one, sees. If the
+    // shell can't be run, iTerm2's own environment stands in; it has HOME,
+    // and a variable it lacks or a bare cc-status missing from its PATH only
+    // makes a command unresolvable, which counts as working.
+    //
+    // Called on `queue`; calls completion on `queue`.
+    private static func withHookEnvironment(for settings: [String: Any],
+                                            queue: DispatchQueue,
+                                            completion: @escaping ([String: String]) -> Void) {
+        guard ccStatusCommands(inSettings: settings).contains(where: CCStatusHookCommand.needsEnvironment) else {
+            completion([:])
+            return
+        }
+        DLog("Onboarding: reading the shell environment to resolve hook commands")
+        DispatchQueue.main.async {
+            iTermSlowOperationGateway.sharedInstance().runCommand(inUserShell: "/usr/bin/env",
+                                                                  mode: .loginInteractive) { output in
+                let environment: [String: String]
+                if let output {
+                    environment = CCStatusHookCommand.parseEnvironment(output)
+                } else {
+                    DLog("Onboarding: couldn't read the shell environment; using iTerm2's")
+                    environment = ProcessInfo.processInfo.environment
+                }
+                queue.async {
+                    completion(environment)
+                }
+            }
+        }
+    }
+
+    // The settings.json half of checkHooksHealth.
+    // internal (not private) for unit testing via @testable import.
+    static func hooksHealthy(inSettings settings: [String: Any],
+                             environment: [String: String],
+                             isExecutable: (String) -> Bool) -> Bool {
+        guard let hooks = settings["hooks"] as? [String: Any] else {
             return false
         }
-        let fm = FileManager.default
         for eventName in hookEventNames {
             guard let groups = hooks[eventName] as? [[String: Any]] else {
                 return false
             }
-            var ok = false
-            for group in groups {
-                guard let entries = group["hooks"] as? [[String: Any]] else { continue }
-                for entry in entries {
-                    guard let command = entry["command"] as? String,
-                          command.hasSuffix("/cc-status") else {
-                        continue
+            let ok = groups.contains { group in
+                let entries = group["hooks"] as? [[String: Any]] ?? []
+                return entries.contains { entry in
+                    guard let command = entry["command"] as? String else {
+                        return false
                     }
-                    // Follows symlinks; a dangling symlink fails
-                    // both isExecutableFile and fileExists. The
-                    // executable bit matters because Claude Code
-                    // would refuse to invoke a non-executable hook.
-                    if fm.isExecutableFile(atPath: command) {
-                        ok = true
-                        break
+                    let resolutions = CCStatusHookCommand.resolutions(of: command,
+                                                                      environment: environment,
+                                                                      isExecutable: isExecutable)
+                    return resolutions.contains { resolution in
+                        if case .notExecutable = resolution {
+                            return false
+                        }
+                        return true
                     }
                 }
-                if ok { break }
             }
-            if !ok { return false }
+            if !ok {
+                DLog("Health: no working cc-status hook for \(eventName)")
+                return false
+            }
         }
         return true
     }
@@ -501,7 +603,7 @@ class ClaudeCodeOnboarding: NSObject {
     // install would incorrectly hide the menu's Uninstall item
     // when there's still real state on disk. The strict variant
     // for the broken-install detector is
-    // hooksHealthyOnDiskForHealthCheck above.
+    // checkHooksHealth above.
     private static func hooksInstalledOnDisk() -> Bool {
         let settingsURL = claudeSettingsURL()
         guard let data = try? Data(contentsOf: settingsURL),
@@ -515,7 +617,7 @@ class ClaudeCodeOnboarding: NSObject {
                 guard let entries = group["hooks"] as? [[String: Any]] else { continue }
                 for entry in entries {
                     if let command = entry["command"] as? String,
-                       command.hasSuffix("/cc-status") {
+                       CCStatusHookCommand.refersToCCStatus(command) {
                         return true
                     }
                 }
@@ -767,17 +869,14 @@ class ClaudeCodeOnboarding: NSObject {
         // Identity-checks against the static instance on return so
         // a panel that was closed-and-reopened during the read
         // doesn't get the result of an earlier query.
-        DispatchQueue.global(qos: .utility).async { [weak onboarding] in
-            let healthy = hooksHealthyOnDiskForHealthCheck()
-            DispatchQueue.main.async {
-                guard let onboarding,
-                      Self.instance === onboarding,
-                      healthy else {
-                    return
-                }
-                onboarding.completedSteps.insert(.installHook)
-                onboarding.updateUI()
+        checkHooksHealth(on: DispatchQueue.global(qos: .utility)) { [weak onboarding] healthy in
+            guard let onboarding,
+                  Self.instance === onboarding,
+                  healthy else {
+                return
             }
+            onboarding.completedSteps.insert(.installHook)
+            onboarding.updateUI()
         }
     }
 
@@ -1435,7 +1534,7 @@ class ClaudeCodeOnboarding: NSObject {
     }
 
     /// Hook event names that cc-status handles.
-    private static let hookEventNames = [
+    static let hookEventNames = [
         "UserPromptSubmit",
         "Stop",
         "StopFailure",
@@ -1572,13 +1671,26 @@ class ClaudeCodeOnboarding: NSObject {
     // reports back on the main thread. configDirectory has already been resolved
     // (resolveConfigDirectory) before this is called, so there is no shell spawn
     // here.
+    //
+    // Existing cc-status hook commands are judged in the same environment the
+    // health check uses (withHookEnvironment), so a command the health check
+    // calls broken is one Reinstall replaces.
     private static func installHookFiles(configDirectory: URL, completion: @escaping (Bool) -> Void) {
-        DispatchQueue.global(qos: .userInitiated).async {
-            installHookFilesOnBackgroundQueue(configDirectory: configDirectory, completion: completion)
+        let queue = DispatchQueue.global(qos: .userInitiated)
+        queue.async {
+            let settingsURL = configDirectory.appendingPathComponent("settings.json")
+            let settings = loadSettings(at: settingsURL) ?? [:]
+            withHookEnvironment(for: settings, queue: queue) { environment in
+                installHookFilesOnBackgroundQueue(configDirectory: configDirectory,
+                                                  environment: environment,
+                                                  completion: completion)
+            }
         }
     }
 
-    private static func installHookFilesOnBackgroundQueue(configDirectory: URL, completion: @escaping (Bool) -> Void) {
+    private static func installHookFilesOnBackgroundQueue(configDirectory: URL,
+                                                          environment: [String: String],
+                                                          completion: @escaping (Bool) -> Void) {
         guard let ccStatusPath = Self.ensureCCStatusSymlink() else {
             RLog("Onboarding: couldn't prepare cc-status symlink")
             DispatchQueue.main.async {
@@ -1612,13 +1724,9 @@ class ClaudeCodeOnboarding: NSObject {
         for eventName in Self.hookEventNames {
             var eventHookGroups = (hooks[eventName] as? [[String: Any]]) ?? []
 
-            // Find any existing cc-status hook and rewrite it to the current
-            // path. A previously installed hook may point at a stale dot dir
-            // (for example a `-suite` instance wrote ~/.config/iterm2-alt4/
-            // cc-status and we're now reinstalling from the default instance
-            // that wants ~/.config/iterm2/cc-status). Matching on the
-            // "/cc-status" suffix lets us adopt and correct that entry instead
-            // of leaving it stale or appending a duplicate.
+            // Find any existing cc-status hook and adopt it instead of
+            // appending a duplicate. See shouldRewriteHookCommand for when its
+            // command is replaced with the current path.
             var foundCCStatus = false
             for groupIndex in eventHookGroups.indices {
                 guard var groupHooks = eventHookGroups[groupIndex]["hooks"] as? [[String: Any]] else {
@@ -1627,11 +1735,13 @@ class ClaudeCodeOnboarding: NSObject {
                 var groupChanged = false
                 for entryIndex in groupHooks.indices {
                     guard let command = groupHooks[entryIndex]["command"] as? String,
-                          command.hasSuffix("/cc-status") else {
+                          CCStatusHookCommand.refersToCCStatus(command) else {
                         continue
                     }
                     foundCCStatus = true
-                    if command != ccStatusPath {
+                    if shouldRewriteHookCommand(command,
+                                                ccStatusPath: ccStatusPath,
+                                                environment: environment) {
                         groupHooks[entryIndex]["command"] = ccStatusPath
                         groupChanged = true
                         DLog("Onboarding: updated stale cc-status hook for \(eventName) from \(command) to \(ccStatusPath)")
@@ -1722,6 +1832,41 @@ class ClaudeCodeOnboarding: NSObject {
             iTermUserDefaults.claudeCodeIntegrationCompleted = true
             RLog("Onboarding: hook install complete")
             completion(true)
+        }
+    }
+
+    // Whether reinstalling should replace an existing cc-status hook command
+    // with ccStatusPath. A plain absolute path is the form the installer
+    // writes, so it is updated whenever it differs; this corrects a hook left
+    // pointing at another dot dir (for example a `-suite` instance wrote
+    // ~/.config/iterm2-alt4/cc-status and we're now reinstalling from the
+    // default instance that wants ~/.config/iterm2/cc-status). Anything else
+    // was written by the user, such as $HOME/.config/iterm2/cc-status for a
+    // settings.json shared between Macs, or a wrapper that tolerates a
+    // missing cc-status (issue 13099). Those are kept unless every reference
+    // to cc-status resolves to a path that isn't executable, which means the
+    // hook can't work.
+    // internal (not private) for unit testing via @testable import.
+    static func shouldRewriteHookCommand(_ command: String,
+                                         ccStatusPath: String,
+                                         environment: [String: String],
+                                         isExecutable: (String) -> Bool = {
+                                             FileManager.default.isExecutableFile(atPath: $0)
+                                         }) -> Bool {
+        guard command != ccStatusPath else {
+            return false
+        }
+        if CCStatusHookCommand.isPlainAbsolutePath(command) {
+            return true
+        }
+        let resolutions = CCStatusHookCommand.resolutions(of: command,
+                                                          environment: environment,
+                                                          isExecutable: isExecutable)
+        return !resolutions.isEmpty && resolutions.allSatisfy { resolution in
+            if case .notExecutable = resolution {
+                return true
+            }
+            return false
         }
     }
 

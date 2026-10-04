@@ -725,6 +725,12 @@ Bug Fixes:
   Code’s settings outside ~/.claude. It used to
   always install into ~/.claude, where Claude
   Code never looked.
+- The Claude Code Integration no longer warns
+  that it looks broken when you edit its hook
+  commands in Claude Code’s settings.json to use
+  $HOME, ~, or a wrapper script. Reinstalling
+  also keeps such commands instead of adding a
+  second copy of each hook.
 - Fixed a crash when a program wrote a hyperlink
   whose web address contained an emoji or other
   character outside the Basic Multilingual
