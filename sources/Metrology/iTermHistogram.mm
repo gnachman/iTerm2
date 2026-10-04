@@ -21,7 +21,9 @@ namespace iTerm2 {
     class Sampler {
         std::vector<double> _values;
         const int _capacity;
-        int _weight;
+        // 64 bits because long-lived histograms (e.g., the global Metal ones) can see more than
+        // INT32_MAX values. Issue 13103.
+        int64_t _weight;
 
     public:
         explicit Sampler(const int &capacity) : _capacity(capacity), _weight(0) {
@@ -35,7 +37,7 @@ namespace iTerm2 {
 
         Sampler(NSDictionary *dict) :
         _capacity([dict[@"capacity"] intValue]),
-        _weight([dict[@"weight"] intValue]) {
+        _weight([dict[@"weight"] longLongValue]) {
             NSArray *values = dict[@"values"];
             _values.reserve(_capacity);
             for (NSNumber *num in values) {
@@ -44,7 +46,7 @@ namespace iTerm2 {
 
             // sanity checks
             assert(_values.size() <= _capacity);
-            assert(_weight >= (int)_values.size());
+            assert(_weight >= (int64_t)_values.size());
         }
 
         Sampler &operator=(const Sampler &) = delete;
@@ -66,7 +68,7 @@ namespace iTerm2 {
             if (_values.size() < _capacity) {
                 _values.push_back(value);
             } else {
-                uint32_t r = arc4random_uniform(_weight + 1);
+                const int64_t r = random_below(_weight + 1);
                 if (r < _capacity) {
                     _values[r] = value;
                 }
@@ -76,7 +78,7 @@ namespace iTerm2 {
             assert(_values.size() <= _capacity);
         }
 
-        const int &get_weight() const {
+        const int64_t &get_weight() const {
             return _weight;
         }
 
@@ -141,8 +143,10 @@ namespace iTerm2 {
             const double S2 = other_values.size();
             const double P1 = Nm / ((W1 + W2) * (S1 / W1));
             const double P2 = Nm / ((W1 + W2) * (S2 / W2));
-            const double N1 = std::floor(S1 * P1);
-            const double N2 = std::floor(S2 * P2);
+            // Clamp so that rounding error (or a corrupt weight) can never read past the end of
+            // either vector or overfill the reservoir.
+            const double N1 = std::clamp(std::floor(S1 * P1), 0.0, std::min(S1, Nm));
+            const double N2 = std::clamp(std::floor(S2 * P2), 0.0, std::min(S2, Nm - N1));
 
             merged_values.insert(std::end(merged_values),
                                  std::begin(this_values),
@@ -153,7 +157,7 @@ namespace iTerm2 {
             _values = merged_values;
             assert(_values.size() <= _capacity);
             assert(_values.size() > 0);
-            _weight = W1 + W2;
+            _weight += other._weight;
         }
 
         // percentile in [0, 1)
@@ -230,8 +234,20 @@ namespace iTerm2 {
             return result;
         }
 
-        int weight() const { return _weight; }
+        int64_t weight() const { return _weight; }
     private:
+        // Uniform in [0, n). arc4random is thread-safe, which matters because add() is called
+        // from many queues.
+        static int64_t random_below(const int64_t n) {
+            if (n <= UINT32_MAX) {
+                return arc4random_uniform(static_cast<uint32_t>(n));
+            }
+            uint64_t r;
+            arc4random_buf(&r, sizeof(r));
+            // Modulo bias is negligible for any realistic weight.
+            return static_cast<int64_t>(r % static_cast<uint64_t>(n));
+        }
+
         int clamp(int i, int min, int max) const {
             return std::min(std::max(min, i), max);
         }

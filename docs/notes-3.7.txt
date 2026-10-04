@@ -981,3 +981,6 @@ Bug Fixes:
   login. Claude Code’s status updates could
   relaunch iTerm2 just as it was quitting, and
   that brief launch replaced the saved windows.
+- Fixed a crash that could happen when the GPU
+  renderer had been running for several weeks
+  without restarting iTerm2. Issue 13103.
