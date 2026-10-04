@@ -18,6 +18,7 @@
 @class iTermVariableScope;
 @class PTYSession;
 @class PTYTab;
+@class VT100Token;
 @class PseudoTerminal;
 @class EquivalenceClassSet;
 
@@ -306,6 +307,22 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
                          value:(NSString *)value
                           pane:(int)paneID;
 - (NSDictionary<NSString *, NSString *> *)userVarsForPane:(int)paneID;
+
+// Called with output for a pane that has no session, such as while its window is being opened.
+// Control sequences whose effect would otherwise be lost are remembered. See issue 13006.
+- (void)didDropOutput:(NSData *)data forPane:(int)wp;
+
+// Returns the control sequences remembered by -didDropOutput:forPane: and forgets them. User
+// variables they set are applied to this controller and saved in tmux.
+- (NSArray<VT100Token *> *)takeDeferredTokensForPane:(int)wp;
+
+// A window opener calls these around fetching the state of panes that will get new sessions.
+// Only those panes' dropped output is remembered.
+- (void)willOpenPane:(int)wp;
+- (void)didFinishOpeningPanes:(NSArray<NSNumber *> *)panes;
+
+// Call with every window layout received from tmux, including those of hidden windows.
+- (void)didLearnLayout:(NSString *)layout forWindow:(int)windowId;
 - (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
 - (void)activeWindowDidChangeTo:(int)windowID;
 - (void)setCurrentLatency:(NSTimeInterval)latency forPane:(int)wp;

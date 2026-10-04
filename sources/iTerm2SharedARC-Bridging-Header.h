@@ -267,6 +267,7 @@
 #import "TmuxGateway.h"
 #import "TmuxController.h"
 #import "TmuxControllerRegistry.h"
+#import "TmuxWindowOpener.h"
 #import "charmaps.h"
 #import "SSKeychain.h"
 #import "iTermPasswordManagerWindowController.h"

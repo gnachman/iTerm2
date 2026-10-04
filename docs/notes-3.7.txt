@@ -940,3 +940,10 @@ Bug Fixes:
   more than one word could fail on output from
   programs like Claude Code even though the
   words appeared separated by a space.
+- In tmux integration, a new pane now picks up
+  user variables, the host name, the current
+  directory, and the shell integration version
+  that its shell reported while the pane was
+  opening. Before, a badge such as
+  \(user.host_name) stayed empty until the shell
+  showed its second prompt. Issue 13006.

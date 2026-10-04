@@ -7513,6 +7513,15 @@ lengthExcludingInBandSignaling:data.length
     // in the pane has asked for keys to be encoded. Older tmux versions return an
     // empty string, which we leave alone.
     [self applyTmuxPaneKeyMode:[NSString castFrom:state[kStateDictPaneKeyMode]]];
+
+    // These arrived before the pane had a session and change state the snapshot above can't
+    // restore, like user variables. Execute them after the cursor is restored so anything they
+    // record lands on the cursor's line.
+    NSArray<VT100Token *> *deferredTokens = [NSArray castFrom:state[kTmuxWindowOpenerStateDeferredTokens]];
+    for (VT100Token *token in deferredTokens) {
+        DLog(@"Execute deferred tmux token %@", token);
+        [self.terminal executeToken:token];
+    }
 }
 
 - (void)applyTmuxPaneKeyMode:(NSString *)paneKeyMode {

@@ -11,6 +11,9 @@
 #import "ProfileModel.h"
 
 extern NSString * const kTmuxWindowOpenerStatePendingOutput;
+// NSArray<VT100Token *> of control sequences captured from output dropped before the pane had a
+// session. See iTermTmuxDroppedOutputScanner.
+extern NSString * const kTmuxWindowOpenerStateDeferredTokens;
 
 extern NSString *const kTmuxWindowOpenerWindowOptionStyle;
 extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;

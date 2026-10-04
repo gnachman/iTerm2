@@ -10876,12 +10876,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     PTYTab *tab = [_tmuxController window:windowId];
     if (!tab) {
         DLog(@"* NO TAB, DO NOTHING");
+        [_tmuxController didLearnLayout:layout forWindow:windowId];
         return NO;
     }
     const BOOL result = [_tmuxController setLayoutInTab:tab
                                                toLayout:layout
                                           visibleLayout:visibleLayout
                                                  zoomed:zoomed];
+    // Do this after the opener for any new panes has registered them.
+    [_tmuxController didLearnLayout:layout forWindow:windowId];
     if (result && only) {
         [_tmuxController adjustWindowSizeIfNeededForTabs:@[ tab ]];
     }
@@ -11091,7 +11094,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (latency) {
         [_tmuxController setCurrentLatency:latency.doubleValue forPane:wp];
     }
-    [[_tmuxController sessionForWindowPane:wp] handleTmuxData:data];
+    PTYSession *session = [_tmuxController sessionForWindowPane:wp];
+    if (session) {
+        [session handleTmuxData:data];
+    } else {
+        [_tmuxController didDropOutput:data forPane:wp];
+    }
 }
 
 - (void)handleTmuxData:(NSData *)data {
@@ -17552,33 +17560,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenSetUserVar:(NSString *)kvpString {
-    iTermTuple<NSString *, NSString *> *kvp = [kvpString keyValuePair];
-    if (kvp) {
-        if ([kvp.firstObject rangeOfString:@"."].location != NSNotFound) {
-            DLog(@"key contains a ., which is not allowed. kvpString=%@", kvpString);
-            return;
-        }
-        NSString *key = [NSString stringWithFormat:@"user.%@", kvp.firstObject];
-        NSString *value = [kvp.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
-        [self.variablesScope setValue:value
-                     forVariableNamed:key];
-        if (self.isTmuxClient) {
-            [self.tmuxController setUserVariableWithKey:key
-                                                  value:value
-                                                   pane:self.tmuxPane];
-        }
-    } else {
-        if ([kvpString rangeOfString:@"."].location != NSNotFound) {
-            DLog(@"key contains a ., which is not allowed. key=%@", kvpString);
-            return;
-        }
-        NSString *key = [NSString stringWithFormat:@"user.%@", kvpString];
-        [self.variablesScope setValue:nil forVariableNamed:[NSString stringWithFormat:@"user.%@", kvpString]];
-        if (self.isTmuxClient) {
-            [self.tmuxController setUserVariableWithKey:key
-                                                  value:nil
-                                                   pane:self.tmuxPane];
-        }
+    iTermUserVariableAssignment *assignment = [[[iTermUserVariableAssignment alloc] initWithPayload:kvpString] autorelease];
+    if (!assignment) {
+        return;
+    }
+    [self.variablesScope setValue:assignment.value
+                 forVariableNamed:assignment.name];
+    if (self.isTmuxClient) {
+        [self.tmuxController setUserVariableWithKey:assignment.name
+                                              value:assignment.value
+                                               pane:self.tmuxPane];
     }
 }
 
