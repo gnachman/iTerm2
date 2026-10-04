@@ -550,6 +550,16 @@ NSString* ScreenCharArrayToString(const screen_char_t *screenChars,
                                   unichar** backingStorePtr,
                                   int** deltasPtr);
 
+// Like ScreenCharArrayToString, but if interiorNulsAsSpaces is set then nul cells that
+// precede the last non-nul cell (e.g., ones the cursor moved over without writing)
+// become spaces. Trailing nuls are unaffected.
+NSString* ScreenCharArrayToStringWithInteriorNulsAsSpaces(const screen_char_t *screenChars,
+                                                          int start,
+                                                          int end,
+                                                          unichar** backingStorePtr,
+                                                          int** deltasPtr,
+                                                          BOOL interiorNulsAsSpaces);
+
 // Number of chars before a sequence of nuls at the end of the line.
 int EffectiveLineLength(screen_char_t* theLine, int totalLength);
 

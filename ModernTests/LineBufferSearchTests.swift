@@ -35,27 +35,70 @@ final class LineBufferSearchTests: XCTestCase {
                                 9,
                                 false,
                                 nil)
-            var eol = screen_char_t()
-            eol.code = unichar(EOL_HARD)
-            block.appendLine(umbp.baseAddress!,
-                             length: length,
-                             partial: false,
-                             width: 80,
-                             metadata: iTermImmutableMetadataDefault(),
-                             continuation: eol)
+            append(umbp.baseAddress!, length: length, to: block)
         }
         return block
     }
 
+    // Appends one hard-EOL raw line with a cell per character of `ascii`. A "\0" leaves
+    // the cell unwritten, as when the cursor moves over it with CHA or CUF.
+    private func makeBlock(cells ascii: String) -> LineBlock {
+        let block = LineBlock(rawBufferSize: Int32(Self.rawBufferSize), absoluteBlockNumber: 0)
+        var buffer = ascii.utf16.map { code -> screen_char_t in
+            var c = screen_char_t()
+            c.code = code
+            return c
+        }
+        buffer.withUnsafeMutableBufferPointer { umbp in
+            append(umbp.baseAddress!, length: Int32(umbp.count), to: block)
+        }
+        return block
+    }
+
+    private func append(_ line: UnsafeMutablePointer<screen_char_t>, length: Int32, to block: LineBlock) {
+        var eol = screen_char_t()
+        eol.code = unichar(EOL_HARD)
+        block.appendLine(line,
+                         length: length,
+                         partial: false,
+                         width: 80,
+                         metadata: iTermImmutableMetadataDefault(),
+                         continuation: eol)
+    }
+
     // Searches backwards from the end of the block for every match of `needle`.
-    private func backwardsMatches(for needle: String, in block: LineBlock) -> [ResultRange] {
+    private func backwardsMatches(for needle: String,
+                                  in block: LineBlock,
+                                  mode: iTermFindMode = .smartCaseSensitivity) -> [ResultRange] {
+        return matches(for: needle,
+                       in: block,
+                       options: FindOptions(rawValue: FindOptions.optBackwards.rawValue | FindOptions.multipleResults.rawValue),
+                       offset: -1,
+                       mode: mode)
+    }
+
+    // Searches forwards from the start of the block for every match of `needle`.
+    private func forwardMatches(for needle: String,
+                                in block: LineBlock,
+                                mode: iTermFindMode = .smartCaseSensitivity) -> [ResultRange] {
+        return matches(for: needle,
+                       in: block,
+                       options: .multipleResults,
+                       offset: 0,
+                       mode: mode)
+    }
+
+    private func matches(for needle: String,
+                         in block: LineBlock,
+                         options: FindOptions,
+                         offset: Int32,
+                         mode: iTermFindMode) -> [ResultRange] {
         let results = NSMutableArray()
         var includesPartialLastLine = ObjCBool(false)
-        let options = FindOptions(rawValue: FindOptions.optBackwards.rawValue | FindOptions.multipleResults.rawValue)
         block.findSubstring(needle,
                             options: options,
-                            mode: .smartCaseSensitivity,
-                            atOffset: -1,
+                            mode: mode,
+                            atOffset: offset,
                             results: results,
                             multipleResults: true,
                             includesPartialLastLine: &includesPartialLastLine,
@@ -113,5 +156,41 @@ final class LineBufferSearchTests: XCTestCase {
         let actual = backwardsMatches(for: "xx", in: block)
 
         XCTAssertEqual(actual, [ range(from: 1, to: 2) ])
+    }
+
+    // MARK: - Unwritten cells
+
+    func testForwardSearchTreatsSkippedCellAsSpace() {
+        let block = makeBlock(cells: "gamma\0delta")
+
+        XCTAssertEqual(forwardMatches(for: "gamma delta", in: block), [ range(from: 0, to: 10) ])
+    }
+
+    func testBackwardsSearchTreatsSkippedCellAsSpace() {
+        let block = makeBlock(cells: "gamma\0delta")
+
+        XCTAssertEqual(backwardsMatches(for: "gamma delta", in: block), [ range(from: 0, to: 10) ])
+    }
+
+    func testRegexSearchTreatsSkippedCellAsWhitespace() {
+        let block = makeBlock(cells: "gamma\0delta")
+
+        XCTAssertEqual(forwardMatches(for: "gamma\\sdelta", in: block, mode: .caseSensitiveRegex),
+                       [ range(from: 0, to: 10) ])
+        XCTAssertEqual(forwardMatches(for: "\\S+", in: block, mode: .caseSensitiveRegex),
+                       [ range(from: 0, to: 4), range(from: 6, to: 10) ])
+    }
+
+    func testSkippedCellsBeforeFirstWrittenCellAreSpaces() {
+        let block = makeBlock(cells: "\0\0delta")
+
+        XCTAssertEqual(forwardMatches(for: "  delta", in: block), [ range(from: 0, to: 6) ])
+    }
+
+    func testTrailingUnwrittenCellsAreNotSpaces() {
+        let block = makeBlock(cells: "gamma\0\0")
+
+        XCTAssertEqual(forwardMatches(for: "gamma ", in: block), [])
+        XCTAssertEqual(forwardMatches(for: "gamma", in: block), [ range(from: 0, to: 4) ])
     }
 }

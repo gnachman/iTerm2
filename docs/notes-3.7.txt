@@ -928,3 +928,9 @@ Bug Fixes:
   of asking you to locate it. If you do pick it
   by hand, iTerm2 keeps the path you chose, so
   it keeps working after the tool is upgraded.
+- Find now matches text that spans a blank the
+  program created by moving the cursor instead
+  of printing a space. Before, searching for
+  more than one word could fail on output from
+  programs like Claude Code even though the
+  words appeared separated by a space.

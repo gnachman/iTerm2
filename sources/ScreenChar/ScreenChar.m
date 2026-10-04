@@ -316,6 +316,35 @@ NSString* ScreenCharArrayToString(const screen_char_t *screenChars,
                                   int end,
                                   unichar** backingStorePtr,
                                   int** deltasPtr) {
+    return ScreenCharArrayToStringWithInteriorNulsAsSpaces(screenChars,
+                                                           start,
+                                                           end,
+                                                           backingStorePtr,
+                                                           deltasPtr,
+                                                           NO);
+}
+
+static BOOL ScreenCharIsNul(const screen_char_t *c) {
+    return !c->image && !c->complexChar && c->code == 0;
+}
+
+NSString* ScreenCharArrayToStringWithInteriorNulsAsSpaces(const screen_char_t *screenChars,
+                                                          int start,
+                                                          int end,
+                                                          unichar** backingStorePtr,
+                                                          int** deltasPtr,
+                                                          BOOL interiorNulsAsSpaces) {
+    // A cell the cursor moved over without writing is a nul. It looks like a space, so
+    // when asked, convert nuls that come before the last non-nul cell into spaces.
+    // Trailing nuls are left alone. This is still one unichar per cell, so it does not
+    // affect deltas.
+    int interiorEnd = start;
+    if (interiorNulsAsSpaces) {
+        interiorEnd = end;
+        while (interiorEnd > start && ScreenCharIsNul(&screenChars[interiorEnd - 1])) {
+            --interiorEnd;
+        }
+    }
     const int lineLength = end - start;
     unichar* charHaystack = iTermMalloc(sizeof(unichar) * lineLength * kMaxParts + 1);
     *backingStorePtr = charHaystack;
@@ -362,7 +391,13 @@ NSString* ScreenCharArrayToString(const screen_char_t *screenChars,
             // tab fillers.
             ++delta;
         } else {
-            const int len = ExpandScreenChar(&screenChars[i], charHaystack + o);
+            int len;
+            if (i < interiorEnd && ScreenCharIsNul(&screenChars[i])) {
+                charHaystack[o] = ' ';
+                len = 1;
+            } else {
+                len = ExpandScreenChar(&screenChars[i], charHaystack + o);
+            }
             ++delta;
             for (int j = o; j < o + len; ++j) {
                 deltas[j] = --delta;

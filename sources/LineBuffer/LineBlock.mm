@@ -2286,11 +2286,13 @@ firstSurvivorPartialOffset:(int *)firstSurvivorPartialOffset {
                         length:(int)length
                   backingStore:(unichar **)backingStorePtr
                         deltas:(int **)deltasPtr {
-    return ScreenCharArrayToString(_characterBuffer.pointer + offset,
-                                   0,
-                                   length,
-                                   backingStorePtr,
-                                   deltasPtr);
+    // Search treats cells the cursor skipped over as spaces, since that's how they look.
+    return ScreenCharArrayToStringWithInteriorNulsAsSpaces(_characterBuffer.pointer + offset,
+                                                           0,
+                                                           length,
+                                                           backingStorePtr,
+                                                           deltasPtr,
+                                                           YES);
 }
 
 - (void)_findInRawLine:(int)entry
