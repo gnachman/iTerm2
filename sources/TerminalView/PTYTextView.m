@@ -5948,8 +5948,15 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     } else {
         [self selectCoordRange:selectionRange];
     }
-    // Let the scrollview scroll if needs to before showing the find indicator.
+    // Let the scrollview scroll if needs to before showing the find indicator. The range is
+    // only valid at the current width, so skip the indicator if the width changes first.
+    const int widthAtSelection = [_dataSource width];
     dispatch_async(dispatch_get_main_queue(), ^{
+        if ([self.dataSource width] != widthAtSelection) {
+            DLog(@"Width changed from %@ to %@ before showing find indicator for %@. Skip it.",
+                 @(widthAtSelection), @([self.dataSource width]), VT100GridWindowedRangeDescription(indicatorWindowedRange));
+            return;
+        }
         [self.delegate textViewShowFindIndicator:indicatorWindowedRange];
     });
     if (!wrapped) {

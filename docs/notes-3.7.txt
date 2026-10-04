@@ -423,6 +423,9 @@ Bug Fixes:
 - Sessions closed shortly before quitting are
   now always archived if their profile archives
   sessions on close.
+- Fixed a crash that could happen after using
+  Find when the window got narrower before the
+  match was highlighted.
 - Fixed a crash that could recur every time
   iTerm2 saved window state. Quitting while a
   save was in progress could store duplicate

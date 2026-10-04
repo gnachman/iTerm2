@@ -6,6 +6,7 @@
 //
 
 #import "ScreenCharArray.h"
+#import "DebugLogging.h"
 #import "NSDictionary+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSMutableData+iTerm.h"
@@ -802,16 +803,24 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
                                         bidiInfo:_bidiInfo];
 }
 
+// Cells outside the line are ignored. Writing them would corrupt the heap.
 - (ScreenCharArray *)copyByZeroingRange:(NSRange)range {
     ScreenCharArray *theCopy = [self copy];
     screen_char_t *line = (screen_char_t *)theCopy->_line;
-    for (NSInteger i = 0; i < range.length; i++) {
-        line[range.location + i] = (screen_char_t){ 0 };
+    const NSUInteger length = MAX(0, theCopy->_length);
+    if (NSMaxRange(range) > length) {
+        RLog(@"copyByZeroingRange: range %@ extends past line of length %@", NSStringFromRange(range), @(length));
+    }
+    const NSUInteger start = MIN(range.location, length);
+    const NSUInteger end = MIN(NSMaxRange(range), length);
+    for (NSUInteger i = start; i < end; i++) {
+        line[i] = (screen_char_t){ 0 };
     }
     theCopy->_bidiInfo = nil;
     return theCopy;
 }
 
+// Cells outside the line are ignored. Writing them would corrupt the heap.
 - (ScreenCharArray *)copyByZeroingVisibleRange:(NSRange)range {
     if (!_bidiInfo) {
         return [self copyByZeroingRange:range];
@@ -819,8 +828,15 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
 
     ScreenCharArray *theCopy = [self copy];
     screen_char_t *line = (screen_char_t *)theCopy->_line;
+    const int length = theCopy->_length;
+    if (NSMaxRange(range) > (NSUInteger)MAX(0, length)) {
+        RLog(@"copyByZeroingVisibleRange: range %@ extends past line of length %@", NSStringFromRange(range), @(length));
+    }
     for (NSInteger visualIndex = 0; visualIndex < range.length; visualIndex++) {
-        int logicalIndex = [_bidiInfo logicalForVisual:range.location + visualIndex];
+        const int logicalIndex = [_bidiInfo logicalForVisual:range.location + visualIndex];
+        if (logicalIndex < 0 || logicalIndex >= length) {
+            continue;
+        }
         line[logicalIndex] = (screen_char_t){ 0 };
     }
     theCopy->_bidiInfo = _bidiInfo;
