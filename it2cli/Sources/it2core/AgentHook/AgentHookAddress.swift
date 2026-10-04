@@ -31,7 +31,13 @@ struct AgentHookAddress {
 /// and the lookup is restricted to tmux servers attached over that connection. Nothing here needs
 /// to know whether it is running locally or remotely; `environment` is the hook's, wherever it
 /// ran, never this process's.
-func resolveAgentHookAddress(environment: [String: String]) -> AgentHookAddress? {
+///
+/// A plain shell on such a host has neither tmux nor TERM_SESSION_ID (the variable does not cross
+/// ssh). There `originSessionID`, the session the call arrived on as iTerm2 itself recorded it,
+/// is the address. It never comes from the hook's own input. A pane address still wins over it:
+/// the origin is the session showing the connection, which is not necessarily the pane's tab.
+func resolveAgentHookAddress(environment: [String: String],
+                             originSessionID: String? = nil) -> AgentHookAddress? {
     let termSessionGUID: String? = environment["TERM_SESSION_ID"].flatMap { value in
         // "w0t0p0:D1B2BAE2-3D01-4BB6-9021-27D6CF210957" -- the GUID is everything after the colon.
         value.firstIndex(of: ":").map { String(value[value.index(after: $0)...]) }
@@ -62,6 +68,8 @@ func resolveAgentHookAddress(environment: [String: String]) -> AgentHookAddress?
         addressArgs = shortcutOptionArgs("--tmux", tmux) + shortcutOptionArgs("--tmux-pane", tmuxPane)
     } else if let termSessionGUID {
         addressArgs = shortcutOptionArgs("--session", termSessionGUID)
+    } else if let originSessionID, !originSessionID.isEmpty {
+        addressArgs = shortcutOptionArgs("--session", originSessionID)
     } else {
         // No tmux, no TERM_SESSION_ID: nothing to address.
         return nil
@@ -75,7 +83,10 @@ func resolveAgentHookAddress(environment: [String: String]) -> AgentHookAddress?
     // app. Purely a transport question, so nothing about session IDs belongs in it: with the Python
     // API preference off there is no socket but every session still has TERM_SESSION_ID, and the
     // same goes for a stale value left behind after iTerm2 quits.
-    let it2IsReachable = (environment["IT2_SOCK"] != nil) || localIt2SocketExists(environment)
+    // A call with an origin is already running inside iTerm2: nothing to reach.
+    let it2IsReachable = (originSessionID.map { !$0.isEmpty } ?? false)
+        || (environment["IT2_SOCK"] != nil)
+        || localIt2SocketExists(environment)
     if !it2IsReachable {
         return nil
     }

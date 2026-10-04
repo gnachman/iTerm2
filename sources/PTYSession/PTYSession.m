@@ -10591,6 +10591,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [[self.variablesScope valueForVariableName:iTermVariableKeySessionTmuxWindowPane] intValue];
 }
 
+- (iTermConductor *)hostConductor {
+    if (_conductor) {
+        return _conductor;
+    }
+    if (self.isTmuxClient) {
+        return self.tmuxGatewaySession.conductor;
+    }
+    return nil;
+}
+
 - (PTYSession *)tmuxGatewaySession {
     if (self.isTmuxGateway) {
         return self;

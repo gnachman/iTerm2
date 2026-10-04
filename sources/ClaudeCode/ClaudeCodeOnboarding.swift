@@ -38,6 +38,9 @@ class ClaudeCodeOnboarding: NSObject {
         case showToolbelt = 2
         case installWorkgroup = 4
         case installTriggers = 5
+        /// The hook on the host the session reaches through SSH Integration. Shown only for such a
+        /// session.
+        case installRemoteHook = 6
 
         var title: String {
             switch self {
@@ -46,6 +49,7 @@ class ClaudeCodeOnboarding: NSObject {
             case .showToolbelt: return String(localized: "ClaudeCodeOnboarding.ShowToolbeltTitle", defaultValue: "Show Toolbelt", comment: "Title of the show-toolbelt onboarding step")
             case .installWorkgroup: return String(localized: "ClaudeCodeOnboarding.InstallWorkgroupTitle", defaultValue: "Install Workgroup", comment: "Title of the install-workgroup onboarding step")
             case .installTriggers: return String(localized: "ClaudeCodeOnboarding.AutoEnterWorkgroupTitle", defaultValue: "Auto-Enter Workgroup", comment: "Title of the auto-enter-workgroup onboarding step")
+            case .installRemoteHook: return String(localized: "ClaudeCodeOnboarding.InstallRemoteHookTitle", defaultValue: "Install on Remote Host", comment: "Title of the onboarding step that installs the Claude Code hook on the host the session is connected to through SSH Integration")
             }
         }
 
@@ -56,9 +60,11 @@ class ClaudeCodeOnboarding: NSObject {
             case .showToolbelt: return String(localized: "ClaudeCodeOnboarding.Show", defaultValue: "Show", comment: "Button that shows the toolbelt onboarding step")
             case .installWorkgroup: return String(localized: "ClaudeCodeOnboarding.Install", defaultValue: "Install", comment: "Button that installs the integration step")
             case .installTriggers: return String(localized: "ClaudeCodeOnboarding.Install", defaultValue: "Install", comment: "Button that installs the integration step")
+            case .installRemoteHook: return String(localized: "ClaudeCodeOnboarding.Install", defaultValue: "Install", comment: "Button that installs the integration step")
             }
         }
 
+        /// The remote step's text names its host, so it comes from remoteHookDescription instead.
         var description: String {
             switch self {
             case .enablePythonAPI:
@@ -69,6 +75,8 @@ class ClaudeCodeOnboarding: NSObject {
                 return String(localized: "ClaudeCodeOnboarding.ShowToolbeltDescription", defaultValue: "Show the toolbelt and enable the Session Status tool. The toolbelt appears on the right side of your terminal window.\n\nYou can toggle the toolbelt from View > Toolbelt > Show Toolbelt, or with the shortcut \u{2318}\u{21E7}B.", comment: "Description of the show-toolbelt onboarding step")
             case .installWorkgroup:
                 return String(localized: "ClaudeCodeOnboarding.InstallWorkgroupDescription", defaultValue: "Install the Claude Code workgroup, which groups your main Claude session with two peer sessions: a diff viewer and a code-review session. You can switch between them with one click.\n\nYou can customize this layout later in Settings > Arrangements > Workgroups.", comment: "Description of the install-workgroup onboarding step")
+            case .installRemoteHook:
+                return ""
             case .installTriggers:
                 return String(localized: "ClaudeCodeOnboarding.InstallTriggersDescription", defaultValue: "Pick the terminal profiles where you run claude. iTerm2 will add triggers so the Claude Code workgroup is entered automatically when claude starts and exited when it stops.\n\nWithout this, you can still enter the workgroup manually via Shell > Workgroups > Claude Code.", comment: "Description of the install-triggers onboarding step")
             }
@@ -121,6 +129,12 @@ class ClaudeCodeOnboarding: NSObject {
     // one at Install time.
     private var configDirSources: [ClaudeCodeConfigDirResolver.Source] = []
     private var configDirCandidates: [ClaudeCodeConfigDirResolver.Candidate] = []
+    // The remote step. remoteConductor is the session's conductor when it is framing, captured
+    // when the panel opens; its host's CLAUDE_CONFIG_DIR lookup also starts then.
+    private weak var remoteConductor: Conductor?
+    private var remoteHost = ""
+    private var remoteResolvedDirectory: String?
+    private var remoteResolutionInFlight = false
     private var introSheet: NSWindow?
     private var introTitleLabel: NSTextField?
     private var introLeadLabel: NSTextField?
@@ -219,61 +233,12 @@ class ClaudeCodeOnboarding: NSObject {
             DLog("Onboarding: settings.json root isn't a JSON object")
             return .malformed
         }
-        guard var hooks = settings["hooks"] as? [String: Any] else {
+        guard let stripped = ClaudeCodeHookSettings.stripped(settings,
+                                                             descriptor: .claudeCode,
+                                                             isOurs: { Self.isOurHookCommand($0) }) else {
             return .success
         }
-        var changed = false
-        for eventName in hookEventNames {
-            guard var groups = hooks[eventName] as? [[String: Any]] else { continue }
-            var groupsChanged = false
-            for i in (0..<groups.count).reversed() {
-                guard var entries = groups[i]["hooks"] as? [[String: Any]] else { continue }
-                let before = entries.count
-                entries.removeAll { entry in
-                    guard let command = entry["command"] as? String,
-                          Self.isOurHookCommand(command) else {
-                        return false
-                    }
-                    // Removing a command that also runs something of the
-                    // user's would stop that from running too.
-                    guard CCStatusHookCommand.runsOnlyCCStatus(command) else {
-                        DLog("Onboarding: leaving \(command) because it runs more than cc-status")
-                        return false
-                    }
-                    return true
-                }
-                if entries.count != before {
-                    groupsChanged = true
-                    if entries.isEmpty {
-                        // Drop a hook group whose only entry was
-                        // ours — leaving an empty group behind would
-                        // change the shape of the user's settings
-                        // unnecessarily.
-                        groups.remove(at: i)
-                    } else {
-                        var group = groups[i]
-                        group["hooks"] = entries
-                        groups[i] = group
-                    }
-                }
-            }
-            if groupsChanged {
-                changed = true
-                if groups.isEmpty {
-                    hooks.removeValue(forKey: eventName)
-                } else {
-                    hooks[eventName] = groups
-                }
-            }
-        }
-        guard changed else {
-            return .success
-        }
-        if hooks.isEmpty {
-            settings.removeValue(forKey: "hooks")
-        } else {
-            settings["hooks"] = hooks
-        }
+        settings = stripped
         do {
             let out = try JSONSerialization.data(withJSONObject: settings,
                                                  options: [.prettyPrinted, .sortedKeys])
@@ -942,7 +907,22 @@ class ClaudeCodeOnboarding: NSObject {
     // the offer, the one the health monitor found broken, or the current one.
     // Its profile decides which shells could have exported CLAUDE_CONFIG_DIR.
     @objc static func show(session: PTYSession?) {
+        show(session: session, startAtRemoteStep: false)
+    }
+
+    /// The installer opened at the step that installs the hook on the host `session` reaches
+    /// through SSH Integration, for something that is specifically about that host, such as the
+    /// health monitor finding its hook broken.
+    @objc static func showRemoteInstall(session: PTYSession?) {
+        show(session: session, startAtRemoteStep: true)
+    }
+
+    private static func show(session: PTYSession?, startAtRemoteStep: Bool) {
         if let existing = instance {
+            if startAtRemoteStep, existing.activeSteps.contains(.installRemoteHook) {
+                existing.currentStep = .installRemoteHook
+                existing.updateUI()
+            }
             existing.panel.makeKeyAndOrderFront(nil)
             return
         }
@@ -959,12 +939,31 @@ class ClaudeCodeOnboarding: NSObject {
         if !iTermAPIHelper.isEnabled() {
             steps.append(.enablePythonAPI)
         }
-        steps.append(contentsOf: [.installHook,
-                                  .showToolbelt,
+        steps.append(.installHook)
+        // The agent in a session reached through SSH Integration reads the remote host's settings,
+        // not this Mac's. hostConductor is the innermost conductor, where the shell runs, and for
+        // a tmux pane its gateway's, since a pane has none of its own.
+        // Menu actions and the health monitor call this on the main thread.
+        let remoteConductor = MainActor.assumeIsolated {
+            session?.hostConductor.flatMap { $0.framing ? $0 : nil }
+        }
+        if remoteConductor != nil {
+            steps.append(.installRemoteHook)
+        }
+        steps.append(contentsOf: [.showToolbelt,
                                   .installWorkgroup,
                                   .installTriggers])
 
         let onboarding = ClaudeCodeOnboarding(activeSteps: steps)
+        if let remoteConductor {
+            onboarding.remoteConductor = remoteConductor
+            onboarding.remoteHost = MainActor.assumeIsolated { remoteConductor.sshIdentity.stringIdentifier }
+            // A session on a remote host is about that host, so start at its step, unless the
+            // Python API still has to be enabled: nothing works until it is.
+            if startAtRemoteStep || !steps.contains(.enablePythonAPI) {
+                onboarding.currentStep = .installRemoteHook
+            }
+        }
         // Pre-mark install steps that are already done so the installer
         // shows them with the green checkmark and Next-as-default
         // affordance from the get-go. Re-clicking Install is a no-op
@@ -1001,6 +1000,10 @@ class ClaudeCodeOnboarding: NSObject {
         // Start the CLAUDE_CONFIG_DIR lookups now, while the user reads the intro
         // and steps through the panel, so Install rarely has to wait on them.
         onboarding.startResolvingConfigDirectory()
+        MainActor.assumeIsolated {
+            onboarding.startResolvingRemoteConfigDirectory()
+            onboarding.premarkRemoteHookStepIfHealthy()
+        }
         // Cover the installer with the heads-up intro until the user
         // dismisses it. They might've launched this from the menu
         // not knowing what's about to be touched on disk; a sheet
@@ -1385,7 +1388,11 @@ class ClaudeCodeOnboarding: NSObject {
         }
 
         // Update content
-        contentLabel.stringValue = currentStep.description
+        if currentStep == .installRemoteHook {
+            contentLabel.stringValue = MainActor.assumeIsolated { remoteHookDescription }
+        } else {
+            contentLabel.stringValue = currentStep.description
+        }
 
         // The step labels and content above always update. The button bar,
         // however, is owned by the config-resolution wait while it's up
@@ -1494,6 +1501,14 @@ class ClaudeCodeOnboarding: NSObject {
             finishDoIt(doInstallWorkgroup(), step: step)
         case .installTriggers:
             finishDoIt(doInstallTriggers(), step: step)
+        case .installRemoteHook:
+            if let directory = remoteResolvedDirectory {
+                MainActor.assumeIsolated {
+                    performRemoteHookInstall(configDirectory: directory, step: step)
+                }
+            } else {
+                beginWaitingForConfigResolution(step: step)
+            }
         }
     }
 
@@ -1545,7 +1560,7 @@ class ClaudeCodeOnboarding: NSObject {
         case 1:
             resolvedConfigDirectory = candidates[0].directory
             // If Install is waiting on this, resume it now.
-            if let step = pendingInstallStep {
+            if let step = pendingInstallStep, step == .installHook {
                 pendingInstallStep = nil
                 endWaitingForConfigResolution()
                 performHookInstall(configDirectory: candidates[0].directory, step: step)
@@ -1555,7 +1570,7 @@ class ClaudeCodeOnboarding: NSObject {
         default:
             configDirCandidates = candidates
             // If Install is waiting on this, ask now and resume.
-            if let step = pendingInstallStep {
+            if let step = pendingInstallStep, step == .installHook {
                 pendingInstallStep = nil
                 endWaitingForConfigResolution()
                 guard let configDirectory = askWhichConfigDirectory() else {
@@ -1568,7 +1583,7 @@ class ClaudeCodeOnboarding: NSObject {
     }
 
     private func configResolutionFailed() {
-        guard pendingInstallStep != nil else {
+        guard pendingInstallStep == .installHook else {
             // The early background kick-off failed and nobody is waiting. Leave
             // resolvedConfigDirectory nil so the next Install click re-resolves
             // (showing the spinner) rather than silently proceeding.
@@ -1594,8 +1609,15 @@ class ClaudeCodeOnboarding: NSObject {
 
     private func beginWaitingForConfigResolution(step: Step) {
         pendingInstallStep = step
-        // In case the early kick-off never ran (defensive), start it now.
-        startResolvingConfigDirectory()
+        // In case the early kick-off never ran or failed, start it now. Each lookup resumes only
+        // an install waiting on its own step.
+        if step == .installRemoteHook {
+            MainActor.assumeIsolated {
+                startResolvingRemoteConfigDirectory()
+            }
+        } else {
+            startResolvingConfigDirectory()
+        }
         // Right-align Cancel where Do It sat, and drop the spinner to its left.
         cancelButton.sizeToFit()
         var cancelFrame = cancelButton.frame
@@ -1642,6 +1664,174 @@ class ClaudeCodeOnboarding: NSObject {
             self.doItButton.isEnabled = true
             self.finishDoIt(success, step: step)
         }
+    }
+
+    // MARK: - Step: Install on Remote Host
+
+    @MainActor
+    private var remoteHostIsAlwaysAllowed: Bool {
+        return !remoteHost.isEmpty && Conductor.hostGrantStore.grant(forHost: remoteHost) != nil
+    }
+
+    @MainActor
+    private var remoteHookDescription: String {
+        let host = remoteHost
+        var text = String(localized: "ClaudeCodeOnboarding.InstallRemoteHookDescription", defaultValue: "Install the Claude Code hook on \(host), so Claude Code running there shows its state (working, waiting, idle) in the Session Status tool too.\n\nThis adds a hook to Claude Code\u{2019}s settings on \(host). It runs the it2 command that SSH Integration keeps up to date on that host.", comment: "Description of the onboarding step that installs the Claude Code hook on a remote host; the value is the host, such as user@example.com")
+        if remoteHostIsAlwaysAllowed {
+            text += "\n\n" + String(localized: "ClaudeCodeOnboarding.RemoteHostAlreadyAllowed", defaultValue: "\(host) is already always allowed to use the iTerm2 API. You can change that in Settings > General > Magic > API access over ssh.", comment: "Shown in the remote install step when the host already has an always-allow grant; the value is the host")
+        }
+        return text
+    }
+
+    @MainActor
+    private func startResolvingRemoteConfigDirectory() {
+        guard remoteResolvedDirectory == nil, !remoteResolutionInFlight, let conductor = remoteConductor else {
+            return
+        }
+        remoteResolutionInFlight = true
+        Self.resolveRemoteConfigDirectory(conductor: conductor) { [weak self] directory in
+            guard let self, Self.instance === self else {
+                return
+            }
+            self.remoteResolutionInFlight = false
+            if let directory {
+                self.remoteResolvedDirectory = directory
+                if self.pendingInstallStep == .installRemoteHook {
+                    self.pendingInstallStep = nil
+                    self.endWaitingForConfigResolution()
+                    self.performRemoteHookInstall(configDirectory: directory, step: .installRemoteHook)
+                }
+            } else if self.pendingInstallStep == .installRemoteHook {
+                self.remoteConfigResolutionFailed()
+            }
+        }
+    }
+
+    @MainActor
+    private func remoteConfigResolutionFailed() {
+        let alert = NSAlert()
+        alert.messageText = String(localized: "ClaudeCodeOnboarding.ConfigResolutionFailedTitle", defaultValue: "Couldn\u{2019}t Determine Settings Location", comment: "Title of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user\u{2019}s shell")
+        let host = remoteHost
+        alert.informativeText = String(localized: "ClaudeCodeOnboarding.RemoteConfigResolutionFailedBody", defaultValue: "iTerm2 couldn\u{2019}t read CLAUDE_CONFIG_DIR from your login shell on \(host), so it doesn\u{2019}t know where Claude Code keeps its settings there. Try again?", comment: "Body of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR on a remote host; the value is the host")
+        alert.addButton(withTitle: String(localized: "ClaudeCodeOnboarding.Retry", defaultValue: "Retry", comment: "Button to retry resolving the Claude Code settings location"))
+        alert.addButton(withTitle: iTermLocalizedCancel())
+        if alert.runModal() == .alertFirstButtonReturn {
+            startResolvingRemoteConfigDirectory()
+        } else {
+            pendingInstallStep = nil
+            endWaitingForConfigResolution()
+        }
+    }
+
+    /// Marks the remote step done when the host already has a healthy hook, as the local step is.
+    @MainActor
+    private func premarkRemoteHookStepIfHealthy() {
+        guard let conductor = remoteConductor else {
+            return
+        }
+        Self.remoteHooksHealthy(conductor: conductor) { [weak self] healthy in
+            guard let self, Self.instance === self, healthy else {
+                return
+            }
+            DLog("Onboarding: remote hook already healthy; pre-marking the step")
+            self.completedSteps.insert(.installRemoteHook)
+            self.updateUI()
+        }
+    }
+
+    private enum AlwaysAllowAnswer {
+        case alwaysAllow
+        case askEachConnection
+        case cancel
+    }
+
+    /// Installing the hook does not by itself let the host in: each connection's first hook would
+    /// raise the authorization prompt. Always allowing the host avoids that, but means anything on
+    /// it can see and control the user's terminal without asking, which nobody would guess from
+    /// "install an integration". So it is asked plainly, and nothing grants by default.
+    @MainActor
+    private func askAboutAlwaysAllow() -> AlwaysAllowAnswer {
+        let host = remoteHost
+        let alert = NSAlert()
+        alert.messageText = String(localized: "ClaudeCodeOnboarding.AlwaysAllowHostTitle", defaultValue: "Always Allow \(host) to Use the iTerm2 API?", comment: "Title of the question asked before installing the Claude Code hook on a remote host; the value is the host")
+        alert.informativeText = String(localized: "ClaudeCodeOnboarding.AlwaysAllowHostBody", defaultValue: "Claude Code on \(host) reports its status to iTerm2 through the iTerm2 API.\n\nIf you always allow \(host), any program running as you on that host can see and control your terminal sessions, reading their contents and typing into them, without asking, on this and every future connection.\n\nIf you choose Ask Each Connection, iTerm2 asks the first time Claude Code reports on each new connection.\n\nYou can stop always allowing a host in Settings > General > Magic > API access over ssh.", comment: "Body of the question asked before installing the Claude Code hook on a remote host; the value is the host")
+        alert.addButton(withTitle: String(localized: "ClaudeCodeOnboarding.AlwaysAllow", defaultValue: "Always Allow", comment: "Button that installs the remote Claude Code hook and always allows the host to use the iTerm2 API"))
+        alert.addButton(withTitle: String(localized: "ClaudeCodeOnboarding.AskEachConnection", defaultValue: "Ask Each Connection", comment: "Button that installs the remote Claude Code hook without always allowing the host; iTerm2 asks on each connection"))
+        alert.addButton(withTitle: iTermLocalizedCancel())
+        // No default: Return must not grant access, or install without the user reading this.
+        alert.buttons[0].keyEquivalent = ""
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            return .alwaysAllow
+        case .alertSecondButtonReturn:
+            return .askEachConnection
+        default:
+            return .cancel
+        }
+    }
+
+    @MainActor
+    private func performRemoteHookInstall(configDirectory: String, step: Step) {
+        guard let conductor = remoteConductor, conductor.framing else {
+            showRemoteInstallFailure(String(localized: "ClaudeCodeOnboarding.RemoteDisconnected", defaultValue: "The connection to \(remoteHost) has ended. Reconnect and try again.", comment: "Shown when the remote host disconnected before the Claude Code hook could be installed; the value is the host"))
+            return
+        }
+        let grant: Bool
+        if remoteHostIsAlwaysAllowed {
+            // Already allowed, and the step's text says so. Minting again would only replace it.
+            grant = false
+        } else {
+            switch askAboutAlwaysAllow() {
+            case .alwaysAllow:
+                grant = true
+            case .askEachConnection:
+                grant = false
+            case .cancel:
+                return
+            }
+        }
+        doItButton.isEnabled = false
+        Self.installHooksRemotely(conductor: conductor,
+                                  configDirectory: configDirectory,
+                                  grantAlwaysAllow: grant) { [weak self] result in
+            guard let self else {
+                return
+            }
+            self.doItButton.isEnabled = true
+            if let message = self.remoteInstallFailureMessage(result, configDirectory: configDirectory) {
+                self.showRemoteInstallFailure(message)
+                self.finishDoIt(false, step: step)
+            } else {
+                self.finishDoIt(true, step: step)
+            }
+        }
+    }
+
+    private func remoteInstallFailureMessage(_ result: ClaudeCodeRemoteHooks.InstallResult,
+                                             configDirectory: String) -> String? {
+        let host = remoteHost
+        let path = (configDirectory as NSString).appendingPathComponent("settings.json")
+        switch result {
+        case .installed:
+            return nil
+        case .thisMac:
+            return String(localized: "ClaudeCodeOnboarding.RemoteIsThisMac", defaultValue: "\(host) is this Mac. Claude Code here is set up by the Install Hook step instead.", comment: "Shown when the remote install was attempted on an ssh connection back to this Mac; the value is the host")
+        case .it2Missing:
+            return String(localized: "ClaudeCodeOnboarding.RemoteIt2Missing", defaultValue: "SSH Integration couldn\u{2019}t set up the it2 command on \(host), so the hook would have nothing to run. This happens when the login shell there is not one SSH Integration supports: zsh, bash, fish, or xonsh.", comment: "Shown when the remote host lacks the uploaded it2 wrapper; the value is the host")
+        case .unreadable:
+            return String(localized: "ClaudeCodeOnboarding.RemoteSettingsUnreadable", defaultValue: "iTerm2 couldn\u{2019}t read \(path) on \(host).", comment: "Shown when Claude Code settings on a remote host could not be read; the values are a file path and the host")
+        case .malformed:
+            return String(localized: "ClaudeCodeOnboarding.RemoteSettingsMalformed", defaultValue: "\(path) on \(host) isn\u{2019}t valid JSON. iTerm2 left it unchanged. Fix or remove it and try again.", comment: "Shown when Claude Code settings on a remote host could not be parsed; the values are a file path and the host")
+        case .writeFailed:
+            return String(localized: "ClaudeCodeOnboarding.RemoteSettingsWriteFailed", defaultValue: "iTerm2 couldn\u{2019}t write \(path) on \(host).", comment: "Shown when Claude Code settings on a remote host could not be written; the values are a file path and the host")
+        }
+    }
+
+    private func showRemoteInstallFailure(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = String(localized: "ClaudeCodeOnboarding.FailedToInstallHook", defaultValue: "Failed to install hook", comment: "Title of the alert shown when the Claude Code hook could not be installed")
+        alert.informativeText = message
+        alert.runModal()
     }
 
     // MARK: - Step: Enable Python API
@@ -1881,9 +2071,8 @@ class ClaudeCodeOnboarding: NSObject {
     // a guessed directory on failure, or it would install into the wrong place
     // and record it as ground truth.
     //
-    // Only local sessions are covered: Claude Code hook installation has no
-    // remote/SSH support today (installHookFiles always writes locally), so there
-    // is no equivalent lookup over Conductor.
+    // Local sessions only; a host reached through SSH Integration uses
+    // resolveRemoteConfigDirectory below.
     private static func resolveConfigDirectory(from source: ClaudeCodeConfigDirResolver.Source,
                                                completion: @escaping (URL?) -> Void) {
         let dependencies = ClaudeCodeConfigDirResolver.Dependencies(
@@ -1901,6 +2090,48 @@ class ClaudeCodeOnboarding: NSObject {
         ClaudeCodeConfigDirResolver.resolve(source, dependencies: dependencies, completion: completion)
     }
 
+    /// The remote counterpart of resolveConfigDirectory: CLAUDE_CONFIG_DIR as the host's login
+    /// shell reports it. Delivers nil, on the main thread, when the lookup failed, in which case
+    /// the caller must not guess. Only the login shell from getshell is run; see
+    /// ClaudeCodeRemoteConfigDirResolver.
+    @MainActor
+    static func resolveRemoteConfigDirectory(conductor: Conductor,
+                                             completion: @escaping (String?) -> Void) {
+        guard conductor.framing else {
+            RLog("Remote CLAUDE_CONFIG_DIR lookup failed: the connection is not framing")
+            completion(nil)
+            return
+        }
+        let dependencies = ClaudeCodeRemoteConfigDirResolver.Dependencies(
+            run: { [weak conductor] commandLine, done in
+                // resolve() calls this synchronously, and it is called from here, on main.
+                MainActor.assumeIsolated {
+                    guard let conductor else {
+                        done(Data(), -1)
+                        return
+                    }
+                    conductor.runRemoteCommand(commandLine) { data, status in
+                        DispatchQueue.main.async {
+                            done(data, status)
+                        }
+                    }
+                }
+            },
+            after: { seconds, block in
+                let box = MainQueueBlock(block)
+                DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
+                    box.block()
+                }
+            },
+            makeSentinel: {
+                String.makeSecureHexString(byteCount: 16) ?? UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            })
+        ClaudeCodeRemoteConfigDirResolver.resolve(shell: conductor.shell,
+                                                  home: conductor.homeDirectory,
+                                                  dependencies: dependencies,
+                                                  completion: completion)
+    }
+
     /// Whether THIS instance's hooks are healthy in the directory the given session's agent will
     /// actually read. Answers on the main thread.
     ///
@@ -1915,8 +2146,31 @@ class ClaudeCodeOnboarding: NSObject {
     /// its own environment is read from the kernel, which spawns nothing; otherwise the recorded
     /// directory is used. No shell is ever run: this answers a background question raised by an
     /// announcement, not an install, so it must not cost a shell startup or ask the user anything.
+    ///
+    /// For a session on a host reached through SSH Integration the answer is about that host's
+    /// hook, read over the connection.
     static func hooksHealthyForSession(_ session: PTYSession?,
                                        completion: @escaping (Bool) -> Void) {
+        // A session on a host reached through SSH Integration runs claude there, so it is that
+        // host's hook that matters. A connection back to this Mac is answered by the local check.
+        // Callers are on the main thread.
+        if let conductor = MainActor.assumeIsolated({ session?.hostConductor.flatMap { $0.framing ? $0 : nil } }) {
+            MainActor.assumeIsolated {
+                remoteHostIsThisMac(conductor: conductor) { isThisMac in
+                    if isThisMac {
+                        localHooksHealthyForSession(session, completion: completion)
+                    } else {
+                        remoteHooksHealthy(conductor: conductor, completion: completion)
+                    }
+                }
+            }
+            return
+        }
+        localHooksHealthyForSession(session, completion: completion)
+    }
+
+    private static func localHooksHealthyForSession(_ session: PTYSession?,
+                                                    completion: @escaping (Bool) -> Void) {
         let checkDisk = { (settingsURL: URL) in
             // Reads disk and follows symlinks, so keep it off the main thread.
             DispatchQueue.global(qos: .userInitiated).async {
@@ -2114,76 +2368,28 @@ class ClaudeCodeOnboarding: NSObject {
     static func mergedHooks(_ existing: [String: Any],
                             command: String,
                             environment: [String: String] = [:],
-                            isExecutable: (String) -> Bool = {
+                            isExecutable: @escaping (String) -> Bool = {
                                 FileManager.default.isExecutableFile(atPath: $0)
                             }) -> [String: Any] {
-        var hooks = existing
-        let hookEntry: [String: Any] = [
-            "type": "command",
-            "command": command
-        ]
         // Another instance's entries are foreign: left alone, and not duplicates of ours.
         let ownership = environment.isEmpty ? ProcessInfo.processInfo.environment : environment
-        for eventName in Self.hookEventNames {
-            var eventHookGroups = (hooks[eventName] as? [[String: Any]]) ?? []
-            var foundOurs = false
-            var groupIndex = 0
-            while groupIndex < eventHookGroups.count {
-                guard var groupHooks = eventHookGroups[groupIndex]["hooks"] as? [[String: Any]] else {
-                    groupIndex += 1
-                    continue
-                }
-                var groupChanged = false
-                var entryIndex = 0
-                while entryIndex < groupHooks.count {
-                    guard let existingCommand = groupHooks[entryIndex]["command"] as? String,
-                          Self.isOurHookCommand(existingCommand, environment: ownership) else {
-                        entryIndex += 1
-                        continue
-                    }
-                    if foundOurs {
-                        if CCStatusHookCommand.runsOnlyCCStatus(existingCommand) {
-                            groupHooks.remove(at: entryIndex)
-                            groupChanged = true
-                            DLog("Onboarding: removed duplicate hook entry for \(eventName): \(existingCommand)")
-                            continue
-                        }
-                        DLog("Onboarding: leaving \(existingCommand) for \(eventName) because it runs more than the hook")
-                        entryIndex += 1
-                        continue
-                    }
-                    switch existingHookAction(existingCommand,
-                                              ccStatusPath: command,
-                                              environment: environment,
-                                              isExecutable: isExecutable) {
-                    case .keep:
-                        foundOurs = true
-                    case .rewrite:
-                        foundOurs = true
-                        groupHooks[entryIndex]["command"] = command
-                        groupChanged = true
-                        DLog("Onboarding: updated stale hook for \(eventName) from \(existingCommand) to \(command)")
-                    case .addAlongside:
-                        DLog("Onboarding: \(existingCommand) for \(eventName) can't run the hook but runs more than it; leaving it")
-                    }
-                    entryIndex += 1
-                }
-                if groupChanged {
-                    if groupHooks.isEmpty {
-                        eventHookGroups.remove(at: groupIndex)
-                        continue
-                    }
-                    eventHookGroups[groupIndex]["hooks"] = groupHooks
-                }
-                groupIndex += 1
+        return ClaudeCodeHookSettings.merged(existing,
+                                             command: command,
+                                             descriptor: .claudeCode,
+                                             isOurs: { Self.isOurHookCommand($0, environment: ownership) },
+                                             action: { existingCommand in
+            switch existingHookAction(existingCommand,
+                                      ccStatusPath: command,
+                                      environment: environment,
+                                      isExecutable: isExecutable) {
+            case .keep:
+                return .keep
+            case .rewrite:
+                return .rewrite
+            case .addAlongside:
+                return .addAlongside
             }
-            if !foundOurs {
-                eventHookGroups.append(["hooks": [hookEntry]])
-                DLog("Onboarding: added hook for \(eventName)")
-            }
-            hooks[eventName] = eventHookGroups
-        }
-        return hooks
+        })
     }
 
     // Merge our hook for every event in hookEventNames into the
@@ -3009,5 +3215,15 @@ private class OnboardingScrim: NSView {
             NSBezierPath(roundedRect: insetRect, xRadius: radius, yRadius: radius).fill()
             a -= alphaStride
         }
+    }
+}
+
+/// Carries a block created on the main queue to a later main-queue call. Unchecked because the
+/// block is never run anywhere else, which the compiler cannot see through asyncAfter.
+private final class MainQueueBlock: @unchecked Sendable {
+    let block: () -> Void
+
+    init(_ block: @escaping () -> Void) {
+        self.block = block
     }
 }

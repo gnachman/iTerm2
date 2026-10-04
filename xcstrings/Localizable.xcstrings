@@ -53258,6 +53258,18 @@
         }
       }
     },
+    "ClaudeCode.KeepAllowing" : {
+      "comment" : "Button that keeps a remote host’s always-allow grant during uninstall",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keep Allowing"
+          }
+        }
+      }
+    },
     "ClaudeCode.LeaveEnabled" : {
       "comment" : "Button to leave the Python API enabled",
       "extractionState" : "extracted_with_value",
@@ -53296,6 +53308,78 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保持启用"
+          }
+        }
+      }
+    },
+    "ClaudeCode.RemoteHookMalformed" : {
+      "comment" : "Detail shown when the Claude Code settings on a remote host are not valid JSON during uninstall; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code’s settings on %@ couldn’t be parsed as JSON."
+          }
+        }
+      }
+    },
+    "ClaudeCode.RemoteHookUnreadable" : {
+      "comment" : "Detail shown when the Claude Code settings on a remote host could not be read, or the host disconnected, during uninstall; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn’t read Claude Code’s settings on %@."
+          }
+        }
+      }
+    },
+    "ClaudeCode.RemoteHookWriteFailed" : {
+      "comment" : "Detail shown when the Claude Code settings on a remote host could not be written during uninstall; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn’t write Claude Code’s settings on %@."
+          }
+        }
+      }
+    },
+    "ClaudeCode.StopAllowing" : {
+      "comment" : "Button that revokes a remote host’s always-allow grant during uninstall",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Allowing"
+          }
+        }
+      }
+    },
+    "ClaudeCode.StopAllowingHostBody" : {
+      "comment" : "Body of the question asked when uninstalling the Claude Code integration from an always-allowed host; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Other uses of it2 on %@ may rely on it. You can also change this later in Settings > General > Magic > API access over ssh."
+          }
+        }
+      }
+    },
+    "ClaudeCode.StopAllowingHostTitle" : {
+      "comment" : "Title of the question asked when uninstalling the Claude Code integration from a host that is always allowed to use the API; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Also Stop Always Allowing %@ to Use the iTerm2 API?"
           }
         }
       }
@@ -53384,6 +53468,18 @@
         }
       }
     },
+    "ClaudeCode.UninstallRemoteHost" : {
+      "comment" : "Line of the uninstall confirmation for a remote host that will be cleaned up; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It also removes the hook from Claude Code’s settings on %@."
+          }
+        }
+      }
+    },
     "ClaudeCode.UninstallTitle" : {
       "comment" : "Title of the uninstall confirmation dialog",
       "extractionState" : "extracted_with_value",
@@ -53422,6 +53518,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "卸载 Claude Code 集成？"
+          }
+        }
+      }
+    },
+    "ClaudeCode.UninstallUnreachableHost" : {
+      "comment" : "Line of the uninstall confirmation for a remote host with the hook installed that cannot be reached now; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ isn’t connected, so its hook stays. Connect to it with SSH Integration and uninstall again to remove it."
           }
         }
       }
@@ -53548,6 +53656,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "立即尝试"
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.AlwaysAllow" : {
+      "comment" : "Button that installs the remote Claude Code hook and always allows the host to use the iTerm2 API",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Always Allow"
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.AlwaysAllowHostBody" : {
+      "comment" : "Body of the question asked before installing the Claude Code hook on a remote host; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code on %1$@ reports its status to iTerm2 through the iTerm2 API.\n\nIf you always allow %2$@, any program running as you on that host can see and control your terminal sessions, reading their contents and typing into them, without asking, on this and every future connection.\n\nIf you choose Ask Each Connection, iTerm2 asks the first time Claude Code reports on each new connection.\n\nYou can stop always allowing a host in Settings > General > Magic > API access over ssh."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.AlwaysAllowHostTitle" : {
+      "comment" : "Title of the question asked before installing the Claude Code hook on a remote host; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Always Allow %@ to Use the iTerm2 API?"
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.AskEachConnection" : {
+      "comment" : "Button that installs the remote Claude Code hook without always allowing the host; iTerm2 asks on each connection",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ask Each Connection"
           }
         }
       }
@@ -54260,6 +54416,30 @@
         }
       }
     },
+    "ClaudeCodeOnboarding.InstallRemoteHookDescription" : {
+      "comment" : "Description of the onboarding step that installs the Claude Code hook on a remote host; the value is the host, such as user@example.com",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install the Claude Code hook on %1$@, so Claude Code running there shows its state (working, waiting, idle) in the Session Status tool too.\n\nThis adds a hook to Claude Code’s settings on %2$@. It runs the it2 command that SSH Integration keeps up to date on that host."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.InstallRemoteHookTitle" : {
+      "comment" : "Title of the onboarding step that installs the Claude Code hook on the host the session is connected to through SSH Integration",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install on Remote Host"
+          }
+        }
+      }
+    },
     "ClaudeCodeOnboarding.InstallTriggersBody" : {
       "comment" : "Body of the alert asking which profiles to add auto-enter triggers to",
       "extractionState" : "extracted_with_value",
@@ -54718,6 +54898,102 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 集成设置"
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.RemoteConfigResolutionFailedBody" : {
+      "comment" : "Body of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR on a remote host; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t read CLAUDE_CONFIG_DIR from your login shell on %@, so it doesn’t know where Claude Code keeps its settings there. Try again?"
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.RemoteDisconnected" : {
+      "comment" : "Shown when the remote host disconnected before the Claude Code hook could be installed; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The connection to %@ has ended. Reconnect and try again."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.RemoteHostAlreadyAllowed" : {
+      "comment" : "Shown in the remote install step when the host already has an always-allow grant; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ is already always allowed to use the iTerm2 API. You can change that in Settings > General > Magic > API access over ssh."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.RemoteIsThisMac" : {
+      "comment" : "Shown when the remote install was attempted on an ssh connection back to this Mac; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ is this Mac. Claude Code here is set up by the Install Hook step instead."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.RemoteIt2Missing" : {
+      "comment" : "Shown when the remote host lacks the uploaded it2 wrapper; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "SSH Integration couldn’t set up the it2 command on %@, so the hook would have nothing to run. This happens when the login shell there is not one SSH Integration supports: zsh, bash, fish, or xonsh."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.RemoteSettingsMalformed" : {
+      "comment" : "Shown when Claude Code settings on a remote host could not be parsed; the values are a file path and the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ on %2$@ isn’t valid JSON. iTerm2 left it unchanged. Fix or remove it and try again."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.RemoteSettingsUnreadable" : {
+      "comment" : "Shown when Claude Code settings on a remote host could not be read; the values are a file path and the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t read %1$@ on %2$@."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.RemoteSettingsWriteFailed" : {
+      "comment" : "Shown when Claude Code settings on a remote host could not be written; the values are a file path and the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t write %1$@ on %2$@."
           }
         }
       }
@@ -55280,6 +55556,18 @@
         }
       }
     },
+    "ClaudeHealthMonitor.Install" : {
+      "comment" : "Button to install the Claude Code status hook on a remote host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install"
+          }
+        }
+      }
+    },
     "ClaudeHealthMonitor.NotNow" : {
       "comment" : "Button to dismiss the reinstall prompt for now",
       "extractionState" : "extracted_with_value",
@@ -55360,6 +55648,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重新安装"
+          }
+        }
+      }
+    },
+    "ClaudeHealthMonitor.RemoteBrokenHeading" : {
+      "comment" : "Heading of the warning shown when the Claude Code hook on a remote host is incomplete; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code Integration on %@ Looks Broken"
+          }
+        }
+      }
+    },
+    "ClaudeHealthMonitor.RemoteBrokenTitle" : {
+      "comment" : "Body of the warning shown when the Claude Code hook on a remote host is incomplete; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2’s hook is no longer complete in Claude Code’s settings on %@. This usually means Claude Code rewrote that file. Reinstall the hook so per-tab status indicators (“Working…,” “Waiting…”) work again?"
+          }
+        }
+      }
+    },
+    "ClaudeHealthMonitor.RemoteNotInstalledHeading" : {
+      "comment" : "Heading of the prompt offering to install the Claude Code hook on a remote host where claude is running; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install Claude Code Integration on %@?"
+          }
+        }
+      }
+    },
+    "ClaudeHealthMonitor.RemoteNotInstalledTitle" : {
+      "comment" : "Body of the prompt offering to install the Claude Code hook on a remote host where claude is running; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code is running on %@, but iTerm2’s hook isn’t installed there, so its status won’t appear in the Session Status tool. Install it?"
           }
         }
       }

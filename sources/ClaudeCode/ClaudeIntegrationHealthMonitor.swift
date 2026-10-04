@@ -58,6 +58,15 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
     // the next launch, which is good enough for a recovery prompt.
     private var hasEvaluated = false
 
+    // Hosts reached through SSH Integration are checked once per connection rather than once per
+    // launch: a check is one round trip over that connection, not a disk read, so there is no
+    // reason to make a user relaunch to have a host looked at again. Keyed by the conductor's
+    // guid. A connection whose prompt could not be shown is removed again so the next claude
+    // launch on it retries.
+    private var evaluatedConnections = Set<String>()
+    private static let remoteWarningIdentifier =
+        "NoSyncSuppressClaudeCodeRemoteIntegrationPrompt"
+
     private override init() {
         super.init()
     }
@@ -86,7 +95,119 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
               !sessions.isEmpty else {
             return
         }
-        evaluateAndPromptIfBroken(sessionGUIDs: sessions)
+        // claude on a remote host reads that host's settings, so it says nothing about this Mac's
+        // and is checked separately, once per host. hostConductor covers a tmux pane over ssh.
+        // Notifications are posted on the main thread.
+        MainActor.assumeIsolated {
+            var local = Set<String>()
+            var remote = [String: PTYSession]()
+            for guid in sessions {
+                guard let session = iTermController.sharedInstance().session(withGUID: guid),
+                      let conductor = session.hostConductor, conductor.framing else {
+                    local.insert(guid)
+                    continue
+                }
+                let host = conductor.sshIdentity.stringIdentifier
+                if remote[host] == nil {
+                    remote[host] = session
+                }
+            }
+            if !local.isEmpty {
+                evaluateAndPromptIfBroken(sessionGUIDs: local)
+            }
+            for host in remote.keys.sorted() {
+                if let session = remote[host] {
+                    evaluateRemote(host: host, session: session)
+                }
+            }
+        }
+    }
+
+    // MARK: - Remote hosts
+
+    @MainActor
+    private func evaluateRemote(host: String, session: PTYSession) {
+        guard let conductor = session.hostConductor, conductor.framing else {
+            DLog("Health: remote session \(session.guid) has no framing connection; skipping")
+            return
+        }
+        let connection = conductor.guid
+        guard !evaluatedConnections.contains(connection) else {
+            DLog("Health: \(host) already checked on this connection; skipping")
+            return
+        }
+        guard !alertInFlight else {
+            DLog("Health: alert already in flight, skipping \(host)")
+            return
+        }
+        guard !iTermWarning.showingWarning() else {
+            DLog("Health: another warning is on-screen, skipping \(host)")
+            return
+        }
+        let installed = ClaudeCodeRemoteHostState.shared.hooksInstalled(onHost: host)
+        // Offer an install only to someone who uses the integration: a recorded install on this
+        // host, or a completed setup on this Mac.
+        evaluatedConnections.insert(connection)
+        guard installed || iTermUserDefaults.claudeCodeIntegrationCompleted else {
+            DLog("Health: \(host) has no install and the integration was never set up; not offering")
+            return
+        }
+        DLog("Health: checking \(host) (installed=\(installed))")
+        alertInFlight = true
+        ClaudeCodeOnboarding.remoteHostIsThisMac(conductor: conductor) { [weak self, weak conductor, weak session] isThisMac in
+            guard let self else {
+                return
+            }
+            // This Mac reached over ssh: the local install covers it, and a remote install would
+            // only be refused.
+            guard !isThisMac, let conductor else {
+                DLog("Health: \(host) is this Mac or disconnected; not checking")
+                self.alertInFlight = false
+                return
+            }
+            ClaudeCodeOnboarding.remoteHooksHealthy(conductor: conductor) { [weak self, weak session] healthy in
+                self?.remoteCheckCompleted(host: host, connection: connection, installed: installed,
+                                           healthy: healthy, session: session)
+            }
+        }
+    }
+
+    private func remoteCheckCompleted(host: String, connection: String, installed: Bool, healthy: Bool,
+                                      session: PTYSession?) {
+        if healthy {
+            DLog("Health: \(host) is healthy")
+            alertInFlight = false
+            return
+        }
+        if iTermWarning.showingWarning() {
+            RLog("Health: another warning came up during the remote check, deferring")
+            alertInFlight = false
+            evaluatedConnections.remove(connection)
+            return
+        }
+        RLog("Health: Claude Code hook \(installed ? "broken" : "not installed") on a remote host; prompting")
+        let warning = iTermWarning()
+        let actionLabel: String
+        if installed {
+            warning.heading = String(localized: "ClaudeHealthMonitor.RemoteBrokenHeading", defaultValue: "Claude Code Integration on \(host) Looks Broken", comment: "Heading of the warning shown when the Claude Code hook on a remote host is incomplete; the value is the host")
+            warning.title = String(localized: "ClaudeHealthMonitor.RemoteBrokenTitle", defaultValue: "iTerm2\u{2019}s hook is no longer complete in Claude Code\u{2019}s settings on \(host). This usually means Claude Code rewrote that file. Reinstall the hook so per-tab status indicators (\u{201C}Working\u{2026},\u{201D} \u{201C}Waiting\u{2026}\u{201D}) work again?", comment: "Body of the warning shown when the Claude Code hook on a remote host is incomplete; the value is the host")
+            actionLabel = String(localized: "ClaudeHealthMonitor.Reinstall", defaultValue: "Reinstall", comment: "Button to reinstall the Claude Code status hook")
+        } else {
+            warning.heading = String(localized: "ClaudeHealthMonitor.RemoteNotInstalledHeading", defaultValue: "Install Claude Code Integration on \(host)?", comment: "Heading of the prompt offering to install the Claude Code hook on a remote host where claude is running; the value is the host")
+            warning.title = String(localized: "ClaudeHealthMonitor.RemoteNotInstalledTitle", defaultValue: "Claude Code is running on \(host), but iTerm2\u{2019}s hook isn\u{2019}t installed there, so its status won\u{2019}t appear in the Session Status tool. Install it?", comment: "Body of the prompt offering to install the Claude Code hook on a remote host where claude is running; the value is the host")
+            actionLabel = String(localized: "ClaudeHealthMonitor.Install", defaultValue: "Install", comment: "Button to install the Claude Code status hook on a remote host")
+        }
+        warning.warningType = .kiTermWarningTypePermanentlySilenceable
+        warning.identifier = Self.remoteWarningIdentifier
+        warning.actionLabels = [actionLabel, String(localized: "ClaudeHealthMonitor.NotNow", defaultValue: "Not Now", comment: "Button to dismiss the reinstall prompt for now")]
+        // As for the local prompt: only declining can be remembered.
+        warning.doNotRememberLabels = [actionLabel]
+        warning.runModalAsync { [weak self, weak session] selection, _ in
+            self?.alertInFlight = false
+            if selection == .kiTermWarningSelection0 {
+                ClaudeCodeOnboarding.showRemoteInstall(session: session)
+            }
+        }
     }
 
     // Two-phase: cheap checks + disk-read kickoff stay on the main

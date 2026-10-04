@@ -52,10 +52,7 @@ New Features:
   set-var or get-var; a program running there
   cannot otherwise learn which session it is in.
   This works the same on a host reached through
-  SSH Integration. (Claude Code’s own status hook
-  is not yet installed on remote hosts, so its
-  status is only reported automatically for
-  sessions on this Mac.)
+  SSH Integration.
   Claude Code’s status is no longer reported from
   a pane of a plain tmux session (one not using
   tmux Integration), since iTerm2 cannot tell
@@ -353,6 +350,14 @@ New Features:
   later connections. Review or remove these hosts
   in Settings > General > Magic > API access
   over ssh.
+- The Claude Code integration can now be
+  installed on a host reached through SSH
+  Integration, so Claude Code running there
+  reports its status too. Choose iTerm2 > Install
+  Claude Code Integration from a session on that
+  host, including a tmux Integration pane there.
+  Uninstalling removes it from every host you are
+  connected to.
 
 Improvements:
 - Pausing a spinning progress indicator with

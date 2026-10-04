@@ -4,7 +4,8 @@ import Foundation
 /// The hook program for Claude Code and Codex CLI. Each hook event arrives as JSON on stdin, and
 /// the command turns it into a session status update for the session the agent is running in,
 /// addressed from the hook's environment: a tmux pane by $TMUX/$TMUX_PANE, otherwise
-/// TERM_SESSION_ID. Nothing is printed on stdout, and failures never fail the hook.
+/// TERM_SESSION_ID, otherwise (over SSH Integration) the session the call arrived on. Nothing is
+/// printed on stdout, and failures never fail the hook.
 ///
 /// Driven by the hook configuration iTerm2 installs into ~/.claude/settings.json, or by a Codex
 /// hooks.json that passes `--agent codex`. Runs in-process inside iTerm2 when the hook is on a
@@ -30,6 +31,7 @@ struct HandleAgentHook: ParsableCommand, IT2Runnable {
         try AgentHookHandler.handle(payload: ctx.stdin(),
                                     agent: agent,
                                     environment: ctx.environment,
+                                    originSessionID: ctx.originSessionID,
                                     backend: backend,
                                     report: ctx.err)
     }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FE2DE1ED09FAE9E9F198286A /* ClaudeCodeHookSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D9A81913C0C93D1222686D /* ClaudeCodeHookSettings.swift */; };
 		1CFBC8DDC0F47C682E8BA689 /* it2.py in Resources */ = {isa = PBXBuildFile; fileRef = 7FEACD97BE4694F8EA0745A9 /* it2.py */; };
 		640AE7AAB1BDCC09B531A3AC /* it2.py in Resources */ = {isa = PBXBuildFile; fileRef = 7FEACD97BE4694F8EA0745A9 /* it2.py */; };
 		DAB9BA82D680E9AB6B3043D7 /* iTermFloatingPaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F500F98D6607037DCEB270 /* iTermFloatingPaneView.swift */; };
@@ -4611,6 +4612,7 @@
 		AA88F4DAFA1B2F597D29B24C /* iTermTabGroupBuiltInFunctions.m in Sources */ = {isa = PBXBuildFile; fileRef = 12059C10060BB05CF0292FBC /* iTermTabGroupBuiltInFunctions.m */; };
 		AA98CC958BF6A53E358DCDA3 /* iTermBundledIt2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230D3C594C279967BC55DBA4 /* iTermBundledIt2.swift */; };
 		AA9D88347B84F8285654354D /* challenge-frame-detection.js in Resources */ = {isa = PBXBuildFile; fileRef = 832B7B71C0EE3B7635C7E77A /* challenge-frame-detection.js */; };
+		ABC080A269867E79C849EF75 /* ClaudeCodeRemoteHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = E647495B7897B679F2372C34 /* ClaudeCodeRemoteHooks.swift */; };
 		ABC9DFDC56692F9999D7841B /* AIConnectionTester.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E537A76A33939E90C1F01F9 /* AIConnectionTester.swift */; };
 		ADC7FB502202FA2C5A67E470 /* iTermWorkgroupPeerPort.swift in Sources */ = {isa = PBXBuildFile; fileRef = B048AAFA78F22F2C8CB157F3 /* iTermWorkgroupPeerPort.swift */; };
 		ADD0A0ADE0A926F49C2D6116 /* WindowCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F5137AE2C71CDD51D7C53D /* WindowCommand.swift */; };
@@ -4640,6 +4642,7 @@
 		BA92EFE30108CC1ED8491814 /* ChatBlobAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4836A8DAE973FFD820A3513A /* ChatBlobAssembler.swift */; };
 		BB3599576D131056222AF693 /* PSMTabDragSessionDriver.m in Sources */ = {isa = PBXBuildFile; fileRef = D5B22C5FAF61770FD55AD000 /* PSMTabDragSessionDriver.m */; };
 		BB4ECCB6C145CDE401FE7EE7 /* CompanionPluginTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16244DB19048FCA0614235A6 /* CompanionPluginTransport.swift */; };
+		BB8ABCBE01767CE8D529581F /* ClaudeCodeRemoteHostState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 455A915DA551BA62B103AE45 /* ClaudeCodeRemoteHostState.swift */; };
 		BCED56C0C7BC4730A6B05159 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9E8EE77086E04B6E9BACAF1D /* Localizable.xcstrings */; };
 		BD4D313E427B806663EB3D47 /* AILiveAttachmentFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11BE1CE0F1EF4E86C53D1E0 /* AILiveAttachmentFixtures.swift */; };
 		BEEFCAFEDEADC0DE00000001 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
@@ -4690,6 +4693,7 @@
 		D3D470D34777DFA2474E14DC /* iTermSessionTabStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1C7B91071000DE37B9DA33 /* iTermSessionTabStatus.swift */; };
 		D40FA74614B9343BFA69E64D /* companion-browser-editing.js in Resources */ = {isa = PBXBuildFile; fileRef = FECE5E04FE9D0FCDF073F6F5 /* companion-browser-editing.js */; };
 		D456895D420CBEEDC331D5F7 /* StatusPrioritySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AB44D00ABCD3E5DC090E2D2 /* StatusPrioritySettings.swift */; };
+		D48410D03726C88ACD4A53C4 /* ClaudeCodeRemoteConfigDirResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C87C5FFBC6F1FBEFA66319FD /* ClaudeCodeRemoteConfigDirResolver.swift */; };
 		D4D2E570EFEAF9FA77EDFF84 /* AutoModeClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE771C4F77C837427ABA9B44 /* AutoModeClassifier.swift */; };
 		D52DA7A75005457424B6ECB8 /* CompanionTransport in Frameworks */ = {isa = PBXBuildFile; productRef = B64D2673BB7E3F17D208CC22 /* CompanionTransport */; };
 		D5A1B154ADC8F0C185E74D06 /* iTermBrowserBasicAuthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B5F7D21158AA94C2F192559 /* iTermBrowserBasicAuthStore.swift */; };
@@ -5612,6 +5616,7 @@
 		434641A807C0B3035264BEF2 /* iTermSessionPreviewPanel.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermSessionPreviewPanel.m; sourceTree = "<group>"; };
 		43834CBF2E72D7D09EF83805 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/ImportingWindowController.xcstrings; sourceTree = "<group>"; };
 		44CB910BF4A14464953BB8DE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermParameterPanelWindowController.xib; sourceTree = "<group>"; };
+		455A915DA551BA62B103AE45 /* ClaudeCodeRemoteHostState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeRemoteHostState.swift; sourceTree = "<group>"; };
 		457E888882A6E3DD414DA970 /* CompanionHostBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionHostBridge.swift; sourceTree = "<group>"; };
 		45DB359918514407822F4C2B /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/PseudoTerminal.xcstrings; sourceTree = "<group>"; };
 		45FB9AAD273DCCA975189D9B /* AITabTitleGenerator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AITabTitleGenerator.swift; sourceTree = "<group>"; };
@@ -8817,6 +8822,7 @@
 		C78C2666BDAB4973BE1F00B6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermStatusBarKnobFontViewController.xib; sourceTree = "<group>"; };
 		C7F8E4B139D63B87BBCC27AC /* SessionCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionCommand.swift; path = it2cli/Sources/it2core/Commands/SessionCommand.swift; sourceTree = "<group>"; };
 		C832F1FDBC038F9C98F04DE7 /* RemoteCommand+Mac.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "RemoteCommand+Mac.swift"; sourceTree = "<group>"; };
+		C87C5FFBC6F1FBEFA66319FD /* ClaudeCodeRemoteConfigDirResolver.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeRemoteConfigDirResolver.swift; sourceTree = "<group>"; };
 		C8DE5AB65EE3E11037811D4A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermTriggersPanel.xib; sourceTree = "<group>"; };
 		C8EEBBD51AD44F3AB26B9B9A /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermStatusBarKnobNumericViewController.xcstrings; sourceTree = "<group>"; };
 		C9453AA959137BDC033498F2 /* iTermProgramStatus.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermProgramStatus.swift; sourceTree = "<group>"; };
@@ -8906,6 +8912,7 @@
 		E4FCBB8A80DB478BBE9D21E5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MinimalFindView.xib; sourceTree = "<group>"; };
 		E5255A7A21B4425481DC8012 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/TmuxDashboard.xib; sourceTree = "<group>"; };
 		E6270F746A06950D2A3CE637 /* iTermUndoCloseMigrationWarning.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermUndoCloseMigrationWarning.swift; sourceTree = "<group>"; };
+		E647495B7897B679F2372C34 /* ClaudeCodeRemoteHooks.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeRemoteHooks.swift; sourceTree = "<group>"; };
 		E6BC074C860759EEDF3F98F0 /* iTermLayoutSpecValidator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermLayoutSpecValidator.swift; sourceTree = "<group>"; };
 		E6CB27B6647329ACD05CE222 /* iTermCompactProxyIconView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermCompactProxyIconView.swift; sourceTree = "<group>"; };
 		E75A577B8D27C3128D180B27 /* iTermWorkgroupRestoration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupRestoration.swift; sourceTree = "<group>"; };
@@ -8996,6 +9003,7 @@
 		F6E708B70A9D0EA400D0C4EF /* PSMTabDragAssistant.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabDragAssistant.h; sourceTree = "<group>"; };
 		F6E708B80A9D0EA400D0C4EF /* PSMTabDragAssistant.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMTabDragAssistant.m; sourceTree = "<group>"; };
 		F790CA240B9BA05F26567E86 /* AILiveAttachmentTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveAttachmentTests.swift; sourceTree = "<group>"; };
+		F7D9A81913C0C93D1222686D /* ClaudeCodeHookSettings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeHookSettings.swift; sourceTree = "<group>"; };
 		F900014EDED3405CB4AD86C9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/NumberOfSpacesAccessoryView.xib; sourceTree = "<group>"; };
 		F90733DD8ECD8EDFD8F5D0BC /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/BulkCopyProfilePreferences.xcstrings; sourceTree = "<group>"; };
 		F915C2AAA3C3B4331311DC06 /* ToolProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToolProvider.swift; sourceTree = "<group>"; };
@@ -14276,6 +14284,10 @@
 		A6CD8B592F9846D1003EA0C1 /* ClaudeCode */ = {
 			isa = PBXGroup;
 			children = (
+				F7D9A81913C0C93D1222686D /* ClaudeCodeHookSettings.swift */,
+				E647495B7897B679F2372C34 /* ClaudeCodeRemoteHooks.swift */,
+				C87C5FFBC6F1FBEFA66319FD /* ClaudeCodeRemoteConfigDirResolver.swift */,
+				455A915DA551BA62B103AE45 /* ClaudeCodeRemoteHostState.swift */,
 				A6E70C1F2F84B6D5001349AE /* ClaudeWatcher.swift */,
 				CA34A6F29B10471D8FD572F6 /* GlobalJobMonitor.swift */,
 				E961A126DE6D9EFA0C6CC9AB /* ClaudeCodeOnboarding.swift */,
@@ -20160,6 +20172,10 @@
 				A033F281B74486F43A56A2E0 /* iTermUndoCloseMigrationWarning.swift in Sources */,
 				6DEF6ECE06F2BFCD91F283E1 /* iTermAPICreateTabFocusDeferral.m in Sources */,
 				8E007BBFD3CF9DA1A675D4BD /* iTermIT2HostGrantsWindowController.swift in Sources */,
+				BB8ABCBE01767CE8D529581F /* ClaudeCodeRemoteHostState.swift in Sources */,
+				D48410D03726C88ACD4A53C4 /* ClaudeCodeRemoteConfigDirResolver.swift in Sources */,
+				ABC080A269867E79C849EF75 /* ClaudeCodeRemoteHooks.swift in Sources */,
+				FE2DE1ED09FAE9E9F198286A /* ClaudeCodeHookSettings.swift in Sources */,
 				6525DAAA19CCA2BCAF26D083 /* iTermAPICreateTabFocusDeferral.h in Sources */,
 				B4042F8000C16FCBCF0E3225 /* OllamaModelDiscovery.swift in Sources */,
 				FCEDFDBC42D7B491D8603596 /* OllamaModelCache.swift in Sources */,

@@ -788,6 +788,9 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly) NSString *regularExpressonForNonLowPrecisionSmartSelectionRulesCombined;
 @property(nonatomic, strong, nullable) NSCursor *defaultPointer;
 @property(nonatomic, readonly, nullable) iTermConductor *conductor;
+// The conductor for the host this session's shell runs on: its own, or for a tmux pane, the
+// gateway's, since a pane never owns one. nil for a session on this Mac.
+@property(nonatomic, readonly, nullable) iTermConductor *hostConductor;
 @property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, strong) iTermRunningRemoteCommand *runningRemoteCommand;
 @property(nonatomic, readonly) iTermSessionModeHandler *modeHandler;

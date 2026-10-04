@@ -53,6 +53,11 @@ TOP-LEVEL keys
   Coprocess MRU, NoSyncCoprocessCommandsToIgnoreErrorOutput,
     FileDropCoprocess, UrlHandlerCommand   user shell commands
   NoSyncKnownHosts ....................... user@host:port list
+  NoSyncClaudeCodeHooksInstalledHosts .... user@host of each remote host with
+                                           the Claude Code integration installed
+  NoSyncClaudeCodeConfigDirPathByHost .... remote CLAUDE_CONFIG_DIR paths keyed
+                                           by user@host (removed, not redacted:
+                                           the private part is also in the KEY)
   NoSyncWorkgroupGitBaseRecents .......... git base/ref recents
   NoSyncRecentArchives ................... archive file paths
   NoSyncOllamaDiscoveredModels ........... discovered Ollama models, keyed by
@@ -265,6 +270,8 @@ CONTENT_KEYS = {
     # hash of the entry's custom headers), and scrub() can only rewrite values,
     # never keys, so the hosts in the keys would survive a redaction.
     "NoSyncOllamaDiscoveredModels": REMOVE,
+    # Keyed by user@host, so it is removed for the same reason.
+    "NoSyncClaudeCodeConfigDirPathByHost": REMOVE,
     # hosts / URLs
     "Bound Hosts": REDACT_V,
     "Hosts": REDACT_V,                    # array of VT100RemoteHost dicts
@@ -279,6 +286,7 @@ CONTENT_KEYS = {
     # fails to decode on restore anyway.
     "Pending Jumps": REMOVE,
     "NoSyncKnownHosts": REDACT_V,
+    "NoSyncClaudeCodeHooksInstalledHosts": REDACT_V,
     "Hostname to Shell": REMOVE,
     "urlString": REDACT_V,
     "url": REDACT_V,

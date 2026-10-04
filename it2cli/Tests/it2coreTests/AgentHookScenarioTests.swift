@@ -612,6 +612,49 @@ final class AgentHookScenarioTests: XCTestCase {
         XCTAssertEqual(backend.calls, [])
     }
 
+    // A hook on a host reached through SSH Integration, in a plain shell: no tmux, and no
+    // TERM_SESSION_ID, which does not cross ssh. It runs inside iTerm2, which knows the session the
+    // call arrived on, so that is the address, and iTerm2 is reachable by definition even though
+    // IT2_SOCK is not among the variables sent over. Before this the hook reported nothing.
+    func testARemoteHookAddressesTheSessionItArrivedOn() throws {
+        let backend = FakeAgentStatusBackend()
+        try AgentHookHandler.handle(payload: try payload("claude/UserPromptSubmit"),
+                                    agent: .claude,
+                                    environment: ["IT2_PY": "/home/u/.iterm2/it2.abc.py"],
+                                    originSessionID: "ORIGIN-GUID",
+                                    backend: backend,
+                                    report: { _ in })
+        XCTAssertEqual(backend.calls, [["set-status", "--session=ORIGIN-GUID"]
+                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.EXPIRES])
+    }
+
+    // In a remote tmux pane the pane address still wins: the origin is the session showing the
+    // gateway's connection, not necessarily the pane's tab.
+    func testARemoteTmuxPaneStillWinsOverTheOrigin() throws {
+        let backend = FakeAgentStatusBackend()
+        try AgentHookHandler.handle(payload: try payload("claude/UserPromptSubmit"),
+                                    agent: .claude,
+                                    environment: ["TMUX": "/tmp/tmux-1000/default,77,2", "TMUX_PANE": "%4"],
+                                    originSessionID: "ORIGIN-GUID",
+                                    backend: backend,
+                                    report: { _ in })
+        XCTAssertEqual(backend.calls, [["set-status", "--tmux=/tmp/tmux-1000/default,77,2", "--tmux-pane=%4"]
+                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.EXPIRES])
+    }
+
+    // A malformed pane address still reports nothing, origin or not: the pane path never falls
+    // back to another address.
+    func testARemoteMalformedTmuxAddressStillReportsNothing() throws {
+        let backend = FakeAgentStatusBackend()
+        try AgentHookHandler.handle(payload: try payload("claude/UserPromptSubmit"),
+                                    agent: .claude,
+                                    environment: ["TMUX": "garbage"],
+                                    originSessionID: "ORIGIN-GUID",
+                                    backend: backend,
+                                    report: { _ in })
+        XCTAssertEqual(backend.calls, [])
+    }
+
     // A failed it2 call is reported on stderr only at the session boundaries, once, with it2's
     // own explanation attached; per-tool-call events stay silent.
     func testFailuresAreReportedOnlyAtSessionBoundaries() throws {

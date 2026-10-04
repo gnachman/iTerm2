@@ -54,12 +54,14 @@ enum AgentHookHandler {
     static func handle(payload: Data,
                        agent: AgentKind,
                        environment: [String: String],
+                       originSessionID: String? = nil,
                        backend: AgentStatusBackend,
                        report: @escaping (String) -> Void) throws {
         guard let event = readAgentHookEvent(payload) else {
             return
         }
-        guard let address = resolveAgentHookAddress(environment: environment) else {
+        guard let address = resolveAgentHookAddress(environment: environment,
+                                                    originSessionID: originSessionID) else {
             return
         }
         let runner = AgentHookRunner(address: address,
