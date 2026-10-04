@@ -22,3 +22,6 @@ Bug Fixes:
   save was in progress could store duplicate
   entries in the saved-state database, which
   later saves could not handle.
+- Fixed a crash that could happen after using
+  Find when the window got narrower before the
+  match was highlighted.

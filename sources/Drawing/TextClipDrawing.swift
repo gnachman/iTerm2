@@ -123,6 +123,12 @@ class TextClipDrawing: NSObject {
             DLog("bogus range")
             return
         }
+        // A stale range (e.g., computed before the session got narrower) starts past the end
+        // of the lines copied below.
+        guard range.start.x <= width else {
+            RLog("Find indicator range \(VT100GridCoordRangeDescription(range)) starts past width \(width)")
+            return
+        }
 
         var lines = range.closedRangeForY.map { i -> ScreenCharArray in
             let line = delegate.drawingHelperLine(at: i)
