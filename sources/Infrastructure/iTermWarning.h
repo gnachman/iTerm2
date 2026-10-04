@@ -2,6 +2,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermModalAlertDescriptor;
+
 extern BOOL gShowRememberedAlerts;
 
 @protocol iTermWarningHandler <NSObject>
@@ -93,6 +95,18 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // Tests can use this to prevent warning popups.
 + (void)setWarningHandler:(id<iTermWarningHandler>)handler;
 + (id<iTermWarningHandler>)warningHandler;
+
+// For tests. While YES, a warning that would be shown is not put on screen. It still builds its
+// alert and blocks the way a real one does (runModal spins a nested run loop in the modal panel
+// mode; a sheet started with runModalAsync: does not block), until one of the alert's buttons is
+// clicked programmatically or +cancelHeadlessModals is called. Unlike a warning handler, the
+// warning goes through everything else it normally does around showing an alert.
++ (void)setRunsHeadlessModals:(BOOL)headless;
++ (BOOL)runsHeadlessModals;
+
+// Ends every headless modal that is waiting, as if it had been aborted: each reports
+// kItermWarningSelectionError. Safe to call from inside a headless modal's run loop.
++ (void)cancelHeadlessModals;
 + (BOOL)showingWarning;
 // Nil if nothing saved, otherwise an iTermWarningSelection.
 + (NSNumber * _Nullable)conditionalSavedSelectionForIdentifier:(NSString *)identifier;
@@ -198,6 +212,11 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // If set then a "help" button is added to the alert box and this block is invoked when it is clicked.
 @property(nullable, nonatomic, copy) void (^showHelpBlock)(void);
 
+// Whether the paired companion app may see this warning and press one of its buttons while it is
+// showing (see iTermModalAlertRegistry). Defaults to YES. Set to NO for a warning that has to be
+// answered at this Mac, such as one about the companion pairing itself.
+@property(nonatomic) BOOL remotelyAnswerable;
+
 @property(nonatomic, retain) NSWindow * _Nullable window;
 @property(nonatomic, retain) NSView * _Nullable initialFirstResponder;
 
@@ -209,6 +228,19 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // Modally show the alert. Returns the selection.
 - (iTermWarningSelection)runModal;
 - (void)runModalAsync:(void (^)(iTermWarningSelection result, iTermWarning *warning))completion;
+
+// How this warning would be described to iTermModalAlertRegistry if it were shown now. Builds the
+// alert without showing it. Nil when the warning is not remotelyAnswerable. For tests.
+- (iTermModalAlertDescriptor * _Nullable)modalAlertDescriptorWhenAppModal:(BOOL)appModal;
+
+// Builds this warning's alert without showing it. For tests.
+- (NSAlert *)makeAlertForRemoteAnswer;
+
+// The block iTermModalAlertRegistry calls to press a button on `alert` (which must be one this
+// warning made). It checks the suppression box first if `suppress` is set, the alert has one, and
+// that button's choice may be remembered; then it clicks the button. Returns NO, clicking nothing,
+// if the index is not one of this warning's actions or the alert is gone. Holds the alert weakly.
+- (BOOL (^)(NSInteger buttonIndex, BOOL suppress))modalAlertPressBlockForAlert:(NSAlert *)alert;
 
 @end
 

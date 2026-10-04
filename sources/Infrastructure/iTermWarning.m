@@ -42,6 +42,72 @@ BOOL gShowRememberedAlerts = NO;
 
 @end
 
+// Stands in for an alert's modal session when warnings run headless (see
+// +[iTermWarning setRunsHeadlessModals:]). The alert is never shown. Its buttons are pointed here,
+// so clicking one programmatically ends the wait with that button's return code, as it would end a
+// real modal session.
+@interface iTermHeadlessModalSession : NSObject
+@property (nonatomic, readonly) BOOL finished;
+@property (nonatomic, readonly) NSModalResponse response;
+@end
+
+static BOOL gRunsHeadlessModals;
+static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
+
+@implementation iTermHeadlessModalSession {
+    // Set for a sheet, which reports its result later instead of blocking.
+    void (^_completion)(NSModalResponse);
+}
+
+- (instancetype)initWithAlert:(NSAlert *)alert completion:(void (^)(NSModalResponse))completion {
+    self = [super init];
+    if (self) {
+        _completion = [completion copy];
+        [alert.buttons enumerateObjectsUsingBlock:^(NSButton *button, NSUInteger idx, BOOL *stop) {
+            button.tag = NSAlertFirstButtonReturn + idx;
+            button.target = self;
+            button.action = @selector(buttonPressed:);
+        }];
+        if (!gHeadlessModalSessions) {
+            gHeadlessModalSessions = [NSMutableArray array];
+        }
+        [gHeadlessModalSessions addObject:self];
+    }
+    return self;
+}
+
+- (void)buttonPressed:(NSButton *)sender {
+    [self finishWithResponse:sender.tag];
+}
+
+- (void)finishWithResponse:(NSModalResponse)response {
+    if (_finished) {
+        return;
+    }
+    _finished = YES;
+    _response = response;
+    [gHeadlessModalSessions removeObject:self];
+    if (_completion) {
+        void (^completion)(NSModalResponse) = _completion;
+        _completion = nil;
+        completion(response);
+    } else {
+        // Wake the nested run loop in -runUntilFinished.
+        CFRunLoopStop(CFRunLoopGetMain());
+    }
+}
+
+// Blocks like -[NSAlert runModal]: a nested run loop in the modal panel mode. Started from a
+// main-queue callout it freezes the main dispatch queue, exactly as a real alert would.
+- (NSModalResponse)runUntilFinished {
+    while (!_finished) {
+        CFRunLoopRunInMode((__bridge CFStringRef)NSModalPanelRunLoopMode, 60, false);
+    }
+    return _response;
+}
+
+@end
+
 @interface iTermWarning()<NSAlertDelegate>
 @end
 
@@ -53,6 +119,20 @@ BOOL gShowRememberedAlerts = NO;
 
 + (id<iTermWarningHandler>)warningHandler {
     return gWarningHandler;
+}
+
++ (void)setRunsHeadlessModals:(BOOL)headless {
+    gRunsHeadlessModals = headless;
+}
+
++ (BOOL)runsHeadlessModals {
+    return gRunsHeadlessModals;
+}
+
++ (void)cancelHeadlessModals {
+    for (iTermHeadlessModalSession *session in [gHeadlessModalSessions copy]) {
+        [session finishWithResponse:NSModalResponseAbort];
+    }
 }
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
@@ -220,15 +300,29 @@ BOOL gShowRememberedAlerts = NO;
         DLog(@"Show warning %@\n%@", self, [NSThread callStackSymbols]);
         gShowingWarning = YES;
         if (self.window) {
-            [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse result) {
+            // A sheet shown this way does not block, so it is not app-modal.
+            iTermModalAlertRegistration *sheetRegistration = [self registerAlert:alert appModal:NO];
+            void (^sheetCompletion)(NSModalResponse) = ^(NSModalResponse result) {
+                [sheetRegistration unregister];
                 DLog(@"Result for %@ is %@", self, @(result));
                 gShowingWarning = NO;
                 completion([self handleResult:result alert:alert], self);
-            }];
+            };
+            if (gRunsHeadlessModals) {
+                // Kept alive by gHeadlessModalSessions until a button is clicked.
+                (void)[[iTermHeadlessModalSession alloc] initWithAlert:alert completion:sheetCompletion];
+            } else {
+                [alert beginSheetModalForWindow:self.window completionHandler:sheetCompletion];
+            }
             return;
+        }
+        iTermModalAlertRegistration *registration = [self registerAlert:alert appModal:YES];
+        if (gRunsHeadlessModals) {
+            result = [[[iTermHeadlessModalSession alloc] initWithAlert:alert completion:nil] runUntilFinished];
         } else {
             result = [alert runModal];
         }
+        [registration unregister];
         DLog(@"Result for %@ is %@", self, @(result));
         gShowingWarning = NO;
     }
@@ -487,6 +581,88 @@ BOOL gShowRememberedAlerts = NO;
     return nil;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _remotelyAnswerable = YES;
+    }
+    return self;
+}
+
+#pragma mark - Remote answering
+
+- (iTermModalAlertDescriptor *)modalAlertDescriptorWhenAppModal:(BOOL)appModal {
+    if (!_remotelyAnswerable) {
+        return nil;
+    }
+    return [self modalAlertDescriptorForAlert:[self makeAlertForRemoteAnswer] appModal:appModal];
+}
+
+// Describes `alert` for iTermModalAlertRegistry. The buttons are exactly this warning's actions:
+// the "Permanently Forget Saved Selection" button that remembered-alerts mode appends after them is
+// left out, so a button's index is always an index into _warningActions. Accessory views and the
+// help button are not described.
+- (iTermModalAlertDescriptor *)modalAlertDescriptorForAlert:(NSAlert *)alert appModal:(BOOL)appModal {
+    NSArray<iTermModalAlertButton *> *buttons = [_warningActions mapWithBlock:^id(iTermWarningAction *action) {
+        return [[iTermModalAlertButton alloc] initWithTitle:action.label
+                                                   isCancel:action.isCancel
+                                              isDestructive:action.destructive
+                                               rememberable:[self shouldRememberAction:action]];
+    }];
+    return [[iTermModalAlertDescriptor alloc] initWithHeading:alert.messageText
+                                                         body:alert.informativeText
+                                                      buttons:buttons ?: @[]
+                                             suppressionLabel:alert.showsSuppressionButton ? alert.suppressionButton.title : nil
+                                                 hasAccessory:_accessory != nil
+                                                   isAppModal:appModal];
+}
+
+// Publishes `alert`, which is about to be shown, so the companion app can show it and press a
+// button. Returns nil if this warning opted out. The caller unregisters when the alert is gone.
+- (iTermModalAlertRegistration *)registerAlert:(NSAlert *)alert appModal:(BOOL)appModal {
+    if (!_remotelyAnswerable) {
+        return nil;
+    }
+    // A headless alert (tests) runs no real modal session, so there is no window for the registry
+    // to compare against the one in front.
+    NSWindow *window = gRunsHeadlessModals ? nil : alert.window;
+    return [[iTermModalAlertRegistry shared] registerAlert:[self modalAlertDescriptorForAlert:alert appModal:appModal]
+                                                    window:window
+                                                     press:[self modalAlertPressBlockForAlert:alert]];
+}
+
+- (NSAlert *)makeAlertForRemoteAnswer {
+    [self resolveActionRoles];
+    return [self makeAlert];
+}
+
+- (BOOL (^)(NSInteger, BOOL))modalAlertPressBlockForAlert:(NSAlert *)alert {
+    __weak NSAlert *weakAlert = alert;
+    __weak __typeof(self) weakSelf = self;
+    return ^BOOL(NSInteger buttonIndex, BOOL suppress) {
+        NSAlert *strongAlert = weakAlert;
+        iTermWarning *strongSelf = weakSelf;
+        if (!strongAlert || !strongSelf) {
+            return NO;
+        }
+        NSArray<iTermWarningAction *> *actions = strongSelf.warningActions;
+        if (buttonIndex < 0 || buttonIndex >= actions.count || buttonIndex >= strongAlert.buttons.count) {
+            return NO;
+        }
+        // -handleResult:alert: reads the box's state when it handles the click, and would persist
+        // the choice even for a warning that shows no box. So check it only when the warning has
+        // one and this action may be remembered.
+        if (suppress &&
+            strongAlert.showsSuppressionButton &&
+            [strongSelf shouldRememberAction:actions[buttonIndex]]) {
+            strongAlert.suppressionButton.state = NSControlStateValueOn;
+        }
+        // The same as a mouse click: ends the modal session (or sheet) with this button's code.
+        [strongAlert.buttons[buttonIndex] performClick:nil];
+        return YES;
+    };
+}
+
 - (iTermWarningSelection)runModalImpl {
     [self resolveActionRoles];
     iTermWarningSelection preemptedSelection;
@@ -502,11 +678,17 @@ BOOL gShowRememberedAlerts = NO;
     } else {
         DLog(@"Show warning %@\n%@", self, [NSThread callStackSymbols]);
         gShowingWarning = YES;
-        if (self.window) {
+        // Registered just before the modal loop starts and unregistered as soon as it ends, before
+        // -handleResult:alert: (which may show this warning again, registering anew).
+        iTermModalAlertRegistration *registration = [self registerAlert:alert appModal:YES];
+        if (gRunsHeadlessModals) {
+            result = [[[iTermHeadlessModalSession alloc] initWithAlert:alert completion:nil] runUntilFinished];
+        } else if (self.window) {
             result = [alert runSheetModalForWindow:self.window];
         } else {
             result = [alert runModal];
         }
+        [registration unregister];
         DLog(@"Result for %@ is %@", self, @(result));
         gShowingWarning = NO;
     }
