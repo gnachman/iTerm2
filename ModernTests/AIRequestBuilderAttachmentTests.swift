@@ -757,7 +757,7 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
     /// DeepSeek supports inline text content. A text-mime attachment should
     /// be inlined into the message content rather than dropped.
     func testDeepSeek_textAttachment_isInlined() throws {
-        let model = try model(named: "deepseek-v4-flash")
+        let model = try model(named: "deepseek-flash")
         let attachment = file(name: "notes.txt", mime: "text/plain", bytes: Self.textBytes)
         let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
             .text("Read this:"),

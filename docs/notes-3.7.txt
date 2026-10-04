@@ -262,6 +262,17 @@ New Features:
   CSI 0 SP k restores the default.
 
 Improvements:
+- The built-in AI model list is up to date. It
+  adds GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol,
+  GPT-6 Luna, GPT-5.4 Pro, GPT-5.4 mini, Gemini
+  3.8 Flash, DeepSeek Flash (V4.1), Claude Opus
+  5.5, Claude Sonnet 5.5, Claude Fable 5.1,
+  Claude Opus 5, and Claude Fable 5, and the
+  recommended model for each provider is now its
+  newest flagship. Newer Claude models also get
+  their full 1 million token context window.
+  o4-mini, which OpenAI is shutting down, has
+  been removed.
 - iTerm2 now recognizes when a terminal is
   running on your own Mac by machine identity
   rather than by hostname, so features that only

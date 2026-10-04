@@ -27,7 +27,7 @@
 //        "OPENAI_MODELS":    "gpt-5,gpt-5-mini",      // optional override
 //        "ANTHROPIC_MODELS": "claude-haiku-4-5",      // optional override
 //        "GEMINI_MODELS":    "gemini-3-flash-preview",// optional override
-//        "DEEPSEEK_MODELS":  "deepseek-v4-flash",     // optional override
+//        "DEEPSEEK_MODELS":  "deepseek-flash",     // optional override
 //        "GEMINI_INTERVAL":  "13"                     // seconds between calls
 //      }
 //
@@ -147,6 +147,9 @@ final class AILiveHarness: XCTestCase {
         "gpt-5.5-pro",
         "gpt-5.6-sol",
         "gpt-5.6-terra",
+        "gpt-6-astra",
+        "gpt-6.1-sol",
+        "gpt-6-sol",
         "gemini-3.7-flash",
     ]
 
@@ -1689,14 +1692,14 @@ final class AILiveHarness: XCTestCase {
 
     func test_deepseek_thinking_toolCall_nonStreaming() throws {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
-        runDeepSeekThinkingToolCall(modelName: "deepseek-v4-flash",
+        runDeepSeekThinkingToolCall(modelName: "deepseek-flash",
                                     apiKey: key,
                                     streaming: false)
     }
 
     func test_deepseek_thinking_toolCall_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
-        runDeepSeekThinkingToolCall(modelName: "deepseek-v4-flash",
+        runDeepSeekThinkingToolCall(modelName: "deepseek-flash",
                                     apiKey: key,
                                     streaming: true)
     }
@@ -1714,7 +1717,7 @@ final class AILiveHarness: XCTestCase {
         throttle(forVendor: "deepseek")
         do {
             let result = try AILiveDriver.run(
-                model: Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash"),
+                model: Self.deepseekV4ThinkingModel(named: "deepseek-flash"),
                 apiKey: key,
                 messages: messages,
                 streaming: false,
@@ -1743,7 +1746,7 @@ final class AILiveHarness: XCTestCase {
         let provider = AILiveStaticRegistrationProvider(apiKey: key)
         // Production model entry — Phase 4 added .configurableThinking to it,
         // so AITermController.shouldThink propagation flows.
-        let modelName = "deepseek-v4-flash"
+        let modelName = "deepseek-flash"
 
         // Verify the wire request actually used the test's loaded key, not
         // whatever AITermControllerRegistrationHelper.instance pulled from
@@ -1838,7 +1841,7 @@ final class AILiveHarness: XCTestCase {
         throttle(forVendor: "deepseek")
         do {
             let result = try AILiveDriver.run(
-                modelName: "deepseek-v4-flash",
+                modelName: "deepseek-flash",
                 apiKey: key,
                 messages: messages,
                 streaming: false,
@@ -1882,7 +1885,7 @@ final class AILiveHarness: XCTestCase {
         throttle(forVendor: "deepseek")
         do {
             let result = try AILiveDriver.run(
-                modelName: "deepseek-v4-flash",
+                modelName: "deepseek-flash",
                 apiKey: key,
                 messages: messages,
                 streaming: false,
@@ -1917,7 +1920,7 @@ final class AILiveHarness: XCTestCase {
     // "The reasoning_content in the thinking mode must be passed back to the API."
     func test_deepseek_thinking_assistantTurn_roundTrips() throws {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
-        let model = Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash")
+        let model = Self.deepseekV4ThinkingModel(named: "deepseek-flash")
 
         let turn1 = [LLM.Message(role: .user,
                                  content: "Briefly explain why ice floats on water. Reply in one short sentence.")]
@@ -1960,7 +1963,7 @@ final class AILiveHarness: XCTestCase {
             XCTAssertFalse(r2.finalText.isEmpty,
                            "turn 2 returned empty text; round-trip failed")
             report(vendor: "deepseek-thinking",
-                   model: "deepseek-v4-flash",
+                   model: "deepseek-flash",
                    scenario: "thinkingRoundTrip2",
                    streaming: true,
                    result: r2)
@@ -1982,7 +1985,7 @@ final class AILiveHarness: XCTestCase {
         throttle(forVendor: "deepseek")
         do {
             let result = try AILiveDriver.run(
-                model: Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash"),
+                model: Self.deepseekV4ThinkingModel(named: "deepseek-flash"),
                 apiKey: key,
                 messages: messages,
                 streaming: true,
@@ -1990,16 +1993,16 @@ final class AILiveHarness: XCTestCase {
                 scenarioTag: "thinkingSmoke",
                 test: self)
             XCTAssertFalse(result.finalText.isEmpty,
-                           "[deepseek/deepseek-v4-flash] empty response")
+                           "[deepseek/deepseek-flash] empty response")
             XCTAssertFalse(result.reasoningText.isEmpty,
-                           "[deepseek/deepseek-v4-flash] no reasoning content captured; attachments=\(result.attachments)")
+                           "[deepseek/deepseek-flash] no reasoning content captured; attachments=\(result.attachments)")
             report(vendor: "deepseek-thinking",
-                   model: "deepseek-v4-flash",
+                   model: "deepseek-flash",
                    scenario: "thinkingSmoke",
                    streaming: true,
                    result: result)
         } catch {
-            XCTFail("[deepseek/deepseek-v4-flash/thinkingSmoke] \(error)")
+            XCTFail("[deepseek/deepseek-flash/thinkingSmoke] \(error)")
         }
     }
 
@@ -2030,7 +2033,7 @@ final class AILiveHarness: XCTestCase {
         throttle(forVendor: "deepseek")
         do {
             let result = try AILiveDriver.run(
-                model: Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash"),
+                model: Self.deepseekV4ThinkingModel(named: "deepseek-flash"),
                 apiKey: key,
                 messages: messages,
                 streaming: false,

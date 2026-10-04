@@ -28,21 +28,21 @@ final class AIModelCatalogTest: XCTestCase {
         let models = try bundledModels()
         XCTAssertFalse(models.isEmpty,
                        "AI model catalog decoded to zero models")
-        XCTAssertEqual(models.count, 40,
+        XCTAssertEqual(models.count, 51,
                        "Unexpected catalog size; update this test if you intentionally changed ai-models.json")
     }
 
     func testDefaultIsFirstEntry() throws {
         let models = try bundledModels()
-        XCTAssertEqual(models.first?.name, "gpt-5.6-sol")
+        XCTAssertEqual(models.first?.name, "gpt-6-astra")
     }
 
     func testRecommendedModelPerVendor() throws {
         let models = try bundledModels()
-        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .openAI, in: models)?.name, "gpt-5.6-sol")
-        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .gemini, in: models)?.name, "gemini-3.7-flash")
-        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .deepSeek, in: models)?.name, "deepseek-v4-flash")
-        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .anthropic, in: models)?.name, "claude-opus-4-8")
+        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .openAI, in: models)?.name, "gpt-6-astra")
+        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .gemini, in: models)?.name, "gemini-3.8-flash")
+        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .deepSeek, in: models)?.name, "deepseek-flash")
+        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .anthropic, in: models)?.name, "claude-opus-5-5")
         // Ollama models are discovered from the local server, not the catalog.
         XCTAssertNil(AIModelCatalog.recommendedModel(for: .llama, in: models))
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .apple, in: models)?.name, "apple-on-device")
@@ -51,7 +51,7 @@ final class AIModelCatalogTest: XCTestCase {
     func testAlternateModelsFilterByVendor() throws {
         let models = try bundledModels()
         let anthropic = models.filter { $0.vendor == .anthropic }
-        XCTAssertEqual(anthropic.count, 7)
+        XCTAssertEqual(anthropic.count, 12)
         XCTAssertTrue(anthropic.allSatisfy { $0.vendor == .anthropic })
         XCTAssertTrue(models.filter { $0.vendor == .gemini }.allSatisfy { $0.vendor == .gemini })
         XCTAssertTrue(models.filter { $0.vendor == .openAI }.allSatisfy { $0.vendor == .openAI })
@@ -59,15 +59,15 @@ final class AIModelCatalogTest: XCTestCase {
 
     func testFieldsMapCorrectly() throws {
         let models = try bundledModels()
-        guard let opus = models.first(where: { $0.name == "claude-opus-4-8" }) else {
-            XCTFail("claude-opus-4-8 missing from catalog")
+        guard let opus = models.first(where: { $0.name == "claude-opus-5-5" }) else {
+            XCTFail("claude-opus-5-5 missing from catalog")
             return
         }
-        // Opus 4.8 rejects the temperature parameter.
+        // Opus 5.5 rejects the temperature parameter.
         XCTAssertFalse(opus.supportsTemperature)
         XCTAssertEqual(opus.api, .anthropic)
         XCTAssertEqual(opus.vendor, .anthropic)
-        XCTAssertEqual(opus.contextWindowTokens, 200_000)
+        XCTAssertEqual(opus.contextWindowTokens, 1_000_000)
         XCTAssertEqual(opus.maxResponseTokens, 128_000)
         XCTAssertTrue(opus.features.contains(.functionCalling))
         XCTAssertTrue(opus.features.contains(.streaming))

@@ -530,6 +530,25 @@ private func parseArguments(_ arguments: String?) -> [String: Any] {
     return json
 }
 
+// Present on a response that stopped for a reason needing explanation. For
+// stop_reason "refusal" it carries a human-readable `explanation`.
+// https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback
+struct AnthropicStopDetails: Codable {
+    let type: String?
+    let category: String?
+    let explanation: String?
+
+    func refusalExplanation(stopReason: String?) -> String? {
+        guard stopReason == "refusal",
+              let explanation,
+              !explanation.isEmpty else {
+            return nil
+        }
+        DLog("Anthropic refusal (\(category ?? "nil")): \(explanation)")
+        return explanation
+    }
+}
+
 struct AnthropicResponseParser: LLMResponseParser {
     struct AnthropicResponse: Codable, LLM.AnyResponse {
         var isStreamingResponse: Bool { false }
@@ -540,6 +559,7 @@ struct AnthropicResponseParser: LLMResponseParser {
         var model: String
         var stop_reason: String?
         var stop_sequence: String?
+        var stop_details: AnthropicStopDetails?
         var usage: AnthropicUsage
 
         struct AnthropicResponseContent: Codable {
@@ -620,6 +640,13 @@ struct AnthropicResponseParser: LLMResponseParser {
                 default:
                     break
                 }
+            }
+
+            // Newer models (Opus 5 and later) can decline at the API layer:
+            // stop_reason "refusal" with no text and the reason in
+            // stop_details. Surface it so the user doesn't get a blank reply.
+            if let explanation = stop_details?.refusalExplanation(stopReason: stop_reason) {
+                bodies.append(.text(explanation))
             }
 
             let body: LLM.Message.Body
@@ -734,10 +761,11 @@ struct AnthropicStreamingResponseParser: LLMStreamingResponseParser {
             let type: String?
             let text: String?
             let stop_reason: String?
+            let stop_details: AnthropicStopDetails?
             let partial_json: String?
 
             enum CodingKeys: String, CodingKey {
-                case type, text, stop_reason, partial_json
+                case type, text, stop_reason, stop_details, partial_json
             }
         }
 
@@ -763,6 +791,10 @@ struct AnthropicStreamingResponseParser: LLMStreamingResponseParser {
                 } else if let partialJson = delta.partial_json {
                     // This is likely partial tool input, treat as text for now
                     text = partialJson
+                } else if let explanation = delta.stop_details?.refusalExplanation(stopReason: delta.stop_reason) {
+                    // API-level refusal arrives on message_delta; see the
+                    // non-streaming parser.
+                    text = explanation
                 }
             }
 

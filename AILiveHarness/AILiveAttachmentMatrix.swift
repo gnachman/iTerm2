@@ -36,7 +36,7 @@
 //    gemini           gemini-2.5-flash. inlineData with the attached
 //                     MIME; Gemini accepts a wider list than other
 //                     vendors (audio, video, heic).
-//    deepseek         deepseek-v4-flash. Chat-completions-like; non-text
+//    deepseek         deepseek-flash. Chat-completions-like; non-text
 //                     binaries get wrapped in <iterm2:attachment> via
 //                     lossyString.
 //    llama            Local Ollama (llama4:latest, /api/chat). Runs only
@@ -126,7 +126,7 @@ enum AttachmentLane: String, CaseIterable {
         case .gemini:
             return try lookup("gemini-2.5-flash")
         case .deepseek:
-            return try lookup("deepseek-v4-flash")
+            return try lookup("deepseek-flash")
         case .llama:
             // Local Ollama, url http://localhost:11434/api/chat. Model name from
             // LLAMA_MODELS (first non-empty, comma-separated), defaulting to the
