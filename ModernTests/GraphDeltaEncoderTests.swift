@@ -388,4 +388,182 @@ final class GraphDeltaEncoderTests: XCTestCase {
             "insert node key=k6, identifier=i4, parent=2, data={k11=k11_v1} -> 7",
         ])
     }
+
+    // MARK: - Duplicate sibling records
+
+    // What iTermGraphDatabase's reallySave: does with each (before, after) pair, except that
+    // the two failures that crash the app are recorded instead of thrown or asserted:
+    // a `before` without a rowid (the MissingRowID exception) and a `before`/`after` pair whose
+    // rowids disagree (assert(before.rowid == after.rowid)).
+    private struct SaveProblems {
+        var missingRowIDs = [String]()
+        var mismatchedRowIDs = [String]()
+    }
+
+    private func simulateSave(_ encoder: iTermGraphDeltaEncoder) -> SaveProblems {
+        var problems = SaveProblems()
+        _ = encoder.enumerateRecords { before, after, _, path, _ in
+            if let before, before.rowid == nil {
+                problems.missingRowIDs.append(path)
+                return
+            }
+            switch (before, after) {
+            case (nil, let after?):
+                self.nextRowID += 1
+                after.rowid = NSNumber(value: self.nextRowID)
+            case (let before?, let after?):
+                if after.rowid == nil {
+                    after.rowid = before.rowid
+                } else if before.generation == after.generation && after.generation != iTermGenerationAlwaysEncode {
+                    return
+                }
+                if before.rowid != after.rowid {
+                    problems.mismatchedRowIDs.append("\(path): before rowid \(self.describe(before.rowid)), after rowid \(self.describe(after.rowid))")
+                }
+            default:
+                break
+            }
+        }
+        return problems
+    }
+
+    // Paths of records that a save left without a rowid. The next save's delta is computed
+    // against this tree, and any such record makes it throw MissingRowID.
+    private func recordsWithoutRowIDs(_ record: iTermEncoderGraphRecord, path: String = "root") -> [String] {
+        var result = record.rowid == nil ? [path] : []
+        for child in record.graphRecords {
+            result += recordsWithoutRowIDs(child, path: "\(path).\(child.key)[\(child.identifier)]")
+        }
+        return result
+    }
+
+    private func record(key: String,
+                        identifier: String,
+                        generation: Int,
+                        rowid: Int,
+                        pod: [String: Any] = [:],
+                        children: [iTermEncoderGraphRecord] = []) -> iTermEncoderGraphRecord {
+        return iTermEncoderGraphRecord.withPODs(pod,
+                                                graphs: children,
+                                                generation: generation,
+                                                key: key,
+                                                identifier: identifier,
+                                                rowid: NSNumber(value: rowid))
+    }
+
+    // A previous revision shaped like what loads from a database containing a duplicate
+    // sibling: root > __array[items] > { e0...e(n-1), X (first), X (last) }, where each X has a
+    // "wrapper" child. This is the shape of the crashing records (a LineBuffer block's
+    // "Block Wrapper", or a mark's "content", inside a large array).
+    private func previousRevisionWithDuplicate(uniqueCount: Int,
+                                               firstGeneration: Int,
+                                               firstWrapperGeneration: Int,
+                                               lastGeneration: Int,
+                                               lastWrapperGeneration: Int,
+                                               includeLast: Bool = true) -> iTermEncoderGraphRecord {
+        var elements = (0..<uniqueCount).map {
+            record(key: "", identifier: "e\($0)", generation: 1, rowid: 10 + $0, pod: ["v": "old"])
+        }
+        elements.append(record(key: "", identifier: "X", generation: firstGeneration, rowid: 100,
+                               children: [record(key: "wrapper", identifier: "", generation: firstWrapperGeneration, rowid: 101)]))
+        if includeLast {
+            elements.append(record(key: "", identifier: "X", generation: lastGeneration, rowid: 200,
+                                   children: [record(key: "wrapper", identifier: "", generation: lastWrapperGeneration, rowid: 201)]))
+        }
+        let order = ((0..<uniqueCount).map { "e\($0)" } + ["X"]).joined(separator: "\t")
+        let array = record(key: "__array", identifier: "items", generation: 1, rowid: 2,
+                           pod: ["__order": order], children: elements)
+        nextRowID = 1000
+        return record(key: "", identifier: "", generation: 1, rowid: 1, children: [array])
+    }
+
+    // Encodes a new revision of the array in which X's wrapper is at `wrapperGeneration`.
+    private func encodeItems(previous: iTermEncoderGraphRecord,
+                             uniqueCount: Int,
+                             wrapperGeneration: Int) -> iTermGraphDeltaEncoder {
+        let encoder = iTermGraphDeltaEncoder(previousRevision: previous)
+        let identifiers = (0..<uniqueCount).map { "e\($0)" } + ["X"]
+        encoder.encodeArray(withKey: "items",
+                            generation: 2,
+                            identifiers: identifiers,
+                            options: []) { identifier, _, subencoder, _ in
+            subencoder.encode("new", forKey: "v")
+            if identifier == "X" {
+                _ = subencoder.encodeChild(withKey: "wrapper", identifier: "", generation: wrapperGeneration) { wrapper in
+                    wrapper.encode("payload", forKey: "p")
+                    return true
+                }
+            }
+            return true
+        }
+        return encoder
+    }
+
+    // MissingRowID: with more than 16 elements the delta encoder looks up X's previous revision
+    // in an index. If the index picked the LAST duplicate (gen 5, so the new X is gen 6) while
+    // the save pairs X with the FIRST (also gen 6), equal rowid and generation would make the
+    // save skip X's subtree, so X's new wrapper would never get a rowid and the next save
+    // would throw MissingRowID.
+    func testDuplicateSiblingInLargeArrayLeavesRecordWithoutRowID() throws {
+        let previous = previousRevisionWithDuplicate(uniqueCount: 17,
+                                                     firstGeneration: 6,
+                                                     firstWrapperGeneration: 10,
+                                                     lastGeneration: 5,
+                                                     lastWrapperGeneration: 10)
+        let encoder = encodeItems(previous: previous, uniqueCount: 17, wrapperGeneration: 11)
+        let problems = simulateSave(encoder)
+        XCTAssertEqual(problems.missingRowIDs, [])
+        XCTAssertEqual(problems.mismatchedRowIDs, [])
+        XCTAssertEqual(recordsWithoutRowIDs(try XCTUnwrap(encoder.record)), [])
+    }
+
+    // assert(before.rowid == after.rowid): if the index picked the LAST duplicate, the delta
+    // encoder would reuse its unchanged wrapper (rowid 201) in the new tree, while the save
+    // pairs it with the FIRST duplicate's wrapper (rowid 101).
+    func testDuplicateSiblingInLargeArrayPairsMismatchedRowIDs() throws {
+        let previous = previousRevisionWithDuplicate(uniqueCount: 17,
+                                                     firstGeneration: 9,
+                                                     firstWrapperGeneration: 10,
+                                                     lastGeneration: 5,
+                                                     lastWrapperGeneration: 20)
+        let encoder = encodeItems(previous: previous, uniqueCount: 17, wrapperGeneration: 20)
+        let problems = simulateSave(encoder)
+        XCTAssertEqual(problems.missingRowIDs, [])
+        XCTAssertEqual(problems.mismatchedRowIDs, [])
+        XCTAssertEqual(recordsWithoutRowIDs(try XCTUnwrap(encoder.record)), [])
+    }
+
+    // The same duplicate in a small array (16 elements or fewer), where the delta encoder
+    // doesn't use an index.
+    func testDuplicateSiblingInSmallArrayIsConsistent() throws {
+        for (firstGeneration, lastWrapperGeneration, wrapperGeneration) in [(6, 10, 11), (9, 20, 20)] {
+            let previous = previousRevisionWithDuplicate(uniqueCount: 3,
+                                                         firstGeneration: firstGeneration,
+                                                         firstWrapperGeneration: 10,
+                                                         lastGeneration: 5,
+                                                         lastWrapperGeneration: lastWrapperGeneration)
+            let encoder = encodeItems(previous: previous, uniqueCount: 3, wrapperGeneration: wrapperGeneration)
+            let problems = simulateSave(encoder)
+            XCTAssertEqual(problems.missingRowIDs, [])
+            XCTAssertEqual(problems.mismatchedRowIDs, [])
+            XCTAssertEqual(recordsWithoutRowIDs(try XCTUnwrap(encoder.record)), [])
+        }
+    }
+
+    // The large-array scenarios without the duplicate.
+    func testLargeArrayWithoutDuplicateIsConsistent() throws {
+        for (firstGeneration, wrapperGeneration) in [(6, 11), (9, 20)] {
+            let previous = previousRevisionWithDuplicate(uniqueCount: 17,
+                                                         firstGeneration: firstGeneration,
+                                                         firstWrapperGeneration: 10,
+                                                         lastGeneration: 5,
+                                                         lastWrapperGeneration: 10,
+                                                         includeLast: false)
+            let encoder = encodeItems(previous: previous, uniqueCount: 17, wrapperGeneration: wrapperGeneration)
+            let problems = simulateSave(encoder)
+            XCTAssertEqual(problems.missingRowIDs, [])
+            XCTAssertEqual(problems.mismatchedRowIDs, [])
+            XCTAssertEqual(recordsWithoutRowIDs(try XCTUnwrap(encoder.record)), [])
+        }
+    }
 }

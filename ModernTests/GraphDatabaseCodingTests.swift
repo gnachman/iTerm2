@@ -425,4 +425,68 @@ final class GraphDatabaseCodingTests: XCTestCase {
         XCTAssertEqual(contents["cll"] as? NSArray, [2, 4, 6, 8])
         XCTAssertEqual(contents["metadata"] as? NSArray, [1, "foo"])
     }
+
+    // MARK: - Overlapping saves
+
+    // Rows that share (parent, key, identifier). A correct save never produces these: each node
+    // in the tree is one row.
+    private func duplicateSiblingRows() throws -> [String] {
+        let db = try XCTUnwrap(sqlite)
+        let rs = try XCTUnwrap(db.executeQuery("select parent, key, identifier, count(*) as n from Node group by parent, key, identifier having n > 1",
+                                               withArguments: []))
+        defer { rs.close() }
+        var result = [String]()
+        while rs.next() {
+            result.append("parent=\(rs.longLongInt(forColumn: "parent")) key=\(rs.string(forColumn: "key") ?? "") identifier=\(rs.string(forColumn: "identifier") ?? "") count=\(rs.longLongInt(forColumn: "n"))")
+        }
+        return result
+    }
+
+    // Encodes wrapper > { mynode, newnode } at the given wrapper generation.
+    private func encodeWrapperWithNewNode(_ encoder: iTermGraphEncoder, generation: Int) {
+        _ = encoder.encodeChild(withKey: "wrapper", identifier: "", generation: generation) { wrapper in
+            _ = wrapper.encodeChild(withKey: "mynode", identifier: "", generation: 1) { mynode in
+                mynode.encode("Hello", forKey: "World")
+                return true
+            }
+            return wrapper.encodeChild(withKey: "newnode", identifier: "", generation: 1) { newnode in
+                newnode.encode("Goodbye", forKey: "Everybody")
+                return true
+            }
+        }
+    }
+
+    // The quit-time race. An async save is still pending when a sync save (as
+    // applicationWillTerminate does) starts. If the sync save built its delta right away, both
+    // deltas would be against the same self.record, so both would insert the node that is new
+    // since then, leaving two sibling rows for one node. On the next launch those duplicates
+    // make the delta encoder and the save enumerator pick different rows, which crashes saves.
+    // The sync save must wait for the pending save to publish its result first.
+    func testSyncSaveWhileAsyncSaveIsPendingDoesNotDuplicateRows() throws {
+        let graph = try saveWrapperAndMynode()
+
+        let asyncAccepted = graph.updateSynchronously(false, block: { encoder in
+            self.encodeWrapperWithNewNode(encoder, generation: 2)
+        }, completion: nil)
+        XCTAssertTrue(asyncAccepted)
+
+        var baseHadNewNode = false
+        let syncAccepted = graph.updateSynchronously(true, block: { encoder in
+            // By the time the sync save builds its delta, the async save must have published
+            // its tree, rowids included, as the base.
+            let wrapper = graph.record.childRecord(withKey: "wrapper", identifier: "")
+            let newnode = wrapper?.childRecord(withKey: "newnode", identifier: "")
+            baseHadNewNode = (newnode?.rowid != nil)
+            self.encodeWrapperWithNewNode(encoder, generation: 3)
+        }, completion: nil)
+        XCTAssertTrue(syncAccepted)
+        XCTAssertTrue(baseHadNewNode, "Sync save built its delta while the async save was still pending")
+
+        XCTAssertEqual(try duplicateSiblingRows(), [])
+
+        // Duplicate rows would survive a relaunch as two siblings for one node.
+        let reopened = openGraphDatabase()
+        let wrapper = try XCTUnwrap(reopened.record.childRecord(withKey: "wrapper", identifier: ""))
+        XCTAssertEqual(wrapper.graphRecords.filter { $0.key == "newnode" }.count, 1)
+    }
 }

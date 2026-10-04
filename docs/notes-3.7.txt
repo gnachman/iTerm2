@@ -423,6 +423,11 @@ Bug Fixes:
 - Sessions closed shortly before quitting are
   now always archived if their profile archives
   sessions on close.
+- Fixed a crash that could recur every time
+  iTerm2 saved window state. Quitting while a
+  save was in progress could store duplicate
+  entries in the saved-state database, which
+  later saves could not handle.
 - Fixed Tab.async_update_layout in the Python
   API making a browser pane many times too big,
   squeezing the panes beside it, and sometimes
