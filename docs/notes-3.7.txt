@@ -262,6 +262,8 @@ New Features:
   CSI 0 SP k restores the default.
 
 Improvements:
+- Add an Edit Tab Title action in Settings > Keys
+  so you can assign a shortcut to rename tabs.
 - iTerm2 now recognizes when a terminal is
   running on your own Mac by machine identity
   rather than by hostname, so features that only

@@ -205,6 +205,9 @@
 - (void)moveTabLeft:(id)sender;
 - (void)moveTabRight:(id)sender;
 
+// Open the title editor for the current tab.
+- (IBAction)editTabTitle:(id)sender;
+
 // Increase and Decrease
 - (void)increaseHeight:(id)sender;
 - (void)decreaseHeight:(id)sender;
