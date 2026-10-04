@@ -16,6 +16,12 @@
 //  It uses a clock that does not advance while the Mac is asleep, so waking up
 //  does not look like a stall.
 //
+//  It only runs while something is subscribed, so that an app with no phone
+//  connected does no periodic work. The cost is that a stall which began
+//  before the first subscriber arrived is measured from the subscription, not
+//  from when it began: a phone that connects during a freeze is told the Mac is
+//  blocked up to CompanionMainStallTracker.threshold seconds late.
+//
 
 import Foundation
 import os
@@ -79,29 +85,13 @@ final class CompanionMainThreadMonitor: CompanionMainStallSource {
 
     private static let tickIntervalNanos: UInt64 = 1_000_000_000
 
-    /// The observer token. Held weakly here, so dropping the token unsubscribes.
-    private final class Observer: Sendable {
-        let changed: @Sendable () -> Void
-        init(changed: @escaping @Sendable () -> Void) {
-            self.changed = changed
-        }
-    }
-
-    private struct WeakObserver: Sendable {
-        weak var observer: Observer?
-    }
-
     private struct State: Sendable {
         var tracker = CompanionMainStallTracker()
-        var observers: [WeakObserver] = []
         /// Whether the automatic tick loop is running.
         var ticking = false
-
-        mutating func liveObservers() -> [Observer] {
-            observers.removeAll { $0.observer == nil }
-            return observers.compactMap { $0.observer }
-        }
     }
+
+    private let observers = WeakObserverList()
 
     private let state = OSAllocatedUnfairLock(initialState: State())
     private let now: @Sendable () -> TimeInterval
@@ -123,17 +113,12 @@ final class CompanionMainThreadMonitor: CompanionMainStallSource {
     /// Check on the main thread now.
     func tick() {
         let time = now()
-        let (postProbe, toNotify) = state.withLock { state -> (Bool, [Observer]) in
-            let result = state.tracker.tick(now: time)
-            return (result.postProbe, result.changed ? state.liveObservers() : [])
-        }
-        if !toNotify.isEmpty {
+        let result = state.withLock { $0.tracker.tick(now: time) }
+        if result.changed {
             RLog("Companion: the main thread has stopped responding")
+            observers.notify()
         }
-        for observer in toNotify {
-            observer.changed()
-        }
-        if postProbe {
+        if result.postProbe {
             runOnMain { [weak self] in
                 self?.probeRan()
             }
@@ -141,25 +126,23 @@ final class CompanionMainThreadMonitor: CompanionMainStallSource {
     }
 
     private func probeRan() {
-        let toNotify = state.withLock { state -> [Observer] in
-            return state.tracker.probeRan() ? state.liveObservers() : []
-        }
-        if !toNotify.isEmpty {
+        let changed = state.withLock { $0.tracker.probeRan() }
+        if changed {
             RLog("Companion: the main thread is responding again")
-        }
-        for observer in toNotify {
-            observer.changed()
+            observers.notify()
         }
     }
 
     func isMainBlocked() -> Bool {
+        // Evaluated against the clock now, not as of the last tick. The link
+        // asks while it builds a hello reply, which can come before any tick.
+        tick()
         return state.withLock { $0.tracker.isBlocked }
     }
 
     func addObserver(_ changed: @escaping @Sendable () -> Void) -> AnyObject {
-        let observer = Observer(changed: changed)
+        let token = observers.add(changed)
         let startTicking = state.withLock { state -> Bool in
-            state.observers.append(WeakObserver(observer: observer))
             guard ticksAutomatically, !state.ticking else {
                 return false
             }
@@ -169,7 +152,11 @@ final class CompanionMainThreadMonitor: CompanionMainStallSource {
         if startTicking {
             startTickLoop()
         }
-        return observer
+        // Start measuring now, not at the first tick a second from now. A phone
+        // may be connecting while the main queue is already frozen: nothing was
+        // subscribed when the freeze began, so nothing has been measured yet.
+        tick()
+        return token
     }
 
     /// Ticks about once a second for as long as anything is subscribed, then
@@ -181,15 +168,20 @@ final class CompanionMainThreadMonitor: CompanionMainStallSource {
                 guard let self else {
                     return
                 }
-                let keepGoing = self.state.withLock { state -> Bool in
-                    if state.liveObservers().isEmpty {
+                if self.observers.isEmpty {
+                    let stop = self.state.withLock { state -> Bool in
+                        // Checked again under the lock that addObserver takes
+                        // after subscribing, so a subscriber that arrived just
+                        // now is not left without a loop.
+                        guard self.observers.isEmpty else {
+                            return false
+                        }
                         state.ticking = false
-                        return false
+                        return true
                     }
-                    return true
-                }
-                guard keepGoing else {
-                    return
+                    if stop {
+                        return
+                    }
                 }
                 self.tick()
             }

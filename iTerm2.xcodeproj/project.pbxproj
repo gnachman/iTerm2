@@ -4696,6 +4696,7 @@
 		F4B48ACE64DE84CB54640D8E /* ColorAlphaBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB585CA61BDA34E5071CFD83 /* ColorAlphaBuiltInFunction.swift */; };
 		F50FD9F1F317F265BA9D2575 /* AILiveAppleIntelligenceTabTitle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7133FD0EA06B662C44BD713A /* AILiveAppleIntelligenceTabTitle.swift */; };
 		F591A4498CAE20BD9C1C36C7 /* MonitorCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68BF1DCEF74D6DEC0A2552F2 /* MonitorCommand.swift */; };
+		F639888C586AAEB1D3D93A3F /* iTermWeakObserverList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A292340C410A896E03ADEC3 /* iTermWeakObserverList.swift */; };
 		F7C626F9C65F19A1BEE800DA /* iTermWordExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF1E9C79C30008CC546F987 /* iTermWordExtractor.swift */; };
 		F7E9577EBDD47ED18CBD569F /* iTermImageComparison.h in Sources */ = {isa = PBXBuildFile; fileRef = 516BF83D01B179D961D3EDB6 /* iTermImageComparison.h */; };
 		F81F042365701BE191505DF5 /* CompanionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99A211B9CCCCDFA3692A5C4 /* CompanionSession.swift */; };
@@ -5963,6 +5964,7 @@
 		9946FFB23BB5ECE2EDCA77F6 /* iTermTabGroup.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermTabGroup.swift; sourceTree = "<group>"; };
 		99A7BD23A9FD1C51B6E4C8C6 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermEditKeyActionWindowController.xcstrings; sourceTree = "<group>"; };
 		9A1F7DEDB57FDB370787B646 /* CompanionPushNonceRegistry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPushNonceRegistry.swift; sourceTree = "<group>"; };
+		9A292340C410A896E03ADEC3 /* iTermWeakObserverList.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWeakObserverList.swift; sourceTree = "<group>"; };
 		9AAD1F7EE14F2DDA1A3E1090 /* CompanionModalFreezeDebug.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionModalFreezeDebug.swift; sourceTree = "<group>"; };
 		9AC55449579A4828B645BF60 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/DirectoriesPopup.xib; sourceTree = "<group>"; };
 		9B084D285B6C1CDDE2932596 /* ArchiveClippingsBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ArchiveClippingsBuiltInFunction.swift; sourceTree = "<group>"; };
@@ -13860,6 +13862,7 @@
 				C6675EBA1C4FE96B0041173B /* iTermSelectorSwizzler.h */,
 				C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */,
 				EADF3E7DB1C0DAB2A13D7D99 /* iTermModalAlertRegistry.swift */,
+				9A292340C410A896E03ADEC3 /* iTermWeakObserverList.swift */,
 			);
 			path = Infrastructure;
 			sourceTree = "<group>";
@@ -19995,6 +19998,7 @@
 				3DCAF403F69805DD1E24FA18 /* CompanionParkSupervisor.swift in Sources */,
 				C026494BD761D81234738D90 /* iTermModalAlertRegistry.swift in Sources */,
 				2FCC404587D2BA414548909B /* CompanionMainThreadMonitor.swift in Sources */,
+				F639888C586AAEB1D3D93A3F /* iTermWeakObserverList.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

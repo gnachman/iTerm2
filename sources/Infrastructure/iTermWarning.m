@@ -97,6 +97,16 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
     }
 }
 
+// The sheet's parent window closed. Like a real sheet in that case, the completion never runs.
+- (void)abandon {
+    if (_finished) {
+        return;
+    }
+    _finished = YES;
+    _completion = nil;
+    [gHeadlessModalSessions removeObject:self];
+}
+
 // Blocks like -[NSAlert runModal]: a nested run loop in the modal panel mode. Started from a
 // main-queue callout it freezes the main dispatch queue, exactly as a real alert would.
 - (NSModalResponse)runUntilFinished {
@@ -302,7 +312,33 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
         if (self.window) {
             // A sheet shown this way does not block, so it is not app-modal.
             iTermModalAlertRegistration *sheetRegistration = [self registerAlert:alert appModal:NO];
+            // AppKit does not call a sheet's completion handler if the parent window closes before
+            // the sheet is answered, so the completion alone cannot be relied on to unregister.
+            // Without this the alert would stay published (and unanswerable) until relaunch.
+            NSWindow *parent = self.window;
+            __block id parentCloseObserver = nil;
+            __block iTermHeadlessModalSession *headlessSession = nil;
+            void (^stopObservingParent)(void) = ^{
+                if (parentCloseObserver) {
+                    [[NSNotificationCenter defaultCenter] removeObserver:parentCloseObserver];
+                    parentCloseObserver = nil;
+                }
+            };
+            parentCloseObserver =
+                [[NSNotificationCenter defaultCenter] addObserverForName:NSWindowWillCloseNotification
+                                                                  object:parent
+                                                                   queue:nil
+                                                              usingBlock:^(NSNotification *notification) {
+                DLog(@"Parent window of sheet warning %@ closed before it was answered", self);
+                stopObservingParent();
+                [sheetRegistration unregister];
+                [headlessSession abandon];
+                headlessSession = nil;
+                gShowingWarning = NO;
+            }];
             void (^sheetCompletion)(NSModalResponse) = ^(NSModalResponse result) {
+                stopObservingParent();
+                headlessSession = nil;
                 [sheetRegistration unregister];
                 DLog(@"Result for %@ is %@", self, @(result));
                 gShowingWarning = NO;
@@ -310,9 +346,9 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
             };
             if (gRunsHeadlessModals) {
                 // Kept alive by gHeadlessModalSessions until a button is clicked.
-                (void)[[iTermHeadlessModalSession alloc] initWithAlert:alert completion:sheetCompletion];
+                headlessSession = [[iTermHeadlessModalSession alloc] initWithAlert:alert completion:sheetCompletion];
             } else {
-                [alert beginSheetModalForWindow:self.window completionHandler:sheetCompletion];
+                [alert beginSheetModalForWindow:parent completionHandler:sheetCompletion];
             }
             return;
         }
@@ -649,6 +685,13 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
         if (buttonIndex < 0 || buttonIndex >= actions.count || buttonIndex >= strongAlert.buttons.count) {
             return NO;
         }
+        // A click on a disabled button does nothing. Reporting it as a press would leave the
+        // other end waiting for an alert that is not going away. Nor may a hidden button be
+        // pressed: the user at this Mac could not.
+        NSButton *button = strongAlert.buttons[buttonIndex];
+        if (!button.isEnabled || button.isHidden) {
+            return NO;
+        }
         // -handleResult:alert: reads the box's state when it handles the click, and would persist
         // the choice even for a warning that shows no box. So check it only when the warning has
         // one and this action may be remembered.
@@ -658,7 +701,7 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
             strongAlert.suppressionButton.state = NSControlStateValueOn;
         }
         // The same as a mouse click: ends the modal session (or sheet) with this button's code.
-        [strongAlert.buttons[buttonIndex] performClick:nil];
+        [button performClick:nil];
         return YES;
     };
 }

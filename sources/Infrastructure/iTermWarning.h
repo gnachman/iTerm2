@@ -213,8 +213,13 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @property(nullable, nonatomic, copy) void (^showHelpBlock)(void);
 
 // Whether the paired companion app may see this warning and press one of its buttons while it is
-// showing (see iTermModalAlertRegistry). Defaults to YES. Set to NO for a warning that has to be
-// answered at this Mac, such as one about the companion pairing itself.
+// showing (see iTermModalAlertRegistry). Defaults to YES, so every warning is answerable from the
+// phone unless its call site sets this to NO. No call site does yet. Set it to NO for a warning
+// that must be answered at this Mac.
+//
+// The accessory view is never sent: the phone is told only that one exists, and can still press
+// any button. For a warning whose accessory takes input, that means confirming contents the user
+// has not seen.
 @property(nonatomic) BOOL remotelyAnswerable;
 
 @property(nonatomic, retain) NSWindow * _Nullable window;
@@ -239,7 +244,8 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // The block iTermModalAlertRegistry calls to press a button on `alert` (which must be one this
 // warning made). It checks the suppression box first if `suppress` is set, the alert has one, and
 // that button's choice may be remembered; then it clicks the button. Returns NO, clicking nothing,
-// if the index is not one of this warning's actions or the alert is gone. Holds the alert weakly.
+// if the index is not one of this warning's actions, the button is disabled or hidden, or the alert
+// is gone. Holds the alert weakly.
 - (BOOL (^)(NSInteger buttonIndex, BOOL suppress))modalAlertPressBlockForAlert:(NSAlert *)alert;
 
 @end

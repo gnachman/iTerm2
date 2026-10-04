@@ -315,6 +315,10 @@ final class CompanionLinkTests: XCTestCase {
             return "relayRoomSecret"
         case .answerModalAlert:
             return "answerModalAlert"
+        case .sendKey:
+            return "sendKey"
+        case .pasteText:
+            return "pasteText"
         case .listChatsAndSessions:
             return "listChatsAndSessions"
         case .unsubscribe(let chatID):
@@ -941,6 +945,120 @@ final class CompanionLinkTests: XCTestCase {
         fixture.alerts.releaseAnswers()
         let rejection = try await fixture.phone.next()
         XCTAssertEqual(rejection, "answerRejected(\(id.uuidString))")
+    }
+
+    /// An answer is only meaningful from a phone that was told about the alert,
+    /// which takes a completed hello at a revision that carries the status.
+    func testAnswerIsIgnoredBeforeHelloAndFromAPhoneThatGetsNoStatus() async throws {
+        let id = UUID()
+        // No hello at all.
+        let early = makeFixture()
+        early.alerts.show([FakeAlertSource.alert("A", id: id)])
+        try await early.phone.send(.answerModalAlert(alertID: id.uuidString, buttonIndex: 0, suppress: false))
+        try await early.phone.send(.ping, requestID: 1)
+        let pong = try await early.phone.next()
+        XCTAssertEqual(pong, "pong#1")
+        // A second round trip, so an answer handled apart from the receive loop
+        // would have had its turn by now.
+        try await early.phone.send(.ping, requestID: 2)
+        _ = try await early.phone.next()
+        XCTAssertEqual(early.alerts.answers, [])
+
+        // A phone from before the status existed.
+        let old = makeFixture()
+        old.alerts.show([FakeAlertSource.alert("A", id: id)])
+        try await old.phone.send(Self.revision13Hello, requestID: 1)
+        _ = try await old.phone.next()
+        try await old.phone.send(.answerModalAlert(alertID: id.uuidString, buttonIndex: 0, suppress: false))
+        try await old.phone.send(.ping, requestID: 2)
+        let next = try await old.phone.next()
+        XCTAssertEqual(next, "pong#2", "and no rejection event it could not decode")
+        try await old.phone.send(.ping, requestID: 3)
+        _ = try await old.phone.next()
+        XCTAssertEqual(old.alerts.answers, [])
+    }
+
+    // MARK: Input while the Mac is blocked
+
+    private static func key(_ text: String) -> CompanionClientMessage {
+        return .sendKey(sessionGuid: "g", event: CompanionKeyEvent(key: .text(text)))
+    }
+
+    /// Keystrokes and pastes sent while the Mac cannot act on them must not be
+    /// saved up and typed into the terminal minutes later, when the alert is
+    /// finally dismissed.
+    func testKeysAndPastesAreRefusedWhileTheMainThreadIsBlocked() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        fixture.stall.setBlocked(true)
+        let status = try await fixture.phone.next()
+        XCTAssertEqual(status, "macStatus(alerts=[], blocked=true)")
+
+        try await fixture.phone.send(Self.key("x"), requestID: 5)
+        let refusal = try await fixture.phone.next()
+        XCTAssertEqual(refusal, "error#5")
+        // Sent without a request ID, as the phone normally sends them: dropped.
+        try await fixture.phone.send(Self.key("y"))
+        try await fixture.phone.send(.pasteText(sessionGuid: "g", text: "rm -rf /"))
+        try await fixture.phone.send(.ping, requestID: 6)
+        let pong = try await fixture.phone.next()
+        XCTAssertEqual(pong, "pong#6")
+
+        // Unblocked: input goes through again.
+        fixture.stall.setBlocked(false)
+        _ = try await fixture.phone.next()
+        try await fixture.phone.send(Self.key("z"), requestID: 7)
+        try await fixture.phone.send(.ping, requestID: 8)
+        _ = try await fixture.phone.next()
+
+        await fixture.phone.close()
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events, ["handled hello(\(CompanionProtocolVersion.current))#1",
+                                "helloCompleted(\(CompanionProtocolVersion.current), blocked=false)",
+                                "handled ping#6",
+                                "forwarded sendKey#7",
+                                "handled ping#8",
+                                "closed(dropped)"],
+                       "nothing typed during the block reaches the bridge")
+    }
+
+    func testKeysAreRefusedWhileAnAlertThatBlocksTheMacIsUpButNotForASheet() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+
+        // A sheet does not stop the Mac from serving requests.
+        fixture.alerts.show([FakeAlertSource.alert("Sheet", isAppModal: false)])
+        _ = try await fixture.phone.next()
+        try await fixture.phone.send(Self.key("a"), requestID: 2)
+        // A sync point: the link has read the key before the next alert appears.
+        try await fixture.phone.send(.ping, requestID: 20)
+        let pong = try await fixture.phone.next()
+        XCTAssertEqual(pong, "pong#20")
+
+        // An app-modal alert does, even before the stall monitor notices.
+        fixture.alerts.show([FakeAlertSource.alert("Blocking")])
+        _ = try await fixture.phone.next()
+        try await fixture.phone.send(Self.key("b"), requestID: 3)
+        let refusal = try await fixture.phone.next()
+        XCTAssertEqual(refusal, "error#3")
+
+        await fixture.phone.close()
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events.filter { $0.contains("sendKey") }, ["forwarded sendKey#2"])
+    }
+
+    /// An older Buddy does not know the Mac is blocked and keeps sending. The
+    /// refusal does not depend on what the phone was told.
+    func testKeysFromAnOlderPhoneAreRefusedWhileBlockedToo() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.revision13Hello, requestID: 1)
+        _ = try await fixture.phone.next()
+        fixture.stall.setBlocked(true)
+        try await fixture.phone.send(Self.key("x"), requestID: 2)
+        let refusal = try await fixture.phone.next()
+        XCTAssertEqual(refusal, "error#2")
     }
 
     func testAnswerIsForwardedAsHandledAndClassifiesAsUnsolicited() async throws {

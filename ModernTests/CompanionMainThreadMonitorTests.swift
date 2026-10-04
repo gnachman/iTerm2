@@ -170,6 +170,34 @@ final class CompanionMainThreadMonitorTests: XCTestCase {
         _ = token
     }
 
+    /// A phone that connects while the main queue is ALREADY frozen (so nothing
+    /// was subscribed, and nothing was ticking, when the freeze began). The
+    /// monitor must start measuring the moment it is subscribed to, and must
+    /// answer isMainBlocked() from the current time, not from its last tick:
+    /// the link asks while building the hello reply, and no tick may have
+    /// happened yet.
+    func testSubscribingDuringAFreezeIsMeasuredFromThatMomentWithoutATick() async throws {
+        let clock = Clock()
+        let monitor = CompanionMainThreadMonitor(now: { clock.now }, ticksAutomatically: false)
+        let (unblocked, unblockedContinuation) = AsyncStream<Void>.makeStream()
+        var token: AnyObject?
+        try await FrozenMainQueue.run { freeze in
+            token = monitor.addObserver { [weak monitor] in
+                if monitor?.isMainBlocked() == false {
+                    unblockedContinuation.yield()
+                }
+            }
+            await freeze.waitForRunLoopPasses(3)
+            XCTAssertFalse(monitor.isMainBlocked(), "not yet: the threshold has not passed")
+            clock.now += CompanionMainStallTracker.threshold
+            XCTAssertTrue(monitor.isMainBlocked(), "no tick happened, and none should be needed")
+        }
+        try await FrozenMainQueue.withFailsafe("the monitor to report unblocked") {
+            for await _ in unblocked { break }
+        }
+        _ = token
+    }
+
     func testDefaultClockDoesNotGoBackwards() {
         let first = CompanionMainThreadMonitor.uptimeExcludingSleep()
         let second = CompanionMainThreadMonitor.uptimeExcludingSleep()

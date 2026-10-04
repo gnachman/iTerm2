@@ -198,6 +198,60 @@ final class ModalAlertRegistryTests: XCTestCase {
         XCTAssertEqual(presses.all, [.init(buttonIndex: 0, suppress: false, onMainThread: true)])
     }
 
+    /// Registration order is not what is in front. A sheet that does not block
+    /// the Mac, registered after an alert that does, must not become the one
+    /// alert that can be answered: the blocking alert is still what is in the
+    /// way, and it is still clickable.
+    func testASheetRegisteredLaterDoesNotOutrankTheAlertThatBlocksTheMac() async throws {
+        let registry = ModalAlertRegistry(modalWindow: { nil })
+        let presses = OSAllocatedUnfairLock(initialState: [String]())
+        func press(_ name: String) -> (Int, Bool) -> Bool {
+            return { _, _ in
+                presses.withLock { $0.append(name) }
+                return true
+            }
+        }
+        let (blocking, sheet, blockingRegistration) = await MainActor.run { () -> (UUID, UUID, ModalAlertRegistration) in
+            let blocking = registry.register(self.descriptor("Blocking", isAppModal: true), window: nil,
+                                             press: press("Blocking"))
+            let sheet = registry.register(self.descriptor("Sheet", isAppModal: false), window: nil,
+                                          press: press("Sheet"))
+            return (blocking.identifier, sheet.identifier, blocking)
+        }
+        XCTAssertEqual(registry.currentAlerts().map { $0.heading }, ["Sheet", "Blocking"],
+                       "listed bottom to top: the blocking alert is the one in front")
+
+        let sheetAccepted = await registry.answer(id: sheet, buttonIndex: 0, suppress: false)
+        XCTAssertFalse(sheetAccepted, "the sheet is behind the blocking alert")
+        let blockingAccepted = await registry.answer(id: blocking, buttonIndex: 0, suppress: false)
+        XCTAssertTrue(blockingAccepted)
+        XCTAssertEqual(presses.withLock { $0 }, ["Blocking"])
+
+        // With the blocking alert gone, the sheet is next.
+        await MainActor.run { blockingRegistration.unregister() }
+        XCTAssertEqual(registry.currentAlerts().map { $0.heading }, ["Sheet"])
+        let sheetNowAccepted = await registry.answer(id: sheet, buttonIndex: 0, suppress: false)
+        XCTAssertTrue(sheetNowAccepted)
+    }
+
+    /// Among alerts that block, the newest is in front: it was started from
+    /// inside the older one's modal loop.
+    func testTheNewestBlockingAlertIsInFrontOfAnOlderOneAndOfSheets() async throws {
+        let registry = ModalAlertRegistry(modalWindow: { nil })
+        let (older, newer) = await MainActor.run { () -> (UUID, UUID) in
+            _ = registry.register(self.descriptor("Sheet 1", isAppModal: false), window: nil) { _, _ in true }
+            let older = registry.register(self.descriptor("Older", isAppModal: true), window: nil) { _, _ in true }
+            _ = registry.register(self.descriptor("Sheet 2", isAppModal: false), window: nil) { _, _ in true }
+            let newer = registry.register(self.descriptor("Newer", isAppModal: true), window: nil) { _, _ in true }
+            return (older.identifier, newer.identifier)
+        }
+        XCTAssertEqual(registry.currentAlerts().map { $0.heading }, ["Sheet 1", "Sheet 2", "Older", "Newer"])
+        let olderAccepted = await registry.answer(id: older, buttonIndex: 0, suppress: false)
+        XCTAssertFalse(olderAccepted)
+        let newerAccepted = await registry.answer(id: newer, buttonIndex: 0, suppress: false)
+        XCTAssertTrue(newerAccepted)
+    }
+
     func testAnswerIsRefusedWhenThePressItselfFails() async throws {
         let registry = ModalAlertRegistry(modalWindow: { nil })
         let id = await MainActor.run {

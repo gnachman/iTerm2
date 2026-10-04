@@ -75,6 +75,11 @@ final class CompanionPairingController: NSObject {
     /// longer allowed to park). While true it owns re-parking: nothing on the
     /// main actor may also park, or the two would displace each other.
     private var supervisorActive = false
+    /// The generation of the last command sent to the supervisor. Its events
+    /// are read here after a delay (a long one, if the main actor was frozen),
+    /// so one can arrive from a run that has since been stopped or replaced.
+    /// Only events carrying this generation are acted on.
+    private var supervisorGeneration = 0
     /// Whether parking is still allowed, readable by the supervisor from its own
     /// actor before every park. True only between a resume that passed every
     /// check (gate, plugin, complete pairing) and the next stopAdvertising().
@@ -614,7 +619,7 @@ final class CompanionPairingController: NSObject {
             // Record the attempt for the settings "last try…" timer.
             lastRelayAttempt = Date()
             notifyPresenceChanged()
-            supervisor.send(.start(recipe))
+            supervisorGeneration = supervisor.send(.start(recipe))
             RLog("Companion: resumed listening for paired device (pid \(pid))")
             return
         }
@@ -968,7 +973,7 @@ final class CompanionPairingController: NSObject {
         parkEligibility.withLock { $0 = false }
         if supervisorActive {
             supervisorActive = false
-            supervisor.send(.stop)
+            supervisorGeneration = supervisor.send(.stop)
         }
         // The park is gone: no relay presence to time. A later resume re-parks and
         // restarts the timer from a fresh, accurate instant.
@@ -1474,12 +1479,7 @@ final class CompanionPairingController: NSObject {
                 // main actor), so make sure the copy is current before it can
                 // answer the phone's hello.
                 CompanionAIAvailabilityCache.shared.value = Self.aiAvailable()
-                let link = CompanionLink(transport: channel,
-                                         aiAvailability: .shared,
-                                         wantsNotificationPermission: { CompanionPushRegistry.alertsEverEnabled },
-                                         storeRoomSecret: CompanionLink.storeRoomSecretIfChanged,
-                                         alerts: ModalAlertRegistry.shared,
-                                         mainStall: CompanionMainThreadMonitor.shared)
+                let link = CompanionLink.makeForProduction(transport: channel)
                 installBridge(for: link)
                 link.start()
                 // Persist so future reconnects authenticate. Pin the phone static
@@ -1529,7 +1529,7 @@ final class CompanionPairingController: NSObject {
                 if let recipe = parkRecipe(pairingID: code.pairingID) {
                     parkEligibility.withLock { $0 = true }
                     supervisorActive = true
-                    supervisor.send(.adopt(link, recipe))
+                    supervisorGeneration = supervisor.send(.adopt(link, recipe))
                 }
                 relayLog("acceptLoop EXIT: connected, bridge up, stopped accepting "
                          + "(reconnect now driven by the park supervisor)")
@@ -1644,14 +1644,7 @@ final class CompanionPairingController: NSObject {
                                                        forceFreshResolve: forceFreshResolve,
                                                        onParked: onParked)
             },
-            makeLink: { channel in
-                CompanionLink(transport: channel,
-                              aiAvailability: .shared,
-                              wantsNotificationPermission: { CompanionPushRegistry.alertsEverEnabled },
-                              storeRoomSecret: CompanionLink.storeRoomSecretIfChanged,
-                              alerts: ModalAlertRegistry.shared,
-                              mainStall: CompanionMainThreadMonitor.shared)
-            },
+            makeLink: { CompanionLink.makeForProduction(transport: $0) },
             sleep: { try await Task.sleep(nanoseconds: $0) },
             // Full-jitter delay for a re-park after a reshard evict (§7.3 /
             // Appendix C), so a whole-fleet reshard does not have every mac
@@ -1661,12 +1654,25 @@ final class CompanionPairingController: NSObject {
         // Events pile up while the main actor is frozen and are handled here,
         // in order, once it runs again.
         Task { @MainActor [weak self] in
-            for await event in supervisor.events {
-                self?.handle(event)
+            for await tagged in supervisor.events {
+                self?.handle(tagged)
             }
         return supervisor
-    private func handle(_ event: CompanionParkSupervisor.Event) {
-        switch event {
+    private func handle(_ tagged: CompanionParkSupervisor.TaggedEvent) {
+        guard tagged.generation == supervisorGeneration else {
+            // From a run that has since been stopped or replaced. Acting on it
+            // would, for example, mark the supervisor inactive while its new run
+            // is parking, or install a bridge for a link nobody watches.
+            relayLog("supervisor event from generation \(tagged.generation) ignored; "
+                     + "current is \(supervisorGeneration)")
+            if case .linkUp(let link) = tagged.event {
+                // Nobody will ever watch or use this link, and while it lives
+                // it holds the relay room's single mac slot.
+                link.close()
+            }
+            return
+        }
+        switch tagged.event {
         case .parked:
             // The park succeeded, so any prior quota teardown is behind us:
             // clear the backoff marker so the UI leaves the quota state.

@@ -244,6 +244,23 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
         XCTAssertEqual(fixture.spy.clickedTitles, [])
     }
 
+    /// A click on a disabled or hidden button does nothing, so it must not be
+    /// reported as a press: the phone would wait forever for the alert to go.
+    @MainActor
+    func testPressIsRefusedForAButtonThatCannotBeClicked() {
+        let disabled = pressFixture(identifier: uniqueIdentifier())
+        disabled.alert.buttons[0].isEnabled = false
+        XCTAssertFalse(disabled.press(0, true))
+        XCTAssertEqual(disabled.spy.clickedTitles, [])
+        XCTAssertEqual(disabled.alert.suppressionButton?.state, .off, "a refused press must not check the box")
+        XCTAssertTrue(disabled.press(1, false), "the other buttons still work")
+
+        let hidden = pressFixture(identifier: uniqueIdentifier())
+        hidden.alert.buttons[1].isHidden = true
+        XCTAssertFalse(hidden.press(1, false))
+        XCTAssertEqual(hidden.spy.clickedTitles, [])
+    }
+
     @MainActor
     func testPressDoesNothingOnceTheAlertIsGone() {
         let warning = makeWarning(identifier: uniqueIdentifier())
@@ -458,6 +475,36 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
         }
         XCTAssertEqual(selection, .kiTermWarningSelection1)
         XCTAssertEqual(registry.currentAlerts(), [])
+    }
+
+    /// AppKit does not call a sheet's completion handler when the parent window
+    /// closes first. The warning must still leave the registry, or the phone
+    /// would go on showing an alert that no longer exists.
+    func testAsyncSheetIsUnregisteredWhenItsParentWindowCloses() async throws {
+        let registry = ModalAlertRegistry.shared
+        let (changes, changesContinuation) = AsyncStream<Void>.makeStream()
+        let token = registry.addObserver { changesContinuation.yield() }
+        defer { _ = token }
+        let completions = OSAllocatedUnfairLock(initialState: 0)
+        let parent = await MainActor.run { () -> NSWindow in
+            let parent = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
+                                  styleMask: [.titled], backing: .buffered, defer: true)
+            parent.isReleasedWhenClosed = false
+            let warning = self.makeWarning(type: .kiTermWarningTypePersistent, identifier: nil)
+            warning.window = parent
+            warning.runModalAsync { _, _ in
+                completions.withLock { $0 += 1 }
+            }
+            return parent
+        }
+        _ = try await nextRegisteredAlert(changes)
+
+        await MainActor.run { parent.close() }
+
+        XCTAssertEqual(registry.currentAlerts(), [], "the warning is still registered after its window closed")
+        XCTAssertEqual(completions.withLock { $0 }, 0, "as with a real sheet, the completion does not run")
+        // Closing again, or a late answer, must be harmless.
+        await MainActor.run { parent.close() }
     }
 
     func testWarningThatOptsOutIsNeverRegistered() async throws {

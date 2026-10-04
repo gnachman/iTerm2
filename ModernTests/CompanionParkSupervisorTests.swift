@@ -225,7 +225,10 @@ final class CompanionParkSupervisorTests: XCTestCase {
     private struct Fixture {
         let relay: FakeRelay
         let supervisor: CompanionParkSupervisor
+        /// Each event, described.
         let events: TestQueue<String>
+        /// The same events, each prefixed with the generation it carries.
+        let taggedEvents: TestQueue<String>
         let recipe: CompanionParkRecipe
         let phoneKeys: NoiseKeyPair
     }
@@ -243,15 +246,18 @@ final class CompanionParkSupervisorTests: XCTestCase {
         let relay = FakeRelay()
         let supervisor = CompanionParkSupervisor(environment: relay.environment)
         let events = TestQueue<String>()
+        let taggedEvents = TestQueue<String>()
         Task.detached {
-            for await event in supervisor.events {
-                events.push(Self.describe(event))
+            for await tagged in supervisor.events {
+                events.push(Self.describe(tagged.event))
+                taggedEvents.push("\(tagged.generation): " + Self.describe(tagged.event))
             }
         }
         let phoneKeys = try NoiseKeyPair.generate()
         return Fixture(relay: relay,
                        supervisor: supervisor,
                        events: events,
+                       taggedEvents: taggedEvents,
                        recipe: try makeRecipe(phoneKeys: phoneKeys),
                        phoneKeys: phoneKeys)
     }
@@ -587,6 +593,58 @@ final class CompanionParkSupervisorTests: XCTestCase {
         XCTAssertFalse(secondPark.isStopped)
         XCTAssertEqual(fixture.relay.sleeps, [], "a cancelled park is not a failure and is not retried")
         XCTAssertEqual(fixture.relay.parks.count, 2)
+    }
+
+    /// Events are read on the main actor, which may be frozen, so they can be
+    /// handled long after they happened: after a later stop, and after a later
+    /// start. Each one names the command it belongs to, so the reader can tell
+    /// an event from a run it has since replaced and drop it.
+    func testEventsCarryTheGenerationOfTheCommandThatProducedThem() async throws {
+        let fixture = try makeFixture()
+        let otherRecipe = try makeRecipe(pairingID: "fedcba9876543210", phoneKeys: fixture.phoneKeys)
+
+        let first = fixture.supervisor.send(.start(fixture.recipe))
+        let firstPark = try await fixture.relay.parks.next("park 1")
+        firstPark.admit()
+        let parked = try await fixture.taggedEvents.next("parked")
+        XCTAssertEqual(parked, "\(first): parked")
+
+        let stop = fixture.supervisor.send(.stop)
+        let second = fixture.supervisor.send(.start(otherRecipe))
+        XCTAssertLessThan(first, stop)
+        XCTAssertLessThan(stop, second)
+
+        let stopped = try await fixture.taggedEvents.next("stopped")
+        XCTAssertEqual(stopped, "\(stop): stopped")
+        let secondPark = try await fixture.relay.parks.next("park 2")
+        secondPark.admit()
+        let reparked = try await fixture.taggedEvents.next("parked again")
+        XCTAssertEqual(reparked, "\(second): parked")
+
+        // The relay admits the first, long-cancelled park late. The event still
+        // says which run it came from, so it cannot pass for the current one.
+        firstPark.admit()
+        let late = try await fixture.taggedEvents.next("the late parked")
+        XCTAssertEqual(late, "\(first): parked")
+    }
+
+    /// The reviewer's case: a run that stops itself because parking is no longer
+    /// allowed reports that under ITS generation, not the generation of a start
+    /// sent since.
+    func testARunThatStopsItselfReportsItsOwnGeneration() async throws {
+        let fixture = try makeFixture()
+        fixture.relay.eligible = false
+        let first = fixture.supervisor.send(.start(fixture.recipe))
+        let stopped = try await fixture.taggedEvents.next("stopped")
+        XCTAssertEqual(stopped, "\(first): stopped")
+
+        fixture.relay.eligible = true
+        let second = fixture.supervisor.send(.start(fixture.recipe))
+        let park = try await fixture.relay.parks.next("the park")
+        park.admit()
+        let parked = try await fixture.taggedEvents.next("parked")
+        XCTAssertEqual(parked, "\(second): parked")
+        XCTAssertNotEqual(first, second)
     }
 
     func testStopLeavesALiveLinkOpenAndDoesNotParkWhenItDrops() async throws {

@@ -757,9 +757,24 @@ final class AppModel {
         macLivenessProbe.setActive(blocked && client != nil)
     }
 
-    /// Forget the Mac's status: the connection it described is gone.
+    /// Forget the Mac's status: the connection it described is gone. Takes the
+    /// card down, releases held timeouts, and stops the liveness probe.
     private func clearMacStatus() {
         applyMacStatus(CompanionMacStatus(modalAlerts: [], mainBlocked: false))
+    }
+
+    /// How long the card waits, after an answer is sent, for the Mac to act on
+    /// it. The Mac normally presses the button at once and the alert goes away.
+    private static let alertAnswerTimeoutSeconds: TimeInterval = 10
+
+    /// The Mac neither removed the alert nor rejected the answer in time. Give
+    /// the buttons back, so the card is not stuck on its spinner.
+    private func alertAnswerTimedOut(alertID: String) {
+        guard answeringAlertID == alertID else {
+            return
+        }
+        companionLog("No word from the Mac about the answer to alert \(alertID); re-enabling its buttons")
+        answeringAlertID = nil
     }
 
     private func macRejectedAnswer(alertID: String) {
@@ -794,6 +809,12 @@ final class AppModel {
                                                     buttonIndex: buttonIndex,
                                                     suppress: effectiveSuppress))
         #endif
+        // The Mac reports success only by the alert going away. If its click
+        // had no effect, or it cannot run it yet, nothing would ever arrive.
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(Self.alertAnswerTimeoutSeconds * 1_000_000_000))
+            self?.alertAnswerTimedOut(alertID: alertID)
+        }
         guard let client else {
             return
         }
@@ -869,6 +890,11 @@ final class AppModel {
         var suppress: Bool
     }
     private(set) var testSentAlertAnswers: [TestAlertAnswer] = []
+
+    /// Test hook: the wait for the Mac to act on an answer ran out.
+    func testExpireAlertAnswerTimeout(alertID: String) {
+        alertAnswerTimedOut(alertID: alertID)
+    }
 
     /// Test hook: apply a version handshake as the connect path does.
     func testApplyHandshake(_ handshake: CompanionClient.HandshakeResult) {
@@ -1248,6 +1274,9 @@ final class AppModel {
     /// can't drift (transcriptCache and the reply buffers were previously missed
     /// here, leaving full transcripts and buffered reply text in memory).
     private func clearPairedMacData() {
+        // The Mac's alerts and blocked state. Left in place, the card would stay
+        // up over the pairing scanner showing the old Mac's alert text.
+        clearMacStatus()
         chats = []
         sessions = []
         sessionTree = nil

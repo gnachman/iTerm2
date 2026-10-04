@@ -144,6 +144,17 @@ actor CompanionLink {
         (pokes, pokesContinuation) = AsyncStream<Poke>.makeStream()
     }
 
+    /// A link wired to the app's real dependencies. The one place that does so,
+    /// so a link from a fresh pairing and a link from a reconnect cannot differ.
+    static func makeForProduction(transport: MessageTransport) -> CompanionLink {
+        return CompanionLink(transport: transport,
+                             aiAvailability: .shared,
+                             wantsNotificationPermission: { CompanionPushRegistry.alertsEverEnabled },
+                             storeRoomSecret: storeRoomSecretIfChanged,
+                             alerts: ModalAlertRegistry.shared,
+                             mainStall: CompanionMainThreadMonitor.shared)
+    }
+
     /// The production room secret store. The phone re-sends the secret on every
     /// connect, so skip the keychain write when it is the one already held.
     static let storeRoomSecretIfChanged: @Sendable (Data) throws -> Void = { secret in
@@ -405,15 +416,46 @@ actor CompanionLink {
             eventsContinuation.yield(.envelope(envelope, handledByLink: true))
         case .answerModalAlert(let alertID, let buttonIndex, let suppress):
             eventsContinuation.yield(.envelope(envelope, handledByLink: true))
+            // Only a phone that was told about the alert can mean to answer it:
+            // one that completed hello at a revision that carries the status and
+            // is not version-blocked. That is exactly when lastSentStatus is set.
+            guard lastSentStatus != nil else {
+                RLog("Companion link: ignoring an alert answer from a phone that was sent no status")
+                break
+            }
             // Not awaited here. Pressing the button needs the main thread, and
             // if that is busy in a way that keeps even a run loop block from
             // running, the receive loop must go on answering everything else.
             Task {
                 await self.answerAlert(alertID: alertID, buttonIndex: buttonIndex, suppress: suppress)
             }
+        case .sendKey, .pasteText:
+            // Terminal input is only meaningful now. Forwarded while the main
+            // thread cannot act on it, it would sit in the event stream and be
+            // typed into the session whenever the alert is finally dismissed,
+            // possibly minutes later. Refuse it instead. This does not depend on
+            // what the phone was told: an older Buddy does not know to hold its
+            // input, and a new one may send before the status reaches it.
+            guard !mainThreadCannotServeRequests() else {
+                RLog("Companion link: refusing terminal input while the main thread is blocked")
+                if let requestID {
+                    send(.error(CompanionError(code: .internalError,
+                                               message: "The Mac can’t accept input right now.")),
+                         requestID: requestID)
+                }
+                break
+            }
+            eventsContinuation.yield(.envelope(envelope, handledByLink: false))
         default:
             eventsContinuation.yield(.envelope(envelope, handledByLink: false))
         }
+    }
+
+    /// Whether requests that need the main thread will go unserved for now: the
+    /// stall monitor says so, or an alert that blocks the app is up (which is
+    /// known at once, before the monitor's threshold has passed).
+    private func mainThreadCannotServeRequests() -> Bool {
+        return mainStall.isMainBlocked() || alerts.currentAlerts().contains { $0.isAppModal }
     }
 
     private func handleHello(_ envelope: ClientEnvelope, peerRevision: Int, peerMinimumPeer: Int) {

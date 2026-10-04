@@ -225,6 +225,57 @@ final class AppModelMacStatusTests: XCTestCase {
         XCTAssertFalse(model.macIsBlocked)
     }
 
+    // MARK: Unpairing
+
+    /// The status belongs to the Mac it came from. Once unpaired, nothing of it
+    /// may remain: not the card over the pairing scanner, not held timeouts.
+    func test_beingUnpairedByTheMacClearsItsStatus() {
+        let model = connectedModel(status([alert("A")], blocked: true))
+        XCTAssertTrue(model.macIsBlocked)
+        model.testHandleHostEvent(.unpaired)
+        XCTAssertEqual(model.macAlertPresentation, .none)
+        XCTAssertFalse(model.macIsBlocked)
+        XCTAssertEqual(model.macStatus, status([]))
+    }
+
+    func test_unpairingFromThePhoneClearsTheMacStatus() {
+        let model = connectedModel(status([alert("A")], blocked: true))
+        model.answerMacAlert(buttonIndex: 0, suppress: false)
+        model.disconnectFromMac()
+        XCTAssertEqual(model.macAlertPresentation, .none)
+        XCTAssertFalse(model.macIsBlocked)
+        // Nothing carries over to the next Mac: an alert with the same ID
+        // there starts out ready, not "sending".
+        model.testApplyHandshake(handshake(macStatus: status([alert("A")])))
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .ready))
+    }
+
+    // MARK: An answer the Mac never acts on
+
+    /// The Mac reports an accepted answer only by the alert going away. If it
+    /// never does (the press had no effect, or the Mac cannot run it yet), the
+    /// card must not sit on its spinner with every button disabled forever.
+    func test_sendingStateTimesOutAndRestoresTheButtons() {
+        let model = connectedModel(status([alert("A")]))
+        model.answerMacAlert(buttonIndex: 0, suppress: false)
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .sending))
+        model.testExpireAlertAnswerTimeout(alertID: "A")
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .ready))
+        // And the user can try again.
+        model.answerMacAlert(buttonIndex: 1, suppress: false)
+        XCTAssertEqual(model.testSentAlertAnswers.map { $0.buttonIndex }, [0, 1])
+    }
+
+    func test_timeoutForAnEarlierAlertDoesNotDisturbTheCurrentOne() {
+        let model = connectedModel(status([alert("A")]))
+        model.answerMacAlert(buttonIndex: 0, suppress: false)
+        model.testHandleHostEvent(.macStatusChanged(status: status([alert("B")])))
+        model.answerMacAlert(buttonIndex: 0, suppress: false)
+        // A's timer fires late.
+        model.testExpireAlertAnswerTimeout(alertID: "A")
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("B"), .sending))
+    }
+
     // MARK: An older Mac
 
     /// A pre-14 Mac never sends a status. If one somehow arrived, the phone must

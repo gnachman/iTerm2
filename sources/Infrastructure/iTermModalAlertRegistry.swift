@@ -48,7 +48,8 @@ struct ModalAlertSnapshot: Equatable, Sendable {
 /// substitute a fake.
 protocol ModalAlertSource: AnyObject, Sendable {
     /// The alerts on screen, bottom to top. The last one is the one a user
-    /// could click.
+    /// could click. Alerts that block the app are above sheets that do not,
+    /// whichever was shown first.
     func currentAlerts() -> [ModalAlertSnapshot]
 
     /// `changed` is called, synchronously and on the main thread, each time the
@@ -137,26 +138,13 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
         let press: (Int, Bool) -> Bool
     }
 
-    /// The observer token. The registry holds it weakly, so dropping the token
-    /// unsubscribes.
-    private final class Observer: Sendable {
-        let changed: @Sendable () -> Void
-        init(changed: @escaping @Sendable () -> Void) {
-            self.changed = changed
-        }
-    }
-
-    private struct WeakObserver: Sendable {
-        weak var observer: Observer?
-    }
-
     /// The alerts on screen, bottom to top, with what is needed to press their
     /// buttons. Only the main thread can do that, so this lives there.
     @MainActor private var entries: [Entry] = []
     /// What other threads read. Updated in the same main-thread call that
     /// changes `entries`, so it is current before the main queue can freeze.
     private let snapshots = OSAllocatedUnfairLock(initialState: [ModalAlertSnapshot]())
-    private let observers = OSAllocatedUnfairLock(initialState: [WeakObserver]())
+    private let observers = WeakObserverList()
     private let modalWindow: @MainActor @Sendable () -> NSWindow?
 
     /// - modalWindow: the window of the app-modal session that is running right
@@ -190,7 +178,18 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
             suppressionLabel: descriptor.suppressionLabel,
             hasAccessory: descriptor.hasAccessory,
             isAppModal: descriptor.isAppModal)
-        entries.append(Entry(snapshot: snapshot, hasWindow: window != nil, window: window, press: press))
+        let entry = Entry(snapshot: snapshot, hasWindow: window != nil, window: window, press: press)
+        // Kept in front-to-back order, last in front. Registration order alone
+        // is not that: a sheet that does not block can be started while an
+        // app-modal alert is up (from a timer, say), and the app-modal alert is
+        // still the one in front and in the way. So sheets go behind every
+        // app-modal alert, and each group stays in the order it was registered.
+        if descriptor.isAppModal {
+            entries.append(entry)
+        } else {
+            let firstAppModal = entries.firstIndex { $0.snapshot.isAppModal } ?? entries.endIndex
+            entries.insert(entry, at: firstAppModal)
+        }
         DLog("Modal alert registered: \(snapshot.id) “\(snapshot.heading)”")
         entriesDidChange()
         return ModalAlertRegistration(identifier: snapshot.id, registry: self)
@@ -210,16 +209,10 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
     private func entriesDidChange() {
         let current = entries.map { $0.snapshot }
         snapshots.withLock { $0 = current }
-        let live = observers.withLock { observers -> [Observer] in
-            observers.removeAll { $0.observer == nil }
-            return observers.compactMap { $0.observer }
-        }
         // Synchronous, on purpose: the caller is about to run a modal loop,
         // which may freeze the main queue. Anything deferred to it would not
         // happen until the alert was dismissed.
-        for observer in live {
-            observer.changed()
-        }
+        observers.notify()
     }
 
     /// Whether an alert may be answered right now, given what is in front.
@@ -274,9 +267,7 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
     }
 
     func addObserver(_ changed: @escaping @Sendable () -> Void) -> AnyObject {
-        let observer = Observer(changed: changed)
-        observers.withLock { $0.append(WeakObserver(observer: observer)) }
-        return observer
+        return observers.add(changed)
     }
 
     func answer(id: UUID, buttonIndex: Int, suppress: Bool) async -> Bool {

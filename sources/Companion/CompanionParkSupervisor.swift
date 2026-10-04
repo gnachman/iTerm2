@@ -19,6 +19,12 @@
 //  task reads; they pile up while the main actor is frozen and are handled in
 //  order when it thaws.
 //
+//  That delay means an event can be read after the controller has moved on:
+//  after it sent a stop, and even a new start. So `send` returns a generation
+//  number for the command, and every event carries the generation of the
+//  command whose run produced it. The reader keeps the generation of its latest
+//  command and drops events that carry any other.
+//
 
 import Foundation
 import CompanionProtocol
@@ -209,12 +215,20 @@ actor CompanionParkSupervisor {
         case stopped(StopReason)
     }
 
+    /// An event, and the generation of the command it came from (see `send`).
+    struct TaggedEvent {
+        let generation: Int
+        let event: Event
+    }
+
     /// Single consumer: a @MainActor task in CompanionPairingController.
-    nonisolated let events: AsyncStream<Event>
+    nonisolated let events: AsyncStream<TaggedEvent>
 
     private nonisolated let environment: CompanionParkEnvironment
-    private nonisolated let eventsContinuation: AsyncStream<Event>.Continuation
-    private nonisolated let commandsContinuation: AsyncStream<Command>.Continuation
+    private nonisolated let eventsContinuation: AsyncStream<TaggedEvent>.Continuation
+    private nonisolated let commandsContinuation: AsyncStream<(generation: Int, command: Command)>.Continuation
+    /// The generation given to the most recent command.
+    private nonisolated let lastGeneration = OSAllocatedUnfairLock(initialState: 0)
     /// Lock-protected, not actor state, because the relay reports a successful
     /// park from its own thread and `.parked` must be emitted right then, in
     /// order with the events the run emits.
@@ -228,36 +242,48 @@ actor CompanionParkSupervisor {
 
     init(environment: CompanionParkEnvironment) {
         self.environment = environment
-        (events, eventsContinuation) = AsyncStream<Event>.makeStream()
-        let (commands, commandsContinuation) = AsyncStream<Command>.makeStream()
+        (events, eventsContinuation) = AsyncStream<TaggedEvent>.makeStream()
+        let (commands, commandsContinuation) = AsyncStream<(generation: Int, command: Command)>.makeStream()
         self.commandsContinuation = commandsContinuation
         Task.detached { [self] in
             // One at a time, in the order they were sent.
-            for await command in commands {
-                await self.handle(command)
+            for await (generation, command) in commands {
+                await self.handle(command, generation: generation)
             }
         }
     }
 
     /// Queue a command. Synchronous and safe to call from the main actor even
-    /// if it is about to freeze.
-    nonisolated func send(_ command: Command) {
-        commandsContinuation.yield(command)
+    /// if it is about to freeze. Returns the command's generation: larger than
+    /// that of every earlier command, and carried by every event its run emits.
+    @discardableResult
+    nonisolated func send(_ command: Command) -> Int {
+        let continuation = commandsContinuation
+        // Yielded under the lock so commands are queued in generation order.
+        return lastGeneration.withLock { last -> Int in
+            last += 1
+            continuation.yield((last, command))
+            return last
+        }
+    }
+
+    private nonisolated func emit(_ event: Event, generation: Int) {
+        eventsContinuation.yield(TaggedEvent(generation: generation, event: event))
     }
 
     // MARK: Commands
 
-    private func handle(_ command: Command) async {
+    private func handle(_ command: Command, generation: Int) async {
         // Each command first ends the previous run completely, so two runs
         // never overlap and a stop is finished before the next start begins.
         await cancelRun()
         switch command {
         case .start(let recipe):
-            runTask = Task { await self.run(recipe: recipe, adopted: nil) }
+            runTask = Task { await self.run(recipe: recipe, adopted: nil, generation: generation) }
         case .adopt(let link, let recipe):
-            runTask = Task { await self.run(recipe: recipe, adopted: link) }
+            runTask = Task { await self.run(recipe: recipe, adopted: link, generation: generation) }
         case .stop:
-            eventsContinuation.yield(.stopped(.commanded))
+            emit(.stopped(.commanded), generation: generation)
         }
     }
 
@@ -276,7 +302,7 @@ actor CompanionParkSupervisor {
 
     // MARK: The run
 
-    private func run(recipe: CompanionParkRecipe, adopted: CompanionLink?) async {
+    private func run(recipe: CompanionParkRecipe, adopted: CompanionLink?, generation: Int) async {
         var link = adopted
         var forceFreshResolve = false
         while !Task.isCancelled {
@@ -288,7 +314,7 @@ actor CompanionParkSupervisor {
                 }
                 link = nil
                 RLog("Companion supervisor: link down (\(closeError.map { "\($0)" } ?? "closed locally"))")
-                eventsContinuation.yield(.linkDown(live, closeError))
+                emit(.linkDown(live, closeError), generation: generation)
                 let failure = closeError.map { CompanionParkFailure.classify($0, cancelled: false) } ?? .cancelled
                 if case .reResolve = failure {
                     forceFreshResolve = true
@@ -296,24 +322,23 @@ actor CompanionParkSupervisor {
                 let delay = CompanionParkBackoff.delayNanos(
                     afterLinkClose: failure,
                     jitteredReparkNanos: environment.jitteredReparkNanos())
-                guard await pause(delay, after: failure) else { return }
+                guard await pause(delay, after: failure, generation: generation) else { return }
                 continue
             }
 
             guard environment.isEligible() else {
                 RLog("Companion supervisor: parking is not allowed; idle")
-                eventsContinuation.yield(.stopped(.notEligible))
+                emit(.stopped(.notEligible), generation: generation)
                 return
             }
             let listener: TransportListener
             do {
-                let continuation = eventsContinuation
                 let backoff = self.backoff
-                listener = try await environment.makeListener(recipe, forceFreshResolve) {
+                listener = try await environment.makeListener(recipe, forceFreshResolve) { [self] in
                     // Parked = admitted to the relay room = reachable, which
                     // proves the relay works: the failure backoff starts over.
                     backoff.withLock { $0.noteParked() }
-                    continuation.yield(.parked)
+                    self.emit(.parked, generation: generation)
                 }
             } catch {
                 if Task.isCancelled { return }
@@ -321,7 +346,7 @@ actor CompanionParkSupervisor {
                 // an established pairing there is usually no window to show it
                 // in, so just retry.
                 RLog("Companion supervisor: park setup failed: \(error); will retry")
-                guard await pause(afterParkFailure: .fault) else { return }
+                guard await pause(afterParkFailure: .fault, generation: generation) else { return }
                 continue
             }
             forceFreshResolve = false
@@ -330,7 +355,7 @@ actor CompanionParkSupervisor {
                 return
             }
             currentListener = listener
-            let outcome = await accept(on: listener, recipe: recipe)
+            let outcome = await accept(on: listener, recipe: recipe, generation: generation)
             listener.stop()
             currentListener = nil
             switch outcome {
@@ -341,12 +366,12 @@ actor CompanionParkSupervisor {
             case .failed(let error, let failure):
                 RLog("Companion supervisor: park ended: \(error) (\(failure))")
                 if failure == .fault {
-                    eventsContinuation.yield(.fault(error))
+                    emit(.fault(error), generation: generation)
                 }
                 if case .reResolve = failure {
                     forceFreshResolve = true
                 }
-                guard await pause(afterParkFailure: failure) else { return }
+                guard await pause(afterParkFailure: failure, generation: generation) else { return }
             }
         }
     }
@@ -359,7 +384,9 @@ actor CompanionParkSupervisor {
 
     /// Accept connections on one park until the pinned phone gets in or the
     /// park dies.
-    private func accept(on listener: TransportListener, recipe: CompanionParkRecipe) async -> AcceptOutcome {
+    private func accept(on listener: TransportListener,
+                        recipe: CompanionParkRecipe,
+                        generation: Int) async -> AcceptOutcome {
         while true {
             let transport: MessageTransport
             do {
@@ -413,7 +440,7 @@ actor CompanionParkSupervisor {
             // connection.
             listener.stop()
             RLog("Companion supervisor: link up")
-            eventsContinuation.yield(.linkUp(link))
+            emit(.linkUp(link), generation: generation)
             return .connected(link)
         }
     }
@@ -434,16 +461,16 @@ actor CompanionParkSupervisor {
         return nil
     }
 
-    private func pause(afterParkFailure failure: CompanionParkFailure) async -> Bool {
+    private func pause(afterParkFailure failure: CompanionParkFailure, generation: Int) async -> Bool {
         let jitter = environment.jitteredReparkNanos()
         let delay = backoff.withLock { $0.delayNanos(afterParkFailure: failure, jitteredReparkNanos: jitter) }
-        return await pause(delay, after: failure)
+        return await pause(delay, after: failure, generation: generation)
     }
 
     /// Wait before parking again. Returns false if the run was cancelled.
-    private func pause(_ delayNanos: UInt64, after failure: CompanionParkFailure) async -> Bool {
+    private func pause(_ delayNanos: UInt64, after failure: CompanionParkFailure, generation: Int) async -> Bool {
         if delayNanos > 0 {
-            eventsContinuation.yield(.retryScheduled(nanoseconds: delayNanos, after: failure))
+            emit(.retryScheduled(nanoseconds: delayNanos, after: failure), generation: generation)
             do {
                 try await environment.sleep(delayNanos)
             } catch {
