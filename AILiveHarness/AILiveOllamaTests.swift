@@ -175,6 +175,32 @@ extension AILiveHarness {
                       "wrong or missing answer; text=\(result.finalText) reasoning=\(String(reasoning.prefix(160)))")
     }
 
+    // MARK: - Legacy completions
+
+    // The legacy /v1/completions request shape (a prompt string rather than
+    // messages). OpenAI shut down every model it served on that endpoint on
+    // 2026-09-28, so it is exercised against Ollama's OpenAI-compatible one.
+    func test_ollama_legacyCompletions_smoke_nonStreaming() throws {
+        let apiKey = try ollamaKeyOrSkip()
+        var model = try ollamaModel()
+        model.api = .completions
+        model.url = "\(AILiveHarness.ollamaBaseURL)/v1/completions"
+        model.features = [.streaming]
+        try requireReachableOllama(model: model.name)
+        let messages = [LLM.Message(role: .user, content: "Reply with exactly the single word: PINEAPPLE")]
+        let result = try AILiveDriver.run(model: model,
+                                          apiKey: apiKey,
+                                          messages: messages,
+                                          streaming: false,
+                                          scenarioTag: "legacyCompletions",
+                                          timeout: 120,
+                                          test: self)
+        let body = try XCTUnwrap(lastRequestBody(result), "no request body captured")
+        XCTAssertNotNil(body["prompt"] as? String, "legacy completions must send a prompt; body=\(body)")
+        XCTAssertNil(body["messages"], "legacy completions must not send messages; body=\(body)")
+        XCTAssertFalse(result.finalText.isEmpty, "empty response from legacy completions")
+    }
+
     // MARK: - num_ctx
 
     // options.num_ctx must be present and sized above Ollama's ~4096 default so

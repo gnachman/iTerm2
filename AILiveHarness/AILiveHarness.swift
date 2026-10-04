@@ -1429,21 +1429,15 @@ final class AILiveHarness: XCTestCase {
     // OpenAI audio input is chat-completions-only (the Responses API has no
     // audio input), and no audio model is in AIMetadata, so synthesize one
     // here to exercise the input_audio serialization against the real API.
+    // gpt-audio and gpt-audio-mini decline to say what a clip says ("I can't
+    // identify words from audio"), so they can't answer the probe; gpt-audio-1.5
+    // can.
     private static let syntheticAudioModel = AIMetadata.Model(
-        name: "gpt-audio",
+        name: "gpt-audio-1.5",
         contextWindowTokens: 128_000,
         maxResponseTokens: 16_384,
         url: "https://api.openai.com/v1/chat/completions",
         api: .chatCompletions,
-        features: [.streaming],
-        vendor: .openAI)
-
-    private static let syntheticLegacyCompletionsModel = AIMetadata.Model(
-        name: "gpt-3.5-turbo-instruct",
-        contextWindowTokens: 4_096,
-        maxResponseTokens: 2_048,
-        url: "https://api.openai.com/v1/completions",
-        api: .completions,
         features: [.streaming],
         vendor: .openAI)
 
@@ -1485,12 +1479,6 @@ final class AILiveHarness: XCTestCase {
     // messages into one newline-joined prompt; it's not testing message-history
     // round-trip.
     // Smoke (one prompt -> one completion) is the only meaningful scenario.
-    func test_openai_legacyCompletions_smoke_nonStreaming() throws {
-        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
-        runSyntheticSmoke(model: Self.syntheticLegacyCompletionsModel,
-                          apiKey: key, streaming: false)
-    }
-
     private func runSyntheticSmoke(model: AIMetadata.Model, apiKey: String, streaming: Bool) {
         let prompt = "Reply with exactly the single word: PINEAPPLE"
         let messages = [LLM.Message(role: .user, content: prompt)]

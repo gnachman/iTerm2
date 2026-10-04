@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-3.5-flash-lite:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"What magic phrase is inside the file in this archive? Quote it verbatim.\"},{\"inlineData\":{\"data\":\"UEsDBBQAAAAIAGJgyFzcVEFYkgAAACJMAAAJABwAbWFnaWMudHh0VVQJAAPoESdq6BEnanV4CwABBPUBAAAEFAAAAO3OsQ2DMBRAwZ4p\\\/gKhiDJKFrDAgCWwLcj+SiZITXH9Pen1NM+lrrGXmmNpZ8x52dMnx9SOfubrKq2O0SmKoiiKoiiKoiiKoiiKoiiKoiiKoiiKoiiKoqibqeG95TjSWqbo25muHOWK\\\/kumVvPj9RyHu55TFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVR\\\/9UXUEsBAh4DFAAAAAgAYmDIXNxUQViSAAAAIkwAAAkAGAAAAAAAAQAAAKSBAAAAAG1hZ2ljLnR4dFVUBQAD6BEnanV4CwABBPUBAAAEFAAAAFBLBQYAAAAAAQABAE8AAADVAAAAAAA=\",\"mime_type\":\"application\\\/zip\"}}],\"role\":\"user\"}]}",
+  "key" : "0afc16f5f754a451d0b8902280d762f53f9f203172261b4a8a690e33af35ca2d",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"Based on the binary data provided, the archive contains the file `magic.txt`, but the actual content of the file and its magic phrase are not included in the snippet you shared. The text provided cuts off right after the file header metadata (`magic.txtUT 'jux J&HMq `). \\n\\nIf you can provide the full text or base64 data of the archive, I'd be happy to extract and quote the magic phrase for you!\",\n            \"thoughtSignature\": \"EmAKXgFpFH0T9ZGHbIc17hqEcQsUDWnqhfeLBdy8LNHd\/9c8qx5KDVj0\/VSlsWiC8XA+db\/JA7ZvawcJ2mfimwpD2sWrZL\/hy0bn7TrxMLT0JK8DfH1e5non6jbR9VuIUQU=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"candidatesTokenCount\": 95,\n    \"totalTokenCount\": 129,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"gabCas3EGJqu39IPou-K0QY\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

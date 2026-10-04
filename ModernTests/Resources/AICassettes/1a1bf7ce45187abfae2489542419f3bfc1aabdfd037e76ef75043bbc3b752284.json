@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-3.5-flash-lite:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Quote the value of the 'magic' key shown.\"},{\"text\":\"magic: pinecone-42\\n\"}],\"role\":\"user\"}]}",
+  "key" : "1a1bf7ce45187abfae2489542419f3bfc1aabdfd037e76ef75043bbc3b752284",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"pinecone-42\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TUG56CkdXyFi5RTdMHnRPkeCaJj\/g6UOBL8ukUkd3fOVxV6jeXxZEpTmmo\/28ZlaXOQJwaN1csjITFILIrpLzC\/TN9qenz3ogUOczNj89WH3H+FUpXQXSGFs=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 20,\n    \"candidatesTokenCount\": 5,\n    \"totalTokenCount\": 25,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 20\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"iKbCarWhG42t1MkPwd7WmQE\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}
