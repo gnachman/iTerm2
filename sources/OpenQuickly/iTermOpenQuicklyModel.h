@@ -13,6 +13,11 @@
 - (NSAttributedString *)openQuicklyModelAttributedStringForDetail:(NSString *)detail
                                                       featureName:(NSString *)featureName;
 
+// Called when results that are computed asynchronously (such as session contents
+// matches) change after -updateWithQuery: returned. The delegate should call
+// -updateWithQuery: again with the same query to pick them up.
+- (void)openQuicklyModelDidChangeAsynchronously;
+
 @end
 
 @interface iTermOpenQuicklyModel : NSObject
@@ -20,6 +25,7 @@
 @property(nonatomic, retain) NSMutableArray *items;
 @property(nonatomic, assign) id<iTermOpenQuicklyModelDelegate> delegate;
 
+// Removes all items and cancels any search in progress.
 - (void)removeAllItems;
 
 // Recalculate items, adding those that match |queryString|.

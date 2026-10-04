@@ -111010,6 +111010,30 @@
         }
       }
     },
+    "OpenQuickly.ContentMatchCount" : {
+      "comment" : "Open Quickly detail: number of times the query appears in a session’s contents",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%ld match"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%ld matches"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "OpenQuickly.CreateNewTabWithProfile" : {
       "comment" : "Open Quickly action: create a new tab with this profile",
       "extractionState" : "extracted_with_value",
@@ -112518,6 +112542,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行脚本"
+          }
+        }
+      }
+    },
+    "OpenQuickly.RestrictionSessionContents" : {
+      "comment" : "Open Quickly restriction description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "sessions containing text"
           }
         }
       }
