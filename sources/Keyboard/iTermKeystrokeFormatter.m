@@ -79,7 +79,7 @@
                                          kUCKeyActionDisplay,
                                          0,
                                          LMGetKbdType(),
-                                         kUCKeyTranslateNoDeadKeysBit,
+                                         kUCKeyTranslateNoDeadKeysMask,
                                          &deadKeyState,
                                          sizeof(unicodeString) / sizeof(*unicodeString),
                                          &actualStringLength,

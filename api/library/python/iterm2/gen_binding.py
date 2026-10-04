@@ -988,6 +988,10 @@ class KeyBinding:
           version: typing.Optional[int],
           label: typing.Optional[str]):
         self.__keycode = keycode
+        # True when read from iTerm2's old three-part key with keycode 0, which can mean
+        # either the A key or an unknown keycode. Such keys are written back unchanged so
+        # iTerm2 can keep deciding which it is.
+        self.__ambiguous_keycode = False
         self.__character = character
         self.__modifiers = 0
         for mod in modifiers:
@@ -1018,7 +1022,8 @@ class KeyBinding:
     def _make(key: str, entry: dict):
         # Key can be one of:
         # 0xcharacter-0xmodifiers
-        # 0xcharacter-0xmodifiers-0xkeycode
+        # 0xcharacter-0xmodifiers-0xkeycode (older versions; keycode 0 may mean unknown)
+        # 0xcharacter-0xmodifiers-0xkeycode-0xversion
         keyParts = key.split("-")
         action = BindingAction(entry['Action'])
         if len(keyParts) < 3:
@@ -1030,7 +1035,10 @@ class KeyBinding:
         param = parse_binding_param(
                 action,
                 entry['Text'])
-        return KeyBinding(character, modifiers, keycode, action, param, entry.get('Version', None), entry.get('Label', None))
+        binding = KeyBinding(character, modifiers, keycode, action, param, entry.get('Version', None), entry.get('Label', None))
+        if len(keyParts) == 3 and keycode is not None and keycode.value == 0:
+            binding.__ambiguous_keycode = True
+        return binding
 
     @property
     def encode(self) -> dict:
@@ -1067,7 +1075,11 @@ class KeyBinding:
         base = hex(self.__character) + "-" + hex(self.__modifiers)
         if self.__keycode is None:
             return base
-        return base + "-" + hex(self.__keycode.value)
+        base = base + "-" + hex(self.__keycode.value)
+        if self.__ambiguous_keycode:
+            return base
+        # The fourth part tells iTerm2 the keycode is real, even when it is 0 (the A key).
+        return base + "-0x1"
 
     @property
     def _value(self) -> dict:

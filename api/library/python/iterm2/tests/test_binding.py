@@ -193,3 +193,36 @@ class TestTabTransform:
         assert PasteConfiguration.TabTransform.NONE.value == 0
         assert PasteConfiguration.TabTransform.CONVERT_TO_SPACES.value == 1
         assert PasteConfiguration.TabTransform.ESCAPE_WITH_CONTROL_V.value == 2
+
+
+class TestKeyBindingKey:
+    """Tests for KeyBinding.key, the dictionary key iTerm2 stores bindings under."""
+
+    ENTRY = {'Action': 11, 'Text': '0x4'}
+
+    def _round_trip(self, key):
+        from iterm2.binding import KeyBinding
+        return KeyBinding._make(key, self.ENTRY).key
+
+    def test_new_binding_with_keycode_uses_four_parts(self):
+        import iterm2.keyboard
+        from iterm2.binding import KeyBinding, BindingAction
+        binding = KeyBinding(ord(';'), [iterm2.keyboard.Modifier.CONTROL],
+                             iterm2.keyboard.Keycode.ANSI_A, BindingAction(11), '0x4',
+                             None, None)
+        assert binding.key == '0x3b-0x40000-0x0-0x1'
+
+    def test_binding_without_keycode_uses_two_parts(self):
+        assert self._round_trip('0x62-0x40000') == '0x62-0x40000'
+
+    def test_four_part_key_round_trips(self):
+        assert self._round_trip('0x3b-0x40000-0x0-0x1') == '0x3b-0x40000-0x0-0x1'
+
+    def test_three_part_nonzero_keycode_becomes_four_parts(self):
+        assert self._round_trip('0x74-0x100000-0x11') == '0x74-0x100000-0x11-0x1'
+
+    def test_three_part_keycode_zero_round_trips_unchanged(self):
+        # Keycode 0 in the old format may mean "unknown"; writing it as four parts would
+        # make iTerm2 treat it as the A key.
+        assert self._round_trip('0xf728-0x0-0x0') == '0xf728-0x0-0x0'
+        assert self._round_trip('0x61-0x40000-0x0') == '0x61-0x40000-0x0'

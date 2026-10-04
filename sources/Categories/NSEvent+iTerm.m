@@ -229,7 +229,13 @@
                                      kUCKeyActionDisplay,
                                      (carbonModifiers >> 8) & 0xff,
                                      LMGetKbdType(),
-                                     kUCKeyTranslateNoDeadKeysBit,
+                                     // Leave dead-key processing on so a dead key produces no
+                                     // characters and this returns nil. Callers rely on that:
+                                     // VimKeyParser and CompanionKeyInjection synthesize a key
+                                     // event when this returns the desired character, and a
+                                     // synthesized dead key press would start composition
+                                     // instead of typing the character.
+                                     0,
                                      &deadKeyState,
                                      sizeof(unicodeString) / sizeof(*unicodeString),
                                      &actualStringLength,

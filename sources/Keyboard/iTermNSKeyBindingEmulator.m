@@ -452,7 +452,7 @@ static struct {
                    kUCKeyActionDisplay,
                    0,
                    LMGetKbdType(),
-                   kUCKeyTranslateNoDeadKeysBit,
+                   kUCKeyTranslateNoDeadKeysMask,
                    &deadKeyState,
                    sizeof(unicodeString) / sizeof(unicodeString[0]),
                    &actualStringLength,
@@ -461,6 +461,10 @@ static struct {
 
     if (status) {
         DLog(@"UCKeyTranslate failed with %@", @(status));
+        return [self fallbackCharactersIgnoringAllModifiersInEvent:event];
+    }
+    if (actualStringLength == 0) {
+        DLog(@"UCKeyTranslate produced no characters");
         return [self fallbackCharactersIgnoringAllModifiersInEvent:event];
     }
     NSString *theString = (__bridge_transfer NSString *)CFStringCreateWithCharacters(kCFAllocatorDefault,

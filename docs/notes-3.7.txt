@@ -984,3 +984,9 @@ Bug Fixes:
 - Fixed a crash that could happen when the GPU
   renderer had been running for several weeks
   without restarting iTerm2. Issue 13103.
+- Key bindings saved by older versions of iTerm2
+  no longer fire when you press A while “Interpret
+  key bindings based on physical key” is on, which
+  could make the A key stop typing. iTerm2 also no
+  longer mistakenly offers to turn that setting on
+  when you press a shortcut like ^A. Issue 13110.

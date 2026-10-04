@@ -14,11 +14,22 @@
 #import "NSEvent+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTerm2SharedARC-Swift.h"
 
 // Using this as a test for whether there is a keycode is a big red flag because 0 is the keycode for A on a US keyboard.
 // It should only be used as a placeholder when the hasKeyCode flag is NO.
 // When this is ported to Swift, this and hasKeyCode can go away because keycode should be an optional.
 static const int iTermKeystrokeKeyCodeUnavailable = 0;
+
+// Serialization formats for keystrokes in key binding dictionaries:
+//   0xchar-0xmods                  No keycode. Written before keycodes were recorded.
+//   0xchar-0xmods-0xkeycode        Written by older versions. A keycode of 0 might mean
+//                                  "unknown" rather than kVK_ANSI_A, so it's trusted only when the
+//                                  character is one the A key can type.
+//   0xchar-0xmods-0xkeycode-0x1    The keycode is always trustworthy. The fourth part is a format
+//                                  version. Older versions parse the first three parts and ignore it.
+//   :0xchar:0xmods                 Modified character with no keycode (e.g., from tmux).
+static const unsigned int iTermKeystrokeSerializationVersion = 1;
 
 @implementation iTermKeystroke {
     // When set, self.character = self.modifiedCharacter and it should be treated as a modified
@@ -206,9 +217,21 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
         unsigned int character = 0;
         unsigned long long flags = 0;
         unsigned int virtualKeyCode = 0;
-        if (sscanf(string.UTF8String, "%x-%llx-%x", &character, &flags, &virtualKeyCode) == 3) {
+        unsigned int version = 0;
+        const int count = sscanf(string.UTF8String, "%x-%llx-%x-%x", &character, &flags, &virtualKeyCode, &version);
+        if (count == 4) {
             return [self initWithVirtualKeyCode:virtualKeyCode
                                      hasKeyCode:YES
+                                  modifierFlags:flags
+                                      character:character
+                              modifiedCharacter:0];
+        }
+        if (count == 3) {
+            const BOOL trusted = [iTermKeystroke threePartKeyCode:virtualKeyCode
+                                           isTrustworthyForCharacter:character
+                                                       modifierFlags:flags];
+            return [self initWithVirtualKeyCode:trusted ? virtualKeyCode : iTermKeystrokeKeyCodeUnavailable
+                                     hasKeyCode:trusted
                                   modifierFlags:flags
                                       character:character
                               modifiedCharacter:0];
@@ -226,6 +249,44 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
         }
     }
     return [self initInvalid];
+}
+
+// In the three-part format, a nonzero keycode is always real. Zero is ambiguous: it is the A
+// key, but older versions also wrote it when the keycode was unknown.
++ (BOOL)threePartKeyCode:(unsigned int)virtualKeyCode
+    isTrustworthyForCharacter:(unsigned int)character
+                modifierFlags:(unsigned long long)flags {
+    if (virtualKeyCode != 0) {
+        return YES;
+    }
+    return [iTermKeyCodeZeroCharacters characterIsPlausibleForKeyCodeZero:character
+                                                               modifiers:(NSEventModifierFlags)flags];
+}
+
++ (NSString *)modernSerializationForThreePartKey:(NSString *)key {
+    if (![key isKindOfClass:[NSString class]] || [key hasPrefix:@":"]) {
+        return nil;
+    }
+    unsigned int character = 0;
+    unsigned long long flags = 0;
+    unsigned int virtualKeyCode = 0;
+    unsigned int version = 0;
+    if (sscanf(key.UTF8String, "%x-%llx-%x-%x", &character, &flags, &virtualKeyCode, &version) != 3) {
+        return nil;
+    }
+    iTermKeystroke *keystroke = [[iTermKeystroke alloc] initWithString:key];
+    if (virtualKeyCode == 0) {
+        // Whether keycode 0 is trusted can depend on the enabled keyboard layouts, which differ
+        // between machines and over time. Make it permanent only when that doesn't matter.
+        const NSEventModifierFlags modifiers = (NSEventModifierFlags)flags;
+        const BOOL decidable =
+            [iTermKeyCodeZeroCharacters characterIsAlwaysPlausibleForKeyCodeZero:character modifiers:modifiers] ||
+            [iTermKeyCodeZeroCharacters characterIsNeverPlausibleForKeyCodeZero:character modifiers:modifiers];
+        if (!decidable) {
+            return nil;
+        }
+    }
+    return keystroke.serialized;
 }
 
 - (instancetype)initWithVirtualKeyCode:(int)virtualKeyCode
@@ -315,6 +376,15 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
     if (!self.hasVirtualKeyCode) {
         return [self legacySerialized];
     }
+    return [NSString stringWithFormat: @"0x%x-0x%llx-0x%x-0x%x",
+            self.character, (unsigned long long)self.modifierFlags, self.virtualKeyCode,
+            iTermKeystrokeSerializationVersion];
+}
+
+// The spelling older versions used for a keystroke with a keycode. Key binding dictionaries can
+// still contain it: they might not have been migrated yet (e.g., a dynamic profile that isn't
+// rewritable) or an older version might have written to them.
+- (NSString *)threePartSerialized {
     return [NSString stringWithFormat: @"0x%x-0x%llx-0x%x",
             self.character, (unsigned long long)self.modifierFlags, self.virtualKeyCode];
 }
@@ -331,7 +401,9 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
             return self.modifiedSerialized;
         }
 
-        NSString *portableKey = [self keyMatchingPhysicalIdentityInDictionary:dict];
+        NSString *untrustedKeyCodeKey = nil;
+        NSString *portableKey = [self keyMatchingPhysicalIdentityInDictionary:dict
+                                                  keyCodelessCharacterMatch:&untrustedKeyCodeKey];
         if (portableKey) {
             return portableKey;
         }
@@ -341,12 +413,20 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
             // of the language-agnostic key bindings feature.
             return self.legacySerialized;
         }
-        return nil;
+        // A binding in the three-part format whose keycode isn't trustworthy acts like a binding
+        // with no keycode, so it matches by character.
+        return untrustedKeyCodeKey;
     }
     id result;
     result = dict[self.serialized];
     if (result) {
         return self.serialized;
+    }
+    if (self.hasVirtualKeyCode && !_characterIsModified) {
+        NSString *threePart = self.threePartSerialized;
+        if (dict[threePart]) {
+            return threePart;
+        }
     }
     if (dict[self.legacySerialized]) {
         return self.legacySerialized;
@@ -381,11 +461,22 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
 // keyInBindingDictionary: and by the physical-key suggestion, so the serialization
 // format lives only in -portableSerialized. Allocates a candidate per key; callers
 // use it only after a character lookup already failed.
-- (NSString *)keyMatchingPhysicalIdentityInDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict {
+//
+// If keyCodelessCharacterMatch is nonnull and there is no physical-key match, it is set to the
+// first key without a keycode (such as an old three-part key whose keycode isn't trustworthy)
+// whose character and modifiers equal this keystroke's. This saves language-agnostic matching a
+// second pass over dict.
+- (NSString *)keyMatchingPhysicalIdentityInDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict
+                            keyCodelessCharacterMatch:(NSString **)keyCodelessCharacterMatch {
+    if (keyCodelessCharacterMatch) {
+        *keyCodelessCharacterMatch = nil;
+    }
     if (![dict isKindOfClass:[NSDictionary class]]) {
         return nil;
     }
     NSString *portable = self.portableSerialized;
+    NSString *legacy = keyCodelessCharacterMatch ? self.legacySerialized : nil;
+    NSString *characterMatch = nil;
     @autoreleasepool {
         for (id keyObj in dict) {
             NSString *key = [NSString castFrom:keyObj];
@@ -393,10 +484,18 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
                 continue;
             }
             iTermKeystroke *candidate = [[iTermKeystroke alloc] initWithString:key];
-            if ([candidate.portableSerialized isEqualToString:portable]) {
-                return key;
+            if (candidate.hasVirtualKeyCode) {
+                if ([candidate.portableSerialized isEqualToString:portable]) {
+                    return key;
+                }
+            } else if (legacy && !characterMatch && !candidate->_characterIsModified &&
+                       [candidate.legacySerialized isEqualToString:legacy]) {
+                characterMatch = key;
             }
         }
+    }
+    if (keyCodelessCharacterMatch) {
+        *keyCodelessCharacterMatch = characterMatch;
     }
     return nil;
 }
@@ -407,7 +506,7 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
         // this cannot be a physical-key match.
         return NO;
     }
-    return [self keyMatchingPhysicalIdentityInDictionary:dict] != nil;
+    return [self keyMatchingPhysicalIdentityInDictionary:dict keyCodelessCharacterMatch:NULL] != nil;
 }
 
 - (BOOL)isEqual:(id)object {
@@ -430,7 +529,7 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
 }
 
 - (iTermKeystroke *)keystrokeWithoutVirtualKeyCode {
-    if (self.virtualKeyCode == 0) {
+    if (!self.hasVirtualKeyCode) {
         return self;
     }
     return [iTermKeystroke withCharacter:_character modifierFlags:_modifierFlags];
