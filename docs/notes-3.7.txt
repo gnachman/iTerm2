@@ -425,6 +425,9 @@ Bug Fixes:
   set to the Command Line Tools rather than
   Xcode. It used to show a “Semantic History
   Command Failed” alert instead. Issue 13091.
+- Fixed a rare race where a new session could
+  silently lose some of the first output it
+  received.
 - A tab name you set yourself with Edit Tab Title
   is no longer replaced by the session’s name
   whenever the tab’s subtitle changes or its
