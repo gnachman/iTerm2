@@ -2058,9 +2058,12 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 
         iTermBidiDisplayInfo *bidi = _supportBidi ? sca.bidiInfo : nil;
         if (charBlock) {
+            const int firstX = MIN(width - 1, MAX(range.columnWindow.location, startx));
             if (supportBidi && bidi) {
-                const NSRange visualRange = NSMakeRangeFromHalfOpenInterval(MIN(width - 1, MAX(range.columnWindow.location, startx)),
-                                                                            endx);
+                // The range can be inverted after windowed-range clamping (e.g., a cmd-hover
+                // range rewritten around the mouse). The non-bidi loop below runs zero times in
+                // that case, so do the same here instead of asserting.
+                const NSRange visualRange = firstX < endx ? NSMakeRangeFromHalfOpenInterval(firstX, endx) : NSMakeRange(firstX, 0);
                 [bidi enumerateLogicalRangesIn:visualRange closure:^(NSRange logicalRange, int visualStart, BOOL *stop) {
                     for (int i = 0; i < logicalRange.length; i++) {
                         int x = logicalRange.location + i;
@@ -2072,7 +2075,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                 }];
             } else {
                 // Iterate over characters up to terminal nulls.
-                for (int x = MIN(width - 1, MAX(range.columnWindow.location, startx)); x < endx - numNulls; x++) {
+                for (int x = firstX; x < endx - numNulls; x++) {
                     ITAssertWithMessage(x >= 0 && x < width, @"Iterating terminal nulls. x=%@ range=%@ width=%@ numNulls=%@", @(x), VT100GridWindowedRangeDescription(range), @(width), @(numNulls));
                     if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y), VT100GridCoordMake(x, y), &lineMetadata)) {
                         return;
