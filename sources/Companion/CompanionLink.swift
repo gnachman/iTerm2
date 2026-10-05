@@ -52,6 +52,30 @@ enum CompanionConnectionClassification: Equatable {
     case unsolicited
 }
 
+/// Delivers the phone's stream acknowledgements to the streamer that paces
+/// against them, without going through the main actor. A streamer stops
+/// emitting frames once it gets about half a second ahead of the last
+/// acknowledgement, so if acknowledgements waited for the main queue the video
+/// would stall for as long as an alert had that queue frozen.
+final class CompanionStreamAckRouter: Sendable {
+    typealias Sink = @Sendable (_ ptsMilliseconds: UInt64, _ queueDepth: Int) -> Void
+    private let sinks = OSAllocatedUnfairLock(initialState: [UInt32: Sink]())
+
+    /// `sink` is called on the link's executor and must be safe on any thread.
+    func register(streamID: UInt32, sink: @escaping Sink) {
+        sinks.withLock { $0[streamID] = sink }
+    }
+
+    func unregister(streamID: UInt32) {
+        sinks.withLock { $0[streamID] = nil }
+    }
+
+    func deliver(streamID: UInt32, ptsMilliseconds: UInt64, queueDepth: Int) {
+        let sink = sinks.withLock { $0[streamID] }
+        sink?(ptsMilliseconds, queueDepth)
+    }
+}
+
 actor CompanionLink {
     enum Event {
         /// A decoded message from the phone, in wire order. `handledByLink` is
@@ -82,6 +106,10 @@ actor CompanionLink {
     /// Outbound frames. Lock-protected, so main-actor code and encoder threads
     /// enqueue synchronously and enqueue order is wire order.
     nonisolated let outbox = CompanionPriorityOutbox<HostEnvelope>()
+
+    /// Where the phone's acknowledgements of video frames go. The bridge
+    /// registers each stream here, and the link delivers to it directly.
+    nonisolated let streamAcks = CompanionStreamAckRouter()
 
     /// Single consumer: the @MainActor bridge.
     nonisolated let events: AsyncStream<Event>
@@ -432,7 +460,10 @@ actor CompanionLink {
                                        suppress: suppress,
                                        inputs: inputs ?? [:])
             }
-        case .sendKey, .pasteText:
+        case .streamAck(let streamID, let lastPTSMilliseconds, let queueDepth):
+            streamAcks.deliver(streamID: streamID, ptsMilliseconds: lastPTSMilliseconds, queueDepth: queueDepth)
+            eventsContinuation.yield(.envelope(envelope, handledByLink: true))
+        case .sendKey, .pasteText, .reportScrollWheel:
             // Terminal input is only meaningful now. Forwarded while the main
             // thread cannot act on it, it would sit in the event stream and be
             // typed into the session whenever the alert is finally dismissed,

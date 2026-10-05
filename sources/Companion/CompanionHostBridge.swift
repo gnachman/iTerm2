@@ -428,8 +428,8 @@ final class CompanionHostBridge {
             RLog("Companion bridge: unsupported client message (peer is newer)")
             send(.error(CompanionError(code: .badRequest, message: "Unsupported request; app upgrade required")),
                  requestID: requestID)
-        case .hello, .ping, .relayRoomSecret, .answerModalAlert:
-            // Answered by CompanionLink, off the main actor.
+        case .hello, .ping, .relayRoomSecret, .answerModalAlert, .streamAck:
+            // Handled by CompanionLink, off the main actor.
             break
         case .listChatsAndSessions:
             // Mixed request: the session list works with or without AI, but chats
@@ -549,8 +549,6 @@ final class CompanionHostBridge {
             // raising it is bounded by the main-thread driving timer, which is fixed
             // at the stream's initial rate, so the supported direction is downward.
             streams[streamID]?.streamer.updateFrameRateCap(params.maxFrameRate)
-        case .streamAck(let streamID, let lastPTSMilliseconds, let queueDepth):
-            streams[streamID]?.streamer.noteAck(ptsMilliseconds: lastPTSMilliseconds, queueDepth: queueDepth)
         case .reportScrollWheel(let streamID, let up, let lines):
             handleReportScrollWheel(streamID: streamID, up: up, lines: lines)
         case .selectionGesture(let streamID, let phase, let mode, let point):
@@ -1142,6 +1140,11 @@ final class CompanionHostBridge {
             }
         }
         RunLoop.main.add(timer, forMode: .common)
+        // Acknowledgements go from the link straight to the streamer, so pacing
+        // keeps working while an alert has the main queue frozen.
+        link.streamAcks.register(streamID: streamID) { [weak streamer] ptsMilliseconds, queueDepth in
+            streamer?.noteAck(ptsMilliseconds: ptsMilliseconds, queueDepth: queueDepth)
+        }
         streams[streamID] = StreamContext(streamer: streamer, guid: guid, timer: timer,
                                           lastChange: max(session.screenContentsLastChangedAt,
                                                           session.view?.lastRedrawRequestedAt ?? 0))
@@ -1202,6 +1205,7 @@ final class CompanionHostBridge {
 
     private func endStream(_ streamID: UInt32, reason: CompanionStreamEndReason) {
         guard let context = streams.removeValue(forKey: streamID) else { return }
+        link.streamAcks.unregister(streamID: streamID)
         RLog("stream \(streamID) END reason=\(reason)")
         context.timer.invalidate()
         context.streamer.stop()

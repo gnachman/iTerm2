@@ -326,6 +326,8 @@ final class CompanionLinkTests: XCTestCase {
             return "answerModalAlert"
         case .sendKey:
             return "sendKey"
+        case .reportScrollWheel:
+            return "reportScrollWheel"
         case .pasteText:
             return "pasteText"
         case .listChatsAndSessions:
@@ -1064,6 +1066,65 @@ final class CompanionLinkTests: XCTestCase {
 
     private static func key(_ text: String) -> CompanionClientMessage {
         return .sendKey(sessionGuid: "g", event: CompanionKeyEvent(key: .text(text)))
+    }
+
+    /// The streamer stops sending video once it gets ahead of the phone's
+    /// acknowledgements, so they must reach it while the main queue is frozen
+    /// by an alert, which means without passing through the main actor.
+    func testStreamAcksAreDeliveredWhileTheMainQueueIsFrozen() async throws {
+        let fixture = makeFixture()
+        let acks = OSAllocatedUnfairLock(initialState: [String]())
+        fixture.link.streamAcks.register(streamID: 7) { pts, depth in
+            acks.withLock { $0.append("\(pts)/\(depth)") }
+        }
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+
+        try await FrozenMainQueue.run { _ in
+            try await fixture.phone.send(.streamAck(streamID: 7, lastPTSMilliseconds: 1234, queueDepth: 2))
+            // For a stream nobody registered: dropped, not an error.
+            try await fixture.phone.send(.streamAck(streamID: 8, lastPTSMilliseconds: 1, queueDepth: 0))
+            try await fixture.phone.send(.ping, requestID: 2)
+            let pong = try await fixture.phone.next()
+            XCTAssertEqual(pong, "pong#2")
+            XCTAssertEqual(acks.withLock { $0 }, ["1234/2"])
+        }
+
+        fixture.link.streamAcks.unregister(streamID: 7)
+        try await fixture.phone.send(.streamAck(streamID: 7, lastPTSMilliseconds: 9999, queueDepth: 0))
+        try await fixture.phone.send(.ping, requestID: 3)
+        _ = try await fixture.phone.next()
+        XCTAssertEqual(acks.withLock { $0 }, ["1234/2"])
+    }
+
+    /// A scroll over a program that takes mouse reports is written to the
+    /// terminal as input, so like keys it must not be saved up and delivered
+    /// when the alert is finally dismissed.
+    func testScrollWheelReportsAreRefusedWhileTheMainThreadIsBlocked() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        fixture.stall.setBlocked(true)
+        _ = try await fixture.phone.next()
+
+        try await fixture.phone.send(.reportScrollWheel(streamID: 1, up: true, lines: 3), requestID: 5)
+        let refusal = try await fixture.phone.next()
+        XCTAssertEqual(refusal, "error#5")
+        try await fixture.phone.send(.reportScrollWheel(streamID: 1, up: true, lines: 3))
+        // A sync point: the link has read both reports before the stall ends.
+        try await fixture.phone.send(.ping, requestID: 6)
+        let pong = try await fixture.phone.next()
+        XCTAssertEqual(pong, "pong#6")
+
+        fixture.stall.setBlocked(false)
+        _ = try await fixture.phone.next()
+        try await fixture.phone.send(.reportScrollWheel(streamID: 1, up: false, lines: 1), requestID: 7)
+        try await fixture.phone.send(.ping, requestID: 8)
+        _ = try await fixture.phone.next()
+
+        await fixture.phone.close()
+        let events = try await allEventDescriptions(fixture.link)
+        XCTAssertEqual(events.filter { $0.contains("reportScrollWheel") }, ["forwarded reportScrollWheel#7"])
     }
 
     /// Keystrokes and pastes sent while the Mac cannot act on them must not be
