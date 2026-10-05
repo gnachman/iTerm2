@@ -925,9 +925,53 @@ final class AppModel {
         }
     }
 
+    /// Whether `client` is the connection in use. A connection the phone gave
+    /// up on (the liveness probe or the connection check found it dead) can
+    /// still deliver an event that was in flight, or report its own end much
+    /// later, after another connection has replaced it.
+    private func isCurrent(_ client: CompanionClient?) -> Bool {
+        guard let client else { return false }
+        return client === self.client
+    }
+
+    private func clientDidReceive(_ event: CompanionHostMessage, from client: CompanionClient?) {
+        guard isCurrent(client) else {
+            companionLog("Ignoring an event from a connection that is no longer in use")
+            return
+        }
+        handle(event: event)
+    }
+
+    private func clientDidClose(_ client: CompanionClient?, error: Error?) {
+        guard isCurrent(client) else {
+            companionLog("Ignoring the close of a connection that is no longer in use")
+            return
+        }
+        connectionLost(dueTo: error)
+    }
+
+    /// Closes a connection that is being given up on. Its pending requests
+    /// fail at once, and it reports nothing further.
+    private func abandon(_ client: CompanionClient?) {
+        guard let client else { return }
+        Task { await client.close() }
+    }
+
     private func livenessProbeFoundDeadConnection() {
-        companionLog("Liveness check failed while the Mac was blocked -> treating connection as lost and reconnecting")
-        connectionLost()
+        guard isReconnecting else {
+            companionLog("Liveness check failed while the Mac was blocked -> treating connection as lost and reconnecting")
+            connectionLost()
+            return
+        }
+        // The reconnect that is under way made this connection, and is waiting
+        // on a request over it that is held because the Mac said it was
+        // blocked. connectionLost does nothing during a reconnect, so release
+        // that request here: the status goes, and closing the connection fails
+        // the request, which sends the reconnect round again. The client stays
+        // in place for the reconnect to replace.
+        companionLog("Liveness check failed during a reconnect -> closing the new connection so the reconnect retries")
+        clearMacStatus()
+        abandon(client)
     }
 
     #if DEBUG
@@ -948,6 +992,17 @@ final class AppModel {
     func testExpireAlertAnswerTimeout(alertID: String) {
         alertAnswerTimedOut(alertID: alertID)
     }
+
+    /// Test hooks for the connection a callback came from.
+    func testInstallClient(_ client: CompanionClient?) { self.client = client }
+    func testIsCurrentClient(_ client: CompanionClient) -> Bool { self.client === client }
+    func testClientDidReceive(_ event: CompanionHostMessage, from client: CompanionClient) {
+        clientDidReceive(event, from: client)
+    }
+    func testClientDidClose(_ client: CompanionClient, error: Error? = nil) {
+        clientDidClose(client, error: error)
+    }
+    func testLivenessProbeFoundDeadConnection() { livenessProbeFoundDeadConnection() }
 
     /// Test hook: apply a version handshake as the connect path does.
     func testApplyHandshake(_ handshake: CompanionClient.HandshakeResult) {
@@ -1775,20 +1830,21 @@ final class AppModel {
             companionLog("SAS confirmation accepted")
         }
         let client = CompanionClient(session: CompanionSession(transport: channel))
-        await client.start(onEvent: { [weak self] event in
+        // Before start: the callbacks below act only for the connection in use.
+        self.client = client
+        await client.start(onEvent: { [weak self, weak client] event in
             Task { @MainActor in
-                self?.handle(event: event)
+                self?.clientDidReceive(event, from: client)
             }
-        }, onClose: { [weak self] error in
+        }, onClose: { [weak self, weak client] error in
             Task { @MainActor in
-                self?.connectionLost(dueTo: error)
+                self?.clientDidClose(client, error: error)
             }
         }, onMedia: { [weak self] frame in
             Task { @MainActor in
                 self?.handleStreamMedia(frame)
             }
         })
-        self.client = client
 
         await lockRelayRoom(client: client, code: code, registrationToken: registrationToken)
     }
@@ -2194,6 +2250,7 @@ final class AppModel {
         } else {
             companionLog("Connection lost (no transport error; e.g. the foreground connection-check ping failed)")
         }
+        abandon(client)
         client = nil
         // The status described the connection that just ended. Requests held
         // for a blocked Mac get their timeouts back and fail with it.

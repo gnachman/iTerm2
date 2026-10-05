@@ -428,6 +428,119 @@ final class AppModelMacStatusTests: XCTestCase {
         XCTAssertEqual(model.macAlertPresentation, .overlay(asking, .ready))
     }
 
+    // MARK: Which connection a callback came from
+
+    /// A transport that stays open until closed and says when it was.
+    private final class FakeTransport: MessageTransport, @unchecked Sendable {
+        private let lock = NSLock()
+        private var closed = false
+        private var waiters: [CheckedContinuation<Data, Error>] = []
+        var isClosed: Bool { lock.withLock { closed } }
+        func send(_ frame: Data) async throws {
+            if isClosed { throw TransportError.closed }
+        }
+        func receive() async throws -> Data {
+            try await withCheckedThrowingContinuation { continuation in
+                let alreadyClosed = lock.withLock { () -> Bool in
+                    if closed { return true }
+                    waiters.append(continuation)
+                    return false
+                }
+                if alreadyClosed {
+                    continuation.resume(throwing: TransportError.closed)
+                }
+            }
+        }
+        func close() async {
+            let pending = lock.withLock { () -> [CheckedContinuation<Data, Error>] in
+                closed = true
+                defer { waiters = [] }
+                return waiters
+            }
+            pending.forEach { $0.resume(throwing: TransportError.closed) }
+        }
+    }
+
+    private func makeClient() -> (CompanionClient, FakeTransport) {
+        let transport = FakeTransport()
+        return (CompanionClient(session: CompanionSession(transport: transport)), transport)
+    }
+
+    /// Waits for a client the model dropped to be closed. Closing is started by
+    /// the model and finishes on its own, so this returns as soon as it has.
+    /// The bound is far longer than that takes; it only keeps a failure from
+    /// hanging the test.
+    private func waitUntilClosed(_ transport: FakeTransport, _ message: String) async {
+        for _ in 0..<30_000 where !transport.isClosed {
+            try? await Task.sleep(nanoseconds: 1_000_000)
+        }
+        XCTAssertTrue(transport.isClosed, message)
+    }
+
+    /// The liveness probe gave up on a connection and a new one replaced it.
+    /// When the old socket finally reports its close, that must not tear down
+    /// the new connection or wipe what the Mac just said over it.
+    func test_lateCloseFromAnAbandonedConnectionIsIgnored() {
+        let model = connectedModel(status([alert("A")], blocked: true))
+        let (abandoned, _) = makeClient()
+        let (current, _) = makeClient()
+        model.testInstallClient(current)
+
+        model.testClientDidClose(abandoned, error: TransportError.closed)
+
+        XCTAssertTrue(model.testIsCurrentClient(current))
+        XCTAssertEqual(model.macStatus, status([alert("A")], blocked: true))
+        XCTAssertFalse(model.isReconnecting)
+    }
+
+    func test_lateEventFromAnAbandonedConnectionIsIgnored() {
+        let model = connectedModel(status([]))
+        let (abandoned, _) = makeClient()
+        let (current, _) = makeClient()
+        model.testInstallClient(current)
+
+        model.testClientDidReceive(.macStatusChanged(status: status([alert("Stale")], blocked: true)), from: abandoned)
+        XCTAssertEqual(model.macStatus, status([]))
+
+        model.testClientDidReceive(.macStatusChanged(status: status([alert("Fresh")], blocked: true)), from: current)
+        XCTAssertEqual(model.macStatus, status([alert("Fresh")], blocked: true))
+    }
+
+    /// A connection the phone gives up on is closed, not just forgotten, so it
+    /// cannot go on delivering events or report its own end later.
+    func test_aConnectionThatIsGivenUpOnIsClosed() async {
+        let model = connectedModel(status([alert("A")], blocked: true))
+        let (client, transport) = makeClient()
+        model.testInstallClient(client)
+
+        model.testLivenessProbeFoundDeadConnection()
+
+        XCTAssertFalse(model.testIsCurrentClient(client))
+        XCTAssertEqual(model.macStatus, status([]))
+        await waitUntilClosed(transport, "the abandoned connection was left open")
+    }
+
+    /// The probe can find the connection dead while a reconnect is still under
+    /// way (the new connection said the Mac is blocked, then died). The request
+    /// the reconnect is waiting on is held because the Mac was blocked, so the
+    /// status must be cleared and the connection closed for that request to
+    /// fail and the reconnect to try again.
+    func test_probeFailureDuringAReconnectReleasesWhatTheReconnectIsWaitingOn() async {
+        let model = connectedModel()
+        let (client, transport) = makeClient()
+        model.testInstallClient(client)
+        model.isReconnecting = true
+        model.testApplyHandshake(handshake(macStatus: status([alert("A")], blocked: true)))
+        XCTAssertTrue(model.macIsBlocked)
+
+        model.testLivenessProbeFoundDeadConnection()
+
+        XCTAssertFalse(model.macIsBlocked, "held requests keep waiting while this is set")
+        XCTAssertEqual(model.macAlertPresentation, .none, "a card from the dead connection is still up")
+        await waitUntilClosed(transport, "the reconnect's request is never failed")
+        model.isReconnecting = false
+    }
+
     // MARK: Unpairing
 
     /// The status belongs to the Mac it came from. Once unpaired, nothing of it
