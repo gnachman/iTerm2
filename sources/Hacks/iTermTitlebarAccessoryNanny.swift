@@ -180,8 +180,12 @@ class iTermTitlebarAccessoryNanny: NSObject {
 
     private func update() {
         guard let window = titledWindow else {
-            // Stay pending until the window has a title bar.
+            // Nothing to do without a title bar. Clear needsUpdate anyway: requests only trigger
+            // an update when it goes from false to true, so leaving it set would swallow every later
+            // request. viewControllers and pendingUpdates keep the desired state, so the next
+            // request after the window has a title bar applies all of it.
             DLog("Not updating titlebar accessories of a window without a title bar")
+            needsUpdate = false
             return
         }
         needsUpdate = false

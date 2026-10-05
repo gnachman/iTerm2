@@ -72,4 +72,39 @@ final class TitlebarAccessoryNannyTests: XCTestCase {
         XCTAssertTrue(window.titlebarAccessoryViewControllers.contains(vc))
         XCTAssertTrue(titledNanny.has(viewController: vc))
     }
+
+    private func makeAccessory() -> NSTitlebarAccessoryViewController {
+        let vc = NSTitlebarAccessoryViewController()
+        vc.view = NSView(frame: NSRect(x: 0, y: 0, width: 100, height: 20))
+        return vc
+    }
+
+    // An update skipped while the window had no title bar must not swallow later ones. Requests
+    // only trigger an update when needsUpdate goes from false to true, so leaving it set after the
+    // skip made every later add or min-height change a no-op.
+    func testAddAfterRegainingTitleBarInstallsEveryAccessory() throws {
+        let window = try XCTUnwrap(windowController.window)
+        let early = makeAccessory()
+        try ObjCTry { self.nanny.add(viewController: early) }
+
+        window.styleMask.insert(.titled)
+        let late = makeAccessory()
+        try ObjCTry { self.nanny.add(viewController: late) }
+
+        XCTAssertTrue(window.titlebarAccessoryViewControllers.contains(early))
+        XCTAssertTrue(window.titlebarAccessoryViewControllers.contains(late))
+    }
+
+    func testMinHeightUpdateAfterRegainingTitleBarInstallsAccessory() throws {
+        let window = try XCTUnwrap(windowController.window)
+        let vc = makeAccessory()
+        try ObjCTry { self.nanny.add(viewController: vc) }
+
+        window.styleMask.insert(.titled)
+        _ = nanny.updateMinHeight(viewController: vc,
+                                  minHeight: 20,
+                                  frame: NSRect(x: 0, y: 0, width: 100, height: 20))
+
+        XCTAssertTrue(window.titlebarAccessoryViewControllers.contains(vc))
+    }
 }
