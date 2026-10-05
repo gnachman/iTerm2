@@ -7974,6 +7974,16 @@ backgroundColor:(NSColor *)backgroundColor {
                                                    target:self
                                                    action:@selector(selectPaneInDirectionWithCompletion:direction:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"set_pinned"
+                                            defaultValues:@{}
+                                                    types:@{ @"pinned": [NSNumber class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextTab
+                                   sideEffectsPlaceholder:@"[set_pinned]"
+                                                   target:self
+                                                   action:@selector(setPinnedWithCompletion:pinned:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
 }
@@ -7981,6 +7991,29 @@ backgroundColor:(NSColor *)backgroundColor {
 - (void)setTitleWithCompletion:(void (^)(id, NSError *))completion
                          title:(NSString *)title {
     [self setTitleOverride:title];
+    completion(nil, nil);
+}
+
+// Python API. Goes through the same code path as the Pin Tab menu item, so a tab in a
+// tab group pins or unpins its whole group.
+- (void)setPinnedWithCompletion:(void (^)(id, NSError *))completion
+                         pinned:(NSNumber *)pinned {
+    DLog(@"API set_pinned:%@ for %@", pinned, self);
+    // Name the actual reason: the delegate is weak, and a nil delegate also answers NO.
+    NSString *reason = nil;
+    if (self.isTmuxTab) {
+        reason = @"tmux tabs can’t be pinned.";
+    } else if (!self.delegate) {
+        reason = @"The tab is not in a window.";
+    } else if (![self.delegate tab:self setPinned:pinned.boolValue]) {
+        reason = @"The tab’s group contains a tmux tab, so the group can’t be pinned.";
+    }
+    if (reason) {
+        completion(nil, [NSError errorWithDomain:@"com.iterm2.set-pinned"
+                                            code:0
+                                        userInfo:@{ NSLocalizedDescriptionKey: reason }]);
+        return;
+    }
     completion(nil, nil);
 }
 

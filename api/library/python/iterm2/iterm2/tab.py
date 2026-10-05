@@ -57,7 +57,8 @@ class Tab:
             tab_group_id=None,
             tab_group_name=None,
             tab_group_color=None,
-            tab_group_collapsed=False):
+            tab_group_collapsed=False,
+            pinned=False):
         self.connection = connection
         self.__tab_id = tab_id
         self.__root = root
@@ -69,6 +70,7 @@ class Tab:
         self.__tab_group_name = tab_group_name
         self.__tab_group_color = tab_group_color
         self.__tab_group_collapsed = tab_group_collapsed
+        self.__pinned = pinned
     # pylint: enable=too-many-arguments
 
     def __repr__(self):
@@ -91,6 +93,7 @@ class Tab:
         self.__tab_group_name = other._Tab__tab_group_name
         self.__tab_group_color = other._Tab__tab_group_color
         self.__tab_group_collapsed = other._Tab__tab_group_collapsed
+        self.__pinned = other._Tab__pinned
         # pylint: enable=protected-access
 
     def update_session(self, session):
@@ -130,6 +133,19 @@ class Tab:
             self.__tab_group_name or "",
             color,
             self.__tab_group_collapsed)
+
+    @property
+    def pinned(self) -> bool:
+        """
+        Whether the tab is pinned.
+
+        Pinned tabs are kept at the left of the tab bar and ask for
+        confirmation before closing. Always `False` when connected to a version
+        of iTerm2 that predates protocol 1.21.
+
+        :returns: `True` if the tab is pinned.
+        """
+        return self.__pinned
 
     @property
     def tmux_connection_id(self):
@@ -252,6 +268,30 @@ class Tab:
             "iterm2.select_pane_in_direction",
             {"direction": direction.value})
         return await iterm2.rpc.async_invoke_method(
+            self.connection, self.tab_id, invocation, -1)
+
+    async def async_set_pinned(self, pinned: bool) -> None:
+        """
+        Pins or unpins this tab.
+
+        This behaves like the Pin Tab and Unpin Tab menu items: a pinned tab
+        moves to the left of the tab bar, after any already-pinned tabs. If the
+        tab belongs to a tab group, the whole group is pinned or unpinned with
+        it so the group stays together.
+
+        The `pinned` property of this object is not updated until the next
+        refresh (for example, :meth:`~iterm2.App.async_refresh`).
+
+        :param pinned: `True` to pin the tab, `False` to unpin it.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong (for
+            example, tmux tabs can't be pinned).
+        """
+        iterm2.capabilities.check_supports_tab_pinning(self.connection)
+        invocation = iterm2.util.invocation_string(
+            "iterm2.set_pinned",
+            {"pinned": 1 if pinned else 0})
+        await iterm2.rpc.async_invoke_method(
             self.connection, self.tab_id, invocation, -1)
 
     async def async_update_layout(self) -> None:

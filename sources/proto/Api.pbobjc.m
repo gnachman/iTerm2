@@ -13295,6 +13295,7 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
 @dynamic hasTabGroupName, tabGroupName;
 @dynamic hasTabGroupColor, tabGroupColor;
 @dynamic hasTabGroupCollapsed, tabGroupCollapsed;
+@dynamic hasPinned, pinned;
 
 typedef struct ITMListSessionsResponse_Tab__storage_ {
   uint32_t _has_storage_[1];
@@ -13402,6 +13403,15 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
         .number = ITMListSessionsResponse_Tab_FieldNumber_TabGroupCollapsed,
         .hasIndex = 8,
         .offset = 9,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "pinned",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMListSessionsResponse_Tab_FieldNumber_Pinned,
+        .hasIndex = 10,
+        .offset = 11,  // Stored in _has_storage_ to save space.
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeBool,
       },

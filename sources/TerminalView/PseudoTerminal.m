@@ -16075,6 +16075,10 @@ backgroundColor:(NSColor *)backgroundColor {
     [self _tab:tab didChangePinnedState:pinned];
 }
 
+- (BOOL)tab:(PTYTab *)tab setPinned:(BOOL)pinned {
+    return [self _setPinned:pinned forTab:tab];
+}
+
 
 #pragma mark - PSMMinimalTabStyleDelegate
 

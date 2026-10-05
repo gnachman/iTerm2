@@ -364,10 +364,18 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         guard let tab else {
             return
         }
+        setPinned(!tab.isPinned, for: tab)
+    }
+
+    // Pins or unpins a tab. Shared by the Pin Tab menu item and the Python API so
+    // both behave identically. A tab in a tab group takes its whole group with it.
+    // Returns false if the tab can't be pinned because it (or a member of its
+    // group) is a tmux tab.
+    @discardableResult
+    @objc(_setPinned:forTab:) func setPinned(_ newPinned: Bool, for tab: PTYTab) -> Bool {
         if tab.tmuxController() != nil {
-            return
+            return false
         }
-        let newPinned = !tab.isPinned
         if let gid = tab.tabGroupID, !gid.isEmpty {
             let members = tabs(inGroup: gid) ?? []
             // Pin/unpin the whole group as a block so it stays entirely pinned or
@@ -377,7 +385,7 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
             // we cannot pin the block: refuse the whole toggle, mirroring the
             // per-tab guard above and the context menu (disabled for tmux tabs).
             if members.contains(where: { $0.tmuxController() != nil }) {
-                return
+                return false
             }
             for member in members where member.isPinned != newPinned {
                 member.isPinned = newPinned
@@ -393,6 +401,7 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         } else {
             tab.isPinned = newPinned
         }
+        return true
     }
 
     // Delegate method call forwarded from main class.

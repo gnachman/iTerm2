@@ -79,4 +79,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)tabBelongsToHotkeyWindow:(PTYTab *)tab;
 - (void)tab:(PTYTab *)tab progressDidChange:(VT100ScreenProgress)progress;
 - (void)tab:(PTYTab *)tab didChangePinnedState:(BOOL)pinned;
+// Pins or unpins the tab exactly as the Pin Tab menu item does (a tab in a tab
+// group takes its whole group with it). Returns NO if it can't be pinned (tmux).
+- (BOOL)tab:(PTYTab *)tab setPinned:(BOOL)pinned;
 @end
