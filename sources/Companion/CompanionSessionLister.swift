@@ -37,12 +37,17 @@ enum CompanionSessionLister {
             return CompanionSessionTree(windows: [])
         }
         let windows = (controller.terminals() ?? []).enumerated().map { index, term -> CompanionSessionTree.Window in
-            let tabs = (term.tabs() ?? []).map { tab -> CompanionSessionTree.Tab in
+            let tabs = (term.tabs() ?? []).enumerated().map { tabIndex, tab -> CompanionSessionTree.Tab in
                 let panes = (tab.sessions() ?? []).map { session -> CompanionSessionTree.Pane in
                     CompanionSessionTree.Pane(session: summary(of: session),
                                               peers: peers(of: session))
                 }
-                return CompanionSessionTree.Tab(title: tab.title, panes: panes)
+                // A tab that was just inserted has no title yet, and this runs
+                // from the notification that the number of tabs changed.
+                let tabTitle: String? = tab.title
+                return CompanionSessionTree.Tab(
+                    title: tabTitle.flatMap { $0.isEmpty ? nil : $0 } ?? "Tab \(tabIndex + 1)",  // Localization unneeded
+                    panes: panes)
             }
             let windowTitle = term.window().title
             return CompanionSessionTree.Window(
