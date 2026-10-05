@@ -1831,47 +1831,11 @@ void TurnOnDebugLoggingAutomatically(void) {
     item = [[[NSMenuItem alloc] initWithTitle:@"Replay Recorded Keys" action:@selector(replayRecordedKeys:) keyEquivalent:@""] autorelease];
     [appMenu addItem:item];
 #endif
-#if ITERM_DEBUG
-    {
-        NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
-        NSMenuItem *item;
-        // Triggers for testing the companion app while a modal freezes the main queue.
-        [appMenu addItem:[NSMenuItem separatorItem]];
-        // Localization unneeded
-        item = [[[NSMenuItem alloc] initWithTitle:@"Freeze Main Queue: Warning from @MainActor Task" action:@selector(debugShowWarningFromMainActorTask:) keyEquivalent:@""] autorelease];
-        [appMenu addItem:item];
-        // Localization unneeded
-        item = [[[NSMenuItem alloc] initWithTitle:@"Freeze Main Queue: Warning from Main Queue Block" action:@selector(debugShowWarningFromMainQueueBlock:) keyEquivalent:@""] autorelease];
-        [appMenu addItem:item];
-        // Localization unneeded
-        item = [[[NSMenuItem alloc] initWithTitle:@"Freeze Main Queue: Plain NSAlert from Main Queue Block" action:@selector(debugShowPlainAlertFromMainQueueBlock:) keyEquivalent:@""] autorelease];
-        [appMenu addItem:item];
-        // Localization unneeded
-        item = [[[NSMenuItem alloc] initWithTitle:@"Freeze Main Queue: Password Prompt from Main Queue Block" action:@selector(debugShowPasswordPromptFromMainQueueBlock:) keyEquivalent:@""] autorelease];
-        [appMenu addItem:item];
-    }
-#endif
 }
 
 #if ITERM_DEBUG
 - (IBAction)debugCheckSettingsControlTruncation:(id)sender {
     [[PreferencePanel sharedInstance] debugCheckControlTruncation];
-}
-
-- (IBAction)debugShowWarningFromMainActorTask:(id)sender {
-    [iTermCompanionModalFreezeDebug showWarningFromMainActorTask];
-}
-
-- (IBAction)debugShowWarningFromMainQueueBlock:(id)sender {
-    [iTermCompanionModalFreezeDebug showWarningFromMainQueueBlock];
-}
-
-- (IBAction)debugShowPlainAlertFromMainQueueBlock:(id)sender {
-    [iTermCompanionModalFreezeDebug showPlainAlertFromMainQueueBlock];
-}
-
-- (IBAction)debugShowPasswordPromptFromMainQueueBlock:(id)sender {
-    [iTermCompanionModalFreezeDebug showPasswordPromptFromMainQueueBlock];
 }
 #endif
 
