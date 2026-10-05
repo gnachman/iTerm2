@@ -1135,11 +1135,13 @@ final class CompanionHostBridge {
         // A main-thread timer at the frame-rate cap drives the stream: mark dirty
         // only when the session's content-change timestamp advanced, then tick.
         // The pacer coalesces and enforces the cap, so a static screen emits nothing.
-        let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / frameRate, repeats: true) { [weak self] _ in
+        // Common modes, so the video keeps going while an alert is up on the Mac.
+        let timer = Timer(timeInterval: 1.0 / frameRate, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 self?.driveStream(streamID)
             }
         }
+        RunLoop.main.add(timer, forMode: .common)
         streams[streamID] = StreamContext(streamer: streamer, guid: guid, timer: timer,
                                           lastChange: max(session.screenContentsLastChangedAt,
                                                           session.view?.lastRedrawRequestedAt ?? 0))

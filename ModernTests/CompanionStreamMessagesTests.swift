@@ -317,6 +317,19 @@ final class CompanionStreamMessagesTests: XCTestCase {
         XCTAssertEqual(inputs, ["spaces": "8"])
     }
 
+    func testModalAlertSessionGuidsRoundTripAndDefaultToNone() throws {
+        var alert = sampleAlert()
+        alert.sessionGuids = ["session-1"]
+        let status = CompanionMacStatus(modalAlerts: [alert], mainBlocked: false)
+        guard case let .macStatusChanged(decoded) = try roundTripHost(.macStatusChanged(status: status)) else {
+            return XCTFail("expected .macStatusChanged")
+        }
+        XCTAssertEqual(decoded.modalAlerts.first?.sessionGuids, ["session-1"])
+
+        let bare = try decoder().decode(CompanionMacStatus.self, from: Data(#"{"modalAlerts":[{"id":"A1"}]}"#.utf8))
+        XCTAssertEqual(bare.modalAlerts.first?.sessionGuids, [])
+    }
+
     // An answer to an alert that asks for nothing carries no inputs, and one
     // sent without the field at all still decodes.
     func testAnswerModalAlertWithoutInputs() throws {

@@ -58,6 +58,10 @@ struct ModalAlertSnapshot: Equatable, Sendable {
     /// False for a sheet shown without a nested run loop, which does not freeze
     /// the main queue.
     let isAppModal: Bool
+    /// The terminal sessions this alert is about, if any: the ones in the tab
+    /// it is attached to, or the one its caller named. Empty for an alert that
+    /// is not about a session.
+    let sessionGuids: [String]
 
     init(id: UUID,
          heading: String,
@@ -66,7 +70,9 @@ struct ModalAlertSnapshot: Equatable, Sendable {
          suppressionLabel: String?,
          inputs: [Input] = [],
          hasAccessory: Bool,
-         isAppModal: Bool) {
+         isAppModal: Bool,
+         sessionGuids: [String] = []) {
+        self.sessionGuids = sessionGuids
         self.id = id
         self.heading = heading
         self.body = body
@@ -156,6 +162,8 @@ final class ModalAlertDescriptor: NSObject {
     @objc let inputs: [Input]
     @objc let hasAccessory: Bool
     @objc let isAppModal: Bool
+    /// The terminal sessions this alert is about. Set after init; usually empty.
+    @objc var sessionGuids: [String] = []
 
     @objc init(heading: String,
                body: String,
@@ -262,7 +270,8 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
                     value: $0.value)
             },
             hasAccessory: descriptor.hasAccessory,
-            isAppModal: descriptor.isAppModal)
+            isAppModal: descriptor.isAppModal,
+            sessionGuids: descriptor.sessionGuids)
         let entry = Entry(snapshot: snapshot, hasWindow: window != nil, window: window, press: press)
         // Kept in front-to-back order, last in front. Registration order alone
         // is not that: a sheet that does not block can be started while an

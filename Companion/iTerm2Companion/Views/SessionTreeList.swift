@@ -119,6 +119,8 @@ struct SessionTreeRow: View {
     let title: String
     var subtitle: String? = nil
     let level: Int
+    /// An alert about this session is waiting on the Mac.
+    var hasAlert = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -134,6 +136,12 @@ struct SessionTreeRow: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
+            }
+            if hasAlert {
+                Spacer(minLength: 8)
+                Image(systemName: "exclamationmark.bubble.fill")
+                    .foregroundStyle(.orange)
+                    .accessibilityLabel("Your Mac needs a response")
             }
         }
         .padding(.leading, CGFloat(level) * 24)

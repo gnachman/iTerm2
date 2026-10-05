@@ -137,6 +137,11 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 + (void)setWarningHandler:(id<iTermWarningHandler>)handler;
 + (id<iTermWarningHandler>)warningHandler;
 
+// Tells warnings which terminal sessions a window holds, so a warning attached to a window can be
+// tied to them for the companion app (see sessionGuid). A block, set by the code that knows about
+// terminal windows, so this class need not. Called on the main thread.
++ (void)setSessionGuidResolver:(NSArray<NSString *> * _Nonnull (^ _Nullable)(NSWindow *window))resolver;
+
 // For tests. While YES, a warning that would be shown is not put on screen. It still builds its
 // alert and blocks the way a real one does (runModal spins a nested run loop in the modal panel
 // mode; a sheet started with runModalAsync: does not block), until one of the alert's buttons is
@@ -272,6 +277,12 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // only that an accessory exists, and can still press any button, which for an accessory that takes
 // input means confirming contents the user has not seen.
 @property(nonatomic) BOOL remotelyAnswerable;
+
+// The terminal session this warning is about, if its caller knows. The companion app interrupts
+// with the warning only while the user is looking at a session it is about (or when the warning
+// has the whole app blocked). When nil, the sessions are taken from `window`: see
+// +setSessionGuidResolver:.
+@property(nullable, nonatomic, copy) NSString *sessionGuid;
 
 // The controls in `accessory` that the companion app may set before pressing a button. Setting
 // this declares that they are everything in the accessory that matters to the answer, so the phone

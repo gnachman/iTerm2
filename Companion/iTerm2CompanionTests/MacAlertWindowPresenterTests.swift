@@ -34,7 +34,8 @@ final class MacAlertWindowPresenterTests: XCTestCase {
             wantsNotificationPermission: false,
             peerRevision: CompanionProtocolVersion.modalAlertRevision,
             aiAvailable: true,
-            macStatus: CompanionMacStatus(modalAlerts: alerts, mainBlocked: false)))
+            macStatus: CompanionMacStatus(modalAlerts: alerts,
+                                          mainBlocked: alerts.contains { $0.isAppModal })))
         return model
     }
 

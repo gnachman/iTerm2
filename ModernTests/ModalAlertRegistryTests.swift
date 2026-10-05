@@ -167,6 +167,16 @@ final class ModalAlertRegistryTests: XCTestCase {
         XCTAssertEqual(presses.all, [.init(buttonIndex: 1, suppress: true, onMainThread: true)])
     }
 
+    @MainActor
+    func testTheSessionsAnAlertIsAboutAreListed() {
+        let registry = ModalAlertRegistry(modalWindow: { nil })
+        let about = descriptor("About a session")
+        about.sessionGuids = ["session-1"]
+        _ = registry.register(about, window: nil) { _, _ in true }
+        _ = registry.register(descriptor("About nothing"), window: nil) { _, _ in true }
+        XCTAssertEqual(registry.currentAlerts().map { $0.sessionGuids }, [["session-1"], []])
+    }
+
     func testInputsAreListedAndPassedToThePress() async throws {
         let registry = ModalAlertRegistry(modalWindow: { nil })
         let received = OSAllocatedUnfairLock(initialState: [[String: String]]())

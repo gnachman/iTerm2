@@ -23,7 +23,8 @@ import CompanionProtocol
 final class AppModelMacStatusTests: XCTestCase {
     private func alert(_ id: String,
                        isAppModal: Bool = true,
-                       suppressionLabel: String? = "Remember my choice") -> CompanionModalAlert {
+                       suppressionLabel: String? = "Remember my choice",
+                       sessionGuids: [String] = []) -> CompanionModalAlert {
         return CompanionModalAlert(
             id: id,
             heading: "Heading \(id)",
@@ -33,11 +34,21 @@ final class AppModelMacStatusTests: XCTestCase {
                       .init(title: "Cancel", isCancel: true, isDestructive: false, rememberable: false)],
             suppressionLabel: suppressionLabel,
             hasAccessory: false,
-            isAppModal: isAppModal)
+            isAppModal: isAppModal,
+            sessionGuids: sessionGuids)
     }
 
-    private func status(_ alerts: [CompanionModalAlert], blocked: Bool = false) -> CompanionMacStatus {
-        return CompanionMacStatus(modalAlerts: alerts, mainBlocked: blocked)
+    /// Unless a test says otherwise, an alert that can block the Mac is
+    /// blocking it, which is the case these tests were first written for. The
+    /// tests under “An alert that is not blocking the Mac” cover the rest.
+    private func status(_ alerts: [CompanionModalAlert], blocked: Bool? = nil) -> CompanionMacStatus {
+        return CompanionMacStatus(modalAlerts: alerts,
+                                  mainBlocked: blocked ?? alerts.contains { $0.isAppModal })
+    }
+
+    private func viewSession(_ guid: String, in model: AppModel) {
+        model.selectedTab = .sessions
+        model.sessionsPath = [.session(guid: guid, title: "Session", originatingChatID: nil)]
     }
 
     private func handshake(revision: Int = CompanionProtocolVersion.modalAlertRevision,
@@ -106,6 +117,111 @@ final class AppModelMacStatusTests: XCTestCase {
         XCTAssertEqual(model.macAlertPresentation, .blockedBanner)
         model.testHandleHostEvent(.macStatusChanged(status: status([], blocked: false)))
         XCTAssertEqual(model.macAlertPresentation, .none)
+    }
+
+    // MARK: An alert that is not blocking the Mac
+
+    /// An alert started by something the user did at the Mac leaves the Mac
+    /// able to serve the phone. It has nothing to do with what the phone is
+    /// looking at, so it does not interrupt.
+    func test_alertThatCouldBlockTheMacButIsNotWaitsBehindThePill() {
+        let model = connectedModel(status([alert("A")], blocked: false))
+        XCTAssertEqual(model.macAlertPresentation, .pill(alert("A")))
+        XCTAssertFalse(model.macIsBlocked)
+        model.showMacAlert()
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .ready))
+    }
+
+    /// The Mac finds out a moment after the alert appears that it is blocked.
+    func test_thePillBecomesTheCardWhenTheMacTurnsOutToBeBlocked() {
+        let model = connectedModel(status([alert("A")], blocked: false))
+        model.testHandleHostEvent(.macStatusChanged(status: status([alert("A")], blocked: true)))
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .ready))
+        XCTAssertTrue(model.macIsBlocked)
+    }
+
+    // MARK: Alerts about a session
+
+    func test_alertAboutTheSessionOnScreenIsShownAsTheCard() {
+        let about = alert("A", sessionGuids: ["pane-1", "pane-2"])
+        let model = connectedModel()
+        viewSession("pane-2", in: model)
+        model.testHandleHostEvent(.macStatusChanged(status: status([about], blocked: false)))
+        XCTAssertEqual(model.macAlertPresentation, .overlay(about, .ready))
+    }
+
+    func test_alertAboutAnotherSessionWaitsBehindThePill() {
+        let about = alert("A", sessionGuids: ["pane-1"])
+        let model = connectedModel()
+        viewSession("other", in: model)
+        model.testHandleHostEvent(.macStatusChanged(status: status([about], blocked: false)))
+        XCTAssertEqual(model.macAlertPresentation, .pill(about))
+    }
+
+    func test_navigatingToTheSessionAnAlertIsAboutBringsUpTheCard() {
+        let about = alert("A", sessionGuids: ["pane-1"])
+        let model = connectedModel(status([about], blocked: false))
+        XCTAssertEqual(model.macAlertPresentation, .pill(about))
+        viewSession("pane-1", in: model)
+        XCTAssertEqual(model.macAlertPresentation, .overlay(about, .ready))
+        // And leaving puts it away again.
+        model.sessionsPath = []
+        XCTAssertEqual(model.macAlertPresentation, .pill(about))
+    }
+
+    func test_alertAboutASessionStillInterruptsEverywhereWhenTheMacIsBlocked() {
+        let about = alert("A", sessionGuids: ["pane-1"])
+        let model = connectedModel()
+        viewSession("other", in: model)
+        model.testHandleHostEvent(.macStatusChanged(status: status([about], blocked: true)))
+        XCTAssertEqual(model.macAlertPresentation, .overlay(about, .ready))
+    }
+
+    func test_sheetAboutTheSessionOnScreenIsShownAsTheCard() {
+        let sheet = alert("A", isAppModal: false, sessionGuids: ["pane-1"])
+        let model = connectedModel(status([sheet]))
+        XCTAssertEqual(model.macAlertPresentation, .pill(sheet))
+        viewSession("pane-1", in: model)
+        XCTAssertEqual(model.macAlertPresentation, .overlay(sheet, .ready))
+    }
+
+    func test_notNowSticksForAnAlertAboutTheSessionOnScreen() {
+        let about = alert("A", sessionGuids: ["pane-1"])
+        let model = connectedModel(status([about], blocked: false))
+        viewSession("pane-1", in: model)
+        model.dismissMacAlert()
+        XCTAssertEqual(model.macAlertPresentation, .pill(about))
+        // Leaving and coming back does not undo “Not now”.
+        model.sessionsPath = []
+        viewSession("pane-1", in: model)
+        XCTAssertEqual(model.macAlertPresentation, .pill(about))
+    }
+
+    func test_theSessionOnScreenIsTheTopOfTheSelectedTabsStack() {
+        let model = connectedModel()
+        XCTAssertNil(model.viewedSessionGuid)
+        model.sessionsPath = [.workgroup(id: "w", title: "W"),
+                              .session(guid: "pane-1", title: "One", originatingChatID: nil)]
+        XCTAssertNil(model.viewedSessionGuid, "the Sessions tab is not the one showing")
+        model.selectedTab = .sessions
+        XCTAssertEqual(model.viewedSessionGuid, "pane-1")
+        // A chat pushed over the session covers it.
+        model.sessionsPath.append(.conversation(chatID: "c"))
+        XCTAssertNil(model.viewedSessionGuid)
+        // A session reached from a chat, on the Chats tab.
+        model.selectedTab = .chats
+        model.navigationPath = [.conversation(chatID: "c"),
+                                .session(guid: "pane-9", title: "Nine", originatingChatID: "c")]
+        XCTAssertEqual(model.viewedSessionGuid, "pane-9")
+    }
+
+    /// The session list marks the sessions that have an alert waiting.
+    func test_sessionsWithAnAlertWaitingAreListed() {
+        let model = connectedModel(status([alert("Under", sessionGuids: ["pane-1"]),
+                                           alert("Top", sessionGuids: ["pane-2", "pane-3"])], blocked: false))
+        XCTAssertEqual(model.macAlertSessionGuids, ["pane-1", "pane-2", "pane-3"])
+        model.testHandleHostEvent(.macStatusChanged(status: status([])))
+        XCTAssertEqual(model.macAlertSessionGuids, [])
     }
 
     // MARK: Not now
@@ -214,11 +330,13 @@ final class AppModelMacStatusTests: XCTestCase {
         // The Mac says its main thread is not responding.
         model.testHandleHostEvent(.macStatusChanged(status: status([], blocked: true)))
         XCTAssertTrue(model.macIsBlocked)
-        // An alert that blocks the Mac counts even before the Mac's own stall
-        // detector has noticed.
-        model.testHandleHostEvent(.macStatusChanged(status: status([alert("A")], blocked: false)))
+        model.testHandleHostEvent(.macStatusChanged(status: status([alert("A")], blocked: true)))
         XCTAssertTrue(model.macIsBlocked)
-        // A sheet that does not block it does not.
+        // An alert being up is not enough: the Mac says within a moment of
+        // showing one whether it is blocked, and until it does it is serving
+        // requests as usual.
+        model.testHandleHostEvent(.macStatusChanged(status: status([alert("A")], blocked: false)))
+        XCTAssertFalse(model.macIsBlocked)
         model.testHandleHostEvent(.macStatusChanged(status: status([alert("A", isAppModal: false)], blocked: false)))
         XCTAssertFalse(model.macIsBlocked)
         model.testHandleHostEvent(.macStatusChanged(status: status([])))

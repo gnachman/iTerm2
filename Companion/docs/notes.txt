@@ -6,6 +6,10 @@ New Features:
   and lets you answer from your phone, including
   “don’t ask again” when the warning offers it
   and any value the warning asks you to fill in.
+  A warning that isn’t holding up the Mac stays
+  out of your way unless it’s about the session
+  you’re viewing; the session list marks sessions
+  with a warning waiting.
   Before, the app lost its connection until
   someone dismissed the warning at the Mac. If the
   Mac is showing a dialog that can’t be answered

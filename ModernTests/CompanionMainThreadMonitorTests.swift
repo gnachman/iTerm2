@@ -61,6 +61,28 @@ final class CompanionMainStallTrackerTests: XCTestCase {
     }
 }
 
+extension CompanionMainStallTrackerTests {
+    /// When there is a specific reason to suspect a stall, a much shorter wait
+    /// is enough: a main thread that is serving its queue runs a probe at once.
+    func testExpeditedThresholdDeclaresAStallSooner() {
+        let expedited = CompanionMainStallTracker.expeditedThreshold
+        XCTAssertLessThan(expedited, CompanionMainStallTracker.threshold)
+
+        var tracker = CompanionMainStallTracker()
+        _ = tracker.tick(now: 0)
+        let early = tracker.tick(now: expedited - 0.01, threshold: expedited)
+        XCTAssertFalse(early.changed)
+        let late = tracker.tick(now: expedited, threshold: expedited)
+        XCTAssertTrue(late.changed)
+        XCTAssertTrue(tracker.isBlocked)
+
+        // The ordinary threshold is unaffected.
+        var ordinary = CompanionMainStallTracker()
+        _ = ordinary.tick(now: 0)
+        XCTAssertFalse(ordinary.tick(now: expedited).changed)
+    }
+}
+
 final class CompanionMainThreadMonitorTests: XCTestCase {
     /// A clock the test sets by hand.
     private final class Clock: Sendable {
@@ -195,6 +217,75 @@ final class CompanionMainThreadMonitorTests: XCTestCase {
         try await FrozenMainQueue.withFailsafe("the monitor to report unblocked") {
             for await _ in unblocked { break }
         }
+        _ = token
+    }
+
+    /// Collects the delayed blocks the monitor schedules instead of waiting.
+    private final class DelayedBlocks: Sendable {
+        private let blocks = OSAllocatedUnfairLock(initialState: [(delay: TimeInterval, block: @Sendable () -> Void)]())
+        var delays: [TimeInterval] { blocks.withLock { $0.map { $0.delay } } }
+        func schedule(_ delay: TimeInterval, _ block: @escaping @Sendable () -> Void) {
+            blocks.withLock { $0.append((delay, block)) }
+        }
+        func runAll() {
+            let all = blocks.withLock { blocks -> [@Sendable () -> Void] in
+                let all = blocks.map { $0.block }
+                blocks = []
+                return all
+            }
+            all.forEach { $0() }
+        }
+    }
+
+    /// An alert that can block the app has just appeared. The monitor probes
+    /// at once and checks again a moment later: a probe still unrun by then
+    /// means blocked, long before the ordinary threshold.
+    func testExpediteReportsAStallAfterTheShortThreshold() {
+        let clock = Clock()
+        let queue = ProbeQueue()
+        let delayed = DelayedBlocks()
+        let monitor = CompanionMainThreadMonitor(now: { clock.now },
+                                                 runOnMain: { queue.post($0) },
+                                                 ticksAutomatically: false,
+                                                 after: { delayed.schedule($0, $1) })
+        let changes = OSAllocatedUnfairLock(initialState: 0)
+        let token = monitor.addObserver { changes.withLock { $0 += 1 } }
+        queue.runAll()  // the probe posted on subscribing
+
+        monitor.expedite()
+        XCTAssertEqual(queue.count, 1, "probed at once")
+        XCTAssertEqual(delayed.delays, [CompanionMainStallTracker.expeditedThreshold])
+        XCTAssertFalse(monitor.isMainBlocked())
+
+        // The moment passes and the probe has not run. Well short of the
+        // ordinary threshold. (A round number, so the clock's arithmetic is exact.)
+        clock.now += 0.5
+        delayed.runAll()
+        XCTAssertEqual(changes.withLock { $0 }, 1, "observers are told without anyone asking")
+        XCTAssertTrue(monitor.isMainBlocked())
+        _ = token
+    }
+
+    /// The alert was started by something the user did at the Mac, which does
+    /// not freeze the main queue: the probe runs, and nothing is reported.
+    func testExpediteReportsNothingWhenTheProbeRuns() {
+        let clock = Clock()
+        let queue = ProbeQueue()
+        let delayed = DelayedBlocks()
+        let monitor = CompanionMainThreadMonitor(now: { clock.now },
+                                                 runOnMain: { queue.post($0) },
+                                                 ticksAutomatically: false,
+                                                 after: { delayed.schedule($0, $1) })
+        let changes = OSAllocatedUnfairLock(initialState: 0)
+        let token = monitor.addObserver { changes.withLock { $0 += 1 } }
+        queue.runAll()
+
+        monitor.expedite()
+        queue.runAll()
+        clock.now += CompanionMainStallTracker.expeditedThreshold
+        delayed.runAll()
+        XCTAssertEqual(changes.withLock { $0 }, 0)
+        XCTAssertFalse(monitor.isMainBlocked())
         _ = token
     }
 

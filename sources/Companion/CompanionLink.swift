@@ -454,11 +454,11 @@ actor CompanionLink {
         }
     }
 
-    /// Whether requests that need the main thread will go unserved for now: the
-    /// stall monitor says so, or an alert that blocks the app is up (which is
-    /// known at once, before the monitor's threshold has passed).
+    /// Whether requests that need the main thread will go unserved for now.
+    /// An alert being up is not enough to say so: one started by something the
+    /// user did at the Mac leaves the main queue running.
     private func mainThreadCannotServeRequests() -> Bool {
-        return mainStall.isMainBlocked() || alerts.currentAlerts().contains { $0.isAppModal }
+        return mainStall.isMainBlocked()
     }
 
     private func handleHello(_ envelope: ClientEnvelope, peerRevision: Int, peerMinimumPeer: Int) {
@@ -481,6 +481,11 @@ actor CompanionLink {
         let status: CompanionMacStatus? =
             (!blocked && peerRevision >= CompanionProtocolVersion.modalAlertRevision) ? currentStatus() : nil
         lastSentStatus = status
+        if let status, !status.mainBlocked, status.modalAlerts.contains(where: { $0.isAppModal }) {
+            // The phone connected with an alert already up. If the main queue
+            // is frozen the monitor may only just have started measuring.
+            mainStall.expedite()
+        }
         helloSent = true
         send(.hello(revision: CompanionProtocolVersion.current,
                     minimumPeer: CompanionProtocolVersion.minimumPeer,
@@ -516,6 +521,13 @@ actor CompanionLink {
             guard let lastSentStatus else { return }
             let status = currentStatus()
             guard status != lastSentStatus else { return }
+            // An alert that can block the app has appeared. Whether it has the
+            // main queue frozen depends on how it was started, which is not
+            // known here, so have the monitor find out quickly.
+            let before = Set(lastSentStatus.modalAlerts.filter { $0.isAppModal }.map { $0.id })
+            if status.modalAlerts.contains(where: { $0.isAppModal && !before.contains($0.id) }) {
+                mainStall.expedite()
+            }
             sendStatus(status)
         }
     }
@@ -552,7 +564,8 @@ actor CompanionLink {
                     }
                 },
                 hasAccessory: snapshot.hasAccessory,
-                isAppModal: snapshot.isAppModal)
+                isAppModal: snapshot.isAppModal,
+                sessionGuids: snapshot.sessionGuids)
         }
         return CompanionMacStatus(modalAlerts: modalAlerts, mainBlocked: mainStall.isMainBlocked())
     }

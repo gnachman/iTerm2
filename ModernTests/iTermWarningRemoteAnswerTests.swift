@@ -36,6 +36,7 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
     }
 
     override func tearDown() {
+        iTermWarning.setSessionGuidResolver(nil)
         iTermWarning.cancelHeadlessModals()
         iTermWarning.setRunsHeadlessModals(false)
         let defaults = iTermUserDefaults.userDefaults()
@@ -152,6 +153,53 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
         let warning = makeWarning(identifier: uniqueIdentifier())
         warning.remotelyAnswerable = false
         XCTAssertNil(warning.modalAlertDescriptor(whenAppModal: true))
+    }
+
+    // MARK: Which sessions a warning is about
+
+    @MainActor
+    func testWarningIsTiedToTheSessionsInItsWindow() throws {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
+                              styleMask: [.titled], backing: .buffered, defer: true)
+        let otherWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
+                                   styleMask: [.titled], backing: .buffered, defer: true)
+        iTermWarning.setSessionGuidResolver { asked in
+            return asked === window ? ["pane-1", "pane-2"] : []
+        }
+
+        let attached = makeWarning(identifier: uniqueIdentifier())
+        attached.window = window
+        XCTAssertEqual(try XCTUnwrap(attached.modalAlertDescriptor(whenAppModal: true)).sessionGuids,
+                       ["pane-1", "pane-2"])
+
+        let elsewhere = makeWarning(identifier: uniqueIdentifier())
+        elsewhere.window = otherWindow
+        XCTAssertEqual(try XCTUnwrap(elsewhere.modalAlertDescriptor(whenAppModal: true)).sessionGuids, [])
+
+        // Not attached to any window: not about any session.
+        let free = makeWarning(identifier: uniqueIdentifier())
+        XCTAssertEqual(try XCTUnwrap(free.modalAlertDescriptor(whenAppModal: true)).sessionGuids, [])
+    }
+
+    /// A caller that knows exactly which session it is asking about says so,
+    /// which is more precise than every session in the window.
+    @MainActor
+    func testAnExplicitSessionWinsOverTheWindow() throws {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
+                              styleMask: [.titled], backing: .buffered, defer: true)
+        iTermWarning.setSessionGuidResolver { _ in ["pane-1", "pane-2"] }
+        let warning = makeWarning(identifier: uniqueIdentifier())
+        warning.window = window
+        warning.sessionGuid = "pane-2"
+        XCTAssertEqual(try XCTUnwrap(warning.modalAlertDescriptor(whenAppModal: true)).sessionGuids, ["pane-2"])
+    }
+
+    @MainActor
+    func testWithoutAResolverAWindowTiesAWarningToNoSession() throws {
+        let warning = makeWarning(identifier: uniqueIdentifier())
+        warning.window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
+                                  styleMask: [.titled], backing: .buffered, defer: true)
+        XCTAssertEqual(try XCTUnwrap(warning.modalAlertDescriptor(whenAppModal: true)).sessionGuids, [])
     }
 
     // MARK: Pressing a button

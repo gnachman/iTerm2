@@ -19,6 +19,7 @@ static NSString *iTermWarningDefaultCancelLabel(void) {
 }
 static id<iTermWarningHandler> gWarningHandler;
 static BOOL gShowingWarning;
+static NSArray<NSString *> *(^gSessionGuidResolver)(NSWindow *);
 BOOL gShowRememberedAlerts = NO;
 
 @interface iTermWarningAction()
@@ -215,6 +216,10 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
 
 + (id<iTermWarningHandler>)warningHandler {
     return gWarningHandler;
+}
+
++ (void)setSessionGuidResolver:(NSArray<NSString *> *(^)(NSWindow *))resolver {
+    gSessionGuidResolver = [resolver copy];
 }
 
 + (void)setRunsHeadlessModals:(BOOL)headless {
@@ -784,13 +789,27 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
     // Remote inputs stand for everything in the accessory that matters to the answer, so with them
     // there is nothing more to see on the Mac.
     const BOOL hasUndescribedAccessory = _accessory != nil && inputs.count == 0;
-    return [[iTermModalAlertDescriptor alloc] initWithHeading:alert.messageText
-                                                         body:alert.informativeText
-                                                      buttons:buttons ?: @[]
-                                             suppressionLabel:alert.showsSuppressionButton ? alert.suppressionButton.title : nil
-                                                       inputs:inputs ?: @[]
-                                                 hasAccessory:hasUndescribedAccessory
-                                                   isAppModal:appModal];
+    iTermModalAlertDescriptor *descriptor =
+        [[iTermModalAlertDescriptor alloc] initWithHeading:alert.messageText
+                                                      body:alert.informativeText
+                                                   buttons:buttons ?: @[]
+                                          suppressionLabel:alert.showsSuppressionButton ? alert.suppressionButton.title : nil
+                                                    inputs:inputs ?: @[]
+                                              hasAccessory:hasUndescribedAccessory
+                                                isAppModal:appModal];
+    descriptor.sessionGuids = [self sessionGuidsForRemoteAnswer];
+    return descriptor;
+}
+
+// The sessions this warning is about: the one its creator named, or else those in its window.
+- (NSArray<NSString *> *)sessionGuidsForRemoteAnswer {
+    if (_sessionGuid) {
+        return @[ _sessionGuid ];
+    }
+    if (_window && gSessionGuidResolver) {
+        return gSessionGuidResolver(_window) ?: @[];
+    }
+    return @[];
 }
 
 // Publishes `alert`, which is about to be shown, so the companion app can show it and press a

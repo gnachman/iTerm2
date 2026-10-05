@@ -487,6 +487,11 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
     /// False for a sheet that does not block the mac: the mac keeps serving
     /// requests while it is up, so the phone need not interrupt for it.
     var isAppModal: Bool
+    /// The terminal sessions (by guid) this alert is about, or empty if it is
+    /// not about a session. The phone interrupts with the alert only while the
+    /// user is looking at one of them, or when the mac reports itself blocked;
+    /// otherwise it shows a reminder.
+    var sessionGuids: [String]
 
     init(id: String,
          heading: String,
@@ -495,7 +500,9 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
          suppressionLabel: String?,
          inputs: [Input] = [],
          hasAccessory: Bool,
-         isAppModal: Bool) {
+         isAppModal: Bool,
+         sessionGuids: [String] = []) {
+        self.sessionGuids = sessionGuids
         self.id = id
         self.heading = heading
         self.body = body
@@ -516,6 +523,7 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
         inputs = try c.decodeIfPresent([Input].self, forKey: .inputs) ?? []
         hasAccessory = try c.decodeIfPresent(Bool.self, forKey: .hasAccessory) ?? false
         isAppModal = try c.decodeIfPresent(Bool.self, forKey: .isAppModal) ?? true
+        sessionGuids = try c.decodeIfPresent([String].self, forKey: .sessionGuids) ?? []
     }
 }
 

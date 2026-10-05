@@ -12,6 +12,8 @@ import SwiftUI
 import CompanionProtocol
 
 struct SessionBrowserView: View {
+    @Environment(AppModel.self) private var model
+
     var body: some View {
         SessionTreeBrowser { session, title, level in
             NavigationLink(value: AppModel.Destination.session(guid: session.guid,
@@ -20,7 +22,8 @@ struct SessionBrowserView: View {
                 SessionTreeRow(icon: "terminal",
                                title: title,
                                subtitle: session.subtitle.isEmpty ? nil : session.subtitle,
-                               level: level)
+                               level: level,
+                               hasAlert: model.macAlertSessionGuids.contains(session.guid))
             }
         }
         .navigationTitle("Sessions")

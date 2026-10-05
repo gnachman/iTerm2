@@ -439,6 +439,19 @@ final class CompanionPairingController: NSObject {
 
     private override init() {
         super.init()
+        // Lets a warning shown over a terminal window say which sessions it is
+        // about, so the phone can show it to someone looking at one of them.
+        iTermWarning.setSessionGuidResolver { window in
+            // A warning stacked on another sheet names that sheet as its window.
+            var terminalWindow = window
+            while let parent = terminalWindow.sheetParent {
+                terminalWindow = parent
+            }
+            let terminal = iTermController.sharedInstance()?.terminal(for: terminalWindow)
+            // stableID, because that is how the phone knows sessions (see
+            // CompanionSessionLister).
+            return terminal?.currentTab()?.sessions().compactMap { $0.stableID } ?? []
+        }
         // Track the three inputs to aiAvailable() so a live phone learns of an AI
         // change without reconnecting: user consent + the AI admin setting
         // (iTermSecureUserDefaults.didChange / iTermAdvancedSettingsDidChange), and

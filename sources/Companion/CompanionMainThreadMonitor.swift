@@ -34,6 +34,12 @@ protocol CompanionMainStallSource: AnyObject, Sendable {
     /// `changed` is called, on any thread, each time isMainBlocked() changes.
     /// Keep the returned token to stay subscribed.
     func addObserver(_ changed: @escaping @Sendable () -> Void) -> AnyObject
+
+    /// There is reason to think the main thread may have just become blocked
+    /// (an alert that can block it has appeared). Find out quickly, rather than
+    /// after the usual threshold: probe now, and if the probe has not run a
+    /// moment later, report the main thread blocked.
+    func expedite()
 }
 
 /// The decision logic, with time passed in so it can be tested without waiting.
@@ -42,6 +48,11 @@ struct CompanionMainStallTracker: Sendable {
     /// counts as blocked. Long enough that ordinary busy moments do not flap
     /// the status; short enough to beat the phone's request timeouts.
     static let threshold: TimeInterval = 2
+    /// How long a probe may sit unrun after expedite() before the main thread
+    /// counts as blocked. A main thread that is serving its queue runs a probe
+    /// within milliseconds, so when there is already a specific reason to
+    /// suspect a stall this can be far shorter than `threshold`.
+    static let expeditedThreshold: TimeInterval = 0.3
 
     private(set) var isBlocked = false
     /// When the outstanding probe was posted, or nil if none is outstanding.
@@ -49,14 +60,15 @@ struct CompanionMainStallTracker: Sendable {
 
     /// Called periodically. Returns whether a new probe block should be posted
     /// to the main queue now, and whether `isBlocked` just changed.
-    mutating func tick(now: TimeInterval) -> (postProbe: Bool, changed: Bool) {
+    mutating func tick(now: TimeInterval,
+                       threshold: TimeInterval = CompanionMainStallTracker.threshold) -> (postProbe: Bool, changed: Bool) {
         guard let probePostedAt else {
             self.probePostedAt = now
             return (true, false)
         }
         // One probe at a time: a blocked main queue would otherwise collect a
         // pile of them, all to run at once when it resumes.
-        if !isBlocked && now - probePostedAt >= Self.threshold {
+        if !isBlocked && now - probePostedAt >= threshold {
             isBlocked = true
             return (false, true)
         }
@@ -97,23 +109,34 @@ final class CompanionMainThreadMonitor: CompanionMainStallSource {
     private let now: @Sendable () -> TimeInterval
     private let runOnMain: @Sendable (@escaping @Sendable () -> Void) -> Void
     private let ticksAutomatically: Bool
+    private let after: @Sendable (TimeInterval, @escaping @Sendable () -> Void) -> Void
 
     /// - now: the clock. Must not advance while the Mac is asleep.
     /// - runOnMain: posts a block to the main queue.
     /// - ticksAutomatically: when true, tick() is called about once a second
     ///   while anything is subscribed. Tests pass false and call tick().
+    /// - after: runs a block after a delay, off the main thread. Injected for
+    ///   tests.
     init(now: @escaping @Sendable () -> TimeInterval = CompanionMainThreadMonitor.uptimeExcludingSleep,
          runOnMain: @escaping @Sendable (@escaping @Sendable () -> Void) -> Void = { DispatchQueue.main.async(execute: $0) },
-         ticksAutomatically: Bool = true) {
+         ticksAutomatically: Bool = true,
+         after: @escaping @Sendable (TimeInterval, @escaping @Sendable () -> Void) -> Void = { delay, block in
+             DispatchQueue.global().asyncAfter(deadline: .now() + delay, execute: block)
+         }) {
         self.now = now
         self.runOnMain = runOnMain
         self.ticksAutomatically = ticksAutomatically
+        self.after = after
     }
 
     /// Check on the main thread now.
     func tick() {
+        tick(threshold: CompanionMainStallTracker.threshold)
+    }
+
+    private func tick(threshold: TimeInterval) {
         let time = now()
-        let result = state.withLock { $0.tracker.tick(now: time) }
+        let result = state.withLock { $0.tracker.tick(now: time, threshold: threshold) }
         if result.changed {
             RLog("Companion: the main thread has stopped responding")
             observers.notify()
@@ -130,6 +153,17 @@ final class CompanionMainThreadMonitor: CompanionMainStallSource {
         if changed {
             RLog("Companion: the main thread is responding again")
             observers.notify()
+        }
+    }
+
+    func expedite() {
+        // Make sure a probe is outstanding. If one already is, it is at least as
+        // old as one posted now would be, so judging it by the short threshold
+        // cannot report a stall that is not there.
+        tick()
+        let threshold = CompanionMainStallTracker.expeditedThreshold
+        after(threshold) { [weak self] in
+            self?.tick(threshold: threshold)
         }
     }
 

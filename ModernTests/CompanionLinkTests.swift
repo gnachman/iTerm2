@@ -199,6 +199,14 @@ final class CompanionLinkTests: XCTestCase {
     /// Stands in for CompanionMainThreadMonitor.
     private final class FakeStallSource: CompanionMainStallSource {
         private let state = OSAllocatedUnfairLock(initialState: (blocked: false, observers: [@Sendable () -> Void]()))
+        private let expedites = OSAllocatedUnfairLock(initialState: 0)
+
+        /// How many times the link asked for a quick check.
+        var expediteCount: Int { expedites.withLock { $0 } }
+
+        func expedite() {
+            expedites.withLock { $0 += 1 }
+        }
 
         func setBlocked(_ blocked: Bool) {
             let observers = state.withLock { state -> [@Sendable () -> Void] in
@@ -1061,22 +1069,24 @@ final class CompanionLinkTests: XCTestCase {
                        "nothing typed during the block reaches the bridge")
     }
 
-    func testKeysAreRefusedWhileAnAlertThatBlocksTheMacIsUpButNotForASheet() async throws {
+    /// An alert being up does not by itself mean the Mac cannot act on input.
+    /// One started by something the user did at the Mac leaves the main queue
+    /// running, and the phone can go on typing into other sessions. Only an
+    /// actual stall refuses input.
+    func testKeysAreForwardedWhileAnAlertIsUpUnlessTheMainThreadIsBlocked() async throws {
         let fixture = makeFixture()
         try await fixture.phone.send(Self.compatibleHello, requestID: 1)
         _ = try await fixture.phone.next()
 
-        // A sheet does not stop the Mac from serving requests.
-        fixture.alerts.show([FakeAlertSource.alert("Sheet", isAppModal: false)])
+        fixture.alerts.show([FakeAlertSource.alert("Blocking")])
         _ = try await fixture.phone.next()
         try await fixture.phone.send(Self.key("a"), requestID: 2)
-        // A sync point: the link has read the key before the next alert appears.
+        // A sync point: the link has read the key before the stall is declared.
         try await fixture.phone.send(.ping, requestID: 20)
         let pong = try await fixture.phone.next()
         XCTAssertEqual(pong, "pong#20")
 
-        // An app-modal alert does, even before the stall monitor notices.
-        fixture.alerts.show([FakeAlertSource.alert("Blocking")])
+        fixture.stall.setBlocked(true)
         _ = try await fixture.phone.next()
         try await fixture.phone.send(Self.key("b"), requestID: 3)
         let refusal = try await fixture.phone.next()
@@ -1085,6 +1095,40 @@ final class CompanionLinkTests: XCTestCase {
         await fixture.phone.close()
         let events = try await allEventDescriptions(fixture.link)
         XCTAssertEqual(events.filter { $0.contains("sendKey") }, ["forwarded sendKey#2"])
+    }
+
+    /// Whether an alert has the main queue frozen is not known when it appears.
+    /// The link asks the monitor to find out quickly, so the phone learns within
+    /// a moment instead of after the ordinary stall threshold.
+    func testAnAlertThatCanBlockTheAppAsksForAQuickStallCheck() async throws {
+        let fixture = makeFixture()
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        _ = try await fixture.phone.next()
+        XCTAssertEqual(fixture.stall.expediteCount, 0)
+
+        // A sheet cannot block the app: no need to check.
+        fixture.alerts.show([FakeAlertSource.alert("Sheet", isAppModal: false)])
+        _ = try await fixture.phone.next()
+        XCTAssertEqual(fixture.stall.expediteCount, 0)
+
+        fixture.alerts.show([FakeAlertSource.alert("Sheet", isAppModal: false), FakeAlertSource.alert("Blocking")])
+        _ = try await fixture.phone.next()
+        XCTAssertEqual(fixture.stall.expediteCount, 1)
+    }
+
+    func testTheSessionsAnAlertIsAboutAreSentWithIt() async throws {
+        let fixture = makeFixture()
+        let snapshot = ModalAlertSnapshot(
+            id: UUID(), heading: "Paste", body: "",
+            buttons: [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: true)],
+            suppressionLabel: nil, hasAccessory: false, isAppModal: true,
+            sessionGuids: ["session-1", "session-2"])
+        fixture.alerts.show([snapshot])
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        guard case .hello(_, _, _, _, let macStatus) = try await fixture.phone.nextEnvelope().payload else {
+            return XCTFail("expected hello")
+        }
+        XCTAssertEqual(macStatus?.modalAlerts.first?.sessionGuids, ["session-1", "session-2"])
     }
 
     /// An older Buddy does not know the Mac is blocked and keeps sending. The

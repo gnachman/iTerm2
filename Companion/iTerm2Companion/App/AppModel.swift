@@ -712,10 +712,13 @@ final class AppModel {
         guard let alert = topMacAlert else {
             return macStatus.mainBlocked ? .blockedBanner : .none
         }
-        // An alert that blocks the Mac interrupts, unless the user set it aside.
-        // One that does not block it waits behind the pill until asked for.
+        // An alert interrupts when it is what is stopping the Mac from serving
+        // this phone, or when it is about the session on screen. Otherwise it
+        // waits behind the pill until asked for, as does one the user set aside.
+        let blocksTheMac = alert.isAppModal && macStatus.mainBlocked
+        let aboutViewedSession = viewedSessionGuid.map { alert.sessionGuids.contains($0) } ?? false
         let showCard = openedAlertIDs.contains(alert.id)
-            || (alert.isAppModal && !dismissedAlertIDs.contains(alert.id))
+            || ((blocksTheMac || aboutViewedSession) && !dismissedAlertIDs.contains(alert.id))
         guard showCard else {
             return .pill(alert)
         }
@@ -725,11 +728,26 @@ final class AppModel {
         return .overlay(alert, answeringAlertID == alert.id ? .sending : .ready)
     }
 
+    /// The session whose screen is in front on this phone, if any.
+    var viewedSessionGuid: String? {
+        let path = selectedTab == .sessions ? sessionsPath : navigationPath
+        guard case .session(let guid, _, _)? = path.last else {
+            return nil
+        }
+        return guid
+    }
+
+    /// The sessions the Mac's waiting alert is about, for marking them in the
+    /// session list.
+    var macAlertSessionGuids: Set<String> {
+        return Set(macStatus.modalAlerts.flatMap { $0.sessionGuids })
+    }
+
     /// Whether requests to the Mac should hold their timeouts: its main thread
-    /// is not responding, or an alert that blocks it is up (which counts even
-    /// before the Mac's own stall detector has noticed).
+    /// is not responding. An alert being up does not mean that. The Mac says
+    /// within a moment of showing one whether it is blocked.
     var macIsBlocked: Bool {
-        return macStatus.mainBlocked || macStatus.modalAlerts.contains { $0.isAppModal }
+        return macStatus.mainBlocked
     }
 
     private func applyMacStatus(_ status: CompanionMacStatus) {
