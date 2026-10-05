@@ -66,16 +66,23 @@ protocol SerializableUserDefault {
 struct SecureUserDefaults {
     static var instance = SecureUserDefaults()
 
-    mutating func serializeAll() -> [String: String] {
+    // serializeAll and deserializeAll are static, not mutating instance methods, on purpose (see
+    // setBatch). Setting a value posts secureUserDefaultDidChange synchronously, and its observers
+    // read SecureUserDefaults.instance. A mutating method would hold exclusive access to `instance`
+    // across that callout and trip the Swift exclusivity checker. So take the list of settings with
+    // a brief access first, and read or write them with no access to `instance` held.
+    static func serializeAll() -> [String: String] {
+        let serializables = instance.serializables()
         var result = [String: String]()
-        for serializable in serializables() {
+        for serializable in serializables {
             serializable.encode(to: &result)
         }
         return result
     }
 
-    mutating func deserializeAll(dict: [String: String]) {
-        for serializable in serializables() {
+    static func deserializeAll(dict: [String: String]) {
+        let serializables = instance.serializables()
+        for serializable in serializables {
             if let json = dict[serializable.key] {
                 serializable.setFromSerialized(value: json)
             }
@@ -626,10 +633,17 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
                                             prompt: String) throws {
         let body = (["umask 077"] + statements).joined(separator: "\n")
         let code = "do shell script \"\n\(body)\n\" with prompt \"\(prompt)\" with administrator privileges"
-        let script = NSAppleScript(source: code)
         var error: NSDictionary? = nil
         DLog("Will execute \(code)")
-        script?.executeAndReturnError(&error)
+#if ITERM_DEBUG
+        if let runner = SecureUserDefaultTestHooks.privilegedWriteRunner {
+            error = runner(statements)
+        } else {
+            NSAppleScript(source: code)?.executeAndReturnError(&error)
+        }
+#else
+        NSAppleScript(source: code)?.executeAndReturnError(&error)
+#endif
         DLog("Execution complete. Error is \(error.d)")
         guard error == nil else {
             let maybeReason = error?[NSAppleScript.errorBriefMessage] as? String
@@ -642,6 +656,16 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         }
     }
 }
+
+#if ITERM_DEBUG
+// SecureUserDefault is generic, so it can't have static stored properties.
+enum SecureUserDefaultTestHooks {
+    // Tests set this to run privileged writes without an administrator prompt. It receives the
+    // shell statements and returns nil for success or an AppleScript error dictionary. Change
+    // notifications are posted as they are after a real write.
+    static var privilegedWriteRunner: (([String]) -> NSDictionary?)?
+}
+#endif
 
 extension SecureUserDefault: SerializableUserDefault {
     func setFromSerialized(value: String) {

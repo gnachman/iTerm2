@@ -28,3 +28,6 @@ Bug Fixes:
 - Fixed a crash with the GPU renderer that
   could happen after changing the font size
   with Cmd-+ or Cmd--.
+- Fixed a crash in “Import All Settings and
+  Data” when the import changed a setting that
+  requires your administrator password.
