@@ -414,6 +414,8 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- Fixed a crash when opening a new tab with a
+  profile whose font could not be measured.
 - Fixed a crash that could happen after closing
   a tab while an accessibility app, such as
   VoiceOver, was in use.
