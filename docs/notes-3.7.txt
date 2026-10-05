@@ -49,3 +49,6 @@ Bug Fixes:
   null value or a Keyboard Map that is not an
   object. These values are now ignored or
   reported instead.
+- Fixed a crash when splitting a pane that was
+  closed or moved to another window before the
+  split finished.
