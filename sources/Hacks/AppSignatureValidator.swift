@@ -59,10 +59,25 @@ class AppSignatureValidator: NSObject {
     // For a resource the app can't run without: tell the user the app is damaged and exit. This
     // exits rather than crashing because a damaged installation (e.g., a bundle moved or deleted
     // while the app launched) is not a bug, and crash reports for it are noise.
+    //
+    // Safe to call from any thread. The alert has to run on the main thread, so another thread
+    // hands it off and parks, never continuing without the resource. (If the main thread is
+    // waiting on that thread, the app hangs instead of showing the alert.)
+    @objc
     static func warnAndExit(reason: String) -> Never {
         RLog("Exiting because the app is damaged: \(reason)")
-        warn(reason: reason)
-        exit(1)
+        if Thread.isMainThread {
+            warn(reason: reason)
+            exit(1)
+        }
+        DispatchQueue.main.async {
+            warn(reason: reason)
+            exit(1)
+        }
+        let semaphore = DispatchSemaphore(value: 0)
+        while true {
+            semaphore.wait()
+        }
     }
 
     // What to tell the user about a missing or damaged resource, given the app's verified team

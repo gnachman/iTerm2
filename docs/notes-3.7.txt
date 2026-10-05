@@ -35,7 +35,7 @@ Bug Fixes:
   with “Failed to copy file” after using SSH
   Integration. Temporary connection files it
   could not copy are now skipped.
-- iTerm2 no longer crashes at launch when its
-  app was moved or deleted while starting up,
+- iTerm2 no longer crashes when its app was
+  moved, deleted, or replaced while running,
   for example by an installer. It now explains
   that the app is damaged and quits.
