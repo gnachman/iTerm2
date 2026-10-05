@@ -172,3 +172,26 @@ def test_set_session_note_requires_app_support():
 
     with pytest.raises(iterm2.capabilities.AppVersionTooOld):
         asyncio.run(session.async_set_session_note(text="remember this"))
+
+
+def test_set_split_pane_size_sends_only_given_dimensions(monkeypatch):
+    """Omitted dimensions are left out so the app keeps them, and the frame comes back."""
+    session, connection = make_session()
+    calls = []
+
+    async def async_invoke_method(actual_connection, session_id, invocation, timeout):
+        calls.append((actual_connection, session_id, invocation, timeout))
+        return {"width": 395, "height": 621}
+
+    monkeypatch.setattr(iterm2.rpc, "async_invoke_method", async_invoke_method)
+
+    result = asyncio.run(session.async_set_split_pane_size(width=395))
+    asyncio.run(session.async_set_split_pane_size(height=200.5))
+    asyncio.run(session.async_set_split_pane_size(width=300, height=200))
+
+    assert result == {"width": 395, "height": 621}
+    assert [c[2] for c in calls] == [
+        "iterm2.set_split_pane_size(width: 395)",
+        "iterm2.set_split_pane_size(height: 200.5)",
+        "iterm2.set_split_pane_size(width: 300, height: 200)"]
+    assert calls[0][:2] == (connection, "session-id")

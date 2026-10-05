@@ -1120,6 +1120,38 @@ class Session:
         await iterm2.rpc.async_invoke_method(
             self.connection, self.session_id, invocation, -1)
 
+    async def async_set_split_pane_size(
+            self,
+            width: typing.Optional[float] = None,
+            height: typing.Optional[float] = None) -> typing.Dict[str, float]:
+        """
+        Resize this session's split pane by moving a divider.
+
+        Sizes are in points, which works the same for terminal and browser
+        sessions. The window keeps its size: the neighboring panes grow or
+        shrink to make room, and no pane is made smaller than its minimum
+        size. Unlike :meth:`~iterm2.Tab.async_update_layout`, only the
+        divider next to this pane moves.
+
+        :param width: The new width in points, or `None` to leave it.
+        :param height: The new height in points, or `None` to leave it.
+
+        :returns: The pane's resulting size as ``{"width": w, "height": h}``.
+
+        :raises: :class:`~iterm2.rpc.RPCException` if no divider borders the
+            pane in a requested direction (for example, it is not split
+            side by side when a width is given), or in a tmux tab.
+        """
+        args = {}
+        if width is not None:
+            args["width"] = width
+        if height is not None:
+            args["height"] = height
+        invocation = iterm2.util.invocation_string(
+            "iterm2.set_split_pane_size", args)
+        return await iterm2.rpc.async_invoke_method(
+            self.connection, self.session_id, invocation, -1)
+
     async def async_move_to_new_tab(
             self,
             window: typing.Optional['iterm2.window.Window'] = None,

@@ -214,6 +214,12 @@ typedef enum {
 // Session-initiated resize.
 - (BOOL)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 
+// Moves split pane dividers so the pane containing `session` becomes `width` points wide
+// and/or `height` points tall (nil leaves that dimension), within the limits of its
+// neighbors' minimum sizes. The window does not change size. Returns NO, changing
+// nothing, if no divider borders the pane in a requested direction.
+- (BOOL)session:(PTYSession *)session setSplitPaneWidth:(nullable NSNumber *)width height:(nullable NSNumber *)height;
+
 // Select the "next" session in this tab.
 - (void)nextSession;
 
