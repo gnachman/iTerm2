@@ -7490,7 +7490,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             <subviews>
                                                                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HAE-Wb-88g">
-                                                                    <rect key="frame" x="-3" y="17" width="746" height="434"/>
+                                                                    <rect key="frame" x="-3" y="17" width="775" height="434"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" heightSizable="YES"/>
                                                                     <subviews>
                                                                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FXy-Cw-1Lm">
@@ -7503,7 +7503,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             </textFieldCell>
                                                                         </textField>
                                                                         <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qEC-1B-FMn">
-                                                                            <rect key="frame" x="591" y="-7" width="109" height="27"/>
+                                                                            <rect key="frame" x="620" y="-7" width="109" height="27"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                                             <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3bd-rH-r3u">
                                                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -7514,7 +7514,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             </connections>
                                                                         </button>
                                                                         <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lIb-Jy-R1v">
-                                                                            <rect key="frame" x="708" y="-2" width="18" height="19"/>
+                                                                            <rect key="frame" x="737" y="-2" width="18" height="19"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                                             <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="fWO-HA-eH0">
                                                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -7525,13 +7525,13 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             </connections>
                                                                         </button>
                                                                         <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LsQ-19-iaj" customClass="iTermImageViewWithPopoverMessage">
-                                                                            <rect key="frame" x="567" y="-1" width="16" height="16"/>
+                                                                            <rect key="frame" x="596" y="-1" width="16" height="16"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                                             <string key="toolTip">The prompt must contain the substring \(ai.prompt). The query you enter will replace it when speaking to the AI. For example: “Write a unix command to \(ai.prompt).</string>
                                                                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="E8m-Gx-WjK"/>
                                                                         </imageView>
                                                                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HOA-K1-Jgm">
-                                                                            <rect key="frame" x="17" y="409" width="709" height="25"/>
+                                                                            <rect key="frame" x="17" y="409" width="738" height="25"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                             <popUpButtonCell key="cell" type="push" title="Edit &gt; Engage Artifical Intelligence" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="2cn-gz-86d" id="CM8-FP-FqF">
                                                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -7563,19 +7563,19 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             </connections>
                                                                         </popUpButton>
                                                                         <scrollView fixedFrame="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3X7-5f-z4r">
-                                                                            <rect key="frame" x="20" y="25" width="706" height="269"/>
+                                                                            <rect key="frame" x="20" y="25" width="735" height="376"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <clipView key="contentView" drawsBackground="NO" id="6XT-bG-foe">
-                                                                                <rect key="frame" x="0.0" y="0.0" width="706" height="269"/>
-                                                                                <autoresizingMask key="autoresizingMask"/>
+                                                                                <rect key="frame" x="0.0" y="0.0" width="735" height="376"/>
+                                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                                 <subviews>
                                                                                     <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" spellingCorrection="YES" smartInsertDelete="YES" id="pSg-z3-7LN">
-                                                                                        <rect key="frame" x="0.0" y="0.0" width="706" height="269"/>
+                                                                                        <rect key="frame" x="0.0" y="0.0" width="735" height="376"/>
                                                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                                                        <size key="minSize" width="706" height="269"/>
-                                                                                        <size key="maxSize" width="706" height="10000000"/>
+                                                                                        <size key="minSize" width="735" height="376"/>
+                                                                                        <size key="maxSize" width="735" height="10000000"/>
                                                                                         <connections>
                                                                                             <outlet property="delegate" destination="9Se-ld-UJa" id="udT-Fb-yHi"/>
                                                                                         </connections>
@@ -7587,7 +7587,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                             </scroller>
                                                                             <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="6pj-kE-M7b">
-                                                                                <rect key="frame" x="689" y="0.0" width="17" height="269"/>
+                                                                                <rect key="frame" x="718" y="0.0" width="17" height="376"/>
                                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                             </scroller>
                                                                         </scrollView>
