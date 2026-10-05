@@ -21,9 +21,9 @@ extension Int {
 
 extension Int32 {
     init(clamping value: CGFloat) {
-        if value.isNaN || value >= CGFloat(Int.max) {
+        if value.isNaN || value >= CGFloat(Int32.max) {
             self = Int32.max
-        } else if value <= CGFloat(Int.min) {
+        } else if value <= CGFloat(Int32.min) {
             self = Int32.min
         } else {
             self = Int32(value)

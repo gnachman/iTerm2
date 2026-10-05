@@ -55,3 +55,5 @@ Bug Fixes:
 - Fixed a crash that could happen after closing
   a tab while an accessibility app, such as
   VoiceOver, was in use.
+- Fixed a crash when opening a new tab with a
+  profile whose font could not be measured.

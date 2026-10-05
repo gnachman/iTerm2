@@ -435,13 +435,20 @@ private extension TerminalWindowSizeHelper {
         return gridSize(forContentSize: contentSize, cellSize: cellSize)
     }
 
+}
+
+// Internal for testing.
+@MainActor
+extension TerminalWindowSizeHelper {
     static func gridSize(forContentSize contentSize: NSSize,
                          cellSize: NSSize) -> VT100GridSize {
         let hmargin = Double(iTermPreferences.sideMargins())
         let vmargin = Double(iTermPreferences.topBottomMargins())
+        // A cell is at least one point, as in the other sizing paths: a font that measures as zero
+        // would otherwise give Int32.max columns. A session has at least one row and column.
         return VT100GridSize(
-            width: Int32(clamping: (contentSize.width - hmargin * 2.0) / cellSize.width),
-            height: Int32(clamping: (contentSize.height - vmargin * 2.0) / cellSize.height))
+            width: max(1, Int32(clamping: (contentSize.width - hmargin * 2.0) / max(1.0, cellSize.width))),
+            height: max(1, Int32(clamping: (contentSize.height - vmargin * 2.0) / max(1.0, cellSize.height))))
     }
 }
 
