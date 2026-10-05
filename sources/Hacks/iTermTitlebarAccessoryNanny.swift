@@ -23,6 +23,17 @@ class iTermTitlebarAccessoryNanny: NSObject {
     @objc private(set) var viewControllers = [NSTitlebarAccessoryViewController]()
     private var probation = [ObjectIdentifier: CGFloat]()
     @objc weak var windowController: NSWindowController?
+
+    // The window, but only if it has a title bar. AppKit throws "titlebarAccessoryViewControllers
+    // not supported for this window style" when you get or change a window's titlebar accessories
+    // without .titled, so there is nothing to manage until it has one. Exiting Lion fullscreen can
+    // restore a style mask without it (e.g., tmux integration windows).
+    private var titledWindow: NSWindow? {
+        guard let window = windowController?.window, window.styleMask.contains(.titled) else {
+            return nil
+        }
+        return window
+    }
     private var hasProbationers = false
     @objc var enteringFullScreen = false {
         didSet {
@@ -88,7 +99,7 @@ class iTermTitlebarAccessoryNanny: NSObject {
             }
             return
         }
-        guard let window = windowController?.window else {
+        guard let window = titledWindow else {
             return
         }
         guard window.styleMask.contains(.fullScreen) else {
@@ -168,7 +179,9 @@ class iTermTitlebarAccessoryNanny: NSObject {
     }
 
     private func update() {
-        guard let window = windowController?.window else {
+        guard let window = titledWindow else {
+            // Stay pending until the window has a title bar.
+            DLog("Not updating titlebar accessories of a window without a title bar")
             return
         }
         needsUpdate = false
@@ -221,7 +234,7 @@ class iTermTitlebarAccessoryNanny: NSObject {
     // account for titlebar accessories after exiting Lion fullscreen.
     // Removing and re-adding forces AppKit to recalculate. Issue 12810.
     @objc func forceReaddAll() {
-        guard let window = windowController?.window else {
+        guard let window = titledWindow else {
             return
         }
         RLog("Force re-adding all view controllers to fix content view layout")
@@ -243,7 +256,7 @@ class iTermTitlebarAccessoryNanny: NSObject {
 
     @objc(has:)
     func has(viewController: NSTitlebarAccessoryViewController) -> Bool {
-        guard windowController?.window?.styleMask.contains(.titled) == true else {
+        guard titledWindow != nil else {
             return false
         }
         return viewControllers.contains(viewController)
