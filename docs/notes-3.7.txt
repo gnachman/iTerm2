@@ -63,3 +63,6 @@ Bug Fixes:
 - Fixed memory corruption with the GPU renderer
   that could cause crashes after closing a
   session.
+- Fixed a crash from a Smart Selection rule
+  with no regular expression, for example in a
+  hand-edited or Dynamic Profile.

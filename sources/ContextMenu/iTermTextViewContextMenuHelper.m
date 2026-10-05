@@ -867,6 +867,10 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
         DLog(@"Evaluating rule:\n%@", rule);
         NSString *regex = [SmartSelectionController regexInRule:rule];
+        if (!regex) {
+            DLog(@"Skipping rule with no regex:\n%@", rule);
+            continue;
+        }
         for (int i = 0; i <= textWindow.length; i++) {
             NSString *substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
             NSError *regexError = nil;
