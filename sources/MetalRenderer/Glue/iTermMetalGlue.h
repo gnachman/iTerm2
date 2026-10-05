@@ -10,6 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermAttributedStringBuilder;
 @class iTermTextDrawingHelper;
 @class VT100Screen;
 @class PTYTextView;
@@ -29,6 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) PTYTextView *textView;
 @property (nonatomic, strong) VT100Screen *screen;
 @property (nonatomic, weak) id<iTermMetalGlueDelegate> delegate;
+
+// A builder for one frame. It records timing statistics into this glue's stats. Exposed for tests.
+- (iTermAttributedStringBuilder *)newAttributedStringBuilder;
 
 @end
 
