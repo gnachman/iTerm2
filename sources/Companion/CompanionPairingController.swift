@@ -1590,6 +1590,8 @@ final class CompanionPairingController: NSObject {
             return (transport.summary, transport.details)
         }
         return (userFacingDescription(of: error), nil)
+    }
+
     /// Create the bridge for a newly connected link and make it the current
     /// connection, replacing (and stopping) any previous one. Does not start
     /// the link.

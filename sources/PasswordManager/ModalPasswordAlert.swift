@@ -48,29 +48,25 @@ class ModalPasswordAlert {
     }
 
     private struct Views {
-        var alert: NSAlert
+        var warning: iTermWarning
         var newPassword: NSSecureTextField
         var usernameField: NSTextField?
         var rememberCheckbox: NSButton?
     }
 
+    // The order of the warning's actions.
+    private static let okSelection = iTermWarningSelection.kiTermWarningSelection0
+    private static let passwordManagerSelection = iTermWarningSelection.kiTermWarningSelection2
+
     func run(window: NSWindow?) -> String? {
         let views = makeAlert()
-        let alert = views.alert
-        let newPassword = views.newPassword
-        scheduleTimer(views: views)
-
-        let result = { () -> NSApplication.ModalResponse in
-            if let window = window, window.isVisible {
-                return alert.runSheetModal(for: window)
-            } else {
-                return alert.runModal()
-            }
-        }()
-        if result == .alertFirstButtonReturn {
+        if let window, window.isVisible {
+            views.warning.window = window
+        }
+        if views.warning.runModal() == Self.okSelection {
             username = views.usernameField?.stringValue
             rememberChecked = (views.rememberCheckbox?.state == .on)
-            return newPassword.stringValue
+            return views.newPassword.stringValue
         }
         return nil
     }
@@ -79,17 +75,9 @@ class ModalPasswordAlert {
         precondition(keepalive == nil)
         keepalive = self
         let views = makeAlert()
-        scheduleTimer(views: views)
-        if let window {
-            views.alert.beginSheetModal(for: window) { [weak self] response in
-                self?.handleAsyncCompletion(response,
-                                            views: views,
-                                            completion: completion)
-            }
-        } else {
-            handleAsyncCompletion(views.alert.runModal(),
-                                  views: views,
-                                  completion: completion)
+        views.warning.window = window
+        views.warning.runModalAsync { [weak self] selection, _ in
+            self?.handleAsyncCompletion(selection, views: views, completion: completion)
         }
     }
 
@@ -100,25 +88,21 @@ class ModalPasswordAlert {
         precondition(keepalive == nil)
         keepalive = self
         let views = makeAlert()
-        scheduleTimer(views: views)
-        if let window {
-            views.alert.beginSheetModal(for: window) { [weak self] response in
-                self?.handleAsyncOutcome(response, views: views, completion: completion)
-            }
-        } else {
-            handleAsyncOutcome(views.alert.runModal(), views: views, completion: completion)
+        views.warning.window = window
+        views.warning.runModalAsync { [weak self] selection, _ in
+            self?.handleAsyncOutcome(selection, views: views, completion: completion)
         }
     }
 
-    private func handleAsyncOutcome(_ response: NSApplication.ModalResponse,
+    private func handleAsyncOutcome(_ selection: iTermWarningSelection,
                                     views: Views,
                                     completion: @escaping (Outcome) -> ()) {
-        switch response {
-        case .alertFirstButtonReturn:
+        switch selection {
+        case Self.okSelection:
             username = views.usernameField?.stringValue
             rememberChecked = (views.rememberCheckbox?.state == .on)
             completion(.ok(password: views.newPassword.stringValue))
-        case .alertThirdButtonReturn:
+        case Self.passwordManagerSelection:
             // Preserve anything the user already typed so it can pre-fill the dialog if they
             // back out of the password manager.
             username = views.usernameField?.stringValue
@@ -129,10 +113,10 @@ class ModalPasswordAlert {
         keepalive = nil
     }
 
-    private func handleAsyncCompletion(_ response: NSApplication.ModalResponse,
+    private func handleAsyncCompletion(_ selection: iTermWarningSelection,
                                        views: Views,
                                        completion: @escaping (String?) -> ()) {
-        if response == .alertFirstButtonReturn {
+        if selection == Self.okSelection {
             username = views.usernameField?.stringValue
             rememberChecked = (views.rememberCheckbox?.state == .on)
             completion(views.newPassword.stringValue)
@@ -142,34 +126,23 @@ class ModalPasswordAlert {
         keepalive = nil
     }
 
-    private func scheduleTimer(views: Views) {
-        let timer = Timer(timeInterval: 0, repeats: false) { [weak self] _ in
-            guard let self = self else {
-                return
-            }
-            views.alert.layout()
-            if let username = self.username, !username.isEmpty {
-                views.newPassword.window?.makeFirstResponder(views.newPassword)
-            } else if let usernameField = views.usernameField {
-                usernameField.window?.makeFirstResponder(usernameField)
-            } else {
-                views.newPassword.window?.makeFirstResponder(views.newPassword)
-            }
-        }
-        RunLoop.main.add(timer, forMode: .common)
-    }
-
     private func makeAlert() -> Views {
-        let alert = NSAlert()
-        alert.messageText = prompt
-        if let detail {
-            alert.informativeText = detail
-        }
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.addButton(withTitle: iTermLocalizedCancel())
+        // An iTermWarning so the companion app can show the prompt and answer it.
+        let warning = iTermWarning()
+        warning.heading = prompt
+        warning.title = detail ?? ""
+        var actions = [iTermLocalizedOK(), iTermLocalizedCancel()]
         if showPasswordManagerButton {
-            alert.addButton(withTitle: String(localized: "ModalPasswordAlert.PasswordManagerButton", defaultValue: "Password Manager", comment: "Button to open the password manager"))
+            actions.append(String(localized: "ModalPasswordAlert.PasswordManagerButton", defaultValue: "Password Manager", comment: "Button to open the password manager"))
         }
+        warning.actionLabels = actions
+        if showPasswordManagerButton {
+            // It opens the password manager window on this Mac, which the companion app
+            // cannot see or operate.
+            warning.warningActions?.last?.notOfferedRemotely = true
+        }
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
 
         let newPassword = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 22))
         newPassword.isEditable = true
@@ -220,8 +193,34 @@ class ModalPasswordAlert {
             rememberCheckbox = nil
         }
 
-        alert.accessoryView = wrapper
-        return Views(alert: alert,
+        // iTermWarning sizes its accessory from the view's frame, and a stack view laid out by
+        // constraints has none until it is in a window. Give it a container with a real frame.
+        wrapper.layoutSubtreeIfNeeded()
+        let container = NSView(frame: NSRect(origin: .zero, size: wrapper.fittingSize))
+        container.addSubview(wrapper)
+        NSLayoutConstraint.activate([
+            wrapper.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            wrapper.topAnchor.constraint(equalTo: container.topAnchor),
+            wrapper.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
+        warning.accessory = container
+        var remoteInputs = [iTermWarningRemoteInput]()
+        if let usernameField {
+            remoteInputs.append(.textInput(withIdentifier: "username",  // Localization unneeded
+                                           label: usernameField.placeholderString,
+                                           textField: usernameField))
+        }
+        remoteInputs.append(.secretInput(withIdentifier: "password",  // Localization unneeded
+                                         label: nil,
+                                         textField: newPassword))
+        warning.remoteInputs = remoteInputs
+        warning.remoteCheckbox = rememberCheckbox
+        if let usernameField, (username ?? "").isEmpty {
+            warning.initialFirstResponder = usernameField
+        } else {
+            warning.initialFirstResponder = newPassword
+        }
+        return Views(warning: warning,
                      newPassword: newPassword,
                      usernameField: usernameField,
                      rememberCheckbox: rememberCheckbox)

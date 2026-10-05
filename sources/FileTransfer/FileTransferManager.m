@@ -7,6 +7,7 @@
 //
 
 #import "FileTransferManager.h"
+#import "iTermWarning.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "NSArray+iTerm.h"
@@ -393,26 +394,35 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         interactivePrompt:(NSString *)prompt
                completion:(void (^)(NSString *password))completion {
     NSString *text = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"FileTransfer.AuthenticateTitle", nil, [NSBundle mainBundle], @"Authenticate %@", @"Title of the authentication dialog; %@ is who is requesting authentication"), transferrableFile.authRequestor];
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = text;
-    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"FileTransfer.AuthPrompt", nil, [NSBundle mainBundle], @"Please enter the %1$@ for %2$@ to begin %3$@.", @"Prompt asking for a credential; first %@ is the credential type (e.g. password), second %@ is who is requesting it, third %@ is the operation name"),
+    // An iTermWarning so the companion app can show the prompt and answer it. This comes up some
+    // time after a transfer starts, possibly with nobody at the Mac.
+    iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
+    warning.heading = text;
+    warning.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"FileTransfer.AuthPrompt", nil, [NSBundle mainBundle], @"Please enter the %1$@ for %2$@ to begin %3$@.", @"Prompt asking for a credential; first %@ is the credential type (e.g. password), second %@ is who is requesting it, third %@ is the operation name"),
                              prompt, transferrableFile.authRequestor,
                              transferrableFile.protocolName];
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-    [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"FileTransfer.PasswordManager", nil, [NSBundle mainBundle], @"Password Manager…", @"Button to open the password manager to fill in credentials")];
+    warning.actionLabels = @[ iTermLocalizedOK(),
+                              iTermLocalizedCancel(),
+                              NSLocalizedStringWithDefaultValue(@"FileTransfer.PasswordManager", nil, [NSBundle mainBundle], @"Password Manager…", @"Button to open the password manager to fill in credentials") ];
+    warning.cancelLabel = iTermLocalizedCancel();
+    warning.warningType = kiTermWarningTypePersistent;
+    // The password manager opens on this Mac, where the companion app cannot see or operate it.
+    warning.warningActions.lastObject.notOfferedRemotely = YES;
 
     NSSecureTextField *input =
         [[[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
     [input setStringValue:@""];
-    [alert setAccessoryView:input];
-    [alert layout];
-    [[alert window] makeFirstResponder:input];
-    NSInteger button = [alert runModal];
-    if (button == NSAlertFirstButtonReturn) {
+    warning.accessory = input;
+    warning.initialFirstResponder = input;
+    // Localization unneeded
+    warning.remoteInputs = @[ [iTermWarningRemoteInput secretInputWithIdentifier:@"password"
+                                                                           label:nil
+                                                                       textField:input] ];
+    const iTermWarningSelection selection = [warning runModal];
+    if (selection == kiTermWarningSelection0) {
         [input validateEditing];
         completion([input stringValue]);
-    } else if (button == NSAlertThirdButtonReturn) {
+    } else if (selection == kiTermWarningSelection2) {
         [self asynchronouslySelectPasswordFromPasswordManager:completion];
     } else {
         completion(nil);

@@ -298,7 +298,9 @@ Improvements:
   from your Mac no longer cuts off your paired
   iPhone. The iTerm2 Buddy app stays connected,
   shows the warning, and lets you answer it,
-  including “don’t ask again”. Other kinds of
+  including “don’t ask again” and password
+  prompts (a password manager’s master password,
+  an scp password). Other kinds of
   dialogs can’t be answered from the phone, but
   it now says the Mac is waiting instead of
   appearing disconnected. Requires an up-to-date

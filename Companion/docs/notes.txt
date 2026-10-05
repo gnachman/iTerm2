@@ -6,6 +6,10 @@ New Features:
   and lets you answer from your phone, including
   “don’t ask again” when the warning offers it
   and any value the warning asks you to fill in.
+  That includes password prompts, such as a
+  password manager’s master password or an scp
+  password: you can type the password on your
+  phone.
   A warning that isn’t holding up the Mac stays
   out of your way unless it’s about the session
   you’re viewing; the session list marks sessions
