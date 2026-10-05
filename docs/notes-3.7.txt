@@ -414,6 +414,11 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- Fixed crashes loading Dynamic Profiles files
+  with values of an unexpected type, such as a
+  null value or a Keyboard Map that is not an
+  object. These values are now ignored or
+  reported instead.
 - Fixed a crash when holding Cmd with the mouse
   over a gray autosuggestion in the composer.
 - Fixed a crash when exiting full screen in a
