@@ -1,0 +1,47 @@
+Version 3.7.4
+
+Bug Fixes:
+- Fixed a crash that could recur every time
+  iTerm2 saved window state. Quitting while a
+  save was in progress could store duplicate
+  entries in the saved-state database, which
+  later saves could not handle.
+- Fixed a crash when opening a new tab next to a
+  tab in a tab group.
+- iTerm2 no longer crashes when its app was
+  moved, deleted, or replaced while running,
+  for example by an installer. It now explains
+  that the app is damaged and quits.
+- Fixed a crash when exiting full screen in a
+  window without a title bar, such as a tmux
+  integration window, on macOS 26.
+- Fixed a crash with the GPU renderer that
+  could happen after changing the font size
+  with Cmd-+ or Cmd--.
+- Fixed a crash that could happen when the GPU
+  renderer had been running for several weeks
+  without restarting iTerm2. Issue 13103.
+- Fixed a crash when pressing Cmd-Z after
+  closing a pane, toolbelt tool, or other view
+  that had text you had edited.
+- Fixed a crash when a program printed a
+  letter followed by many spacing marks (such
+  as Devanagari vowel signs) in a later write.
+  Issue 13073.
+- Fixed a crash in “Import All Settings and
+  Data” when the import changed a setting that
+  requires your administrator password.
+- Fixed “Export All Settings and Data” failing
+  with “Failed to copy file” after using SSH
+  Integration. Temporary connection files it
+  could not copy are now skipped.
+- Fixed crashes loading Dynamic Profiles files
+  with values of an unexpected type, such as a
+  null value or a Keyboard Map that is not an
+  object. These values are now ignored or
+  reported instead.
+- Fixed various other crashes, including ones
+  involving Find, the composer, splitting
+  panes, Smart Selection, right-to-left text,
+  VoiceOver, the GPU renderer, and quitting
+  while iTerm2 was still starting up.
