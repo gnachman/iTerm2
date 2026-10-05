@@ -59,16 +59,23 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+// Posted on the main thread, while textures are requested and returned on the Metal queue, so
+// this takes the same lock. Emptying the array between -requestTextureOfSize:'s count check and its
+// removal threw "removeObjectsInRange: range {0, 1} extends beyond bounds for empty array".
 - (void)powerManagerMetalAllowedDidChange:(NSNotification *)notification {
     NSNumber *allowedNumber = notification.object;
     if (!allowedNumber.boolValue) {
-        [_textures removeAllObjects];
-        _generation = @(_generation.integerValue + 1);
+        @synchronized(self) {
+            [_textures removeAllObjects];
+            _generation = @(_generation.integerValue + 1);
+        }
     }
 }
 
 - (void)stampTextureWithGeneration:(id<MTLTexture>)texture {
-    [(NSObject *)texture it_setAssociatedObject:_generation forKey:iTermTexturePoolAssociatedObjectKeyGeneration];
+    @synchronized(self) {
+        [(NSObject *)texture it_setAssociatedObject:_generation forKey:iTermTexturePoolAssociatedObjectKeyGeneration];
+    }
 }
 
 @end

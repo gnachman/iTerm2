@@ -414,6 +414,9 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- Fixed a crash with the GPU renderer that
+  could happen when switching to or from
+  battery power.
 - Fixed a crash from a Smart Selection rule
   with no regular expression, for example in a
   hand-edited or Dynamic Profile.
