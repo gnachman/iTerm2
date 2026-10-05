@@ -49,10 +49,15 @@
 
     if ([NSApp isActive]) {
         PreferencePanel *prefsWindowController = [PreferencePanel sharedInstance];
-        NSWindow *prefsWindow = [prefsWindowController window];
+        // Don't load the Settings window just to check whether it's in use: if it was never
+        // loaded, it can't be. Loading it needlessly also surfaces a damaged bundle (e.g., after
+        // the app was replaced while running) on an unrelated keystroke.
+        NSWindow *prefsWindow = prefsWindowController.isWindowLoaded ? prefsWindowController.window : nil;
         NSWindow *keyWindow = [[NSApplication sharedApplication] keyWindow];
-        if (prefsWindow != keyWindow ||
-            prefsWindowController.window.firstResponder != prefsWindowController.hotkeyField) {
+        const BOOL prefsHasHotkeyFocus = (prefsWindow != nil &&
+                                          prefsWindow == keyWindow &&
+                                          prefsWindow.firstResponder == prefsWindowController.hotkeyField);
+        if (!prefsHasHotkeyFocus) {
             if (_previousState && (keyWindow.styleMask & NSWindowStyleMaskFullScreen)) {
                 RLog(@"Retore previously active app %@", _previousState);
                 [_previousState restorePreviouslyActiveApp];
