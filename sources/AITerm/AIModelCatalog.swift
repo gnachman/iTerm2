@@ -76,11 +76,22 @@ struct AIModelCatalog {
     static let bundledModels: [AIMetadata.Model] = load(at: bundledCatalogURL)?.models ?? []
 
     init() {
+        guard let catalog = Self(bundledURL: Self.bundledCatalogURL, cachedURL: Self.cachedCatalogURL) else {
+            // The bundled catalog always ships, so the app's bundle is damaged or was moved or
+            // deleted while it launched.
+            AppSignatureValidator.warnAndExit(reason: "While loading the list of AI models")
+        }
+        self = catalog
+    }
+
+    // Nil if neither the bundle nor the cache has a usable catalog. Tests pass their own URLs to
+    // simulate a missing or damaged bundle or cache.
+    init?(bundledURL: URL?, cachedURL: URL?) {
         // Load both sources and use whichever has the higher version. This way a
         // newer bundled snapshot (shipped by an app upgrade) wins over a stale
         // downloaded cache, and a newer downloaded cache wins over the bundle.
-        let bundled = Self.load(at: Self.bundledCatalogURL)
-        let cached = Self.load(at: Self.cachedCatalogURL)
+        let bundled = Self.load(at: bundledURL)
+        let cached = Self.load(at: cachedURL)
         let chosen: Loaded?
         switch (bundled, cached) {
         case let (b?, c?): chosen = (c.version > b.version) ? c : b
@@ -93,9 +104,8 @@ struct AIModelCatalog {
             self.version = chosen.version
             self.models = chosen.models
         } else {
-            it_assert(false, "Failed to load AI model catalog from cache or bundle")
-            self.version = 0
-            self.models = []
+            RLog("Failed to load AI model catalog from \(bundledURL.d) or \(cachedURL.d)")
+            return nil
         }
     }
 
