@@ -908,11 +908,15 @@ class ComposerTextView: MultiCursorTextView {
         return characterRangeOfCommand(atCharacterIndex: characterIndex)
     }
 
-    private func characterRangeOfCommand(atCharacterIndex unsafeIndex: Int) -> (NSRange, String)? {
+    // Internal for testing.
+    func characterRangeOfCommand(atCharacterIndex unsafeIndex: Int) -> (NSRange, String)? {
         guard let textStorage else {
             return nil
         }
-        if unsafeIndex < 0 {
+        // The index can be past the end: it was computed with the prefix and the suggestion in
+        // the text, and removing the prefix (in the recursive call below) also removes the
+        // suggestion. Neither is a command.
+        if unsafeIndex < 0 || unsafeIndex > textStorage.length {
             return nil
         }
         if let prefixLength = prefix?.string.utf16.count, prefixLength > 0 {
