@@ -423,6 +423,10 @@ Bug Fixes:
 - Sessions closed shortly before quitting are
   now always archived if their profile archives
   sessions on close.
+- Fixed “Export All Settings and Data” failing
+  with “Failed to copy file” after using SSH
+  Integration. Temporary connection files it
+  could not copy are now skipped.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.

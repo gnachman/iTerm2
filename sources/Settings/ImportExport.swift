@@ -406,7 +406,8 @@ private struct ImportExportConfig {
                // Localization unneeded
                displayName: "~/.iterm2",
                flavor: .folder(Path(baseDirectory: .home, relativePath: ".iterm2"),
-                               exclude: Set(["AppSupport", "iTermServer-*", "sockets", "Scripts"]))),
+                               // it2 holds the live sockets and locks of it2 over SSH.
+                               exclude: Set(["AppSupport", "iTermServer-*", "it2", "sockets", "Scripts"]))),
         Entity(key: "app-support",
                displayName: String(localized: "ImportExport.EntityApplicationSupport", defaultValue: "Application Support", comment: "Name of the Application Support folder item in the import/export list"),
                flavor: .folder(Path(baseDirectory: .applicationSupport, relativePath: nil),
@@ -1160,6 +1161,21 @@ fileprivate extension Dictionary {
 }
 
 extension FileManager {
+    // Sockets, FIFOs, and devices can't be copied, and they are runtime state rather than data
+    // (for example, the sockets it2 over SSH creates in ~/.iterm2/it2), so copies skip them.
+    // Symbolic links are not special; they are copied as links.
+    private func isSpecialFile(_ url: URL) -> Bool {
+        guard let type = try? url.resourceValues(forKeys: [.fileResourceTypeKey]).fileResourceType else {
+            return false
+        }
+        switch type {
+        case .socket, .namedPipe, .characterSpecial, .blockSpecial:
+            return true
+        default:
+            return false
+        }
+    }
+
     func deepCopyContentsOfDirectory(source: URL,
                                      to destination: URL,
                                      excluding exclusions: Set<String>) throws {
@@ -1180,6 +1196,11 @@ extension FileManager {
             // Check if the file should be excluded based on the glob pattern
             if exclusions.contains(where: { fileName.matchesGlob($0) }) {
                 DLog("Skipping file: \(fileName)")
+                continue
+            }
+
+            if isSpecialFile(url) {
+                DLog("Skipping special file: \(url.path)")
                 continue
             }
 
@@ -1213,6 +1234,10 @@ extension FileManager {
         try? createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
         let contents = try contentsOfDirectory(at: sourceURL, includingPropertiesForKeys: nil, options: [])
         for item in contents {
+            if isSpecialFile(item) {
+                DLog("Skipping special file: \(item.path)")
+                continue
+            }
             let destinationItemURL = destinationURL.appendingPathComponent(item.lastPathComponent)
             var isDirectory: ObjCBool = false
             guard fileExists(atPath: item.path, isDirectory: &isDirectory) else {
