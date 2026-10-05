@@ -60,3 +60,6 @@ Bug Fixes:
 - Fixed a crash when iTerm2 was told to quit,
   for example by logging out, while it was
   still starting up.
+- Fixed memory corruption with the GPU renderer
+  that could cause crashes after closing a
+  session.

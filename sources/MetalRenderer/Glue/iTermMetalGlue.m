@@ -42,10 +42,21 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermMetalGlue()<iTermMetalPerFrameStateDelegate>
 @end
 
+// Owns the timing statistics that this glue's attributed string builders record into. It is a
+// separate object so builders can retain it: they belong to frames, which can outlive the glue.
+@interface iTermMetalGlueStatsBox : NSObject {
+@public
+    iTermAttributedStringBuilderStats _stats;
+}
+@end
+
+@implementation iTermMetalGlueStatsBox
+@end
+
 @implementation iTermMetalGlue {
     NSMutableSet<NSString *> *_missingImages;
     NSMutableSet<NSString *> *_loadedImages;
-    iTermAttributedStringBuilderStats _stats;
+    iTermMetalGlueStatsBox *_statsBox;
     iTermConfigGenerationTracker *_configGenerationTracker;
     // Persists across frames so unchanged rows can be reused. One per text view.
     iTermRowOutputCache *_rowOutputCache;
@@ -80,12 +91,14 @@ NS_ASSUME_NONNULL_BEGIN
         // pane), so a larger cap would retain tens of MB per text view across split
         // panes and tabs for near-zero extra hit rate.
         _rowOutputCache = [[iTermRowOutputCache alloc] initWithCapacity:256];
-        iTermPreciseTimerStatsInit(&_stats.attrsForChar, "Compute Attrs");
-        iTermPreciseTimerStatsInit(&_stats.shouldSegment, "Segment");
-        iTermPreciseTimerStatsInit(&_stats.buildMutableAttributedString, "Build attr strings");
-        iTermPreciseTimerStatsInit(&_stats.combineAttributes, "Combine Attrs");
-        iTermPreciseTimerStatsInit(&_stats.updateBuilder, "Update Builder");
-        iTermPreciseTimerStatsInit(&_stats.advances, "Advances");
+        _statsBox = [[iTermMetalGlueStatsBox alloc] init];
+        iTermAttributedStringBuilderStats *stats = &_statsBox->_stats;
+        iTermPreciseTimerStatsInit(&stats->attrsForChar, "Compute Attrs");
+        iTermPreciseTimerStatsInit(&stats->shouldSegment, "Segment");
+        iTermPreciseTimerStatsInit(&stats->buildMutableAttributedString, "Build attr strings");
+        iTermPreciseTimerStatsInit(&stats->combineAttributes, "Combine Attrs");
+        iTermPreciseTimerStatsInit(&stats->updateBuilder, "Update Builder");
+        iTermPreciseTimerStatsInit(&stats->advances, "Advances");
     }
     return self;
 }
@@ -132,15 +145,7 @@ NS_ASSUME_NONNULL_BEGIN
         // cache-enabled frame is being built.
         VT100LineInfoEnableGenerationTracking();
     }
-    iTermAttributedStringBuilderStatsPointers statsPointers = {
-        .attrsForChar = &_stats.attrsForChar,
-        .shouldSegment = &_stats.shouldSegment,
-        .buildMutableAttributedString = &_stats.buildMutableAttributedString,
-        .combineAttributes = &_stats.combineAttributes,
-        .updateBuilder = &_stats.updateBuilder,
-        .advances = &_stats.advances,
-    };
-    iTermAttributedStringBuilder *attributedStringBuilder = [[iTermAttributedStringBuilder alloc] initWithStats:statsPointers];
+    iTermAttributedStringBuilder *attributedStringBuilder = [self newAttributedStringBuilder];
     return [[iTermMetalPerFrameState alloc] initWithTextView:self.textView
                                                       screen:self.screen
                                                         glue:self
@@ -148,6 +153,23 @@ NS_ASSUME_NONNULL_BEGIN
                                          doubleWidthContext:self.delegate.metalGlueContextDoubleWidth
                                      attributedStringBuilder:attributedStringBuilder
                                               rowOutputCache:_rowOutputCache];
+}
+
+- (iTermAttributedStringBuilder *)newAttributedStringBuilder {
+    iTermAttributedStringBuilderStats *stats = &_statsBox->_stats;
+    iTermAttributedStringBuilderStatsPointers statsPointers = {
+        .attrsForChar = &stats->attrsForChar,
+        .shouldSegment = &stats->shouldSegment,
+        .buildMutableAttributedString = &stats->buildMutableAttributedString,
+        .combineAttributes = &stats->combineAttributes,
+        .updateBuilder = &stats->updateBuilder,
+        .advances = &stats->advances,
+    };
+    iTermAttributedStringBuilder *builder = [[iTermAttributedStringBuilder alloc] initWithStats:statsPointers];
+    // The builder belongs to a frame, which can outlive this glue (a closed session frees its glue
+    // while frames are in flight), so it keeps the statistics it points into alive.
+    builder.statsOwner = _statsBox;
+    return builder;
 }
 
 - (void)metalDidFindImages:(NSSet<NSString *> *)foundImages
