@@ -162,6 +162,26 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
     }];
 }
 
++ (instancetype)secretInputWithIdentifier:(NSString *)identifier
+                                    label:(NSString *)label
+                                textField:(NSTextField *)textField {
+    __weak NSTextField *weakTextField = textField;
+    iTermWarningRemoteInput *input = [[self alloc] initWithIdentifier:identifier
+                                                                label:label
+                                                            isInteger:NO
+                                                              minimum:0
+                                                              maximum:0
+                                                                  get:^NSString *{
+        // What the field holds stays on this Mac.
+        return @"";
+    }
+                                                                  set:^(NSString *value) {
+        weakTextField.stringValue = value;
+    }];
+    input->_isSecret = YES;
+    return input;
+}
+
 + (instancetype)integerInputWithIdentifier:(NSString *)identifier
                                      label:(NSString *)label
                                    minimum:(NSInteger)minimum
@@ -773,31 +793,41 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
 // help button are not described.
 - (iTermModalAlertDescriptor *)modalAlertDescriptorForAlert:(NSAlert *)alert appModal:(BOOL)appModal {
     NSArray<iTermModalAlertButton *> *buttons = [_warningActions mapWithBlock:^id(iTermWarningAction *action) {
-        return [[iTermModalAlertButton alloc] initWithTitle:action.label
-                                                   isCancel:action.isCancel
-                                              isDestructive:action.destructive
-                                               rememberable:[self shouldRememberAction:action]];
+        iTermModalAlertButton *button =
+            [[iTermModalAlertButton alloc] initWithTitle:action.label
+                                                isCancel:action.isCancel
+                                           isDestructive:action.destructive
+                                            rememberable:[self shouldRememberAction:action]];
+        button.offered = !action.notOfferedRemotely;
+        return button;
     }];
     NSArray<iTermModalAlertInput *> *inputs = [_remoteInputs mapWithBlock:^id(iTermWarningRemoteInput *input) {
-        return [[iTermModalAlertInput alloc] initWithIdentifier:input.identifier
-                                                          label:input.label
-                                                      isInteger:input.isInteger
-                                                        minimum:input.minimum
-                                                        maximum:input.maximum
-                                                          value:[input currentValue]];
+        iTermModalAlertInput *descriptorInput =
+            [[iTermModalAlertInput alloc] initWithIdentifier:input.identifier
+                                                       label:input.label
+                                                   isInteger:input.isInteger
+                                                     minimum:input.minimum
+                                                     maximum:input.maximum
+                                                       value:[input currentValue]];
+        descriptorInput.isSecret = input.isSecret;
+        return descriptorInput;
     }];
     // Remote inputs stand for everything in the accessory that matters to the answer, so with them
     // there is nothing more to see on the Mac.
     const BOOL hasUndescribedAccessory = _accessory != nil && inputs.count == 0;
+    // The warning's own box, or failing that a checkbox in the accessory that stands in for one.
+    NSButton *remoteCheckbox = alert.showsSuppressionButton ? nil : _remoteCheckbox;
+    NSString *suppressionLabel = alert.showsSuppressionButton ? alert.suppressionButton.title : remoteCheckbox.title;
     iTermModalAlertDescriptor *descriptor =
         [[iTermModalAlertDescriptor alloc] initWithHeading:alert.messageText
                                                       body:alert.informativeText
                                                    buttons:buttons ?: @[]
-                                          suppressionLabel:alert.showsSuppressionButton ? alert.suppressionButton.title : nil
+                                          suppressionLabel:suppressionLabel
                                                     inputs:inputs ?: @[]
                                               hasAccessory:hasUndescribedAccessory
                                                 isAppModal:appModal];
     descriptor.sessionGuids = [self sessionGuidsForRemoteAnswer];
+    descriptor.suppressionDefault = remoteCheckbox.state == NSControlStateValueOn;
     return descriptor;
 }
 
@@ -844,6 +874,9 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
         if (buttonIndex < 0 || buttonIndex >= actions.count || buttonIndex >= strongAlert.buttons.count) {
             return NO;
         }
+        if (actions[buttonIndex].notOfferedRemotely) {
+            return NO;
+        }
         // A click on a disabled button does nothing. Reporting it as a press would leave the
         // other end waiting for an alert that is not going away. Nor may a hidden button be
         // pressed: the user at this Mac could not.
@@ -872,6 +905,9 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
             strongAlert.showsSuppressionButton &&
             [strongSelf shouldRememberAction:actions[buttonIndex]]) {
             strongAlert.suppressionButton.state = NSControlStateValueOn;
+        }
+        if (!strongAlert.showsSuppressionButton && strongSelf.remoteCheckbox) {
+            strongSelf.remoteCheckbox.state = suppress ? NSControlStateValueOn : NSControlStateValueOff;
         }
         // The same as a mouse click: ends the modal session (or sheet) with this button's code.
         [button performClick:nil];

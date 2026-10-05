@@ -544,11 +544,17 @@ actor CompanionLink {
                     CompanionModalAlert.Button(title: $0.title,
                                                isCancel: $0.isCancel,
                                                isDestructive: $0.isDestructive,
-                                               rememberable: $0.rememberable)
+                                               rememberable: $0.rememberable,
+                                               offered: $0.offered)
                 },
                 suppressionLabel: snapshot.suppressionLabel,
                 inputs: snapshot.inputs.map { input in
                     switch input.kind {
+                    case .secret:
+                        return CompanionModalAlert.Input(id: input.id,
+                                                         label: input.label,
+                                                         kind: CompanionModalAlert.Input.secretKind,
+                                                         value: "")
                     case .text:
                         return CompanionModalAlert.Input(id: input.id,
                                                          label: input.label,
@@ -565,7 +571,8 @@ actor CompanionLink {
                 },
                 hasAccessory: snapshot.hasAccessory,
                 isAppModal: snapshot.isAppModal,
-                sessionGuids: snapshot.sessionGuids)
+                sessionGuids: snapshot.sessionGuids,
+                suppressionDefault: snapshot.suppressionDefault)
         }
         return CompanionMacStatus(modalAlerts: modalAlerts, mainBlocked: mainStall.isMainBlocked())
     }

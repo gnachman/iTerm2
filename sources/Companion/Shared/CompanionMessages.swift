@@ -409,8 +409,13 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
         /// Whether this button's choice may be remembered. The "don't ask again"
         /// option applies only to such buttons.
         var rememberable: Bool
+        /// False for a button that only makes sense at the mac. It is listed so
+        /// that indexes match the mac's, but the phone does not show it and the
+        /// mac refuses an answer that names it.
+        var offered: Bool
 
-        init(title: String, isCancel: Bool, isDestructive: Bool, rememberable: Bool) {
+        init(title: String, isCancel: Bool, isDestructive: Bool, rememberable: Bool, offered: Bool = true) {
+            self.offered = offered
             self.title = title
             self.isCancel = isCancel
             self.isDestructive = isDestructive
@@ -426,6 +431,7 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
             isCancel = try c.decodeIfPresent(Bool.self, forKey: .isCancel) ?? false
             isDestructive = try c.decodeIfPresent(Bool.self, forKey: .isDestructive) ?? false
             rememberable = try c.decodeIfPresent(Bool.self, forKey: .rememberable) ?? false
+            offered = try c.decodeIfPresent(Bool.self, forKey: .offered) ?? true
         }
     }
 
@@ -438,6 +444,9 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
         /// text.
         static let textKind = "text"
         static let integerKind = "integer"
+        /// A password or other secret. `value` is always empty, and the phone
+        /// shows an obscured field.
+        static let secretKind = "secret"
 
         /// Echoed as the key in `.answerModalAlert`'s `inputs`.
         var id: String
@@ -492,6 +501,8 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
     /// user is looking at one of them, or when the mac reports itself blocked;
     /// otherwise it shows a reminder.
     var sessionGuids: [String]
+    /// Whether the checkbox named by `suppressionLabel` starts out checked.
+    var suppressionDefault: Bool
 
     init(id: String,
          heading: String,
@@ -501,8 +512,10 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
          inputs: [Input] = [],
          hasAccessory: Bool,
          isAppModal: Bool,
-         sessionGuids: [String] = []) {
+         sessionGuids: [String] = [],
+         suppressionDefault: Bool = false) {
         self.sessionGuids = sessionGuids
+        self.suppressionDefault = suppressionDefault
         self.id = id
         self.heading = heading
         self.body = body
@@ -524,6 +537,7 @@ struct CompanionModalAlert: Codable, Equatable, Sendable {
         hasAccessory = try c.decodeIfPresent(Bool.self, forKey: .hasAccessory) ?? false
         isAppModal = try c.decodeIfPresent(Bool.self, forKey: .isAppModal) ?? true
         sessionGuids = try c.decodeIfPresent([String].self, forKey: .sessionGuids) ?? []
+        suppressionDefault = try c.decodeIfPresent(Bool.self, forKey: .suppressionDefault) ?? false
     }
 }
 

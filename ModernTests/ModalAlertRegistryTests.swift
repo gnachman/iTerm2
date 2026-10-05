@@ -167,6 +167,37 @@ final class ModalAlertRegistryTests: XCTestCase {
         XCTAssertEqual(presses.all, [.init(buttonIndex: 1, suppress: true, onMainThread: true)])
     }
 
+    /// A button that only makes sense at the Mac is listed, so indexes still
+    /// match the alert's, but an answer that names it is refused.
+    func testButtonThatIsNotOfferedIsListedButCannotBePressed() async {
+        let registry = ModalAlertRegistry(modalWindow: { nil })
+        let pressed = OSAllocatedUnfairLock(initialState: [Int]())
+        let id = await MainActor.run { () -> UUID in
+            let macOnly = ModalAlertDescriptor.Button(title: "Open Window", isCancel: false, isDestructive: false,
+                                                      rememberable: false)
+            macOnly.offered = false
+            let descriptor = ModalAlertDescriptor(
+                heading: "Heading",
+                body: "",
+                buttons: [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: false),
+                          macOnly],
+                suppressionLabel: nil,
+                inputs: [],
+                hasAccessory: false,
+                isAppModal: true)
+            return registry.register(descriptor, window: nil) { index, _, _ in
+                pressed.withLock { $0.append(index) }
+                return true
+            }.identifier
+        }
+        XCTAssertEqual(registry.currentAlerts().first?.buttons.map { $0.offered }, [true, false])
+        let refused = await registry.answer(id: id, buttonIndex: 1, suppress: false)
+        XCTAssertFalse(refused)
+        let accepted = await registry.answer(id: id, buttonIndex: 0, suppress: false)
+        XCTAssertTrue(accepted)
+        XCTAssertEqual(pressed.withLock { $0 }, [0])
+    }
+
     @MainActor
     func testTheSessionsAnAlertIsAboutAreListed() {
         let registry = ModalAlertRegistry(modalWindow: { nil })
@@ -175,6 +206,27 @@ final class ModalAlertRegistryTests: XCTestCase {
         _ = registry.register(about, window: nil) { _, _ in true }
         _ = registry.register(descriptor("About nothing"), window: nil) { _, _ in true }
         XCTAssertEqual(registry.currentAlerts().map { $0.sessionGuids }, [["session-1"], []])
+    }
+
+    /// The registry is the last place on the main thread that sees a secret
+    /// input's value, so it drops it there no matter what it was handed.
+    @MainActor
+    func testSecretInputIsListedWithoutAValue() {
+        let registry = ModalAlertRegistry(modalWindow: { nil })
+        let password = ModalAlertDescriptor.Input(identifier: "password", label: "Password:", isInteger: false,
+                                                  minimum: 0, maximum: 0, value: "hunter2")
+        password.isSecret = true
+        let descriptor = ModalAlertDescriptor(
+            heading: "Log in",
+            body: "",
+            buttons: [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: false)],
+            suppressionLabel: nil,
+            inputs: [password],
+            hasAccessory: false,
+            isAppModal: true)
+        _ = registry.register(descriptor, window: nil) { _, _, _ in true }
+        XCTAssertEqual(registry.currentAlerts().first?.inputs,
+                       [.init(id: "password", label: "Password:", kind: .secret, value: "")])
     }
 
     func testInputsAreListedAndPassedToThePress() async throws {

@@ -340,6 +340,42 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
         return (field, fixture)
     }
 
+    /// A password field can be filled in from the phone, but what it holds is
+    /// never described: a password the user started typing at the Mac, or one a
+    /// password manager put there, stays on the Mac.
+    @MainActor
+    func testSecretInputIsDescribedWithoutItsContents() throws {
+        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        field.stringValue = "hunter2"
+        let warning = makeWarning(type: .kiTermWarningTypePersistent, identifier: nil)
+        warning.accessory = field
+        let input = iTermWarningRemoteInput.secretInput(withIdentifier: "password", label: "Password:", textField: field)
+        warning.remoteInputs = [input]
+
+        XCTAssertTrue(input.isSecret)
+        XCTAssertFalse(input.isInteger)
+        XCTAssertEqual(input.currentValue(), "")
+
+        let descriptor = try XCTUnwrap(warning.modalAlertDescriptor(whenAppModal: true))
+        XCTAssertEqual(descriptor.inputs.map { $0.isSecret }, [true])
+        XCTAssertEqual(descriptor.inputs.map { $0.value }, [""])
+        XCTAssertEqual(descriptor.inputs.map { $0.label }, ["Password:"])
+        XCTAssertFalse(descriptor.hasAccessory)
+
+        // What the phone sends goes into the field as typed.
+        XCTAssertTrue(input.acceptsValue(" correct horse "))
+        input.applyValue(" correct horse ")
+        XCTAssertEqual(field.stringValue, " correct horse ")
+    }
+
+    @MainActor
+    func testOrdinaryInputsAreNotSecret() {
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        XCTAssertFalse(iTermWarningRemoteInput.textInput(withIdentifier: "name", label: nil, textField: field).isSecret)
+        XCTAssertFalse(iTermWarningRemoteInput.integerInput(withIdentifier: "n", label: nil, minimum: 0, maximum: 1,
+                                                            getter: { 0 }, setter: { _ in }).isSecret)
+    }
+
     @MainActor
     func testRemoteInputsAreDescribedAndStandInForTheAccessory() throws {
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))

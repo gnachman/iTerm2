@@ -391,6 +391,43 @@ final class AppModelMacStatusTests: XCTestCase {
         XCTAssertEqual(model.testSentAlertAnswers.first?.inputs, ["spaces": "100"])
     }
 
+    /// A password is sent exactly as typed: no trimming, no fallback.
+    func test_secretIsSentAsTyped() {
+        var asking = alert("A")
+        asking.inputs = [.init(id: "password", label: "Password:",
+                               kind: CompanionModalAlert.Input.secretKind, value: "")]
+        XCTAssertEqual(AppModel.valueToSend(for: asking.inputs[0], entered: " correct horse "), " correct horse ")
+        let model = connectedModel(status([asking]))
+        model.answerMacAlert(buttonIndex: 0, suppress: false, inputs: ["password": " correct horse "])
+        XCTAssertEqual(model.testSentAlertAnswers.first?.inputs, ["password": " correct horse "])
+    }
+
+    /// The phone never knows what a password field holds on the Mac, so a
+    /// secret left blank is left out: the Mac keeps whatever is in its field
+    /// (typed there, or filled by a password manager) instead of clearing it.
+    func test_secretLeftBlankIsNotSent() {
+        var asking = alert("A")
+        asking.inputs = [.init(id: "user", label: nil, kind: CompanionModalAlert.Input.textKind, value: "me"),
+                         .init(id: "password", label: "Password:",
+                               kind: CompanionModalAlert.Input.secretKind, value: "")]
+        let model = connectedModel(status([asking]))
+        model.answerMacAlert(buttonIndex: 0, suppress: false, inputs: ["user": "", "password": ""])
+        XCTAssertEqual(model.testSentAlertAnswers.first?.inputs, ["user": ""],
+                       "ordinary text may be cleared; a blank secret is not sent")
+    }
+
+    /// A button the Mac does not offer to the phone is not shown, and nothing
+    /// is sent for it even if something asks.
+    func test_buttonThatIsNotOfferedCannotBeAnswered() {
+        var asking = alert("A")
+        asking.buttons.append(.init(title: "Password Manager", isCancel: false, isDestructive: false,
+                                    rememberable: false, offered: false))
+        let model = connectedModel(status([asking]))
+        model.answerMacAlert(buttonIndex: asking.buttons.count - 1, suppress: false)
+        XCTAssertEqual(model.testSentAlertAnswers, [])
+        XCTAssertEqual(model.macAlertPresentation, .overlay(asking, .ready))
+    }
+
     // MARK: Unpairing
 
     /// The status belongs to the Mac it came from. Once unpaired, nothing of it

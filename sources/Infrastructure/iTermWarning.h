@@ -53,6 +53,10 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @property(nonatomic) BOOL isCancel;
 @property(nonatomic) BOOL neverRemember;
 
+// Set for an action that only makes sense at this Mac, such as one that opens another window here.
+// The companion app does not show its button and cannot press it.
+@property(nonatomic) BOOL notOfferedRemotely;
+
 @end
 
 // Describes one control in a warning's accessory view whose value the paired companion app may set
@@ -69,6 +73,9 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @property(nonatomic, readonly) BOOL isInteger;
 @property(nonatomic, readonly) NSInteger minimum;
 @property(nonatomic, readonly) NSInteger maximum;
+// YES for a password or other secret. The phone shows an obscured field, and what the control
+// holds is never sent to it: currentValue is always empty.
+@property(nonatomic, readonly) BOOL isSecret;
 
 // What the control holds now.
 - (NSString *)currentValue;
@@ -82,6 +89,12 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 + (instancetype)textInputWithIdentifier:(NSString *)identifier
                                   label:(NSString * _Nullable)label
                               textField:(NSTextField *)textField;
+
+// A secret, such as a password, backed by `textField` (normally an NSSecureTextField). What the
+// phone sends is put in the field; what the field holds is never sent to the phone.
++ (instancetype)secretInputWithIdentifier:(NSString *)identifier
+                                    label:(NSString * _Nullable)label
+                                textField:(NSTextField *)textField;
 
 // A whole-number input. `getter` reads the current value and `setter` stores a new one; the
 // setter is only called with a value in [minimum, maximum].
@@ -288,6 +301,12 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // this declares that they are everything in the accessory that matters to the answer, so the phone
 // does not tell the user that more is shown on the Mac.
 @property(nullable, nonatomic, copy) NSArray<iTermWarningRemoteInput *> *remoteInputs;
+
+// A checkbox in `accessory` that the companion app shows and sets the way it does a warning's
+// own "don't ask again" box: for example "Remember this password". Only for a warning that has no
+// box of its own (kiTermWarningTypePersistent). The phone starts from the checkbox's state, and
+// what the phone chose is put in it before a button is pressed, whichever button that is.
+@property(nullable, nonatomic, strong) NSButton *remoteCheckbox;
 
 @property(nonatomic, retain) NSWindow * _Nullable window;
 @property(nonatomic, retain) NSView * _Nullable initialFirstResponder;

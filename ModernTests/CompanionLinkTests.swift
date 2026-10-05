@@ -801,6 +801,42 @@ final class CompanionLinkTests: XCTestCase {
                                                      inputs: ["name": "requests", "spaces": "8"])])
     }
 
+    /// A secret input goes to the phone marked as one and without a value, and
+    /// what the phone enters for it reaches the alert.
+    func testSecretInputIsSentWithoutAValueAndItsAnswerIsDelivered() async throws {
+        let fixture = makeFixture()
+        let id = UUID()
+        let snapshot = ModalAlertSnapshot(
+            id: id,
+            heading: "Log in",
+            body: "",
+            buttons: [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: false)],
+            suppressionLabel: nil,
+            // A value should never get this far. If one does it still must not
+            // leave the Mac.
+            inputs: [.init(id: "password", label: "Password:", kind: .secret, value: "hunter2")],
+            hasAccessory: false,
+            isAppModal: true)
+        fixture.alerts.show([snapshot])
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        guard case .hello(_, _, _, _, let macStatus) = try await fixture.phone.nextEnvelope().payload else {
+            return XCTFail("expected hello")
+        }
+        XCTAssertEqual(macStatus?.modalAlerts.first?.inputs, [
+            .init(id: "password", label: "Password:", kind: "secret", value: ""),
+        ])
+
+        try await fixture.phone.send(.answerModalAlert(alertID: id.uuidString, buttonIndex: 0, suppress: false,
+                                                       inputs: ["password": " correct horse "]))
+        try await FrozenMainQueue.withFailsafe("the answer to reach the alert source") {
+            while fixture.alerts.answers.isEmpty {
+                await Task.yield()
+            }
+        }
+        XCTAssertEqual(fixture.alerts.answers, [.init(id: id, buttonIndex: 0, suppress: false,
+                                                     inputs: ["password": " correct horse "])])
+    }
+
     func testOlderPhoneGetsNoMacStatus() async throws {
         let fixture = makeFixture()
         fixture.alerts.show([FakeAlertSource.alert("A")])
@@ -1114,6 +1150,21 @@ final class CompanionLinkTests: XCTestCase {
         fixture.alerts.show([FakeAlertSource.alert("Sheet", isAppModal: false), FakeAlertSource.alert("Blocking")])
         _ = try await fixture.phone.next()
         XCTAssertEqual(fixture.stall.expediteCount, 1)
+    }
+
+    func testWhetherTheCheckboxStartsCheckedIsSentWithTheAlert() async throws {
+        let fixture = makeFixture()
+        let snapshot = ModalAlertSnapshot(
+            id: UUID(), heading: "Log in", body: "",
+            buttons: [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: true)],
+            suppressionLabel: "Remember this password", hasAccessory: false, isAppModal: true,
+            suppressionDefault: true)
+        fixture.alerts.show([snapshot])
+        try await fixture.phone.send(Self.compatibleHello, requestID: 1)
+        guard case .hello(_, _, _, _, let macStatus) = try await fixture.phone.nextEnvelope().payload else {
+            return XCTFail("expected hello")
+        }
+        XCTAssertEqual(macStatus?.modalAlerts.first?.suppressionDefault, true)
     }
 
     func testTheSessionsAnAlertIsAboutAreSentWithIt() async throws {

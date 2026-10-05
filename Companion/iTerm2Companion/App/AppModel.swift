@@ -828,6 +828,7 @@ final class AppModel {
         guard macRevision >= CompanionProtocolVersion.modalAlertRevision,
               let alert = topMacAlert,
               alert.buttons.indices.contains(buttonIndex),
+              alert.buttons[buttonIndex].offered,
               answeringAlertID != alert.id,
               rejectedAlertID != alert.id else {
             return
@@ -841,9 +842,15 @@ final class AppModel {
         // Only the inputs this alert has, each in a form the Mac will accept.
         var valuesToSend: [String: String] = [:]
         for input in alert.inputs {
-            if let entered = inputs[input.id] {
-                valuesToSend[input.id] = Self.valueToSend(for: input, entered: entered)
+            guard let entered = inputs[input.id] else {
+                continue
             }
+            // What a secret field holds on the Mac is never known here, so a
+            // blank one means “leave it alone”, not “clear it”.
+            if input.kind == CompanionModalAlert.Input.secretKind && entered.isEmpty {
+                continue
+            }
+            valuesToSend[input.id] = Self.valueToSend(for: input, entered: entered)
         }
         answeringAlertID = alertID
         companionLog("Answering Mac alert \(alertID): button \(buttonIndex), suppress=\(effectiveSuppress), \(valuesToSend.count) input(s)")

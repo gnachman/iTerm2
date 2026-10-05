@@ -27,6 +27,10 @@ struct ModalAlertSnapshot: Equatable, Sendable {
         /// Whether choosing this button may be remembered (it is not Cancel and
         /// not excluded by the alert).
         let rememberable: Bool
+        /// False for a button that only makes sense at the Mac (one that opens
+        /// another window there, say). It is listed so indexes match the
+        /// alert's, but it is not shown remotely and cannot be pressed remotely.
+        var offered = true
     }
 
     /// A value the alert asks for: a control in its accessory view.
@@ -34,6 +38,9 @@ struct ModalAlertSnapshot: Equatable, Sendable {
         enum Kind: Equatable, Sendable {
             case text
             case integer(minimum: Int, maximum: Int)
+            /// Text that must not be shown or kept: a password. Its `value` is
+            /// always empty, whatever the control holds.
+            case secret
         }
         let id: String
         /// The control's label, or nil if it has none.
@@ -62,6 +69,8 @@ struct ModalAlertSnapshot: Equatable, Sendable {
     /// it is attached to, or the one its caller named. Empty for an alert that
     /// is not about a session.
     let sessionGuids: [String]
+    /// Whether the "don't ask again" checkbox starts out checked.
+    let suppressionDefault: Bool
 
     init(id: UUID,
          heading: String,
@@ -71,8 +80,10 @@ struct ModalAlertSnapshot: Equatable, Sendable {
          inputs: [Input] = [],
          hasAccessory: Bool,
          isAppModal: Bool,
-         sessionGuids: [String] = []) {
+         sessionGuids: [String] = [],
+         suppressionDefault: Bool = false) {
         self.sessionGuids = sessionGuids
+        self.suppressionDefault = suppressionDefault
         self.id = id
         self.heading = heading
         self.body = body
@@ -125,6 +136,8 @@ final class ModalAlertDescriptor: NSObject {
         @objc let isCancel: Bool
         @objc let isDestructive: Bool
         @objc let rememberable: Bool
+        /// False for a button that may not be pressed remotely.
+        @objc var offered = true
 
         @objc init(title: String, isCancel: Bool, isDestructive: Bool, rememberable: Bool) {
             self.title = title
@@ -144,6 +157,8 @@ final class ModalAlertDescriptor: NSObject {
         @objc let minimum: Int
         @objc let maximum: Int
         @objc let value: String
+        /// The input is a password or the like. Its value is never published.
+        @objc var isSecret = false
 
         @objc init(identifier: String, label: String?, isInteger: Bool, minimum: Int, maximum: Int, value: String) {
             self.identifier = identifier
@@ -164,6 +179,8 @@ final class ModalAlertDescriptor: NSObject {
     @objc let isAppModal: Bool
     /// The terminal sessions this alert is about. Set after init; usually empty.
     @objc var sessionGuids: [String] = []
+    /// Whether the checkbox named by `suppressionLabel` starts out checked.
+    @objc var suppressionDefault = false
 
     @objc init(heading: String,
                body: String,
@@ -259,11 +276,17 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
                 ModalAlertSnapshot.Button(title: $0.title,
                                           isCancel: $0.isCancel,
                                           isDestructive: $0.isDestructive,
-                                          rememberable: $0.rememberable)
+                                          rememberable: $0.rememberable,
+                                          offered: $0.offered)
             },
             suppressionLabel: descriptor.suppressionLabel,
             inputs: descriptor.inputs.map {
-                ModalAlertSnapshot.Input(
+                if $0.isSecret {
+                    // Snapshots are read off the main thread and sent to the
+                    // phone. A secret's value goes no further than this.
+                    return ModalAlertSnapshot.Input(id: $0.identifier, label: $0.label, kind: .secret, value: "")
+                }
+                return ModalAlertSnapshot.Input(
                     id: $0.identifier,
                     label: $0.label,
                     kind: $0.isInteger ? .integer(minimum: $0.minimum, maximum: $0.maximum) : .text,
@@ -271,7 +294,8 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
             },
             hasAccessory: descriptor.hasAccessory,
             isAppModal: descriptor.isAppModal,
-            sessionGuids: descriptor.sessionGuids)
+            sessionGuids: descriptor.sessionGuids,
+            suppressionDefault: descriptor.suppressionLabel != nil && descriptor.suppressionDefault)
         let entry = Entry(snapshot: snapshot, hasWindow: window != nil, window: window, press: press)
         // Kept in front-to-back order, last in front. Registration order alone
         // is not that: a sheet that does not block can be started while an
@@ -349,6 +373,10 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
         }
         guard top.snapshot.buttons.indices.contains(buttonIndex) else {
             DLog("Modal alert answer refused: no button \(buttonIndex)")
+            return false
+        }
+        guard top.snapshot.buttons[buttonIndex].offered else {
+            DLog("Modal alert answer refused: button \(buttonIndex) is not offered remotely")
             return false
         }
         if top.hasWindow {

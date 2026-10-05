@@ -317,6 +317,45 @@ final class CompanionStreamMessagesTests: XCTestCase {
         XCTAssertEqual(inputs, ["spaces": "8"])
     }
 
+    func testSuppressionDefaultRoundTripsAndDefaultsToOff() throws {
+        var alert = sampleAlert()
+        alert.suppressionDefault = true
+        let status = CompanionMacStatus(modalAlerts: [alert], mainBlocked: false)
+        guard case let .macStatusChanged(decoded) = try roundTripHost(.macStatusChanged(status: status)) else {
+            return XCTFail("expected .macStatusChanged")
+        }
+        XCTAssertEqual(decoded.modalAlerts.first?.suppressionDefault, true)
+
+        let bare = try decoder().decode(CompanionMacStatus.self, from: Data(#"{"modalAlerts":[{"id":"A1"}]}"#.utf8))
+        XCTAssertEqual(bare.modalAlerts.first?.suppressionDefault, false)
+    }
+
+    func testButtonNotOfferedRoundTripsAndButtonsAreOfferedByDefault() throws {
+        var alert = sampleAlert()
+        alert.buttons = [.init(title: "OK", isCancel: false, isDestructive: false, rememberable: false),
+                         .init(title: "Password Manager", isCancel: false, isDestructive: false, rememberable: false,
+                               offered: false)]
+        let status = CompanionMacStatus(modalAlerts: [alert], mainBlocked: false)
+        guard case let .macStatusChanged(decoded) = try roundTripHost(.macStatusChanged(status: status)) else {
+            return XCTFail("expected .macStatusChanged")
+        }
+        XCTAssertEqual(decoded.modalAlerts.first?.buttons.map { $0.offered }, [true, false])
+
+        let bare = try decoder().decode(CompanionMacStatus.self,
+                                        from: Data(#"{"modalAlerts":[{"id":"A1","buttons":[{"title":"OK"}]}]}"#.utf8))
+        XCTAssertEqual(bare.modalAlerts.first?.buttons.map { $0.offered }, [true])
+    }
+
+    func testSecretInputKindRoundTrips() throws {
+        var alert = sampleAlert()
+        alert.inputs = [.init(id: "password", label: "Password:", kind: CompanionModalAlert.Input.secretKind, value: "")]
+        let status = CompanionMacStatus(modalAlerts: [alert], mainBlocked: true)
+        guard case let .macStatusChanged(decoded) = try roundTripHost(.macStatusChanged(status: status)) else {
+            return XCTFail("expected .macStatusChanged")
+        }
+        XCTAssertEqual(decoded.modalAlerts.first?.inputs.first?.kind, "secret")
+    }
+
     func testModalAlertSessionGuidsRoundTripAndDefaultToNone() throws {
         var alert = sampleAlert()
         alert.sessionGuids = ["session-1"]

@@ -26,7 +26,10 @@ struct MacAlertCard: View {
     let onAnswer: (_ buttonIndex: Int, _ suppress: Bool, _ inputs: [String: String]) -> Void
     let onNotNow: () -> Void
 
-    @State private var suppress = false
+    /// nil until the user touches the toggle, which starts where the Mac's
+    /// checkbox is.
+    @State private var chosenSuppress: Bool?
+    private var suppress: Bool { chosenSuppress ?? alert.suppressionDefault }
     /// What the user has typed into each input, by id. An input that has not
     /// been touched is absent, and shows what the Mac's control holds.
     @State private var entered: [String: String] = [:]
@@ -77,7 +80,7 @@ struct MacAlertCard: View {
             if let suppressionLabel = alert.suppressionLabel {
                 // A checkbox, like the one it stands for on the Mac.
                 Button {
-                    suppress.toggle()
+                    chosenSuppress = !suppress
                 } label: {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Image(systemName: suppress ? "checkmark.square.fill" : "square")
@@ -95,7 +98,9 @@ struct MacAlertCard: View {
             }
 
             VStack(spacing: 8) {
-                ForEach(Array(alert.buttons.enumerated()), id: \.offset) { index, button in
+                // A button the Mac does not offer here keeps its place in the
+                // numbering but is not shown.
+                ForEach(Array(alert.buttons.enumerated()).filter { $0.element.offered }, id: \.offset) { index, button in
                     answerButton(index: index, button: button)
                 }
             }
@@ -145,6 +150,10 @@ struct MacAlertCard: View {
                         .labelsHidden()
                     Spacer(minLength: 0)
                 }
+            } else if input.kind == CompanionModalAlert.Input.secretKind {
+                SecureField("", text: text(for: input))
+                    .textFieldStyle(.roundedBorder)
+                    .textContentType(.password)
             } else {
                 TextField("", text: text(for: input))
                     .textFieldStyle(.roundedBorder)
