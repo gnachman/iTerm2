@@ -21521,6 +21521,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                 [[iTermUserDefaults userDefaults] setBool:YES forKey:bypassKey];
             }
             completion([[[input string] copy] autorelease]);
+            return;
         }
         completion(nil);
     }];
