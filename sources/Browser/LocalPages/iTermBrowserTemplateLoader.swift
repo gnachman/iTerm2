@@ -20,7 +20,7 @@ class iTermBrowserTemplateLoader: NSObject {
                              substitutions: [String: String] = [:]) -> String {
         guard let path = Bundle.main.path(forResource: templateName, ofType: type),
               let template = try? String(contentsOfFile: path) else {
-            it_fatalError(templateName)
+            AppSignatureValidator.warnAndExit(reason: "While loading the browser page template \(templateName).\(type)")
         }
         
         return performSubstitutions(template: template, substitutions: substitutions)
@@ -58,7 +58,7 @@ class iTermBrowserTemplateLoader: NSObject {
                         let fullRange = Range(match.range(at: 0), in: result)!
                         result.replaceSubrange(fullRange, with: includeContent)
                     } else {
-                        it_fatalError("Could not load included file \(name).\(ext)")
+                        AppSignatureValidator.warnAndExit(reason: "While loading the browser page file \(name).\(ext)")
                     }
                 }
             }

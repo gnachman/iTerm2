@@ -29,9 +29,8 @@ class StatusBarTriggersComponent: iTermStatusBarTextComponent {
 
     override func statusBarComponentIcon() -> NSImage {
         guard let image = NSImage.it_cacheableImageNamed("StatusBarIconTriggers", for: Self.self) else {
-            AppSignatureValidator.warn(
+            AppSignatureValidator.warnAndExit(
                 reason: "The icon for the status bar “triggers” component is missing from the app bundle.")
-            it_fatalError("Missing StatsBarIconTriggers")
         }
         return image
     }

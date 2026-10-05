@@ -97,7 +97,10 @@ static uint64_t sGraphicMapGeneration;
     };
 
     NSString *bundlePath = [[NSBundle bundleForClass:self] pathForResource:bundleResource ofType:@"json"];
-    NSDictionary *map = parse([NSData dataWithContentsOfFile:bundlePath options:0 error:nil]);
+    NSDictionary *map = bundlePath ? parse([NSData dataWithContentsOfFile:bundlePath options:0 error:nil]) : nil;
+    if (!map) {
+        [iTermAppSignatureValidator warnAndExitWithReason:[NSString stringWithFormat:@"While loading %@.json", bundleResource]];
+    }
 
     NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
     NSString *overridePath = [appSupport stringByAppendingPathComponent:appSupportName];
@@ -107,9 +110,7 @@ static uint64_t sGraphicMapGeneration;
     if (overrideData) {
         NSDictionary *override = parse(overrideData);
         if (override) {
-            // Merge over the bundle map, or use the override directly if the bundle map failed to load
-            // (merging INTO nil returns nil, which would silently discard a valid custom map).
-            map = map ? [map dictionaryByMergingDictionary:override] : override;
+            map = [map dictionaryByMergingDictionary:override];
         } else if (previousMap) {
             // Present but unparseable: keep the previously-loaded good map instead of reverting to
             // bundle-only. It will re-merge once the file parses again.
