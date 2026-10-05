@@ -33,7 +33,7 @@
         NSMutableDictionary<NSString *, NSString *> *environment = [NSMutableDictionary dictionary];
         for (int i = 0; i < report->envc; i++) {
             NSString *kvp = [[NSString alloc] initWithUTF8String:report->envp[i]];
-            NSInteger equals = [kvp rangeOfString:@"="].location;
+            NSInteger equals = [kvp rangeOfString:@"=" options:NSLiteralSearch].location;
             if (equals == NSNotFound) {
                 assert(false);
                 continue;
