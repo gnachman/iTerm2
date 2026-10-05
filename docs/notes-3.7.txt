@@ -66,3 +66,6 @@ Bug Fixes:
 - Fixed a crash from a Smart Selection rule
   with no regular expression, for example in a
   hand-edited or Dynamic Profile.
+- Fixed a crash with the GPU renderer that
+  could happen when switching to or from
+  battery power.
