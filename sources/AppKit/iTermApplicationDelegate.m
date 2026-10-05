@@ -1843,6 +1843,9 @@ void TurnOnDebugLoggingAutomatically(void) {
         // Localization unneeded
         item = [[[NSMenuItem alloc] initWithTitle:@"Freeze Main Queue: Plain NSAlert from Main Queue Block" action:@selector(debugShowPlainAlertFromMainQueueBlock:) keyEquivalent:@""] autorelease];
         [appMenu addItem:item];
+        // Localization unneeded
+        item = [[[NSMenuItem alloc] initWithTitle:@"Freeze Main Queue: Password Prompt from Main Queue Block" action:@selector(debugShowPasswordPromptFromMainQueueBlock:) keyEquivalent:@""] autorelease];
+        [appMenu addItem:item];
     }
 #endif
 }
@@ -1862,6 +1865,10 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (IBAction)debugShowPlainAlertFromMainQueueBlock:(id)sender {
     [iTermCompanionModalFreezeDebug showPlainAlertFromMainQueueBlock];
+}
+
+- (IBAction)debugShowPasswordPromptFromMainQueueBlock:(id)sender {
+    [iTermCompanionModalFreezeDebug showPasswordPromptFromMainQueueBlock];
 }
 #endif
 

@@ -36,6 +36,37 @@ final class CompanionModalFreezeDebug: NSObject {
         }
     }
 
+    /// The password prompt with every optional part: a user name, a Remember
+    /// checkbox, and a Password Manager button. Afterwards a second warning
+    /// says what the prompt reported, so use a throwaway password.
+    @objc static func showPasswordPromptFromMainQueueBlock() {
+        DispatchQueue.main.async {
+            // Localization unneeded
+            let prompt = ModalPasswordAlert("Password Prompt Test (use a throwaway password)")
+            prompt.username = "debug-user"
+            prompt.showRememberCheckbox = true
+            prompt.showPasswordManagerButton = true
+            prompt.runAsyncOutcome(window: nil) { outcome in
+                let report: String
+                switch outcome {
+                case .ok(let password):
+                    report = "OK. User name “\(prompt.username ?? "")”, password “\(password)”, remember=\(prompt.rememberChecked)."
+                case .cancel:
+                    report = "Cancel."
+                case .passwordManager(let typed):
+                    report = "Password Manager. Typed so far: “\(typed)”."
+                }
+                iTermWarning.show(withTitle: report,
+                                  actions: ["OK"],
+                                  accessory: nil,
+                                  identifier: nil,
+                                  silenceable: .kiTermWarningTypePersistent,
+                                  heading: "The Password Prompt Reported",
+                                  window: nil)
+            }
+        }
+    }
+
     /// A plain NSAlert, which the companion app will never be able to answer.
     @objc static func showPlainAlertFromMainQueueBlock() {
         DispatchQueue.main.async {
