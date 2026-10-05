@@ -468,6 +468,10 @@ const NSInteger kLongMaximumWordLength = 100000;
             continue;
         }
         NSString *regex = [SmartSelectionController regexInRule:rule];
+        if (!regex) {
+            DLog(@"Ignore smart selection rule because it has no regex: %@", rule);
+            continue;
+        }
         double precision = [SmartSelectionController precisionInRule:rule];
         if (debug) {
             NSLog(@"Try regex %@", regex);

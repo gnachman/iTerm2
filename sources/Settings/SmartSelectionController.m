@@ -195,8 +195,11 @@ static NSString *iTermLocalizedSmartSelectionNote(NSString *note) {
     return [rule objectForKey:kActionsKey];
 }
 
+// Nil if the rule has no usable regex. Rules can come from hand-edited, dynamic, or imported
+// profiles, so the value may be missing or not a string.
 + (NSString *)regexInRule:(NSDictionary *)rule {
-    return [rule objectForKey:kRegexKey];
+    NSString *regex = [NSString castFrom:[rule objectForKey:kRegexKey]];
+    return regex.length > 0 ? regex : nil;
 }
 
 + (double)precisionInRule:(NSDictionary *)rule {

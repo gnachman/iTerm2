@@ -376,6 +376,30 @@ final class TextExtractorTests: XCTestCase {
         XCTAssertEqual(match.absEndY, 0)
     }
 
+    // Smart selection rules can come from hand-edited, dynamic, or imported profiles. A rule with
+    // no regex (or one that isn't a string) passed nil to RegexKitLite, which threw “The regular
+    // expression argument is NULL.” Such rules must be skipped.
+    func testSmartSelectionSkipsRuleWithoutRegex() throws {
+        let dataSource = FakeTextDataSource(strings: ["blah foo bar"])
+        let extractor = makeExtractor(for: dataSource)
+        let rules: [[String: Any]] = [
+            [kPrecisionKey: kVeryHighPrecision],
+            [kRegexKey: 42, kPrecisionKey: kVeryHighPrecision],
+            [kRegexKey: "f\\S+", kPrecisionKey: kVeryHighPrecision],
+        ]
+        var range = VT100GridWindowedRange()
+        var match: SmartMatch?
+        XCTAssertNoThrow(try ObjCTry {
+            match = extractor.smartSelection(at: VT100GridCoord(x: 6, y: 0),
+                                             withRules: rules,
+                                             actionRequired: false,
+                                             range: &range,
+                                             ignoringNewlines: false)
+        })
+        XCTAssertEqual(match?.startX, 5)
+        XCTAssertEqual(match?.endX, 8)
+    }
+
     // The header declares the `range` out-parameter `_Nullable` and comments it as “unused”
     // (sources/ContentAnalysis/iTermTextExtractor.h, annotation added in f8b9ef965), but
     // -smartSelectionAt:withRules:actionRequired:range:ignoringNewlines: writes through it on every
