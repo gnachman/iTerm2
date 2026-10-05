@@ -30,7 +30,8 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 @interface PSMTabAccessibilityElementPrototype : NSAccessibilityElement
-@property(nonatomic, assign) PSMTabBarCell *cell;
+// Weak because assistive apps can keep an element after its tab closes and the cell is freed.
+@property(nonatomic, weak) PSMTabBarCell *cell;
 - (instancetype)initWithCell:(PSMTabBarCell *)cell role:(NSString *)role;
 @end
 

@@ -414,6 +414,9 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- Fixed a crash that could happen after closing
+  a tab while an accessibility app, such as
+  VoiceOver, was in use.
 - Fixed a crash when splitting a pane that was
   closed or moved to another window before the
   split finished.
