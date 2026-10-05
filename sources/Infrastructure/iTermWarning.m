@@ -418,7 +418,7 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p title=%@ heading=%@ actions=%@ identifier=%@>",
-            NSStringFromClass([self class]), self, _title, _heading, _warningActions, _identifier];
+            NSStringFromClass([self class]), self, _titleIsSecret ? @"(secret)" : _title, _heading, _warningActions, _identifier];
 }
 
 - (void)setActionLabels:(NSArray<NSString *> *)actionLabels {
@@ -461,9 +461,10 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
         result = [gWarningHandler warningWouldShowAlert:alert identifier:_identifier];
     } else {
         DLog(@"Show warning %@\n%@", self, [NSThread callStackSymbols]);
-        gShowingWarning = YES;
         if (self.window) {
-            // A sheet shown this way does not block, so it is not app-modal.
+            // A sheet shown this way does not block, so it is not app-modal. It does not count
+            // as showingWarning either: that pauses redraws in every window and keeps the hotkey
+            // window from hiding, and a sheet only concerns its own window.
             iTermModalAlertRegistration *sheetRegistration = [self registerAlert:alert appModal:NO];
             // AppKit does not call a sheet's completion handler if the parent window closes before
             // the sheet is answered, so the completion alone cannot be relied on to unregister.
@@ -487,14 +488,12 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
                 [sheetRegistration unregister];
                 [headlessSession abandon];
                 headlessSession = nil;
-                gShowingWarning = NO;
             }];
             void (^sheetCompletion)(NSModalResponse) = ^(NSModalResponse result) {
                 stopObservingParent();
                 headlessSession = nil;
                 [sheetRegistration unregister];
                 DLog(@"Result for %@ is %@", self, @(result));
-                gShowingWarning = NO;
                 completion([self handleResult:result alert:alert], self);
             };
             if (gRunsHeadlessModals) {
@@ -505,6 +504,7 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
             }
             return;
         }
+        gShowingWarning = YES;
         iTermModalAlertRegistration *registration = [self registerAlert:alert appModal:YES];
         if (gRunsHeadlessModals) {
             result = [[[iTermHeadlessModalSession alloc] initWithAlert:alert completion:nil] runUntilFinished];
@@ -754,6 +754,9 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
         if (_doNotRememberLabels.count && [_doNotRememberLabels containsObject:action.label]) {
             action.neverRemember = YES;
         }
+        if (_notOfferedRemotelyLabels.count && [_notOfferedRemotelyLabels containsObject:action.label]) {
+            action.notOfferedRemotely = YES;
+        }
     }
 }
 
@@ -899,12 +902,13 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
             }
         }
         // -handleResult:alert: reads the box's state when it handles the click, and would persist
-        // the choice even for a warning that shows no box. So check it only when the warning has
-        // one and this action may be remembered.
-        if (suppress &&
-            strongAlert.showsSuppressionButton &&
-            [strongSelf shouldRememberAction:actions[buttonIndex]]) {
-            strongAlert.suppressionButton.state = NSControlStateValueOn;
+        // the choice even for a warning that shows no box. So touch it only when the warning has
+        // one, and tick it only when this action may be remembered. Set it both ways: someone may
+        // have ticked the box at this Mac, and the other end, which always starts with it
+        // unticked, did not ask for the choice to be remembered.
+        if (strongAlert.showsSuppressionButton) {
+            const BOOL remember = suppress && [strongSelf shouldRememberAction:actions[buttonIndex]];
+            strongAlert.suppressionButton.state = remember ? NSControlStateValueOn : NSControlStateValueOff;
         }
         if (!strongAlert.showsSuppressionButton && strongSelf.remoteCheckbox) {
             strongSelf.remoteCheckbox.state = suppress ? NSControlStateValueOn : NSControlStateValueOff;

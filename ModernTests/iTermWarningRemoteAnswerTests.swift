@@ -250,6 +250,47 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
         XCTAssertEqual(fixture.alert.suppressionButton?.state, .off)
     }
 
+    /// Someone ticked the box at the Mac and walked away. The phone shows it
+    /// unticked, so an answer without it must leave nothing remembered.
+    @MainActor
+    func testPressWithoutSuppressClearsABoxTickedAtTheMac() {
+        let fixture = pressFixture(identifier: uniqueIdentifier())
+        fixture.alert.suppressionButton?.state = .on
+        XCTAssertTrue(fixture.press(0, false))
+        XCTAssertEqual(fixture.alert.suppressionButton?.state, .off)
+    }
+
+    /// The same for a button whose choice may never be remembered, even when
+    /// the phone asked for it.
+    @MainActor
+    func testCancelClearsABoxTickedAtTheMac() {
+        let fixture = pressFixture(identifier: uniqueIdentifier())
+        fixture.alert.suppressionButton?.state = .on
+        XCTAssertTrue(fixture.press(2, true))
+        XCTAssertEqual(fixture.alert.suppressionButton?.state, .off)
+    }
+
+    @MainActor
+    func testActionsNamedAsNotOfferedRemotelyAreMarked() throws {
+        let warning = makeWarning(actions: ["OK", "Cancel", "Advanced…"], identifier: uniqueIdentifier())
+        warning.notOfferedRemotelyLabels = ["Advanced…"]
+        let descriptor = try XCTUnwrap(warning.modalAlertDescriptor(whenAppModal: true))
+        XCTAssertEqual(descriptor.buttons.map { $0.offered }, [true, true, false])
+        let alert = warning.makeAlertForRemoteAnswer()
+        let press = warning.modalAlertPressBlock(for: alert)
+        XCTAssertFalse(press(2, false, [:]), "a button that is not offered cannot be pressed remotely")
+    }
+
+    /// A warning whose text is itself a secret keeps it out of the debug log.
+    @MainActor
+    func testSecretTitleIsNotInTheDescription() {
+        let warning = makeWarning(identifier: uniqueIdentifier())
+        warning.title = "hunter2"
+        XCTAssertTrue(warning.description.contains("hunter2"))
+        warning.titleIsSecret = true
+        XCTAssertFalse(warning.description.contains("hunter2"))
+    }
+
     @MainActor
     func testCancelIsClickedButNeverChecksTheBox() {
         let fixture = pressFixture(identifier: uniqueIdentifier())
@@ -675,6 +716,40 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
             }
         }
         XCTAssertEqual(selection, .kiTermWarningSelection2)
+    }
+
+    /// A sheet on one window must not make the whole app behave as if an
+    /// app-modal warning were up: terminals in other windows stop redrawing
+    /// and the hotkey window stops hiding while showingWarning is true.
+    func testAsyncSheetDoesNotCountAsShowingAWarning() async throws {
+        let registry = ModalAlertRegistry.shared
+        let (changes, changesContinuation) = AsyncStream<Void>.makeStream()
+        let token = registry.addObserver { changesContinuation.yield() }
+        defer { _ = token }
+        let (finished, finishedContinuation) = AsyncStream<Void>.makeStream()
+        await MainActor.run {
+            let warning = self.makeWarning(type: .kiTermWarningTypePersistent, identifier: nil)
+            warning.window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
+                                      styleMask: [.titled], backing: .buffered, defer: true)
+            warning.runModalAsync { _, _ in
+                finishedContinuation.yield()
+            }
+        }
+        try await endingHeadlessModalsOnFailure {
+            let snapshot = try await nextRegisteredAlert(changes)
+            let showing = await MainActor.run { iTermWarning.showingWarning() }
+            XCTAssertFalse(showing)
+            let accepted = await registry.answer(id: snapshot.id, buttonIndex: 0, suppress: false)
+            if !accepted {
+                Self.cancelHeadlessModals()
+            }
+            try await FrozenMainQueue.withFailsafe("the sheet's completion") {
+                for await _ in finished {
+                    return
+                }
+                throw CancellationError()
+            }
+        }
     }
 
     /// A sheet started with runModalAsync does not block, so it is registered

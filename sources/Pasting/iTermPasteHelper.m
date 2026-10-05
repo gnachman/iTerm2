@@ -751,14 +751,18 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     DLog(@"limit=%@, length=%@", @(limit), @(pasteEvent.string.length));
     if (limit >= 0) {
         if (pasteEvent.string.length > limit) {
-            const iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:[NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"PasteHelper.OKToPasteCharacters", nil, [NSBundle mainBundle], @"OK to paste %ld characters?", @"Confirmation before pasting a large amount of text; %ld is the character count"), (long)pasteEvent.string.length]
-                                       actions:@[ iTermLocalizedOK(), iTermLocalizedCancel(), NSLocalizedStringWithDefaultValue(@"PasteHelper.Advanced", nil, [NSBundle mainBundle], @"Advanced…", @"Button that opens the advanced paste dialog") ]
-                                     accessory:nil
-                                    identifier:@"NoSyncPasteOverCharacterLimitWarning"
-                                   silenceable:kiTermWarningTypePersistent
-                                       heading:NSLocalizedStringWithDefaultValue(@"PasteHelper.PasteLimitExceeded", nil, [NSBundle mainBundle], @"Paste Limit Exceeded", @"Heading of the warning shown when pasting more than the configured character limit")
-                                        window:self.delegate.pasteHelperViewForIndicator.window];
+            NSString *const advanced = NSLocalizedStringWithDefaultValue(@"PasteHelper.Advanced", nil, [NSBundle mainBundle], @"Advanced…", @"Button that opens the advanced paste dialog");
+            iTermWarning *warning = [[iTermWarning alloc] init];
+            warning.heading = NSLocalizedStringWithDefaultValue(@"PasteHelper.PasteLimitExceeded", nil, [NSBundle mainBundle], @"Paste Limit Exceeded", @"Heading of the warning shown when pasting more than the configured character limit");
+            warning.title = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"PasteHelper.OKToPasteCharacters", nil, [NSBundle mainBundle], @"OK to paste %ld characters?", @"Confirmation before pasting a large amount of text; %ld is the character count"), (long)pasteEvent.string.length];
+            warning.actionLabels = @[ iTermLocalizedOK(), iTermLocalizedCancel(), advanced ];
+            // The advanced paste panel opens on this Mac, where the companion app cannot use it.
+            warning.notOfferedRemotelyLabels = @[ advanced ];
+            warning.cancelLabel = iTermLocalizedCancel();
+            warning.identifier = @"NoSyncPasteOverCharacterLimitWarning";
+            warning.warningType = kiTermWarningTypePersistent;
+            warning.window = [self deepestSheetOfWindow:self.delegate.pasteHelperViewForIndicator.window];
+            const iTermWarningSelection selection = [warning runModal];
             switch (selection) {
                 case kiTermWarningSelection0:
                     break;
@@ -858,6 +862,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         [self showAdvancedPasteWithFlags:flags];
         result = NO;
     }]];
+    // The advanced paste panel opens on this Mac, where the companion app cannot use it.
+    actions.lastObject.notOfferedRemotely = YES;
     iTermWarning *warning = [[iTermWarning alloc] init];
     warning.heading = NSLocalizedStringWithDefaultValue(@"PasteHelper.ConfirmMultiLinePasteHeading", nil, [NSBundle mainBundle], @"Confirm Multi-Line Paste", @"Heading of the confirmation shown before a multi-line paste");
     warning.title = theTitle;
@@ -869,6 +875,15 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     [warning runModal];
     DLog(@"Return result of %@", @(result));
     return result;
+}
+
+// Where iTermWarning's class methods attach a sheet: the innermost sheet already on `window`.
+- (NSWindow *)deepestSheetOfWindow:(NSWindow *)window {
+    NSWindow *deepest = window;
+    while (deepest.sheets.lastObject) {
+        deepest = deepest.sheets.lastObject;
+    }
+    return deepest;
 }
 
 - (void)showAdvancedPasteWithFlags:(PTYSessionPasteFlags)flags {
@@ -903,14 +918,22 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         iTermNumberOfSpacesAccessoryViewController *accessoryController =
             [[iTermNumberOfSpacesAccessoryViewController alloc] init];
 
-        iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PasteHelper.PasteWithTabsTitle", nil, [NSBundle mainBundle], @"You're about to paste a string with tabs.", @"Title of the warning shown before pasting text containing tabs")
-                                       actions:@[ iTermLocalizedOK(), iTermLocalizedCancel(), NSLocalizedStringWithDefaultValue(@"PasteHelper.ConvertTabsToSpaces", nil, [NSBundle mainBundle], @"Convert tabs to spaces", @"Button that converts tabs to spaces when pasting"), NSLocalizedStringWithDefaultValue(@"PasteHelper.Advanced", nil, [NSBundle mainBundle], @"Advanced…", @"Button that opens the advanced paste dialog") ]
-                                     accessory:accessoryController.view
-                                  remoteInputs:@[ accessoryController.remoteInput ]
-                                    identifier:@"AboutToPasteTabsWithCancel"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable
-                                        window:self.delegate.pasteHelperViewForIndicator.window];
+        NSString *const advanced = NSLocalizedStringWithDefaultValue(@"PasteHelper.Advanced", nil, [NSBundle mainBundle], @"Advanced…", @"Button that opens the advanced paste dialog");
+        iTermWarning *warning = [[iTermWarning alloc] init];
+        warning.title = NSLocalizedStringWithDefaultValue(@"PasteHelper.PasteWithTabsTitle", nil, [NSBundle mainBundle], @"You're about to paste a string with tabs.", @"Title of the warning shown before pasting text containing tabs");
+        warning.actionLabels = @[ iTermLocalizedOK(),
+                                  iTermLocalizedCancel(),
+                                  NSLocalizedStringWithDefaultValue(@"PasteHelper.ConvertTabsToSpaces", nil, [NSBundle mainBundle], @"Convert tabs to spaces", @"Button that converts tabs to spaces when pasting"),
+                                  advanced ];
+        // The advanced paste panel opens on this Mac, where the companion app cannot use it.
+        warning.notOfferedRemotelyLabels = @[ advanced ];
+        warning.cancelLabel = iTermLocalizedCancel();
+        warning.accessory = accessoryController.view;
+        warning.remoteInputs = @[ accessoryController.remoteInput ];
+        warning.identifier = @"AboutToPasteTabsWithCancel";
+        warning.warningType = kiTermWarningTypePermanentlySilenceable;
+        warning.window = [self deepestSheetOfWindow:self.delegate.pasteHelperViewForIndicator.window];
+        const iTermWarningSelection selection = [warning runModal];
         switch (selection) {
             case kiTermWarningSelection0:  // Paste with tabs
                 return kNumberOfSpacesPerTabNoConversion;

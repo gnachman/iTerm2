@@ -1617,16 +1617,19 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         return;
     }
     __weak __typeof(self) weakSelf = self;
-    [iTermWarning asyncShowWarningWithTitle:password
-                                    actions:@[ iTermLocalizedOK(), iTermLocalizedCopy() ]
-                              actionMapping:nil
-                                  accessory:nil
-                                 identifier:nil
-                                silenceable:kiTermWarningTypePersistent
-                                    heading:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PasswordManager.PasswordForAccountFormat", nil, [NSBundle mainBundle], @"Password for %@", @"Title of the alert that reveals a password; the placeholder is the account name"), accountName]
-                                cancelLabel:nil
-                                     window:[self windowForAlertSheet]
-                                 completion:^(iTermWarningSelection selection, iTermWarning *warning) {
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.heading = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PasswordManager.PasswordForAccountFormat", nil, [NSBundle mainBundle], @"Password for %@", @"Title of the alert that reveals a password; the placeholder is the account name"), accountName];
+    warning.title = password;
+    // Keeps the password out of the debug log. It is still shown here and in the companion app.
+    warning.titleIsSecret = YES;
+    warning.actionLabels = @[ iTermLocalizedOK(), iTermLocalizedCopy() ];
+    warning.warningType = kiTermWarningTypePersistent;
+    NSWindow *sheetWindow = [self windowForAlertSheet];
+    while (sheetWindow.sheets.lastObject) {
+        sheetWindow = sheetWindow.sheets.lastObject;
+    }
+    warning.window = sheetWindow;
+    [warning runModalAsync:^(iTermWarningSelection selection, iTermWarning *shownWarning) {
         if (selection == kiTermWarningSelection1) {
             [weakSelf copyPasswordToClipboard:password];
         }

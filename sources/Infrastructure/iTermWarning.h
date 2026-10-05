@@ -277,6 +277,14 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // Optional. Actions whose strings are in `doNotRememberLabels` won't be remembered.
 @property(nonatomic, copy) NSArray<NSString *> * _Nullable doNotRememberLabels;
 
+// Optional. Actions whose strings are in `notOfferedRemotelyLabels` are marked notOfferedRemotely,
+// for callers that pass labels rather than iTermWarningAction objects.
+@property(nonatomic, copy) NSArray<NSString *> * _Nullable notOfferedRemotelyLabels;
+
+// Set when `title` is itself a secret (a revealed password, say), to keep it out of logs. It is
+// still shown, on this Mac and in the companion app.
+@property(nonatomic) BOOL titleIsSecret;
+
 // If set then a "help" button is added to the alert box and this block is invoked when it is clicked.
 @property(nullable, nonatomic, copy) void (^showHelpBlock)(void);
 
