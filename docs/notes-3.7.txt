@@ -423,6 +423,9 @@ Bug Fixes:
 - Sessions closed shortly before quitting are
   now always archived if their profile archives
   sessions on close.
+- Fixed a crash in “Import All Settings and
+  Data” when the import changed a setting that
+  requires your administrator password.
 - Fixed a crash with the GPU renderer that
   could happen after changing the font size
   with Cmd-+ or Cmd--.

@@ -914,7 +914,7 @@ private struct SecureUserDefaultsImporterExporter {
     private let filename = "SecureUserDefaults.plist"
     func export(to destination: URL) throws {
         DLog("Begin")
-        let dictionary = SecureUserDefaults.instance.serializeAll()
+        let dictionary = SecureUserDefaults.serializeAll()
         try dictionary.saveAsPropertyList(to: destination.appendingPathComponent(filename))
     }
 
@@ -943,7 +943,7 @@ private struct SecureUserDefaultsImporterExporter {
     }
 
     private func reallyPerformImport(_ dict: [String: String]) {
-        SecureUserDefaults.instance.deserializeAll(dict: dict)
+        SecureUserDefaults.deserializeAll(dict: dict)
     }
 
     func erase(action: EraseAction) {
