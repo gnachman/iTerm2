@@ -47,4 +47,22 @@
     return NO;
 }
 
+- (BOOL)it_focusFollowsMouseHoldsFocus {
+    return NO;
+}
+
+- (BOOL)it_focusFollowsMouseHoldsFocusInHierarchy {
+    if ([self it_focusFollowsMouseHoldsFocus]) {
+        return YES;
+    }
+    NSView *view = [NSView castFrom:self].superview;
+    while (view) {
+        if ([view it_focusFollowsMouseHoldsFocus]) {
+            return YES;
+        }
+        view = view.superview;
+    }
+    return NO;
+}
+
 @end

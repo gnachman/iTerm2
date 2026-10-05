@@ -1458,6 +1458,36 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     DLog(@"Mouse entered %@", self);
     [_mouseHandler mouseEntered:event];
 
+    // A just-focused overlay (e.g., a new session note) keeps focus until the pointer has entered it,
+    // even if the pointer crosses other panes on the way.
+    NSResponder *keyFirstResponder = NSApp.keyWindow.firstResponder;
+    if ([keyFirstResponder it_focusFollowsMouseHoldsFocusInHierarchy]) {
+        DLog(@"Ignore focus-follows-mouse entry because %@ holds focus", keyFirstResponder);
+        [self updateUnderlinedURLs:event];
+        return;
+    }
+
+    // Resolve the hit inside the entire pane before invoking either focus-follows-mouse hook.
+    // Immune overlays can be smaller than the terminal view and must retain keyboard focus.
+    NSView *sessionView = self;
+    Class sessionViewClass = NSClassFromString(@"SessionView");
+    while (sessionView != nil && ![sessionView isKindOfClass:sessionViewClass]) {
+        sessionView = sessionView.superview;
+    }
+    if (sessionView != nil) {
+        // -hitTest: takes a point in the receiver's superview's coordinate system.
+        const NSPoint hitTestPoint = [sessionView.superview convertPoint:event.locationInWindow fromView:nil];
+        NSView *hitView = [sessionView hitTest:hitTestPoint];
+        while (hitView != nil && hitView.superview != sessionView) {
+            hitView = hitView.superview;
+        }
+        if ([hitView it_focusFollowsMouseImmune]) {
+            DLog(@"Ignore focus-follows-mouse entry over immune pane child %@", hitView);
+            [self updateUnderlinedURLs:event];
+            return;
+        }
+    }
+
     if ([_focusFollowsMouse mouseWillEnter:event]) {
         [self requestDelegateRedraw];
     }
