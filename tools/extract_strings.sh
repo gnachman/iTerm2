@@ -72,7 +72,19 @@ find sources ThirdParty/UKCrashReporter -type f \( -name '*.m' -o -name '*.mm' \
 # Swift: the build already emitted a .stringsdata per file for the first-party
 # ARC library. Third-party SPM packages and separate frameworks have their own
 # catalogs and are intentionally excluded.
-SWIFT_ROOT="$BUILD_DIR/Intermediates.noindex/iTerm2.build/$CONFIG/iTerm2SharedARC.build"
+#
+# The intermediates live under OBJROOT, which is not necessarily inside
+# BUILD_DIR: overriding SYMROOT (as the Makefile does) leaves OBJROOT wherever
+# the user's Xcode build-location preference puts it, e.g. DerivedData. Ask
+# xcodebuild with the same override the build used.
+PROJECT_TEMP_DIR="$(xcodebuild -scheme iTerm2 -configuration "$CONFIG" -showBuildSettings \
+    -skipPackagePluginValidation SYMROOT="$BUILD_DIR" 2>/dev/null \
+    | sed -n 's/^ *PROJECT_TEMP_DIR = //p' | head -1)"
+if [[ -z "$PROJECT_TEMP_DIR" ]]; then
+    echo "extract_strings: could not determine PROJECT_TEMP_DIR from xcodebuild" >&2
+    exit 1
+fi
+SWIFT_ROOT="$PROJECT_TEMP_DIR/$CONFIG/iTerm2SharedARC.build"
 if [[ ! -d "$SWIFT_ROOT" ]]; then
     echo "extract_strings: no Swift build products at $SWIFT_ROOT" >&2
     echo "extract_strings: build $CONFIG first (SWIFT_EMIT_LOC_STRINGS must be YES)" >&2

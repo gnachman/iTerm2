@@ -552,8 +552,8 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             // paired state and leave the window open; the user closes it.
             self?.showPairedState()
         }
-        controller.onFailed = { [weak self] message in
-            self?.setStatus("Pairing failed: \(message)", color: .systemRed)
+        controller.onFailed = { [weak self] message, details in
+            self?.setStatus("Pairing failed: \(message)", color: .systemRed, details: details)
         }
         controller.onDisconnect = { [weak self] in
             guard let self else { return }
@@ -585,9 +585,12 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         }
     }
 
-    private func setStatus(_ text: String, color: NSColor) {
+    /// - details: a longer explanation, shown as the label's tooltip since the
+    ///   label holds only a few lines. Nil clears it.
+    private func setStatus(_ text: String, color: NSColor, details: String? = nil) {
         statusLabel.stringValue = text
         statusLabel.textColor = color
+        statusLabel.toolTip = details
     }
 
     private func showPairedState() {

@@ -210,6 +210,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(VT100CSI_SM):                     @"VT100CSI_SM",
                 @(VT100CSI_TBC):                    @"VT100CSI_TBC",
                 @(VT100CSI_DECSCUSR):               @"VT100CSI_DECSCUSR",
+                @(VT100CSI_SCP):                    @"VT100CSI_SCP",
                 @(VT100CSI_DECSTR):                 @"VT100CSI_DECSTR",
                 @(VT100CSI_DECDSR):                 @"VT100CSI_DECDSR",
                 @(VT100CSI_SET_MODIFIERS):          @"VT100CSI_SET_MODIFIERS",
@@ -549,7 +550,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     // cannot occur in either the space-augmented or predecessor-augmented path.
     NSString *normalized = [string normalized:config.normalization];
     NSString *augmented = [@" " stringByAppendingString:normalized];
-    const int capacity = (int)(augmented.length * 3);
+    const int capacity = (int)iTermStringToScreenCharsCapacity(augmented.length);
 
     if (capacity <= kStaticPreconvertedScreenCharsCount) {
         pre->buffer = pre->staticBuffer;
@@ -571,8 +572,8 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     pre->rtlFound = rtlFound;
     pre->config = config;
     // The space is at index 0, so everything past it in that cluster came from the string.
-    pre->firstClusterLengthInString =
-        (int)[augmented rangeOfComposedCharacterSequenceAtIndex:0].length - 1;
+    // Segment the way StringToScreenChars does, since that decides which cells get written.
+    pre->firstClusterLengthInString = (int)[augmented rangeOfFirstComposedCharacter].length - 1;
     pre->valid = YES;
 }
 

@@ -1,0 +1,6 @@
+Written in implicit mode (reordered):
+שלום עולם 5
+[8lWritten in explicit mode (as is):
+שלום עולם 5
+[8hWritten in implicit mode again (reordered):
+שלום עולם 5

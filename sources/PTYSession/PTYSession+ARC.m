@@ -160,7 +160,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 
 - (NSString *)joinedNameWithFolder:(NSString *)formattedFolder
                           filename:(NSString *)formattedFilename {
-    NSString *name = [formattedFilename stringByReplacingOccurrencesOfString:@"/" withString:@"__"];
+    NSString *name = [formattedFilename it_sanitizedForFilename];
     NSString *joined = [formattedFolder stringByAppendingPathComponent:name];
     DLog(@"folder=%@ filename=%@ name=%@ joined=%@", formattedFolder, formattedFilename, name, joined);
     return [joined stringByExpandingTildeInPath];

@@ -363,6 +363,7 @@ typedef struct {
     _cursorInfo.useHDRWhite = [iTermCursor shouldUseHDRCursorOnBackground:[drawingHelper defaultBackgroundColor]
                                                           profileEnabled:drawingHelper.hdrCursorEnabled
                                                        potentialHeadroom:potentialEDR];
+    _cursorInfo.hdrBrightness = drawingHelper.hdrCursorBrightness;
     _cursorInfo.password = drawingHelper.passwordInput;
     _cursorInfo.copyMode = drawingHelper.copyMode;
     _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
@@ -1046,7 +1047,8 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
                                        const int *bidiLUT,
                                        int bidiLUTLength,
                                        iTermBidiDisplayInfo * _Nullable bidiInfo,
-                                       iTermLineAttribute lineAttribute) {
+                                       iTermLineAttribute lineAttribute,
+                                       BOOL useNativePowerlineGlyphs) {
     iTermCachedGlyphKeysBufferEnsureSize(buf, i);
     iTermMetalGlyphKey *glyphKeys = buf->buffer;
     glyphKeys[i].type = iTermMetalGlyphTypeRegular;
@@ -1073,9 +1075,9 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
     glyphKeys[i].payload.regular.drawable = YES;
     if (logicalIndex + 1 < width &&
         line[logicalIndex + 1].complexChar &&
-        !(!line[logicalIndex].complexChar && line[logicalIndex].code < 128) &&
-        ComplexCharCodeIsSpacingCombiningMark(line[logicalIndex + 1].code)) {
-        // Next character is a combining spacing mark that will join with this non-ascii character.
+        ComplexCharCodeIsSpacingCombiningMark(line[logicalIndex + 1].code) &&
+        iTermScreenCharCanHostSpacingMark(&line[logicalIndex], useNativePowerlineGlyphs)) {
+        // Next character is a combining spacing mark that will join with this character.
         glyphKeys[i].payload.regular.combiningSuccessor = line[logicalIndex + 1].code;
     } else {
         glyphKeys[i].payload.regular.combiningSuccessor = 0;
@@ -1656,6 +1658,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                            // content identity). The caller must not store such a row.
                                            BOOL *rowContentIsVolatilePtr) {
     const BOOL blinkAllowed = self->_configuration->_renderInputs.blinkAllowed;
+    const BOOL useNativePowerlineGlyphs = self->_configuration->_renderInputs.useNativePowerlineGlyphs;
     // The volatile-row scan only feeds the store path, so skip it entirely when the
     // cache is disabled (the default) to keep it out of the innermost glyph loop.
     const BOOL trackVolatile = (self->_rowOutputCache != nil);
@@ -1665,7 +1668,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     int asIndex = -1;
     int previousVisualX = -1;
     BOOL lastSelected = NO;
-    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:self->_configuration->_renderInputs.useNativePowerlineGlyphs];
+    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:useNativePowerlineGlyphs];
     iTermTextColorKey keys[2];
     iTermTextColorKey *currentColorKey = &keys[0];
     iTermTextColorKey *previousColorKey = &keys[1];
@@ -1758,7 +1761,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                                                    _configuration->_blinkingItemsVisible,
                                                                                    blinkAllowed,
                                                                                    NO /* preferSpeedToFullLigatureSupport */,
-                                                                                   url != nil);
+                                                                                   url != nil,
+                                                                                   useNativePowerlineGlyphs);
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
                                             ((!line[logicalIndex].complexChar &&
                                               line[logicalIndex].code > 127 &&
@@ -1854,7 +1858,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                           bidiLUT,
                                           bidiLUTLength,
                                           bidiInfo,
-                                          lineAttribute);
+                                          lineAttribute,
+                                          useNativePowerlineGlyphs);
         } else {
             iTermGlyphKeyEmitPlaceholder(buf, gk, logicalIndex, bidiLUT, bidiLUTLength);
         }

@@ -379,6 +379,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
         if (@available(macOS 15, *)) {
             [iTermMigrationHelper askToRemoveDeprecatedKeyMappingsIfNeeded];
         }
+        [iTermKeyBindingFormatMigration migrate];
         [[iTermHotKeyProfileBindingController sharedInstance] refresh];
     }
 

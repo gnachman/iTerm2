@@ -170,12 +170,18 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     BOOL ambiguousIsDoubleWidth_;
     NSMutableDictionary<NSNumber *, NSDictionary *> *_hotkeys;
     NSMutableSet<NSNumber *> *_paneIDs;  // existing pane IDs
+    // Remembers control sequences in output for panes about to get a session. See issue 13006.
+    iTermTmuxDroppedOutputTracker *_droppedOutputTracker;
     NSMutableDictionary<NSNumber *, NSString *> *_tabColors;
 
     // Have we guessed the server version? Don't try to open windows until this is true, because
     // window opening is version-dependent (to avoid triggering bugs in tmux 1.8).
     BOOL _versionKnown;
     BOOL _wantsOpenWindowsInitial;
+    // Window opens requested before the version was known, from the tmux dashboard, the API
+    // (iTermAPIHelper) or a buried session being restored. Replayed by didGuessVersion, dropped by
+    // detach.
+    NSMutableArray<void (^)(void)> *_windowOpensAwaitingVersion;
 
     // Maps a window id string to a dictionary of window flags defined by TmuxWindowOpener (see the
     // top of its header file)
@@ -292,6 +298,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
         gateway_ = gateway;
         _paneIDs = [[NSMutableSet alloc] init];
+        _droppedOutputTracker = [[iTermTmuxDroppedOutputTracker alloc] init];
         windowPanes_ = [[NSMutableDictionary alloc] init];
         _windowStates = [[NSMutableDictionary alloc] init];
         windowPositions_ = [[NSMutableDictionary alloc] init];
@@ -303,6 +310,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         self.clientName = [[TmuxControllerRegistry sharedInstance] uniqueClientNameBasedOn:clientName];
         _windowOpenerOptions = [[NSMutableDictionary alloc] init];
         _pendingWindows = [[NSMutableDictionary alloc] init];
+        _windowOpensAwaitingVersion = [[NSMutableArray alloc] init];
         _currentWindowID = -1;
         _userVars = [[NSMutableDictionary alloc] init];
         _when = [[NSMutableDictionary alloc] init];
@@ -632,6 +640,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     for (NSArray *record in doc.records) {
         DLog(@"Consider record %@", record);
         const int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
+        [self didLearnLayout:[doc valueInRecord:record forField:@"window_layout"] forWindow:wid];
         if (hiddenWindows_ && [hiddenWindows_ containsObject:[NSNumber numberWithInt:wid]]) {
             DLog(@"Don't open window %d because it was saved hidden.", wid);
             haveHidden = YES;
@@ -893,6 +902,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (tab) {
         [self retainWindow:window withTab:tab];
         [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
+        [_droppedOutputTracker forgetPane:windowPane];
         void (^call)(PTYSession<iTermTmuxControllerSession> *) = _when[@(windowPane)];
         if (call) {
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -915,6 +925,44 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         [windowPanes_ removeObjectForKey:key];
         [_when removeObjectForKey:@(windowPane)];
     }
+}
+
+- (void)didDropOutput:(NSData *)data forPane:(int)wp {
+    [_droppedOutputTracker didDropOutput:data pane:wp];
+}
+
+- (NSArray<VT100Token *> *)takeDeferredTokensForPane:(int)wp {
+    NSArray<VT100Token *> *tokens = [_droppedOutputTracker takeTokensForPane:wp];
+    // The session these are for doesn't have a tmux controller when it executes them, and it
+    // copies its user variables from here once it gets one. Apply them now so they win over the
+    // @uservars fetched while opening, and so they're saved in tmux.
+    for (VT100Token *token in tokens) {
+        if (token.type != XTERMCC_SET_KVP || ![token.kvpKey isEqualToString:@"SetUserVar"]) {
+            continue;
+        }
+        iTermUserVariableAssignment *assignment = [[iTermUserVariableAssignment alloc] initWithPayload:token.kvpValue ?: @""];
+        if (assignment) {
+            [self setUserVariableWithKey:assignment.name value:assignment.value pane:wp];
+        }
+    }
+    return tokens;
+}
+
+- (void)willOpenPane:(int)wp {
+    [_droppedOutputTracker willOpenPane:wp];
+}
+
+- (void)didFinishOpeningPanes:(NSArray<NSNumber *> *)panes {
+    [_droppedOutputTracker didFinishOpeningPanes:panes];
+}
+
+- (void)didLearnLayout:(NSString *)layout forWindow:(int)windowId {
+    NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:layout];
+    if (!parseTree) {
+        return;
+    }
+    [_droppedOutputTracker didLearnPanes:[[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree]
+                                  window:windowId];
 }
 
 - (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession<iTermTmuxControllerSession> *))block {
@@ -963,12 +1011,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_setClipboardMonitor invalidate];
     _setClipboardMonitor = nil;
     detached_ = YES;
+    [_windowOpensAwaitingVersion removeAllObjects];
     [self closeAllPanes];
     gateway_ = nil;
     [_when enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, void (^ _Nonnull obj)(PTYSession<iTermTmuxControllerSession> *), BOOL * _Nonnull stop) {
         obj(nil);
     }];
     [_when removeAllObjects];
+    [_droppedOutputTracker reset];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDetachedNotification
                                                         object:self];
     [[TmuxControllerRegistry sharedInstance] setController:nil
@@ -2028,9 +2078,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [self loadTmuxClientName];
     [self loadTitleFormat];
     _versionKnown = YES;
+    // Before any pane is captured, since a capture can contain lines that look like %exit. Window
+    // opens wait for _versionKnown (below and in openWindowsInitial), so no capture precedes this.
+    [gateway_.delegate tmuxServerMayOmitEndGuardBeforeExit:[gateway_ serverMayOmitEndGuardBeforeExit]];
     if (_wantsOpenWindowsInitial) {
         _wantsOpenWindowsInitial = NO;
         [self openWindowsInitial];
+    }
+    NSArray<void (^)(void)> *deferredOpens = [_windowOpensAwaitingVersion copy];
+    [_windowOpensAwaitingVersion removeAllObjects];
+    for (void (^open)(void) in deferredOpens) {
+        open();
     }
 }
 
@@ -2772,6 +2830,22 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
               affinities:(NSArray *)affinities
              intentional:(BOOL)intentional
                  profile:(Profile *)profile {
+    if (!_versionKnown) {
+        // Opening a window captures its panes, and the parser only handles a capture safely once
+        // didGuessVersion has told it what the server is (see VT100TmuxParser). A %window-add
+        // cannot arrive this early because notifications are not accepted until the initial
+        // windows open, but the tmux dashboard, the API and buried-session restoration can all
+        // ask for a window before then.
+        DLog(@"Defer opening window %d until the version is known", windowId);
+        __weak __typeof(self) weakSelf = self;
+        [_windowOpensAwaitingVersion addObject:^{
+            [weakSelf openWindowWithId:windowId
+                            affinities:affinities
+                           intentional:intentional
+                               profile:profile];
+        }];
+        return;
+    }
     if (intentional) {
         DLog(@"open intentional: Remove this window ID from hidden: %d", windowId);
         if (!_pendingWindows[@(windowId)]) {
@@ -2799,6 +2873,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         }
     }];
     // Get the window's basic info to prep the creation of a TmuxWindowOpener.
+    [_droppedOutputTracker windowWillAwaitLayout:windowId];
     [gateway_ sendCommand:[NSString stringWithFormat:@"display -p -F %@ -t @%d",
                            [self listWindowsDetailedFormat], windowId]
            responseTarget:self
@@ -3696,11 +3771,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)listedWindowsToOpenOne:(NSString *)response
       forWindowIdAndAffinities:(NSArray *)values {
+    NSNumber *windowId = values[0];
     if (response == nil) {
         RLog(@"Listing windows failed. Maybe the window died before we could get to it?");
+        [_droppedOutputTracker windowDidStopAwaitingLayout:windowId.intValue];
         return;
     }
-    NSNumber *windowId = values[0];
     NSSet *affinities = values[1];
     Profile *profile = values[2];
     NSNumber *tabIndex = values[3];
@@ -3730,6 +3806,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                               initial:NO
                              tabIndex:tabIndex];
         }
+    }
+    // The opener, if any, has registered the panes it will open, so they keep being scanned.
+    [_droppedOutputTracker windowDidStopAwaitingLayout:windowId.intValue];
+    for (NSArray *record in doc.records) {
+        const int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
+        [self didLearnLayout:[doc valueInRecord:record forField:@"window_layout"] forWindow:wid];
     }
 }
 

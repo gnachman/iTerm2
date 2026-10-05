@@ -193,11 +193,12 @@ static char iTermSliderEnabledKVOKey;
     if (!_textField.stringValue.isNonnegativeFractionalNumber) {
         return;
     }
-    const double value = [self textFieldValue];
-    if (value < _slider.minValue || value >= _slider.maxValue) {
+    const double typedValue = [self textFieldValue];
+    if (typedValue < _slider.minValue || typedValue > _slider.maxValue) {
         // Ignore illegal values as they can exist during editing
         return;
     }
+    const double value = [self snappedValue:typedValue];
     _slider.doubleValue = value;
     _stepper.doubleValue = value;
     [self performAction];
@@ -206,10 +207,20 @@ static char iTermSliderEnabledKVOKey;
 - (void)controlTextDidEndEditing:(NSNotification *)obj {
     const double value = [self textFieldValue];
     if (value < _slider.minValue ||
-        value >= _slider.maxValue ||
-        !_textField.stringValue.isNonnegativeFractionalNumber) {
+        value > _slider.maxValue ||
+        !_textField.stringValue.isNonnegativeFractionalNumber ||
+        value != [self snappedValue:value]) {
         [self loadFromSlider];
     }
+}
+
+// A slider that only allows tick mark values snaps when dragged but not when its
+// value is set programmatically, so typed values have to be snapped here.
+- (double)snappedValue:(double)value {
+    if (!_slider.allowsTickMarkValuesOnly) {
+        return value;
+    }
+    return [_slider closestTickMarkValueToValue:value];
 }
 
 @end

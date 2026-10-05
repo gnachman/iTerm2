@@ -105,6 +105,9 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 // precondition: i >= first && i < numEntries
 - (const LineBlockMetadata *)metadataAtIndex:(int)i;
 - (iTermImmutableMetadata)immutableLineMetadataAtIndex:(int)i;
+// The bidi display info of the `i`th entry, if any. Usable from Swift, where
+// the LineBlockMetadata struct is opaque.
+- (iTermBidiDisplayInfo * _Nullable)bidiInfoAtIndex:(int)i;
 
 // precondition: numEntries > 0
 - (screen_char_t)lastContinuation;

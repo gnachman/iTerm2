@@ -476,13 +476,13 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
 
             if (i > indexRange.location &&
                 builder.length > 0 &&
-                !(!predecessor.complexChar && predecessor.code < 128) &&
-                ComplexCharCodeIsSpacingCombiningMark(code)) {
+                ComplexCharCodeIsSpacingCombiningMark(code) &&
+                iTermScreenCharCanHostSpacingMark(&predecessor, _useNativePowerlineGlyphs)) {
                 // Spacing combining marks get their own cell but get drawn together with their base
                 // character which is assumed to be in the preceding cell so they combine properly.
-                // This does not apply to ASCII characters, since they can never combine with a
-                // spacing combining mark. That's done for performance in the GPU renderer to avoid
-                // complicating its ASCII fastpath.
+                // iTermScreenCharCanHostSpacingMark excludes ASCII, box-drawing, and image bases;
+                // a mark after one of those is drawn on its own. `predecessor` is stale after a
+                // run of appended marks, but then it is the run's base, which is what matters.
                 // The base is normally the preceding cell (i-1). But a double-width
                 // base stores the base at i-2 with a DWC_RIGHT placeholder at i-1, so
                 // for a DWC base the mark's origin is two cells back; using i-1 would
@@ -541,7 +541,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                                                         _blinkingItemsVisible,
                                                                         _blinkAllowed,
                                                                         _preferSpeedToFullLigatureSupport,
-                                                                        ea.url != nil);
+                                                                        ea.url != nil,
+                                                                        _useNativePowerlineGlyphs);
         predecessor = c;
         if (!drawable) {
             if ((characterAttributes.drawable && ScreenCharIsDWC_RIGHT(c)) ||

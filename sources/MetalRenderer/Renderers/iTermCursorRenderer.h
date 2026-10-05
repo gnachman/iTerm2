@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // When YES, draw the cursor as a bright HDR white (the HDR-cursor hint applied).
 @property (nonatomic) BOOL useHDRCursor;
+// Requested peak brightness for the HDR cursor, in units of reference white.
+@property (nonatomic) CGFloat hdrBrightness;
 // Opacity in [0, 1] for smooth blink fading. Defaults to 1.
 @property (nonatomic) CGFloat fadeAlpha;
 @end

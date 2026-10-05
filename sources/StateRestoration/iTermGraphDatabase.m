@@ -86,8 +86,10 @@
 
 - (void)doHousekeeping {
     [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
-        // PRAGMA returns a result set, so we must use executeQuery and close it
+        // PRAGMA returns a result set, so we must use executeQuery. The statement only
+        // runs when the result set is stepped, so call next before closing it.
         FMResultSet *rs = [state.db executeQuery:@"pragma wal_checkpoint"];
+        [rs next];
         [rs close];
         [state.db executeUpdate:@"vacuum"];
     }];
@@ -468,8 +470,12 @@
 }
 
 - (BOOL)createTables:(iTermGraphDatabaseState *)state {
-    // PRAGMA returns a result set, so we must use executeQuery and close it explicitly
+    // PRAGMA returns a result set, so we must use executeQuery. executeQuery only prepares the
+    // statement; it does not run until the result set is stepped, so call next before closing.
     FMResultSet *rs = [state.db executeQuery:@"PRAGMA journal_mode=WAL"];
+    if (![rs next]) {
+        DLog(@"Failed to set journal_mode=WAL");
+    }
     [rs close];
 
     // In WAL mode, synchronous=NORMAL syncs at checkpoints instead of on every

@@ -3202,6 +3202,8 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
                  forceEncoding:(BOOL)forceEncoding {
     for (PTYSession *aSession in [self broadcastSessions]) {
         if (![aSession isTmuxGateway]) {
+            // Broadcast input is the user typing into every one of these panes.
+            [aSession noteUserInput];
             [aSession writeTaskNoBroadcast:string encoding:optionalEncoding forceEncoding:forceEncoding reporting:NO];
         }
     }
@@ -3797,7 +3799,11 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
                                   named:(NSString *)arrangementName
                                sessions:(NSArray *)sessions
+                               archives:(iTermUndoCloseArchives *)archives
                forceOpeningHotKeyWindow:(BOOL)force {
+    if (archives) {
+        arrangement = [archives windowArrangementBySubstitutingArchivesIn:arrangement];
+    }
     PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement
                                               forceOpeningHotKeyWindow:force
                                                              restoring:NO];
@@ -3826,6 +3832,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     return [self terminalWithArrangement:arrangement
                                    named:arrangementName
                                 sessions:nil
+                                archives:nil
                 forceOpeningHotKeyWindow:force];
 }
 
@@ -5637,6 +5644,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     return NO;
+}
+
+- (BOOL)rootTerminalViewClickableSessionDecorationIntersectsRect:(NSRect)rect {
+    return [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
+        return [session.view clickableDecorationIntersectsWindowRect:rect];
+    }];
 }
 
 - (NSEdgeInsets)tabBarInsets {
@@ -11258,11 +11271,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)recreateTab:(PTYTab *)tab
     withArrangement:(NSDictionary *)arrangement
            sessions:(NSArray *)sessions
+           archives:(iTermUndoCloseArchives *)archives
              revive:(BOOL)revive {
     RLog(@"Re-create tab");
+    if (archives) {
+        arrangement = [archives tabArrangementBySubstitutingArchivesIn:arrangement];
+    }
     NSInteger tabIndex = [_contentView.tabView indexOfTabViewItemWithIdentifier:tab];
     if (tabIndex == NSNotFound) {
         RLog(@"The requested tab does not exist any more");
+        [self addTabsForArchives:archives];
         return;
     }
     RLog(@"OK");
@@ -11300,6 +11318,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             }
             [self addRevivedSession:session];
         }
+        [self addTabsForArchives:archives];
         return;
     }
     if (revive) {
@@ -11329,8 +11348,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)addTabWithArrangement:(NSDictionary *)arrangement
                      uniqueId:(int)tabUniqueId
                      sessions:(NSArray *)sessions
+                     archives:(iTermUndoCloseArchives *)archives
                  predecessors:(NSArray *)predecessors {
     RLog(@"Begin with %@ sessions", @(sessions.count));
+    if (archives) {
+        arrangement = [archives tabArrangementBySubstitutingArchivesIn:arrangement];
+    }
     DLog(@"construct session map with sessions: %@\nArrangement:\n%@", sessions, arrangement);
     NSDictionary<NSString *, PTYSession *> *sessionMap = [PTYTab sessionMapWithArrangement:arrangement
                                                                                   sessions:sessions];
@@ -11344,6 +11367,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                 [self addRevivedSession:session];
             }
         }
+        [self addTabsForArchives:archives];
         return;
     }
 
@@ -11367,6 +11391,27 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     [self insertTab:tab atIndex:[self indexForTabWithPredecessors:predecessors]];
     [tab didAddToTerminal:self withArrangement:arrangement];
+}
+
+- (void)addTabsForArchives:(iTermUndoCloseArchives *)archives {
+    for (NSDictionary *arrangement in archives.standaloneTabArrangements) {
+        RLog(@"Add a tab for an archived session");
+        PTYTab *tab = [PTYTab tabWithArrangement:arrangement
+                                           named:nil
+                                      inTerminal:self
+                                 hasFlexibleView:NO
+                                         viewMap:nil
+                                      sessionMap:nil
+                                  tmuxController:nil
+                              partialAttachments:nil
+                                reservedTabGUIDs:[self tabGUIDs]
+                                         options:nil];
+        if (!tab) {
+            continue;
+        }
+        [self insertTab:tab atIndex:[self numberOfTabs]];
+        [tab didAddToTerminal:self withArrangement:arrangement];
+    }
 }
 
 - (NSUInteger)indexOfTabWithUniqueId:(int)uniqueId {

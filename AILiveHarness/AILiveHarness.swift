@@ -27,7 +27,7 @@
 //        "OPENAI_MODELS":    "gpt-5,gpt-5-mini",      // optional override
 //        "ANTHROPIC_MODELS": "claude-haiku-4-5",      // optional override
 //        "GEMINI_MODELS":    "gemini-3-flash-preview",// optional override
-//        "DEEPSEEK_MODELS":  "deepseek-v4-flash",     // optional override
+//        "DEEPSEEK_MODELS":  "deepseek-flash",     // optional override
 //        "GEMINI_INTERVAL":  "13"                     // seconds between calls
 //      }
 //
@@ -147,6 +147,9 @@ final class AILiveHarness: XCTestCase {
         "gpt-5.5-pro",
         "gpt-5.6-sol",
         "gpt-5.6-terra",
+        "gpt-6-astra",
+        "gpt-6.1-sol",
+        "gpt-6-sol",
         "gemini-3.7-flash",
     ]
 
@@ -1426,21 +1429,15 @@ final class AILiveHarness: XCTestCase {
     // OpenAI audio input is chat-completions-only (the Responses API has no
     // audio input), and no audio model is in AIMetadata, so synthesize one
     // here to exercise the input_audio serialization against the real API.
+    // gpt-audio and gpt-audio-mini decline to say what a clip says ("I can't
+    // identify words from audio"), so they can't answer the probe; gpt-audio-1.5
+    // can.
     private static let syntheticAudioModel = AIMetadata.Model(
-        name: "gpt-audio",
+        name: "gpt-audio-1.5",
         contextWindowTokens: 128_000,
         maxResponseTokens: 16_384,
         url: "https://api.openai.com/v1/chat/completions",
         api: .chatCompletions,
-        features: [.streaming],
-        vendor: .openAI)
-
-    private static let syntheticLegacyCompletionsModel = AIMetadata.Model(
-        name: "gpt-3.5-turbo-instruct",
-        contextWindowTokens: 4_096,
-        maxResponseTokens: 2_048,
-        url: "https://api.openai.com/v1/completions",
-        api: .completions,
         features: [.streaming],
         vendor: .openAI)
 
@@ -1482,12 +1479,6 @@ final class AILiveHarness: XCTestCase {
     // messages into one newline-joined prompt; it's not testing message-history
     // round-trip.
     // Smoke (one prompt -> one completion) is the only meaningful scenario.
-    func test_openai_legacyCompletions_smoke_nonStreaming() throws {
-        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
-        runSyntheticSmoke(model: Self.syntheticLegacyCompletionsModel,
-                          apiKey: key, streaming: false)
-    }
-
     private func runSyntheticSmoke(model: AIMetadata.Model, apiKey: String, streaming: Bool) {
         let prompt = "Reply with exactly the single word: PINEAPPLE"
         let messages = [LLM.Message(role: .user, content: prompt)]
@@ -1689,14 +1680,14 @@ final class AILiveHarness: XCTestCase {
 
     func test_deepseek_thinking_toolCall_nonStreaming() throws {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
-        runDeepSeekThinkingToolCall(modelName: "deepseek-v4-flash",
+        runDeepSeekThinkingToolCall(modelName: "deepseek-flash",
                                     apiKey: key,
                                     streaming: false)
     }
 
     func test_deepseek_thinking_toolCall_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
-        runDeepSeekThinkingToolCall(modelName: "deepseek-v4-flash",
+        runDeepSeekThinkingToolCall(modelName: "deepseek-flash",
                                     apiKey: key,
                                     streaming: true)
     }
@@ -1714,7 +1705,7 @@ final class AILiveHarness: XCTestCase {
         throttle(forVendor: "deepseek")
         do {
             let result = try AILiveDriver.run(
-                model: Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash"),
+                model: Self.deepseekV4ThinkingModel(named: "deepseek-flash"),
                 apiKey: key,
                 messages: messages,
                 streaming: false,
@@ -1743,7 +1734,7 @@ final class AILiveHarness: XCTestCase {
         let provider = AILiveStaticRegistrationProvider(apiKey: key)
         // Production model entry — Phase 4 added .configurableThinking to it,
         // so AITermController.shouldThink propagation flows.
-        let modelName = "deepseek-v4-flash"
+        let modelName = "deepseek-flash"
 
         // Verify the wire request actually used the test's loaded key, not
         // whatever AITermControllerRegistrationHelper.instance pulled from
@@ -1838,7 +1829,7 @@ final class AILiveHarness: XCTestCase {
         throttle(forVendor: "deepseek")
         do {
             let result = try AILiveDriver.run(
-                modelName: "deepseek-v4-flash",
+                modelName: "deepseek-flash",
                 apiKey: key,
                 messages: messages,
                 streaming: false,
@@ -1882,7 +1873,7 @@ final class AILiveHarness: XCTestCase {
         throttle(forVendor: "deepseek")
         do {
             let result = try AILiveDriver.run(
-                modelName: "deepseek-v4-flash",
+                modelName: "deepseek-flash",
                 apiKey: key,
                 messages: messages,
                 streaming: false,
@@ -1917,7 +1908,7 @@ final class AILiveHarness: XCTestCase {
     // "The reasoning_content in the thinking mode must be passed back to the API."
     func test_deepseek_thinking_assistantTurn_roundTrips() throws {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
-        let model = Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash")
+        let model = Self.deepseekV4ThinkingModel(named: "deepseek-flash")
 
         let turn1 = [LLM.Message(role: .user,
                                  content: "Briefly explain why ice floats on water. Reply in one short sentence.")]
@@ -1960,7 +1951,7 @@ final class AILiveHarness: XCTestCase {
             XCTAssertFalse(r2.finalText.isEmpty,
                            "turn 2 returned empty text; round-trip failed")
             report(vendor: "deepseek-thinking",
-                   model: "deepseek-v4-flash",
+                   model: "deepseek-flash",
                    scenario: "thinkingRoundTrip2",
                    streaming: true,
                    result: r2)
@@ -1982,7 +1973,7 @@ final class AILiveHarness: XCTestCase {
         throttle(forVendor: "deepseek")
         do {
             let result = try AILiveDriver.run(
-                model: Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash"),
+                model: Self.deepseekV4ThinkingModel(named: "deepseek-flash"),
                 apiKey: key,
                 messages: messages,
                 streaming: true,
@@ -1990,16 +1981,16 @@ final class AILiveHarness: XCTestCase {
                 scenarioTag: "thinkingSmoke",
                 test: self)
             XCTAssertFalse(result.finalText.isEmpty,
-                           "[deepseek/deepseek-v4-flash] empty response")
+                           "[deepseek/deepseek-flash] empty response")
             XCTAssertFalse(result.reasoningText.isEmpty,
-                           "[deepseek/deepseek-v4-flash] no reasoning content captured; attachments=\(result.attachments)")
+                           "[deepseek/deepseek-flash] no reasoning content captured; attachments=\(result.attachments)")
             report(vendor: "deepseek-thinking",
-                   model: "deepseek-v4-flash",
+                   model: "deepseek-flash",
                    scenario: "thinkingSmoke",
                    streaming: true,
                    result: result)
         } catch {
-            XCTFail("[deepseek/deepseek-v4-flash/thinkingSmoke] \(error)")
+            XCTFail("[deepseek/deepseek-flash/thinkingSmoke] \(error)")
         }
     }
 
@@ -2030,7 +2021,7 @@ final class AILiveHarness: XCTestCase {
         throttle(forVendor: "deepseek")
         do {
             let result = try AILiveDriver.run(
-                model: Self.deepseekV4ThinkingModel(named: "deepseek-v4-flash"),
+                model: Self.deepseekV4ThinkingModel(named: "deepseek-flash"),
                 apiKey: key,
                 messages: messages,
                 streaming: false,

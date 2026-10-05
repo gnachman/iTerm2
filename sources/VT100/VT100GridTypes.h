@@ -11,6 +11,29 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Base writing direction for bidi reordering of a line. The values match SCP
+// (Select Character Path, CSI Ps SP k): 0 is the terminal default (the
+// paragraph-direction detection setting), 1 forces left-to-right, 2 forces
+// right-to-left. Recorded per line as right-to-left text is written to it.
+typedef NS_ENUM(int, iTermBidiDirection) {
+    iTermBidiDirectionDefault = 0,
+    iTermBidiDirectionLeftToRight = 1,
+    iTermBidiDirectionRightToLeft = 2,
+};
+
+// What a write does to the per-line RTL state of each line it touches.
+typedef NS_ENUM(int, VT100GridRTLUpdate) {
+    // Leave it alone: implicit bidi mode and the write has no right-to-left text.
+    VT100GridRTLUpdateNone,
+    // Flag the line and record the direction: implicit mode, right-to-left text.
+    VT100GridRTLUpdateFound,
+    // Clear the flag and the per-cell RTL status: explicit bidi mode (BDSM reset),
+    // where the app laid the line out itself. The flag is otherwise sticky across
+    // erases and overwrites, so without this a line that once held right-to-left
+    // text would still be reordered.
+    VT100GridRTLUpdateClear,
+};
+
 typedef struct {
     int x;
     int y;

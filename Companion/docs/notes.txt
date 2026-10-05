@@ -68,6 +68,14 @@ Bug Fixes:
   email diagnostic logs even when not connected
   to a Mac. It also moved off the chat list into
   a sheet you can open from anywhere.
+- Pairing and reconnecting no longer fail on
+  networks that can’t reach iterm2.com. The app
+  now falls back to a second copy of its server
+  list. If neither can be reached, it says so
+  and suggests another network instead of
+  showing “The request timed out.” Tap Details
+  to see each server it tried and what went
+  wrong with each.
 
 New Features:
 - You can now type into a live session. Tap the

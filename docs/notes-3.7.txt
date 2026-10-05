@@ -138,11 +138,13 @@ New Features:
   navigation; matches are highlighted in place.
   Supports smart-case, case-sensitive, and regular
   expression modes.
-- New setting “Require Authentication on Every
-  Open” re-prompts for Touch ID or your password
-  each time the password manager opens, instead
-  of reusing the first unlock until the screen
-  locks.
+- The password manager’s settings menu now offers
+  one choice of how often to ask for Touch ID or
+  your password: never, once per launch, once per
+  launch and after the screen locks, or every
+  time it opens. The last option is new, and it
+  also closes the password manager when the
+  screen locks.
 - The Session Status toolbelt tool has a
   snooze button next to the notify button
   that toggles snooze on the selected
@@ -169,8 +171,9 @@ New Features:
   available” setting (Profiles > Colors). When
   on, a white cursor renders brighter than white
   on an HDR-capable display, with either the GPU
-  or the legacy renderer. Only sessions that
-  enable it pay the extra fp16 cost.
+  or the legacy renderer. A slider next to it
+  sets how bright the cursor gets. Only sessions
+  that enable it pay the extra fp16 cost.
 - AI command suggestions can now recognize when
   you have typed a plain-English request instead
   of the start of a command. In that case the
@@ -247,6 +250,16 @@ New Features:
   option of it2 set-status, or the
   expires_on argument of the Python API’s
   set_status.
+- Apps can now control right-to-left text
+  reordering with the BDSM and SCP escape
+  sequences. CSI 8 l enters explicit mode,
+  in which text is drawn exactly as written,
+  and CSI 8 h returns to implicit mode. This
+  keeps full-screen apps that lay out their
+  own text from being scrambled. CSI 1 SP k
+  and CSI 2 SP k make reordered lines
+  left-to-right or right-to-left, and
+  CSI 0 SP k restores the default.
 - New variables iterm2.workingSessionCount and
   iterm2.waitingSessionCount count the sessions
   whose status reads “working” or “waiting”. Use
@@ -256,6 +269,24 @@ New Features:
   interpolated string like these in the menu bar.
 
 Improvements:
+- If a profile archives sessions when they close
+  (Settings > Profiles > Session), Undo Close
+  keeps working after its time limit runs out.
+  Archived sessions come back from their archives
+  in their original split panes, tabs, and
+  windows. The last 20 can be undone even after
+  restarting iTerm2.
+- The built-in AI model list is up to date. It
+  adds GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol,
+  GPT-6 Luna, GPT-5.4 Pro, GPT-5.4 mini, Gemini
+  3.8 Flash, DeepSeek Flash (V4.1), Claude Opus
+  5.5, Claude Sonnet 5.5, Claude Fable 5.1,
+  Claude Opus 5, and Claude Fable 5, and the
+  recommended model for each provider is now its
+  newest flagship. Newer Claude models also get
+  their full 1 million token context window.
+  o4-mini, which OpenAI is shutting down, has
+  been removed.
 - iTerm2 now recognizes when a terminal is
   running on your own Mac by machine identity
   rather than by hostname, so features that only
@@ -390,6 +421,36 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- Closing an archived session soon after opening
+  it no longer warns that the session ended very
+  soon after starting.
+- Archiving split panes with the same name when
+  their window closes no longer saves only one of
+  them.
+- Sessions closed shortly before quitting are
+  now always archived if their profile archives
+  sessions on close.
+- Fixed Tab.async_update_layout in the Python
+  API making a browser pane many times too big,
+  squeezing the panes beside it, and sometimes
+  crashing iTerm2.
+- Make Text Bigger works again when you type it
+  as ⌘⇧= (the way you type ⌘+). Since 3.7.0,
+  that keystroke opened the Clippings panel
+  instead, because Show Clippings had claimed it.
+  Show Clippings is now ⌘⇧⌥G. Issue 13022.
+- “Open Selection as URL” now works on links
+  without a scheme, like example.com/path, and
+  is hidden when the selection isn’t a URL.
+  Issue 13092.
+- Semantic History can once again open files in
+  Xcode when the active developer directory is
+  set to the Command Line Tools rather than
+  Xcode. It used to show a “Semantic History
+  Command Failed” alert instead. Issue 13091.
+- Fixed a rare race where a new session could
+  silently lose some of the first output it
+  received.
 - A tab name you set yourself with Edit Tab Title
   is no longer replaced by the session’s name
   whenever the tab’s subtitle changes or its
@@ -399,6 +460,14 @@ Bug Fixes:
   It used to briefly show a bare session name,
   with neither the “↣” marker that flags a tmux
   tab nor the second line under the title.
+- Attaching with tmux Integration no longer fails
+  when a pane’s scrollback contains raw tmux
+  control-mode text (for example, from an earlier
+  tmux -CC run in a terminal without tmux
+  Integration). iTerm2 mistook a %exit line in
+  that text for tmux quitting, dropped the
+  connection, and printed the rest of the
+  protocol stream into the window.
 - Interrupting Claude Code with Esc now
   returns its Session Status to idle. The
   tab kept reading “working”, or “waiting”
@@ -420,6 +489,15 @@ Bug Fixes:
   reached through SSH Integration. They never
   appeared before, and their status went
   unreported to the rest of the app. Issue 13049.
+- In a tmux Integration session, keys such as
+  Shift-Enter are now encoded the same way before
+  and after a detach and reattach. Previously a
+  pane could encode them one way before a detach
+  and another way after, until the app was
+  restarted. With tmux 3.9 or later, iTerm2 lets
+  tmux encode each key for the app in the pane,
+  including with the Kitty keyboard protocol.
+  Issue 13076.
 - The control sequence that resets a tab color to
   the profile’s now restores it correctly when
   the profile has separate light and dark mode
@@ -451,6 +529,8 @@ Bug Fixes:
   inserts its path again on VPN or Tailscale
   networks, where it had instead been offering
   to upload the file.
+- Fixed a crash when opening a new tab next to a
+  tab in a tab group.
 - Fixed a crash when editing a dynamic profile
   whose file had been changed on disk.
 - Fixed a crash when clicking the bookmark
@@ -638,6 +718,13 @@ Bug Fixes:
   in the popup, so choosing a provider
   other than the current default no longer
   stores the key under the wrong service.
+- Pairing a companion iPhone no longer fails on
+  networks that can’t reach iterm2.com. iTerm2
+  now falls back to a second copy of its list
+  of relay servers. If neither can be reached,
+  the pairing window says so and suggests
+  another network; hover over the message to
+  see what went wrong with each server.
 - Added a reply to CSI 16 t (report character
   cell size), which was previously ignored.
 - Fixed the workgroup toolbar’s
@@ -681,6 +768,12 @@ Bug Fixes:
   Code’s settings outside ~/.claude. It used to
   always install into ~/.claude, where Claude
   Code never looked.
+- The Claude Code Integration no longer warns
+  that it looks broken when you edit its hook
+  commands in Claude Code’s settings.json to use
+  $HOME, ~, or a wrapper script. Reinstalling
+  also keeps such commands instead of adding a
+  second copy of each hook.
 - Fixed a crash when a program wrote a hyperlink
   whose web address contained an emoji or other
   character outside the Basic Multilingual
@@ -748,8 +841,11 @@ Bug Fixes:
   width other terminals report for it, so the
   advanced setting “Lone regional indicators
   render full-width” no longer affects flags.
-  Skin-toned emoji are still affected and will
-  be fixed separately.
+- Fixed a bug where a skin-toned emoji like 👍🏻
+  was drawn as the plain emoji followed by a
+  separate color swatch, taking four columns.
+  It is now a single emoji two columns wide,
+  matching other modern terminals.
 - Fixed a bug where a character that combined
   with the one before it could come out the
   wrong width when the two halves arrived in
@@ -814,3 +910,106 @@ Bug Fixes:
   to change apps without the mouse. This
   affected windows using the older full screen
   style with menu bar hiding turned on.
+- Fixed a bug where pressing Backspace while
+  composing text with an input method such as
+  the Korean 2-Set IME could leave a stray
+  character behind that needed an extra press
+  to remove. Pressing Return while composing
+  now submits the line in one press.
+- Archive Sessions on Closure failed with “The
+  file doesn’t exist” whenever the session’s
+  name contained a slash, such as a title that
+  shows the tty or the current directory. Slashes
+  and other characters that can’t appear in a
+  filename are now replaced with underscores, the
+  time in the archive name uses periods instead
+  of colons so Finder shows it correctly, and
+  very long names are shortened to fit. The same
+  cleanup now applies to automatic session log
+  filenames, which used to handle only slashes.
+  Issue 13094.
+- In Settings > General > Selection, the tooltip
+  on “When pasting a dropped filename, wrap it in
+  double quotes” now describes that setting. It
+  used to repeat the tooltip for command
+  selection. Issue 13086.
+- The “Animate large movements” cursor option no
+  longer streaks a cursor-colored trail across
+  the screen when a program such as top redraws
+  the screen on its own. The animation now plays
+  only for cursor jumps that follow your own
+  keyboard or mouse input.
+- Semantic History could open the wrong file in
+  TextMate, BBEdit or MacVim when the path
+  contained a space, an ampersand, or another
+  character with special meaning in a URL.
+- With “Report keys using CSI u” turned on and
+  Option set to Meta, pressing Option with a
+  letter sent nothing at all. It now sends the
+  meta byte, as it does without CSI u.
+- Resizing a window while only blank space was
+  selected left behind an empty selection, so
+  Copy and other selection-based actions acted
+  on nothing.
+- Restorable session state is again saved with
+  SQLite’s write-ahead logging, which had been
+  silently disabled. This reduces disk syncing
+  while iTerm2 saves its state.
+- The Bitwarden, KeePassXC, and Keeper password
+  manager integrations now find command-line
+  tools installed by Homebrew or npm. Homebrew’s
+  “bw” is a script that needs “node”, which the
+  integration could not locate, so Bitwarden
+  showed an empty list. The password manager now
+  runs these tools with your shell’s search path.
+- The Bitwarden integration now reports the
+  Bitwarden CLI’s own error message instead of
+  showing an empty list or a vague error. It
+  lists only items in a Bitwarden folder named
+  “iTerm2”, and now says so when your vault has
+  no such folder.
+- Debug logs no longer include passwords sent
+  to or received from password manager
+  integrations.
+- Password manager integrations that use a
+  command-line tool, like Bitwarden’s “bw”, now
+  find it on your shell’s search path instead
+  of asking you to locate it. If you do pick it
+  by hand, iTerm2 keeps the path you chose, so
+  it keeps working after the tool is upgraded.
+- Find now matches text that spans a blank the
+  program created by moving the cursor instead
+  of printing a space. Before, searching for
+  more than one word could fail on output from
+  programs like Claude Code even though the
+  words appeared separated by a space.
+- In tmux integration, a new pane now picks up
+  user variables, the host name, the current
+  directory, and the shell integration version
+  that its shell reported while the pane was
+  opening. Before, a badge such as
+  \(user.host_name) stayed empty until the shell
+  showed its second prompt. Issue 13006.
+- With the Minimal or Compact theme and no tab
+  bar at the top, the window buttons that appear
+  when you point at the window’s top-left corner
+  no longer cover a status bar or Workgroup
+  toolbar there, which made its leftmost item
+  impossible to click. A small arrow appears in
+  the corner instead; click it to show or hide
+  the window buttons. Issue 13100.
+- Restarting or logging out of macOS while
+  Claude Code was running in iTerm2 could cause
+  your windows not to be restored at the next
+  login. Claude Code’s status updates could
+  relaunch iTerm2 just as it was quitting, and
+  that brief launch replaced the saved windows.
+- Fixed a crash that could happen when the GPU
+  renderer had been running for several weeks
+  without restarting iTerm2. Issue 13103.
+- Key bindings saved by older versions of iTerm2
+  no longer fire when you press A while “Interpret
+  key bindings based on physical key” is on, which
+  could make the A key stop typing. iTerm2 also no
+  longer mistakenly offers to turn that setting on
+  when you press a shortcut like ^A. Issue 13110.

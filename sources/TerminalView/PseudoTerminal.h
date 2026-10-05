@@ -26,6 +26,7 @@
 @class TabColorPickerState;
 @class iTermBrowserWebView;
 @class iTermPromptOnCloseReason;
+@class iTermUndoCloseArchives;
 @class iTermSessionFactory;
 @class iTermToolbeltView;
 @protocol iTermLargeContentProvider;
@@ -205,6 +206,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
                                   named:(NSString *)arrangementName
                                sessions:(NSArray *)sessions
+                               archives:(iTermUndoCloseArchives *)archives
                forceOpeningHotKeyWindow:(BOOL)force;
 
 // Register all sessions in the window's arrangement so their contents can be
@@ -461,14 +463,20 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)moveSessionToWindow:(id)sender;
 
 - (void)addRevivedSession:(PTYSession *)session;
+// `archives` holds sessions in the arrangement that are restored from archives
+// because they could not be revived. It may be nil.
 - (void)addTabWithArrangement:(NSDictionary *)arrangement
                      uniqueId:(int)tabUniqueId
                      sessions:(NSArray *)sessions
+                     archives:(iTermUndoCloseArchives *)archives
                  predecessors:(NSArray *)predecessors;  // NSInteger of tab uniqueId's that come before this tab.
 - (void)recreateTab:(PTYTab *)tab
     withArrangement:(NSDictionary *)arrangement
            sessions:(NSArray *)sessions
+           archives:(iTermUndoCloseArchives *)archives
              revive:(BOOL)revive;
+// Adds a tab for each archived session.
+- (void)addTabsForArchives:(iTermUndoCloseArchives *)archives;
 
 - (IBAction)toggleToolbeltVisibility:(id)sender;
 

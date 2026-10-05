@@ -33,10 +33,10 @@
 //    anthropic        claude-haiku-4-5. Exercises the AnthropicMessage
 //                     content-block ladder: text / image / document /
 //                     lossyString-fallback.
-//    gemini           gemini-2.5-flash. inlineData with the attached
+//    gemini           gemini-3.5-flash-lite. inlineData with the attached
 //                     MIME; Gemini accepts a wider list than other
 //                     vendors (audio, video, heic).
-//    deepseek         deepseek-v4-flash. Chat-completions-like; non-text
+//    deepseek         deepseek-flash. Chat-completions-like; non-text
 //                     binaries get wrapped in <iterm2:attachment> via
 //                     lossyString.
 //    llama            Local Ollama (llama4:latest, /api/chat). Runs only
@@ -124,9 +124,9 @@ enum AttachmentLane: String, CaseIterable {
         case .anthropic:
             return try lookup("claude-haiku-4-5")
         case .gemini:
-            return try lookup("gemini-2.5-flash")
+            return try lookup("gemini-3.5-flash-lite")
         case .deepseek:
-            return try lookup("deepseek-v4-flash")
+            return try lookup("deepseek-flash")
         case .llama:
             // Local Ollama, url http://localhost:11434/api/chat. Model name from
             // LLAMA_MODELS (first non-empty, comma-separated), defaulting to the
@@ -284,10 +284,12 @@ enum AttachmentMatrix {
         // MARK: gemini
         //
         // Gemini.swift:170-173 wraps every binary as inlineData with the
-        // attached MIME. Gemini's published acceptance list covers
-        // images jpeg/png/webp/heic/heif, application/pdf, plus audio
-        // and video. tiff/docx/zip/octet are outside that list; they
-        // typically return 400 INVALID_ARGUMENT.
+        // attached MIME. Gemini 2.5 returned 400 INVALID_ARGUMENT (and later
+        // 500) for tiff/docx/zip/octet, which are outside its published list.
+        // Gemini 3.5 accepts all four: it reads tiff and docx, and accepts
+        // zip and octet-stream without being able to read them. In the app,
+        // tiff reaches Gemini like every image/*; LLMProvider.accepts still
+        // withholds docx, zip, and octet-stream.
         .gemini: [
             .textPlain:        .acceptsAndExtractsProbe,
             .textMarkdown:     .acceptsAndExtractsProbe,
@@ -298,7 +300,7 @@ enum AttachmentMatrix {
             .imagePNG:         .acceptsAndExtractsProbe,
             .imageWEBP:        .acceptsAndExtractsProbe,
             .imageHEIC:        .acceptsAndExtractsProbe,
-            .imageTIFF:        .rejectsAtHTTPLayer,
+            .imageTIFF:        .acceptsAndExtractsProbe,
             .applicationPDF:   .acceptsAndExtractsProbe,
             // Gemini supports audio/video natively via inlineData. These
             // matrix fixtures (3s synth, scroll-browser screen capture) have
@@ -308,9 +310,9 @@ enum AttachmentMatrix {
             // and test_gemini_videoDescribe.
             .audioMPEG:        .skipped(reason: "no deterministic probe in this fixture; inlineData audio verified by test_gemini_audioTranscribe_{mp3,wav}"),
             .videoMP4:         .skipped(reason: "no deterministic probe in this fixture; inlineData video verified by test_gemini_videoDescribe"),
-            .applicationDOCX:  .rejectsAtHTTPLayer,
-            .applicationZIP:   .rejectsAtHTTPLayer,
-            .applicationOctet: .rejectsAtHTTPLayer,
+            .applicationDOCX:  .acceptsAndExtractsProbe,
+            .applicationZIP:   .acceptsButGarbled,
+            .applicationOctet: .acceptsButGarbled,
         ],
 
         // MARK: deepseek

@@ -546,7 +546,7 @@ final class AIParserCombiningTests: XCTestCase {
             "id": "chatcmpl_test",
             "object": "chat.completion.chunk",
             "created": 0,
-            "model": "deepseek-v4-flash",
+            "model": "deepseek-flash",
             "choices": [
                 {
                     "index": 0,
@@ -577,7 +577,7 @@ final class AIParserCombiningTests: XCTestCase {
             "id": "chatcmpl_test",
             "object": "chat.completion.chunk",
             "created": 0,
-            "model": "deepseek-v4-flash",
+            "model": "deepseek-flash",
             "choices": [
                 {"index": 0, "delta": {"reasoning_content": "deep thoughts"}, "finish_reason": null}
             ]
@@ -597,7 +597,7 @@ final class AIParserCombiningTests: XCTestCase {
             "id": "chatcmpl_test_n",
             "object": "chat.completion",
             "created": 0,
-            "model": "deepseek-v4-flash",
+            "model": "deepseek-flash",
             "choices": [
                 {
                     "index": 0,
@@ -620,7 +620,7 @@ final class AIParserCombiningTests: XCTestCase {
     /// DeepSeekRequestBuilder must emit reasoning_content on assistant turns
     /// when LLM.Message.reasoningContent is set, and only on assistant role.
     func testDeepSeekRequestBuilder_emitsReasoningContent() throws {
-        let model = try model(named: "deepseek-v4-flash")
+        let model = try model(named: "deepseek-flash")
         var assistant = LLM.Message(role: .assistant, content: "the visible reply")
         assistant.reasoningContent = "the hidden thinking"
         let messages: [LLM.Message] = [
@@ -647,7 +647,7 @@ final class AIParserCombiningTests: XCTestCase {
     /// field entirely (not encode it as null). DeepSeek's API may reject
     /// `reasoning_content: null` as ambiguous; absence is the safe shape.
     func testDeepSeekRequestBuilder_omitsReasoningWhenNil() throws {
-        let model = try model(named: "deepseek-v4-flash")
+        let model = try model(named: "deepseek-flash")
         let messages: [LLM.Message] = [
             LLM.Message(role: .user, content: "ask"),
             LLM.Message(role: .assistant, content: "reply"),  // no reasoningContent
@@ -674,7 +674,7 @@ final class AIParserCombiningTests: XCTestCase {
             "id": "chatcmpl_test_both",
             "object": "chat.completion.chunk",
             "created": 0,
-            "model": "deepseek-v4-flash",
+            "model": "deepseek-flash",
             "choices": [
                 {
                     "index": 0,
@@ -713,7 +713,7 @@ final class AIParserCombiningTests: XCTestCase {
     /// API lives in test_deepseek_thinking_reasoningOnlyAssistant_roundTrips
     /// in the live harness; this offline test only locks the local wire shape.
     func testDeepSeekRequestBuilder_reasoningOnlyAssistant_serializesEmptyContent() throws {
-        let model = try model(named: "deepseek-v4-flash")
+        let model = try model(named: "deepseek-flash")
         var assistant = LLM.Message(role: .assistant, body: .multipart([]))
         assistant.reasoningContent = "the hidden thinking"
         let messages: [LLM.Message] = [

@@ -1,6 +1,131 @@
 {
-  "version": 3,
+  "version": 4,
   "models": [
+    {
+      "name": "gpt-6-astra",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "fixtureExempt": true,
+      "economyModel": "gpt-6-luna",
+      "thinkingOffEffort": "low",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ],
+      "recommended": true
+    },
+    {
+      "name": "gpt-6.1-sol",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "fixtureExempt": true,
+      "economyModel": "gpt-6-luna",
+      "thinkingOffEffort": "low",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ]
+    },
+    {
+      "name": "gpt-6-sol",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "fixtureExempt": true,
+      "economyModel": "gpt-6-luna",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ]
+    },
+    {
+      "name": "gpt-6-luna",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ]
+    },
     {
       "name": "gpt-5.6-sol",
       "vendor": "openAI",
@@ -17,8 +142,7 @@
         "configurableThinking"
       ],
       "fixtureExempt": true,
-      "recommended": true,
-      "economyModel": "gpt-5.6-luna",
+      "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "none",
       "reasoningEfforts": [
         "none",
@@ -50,7 +174,7 @@
         "configurableThinking"
       ],
       "fixtureExempt": true,
-      "economyModel": "gpt-5.6-luna",
+      "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "none",
       "reasoningEfforts": [
         "none",
@@ -58,6 +182,12 @@
         "medium",
         "high",
         "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
       ]
     },
     {
@@ -82,7 +212,14 @@
         "medium",
         "high",
         "xhigh"
-      ]
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ],
+      "economyModel": "gpt-6-luna"
     },
     {
       "name": "gpt-5.5",
@@ -99,7 +236,7 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini",
+      "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "none",
       "reasoningEfforts": [
         "none",
@@ -126,12 +263,11 @@
         "functionCalling",
         "hostedFileSearch",
         "hostedWebSearch",
-        "streaming",
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
       "fixtureExempt": true,
-      "economyModel": "gpt-5-mini",
+      "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "medium",
       "thinkingOnEffort": "high",
       "reasoningEfforts": [
@@ -160,7 +296,66 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini",
+      "economyModel": "gpt-6-luna",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ]
+    },
+    {
+      "name": "gpt-5.4-pro",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "configurableThinking"
+      ],
+      "economyModel": "gpt-6-luna",
+      "thinkingOffEffort": "medium",
+      "thinkingOnEffort": "high",
+      "reasoningEfforts": [
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "flex"
+      ]
+    },
+    {
+      "name": "gpt-5.4-mini",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 400000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "none",
       "reasoningEfforts": [
         "none",
@@ -185,13 +380,11 @@
       "maxResponseTokens": 128000,
       "features": [
         "functionCalling",
-        "hostedFileSearch",
         "hostedWebSearch",
         "streaming",
-        "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini",
+      "economyModel": "gpt-6-luna",
       "reasoningEfforts": [
         "low",
         "medium",
@@ -200,8 +393,7 @@
       ],
       "serviceTiers": [
         "auto",
-        "default",
-        "priority"
+        "default"
       ]
     },
     {
@@ -219,7 +411,7 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini",
+      "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "none",
       "reasoningEfforts": [
         "none",
@@ -227,6 +419,12 @@
         "medium",
         "high",
         "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
       ]
     },
     {
@@ -241,10 +439,9 @@
         "hostedFileSearch",
         "hostedWebSearch",
         "streaming",
-        "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini",
+      "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "medium",
       "thinkingOnEffort": "high",
       "reasoningEfforts": [
@@ -268,13 +465,19 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini",
+      "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "none",
       "reasoningEfforts": [
         "none",
         "low",
         "medium",
         "high"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
       ]
     },
     {
@@ -293,7 +496,7 @@
         "configurableThinking"
       ],
       "vectorStore": "openAI",
-      "economyModel": "gpt-5-mini",
+      "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "minimal",
       "reasoningEfforts": [
         "minimal",
@@ -355,7 +558,7 @@
       "vendor": "openAI",
       "api": "responses",
       "url": "https://api.openai.com/v1/responses",
-      "contextWindowTokens": 1000000,
+      "contextWindowTokens": 1047576,
       "maxResponseTokens": 32768,
       "features": [
         "functionCalling",
@@ -365,7 +568,7 @@
         "hostedCodeInterpreter"
       ],
       "vectorStore": "openAI",
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-6-luna"
     },
     {
       "name": "gpt-4o",
@@ -382,7 +585,7 @@
         "hostedCodeInterpreter"
       ],
       "vectorStore": "openAI",
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-6-luna"
     },
     {
       "name": "gpt-4o-mini",
@@ -405,8 +608,8 @@
       "vendor": "openAI",
       "api": "responses",
       "url": "https://api.openai.com/v1/responses",
-      "contextWindowTokens": 1000000,
-      "maxResponseTokens": 16384,
+      "contextWindowTokens": 1047576,
+      "maxResponseTokens": 32768,
       "features": [
         "functionCalling",
         "hostedFileSearch",
@@ -429,7 +632,7 @@
         "configurableThinking"
       ],
       "vectorStore": "openAI",
-      "economyModel": "gpt-5-mini",
+      "economyModel": "gpt-6-luna",
       "reasoningEfforts": [
         "low",
         "medium",
@@ -449,7 +652,7 @@
         "configurableThinking"
       ],
       "vectorStore": "openAI",
-      "economyModel": "gpt-5-mini",
+      "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "medium",
       "thinkingOnEffort": "high",
       "reasoningEfforts": [
@@ -459,25 +662,18 @@
       ]
     },
     {
-      "name": "o4-mini",
-      "vendor": "openAI",
-      "api": "responses",
-      "url": "https://api.openai.com/v1/responses",
-      "contextWindowTokens": 200000,
-      "maxResponseTokens": 100000,
+      "name": "gemini-3.8-flash",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
       "features": [
-        "hostedFileSearch",
-        "streaming",
         "functionCalling",
-        "hostedCodeInterpreter",
-        "configurableThinking"
+        "streaming"
       ],
-      "vectorStore": "openAI",
-      "reasoningEfforts": [
-        "low",
-        "medium",
-        "high"
-      ]
+      "recommended": true,
+      "economyModel": "gemini-3.5-flash-lite"
     },
     {
       "name": "gemini-3.7-flash",
@@ -491,8 +687,7 @@
         "streaming"
       ],
       "fixtureExempt": true,
-      "recommended": true,
-      "economyModel": "gemini-2.5-flash-lite"
+      "economyModel": "gemini-3.5-flash-lite"
     },
     {
       "name": "gemini-3.6-flash",
@@ -505,7 +700,7 @@
         "functionCalling",
         "streaming"
       ],
-      "economyModel": "gemini-2.5-flash-lite"
+      "economyModel": "gemini-3.5-flash-lite"
     },
     {
       "name": "gemini-3.5-flash",
@@ -518,7 +713,7 @@
         "functionCalling",
         "streaming"
       ],
-      "economyModel": "gemini-2.5-flash-lite"
+      "economyModel": "gemini-3.5-flash-lite"
     },
     {
       "name": "gemini-3.1-pro-preview",
@@ -531,7 +726,7 @@
         "functionCalling",
         "streaming"
       ],
-      "economyModel": "gemini-2.5-flash-lite"
+      "economyModel": "gemini-3.5-flash-lite"
     },
     {
       "name": "gemini-3.5-flash-lite",
@@ -568,7 +763,7 @@
         "functionCalling",
         "streaming"
       ],
-      "economyModel": "gemini-2.5-flash-lite"
+      "economyModel": "gemini-3.5-flash-lite"
     },
     {
       "name": "gemini-2.5-flash-lite",
@@ -593,7 +788,7 @@
         "functionCalling",
         "streaming"
       ],
-      "economyModel": "gemini-2.5-flash-lite"
+      "economyModel": "gemini-3.5-flash-lite"
     },
     {
       "name": "gemini-2.5-pro",
@@ -606,10 +801,10 @@
         "functionCalling",
         "streaming"
       ],
-      "economyModel": "gemini-2.5-flash-lite"
+      "economyModel": "gemini-3.5-flash-lite"
     },
     {
-      "name": "deepseek-v4-flash",
+      "name": "deepseek-flash",
       "vendor": "deepSeek",
       "api": "deepSeek",
       "url": "https://api.deepseek.com/chat/completions",
@@ -634,21 +829,91 @@
         "streaming",
         "configurableThinking"
       ],
-      "economyModel": "deepseek-v4-flash"
+      "economyModel": "deepseek-flash"
     },
     {
-      "name": "claude-opus-4-8",
+      "name": "claude-opus-5-5",
       "vendor": "anthropic",
       "api": "anthropic",
       "url": "https://api.anthropic.com/v1/messages",
-      "contextWindowTokens": 200000,
+      "contextWindowTokens": 1000000,
       "maxResponseTokens": 128000,
       "features": [
         "functionCalling",
         "streaming"
       ],
       "supportsTemperature": false,
-      "recommended": true,
+      "economyModel": "claude-haiku-4-5",
+      "recommended": true
+    },
+    {
+      "name": "claude-fable-5-1",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "supportsTemperature": false,
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
+      "name": "claude-sonnet-5-5",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "supportsTemperature": false,
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
+      "name": "claude-fable-5",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "supportsTemperature": false,
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
+      "name": "claude-opus-5",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "supportsTemperature": false,
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
+      "name": "claude-opus-4-8",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "supportsTemperature": false,
       "economyModel": "claude-haiku-4-5"
     },
     {
@@ -656,7 +921,7 @@
       "vendor": "anthropic",
       "api": "anthropic",
       "url": "https://api.anthropic.com/v1/messages",
-      "contextWindowTokens": 200000,
+      "contextWindowTokens": 1000000,
       "maxResponseTokens": 128000,
       "features": [
         "functionCalling",
@@ -670,7 +935,7 @@
       "vendor": "anthropic",
       "api": "anthropic",
       "url": "https://api.anthropic.com/v1/messages",
-      "contextWindowTokens": 200000,
+      "contextWindowTokens": 1000000,
       "maxResponseTokens": 128000,
       "features": [
         "functionCalling",
@@ -683,8 +948,8 @@
       "vendor": "anthropic",
       "api": "anthropic",
       "url": "https://api.anthropic.com/v1/messages",
-      "contextWindowTokens": 200000,
-      "maxResponseTokens": 64000,
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 128000,
       "features": [
         "functionCalling",
         "streaming"
@@ -697,8 +962,8 @@
       "vendor": "anthropic",
       "api": "anthropic",
       "url": "https://api.anthropic.com/v1/messages",
-      "contextWindowTokens": 200000,
-      "maxResponseTokens": 64000,
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 128000,
       "features": [
         "functionCalling",
         "streaming"

@@ -53,6 +53,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)hasPhysicalKeyMatchInDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;
 - (iTermKeystroke *)keystrokeWithoutVirtualKeyCode;
 
+// If `key` uses the three-part serialization written by older versions ("0xchar-0xmods-0xkeycode"),
+// returns its modern equivalent: four parts when the keycode is trustworthy, or the keycode-less
+// two-part form when it isn't. Returns nil for any other format, and for a keycode of 0 whose
+// trustworthiness depends on the enabled keyboard layouts (those stay three-part so they are
+// reinterpreted against the current layouts each time they're parsed).
++ (NSString * _Nullable)modernSerializationForThreePartKey:(NSString *)key;
+
 @end
 
 @interface iTermTouchbarItem: NSObject<NSCopying>

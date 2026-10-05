@@ -333,6 +333,10 @@ public enum PasswordManagerProtocol {
         /// credentials are persisted). Adapters should set this on auth-rejection responses;
         /// nil/false is treated as an ordinary error. Backward-compatible: older adapters that
         /// never set it keep the previous behavior.
+        ///
+        /// On a response to `login`, it means the master password itself was rejected. The host
+        /// asks for it again, showing `error` as the reason, so make that message suitable for
+        /// the user (for example “Incorrect master password.”).
         public var needsAuthentication: Bool?
 
         public init(error: String, needsAuthentication: Bool? = nil) {

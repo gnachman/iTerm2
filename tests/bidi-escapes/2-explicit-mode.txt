@@ -1,0 +1,7 @@
+[8lExplicit mode (CSI 8 l). Every row should be drawn exactly as written,
+Hebrew letters in logical order, borders and digits in place.
+    ■ Kapitel 9    │   │       │ 3 : Commands    │
+    ■ Kapiשלםtel 2 │   │       │ 4 : Library     │
+    ■ שלם      │   │       │ 5 : Deck        │
+    ■ שלם      │   │       │ 6 : Study       │
+[8h

@@ -149,6 +149,7 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string {
     // Dispatch because this will join threads.
     dispatch_async(dispatch_get_main_queue(), ^{
+        [self.session noteUserInput];
         [self.session writeTaskNoBroadcast:string];
     });
 }
@@ -156,6 +157,7 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data {
     // Dispatch because this will join threads.
     dispatch_async(dispatch_get_main_queue(), ^{
+        [self.session noteUserInput];
         [self.session writeLatin1EncodedData:data broadcastAllowed:NO reporting:NO];
     });
 }

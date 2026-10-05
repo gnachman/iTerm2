@@ -13,7 +13,7 @@
 #import "iTermSmartCursorColor.h"
 #import "iTermVirtualOffset.h"
 
-const CGFloat iTermHDRCursorMaximumBrightness = 8.0;
+const CGFloat iTermHDRCursorMaximumBrightness = 16.0;
 
 @interface iTermUnderlineCursor : iTermCursor
 @end
@@ -39,7 +39,7 @@ const CGFloat iTermHDRCursorMaximumBrightness = 8.0;
     self = [super init];
     if (self) {
         _fadeAlpha = 1.0;
-        _hdrBrightness = 1.0;
+        _hdrComponentValue = 1.0;
     }
     return self;
 }
@@ -48,20 +48,17 @@ const CGFloat iTermHDRCursorMaximumBrightness = 8.0;
 // using additive plusLighter passes. A drawRect: context clamps a color with
 // components > 1 when it is set, but plusLighter accumulates already-written
 // values in the extended backing store (the same mechanism as the Tahoe tab
-// outline), so we add full-white steps until we reach hdrBrightness. Call this
+// outline), so we add full-white steps until we reach hdrComponentValue. Call this
 // after filling the solid rect and before drawing any glyph over it, so the
 // glyph is not washed out.
 - (void)applyHDRBoostToRect:(NSRect)rect virtualOffset:(CGFloat)virtualOffset {
-    if (_hdrBrightness <= 1.0) {
+    if (_hdrComponentValue <= 1.0) {
         return;
     }
-    // Each pass adds at most 1.0 (a white source is clamped at set-time), so
-    // reaching potential headroom of ~16 would take ~15 fills every frame. A
-    // display's *current* headroom (what is actually visible) tops out well below
-    // that, so cap the peak brightness at the shared maximum (also used by the
-    // Metal renderer): passes beyond it are tonemapped to the same maximum and
-    // only cost CPU, and both renderers request the same peak.
-    CGFloat remaining = MIN(_hdrBrightness - 1.0, iTermHDRCursorMaximumBrightness - 1.0);
+    // Each pass adds at most 1.0 (a white source is clamped at set-time). The
+    // component value is gamma encoded, so even the maximum brightness needs only
+    // a few passes.
+    CGFloat remaining = _hdrComponentValue - 1.0;
     while (remaining > 0) {
         const CGFloat step = MIN(1.0, remaining);
         [[NSColor colorWithWhite:step alpha:1.0] set];
@@ -237,6 +234,13 @@ const CGFloat iTermHDRCursorMaximumBrightness = 8.0;
     // An unfocused box cursor is drawn as a hollow frame that keeps its profile
     // color; every other case fills the block, which is forced to HDR white.
     return !(type == CURSOR_BOX && !focused);
+}
+
++ (CGFloat)hdrCursorComponentValueForRequestedBrightness:(CGFloat)requested
+                                                headroom:(CGFloat)headroom {
+    const CGFloat linear = MAX(1.0, MIN(MIN(requested, headroom), iTermHDRCursorMaximumBrightness));
+    // sRGB transfer function for linear values above 0.0031308.
+    return 1.055 * pow(linear, 1.0 / 2.4) - 0.055;
 }
 
 @end

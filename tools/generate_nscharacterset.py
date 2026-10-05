@@ -8,7 +8,7 @@ NSCharacterSet+iTerm.m file with up-to-date character set definitions.
 Data sources:
 - UnicodeData.txt: Basic character properties (bidi classes, general categories)
 - DerivedCoreProperties.txt: Derived properties like Grapheme_Base, Default_Ignorable_Code_Point
-- emoji-data.txt: Emoji properties (Emoji, Emoji_Presentation)
+- emoji-data.txt: Emoji properties (Emoji, Emoji_Presentation, Emoji_Modifier_Base)
 - emoji-sequences.txt: Emoji sequences (for VS16 detection)
 - idn-chars.txt: IDN characters for URL detection
 - HangulSyllableType.txt: Conjoining jamo (L/V/T) that must not start their own cell
@@ -163,9 +163,11 @@ def parse_bidi_mirroring(content: str):
         code = int(left, 16)
         mirror = int(right, 16)
         if code > 0xFFFF or mirror > 0xFFFF:
-            # iTermBidiMirroredCounterpart stores pairs as uint16_t. No pair has
-            # ever been outside the BMP; fail loudly if that changes.
-            raise ValueError(f"Non-BMP bidi mirroring pair {left};{right}")
+            # iTermBidiMirroredCounterpart maps a unichar to a unichar, and its
+            # callers substitute the result in place, so a pair with either side
+            # outside the BMP can't be applied. Skip the pair in both directions
+            # (e.g., 221D;1DB10 and 1DB10;221D) so the table stays an involution.
+            continue
         pairs.append((code, mirror))
     return sorted(pairs)
 
@@ -439,6 +441,7 @@ def main():
     all_emoji = parse_emoji_data(emoji_data_content, "Emoji")
     emoji_presentation = parse_emoji_data(emoji_data_content, "Emoji_Presentation")
     emoji_vs16_codes = sorted(vs16_emoji | (all_emoji - emoji_presentation))
+    emoji_modifier_base_codes = sorted(parse_emoji_data(emoji_data_content, "Emoji_Modifier_Base"))
 
     bidi_classes = {"R", "AL", "AN", "RLE", "RLO", "RLI", "FSI", "PDF", "PDI", "LRE", "LRO", "LRI"}
     rtl_codes = sorted(
@@ -477,8 +480,10 @@ def main():
     # here. They have Grapheme_Cluster_Break=Extend, so Apple attaches one to whatever
     # precedes it, valid base or not, and CoreText draws a separate swatch glyph when the
     # sequence is not a real emoji modifier sequence. Excluding them outright would
-    # collapse "A" + modifier into a single cell and overlap the swatch. Suppressing that
-    # split correctly requires an Emoji_Modifier_Base check on the preceding code point.
+    # collapse "A" + modifier into a single cell and overlap the swatch. Instead,
+    # iTermFindFirstCodePointWithOwnCell declines to split a modifier that follows an
+    # Emoji_Modifier_Base, using the table generated from emoji_modifier_base_codes.
+    # See issue 13079.
     regional_indicators = parse_derived_props(grapheme_break_content, "Regional_Indicator")
     own_cell_codes = sorted(
         (base_codes | set(spacing_combining_codes) | modifier_letter_codes)
@@ -505,6 +510,7 @@ def main():
         "{{EMOJI_VS16_SUPP_RANGES}}": "\n".join(format_c_supp_ranges(vs16_supp)),
         "{{RTL_SUPP_RANGES}}": "\n".join(format_c_supp_ranges(rtl_supp)),
         "{{CODE_POINTS_WITH_OWN_CELL_SUPP_RANGES}}": "\n".join(format_c_supp_ranges(own_cell_supp)),
+        "{{EMOJI_MODIFIER_BASE_RANGES}}": "\n".join(format_c_supp_ranges(emoji_modifier_base_codes)),
         "{{IGNORABLE_BMP_INIT}}": "\n".join(format_c_bmp_init(ignorable_bmp, "sIgnorableBMP")),
         "{{SPACING_COMBINING_MARKS_BMP_INIT}}": "\n".join(format_c_bmp_init(scm_bmp, "sSpacingCombiningMarksBMP")),
         "{{EMOJI_VS16_BMP_INIT}}": "\n".join(format_c_bmp_init(vs16_bmp, "sEmojiAcceptingVS16BMP")),

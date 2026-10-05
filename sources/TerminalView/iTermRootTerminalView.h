@@ -40,6 +40,9 @@
 - (BOOL)divisionViewShouldBeVisible;
 - (NSWindow *)window;
 - (BOOL)enableStoplightHotbox;
+// Whether a session decoration with clickable controls, such as a toolbar or
+// status bar, overlaps `rect`, which is in window coordinates.
+- (BOOL)rootTerminalViewClickableSessionDecorationIntersectsRect:(NSRect)rect;
 - (void)rootTerminalViewDidChangeEffectiveAppearance;
 - (CGFloat)rootTerminalViewHeightOfTabBar:(iTermRootTerminalView *)sender;
 - (CGFloat)rootTerminalViewStoplightButtonsOffset:(iTermRootTerminalView *)sender;

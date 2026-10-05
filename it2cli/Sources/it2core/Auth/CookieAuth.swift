@@ -47,7 +47,12 @@ enum CookieAuth {
                 params += " session id \"\(escaped)\""
             }
         }
-        let script = "tell \(appTarget) to \(params)"
+        // A bare `tell` launches the app when it is not running. it2 runs from hooks that fire as
+        // iTerm2 quits (e.g., Claude Code's SessionEnd), and relaunching it then can clobber the
+        // saved window state during a logout or restart. When iTerm2 is not running the script
+        // returns nothing, which is reported below as a failure to get credentials.
+        let target = appTarget
+        let script = "if \(target) is running then tell \(target) to \(params)"
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")

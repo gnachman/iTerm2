@@ -193,7 +193,8 @@ class BidiTUIRepaintTests: XCTestCase {
                              ansi: false,
                              insert: false,
                              externalAttributeIndex: nil,
-                             rtlFound: rtl,
+                             rtlUpdate: rtl ? .found : .none,
+                             bidiDirection: .default,
                              dwcFree: false)
             grid.cursorX = 0
             grid.cursorY += 1

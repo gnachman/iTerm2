@@ -404,6 +404,25 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return _showTitle ? iTermGetSessionViewTitleHeight() : 0;
 }
 
+- (BOOL)clickableDecorationIntersectsWindowRect:(NSRect)rect {
+    NSMutableArray<NSView *> *decorations = [NSMutableArray array];
+    if (_toolbarView) {
+        [decorations addObject:_toolbarView];
+    }
+    if (_showTitle && _title) {
+        [decorations addObject:_title];
+    }
+    if (_showBottomStatusBar && _genericStatusBarContainer) {
+        [decorations addObject:_genericStatusBarContainer];
+    }
+    return [decorations anyWithBlock:^BOOL(NSView *view) {
+        if (!view.window || view.isHiddenOrHasHiddenAncestor) {
+            return NO;
+        }
+        return NSIntersectsRect([view convertRect:view.bounds toView:nil], rect);
+    }];
+}
+
 - (void)updateToolbarFrame {
     if (!_toolbarView) {
         return;

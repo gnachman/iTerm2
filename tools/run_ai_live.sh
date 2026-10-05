@@ -19,6 +19,10 @@
 #
 #   ITERM2_AI_LIVE_OPENAI_MODELS=gpt-5,gpt-5-mini tools/run_ai_live.sh smoke
 #
+# Apple Intelligence tests that walk the captured tab title corpus are
+# skipped unless ITERM2_AI_LIVE_TAB_TITLE_CORPUS=1. With a large corpus
+# each one can run for hours.
+#
 # Refusal scenarios write captured responses to
 # ModernTests/Resources/SafetyRefusalFixtures/ only when explicitly
 # requested. Set ITERM2_AI_LIVE_REFRESH_REFUSAL_FIXTURES=1 to refresh.
@@ -111,6 +115,9 @@ json_quote() {
     # Opt-in: rewrite the static magic.pdf / magic.zip probe fixtures. Used by
     # test_regenerateProbeAttachmentFixtures; off for normal runs.
     emit REGENERATE_ATTACHMENT_FIXTURES "${ITERM2_AI_LIVE_REGENERATE_ATTACHMENT_FIXTURES:-}"
+    # Opt-in: run the Apple Intelligence tests that walk the captured tab title
+    # corpus. They make on-device calls per record and can take hours.
+    emit TAB_TITLE_CORPUS "${ITERM2_AI_LIVE_TAB_TITLE_CORPUS:-}"
     echo
     echo "}"
 } > "$CONFIG_FILE"

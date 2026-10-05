@@ -156,8 +156,9 @@ enum CompanionPushSender {
         guard response.error.isEmpty else {
             let detail = (try? JSONDecoder().decode(RelayReply.self, from: Data(response.data.utf8)))?.error
                 ?? response.data
-            RLog("Companion push: relay rejected send (\(response.error)): \(detail)")
-            throw SendError(message: "The push relay refused the notification (\(response.error)): \(detail)")
+            let reason = CompanionPluginHTTPError.decode(response.error).message
+            RLog("Companion push: relay rejected send (\(reason)): \(detail)")
+            throw SendError(message: "The push relay refused the notification (\(reason)): \(detail)")
         }
         RLog("Companion push: delivered \(label) via relay")
     }

@@ -132,13 +132,13 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 
     // statFile:withReply: returns a struct and int – no registration needed.
 
-    // For runShellScript:shell:interactive:withReply: (reply block: NSData *output, NSData *error, int status)
+    // For runShellScript:shell:mode:withReply: (reply block: NSData *output, NSData *error, int status)
     [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSData class], [NSNumber class]]]
-                                                   forSelector:@selector(runShellScript:shell:interactive:withReply:)
+                                                   forSelector:@selector(runShellScript:shell:mode:withReply:)
                                                  argumentIndex:0
                                                        ofReply:YES];
     [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSData class], [NSNumber class]]]
-                                                   forSelector:@selector(runShellScript:shell:interactive:withReply:)
+                                                   forSelector:@selector(runShellScript:shell:mode:withReply:)
                                                  argumentIndex:1
                                                        ofReply:YES];
 
@@ -269,18 +269,46 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 
 - (void)exfiltrateEnvironmentVariableNamed:(NSString *)name
                                      shell:(NSString *)shell
-                                completion:(void (^)(NSString * _Nonnull))completion {
-    // Non-interactive: PATH/SSH_AUTH_SOCK come from the exported environment, so
-    // there's no need to pay the interactive rc-sourcing cost.
-    [[_connectionToService remoteObjectProxy] runShellScript:[NSString stringWithFormat:@"echo $%@", name]
-                                                       shell:shell
-                                                 interactive:NO
-                                                   withReply:^(NSData * _Nullable data,
-                                                               NSData * _Nullable error,
-                                                               int status) {
+                                completion:(void (^)(NSString * _Nullable))completion {
+    // Bare: the exported environment is what's wanted, so don't pay for the
+    // startup files.
+    [self runScript:[NSString stringWithFormat:@"echo $%@", name]
+              shell:shell
+               mode:iTermShellRunModeBare
+         completion:completion];
+}
+
+// Runs `script` in `shell` through the service and delivers the command's stdout
+// (trailing newlines trimmed), or nil on failure, exactly once on the main
+// thread. The error handler covers the case NSXPCConnection silently drops the
+// reply block: the pidinfo service crashing or being invalidated mid-call (it
+// can _exit(0) itself when too many calls wedge). Without it a caller that
+// blocks on this completion (the CLAUDE_CONFIG_DIR spinner) or holds state that
+// must be settled (the composer's PATH promise) would wait forever.
+- (void)runScript:(NSString *)script
+            shell:(NSString *)shell
+             mode:(iTermShellRunMode)mode
+       completion:(void (^)(NSString * _Nullable))completion {
+    __block atomic_flag delivered = ATOMIC_FLAG_INIT;
+    void (^deliver)(NSString * _Nullable) = ^(NSString * _Nullable value) {
+        if (atomic_flag_test_and_set(&delivered)) {
+            return;
+        }
         dispatch_async(dispatch_get_main_queue(), ^{
-            completion(status == 0 ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]] : nil);
+            completion(value);
         });
+    };
+    id<pidinfoProtocol> proxy =
+        [_connectionToService remoteObjectProxyWithErrorHandler:^(NSError *error) {
+            deliver(nil);
+        }];
+    [proxy runShellScript:script
+                    shell:shell
+                     mode:mode
+                withReply:^(NSData * _Nullable data,
+                            NSData * _Nullable error,
+                            int status) {
+        deliver(status == 0 ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]] : nil);
     }];
 }
 
@@ -319,38 +347,24 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 }
 
 - (void)runCommandInUserShell:(NSString *)command completion:(void (^)(NSString *))completion {
-    [self runCommandInUserShell:command interactive:NO completion:completion];
+    [self runCommandInUserShell:command mode:iTermShellRunModeBare completion:completion];
 }
 
 - (void)runCommandInUserShell:(NSString *)command
                   interactive:(BOOL)interactive
                    completion:(void (^)(NSString * _Nullable))completion {
-    // Deliver exactly once, on the main thread. The error handler covers the
-    // case NSXPCConnection silently drops the reply block — the pidinfo service
-    // crashing or being invalidated mid-call (it can _exit(0) itself when too
-    // many calls wedge). Without it a caller that blocks on this completion
-    // (e.g. the CLAUDE_CONFIG_DIR spinner) would wait forever.
-    __block atomic_flag delivered = ATOMIC_FLAG_INIT;
-    void (^deliver)(NSString * _Nullable) = ^(NSString * _Nullable value) {
-        if (atomic_flag_test_and_set(&delivered)) {
-            return;
-        }
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion(value);
-        });
-    };
-    id<pidinfoProtocol> proxy =
-        [_connectionToService remoteObjectProxyWithErrorHandler:^(NSError *error) {
-            deliver(nil);
-        }];
-    [proxy runShellScript:command
-                    shell:[iTermOpenDirectory userShell] ?: @"/bin/bash"
-              interactive:interactive
-                withReply:^(NSData * _Nullable data,
-                            NSData * _Nullable error,
-                            int status) {
-        deliver(status == 0 ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]] : nil);
-    }];
+    [self runCommandInUserShell:command
+                           mode:interactive ? iTermShellRunModeInteractive : iTermShellRunModeBare
+                     completion:completion];
+}
+
+- (void)runCommandInUserShell:(NSString *)command
+                         mode:(iTermShellRunMode)mode
+                   completion:(void (^)(NSString * _Nullable))completion {
+    [self runScript:command
+              shell:[iTermOpenDirectory userShell] ?: @"/bin/bash"
+               mode:mode
+         completion:completion];
 }
 
 - (void)findCompletionsWithPrefix:(NSString *)prefix

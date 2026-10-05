@@ -4112,7 +4112,8 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
             }
         }
         if (!session) {
-            return NO;
+            // An archived session is created from its arrangement.
+            return [PTYSession arrangementIsMarkedAsArchive:arrangement[TAB_ARRANGEMENT_SESSION]];
         }
         sessionMap[sessionGuid] = session;
         return YES;
@@ -5146,7 +5147,13 @@ typedef struct {
             newSubviewSize = [self setSizesFromSplitTreeNode:link.node splitView:splitView];
         } else if (sessionView) {
             PTYSession *session = (PTYSession *)sessionView.delegate;
-            newSubviewSize = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:session.profile]
+            // A browser session's grid is measured in points (its cells are 1x1), not in
+            // the profile font's cells. Scaling it by the font would make the pane many
+            // times too big.
+            const NSSize cellSize = (session.isBrowserSession ?
+                                     NSMakeSize(session.textview.charWidth, session.textview.lineHeight) :
+                                     [PTYTab cellSizeForBookmark:session.profile]);
+            newSubviewSize = [PTYTab _sessionSizeWithCellSize:cellSize
                                                    dimensions:NSMakeSize(link.session.gridSize.width,
                                                                          link.session.gridSize.height)
                                                    showTitles:sessionView.showTitle

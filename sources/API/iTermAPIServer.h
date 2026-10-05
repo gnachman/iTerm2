@@ -114,6 +114,10 @@ extern NSString *const iTermAPIServerConnectionClosed;
 
 - (void)stop;
 
+// Closes the listening socket so new clients are refused, while existing connections keep
+// working. Called when the app begins to quit. See the comment at the call site.
+- (void)stopAcceptingConnections;
+
 #pragma mark - In-process dispatch
 
 // Run requests through the same handlers and subscription machinery as a socket

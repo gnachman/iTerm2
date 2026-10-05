@@ -316,6 +316,35 @@ NSString* ScreenCharArrayToString(const screen_char_t *screenChars,
                                   int end,
                                   unichar** backingStorePtr,
                                   int** deltasPtr) {
+    return ScreenCharArrayToStringWithInteriorNulsAsSpaces(screenChars,
+                                                           start,
+                                                           end,
+                                                           backingStorePtr,
+                                                           deltasPtr,
+                                                           NO);
+}
+
+static BOOL ScreenCharIsNul(const screen_char_t *c) {
+    return !c->image && !c->complexChar && c->code == 0;
+}
+
+NSString* ScreenCharArrayToStringWithInteriorNulsAsSpaces(const screen_char_t *screenChars,
+                                                          int start,
+                                                          int end,
+                                                          unichar** backingStorePtr,
+                                                          int** deltasPtr,
+                                                          BOOL interiorNulsAsSpaces) {
+    // A cell the cursor moved over without writing is a nul. It looks like a space, so
+    // when asked, convert nuls that come before the last non-nul cell into spaces.
+    // Trailing nuls are left alone. This is still one unichar per cell, so it does not
+    // affect deltas.
+    int interiorEnd = start;
+    if (interiorNulsAsSpaces) {
+        interiorEnd = end;
+        while (interiorEnd > start && ScreenCharIsNul(&screenChars[interiorEnd - 1])) {
+            --interiorEnd;
+        }
+    }
     const int lineLength = end - start;
     unichar* charHaystack = iTermMalloc(sizeof(unichar) * lineLength * kMaxParts + 1);
     *backingStorePtr = charHaystack;
@@ -362,7 +391,13 @@ NSString* ScreenCharArrayToString(const screen_char_t *screenChars,
             // tab fillers.
             ++delta;
         } else {
-            const int len = ExpandScreenChar(&screenChars[i], charHaystack + o);
+            int len;
+            if (i < interiorEnd && ScreenCharIsNul(&screenChars[i])) {
+                charHaystack[o] = ' ';
+                len = 1;
+            } else {
+                len = ExpandScreenChar(&screenChars[i], charHaystack + o);
+            }
             ++delta;
             for (int j = o; j < o + len; ++j) {
                 deltas[j] = --delta;
@@ -471,6 +506,27 @@ static BOOL iTermComposedCharIsFlag(NSString *s, UTF32Char baseChar) {
         return NO;
     }
     return iTermCodePointIsRegionalIndicator(DecodeSurrogatePair(high, [s characterAtIndex:3]));
+}
+
+// YES if `s` begins with an emoji modifier sequence: an Emoji_Modifier_Base followed by
+// a skin tone modifier, as in U+1F44D U+1F3FB, optionally with a U+FE0F between them to
+// match iTermFindFirstCodePointWithOwnCell. `baseChar` is the already-decoded first code
+// point and `next` is the UTF-16 index just past it.
+static BOOL iTermComposedCharIsEmojiModifierSequence(NSString *s, UTF32Char baseChar, NSInteger next) {
+    if (!iTermIsEmojiModifierBase(baseChar)) {
+        return NO;
+    }
+    if ((NSUInteger)next < s.length && [s characterAtIndex:next] == 0xFE0F) {
+        next += 1;
+    }
+    if (s.length < (NSUInteger)next + 2) {
+        return NO;
+    }
+    const unichar high = [s characterAtIndex:next];
+    if (!IsHighSurrogate(high)) {
+        return NO;
+    }
+    return iTermIsEmojiModifier(DecodeSurrogatePair(high, [s characterAtIndex:next + 1]));
 }
 
 // Convert a string into an array of screen characters, dealing with surrogate
@@ -598,6 +654,16 @@ void StringToScreenChars(NSString *s,
                 // gave before flags became a single cluster. A single narrow cell would put
                 // a program's cursor arithmetic out of step with the grid. A lone indicator
                 // is not a flag and keeps the width those settings give it.
+                isDoubleWidth = YES;
+                disambiguated = YES;
+            }
+            if (!disambiguated && iTermComposedCharIsEmojiModifierSequence(composedOrNonBmpChar, baseChar, next)) {
+                // An emoji modifier sequence is one emoji glyph, so it occupies two columns
+                // even when the base alone is narrow (e.g., U+261D). This is deliberately
+                // not gated on the alternate screen the way VS16 widening is: every emoji
+                // modifier sequence gets the same width everywhere. Note that wcwidth sums
+                // the two code points (4 columns for U+1F44D U+1F3FB), so a program that
+                // measures with it will disagree. See issue 13079.
                 isDoubleWidth = YES;
                 disambiguated = YES;
             }

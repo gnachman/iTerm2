@@ -1740,27 +1740,9 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     if (!self.dataSourceProvider.authenticated) {
         return NO;
     }
-    if (menuItem.action == @selector(toggleRequireAuthenticationAfterScreenLocks:)) {
-        const BOOL allowed = iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager;
-        if (!allowed) {
-            return NO;
-        }
-        if (iTermSecureUserDefaults.instance.requireAuthEveryOpenPasswordManager) {
-            // Subsumed: re-authenticating on every open already covers the first open
-            // after a screen lock, so show this as effectively on but not toggleable.
-            menuItem.state = NSControlStateValueOn;
-            return NO;
-        }
-        menuItem.state = [iTermUserDefaults requireAuthenticationAfterScreenLocks] ? NSControlStateValueOn : NSControlStateValueOff;
-    } else if (menuItem.action == @selector(toggleRequireAuthenticationEveryOpen:)) {
-        const BOOL allowed = iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager;
-        if (!allowed) {
-            return NO;
-        }
-        menuItem.state = iTermSecureUserDefaults.instance.requireAuthEveryOpenPasswordManager ? NSControlStateValueOn : NSControlStateValueOff;
-    } else if (menuItem.action == @selector(toggleRequireAuthenticationToOpenPasswordManager:)) {
-        const BOOL state = iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager;
-        menuItem.state = state ? NSControlStateValueOn : NSControlStateValueOff;
+    if (menuItem.action == @selector(selectAuthenticationMode:)) {
+        const BOOL selected = (menuItem.tag == [iTermPasswordManagerDataSourceProvider currentAuthenticationMode]);
+        menuItem.state = selected ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(toggleProbe:)) {
         menuItem.state = self.shouldProbe ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(useKeychain:)) {
@@ -1812,17 +1794,9 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     return YES;
 }
 
-- (IBAction)toggleRequireAuthenticationToOpenPasswordManager:(id)sender {
-    iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager = !iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager;
-}
-
-- (IBAction)toggleRequireAuthenticationAfterScreenLocks:(id)sender {
-    [iTermUserDefaults setRequireAuthenticationAfterScreenLocks:![iTermUserDefaults requireAuthenticationAfterScreenLocks]];
-}
-
-- (IBAction)toggleRequireAuthenticationEveryOpen:(id)sender {
-    iTermSecureUserDefaults.instance.requireAuthEveryOpenPasswordManager =
-        !iTermSecureUserDefaults.instance.requireAuthEveryOpenPasswordManager;
+// Each authentication mode menu item's tag is its iTermPasswordManagerAuthenticationMode.
+- (IBAction)selectAuthenticationMode:(NSMenuItem *)sender {
+    [iTermPasswordManagerDataSourceProvider setAuthenticationMode:(iTermPasswordManagerAuthenticationMode)sender.tag];
 }
 
 - (IBAction)toggleProbe:(id)sender {
@@ -1836,14 +1810,13 @@ static NSInteger const kDynamicMenuItemTag = 9999;
 #pragma mark - Notifications
 
 + (void)staticScreenDidLock:(NSNotification *)notification {
-    if ([iTermUserDefaults requireAuthenticationAfterScreenLocks]) {
+    if ([iTermPasswordManagerDataSourceProvider requiresAuthenticationAfterScreenLock]) {
         [self.dataSourceProvider revokeAuthentication];
     }
 }
 
 - (void)instanceScreenDidLock:(NSNotification *)notification {
-    if (iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager &&
-        [iTermUserDefaults requireAuthenticationAfterScreenLocks]) {
+    if ([iTermPasswordManagerDataSourceProvider requiresAuthenticationAfterScreenLock]) {
         for (NSWindow *sheet in [self.window.sheets copy]) {
             [self.window endSheet:sheet];
         }

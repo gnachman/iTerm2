@@ -469,6 +469,19 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
     }
 }
 
+- (void)setTmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit {
+    @synchronized(self) {
+        [_controlParser setTmuxServerMayOmitEndGuardBeforeExit:mayOmit];
+        // When tmux runs over SSH integration its stream is re-parsed by a child parser (see
+        // SSH_OUTPUT), and that child is the one holding the tmux hook. Children can nest. A
+        // level whose hook is not tmux ignores this. Same lock order as the parse path: outer
+        // parser first, then the child.
+        [_sshParsers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, VT100Parser * _Nonnull child, BOOL * _Nonnull stop) {
+            [child setTmuxServerMayOmitEndGuardBeforeExit:mayOmit];
+        }];
+    }
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p dcsHooked=%@ depth=%@>",
             NSStringFromClass([self class]),

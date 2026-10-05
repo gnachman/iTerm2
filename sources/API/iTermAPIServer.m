@@ -384,6 +384,12 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     });
 }
 
+- (void)stopAcceptingConnections {
+    DLog(@"stopAcceptingConnections");
+    [_unixSocket close];
+    _unixSocket = nil;
+}
+
 - (void)stop {
     self.delegate = nil;
     [_unixSocket close];

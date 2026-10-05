@@ -209,6 +209,10 @@
     [_dcsParser cancelTmuxRecoveryMode];
 }
 
+- (void)setTmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit {
+    [_dcsParser setTmuxServerMayOmitEndGuardBeforeExit:mayOmit];
+}
+
 - (void)startConductorRecoveryModeWithID:(NSString *)dcsID {
     [_dcsParser startConductorRecoveryModeWithID:dcsID];
 }

@@ -144,6 +144,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
             [term recreateTab:tab
               withArrangement:restorableSession.arrangement
                      sessions:restorableSession.sessions
+                     archives:nil
                        revive:NO];
         } else {
             RLog(@"The tab doesn't exist. Create a new tab and add the session to it");

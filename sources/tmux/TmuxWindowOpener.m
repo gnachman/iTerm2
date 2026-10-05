@@ -18,6 +18,7 @@
 #import "TmuxStateParser.h"
 
 NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
+NSString * const kTmuxWindowOpenerStateDeferredTokens = @"deferred_tokens";
 
 NSString *const kTmuxWindowOpenerWindowOptionStyle = @"WindowStyle";
 NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen";
@@ -47,6 +48,8 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     NSMutableDictionary<NSNumber *, TmuxHistory *> *altHistories_;
     NSMutableDictionary *states_;
     PTYTab *tabToUpdate_;
+    // Panes whose state is being fetched to create their sessions. See -[TmuxController willOpenPane:].
+    NSMutableArray<NSNumber *> *_panesBeingOpened;
     id target_;
     SEL selector_;
     BOOL ambiguousIsDoubleWidth_;
@@ -74,6 +77,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         histories_ = [[NSMutableDictionary alloc] init];
         altHistories_ = [[NSMutableDictionary alloc] init];
         states_ = [[NSMutableDictionary alloc] init];
+        _panesBeingOpened = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -196,6 +200,10 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 
 - (void)appendRequestsForWindowPane:(NSNumber *)wp
                             toArray:(NSMutableArray *)cmdList {
+    if (!_unpausingWindowPanes) {
+        [self.controller willOpenPane:wp.intValue];
+        [_panesBeingOpened addObject:wp];
+    }
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:NO]];
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:YES]];
     [cmdList addObject:[self dictForDumpStateForWindowPane:wp]];
@@ -297,7 +305,16 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     }
 }
 
+- (void)didFinishOpeningPanes {
+    if (_panesBeingOpened.count == 0) {
+        return;
+    }
+    [self.controller didFinishOpeningPanes:_panesBeingOpened];
+    [_panesBeingOpened removeAllObjects];
+}
+
 - (void)finishErroneously {
+    [self didFinishOpeningPanes];
     if (self.target) {
         [self.target it_performNonObjectReturningSelector:self.selector
                                                withObject:self];
@@ -447,6 +464,22 @@ static int OctalValue(const char *bytes) {
     return nil;
 }
 
+// Output that arrived before the panes had sessions was dropped. Its effect on the screen is in
+// the captured history, but some control sequences change state that only iTerm2 keeps. Hand
+// those to the sessions about to be created from these states.
+- (void)addDeferredTokensToStates {
+    for (NSNumber *wp in [states_ allKeys]) {
+        NSArray<VT100Token *> *tokens = [self.controller takeDeferredTokensForPane:wp.intValue];
+        if (tokens.count == 0) {
+            continue;
+        }
+        DLog(@"Pane %@ has %@ deferred tokens", wp, @(tokens.count));
+        NSMutableDictionary *state = [states_[wp] mutableCopy];
+        state[kTmuxWindowOpenerStateDeferredTokens] = tokens;
+        states_[wp] = state;
+    }
+}
+
 - (void)requestDidComplete {
     --pendingRequests_;
     if (_errorCount) {
@@ -464,6 +497,8 @@ static int OctalValue(const char *bytes) {
                                                withObject:self];
         return;
     }
+    [self addDeferredTokensToStates];
+    [self didFinishOpeningPanes];
     NSWindowController<iTermWindowController> *term = nil;
     BOOL isNewWindow = NO;
     if (!tabToUpdate_) {

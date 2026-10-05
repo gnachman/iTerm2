@@ -384,7 +384,23 @@ final class AppModel {
     let dictation: DictationController
 
     /// A user-facing error for the pairing screen. Nil while in progress.
-    var pairingError: String?
+    /// Set it with showPairingError(for:) so its details stay in step.
+    var pairingError: String? {
+        didSet {
+            if pairingError == nil {
+                pairingErrorDetails = nil
+            }
+        }
+    }
+    /// Technical details for pairingError (the URLs tried and their low-level
+    /// errors), shown on request for users debugging their network.
+    private(set) var pairingErrorDetails: String?
+    /// While a reconnect keeps retrying: what is stopping it, when that is
+    /// something the user can act on (the relay server list is unreachable from
+    /// this network). Nil for ordinary "Mac not found yet" retries.
+    private(set) var reconnectProblem: String?
+    /// Technical details for reconnectProblem, shown on request.
+    private(set) var reconnectProblemDetails: String?
     /// Step description for the pairing screen ("Searching for your Mac…").
     var pairingStatus = ""
     /// The 6-digit SAS confirmation code to display during a fresh pairing.
@@ -1153,6 +1169,7 @@ final class AppModel {
         phase = .pairing
         pairingError = nil
         pairingStartedAt = Date()
+        showReconnectProblem(for: nil)
         pairingStatus = isReconnect ? "Reconnecting to your Mac" : "Searching for your Mac"
         pairingTask?.cancel()
         pairingTask = Task {
@@ -1165,6 +1182,7 @@ final class AppModel {
                                             ? Self.reconnectHandshakeTimeout
                                             : Self.firstPairHandshakeTimeout,
                                         requireConfirmation: !isReconnect)
+                    showReconnectProblem(for: nil)
                     pairingStatus = "Loading chats"
                     companionLog("Pairing succeeded; loading home")
                     try await loadHome()
@@ -1198,8 +1216,16 @@ final class AppModel {
                         // a fetch blip keeps the cached map. Retry on the shared jittered
                         // backoff (the mac may still be relaunching, and each attempt
                         // re-sends a fresh handshake until it lands).
+                        //
+                        // Retrying forever behind "Mac not found yet" would hide
+                        // a problem the user can fix by changing networks. Say so
+                        // before the re-resolve, which can itself take a long time
+                        // on just such a network.
+                        showReconnectProblem(for: error)
+                        pairingStatus = reconnectProblem == nil
+                            ? "Mac not found yet; retrying (attempt \(attempt + 1))"
+                            : "Retrying (attempt \(attempt + 1))"
                         await forceReResolve(code)
-                        pairingStatus = "Mac not found yet; retrying (attempt \(attempt + 1))"
                         do {
                             try await Task.sleep(nanoseconds: reconnectDelayNanos(consecutiveFailures: attempt))
                             continue
@@ -1207,7 +1233,7 @@ final class AppModel {
                             companionLog("Pairing retry loop cancelled")
                         }
                     } else {
-                        pairingError = userMessage(for: error)
+                        showPairingError(for: error)
                     }
                 }
                 break
@@ -1331,6 +1357,9 @@ final class AppModel {
         return shardResolverCache.resolver(
             resolverURL: resolverURL, token: nil,
             fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared),
+            // The phone refreshes rarely and only while active, so it can afford
+            // to fetch the mirror alongside the primary and fall back at once.
+            mirrorTiming: .withPrimary,
             floorStore: shardMapFloorStore)
     }
 
@@ -2123,7 +2152,7 @@ final class AppModel {
             do {
                 try await loadHome()
             } catch {
-                pairingError = userMessage(for: error)
+                showPairingError(for: error)
             }
         }
     }
@@ -2149,7 +2178,7 @@ final class AppModel {
                     openConversation(chatID: entry.chat.id, replacingPath: true)
                 }
             } catch {
-                pairingError = userMessage(for: error)
+                showPairingError(for: error)
             }
         }
     }
@@ -4733,9 +4762,28 @@ final class AppModel {
         }
     }
 
+    /// Explain a failed reconnect attempt alongside the retry status when the
+    /// relay server list could not be fetched; clear the explanation otherwise.
+    private func showReconnectProblem(for error: Error?) {
+        if let transport = error as? TransportError, case .shardMapUnavailable = transport {
+            reconnectProblem = transport.summary
+            reconnectProblemDetails = transport.details
+        } else {
+            reconnectProblem = nil
+            reconnectProblemDetails = nil
+        }
+    }
+
+    private func showPairingError(for error: Error) {
+        pairingError = userMessage(for: error)
+        pairingErrorDetails = (error as? TransportError)?.details
+    }
+
+    /// One paragraph for the user. Technical details, when an error has them,
+    /// are shown separately (see pairingErrorDetails).
     func userMessage(for error: Error) -> String {
         if let transport = error as? TransportError {
-            return transport.errorDescription ?? "The connection to your Mac was interrupted."
+            return transport.summary
         }
         if let companion = error as? CompanionError {
             return companion.message

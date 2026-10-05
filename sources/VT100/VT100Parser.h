@@ -25,6 +25,10 @@
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelTmuxRecoveryMode;
 
+// Whether a %exit line inside a %begin/%end block ends tmux mode. Pass NO once the tmux server
+// is known to be 1.9 or later; see VT100TmuxParser. Thread-safe.
+- (void)setTmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit;
+
 - (NSInteger)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree;
 - (void)cancelConductorRecoveryMode;
 

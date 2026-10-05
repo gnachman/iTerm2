@@ -34,6 +34,10 @@ NS_INLINE BOOL testBit(const BMPBitmap *bmp, uint32_t cp) {
     return (bmp->bits[cp >> 6] & (1ULL << (cp & 63))) != 0;
 }
 
+NS_INLINE uint32_t decodeSurrogatePair(UniChar high, UniChar low) {
+    return 0x10000 + ((uint32_t)(high - 0xD800) << 10) + (low - 0xDC00);
+}
+
 NS_INLINE void setRange(BMPBitmap *bmp, uint32_t start, uint32_t count) {
     for (uint32_t i = start; i < start + count; i++) {
         setBit(bmp, i);
@@ -103,6 +107,15 @@ static const CharRange sCodePointsWithOwnCellSupp[] = {
 static const int sCodePointsWithOwnCellSuppCount =
     sizeof(sCodePointsWithOwnCellSupp) / sizeof(sCodePointsWithOwnCellSupp[0]);
 
+// Emoji_Modifier_Base ranges from emoji-data.txt, BMP and supplementary together.
+// The set is small and only consulted when an emoji modifier is found, so it
+// gets no bitmap.
+static const CharRange sEmojiModifierBase[] = {
+{{EMOJI_MODIFIER_BASE_RANGES}}
+};
+static const int sEmojiModifierBaseCount =
+    sizeof(sEmojiModifierBase) / sizeof(sEmojiModifierBase[0]);
+
 // ============================================================================
 // Initialization
 // ============================================================================
@@ -166,6 +179,10 @@ BOOL iTermIsRTLCodePoint(uint32_t cp) {
     return inRanges(cp, sRTLSupp, sRTLSuppCount);
 }
 
+BOOL iTermIsEmojiModifierBase(uint32_t cp) {
+    return inRanges(cp, sEmojiModifierBase, sEmojiModifierBaseCount);
+}
+
 BOOL iTermIsCodePointWithOwnCell(uint32_t cp) {
     iTermCharacterSetsInit();
     if (cp < 0x10000) {
@@ -185,7 +202,7 @@ NS_INLINE uint32_t decodeUTF16(const UniChar *chars, CFIndex len, CFIndex *i) {
         UniChar low = chars[*i + 1];
         if (low >= 0xDC00 && low <= 0xDFFF) {
             *i += 2;
-            return 0x10000 + ((uint32_t)(c - 0xD800) << 10) + (low - 0xDC00);
+            return decodeSurrogatePair(c, low);
         }
     }
     *i += 1;
@@ -284,6 +301,38 @@ BOOL iTermStringContainsModifierForcingFullWidth(CFStringRef s) {
     return NO;
 }
 
+// YES if `cp`, which begins at chars[i], is an emoji modifier (skin tone) that follows an
+// Emoji_Modifier_Base, forming an emoji modifier sequence such as U+1F44D U+1F3FB. That
+// sequence is drawn as one glyph, so the modifier must not start its own cell. A modifier
+// after anything else is drawn by CoreText as a separate swatch and keeps its own cell.
+// A single U+FE0F between the base and the modifier is allowed: some text contains it and
+// CoreText still draws one glyph. Only chars[lowerBound..<i] are considered to precede
+// the modifier. See issue 13079.
+static BOOL iTermIsModifierOfPrecedingEmoji(const UniChar *chars,
+                                            CFIndex lowerBound,
+                                            CFIndex i,
+                                            uint32_t cp) {
+    if (!iTermIsEmojiModifier(cp)) {
+        return NO;
+    }
+    // End (exclusive) of the code point that should be the base.
+    CFIndex end = i;
+    if (end > lowerBound && chars[end - 1] == 0xFE0F) {
+        end--;
+    }
+    if (end <= lowerBound) {
+        return NO;
+    }
+    uint32_t preceding = chars[end - 1];
+    if (preceding >= 0xDC00 && preceding <= 0xDFFF && end - 2 >= lowerBound) {
+        const UniChar high = chars[end - 2];
+        if (high >= 0xD800 && high <= 0xDBFF) {
+            preceding = decodeSurrogatePair(high, preceding);
+        }
+    }
+    return iTermIsEmojiModifierBase(preceding);
+}
+
 CFIndex iTermFindFirstCodePointWithOwnCell(const UniChar *chars,
                                            CFIndex start,
                                            CFIndex length,
@@ -311,8 +360,9 @@ CFIndex iTermFindFirstCodePointWithOwnCell(const UniChar *chars,
             // Surrogate pair
             UniChar low = chars[i + 1];
             if (low >= 0xDC00 && low <= 0xDFFF) {
-                uint32_t cp = 0x10000 + ((uint32_t)(c - 0xD800) << 10) + (low - 0xDC00);
-                if (inRanges(cp, sCodePointsWithOwnCellSupp, sCodePointsWithOwnCellSuppCount)) {
+                uint32_t cp = decodeSurrogatePair(c, low);
+                if (inRanges(cp, sCodePointsWithOwnCellSupp, sCodePointsWithOwnCellSuppCount) &&
+                    !iTermIsModifierOfPrecedingEmoji(chars, start - 1, i, cp)) {
                     return i;
                 }
                 i += 2;
@@ -331,8 +381,9 @@ CFIndex iTermFindFirstCodePointWithOwnCell(const UniChar *chars,
 // ============================================================================
 
 // (code point, Bidi_Mirroring_Glyph counterpart) sorted by code point.
-// Every pair in BidiMirroring.txt is in the BMP; the generator fails if a
-// future Unicode version breaks that assumption.
+// Only pairs with both sides in the BMP are included, since callers substitute
+// one unichar for another. Pairs involving supplementary code points (added in
+// Unicode 18) are omitted, so those characters are not mirrored.
 static const uint16_t sBidiMirroringPairs[][2] = {
 {{BIDI_MIRRORING_PAIRS}}
 };

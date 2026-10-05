@@ -145,8 +145,8 @@ final class iTermLineAttributeTests: XCTestCase {
 
         let encoded = iTermMetadataEncodeToArray(original)
 
-        // Verify array grew to 4 elements and lineAttribute is at index 3.
-        XCTAssertEqual(encoded.count, 4)
+        // lineAttribute is at index 3, followed by the bidi direction at index 4.
+        XCTAssertEqual(encoded.count, 5)
         XCTAssertEqual((encoded[3] as! NSNumber).int32Value,
                        iTermLineAttribute.doubleWidth.rawValue)
 

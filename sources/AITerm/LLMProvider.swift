@@ -229,7 +229,7 @@ struct LLMProvider {
     // Whether this vendor's request serializer can carry an inline image
     // content block for any image/* MIME. We send the bytes with their real
     // media type and let the vendor reject sub-formats it doesn't accept
-    // (e.g. Anthropic 400s on image/heic, Gemini on image/tiff). This is
+    // (e.g. Anthropic 400s on image/heic). This is
     // serializer capability, not model capability: every current chat model
     // on these hosts is multimodal, and an unknown future one inherits
     // support here for free. Image-shaped MIMEs that are really text

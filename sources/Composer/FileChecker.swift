@@ -119,6 +119,18 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
     private var path: iTermPromise<NSString>?
     private let shell: String?
 
+    /// Reads PATH from `shell`, calling back on the main thread with nil if the shell could
+    /// not be run. Injected so tests can drive the checker without spawning a shell.
+    typealias PathFetcher = (_ shell: String, _ completion: @escaping (String?) -> Void) -> Void
+    /// stat(2) on a path, calling back with the result and errno (0 on success).
+    typealias FileStatter = (_ path: String, _ completion: @escaping (stat, Int32) -> Void) -> Void
+    private let fetchPath: PathFetcher
+    private let statFile: FileStatter
+    /// Seconds since boot. Injected so tests can move time forward.
+    private let now: () -> TimeInterval
+    /// When the last PATH fetch failed, so it is not retried on every keystroke.
+    private var pathFetchFailedAt: TimeInterval?
+
     enum CommandValidity {
         case invalid(TimeInterval)
         case valid(TimeInterval)
@@ -127,8 +139,25 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
     private var knownCommands = [String: CommandValidity]()
 
     @objc(initWithShell:)
-    init(shell: String?) {
+    convenience init(shell: String?) {
+        let gateway = iTermSlowOperationGateway.sharedInstance()
+        self.init(shell: shell,
+                  fetchPath: { shell, completion in
+                      gateway.exfiltrateEnvironmentVariableNamed("PATH", shell: shell, completion: completion)
+                  },
+                  statFile: { path, completion in
+                      gateway.statFile(path, completion: completion)
+                  })
+    }
+
+    init(shell: String?,
+         fetchPath: @escaping PathFetcher,
+         statFile: @escaping FileStatter,
+         now: @escaping () -> TimeInterval = { NSDate.it_timeSinceBoot() }) {
         self.shell = shell
+        self.fetchPath = fetchPath
+        self.statFile = statFile
+        self.now = now
         super.init()
         dataSource = self
     }
@@ -139,7 +168,7 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
     var fileCheckerDataSourceCanPerformFileChecking: Bool { true }
 
     func fileCheckerDataSourceCheck(path: String, completion: @escaping (Bool) -> ()) {
-        iTermSlowOperationGateway.sharedInstance().statFile(makeAbsolute(path)) { _, error in
+        statFile(makeAbsolute(path)) { _, error in
             completion(error == 0)
         }
     }
@@ -160,6 +189,11 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
     // Max amount of time in seconds a file can be in the valid or invalid state before rechecking.
     private let steadyStateTimeout = TimeInterval(60)
 
+    // How long to wait after the shell failed to report PATH before asking again. The composer
+    // checks commands on every edit, so without this a broken shell would mean a shell launch
+    // per keystroke.
+    private let pathFetchRetryInterval = TimeInterval(60)
+
     // true: definitely valid
     // false: definitely invalid
     // nil: don't know
@@ -168,19 +202,19 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
         case .none:
             break
         case .pending(_, let time):
-            if NSDate.it_timeSinceBoot() - time < pendingTimeout {
+            if now() - time < pendingTimeout {
                 return nil
             }
             // Expired
             knownCommands.removeValue(forKey: command)
         case .valid(let time):
-            if NSDate.it_timeSinceBoot() - time < steadyStateTimeout {
+            if now() - time < steadyStateTimeout {
                 return true
             }
             // Expired
             knownCommands.removeValue(forKey: command)
         case .invalid(let time):
-            if NSDate.it_timeSinceBoot() - time < steadyStateTimeout {
+            if now() - time < steadyStateTimeout {
                 return false
             }
             // Expired
@@ -193,9 +227,9 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
             return nil
         }
         if command.hasPrefix("/") || command.hasPrefix("~") {
-            knownCommands[command] = .pending(1, NSDate.it_timeSinceBoot())
+            knownCommands[command] = .pending(1, now())
             let candidate = command
-            iTermSlowOperationGateway.sharedInstance().statFile(candidate) { [weak self] sb, error in
+            statFile(candidate) { [weak self] sb, error in
                 DispatchQueue.main.async {
                     self?.handleStatResult(command: command,
                                            path: candidate,
@@ -211,10 +245,10 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
                 let pathsString = obj as String
                 let paths = pathsString.components(separatedBy: ":")
                 // We know the path, so search it
-                knownCommands[command] = .pending(paths.count, NSDate.it_timeSinceBoot())
+                knownCommands[command] = .pending(paths.count, now())
                 for path in paths {
                     let candidate = path.appending(pathComponent: command)
-                    iTermSlowOperationGateway.sharedInstance().statFile(candidate) { [weak self] sb, error in
+                    statFile(candidate) { [weak self] sb, error in
                         DispatchQueue.main.async {
                             self?.handleStatResult(command: command,
                                                    path: candidate,
@@ -225,10 +259,29 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
                 }
             }  // else still waiting on promise
         } else {
+            if let pathFetchFailedAt, now() - pathFetchFailedAt < pathFetchRetryInterval {
+                // The shell failed recently; don't launch it again yet.
+                return nil
+            }
+            pathFetchFailedAt = nil
             // Create a path promise
-            path = iTermPromise({ seal in
-                iTermSlowOperationGateway.sharedInstance().exfiltrateEnvironmentVariableNamed("PATH", shell: shell) { result in
-                    seal.fulfill(result)
+            path = iTermPromise({ [fetchPath] seal in
+                fetchPath(shell) { [weak self] result in
+                    guard let result else {
+                        // The shell could not be run. Settle the seal (it asserts if it is
+                        // released unsettled) and drop the promise so a later check asks
+                        // again, rather than treating the failure as an empty PATH forever.
+                        seal.rejectWithDefaultError()
+                        DispatchQueue.main.async {
+                            guard let self else {
+                                return
+                            }
+                            self.path = nil
+                            self.pathFetchFailedAt = self.now()
+                        }
+                        return
+                    }
+                    seal.fulfill(result as NSString)
                 }
             })
         }
@@ -244,7 +297,7 @@ class LocalFileChecker: FileChecker, FileCheckerDataSource {
             valid = false
         }
         let disposition: CommandValidity
-        let now = NSDate.it_timeSinceBoot()
+        let now = now()
         if valid {
             disposition = .valid(now)
         } else {

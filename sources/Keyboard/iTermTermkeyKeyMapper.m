@@ -54,7 +54,15 @@
 #pragma mark - Post-Cocoa
 
 - (NSData *)postCocoaData {
-    return [[self termkeySequenceForEvent] dataUsingEncoding:_configuration.encoding];
+    NSData *optionModifiedData = nil;
+    NSString *string = [self termkeySequenceForEventWithOptionModifiedData:&optionModifiedData];
+    if (optionModifiedData) {
+        // Option-as-Meta sets the high bit on the first byte, which is not valid text in the
+        // session encoding, so the bytes must be sent as-is rather than decoded and re-encoded.
+        DLog(@"Sending option-modified data %@", optionModifiedData);
+        return optionModifiedData;
+    }
+    return [string dataUsingEncoding:_configuration.encoding];
 }
 
 - (void)updateConfigurationWithEvent:(NSEvent *)event {
@@ -448,9 +456,14 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     return c >= 0xE000 && c <= 0xF8FF;
 }
 
+// Returns the sequence to send as a string. When the legacy Option-modified path applies
+// (Esc+ or Meta with CSI u disambiguation off), the result is raw bytes instead: they are
+// stored in *optionModifiedDataPtr and nil is returned, because a Meta byte (>= 0x80) does not
+// survive a round trip through NSString in the session encoding.
 - (NSString *)termkeySequenceForCodePoint:(unichar)codePoint
                                 modifiers:(NSEventModifierFlags)eventModifiers
-                                  keyCode:(int)keyCode {
+                                  keyCode:(int)keyCode
+                       optionModifiedData:(out NSData **)optionModifiedDataPtr {
     // Modified C0
     // Enter, delete, space, tab.
     NSString *sequence = [self termkeySequenceForModifiedC0Control:keyCode eventModifiers:eventModifiers];
@@ -500,7 +513,8 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
             // the shift key should not be considered.
             NSData *data = [self dataForOptionModifiedKeypress];
             if (data) {
-                return [[NSString alloc] initWithData:data encoding:_configuration.encoding];
+                *optionModifiedDataPtr = data;
+                return nil;
             }
         }
     }
@@ -561,14 +575,26 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
     return NO;
 }
 
-- (NSString *)termkeySequenceForEvent {
+- (NSString *)termkeySequenceForEventWithOptionModifiedData:(out NSData **)optionModifiedDataPtr {
     if (_event.charactersIgnoringModifiers.length == 0) {
         return nil;
     }
     const unichar codePoint = [_event.charactersIgnoringModifiers characterAtIndex:0];
     return [self termkeySequenceForCodePoint:codePoint
                                    modifiers:_event.it_modifierFlags
-                                     keyCode:_event.keyCode];
+                                     keyCode:_event.keyCode
+                          optionModifiedData:optionModifiedDataPtr];
+}
+
+// String-only form for the pre-Cocoa path, which never has Option pressed and so never takes
+// the Option-modified data path.
+- (NSString *)termkeySequenceForEvent {
+    NSData *optionModifiedData = nil;
+    NSString *string = [self termkeySequenceForEventWithOptionModifiedData:&optionModifiedData];
+    if (optionModifiedData) {
+        return [[NSString alloc] initWithData:optionModifiedData encoding:_configuration.encoding];
+    }
+    return string;
 }
 
 #pragma mark - iTerm

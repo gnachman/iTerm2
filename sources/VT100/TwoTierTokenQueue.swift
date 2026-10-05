@@ -54,9 +54,12 @@ class TokenArrayGroup {
 class TwoTierTokenQueue {
     static let numberOfPriorities = 2
 
-    private lazy var queues: [Queue] = {
-        (0..<TwoTierTokenQueue.numberOfPriorities).map { _ in Queue() }
-    }()
+    // Not lazy: this is read and appended to from several threads (the reader
+    // thread adds tokens while the mutation queue executes them), and Swift lazy
+    // initialization is not thread safe. Two threads racing the first access each
+    // built their own queues, and tokens appended to the losing set were silently
+    // lost, so a new session could drop its first output.
+    private let queues: [Queue] = (0..<TwoTierTokenQueue.numberOfPriorities).map { _ in Queue() }
 
     private var nextQueueAndTokenArray: (Queue, TokenArray, Int)? {
         for (i, queue) in queues.enumerated() {

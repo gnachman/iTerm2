@@ -691,8 +691,16 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     info.height = _state.currentGrid.size.height;
     info.width = _state.currentGrid.size.width;
 
+    // DVR lengths are ints. A huge grid (a browser session's 1x1 cells in a pane tens of
+    // thousands of points across) would overflow one and fail an assertion in the encoder.
+    // Frames that big are skipped, like any frame too large for the buffer.
+    const long long length = (long long)sizeof(screen_char_t) * (info.width + 1) * info.height;
+    if (length > INT_MAX) {
+        DLog(@"Not saving %@x%@ frame to DVR: %@ bytes", @(info.width), @(info.height), @(length));
+        return;
+    }
     [dvr_ appendFrame:[_state.currentGrid orderedLines]
-               length:sizeof(screen_char_t) * (_state.currentGrid.size.width + 1) * (_state.currentGrid.size.height)
+               length:(int)length
              metadata:[_state.currentGrid metadataArray]
            cleanLines:cleanLines
                  info:&info];

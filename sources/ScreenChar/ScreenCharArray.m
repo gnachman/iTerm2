@@ -683,6 +683,7 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
         .externalAttributes = nil,
         .rtlFound = _metadata.rtlFound,
         .lineAttribute = _metadata.lineAttribute,
+        .bidiDirection = _metadata.bidiDirection,
     };
     iTermExternalAttributeIndex *modified = [original subAttributesInRange:range];
     iTermMetadataSetExternalAttributes(&result, modified);
@@ -707,6 +708,7 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
                       other->_metadata.rtlFound,
                       eaIndex,
                       _metadata.lineAttribute);
+    combined.bidiDirection = (_metadata.bidiDirection != iTermBidiDirectionDefault) ? _metadata.bidiDirection : other->_metadata.bidiDirection;
     ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:copy
                                                              length:combinedLength
                                                            metadata:iTermMetadataMakeImmutable(combined)
@@ -764,12 +766,17 @@ static NSString *const ScreenCharArrayKeyBidiInfo = @"bidi";
     screen_char_t *buffer = (screen_char_t *)data.mutableBytes;
     memmove(buffer, self.line, MIN(length, self.length) * sizeof(screen_char_t));
 
-    // Copy continuation to added section if needed.
+    // Copy continuation to added section if needed so the padding carries its colors and
+    // attributes. The continuation's code is the EOL type rather than a character (and
+    // EOL_SOFT happens to equal DWC_SKIP), so the padding cells get a null code: otherwise
+    // they would read as private-use characters and the DWC_SKIP check below never fires.
     screen_char_t continuation = self.continuation;
     screen_char_t zero = { 0 };
     if (memcmp(&continuation, &zero, sizeof(continuation))) {
+        screen_char_t padding = continuation;
+        padding.code = 0;
         for (int i = self.length; i < length; i++) {
-            buffer[i] = continuation;
+            buffer[i] = padding;
         }
     }
     unichar eol = self.eol;

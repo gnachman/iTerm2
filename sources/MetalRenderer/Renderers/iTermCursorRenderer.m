@@ -368,10 +368,10 @@ NS_ASSUME_NONNULL_BEGIN
             DLog(@"HDR cursor override with non-white color (%@, %@, %@); glue should have forced white",
                  @(color.redComponent), @(color.greenComponent), @(color.blueComponent));
         }
-        // Cap at the shared maximum so the GPU and legacy renderers request the
-        // same peak brightness regardless of the display's potential headroom.
-        const CGFloat maxValue = MIN(tState.configuration.maximumExtendedDynamicRangeColorComponentValue,
-                                     iTermHDRCursorMaximumBrightness);
+        // Use the shared clamp so the GPU and legacy renderers request the same
+        // peak brightness regardless of the display's potential headroom.
+        const CGFloat maxValue = [iTermCursor hdrCursorComponentValueForRequestedBrightness:tState.hdrBrightness
+                                                                                    headroom:tState.configuration.maximumExtendedDynamicRangeColorComponentValue];
         description.color = simd_make_float4(maxValue, maxValue, maxValue, 1);
     }
     return description;

@@ -1505,6 +1505,9 @@ extension PTYSession {
             KEY_HDR_CURSOR: nullValue,
             KEY_HDR_CURSOR + COLORS_LIGHT_MODE_SUFFIX: nullValue,
             KEY_HDR_CURSOR + COLORS_DARK_MODE_SUFFIX: nullValue,
+            KEY_HDR_CURSOR_BRIGHTNESS: nullValue,
+            KEY_HDR_CURSOR_BRIGHTNESS + COLORS_LIGHT_MODE_SUFFIX: nullValue,
+            KEY_HDR_CURSOR_BRIGHTNESS + COLORS_DARK_MODE_SUFFIX: nullValue,
             KEY_ANSI_0_COLOR: nullValue,
             KEY_ANSI_0_COLOR + COLORS_LIGHT_MODE_SUFFIX: nullValue,
             KEY_ANSI_0_COLOR + COLORS_DARK_MODE_SUFFIX: nullValue,
@@ -1673,10 +1676,12 @@ extension PTYSession {
 
 @objc
 extension PTYSession {
-    func saveArchive() {
+    // Returns the path of the archive if it was saved.
+    @discardableResult
+    func saveArchive() -> String? {
         guard let destination = iTermProfilePreferences.string(forKey: KEY_ARCHIVEDIR, inProfile: justProfile) else {
             RLog("No archive dir in profile")
-            return
+            return nil
         }
         let term = delegate?.realParentWindow() as? PseudoTerminal
         let now = Date()
@@ -1687,15 +1692,33 @@ extension PTYSession {
 
         let dateTime = formatter.string(from: now)
             .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "\u{202f}", with: "_")  // narrow no-break space before AM/PM
             .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: ":", with: ".")
             .replacingOccurrences(of: ",", with: "")
-        let filename = "\(dateTime) - \(name).itermarchive"
-        let url = URL(fileURLWithPath: destination).appendingPathComponent(filename)
-        saveArchive(to: iTermSavePanelItem(filename: url.path, host: .localhost), term: term)
+        // The session name can contain slashes, colons, control characters, or
+        // be far too long to be a filename. Issue 13094.
+        // Leave room in the 255-byte filename limit for a suffix and the extension.
+        let base = "\(dateTime) - \(name)".it_sanitizedForFilename(maxBytes: 230)
+        // Sessions closed together, such as split panes, often have the same
+        // name. Don't let one's archive overwrite another's.
+        let directory = URL(fileURLWithPath: destination)
+        var url = directory.appendingPathComponent(base + ".itermarchive")
+        var suffix = 2
+        while FileManager.default.fileExists(atPath: url.path) {
+            url = directory.appendingPathComponent("\(base) (\(suffix)).itermarchive")
+            suffix += 1
+        }
+        guard saveArchive(to: iTermSavePanelItem(filename: url.path, host: .localhost), term: term) else {
+            return nil
+        }
+        return url.path
     }
 
+    // Returns true if the archive was written synchronously to a local file.
     @objc(saveArchiveTo:term:)
-    func saveArchive(to location: iTermSavePanelItem, term: PseudoTerminal?) {
+    @discardableResult
+    func saveArchive(to location: iTermSavePanelItem, term: PseudoTerminal?) -> Bool {
 
         let arrangement: [AnyHashable: Any]?
         if let term {
@@ -1705,19 +1728,20 @@ extension PTYSession {
         }
         guard let data = (arrangement as? NSDictionary)?.propertyListData() else {
             DLog("Invalid plist at \(((arrangement as? NSDictionary)?.it_invalidPathInPlist()).d)")
-            return
+            return false
         }
         if location.host.isLocalhost {
             // This has to be synchronous for saving archives on app quit.
             do {
                 try data.write(to: URL(fileURLWithPath: location.filename))
                 ArchivesMenuBuilder.shared?.didAdd(path: location.filename)
+                return true
             } catch {
                 RLog("Saving to \(location.description) failed: \(error)")
                 iTermNotificationController.sharedInstance().notify(
                     String(localized: "PTYSession.ArchivingFailed", defaultValue: "Archiving to \(location.displayName) failed: \(error.localizedDescription)", comment: "Notification shown when archiving a session fails; first placeholder is the destination, second is the error"))
             }
-            return
+            return false
         }
         Task { @MainActor in
             do {
@@ -1731,6 +1755,7 @@ extension PTYSession {
                     String(localized: "PTYSession.ArchivingFailed", defaultValue: "Archiving to \(location.displayName) failed: \(error.localizedDescription)", comment: "Notification shown when archiving a session fails; first placeholder is the destination, second is the error"))
             }
         }
+        return false
     }
 }
 

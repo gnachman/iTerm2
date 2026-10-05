@@ -24,6 +24,7 @@
 #import "iTermScriptFunctionCall.h"
 #import "iTermSelection.h"
 #import "iTermTextExtractor.h"
+#import "iTermURLActionFactory.h"
 #import "iTermURLActionHelper.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Session.h"
@@ -546,9 +547,12 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     };
     add(scpTitle, @selector(downloadWithSCP:));
-    if (shortSelectedText) {
+    // Same URL construction as browse: uses, so the items only appear when choosing one
+    // would open something. Issue 13092.
+    NSURL *selectionURL = shortSelectedText ? [iTermURLActionFactory urlForUserSuppliedString:shortSelectedText guessingScheme:YES] : nil;
+    if (selectionURL) {
         add(NSLocalizedStringWithDefaultValue(@"ContextMenu.OpenSelectionAsURL", nil, [NSBundle mainBundle], @"Open Selection as URL", @"Context menu item to open the selected text as a URL"), @selector(browse:));
-        if ([[NSWorkspace sharedWorkspace] it_urlIsConditionallyLocallyOpenable:[NSURL URLWithString:shortSelectedText]]) {
+        if ([[NSWorkspace sharedWorkspace] it_urlIsConditionallyLocallyOpenable:selectionURL]) {
             add(NSLocalizedStringWithDefaultValue(@"ContextMenu.OpenURLInVerticalSplitPane", nil, [NSBundle mainBundle], @"Open URL in Vertical Split Pane", @"Context menu item to open a URL in a vertical split pane"), @selector(openURLInVerticalSplitPane:));
             add(NSLocalizedStringWithDefaultValue(@"ContextMenu.OpenURLInHorizontalSplitPane", nil, [NSBundle mainBundle], @"Open URL in Horizontal Split Pane", @"Context menu item to open a URL in a horizontal split pane"), @selector(openURLInHorizontalSplitPane:));
             [theMenu addItem:[NSMenuItem separatorItem]];
@@ -1151,19 +1155,22 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 - (void)browse:(id)sender {
     [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0]
                   andOpenInBackground:NO
-                                style:iTermOpenStyleTab];
+                                style:iTermOpenStyleTab
+                       guessingScheme:YES];
 }
 
 - (void)openURLInVerticalSplitPane:(id)sender {
     [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0]
                   andOpenInBackground:NO
-                                style:iTermOpenStyleVerticalSplit];
+                                style:iTermOpenStyleVerticalSplit
+                       guessingScheme:YES];
 }
 
 - (void)openURLInHorizontalSplitPane:(id)sender {
     [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0]
                   andOpenInBackground:NO
-                                style:iTermOpenStyleHorizontalSplit];
+                                style:iTermOpenStyleHorizontalSplit
+                       guessingScheme:YES];
 }
 
 - (void)quickLook:(id)sender {
@@ -1183,7 +1190,8 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
                                             withValue:[self.delegate contextMenuSelectedText:self capped:0]];
     [_urlActionHelper findUrlInString:url.absoluteString
                   andOpenInBackground:NO
-                                style:iTermOpenStyleTab];
+                                style:iTermOpenStyleTab
+                       guessingScheme:NO];
 }
 
 - (void)addTrigger:(id)sender {

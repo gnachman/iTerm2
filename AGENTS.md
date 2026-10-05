@@ -30,7 +30,7 @@
 ```
 iTerm2/
 ├── sources/               # Main application code
-├── tests/iTerm2XCTests/   # Unit tests
+├── ModernTests/           # Unit tests (XCTest, Swift and ObjC)
 ├── proto/api.proto        # Protocol Buffer API
 ├── tools/                 # Build scripts
 ├── submodules/            # Git submodules
@@ -95,4 +95,4 @@ assert(value != nil)
 - Session logic → `PTYSession.{h,m}`
 - Terminal emulation → `VT100Parser`, `VT100Terminal`, `VT100ScreenMutableState`
 - UI rendering → `PTYTextView.{h,m}`
-- Tests → `tests/iTerm2XCTests/`
+- Tests → `ModernTests/`

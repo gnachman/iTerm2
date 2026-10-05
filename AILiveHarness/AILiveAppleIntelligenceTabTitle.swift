@@ -18,6 +18,8 @@
 //       it a tab renames itself while you are reading it.
 //
 //  Run via: tools/run_ai_live.sh appleIntelligenceTabTitle
+//  Tests over the captured corpus additionally need
+//  ITERM2_AI_LIVE_TAB_TITLE_CORPUS=1; see skipUnlessTabTitleCorpusRequested.
 //
 
 import XCTest
@@ -44,6 +46,18 @@ private struct AuthorTabTitle {
 }
 
 extension AILiveHarness {
+    // Tests that walk the user's captured tab-title corpus make one or more
+    // on-device generations per record, so with a real corpus (thousands of
+    // records) a single test can run for hours. Opt-in only, so a bare
+    // tools/run_ai_live.sh never starts one.
+    static func skipUnlessTabTitleCorpusRequested() throws {
+        let configPath = configFilePath()
+        let json = (try? Data(contentsOf: URL(fileURLWithPath: configPath)))
+            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: String] }
+        try XCTSkipUnless(json?["TAB_TITLE_CORPUS"] == "1",
+                          "Opt-in. Set ITERM2_AI_LIVE_TAB_TITLE_CORPUS=1 to run tests over the tab title corpus.")
+    }
+
     // A: the reporter-style prompt with a concrete "Code Review" example.
     private static let instructionsA = """
         You name terminal tabs. You are given context about a terminal session \
@@ -234,6 +248,7 @@ extension AILiveHarness {
     // without regressing the others. Skipped when no corpus has been collected.
     @available(macOS 26, *)
     func test_appleIntelligence_tabTitle_gradeCorpus() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(
             AIAvailabilityProbe.check(),
             "Apple Intelligence is not available here (needs macOS 26 with Apple Intelligence enabled).")
@@ -279,6 +294,7 @@ extension AILiveHarness {
     // NO-screen side by side. Skipped when no corpus has been collected.
     @available(macOS 26, *)
     func test_appleIntelligence_tabTitle_noScreen() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(
             AIAvailabilityProbe.check(),
             "Apple Intelligence is not available here (needs macOS 26 with Apple Intelligence enabled).")
@@ -318,6 +334,7 @@ extension AILiveHarness {
     // whether the entity is recoverable from the commands alone.
     @available(macOS 26, *)
     func test_appleIntelligence_tabTitle_historyEntity() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(
             AIAvailabilityProbe.check(),
             "Apple Intelligence is not available here (needs macOS 26 with Apple Intelligence enabled).")
@@ -376,6 +393,7 @@ extension AILiveHarness {
     //   NEW             = our shipping prompt + our context+screen, for reference
     @available(macOS 26, *)
     func test_appleIntelligence_tabTitle_authorPrompt() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(
             AIAvailabilityProbe.check(),
             "Apple Intelligence is not available here (needs macOS 26 with Apple Intelligence enabled).")
@@ -423,6 +441,7 @@ extension AILiveHarness {
     // 2-to-5 word guide.
     @available(macOS 26, *)
     func test_appleIntelligence_tabTitle_authorNudge() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(
             AIAvailabilityProbe.check(),
             "Apple Intelligence is not available here (needs macOS 26 with Apple Intelligence enabled).")
@@ -469,6 +488,7 @@ extension AILiveHarness {
     // for everything). All fed context+screen, his 2-to-5 word guide.
     @available(macOS 26, *)
     func test_appleIntelligence_tabTitle_verbObject() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(
             AIAvailabilityProbe.check(),
             "Apple Intelligence is not available here (needs macOS 26 with Apple Intelligence enabled).")
@@ -512,6 +532,7 @@ extension AILiveHarness {
     // Fed context+screen; his 2-to-5 word guide.
     @available(macOS 26, *)
     func test_appleIntelligence_tabTitle_verbObjectTight() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(
             AIAvailabilityProbe.check(),
             "Apple Intelligence is not available here (needs macOS 26 with Apple Intelligence enabled).")
@@ -560,6 +581,7 @@ extension AILiveHarness {
     // the screen differs between the two.
     @available(macOS 26, *)
     func test_appleIntelligence_boilerplateExperiment() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(AIAvailabilityProbe.check(), "Apple Intelligence unavailable.")
         let records = AITabTitleCorpus.load()
         try XCTSkipUnless(records.count >= 5, "Need a corpus; collect captures first.")
@@ -656,6 +678,7 @@ extension AILiveHarness {
     // windowName), so it can't be biased toward a title that parrots it.
     @available(macOS 26, *)
     func test_appleIntelligence_windowHintExperiment() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(AIAvailabilityProbe.check(), "Apple Intelligence unavailable.")
         let records = AITabTitleCorpus.load()
         let candidates = records.enumerated().filter {
@@ -716,6 +739,7 @@ extension AILiveHarness {
     // program title while title-less shells want the model.
     @available(macOS 26, *)
     func test_appleIntelligence_windowNameExperiment() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(AIAvailabilityProbe.check(), "Apple Intelligence unavailable.")
         let records = AITabTitleCorpus.load()
         let candidates = records.enumerated().filter {
@@ -770,6 +794,7 @@ extension AILiveHarness {
     // recorded as an empty title so the judge auto-awards the treatment.
     @available(macOS 26, *)
     func test_appleIntelligence_trimExperiment() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(AIAvailabilityProbe.check(), "Apple Intelligence unavailable.")
         let records = AITabTitleCorpus.load()
         try XCTSkipUnless(records.count >= 5, "Need a corpus; collect captures first.")
@@ -821,6 +846,7 @@ extension AILiveHarness {
     // can be compared head-to-head with Opus 4.8 on the same 20 real inputs.
     @available(macOS 26, *)
     func test_appleIntelligence_tabTitle_sample20() async throws {
+        try Self.skipUnlessTabTitleCorpusRequested()
         try XCTSkipUnless(
             AIAvailabilityProbe.check(),
             "Apple Intelligence is not available here.")
