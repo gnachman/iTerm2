@@ -1120,6 +1120,23 @@ class Session:
         await iterm2.rpc.async_invoke_method(
             self.connection, self.session_id, invocation, -1)
 
+    async def async_set_browser_toolbar_hidden(self, hidden: bool) -> None:
+        """
+        Hide (or show) the toolbar of a browser session: the navigation
+        buttons and URL bar. When hidden, the page fills the session. Open
+        Location shows the toolbar again.
+
+        :param hidden: Whether the toolbar should be hidden.
+
+        :raises: :class:`~iterm2.rpc.RPCException` if the session is not a
+            browser session.
+        """
+        invocation = iterm2.util.invocation_string(
+            "iterm2.browser_set_toolbar_hidden",
+            {"hidden": 1 if hidden else 0})
+        await iterm2.rpc.async_invoke_method(
+            self.connection, self.session_id, invocation, -1)
+
     async def async_move_to_new_tab(
             self,
             window: typing.Optional['iterm2.window.Window'] = None,

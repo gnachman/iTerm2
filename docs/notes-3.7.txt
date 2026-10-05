@@ -260,6 +260,11 @@ New Features:
   and CSI 2 SP k make reordered lines
   left-to-right or right-to-left, and
   CSI 0 SP k restores the default.
+- The Python API can hide a browser session’s
+  toolbar with
+  Session.async_set_browser_toolbar_hidden, so
+  the page fills the pane. Open Location brings
+  the toolbar back.
 
 Improvements:
 - If a profile archives sessions when they close

@@ -23851,6 +23851,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                    target:self
                                                    action:@selector(loadURLWithCompletion:url:connectionKey:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"browser_set_toolbar_hidden"
+                                            defaultValues:@{}
+                                                    types:@{ @"hidden": [NSNumber class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[browser_set_toolbar_hidden]"
+                                                   target:self
+                                                   action:@selector(browserSetToolbarHiddenWithCompletion:hidden:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
+
     }
     return _methods;
 }
@@ -24009,6 +24020,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)performLoadURL:(NSURL *)url completion:(void (^)(id, NSError *))completion {
     [self openURL:url];
+    completion(@YES, nil);
+}
+
+// Removes the navigation toolbar of a browser session so the page fills the session, or
+// brings it back. Open Location also brings it back.
+- (void)browserSetToolbarHiddenWithCompletion:(void (^)(id, NSError *))completion
+                                       hidden:(NSNumber *)hidden {
+    if (!self.isBrowserSession || !_view.browserViewController) {
+        completion(nil, [self loadURLErrorWithCode:1
+                                           message:@"browser_set_toolbar_hidden is only supported in browser sessions"]);
+        return;
+    }
+    _view.browserViewController.toolbarHidden = hidden.boolValue;
     completion(@YES, nil);
 }
 
