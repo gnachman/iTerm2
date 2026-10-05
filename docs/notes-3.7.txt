@@ -414,6 +414,8 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- Fixed a crash when holding Cmd with the mouse
+  over a gray autosuggestion in the composer.
 - Fixed a crash when exiting full screen in a
   window without a title bar, such as a tmux
   integration window, on macOS 26.
