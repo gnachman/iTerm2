@@ -382,17 +382,32 @@
             *fileType = kDynamicProfileFileTypeJSON;
         }
     }
-    NSArray *entries = dict[@"Profiles"];
+    // These files are written by hand or by scripts, so don't trust the types of anything in them.
+    NSArray *entries = [NSArray castFrom:dict[@"Profiles"]];
     if (!entries) {
-        XLog(@"Property list in %@ has no entries", entries);
-        [self reportError:[NSString stringWithFormat:@"Dynamic Profiles file %@ does not have a “Profiles” key at the root.",
-                           filename]
-                     file:filename];
+        XLog(@"Property list in %@ has no array of entries: %@", filename, dict[@"Profiles"]);
+        if (dict[@"Profiles"]) {
+            [self reportError:[NSString stringWithFormat:@"In Dynamic Profiles file %@, the value of “Profiles” must be an array.",
+                               filename]
+                         file:filename];
+        } else {
+            [self reportError:[NSString stringWithFormat:@"Dynamic Profiles file %@ does not have a “Profiles” key at the root.",
+                               filename]
+                         file:filename];
+        }
         return nil;
     }
 
     NSMutableArray *profiles = [NSMutableArray array];
-    for (Profile *profile in entries) {
+    for (id entry in entries) {
+        Profile *profile = [NSDictionary castFrom:entry];
+        if (!profile) {
+            [self reportError:[NSString stringWithFormat:@"In Dynamic Profiles file %@, an entry in “Profiles” is not an object (i.e., a dictionary), so it was ignored.",
+                               filename]
+                         file:filename];
+            continue;
+        }
+        profile = [self profileBySanitizingDynamicProfile:profile file:filename];
         if (![profile[KEY_GUID] isKindOfClass:[NSString class]]) {
             [self reportError:[NSString stringWithFormat:@"Dynamic profile is missing the Guid field in file %@", filename]
                          file:filename];
@@ -445,6 +460,47 @@
     } else {
         return profiles;
     }
+}
+
+// JSON null means a value is absent. Left in, it can't be stored in user defaults ("Attempt to
+// insert non-property list object") or used where code expects a value of the key's type.
+static id iTermDynamicProfileByRemovingNulls(id object) {
+    if ([object isKindOfClass:[NSDictionary class]]) {
+        NSMutableDictionary *result = [NSMutableDictionary dictionary];
+        [(NSDictionary *)object enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+            id sanitized = iTermDynamicProfileByRemovingNulls(value);
+            if (sanitized) {
+                result[key] = sanitized;
+            }
+        }];
+        return result;
+    }
+    if ([object isKindOfClass:[NSArray class]]) {
+        NSMutableArray *result = [NSMutableArray array];
+        for (id value in (NSArray *)object) {
+            id sanitized = iTermDynamicProfileByRemovingNulls(value);
+            if (sanitized) {
+                [result addObject:sanitized];
+            }
+        }
+        return result;
+    }
+    if ([object isKindOfClass:[NSNull class]]) {
+        return nil;
+    }
+    return object;
+}
+
+- (Profile *)profileBySanitizingDynamicProfile:(Profile *)profile file:(NSString *)filename {
+    NSMutableDictionary *result = [iTermDynamicProfileByRemovingNulls(profile) mutableCopy];
+    id keyboardMap = result[KEY_KEYBOARD_MAP];
+    if (keyboardMap && ![keyboardMap isKindOfClass:[NSDictionary class]]) {
+        [self reportError:[NSString stringWithFormat:@"In Dynamic Profiles file %@, the “Keyboard Map” of a profile is not an object (i.e., a dictionary), so it was ignored.",
+                           filename]
+                     file:filename];
+        [result removeObjectForKey:KEY_KEYBOARD_MAP];
+    }
+    return result;
 }
 
 - (NSDictionary *)dictionaryForProfiles:(NSArray<Profile *> *)profiles {
@@ -593,8 +649,8 @@
 // Returns the dictionary for the parent of `profile`.
 - (Profile *)prototypeForDynamicProfile:(Profile *)profile {
     Profile *prototype = nil;
-    NSString *parentName = profile[KEY_DYNAMIC_PROFILE_PARENT_NAME];
-    NSString *parentGUID = profile[KEY_DYNAMIC_PROFILE_PARENT_GUID];
+    NSString *parentName = [NSString castFrom:profile[KEY_DYNAMIC_PROFILE_PARENT_NAME]];
+    NSString *parentGUID = [NSString castFrom:profile[KEY_DYNAMIC_PROFILE_PARENT_GUID]];
     if (!parentName && !parentGUID) {
         return [[ProfileModel sharedInstance] defaultBookmark];
     }

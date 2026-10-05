@@ -44,3 +44,8 @@ Bug Fixes:
   integration window, on macOS 26.
 - Fixed a crash when holding Cmd with the mouse
   over a gray autosuggestion in the composer.
+- Fixed crashes loading Dynamic Profiles files
+  with values of an unexpected type, such as a
+  null value or a Keyboard Map that is not an
+  object. These values are now ignored or
+  reported instead.
