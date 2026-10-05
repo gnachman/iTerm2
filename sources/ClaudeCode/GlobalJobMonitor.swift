@@ -53,8 +53,10 @@ class GlobalJobMonitor: NSObject {
             name: .iTermSessionWillTerminate,
             object: nil)
 
-        // Pick up sessions that already exist.
-        let existing = iTermController.sharedInstance().allSessions() ?? []
+        // Pick up sessions that already exist. The shared controller is nil once termination
+        // has begun, which can happen before launch finishes (a quit or logout during launch).
+        // sharedInstance() imports as an implicitly unwrapped optional, so don't unwrap it.
+        let existing = iTermController.sharedInstance()?.allSessions() ?? []
         DLog("GlobalJobMonitor picking up \(existing.count) existing sessions")
         for session in existing {
             startObserving(session)

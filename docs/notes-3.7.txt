@@ -57,3 +57,6 @@ Bug Fixes:
   VoiceOver, was in use.
 - Fixed a crash when opening a new tab with a
   profile whose font could not be measured.
+- Fixed a crash when iTerm2 was told to quit,
+  for example by logging out, while it was
+  still starting up.
