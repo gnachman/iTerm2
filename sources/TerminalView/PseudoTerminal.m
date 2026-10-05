@@ -14,7 +14,6 @@
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
-#import "NSAlert+iTerm.h"
 #import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -2349,12 +2348,17 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     // The PseudoTerminal might close while the dialog is open so keep it around for now.
     [[self retain] autorelease];
 
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = closeTitle;
-    alert.informativeText = message;
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-    return [alert runSheetModalForWindow:self.window] == NSAlertFirstButtonReturn;
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:message
+                                   actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                             actionMapping:nil
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:closeTitle
+                               cancelLabel:iTermLocalizedCancel()
+                                    window:self.window];
+    return selection == kiTermWarningSelection0;
 }
 
 - (BOOL)confirmCloseTab:(PTYTab *)aTab suppressConfirmation:(BOOL)suppressConfirmation {

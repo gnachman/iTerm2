@@ -700,10 +700,13 @@ NS_ASSUME_NONNULL_BEGIN
                                         autolaunch:autolaunch
                                         completion:^(NSString *errorMessage, NSURL *zipURL) {
                 if (errorMessage || !zipURL) {
-                    NSAlert *alert = [[NSAlert alloc] init];
-                    alert.messageText = NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ExportFailedTitle", nil, [NSBundle mainBundle], @"Export Failed", @"Alert title shown when exporting a script fails");
-                    alert.informativeText = errorMessage ?: NSLocalizedStringWithDefaultValue(@"ScriptsMenu.FailedToCreateArchive", nil, [NSBundle mainBundle], @"Failed to create archive", @"Fallback message shown when creating a script archive fails");
-                    [alert runModal];
+                    [iTermWarning showWarningWithTitle:errorMessage ?: NSLocalizedStringWithDefaultValue(@"ScriptsMenu.FailedToCreateArchive", nil, [NSBundle mainBundle], @"Failed to create archive", @"Fallback message shown when creating a script archive fails")
+                                               actions:@[ iTermLocalizedOK() ]
+                                             accessory:nil
+                                            identifier:nil
+                                           silenceable:kiTermWarningTypePersistent
+                                               heading:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ExportFailedTitle", nil, [NSBundle mainBundle], @"Export Failed", @"Alert title shown when exporting a script fails")
+                                                window:nil];
                     return;
                 }
 
@@ -763,24 +766,28 @@ NS_ASSUME_NONNULL_BEGIN
                             originalURL:(NSURL *)url {
     RLog(@"error=%@ location=%@ url=%@", errorMessage, location, url);
     if (errorMessage) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"ScriptsMenu.CouldNotInstallTitle", nil, [NSBundle mainBundle], @"Could Not Install Script", @"Alert title shown when a script could not be installed");
-        alert.informativeText = errorMessage;
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.TryAgain", nil, [NSBundle mainBundle], @"Try Again", @"Button to retry installing a script")];
-        if ([alert runModal] ==  NSAlertSecondButtonReturn) {
+        const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:errorMessage
+                                                                           actions:@[ iTermLocalizedOK(), NSLocalizedStringWithDefaultValue(@"ScriptsMenu.TryAgain", nil, [NSBundle mainBundle], @"Try Again", @"Button to retry installing a script") ]
+                                                                         accessory:nil
+                                                                        identifier:nil
+                                                                       silenceable:kiTermWarningTypePersistent
+                                                                           heading:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.CouldNotInstallTitle", nil, [NSBundle mainBundle], @"Could Not Install Script", @"Alert title shown when a script could not be installed")
+                                                                            window:nil];
+        if (selection == kiTermWarningSelection1) {
             [self importFromURL:url];
         }
     } else {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ImportedSuccessfullyTitle", nil, [NSBundle mainBundle], @"Script Imported Successfully", @"Alert title shown when a script is imported successfully");
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.Launch", nil, [NSBundle mainBundle], @"Launch", @"Button to launch a script")];
-        const NSModalResponse response = [alert runModal];
-        if (response == NSAlertFirstButtonReturn) {
+        const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:@""
+                                                                           actions:@[ iTermLocalizedOK(), NSLocalizedStringWithDefaultValue(@"ScriptsMenu.Launch", nil, [NSBundle mainBundle], @"Launch", @"Button to launch a script") ]
+                                                                         accessory:nil
+                                                                        identifier:nil
+                                                                       silenceable:kiTermWarningTypePersistent
+                                                                           heading:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ImportedSuccessfullyTitle", nil, [NSBundle mainBundle], @"Script Imported Successfully", @"Alert title shown when a script is imported successfully")
+                                                                            window:nil];
+        if (selection == kiTermWarningSelection0) {
             return;
         }
-        if (response == NSAlertSecondButtonReturn) {
+        if (selection == kiTermWarningSelection1) {
             [self launchScriptWithAbsolutePath:location.path
                                      arguments:@[]
                             explicitUserAction:YES];
@@ -1028,10 +1035,13 @@ NS_ASSUME_NONNULL_BEGIN
         progress = nil;
         if (error != nil) {
             if (![iTermUvProvisioner isCancelationError:error]) {
-                NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = NSLocalizedStringWithDefaultValue(@"ScriptsMenu.CouldNotRebuildTitle", nil, [NSBundle mainBundle], @"Could Not Rebuild Environment", @"Alert title shown when rebuilding a script's Python environment fails");
-                alert.informativeText = error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"ScriptsMenu.UnknownError", nil, [NSBundle mainBundle], @"Unknown error", @"Fallback message shown when an error has no description");
-                [alert runModal];
+                [iTermWarning showWarningWithTitle:error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"ScriptsMenu.UnknownError", nil, [NSBundle mainBundle], @"Unknown error", @"Fallback message shown when an error has no description")
+                                           actions:@[ iTermLocalizedOK() ]
+                                         accessory:nil
+                                        identifier:nil
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.CouldNotRebuildTitle", nil, [NSBundle mainBundle], @"Could Not Rebuild Environment", @"Alert title shown when rebuilding a script's Python environment fails")
+                                            window:nil];
             }
             return;
         }
@@ -1186,14 +1196,19 @@ NS_ASSUME_NONNULL_BEGIN
                      // The user declined the download; do not report a failure.
                      return;
                  }
-                 NSAlert *alert = [[NSAlert alloc] init];
-                 alert.messageText = NSLocalizedStringWithDefaultValue(@"ScriptsMenu.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title shown when installing the Python runtime or environment fails");
+                 NSString *message;
                  if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
-                     alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.EnvCreateError", nil, [NSBundle mainBundle], @"An error occurred while creating the Python environment. The error was: %@", @"Alert body shown when creating the Python environment fails"), errorStatus.localizedDescription];
+                     message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.EnvCreateError", nil, [NSBundle mainBundle], @"An error occurred while creating the Python environment. The error was: %@", @"Alert body shown when creating the Python environment fails"), errorStatus.localizedDescription];
                  } else {
-                     alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.RuntimeInstallError", nil, [NSBundle mainBundle], @"An error ocurred while installing the Python runtime. Remove ~/Library/Application Support/iTerm2/iterm2env and try again. The error was: %@", @"Alert body shown when installing the legacy Python runtime fails"), errorStatus.localizedDescription];
+                     message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.RuntimeInstallError", nil, [NSBundle mainBundle], @"An error ocurred while installing the Python runtime. Remove ~/Library/Application Support/iTerm2/iterm2env and try again. The error was: %@", @"Alert body shown when installing the legacy Python runtime fails"), errorStatus.localizedDescription];
                  }
-                 [alert runModal];
+                 [iTermWarning showWarningWithTitle:message
+                                            actions:@[ iTermLocalizedOK() ]
+                                          accessory:nil
+                                         identifier:nil
+                                        silenceable:kiTermWarningTypePersistent
+                                            heading:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title shown when installing the Python runtime or environment fails")
+                                             window:nil];
                  return;
              }
              [self finishInstallingNewPythonScriptForPicker:picker url:url];
@@ -1459,12 +1474,15 @@ NS_ASSUME_NONNULL_BEGIN
             *pythonVersionOut = pythonVersionPopup.selectedItem.title;
             return url;
         } else {
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"ScriptsMenu.SpacesNotAllowedTitle", nil, [NSBundle mainBundle], @"Spaces Not Allowed", @"Alert title shown when a script filename contains spaces");
-            alert.informativeText = NSLocalizedStringWithDefaultValue(@"ScriptsMenu.SpacesNotAllowedBody", nil, [NSBundle mainBundle], @"Scripts can't have space characters in their filenames.", @"Alert body shown when a script filename contains spaces");
-            [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.UseUnderscore", nil, [NSBundle mainBundle], @"Use _ Instead of Space", @"Button to replace spaces with underscores in a script filename")];
-            [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ChangeName", nil, [NSBundle mainBundle], @"Change Name", @"Button to change a script filename")];
-            if ([alert runModal] == NSAlertFirstButtonReturn) {
+            const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.SpacesNotAllowedBody", nil, [NSBundle mainBundle], @"Scripts can't have space characters in their filenames.", @"Alert body shown when a script filename contains spaces")
+                                                                               actions:@[ NSLocalizedStringWithDefaultValue(@"ScriptsMenu.UseUnderscore", nil, [NSBundle mainBundle], @"Use _ Instead of Space", @"Button to replace spaces with underscores in a script filename"),
+                                                                                          NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ChangeName", nil, [NSBundle mainBundle], @"Change Name", @"Button to change a script filename") ]
+                                                                             accessory:nil
+                                                                            identifier:nil
+                                                                           silenceable:kiTermWarningTypePersistent
+                                                                               heading:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.SpacesNotAllowedTitle", nil, [NSBundle mainBundle], @"Spaces Not Allowed", @"Alert title shown when a script filename contains spaces")
+                                                                                window:nil];
+            if (selection == kiTermWarningSelection0) {
                 return [[url URLByDeletingLastPathComponent] URLByAppendingPathComponent:safeFilename];
             } else {
                 return [self runSavePanelForNewScriptWithPicker:picker
@@ -1577,11 +1595,14 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)showAlertForScript:(NSString *)fullPath error:(NSError *)error {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ProblemRunningTitle", nil, [NSBundle mainBundle], @"Problem running script", @"Alert title shown when a script fails to run");
-    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ScriptFailedBody", nil, [NSBundle mainBundle], @"The script at “%1$@” failed:\n\n%2$@", @"Alert body shown when a script fails, with its path and failure reason"),
-                             fullPath, error.localizedFailureReason];
-    [alert runModal];
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ScriptFailedBody", nil, [NSBundle mainBundle], @"The script at “%1$@” failed:\n\n%2$@", @"Alert body shown when a script fails, with its path and failure reason"),
+                                       fullPath, error.localizedFailureReason]
+                               actions:@[ iTermLocalizedOK() ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ProblemRunningTitle", nil, [NSBundle mainBundle], @"Problem running script", @"Alert title shown when a script fails to run")
+                                window:nil];
 }
 
 + (NSString *)autolaunchScriptPath {

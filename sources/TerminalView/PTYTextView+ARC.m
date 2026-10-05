@@ -31,6 +31,7 @@
 #import "iTermTextPopoverViewController.h"
 #import "iTermURLActionFactory.h"
 #import "iTermURLStore.h"
+#import "iTermWarning.h"
 #import "iTermWebViewWrapperViewController.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -2156,11 +2157,13 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
                           (int)imageInfo.image.size.width,
                           (int)imageInfo.image.size.height];
 
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = text;
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert layout];
-        [alert runModal];
+        [iTermWarning showWarningWithTitle:@""
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:text
+                                    window:nil];
     }
 }
 

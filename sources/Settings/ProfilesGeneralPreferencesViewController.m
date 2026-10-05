@@ -7,6 +7,7 @@
 //
 
 #import "ProfilesGeneralPreferencesViewController.h"
+#import "iTermWarning.h"
 
 #import "AdvancedWorkingDirectoryWindowController.h"
 #import "DebugLogging.h"
@@ -959,11 +960,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [self updateDownloadBrowserPluginButtonHidden];
         return;
     }
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.PluginInvalidTitle", nil, [NSBundle mainBundle], @"Plugin Invalid", @"Title of the alert shown when a browser plugin is invalid");
-    alert.informativeText = error;
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert runSheetModalForWindow:self.view.window];
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.heading = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.PluginInvalidTitle", nil, [NSBundle mainBundle], @"Plugin Invalid", @"Title of the alert shown when a browser plugin is invalid");
+    warning.title = error;
+    warning.actionLabels = @[ iTermLocalizedOK() ];
+    warning.warningType = kiTermWarningTypePersistent;
+    warning.window = self.view.window;
+    [warning runModal];
 }
 
 #pragma mark - SSH

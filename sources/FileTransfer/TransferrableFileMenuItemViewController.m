@@ -9,6 +9,7 @@
 #import "TransferrableFileMenuItemViewController.h"
 #import "FileTransferManager.h"
 #import "TransferrableFileMenuItemView.h"
+#import "iTermWarning.h"
 
 static const CGFloat kWidth = 300;
 static const CGFloat kHeight = 63;
@@ -221,11 +222,13 @@ static const CGFloat kCollapsedHeight = 51;
                       [_transferrableFile displayName],
                       [self stringForStatus:_transferrableFile.status],
                       extra];
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.SummaryTitle", nil, [NSBundle mainBundle], @"File Transfer Summary", @"Title of the dialog summarizing a file transfer");
-    alert.informativeText = text;
-    [alert layout];
-    [alert runModal];
+    [iTermWarning showWarningWithTitle:text
+                               actions:@[ iTermLocalizedOK() ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.SummaryTitle", nil, [NSBundle mainBundle], @"File Transfer Summary", @"Title of the dialog summarizing a file transfer")
+                                window:nil];
 }
 
 - (NSTimeInterval)timeSinceLastStatusChange {

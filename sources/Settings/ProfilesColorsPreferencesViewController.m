@@ -757,11 +757,15 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 - (void)deleteColorPreset:(id)sender {
     iTermColorPresetDictionary *customPresets = [iTermColorPresets customColorPresets];
     if (!customPresets || [customPresets count] == 0) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"ProfilesColors.NoDeletablePresets", nil, [NSBundle mainBundle], @"No deletable color presets.", @"Message text when there are no color presets that can be deleted");
-        alert.informativeText = NSLocalizedStringWithDefaultValue(@"ProfilesColors.NoDeletablePresetsDetail", nil, [NSBundle mainBundle], @"You cannot erase the built-in presets and no custom presets have been imported.", @"Detail text when there are no color presets that can be deleted");
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert runModal];
+        NSString *const heading = NSLocalizedStringWithDefaultValue(@"ProfilesColors.NoDeletablePresets", nil, [NSBundle mainBundle], @"No deletable color presets.", @"Message text when there are no color presets that can be deleted");
+        NSString *const title = NSLocalizedStringWithDefaultValue(@"ProfilesColors.NoDeletablePresetsDetail", nil, [NSBundle mainBundle], @"You cannot erase the built-in presets and no custom presets have been imported.", @"Detail text when there are no color presets that can be deleted");
+        [iTermWarning showWarningWithTitle:title
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:heading
+                                    window:nil];
         return;
     }
 
@@ -810,11 +814,15 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     NSDictionary *theDict = [self presetDictionaryForCurrentColors];
     [theDict writeToSaveItem:item completionHandler:^(NSError *error) {
         if (error) {
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"ProfilesColors.SaveFailed", nil, [NSBundle mainBundle], @"Save Failed.", @"Message text when saving a color preset fails");
-            alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilesColors.CouldNotSave", nil, [NSBundle mainBundle], @"Could not save to %@", @"Detail text when a color preset could not be saved to a destination"), item.displayName];
-            [alert addButtonWithTitle:iTermLocalizedOK()];
-            [alert runModal];
+            NSString *const heading = NSLocalizedStringWithDefaultValue(@"ProfilesColors.SaveFailed", nil, [NSBundle mainBundle], @"Save Failed.", @"Message text when saving a color preset fails");
+            NSString *const title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilesColors.CouldNotSave", nil, [NSBundle mainBundle], @"Could not save to %@", @"Detail text when a color preset could not be saved to a destination"), item.displayName];
+            [iTermWarning showWarningWithTitle:title
+                                       actions:@[ iTermLocalizedOK() ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:heading
+                                        window:nil];
         } else {
             [item revealInFinderIfLocal];
         }

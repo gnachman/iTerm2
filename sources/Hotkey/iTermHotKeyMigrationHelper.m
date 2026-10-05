@@ -202,15 +202,18 @@
         }
 
     }
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"HotKeyMigration.ChangesToMakeTitle", nil, [NSBundle mainBundle], @"Changes to Make", @"Title of the dialog listing settings to add to a dynamic profile");
-    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"HotKeyMigration.ChangesToMakeBody", nil, [NSBundle mainBundle], @"Add these settings to the profile named “%1$@” in “%2$@”:\n%3$@", @"Body explaining which settings to add; first %@ is the profile name, second %@ is the file name, third %@ is the settings text"),
-                             profile[KEY_NAME],
-                             filename,
-                             lines];
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"HotKeyMigration.CopyToPasteboard", nil, [NSBundle mainBundle], @"Copy to Pasteboard", @"Button to copy the suggested settings to the pasteboard")];
-    if ([alert runModal] == NSAlertSecondButtonReturn) {
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"HotKeyMigration.ChangesToMakeBody", nil, [NSBundle mainBundle], @"Add these settings to the profile named “%1$@” in “%2$@”:\n%3$@", @"Body explaining which settings to add; first %@ is the profile name, second %@ is the file name, third %@ is the settings text"),
+                                                               profile[KEY_NAME],
+                                                               filename,
+                                                               lines]
+                                   actions:@[ iTermLocalizedOK(), NSLocalizedStringWithDefaultValue(@"HotKeyMigration.CopyToPasteboard", nil, [NSBundle mainBundle], @"Copy to Pasteboard", @"Button to copy the suggested settings to the pasteboard") ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"HotKeyMigration.ChangesToMakeTitle", nil, [NSBundle mainBundle], @"Changes to Make", @"Title of the dialog listing settings to add to a dynamic profile")
+                                    window:nil];
+    if (selection == kiTermWarningSelection1) {
         NSPasteboard *pasteBoard = [NSPasteboard generalPasteboard];
         [pasteBoard declareTypes:@[ NSPasteboardTypeString ] owner:self];
         [pasteBoard setString:lines forType:NSPasteboardTypeString];

@@ -308,20 +308,27 @@ class CodeReviewPromptView: iTermLayerBackedSolidColorView {
 
     @objc private func saveAsNewMenuItem(_ sender: Any) {
         guard let host = window else { return }
-        let alert = NSAlert()
-        alert.messageText = String(localized: "CodeReviewPrompt.SaveTitle", defaultValue: "Name this prompt", comment: "Title of the dialog for saving a code review prompt")
-        alert.informativeText =
-            String(localized: "CodeReviewPrompt.SaveInformative", defaultValue: "Saved prompts can be re-loaded from the Prompts pulldown.", comment: "Explanatory text in the dialog for saving a code review prompt")
-        alert.addButton(withTitle: String(localized: "General.Save", defaultValue: "Save", comment: "Save: used on buttons and menu items"))
-        alert.addButton(withTitle: iTermLocalizedCancel())
-
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
         field.placeholderString = String(localized: "CodeReviewPrompt.NamePlaceholder", defaultValue: "Prompt name", comment: "Placeholder for the field that names a saved code review prompt")
-        alert.accessoryView = field
 
-        alert.beginSheetModal(for: host) { [weak self] response in
+        let warning = iTermWarning()
+        warning.heading = String(localized: "CodeReviewPrompt.SaveTitle", defaultValue: "Name this prompt", comment: "Title of the dialog for saving a code review prompt")
+        warning.title =
+            String(localized: "CodeReviewPrompt.SaveInformative", defaultValue: "Saved prompts can be re-loaded from the Prompts pulldown.", comment: "Explanatory text in the dialog for saving a code review prompt")
+        warning.actionLabels = [String(localized: "General.Save", defaultValue: "Save", comment: "Save: used on buttons and menu items"),
+                                iTermLocalizedCancel()]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.accessory = field
+        warning.remoteInputs = [.textInput(withIdentifier: "name",  // Localization unneeded
+                                           label: nil,
+                                           textField: field)]
+        warning.initialFirstResponder = field
+        warning.window = host
+
+        warning.runModalAsync { [weak self] selection, _ in
             guard let self else { return }
-            guard response == .alertFirstButtonReturn else { return }
+            guard selection == .kiTermWarningSelection0 else { return }
             let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty else { return }
             let store = CodeReviewPromptStore.shared
@@ -329,10 +336,6 @@ class CodeReviewPromptView: iTermLayerBackedSolidColorView {
             if index >= 0, index < store.prompts.count {
                 store.lastSelectedUUID = store.prompts[index].uuid
             }
-        }
-        // Focus the input as the sheet finishes presenting.
-        DispatchQueue.main.async {
-            field.window?.makeFirstResponder(field)
         }
     }
 

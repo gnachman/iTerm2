@@ -8,7 +8,6 @@
 
 #import "WindowArrangements.h"
 
-#import "NSAlert+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
@@ -16,6 +15,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermSavePanel.h"
 #import "iTermUserDefaults.h"
+#import "iTermWarning.h"
 
 static NSString* WINDOW_ARRANGEMENTS = @"Window Arrangements";
 static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
@@ -203,23 +203,28 @@ static NSInteger sWindowArrangementGeneration;
              defaultInput:(NSString *)defaultValue
               offerExport:(BOOL)offerExport
                completion:(void (^)(NSString *name, iTermSavePanelItem *saveItem))completion {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = prompt;
-    [alert addButtonWithTitle:iTermLocalizedOK()];
+    NSMutableArray<NSString *> *actions = [NSMutableArray arrayWithObject:iTermLocalizedOK()];
     if (offerExport) {
-        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"WindowArrangements.SaveToFileButton", nil, [NSBundle mainBundle], @"Save to File with Contents…", @"Button to save a window arrangement to a file including its contents.")];
+        [actions addObject:NSLocalizedStringWithDefaultValue(@"WindowArrangements.SaveToFileButton", nil, [NSBundle mainBundle], @"Save to File with Contents…", @"Button to save a window arrangement to a file including its contents.")];
     }
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
+    [actions addObject:iTermLocalizedCancel()];
 
     NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 300, 24)];
     [input setStringValue:defaultValue];
-    [alert setAccessoryView:input];
-    [alert layout];
-    [[alert window] makeFirstResponder:input];
-    NSInteger button = [alert runModal];
 
-    const NSInteger okButton = NSAlertFirstButtonReturn;
-    const NSInteger exportButton = offerExport ? NSAlertSecondButtonReturn : -1;
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.heading = prompt;
+    warning.title = @"";
+    warning.actionLabels = actions;
+    warning.cancelLabel = iTermLocalizedCancel();
+    warning.warningType = kiTermWarningTypePersistent;
+    warning.accessory = input;
+    warning.remoteInputs = @[ [iTermWarningRemoteInput textInputWithIdentifier:@"name" label:nil textField:input] ];
+    warning.initialFirstResponder = input;
+    const iTermWarningSelection button = [warning runModal];
+
+    const iTermWarningSelection okButton = kiTermWarningSelection0;
+    const NSInteger exportButton = offerExport ? kiTermWarningSelection1 : -1;
     if (button == okButton) {
         [input validateEditing];
         completion([[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "],
@@ -292,12 +297,17 @@ static NSInteger sWindowArrangementGeneration;
             return;
         }
         if ([WindowArrangements hasWindowArrangement:name]) {
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"WindowArrangements.ReplaceExistingTitle", nil, [NSBundle mainBundle], @"Replace Existing Saved Window Arrangement?", @"Alert title asking whether to replace an existing saved window arrangement.");
-            alert.informativeText = NSLocalizedStringWithDefaultValue(@"WindowArrangements.ReplaceExistingBody", nil, [NSBundle mainBundle], @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?", @"Alert body asking whether to replace an existing saved window arrangement with the current one.");
-            [alert addButtonWithTitle:iTermLocalizedYes()];
-            [alert addButtonWithTitle:iTermLocalizedNo()];
-            if ([alert runModal] == NSAlertSecondButtonReturn) {
+            NSString *const heading = NSLocalizedStringWithDefaultValue(@"WindowArrangements.ReplaceExistingTitle", nil, [NSBundle mainBundle], @"Replace Existing Saved Window Arrangement?", @"Alert title asking whether to replace an existing saved window arrangement.");
+            NSString *const title = NSLocalizedStringWithDefaultValue(@"WindowArrangements.ReplaceExistingBody", nil, [NSBundle mainBundle], @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?", @"Alert body asking whether to replace an existing saved window arrangement with the current one.");
+            const iTermWarningSelection selection =
+                [iTermWarning showWarningWithTitle:title
+                                           actions:@[ iTermLocalizedYes(), iTermLocalizedNo() ]
+                                         accessory:nil
+                                        identifier:nil
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:heading
+                                            window:nil];
+            if (selection == kiTermWarningSelection1) {
                 completion(nil);
                 return;
             }
@@ -361,12 +371,14 @@ static NSInteger sWindowArrangementGeneration;
     NSMutableDictionary *dict = [[[iTermUserDefaults userDefaults] objectForKey:WINDOW_ARRANGEMENTS] mutableCopy];
     NSDictionary *value = [dict[oldName] copy];
     if (dict[newName]) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"WindowArrangements.ReplaceArrangementTitle", nil, [NSBundle mainBundle], @"Replace Arrangement?", @"Alert title asking whether to replace an existing window arrangement when renaming.");
-        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"WindowArrangements.ReplaceArrangementBody", nil, [NSBundle mainBundle], @"An arrangement named “%@” already exists. Would you like to replace it?", @"Alert body when renaming to a name that already exists. %@ is the arrangement name."), newName];
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert addButtonWithTitle:iTermLocalizedCancel()];
-        if ([alert runSheetModalForWindow:self.view.window] == NSAlertSecondButtonReturn) {
+        iTermWarning *warning = [[iTermWarning alloc] init];
+        warning.heading = NSLocalizedStringWithDefaultValue(@"WindowArrangements.ReplaceArrangementTitle", nil, [NSBundle mainBundle], @"Replace Arrangement?", @"Alert title asking whether to replace an existing window arrangement when renaming.");
+        warning.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"WindowArrangements.ReplaceArrangementBody", nil, [NSBundle mainBundle], @"An arrangement named “%@” already exists. Would you like to replace it?", @"Alert body when renaming to a name that already exists. %@ is the arrangement name."), newName];
+        warning.actionLabels = @[ iTermLocalizedOK(), iTermLocalizedCancel() ];
+        warning.cancelLabel = iTermLocalizedCancel();
+        warning.warningType = kiTermWarningTypePersistent;
+        warning.window = self.view.window;
+        if ([warning runModal] == kiTermWarningSelection1) {
             textField.stringValue = oldName;
             return;
         }

@@ -510,10 +510,13 @@
                 // The user declined the download; do not report a failure.
                 return;
             }
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title when installation fails");
-            alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.UpgradeErrorMessage", nil, [NSBundle mainBundle], @"Please file a bug report at https://iterm2.com/bugs. The following error occurred while upgrading a dependency: %@", @"Error message when upgrading a dependency fails; %@ is the error"), errorStatus.localizedDescription];
-            [alert runModal];
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.UpgradeErrorMessage", nil, [NSBundle mainBundle], @"Please file a bug report at https://iterm2.com/bugs. The following error occurred while upgrading a dependency: %@", @"Error message when upgrading a dependency fails; %@ is the error"), errorStatus.localizedDescription]
+                                       actions:@[ iTermLocalizedOK() ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title when installation fails")
+                                        window:nil];
             return;
         }
         [weakSelf finishUpgradingScriptItem:item toFullEnvironmentAt:folder];
@@ -553,10 +556,13 @@
                             attributes:nil
                                  error:&error];
     if (error) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title when installation fails");
-        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.ErrorCreatingMessage", nil, [NSBundle mainBundle], @"Error creating %1$@: %2$@", @"Error creating a folder; first %@ is the folder, second %@ is the error"), innerFolder, error.localizedDescription];
-        [alert runModal];
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.ErrorCreatingMessage", nil, [NSBundle mainBundle], @"Error creating %1$@: %2$@", @"Error creating a folder; first %@ is the folder, second %@ is the error"), innerFolder, error.localizedDescription]
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title when installation fails")
+                                    window:nil];
         return;
     }
     // Move Scripts/Foo.py to Scripts/Foo/Foo/Foo.py
@@ -566,10 +572,13 @@
                          toPath:destination
                           error:&error];
     if (error) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title when installation fails");
-        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.ErrorMovingMessage", nil, [NSBundle mainBundle], @"Error moving %1$@ to %2$@: %3$@", @"Error moving a file; first %@ is source, second %@ is destination, third %@ is the error"), item.path, destination, error.localizedDescription];
-        [alert runModal];
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DependencyEditor.ErrorMovingMessage", nil, [NSBundle mainBundle], @"Error moving %1$@ to %2$@: %3$@", @"Error moving a file; first %@ is source, second %@ is destination, third %@ is the error"), item.path, destination, error.localizedDescription]
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"DependencyEditor.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Alert title when installation fails")
+                                    window:nil];
         return;
     }
 
@@ -728,10 +737,13 @@
             strongSelf->_rebuildInProgress = NO;
             [strongSelf setEditingControlsEnabled:YES];
             if (error != nil && ![iTermUvProvisioner isCancelationError:error]) {
-                NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = NSLocalizedStringWithDefaultValue(@"DependencyEditor.CouldNotChangeVersionTitle", nil, [NSBundle mainBundle], @"Could Not Change Python Version", @"Alert title when the Python version could not be changed");
-                alert.informativeText = error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"DependencyEditor.UnknownError", nil, [NSBundle mainBundle], @"Unknown error", @"Fallback text for an unknown error");
-                [alert runModal];
+                [iTermWarning showWarningWithTitle:error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"DependencyEditor.UnknownError", nil, [NSBundle mainBundle], @"Unknown error", @"Fallback text for an unknown error")
+                                           actions:@[ iTermLocalizedOK() ]
+                                         accessory:nil
+                                        identifier:nil
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:NSLocalizedStringWithDefaultValue(@"DependencyEditor.CouldNotChangeVersionTitle", nil, [NSBundle mainBundle], @"Could Not Change Python Version", @"Alert title when the Python version could not be changed")
+                                            window:nil];
             }
             // Refresh the editor from the (rebuilt) environment and setup.cfg.
             [strongSelf didSelectScriptAtIndex:strongSelf->_scriptsButton.indexOfSelectedItem];

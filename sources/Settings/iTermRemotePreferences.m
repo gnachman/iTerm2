@@ -207,20 +207,26 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
 }
 
 - (NSData *)didFailToLoadFromURL:(NSURL *)url withError:(NSError *)error {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"RemotePreferences.FailedToLoadFromURL", nil, [NSBundle mainBundle], @"Failed to load settings from URL. Falling back to local copy.", @"Alert title when settings could not be loaded from a URL");
-    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"RemotePreferences.HTTPRequestFailed", nil, [NSBundle mainBundle], @"HTTP request failed: %@", @"Alert detail describing an HTTP request failure; %@ is the error description"),
-                             [error localizedDescription] ?: NSLocalizedStringWithDefaultValue(@"RemotePreferences.UnknownError", nil, [NSBundle mainBundle], @"unknown error", @"Fallback text when the error description is unavailable")];
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"RemotePreferences.RevealInSettings", nil, [NSBundle mainBundle], @"Reveal in Settings", @"Button that reveals the relevant setting in Settings")];
+    NSString *heading = NSLocalizedStringWithDefaultValue(@"RemotePreferences.FailedToLoadFromURL", nil, [NSBundle mainBundle], @"Failed to load settings from URL. Falling back to local copy.", @"Alert title when settings could not be loaded from a URL");
+    NSString *body = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"RemotePreferences.HTTPRequestFailed", nil, [NSBundle mainBundle], @"HTTP request failed: %@", @"Alert detail describing an HTTP request failure; %@ is the error description"),
+                      [error localizedDescription] ?: NSLocalizedStringWithDefaultValue(@"RemotePreferences.UnknownError", nil, [NSBundle mainBundle], @"unknown error", @"Fallback text when the error description is unavailable")];
+    NSMutableArray<NSString *> *actions = [NSMutableArray array];
+    [actions addObject:iTermLocalizedOK()];
+    [actions addObject:NSLocalizedStringWithDefaultValue(@"RemotePreferences.RevealInSettings", nil, [NSBundle mainBundle], @"Reveal in Settings", @"Button that reveals the relevant setting in Settings")];
     if ([error.domain isEqual:NSURLErrorDomain] && error.code == NSURLErrorTimedOut) {
-        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"RemotePreferences.TryAgainWithoutTimeout", nil, [NSBundle mainBundle], @"Try Again Without Timeout", @"Button that retries loading without a timeout")];
+        [actions addObject:NSLocalizedStringWithDefaultValue(@"RemotePreferences.TryAgainWithoutTimeout", nil, [NSBundle mainBundle], @"Try Again Without Timeout", @"Button that retries loading without a timeout")];
     }
 
-    const NSModalResponse response = [alert runModal];
-    if (response == NSAlertSecondButtonReturn) {
+    const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
+                                                                       actions:actions
+                                                                     accessory:nil
+                                                                    identifier:nil
+                                                                   silenceable:kiTermWarningTypePersistent
+                                                                       heading:heading
+                                                                        window:nil];
+    if (selection == kiTermWarningSelection1) {
         [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyLoadPrefsFromCustomFolder];
-    } else if (response == NSAlertThirdButtonReturn) {
+    } else if (selection == kiTermWarningSelection2) {
         NSError *innerError = nil;
         NSData *data = [self loadFromURL:url respectingTimeoutSetting:NO error:&innerError];
         if (!data || innerError) {
@@ -292,20 +298,30 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
     if (!remotePrefs.count) {
         RLog(@"It's empty");
         if ([[self customFolderOrURL] length] == 0) {
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"RemotePreferences.ErrorLoadingSettings", nil, [NSBundle mainBundle], @"Error Loading Settings", @"Alert title when settings could not be loaded");
-            alert.informativeText = NSLocalizedStringWithDefaultValue(@"RemotePreferences.LocationNotSet", nil, [NSBundle mainBundle], @"You have enabled “Load settings from a custom folder or URL” in settings but the location is not set.", @"Alert detail explaining the custom settings location is not set");
-            [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"RemotePreferences.DontLoadRemoteSettings", nil, [NSBundle mainBundle], @"Don’t Load Remote Settings", @"Button that disables loading remote settings")];
-            [alert addButtonWithTitle:iTermLocalizedCancel()];
-            if ([alert runModal] == NSAlertFirstButtonReturn) {
+            const iTermWarningSelection selection =
+                [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"RemotePreferences.LocationNotSet", nil, [NSBundle mainBundle], @"You have enabled “Load settings from a custom folder or URL” in settings but the location is not set.", @"Alert detail explaining the custom settings location is not set")
+                                           actions:@[ NSLocalizedStringWithDefaultValue(@"RemotePreferences.DontLoadRemoteSettings", nil, [NSBundle mainBundle], @"Don’t Load Remote Settings", @"Button that disables loading remote settings"),
+                                                      iTermLocalizedCancel() ]
+                                     actionMapping:nil
+                                         accessory:nil
+                                        identifier:nil
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:NSLocalizedStringWithDefaultValue(@"RemotePreferences.ErrorLoadingSettings", nil, [NSBundle mainBundle], @"Error Loading Settings", @"Alert title when settings could not be loaded")
+                                       cancelLabel:iTermLocalizedCancel()
+                                            window:nil];
+            if (selection == kiTermWarningSelection0) {
                 [iTermPreferences setBool:NO forKey:kPreferenceKeyLoadPrefsFromCustomFolder];
             }
         } else {
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"RemotePreferences.FailedToLoadFromDirectory", nil, [NSBundle mainBundle], @"Failed to load settings from custom directory. Falling back to local copy.", @"Alert title when settings could not be loaded from the custom directory");
-            alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"RemotePreferences.MissingOrMalformedFile", nil, [NSBundle mainBundle], @"Missing or malformed file at “%@”", @"Alert detail naming the missing or malformed file; %@ is the path"),
-                                     [self customFolderOrURL]];
-            [alert runModal];
+            NSString *body = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"RemotePreferences.MissingOrMalformedFile", nil, [NSBundle mainBundle], @"Missing or malformed file at “%@”", @"Alert detail naming the missing or malformed file; %@ is the path"),
+                              [self customFolderOrURL]];
+            [iTermWarning showWarningWithTitle:body
+                                       actions:@[ iTermLocalizedOK() ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:NSLocalizedStringWithDefaultValue(@"RemotePreferences.FailedToLoadFromDirectory", nil, [NSBundle mainBundle], @"Failed to load settings from custom directory. Falling back to local copy.", @"Alert title when settings could not be loaded from the custom directory")
+                                        window:nil];
         }
     }
     DLog(@"Done");
@@ -366,21 +382,28 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
             NSLocalizedStringWithDefaultValue(@"RemotePreferences.CannotCopyToURLDetail", nil, [NSBundle mainBundle], @"To make it available, first quit iTerm2 and then manually "
             @"copy ~/Library/Preferences/com.googlecode.iterm2.plist to "
             @"your hosting provider.", @"Alert detail explaining that settings must be copied manually when the destination is a URL");
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"RemotePreferences.CannotCopyToURL", nil, [NSBundle mainBundle], @"Settings cannot be copied to a URL.", @"Alert title when settings cannot be copied because the destination is a URL");
-        alert.informativeText = informativeText;
-        [alert runModal];
+        [iTermWarning showWarningWithTitle:informativeText
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"RemotePreferences.CannotCopyToURL", nil, [NSBundle mainBundle], @"Settings cannot be copied to a URL.", @"Alert title when settings cannot be copied because the destination is a URL")
+                                    window:nil];
         return;
     }
 
     NSString *filename = [self prefsFilenameWithBaseDir:folder];
     NSDictionary *myDict = iTermRemotePreferencesSave(iTermUserDefaultsDictionary(self.preservedKeys), filename);
     if (!myDict) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"RemotePreferences.FailedToCopyToDirectory", nil, [NSBundle mainBundle], @"Failed to copy settings to custom directory.", @"Alert title when settings could not be copied to the custom directory");
-        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"RemotePreferences.TriedToCopyDetail", nil, [NSBundle mainBundle], @"Tried to copy %1$@ to %2$@", @"Alert detail describing the failed copy; first %@ is the source, second %@ is the destination"),
-                                 [self remotePrefsLocation], filename];
-        [alert runModal];
+        NSString *body = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"RemotePreferences.TriedToCopyDetail", nil, [NSBundle mainBundle], @"Tried to copy %1$@ to %2$@", @"Alert detail describing the failed copy; first %@ is the source, second %@ is the destination"),
+                          [self remotePrefsLocation], filename];
+        [iTermWarning showWarningWithTitle:body
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"RemotePreferences.FailedToCopyToDirectory", nil, [NSBundle mainBundle], @"Failed to copy settings to custom directory.", @"Alert title when settings could not be copied to the custom directory")
+                                    window:nil];
     } else {
         self.savedRemotePrefs = myDict;
     }

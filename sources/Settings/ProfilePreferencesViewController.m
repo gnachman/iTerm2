@@ -1051,13 +1051,18 @@ andEditComponentWithIdentifier:(NSString *)identifier
     [string writeToSaveItem:item completionHandler:^(NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if (error) {
-                NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
-                alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CouldntSaveFormat", nil, [NSBundle mainBundle], @"Couldn't save to “%1$@” on %2$@: %3$@", @"Error message when saving fails. First %@ is filename, second %@ is host, third %@ is the error."),
+                NSString *const heading = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
+                NSString *const title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CouldntSaveFormat", nil, [NSBundle mainBundle], @"Couldn't save to “%1$@” on %2$@: %3$@", @"Error message when saving fails. First %@ is filename, second %@ is host, third %@ is the error."),
                                          item.filename,
                                          item.host.displayName,
                                          [error localizedDescription]];
-                [alert runModal];
+                [iTermWarning showWarningWithTitle:title
+                                           actions:@[ iTermLocalizedOK() ]
+                                         accessory:nil
+                                        identifier:nil
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:heading
+                                            window:nil];
             }
             completion(error == nil);
         });
@@ -1091,11 +1096,16 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSError *error = nil;
     NSString *string = [self jsonForProfile:profile error:&error];
     if (!string) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
-        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CouldntConvertProfileFormat", nil, [NSBundle mainBundle], @"Couldn't convert profile to JSON: %@", @"Error message when converting a profile to JSON fails. %@ is the error."),
+        NSString *const heading = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
+        NSString *const title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CouldntConvertProfileFormat", nil, [NSBundle mainBundle], @"Couldn't convert profile to JSON: %@", @"Error message when converting a profile to JSON fails. %@ is the error."),
                                  [error localizedDescription]];
-        [alert runModal];
+        [iTermWarning showWarningWithTitle:title
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:heading
+                                    window:nil];
         return;
     }
 
@@ -1126,10 +1136,15 @@ andEditComponentWithIdentifier:(NSString *)identifier
     int errors = 0;
     NSString *string = [self jsonForAllProfilesWithErrorCount:&errors];
     if (errors) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
-        alert.informativeText = NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CouldntConvertProfiles", nil, [NSBundle mainBundle], @"Couldn't convert one or more profiles to JSON. Check Console.app for errors.", @"Error message when converting profiles to JSON fails");
-        [alert runModal];
+        NSString *const heading = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
+        NSString *const title = NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CouldntConvertProfiles", nil, [NSBundle mainBundle], @"Couldn't convert one or more profiles to JSON. Check Console.app for errors.", @"Error message when converting profiles to JSON fails");
+        [iTermWarning showWarningWithTitle:title
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:heading
+                                    window:nil];
         return;
     }
 

@@ -1432,12 +1432,16 @@ final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
         let declaredSize = min(max(byteCount, 0), iTermUvProvisioner.maxTarballBytes)
         // Ask before downloading, like the legacy runtime download did.
         let megabytes = max(1, (declaredSize + 512 * 1024) / (1024 * 1024))
-        let alert = NSAlert()
-        alert.messageText = String(localized: "UvProvisioner.DownloadTitle", defaultValue: "Download Python Support?", comment: "Title of the dialog asking permission to download the Python runtime")
-        alert.informativeText = String(localized: "UvProvisioner.DownloadBody", defaultValue: "To run Python scripts, iTerm2 needs to download uv (about \(megabytes) MB) and a Python interpreter. Additional Python versions are downloaded automatically later if a script needs them. OK to download it now?", comment: "Body of the dialog asking permission to download the Python runtime")
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.addButton(withTitle: iTermLocalizedCancel())
-        guard alert.runModal() == .alertFirstButtonReturn else {
+        let selection = iTermWarning.show(withTitle: String(localized: "UvProvisioner.DownloadBody", defaultValue: "To run Python scripts, iTerm2 needs to download uv (about \(megabytes) MB) and a Python interpreter. Additional Python versions are downloaded automatically later if a script needs them. OK to download it now?", comment: "Body of the dialog asking permission to download the Python runtime"),
+                                          actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
+                                          actionMapping: nil,
+                                          accessory: nil,
+                                          identifier: nil,
+                                          silenceable: .kiTermWarningTypePersistent,
+                                          heading: String(localized: "UvProvisioner.DownloadTitle", defaultValue: "Download Python Support?", comment: "Title of the dialog asking permission to download the Python runtime"),
+                                          cancelLabel: iTermLocalizedCancel(),
+                                          window: nil)
+        guard selection == .kiTermWarningSelection0 else {
             completion(.failure(iTermUvProvisioner.cancelError()))
             return
         }

@@ -511,27 +511,31 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 }
 
 - (void)debug {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"StatusBarGit.DebugInfoTitle", nil, [NSBundle mainBundle], @"Debug Info", @"Title of the git status bar debug info alert");
-    alert.informativeText = [NSString stringWithFormat:
-                             NSLocalizedStringWithDefaultValue(@"StatusBarGit.DebugInfoFormat", nil, [NSBundle mainBundle], @"Directory: %1$@\n"
-                             @"Polling cadence: %2$@ sec\n"
-                             @"Polling enabled: %3$@\n"
-                             @"Last polled %4$@ seconds ago\n"
-                             @"Repo state: %5$@\n"
-                             @"%6$@", @"Body of the git status bar debug info alert; placeholders are directory, cadence, enabled flag, seconds since last poll, repo state, and extra debug info"),
-                             _maker.gitPoller.currentDirectory,
-                             @(_maker.gitPoller.cadence),
-                             _maker.gitPoller.enabled ? iTermLocalizedYes() : iTermLocalizedNo(),
-                             @(-[_maker.gitPoller lastPollTime].timeIntervalSinceNow),
-                             [_maker.gitPoller.state prettyDescription],
-                             [[iTermGitPollWorker sharedInstance] debugInfoForDirectory:_maker.gitPoller.currentDirectory]];
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCopy()];
-    if ([alert runModal] == NSAlertSecondButtonReturn) {
+    NSString *const info = [NSString stringWithFormat:
+                            NSLocalizedStringWithDefaultValue(@"StatusBarGit.DebugInfoFormat", nil, [NSBundle mainBundle], @"Directory: %1$@\n"
+                            @"Polling cadence: %2$@ sec\n"
+                            @"Polling enabled: %3$@\n"
+                            @"Last polled %4$@ seconds ago\n"
+                            @"Repo state: %5$@\n"
+                            @"%6$@", @"Body of the git status bar debug info alert; placeholders are directory, cadence, enabled flag, seconds since last poll, repo state, and extra debug info"),
+                            _maker.gitPoller.currentDirectory,
+                            @(_maker.gitPoller.cadence),
+                            _maker.gitPoller.enabled ? iTermLocalizedYes() : iTermLocalizedNo(),
+                            @(-[_maker.gitPoller lastPollTime].timeIntervalSinceNow),
+                            [_maker.gitPoller.state prettyDescription],
+                            [[iTermGitPollWorker sharedInstance] debugInfoForDirectory:_maker.gitPoller.currentDirectory]];
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:info
+                                   actions:@[ iTermLocalizedOK(), iTermLocalizedCopy() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"StatusBarGit.DebugInfoTitle", nil, [NSBundle mainBundle], @"Debug Info", @"Title of the git status bar debug info alert")
+                                    window:nil];
+    if (selection == kiTermWarningSelection1) {
         NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
         [pasteboard clearContents];
-        [pasteboard setString:alert.informativeText forType:NSPasteboardTypeString];
+        [pasteboard setString:info forType:NSPasteboardTypeString];
     }
 }
 

@@ -444,15 +444,17 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 - (BOOL)transferrableFile:(TransferrableFile *)transferrableFile
                     title:(NSString *)title
            confirmMessage:(NSString *)message {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = title;
-    alert.informativeText = message;
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-
-    [alert layout];
-    NSInteger button = [alert runModal];
-    return (button == NSAlertFirstButtonReturn);
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:message
+                                   actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                             actionMapping:nil
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:title
+                               cancelLabel:iTermLocalizedCancel()
+                                    window:nil];
+    return (selection == kiTermWarningSelection0);
 }
 
 - (void)removeItem:(TransferrableFileMenuItemViewController *)viewController {

@@ -16,7 +16,6 @@
 #import "iTermSearchField.h"
 #import "iTermSystemVersion.h"
 #import "iTermUserDefaults.h"
-#import "NSAlert+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "SFSymbolEnum/SFSymbolEnum.h"
@@ -1016,12 +1015,14 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     if (!error) {
         return;
     }
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"PasswordManager.CouldNotSaveChanges", nil, [NSBundle mainBundle], @"Could Not Save Changes", @"Title of the alert shown when saving password manager changes fails");
-    alert.informativeText = error.localizedDescription.length > 0 ? error.localizedDescription
-                                                                  : NSLocalizedStringWithDefaultValue(@"PasswordManager.GenericReportedError", nil, [NSBundle mainBundle], @"The password manager reported an error.", @"Generic fallback message when the password manager reports an unspecified error");
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert runSheetModalForWindow:self.window];
+    [iTermWarning showWarningWithTitle:error.localizedDescription.length > 0 ? error.localizedDescription
+                                                                             : NSLocalizedStringWithDefaultValue(@"PasswordManager.GenericReportedError", nil, [NSBundle mainBundle], @"The password manager reported an error.", @"Generic fallback message when the password manager reports an unspecified error")
+                               actions:@[ iTermLocalizedOK() ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:NSLocalizedStringWithDefaultValue(@"PasswordManager.CouldNotSaveChanges", nil, [NSBundle mainBundle], @"Could Not Save Changes", @"Title of the alert shown when saving password manager changes fails")
+                                window:self.window];
 }
 
 - (void)didAddAccount:(id<PasswordManagerAccount>)newAccount withError:(NSError *)error {
@@ -1080,11 +1081,16 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (BOOL)shouldRemoveSelection {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"PasswordManager.ConfirmDeletePassword", nil, [NSBundle mainBundle], @"Are you sure you want to delete this password?", @"Confirmation shown before deleting a saved password");
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-    return [alert runSheetModalForWindow:self.window] == NSAlertFirstButtonReturn;
+    const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:@""
+                                                                       actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                                                                 actionMapping:nil
+                                                                     accessory:nil
+                                                                    identifier:nil
+                                                                   silenceable:kiTermWarningTypePersistent
+                                                                       heading:NSLocalizedStringWithDefaultValue(@"PasswordManager.ConfirmDeletePassword", nil, [NSBundle mainBundle], @"Are you sure you want to delete this password?", @"Confirmation shown before deleting a saved password")
+                                                                   cancelLabel:iTermLocalizedCancel()
+                                                                        window:self.window];
+    return selection == kiTermWarningSelection0;
 }
 
 - (IBAction)edit:(id)sender {
@@ -1510,19 +1516,23 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                     if (message.length > 0) {
                         [info appendFormat:@"\n\n%@", message];
                     }
-                    NSAlert *alert = [[NSAlert alloc] init];
-                    alert.messageText = NSLocalizedStringWithDefaultValue(@"PasswordManager.CommandFailed", nil, [NSBundle mainBundle], @"Command Failed", @"Title of the alert shown when a password manager custom command fails");
-                    alert.informativeText = info;
-                    [alert addButtonWithTitle:iTermLocalizedOK()];
-                    [alert runModal];
+                    [iTermWarning showWarningWithTitle:info
+                                               actions:@[ iTermLocalizedOK() ]
+                                             accessory:nil
+                                            identifier:nil
+                                           silenceable:kiTermWarningTypePersistent
+                                               heading:NSLocalizedStringWithDefaultValue(@"PasswordManager.CommandFailed", nil, [NSBundle mainBundle], @"Command Failed", @"Title of the alert shown when a password manager custom command fails")
+                                                window:nil];
                 } else {
                     [weakSelf reloadItems:nil];
                     if (message.length > 0) {
-                        NSAlert *alert = [[NSAlert alloc] init];
-                        alert.messageText = commandName;
-                        alert.informativeText = message;
-                        [alert addButtonWithTitle:iTermLocalizedOK()];
-                        [alert runModal];
+                        [iTermWarning showWarningWithTitle:message
+                                                   actions:@[ iTermLocalizedOK() ]
+                                                 accessory:nil
+                                                identifier:nil
+                                               silenceable:kiTermWarningTypePersistent
+                                                   heading:commandName
+                                                    window:nil];
                     }
                 }
             }];
@@ -1606,15 +1616,18 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         // Already showed an error.
         return;
     }
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PasswordManager.PasswordForAccountFormat", nil, [NSBundle mainBundle], @"Password for %@", @"Title of the alert that reveals a password; the placeholder is the account name"), accountName];
-    alert.informativeText = password;
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCopy()];
-
     __weak __typeof(self) weakSelf = self;
-    [self runModal:alert completion:^(NSModalResponse response) {
-        if (response == NSAlertSecondButtonReturn) {
+    [iTermWarning asyncShowWarningWithTitle:password
+                                    actions:@[ iTermLocalizedOK(), iTermLocalizedCopy() ]
+                              actionMapping:nil
+                                  accessory:nil
+                                 identifier:nil
+                                silenceable:kiTermWarningTypePersistent
+                                    heading:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PasswordManager.PasswordForAccountFormat", nil, [NSBundle mainBundle], @"Password for %@", @"Title of the alert that reveals a password; the placeholder is the account name"), accountName]
+                                cancelLabel:nil
+                                     window:[self windowForAlertSheet]
+                                 completion:^(iTermWarningSelection selection, iTermWarning *warning) {
+        if (selection == kiTermWarningSelection1) {
             [weakSelf copyPasswordToClipboard:password];
         }
     }];
@@ -1921,11 +1934,17 @@ static NSInteger const kDynamicMenuItemTag = 9999;
             if (error) {
                 RLog(@"passwordForRow: return nil, keychain gave error %@", error);
 
-                NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PasswordManager.KeychainQueryFailedFormat", nil, [NSBundle mainBundle], @"Could not get password. Keychain query failed: %@", @"Alert message when a keychain query fails; the placeholder is the underlying error description"),
-                                     error.localizedDescription];
-                [alert addButtonWithTitle:iTermLocalizedOK()];
-                [self runModal:alert completion:^(NSModalResponse response) { }];
+                [iTermWarning asyncShowWarningWithTitle:@""
+                                                actions:@[ iTermLocalizedOK() ]
+                                          actionMapping:nil
+                                              accessory:nil
+                                             identifier:nil
+                                            silenceable:kiTermWarningTypePersistent
+                                                heading:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PasswordManager.KeychainQueryFailedFormat", nil, [NSBundle mainBundle], @"Could not get password. Keychain query failed: %@", @"Alert message when a keychain query fails; the placeholder is the underlying error description"),
+                                                         error.localizedDescription]
+                                            cancelLabel:nil
+                                                 window:[self windowForAlertSheet]
+                                             completion:^(iTermWarningSelection selection, iTermWarning *warning) { }];
                 completion(nil, nil);
             } else {
                 DLog(@"passwordForRow: return nonnil password");
@@ -1935,14 +1954,14 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     }];
 }
 
-- (void)runModal:(NSAlert *)alert completion:(void (^)(NSModalResponse))completion {
+// The window an alert should be a sheet on, or nil if it should be app-modal because the password
+// manager is not on screen.
+- (NSWindow *)windowForAlertSheet {
     if (self.windowLoaded && self.window.isVisible) {
         [NSApp activateIgnoringOtherApps:YES];
-        [alert beginSheetModalForWindow:self.window completionHandler:completion];
-    } else {
-        const NSModalResponse response = [alert runModal];
-        completion(response);
+        return self.window;
     }
+    return nil;
 }
 
 - (NSString *)selectedUserName {

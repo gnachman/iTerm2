@@ -317,16 +317,15 @@ class iTermNonTextPasteHelper: NSObject {
     }
 
     private func showError(_ message: String) {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "NonTextPaste.PasteFailedTitle", defaultValue: "Paste Failed", comment: "Title of the dialog shown when a paste operation fails")
-        alert.informativeText = message
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: iTermLocalizedOK())
-        if let window = delegate?.nonTextPasteHelperWindow(self) {
-            alert.beginSheetModal(for: window)
-        } else {
-            alert.runModal()
-        }
+        let warning = iTermWarning()
+        warning.heading = String(localized: "NonTextPaste.PasteFailedTitle", defaultValue: "Paste Failed", comment: "Title of the dialog shown when a paste operation fails")
+        warning.title = message
+        warning.actionLabels = [iTermLocalizedOK()]
+        warning.warningType = .kiTermWarningTypePersistent
+        // With a window this is a sheet that does not block the caller. Without one it is
+        // app-modal and returns when dismissed.
+        warning.window = delegate?.nonTextPasteHelperWindow(self)
+        warning.runModalAsync { _, _ in }
     }
 
     // Raw values are stable identity (logging and cancel-label matching); text comes from displayName.

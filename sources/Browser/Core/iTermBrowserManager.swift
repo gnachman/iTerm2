@@ -1607,23 +1607,25 @@ extension iTermBrowserManager: WKUIDelegate {
     
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         // Handle JavaScript alerts
-        let alert = NSAlert()
-        alert.messageText = String(localized: "BrowserManager.WebPageAlert", defaultValue: "Web Page Alert", comment: "Title for a JavaScript alert dialog")
-        alert.informativeText = message
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.runModal()
+        let warning = iTermWarning()
+        warning.heading = String(localized: "BrowserManager.WebPageAlert", defaultValue: "Web Page Alert", comment: "Title for a JavaScript alert dialog")
+        warning.title = message
+        warning.actionLabels = [iTermLocalizedOK()]
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.runModal()
         completionHandler()
     }
     
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
         // Handle JavaScript confirmations
-        let alert = NSAlert()
-        alert.messageText = String(localized: "BrowserManager.WebPageConfirmation", defaultValue: "Web Page Confirmation", comment: "Title for a JavaScript confirmation dialog")
-        alert.informativeText = message
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.addButton(withTitle: iTermLocalizedCancel())
-        let response = alert.runModal()
-        completionHandler(response == .alertFirstButtonReturn)
+        let warning = iTermWarning()
+        warning.heading = String(localized: "BrowserManager.WebPageConfirmation", defaultValue: "Web Page Confirmation", comment: "Title for a JavaScript confirmation dialog")
+        warning.title = message
+        warning.actionLabels = [iTermLocalizedOK(), iTermLocalizedCancel()]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        let selection = warning.runModal()
+        completionHandler(selection == .kiTermWarningSelection0)
     }
     
     func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {

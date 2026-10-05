@@ -398,11 +398,14 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                     return;
                 }
                 if (uvError != nil || sharedPython == nil) {
-                    NSAlert *alert = [[NSAlert alloc] init];
-                    alert.messageText = NSLocalizedStringWithDefaultValue(@"ScriptLauncher.EnvUnavailableTitle", nil, [NSBundle mainBundle], @"Python Environment Unavailable", @"Alert title when the Python environment is unavailable");
-                    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptLauncher.EnvUnavailableMessage", nil, [NSBundle mainBundle], @"Could not prepare the Python environment for this script: %@", @"Alert body when the Python environment could not be prepared; %@ is the error detail"),
-                                             uvError.localizedDescription ?: @"unknown error"];
-                    [alert runModal];
+                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptLauncher.EnvUnavailableMessage", nil, [NSBundle mainBundle], @"Could not prepare the Python environment for this script: %@", @"Alert body when the Python environment could not be prepared; %@ is the error detail"),
+                                                       uvError.localizedDescription ?: @"unknown error"]
+                                               actions:@[ iTermLocalizedOK() ]
+                                             accessory:nil
+                                            identifier:nil
+                                           silenceable:kiTermWarningTypePersistent
+                                               heading:NSLocalizedStringWithDefaultValue(@"ScriptLauncher.EnvUnavailableTitle", nil, [NSBundle mainBundle], @"Python Environment Unavailable", @"Alert title when the Python environment is unavailable")
+                                                window:nil];
                     return;
                 }
                 [self reallyLaunchScript:filename
@@ -522,10 +525,13 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     NSString *base = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptLauncher.IntelOnlyBase", nil, [NSBundle mainBundle], @"“%@” uses an Intel-only Python environment, which cannot run on this version of macOS because Rosetta is not available.", @"Error explaining a script uses an Intel-only environment; %@ is the script name"), name];
     [[iTermScriptHistoryEntry globalEntry] addOutput:[NSString stringWithFormat:@"%@ %@\n", base, recovery] completion:^{}];
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"ScriptLauncher.ScriptCannotRunTitle", nil, [NSBundle mainBundle], @"Script Cannot Run", @"Alert title when a script cannot run");
-        alert.informativeText = [NSString stringWithFormat:@"%@ %@", base, recovery];
-        [alert runModal];
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@ %@", base, recovery]
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"ScriptLauncher.ScriptCannotRunTitle", nil, [NSBundle mainBundle], @"Script Cannot Run", @"Alert title when a script cannot run")
+                                    window:nil];
     });
 }
 
@@ -1021,11 +1027,14 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
 + (void)didFailToLaunchScript:(NSString *)filename withException:(NSException *)e {
     ELog(@"Exception occurred %@", e);
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"ScriptLauncher.ErrorRunningScriptTitle", nil, [NSBundle mainBundle], @"Error running script", @"Alert title when a script fails to run");
-    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptLauncher.ErrorRunningScriptMessage", nil, [NSBundle mainBundle], @"Script at “%1$@” failed.\n\n%2$@", @"Alert body when a script fails; first %@ is the file path, second %@ is the failure reason"),
-                             filename, e.reason];
-    [alert runModal];
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptLauncher.ErrorRunningScriptMessage", nil, [NSBundle mainBundle], @"Script at “%1$@” failed.\n\n%2$@", @"Alert body when a script fails; first %@ is the file path, second %@ is the failure reason"),
+                                       filename, e.reason]
+                               actions:@[ iTermLocalizedOK() ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:NSLocalizedStringWithDefaultValue(@"ScriptLauncher.ErrorRunningScriptTitle", nil, [NSBundle mainBundle], @"Error running script", @"Alert title when a script fails to run")
+                                window:nil];
 }
 
 + (NSString *)pathToVersionsFolderForPyenvScriptNamed:(NSString *)name {

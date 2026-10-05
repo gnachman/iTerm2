@@ -29,6 +29,7 @@
 #import "NSWorkspace+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
+#import "iTermWarning.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static const CGFloat kMargin = 5;
@@ -280,11 +281,17 @@ static const CGFloat kMargin = 5;
 }
 
 - (void)clear:(id)sender {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"ToolDirectories.EraseTitle", nil, [NSBundle mainBundle], @"Erase Saved Directories?", @"Confirmation alert title for erasing saved directories");
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-    if ([alert runModal] == NSAlertFirstButtonReturn) {
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@""
+                                   actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                             actionMapping:nil
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"ToolDirectories.EraseTitle", nil, [NSBundle mainBundle], @"Erase Saved Directories?", @"Confirmation alert title for erasing saved directories")
+                               cancelLabel:iTermLocalizedCancel()
+                                    window:nil];
+    if (selection == kiTermWarningSelection0) {
         [[iTermShellHistoryController sharedInstance] eraseCommandHistory:NO directories:YES];
     }
 }

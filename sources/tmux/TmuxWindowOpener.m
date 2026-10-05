@@ -10,6 +10,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
+#import "iTermWarning.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "ScreenChar.h"
@@ -350,10 +351,13 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         }
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"WindowOpener.MalformedHistoryTitle", nil, [NSBundle mainBundle], @"Error: malformed history line from tmux.", @"Alert title shown when tmux sends a malformed scrollback history line");
-            alert.informativeText = NSLocalizedStringWithDefaultValue(@"WindowOpener.SeeConsoleForDetails", nil, [NSBundle mainBundle], @"See Console.app for details", @"Alert body directing the user to the macOS Console app for more information");
-            [alert runModal];
+            [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"WindowOpener.SeeConsoleForDetails", nil, [NSBundle mainBundle], @"See Console.app for details", @"Alert body directing the user to the macOS Console app for more information")
+                                       actions:@[ iTermLocalizedOK() ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:NSLocalizedStringWithDefaultValue(@"WindowOpener.MalformedHistoryTitle", nil, [NSBundle mainBundle], @"Error: malformed history line from tmux.", @"Alert title shown when tmux sends a malformed scrollback history line")
+                                        window:nil];
         });
     }
     [self requestDidComplete];

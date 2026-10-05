@@ -1402,12 +1402,14 @@ class ClaudeCodeOnboarding: NSObject {
         }
         // The user is waiting on the spinner. Offer to retry rather than install
         // into a guessed location.
-        let alert = NSAlert()
-        alert.messageText = String(localized: "ClaudeCodeOnboarding.ConfigResolutionFailedTitle", defaultValue: "Couldn\u{2019}t Determine Settings Location", comment: "Title of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user\u{2019}s shell")
-        alert.informativeText = String(localized: "ClaudeCodeOnboarding.ConfigResolutionFailedBody", defaultValue: "iTerm2 couldn\u{2019}t read CLAUDE_CONFIG_DIR from your shell, so it doesn\u{2019}t know where Claude Code keeps its settings. Try again?", comment: "Body of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user\u{2019}s shell")
-        alert.addButton(withTitle: String(localized: "ClaudeCodeOnboarding.Retry", defaultValue: "Retry", comment: "Button to retry resolving the Claude Code settings location"))
-        alert.addButton(withTitle: iTermLocalizedCancel())
-        if alert.runModal() == .alertFirstButtonReturn {
+        let warning = iTermWarning()
+        warning.heading = String(localized: "ClaudeCodeOnboarding.ConfigResolutionFailedTitle", defaultValue: "Couldn\u{2019}t Determine Settings Location", comment: "Title of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user\u{2019}s shell")
+        warning.title = String(localized: "ClaudeCodeOnboarding.ConfigResolutionFailedBody", defaultValue: "iTerm2 couldn\u{2019}t read CLAUDE_CONFIG_DIR from your shell, so it doesn\u{2019}t know where Claude Code keeps its settings. Try again?", comment: "Body of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user\u{2019}s shell")
+        warning.actionLabels = [String(localized: "ClaudeCodeOnboarding.Retry", defaultValue: "Retry", comment: "Button to retry resolving the Claude Code settings location"),
+                                iTermLocalizedCancel()]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        if warning.runModal() == .kiTermWarningSelection0 {
             // Keep the spinner up and pendingInstallStep set; re-resolve.
             startResolvingConfigDirectory()
         } else {
@@ -1800,10 +1802,12 @@ class ClaudeCodeOnboarding: NSObject {
         } catch {
             RLog("Onboarding: failed to write settings.json: \(error)")
             DispatchQueue.main.async {
-                let alert = NSAlert()
-                alert.messageText = String(localized: "ClaudeCodeOnboarding.FailedToInstallHook", defaultValue: "Failed to install hook", comment: "Title of the alert shown when the Claude Code hook could not be installed")
-                alert.informativeText = String(localized: "ClaudeCodeOnboarding.FailedToWriteSettings", defaultValue: "Could not write to \(settingsURL.path): \(error.localizedDescription)", comment: "Body of the alert shown when settings.json could not be written; first interpolation is a file path, second is an error description")
-                alert.runModal()
+                let warning = iTermWarning()
+                warning.heading = String(localized: "ClaudeCodeOnboarding.FailedToInstallHook", defaultValue: "Failed to install hook", comment: "Title of the alert shown when the Claude Code hook could not be installed")
+                warning.title = String(localized: "ClaudeCodeOnboarding.FailedToWriteSettings", defaultValue: "Could not write to \(settingsURL.path): \(error.localizedDescription)", comment: "Body of the alert shown when settings.json could not be written; first interpolation is a file path, second is an error description")
+                warning.actionLabels = [iTermLocalizedOK()]
+                warning.warningType = .kiTermWarningTypePersistent
+                warning.runModal()
                 completion(false)
             }
             return

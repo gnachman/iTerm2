@@ -122,17 +122,23 @@ class iTermJobTerminationMonitor: NSObject {
 
     private func showAlert(for terminations: [(name: String, pid: pid_t)]) {
         NSApp.activate(ignoringOtherApps: true)
-        let alert = NSAlert()
+        let heading: String
+        let message: String
         if terminations.count == 1 {
             let termination = terminations[0]
-            alert.messageText = String(localized: "JobTermination.JobTerminated", defaultValue: "Job Terminated", comment: "Alert title when a single job was terminated")
-            alert.informativeText = sentence(for: termination)
+            heading = String(localized: "JobTermination.JobTerminated", defaultValue: "Job Terminated", comment: "Alert title when a single job was terminated")
+            message = sentence(for: termination)
         } else {
-            alert.messageText = String(localized: "JobTermination.JobsTerminated", defaultValue: "Jobs Terminated", comment: "Alert title when multiple jobs were terminated")
-            alert.informativeText = terminations.map { "• " + sentence(for: $0) }.joined(separator: "\n")
+            heading = String(localized: "JobTermination.JobsTerminated", defaultValue: "Jobs Terminated", comment: "Alert title when multiple jobs were terminated")
+            message = terminations.map { "• " + sentence(for: $0) }.joined(separator: "\n")
         }
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.runModal()
+        iTermWarning.show(withTitle: message,
+                          actions: [iTermLocalizedOK()],
+                          accessory: nil,
+                          identifier: nil,
+                          silenceable: .kiTermWarningTypePersistent,
+                          heading: heading,
+                          window: nil)
     }
 
     private func sentence(for termination: (name: String, pid: pid_t)) -> String {
@@ -143,10 +149,12 @@ class iTermJobTerminationMonitor: NSObject {
     private func showCannotMonitorAlert(pid: pid_t, name: String?) {
         let displayName = (name?.isEmpty == false) ? name! : String(localized: "JobTerminationMonitor.Unknown", defaultValue: "(unknown)", comment: "Placeholder shown for a job whose name is unknown")
         NSApp.activate(ignoringOtherApps: true)
-        let alert = NSAlert()
-        alert.messageText = String(localized: "JobTerminationMonitor.CannotNotifyTitle", defaultValue: "Cannot Notify on Termination", comment: "Alert title when a process cannot be watched for termination")
-        alert.informativeText = String(localized: "JobTerminationMonitor.CannotWatchJob", defaultValue: "iTerm2 cannot watch the job \(displayName) with process ID \(String(describing: pid)) because it has already terminated.", comment: "Alert body when a process cannot be watched because it already exited")
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.runModal()
+        iTermWarning.show(withTitle: String(localized: "JobTerminationMonitor.CannotWatchJob", defaultValue: "iTerm2 cannot watch the job \(displayName) with process ID \(String(describing: pid)) because it has already terminated.", comment: "Alert body when a process cannot be watched because it already exited"),
+                          actions: [iTermLocalizedOK()],
+                          accessory: nil,
+                          identifier: nil,
+                          silenceable: .kiTermWarningTypePersistent,
+                          heading: String(localized: "JobTerminationMonitor.CannotNotifyTitle", defaultValue: "Cannot Notify on Termination", comment: "Alert title when a process cannot be watched for termination"),
+                          window: nil)
     }
 }

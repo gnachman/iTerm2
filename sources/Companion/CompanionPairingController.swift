@@ -129,22 +129,22 @@ final class CompanionPairingController: NSObject {
     private func showVersionIncompatibleAlert(_ verdict: CompanionProtocolVersion.Compatibility) {
         if let last = lastVersionAlert, Date().timeIntervalSince(last) < 60 { return }
         lastVersionAlert = Date()
-        let alert = NSAlert()
-        alert.alertStyle = .warning
+        let warning = iTermWarning()
         switch verdict {
         case .peerMustUpgrade:
-            alert.messageText = "Companion Device Needs an Update"
-            alert.informativeText = "The iTerm2 Buddy app on your phone is too old to connect to "
+            warning.heading = "Companion Device Needs an Update"
+            warning.title = "The iTerm2 Buddy app on your phone is too old to connect to "
                 + "this version of iTerm2. Update the iPhone app to continue."
         case .selfMustUpgrade:
-            alert.messageText = "iTerm2 Needs an Update"
-            alert.informativeText = "This version of iTerm2 is too old to connect to the iTerm2 "
+            warning.heading = "iTerm2 Needs an Update"
+            warning.title = "This version of iTerm2 is too old to connect to the iTerm2 "
                 + "Buddy app on your phone. Update iTerm2 to continue."
         case .compatible:
             return
         }
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
+        warning.actionLabels = ["OK"]
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.runModal()
     }
 
     /// Whether the persisted pairing has everything a reconnect actually needs.
@@ -198,16 +198,17 @@ final class CompanionPairingController: NSObject {
                 return
             }
             RLog("Companion pairing incomplete at launch (missing: \(missing.joined(separator: ", "))); prompting to re-pair")
-            let alert = NSAlert()
-            alert.messageText = "Re-pair Your Companion Device"
-            alert.informativeText =
+            let warning = iTermWarning()
+            warning.heading = "Re-pair Your Companion Device"
+            warning.title =
                 "Your paired iPhone can’t connect because some pairing information "
                 + "stored on this Mac is missing (\(missing.joined(separator: ", "))). "
                 + "This can happen after reinstalling or rebuilding iTerm2, or after a "
                 + "keychain reset. Re-pair to fix it."
-            alert.addButton(withTitle: "Re-pair…")
-            alert.addButton(withTitle: "Later")
-            if alert.runModal() == .alertFirstButtonReturn {
+            warning.actionLabels = ["Re-pair…", "Later"]
+            warning.cancelLabel = "Later"
+            warning.warningType = .kiTermWarningTypePersistent
+            if warning.runModal() == .kiTermWarningSelection0 {
                 CompanionOnboardingRouter.openSettingsOrWizard()
             }
         }

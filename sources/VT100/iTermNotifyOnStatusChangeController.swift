@@ -243,33 +243,25 @@ class NotifyOnStatusChangeController: NSObject {
         // reentrantly while the status-change notification is still
         // being dispatched.
         DispatchQueue.main.async {
-            let alert = NSAlert()
-            alert.messageText = String(localized: "StatusChange.Title", defaultValue: "Session status changed", comment: "Alert title shown when a session's status changes")
-            alert.informativeText = String(localized: "StatusChange.Body", defaultValue: "\(name) changed from “\(fromText)” to “\(toText)”.", comment: "Alert body; name is the session name, fromText and toText are the old and new status")
-            alert.addButton(withTitle: iTermLocalizedOK())
+            let warning = iTermWarning()
+            warning.heading = String(localized: "StatusChange.Title", defaultValue: "Session status changed", comment: "Alert title shown when a session's status changes")
+            warning.title = String(localized: "StatusChange.Body", defaultValue: "\(name) changed from “\(fromText)” to “\(toText)”.", comment: "Alert body; name is the session name, fromText and toText are the old and new status")
+            var actions = [iTermLocalizedOK()]
             // Offer Reveal only when the session can still be resolved; it may
             // have gone away between the change and the alert being shown.
             let canReveal = sessionGuid.flatMap {
                 iTermController.sharedInstance()?.anySession(withGUID: $0)
             } != nil
             if canReveal {
-                alert.addButton(withTitle: String(localized: "StatusChange.Reveal", defaultValue: "Reveal", comment: "Button to reveal the session whose status changed"))
+                actions.append(String(localized: "StatusChange.Reveal", defaultValue: "Reveal", comment: "Button to reveal the session whose status changed"))
             }
-            let reveal: () -> Void = {
-                if let sessionGuid {
+            warning.actionLabels = actions
+            warning.warningType = .kiTermWarningTypePersistent
+            // A sheet if there is a window, otherwise app-modal.
+            warning.window = window
+            warning.runModalAsync { selection, _ in
+                if selection == .kiTermWarningSelection1, let sessionGuid {
                     iTermController.sharedInstance()?.anySession(withGUID: sessionGuid)?.reveal()
-                }
-            }
-            if let window {
-                alert.beginSheetModal(for: window) { response in
-                    if response == .alertSecondButtonReturn {
-                        reveal()
-                    }
-                }
-            } else {
-                let response = alert.runModal()
-                if response == .alertSecondButtonReturn {
-                    reveal()
                 }
             }
         }

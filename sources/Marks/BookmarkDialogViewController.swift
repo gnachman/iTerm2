@@ -11,25 +11,27 @@ import Cocoa
 class BookmarkDialogViewController: NSObject {
     @objc(showInWindow:withDefaultName:completion:)
     static func show(window: NSWindow, defaultName: String, completion: @escaping (String) -> ()) {
-        // Create the modal dialog
-        let alert = NSAlert()
-        alert.messageText = String(localized: "BookmarkDialog.EnterName", defaultValue: "Enter Mark Name", comment: "Prompt asking the user to enter a name for a mark")
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.addButton(withTitle: iTermLocalizedCancel())
-
         // Create the text field
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         textField.stringValue = defaultName
-        alert.accessoryView = textField
 
-        // Make the text field the first responder
-        DispatchQueue.main.async {
-            textField.becomeFirstResponder()
-        }
+        // Create the modal dialog
+        let warning = iTermWarning()
+        warning.heading = String(localized: "BookmarkDialog.EnterName", defaultValue: "Enter Mark Name", comment: "Prompt asking the user to enter a name for a mark")
+        warning.title = ""
+        warning.actionLabels = [iTermLocalizedOK(), iTermLocalizedCancel()]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.accessory = textField
+        warning.remoteInputs = [.textInput(withIdentifier: "name",  // Localization unneeded
+                                           label: nil,
+                                           textField: textField)]
+        warning.initialFirstResponder = textField
+        warning.window = window
 
         // Run the modal dialog
-        alert.beginSheetModal(for: window) { response in
-            if response == NSApplication.ModalResponse.alertFirstButtonReturn { // OK button clicked
+        warning.runModalAsync { selection, _ in
+            if selection == .kiTermWarningSelection0 { // OK button clicked
                 let name = textField.stringValue
                 guard !name.isEmpty else {
                     return // Don't proceed with empty name

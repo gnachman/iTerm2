@@ -32,6 +32,7 @@
 #import "iTermUserDefaults.h"
 #import "iTermVariableScope.h"
 #import "iTermVariables.h"
+#import "iTermWarning.h"
 
 @implementation iTermURLActionHelper {
     NSInteger _openTargetGeneration;
@@ -520,18 +521,20 @@ workingDirectory:(NSString *)workingDirectory
 #pragma mark - Secure Copy
 
 + (NSString *)usernameToDownloadFileOnHost:(NSString *)host {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"URLActionHelper.EnterUsernameForHost", nil, [NSBundle mainBundle], @"Enter username for host %@ to download file with scp", @"Prompt asking for the username to use when downloading a file with scp. %@ is the host name."), host];
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-
     NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
     [input setStringValue:NSUserName()];
-    [alert setAccessoryView:input];
-    [alert layout];
-    [[alert window] makeFirstResponder:input];
-    NSInteger button = [alert runModal];
-    if (button == NSAlertFirstButtonReturn) {
+
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.heading = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"URLActionHelper.EnterUsernameForHost", nil, [NSBundle mainBundle], @"Enter username for host %@ to download file with scp", @"Prompt asking for the username to use when downloading a file with scp. %@ is the host name."), host];
+    warning.title = @"";
+    warning.actionLabels = @[ iTermLocalizedOK(), iTermLocalizedCancel() ];
+    warning.cancelLabel = iTermLocalizedCancel();
+    warning.warningType = kiTermWarningTypePersistent;
+    warning.accessory = input;
+    warning.remoteInputs = @[ [iTermWarningRemoteInput textInputWithIdentifier:@"username" label:nil textField:input] ];
+    warning.initialFirstResponder = input;
+    const iTermWarningSelection selection = [warning runModal];
+    if (selection == kiTermWarningSelection0) {
         [input validateEditing];
         return [[input stringValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
     }

@@ -11,6 +11,7 @@
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "iTermUserDefaults.h"
+#import "iTermWarning.h"
 
 const int kMaxInputBufferSize = 1024;
 const int kMaxOutputBufferSize = 1024;
@@ -122,10 +123,13 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
         fprintf(stderr, "## exec failed %s for command /bin/sh -c %s##\n", strerror(errno), [command UTF8String]);
         _exit(-1);
     } else if (pid < (pid_t)0) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"Coprocess.FailedToLaunch", nil, [NSBundle mainBundle], @"Failed to launch coprocess.", @"Error shown when a coprocess could not be launched.");
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert runModal];
+        [iTermWarning showWarningWithTitle:@""
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"Coprocess.FailedToLaunch", nil, [NSBundle mainBundle], @"Failed to launch coprocess.", @"Error shown when a coprocess could not be launched.")
+                                    window:nil];
         return nil;
     }
 

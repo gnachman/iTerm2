@@ -194,21 +194,23 @@ private class PriorityDataProvider: CRUDDataProvider {
               let window = vc.view.window else {
             return
         }
-        let alert = NSAlert()
-        alert.messageText = String(localized: "StatusPriority.NewPatternTitle", defaultValue: "New Priority Pattern", comment: "Title of the new priority pattern dialog")
-        alert.informativeText = String(localized: "StatusPriority.NewPatternInfo", defaultValue: "Enter a substring to match against status text (case-insensitive).", comment: "Informative text of the new priority pattern dialog")
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.addButton(withTitle: iTermLocalizedCancel())
+        let warning = iTermWarning()
+        warning.heading = String(localized: "StatusPriority.NewPatternTitle", defaultValue: "New Priority Pattern", comment: "Title of the new priority pattern dialog")
+        warning.title = String(localized: "StatusPriority.NewPatternInfo", defaultValue: "Enter a substring to match against status text (case-insensitive).", comment: "Informative text of the new priority pattern dialog")
+        warning.actionLabels = [iTermLocalizedOK(), iTermLocalizedCancel()]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
 
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
-        alert.accessoryView = textField
+        warning.accessory = textField
+        warning.remoteInputs = [.textInput(withIdentifier: "pattern",  // Localization unneeded
+                                           label: nil,
+                                           textField: textField)]
+        warning.initialFirstResponder = textField
+        warning.window = window
 
-        DispatchQueue.main.async {
-            textField.becomeFirstResponder()
-        }
-
-        alert.beginSheetModal(for: window) { response in
-            guard response == .alertFirstButtonReturn else { return }
+        warning.runModalAsync { selection, _ in
+            guard selection == .kiTermWarningSelection0 else { return }
             let value = textField.stringValue
             guard !value.isEmpty else { return }
             vc.undoableAdd(value, completion: completion)

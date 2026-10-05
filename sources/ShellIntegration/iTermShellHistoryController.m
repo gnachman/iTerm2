@@ -25,6 +25,7 @@
 #import "iTermRecentDirectoryMO+Additions.h"
 #import "iTermRecentDirectoryMO.h"
 #import "iTermUserDefaults.h"
+#import "iTermWarning.h"
 #include <sys/stat.h>
 
 NSString *const kCommandHistoryDidChangeNotificationName = @"kCommandHistoryDidChangeNotificationName";
@@ -364,9 +365,8 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
     if (![firstResponder respondsToSelector:selector]) {
         firstResponder = nil;
     }
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"ShellIntegration.AboutTitle", nil, [NSBundle mainBundle], @"About Shell Integration", @"Title of the About Shell Integration informational alert");
-    alert.informativeText =
+    NSString *heading = NSLocalizedStringWithDefaultValue(@"ShellIntegration.AboutTitle", nil, [NSBundle mainBundle], @"About Shell Integration", @"Title of the About Shell Integration informational alert");
+    NSString *body =
         NSLocalizedStringWithDefaultValue(@"ShellIntegration.AboutBody", nil, [NSBundle mainBundle],
         @"To use shell integration features such as "
         @"Command History, "
@@ -374,22 +374,34 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
         @"Select Output of Last Command, "
         @"and Automatic Profile Switching, "
         @"your shell must be properly configured.", @"Body text explaining what shell integration provides");
-    [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"ShellIntegration.LearnMore", nil, [NSBundle mainBundle], @"Learn More…", @"Button that opens shell integration documentation")];
-    [alert addButtonWithTitle:iTermLocalizedOK()];
+    NSArray<NSString *> *actions = @[ NSLocalizedStringWithDefaultValue(@"ShellIntegration.LearnMore", nil, [NSBundle mainBundle], @"Learn More…", @"Button that opens shell integration documentation"),
+                                      iTermLocalizedOK() ];
     if (firstResponder) {
-        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"ShellIntegration.InstallNow", nil, [NSBundle mainBundle], @"Install Now", @"Button to install shell integration immediately")];
+        actions = [actions arrayByAddingObject:NSLocalizedStringWithDefaultValue(@"ShellIntegration.InstallNow", nil, [NSBundle mainBundle], @"Install Now", @"Button to install shell integration immediately")];
     }
-    [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
-        switch (returnCode) {
-            case NSAlertFirstButtonReturn:
+    [iTermWarning asyncShowWarningWithTitle:body
+                                    actions:actions
+                              actionMapping:nil
+                                  accessory:nil
+                                 identifier:nil
+                                silenceable:kiTermWarningTypePersistent
+                                    heading:heading
+                                cancelLabel:nil
+                                     window:window
+                                 completion:^(iTermWarningSelection selection, iTermWarning *warning) {
+        switch (selection) {
+            case kiTermWarningSelection0:
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]
                                                    target:nil
                                                     style:iTermOpenStyleTab
                                                    window:window];
                 break;
                 
-            case NSAlertThirdButtonReturn:  // Install now, optional button
+            case kiTermWarningSelection2:  // Install now, optional button
                 [firstResponder performSelector:selector withObject:self];
+                break;
+
+            default:
                 break;
         }
     }];

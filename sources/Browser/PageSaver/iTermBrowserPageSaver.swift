@@ -382,12 +382,13 @@ extension iTermBrowserPageSaver {
 
     @MainActor
     private static func showSaveError(_ error: Error, window: NSWindow) {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "BrowserPageSaver.SaveFailedTitle", defaultValue: "Save Failed", comment: "Title of alert when saving a page fails")
-        alert.informativeText = String(localized: "BrowserPageSaver.SaveFailedMessage", defaultValue: "Could not save the page: \(error.localizedDescription)", comment: "Informative text when saving a page fails")
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.beginSheetModal(for: window, completionHandler: nil)
+        let warning = iTermWarning()
+        warning.heading = String(localized: "BrowserPageSaver.SaveFailedTitle", defaultValue: "Save Failed", comment: "Title of alert when saving a page fails")
+        warning.title = String(localized: "BrowserPageSaver.SaveFailedMessage", defaultValue: "Could not save the page: \(error.localizedDescription)", comment: "Informative text when saving a page fails")
+        warning.actionLabels = [iTermLocalizedOK()]
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.window = window
+        warning.runModalAsync { _, _ in }
     }
 
     private static func sanitizeFilename(_ name: String) -> String {

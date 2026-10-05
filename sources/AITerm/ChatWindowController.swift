@@ -780,19 +780,24 @@ extension ChatWindowController: ChatListViewControllerDelegate {
         guard let chat = model.chat(id: chatID) else {
             return
         }
-        let alert = NSAlert()
-        alert.messageText = String(localized: "ChatWindowController.RenameChatTitle", defaultValue: "Rename Chat", comment: "Title of the rename chat dialog")
-        alert.informativeText = String(localized: "ChatWindowController.RenameChatPrompt", defaultValue: "Choose a new name for this chat.", comment: "Prompt in the rename chat dialog")
-        alert.addButton(withTitle: String(localized: "ChatWindowController.RenameButton", defaultValue: "Rename", comment: "Rename button in the rename chat dialog"))
-        alert.addButton(withTitle: iTermLocalizedCancel())
-
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
         field.stringValue = chat.title
         field.selectText(nil)
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
 
-        guard alert.runModal() == .alertFirstButtonReturn else {
+        let warning = iTermWarning()
+        warning.heading = String(localized: "ChatWindowController.RenameChatTitle", defaultValue: "Rename Chat", comment: "Title of the rename chat dialog")
+        warning.title = String(localized: "ChatWindowController.RenameChatPrompt", defaultValue: "Choose a new name for this chat.", comment: "Prompt in the rename chat dialog")
+        warning.actionLabels = [String(localized: "ChatWindowController.RenameButton", defaultValue: "Rename", comment: "Rename button in the rename chat dialog"),
+                                iTermLocalizedCancel()]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.accessory = field
+        warning.remoteInputs = [.textInput(withIdentifier: "title",  // Localization unneeded
+                                           label: nil,
+                                           textField: field)]
+        warning.initialFirstResponder = field
+
+        guard warning.runModal() == .kiTermWarningSelection0 else {
             return
         }
         let newTitle = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)

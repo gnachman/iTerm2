@@ -308,11 +308,13 @@ class LastPassDataSource: CommandLinePasswordDataSource {
     func wrap<Inputs, Outputs>(_ message: String, _ recipe: AnyRecipe<Inputs, Outputs>) -> AnyRecipe<Inputs, Outputs> {
         return AnyRecipe(CatchRecipe(recipe, errorHandler: { (inputs, error) in
             if error as? LPError == LPError.timedOut {
-                let alert = NSAlert()
-                alert.messageText = String(localized: "LastPass.TimeoutTitle", defaultValue: "Timeout", comment: "Alert title when LastPass times out")
-                alert.informativeText = String(localized: "LastPass.TimeoutMessage", defaultValue: "The LastPass service took too long to respond. \(message)", comment: "Alert body when LastPass times out; the interpolated value is a context message")
-                alert.addButton(withTitle: iTermLocalizedOK())
-                alert.runModal()
+                iTermWarning.show(withTitle: String(localized: "LastPass.TimeoutMessage", defaultValue: "The LastPass service took too long to respond. \(message)", comment: "Alert body when LastPass times out; the interpolated value is a context message"),
+                                  actions: [iTermLocalizedOK()],
+                                  accessory: nil,
+                                  identifier: nil,
+                                  silenceable: .kiTermWarningTypePersistent,
+                                  heading: String(localized: "LastPass.TimeoutTitle", defaultValue: "Timeout", comment: "Alert title when LastPass times out"),
+                                  window: nil)
                 return
             } else if error as? LPError == LPError.needsLogin {
                 LastPassUtils.showNotLoggedInMessage()
@@ -530,32 +532,39 @@ class LastPassUtils {
     }
 
     static func showNotLoggedInMessage() {
-        let alert = NSAlert()
         let email = iTermUserDefaults.userDefaults().string(forKey: usernameUserDefaultsKey) ?? "your@email.address"
-        alert.messageText = String(localized: "LastPass.AuthFailedTitle", defaultValue: "Authentication Failed", comment: "Alert title when LastPass authentication fails")
-        alert.informativeText = String(localized: "LastPass.AuthFailedMessage", defaultValue: "You can also try opening a terminal window and running `lpass login \(email)`.", comment: "Alert body when LastPass authentication fails; the interpolated value is the user email")
-        alert.addButton(withTitle: String(localized: "LastPass.OpenTerminalWindow", defaultValue: "Open Terminal Window", comment: "Button to open a terminal window to log in to LastPass"))
-        alert.addButton(withTitle: String(localized: "LastPass.CopyCommand", defaultValue: "Copy Command", comment: "Button to copy the LastPass login command"))
-        alert.addButton(withTitle: iTermLocalizedCancel())
-        switch alert.runModal() {
-        case .alertFirstButtonReturn:
+        let selection = iTermWarning.show(withTitle: String(localized: "LastPass.AuthFailedMessage", defaultValue: "You can also try opening a terminal window and running `lpass login \(email)`.", comment: "Alert body when LastPass authentication fails; the interpolated value is the user email"),
+                                          actions: [String(localized: "LastPass.OpenTerminalWindow", defaultValue: "Open Terminal Window", comment: "Button to open a terminal window to log in to LastPass"),
+                                                    String(localized: "LastPass.CopyCommand", defaultValue: "Copy Command", comment: "Button to copy the LastPass login command"),
+                                                    iTermLocalizedCancel()],
+                                          actionMapping: nil,
+                                          accessory: nil,
+                                          identifier: nil,
+                                          silenceable: .kiTermWarningTypePersistent,
+                                          heading: String(localized: "LastPass.AuthFailedTitle", defaultValue: "Authentication Failed", comment: "Alert title when LastPass authentication fails"),
+                                          cancelLabel: iTermLocalizedCancel(),
+                                          window: nil)
+        switch selection {
+        case .kiTermWarningSelection0:
             let window = iTermController.sharedInstance().openSingleUseLoginWindowAndWrite("lpass login \(email)".data(using: .utf8)!) { session in
                 session?.addExpectation("^Success: Logged in as",
                                         after: nil,
                                         deadline: nil,
                                         willExpect: nil) { _ in
-                    let alert = NSAlert()
-                    alert.messageText = String(localized: "LastPass.LoginSuccessfulTitle", defaultValue: "Login Successful", comment: "Alert title when LastPass login succeeds")
-                    alert.informativeText = String(localized: "LastPass.LoginSuccessfulMessage", defaultValue: "Please retry your action in the password manager.", comment: "Alert body when LastPass login succeeds")
-                    alert.addButton(withTitle: iTermLocalizedOK())
-                    alert.runModal()
+                    iTermWarning.show(withTitle: String(localized: "LastPass.LoginSuccessfulMessage", defaultValue: "Please retry your action in the password manager.", comment: "Alert body when LastPass login succeeds"),
+                                      actions: [iTermLocalizedOK()],
+                                      accessory: nil,
+                                      identifier: nil,
+                                      silenceable: .kiTermWarningTypePersistent,
+                                      heading: String(localized: "LastPass.LoginSuccessfulTitle", defaultValue: "Login Successful", comment: "Alert title when LastPass login succeeds"),
+                                      window: nil)
                     session?.close()
                 }
             }
             Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { _ in
                 window?.makeKeyAndOrderFront(nil)
             }
-        case .alertSecondButtonReturn:
+        case .kiTermWarningSelection1:
             NSPasteboard.general.declareTypes([.string], owner: self)
             NSPasteboard.general.setString("lpass login \(email)", forType: .string)
         default:
@@ -565,18 +574,23 @@ class LastPassUtils {
 
     // Returns true to show an open panel to locate it.
     private static func showCannotFindCLIMessage() -> Bool {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "LastPass.CannotFindCLITitle", defaultValue: "Can’t Find LastPass CLI", comment: "Alert title when the LastPass CLI cannot be found")
-        alert.informativeText = String(localized: "LastPass.CannotFindCLIMessage", defaultValue: "In order to use the LastPass integration, iTerm2 needs to know where to find the CLI app named “lpass”. Select Locate to provide its location.", comment: "Alert body when the LastPass CLI cannot be found")
-        alert.addButton(withTitle: String(localized: "LastPass.Locate", defaultValue: "Locate", comment: "Button to locate the LastPass CLI"))
-        alert.addButton(withTitle: iTermLocalizedCancel())
-        alert.addButton(withTitle: String(localized: "LastPass.Help", defaultValue: "Help", comment: "Help button"))
-        switch alert.runModal() {
-        case .alertFirstButtonReturn:
+        let selection = iTermWarning.show(withTitle: String(localized: "LastPass.CannotFindCLIMessage", defaultValue: "In order to use the LastPass integration, iTerm2 needs to know where to find the CLI app named “lpass”. Select Locate to provide its location.", comment: "Alert body when the LastPass CLI cannot be found"),
+                                          actions: [String(localized: "LastPass.Locate", defaultValue: "Locate", comment: "Button to locate the LastPass CLI"),
+                                                    iTermLocalizedCancel(),
+                                                    String(localized: "LastPass.Help", defaultValue: "Help", comment: "Help button")],
+                                          actionMapping: nil,
+                                          accessory: nil,
+                                          identifier: nil,
+                                          silenceable: .kiTermWarningTypePersistent,
+                                          heading: String(localized: "LastPass.CannotFindCLITitle", defaultValue: "Can’t Find LastPass CLI", comment: "Alert title when the LastPass CLI cannot be found"),
+                                          cancelLabel: iTermLocalizedCancel(),
+                                          window: nil)
+        switch selection {
+        case .kiTermWarningSelection0:
             return true
-        case .alertSecondButtonReturn:
+        case .kiTermWarningSelection1:
             return false
-        case .alertThirdButtonReturn:
+        case .kiTermWarningSelection2:
             NSWorkspace.shared.open(URL(string: "https://iterm2.com/lastpass-cli")!)
             return false
         default:

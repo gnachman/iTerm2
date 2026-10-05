@@ -382,7 +382,6 @@ class PasswordManagerDataSourceProvider: NSObject {
     }
 
     private func showError(_ error: NSError) {
-        let alert = NSAlert()
         let reason: String
         switch LAError.Code(rawValue: error.code) {
         case .authenticationFailed:
@@ -442,10 +441,13 @@ class PasswordManagerDataSourceProvider: NSObject {
         @unknown default:
             reason = error.localizedDescription
         }
-        alert.messageText = String(localized: "PasswordManagerAuth.FailedTitle", defaultValue: "Authentication Failed", comment: "Title of the alert shown when unlocking the password manager fails")
-        alert.informativeText = String(localized: "PasswordManagerAuth.FailedFormat", defaultValue: "Authentication failed because \(reason)", comment: "Body of the authentication-failed alert; the placeholder is the reason for the failure")
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.runModal()
+        iTermWarning.show(withTitle: String(localized: "PasswordManagerAuth.FailedFormat", defaultValue: "Authentication failed because \(reason)", comment: "Body of the authentication-failed alert; the placeholder is the reason for the failure"),
+                          actions: [iTermLocalizedOK()],
+                          accessory: nil,
+                          identifier: nil,
+                          silenceable: .kiTermWarningTypePersistent,
+                          heading: String(localized: "PasswordManagerAuth.FailedTitle", defaultValue: "Authentication Failed", comment: "Title of the alert shown when unlocking the password manager fails"),
+                          window: nil)
     }
 }
 

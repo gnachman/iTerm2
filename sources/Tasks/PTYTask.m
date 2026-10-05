@@ -23,6 +23,7 @@
 #import "iTermOrphanServerAdopter.h"
 #import "iTermThreadSafety.h"
 #import "iTermTmuxJobManager.h"
+#import "iTermWarning.h"
 #import "NSDictionary+iTerm.h"
 
 #import "iTerm2SharedARC-Swift.h"
@@ -843,11 +844,13 @@ static void HandleSigChld(int n) {
 }
 
 - (void)showFailedToCreateTempSocketError {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
-    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYTask.TempFileError", nil, [NSBundle mainBundle], @"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", @"Error shown when a temporary file could not be created. %@ is the temporary directory path."), NSTemporaryDirectory()];
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert runModal];
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYTask.TempFileError", nil, [NSBundle mainBundle], @"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", @"Error shown when a temporary file could not be created. %@ is the temporary directory path."), NSTemporaryDirectory()]
+                               actions:@[ iTermLocalizedOK() ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading")
+                                window:nil];
 }
 
 #pragma mark I/O

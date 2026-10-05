@@ -545,22 +545,24 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
                       comment: "AI usage toolbar item message when no usage bars are available")
         let report = reportText(summary: summary)
 
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText = summary
-        alert.informativeText = String(localized: "WorkgroupUsage.ReportGuidanceIntro",
-                                        defaultValue: "iTerm2 couldn’t read the AI usage report. Updating iTerm2 to the latest version may fix this. If you’re already up to date, click “Report a Bug” to open a pre-filled report. The full details below are also copied to your clipboard.",
-                                        comment: "Guidance shown when the AI usage format couldn’t be parsed") + "\n\n" + report
-        alert.addButton(withTitle: String(localized: "WorkgroupUsage.ReportBug",
-                                           defaultValue: "Report a Bug",
-                                           comment: "Button that opens a pre-filled bug report and copies the details to the clipboard"))
-        alert.addButton(withTitle: String(localized: "General.Cancel",
-                                           defaultValue: "Cancel",
-                                           comment: "Cancel button"))
+        let cancel = String(localized: "General.Cancel",
+                            defaultValue: "Cancel",
+                            comment: "Cancel button")
+        let warning = iTermWarning()
+        warning.heading = summary
+        warning.title = String(localized: "WorkgroupUsage.ReportGuidanceIntro",
+                               defaultValue: "iTerm2 couldn’t read the AI usage report. Updating iTerm2 to the latest version may fix this. If you’re already up to date, click “Report a Bug” to open a pre-filled report. The full details below are also copied to your clipboard.",
+                               comment: "Guidance shown when the AI usage format couldn’t be parsed") + "\n\n" + report
+        warning.actionLabels = [String(localized: "WorkgroupUsage.ReportBug",
+                                       defaultValue: "Report a Bug",
+                                       comment: "Button that opens a pre-filled bug report and copies the details to the clipboard"),
+                                cancel]
+        warning.cancelLabel = cancel
+        warning.warningType = .kiTermWarningTypePersistent
 
         let url = Self.bugReportURL(title: summary, body: report)
-        let handler: (NSApplication.ModalResponse) -> Void = { response in
-            if response == .alertFirstButtonReturn {
+        let handler: (iTermWarningSelection, iTermWarning) -> Void = { selection, _ in
+            if selection == .kiTermWarningSelection0 {
                 // Clipboard first as the reliable fallback: URL length
                 // limits (and prefill support) can truncate what the link
                 // carries, but the clipboard always has the whole report.
@@ -572,11 +574,8 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
                 }
             }
         }
-        if let window = container.window {
-            alert.beginSheetModal(for: window, completionHandler: handler)
-        } else {
-            handler(alert.runModal())
-        }
+        warning.window = container.window
+        warning.runModalAsync(handler)
     }
 
     // The clipboard payload: enough context for the developer to act on,

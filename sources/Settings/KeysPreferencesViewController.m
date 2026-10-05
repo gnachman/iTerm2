@@ -476,12 +476,16 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
             [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
                                                                 object:nil
                                                               userInfo:nil];
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"KeysPreferences.HotkeyConfiguredTitle", nil, [NSBundle mainBundle], @"Hotkey Window Successfully Configured", @"Title shown after successfully configuring a hotkey window profile");
-            alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeysPreferences.HotkeyConfiguredBody", nil, [NSBundle mainBundle], @"A new profile called “%@” was created for you. It is tuned to work well for the Hotkey Window feature and it can be customized in the Profiles tab.", @"Body explaining the newly created hotkey window profile; the placeholder is the profile name"),
+            NSString *const heading = NSLocalizedStringWithDefaultValue(@"KeysPreferences.HotkeyConfiguredTitle", nil, [NSBundle mainBundle], @"Hotkey Window Successfully Configured", @"Title shown after successfully configuring a hotkey window profile");
+            NSString *const title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeysPreferences.HotkeyConfiguredBody", nil, [NSBundle mainBundle], @"A new profile called “%@” was created for you. It is tuned to work well for the Hotkey Window feature and it can be customized in the Profiles tab.", @"Body explaining the newly created hotkey window profile; the placeholder is the profile name"),
                                      newProfileName];
-            [alert addButtonWithTitle:iTermLocalizedOK()];
-            [alert runModal];
+            [iTermWarning showWarningWithTitle:title
+                                       actions:@[ iTermLocalizedOK() ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:heading
+                                        window:nil];
         }
     }];
 }
@@ -626,10 +630,15 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 }
 
 - (IBAction)emulateUsKeyboardHelp:(id)sender {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"KeysPreferences.EmulateUSKeyboardTitle", nil, [NSBundle mainBundle], @"Emulate US Keyboard", @"Title of the help dialog for the Emulate US Keyboard option");
-    alert.informativeText = NSLocalizedStringWithDefaultValue(@"KeysPreferences.EmulateUSKeyboardHelp", nil, [NSBundle mainBundle], @"Some keyboard layouts (such as AZERTY) require a modifier to press a number key. This causes problems for switching to a window, tab, or split pane by pressing modifier+number: you might need other modifiers or conflicting modifiers. When “Emulate US Keyboard” is enabled, you can press the configured modifier plus the key on the top row that corresponds to a number key on a US keyboard. For example, on AZERTY, the & key would act as the 1 key.", @"Help text explaining the Emulate US Keyboard option");
-    [alert runModal];
+    NSString *const heading = NSLocalizedStringWithDefaultValue(@"KeysPreferences.EmulateUSKeyboardTitle", nil, [NSBundle mainBundle], @"Emulate US Keyboard", @"Title of the help dialog for the Emulate US Keyboard option");
+    NSString *const title = NSLocalizedStringWithDefaultValue(@"KeysPreferences.EmulateUSKeyboardHelp", nil, [NSBundle mainBundle], @"Some keyboard layouts (such as AZERTY) require a modifier to press a number key. This causes problems for switching to a window, tab, or split pane by pressing modifier+number: you might need other modifiers or conflicting modifiers. When “Emulate US Keyboard” is enabled, you can press the configured modifier plus the key on the top row that corresponds to a number key on a US keyboard. For example, on AZERTY, the & key would act as the 1 key.", @"Help text explaining the Emulate US Keyboard option");
+    [iTermWarning showWarningWithTitle:title
+                               actions:@[ iTermLocalizedOK() ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:heading
+                                window:nil];
 }
 
 - (IBAction)showLeaderHelp:(id)sender {

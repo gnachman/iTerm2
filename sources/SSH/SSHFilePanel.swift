@@ -1142,21 +1142,30 @@ extension SSHFilePanel {
     }
 
     private func presentFileExistsAlert(for descriptor: SSHFileDescriptor) async -> NSApplication.ModalResponse {
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText = String(localized: "SSHFilePanel.FileExistsMessage", defaultValue: "A file with the name “\(descriptor.absolutePath.lastPathComponent)” on \(descriptor.sshIdentity.displayName) already exists in this location. Do you want to replace it?", comment: "Alert asking whether to replace an existing file with the given name on the given host")
-        alert.informativeText = String(localized: "SSHFilePanel.ReplaceWarning", defaultValue: "Replacing it will overwrite its current contents.", comment: "Warning explaining that replacing a file overwrites its contents")
+        let warning = iTermWarning()
+        warning.heading = String(localized: "SSHFilePanel.FileExistsMessage", defaultValue: "A file with the name “\(descriptor.absolutePath.lastPathComponent)” on \(descriptor.sshIdentity.displayName) already exists in this location. Do you want to replace it?", comment: "Alert asking whether to replace an existing file with the given name on the given host")
+        warning.title = String(localized: "SSHFilePanel.ReplaceWarning", defaultValue: "Replacing it will overwrite its current contents.", comment: "Warning explaining that replacing a file overwrites its contents")
+        warning.actionLabels = [String(localized: "SSHFilePanel.Replace", defaultValue: "Replace", comment: "Button to replace an existing file"),
+                                iTermLocalizedCancel()]
+        warning.warningActions?.first?.destructive = true
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.window = window
 
-        let replaceButton = alert.addButton(withTitle: String(localized: "SSHFilePanel.Replace", defaultValue: "Replace", comment: "Button to replace an existing file"))
-        replaceButton.hasDestructiveAction = true
-
-        alert.addButton(withTitle: iTermLocalizedCancel())
-
-        if let window {
-            return await alert.beginSheetModal(for: window)
-        } else {
-            return alert.runModal()
+        // With a window this is a sheet that does not block. Without one it is app-modal and the
+        // completion runs before runModalAsync returns.
+        return await withCheckedContinuation { continuation in
+            warning.runModalAsync { selection, _ in
+                continuation.resume(returning: selection == .kiTermWarningSelection0 ? .alertFirstButtonReturn : .alertSecondButtonReturn)
+            }
         }
+    }
+
+    // Starts a warning's sheet and returns at once. A plain function because in an async context
+    // the compiler insists on the awaiting form of runModalAsync, which would keep the caller's
+    // task alive until the sheet is dismissed (or forever, if its window closes first).
+    private func showWithoutWaiting(_ warning: iTermWarning) {
+        warning.runModalAsync { _, _ in }
     }
 
     private func end(returnCode: NSApplication.ModalResponse) {
@@ -1590,12 +1599,13 @@ extension SSHFilePanel {
                 await navigateToPath(currentPath)
             } catch {
                 // Show error alert
-                let alert = NSAlert()
-                alert.messageText = String(localized: "SSHFilePanel.UnableToCreateFolder", defaultValue: "Unable to create folder", comment: "Alert title when a new folder cannot be created")
-                alert.informativeText = error.localizedDescription
-                alert.alertStyle = .warning
-                alert.addButton(withTitle: iTermLocalizedOK())
-                alert.beginSheetModal(for: sheet) { _ in }
+                let warning = iTermWarning()
+                warning.heading = String(localized: "SSHFilePanel.UnableToCreateFolder", defaultValue: "Unable to create folder", comment: "Alert title when a new folder cannot be created")
+                warning.title = error.localizedDescription
+                warning.actionLabels = [iTermLocalizedOK()]
+                warning.warningType = .kiTermWarningTypePersistent
+                warning.window = sheet
+                showWithoutWaiting(warning)
             }
         }
     }

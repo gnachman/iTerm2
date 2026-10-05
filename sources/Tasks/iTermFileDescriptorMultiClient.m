@@ -788,10 +788,13 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
         });
         [rateLimit performRateLimitedBlock:^{
             DLog(@"Called");
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"MultiClient.DaemonStartFailed", nil, [NSBundle mainBundle], @"Problem Starting iTerm2 Daemon", @"Alert title shown when the iTerm2 daemon fails to start");
-            alert.informativeText = message;
-            [alert runModal];
+            [iTermWarning showWarningWithTitle:message
+                                       actions:@[ iTermLocalizedOK() ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:NSLocalizedStringWithDefaultValue(@"MultiClient.DaemonStartFailed", nil, [NSBundle mainBundle], @"Problem Starting iTerm2 Daemon", @"Alert title shown when the iTerm2 daemon fails to start")
+                                        window:nil];
         }];
     });
 }

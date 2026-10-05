@@ -521,25 +521,21 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     /// On any setup failure, explain it and hand the user to the plain settings
     /// window so they can finish manually (the status quo before the wizard).
     private func failAndFallBackToPlainWindow(_ error: Error) {
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText = String(localized: "Companion.SetupFailed.Title",
+        let warning = iTermWarning()
+        warning.heading = String(localized: "Companion.SetupFailed.Title",
                                    defaultValue: "Setup Could Not Be Completed",
                                    comment: "Title of the alert shown when setup fails")
-        alert.informativeText = error.localizedDescription
+        warning.title = error.localizedDescription
             + String(localized: "Companion.SetupFailed.Suffix",
                      defaultValue: "\n\nYou can finish setting up in Companion Device Settings.",
                      comment: "Text appended after the error message in the setup-failed alert")
-        alert.addButton(withTitle: iTermLocalizedOK())
-        let finish = { [weak self] in
+        warning.actionLabels = [iTermLocalizedOK()]
+        warning.warningType = .kiTermWarningTypePersistent
+        // A sheet that does not block when there is a window; app-modal otherwise.
+        warning.window = window
+        warning.runModalAsync { [weak self] _, _ in
             self?.close()
             CompanionPairingWindowController.shared.showAndBeginPairing()
-        }
-        if let window {
-            alert.beginSheetModal(for: window) { _ in finish() }
-        } else {
-            alert.runModal()
-            finish()
         }
     }
 

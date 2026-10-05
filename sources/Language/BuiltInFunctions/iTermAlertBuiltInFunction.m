@@ -8,6 +8,7 @@
 #import "iTermAlertBuiltInFunction.h"
 
 #import "iTermController.h"
+#import "iTermWarning.h"
 #import "NSAlert+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "PTYSession.h"
@@ -117,22 +118,20 @@
     textField.stringValue = defaultValue;
     textField.placeholderString = placeholder;
 
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = title;
-    alert.informativeText = subtitle;
-    alert.accessoryView = textField;
-    [alert layout];
-    [[alert window] makeFirstResponder:textField];
-
-    NSWindow *window = [[[iTermController sharedInstance] terminalWithGuid:windowID] window];
-    if (window) {
-        [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
-            completion(textField.stringValue ?: @"", nil);
-        }];
-    } else {
-        [alert runModal];
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.heading = title;
+    warning.title = subtitle;
+    warning.actionLabels = @[ iTermLocalizedOK() ];
+    warning.warningType = kiTermWarningTypePersistent;
+    warning.accessory = textField;
+    // Localization unneeded
+    warning.remoteInputs = @[ [iTermWarningRemoteInput textInputWithIdentifier:@"string" label:nil textField:textField] ];
+    warning.initialFirstResponder = textField;
+    // With a window this is a sheet that does not block. Without one it is app-modal.
+    warning.window = [[[iTermController sharedInstance] terminalWithGuid:windowID] window];
+    [warning runModalAsync:^(iTermWarningSelection selection, iTermWarning *shownWarning) {
         completion(textField.stringValue ?: @"", nil);
-    }
+    }];
 }
 
 @end

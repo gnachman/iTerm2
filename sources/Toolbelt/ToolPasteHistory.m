@@ -21,6 +21,7 @@
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
+#import "iTermWarning.h"
 
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
@@ -275,12 +276,17 @@ static const CGFloat kMargin = 4;
 }
 
 - (void)clear:(id)sender {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"ToolPasteHistory.EraseTitle", nil, [NSBundle mainBundle], @"Erase Paste History", @"Confirmation alert title for erasing paste history");
-    alert.informativeText = NSLocalizedStringWithDefaultValue(@"ToolPasteHistory.EraseMessage", nil, [NSBundle mainBundle], @"Paste history will be erased. Continue?", @"Confirmation alert message for erasing paste history");
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-    if ([alert runModal] == NSAlertFirstButtonReturn) {
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"ToolPasteHistory.EraseMessage", nil, [NSBundle mainBundle], @"Paste history will be erased. Continue?", @"Confirmation alert message for erasing paste history")
+                                   actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                             actionMapping:nil
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"ToolPasteHistory.EraseTitle", nil, [NSBundle mainBundle], @"Erase Paste History", @"Confirmation alert title for erasing paste history")
+                               cancelLabel:iTermLocalizedCancel()
+                                    window:nil];
+    if (selection == kiTermWarningSelection0) {
         [pasteHistory_ eraseHistory];
         [pasteHistory_ clear];
         [_tableView reloadData];

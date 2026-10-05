@@ -63,6 +63,17 @@ static NSString *const kAIManualModelDynamicSelectedModelKey = @"dynamicSelected
 // Array of {"name","value"} dictionaries. Must match LLMMetadata.ManualModelKey.customHeaders.
 static NSString *const kAIManualModelCustomHeadersKey = @"customHeaders";
 
+// Shows a non-blocking sheet on `window` with just an OK button.
+static void iTermGeneralPreferencesShowSheet(NSString *heading, NSString *body, NSWindow *window) {
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.heading = heading;
+    warning.title = body;
+    warning.actionLabels = @[ iTermLocalizedOK() ];
+    warning.warningType = kiTermWarningTypePersistent;
+    warning.window = window;
+    [warning runModalAsync:^(iTermWarningSelection selection, iTermWarning *shownWarning) {}];
+}
+
 // The two hints that explain a withheld API key. Shared by the main AI panel
 // (under the default-model popup) and the manual model editor's own hint, so
 // the same model can never be described two different ways in two places
@@ -1349,10 +1360,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSString *url =
         [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     if (url.length == 0) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingURLTitle", nil, [NSBundle mainBundle], @"Missing URL", @"Alert title shown when the user fetches models without entering a server URL");
-        alert.informativeText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingURLBody", nil, [NSBundle mainBundle], @"Enter the server URL before fetching models.", @"Alert body shown when the user fetches models without entering a server URL");
-        [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse r) {}];
+        iTermGeneralPreferencesShowSheet(NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingURLTitle", nil, [NSBundle mainBundle], @"Missing URL", @"Alert title shown when the user fetches models without entering a server URL"),
+                                         NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingURLBody", nil, [NSBundle mainBundle], @"Enter the server URL before fetching models.", @"Alert body shown when the user fetches models without entering a server URL"),
+                                         _window);
         return;
     }
     NSButton *button = _fetchModelsButton;
@@ -1380,15 +1390,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             // The cache is now seeded for this URL: repopulate the model popup so
             // the discovered tags are selectable without reopening the editor.
             [strongSelf reloadDynamicModelPopup];
-            NSAlert *alert = [[NSAlert alloc] init];
+            NSString *heading;
+            NSString *body;
             if (failed) {
-                alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotReachServerTitle", nil, [NSBundle mainBundle], @"Could Not Reach Server", @"Alert title shown when refreshing the Ollama model list fails");
-                alert.informativeText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotReachServerBody", nil, [NSBundle mainBundle], @"Could not reach the Ollama server to list its models. Check that it is running and the URL is correct.", @"Alert body shown when refreshing the Ollama model list fails");
+                heading = NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotReachServerTitle", nil, [NSBundle mainBundle], @"Could Not Reach Server", @"Alert title shown when refreshing the Ollama model list fails");
+                body = NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotReachServerBody", nil, [NSBundle mainBundle], @"Could not reach the Ollama server to list its models. Check that it is running and the URL is correct.", @"Alert body shown when refreshing the Ollama model list fails");
             } else {
-                alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelsRefreshedTitle", nil, [NSBundle mainBundle], @"Models Refreshed", @"Alert title shown after successfully refreshing the Ollama model list");
-                alert.informativeText = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelsRefreshedBody", nil, [NSBundle mainBundle], @"Found %ld installed models. Choose one from the Model popup, or “All installed models” to expose every one.", @"Alert body after refreshing the Ollama model list; %ld is the number of models found"), (long)count];
+                heading = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelsRefreshedTitle", nil, [NSBundle mainBundle], @"Models Refreshed", @"Alert title shown after successfully refreshing the Ollama model list");
+                body = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelsRefreshedBody", nil, [NSBundle mainBundle], @"Found %ld installed models. Choose one from the Model popup, or “All installed models” to expose every one.", @"Alert body after refreshing the Ollama model list; %ld is the number of models found"), (long)count];
             }
-            [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
+            iTermGeneralPreferencesShowSheet(heading, body, strongSelf->_window);
         }];
         return;
     }
@@ -1407,10 +1418,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             return;
         }
         if (errorMessage) {
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotFetchModelsTitle", nil, [NSBundle mainBundle], @"Could Not Fetch Models", @"Alert title shown when listing the Ollama server's models fails");
-            alert.informativeText = errorMessage;
-            [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
+            iTermGeneralPreferencesShowSheet(NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotFetchModelsTitle", nil, [NSBundle mainBundle], @"Could Not Fetch Models", @"Alert title shown when listing the Ollama server's models fails"),
+                                             errorMessage,
+                                             strongSelf->_window);
             return;
         }
         [strongSelf presentOllamaModelMenu:names fromButton:button];
@@ -1490,10 +1500,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         missing = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingInfoText", nil, [NSBundle mainBundle], @"Enter a model name and URL before testing the connection.", @"Body of alert shown when required fields are empty before testing");
     }
     if (missing) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingInfoTitle", nil, [NSBundle mainBundle], @"Missing Information", @"Title of alert shown when required fields are empty before testing");
-        alert.informativeText = missing;
-        [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse returnCode) {}];
+        iTermGeneralPreferencesShowSheet(NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingInfoTitle", nil, [NSBundle mainBundle], @"Missing Information", @"Title of alert shown when required fields are empty before testing"),
+                                         missing,
+                                         _window);
         return;
     }
     const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedItem.tag;
@@ -1525,16 +1534,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         if (outcome == iTermAIConnectionTestOutcomeCancelled) {
             return;
         }
-        NSAlert *alert = [[NSAlert alloc] init];
+        NSString *heading;
         if (outcome == iTermAIConnectionTestOutcomeSuccess) {
-            alert.alertStyle = NSAlertStyleInformational;
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ConnectionSucceeded", nil, [NSBundle mainBundle], @"Connection Succeeded", @"Title of alert when the AI connection test succeeds");
+            heading = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ConnectionSucceeded", nil, [NSBundle mainBundle], @"Connection Succeeded", @"Title of alert when the AI connection test succeeds");
         } else {
-            alert.alertStyle = NSAlertStyleWarning;
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ConnectionFailed", nil, [NSBundle mainBundle], @"Connection Failed", @"Title of alert when the AI connection test fails");
+            heading = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ConnectionFailed", nil, [NSBundle mainBundle], @"Connection Failed", @"Title of alert when the AI connection test fails");
         }
-        alert.informativeText = message ?: @"";
-        [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse returnCode) {}];
+        iTermGeneralPreferencesShowSheet(heading, message ?: @"", strongSelf->_window);
     }];
 }
 
@@ -1612,10 +1618,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }
     }
     if (failure) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.InvalidModelTitle", nil, [NSBundle mainBundle], @"Invalid Manual AI Model", @"Title of alert shown when a manual AI model fails validation");
-        alert.informativeText = failure;
-        [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse returnCode) {}];
+        iTermGeneralPreferencesShowSheet(NSLocalizedStringWithDefaultValue(@"AIModelEditor.InvalidModelTitle", nil, [NSBundle mainBundle], @"Invalid Manual AI Model", @"Title of alert shown when a manual AI model fails validation"),
+                                         failure,
+                                         _window);
         return;
     }
 
@@ -3093,13 +3098,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }
         // Probe failed (server down/unreachable): roll back and tell the user.
         [strongSelf restoreDefaultAIModelSnapshot:priorDefault];
-        NSAlert *error = [[NSAlert alloc] init];
-        error.messageText = NSLocalizedStringWithDefaultValue(@"AISettings.CouldNotReachOllamaTitle", nil, [NSBundle mainBundle], @"Could Not Reach Ollama", @"Alert title shown when the local Ollama server can't be reached");
-        error.informativeText = [NSString stringWithFormat:
-            NSLocalizedStringWithDefaultValue(@"AISettings.CouldNotReachOllamaBody", nil, [NSBundle mainBundle], @"Could not reach the Ollama server at %@. Make sure Ollama is running, then try again.", @"Alert body shown when the local Ollama server can't be reached; %@ is the server endpoint URL"),
-            endpoint];
-        [error beginSheetModalForWindow:strongSelf.view.window
-                      completionHandler:^(NSModalResponse r) {}];
+        iTermGeneralPreferencesShowSheet(NSLocalizedStringWithDefaultValue(@"AISettings.CouldNotReachOllamaTitle", nil, [NSBundle mainBundle], @"Could Not Reach Ollama", @"Alert title shown when the local Ollama server can't be reached"),
+                                         [NSString stringWithFormat:
+                                             NSLocalizedStringWithDefaultValue(@"AISettings.CouldNotReachOllamaBody", nil, [NSBundle mainBundle], @"Could not reach the Ollama server at %@. Make sure Ollama is running, then try again.", @"Alert body shown when the local Ollama server can't be reached; %@ is the server endpoint URL"),
+                                             endpoint],
+                                         strongSelf.view.window);
     }];
 
     [iTermOllamaModelCache.shared refreshEndpoint:endpoint
@@ -4019,13 +4022,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         return;  // Not on the legacy path; the migration handles configured models.
     }
     [ud setBool:YES forKey:@"NoSyncAILegacyGlobalHeadersWarningShown"];
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.LegacyHeadersTitle", nil, [NSBundle mainBundle], @"Custom Headers Are Now Set Per Model", @"Title of alert explaining custom headers moved to per-model settings");
-    alert.informativeText = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.LegacyHeadersText", nil, [NSBundle mainBundle], @"Your AI custom HTTP headers used to be a single global "
-                            @"setting. They still apply to your current model, but adding "
-                            @"or editing models here does not carry them over. Re-add the "
-                            @"headers you need in each model’s “Custom headers” section.", @"Body of alert explaining custom headers moved to per-model settings");
-    [alert runModal];
+    [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.LegacyHeadersText", nil, [NSBundle mainBundle], @"Your AI custom HTTP headers used to be a single global "
+                                       @"setting. They still apply to your current model, but adding "
+                                       @"or editing models here does not carry them over. Re-add the "
+                                       @"headers you need in each model’s “Custom headers” section.", @"Body of alert explaining custom headers moved to per-model settings")
+                               actions:@[ iTermLocalizedOK() ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.LegacyHeadersTitle", nil, [NSBundle mainBundle], @"Custom Headers Are Now Set Per Model", @"Title of alert explaining custom headers moved to per-model settings")
+                                window:nil];
 }
 
 - (IBAction)showManualAIConfigurationPanel:(NSButton *)button {
@@ -4274,11 +4280,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             if ([self choosePrefsCustomFolder]) {
                 // User didn't hit cancel; if he chose a writable directory, ask if he wants to write to it.
                 if ([[iTermRemotePreferences sharedInstance] remoteLocationIsValid]) {
-                    NSAlert *alert = [[NSAlert alloc] init];
-                    alert.messageText = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.CopyLocalSettingsPrompt", nil, [NSBundle mainBundle], @"Copy local settings to custom folder now?", @"Prompt asking whether to copy local settings into the newly chosen custom prefs folder");
-                    [alert addButtonWithTitle:iTermLocalizedCopy()];
-                    [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.DontCopy", nil, [NSBundle mainBundle], @"Don’t Copy", @"Button declining to copy settings")];
-                    if ([alert runModal] == NSAlertFirstButtonReturn) {
+                    const iTermWarningSelection selection =
+                        [iTermWarning showWarningWithTitle:@""
+                                                   actions:@[ iTermLocalizedCopy(),
+                                                              NSLocalizedStringWithDefaultValue(@"GeneralPrefs.DontCopy", nil, [NSBundle mainBundle], @"Don’t Copy", @"Button declining to copy settings") ]
+                                                 accessory:nil
+                                                identifier:nil
+                                               silenceable:kiTermWarningTypePersistent
+                                                   heading:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.CopyLocalSettingsPrompt", nil, [NSBundle mainBundle], @"Copy local settings to custom folder now?", @"Prompt asking whether to copy local settings into the newly chosen custom prefs folder")
+                                                    window:nil];
+                    if (selection == kiTermWarningSelection0) {
                         [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
                     }
                 }

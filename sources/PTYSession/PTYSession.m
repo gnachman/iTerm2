@@ -12,7 +12,6 @@
 #import "ITAddressBookMgr.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
-#import "NSAlert+iTerm.h"
 #import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -4407,17 +4406,20 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                 ? NSLocalizedStringWithDefaultValue(@"PTYSession.TmuxLoggingOn", nil, [NSBundle mainBundle], @"tmux logging on", @"Message reporting that tmux logging was turned on")
                                 : NSLocalizedStringWithDefaultValue(@"PTYSession.TmuxLoggingOff", nil, [NSBundle mainBundle], @"tmux logging off", @"Message reporting that tmux logging was turned off"))];
     } else if (unicode == 'C') {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"PTYSession.EnterTmuxCommand", nil, [NSBundle mainBundle], @"Enter command to send tmux:", @"Prompt asking the user to enter a command to send to tmux");
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert addButtonWithTitle:iTermLocalizedCancel()];
+        iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
+        warning.heading = NSLocalizedStringWithDefaultValue(@"PTYSession.EnterTmuxCommand", nil, [NSBundle mainBundle], @"Enter command to send tmux:", @"Prompt asking the user to enter a command to send to tmux");
+        warning.title = @"";
+        warning.actionLabels = @[ iTermLocalizedOK(), iTermLocalizedCancel() ];
+        warning.cancelLabel = iTermLocalizedCancel();
+        warning.warningType = kiTermWarningTypePersistent;
         NSTextField *tmuxCommand = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
         [tmuxCommand setEditable:YES];
         [tmuxCommand setSelectable:YES];
-        [alert setAccessoryView:tmuxCommand];
-        [alert layout];
-        [[alert window] makeFirstResponder:tmuxCommand];
-        if ([alert runModal] == NSAlertFirstButtonReturn && [[tmuxCommand stringValue] length]) {
+        warning.accessory = tmuxCommand;
+        warning.remoteInputs = @[ [iTermWarningRemoteInput textInputWithIdentifier:@"command" label:nil textField:tmuxCommand] ];
+        warning.initialFirstResponder = tmuxCommand;
+        warning.sessionGuid = self.stableID;
+        if ([warning runModal] == kiTermWarningSelection0 && [[tmuxCommand stringValue] length]) {
             [self printTmuxMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.RunTmuxCommand", nil, [NSBundle mainBundle], @"Run command \"%@\"", @"Message echoing the tmux command being run; placeholder is the command"), [tmuxCommand stringValue]]];
             [_tmuxGateway sendCommand:[tmuxCommand stringValue]
                        responseTarget:self
@@ -11007,19 +11009,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }
         return;
     }
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"PTYSession.ForceDetachTitle", nil, [NSBundle mainBundle], @"Force Detach?", @"Alert title asking whether to force detach from tmux");
-    alert.informativeText = NSLocalizedStringWithDefaultValue(@"PTYSession.TmuxNotResponding", nil, [NSBundle mainBundle], @"Tmux is not responding. Would you like to force detach?", @"Alert body explaining tmux is not responding and asking whether to force detach");
-    [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.Detach", nil, [NSBundle mainBundle], @"Detach", @"Button that detaches from tmux")];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-    NSWindow *window = self.view.window;
-    NSInteger button;
-    if (window) {
-        button = [alert runSheetModalForWindow:window];
-    } else {
-        button = [alert runModal];
-    }
-    if (button == NSAlertFirstButtonReturn) {
+    // A synchronous sheet if the session is in a window, otherwise app-modal.
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.TmuxNotResponding", nil, [NSBundle mainBundle], @"Tmux is not responding. Would you like to force detach?", @"Alert body explaining tmux is not responding and asking whether to force detach")
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.Detach", nil, [NSBundle mainBundle], @"Detach", @"Button that detaches from tmux"),
+                                              iTermLocalizedCancel() ]
+                             actionMapping:nil
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"PTYSession.ForceDetachTitle", nil, [NSBundle mainBundle], @"Force Detach?", @"Alert title asking whether to force detach from tmux")
+                               cancelLabel:iTermLocalizedCancel()
+                                    window:self.view.window];
+    if (selection == kiTermWarningSelection0) {
         [_tmuxGateway forceDetach];
     }
 }
@@ -11033,19 +11035,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)tmuxGatewayShouldForceDetach {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"PTYSession.ForceDetachTitle", nil, [NSBundle mainBundle], @"Force Detach?", @"Alert title asking whether to force detach from tmux");
-    alert.informativeText = NSLocalizedStringWithDefaultValue(@"PTYSession.ForceDetachPending", nil, [NSBundle mainBundle], @"A previous detach request has not yet been honored. Force detach?", @"Alert body explaining a detach request is pending and asking whether to force detach");
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-    NSWindow *window = self.view.window;
-    NSInteger button;
-    if (window) {
-        button = [alert runSheetModalForWindow:window];
-    } else {
-        button = [alert runModal];
-    }
-    return button == NSAlertFirstButtonReturn;
+    // A synchronous sheet if the session is in a window, otherwise app-modal.
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.ForceDetachPending", nil, [NSBundle mainBundle], @"A previous detach request has not yet been honored. Force detach?", @"Alert body explaining a detach request is pending and asking whether to force detach")
+                                   actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                             actionMapping:nil
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"PTYSession.ForceDetachTitle", nil, [NSBundle mainBundle], @"Force Detach?", @"Alert title asking whether to force detach from tmux")
+                               cancelLabel:iTermLocalizedCancel()
+                                    window:self.view.window];
+    return selection == kiTermWarningSelection0;
 }
 
 - (NSWindowController<iTermWindowController> *)tmuxGatewayWindow {
@@ -17015,12 +17016,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)showMarkSetAlert {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"PTYSession.Alert", nil, [NSBundle mainBundle], @"Alert", @"Notification title for a session alert");
-    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.MarkSet", nil, [NSBundle mainBundle], @"Mark set in session “%@.”", @"Alert body reporting a mark was set; placeholder is the session name"), [self name]];
-    [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.Reveal", nil, [NSBundle mainBundle], @"Reveal", @"Button that reveals a session")];
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    if ([alert runModal] == NSAlertFirstButtonReturn) {
+    iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
+    warning.heading = NSLocalizedStringWithDefaultValue(@"PTYSession.Alert", nil, [NSBundle mainBundle], @"Alert", @"Notification title for a session alert");
+    warning.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.MarkSet", nil, [NSBundle mainBundle], @"Mark set in session “%@.”", @"Alert body reporting a mark was set; placeholder is the session name"), [self name]];
+    warning.actionLabels = @[ NSLocalizedStringWithDefaultValue(@"PTYSession.Reveal", nil, [NSBundle mainBundle], @"Reveal", @"Button that reveals a session"),
+                              iTermLocalizedOK() ];
+    warning.warningType = kiTermWarningTypePersistent;
+    warning.sessionGuid = self.stableID;
+    if ([warning runModal] == kiTermWarningSelection0) {
         [self reveal];
     }
 }
@@ -17447,10 +17450,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             if (!data && error) {
                 NSString *message = error.userInfo[@"errorMessage"];
                 if (message) {
-                    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-                    alert.messageText = NSLocalizedStringWithDefaultValue(@"PTYSession.ErrorPreparingUpload", nil, [NSBundle mainBundle], @"Error Preparing Upload", @"Alert title when preparing an upload fails");
-                    alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.TarFailed", nil, [NSBundle mainBundle], @"tar failed with this message: %@", @"Alert body reporting a tar error; placeholder is the error message"), message];
-                    [alert runModal];
+                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.TarFailed", nil, [NSBundle mainBundle], @"tar failed with this message: %@", @"Alert body reporting a tar error; placeholder is the error message"), message]
+                                               actions:@[ iTermLocalizedOK() ]
+                                             accessory:nil
+                                            identifier:nil
+                                           silenceable:kiTermWarningTypePersistent
+                                               heading:NSLocalizedStringWithDefaultValue(@"PTYSession.ErrorPreparingUpload", nil, [NSBundle mainBundle], @"Error Preparing Upload", @"Alert title when preparing an upload fails")
+                                                window:nil];
                     return;
                 }
             }
@@ -20954,16 +20960,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     if (_uploadAndPasteTransfers.count > 0) {
         DLog(@"Upload already in progress, blocking new upload");
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"PTYSession.UploadInProgressTitle", nil, [NSBundle mainBundle], @"Upload in Progress", @"Alert title when an upload is already in progress");
-        alert.informativeText = NSLocalizedStringWithDefaultValue(@"PTYSession.UploadInProgressBody", nil, [NSBundle mainBundle], @"Please wait for the current upload to complete or cancel it before starting another.", @"Alert body explaining that another upload is already in progress");
-        alert.alertStyle = NSAlertStyleWarning;
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        if (self.view.window) {
-            [alert beginSheetModalForWindow:self.view.window completionHandler:nil];
-        } else {
-            [alert runModal];
-        }
+        // A non-blocking sheet if the session is in a window, otherwise app-modal.
+        [iTermWarning asyncShowWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.UploadInProgressBody", nil, [NSBundle mainBundle], @"Please wait for the current upload to complete or cancel it before starting another.", @"Alert body explaining that another upload is already in progress")
+                                        actions:@[ iTermLocalizedOK() ]
+                                  actionMapping:nil
+                                      accessory:nil
+                                     identifier:nil
+                                    silenceable:kiTermWarningTypePersistent
+                                        heading:NSLocalizedStringWithDefaultValue(@"PTYSession.UploadInProgressTitle", nil, [NSBundle mainBundle], @"Upload in Progress", @"Alert title when an upload is already in progress")
+                                    cancelLabel:nil
+                                         window:self.view.window
+                                     completion:^(iTermWarningSelection selection, iTermWarning *warning) {}];
         return;
     }
     SCPPath *scpPath = [self scpPathForCurrentRemoteHost];
@@ -25448,21 +25455,24 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                                   disable:(void (^)(void))disable {
     __weak __typeof(self) weakSelf = self;
     [rateLimit performRateLimitedBlock:^{
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = message ?: @"";
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.ShowSession", nil, [NSBundle mainBundle], @"Show Session", @"Button that reveals a session")];
-        [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.DisableThisAlert", nil, [NSBundle mainBundle], @"Disable This Alert", @"Button that disables a recurring alert")];
-        switch ([alert runModal]) {
-            case NSAlertFirstButtonReturn:
+        iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
+        warning.heading = message ?: @"";
+        warning.title = @"";
+        warning.actionLabels = @[ iTermLocalizedOK(),
+                                  NSLocalizedStringWithDefaultValue(@"PTYSession.ShowSession", nil, [NSBundle mainBundle], @"Show Session", @"Button that reveals a session"),
+                                  NSLocalizedStringWithDefaultValue(@"PTYSession.DisableThisAlert", nil, [NSBundle mainBundle], @"Disable This Alert", @"Button that disables a recurring alert") ];
+        warning.warningType = kiTermWarningTypePersistent;
+        warning.sessionGuid = weakSelf.stableID;
+        switch ([warning runModal]) {
+            case kiTermWarningSelection0:
                 break;
 
-            case NSAlertSecondButtonReturn: {
+            case kiTermWarningSelection1: {
                 [weakSelf reveal];
                 break;
             }
 
-            case NSAlertThirdButtonReturn:
+            case kiTermWarningSelection2:
                 disable();
                 break;
 

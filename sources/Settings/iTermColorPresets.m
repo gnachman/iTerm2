@@ -8,6 +8,7 @@
 #import "NSStringITerm.h"
 #import "iTermProfilePreferences.h"
 #import "iTermUserDefaults.h"
+#import "iTermWarning.h"
 
 NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
 NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
@@ -33,23 +34,35 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
     NSDictionary *aDict = [NSDictionary dictionaryWithContentsOfFile:filename];
     if (!aDict) {
         RLog(@"Failed to parse dictionary");
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"ColorPresets.ImportFailedTitle", nil, [NSBundle mainBundle], @"Import Failed.", @"Title of alert shown when a color preset import fails");
-        alert.informativeText = NSLocalizedStringWithDefaultValue(@"ColorPresets.ImportFailedInformative", nil, [NSBundle mainBundle], @"The selected file could not be read or did not contain a valid color scheme.", @"Informative text shown when a color preset import fails");
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert runModal];
+        NSString *const heading = NSLocalizedStringWithDefaultValue(@"ColorPresets.ImportFailedTitle", nil, [NSBundle mainBundle], @"Import Failed.", @"Title of alert shown when a color preset import fails");
+        NSString *const title = NSLocalizedStringWithDefaultValue(@"ColorPresets.ImportFailedInformative", nil, [NSBundle mainBundle], @"The selected file could not be read or did not contain a valid color scheme.", @"Informative text shown when a color preset import fails");
+        [iTermWarning showWarningWithTitle:title
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:heading
+                                    window:nil];
         return NO;
     } else {
         DLog(@"Parsed dictionary ok");
         NSString *dup = [self nameOfPresetsEqualTo:aDict];
         if (dup) {
             DLog(@"Is a duplicate preset");
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"ColorPresets.DuplicateTitle", nil, [NSBundle mainBundle], @"Add duplicate color preset?", @"Title of alert asking whether to add a duplicate color preset");
-            alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ColorPresets.DuplicateInformative", nil, [NSBundle mainBundle], @"The color preset “%@” is the same as the preset you're trying to add. Really add it?", @"Informative text shown when adding a duplicate color preset; %@ is the preset name"), dup];
-            [alert addButtonWithTitle:iTermLocalizedCancel()];
-            [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"ColorPresets.AddItAnyway", nil, [NSBundle mainBundle], @"Add it anyway", @"Button to add a color preset that duplicates an existing one")];
-            if ([alert runModal] == NSAlertFirstButtonReturn) {
+            NSString *const heading = NSLocalizedStringWithDefaultValue(@"ColorPresets.DuplicateTitle", nil, [NSBundle mainBundle], @"Add duplicate color preset?", @"Title of alert asking whether to add a duplicate color preset");
+            NSString *const title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ColorPresets.DuplicateInformative", nil, [NSBundle mainBundle], @"The color preset “%@” is the same as the preset you're trying to add. Really add it?", @"Informative text shown when adding a duplicate color preset; %@ is the preset name"), dup];
+            NSString *const addAnyway = NSLocalizedStringWithDefaultValue(@"ColorPresets.AddItAnyway", nil, [NSBundle mainBundle], @"Add it anyway", @"Button to add a color preset that duplicates an existing one");
+            const iTermWarningSelection selection =
+                [iTermWarning showWarningWithTitle:title
+                                           actions:@[ iTermLocalizedCancel(), addAnyway ]
+                                     actionMapping:nil
+                                         accessory:nil
+                                        identifier:nil
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:heading
+                                       cancelLabel:iTermLocalizedCancel()
+                                            window:nil];
+            if (selection == kiTermWarningSelection0) {
                 DLog(@"User declined to install dup");
                 return NO;
             }

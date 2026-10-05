@@ -122,25 +122,34 @@ class OnePasswordUtils {
     }
 
     static func showUnavailableMessage(_ path: String? = nil) {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "OnePassword.UnavailableTitle", defaultValue: "OnePassword Unavailable", comment: "Title of an alert shown when 1Password integration is unavailable")
+        let message: String
         if let path = path {
-            alert.informativeText = String(localized: "OnePassword.TooOldMessage", defaultValue: "The 1Password CLI at \(path) is too old. The iTerm2 integration requires version \(minimumSupportedVersionString) or later.", comment: "Explanation shown when the 1Password CLI is too old; first placeholder is the CLI path, second is the minimum required version")
+            message = String(localized: "OnePassword.TooOldMessage", defaultValue: "The 1Password CLI at \(path) is too old. The iTerm2 integration requires version \(minimumSupportedVersionString) or later.", comment: "Explanation shown when the 1Password CLI is too old; first placeholder is the CLI path, second is the minimum required version")
         } else {
-            alert.informativeText = String(localized: "OnePassword.NotFoundMessage", defaultValue: "The 1Password CLI could not be found, or is older than the required version \(minimumSupportedVersionString). Check that a current op is installed.", comment: "Explanation shown when the 1Password CLI is missing or too old; placeholder is the minimum required version")
+            message = String(localized: "OnePassword.NotFoundMessage", defaultValue: "The 1Password CLI could not be found, or is older than the required version \(minimumSupportedVersionString). Check that a current op is installed.", comment: "Explanation shown when the 1Password CLI is missing or too old; placeholder is the minimum required version")
         }
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.runModal()
+        iTermWarning.show(withTitle: message,
+                          actions: [iTermLocalizedOK()],
+                          accessory: nil,
+                          identifier: nil,
+                          silenceable: .kiTermWarningTypePersistent,
+                          heading: String(localized: "OnePassword.UnavailableTitle", defaultValue: "OnePassword Unavailable", comment: "Title of an alert shown when 1Password integration is unavailable"),
+                          window: nil)
     }
 
     // Returns true to show an open panel to locate it.
     private static func showCannotFindCLIMessage() -> Bool {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "OnePassword.CannotFindTitle", defaultValue: "Can’t Find 1Password CLI", comment: "Title of an alert shown when the 1Password CLI cannot be found")
-        alert.informativeText = String(localized: "OnePassword.CannotFindMessage", defaultValue: "In order to use the 1Password integration, iTerm2 needs to know where to find the CLI app named “op”. It’s normally in /usr/local/bin. If you have installed it elsewhere, please select Locate to provide its location.", comment: "Explanation shown when the 1Password CLI cannot be found automatically")
-        alert.addButton(withTitle: String(localized: "OnePassword.Locate", defaultValue: "Locate", comment: "Button that lets the user locate the 1Password CLI"))
-        alert.addButton(withTitle: iTermLocalizedCancel())
-        return alert.runModal() == .alertFirstButtonReturn
+        let selection = iTermWarning.show(withTitle: String(localized: "OnePassword.CannotFindMessage", defaultValue: "In order to use the 1Password integration, iTerm2 needs to know where to find the CLI app named “op”. It’s normally in /usr/local/bin. If you have installed it elsewhere, please select Locate to provide its location.", comment: "Explanation shown when the 1Password CLI cannot be found automatically"),
+                                          actions: [String(localized: "OnePassword.Locate", defaultValue: "Locate", comment: "Button that lets the user locate the 1Password CLI"),
+                                                    iTermLocalizedCancel()],
+                                          actionMapping: nil,
+                                          accessory: nil,
+                                          identifier: nil,
+                                          silenceable: .kiTermWarningTypePersistent,
+                                          heading: String(localized: "OnePassword.CannotFindTitle", defaultValue: "Can’t Find 1Password CLI", comment: "Title of an alert shown when the 1Password CLI cannot be found"),
+                                          cancelLabel: iTermLocalizedCancel(),
+                                          window: nil)
+        return selection == .kiTermWarningSelection0
     }
 
     private static func askUserToFindCLI() -> String? {
@@ -408,11 +417,13 @@ class OnePasswordTokenRequester {
     }
 
     private func showErrorMessage(_ reason: String) {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "OnePassword.AuthErrorTitle", defaultValue: "Authentication Error", comment: "Title of an alert reporting a 1Password authentication error")
-        alert.informativeText = reason
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.runModal()
+        iTermWarning.show(withTitle: reason,
+                          actions: [iTermLocalizedOK()],
+                          accessory: nil,
+                          identifier: nil,
+                          silenceable: .kiTermWarningTypePersistent,
+                          heading: String(localized: "OnePassword.AuthErrorTitle", defaultValue: "Authentication Error", comment: "Title of an alert reporting a 1Password authentication error"),
+                          window: nil)
     }
 
     private func requestPassword(prompt: String) -> String? {

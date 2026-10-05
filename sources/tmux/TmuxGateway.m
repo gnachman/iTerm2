@@ -10,6 +10,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermWarning.h"
 #import "TmuxController.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
@@ -130,11 +131,13 @@ static NSString *kCommandTimestamp = @"timestamp";
 - (void)abortWithErrorMessage:(NSString *)message title:(NSString *)title {
     // This can run in a side-effect and it's not safe to start a runloop in a side effect.
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = title;
-        alert.informativeText = message;
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert runModal];
+        [iTermWarning showWarningWithTitle:message
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:title
+                                    window:nil];
     });
     [self detach];
     [delegate_ tmuxHostDisconnected:[_dcsID copy]];  // Force the client to quit

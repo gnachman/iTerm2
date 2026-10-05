@@ -4012,9 +4012,9 @@ extension ChatViewController {
         // etc.) are replaced by one-time per-session approvals that
         // stick for the rest of the chat. Users coming from the
         // menu-driven toggle won't know that without being told.
-        let alert = NSAlert()
-        alert.messageText = String(localized: "ChatViewController.EnableOrchestrationModeTitle", defaultValue: "Enable orchestration mode?", comment: "Title of the enable orchestration confirmation dialog")
-        alert.informativeText = String(localized: "ChatViewController.EnableOrchestrationModeBody", defaultValue: """
+        let warning = iTermWarning()
+        warning.heading = String(localized: "ChatViewController.EnableOrchestrationModeTitle", defaultValue: "Enable orchestration mode?", comment: "Title of the enable orchestration confirmation dialog")
+        warning.title = String(localized: "ChatViewController.EnableOrchestrationModeBody", defaultValue: """
             Orchestration mode lets the agent coordinate across any iTerm2 sessions. \
             It can read screen contents from any session, but to type into a session requires \
             your permission. This is a more permissive model than when an agent is linked to \
@@ -4023,10 +4023,10 @@ extension ChatViewController {
             Enabling will detach any linked terminal or browser session and switch \
             the chat to Orchestration mode.
             """, comment: "Explanatory body of the enable orchestration confirmation dialog")
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: enableOrchestrationButtonTitle)
-        alert.addButton(withTitle: iTermLocalizedCancel())
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        warning.actionLabels = [enableOrchestrationButtonTitle, iTermLocalizedCancel()]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        guard warning.runModal() == .kiTermWarningSelection0 else { return }
         setOrchestrationEnabled(true)
     }
 

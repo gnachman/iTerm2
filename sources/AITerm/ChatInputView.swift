@@ -573,14 +573,15 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         guard let window else { return }
         let names = urls.map { $0.lastPathComponent }.joined(separator: ", ")
         let providerName = AITermController.provider?.displayName ?? String(localized: "ChatInputView.CurrentProvider", defaultValue: "the current AI provider", comment: "Fallback name for the AI provider when its display name is unknown")
-        let alert = NSAlert()
-        alert.messageText = urls.count == 1
+        let warning = iTermWarning()
+        warning.heading = urls.count == 1
             ? String(localized: "ChatInputView.AttachmentNotSupported", defaultValue: "Attachment not supported", comment: "Alert title when a single dropped file is not supported as an attachment")
             : String(localized: "ChatInputView.AttachmentsNotSupported", defaultValue: "Attachments not supported", comment: "Alert title when multiple dropped files are not supported as attachments")
-        alert.informativeText = String(localized: "ChatInputView.UnsupportedAttachmentBody", defaultValue: "\(providerName) doesn’t accept this file type as a chat attachment: \(names).", comment: "Explanation shown when dropped files are not supported as attachments; first placeholder is the AI provider name, second is the list of file names")
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.beginSheetModal(for: window)
+        warning.title = String(localized: "ChatInputView.UnsupportedAttachmentBody", defaultValue: "\(providerName) doesn’t accept this file type as a chat attachment: \(names).", comment: "Explanation shown when dropped files are not supported as attachments; first placeholder is the AI provider name, second is the list of file names")
+        warning.actionLabels = [iTermLocalizedOK()]
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.window = window
+        warning.runModalAsync { _, _ in }
     }
 
     var isEnabled: Bool {

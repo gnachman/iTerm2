@@ -284,19 +284,22 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     }
 
     private func requestPathToDatabaseViaTextField(handshake: HandshakeResponse) -> Bool {
-        let alert = NSAlert()
-        alert.messageText = handshake.pathToDatabasePrompt ?? String(localized: "AdapterPassword.EnterDatabaseURL", defaultValue: "Enter database URL for \(identifier)", comment: "Prompt asking the user to enter a database URL; placeholder is the adapter identifier")
-        alert.addButton(withTitle: iTermLocalizedOK())
-        alert.addButton(withTitle: iTermLocalizedCancel())
+        let warning = iTermWarning()
+        warning.heading = handshake.pathToDatabasePrompt ?? String(localized: "AdapterPassword.EnterDatabaseURL", defaultValue: "Enter database URL for \(identifier)", comment: "Prompt asking the user to enter a database URL; placeholder is the adapter identifier")
+        warning.title = ""
+        warning.actionLabels = [iTermLocalizedOK(), iTermLocalizedCancel()]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
 
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         textField.placeholderString = handshake.pathToDatabasePlaceholder ?? "https://\u{2026}"
-        alert.accessoryView = textField
-        alert.layout()
-        alert.window.makeFirstResponder(textField)
+        warning.accessory = textField
+        warning.remoteInputs = [iTermWarningRemoteInput.textInput(withIdentifier: "database",  // Localization unneeded
+                                                                  label: nil,
+                                                                  textField: textField)]
+        warning.initialFirstResponder = textField
 
-        let response = alert.runModal()
-        guard response == .alertFirstButtonReturn else {
+        guard warning.runModal() == .kiTermWarningSelection0 else {
             return false
         }
         let value = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)

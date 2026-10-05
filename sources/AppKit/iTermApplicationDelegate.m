@@ -803,10 +803,13 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     if ([filename hasSuffix:@".itermcolors"]) {
         RLog(@"Importing color presets from %@", filename);
         if ([iTermColorPresets importColorPresetFromFile:filename]) {
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"ColorPreset.ImportedTitle", nil, [NSBundle mainBundle], @"Colors Scheme Imported", @"Title when a color scheme was imported");
-            alert.informativeText = NSLocalizedStringWithDefaultValue(@"ColorPreset.ImportedMessage", nil, [NSBundle mainBundle], @"The color scheme was imported and added to presets. You can find it under Settings > Profiles > Colors > Load Presets….", @"Message telling the user where to find the imported color scheme");
-            [alert runModal];
+            [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"ColorPreset.ImportedMessage", nil, [NSBundle mainBundle], @"The color scheme was imported and added to presets. You can find it under Settings > Profiles > Colors > Load Presets….", @"Message telling the user where to find the imported color scheme")
+                                       actions:@[ iTermLocalizedOK() ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:NSLocalizedStringWithDefaultValue(@"ColorPreset.ImportedTitle", nil, [NSBundle mainBundle], @"Colors Scheme Imported", @"Title when a color scheme was imported")
+                                        window:nil];
         }
         return YES;
     }
@@ -3433,11 +3436,13 @@ static iTermKeyEventReplayer *gReplayer;
 - (IBAction)saveRetrospectiveDebugLogs:(id)sender {
     NSString *ring = iTermRetrospectiveLogString();
     if (ring.length == 0) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"DebugLogs.NoRetrospectiveTitle", nil, [NSBundle mainBundle], @"No Retrospective Logs", @"Title when there are no retrospective debug logs");
-        alert.informativeText = NSLocalizedStringWithDefaultValue(@"DebugLogs.NoRetrospectiveMessage", nil, [NSBundle mainBundle], @"No retrospective debug logs have been recorded yet.", @"Message when there are no retrospective debug logs");
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert runModal];
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"DebugLogs.NoRetrospectiveMessage", nil, [NSBundle mainBundle], @"No retrospective debug logs have been recorded yet.", @"Message when there are no retrospective debug logs")
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"DebugLogs.NoRetrospectiveTitle", nil, [NSBundle mainBundle], @"No Retrospective Logs", @"Title when there are no retrospective debug logs")
+                                    window:nil];
         return;
     }
     // Prepend the same header a regular debug log gets (version, screens, window
@@ -3452,11 +3457,13 @@ static iTermKeyEventReplayer *gReplayer;
     }
     NSError *error = nil;
     if (![log writeToURL:panel.URL atomically:YES encoding:NSUTF8StringEncoding error:&error]) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = NSLocalizedStringWithDefaultValue(@"DebugLogs.CouldNotSaveTitle", nil, [NSBundle mainBundle], @"Could Not Save", @"Title when saving retrospective debug logs failed");
-        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DebugLogs.SaveFailed", nil, [NSBundle mainBundle], @"Failed to save retrospective debug logs: %@", @"Message that saving retrospective debug logs failed; %@ is the error"), error.localizedDescription];
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert runModal];
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DebugLogs.SaveFailed", nil, [NSBundle mainBundle], @"Failed to save retrospective debug logs: %@", @"Message that saving retrospective debug logs failed; %@ is the error"), error.localizedDescription]
+                                   actions:@[ iTermLocalizedOK() ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"DebugLogs.CouldNotSaveTitle", nil, [NSBundle mainBundle], @"Could Not Save", @"Title when saving retrospective debug logs failed")
+                                    window:nil];
     }
 }
 
@@ -3532,10 +3539,13 @@ static iTermKeyEventReplayer *gReplayer;
     if ([iTermUvProvisioner isInstalled]) {
         [[iTermUvProvisioner shared] userRequestedUpgradeCheckWithCompletion:^(BOOL ok, NSString *message) {
             [[iTermScriptHistoryEntry globalEntry] addOutput:[message stringByAppendingString:@"\n"] completion:^{}];
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = ok ? NSLocalizedStringWithDefaultValue(@"PythonRuntime.Heading", nil, [NSBundle mainBundle], @"Python Runtime", @"Heading for Python runtime alerts") : NSLocalizedStringWithDefaultValue(@"PythonRuntime.UpdateFailedTitle", nil, [NSBundle mainBundle], @"Update Failed", @"Title when checking for a Python runtime update failed");
-            alert.informativeText = message;
-            [alert runModal];
+            [iTermWarning showWarningWithTitle:message
+                                       actions:@[ iTermLocalizedOK() ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:ok ? NSLocalizedStringWithDefaultValue(@"PythonRuntime.Heading", nil, [NSBundle mainBundle], @"Python Runtime", @"Heading for Python runtime alerts") : NSLocalizedStringWithDefaultValue(@"PythonRuntime.UpdateFailedTitle", nil, [NSBundle mainBundle], @"Update Failed", @"Title when checking for a Python runtime update failed")
+                                        window:nil];
         }];
         return;
     }
@@ -3546,11 +3556,13 @@ static iTermKeyEventReplayer *gReplayer;
             return;
         }
         if (error != nil || python == nil) {
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = NSLocalizedStringWithDefaultValue(@"PythonRuntime.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Title when installing the Python runtime failed");
-            alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PythonRuntime.InstallFailed", nil, [NSBundle mainBundle], @"Could not install the Python runtime: %@", @"Message that the Python runtime could not be installed; %@ is the error"),
-                                     error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"PythonRuntime.UnknownError", nil, [NSBundle mainBundle], @"unknown error", @"Fallback text when an error has no description")];
-            [alert runModal];
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PythonRuntime.InstallFailed", nil, [NSBundle mainBundle], @"Could not install the Python runtime: %@", @"Message that the Python runtime could not be installed; %@ is the error"), error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"PythonRuntime.UnknownError", nil, [NSBundle mainBundle], @"unknown error", @"Fallback text when an error has no description")]
+                                       actions:@[ iTermLocalizedOK() ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:NSLocalizedStringWithDefaultValue(@"PythonRuntime.InstallationFailedTitle", nil, [NSBundle mainBundle], @"Installation Failed", @"Title when installing the Python runtime failed")
+                                        window:nil];
             return;
         }
         // uv is now installed; retitle the menu item to "Check for Updated Runtime".
@@ -3659,11 +3671,13 @@ static iTermKeyEventReplayer *gReplayer;
                 interpreter = [[iTermUvProvisioner shared] newestProvisionedSharedVenvInterpreter];
             }
             if (interpreter == nil) {
-                NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-                alert.messageText = NSLocalizedStringWithDefaultValue(@"PythonRuntime.EnvUnavailableTitle", nil, [NSBundle mainBundle], @"Python Environment Unavailable", @"Title when the Python environment for the REPL could not be prepared");
-                alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PythonRuntime.REPLPrepareFailed", nil, [NSBundle mainBundle], @"Could not prepare the Python environment for the REPL: %@", @"Message that the REPL Python environment could not be prepared; %@ is the error"),
-                                         uvError.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"PythonRuntime.UnknownError", nil, [NSBundle mainBundle], @"unknown error", @"Fallback text when an error has no description")];
-                [alert runModal];
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PythonRuntime.REPLPrepareFailed", nil, [NSBundle mainBundle], @"Could not prepare the Python environment for the REPL: %@", @"Message that the REPL Python environment could not be prepared; %@ is the error"), uvError.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"PythonRuntime.UnknownError", nil, [NSBundle mainBundle], @"unknown error", @"Fallback text when an error has no description")]
+                                           actions:@[ iTermLocalizedOK() ]
+                                         accessory:nil
+                                        identifier:nil
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:NSLocalizedStringWithDefaultValue(@"PythonRuntime.EnvUnavailableTitle", nil, [NSBundle mainBundle], @"Python Environment Unavailable", @"Title when the Python environment for the REPL could not be prepared")
+                                            window:nil];
                 return;
             }
             if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
@@ -3806,18 +3820,23 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (IBAction)gpuRendererAvailability:(id)sender {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"GPURenderer.Title", nil, [NSBundle mainBundle], @"GPU Renderer Availability", @"Title of the GPU renderer availability alert");
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
     PTYSession *session = [term currentSession];
     PTYTab *tab = [term tabForSession:session];
     NSString *reason = [self gpuUnavailableStringForReason:tab.metalUnavailableReason];
+    NSString *message;
     if (reason) {
-        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GPURenderer.OffBecause", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because %@", @"Explanation that GPU rendering is off; %@ is the reason"), reason];
+        message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GPURenderer.OffBecause", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because %@", @"Explanation that GPU rendering is off; %@ is the reason"), reason];
     } else {
-        alert.informativeText = NSLocalizedStringWithDefaultValue(@"GPURenderer.Enabled", nil, [NSBundle mainBundle], @"GPU rendering is enabled for the current session.", @"Message that GPU rendering is enabled");
+        message = NSLocalizedStringWithDefaultValue(@"GPURenderer.Enabled", nil, [NSBundle mainBundle], @"GPU rendering is enabled for the current session.", @"Message that GPU rendering is enabled");
     }
-    [alert runModal];
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ iTermLocalizedOK() ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:NSLocalizedStringWithDefaultValue(@"GPURenderer.Title", nil, [NSBundle mainBundle], @"GPU Renderer Availability", @"Title of the GPU renderer availability alert")
+                                window:nil];
 }
 
 - (IBAction)openSourceLicenses:(id)sender {

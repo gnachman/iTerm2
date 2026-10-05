@@ -43,13 +43,14 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         // synchronous read (no shell spawn) and is the same path uninstallHooks
         // operates on below.
         let settingsPath = ClaudeCodeOnboarding.claudeSettingsURL().path
-        let confirm = NSAlert()
-        confirm.messageText = String(localized: "ClaudeCode.UninstallTitle", defaultValue: "Uninstall Claude Code Integration?", comment: "Title of the uninstall confirmation dialog")
-        confirm.informativeText = String(localized: "ClaudeCode.UninstallBody", defaultValue: "This removes the cc-status hook from \(settingsPath), the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration.", comment: "Explanation of what uninstalling the Claude Code integration does; the interpolated value is the absolute path to settings.json")
-        confirm.alertStyle = .warning
-        confirm.addButton(withTitle: String(localized: "ClaudeCode.Uninstall", defaultValue: "Uninstall", comment: "Button to confirm uninstalling the Claude Code integration"))
-        confirm.addButton(withTitle: iTermLocalizedCancel())
-        guard confirm.runModal() == .alertFirstButtonReturn else { return }
+        let confirm = iTermWarning()
+        confirm.heading = String(localized: "ClaudeCode.UninstallTitle", defaultValue: "Uninstall Claude Code Integration?", comment: "Title of the uninstall confirmation dialog")
+        confirm.title = String(localized: "ClaudeCode.UninstallBody", defaultValue: "This removes the cc-status hook from \(settingsPath), the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration.", comment: "Explanation of what uninstalling the Claude Code integration does; the interpolated value is the absolute path to settings.json")
+        confirm.actionLabels = [String(localized: "ClaudeCode.Uninstall", defaultValue: "Uninstall", comment: "Button to confirm uninstalling the Claude Code integration"),
+                                iTermLocalizedCancel()]
+        confirm.cancelLabel = iTermLocalizedCancel()
+        confirm.warningType = .kiTermWarningTypePersistent
+        guard confirm.runModal() == .kiTermWarningSelection0 else { return }
 
         // Hooks first — they're the only step that can fail (disk).
         let hookResult = ClaudeCodeOnboarding.uninstallHooks()
@@ -76,13 +77,14 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
             @unknown default:
                 detail = ""
             }
-            let failure = NSAlert()
-            failure.messageText = String(localized: "ClaudeCode.HookRemovalFailedTitle", defaultValue: "Couldn\u{2019}t Remove Hooks", comment: "Title shown when Claude Code hook removal failed")
-            failure.informativeText = String(localized: "ClaudeCode.HookRemovalFailedBody", defaultValue: "\(detail) Continue removing the workgroup and triggers anyway? cc-status will keep running until you fix the underlying issue and try again.", comment: "Body shown when hook removal failed, asking whether to continue uninstalling")
-            failure.alertStyle = .warning
-            failure.addButton(withTitle: String(localized: "General.Continue", defaultValue: "Continue", comment: "Continue button"))
-            failure.addButton(withTitle: iTermLocalizedCancel())
-            guard failure.runModal() == .alertFirstButtonReturn else { return }
+            let failure = iTermWarning()
+            failure.heading = String(localized: "ClaudeCode.HookRemovalFailedTitle", defaultValue: "Couldn\u{2019}t Remove Hooks", comment: "Title shown when Claude Code hook removal failed")
+            failure.title = String(localized: "ClaudeCode.HookRemovalFailedBody", defaultValue: "\(detail) Continue removing the workgroup and triggers anyway? cc-status will keep running until you fix the underlying issue and try again.", comment: "Body shown when hook removal failed, asking whether to continue uninstalling")
+            failure.actionLabels = [String(localized: "General.Continue", defaultValue: "Continue", comment: "Continue button"),
+                                    iTermLocalizedCancel()]
+            failure.cancelLabel = iTermLocalizedCancel()
+            failure.warningType = .kiTermWarningTypePersistent
+            guard failure.runModal() == .kiTermWarningSelection0 else { return }
         }
 
         ClaudeCodeOnboarding.uninstallWorkgroup()
@@ -99,12 +101,13 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         // entirely if the API is already off (uninstall has nothing
         // to offer).
         if iTermAPIHelper.isEnabled() {
-            let apiAlert = NSAlert()
-            apiAlert.messageText = String(localized: "ClaudeCode.DisableAPITitle", defaultValue: "Disable the Python API?", comment: "Title asking whether to disable the Python API during uninstall")
-            apiAlert.informativeText = String(localized: "ClaudeCode.DisableAPIBody", defaultValue: "The installer enabled iTerm2\u{2019}s Python API. Other scripts or integrations may be using it now. Leave it enabled, or turn it off?", comment: "Explanation shown when asking whether to disable the Python API during uninstall")
-            apiAlert.addButton(withTitle: String(localized: "ClaudeCode.LeaveEnabled", defaultValue: "Leave Enabled", comment: "Button to leave the Python API enabled"))
-            apiAlert.addButton(withTitle: String(localized: "ClaudeCode.Disable", defaultValue: "Disable", comment: "Button to disable the Python API"))
-            if apiAlert.runModal() == .alertSecondButtonReturn {
+            let apiAlert = iTermWarning()
+            apiAlert.heading = String(localized: "ClaudeCode.DisableAPITitle", defaultValue: "Disable the Python API?", comment: "Title asking whether to disable the Python API during uninstall")
+            apiAlert.title = String(localized: "ClaudeCode.DisableAPIBody", defaultValue: "The installer enabled iTerm2\u{2019}s Python API. Other scripts or integrations may be using it now. Leave it enabled, or turn it off?", comment: "Explanation shown when asking whether to disable the Python API during uninstall")
+            apiAlert.actionLabels = [String(localized: "ClaudeCode.LeaveEnabled", defaultValue: "Leave Enabled", comment: "Button to leave the Python API enabled"),
+                                     String(localized: "ClaudeCode.Disable", defaultValue: "Disable", comment: "Button to disable the Python API")]
+            apiAlert.warningType = .kiTermWarningTypePersistent
+            if apiAlert.runModal() == .kiTermWarningSelection1 {
                 iTermAPIHelper.setEnabled(false)
             }
         }

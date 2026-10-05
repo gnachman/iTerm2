@@ -12,6 +12,7 @@
 #import "ITAddressBookMgr.h"
 #import "NSWorkspace+iTerm.h"
 #import "iTermUserDefaults.h"
+#import "iTermWarning.h"
 
 static NSString *const kUrlHandlersUserDefaultsKey = @"URLHandlersByGuid";
 static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
@@ -77,23 +78,27 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     [appURL autorelease];
 
     if (appURL == nil) {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"LaunchServices.NotDefaultHandlerTitle", nil, [NSBundle mainBundle], @"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?", @"Alert title asking whether to make iTerm the default handler; %@ is the URL scheme"),
-                             scheme];
-        alert.informativeText = NSLocalizedStringWithDefaultValue(@"LaunchServices.NoHandler", nil, [NSBundle mainBundle], @"There is currently no handler.", @"Alert message indicating there is currently no handler for a URL scheme");
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert addButtonWithTitle:iTermLocalizedCancel()];
-        set = ([alert runModal] == NSAlertFirstButtonReturn);
+        set = ([iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"LaunchServices.NoHandler", nil, [NSBundle mainBundle], @"There is currently no handler.", @"Alert message indicating there is currently no handler for a URL scheme")
+                                          actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                                    actionMapping:nil
+                                        accessory:nil
+                                       identifier:nil
+                                      silenceable:kiTermWarningTypePersistent
+                                          heading:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"LaunchServices.NotDefaultHandlerTitle", nil, [NSBundle mainBundle], @"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?", @"Alert title asking whether to make iTerm the default handler; %@ is the URL scheme"), scheme]
+                                      cancelLabel:iTermLocalizedCancel()
+                                           window:nil] == kiTermWarningSelection0);
     // Localization unneeded
     } else if (![[[NSFileManager defaultManager] displayNameAtPath:[appURL path]] isEqualToString:@"iTerm 2"]) {
         NSString *theTitle = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"LaunchServices.NotDefaultHandlerTitle", nil, [NSBundle mainBundle], @"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?", @"Alert title asking whether to make iTerm the default handler; %@ is the URL scheme"), scheme];
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = theTitle;
-        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"LaunchServices.CurrentHandler", nil, [NSBundle mainBundle], @"The current handler is: %@", @"Alert message; %@ is the name of the current handler application"),
-                                 [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]];
-        [alert addButtonWithTitle:iTermLocalizedOK()];
-        [alert addButtonWithTitle:iTermLocalizedCancel()];
-        set = ([alert runModal] == NSAlertFirstButtonReturn);
+        set = ([iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"LaunchServices.CurrentHandler", nil, [NSBundle mainBundle], @"The current handler is: %@", @"Alert message; %@ is the name of the current handler application"), [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]]
+                                          actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                                    actionMapping:nil
+                                        accessory:nil
+                                       identifier:nil
+                                      silenceable:kiTermWarningTypePersistent
+                                          heading:theTitle
+                                      cancelLabel:iTermLocalizedCancel()
+                                           window:nil] == kiTermWarningSelection0);
     }
 
     if (set) {
@@ -173,14 +178,18 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 }
 
 - (BOOL)offerToPickApplicationToOpenFile:(NSString *)fullPath {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"LaunchServices.NoAppToOpenDocument", nil, [NSBundle mainBundle], @"There is no application set to open the document “%@”", @"Alert title; %@ is the document file name"), [fullPath lastPathComponent]];
-    alert.informativeText = NSLocalizedStringWithDefaultValue(@"LaunchServices.ChooseAppMessage", nil, [NSBundle mainBundle], @"Choose an application on your computer to open this file.", @"Alert message asking the user to choose an application to open a file");
-    [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"LaunchServices.ChooseApplicationButton", nil, [NSBundle mainBundle], @"Choose Application…", @"Button that lets the user choose an application to open a file")];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-
     DLog(@"Offer to pick an app to open %@", fullPath);
-    if ([alert runModal] == NSAlertFirstButtonReturn) {
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"LaunchServices.ChooseAppMessage", nil, [NSBundle mainBundle], @"Choose an application on your computer to open this file.", @"Alert message asking the user to choose an application to open a file")
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"LaunchServices.ChooseApplicationButton", nil, [NSBundle mainBundle], @"Choose Application…", @"Button that lets the user choose an application to open a file"), iTermLocalizedCancel() ]
+                             actionMapping:nil
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"LaunchServices.NoAppToOpenDocument", nil, [NSBundle mainBundle], @"There is no application set to open the document “%@”", @"Alert title; %@ is the document file name"), [fullPath lastPathComponent]]
+                               cancelLabel:iTermLocalizedCancel()
+                                    window:nil];
+    if (selection == kiTermWarningSelection0) {
         return [self pickApplicationToOpenFile:fullPath];
     } else {
         DLog(@"Offer declined");

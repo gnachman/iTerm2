@@ -220,15 +220,18 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
     }
 
     @objc private func deleteBookmark() {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "BookmarkTagEditor.DeleteBookmark", defaultValue: "Delete Bookmark", comment: "Title/label for deleting a bookmark")
-        alert.informativeText = String(localized: "BookmarkTagEditor.DeleteConfirm", defaultValue: "Are you sure you want to delete this bookmark?", comment: "Confirmation prompt before deleting a bookmark")
-        alert.addButton(withTitle: String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete: used on buttons, menu items and other controls"))
-        alert.addButton(withTitle: iTermLocalizedCancel())
-        alert.alertStyle = .warning
+        let warning = iTermWarning()
+        warning.heading = String(localized: "BookmarkTagEditor.DeleteBookmark", defaultValue: "Delete Bookmark", comment: "Title/label for deleting a bookmark")
+        warning.title = String(localized: "BookmarkTagEditor.DeleteConfirm", defaultValue: "Are you sure you want to delete this bookmark?", comment: "Confirmation prompt before deleting a bookmark")
+        warning.actionLabels = [
+            String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete: used on buttons, menu items and other controls"),
+            iTermLocalizedCancel()]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.window = window!
 
-        alert.beginSheetModal(for: window!) { response in
-            if response == .alertFirstButtonReturn {
+        warning.runModalAsync { selection, _ in
+            if selection == .kiTermWarningSelection0 {
                 Task {
                     await self.performDeleteBookmark()
                 }

@@ -17,6 +17,7 @@
 #import "iTermSessionLauncher.h"
 #import "iTermSessionPreviewPanel.h"
 #import "iTermSnippetsMenuController.h"
+#import "iTermWarning.h"
 #import "DebugLogging.h"
 #import "NSAppearance+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -492,11 +493,13 @@
                                                          origin:NSLocalizedStringWithDefaultValue(@"OpenQuickly.ErrorOrigin", nil, [NSBundle mainBundle], @"Open Quickly", @"Origin label shown when an Open Quickly function call reports an error")
                                                          window:nil];
                     } else {
-                        NSAlert *alert = [[NSAlert alloc] init];
-                        [alert setMessageText:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FunctionCallResultTitle", nil, [NSBundle mainBundle], @"Function Call Result", @"Alert title showing the result of a function call")];
-                        [alert setInformativeText:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FunctionCallResultBody", nil, [NSBundle mainBundle], @"%1$@ returned:\n%2$@", @"Alert body showing a function call result; first %@ is the invocation and second is the returned value"), item.identifier, [value description]]];
-                        [alert addButtonWithTitle:iTermLocalizedOK()];
-                        [alert runModal];
+                        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FunctionCallResultBody", nil, [NSBundle mainBundle], @"%1$@ returned:\n%2$@", @"Alert body showing a function call result; first %@ is the invocation and second is the returned value"), item.identifier, [value description]]
+                                                   actions:@[ iTermLocalizedOK() ]
+                                                 accessory:nil
+                                                identifier:nil
+                                               silenceable:kiTermWarningTypePersistent
+                                                   heading:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FunctionCallResultTitle", nil, [NSBundle mainBundle], @"Function Call Result", @"Alert title showing the result of a function call")
+                                                    window:nil];
                     }
                 }];
             } else {

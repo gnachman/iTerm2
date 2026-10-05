@@ -5264,13 +5264,17 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                 [files componentsJoinedByString:@", "],
                 path.username, path.hostname, path.path];
     }
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = text;
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-    [alert layout];
-    NSInteger button = [alert runModal];
-    return (button == NSAlertFirstButtonReturn);
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@""
+                                   actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                             actionMapping:nil
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:text
+                               cancelLabel:iTermLocalizedCancel()
+                                    window:nil];
+    return (selection == kiTermWarningSelection0);
 }
 
 - (void)maybeUpload:(NSArray *)tuple {

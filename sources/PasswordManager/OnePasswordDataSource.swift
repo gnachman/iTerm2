@@ -188,11 +188,13 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
                 }
             } outputTransformer: { output, completion in
                 if output.timedOut {
-                    let alert = NSAlert()
-                    alert.messageText = String(localized: "OnePasswordDataSource.TimeoutTitle", defaultValue: "Timeout", comment: "Alert title when 1Password times out")
-                    alert.informativeText = String(localized: "OnePasswordDataSource.TimeoutMessage", defaultValue: "1Password took too long to respond.", comment: "Alert body when 1Password times out")
-                    alert.addButton(withTitle: iTermLocalizedOK())
-                    alert.runModal()
+                    iTermWarning.show(withTitle: String(localized: "OnePasswordDataSource.TimeoutMessage", defaultValue: "1Password took too long to respond.", comment: "Alert body when 1Password times out"),
+                                      actions: [iTermLocalizedOK()],
+                                      accessory: nil,
+                                      identifier: nil,
+                                      silenceable: .kiTermWarningTypePersistent,
+                                      heading: String(localized: "OnePasswordDataSource.TimeoutTitle", defaultValue: "Timeout", comment: "Alert title when 1Password times out"),
+                                      window: nil)
                     completion(.failure(OPError.timeout))
                     return
                 }

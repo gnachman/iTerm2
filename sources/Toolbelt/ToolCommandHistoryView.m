@@ -25,6 +25,7 @@
 #import "NSTextField+iTerm.h"
 #import "NSWorkspace+iTerm.h"
 #import "PTYSession.h"
+#import "iTermWarning.h"
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
@@ -314,12 +315,17 @@ static const CGFloat kMargin = 5;
 }
 
 - (void)clear:(id)sender {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedStringWithDefaultValue(@"ToolCommandHistory.EraseTitle", nil, [NSBundle mainBundle], @"Erase Command History", @"Confirmation alert title for erasing command history");
-    alert.informativeText = NSLocalizedStringWithDefaultValue(@"ToolCommandHistory.EraseMessage", nil, [NSBundle mainBundle], @"Command history for all hosts will be erased. Continue?", @"Confirmation alert message for erasing command history");
-    [alert addButtonWithTitle:iTermLocalizedOK()];
-    [alert addButtonWithTitle:iTermLocalizedCancel()];
-    if ([alert runModal] == NSAlertFirstButtonReturn) {
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"ToolCommandHistory.EraseMessage", nil, [NSBundle mainBundle], @"Command history for all hosts will be erased. Continue?", @"Confirmation alert message for erasing command history")
+                                   actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                             actionMapping:nil
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"ToolCommandHistory.EraseTitle", nil, [NSBundle mainBundle], @"Erase Command History", @"Confirmation alert title for erasing command history")
+                               cancelLabel:iTermLocalizedCancel()
+                                    window:nil];
+    if (selection == kiTermWarningSelection0) {
         [[iTermShellHistoryController sharedInstance] eraseCommandHistory:YES directories:NO];
     }
 }
