@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 
 @class PTYSession;
+@protocol iTermOpenQuicklyCommand;
 
 @protocol iTermOpenQuicklyModelDelegate <NSObject>
 
@@ -30,6 +31,10 @@
 
 // Recalculate items, adding those that match |queryString|.
 - (void)updateWithQuery:(NSString *)queryString;
+
+// Parses a query into the command its “/x” prefix names (or no command) and
+// the text that follows the prefix.
+- (id<iTermOpenQuicklyCommand>)commandForQuery:(NSString *)queryString;
 
 // Returns a PTYSession* or Profile* for an item at a given index. May return nil if the
 // session has closed or profile was deleted.

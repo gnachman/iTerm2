@@ -160,7 +160,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
                                                                         value:[commandClass tipDetail]
                                                            highlightedIndexes:nil];
-        item.identifier = [NSString stringWithFormat:@"/%@ ", [commandClass command]];
+        item.identifier = [commandClass queryPrefix];
         [items addObject:item];
     }
 }

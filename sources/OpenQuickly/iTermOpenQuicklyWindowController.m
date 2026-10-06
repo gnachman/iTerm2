@@ -9,6 +9,7 @@
 #import "iTermGlobalSearchResult.h"
 #import "iTermHotKeyController.h"
 #import "iTermProfileHotKey.h"
+#import "iTermOpenQuicklyCommands.h"
 #import "iTermOpenQuicklyItem.h"
 #import "iTermOpenQuicklyModel.h"
 #import "iTermOpenQuicklyTableCellView.h"
@@ -140,6 +141,25 @@
 }
 
 - (void)presentWindow {
+    [self presentWindowWithQuery:nil];
+}
+
+- (void)presentWindowWithCommand:(Class)commandClass {
+    NSString *query = [commandClass queryPrefix];
+    if (self.window.isVisible) {
+        // Keep what was already typed, switched to this mode.
+        query = [query stringByAppendingString:[[_model commandForQuery:_textField.stringValue] text] ?: @""];
+    }
+    [self presentWindowWithQuery:query];
+}
+
+// Puts the query in the field with the cursor after it, so typing extends it.
+- (void)setQuery:(NSString *)query {
+    _textField.stringValue = query;
+    _textField.currentEditor.selectedRange = NSMakeRange(query.length, 0);
+}
+
+- (void)presentWindowWithQuery:(NSString *)query {
     [_previewPanel teardown];
     [_model removeAllItems];
     [_table reloadData];
@@ -176,6 +196,10 @@
     } else {
         self.window.alphaValue = 1;
         [self.window makeKeyAndOrderFront:nil];
+    }
+
+    if (query) {
+        [self setQuery:query];
     }
 
     // After the window is rendered, call update which will animate to the new frame.
@@ -470,7 +494,7 @@
             }
         } else if ([object isKindOfClass:[iTermOpenQuicklyHelpItem class]]) {
             iTermOpenQuicklyHelpItem *item = object;
-            _textField.stringValue = [item identifier];
+            [self setQuery:[item identifier]];
             [self update];
             return;
         } else if ([object isKindOfClass:[iTermOpenQuicklyScriptItem class]]) {

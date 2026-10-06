@@ -33,6 +33,10 @@
     return nil;
 }
 
++ (NSString *)queryPrefix {
+    return [NSString stringWithFormat:@"/%@ ", [self command]];
+}
+
 - (BOOL)supportsSessionLocation {
     return NO;
 }

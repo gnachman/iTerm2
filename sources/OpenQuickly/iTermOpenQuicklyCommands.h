@@ -32,6 +32,8 @@
 
 @interface iTermOpenQuicklyCommand : NSObject<iTermOpenQuicklyCommand>
 + (NSString *)restrictionDescription;
+// What to type to start a query in this command’s mode, such as “/g ”.
++ (NSString *)queryPrefix;
 @end
 
 @interface iTermOpenQuicklyInTabsWindowArrangementCommand : iTermOpenQuicklyCommand
