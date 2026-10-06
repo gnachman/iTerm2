@@ -5868,6 +5868,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return proposedFrameSize;
     }
     PTYSession* session = [tab activeSession];
+    if ([tab sessionIsFloating:session]) {
+        // The window is sized for the tiled layout, so snap to a tiled pane's cells, not a float's.
+        // A tmux tab may have no tiled pane, so fall back to the float.
+        session = [tab mostRecentlyActiveTiledSession] ?: session;
+    }
 
     // Get the width and height of characters in this session.
     float charWidth = [[session textview] charWidth];
@@ -7219,6 +7224,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
     RLog(@"sessionInitiatedResize: %dx%d", width, height);
+    // For a float the pane is the window: change its grid within the tab, never the window. This is
+    // allowed in full screen.
+    if ([[self tabForSession:session] sessionResizeFloatingPane:session columns:width rows:height]) {
+        return YES;
+    }
     DLog(@"%@", [NSThread callStackSymbols]);
     __block BOOL result;
     [session resetMode];
@@ -11816,6 +11826,31 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+// Moves the active float into the tiled layout, to the right of the tiled pane used most recently.
+- (IBAction)dockFloatingPane:(id)sender {
+    PTYTab *tab = self.currentTab;
+    PTYSession *session = self.currentSession;
+    if (![tab floatingPaneForSession:session] || _layoutLocked || tab.isTmuxTab) {
+        return;
+    }
+    PTYSession *target = [tab mostRecentlyActiveTiledSession];
+    if (!target) {
+        return;
+    }
+    DLog(@"Dock %@ next to %@", session, target);
+    [[session retain] autorelease];
+    [[session.view retain] autorelease];
+    [tab removeSession:session];
+    [self splitVertically:YES
+                   before:NO
+            addingSession:session
+            targetSession:target
+             performSetup:NO];
+    [tab fitSessionToCurrentViewSize:session];
+    [tab updateSessionOrdinals];
+    [tab setActiveSession:session];
+}
+
 - (IBAction)toggleFloatingPanesHidden:(id)sender {
     PTYTab *tab = self.currentTab;
     tab.floatingPanesHidden = !tab.floatingPanesHidden;
@@ -12562,7 +12597,15 @@ typedef struct {
     // Things would get really complicated if you could do this in IR, so just
     // close it.
     [self closeInstantReplay:nil orTerminateSession:NO];
+    // A float is never a place to move a session into, and floats would cover the panes that are,
+    // so they are hidden while picking. For a swap, floats are fair targets and stay visible.
+    for (PTYTab *tab in self.tabs) {
+        tab.floatingPanesTemporarilyHidden = (mode && move);
+    }
     for (PTYSession *aSession in [self allSessions]) {
+        if (mode && move && aSession != session && [[self tabForSession:aSession] sessionIsFloating:aSession]) {
+            continue;
+        }
         if (mode) {
             [aSession setSplitSelectionMode:(aSession != session) ? kSplitSelectionModeOn : kSplitSelectionModeCancel
                                        move:move];
@@ -12695,25 +12738,39 @@ typedef struct {
 }
 
 
+// The Increase and Decrease Height and Width commands resize the window. With a float as the
+// receiver, they act on the tiled layout instead of the float.
+- (PTYSession *)windowResizeSessionForSession:(PTYSession *)session {
+    PTYTab *tab = [self tabForSession:session];
+    if ([tab sessionIsFloating:session]) {
+        return [tab mostRecentlyActiveTiledSession] ?: session;
+    }
+    return session;
+}
+
 - (IBAction)increaseHeightOfSession:(PTYSession *)session {
+    session = [self windowResizeSessionForSession:session];
     [self sessionInitiatedResize:session
                            width:session.columns
                           height:session.rows+1];
 }
 
 - (IBAction)decreaseHeightOfSession:(PTYSession *)session {
+    session = [self windowResizeSessionForSession:session];
     [self sessionInitiatedResize:session
                            width:session.columns
                           height:session.rows-1];
 }
 
 - (IBAction)increaseWidthOfSession:(PTYSession *)session {
+    session = [self windowResizeSessionForSession:session];
     [self sessionInitiatedResize:session
                            width:session.columns+1
                           height:session.rows];
 }
 
 - (IBAction)decreaseWidthOfSession:(PTYSession *)session {
+    session = [self windowResizeSessionForSession:session];
     [self sessionInitiatedResize:session
                            width:session.columns-1
                           height:session.rows];
@@ -14231,7 +14288,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             action == @selector(newTabToTheRight:) ||
             action == @selector(closeOtherTabs:) ||
             action == @selector(closeTabsToTheRight:) ||
-            action == @selector(newFloatingPaneWithCurrentProfile:)) {
+            action == @selector(newFloatingPaneWithCurrentProfile:) ||
+            action == @selector(dockFloatingPane:)) {
             return NO;
         }
     }
@@ -14243,6 +14301,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         if (action == @selector(bringFloatingPaneToFront:) ||
             action == @selector(sendFloatingPaneToBack:)) {
             return [self activeFloatingPane] != nil;
+        }
+        if (action == @selector(dockFloatingPane:)) {
+            return ([self activeFloatingPane] != nil &&
+                    !_layoutLocked &&
+                    !self.currentTab.isTmuxTab &&
+                    ![self inInstantReplay]);
         }
         if (action == @selector(moveFloatingPaneUp:) ||
             action == @selector(moveFloatingPaneDown:) ||

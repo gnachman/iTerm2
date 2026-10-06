@@ -304,6 +304,9 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // shows them again.
 @property(nonatomic) BOOL floatingPanesHidden;
 
+// Hides floats for a moment without the effects of the hide toggle.
+@property(nonatomic) BOOL floatingPanesTemporarilyHidden;
+
 // Change a float's z-order.
 - (void)bringFloatingPaneToFront:(iTermFloatingPaneView *)pane;
 - (void)sendFloatingPaneToBack:(iTermFloatingPaneView *)pane;
@@ -312,6 +315,9 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 + (NSDictionary *)arrangementWithoutFloatingPanes:(NSDictionary *)arrangement;
 + (NSDictionary *)floatingPaneRecordForSessionWithGUID:(NSString *)guid inArrangement:(NSDictionary *)arrangement;
 - (void)addRevivedFloatingSession:(PTYSession *)session fromArrangement:(NSDictionary *)arrangement;
+
+// For a native float: set its grid within the tab and return YES. NO for any other session.
+- (BOOL)sessionResizeFloatingPane:(PTYSession *)session columns:(int)columns rows:(int)rows;
 
 // The tiled session with the highest activity counter.
 - (PTYSession *)mostRecentlyActiveTiledSession;

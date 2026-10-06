@@ -223,4 +223,112 @@ final class FloatingPaneCommandTests: XCTestCase {
         let text = helper.helpTextForIndicator(withName: kiTermIndicatorHiddenFloatingPanes, sessionID: "x") ?? ""
         XCTAssertTrue(text.contains("3"), text)
     }
+
+    // MARK: - Docking
+
+    func testDockMovesTheFloatIntoTheTiledLayout() {
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let float = fixture.addFloat(frame: floatFrame)
+        tab.setActiveSession(float)
+        XCTAssertTrue(isEnabled(NSSelectorFromString("dockFloatingPane:")))
+
+        perform("dockFloatingPane:")
+
+        XCTAssertEqual(tab.tiledSessions(), [tiled, float], "docked to the right of the tiled pane")
+        XCTAssertTrue(tab.floatingPanes.isEmpty)
+        XCTAssertTrue(tab.activeSession === float)
+        XCTAssertTrue(float.view?.superview === tab.rootView)
+    }
+
+    func testDockIsDisabledForATiledPaneAndWhenLayoutIsLocked() {
+        let float = fixture.addFloat(frame: floatFrame)
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        tab.setActiveSession(tiled)
+        XCTAssertFalse(isEnabled(NSSelectorFromString("dockFloatingPane:")))
+        tab.setActiveSession(float)
+        perform("toggleLayoutLocked:")
+        XCTAssertFalse(isEnabled(NSSelectorFromString("dockFloatingPane:")))
+        perform("toggleLayoutLocked:")
+    }
+
+    // MARK: - Split selection
+
+    func testPickingAPaneToMoveIntoHidesFloats() {
+        let float = fixture.addFloat(frame: floatFrame)
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        terminal.setSplitSelectionMode(true, excludingSession: tiled, move: true)
+        XCTAssertTrue(pane(float).isHidden, "floats would cover the panes to pick from")
+        XCTAssertFalse(tab.floatingPanesHidden, "this is not the hide toggle")
+        terminal.setSplitSelectionMode(false, excludingSession: tiled, move: true)
+        XCTAssertFalse(pane(float).isHidden)
+    }
+
+    func testPickingAPaneToSwapWithKeepsFloatsVisible() {
+        let float = fixture.addFloat(frame: floatFrame)
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        terminal.setSplitSelectionMode(true, excludingSession: tiled, move: false)
+        XCTAssertFalse(pane(float).isHidden, "a float is a fair swap target")
+        terminal.setSplitSelectionMode(false, excludingSession: tiled, move: false)
+    }
+
+    // MARK: - Resize requests from the program
+
+    func testAProgramResizingAFloatChangesItsGridAndNotTheWindow() {
+        let float = fixture.addFloat(frame: floatFrame)
+        let windowFrame = fixture.window.frame
+        let columns = Int(float.columns) + 5
+        let rows = Int(float.rows) + 3
+
+        XCTAssertTrue(terminal.sessionInitiatedResize(float, width: Int32(columns), height: Int32(rows)))
+        XCTAssertEqual(Int(float.columns), columns)
+        XCTAssertEqual(Int(float.rows), rows)
+        XCTAssertEqual(fixture.window.frame, windowFrame, "a float resizes within its tab")
+        XCTAssertTrue(tab.realRootView?.bounds.contains(pane(float).outlineFrame) ?? false)
+    }
+
+    func testAProgramCannotMakeAFloatLargerThanItsTab() {
+        let float = fixture.addFloat(frame: floatFrame)
+        let maximum = tab.sessionMaximumFloatingGridSize(float)
+        XCTAssertGreaterThan(maximum.width, CGFloat(float.columns))
+        XCTAssertGreaterThan(maximum.height, CGFloat(float.rows))
+
+        XCTAssertTrue(terminal.sessionInitiatedResize(float, width: 1000, height: 1000))
+        XCTAssertEqual(CGFloat(float.columns), maximum.width)
+        XCTAssertEqual(CGFloat(float.rows), maximum.height)
+        XCTAssertTrue(tab.realRootView?.bounds.contains(pane(float).outlineFrame) ?? false)
+    }
+
+    func testTiledSessionsHaveNoFloatingMaximum() {
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        XCTAssertEqual(tab.sessionMaximumFloatingGridSize(tiled), .zero)
+    }
+
+    func testIncreaseHeightWithAFloatActsOnTheTiledLayout() {
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let float = fixture.addFloat(frame: floatFrame)
+        let floatRows = float.rows
+        let tiledRows = tiled.rows
+
+        terminal.decreaseHeight(of: float)
+        XCTAssertEqual(float.rows, floatRows, "the float is not resized")
+        XCTAssertEqual(tiled.rows, tiledRows - 1, "the tiled session is")
+    }
 }

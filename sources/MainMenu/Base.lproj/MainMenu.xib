@@ -2118,6 +2118,12 @@ DQ
                                                         </connections>
                                                         <accessibility identifier="Send to Back"/>
                                                     </menuItem>
+                                                    <menuItem title="Dock Floating Pane" identifier="Floating Panes.Dock Floating Pane" id="fpn-dk-itm">
+                                                        <connections>
+                                                            <action selector="dockFloatingPane:" target="-1" id="fpn-dk-act"/>
+                                                        </connections>
+                                                        <accessibility identifier="Dock Floating Pane"/>
+                                                    </menuItem>
                                                     <menuItem title="Hide Floating Panes" identifier="Floating Panes.Hide Floating Panes" id="fpn-hd-tgl">
                                                         <connections>
                                                             <action selector="toggleFloatingPanesHidden:" target="-1" id="fpn-hd-act"/>

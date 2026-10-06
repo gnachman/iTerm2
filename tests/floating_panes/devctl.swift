@@ -15,7 +15,7 @@
 //   devctl cookie <pid>                 request a Python API cookie and key from <pid> by Apple Event
 //   devctl move <pid> x y               move the pointer
 //   devctl click <pid> x y [n] [mods]   click; n is the click count; mods is e.g. ctrl,opt,cmd,shift
-//   devctl drag <pid> x0 y0 x1 y1 [steps] [mods]
+//   devctl drag <pid> x0 y0 x1 y1 [steps] [mods]   mods are held after the button goes down
 //   devctl key <pid> keycode [mods]     a key press posted to <pid>
 //   devctl type <pid> text              types text into <pid>; \n becomes Return
 
@@ -211,7 +211,9 @@ case "drag":
     let end = CGPoint(x: double(args, 3), y: double(args, 4))
     let steps = max(1, args.count > 5 ? Int(arg(args, 5)) ?? 20 : 20)
     let modifiers = flags(args.count > 6 ? args[6] : nil)
-    mouse(.leftMouseDown, start, modifiers)
+    // The button goes down without modifiers (Control-click is a secondary click); they are
+    // pressed during the drag.
+    mouse(.leftMouseDown, start, [])
     usleep(50_000)
     for i in 1...steps {
         requireFrontmost(pid)

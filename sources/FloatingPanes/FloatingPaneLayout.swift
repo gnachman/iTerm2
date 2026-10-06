@@ -70,6 +70,27 @@ final class FloatingPaneLayout: NSObject {
         return metrics(for: session)?.minimumFrameSize ?? .zero
     }
 
+    /// The largest grid the float can have in its tab, as (columns, rows) in an NSSize.
+    @objc(maximumGridOfFloatingPane:session:)
+    static func maximumGrid(_ pane: iTermFloatingPaneView, session: PTYSession) -> NSSize {
+        guard let metrics = metrics(for: session), let container = containerSize(of: pane) else {
+            return NSSize(width: CGFloat(session.columns), height: CGFloat(session.rows))
+        }
+        let grid = FloatingPaneGeometry.maximumGrid(container: container, metrics: metrics)
+        return NSSize(width: CGFloat(grid.columns), height: CGFloat(grid.rows))
+    }
+
+    /// Sets the float's grid, clamped to what fits in its tab, keeping its top left where there is
+    /// room. A program's resize request (CSI 8 t, DECCOLM, the API) goes here: for a float, the pane
+    /// is the window.
+    @objc(setGridOfFloatingPane:session:columns:rows:)
+    static func setGrid(_ pane: iTermFloatingPaneView, session: PTYSession, columns: Int, rows: Int) {
+        resize(pane,
+               session: session,
+               columns: columns - Int(session.columns),
+               rows: rows - Int(session.rows))
+    }
+
     /// Keeps the float's grid and recomputes its frame from its current metrics, after something
     /// changed them: a font, margin, scroller, title bar or status bar change.
     @objc(refitFloatingPane:session:)

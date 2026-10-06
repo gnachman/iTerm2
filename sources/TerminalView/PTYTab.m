@@ -219,6 +219,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Hides every float in the tab. Their sessions keep running.
     BOOL _floatingPanesHidden;
 
+    // Hides floats for a moment (for example while picking a pane to move a session into) without
+    // the effects of the hide toggle: focus, the indicator and saved state are unchanged.
+    BOOL _floatingPanesTemporarilyHidden;
+
     // The active pane is maximized, meaning there are other panes that are hidden.
     BOOL isMaximized_;
 
@@ -1232,9 +1236,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     // A float stays visible over the maximized pane, so it is activated where it is. Swapping its
     // view into root_ would pull it into the tiled layout.
-    if (isMaximized_ && ![self sessionIsFloating:session]) {
+    iTermFloatingPaneView *floatingPane = [self floatingPaneForSession:session];
+    if (isMaximized_ && !floatingPane) {
         [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
                          with:[session view]];
+    }
+    if (floatingPane) {
+        // Revealing a float raises it; becoming active shows the floats if they were hidden.
+        [self bringFloatingPaneToFront:floatingPane];
     }
     // -reveal is the only caller path and every -reveal site is an explicit
     // user-initiated jump, so bump the per-tab activity counter (for cmd-[/]).
@@ -1855,7 +1864,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     session.view.frame = splitView.bounds;
     [self.viewToSessionMap setObject:session forKey:session.view];
 
-    pane.hidden = _floatingPanesHidden;
+    pane.hidden = _floatingPanesHidden || _floatingPanesTemporarilyHidden;
     [_floatingPanes addObject:pane];
     [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:nil];
     [self numberOfSessionsDidChange];
@@ -1865,6 +1874,38 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (BOOL)floatingPanesHidden {
     return _floatingPanesHidden;
+}
+
+- (void)updateFloatingPaneVisibility {
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        pane.hidden = _floatingPanesHidden || _floatingPanesTemporarilyHidden;
+    }
+}
+
+- (void)setFloatingPanesTemporarilyHidden:(BOOL)hidden {
+    _floatingPanesTemporarilyHidden = hidden;
+    [self updateFloatingPaneVisibility];
+}
+
+- (BOOL)floatingPanesTemporarilyHidden {
+    return _floatingPanesTemporarilyHidden;
+}
+
+- (NSSize)sessionMaximumFloatingGridSize:(PTYSession *)session {
+    iTermFloatingPaneView *pane = [self floatingPaneForSession:session];
+    if (!pane) {
+        return NSZeroSize;
+    }
+    return [iTermFloatingPaneLayout maximumGridOfFloatingPane:pane session:session];
+}
+
+- (BOOL)sessionResizeFloatingPane:(PTYSession *)session columns:(int)columns rows:(int)rows {
+    iTermFloatingPaneView *pane = self.isTmuxTab ? nil : [self floatingPaneForSession:session];
+    if (!pane) {
+        return NO;
+    }
+    [iTermFloatingPaneLayout setGridOfFloatingPane:pane session:session columns:columns rows:rows];
+    return YES;
 }
 
 - (NSInteger)sessionNumberOfHiddenFloatingPanes {
@@ -1877,9 +1918,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     DLog(@"setFloatingPanesHidden:%@", @(hidden));
     _floatingPanesHidden = hidden;
-    for (iTermFloatingPaneView *pane in _floatingPanes) {
-        pane.hidden = hidden;
-    }
+    [self updateFloatingPaneVisibility];
     // Tiled panes show an indicator while floats are hidden.
     for (PTYSession *session in [self tiledSessions]) {
         [session.textview requestDelegateRedraw];
@@ -1991,6 +2030,24 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)floatingPane:(iTermFloatingPaneView *)pane dragDidChangeToActive:(BOOL)active {
     DLog(@"Float %@ drag active=%@", pane, @(active));
+    if (!active) {
+        // Resize notifications were held during the drag (see
+        // -sessionBelongsToTabWhoseSplitsAreBeingDragged), as for a divider drag. Send one now.
+        PTYSession *session = [self sessionForSessionView:pane.sessionView];
+        if (session) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidResizeNotification object:session];
+        }
+    }
+}
+
+- (void)floatingPaneWantsPaneDrag:(iTermFloatingPaneView *)pane {
+    PTYSession *session = [self sessionForSessionView:pane.sessionView];
+    if (!session) {
+        return;
+    }
+    // The existing pane drag: drop it on a pane to dock it, on a tab bar for a new tab, or on
+    // nothing for a new window.
+    [[MovePaneController sharedInstance] beginDrag:session];
 }
 
 // When the active session is removed from a float, which session takes over: the frontmost
@@ -6671,6 +6728,13 @@ typedef struct {
         DLog(@"One or both is locked");
         return;
     }
+    // Each takes the other's place, so a float and a tiled pane exchange roles. A workgroup member
+    // must not become a float.
+    if (([session1.delegate sessionIsFloating:session1] && session2.workgroupInstance) ||
+        ([session2.delegate sessionIsFloating:session2] && session1.workgroupInstance)) {
+        DLog(@"Refusing a swap that would make a workgroup member float");
+        return;
+    }
     if (session1.isTmuxClient &&
         session2.isTmuxClient &&
         session1.tmuxController == session2.tmuxController) {
@@ -8088,7 +8152,7 @@ typedef struct {
 }
 
 - (BOOL)sessionBelongsToTabWhoseSplitsAreBeingDragged {
-    return _numberOfSplitViewDragsInProgress > 0;
+    return _numberOfSplitViewDragsInProgress > 0 || [self anyFloatingPaneIsBeingDragged];
 }
 
 - (void)sessionDoubleClickOnTitleBar:(PTYSession *)session {
@@ -8246,8 +8310,19 @@ typedef struct {
     [parentWindow_ createDuplicateOfTab:self];
 }
 
+- (BOOL)anyFloatingPaneIsBeingDragged {
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        if (pane.isDragging) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session {
-    return _numberOfSplitViewDragsInProgress == 0;
+    // Closing a pane in the middle of a divider drag, or of a float's move or resize, pulls the
+    // view out from under the drag.
+    return _numberOfSplitViewDragsInProgress == 0 && ![self anyFloatingPaneIsBeingDragged];
 }
 
 - (void)sessionDidChangeGraphic:(PTYSession *)session shouldShow:(BOOL)shouldShow image:(NSImage *)image {

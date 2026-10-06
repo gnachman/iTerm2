@@ -447,6 +447,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (IBAction)bringFloatingPaneToFront:(id)sender;
 - (IBAction)sendFloatingPaneToBack:(id)sender;
 - (IBAction)toggleFloatingPanesHidden:(id)sender;
+- (IBAction)dockFloatingPane:(id)sender;
 - (IBAction)moveFloatingPaneUp:(id)sender;
 - (IBAction)moveFloatingPaneDown:(id)sender;
 - (IBAction)moveFloatingPaneLeft:(id)sender;

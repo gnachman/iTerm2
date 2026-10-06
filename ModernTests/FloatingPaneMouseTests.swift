@@ -141,10 +141,14 @@ final class FloatingPaneMouseTests: XCTestCase {
     func testMoveIsClampedToTheTab() {
         let (session, pane) = addFloat()
         let point = titleBarPoint(session)
-        fixture.mouse.drag(from: point, to: NSPoint(x: point.x + 5000, y: point.y + 5000), steps: 3)
+        // Keep the pointer inside the tab (leaving it would start a pane drag), but move far enough
+        // that the float would cross the tab's top right corner.
+        let topRight = container.convert(NSPoint(x: container.bounds.maxX - 2, y: container.bounds.maxY - 2), to: nil)
+        fixture.mouse.drag(from: point, to: topRight, steps: 3)
         XCTAssertTrue(container.bounds.contains(pane.outlineFrame))
         XCTAssertEqual(pane.outlineFrame.maxX, container.bounds.maxX)
         XCTAssertEqual(pane.outlineFrame.maxY, container.bounds.maxY)
+        XCTAssertFalse(pane.isDragging)
     }
 
     func testClickingTheTitleBarDoesNotMoveTheFloat() {

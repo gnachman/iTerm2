@@ -177,6 +177,10 @@ typedef enum {
 @optional
 // How many of the tab's floating panes are hidden.
 - (NSInteger)sessionNumberOfHiddenFloatingPanes;
+
+// For a native floating pane, the largest grid that fits in its tab, as (columns, rows). Zero
+// otherwise.
+- (NSSize)sessionMaximumFloatingGridSize:(PTYSession *)session;
 @required
 
 // Remove aSession from the tab.

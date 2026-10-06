@@ -16082,7 +16082,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenSetSize:(VT100GridSize)proposedSize {
     DLog(@"screenSetSize:%@\n%@", VT100GridSizeDescription(proposedSize), [NSThread callStackSymbols]);
-    if ([[_delegate parentWindow] anyFullScreen]) {
+    // A float resizes within its tab, so full screen does not stop it.
+    if ([[_delegate parentWindow] anyFullScreen] && ![_delegate sessionIsFloating:self]) {
         return;
     }
     if (_view.preferredWidth != nil) {
@@ -16135,6 +16136,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (!window) {
         return NO;
     }
+    if ([_delegate sessionIsFloating:self]) {
+        // A float resizes within its tab, whatever the window is doing.
+        return YES;
+    }
     // A resize request is ignored in full screen (see sessionInitiatedResize:).
     if ([window anyFullScreen]) {
         return NO;
@@ -16181,6 +16186,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (VT100GridSize)windowSizeInCells {
+    if ([_delegate respondsToSelector:@selector(sessionMaximumFloatingGridSize:)]) {
+        const NSSize floatingMaximum = [_delegate sessionMaximumFloatingGridSize:self];
+        if (floatingMaximum.width > 0 && floatingMaximum.height > 0) {
+            // For a float, "as large as possible" means filling its tab.
+            return VT100GridSizeMake(floatingMaximum.width, floatingMaximum.height);
+        }
+    }
     VT100GridSize result;
     const NSRect screenFrame = [self screenWindowScreenFrame];
     const NSRect windowFrame = [self screenWindowFrame];

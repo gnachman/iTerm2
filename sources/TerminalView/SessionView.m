@@ -2108,8 +2108,18 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     return [[sender draggingPasteboard] availableTypeFromArray:@[ PSMTabDragIsGroupPasteboardType ]] != nil;
 }
 
+- (BOOL)isInFloatingPane {
+    for (NSView *view = self.superview; view; view = view.superview) {
+        if ([view isKindOfClass:[iTermFloatingPaneView class]]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender {
-    if ([self draggingIsWholeTabGroup:sender]) {
+    if ([self draggingIsWholeTabGroup:sender] || [self isInFloatingPane]) {
+        // A float holds one session, so it is never split by a drop.
         return NSDragOperationNone;
     }
     return [_delegate sessionViewDraggingEntered:sender];
@@ -2122,7 +2132,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
-    if ([self draggingIsWholeTabGroup:sender]) {
+    if ([self draggingIsWholeTabGroup:sender] || [self isInFloatingPane]) {
         return NSDragOperationNone;
     }
     if ([_delegate sessionViewShouldSplitSelectionAfterDragUpdate:sender]) {
@@ -2138,7 +2148,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     RLog(@"performDragOperation: %@", sender);
-    if ([self draggingIsWholeTabGroup:sender]) {
+    if ([self draggingIsWholeTabGroup:sender] || [self isInFloatingPane]) {
         return NO;
     }
     BOOL result = [_delegate sessionViewPerformDragOperation:sender];

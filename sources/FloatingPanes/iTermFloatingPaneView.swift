@@ -32,6 +32,10 @@ protocol FloatingPaneViewDelegate: AnyObject {
 
     /// A move or resize began or ended.
     func floatingPane(_ pane: iTermFloatingPaneView, dragDidChangeToActive active: Bool)
+
+    /// A live move left the tab, so it becomes an ordinary pane drag (to dock the float, make a
+    /// tab or a window of it).
+    func floatingPaneWantsPaneDrag(_ pane: iTermFloatingPaneView)
 }
 
 @objc(iTermFloatingPaneView)
@@ -382,6 +386,19 @@ final class iTermFloatingPaneView: NSView {
         if !hasBegun {
             dragState = .moving(startPointInWindow: startPoint, start: start, hasBegun: true)
             delegate?.floatingPane(self, dragDidChangeToActive: true)
+        }
+        let leftTheTab = superview.map {
+            !$0.bounds.contains($0.convert(event.locationInWindow, from: nil))
+        } ?? false
+        if leftTheTab || event.modifierFlags.contains(.control) {
+            // Leaving the tab, or pressing Control during the move (to dock the float into its own
+            // tab), escalates to the pane drag, which shows split halves and can dock the float or
+            // move it to another tab or window.
+            DLog("Live move escalates to a pane drag")
+            FloatingPaneLayout.apply(start, to: self, session: session)
+            endDrag()
+            delegate?.floatingPaneWantsPaneDrag(self)
+            return
         }
         let frame = FloatingPaneGeometry.move(start.frame,
                                               by: visualDelta(from: startPoint, to: event.locationInWindow),
