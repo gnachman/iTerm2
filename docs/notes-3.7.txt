@@ -1084,3 +1084,6 @@ Bug Fixes:
   could make the A key stop typing. iTerm2 also no
   longer mistakenly offers to turn that setting on
   when you press a shortcut like ^A. Issue 13110.
+- The API key field shown when AI features ask
+  for a key now hides what you type instead of
+  showing the key in plain text.
