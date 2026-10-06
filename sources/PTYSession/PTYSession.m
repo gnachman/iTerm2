@@ -12002,6 +12002,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_TOGGLE_FULLSCREEN:
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
+        case KEY_ACTION_NEW_FLOATING_PANE_WITH_PROFILE:
         case KEY_ACTION_SET_PROFILE:
         case KEY_ACTION_LOAD_COLOR_PRESET:
         case KEY_ACTION_FIND_REGEX:
@@ -12332,6 +12333,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                                  targetSession:[[_delegate realParentWindow] currentSession]
                                                     completion:nil
                                                          ready:nil];
+            break;
+        }
+        case KEY_ACTION_NEW_FLOATING_PANE_WITH_PROFILE: {
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:action.parameter];
+            if (!profile) {
+                break;
+            }
+            [[PseudoTerminal castFrom:[_delegate realParentWindow]] newFloatingPaneWithProfile:profile];
             break;
         }
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE: {
@@ -13613,6 +13622,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)textViewWillNeedUpdateForBlink {
     self.active = YES;
+}
+
+- (void)textViewNewFloatingPaneWithProfileGuid:(NSString *)guid {
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    if (!profile) {
+        return;
+    }
+    [[PseudoTerminal castFrom:[_delegate realParentWindow]] newFloatingPaneWithProfile:profile];
 }
 
 - (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid {

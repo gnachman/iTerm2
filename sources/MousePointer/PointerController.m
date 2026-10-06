@@ -92,6 +92,8 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
         [delegate_ newVerticalSplitWithProfile:argument withEvent:event];
     } else if ([action isEqualToString:kNewHorizontalSplitWithProfilePointerAction]) {
         [delegate_ newHorizontalSplitWithProfile:argument withEvent:event];
+    } else if ([action isEqualToString:kNewFloatingPaneWithProfilePointerAction]) {
+        [delegate_ newFloatingPaneWithProfile:argument withEvent:event];
     } else if ([action isEqualToString:kSelectNextPanePointerAction]) {
         [delegate_ selectNextPaneWithEvent:event];
     } else if ([action isEqualToString:kSelectPreviousPanePointerAction]) {

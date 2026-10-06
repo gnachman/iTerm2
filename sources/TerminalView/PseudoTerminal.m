@@ -11786,12 +11786,15 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (IBAction)newFloatingPaneWithCurrentProfile:(id)sender {
+    [self newFloatingPaneWithProfile:[self profileForSplittingCurrentSession]];
+}
+
+- (void)newFloatingPaneWithProfile:(Profile *)profile {
     if (![self canCreateFloatingPane]) {
         RLog(@"Can't create a floating pane");
         NSBeep();
         return;
     }
-    Profile *profile = [self profileForSplittingCurrentSession];
     if (![iTermSessionLauncher profileIsWellFormed:profile]) {
         return;
     }

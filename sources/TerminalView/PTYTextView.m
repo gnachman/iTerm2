@@ -8828,6 +8828,10 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     [_delegate textViewSplitVertically:NO withProfileGuid:guid];
 }
 
+- (void)newFloatingPaneWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
+    [_delegate textViewNewFloatingPaneWithProfileGuid:guid];
+}
+
 - (void)selectNextPaneWithEvent:(NSEvent *)event {
     [_delegate textViewSelectNextPane];
 }

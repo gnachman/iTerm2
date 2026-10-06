@@ -86,6 +86,10 @@ protocol PointerControllerDelegate: AnyObject {
     func newHorizontalSplit(withProfile guid: String,
                             withEvent event: NSEvent)
 
+    @objc(newFloatingPaneWithProfile:withEvent:)
+    func newFloatingPane(withProfile guid: String,
+                         withEvent event: NSEvent)
+
     @objc(selectNextPaneWithEvent:)
     func selectNextPane(with event: NSEvent)
 

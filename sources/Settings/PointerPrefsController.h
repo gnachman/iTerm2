@@ -33,6 +33,7 @@ extern NSString *kNewWindowWithProfilePointerAction;
 extern NSString *kNewTabWithProfilePointerAction;
 extern NSString *kNewVerticalSplitWithProfilePointerAction;
 extern NSString *kNewHorizontalSplitWithProfilePointerAction;
+extern NSString *kNewFloatingPaneWithProfilePointerAction;
 extern NSString *kSelectNextPanePointerAction;
 extern NSString *kSelectPreviousPanePointerAction;
 extern NSString *kExtendSelectionPointerAction;

@@ -506,4 +506,71 @@ final class FloatingPaneCommandTests: XCTestCase {
         XCTAssertFalse(pane(float).isHidden)
         textview.endFindCursor()
     }
+
+    // MARK: - Key binding action
+
+    func testNewFloatingPaneKeyBindingAction() {
+        guard let tiled = tab.tiledSessions()?.first,
+              let guid = ProfileModel.sharedInstance().defaultProfile()?[KEY_GUID] as? String,
+              let action = iTermKeyBindingAction.withAction(.ACTION_NEW_FLOATING_PANE_WITH_PROFILE,
+                                                            parameter: guid,
+                                                            escaping: .none,
+                                                            applyMode: .currentSession) else {
+            XCTFail("No profile")
+            return
+        }
+        XCTAssertTrue(action.displayName.contains("Floating Pane"))
+        tab.setActiveSession(tiled)
+
+        let created = expectation(description: "float created")
+        let observer = NotificationCenter.default.addObserver(forName: .iTermTabFloatingPanesDidChange,
+                                                              object: tab,
+                                                              queue: nil) { _ in
+            created.fulfill()
+        }
+        defer {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        tiled.perform(action, event: nil)
+        wait(for: [created], timeout: 30)
+        XCTAssertEqual(tab.floatingSessions()?.count, 1)
+        XCTAssertEqual(tab.tiledSessions(), [tiled], "no split was made")
+    }
+
+    @MainActor
+    func testNewFloatingPanePointerAction() {
+        guard let tiled = tab.tiledSessions()?.first,
+              let textview = tiled.textview,
+              let guid = ProfileModel.sharedInstance().defaultProfile()?[KEY_GUID] as? String,
+              let event = NSEvent.mouseEvent(with: .leftMouseUp,
+                                             location: .zero,
+                                             modifierFlags: [],
+                                             timestamp: 0,
+                                             windowNumber: fixture.window.windowNumber,
+                                             context: nil,
+                                             eventNumber: 0,
+                                             clickCount: 1,
+                                             pressure: 0) else {
+            XCTFail("No profile")
+            return
+        }
+        tab.setActiveSession(tiled)
+        let created = expectation(description: "float created")
+        let observer = NotificationCenter.default.addObserver(forName: .iTermTabFloatingPanesDidChange,
+                                                              object: tab,
+                                                              queue: nil) { _ in
+            created.fulfill()
+        }
+        defer {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        // PTYTextView adopts PointerControllerDelegate privately.
+        guard let pointerDelegate = textview as AnyObject as? PointerControllerDelegate else {
+            XCTFail("Not a pointer delegate")
+            return
+        }
+        pointerDelegate.newFloatingPane(withProfile: guid, withEvent: event)
+        wait(for: [created], timeout: 30)
+        XCTAssertEqual(tab.floatingSessions()?.count, 1)
+    }
 }

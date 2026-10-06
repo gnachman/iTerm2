@@ -444,6 +444,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Floating panes
 - (BOOL)canCreateFloatingPane;
 - (IBAction)newFloatingPaneWithCurrentProfile:(id)sender;
+// Adds a floating pane to the current tab, starting in the current session's directory.
+- (void)newFloatingPaneWithProfile:(Profile *)profile;
 - (IBAction)bringFloatingPaneToFront:(id)sender;
 - (IBAction)sendFloatingPaneToBack:(id)sender;
 - (IBAction)toggleFloatingPanesHidden:(id)sender;

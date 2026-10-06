@@ -130,6 +130,13 @@ class iTermBrowserPointerActionPerformer: NSObject, PointerControllerDelegate {
         delegate?.actionPerformingSplit(vertically: false, guid: guid)
     }
 
+    func newFloatingPane(withProfile guid: String, withEvent event: NSEvent) {
+        guard let profile = ProfileModel.sharedInstance().bookmark(withGuid: guid) else {
+            return
+        }
+        delegate?.actionPerformingCurrentTerminal()?.newFloatingPane(withProfile: profile)
+    }
+
     func selectNextPane(with event: NSEvent) {
         delegate?.actionPerformingSelectPane(forward: true)
     }

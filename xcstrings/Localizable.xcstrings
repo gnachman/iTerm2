@@ -72173,6 +72173,18 @@
         }
       }
     },
+    "EditKeyAction.ActionNewFloatingPaneWithProfile" : {
+      "comment" : "Action name: New Floating Pane with Profile. A floating pane floats over the tab’s split panes.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane with Profile"
+          }
+        }
+      }
+    },
     "EditKeyAction.ActionNewTabWithProfile" : {
       "comment" : "Action name: New Tab with Profile",
       "extractionState" : "extracted_with_value",
@@ -90226,6 +90238,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移动至分屏窗格"
+          }
+        }
+      }
+    },
+    "KeyBindingAction.NewFloatingPaneWithProfile" : {
+      "comment" : "Key binding action name; %@ is the profile name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane with “%@” Profile"
+          }
+        }
+      }
+    },
+    "KeyBindingAction.NewFloatingPaneWithUnavailableProfile" : {
+      "comment" : "Key binding action name shown when the referenced profile no longer exists",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane with unavailable Profile"
           }
         }
       }
@@ -126458,6 +126494,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移动窗格"
+          }
+        }
+      }
+    },
+    "PointerPrefs.ActionNewFloatingPaneWithProfile" : {
+      "comment" : "Pointer action name. A floating pane floats over the tab’s split panes.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane With Profile…"
           }
         }
       }

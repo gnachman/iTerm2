@@ -147,6 +147,7 @@ const CGFloat sideMarginWidth = 40;
 
             case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
             case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
+            case KEY_ACTION_NEW_FLOATING_PANE_WITH_PROFILE:
             case KEY_ACTION_NEW_TAB_WITH_PROFILE:
             case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
                 _profileLabelHidden = NO;
@@ -396,6 +397,7 @@ const CGFloat sideMarginWidth = 40;
         [[iTermSearchableComboViewGroup alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.GroupSplit", nil, [NSBundle mainBundle], @"Split", @"Action group: Split") items:@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionSplitHorizontallyWithProfile", nil, [NSBundle mainBundle], @"Split Horizontally with Profile", @"Action name: Split Horizontally with Profile") tag:KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE],
             [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionSplitVerticallyWithProfile", nil, [NSBundle mainBundle], @"Split Vertically with Profile", @"Action name: Split Vertically with Profile") tag:KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionNewFloatingPaneWithProfile", nil, [NSBundle mainBundle], @"New Floating Pane with Profile", @"Action name: New Floating Pane with Profile. A floating pane floats over the tab’s split panes.") tag:KEY_ACTION_NEW_FLOATING_PANE_WITH_PROFILE],
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.GroupProfile", nil, [NSBundle mainBundle], @"Profile", @"Action group: Profile") items:[@[
@@ -1012,6 +1014,7 @@ const CGFloat sideMarginWidth = 40;
 
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
+        case KEY_ACTION_NEW_FLOATING_PANE_WITH_PROFILE:
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
         case KEY_ACTION_SET_PROFILE:
