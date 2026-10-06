@@ -3,6 +3,7 @@
 #import "FutureMethods.h"
 #import "iTermTexture.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermFlexibleView.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCursor.h"
 #import "iTermAnnouncementViewController.h"
@@ -1699,8 +1700,53 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     return [self.delegate sessionViewOffscreenCommandLineFrameForView:self];
 }
 
+#pragma mark - Floating pane occlusion
+
+// Tracking areas are not occlusion-aware: a pane under a floating pane gets entered and moved
+// events while the pointer is over the float. Only matters while the tab shows a float.
+- (BOOL)tabHasVisibleFloatingPanes {
+    for (NSView *view = self.superview; view; view = view.superview) {
+        if ([view isKindOfClass:[iTermFlexibleView class]]) {
+            for (NSView *subview in view.subviews) {
+                if ([subview isKindOfClass:[iTermFloatingPaneView class]] && !subview.isHidden) {
+                    return YES;
+                }
+            }
+            return NO;
+        }
+    }
+    return NO;
+}
+
+// The view at a window location, as a click there would find it.
+- (NSView *)viewHitAtLocationInWindow:(NSPoint)locationInWindow {
+    NSView *contentView = self.window.contentView;
+    return [contentView hitTest:[contentView.superview convertPoint:locationInWindow fromView:nil]];
+}
+
+- (BOOL)locationIsCoveredByAnotherView:(NSPoint)locationInWindow {
+    if (![self tabHasVisibleFloatingPanes]) {
+        return NO;
+    }
+    NSView *hit = [self viewHitAtLocationInWindow:locationInWindow];
+    return hit != nil && ![hit isDescendantOf:self];
+}
+
+- (SessionView *)sessionViewAtLocationInWindow:(NSPoint)locationInWindow {
+    for (NSView *view = [self viewHitAtLocationInWindow:locationInWindow]; view; view = view.superview) {
+        if ([view isKindOfClass:[SessionView class]]) {
+            return (SessionView *)view;
+        }
+    }
+    return nil;
+}
+
 - (void)mouseEntered:(NSEvent *)theEvent {
     DLog(@"mouseEntered %@", self);
+    if ([self locationIsCoveredByAnotherView:theEvent.locationInWindow]) {
+        DLog(@"Ignore mouseEntered: the pointer is over a view that covers this one");
+        return;
+    }
     switch ([theEvent.trackingArea.userInfo[@"mode"] unsignedIntegerValue]) {
         case SessionViewTrackingModeTrackTerminalFragile:
         case SessionViewTrackingModeTrackFirstResponderFragile:
@@ -1721,16 +1767,35 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
             DLog(@"Mouse exited with mode immune or none");
             [self updateTrackingAreasOnMouseExit:YES];
             [_delegate sessionViewMouseEntered:theEvent];
+            [self enterSessionViewUnderPointerAfterExit:theEvent];
             return;
         case SessionViewTrackingModeNormal:
             break;
     }
     DLog(@"exit %@", theEvent.trackingArea);
     [_delegate sessionViewMouseExited:theEvent];
+    [self enterSessionViewUnderPointerAfterExit:theEvent];
+}
+
+// Leaving a float onto the pane beneath it: that pane never sees an entered event, because the
+// pointer was inside its tracking area all along. Tell it now.
+- (void)enterSessionViewUnderPointerAfterExit:(NSEvent *)theEvent {
+    if (![self tabHasVisibleFloatingPanes]) {
+        return;
+    }
+    SessionView *under = [self sessionViewAtLocationInWindow:theEvent.locationInWindow];
+    if (under && under != self) {
+        DLog(@"Pointer left %@ onto %@", self, under);
+        [under.delegate sessionViewMouseEntered:theEvent];
+    }
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {
     DLog(@"Mouse moved %@", self);
+    if ([self locationIsCoveredByAnotherView:theEvent.locationInWindow]) {
+        // Don't underline URLs, change the cursor, or report motion for a covered spot.
+        return;
+    }
     [_delegate sessionViewMouseMoved:theEvent];
 }
 
