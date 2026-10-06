@@ -1567,39 +1567,6 @@ final class CompanionPairingController: NSObject {
         }
     }
 
-    /// Tell the window about a failure. The full explanation also goes to the
-    /// in-memory log, since the window shows it only in a tooltip.
-    private func reportFailure(_ error: Error) {
-        let failure = Self.userFacingFailure(of: error)
-        if let details = failure.details {
-            RLog("Companion: pairing failed: \(failure.message)\n\(details)")
-        }
-        onFailed?(failure.message, failure.details)
-    }
-
-    /// Convert an error into a short message for a status line (a few lines
-    /// at most) plus any longer explanation.
-    private static func userFacingFailure(of error: Error) -> (message: String, details: String?) {
-        if let fetchError = error as? ShardMapFetchError {
-            // The per-server summary is too long for the status line; keep the
-            // advice there and put the rest in the details. The details are
-            // diagnostics composed in CompanionCore, which has no string
-            // catalog, so they stay in English.
-            let message = fetchError.isNetworkFailure
-                ? String(localized: "Companion.Status.RelayListUnavailableTryAnotherNetwork",
-                         defaultValue: "Couldn’t get the list of relay servers. Try another network or a VPN.",
-                         comment: "Pairing failure shown when the list of relay servers could not be downloaded because of a network problem")
-                : String(localized: "Companion.Status.RelayListUnavailable",
-                         defaultValue: "Couldn’t get the list of relay servers.",
-                         comment: "Pairing failure shown when the list of relay servers could not be downloaded")
-            return (message, "\(fetchError.summary)\n\n\(fetchError.details)")
-        }
-        if let transport = error as? TransportError {
-            return (transport.summary, transport.details)
-        }
-        return (userFacingDescription(of: error), nil)
-    }
-
     /// Create the bridge for a newly connected link and make it the current
     /// connection, replacing (and stopping) any previous one. Does not start
     /// the link.
@@ -1628,13 +1595,17 @@ final class CompanionPairingController: NSObject {
                 return
             }
             self.resumePairedListeningIfNeeded()
+        }
         newBridge.onPeerUnpaired = { [weak self] in
             self?.peerDidUnpair()
+        }
         newBridge.onConnectionClassified = { [weak self, weak newBridge] solicited in
             guard let self, let newBridge else { return }
             self.connectionDidClassify(newBridge, solicited: solicited)
+        }
         newBridge.onVersionIncompatible = { [weak self] verdict in
             self?.showVersionIncompatibleAlert(verdict)
+        }
         newBridge.start()
         let staleBridge = bridge
         bridge = newBridge
@@ -1644,18 +1615,25 @@ final class CompanionPairingController: NSObject {
             // when the old connection dropped). The new one supersedes it.
             DLog("Companion: replacing stale bridge with the new connection")
             staleBridge.stop()
+        }
+    }
+
     // MARK: Park supervisor
+
     /// What the supervisor needs to park for the established pairing, or nil if
     /// a credential cannot be read right now.
     private func parkRecipe(pairingID: String) -> CompanionParkRecipe? {
         guard let keyPair = try? CompanionMacIdentity.keyPair(),
               let pinned = pairedPhoneStatic else {
             return nil
+        }
         return CompanionParkRecipe(pairingID: pairingID,
                                    keyPair: keyPair,
                                    pinnedPhoneStatic: pinned,
                                    resolverURL: Self.configuredResolverURL(),
                                    relayOrigin: Self.configuredRelayOrigin())
+    }
+
     private func makeSupervisor() -> CompanionParkSupervisor {
         let eligibility = parkEligibility
         let listenerFactory = CompanionParkListenerFactory(floorStore: shardMapFloorStore)
@@ -1680,7 +1658,10 @@ final class CompanionPairingController: NSObject {
             for await tagged in supervisor.events {
                 self?.handle(tagged)
             }
+        }
         return supervisor
+    }
+
     private func handle(_ tagged: CompanionParkSupervisor.TaggedEvent) {
         guard tagged.generation == supervisorGeneration else {
             // From a run that has since been stopped or replaced. Acting on it
@@ -1748,6 +1729,40 @@ final class CompanionPairingController: NSObject {
             supervisorActive = false
             relayConnectedSince = nil
             notifyPresenceChanged()
+        }
+    }
+
+    /// Tell the window about a failure. The full explanation also goes to the
+    /// in-memory log, since the window shows it only in a tooltip.
+    private func reportFailure(_ error: Error) {
+        let failure = Self.userFacingFailure(of: error)
+        if let details = failure.details {
+            RLog("Companion: pairing failed: \(failure.message)\n\(details)")
+        }
+        onFailed?(failure.message, failure.details)
+    }
+
+    /// Convert an error into a short message for a status line (a few lines
+    /// at most) plus any longer explanation.
+    private static func userFacingFailure(of error: Error) -> (message: String, details: String?) {
+        if let fetchError = error as? ShardMapFetchError {
+            // The per-server summary is too long for the status line; keep the
+            // advice there and put the rest in the details. The details are
+            // diagnostics composed in CompanionCore, which has no string
+            // catalog, so they stay in English.
+            let message = fetchError.isNetworkFailure
+                ? String(localized: "Companion.Status.RelayListUnavailableTryAnotherNetwork",
+                         defaultValue: "Couldn’t get the list of relay servers. Try another network or a VPN.",
+                         comment: "Pairing failure shown when the list of relay servers could not be downloaded because of a network problem")
+                : String(localized: "Companion.Status.RelayListUnavailable",
+                         defaultValue: "Couldn’t get the list of relay servers.",
+                         comment: "Pairing failure shown when the list of relay servers could not be downloaded")
+            return (message, "\(fetchError.summary)\n\n\(fetchError.details)")
+        }
+        if let transport = error as? TransportError {
+            return (transport.summary, transport.details)
+        }
+        return (userFacingDescription(of: error), nil)
     }
 
     /// Convert transport errors into actionable text.
