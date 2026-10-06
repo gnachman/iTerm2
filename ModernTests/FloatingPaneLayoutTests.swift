@@ -85,6 +85,40 @@ final class FloatingPaneLayoutTests: XCTestCase {
         XCTAssertTrue(session.view?.showTitle() ?? false)
     }
 
+    /// A tmux float with pane-border-lines none has no room for a title bar. The toggle shows it
+    /// and hides it again.
+    func testBorderlessFloatHidesItsTitleBarUntilToggled() {
+        let (session, pane) = newFloat()
+        pane.isBorderless = true
+        tab.updatePaneTitles()
+        XCTAssertFalse(session.view?.showTitle() ?? true, "a borderless float has no title bar")
+        XCTAssertFalse(pane.titleBarToggleIsVisible, "the toggle shows only while the mouse is over the float")
+
+        pane.toggleBorderlessTitleBar(nil)
+        XCTAssertTrue(pane.showsBorderlessTitleBar)
+        XCTAssertTrue(session.view?.showTitle() ?? false, "the toggle shows the title bar")
+
+        pane.toggleBorderlessTitleBar(nil)
+        XCTAssertFalse(session.view?.showTitle() ?? true, "and hides it again")
+    }
+
+    func testFloatThatGetsABorderAgainGetsItsTitleBarBack() {
+        let (session, pane) = newFloat()
+        pane.isBorderless = true
+        pane.toggleBorderlessTitleBar(nil)
+        pane.isBorderless = false
+        XCTAssertFalse(pane.showsBorderlessTitleBar, "the toggle's state goes with the border")
+        tab.updatePaneTitles()
+        XCTAssertTrue(session.view?.showTitle() ?? false)
+    }
+
+    func testToggleDoesNothingForAFloatWithABorder() {
+        let (session, pane) = newFloat()
+        pane.toggleBorderlessTitleBar(nil)
+        XCTAssertFalse(pane.showsBorderlessTitleBar)
+        XCTAssertTrue(session.view?.showTitle() ?? false)
+    }
+
     func testKeyboardResizeChangesTheGridByOneCell() {
         let (session, pane) = newFloat()
         let columns = session.columns

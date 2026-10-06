@@ -285,6 +285,8 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 // Floating panes (tmux 3.8 and later). Each change comes back as a layout change.
 // Whether the server sends layouts that include floating panes.
 @property (nonatomic, readonly) BOOL supportsFloatingPanes;
+// Whether the pane has pane-border-lines none, so tmux draws no border around it.
+- (BOOL)paneIsBorderless:(int)wp;
 - (void)moveFloatingPane:(int)wp byColumns:(int)columns rows:(int)rows;
 - (void)resizeFloatingPane:(int)wp
               moveByColumns:(int)dx

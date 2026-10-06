@@ -115,6 +115,25 @@ async def main(connection):
     check(tab.floating_sessions[0].session_id == float_session.session_id,
           "the float keeps its session")
 
+    # A float with no border has no room for a title bar, so it loses it and keeps its grid.
+    bordered = tab.floating_sessions[0]
+    bordered_height = bordered.frame.size.height
+    bordered_grid = (bordered.grid_size.width, bordered.grid_size.height)
+    tmux("set", "-p", "-t", float_id, "pane-border-lines", "none")
+
+    async def float_height(predicate):
+        tab = await tmux_tab()
+        if not tab or not tab.floating_sessions:
+            return False
+        s = tab.floating_sessions[0]
+        return (s.grid_size.width, s.grid_size.height) == bordered_grid and predicate(s.frame.size.height)
+
+    check(await wait_for(lambda: float_height(lambda h: h < bordered_height)),
+          "a float with pane-border-lines none loses its title bar and keeps its grid")
+    tmux("set", "-p", "-u", "-t", float_id, "pane-border-lines")
+    check(await wait_for(lambda: float_height(lambda h: h == bordered_height)),
+          "it gets its title bar back with a border")
+
     # A tiled pane becomes floating and keeps its session.
     tiled_id = panes[0]
     tiled_guid = None

@@ -47,4 +47,27 @@ final class TmuxFloatingPanePlacementTests: XCTestCase {
     func testWithOnlyFloatsAPlainGridIsUsed() {
         XCTAssertEqual(point(3, 2, anchors: []), CGPoint(x: 5 + 3 * 7, y: 2 + 2 * 17))
     }
+
+    // MARK: - Borderless panes
+
+    /// The pane-border-lines subscription's handler. Its arguments are name, $session, @window,
+    /// index and %pane.
+    func testPaneBorderLinesSubscriptionTracksBorderlessPanes() {
+        guard let controller = TmuxController(gateway: nil, clientName: "borderless-test", profile: [:], profileModel: nil) else {
+            XCTFail("No controller")
+            return
+        }
+        defer {
+            TmuxControllerRegistry.sharedInstance().setController(nil, forClient: controller.clientName)
+        }
+        let selector = NSSelectorFromString("paneBorderLinesDidChange:arguments:")
+        XCTAssertFalse(controller.paneIsBorderless(3))
+        controller.perform(selector, with: "none", with: ["sub", "$0", "@1", "0", "%3"])
+        XCTAssertTrue(controller.paneIsBorderless(3))
+        XCTAssertFalse(controller.paneIsBorderless(4))
+        controller.perform(selector, with: "single", with: ["sub", "$0", "@1", "0", "%3"])
+        XCTAssertFalse(controller.paneIsBorderless(3))
+        controller.perform(selector, with: "none", with: ["sub", "$0", "@1", "0", "-"])
+        XCTAssertFalse(controller.paneIsBorderless(0), "a window subscription's row names no pane")
+    }
 }

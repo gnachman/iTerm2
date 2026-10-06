@@ -208,6 +208,10 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     // until the next relist; until then the geometry correction can be a row off in either
     // direction. A per-window option subscription would close that gap.
     NSMutableDictionary<NSNumber *, NSNumber *> *_paneBorderStatusByWindow;
+    // Panes with pane-border-lines none, kept current by a subscription once the server shows it
+    // has floating panes.
+    NSMutableSet<NSNumber *> *_borderlessPanes;
+    iTermTmuxSubscriptionHandle *_paneBorderLinesSubscription;
     BOOL _versionDetected;
     // terminal guid -> [(tmux window id, tab index), ...]
     NSMutableDictionary<NSString *, NSMutableArray<iTermTuple<NSNumber *, NSNumber *> *> *> *_buriedWindows;
@@ -333,6 +337,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
         _windowSizes = [[NSMutableDictionary alloc] init];
         _paneBorderStatusByWindow = [[NSMutableDictionary alloc] init];
+        _borderlessPanes = [[NSMutableSet alloc] init];
         RLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
@@ -963,6 +968,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         // Only a server that took the new-layouts flag sends JSON, and it has floating panes.
         RLog(@"tmux sends JSON layouts, so it supports floating panes");
         _supportsFloatingPanes = YES;
+        [self subscribeToPaneBorderLines];
     }
     NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:layout];
     if (!parseTree) {
@@ -970,6 +976,44 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
     [_droppedOutputTracker didLearnPanes:[[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree]
                                   window:windowId];
+}
+
+- (BOOL)paneIsBorderless:(int)wp {
+    return [_borderlessPanes containsObject:@(wp)];
+}
+
+// A float with no border has no room for a title bar, so iTerm2 needs to know which panes have
+// none. The layout doesn't say.
+- (void)subscribeToPaneBorderLines {
+    if (_paneBorderLinesSubscription || ![gateway_ supportsSubscriptions]) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _paneBorderLinesSubscription = [gateway_ subscribeToFormat:@"#{pane-border-lines}"
+                                                        target:@"%*"
+                                                         block:^(NSString *value, NSArray<NSString *> *args) {
+        [weakSelf paneBorderLinesDidChange:value arguments:args];
+    }];
+}
+
+// args are: name $session @window index %pane
+- (void)paneBorderLinesDidChange:(NSString *)value arguments:(NSArray<NSString *> *)args {
+    if (args.count < 5 || ![args[2] hasPrefix:@"@"] || ![args[4] hasPrefix:@"%"]) {
+        return;
+    }
+    const int window = [[args[2] substringFromIndex:1] intValue];
+    NSNumber *wp = @([[args[4] substringFromIndex:1] intValue]);
+    const BOOL borderless = [value isEqualToString:@"none"];
+    if (borderless == [_borderlessPanes containsObject:wp]) {
+        return;
+    }
+    DLog(@"Pane %%%@ in @%d borderless=%@", wp, window, @(borderless));
+    if (borderless) {
+        [_borderlessPanes addObject:wp];
+    } else {
+        [_borderlessPanes removeObject:wp];
+    }
+    [[self window:window] tmuxPaneBordersDidChange];
 }
 
 - (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession<iTermTmuxControllerSession> *))block {

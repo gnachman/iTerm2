@@ -80981,6 +80981,18 @@
         }
       }
     },
+    "FloatingPane.HideTitleBar" : {
+      "comment" : "Tooltip and accessibility description for a button on a floating pane with no border that hides the pane’s title bar",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide Title Bar"
+          }
+        }
+      }
+    },
     "FloatingPane.InvalidFrame" : {
       "comment" : "Error from set_floating_pane_frame when an argument is missing or not a number",
       "extractionState" : "extracted_with_value",
@@ -81025,6 +81037,18 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "The session is not in a floating pane"
+          }
+        }
+      }
+    },
+    "FloatingPane.ShowTitleBar" : {
+      "comment" : "Tooltip and accessibility description for a button on a floating pane with no border that shows the pane’s title bar above it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Title Bar"
           }
         }
       }

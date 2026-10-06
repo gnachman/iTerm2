@@ -367,6 +367,9 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
                zoomed:(NSNumber *)zoomed;
 // Returns true if the tmux layout is too large for the window to accommodate.
 - (BOOL)updatedTmuxLayoutRequiresAdjustment;
+// tmux changed which panes have no border (pane-border-lines none). Borderless floats hide their
+// title bars.
+- (void)tmuxPaneBordersDidChange;
 - (TmuxController *)tmuxController;
 
 - (void)setTmuxFontTable:(iTermFontTable *)fontTable

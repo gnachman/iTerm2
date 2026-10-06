@@ -41,6 +41,9 @@ protocol FloatingPaneViewDelegate: AnyObject {
     /// tab or a window of it). `grabPoint` is where the move's mouse-down was, in window
     /// coordinates; the float is back where it was then.
     func floatingPaneWantsPaneDrag(_ pane: iTermFloatingPaneView, grabPointInWindow grabPoint: NSPoint)
+
+    /// The user showed or hid a borderless float's title bar.
+    func floatingPaneTitleBarVisibilityDidChange(_ pane: iTermFloatingPaneView)
 }
 
 @objc(iTermFloatingPaneView)
@@ -91,8 +94,35 @@ final class iTermFloatingPaneView: NSView {
         }
     }
 
+    /// A tmux float with pane-border-lines none. tmux reserves no border around it, so there is no
+    /// room for a title bar: it is hidden until the user shows it with the toggle, and then it sits
+    /// above the content, outside the cells tmux gave the float, covering whatever is there.
+    @objc var isBorderless = false {
+        didSet {
+            guard isBorderless != oldValue else {
+                return
+            }
+            if !isBorderless {
+                showsBorderlessTitleBar = false
+            }
+            updateTrackingAreas()
+            updateTitleBarToggle()
+        }
+    }
+
+    /// Whether the user showed a borderless float's title bar.
+    @objc private(set) var showsBorderlessTitleBar = false
+
+    /// Whether the float's session should show its title bar.
+    @objc var showsTitleBar: Bool {
+        return !isBorderless || showsBorderlessTitleBar
+    }
+
     private let outlineView = FloatingPaneOutlineView()
     private var sizeReadout: NSTextField?
+    private var titleBarToggle: NSButton?
+    private var hoverTrackingArea: NSTrackingArea?
+    private var mouseIsInside = false
 
     /// Shown under a translucent float's session so it blurs what is beneath it in the window
     /// rather than showing the tiled panes' glyphs through it.
@@ -430,6 +460,138 @@ final class iTermFloatingPaneView: NSView {
         if wasActive {
             delegate?.floatingPane(self, dragDidChangeToActive: false)
         }
+    }
+
+    // MARK: - Borderless title bar toggle
+
+    /// Shows or hides a borderless float's title bar.
+    @objc(toggleBorderlessTitleBar:)
+    func toggleBorderlessTitleBar(_ sender: Any?) {
+        guard isBorderless else {
+            return
+        }
+        showsBorderlessTitleBar.toggle()
+        DLog("Borderless float title bar shown=\(showsBorderlessTitleBar)")
+        delegate?.floatingPaneTitleBarVisibilityDidChange(self)
+        updateTitleBarToggle()
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let hoverTrackingArea {
+            removeTrackingArea(hoverTrackingArea)
+            self.hoverTrackingArea = nil
+        }
+        guard isBorderless else {
+            mouseIsInside = false
+            return
+        }
+        // The toggle appears only while the mouse is over the float, so it doesn't permanently
+        // cover the float's top row.
+        let area = NSTrackingArea(rect: .zero,
+                                  options: [.mouseEnteredAndExited, .activeInActiveApp, .inVisibleRect],
+                                  owner: self,
+                                  userInfo: nil)
+        addTrackingArea(area)
+        hoverTrackingArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        guard event.trackingArea === hoverTrackingArea, hoverTrackingArea != nil else {
+            super.mouseEntered(with: event)
+            return
+        }
+        mouseIsInside = true
+        updateTitleBarToggle()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        guard event.trackingArea === hoverTrackingArea, hoverTrackingArea != nil else {
+            super.mouseExited(with: event)
+            return
+        }
+        mouseIsInside = false
+        updateTitleBarToggle()
+    }
+
+    override func resizeSubviews(withOldSize oldSize: NSSize) {
+        super.resizeSubviews(withOldSize: oldSize)
+        updateTitleBarToggle()
+    }
+
+    /// The float's content (its scroll view) in this view's coordinates.
+    private var contentRect: NSRect? {
+        guard let scrollview = sessionView?.scrollview else {
+            return nil
+        }
+        return scrollview.convert(scrollview.bounds, to: self)
+    }
+
+    /// Whether a title bar above the content would be inside the tab. A borderless float in the top
+    /// row has none, and its title bar can't be shown.
+    private var hasRoomForTitleBarAbove: Bool {
+        guard let container = superview, let scrollview = sessionView?.scrollview else {
+            return false
+        }
+        let rect = scrollview.convert(scrollview.bounds, to: container)
+        let top = container.isFlipped ? rect.minY : container.bounds.height - rect.maxY
+        let titleHeight = showsBorderlessTitleBar ? 0 : CGFloat(SessionView.titleHeight())
+        return top >= titleHeight
+    }
+
+    /// Whether the toggle is showing, for tests.
+    @objc var titleBarToggleIsVisible: Bool {
+        return titleBarToggle.map { !$0.isHidden } ?? false
+    }
+
+    /// Shows, hides and positions the toggle. It sits at the top center of the content: under the
+    /// title bar when the title bar shows, over the first row when it doesn't.
+    @objc func updateTitleBarToggle() {
+        guard isBorderless,
+              mouseIsInside,
+              hasRoomForTitleBarAbove,
+              let content = contentRect else {
+            titleBarToggle?.isHidden = true
+            return
+        }
+        let toggle = titleBarToggle ?? makeTitleBarToggle()
+        let description: String
+        let symbol: SFSymbol
+        if showsBorderlessTitleBar {
+            symbol = .chevronCompactUp
+            description = String(localized: "FloatingPane.HideTitleBar",
+                                 defaultValue: "Hide Title Bar",
+                                 comment: "Tooltip and accessibility description for a button on a floating pane with no border that hides the pane’s title bar")
+        } else {
+            symbol = .chevronCompactDown
+            description = String(localized: "FloatingPane.ShowTitleBar",
+                                 defaultValue: "Show Title Bar",
+                                 comment: "Tooltip and accessibility description for a button on a floating pane with no border that shows the pane’s title bar above it")
+        }
+        toggle.image = NSImage(systemSymbolName: symbol.rawValue, accessibilityDescription: description)
+        toggle.toolTip = description
+        // A terminal's colors are arbitrary, so the toggle brings its own background.
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            toggle.layer?.backgroundColor = NSColor.windowBackgroundColor.withAlphaComponent(0.85).cgColor
+        }
+        let size = NSSize(width: 28, height: 12)
+        let y = isFlipped ? content.minY : content.maxY - size.height
+        toggle.frame = NSRect(x: content.midX - size.width / 2, y: y, width: size.width, height: size.height).integral
+        toggle.isHidden = false
+    }
+
+    private func makeTitleBarToggle() -> NSButton {
+        let toggle = NSButton(frame: .zero)
+        toggle.isBordered = false
+        toggle.imagePosition = .imageOnly
+        toggle.contentTintColor = .secondaryLabelColor
+        toggle.wantsLayer = true
+        toggle.layer?.cornerRadius = 4
+        toggle.target = self
+        toggle.action = #selector(toggleBorderlessTitleBar(_:))
+        addSubview(toggle, positioned: .above, relativeTo: nil)
+        titleBarToggle = toggle
+        return toggle
     }
 
     // MARK: - Size readout

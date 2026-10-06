@@ -716,15 +716,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     const BOOL anySessionHasTopStatusBar = statusBarsOnTop && [sessions anyWithBlock:^BOOL(PTYSession *session) {
         return [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:session.profile];
     }];
-    // A floating pane always has a title bar; it is the grab handle. Whether tiled panes have one
-    // depends on the number of tiled panes, so a float appearing does not change the layout.
+    // A floating pane has a title bar, the grab handle, unless it is a borderless tmux float. Whether
+    // tiled panes have one depends on the number of tiled panes, so a float appearing does not
+    // change the layout.
     const BOOL shouldShowTiledTitles = forceTitles || (showTitles && [[self tiledSessions] count] > 1) || anySessionHasTopStatusBar;
     NSArray<PTYSession *> *floatingSessions = [self floatingSessions];
     for (PTYSession *aSession in sessions) {
         const BOOL isFloating = [floatingSessions containsObject:aSession];
         // Every change between tiled and floating ends here. Unchanged values are not re-sent.
         [aSession.variablesScope setValue:@(isFloating) forVariableNamed:iTermVariableKeySessionIsFloating];
-        const BOOL shouldShowTitles = shouldShowTiledTitles || isFloating;
+        iTermFloatingPaneView *floatingPane = isFloating ? [self floatingPaneForSession:aSession] : nil;
+        const BOOL shouldShowTitles = isFloating ? (floatingPane ? floatingPane.showsTitleBar : YES) : shouldShowTiledTitles;
         const BOOL shouldShowBottomStatusBar = (perPaneStatusBars &&
                                                 !statusBarsOnTop &&
                                                 [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR
@@ -739,8 +741,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 if ([self fitSessionToCurrentViewSize:aSession]) {
                     anyChange = YES;
                 }
-            } else {
-                // Get the proper size and return yes if it should change.
+            } else if (!isFloating) {
+                // Get the proper size and return yes if it should change. tmux owns a float's
+                // size and -placeTmuxFloatingPanes fits its frame around it.
                 NSSize size = [self sessionSizeForViewSize:aSession];
                 if (size.width != [aSession columns] ||
                     size.height != [aSession rows]) {
@@ -2212,6 +2215,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (!dx && !dy && !dw && !dh) {
         // Nothing to send, so no layout change will come back. Snap back to tmux's cells.
         [self placeTmuxFloatingPanes];
+    }
+}
+
+- (void)floatingPaneTitleBarVisibilityDidChange:(iTermFloatingPaneView *)pane {
+    [self updatePaneTitles];
+    PTYSession *session = [self sessionForSessionView:pane.sessionView];
+    if (self.isTmuxTab) {
+        // The content stays on tmux's cells and the title bar goes above it.
+        [self placeTmuxFloatingPanes];
+    } else if (session) {
+        [iTermFloatingPaneLayout refitFloatingPane:pane session:session];
     }
 }
 
@@ -6554,6 +6568,17 @@ typedef struct {
     if (visibilityChanged) {
         [self updateFloatingPaneVisibility];
     }
+    BOOL bordersChanged = NO;
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        const BOOL borderless = [tmuxController_ paneIsBorderless:[self sessionForSessionView:pane.sessionView].tmuxPane];
+        if (pane.isBorderless != borderless) {
+            pane.isBorderless = borderless;
+            bordersChanged = YES;
+        }
+    }
+    if (bordersChanged) {
+        [self updatePaneTitles];
+    }
     NSArray<iTermTmuxFloatAnchor *> *anchors = [self tmuxFloatAnchorsForParseTree:placementTree];
     for (NSDictionary *leaf in placementTree[kLayoutDictFloatingPanesKey]) {
         const int wp = [leaf[kLayoutDictWindowPaneKey] intValue];
@@ -6575,7 +6600,12 @@ typedef struct {
         // nothing else sizes a float's scroll view.
         [self fitScrollViewOfSession:session];
         [session.textview requestDelegateRedraw];
+        [pane updateTitleBarToggle];
     }
+}
+
+- (void)tmuxPaneBordersDidChange {
+    [self placeTmuxFloatingPanes];
 }
 
 // The tiled pane in a zoomed window's visible layout.
