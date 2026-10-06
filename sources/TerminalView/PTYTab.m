@@ -1919,6 +1919,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     // Hidden floats don't take part in choosing Metal.
     [self updateUseMetal];
+    [self updateTrackingAreasForFloatingPanes];
 }
 
 - (void)setFloatingPanesTemporarilyHidden:(BOOL)hidden {
@@ -2031,8 +2032,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)floatingPanesDidChange {
+    [self updateTrackingAreasForFloatingPanes];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermTabFloatingPanesDidChangeNotification
                                                         object:self];
+}
+
+// Session views track mouse movement while the tab shows floats, to notice the pointer crossing a
+// float's edge.
+- (void)updateTrackingAreasForFloatingPanes {
+    for (PTYSession *session in [self sessions]) {
+        [session.view updateTrackingAreas];
+    }
 }
 
 - (void)setFloatingPanesHidden:(BOOL)hidden {

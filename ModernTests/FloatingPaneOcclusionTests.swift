@@ -78,6 +78,58 @@ final class FloatingPaneOcclusionTests: XCTestCase {
                       "leaving the float finds the pane beneath it")
     }
 
+    /// Entering a float crosses its resize band, which belongs to the float's wrapper. That must not
+    /// count as covering the float, or the float would ignore the pointer coming in.
+    func testAFloatsOwnResizeBandDoesNotCoverIt() {
+        let (tiled, float, _, _) = setUpCoveredPane()
+        guard let tiledView = tiled.view, let floatView = float.view, let pane = tab.floatingPane(for: float) else {
+            XCTFail("No views")
+            return
+        }
+        let band = iTermFloatingPaneView.resizeBandWidth
+        let inBand = pane.convert(NSPoint(x: band / 2, y: pane.bounds.midY), to: nil)
+        XCTAssertFalse(isCovered(floatView, at: inBand))
+        XCTAssertTrue(isCovered(tiledView, at: inBand), "the band is still over the tiled pane")
+    }
+
+    func testPanesTrackMouseMovementWhileTheTabHasFloats() {
+        guard let tiledView = tab.tiledSessions()?.first?.view else {
+            XCTFail("No view")
+            return
+        }
+        _ = setUpCoveredPane()
+        XCTAssertTrue(tiledView.trackingAreas.first?.options.contains(.mouseMoved) ?? false)
+    }
+
+    /// The pointer comes out from under a float without leaving the tiled pane's tracking area, so
+    /// only a moved event says it entered the tiled pane.
+    func testMovingOutFromUnderAFloatEntersTheTiledPane() {
+        let (tiled, _, covered, uncovered) = setUpCoveredPane()
+        guard let tiledView = tiled.view else {
+            XCTFail("No view")
+            return
+        }
+        func moved(to point: NSPoint) {
+            guard let event = NSEvent.mouseEvent(with: .mouseMoved,
+                                                 location: point,
+                                                 modifierFlags: [],
+                                                 timestamp: 0,
+                                                 windowNumber: fixture.window.windowNumber,
+                                                 context: nil,
+                                                 eventNumber: 0,
+                                                 clickCount: 0,
+                                                 pressure: 0) else {
+                it_fatalError("No event")
+            }
+            tiledView.mouseMoved(with: event)
+        }
+        let entered = { (tiledView.value(forKey: "_pointerIsOverUncoveredPart") as? Bool) ?? false }
+        moved(to: covered)
+        XCTAssertFalse(entered(), "under the float")
+        moved(to: uncovered)
+        XCTAssertTrue(entered(), "out from under it")
+    }
+
     func testHiddenFloatsDoNotCover() {
         let (tiled, _, covered, _) = setUpCoveredPane()
         guard let tiledView = tiled.view else {
