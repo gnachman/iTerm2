@@ -20,6 +20,7 @@
 - In user-visible strings do not use " except as a shorthand for inch. Prefer curly quotes like “ and ”. I know this goes against your nature, but fight hard here.
 - Localizing user-visible strings — how to wrap them, what to leave in English, the complete-sentence-not-injected-fragment rule, format specifiers, and plurals (including the `localizedStringWithFormat:` and single-argument rules): see `docs/localization.md`. Read it before adding or changing localizable strings.
 - Ask permission before using auto layout if it's not already in use in a given file. Debugging auto layout is the worst hell.
+- Use iTermWarning, not NSAlert. iTermWarning alerts can be shown and answered from the iTerm2 Buddy mobile client; an NSAlert leaves the phone stuck. Describe accessory fields with remoteInputs, and mark buttons that only work at the Mac (file panels, other windows, web pages) as notOfferedRemotely.
 - Never `git add` submodules without express written permission.
 - Don't include AI-generated markdown files (summaries, plans, etc.) in commits — only ship code.
 - Avoid duplicate expressions; hoist shared computations into a named `const` before branching.
