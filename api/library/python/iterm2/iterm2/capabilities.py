@@ -250,3 +250,14 @@ def check_supports_session_note(connection):
             "This version of iTerm2 is too old to read or write Session " +
             "Notes via the Python API. You should upgrade to run this " +
             "script.")
+
+def supports_tab_pinning(connection):
+    """Can you read and change whether a tab is pinned?"""
+    min_ver = (1, 21)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_tab_pinning(connection):
+    if not supports_tab_pinning(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to pin or unpin tabs via " +
+            "the Python API. You should upgrade to run this script.")

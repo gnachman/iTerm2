@@ -1620,6 +1620,9 @@ message ListSessionsResponse {
     optional string tab_group_name = 9;
     optional string tab_group_color = 10;
     optional bool tab_group_collapsed = 11;
+    // True if the tab is pinned. Pinned tabs sit at the left of the tab bar and ask
+    // for confirmation before closing. Added in protocol 1.21.
+    optional bool pinned = 12;
   }
   repeated Window windows = 1;
   repeated SessionSummary buried_sessions = 2;

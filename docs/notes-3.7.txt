@@ -121,6 +121,9 @@ New Features:
   renamed, recolored, collapsed, or have tabs
   added or removed. iTerm2 keeps each group's
   tabs consecutive for you.
+- The Python API can now pin and unpin tabs. A
+  Tab has a pinned property and a set_pinned
+  method that works like the Pin Tab menu item.
 - A new “Set Profile Setting” trigger action turns
   a profile checkbox on or off for the session.
   Paired with Job Started and Job Ended matches it

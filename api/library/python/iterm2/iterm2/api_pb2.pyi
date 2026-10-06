@@ -5493,6 +5493,7 @@ class ListSessionsResponse(_message.Message):
         TAB_GROUP_NAME_FIELD_NUMBER: _builtins.int
         TAB_GROUP_COLOR_FIELD_NUMBER: _builtins.int
         TAB_GROUP_COLLAPSED_FIELD_NUMBER: _builtins.int
+        PINNED_FIELD_NUMBER: _builtins.int
         tab_id: _builtins.str
         tmux_window_id: _builtins.str
         tmux_connection_id: _builtins.str
@@ -5511,6 +5512,10 @@ class ListSessionsResponse(_message.Message):
         tab_group_name: _builtins.str
         tab_group_color: _builtins.str
         tab_group_collapsed: _builtins.bool
+        pinned: _builtins.bool
+        """True if the tab is pinned. Pinned tabs sit at the left of the tab bar and ask
+        for confirmation before closing. Added in protocol 1.21.
+        """
         @_builtins.property
         def root(self) -> Global___SplitTreeNode: ...
         @_builtins.property
@@ -5528,10 +5533,11 @@ class ListSessionsResponse(_message.Message):
             tab_group_name: _builtins.str | None = ...,
             tab_group_color: _builtins.str | None = ...,
             tab_group_collapsed: _builtins.bool | None = ...,
+            pinned: _builtins.bool | None = ...,
         ) -> None: ...
-        _HasFieldArgType: _TypeAlias = _typing.Literal["active_session_id", b"active_session_id", "root", b"root", "tab_group_collapsed", b"tab_group_collapsed", "tab_group_color", b"tab_group_color", "tab_group_id", b"tab_group_id", "tab_group_name", b"tab_group_name", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
+        _HasFieldArgType: _TypeAlias = _typing.Literal["active_session_id", b"active_session_id", "pinned", b"pinned", "root", b"root", "tab_group_collapsed", b"tab_group_collapsed", "tab_group_color", b"tab_group_color", "tab_group_id", b"tab_group_id", "tab_group_name", b"tab_group_name", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
         def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-        _ClearFieldArgType: _TypeAlias = _typing.Literal["active_session_id", b"active_session_id", "minimized_sessions", b"minimized_sessions", "root", b"root", "tab_group_collapsed", b"tab_group_collapsed", "tab_group_color", b"tab_group_color", "tab_group_id", b"tab_group_id", "tab_group_name", b"tab_group_name", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["active_session_id", b"active_session_id", "minimized_sessions", b"minimized_sessions", "pinned", b"pinned", "root", b"root", "tab_group_collapsed", b"tab_group_collapsed", "tab_group_color", b"tab_group_color", "tab_group_id", b"tab_group_id", "tab_group_name", b"tab_group_name", "tab_id", b"tab_id", "tmux_connection_id", b"tmux_connection_id", "tmux_window_id", b"tmux_window_id"]  # noqa: Y015
         def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
         def WhichOneof(self, oneof_group: _Never) -> None: ...
 

@@ -5366,6 +5366,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
   ITMListSessionsResponse_Tab_FieldNumber_TabGroupName = 9,
   ITMListSessionsResponse_Tab_FieldNumber_TabGroupColor = 10,
   ITMListSessionsResponse_Tab_FieldNumber_TabGroupCollapsed = 11,
+  ITMListSessionsResponse_Tab_FieldNumber_Pinned = 12,
 };
 
 GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
@@ -5421,6 +5422,13 @@ GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
 @property(nonatomic, readwrite) BOOL tabGroupCollapsed;
 
 @property(nonatomic, readwrite) BOOL hasTabGroupCollapsed;
+/**
+ * True if the tab is pinned. Pinned tabs sit at the left of the tab bar and ask
+ * for confirmation before closing. Added in protocol 1.21.
+ **/
+@property(nonatomic, readwrite) BOOL pinned;
+
+@property(nonatomic, readwrite) BOOL hasPinned;
 @end
 
 #pragma mark - ITMCreateTabRequest
