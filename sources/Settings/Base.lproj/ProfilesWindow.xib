@@ -15,6 +15,7 @@
                 <outlet property="tableView_" destination="319" id="322"/>
                 <outlet property="toggleTagsButton_" destination="6zs-tn-Vlz" id="1Ao-bA-ziT"/>
                 <outlet property="verticalPaneButton_" destination="350" id="356"/>
+                <outlet property="floatingPaneButton_" destination="fpn-pw-btn" id="fpn-pw-out"/>
                 <outlet property="window" destination="5" id="LPA-UV-Ffi"/>
                 <outlet property="windowButton_" destination="329" id="334"/>
             </connections>
@@ -90,7 +91,19 @@ DQ
                         </buttonCell>
                         <connections>
                             <action selector="openBookmarkInVerticalPane:" target="-2" id="354"/>
-                            <outlet property="nextKeyView" destination="327" id="363"/>
+                            <outlet property="nextKeyView" destination="fpn-pw-btn" id="363"/>
+                        </connections>
+                    </button>
+                    <button toolTip="New Floating Pane" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fpn-pw-btn">
+                        <rect key="frame" x="363" y="12" width="53" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" bezelStyle="rounded" image="rectangle.on.rectangle" catalog="system" imagePosition="only" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="fpn-pw-cel">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="openBookmarkInFloatingPane:" target="-2" id="fpn-pw-act"/>
+                            <outlet property="nextKeyView" destination="327" id="fpn-pw-nkv"/>
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="329">
