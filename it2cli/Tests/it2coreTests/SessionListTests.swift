@@ -271,4 +271,23 @@ final class SessionListTests: XCTestCase {
         let expected = "\"\\(f(x: \"a)\")) \\\"\\(g(y: \"\\(h(z: \"q\"))\"))\""
         XCTAssertEqual(swiftyStringLiteral(body), expected)
     }
+
+    // iTerm2 sends each value as JSON, and its encoder escapes "/" as "\/". Trimming the quotes
+    // left those escapes in the output: \/dev\/ttys040. Seen over SSH Integration.
+    func testValuesAreDecodedNotJustTrimmed() throws {
+        let vr = ITMVariableResponse()
+        vr.status = .ok
+        vr.valuesArray.add(#""say \"hi\" \u00e9""#)
+        vr.valuesArray.add(#""\/dev\/ttys040""#)
+        let message = ITMServerOriginatedMessage()
+        message.id_p = 2
+        message.variableResponse = vr
+
+        let channel = FakeChannel()
+        channel.responses = [listResponse(id: 1, sessionId: "sess-1", title: "T"), message]
+        let capture = OutputCapture()
+        var command = try Session.List.parse([])
+        try command.run(capture.context(channel: channel))
+        XCTAssertEqual(capture.out, ["sess-1\tsay \"hi\" \u{e9}\tT\t0x0\t/dev/ttys040"])
+    }
 }

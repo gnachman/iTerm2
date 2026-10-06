@@ -233,20 +233,46 @@ enum ClaudeCodeRemoteHooks {
         return .installed
     }
 
-    /// Every event has our entry and the wrapper it runs is there.
-    static func isHealthy(files: ClaudeCodeRemoteFiles,
-                          settingsPath: String,
-                          home: String,
-                          descriptor: AgentHookDescriptor = .claudeCode) async -> Bool {
-        guard case .contents(let data) = await files.read(settingsPath),
-              let settings = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-              ClaudeCodeHookSettings.ourCommandsCoveringEveryEvent(
-                settings,
-                descriptor: descriptor,
-                isOurs: { ClaudeCodeHookSettings.isRemoteHookCommand($0, home: home) }) != nil else {
-            return false
+    enum HookStatus: Equatable {
+        /// Every event has our entry and the wrapper it runs is there.
+        case healthy
+        /// Some of our entries are there, but not all, or the wrapper is gone.
+        case broken
+        case notInstalled
+        /// The settings could not be read or parsed, so nothing can be said.
+        case unknown
+    }
+
+    /// What the host's own settings say. Nothing about remote hosts is kept on this Mac, so this
+    /// is the only answer to "is the hook installed there?"
+    static func status(files: ClaudeCodeRemoteFiles,
+                       settingsPath: String,
+                       home: String,
+                       descriptor: AgentHookDescriptor = .claudeCode) async -> HookStatus {
+        let settings: [String: Any]
+        switch await files.read(settingsPath) {
+        case .missing:
+            return .notInstalled
+        case .failed:
+            return .unknown
+        case .contents(let data):
+            guard let parsed = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+                return .unknown
+            }
+            settings = parsed
         }
-        return await files.isExecutable(wrapperPath(home: home))
+        let isOurs: (String) -> Bool = { ClaudeCodeHookSettings.isRemoteHookCommand($0, home: home) }
+        // Something to strip means at least one of our entries is there.
+        guard ClaudeCodeHookSettings.stripped(settings, descriptor: descriptor, isOurs: isOurs) != nil else {
+            return .notInstalled
+        }
+        guard ClaudeCodeHookSettings.ourCommandsCoveringEveryEvent(settings,
+                                                                   descriptor: descriptor,
+                                                                   isOurs: isOurs) != nil,
+              await files.isExecutable(wrapperPath(home: home)) else {
+            return .broken
+        }
+        return .healthy
     }
 
     static func uninstall(files: ClaudeCodeRemoteFiles,
@@ -282,9 +308,31 @@ enum ClaudeCodeRemoteHooks {
 // MARK: - Per-host install, health and uninstall
 
 extension ClaudeCodeOnboarding {
+    /// Where Claude Code keeps its settings on `conductor`'s host: CLAUDE_CONFIG_DIR as its login
+    /// shell reports it, looked up once per connection, or the default when that fails. Delivers
+    /// on the main thread.
+    @MainActor
+    static func remoteSettingsPath(conductor: Conductor,
+                                   facts: ClaudeCodeRemoteConnectionFacts = .shared,
+                                   completion: @escaping (String?) -> Void) {
+        guard let home = conductor.homeDirectory, !home.isEmpty else {
+            completion(nil)
+            return
+        }
+        if let directory = facts.configDirectory(for: conductor) {
+            completion(ClaudeCodeRemoteConnectionFacts.settingsPath(configDirectory: directory, home: home))
+            return
+        }
+        resolveRemoteConfigDirectory(conductor: conductor) { [weak conductor] directory in
+            if let directory, let conductor {
+                facts.setConfigDirectory(directory, for: conductor)
+            }
+            completion(ClaudeCodeRemoteConnectionFacts.settingsPath(configDirectory: directory, home: home))
+        }
+    }
+
     /// Installs the hook on the host `conductor` reaches, into `configDirectory` (resolved by
-    /// resolveRemoteConfigDirectory). On success the directory and the install are recorded for the
-    /// host.
+    /// resolveRemoteConfigDirectory). Nothing is recorded on this Mac beyond this connection.
     ///
     /// `grantAlwaysAllow` also mints an always-allow grant, so later connections' hooks are not
     /// met by the authorization prompt. That lets anything on the host see and control the
@@ -292,29 +340,28 @@ extension ClaudeCodeOnboarding {
     /// Claude Code integration". So it is a required argument, and the caller must have told the
     /// user exactly that and had them agree.
     ///
-    /// `files` and `state` are for tests; production passes neither.
+    /// `files` and `facts` are for tests; production passes neither.
     @MainActor
     static func installHooksRemotely(conductor: Conductor,
                                      configDirectory: String,
                                      grantAlwaysAllow: Bool,
                                      files: ClaudeCodeRemoteFiles? = nil,
-                                     state: ClaudeCodeRemoteHostState = .shared,
+                                     facts: ClaudeCodeRemoteConnectionFacts = .shared,
                                      completion: @escaping (ClaudeCodeRemoteHooks.InstallResult) -> Void) {
         guard let home = conductor.homeDirectory, !home.isEmpty else {
             RLog("Remote hook install: the remote home is unknown")
             completion(.unreadable)
             return
         }
-        let host = conductor.sshIdentity.stringIdentifier
         let access = files ?? ConductorClaudeCodeRemoteFiles(conductor: conductor)
-        let settingsPath = (configDirectory as NSString).appendingPathComponent("settings.json")
+        let settingsPath = ClaudeCodeRemoteConnectionFacts.settingsPath(configDirectory: configDirectory, home: home)
         Task { @MainActor in
             let result = await ClaudeCodeRemoteHooks.install(files: access,
                                                               settingsPath: settingsPath,
                                                               home: home)
             if result == .installed {
-                state.recordConfigDirectory(configDirectory, forHost: host)
-                state.setHooksInstalled(true, onHost: host)
+                facts.setConfigDirectory(configDirectory, for: conductor)
+                facts.setHookPresent(true, for: conductor)
                 if grantAlwaysAllow {
                     conductor.mintHostGrant()
                 }
@@ -335,50 +382,68 @@ extension ClaudeCodeOnboarding {
         }
     }
 
-    /// Whether the hook on `conductor`'s host is complete and runnable, in the directory recorded
-    /// at install (or the default).
+    /// The hook's state on `conductor`'s host, read from the host. Delivers on the main thread.
     @MainActor
-    static func remoteHooksHealthy(conductor: Conductor,
-                                   files: ClaudeCodeRemoteFiles? = nil,
-                                   state: ClaudeCodeRemoteHostState = .shared,
-                                   completion: @escaping (Bool) -> Void) {
-        guard let home = conductor.homeDirectory, !home.isEmpty else {
-            completion(false)
-            return
-        }
-        let settingsPath = state.settingsPath(forHost: conductor.sshIdentity.stringIdentifier, home: home)
-        let access = files ?? ConductorClaudeCodeRemoteFiles(conductor: conductor)
-        Task { @MainActor in
-            completion(await ClaudeCodeRemoteHooks.isHealthy(files: access, settingsPath: settingsPath, home: home))
+    static func remoteHookStatus(conductor: Conductor,
+                                 files: ClaudeCodeRemoteFiles? = nil,
+                                 facts: ClaudeCodeRemoteConnectionFacts = .shared,
+                                 completion: @escaping (ClaudeCodeRemoteHooks.HookStatus) -> Void) {
+        remoteSettingsPath(conductor: conductor, facts: facts) { [weak conductor] settingsPath in
+            guard let conductor, let settingsPath, let home = conductor.homeDirectory else {
+                completion(.unknown)
+                return
+            }
+            let access = files ?? ConductorClaudeCodeRemoteFiles(conductor: conductor)
+            Task { @MainActor in
+                let status = await ClaudeCodeRemoteHooks.status(files: access, settingsPath: settingsPath, home: home)
+                switch status {
+                case .healthy, .broken:
+                    facts.setHookPresent(true, for: conductor)
+                case .notInstalled:
+                    facts.setHookPresent(false, for: conductor)
+                case .unknown:
+                    break
+                }
+                completion(status)
+            }
         }
     }
 
-    /// Removes the hook from `conductor`'s host and, on success, forgets that it was installed
-    /// there. `revokeAlwaysAllow` also revokes the host's always-allow grant. Required, because
-    /// the user must be asked: the grant may predate the install, and other uses of it2 on that
-    /// host may depend on it.
+    /// Whether the hook on `conductor`'s host is complete and runnable.
+    @MainActor
+    static func remoteHooksHealthy(conductor: Conductor,
+                                   completion: @escaping (Bool) -> Void) {
+        remoteHookStatus(conductor: conductor) { status in
+            completion(status == .healthy)
+        }
+    }
+
+    /// Removes the hook from `conductor`'s host. `revokeAlwaysAllow` also revokes the host's
+    /// always-allow grant. Required, because the user must be asked: the grant may predate the
+    /// install, and other uses of it2 on that host may depend on it.
     @MainActor
     static func uninstallHooksRemotely(conductor: Conductor,
                                        revokeAlwaysAllow: Bool,
                                        files: ClaudeCodeRemoteFiles? = nil,
-                                       state: ClaudeCodeRemoteHostState = .shared,
+                                       facts: ClaudeCodeRemoteConnectionFacts = .shared,
                                        completion: @escaping (ClaudeCodeUninstallHooksResult) -> Void) {
-        guard let home = conductor.homeDirectory, !home.isEmpty else {
-            completion(.unreadable)
-            return
-        }
         let host = conductor.sshIdentity.stringIdentifier
-        let settingsPath = state.settingsPath(forHost: host, home: home)
-        let access = files ?? ConductorClaudeCodeRemoteFiles(conductor: conductor)
-        Task { @MainActor in
-            let result = await ClaudeCodeRemoteHooks.uninstall(files: access, settingsPath: settingsPath, home: home)
-            if result == .success {
-                state.setHooksInstalled(false, onHost: host)
-                if revokeAlwaysAllow {
-                    Conductor.hostGrantStore.revoke(host: host)
-                }
+        remoteSettingsPath(conductor: conductor, facts: facts) { [weak conductor] settingsPath in
+            guard let conductor, let settingsPath, let home = conductor.homeDirectory else {
+                completion(.unreadable)
+                return
             }
-            completion(result)
+            let access = files ?? ConductorClaudeCodeRemoteFiles(conductor: conductor)
+            Task { @MainActor in
+                let result = await ClaudeCodeRemoteHooks.uninstall(files: access, settingsPath: settingsPath, home: home)
+                if result == .success {
+                    facts.setHookPresent(false, for: conductor)
+                    if revokeAlwaysAllow {
+                        Conductor.hostGrantStore.revoke(host: host)
+                    }
+                }
+                completion(result)
+            }
         }
     }
 }

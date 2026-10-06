@@ -703,13 +703,11 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                 resolved = cfg.resolvedCommand(gitBase: base)
             }
             guard !resolved.isEmpty else { return }
-            let wrapped = ITAddressBookMgr.commandByWrapping(
-                inLoginShell: resolved)
-            session.restart(withCommand: wrapped)
+            session.restart(withCommand: session.workgroupPeerLaunchCommand(resolved) ?? "")
         }
     }
 
-    // The login-shell-wrapped diff command matching the peer's diff
+    // The diff command (the session wraps it for running) matching the peer's diff
     // popup CURRENT selection: the per-file command when a file is
     // picked, the All Files command otherwise. Reload runs this rather
     // than replaying the session's stale _program so a popup that
@@ -732,7 +730,7 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             resolved = cfg.resolvedCommand(gitBase: currentGitBase)
         }
         guard !resolved.isEmpty else { return nil }
-        return ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
+        return resolved
     }
 }
 
@@ -833,8 +831,7 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
             RLog("iTermWorkgroupPeerPort.diffDidSelect aborted, resolved per-file command is empty for owner=\(ownerPeerID)")
             return
         }
-        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
-        session.restart(withCommand: wrapped)
+        session.restart(withCommand: session.workgroupPeerLaunchCommand(command) ?? "")
     }
 
     // Mirror the diff selector's can-navigate predicates onto the
@@ -877,8 +874,7 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
             return
         }
         let resolved = cfg.resolvedCommand(gitBase: currentGitBase)
-        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
-        session.restart(withCommand: wrapped)
+        session.restart(withCommand: session.workgroupPeerLaunchCommand(resolved) ?? "")
     }
 }
 

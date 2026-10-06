@@ -46,6 +46,11 @@ enum iTermWorkgroupEntryMechanism: Int {
 final class iTermWorkgroupController: NSObject {
     @objc static let instance = iTermWorkgroupController()
 
+    /// Posted after a session enters a workgroup. The object is the session; the user info holds
+    /// the workgroup's unique identifier under workgroupIDKey.
+    static let didEnterNotification = Notification.Name("iTermWorkgroupControllerDidEnter")
+    static let workgroupIDKey = "workgroupID"
+
     // Active workgroup instances keyed by instanceUniqueIdentifier.
     // The key is a stable string minted at entry time, so an entry
     // stays reachable no matter what happens to its sessions: exit
@@ -132,6 +137,9 @@ final class iTermWorkgroupController: NSObject {
             instances[instance.instanceUniqueIdentifier] = instance
             session.delegate?.sessionDidChangeDesiredToolbarItems(session)
             checkConsistency()
+            NotificationCenter.default.post(name: Self.didEnterNotification,
+                                            object: session,
+                                            userInfo: [Self.workgroupIDKey: workgroup.uniqueIdentifier])
             return true
         }
     }

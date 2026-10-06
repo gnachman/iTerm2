@@ -62,6 +62,20 @@ if [ ! -d ~/.ssh ]; then
 fi
 
 
+# it2ssh's own option, accepted only first so it can never be mistaken for an ssh option or a
+# word of the remote command: don't load shell integration (or upload it2) on the host. iTerm2
+# otherwise does; an SSH profile passes this when its "Load shell integration automatically" is
+# off. Reported to iTerm2 in SendConductor, never passed to ssh.
+SEND_CONDUCTOR_PARAMS="v=3"
+if [[ "${1:-}" == "--no-shell-integration" ]]; then
+    SEND_CONDUCTOR_PARAMS="v=3;si=0"
+    shift
+    if [ "$#" -eq 0 ]; then
+        ssh 2>&1 | sed -e 's/usage: ssh/usage: it2ssh [--no-shell-integration]/' >&2
+        exit 1
+    fi
+fi
+
 requote() {
   printf "%q " "$@"
 }
@@ -142,7 +156,7 @@ printf "1337;it2ssh=$TOKEN ${UNIQUEID} $ENCODED_BA $SSHARGS"
 printf "%s" "$st"
 
 printf "%s" "$osc"
-printf "1337;SendConductor=v=3"
+printf "1337;SendConductor=%s" "$SEND_CONDUCTOR_PARAMS"
 printf "%s" "$st"
 )
 

@@ -11,6 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermGitPoller;
 @class iTermGitState;
+@protocol iTermGitPollWorkerProtocol;
 
 @protocol iTermGitPollerDelegate <NSObject>
 
@@ -35,6 +36,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, nullable) NSString *gitBase;
 @property (nonatomic, readonly) iTermGitState *state;
 @property (nonatomic, weak) id<iTermGitPollerDelegate> delegate;
+// Where git state comes from. nil (the default) reads repositories on this Mac. A remote worker
+// reads them on a host reached through SSH Integration. Changing it forgets the current state.
+@property (nonatomic, strong, nullable) id<iTermGitPollWorkerProtocol> worker;
 @property (nonatomic, readonly) NSDate *lastPollTime;
 @property (nonatomic, readonly) BOOL hasSuccessfullyFetched;
 @property (nonatomic, readonly) BOOL lastPollTimedOut;

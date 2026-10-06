@@ -29,6 +29,7 @@ final class iTermWorkgroupModel: NSObject {
         backfillToolbarShortcutsIfNeeded()
         backfillClaudeCodeDiffModeIfNeeded()
         backfillCodeReviewSystemPromptCommandIfNeeded()
+        backfillCodeReviewSettingsCommandIfNeeded()
         backfillClaudeCodeAutoSendClippingsIfNeeded()
         backfillClaudeCodeAutoRequestReviewIfNeeded()
     }
@@ -183,6 +184,40 @@ final class iTermWorkgroupModel: NSObject {
         if changed {
             persist()
         }
+    }
+
+    // One-time migration: point any persisted Code Review command's --settings argument at the
+    // `codeReviewSettingsFile` variable instead of the bundled code-review-settings.txt, so a
+    // review peer on a remote host can use a copy written there. Same shapes and same reasoning as
+    // backfillCodeReviewSystemPromptCommandIfNeeded: the templated bundle path or an older
+    // resolved one; a --settings pointing anywhere else is the user's and is left alone.
+    private func backfillCodeReviewSettingsCommandIfNeeded() {
+        guard !iTermUserDefaults.claudeCodeReviewSettingsCommandBackfilled else { return }
+        defer { iTermUserDefaults.claudeCodeReviewSettingsCommandBackfilled = true }
+        var changed = false
+        for wgIdx in workgroups.indices {
+            for sIdx in workgroups[wgIdx].sessions.indices {
+                if let migrated = Self.commandUsingCodeReviewSettingsVariable(workgroups[wgIdx].sessions[sIdx].command) {
+                    workgroups[wgIdx].sessions[sIdx].command = migrated
+                    changed = true
+                }
+            }
+        }
+        if changed {
+            persist()
+        }
+    }
+
+    /// `command` with a --settings argument naming the bundled code-review-settings.txt replaced by
+    /// the variable, or nil when there is none.
+    static func commandUsingCodeReviewSettingsVariable(_ command: String) -> String? {
+        let pattern = "--settings\\s+'?[^'\\s]*code-review-settings\\.txt'?"
+        guard let range = command.range(of: pattern, options: .regularExpression) else {
+            return nil
+        }
+        // Plain (non-template) replacement so the backslash in `\(codeReviewSettingsFile)`
+        // survives verbatim.
+        return command.replacingCharacters(in: range, with: "--settings '\\(codeReviewSettingsFile)'")
     }
 
     // One-time migration: add the Auto-Send Clippings When Idle toolbar

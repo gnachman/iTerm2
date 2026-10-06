@@ -208,6 +208,13 @@ class PTYSessionPeerPort: NSObject {
             RLog("PTYSessionPeerPort.activate: no member of \(debugDescription) has a live delegate; refusing to activate \(identifier)")
             return false
         }
+        // A tmux Integration pane's tab is laid out by tmux, so the tab refuses to swap a pane in or
+        // out (-[PTYTab swapSession:withBuriedSession:]). Refuse here, before committing: going
+        // ahead moved the toolbar to the hidden peer and left the visible pane with none.
+        guard !realizedPeerSessions.contains(where: { $0.isTmuxClient }) else {
+            RLog("PTYSessionPeerPort.activate: \(debugDescription) includes a tmux pane, which cannot be swapped; refusing to activate \(identifier)")
+            return false
+        }
         activeSessionIdentifier = identifier
         promise.then { [weak self] replacement in
             guard let self, !invalidated else {

@@ -418,6 +418,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 - (void)screenSuggestShellIntegrationUpgrade;
 - (void)screenDidDetectShell:(NSString * _Nonnull)shell;
+// Every ShellIntegrationVersion report, including one that names no shell.
+- (void)screenDidReportShellIntegrationVersion:(NSInteger)version shell:(NSString * _Nullable)shell;
 
 - (void)screenSetBackgroundImageFile:(NSString * _Nonnull)filename;
 - (void)screenSetBadgeFormat:(NSString * _Nonnull)theFormat;
@@ -507,10 +509,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenHandleIT2:(NSString * _Nullable)string depth:(int)depth;
 - (void)screenDidReceiveUnframedSSHPromptAtDepth:(int)depth;
 - (void)screenWillBeginSSHIntegration;
+// `injectShellIntegration` is NO when it2ssh was run with --no-shell-integration (si=0).
 - (void)screenBeginSSHIntegrationWithToken:(NSString * _Nonnull)token
                                   uniqueID:(NSString * _Nonnull)uniqueID
                                  encodedBA:(NSString * _Nonnull)encodedBA
-                                   sshArgs:(NSString * _Nonnull)sshArgs;
+                                   sshArgs:(NSString * _Nonnull)sshArgs
+                    injectShellIntegration:(BOOL)injectShellIntegration;
 - (NSInteger)screenEndSSH:(NSString * _Nonnull)uniqueID;
 - (NSString * _Nonnull)screenSSHLocation;
 // Returns NO if the connection's framer output must not start recovery because the

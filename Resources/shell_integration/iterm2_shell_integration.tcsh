@@ -129,7 +129,7 @@ if ( ! ($?iterm2_shell_integration_installed)) then
       alias _iterm2_osc7 "(_iterm2_start; _iterm2_print_osc7; _iterm2_end)"
 
       # Define aliases for printing the shell integration version this script is written against
-      alias _iterm2_print_shell_integration_version 'printf "1337;ShellIntegrationVersion=9;shell=tcsh"'
+      alias _iterm2_print_shell_integration_version 'printf "1337;ShellIntegrationVersion=10;shell=tcsh"'
       alias _iterm2_shell_integration_version "(_iterm2_start; _iterm2_print_shell_integration_version; _iterm2_end)"
 
       # Define aliases for defining the boundary between a command prompt and the

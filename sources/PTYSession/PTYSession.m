@@ -451,6 +451,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 @end
 
 @implementation PTYSession {
+    // A tmux pane on a host reached through SSH Integration: the pane's pid on that host, from
+    // #{pane_pid}. Its jobs are read from the gateway conductor's view of the host's processes
+    // (see remoteTmuxPaneProcessInfoProvider). nil for a pane on this Mac, which uses
+    // _shell.tmuxClientProcessID instead.
+    NSNumber *_remoteTmuxPanePID;
 
     NSString *_termVariable;
 
@@ -1208,6 +1213,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_restoreSavedForegroundJobAncestors release];
     [_slowlySentPasteEvents release];
     [_restoredArchivePath release];
+    [_remoteTmuxPanePID release];
     [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
     NSString *guid = [_guid copy];
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -3081,6 +3087,11 @@ ITERM_WEAKLY_REFERENCEABLE
     return _conductor.sshIdentity;
 }
 
+- (void)setPendingJumpsForNextLaunch:(NSArray<iTermSSHReconnectionInfo *> *)jumps {
+    [_pendingJumps release];
+    _pendingJumps = [jumps mutableCopy];
+}
+
 - (NSArray<iTermSSHReconnectionInfo *> *)sshCommandLineSequence {
     assert(_conductor);
     NSMutableArray<iTermSSHReconnectionInfo *> *sequence = [NSMutableArray array];
@@ -3147,6 +3158,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (id<SessionProcessInfoProvider>)sessionProcessInfoProvider {
     PTYSession *tmuxGatewaySession = self.tmuxGatewaySession;
     if (tmuxGatewaySession && self.isTmuxClient && !_conductor && !_tmuxController.serverIsLocal) {
+        id<SessionProcessInfoProvider> pane = [self remoteTmuxPaneProcessInfoProvider];
+        if (pane) {
+            return pane;
+        }
         return [tmuxGatewaySession sessionProcessInfoProvider];
     }
     if (!_conductor.framing) {
@@ -3159,6 +3174,14 @@ ITERM_WEAKLY_REFERENCEABLE
     NSMutableArray<iTermProcessInfo *> *result = [NSMutableArray array];
     if (_conductor) {
         [result addObjectsFromArray:_conductor.transitiveProcesses];
+    }
+    if (_remoteTmuxPanePID) {
+        // A tmux pane on a remote host. _shell.pid means nothing there.
+        iTermProcessInfo *pane = [self.processInfoProvider processInfoForPid:_remoteTmuxPanePID.intValue];
+        if (pane) {
+            [result addObjectsFromArray:[pane descendantsSkippingLevels:0]];
+        }
+        return result;
     }
     pid_t thePid = [_shell pid];
 
@@ -4077,6 +4100,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
         [self uninstallTmuxTitleMonitor];
         [self uninstallTmuxForegroundJobMonitor];
+        [self stopTrackingRemoteTmuxPane];
     } else if (self.tmuxMode == TMUX_GATEWAY) {
         [_tmuxController detach];
         [_tmuxGateway release];
@@ -8008,7 +8032,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // path and the foreground-job ancestry use. Otherwise the cache lookup misses
     // and the display job silently degrades to the raw deepest job for tmux panes.
     const pid_t effectivePid = _shell.tmuxClientProcessID ? _shell.tmuxClientProcessID.intValue : _shell.pid;
-    iTermProcessInfo *displayInfo = [self.processInfoProvider displayForegroundJobForPid:effectivePid] ?: processInfo;
+    // A remote pane's processes are keyed by its pid on that host, in the gateway's provider.
+    const pid_t displayPid = _remoteTmuxPanePID ? _remoteTmuxPanePID.intValue : effectivePid;
+    iTermProcessInfo *displayInfo = [self.processInfoProvider displayForegroundJobForPid:displayPid] ?: processInfo;
     DLog(@"%p set jobName to %@ (pid %@); raw deepest/deepestJob is %@ (pid %@); root pid %@",
          self, displayInfo.name, @(displayInfo.processID), processInfo.name, @(processInfo.processID), @(effectivePid));
     NSString *name = displayInfo.name;
@@ -8057,6 +8083,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         id oldValue = [self.variablesScope valueForVariableName:iTermVariableKeySessionEffectiveSessionRootPid];
         if (_conductor.framing) {
             [self.variablesScope setValue:_conductor.framedPID
+                         forVariableNamed:iTermVariableKeySessionEffectiveSessionRootPid];
+        } else if (_remoteTmuxPanePID) {
+            // A tmux pane on a remote host: its root is the pane on that host, which is what the
+            // gateway's process provider (this session's processInfoProvider) knows it by. The
+            // Jobs tool reads this.
+            [self.variablesScope setValue:_remoteTmuxPanePID
                          forVariableNamed:iTermVariableKeySessionEffectiveSessionRootPid];
         } else if (effectiveShellPID.intValue > 0) {
             [self.variablesScope setValue:effectiveShellPID
@@ -10277,7 +10309,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)loadTmuxProcessID {
-    if (!_tmuxController.serverIsLocal) {
+    // A pid is only useful where its processes can be seen: on this Mac, or on a host reached
+    // through SSH Integration, whose framer reports any pid registered with it.
+    if (!_tmuxController.serverIsLocal && !self.hostConductor.framing) {
         return;
     }
     NSString *command = [NSString stringWithFormat:@"display-message -t '%%%@' -p '#{pane_pid}'", @(self.tmuxPane)];
@@ -10300,12 +10334,23 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)didFetchTmuxPid:(NSString *)pidString {
-    if (pidString && self.tmuxMode == TMUX_CLIENT && _tmuxController.serverIsLocal) {
-        NSNumber *pid = @([pidString integerValue]);
-        if (pid.intValue > 0) {
-            _shell.tmuxClientProcessID = pid;
-            [self updateTitles];
-        }
+    if (!pidString || self.tmuxMode != TMUX_CLIENT) {
+        return;
+    }
+    NSNumber *pid = @([pidString integerValue]);
+    if (pid.intValue <= 0) {
+        return;
+    }
+    if (_tmuxController.serverIsLocal) {
+        _shell.tmuxClientProcessID = pid;
+        [self updateTitles];
+    } else if (self.hostConductor.framing) {
+        // Not _shell.tmuxClientProcessID: that registers with this Mac's process cache, where a
+        // remote pid names some unrelated local process.
+        DLog(@"%@: remote tmux pane pid is %@", self, pid);
+        [self stopTrackingRemoteTmuxPane];
+        _remoteTmuxPanePID = [pid retain];
+        [self updateTitles];
     }
 }
 
@@ -10589,6 +10634,23 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (int)tmuxPane {
     return [[self.variablesScope valueForVariableName:iTermVariableKeySessionTmuxWindowPane] intValue];
+}
+
+// The pane's own jobs on the remote host, once its pid is known and the connection is framing.
+- (id<SessionProcessInfoProvider>)remoteTmuxPaneProcessInfoProvider {
+    if (!_remoteTmuxPanePID) {
+        return nil;
+    }
+    return [self.hostConductor sessionProcessInfoProviderForTmuxPanePID:_remoteTmuxPanePID.intValue];
+}
+
+- (void)stopTrackingRemoteTmuxPane {
+    if (!_remoteTmuxPanePID) {
+        return;
+    }
+    [self.hostConductor stopTrackingTmuxPanePID:_remoteTmuxPanePID.intValue];
+    [_remoteTmuxPanePID release];
+    _remoteTmuxPanePID = nil;
 }
 
 - (iTermConductor *)hostConductor {
@@ -20109,6 +20171,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
+- (void)screenDidReportShellIntegrationVersion:(NSInteger)version shell:(NSString *)shell {
+    [self recordReportedShellIntegrationVersion:version shell:shell];
+}
+
 - (void)screenDidDetectShell:(NSString *)shell {
     NSString *name = self.currentHost.usernameAndHostname;
     if (name && shell) {
@@ -20891,8 +20957,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [_pendingJumps removeObjectAtIndex:0];
     }
     iTermConductor *previousConductor = [_conductor autorelease];
+    // The shell on the far side reports its own shell-integration version, if it has any.
+    [self forgetReportedShellIntegration];
     NSDictionary *dict = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_SSH_CONFIG inProfile:self.profile]];
-    const BOOL shouldInjectShellIntegration = [iTermProfilePreferences boolForKey:KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY inProfile:self.profile];
+    // What it2ssh asked for, not this session's profile: an it2ssh typed here, or an SSH profile's
+    // (which passes --no-shell-integration when its own setting is off).
+    const BOOL shouldInjectShellIntegration = [self takeSSHIntegrationInjectionForUniqueID:uniqueID];
     iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:dict] autorelease];
     _conductor = [[iTermConductor alloc] init:sshargs
                                      boolArgs:boolArgs
@@ -21271,7 +21341,10 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
 - (void)screenBeginSSHIntegrationWithToken:(NSString *)token
                                   uniqueID:(NSString *)uniqueID
                                  encodedBA:(NSString *)encodedBA
-                                   sshArgs:(NSString *)sshArgs {
+                                   sshArgs:(NSString *)sshArgs
+                    injectShellIntegration:(BOOL)injectShellIntegration {
+    // Used when conductor.sh hooks back with this uniqueID; see screenDidHookSSHConductor.
+    [self rememberSSHIntegrationInjection:injectShellIntegration forUniqueID:uniqueID];
     NSURL *path = [[NSBundle bundleForClass:[PTYSession class]] URLForResource:@"conductor" withExtension:@"sh"];
     NSString *conductorSH = [NSString stringWithContentsOfURL:path encoding:NSUTF8StringEncoding error:nil];
     // Ensure it doesn't contain empty lines.
@@ -26783,7 +26856,9 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 
 #if DEBUG
 - (BOOL)debugAnswerIT2AuthorizationForConductorGUID:(NSString *)guid selection:(int)index {
-    iTermAnnouncementViewController *announcement = _announcements[IT2AuthorizationAnnouncementIdentifier(guid)];
+    NSString *identifier = IT2AuthorizationAnnouncementIdentifier(guid);
+    PTYSession *host = [self it2AuthorizationPromptSessionForIdentifier:identifier] ?: self;
+    iTermAnnouncementViewController *announcement = host->_announcements[identifier];
     if (!announcement) {
         return NO;
     }
@@ -26794,6 +26869,7 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 
 - (void)conductorRequestIT2AuthorizationWithGUID:(NSString *)guid
                                      displayName:(NSString *)displayName
+                                  callerTmuxPane:(NSString *)callerTmuxPane
                                       completion:(void (^)(BOOL granted, BOOL remember, BOOL alwaysForHost))completion {
     NSString *who = displayName.length ? displayName : NSLocalizedStringWithDefaultValue(@"PTYSession.ARemoteSession", nil, [NSBundle mainBundle], @"A remote session", @"Generic name for an unnamed remote session");
     NSString *title =
@@ -26813,12 +26889,14 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
                 [[[iTermIT2AuthorizationOutcome alloc] initWithSelection:selection] autorelease];
             completion(outcome.granted, outcome.remember, outcome.alwaysForHost);
         }];
-    [self queueAnnouncement:announcement
-                 identifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+    // Not necessarily on this session: a tmux gateway is hidden. See presentIT2Authorization.
+    [self presentIT2AuthorizationAnnouncement:announcement
+                                   identifier:IT2AuthorizationAnnouncementIdentifier(guid)
+                               callerTmuxPane:callerTmuxPane];
 }
 
 - (void)conductorDismissIT2AuthorizationPromptWithGUID:(NSString *)guid {
-    [self dismissAnnouncementWithIdentifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+    [self dismissIT2AuthorizationAnnouncementWithIdentifier:IT2AuthorizationAnnouncementIdentifier(guid)];
 }
 
 - (void)conductorSendInitialText {

@@ -2976,6 +2976,7 @@ typedef struct {
     NSInteger latestKnownVersion = [latestVersionByShell[shell ?: @""] integerValue];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
+        [delegate screenDidReportShellIntegrationVersion:versionNumber shell:shell];
         if (shell) {
             DLog(@"shell=%@", shell);
             [delegate screenDidDetectShell:shell];
@@ -4142,13 +4143,17 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     NSString *encodedBA = _sshIntegrationFlags[2];
     NSString *sshArgs = _sshIntegrationFlags[3];
     _sshIntegrationFlags = nil;
+    // it2ssh loads shell integration on the host unless it was run with --no-shell-integration,
+    // which it reports as si=0. An older it2ssh never sends si, so it gets the default.
+    const BOOL injectShellIntegration = ![params[@"si"] isEqualToString:@"0"];
     // Urgent: this is the handshake that starts the conductor, and it pauses the token
     // executor until it runs.
     [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenBeginSSHIntegrationWithToken:token
                                             uniqueID:uniqueID
                                            encodedBA:encodedBA
-                                             sshArgs:sshArgs];
+                                             sshArgs:sshArgs
+                              injectShellIntegration:injectShellIntegration];
         [unpauser unpause];
     } name:@"send conductor"];
 }

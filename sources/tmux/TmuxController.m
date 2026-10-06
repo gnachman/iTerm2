@@ -206,7 +206,10 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     int _tmuxCurrentWindowID;
     // Pane -> (Key -> Value)
     NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_userVars;
-    NSMutableDictionary<NSNumber *, void (^)(PTYSession<iTermTmuxControllerSession> *)> *_when;
+    // Blocks waiting for a pane's session, several per pane (each caller adds its own).
+    NSMutableDictionary<NSNumber *, NSMutableArray<void (^)(PTYSession<iTermTmuxControllerSession> *)> *> *_when;
+    // Blocks waiting for whichever pane's session is registered next.
+    NSMutableArray<void (^)(PTYSession<iTermTmuxControllerSession> *)> *_whenAny;
     NSMutableArray *_listWindowsQueue;
     // If nonnegative, make this pane active after it comes in to being. If negative, invalid.
     int _paneToActivateWhenCreated;
@@ -330,6 +333,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _tmuxCurrentWindowID = -1;
         _userVars = [[NSMutableDictionary alloc] init];
         _when = [[NSMutableDictionary alloc] init];
+        _whenAny = [[NSMutableArray alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
         _listWindowsQueue = [[NSMutableArray alloc] init];
         _paneToActivateWhenCreated = -1;
@@ -981,12 +985,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         [self retainWindow:window withTab:tab];
         [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
         [_droppedOutputTracker forgetPane:windowPane];
-        void (^call)(PTYSession<iTermTmuxControllerSession> *) = _when[@(windowPane)];
-        if (call) {
+        NSArray<void (^)(PTYSession<iTermTmuxControllerSession> *)> *calls =
+            [_when[@(windowPane)] arrayByAddingObjectsFromArray:_whenAny] ?: [_whenAny copy];
+        [_when removeObjectForKey:@(windowPane)];
+        [_whenAny removeAllObjects];
+        for (void (^call)(PTYSession<iTermTmuxControllerSession> *) in calls) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 call(aSession);
             });
-            [_when removeObjectForKey:@(windowPane)];
         }
         if (_paneToActivateWhenCreated == windowPane) {
             [aSession revealIfTabSelected];
@@ -1096,7 +1102,16 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         return;
     }
 
-    _when[@(wp)] = [block copy];
+    NSMutableArray *blocks = _when[@(wp)];
+    if (!blocks) {
+        blocks = [NSMutableArray array];
+        _when[@(wp)] = blocks;
+    }
+    [blocks addObject:[block copy]];
+}
+
+- (void)whenAnyPaneRegisteredCall:(void (^)(PTYSession<iTermTmuxControllerSession> *))block {
+    [_whenAny addObject:[block copy]];
 }
 
 - (PTYTab *)window:(int)window {
@@ -1139,11 +1154,19 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_windowOpensAwaitingVersion removeAllObjects];
     [self closeAllPanes];
     gateway_ = nil;
-    [_when enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, void (^ _Nonnull obj)(PTYSession<iTermTmuxControllerSession> *), BOOL * _Nonnull stop) {
-        obj(nil);
+    [_when enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key,
+                                               NSMutableArray<void (^)(PTYSession<iTermTmuxControllerSession> *)> * _Nonnull blocks,
+                                               BOOL * _Nonnull stop) {
+        for (void (^block)(PTYSession<iTermTmuxControllerSession> *) in blocks) {
+            block(nil);
+        }
     }];
     [_when removeAllObjects];
     [_droppedOutputTracker reset];
+    for (void (^block)(PTYSession<iTermTmuxControllerSession> *) in _whenAny) {
+        block(nil);
+    }
+    [_whenAny removeAllObjects];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDetachedNotification
                                                         object:self
                                                       userInfo:detachedSessionGuid ? @{ kTmuxControllerDetachedSessionGuidKey: detachedSessionGuid } : nil];

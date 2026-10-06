@@ -71,9 +71,11 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
         guard let windowController =
                 parent.delegate?.realParentWindow() as? PseudoTerminal
             else { return nil }
-        guard let profile = Self.resolveProfile(config: config) else { return nil }
+        let remoteHost = MainActor.assumeIsolated { WorkgroupRemoteHost.forLeader(parent) }
+        guard let profile = Self.resolveProfile(config: config, remoteHost: remoteHost) else { return nil }
         let factory = windowController.sessionFactory!
         let newSession = factory.newSession(withProfile: profile, parent: parent)
+        newSession.workgroupRemoteHost = remoteHost
         let args = Self.splitArguments(settings)
         windowController.splitVertically(
             args.isVertical,
@@ -100,9 +102,11 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
         guard let windowController =
                 parent.delegate?.realParentWindow() as? PseudoTerminal
             else { return nil }
-        guard let profile = Self.resolveProfile(config: config) else { return nil }
+        let remoteHost = MainActor.assumeIsolated { WorkgroupRemoteHost.forLeader(parent) }
+        guard let profile = Self.resolveProfile(config: config, remoteHost: remoteHost) else { return nil }
         let factory = windowController.sessionFactory!
         let newSession = factory.newSession(withProfile: profile, parent: parent)
+        newSession.workgroupRemoteHost = remoteHost
         windowController.addSession(inNewTab: newSession)
         Self.launch(session: newSession,
                     config: config,
@@ -139,7 +143,8 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
     // parent's profile — splits and tabs are independent units, and
     // inheriting from the parent would silently propagate parent-
     // specific settings into every workgroup-spawned child).
-    private static func resolveProfile(config: iTermWorkgroupSessionConfig) -> [AnyHashable: Any]? {
+    private static func resolveProfile(config: iTermWorkgroupSessionConfig,
+                                       remoteHost: WorkgroupRemoteHost?) -> [AnyHashable: Any]? {
         let model = ProfileModel.sharedInstance()
         let base: [AnyHashable: Any]?
         if let guid = config.profileGUID,
@@ -166,6 +171,12 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
            let customCommand = profile[KEY_CUSTOM_COMMAND as String] as? String,
            customCommand == kProfilePreferenceCommandTypeBrowserValue {
             profile[KEY_INITIAL_URL as String] = config.urlString
+        }
+        // A parent on a host reached through SSH Integration: the child runs there (see
+        // WorkgroupRemoteHost), and its connection sets up it2 so an agent in it can report.
+        if let remoteHost {
+            profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY as String] = true
+            profile[KEY_SSH_CONFIG as String] = remoteHost.sshConfig ?? [:]
         }
         return profile
     }
@@ -373,9 +384,8 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                     let base = session.workgroupInstance?.currentGitBase
                         ?? CCGitBaseSelectorItem.defaultBase
                     let resolved = config.resolvedCommand(gitBase: base)
-                    let cmd = resolved.isEmpty
-                        ? nil
-                        : ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
+                    let cmd = session.workgroupPeerLaunchCommand(
+                        resolved, workgroupInstanceID: workgroupInstanceID)
                     let request = iTermSessionAttachOrLaunchRequest(
                         session: session,
                         canPrompt: false,
@@ -406,9 +416,8 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                 session.workgroupInstance?.fireDeferredDiffLaunchesIfReady()
                 return
             }
-            let cmd = config.command.isEmpty
-                ? nil
-                : ITAddressBookMgr.commandByWrapping(inLoginShell: config.command)
+            let cmd = session.workgroupPeerLaunchCommand(
+                config.command, workgroupInstanceID: workgroupInstanceID)
             let request = iTermSessionAttachOrLaunchRequest(
                 session: session,
                 canPrompt: false,

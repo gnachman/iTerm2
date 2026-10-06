@@ -15,7 +15,7 @@ import XCTest
 
 private final class NestingDelegate: NSObject, ConductorDelegate {
     private(set) var prompts = [String]()
-    func conductorRequestIT2Authorization(guid: String, displayName: String,
+    func conductorRequestIT2Authorization(guid: String, displayName: String, callerTmuxPane: String?,
                                           completion: @escaping (Bool, Bool, Bool) -> Void) {
         prompts.append(guid)
     }

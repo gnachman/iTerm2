@@ -2177,7 +2177,8 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenBeginSSHIntegration(withToken token: String, uniqueID: String, encodedBA: String, sshArgs: String) {
+    func screenBeginSSHIntegration(withToken token: String, uniqueID: String, encodedBA: String, sshArgs: String,
+                                   injectShellIntegration: Bool) {
 
     }
     
@@ -2408,6 +2409,9 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     
     func screenDidDetectShell(_ shell: String) {
 
+    }
+
+    func screenDidReportShellIntegrationVersion(_ version: Int, shell: String?) {
     }
     
     func screenSetBackgroundImageFile(_ filename: String) {

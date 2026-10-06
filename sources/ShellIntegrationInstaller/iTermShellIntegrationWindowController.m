@@ -85,16 +85,24 @@ static NSString *const iTermShellIntegrationNuVerifyScriptRegex = @"^iTerm2-nu-s
 // damaged or partial archive (as when Cancel stops typing it) doesn't overwrite any utility
 // with part of a file.
 //
+// The archive also carries iTerm2's Python it2 in it2-files: the wrapper for ~/.iterm2/bin/it2
+// and the interpreter it names. Those belong in $HOME's .iterm2 even when the utilities go under
+// $ZDOTDIR, because the shell-integration scripts, Claude Code hooks and the wrapper look there.
+// They get no alias (see utilities-manifest.txt): the wrapper itself decides between them and the
+// native it2 on this Mac. Copying them is part of the same command, so the installer's sequence of
+// expected output is unchanged, and a failed copy reports the install as failed.
+//
 // The empty quotes keep the echo of the command from matching any of these.
 static NSString *const iTermShellIntegrationReceiveUtilitiesCommand =
     @"if command -v base64 >/dev/null 2>&1; then IT2_B64D='base64 -d'; else IT2_B64D='b64decode -r'; fi; "
     @"if { echo it2-\"\"receiving-utilities >&3; "
     @"while IFS= read -r IT2_LINE && test \"$IT2_LINE\" != EOF; do printf '%s\\n' \"$IT2_LINE\"; done; } 3>&1 > .it2-utilities.b64; then "
     @"if $IT2_B64D < .it2-utilities.b64 > .it2-utilities.tgz && tar tfz .it2-utilities.tgz > /dev/null && "
-    @"tar xfz .it2-utilities.tgz && test -s it2check; "
+    @"tar xfz .it2-utilities.tgz && test -s it2check && "
+    @"mkdir -p ~/.iterm2/bin && cp -p it2-files/bin/it2 ~/.iterm2/bin/it2 && cp -p it2-files/it2.*.py ~/.iterm2/; "
     @"then echo it2-\"\"utilities-installed; else echo it2-\"\"utilities-failed; fi; "
     @"else echo it2-\"\"cannot-receive-utilities; fi; "
-    @"rm -f .it2-utilities.b64 .it2-utilities.tgz\n";
+    @"rm -f .it2-utilities.b64 .it2-utilities.tgz; rm -rf it2-files\n";
 
 // The prompt of the innermost helper sh (PS1 in launchHelperShellString). A line editor that
 // breaks the echo of a long command line can start a row with the >> in PS1=">> " or PS1='>> ',

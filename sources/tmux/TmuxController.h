@@ -176,6 +176,9 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 
 // Call `block` when a window pane with `wp` is registered. If one is already registered, it will be called asynchronously.
 - (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession<iTermTmuxControllerSession> *))block;
+// Calls `block` with the next pane session to be registered, such as when the user shows a hidden
+// window. Never called if none ever is.
+- (void)whenAnyPaneRegisteredCall:(void (^)(PTYSession<iTermTmuxControllerSession> *))block;
 
 - (PTYSession<iTermTmuxControllerSession> *)sessionForWindowPane:(int)windowPane;
 - (PTYTab *)window:(int)window;

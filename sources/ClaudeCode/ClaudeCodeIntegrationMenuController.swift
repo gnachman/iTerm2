@@ -57,19 +57,20 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         // synchronous read (no shell spawn) and is the same path uninstallHooks
         // operates on below.
         let settingsPath = ClaudeCodeOnboarding.claudeSettingsURL().path
-        // Hosts reached through SSH Integration that the hook was installed on. Removing it
-        // means editing a file on the host, which needs a live connection.
-        let targets = ClaudeCodeUninstallTargets(
-            installedHosts: ClaudeCodeRemoteHostState.shared.hostsWithHooksInstalled,
-            isReachable: { liveConductor(forHost: $0) != nil })
+        // Nothing about remote hosts is kept on this Mac, and removing the hook means editing a
+        // file on the host, so the hosts to look at are the ones connected through SSH
+        // Integration now. Each one's own settings say whether the hook is there.
+        let hosts = ClaudeCodeUninstallTargets.hosts(connections: ConductorRegistry.instance.conductors.values
+            .flatMap { $0.compactMap(\.value) }
+            .map { ($0.sshIdentity.stringIdentifier, $0.framing) })
         let confirm = iTermWarning()
         confirm.heading = String(localized: "ClaudeCode.UninstallTitle", defaultValue: "Uninstall Claude Code Integration?", comment: "Title of the uninstall confirmation dialog")
         var lines = [String(localized: "ClaudeCode.UninstallBody", defaultValue: "This removes the cc-status hook from \(settingsPath), the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration.", comment: "Explanation of what uninstalling the Claude Code integration does; the interpolated value is the absolute path to settings.json")]
-        for host in targets.reachable {
-            lines.append(String(localized: "ClaudeCode.UninstallRemoteHost", defaultValue: "It also removes the hook from Claude Code\u{2019}s settings on \(host).", comment: "Line of the uninstall confirmation for a remote host that will be cleaned up; the value is the host"))
+        for host in hosts {
+            lines.append(String(localized: "ClaudeCode.UninstallConnectedHost", defaultValue: "It also removes the hook from Claude Code\u{2019}s settings on \(host), if it\u{2019}s there.", comment: "Line of the uninstall confirmation for a host connected through SSH Integration, whose settings will be checked and cleaned up; the value is the host"))
         }
-        for host in targets.unreachable {
-            lines.append(String(localized: "ClaudeCode.UninstallUnreachableHost", defaultValue: "\(host) isn\u{2019}t connected, so its hook stays. Connect to it with SSH Integration and uninstall again to remove it.", comment: "Line of the uninstall confirmation for a remote host with the hook installed that cannot be reached now; the value is the host"))
+        if !hosts.isEmpty {
+            lines.append(String(localized: "ClaudeCode.UninstallDisconnectedHosts", defaultValue: "Hosts that aren\u{2019}t connected keep their hook. Connect to one with SSH Integration and uninstall again to remove it there.", comment: "Line of the uninstall confirmation explaining that hosts not currently connected through SSH Integration are not changed"))
         }
         confirm.title = lines.joined(separator: "\n\n")
         confirm.actionLabels = [String(localized: "ClaudeCode.Uninstall", defaultValue: "Uninstall", comment: "Button to confirm uninstalling the Claude Code integration"),
@@ -78,17 +79,42 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         confirm.warningType = .kiTermWarningTypePersistent
         guard confirm.runModal() == .kiTermWarningSelection0 else { return }
 
-        // Asked now, before anything runs, so the questions come together rather than between
-        // removals. A grant may predate the install and other it2 use there may rely on it.
-        var revoke = [String: Bool]()
-        for host in targets.reachable where Conductor.hostGrantStore.grant(forHost: host) != nil {
-            revoke[host] = askWhetherToStopAllowing(host)
-        }
-
         // Hooks first — they're the only step that can fail (disk).
         let hookResult = ClaudeCodeOnboarding.uninstallHooks()
-        uninstallRemoteHooks(targets.reachable, revoke: revoke, failures: []) { [weak self] failures in
-            self?.finishUninstall(hookResult: hookResult, settingsPath: settingsPath, remoteFailures: failures)
+        remoteHostsWithHook(hosts, found: []) { [weak self] withHook in
+            guard let self else {
+                return
+            }
+            // Asked before anything runs on the hosts, so the questions come together rather
+            // than between removals. A grant may predate the install and other it2 use there may
+            // rely on it.
+            var revoke = [String: Bool]()
+            for host in withHook where Conductor.hostGrantStore.grant(forHost: host) != nil {
+                revoke[host] = self.askWhetherToStopAllowing(host)
+            }
+            self.uninstallRemoteHooks(withHook, revoke: revoke, failures: []) { [weak self] failures in
+                self?.finishUninstall(hookResult: hookResult, settingsPath: settingsPath, remoteFailures: failures)
+            }
+        }
+    }
+
+    /// The hosts among `hosts` whose settings have the hook, or could not be read (so an uninstall
+    /// there reports the failure rather than skipping it silently). One at a time.
+    @MainActor
+    private func remoteHostsWithHook(_ hosts: [String], found: [String], completion: @escaping ([String]) -> Void) {
+        guard let host = hosts.first else {
+            completion(found)
+            return
+        }
+        let rest = Array(hosts.dropFirst())
+        guard let conductor = liveConductor(forHost: host) else {
+            remoteHostsWithHook(rest, found: found, completion: completion)
+            return
+        }
+        ClaudeCodeOnboarding.remoteHookStatus(conductor: conductor) { [weak self] status in
+            let keep = status != .notInstalled
+            DLog("Uninstall: \(host) hook status \(status)")
+            self?.remoteHostsWithHook(rest, found: keep ? found + [host] : found, completion: completion)
         }
     }
 
@@ -264,7 +290,7 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
     private var integrationKnownToHaveExisted: Bool {
         return anyArtifactInstalled
             || iTermUserDefaults.claudeCodeIntegrationCompleted
-            || !ClaudeCodeRemoteHostState.shared.hostsWithHooksInstalled.isEmpty
+            || ClaudeCodeRemoteConnectionFacts.shared.anyHookPresent
     }
 
     private var anyArtifactInstalled: Bool {
@@ -274,14 +300,10 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
     }
 }
 
-/// The hosts an uninstall can clean up now, and the ones it cannot because no connection to them
-/// is open. Order is kept.
-struct ClaudeCodeUninstallTargets {
-    let reachable: [String]
-    let unreachable: [String]
-
-    init(installedHosts: [String], isReachable: (String) -> Bool) {
-        reachable = installedHosts.filter(isReachable)
-        unreachable = installedHosts.filter { !isReachable($0) }
+/// The hosts an uninstall can look at: one entry per host with a framing SSH Integration
+/// connection, sorted so the confirmation reads the same each time.
+enum ClaudeCodeUninstallTargets {
+    static func hosts(connections: [(host: String, framing: Bool)]) -> [String] {
+        return Set(connections.filter(\.framing).map(\.host)).sorted()
     }
 }

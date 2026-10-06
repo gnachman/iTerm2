@@ -188,17 +188,20 @@ final class ClaudeCodeRemoteHooksTests: XCTestCase {
         XCTAssertEqual(result, .writeFailed)
     }
 
-    // MARK: - Health
+    // MARK: - Status, read from the host itself
+    //
+    // Nothing about remote hosts is kept on this Mac, so whether the hook is installed is always
+    // what the host's settings say.
 
     func testHealthyAfterInstall() async throws {
         let files = try makeFiles()
         _ = await Hooks.install(files: files, settingsPath: settingsPath, home: home)
-        let healthy = await Hooks.isHealthy(files: files, settingsPath: settingsPath, home: home)
-        XCTAssertTrue(healthy)
+        let status = await Hooks.status(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(status, .healthy)
     }
 
-    // Claude Code rewrote the file and dropped one event: not healthy, so a reinstall is offered.
-    func testMissingEventIsUnhealthy() async throws {
+    // Claude Code rewrote the file and dropped one event: broken, so a reinstall is offered.
+    func testMissingEventIsBroken() async throws {
         let files = try makeFiles()
         _ = await Hooks.install(files: files, settingsPath: settingsPath, home: home)
         var written = try settings(files)
@@ -206,22 +209,41 @@ final class ClaudeCodeRemoteHooksTests: XCTestCase {
         hooks.removeValue(forKey: "Stop")
         written["hooks"] = hooks
         files.files[settingsPath] = try ClaudeCodeHookSettings.serialized(written)
-        let healthy = await Hooks.isHealthy(files: files, settingsPath: settingsPath, home: home)
-        XCTAssertFalse(healthy)
+        let status = await Hooks.status(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(status, .broken)
     }
 
     // The entries are there but the wrapper they run is gone.
-    func testMissingWrapperIsUnhealthy() async throws {
+    func testMissingWrapperIsBroken() async throws {
         let files = try makeFiles()
         _ = await Hooks.install(files: files, settingsPath: settingsPath, home: home)
         files.executables = []
-        let healthy = await Hooks.isHealthy(files: files, settingsPath: settingsPath, home: home)
-        XCTAssertFalse(healthy)
+        let status = await Hooks.status(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(status, .broken)
     }
 
-    func testNoFileIsUnhealthy() async throws {
-        let healthy = await Hooks.isHealthy(files: try makeFiles(), settingsPath: settingsPath, home: home)
-        XCTAssertFalse(healthy)
+    func testNoFileIsNotInstalled() async throws {
+        let status = await Hooks.status(files: try makeFiles(), settingsPath: settingsPath, home: home)
+        XCTAssertEqual(status, .notInstalled)
+    }
+
+    // Other tools' hooks, none of ours.
+    func testOnlyOtherHooksIsNotInstalled() async throws {
+        let files = try makeFiles(settings: ["hooks": ["Stop": [["hooks": [["type": "command", "command": "other"]]]]]])
+        let status = await Hooks.status(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(status, .notInstalled)
+    }
+
+    // Could not read it, or not JSON: nothing can be said either way.
+    func testUnreadableIsUnknown() async throws {
+        let files = try makeFiles()
+        files.unreadable = [settingsPath]
+        let unreadable = await Hooks.status(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(unreadable, .unknown)
+        let malformed = try makeFiles()
+        malformed.files[settingsPath] = Data("{".utf8)
+        let status = await Hooks.status(files: malformed, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(status, .unknown)
     }
 
     // MARK: - Uninstall

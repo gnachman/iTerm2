@@ -45,6 +45,9 @@ extern NSString *const kReloadAllProfiles;
 extern NSString *const iTermProfileModelNewWindowMenuItemIdentifierPrefix;
 extern NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix;
 extern NSString *const iTermProfileDidChange;
+// Posted when -tmuxProfile creates the "tmux" profile. The object is its GUID. Observers may modify
+// the new profile.
+extern NSString *const iTermProfileModelDidCreateTmuxProfileNotification;
 
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 

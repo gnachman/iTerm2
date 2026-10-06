@@ -85,6 +85,25 @@ class PTYSessionSwiftState: NSObject {
     // re-launch the same session.
     var pendingDiffLaunch: (() -> Void)?
 
+    // Set on a workgroup peer whose leader is on a host reached through SSH Integration: the
+    // peer's programs run there. See WorkgroupRemoteHost.
+    var workgroupRemoteHost: WorkgroupRemoteHost?
+
+    // A remote review peer's input files are being written; a second Start (auto-request calls it
+    // directly) must not launch twice.
+    var codeReviewLaunchPending = false
+    // The last ShellIntegrationVersion the shell reported, forgotten when a new SSH Integration
+    // connection starts so a remote shell that reports nothing does not inherit the local one's.
+    var reportedShellIntegration: (shell: String?, version: Int)?
+    // Whether each it2ssh in flight asked for shell integration, by its uniqueID, from
+    // SendConductor until conductor.sh hooks back.
+    var sshInjectionByUniqueID = [String: Bool]()
+    // The it2 authorization prompt, keyed by its announcement identifier: the session it was put
+    // on when that is not this one (see presentIT2Authorization), or the announcement itself while
+    // it waits for a hidden tmux window to be shown.
+    let it2PromptSessions = NSMapTable<NSString, PTYSession>(keyOptions: .strongMemory, valueOptions: .weakMemory)
+    var it2PendingPrompts = [String: iTermAnnouncementViewController]()
+
     // For .codeReview sessions, whether the "auto-send clippings when idle"
     // toolbar toggle is on. When on, the workgroup peer port sends this
     // session's clippings to the workgroup's main session each time the
@@ -1961,6 +1980,177 @@ extension PTYSession {
     // whose spawn was held back because the workgroup’s git poller had
     // not yet reported a pending change. iTermWorkgroupInstance calls
     // firePendingDiffLaunch from gitPollerDidUpdate once changes appear.
+    // MARK: - Where the it2 authorization prompt goes
+
+    enum IT2PromptPlacement: Equatable {
+        /// This session, visible or buried: what happens outside tmux.
+        case ownSession
+        /// Another session of this tmux client, by guid.
+        case session(String)
+        /// The pane that asked is in a hidden tmux window; wait for the user to show it.
+        case whenPaneAppears(Int)
+        /// No pane named and none shown; the first one shown.
+        case whenAnyPaneAppears
+    }
+
+    /// The prompt goes on this session unless it is a tmux gateway, which iTerm2 hides. Then it
+    /// goes on the pane whose it2 asked, or, when that is not known, any shown pane of this client.
+    /// A pane in a hidden window has no session until the window is shown, so the prompt waits for
+    /// it there, as a buried session's prompt waits to be unburied.
+    static func it2PromptPlacement(isTmuxGateway: Bool,
+                                   callerTmuxPane: String?,
+                                   sessionForPane: (Int) -> String?,
+                                   visibleClientSession: String?) -> IT2PromptPlacement {
+        guard isTmuxGateway else {
+            return .ownSession
+        }
+        if let pane = tmuxPaneNumber(callerTmuxPane) {
+            if let guid = sessionForPane(pane) {
+                return .session(guid)
+            }
+            return .whenPaneAppears(pane)
+        }
+        if let visibleClientSession {
+            return .session(visibleClientSession)
+        }
+        return .whenAnyPaneAppears
+    }
+
+    /// 5 for TMUX_PANE "%5".
+    static func tmuxPaneNumber(_ value: String?) -> Int? {
+        guard let value, value.hasPrefix("%"), let number = Int(value.dropFirst()), number >= 0 else {
+            return nil
+        }
+        return number
+    }
+
+    @objc(presentIT2AuthorizationAnnouncement:identifier:callerTmuxPane:)
+    func presentIT2Authorization(_ announcement: iTermAnnouncementViewController,
+                                 identifier: String,
+                                 callerTmuxPane: String?) {
+        let controller = isTmuxGateway ? tmuxController : nil
+        let sessions = controller?.clientSessions() ?? []
+        let current = iTermController.sharedInstance()?.currentTerminal?.currentSession()
+        let visible = sessions.first { $0 === current } ?? sessions.first
+        let placement = Self.it2PromptPlacement(
+            isTmuxGateway: controller != nil,
+            callerTmuxPane: callerTmuxPane,
+            sessionForPane: { controller?.session(forWindowPane: Int32($0))?.guid },
+            visibleClientSession: visible?.guid)
+        RLog("it2 authorization prompt for \(identifier) from pane \(callerTmuxPane ?? "(none)"): \(placement)")
+        switch placement {
+        case .ownSession:
+            queueAnnouncement(announcement, identifier: identifier)
+        case .session(let guid):
+            if let target = sessions.first(where: { $0.guid == guid }) {
+                put(announcement, identifier: identifier, on: target)
+            } else {
+                queueAnnouncement(announcement, identifier: identifier)
+            }
+        case .whenPaneAppears(let pane):
+            swiftState.it2PendingPrompts[identifier] = announcement
+            controller?.whenPaneRegistered(Int32(pane)) { [weak self] session in
+                if let session {
+                    self?.deliverPendingIT2Prompt(identifier: identifier, to: session)
+                }
+            }
+        case .whenAnyPaneAppears:
+            swiftState.it2PendingPrompts[identifier] = announcement
+            controller?.whenAnyPaneRegisteredCall { [weak self] session in
+                if let session {
+                    self?.deliverPendingIT2Prompt(identifier: identifier, to: session)
+                }
+            }
+        }
+    }
+
+    private func put(_ announcement: iTermAnnouncementViewController, identifier: String, on session: PTYSession) {
+        if session === self {
+            queueAnnouncement(announcement, identifier: identifier)
+            return
+        }
+        swiftState.it2PromptSessions.setObject(session, forKey: identifier as NSString)
+        session.queueAnnouncement(announcement, identifier: identifier)
+    }
+
+    private func deliverPendingIT2Prompt(identifier: String, to session: PTYSession) {
+        // Dismissed while waiting (answered elsewhere, or the connection ended): nothing to show.
+        guard let announcement = swiftState.it2PendingPrompts.removeValue(forKey: identifier) else {
+            return
+        }
+        RLog("it2 authorization prompt \(identifier) shown now that its window is")
+        put(announcement, identifier: identifier, on: session)
+    }
+
+    @objc(dismissIT2AuthorizationAnnouncementWithIdentifier:)
+    func dismissIT2Authorization(identifier: String) {
+        swiftState.it2PendingPrompts.removeValue(forKey: identifier)
+        if let other = swiftState.it2PromptSessions.object(forKey: identifier as NSString) {
+            swiftState.it2PromptSessions.removeObject(forKey: identifier as NSString)
+            other.dismissAnnouncement(withIdentifier: identifier)
+        }
+        dismissAnnouncement(withIdentifier: identifier)
+    }
+
+    @objc(it2AuthorizationPromptSessionForIdentifier:)
+    func it2AuthorizationPromptSession(identifier: String) -> PTYSession? {
+        return swiftState.it2PromptSessions.object(forKey: identifier as NSString)
+    }
+
+    @objc(rememberSSHIntegrationInjection:forUniqueID:)
+    func rememberSSHIntegrationInjection(_ inject: Bool, forUniqueID uniqueID: String) {
+        swiftState.sshInjectionByUniqueID[uniqueID] = inject
+    }
+
+    /// Whether the it2ssh that sent `uniqueID` asked for shell integration; yes when it did not
+    /// say (an older it2ssh, or a conductor hooking back without a SendConductor here).
+    @objc(takeSSHIntegrationInjectionForUniqueID:)
+    func takeSSHIntegrationInjection(forUniqueID uniqueID: String) -> Bool {
+        return swiftState.sshInjectionByUniqueID.removeValue(forKey: uniqueID) ?? true
+    }
+
+    @objc(recordReportedShellIntegrationVersion:shell:)
+    func recordReportedShellIntegration(version: Int, shell: String?) {
+        DLog("Session \(guid) reported shell integration \(shell ?? "(no shell)") \(version)")
+        swiftState.reportedShellIntegration = (shell, version)
+    }
+
+    @objc func forgetReportedShellIntegration() {
+        swiftState.reportedShellIntegration = nil
+    }
+
+    var reportedShellIntegration: (shell: String?, version: Int)? {
+        swiftState.reportedShellIntegration
+    }
+
+    var workgroupRemoteHost: WorkgroupRemoteHost? {
+        get { swiftState.workgroupRemoteHost }
+        set { swiftState.workgroupRemoteHost = newValue }
+    }
+
+    /// What a workgroup peer runs to execute `shellCommand`: through the user's login shell on
+    /// this Mac, or, for a peer of a leader on a remote host, through SSH Integration on that
+    /// host, in the leader's directory there. Every launch and relaunch of a peer's program goes
+    /// through here, so none can run locally by accident.
+    ///
+    /// `workgroupInstanceID` is for a first launch, before the peer is linked to its instance.
+    /// nil means "the profile's own command", which only a local peer with no command gets; a
+    /// remote peer with no command gets an interactive login shell on the host instead, never the
+    /// leader's profile command.
+    func workgroupPeerLaunchCommand(_ shellCommand: String, workgroupInstanceID: String? = nil) -> String? {
+        guard let remote = workgroupRemoteHost else {
+            return shellCommand.isEmpty ? nil : ITAddressBookMgr.commandByWrapping(inLoginShell: shellCommand)
+        }
+        let directory = MainActor.assumeIsolated { remote.currentDirectory }
+        let plan = remote.launchPlan(remoteCommand: shellCommand,
+                                     workgroupInstanceID: workgroupInstanceID ?? workgroupInstance?.instanceUniqueIdentifier,
+                                     directory: directory)
+        DLog("Workgroup peer \(guid) launches on its leader's host in \(plan.jumps.last?.initialDirectory ?? "(no directory: the host's default)")")
+        setPendingJumpsForNextLaunch(plan.jumps.map { SSHReconnectionInfoObjC($0) })
+        RLog("PTYSession[\(guid)]: workgroup peer runs on its leader's host")
+        return remote.localCommand(for: plan)
+    }
+
     var pendingDiffLaunch: (() -> Void)? {
         get { swiftState.pendingDiffLaunch }
         set { swiftState.pendingDiffLaunch = newValue }
@@ -2122,10 +2312,18 @@ extension PTYSession {
         // outer guard is enough, so the closure only needs the weak
         // self check.
         let restartWithCurrentSelection: () -> Void = { [weak self] in
-            if let command = resolveCommand?() {
-                self?.restart(withCommand: command)
+            guard let self else { return }
+            // resolveCommand gives the plain diff command; it runs on the leader's host when the
+            // leader is on one. See workgroupPeerLaunchCommand.
+            if let command = resolveCommand?(),
+               let launch = self.workgroupPeerLaunchCommand(command) {
+                self.restart(withCommand: launch)
+            } else if self.workgroupRemoteHost != nil {
+                // A plain restart would rerun the last program without the hops it was launched
+                // with. Reconnect to the host instead.
+                self.restart(withCommand: self.workgroupPeerLaunchCommand("") ?? "")
             } else {
-                self?.restart()
+                self.restart()
             }
         }
         if ready {
@@ -2223,6 +2421,14 @@ extension PTYSession {
                     profile[KEY_PROMPT_CLOSE] = PROMPT_ALWAYS
                     profile[KEY_SESSION_END_ACTION] =
                         iTermSessionEndAction.default.rawValue
+                    // A leader on a host reached through SSH Integration: the peer runs there,
+                    // where the files are. Its connection must set up it2 so an agent in it can
+                    // report, whatever the leader's profile says about shell integration.
+                    let remoteHost = WorkgroupRemoteHost.forLeader(self)
+                    if let remoteHost {
+                        profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY] = true
+                        profile[KEY_SSH_CONFIG] = remoteHost.sshConfig ?? [:]
+                    }
                     // Browser profile + configured URL: seed
                     // KEY_INITIAL_URL so the browser session's
                     // deferred-URL load picks it up.
@@ -2240,6 +2446,7 @@ extension PTYSession {
                     // shared profile's Close. This flag can't be reverted,
                     // so the peer never auto-closes on program exit.
                     newSession.forceDefaultEndAction = true
+                    newSession.workgroupRemoteHost = remoteHost
                     newSession.setScreenSize(myView.bounds.size,
                                              parent: delegate.realParentWindow())
                     newSession.setSize(screen.size)
@@ -2343,9 +2550,8 @@ extension PTYSession {
                             let base = newSession.workgroupInstance?.currentGitBase
                                 ?? CCGitBaseSelectorItem.defaultBase
                             let resolved = cfg.resolvedCommand(gitBase: base)
-                            let cmd = resolved.isEmpty
-                                ? nil
-                                : ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
+                            let cmd = newSession.workgroupPeerLaunchCommand(
+                                resolved, workgroupInstanceID: workgroupInstanceID)
                             let request = iTermSessionAttachOrLaunchRequest(
                                 session: newSession,
                                 canPrompt: false,
@@ -2368,9 +2574,8 @@ extension PTYSession {
                         seal.fulfill(newSession)
                         return
                     }
-                    let command = config.command.isEmpty
-                        ? nil
-                        : ITAddressBookMgr.commandByWrapping(inLoginShell: config.command)
+                    let command = newSession.workgroupPeerLaunchCommand(
+                        config.command, workgroupInstanceID: workgroupInstanceID)
                     let launchRequest = iTermSessionAttachOrLaunchRequest(
                         session: newSession,
                         canPrompt: false,

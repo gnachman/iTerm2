@@ -656,6 +656,10 @@ NSString *iTermPathToSSH(void);
                       completion:(void (^)(NSString *command, BOOL isSSH))completion;
 
 // Like computeCommandForProfile:objectType:scope:completion: but does not evaluate it.
+// The command a custom or SSH profile runs given its command line's value (already evaluated):
+// it2ssh or ssh for an SSH profile, wrapped in the login shell when that applies.
++ (NSString *)commandByWrappingCommandLine:(NSString *)command forProfile:(Profile *)bookmark;
+
 + (NSString *)bookmarkCommandSwiftyString:(Profile *)bookmark
                             forObjectType:(iTermObjectType)objectType;
 

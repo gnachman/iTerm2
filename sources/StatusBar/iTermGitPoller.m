@@ -83,6 +83,24 @@ NS_ASSUME_NONNULL_BEGIN
     [self bump];
 }
 
+- (id<iTermGitPollWorkerProtocol>)effectiveWorker {
+    return _worker ?: [iTermGitPollWorker sharedInstance];
+}
+
+- (void)setWorker:(nullable id<iTermGitPollWorkerProtocol>)worker {
+    if (worker == _worker) {
+        return;
+    }
+    RLog(@"%@: worker changes from %@ to %@", self, _worker, worker);
+    _worker = worker;
+    // The state described a repository the new worker cannot see (another host, or this Mac).
+    _hasSuccessfullyFetched = NO;
+    _lastPollTimedOut = NO;
+    _state = nil;
+    _update();
+    [self bump];
+}
+
 - (NSTimeInterval)timeSinceLastPoll {
     return -[_lastPollTime timeIntervalSinceNow];
 }
@@ -105,7 +123,7 @@ NS_ASSUME_NONNULL_BEGIN
     __weak __typeof(self) weakSelf = self;
     NSString *polledPath = self.currentDirectory;
     DLog(@"%@: POLL: request path %@", self, polledPath);
-    iTermGitPollWorker *worker = [iTermGitPollWorker sharedInstance];
+    id<iTermGitPollWorkerProtocol> worker = [self effectiveWorker];
     DLog(@"%@: Using worker %@", self, worker);
     [worker requestPath:polledPath
                 gitBase:self.gitBase
@@ -113,6 +131,10 @@ NS_ASSUME_NONNULL_BEGIN
              completion:^(iTermGitState *state, BOOL timedOut) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
+            return;
+        }
+        if ([strongSelf effectiveWorker] != worker) {
+            RLog(@"%@: Discarding a poll result from a worker no longer in use", strongSelf);
             return;
         }
         if (![strongSelf.currentDirectory isEqualToString:polledPath]) {
@@ -156,8 +178,7 @@ NS_ASSUME_NONNULL_BEGIN
     // base so a stale reply doesn't land back in the cache. Cached
     // entries are keyed by base, so they simply stop being read.
     if (self.currentDirectory.length) {
-        [[iTermGitPollWorker sharedInstance]
-            invalidateCacheForPath:self.currentDirectory];
+        [[self effectiveWorker] invalidateCacheForPath:self.currentDirectory];
     }
     // Clear any "we have stale info" flags so the picker doesn't
     // briefly render with the old-base file list while the new
@@ -179,7 +200,7 @@ NS_ASSUME_NONNULL_BEGIN
         [_rateLimit performRateLimitedBlock:^{
             DLog(@"Called");
             DLog(@"%@: Invalidate cache", self);
-            iTermGitPollWorker *worker = [iTermGitPollWorker sharedInstance];
+            id<iTermGitPollWorkerProtocol> worker = [self effectiveWorker];
             DLog(@"%@: Worker for %@ is %@", self, currentDirectory, worker);
             [worker invalidateCacheForPath:currentDirectory];
         }];

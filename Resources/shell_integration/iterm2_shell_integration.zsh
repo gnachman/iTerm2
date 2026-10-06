@@ -285,7 +285,7 @@ if [[ -o interactive ]]; then
     preexec_functions=($preexec_functions iterm2_preexec)
 
     iterm2_print_state_data
-    printf "\033]1337;ShellIntegrationVersion=19;shell=zsh\007"
+    printf "\033]1337;ShellIntegrationVersion=20;shell=zsh\007"
   fi
 fi
 

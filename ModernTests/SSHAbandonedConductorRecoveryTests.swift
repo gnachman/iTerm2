@@ -729,6 +729,7 @@ private final class WriteRecordingConductorDelegate: NSObject, ConductorDelegate
     func conductorSendInitialText() {}
     func conductorRequestIT2Authorization(guid: String,
                                           displayName: String,
+                                          callerTmuxPane: String?,
                                           completion: @escaping (Bool, Bool, Bool) -> Void) {
         completion(false, false, false)
     }

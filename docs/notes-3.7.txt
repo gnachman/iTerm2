@@ -605,6 +605,31 @@ Improvements:
   it2 command that names no session now acts on
   the session it runs in rather than the focused
   one.
+- A command run on a host with it2ssh host
+  command, or by an SSH profile, can now use it2,
+  as an interactive shell there can.
+- it2ssh now loads shell integration on the
+  remote host by default, whatever the current
+  profile’s Load Shell Integration Automatically
+  setting. Run it2ssh --no-shell-integration to
+  skip it. SSH profiles still follow their own
+  setting.
+- it2 now works on a host reached through SSH
+  Integration when the shell is tcsh, and when
+  shell integration is not loaded there. Without
+  it iTerm2 copies nothing to the host, so it2
+  has to be installed there.
+- The git status bar component now shows the
+  status of a repository on a host reached
+  through SSH Integration, by running git there.
+  It used to need it2git set up on the host.
+- In a tmux Integration session on a host reached
+  through SSH Integration, each pane now knows
+  which program is running in it. The tab shows
+  the job, the Jobs tool lists the pane’s
+  processes, and triggers that watch for a
+  program, such as entering the Claude Code
+  workgroup, work there.
 
 Bug Fixes:
 - In an AI chat with an empty message field, the
@@ -746,6 +771,25 @@ Bug Fixes:
   machine, the paste dialog now also offers to
   paste a local path.
   Issue 13117.
+- it2 session list and other it2 commands that
+  print names, paths or profile values no longer
+  show JSON escapes, such as \/dev\/ttys001 for a
+  tty.
+- On a FreeBSD or OpenBSD host reached through
+  SSH Integration, sessions and the Jobs tool
+  showed an environment variable such as
+  VENDOR=unknown instead of the running program.
+- it2ssh now runs a command given after the host
+  exactly as ssh does. Quotes in the command were
+  lost, and newlines, tabs and non-ASCII text
+  were mangled, so a command like
+  it2ssh host "grep 'a b' file" ran the wrong
+  thing.
+- A custom command or SSH profile command that
+  contains a backslash or a double quote now
+  runs as written. Such commands used to reach
+  the shell broken when they ran in a login
+  shell, which SSH profiles always do.
 - Make Text Bigger works again when you type it
   as ⌘⇧= (the way you type ⌘+). Since 3.7.0,
   that keystroke opened the Clippings panel

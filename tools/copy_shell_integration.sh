@@ -47,13 +47,6 @@ cp $SUBMODULE/shell_integration/it2.py OtherResources/it2.py
 DEST=$PWD/Resources/utilities
 ALLDEST=$PWD/OtherResources/utilities
 
-pushd $SUBMODULE/utilities
-files=$(find . -type f)
-tar cvfz $DEST/utilities.tgz *
-echo * > $DEST/utilities-manifest.txt
-cp * $ALLDEST
-popd
-
 # The remote it2: a hashed copy of the interpreter plus a wrapper that execs it, both
 # uploaded to the remote host at getshell (see ShellIntegrationInjection.files). The copy is
 # named by content hash so an upgrade lands under a new name instead of being skipped by a
@@ -64,9 +57,28 @@ popd
 # fallback and the app's injected IT2_PY need the hash at build time; the hashed file itself
 # is produced when it is uploaded (iTermRemoteIt2.hashedCopyURL), so the bundle keeps one
 # stable it2.py reference instead of a new Xcode file reference on every change.
+# The wrapper is built in the submodule (shell_integration/Makefile, from
+# source/it2-wrapper.in) with the hash substituted, so it always matches the it2.py beside it.
 IT2_PY_HASH=$(shasum -a 256 $SUBMODULE/shell_integration/it2.py | cut -c1-16)
-sed "s/__IT2_PY_HASH__/$IT2_PY_HASH/" OtherResources/it2-remote > Resources/it2-remote
+cp $SUBMODULE/shell_integration/it2-wrapper Resources/it2-remote
 chmod 755 Resources/it2-remote
+
+# Install Shell Integration & Utilities unpacks utilities.tgz and aliases each name in the
+# manifest. The archive also carries the Python it2 in it2-files (wrapper and hashed
+# interpreter), which the installer copies to ~/.iterm2; it is not in the manifest, so it gets
+# no alias. See +[iTermShellIntegrationWindowController utilitiesExtractionCommand].
+STAGE=$(mktemp -d)
+cp -p $SUBMODULE/utilities/* $STAGE/
+mkdir -p $STAGE/it2-files/bin
+cp -p Resources/it2-remote $STAGE/it2-files/bin/it2
+cp -p $SUBMODULE/shell_integration/it2.py $STAGE/it2-files/it2.$IT2_PY_HASH.py
+(cd $STAGE && tar cvfz $DEST/utilities.tgz *)
+rm -rf $STAGE
+
+pushd $SUBMODULE/utilities
+echo * > $DEST/utilities-manifest.txt
+cp * $ALLDEST
+popd
 
 # A Swift file rather than a header: iTermLatestVersionByShell.h is #included into an ObjC
 # implementation, but this value is read from Swift, and Swift does not import an ObjC

@@ -27,8 +27,10 @@ protocol ConductorDelegate: Any {
     // only the human-readable title.
     // `alwaysForHost` means the user chose to allow this host on every future connection, not
     // just this one; the conductor then mints a grant (see IT2HostGrants).
-    @objc(conductorRequestIT2AuthorizationWithGUID:displayName:completion:)
-    func conductorRequestIT2Authorization(guid: String, displayName: String,
+    // `callerTmuxPane` is TMUX_PANE ("%5") of the it2 that asked, if it ran in a tmux pane, so the
+    // prompt can go where the user is looking rather than on a hidden tmux gateway.
+    @objc(conductorRequestIT2AuthorizationWithGUID:displayName:callerTmuxPane:completion:)
+    func conductorRequestIT2Authorization(guid: String, displayName: String, callerTmuxPane: String?,
                                           completion: @escaping (_ granted: Bool, _ remember: Bool, _ alwaysForHost: Bool) -> Void)
     // Dismiss the it2 authorization announcement for `guid` still on screen (e.g. the
     // connection was resolved/torn down before the user answered). No-op if none.
@@ -439,6 +441,12 @@ class Conductor: NSObject, SSHIdentityProvider {
         get { restorableState.it2Proxy.authorized }
         set { restorableState.it2Proxy.authorized = newValue }
     }
+    /// Set at getshell when this connection should get it2; acted on by doFraming.
+    private var pendingIT2Home: String?
+
+    /// Git state for directories on this connection's host. See RemoteGitState.swift.
+    private(set) lazy var remoteGitPollWorker = iTermRemoteGitPollWorker(runner: self)
+
     var it2Nonce: String? {
         get { restorableState.it2Proxy.nonce }
         set { restorableState.it2Proxy.nonce = newValue }
@@ -726,6 +734,28 @@ extension Conductor {
         }
         return _processInfoProvider
     }
+    /// A tmux pane on this connection's host: tracks its pid with framer, so the host's process
+    /// table includes its subtree, and returns the pane's view of that table. nil when not
+    /// framing. Safe to call on every title update: registration happens once per provider, and
+    /// after an SSH recovery the new provider registers the pane again.
+    @objc(sessionProcessInfoProviderForTmuxPanePID:)
+    func sessionProcessInfoProvider(forTmuxPanePID pid: Int32) -> SessionProcessInfoProvider? {
+        guard framing, !waitingToResynchronize, let provider = sshProcessInfoProvider else {
+            return nil
+        }
+        provider.register(trackedPID: pid)
+        return provider.sessionProcessInfoProvider(forPID: pid)
+    }
+
+    /// The pane closed: stop tracking its pid.
+    @objc(stopTrackingTmuxPanePID:)
+    func stopTrackingTmuxPane(pid: Int32) {
+        guard framing, let provider = sshProcessInfoProvider else {
+            return
+        }
+        provider.unregister(trackedPID: pid)
+    }
+
     @objc var processInfoProvider: (ProcessInfoProvider & SessionProcessInfoProvider)? {
         if waitingToResynchronize {
             return nil
@@ -961,6 +991,20 @@ extension Conductor {
         case framerIT2Listen(path: String)
         case framerIT2Send(connid: String, data: Data)
         case framerIT2Close(connid: String)
+
+        /// The lines sent for this command, each base64-encoded on its own. A command whose
+        /// arguments are free text lists them, so an argument containing a newline (a multi-line
+        /// remote command) stays one argument instead of being split by its newlines.
+        var wireArguments: [String] {
+            switch self {
+            case .framerLogin(cwd: let cwd, args: let args):
+                return ["login", cwd] + args
+            case .framerRun(let command):
+                return ["run", command]
+            default:
+                return stringValue.components(separatedBy: "\n")
+            }
+        }
 
         var isFramer: Bool {
             switch self {
@@ -1773,7 +1817,7 @@ extension Conductor {
         it2ssh_wrapper() {
         \(it2ssh)
         }
-        it2ssh_wrapper \(myJump!.sshargs)
+        it2ssh_wrapper \(shouldInjectShellIntegration ? "" : "--no-shell-integration ")\(myJump!.sshargs)
         """
         return code
     }
@@ -1927,6 +1971,7 @@ extension Conductor {
     }
 
     private func doFraming() {
+        activatePendingIT2()
         execFramer()
         framerSave(["dcsID": dcsID,
                     "sshargs": sshargs,
@@ -1936,6 +1981,8 @@ extension Conductor {
         // minted and injected into the shell env during the shell-integration setup.
         if let path = it2SocketPath {
             it2Listen(path: path)
+        } else {
+            RLog("Framing without an it2 socket, so it2 on this host cannot reach iTerm2")
         }
         runRemoteCommand(iTermAdvancedSettingsModel.unameCommand()) { [weak self] data, status in
             if status == 0 {
@@ -1947,8 +1994,20 @@ extension Conductor {
         if myJump != nil {
             framerJump()
         } else {
+            // One string: framer joins its arguments with spaces into `-c`, so anything else would
+            // be split and lose its quoting.
+            var command = Self.remoteCommandString(modifiedCommandArgs: modifiedCommandArgs,
+                                                   commandLine: parsedSSHArguments.commandLine)
+            if let unwrapped = command,
+               Self.remoteLaunchKind(commandArgs: parsedSSHArguments.commandArgs) == .command,
+               it2Nonce != nil,
+               let shell {
+                // getshell gave this command it2's environment; it needs it2 on PATH too.
+                command = Self.commandPuttingIT2OnPath(unwrapped, loginShell: shell)
+                DLog("Command with it2 on PATH: \(command ?? "")")
+            }
             framerLogin(cwd: initialDirectory ?? "$HOME",
-                        args: modifiedCommandArgs ?? parsedSSHArguments.commandArgs)
+                        args: command.map { [$0] } ?? [])
         }
         if autopollEnabled {
             send(.framerAutopoll, .fireAndForget)
@@ -2058,10 +2117,136 @@ extension Conductor {
         if let modifiedCommandArgs = modifiedCommandArgs,
            modifiedCommandArgs.isEmpty {
             send(.execLoginShell(modifiedCommandArgs), .handleNonFramerLogin)
-        } else if parsedSSHArguments.commandArgs.isEmpty {
+        } else if parsedSSHArguments.commandLine.isEmpty {
             send(.execLoginShell([]), .handleNonFramerLogin)
         } else {
-            run((parsedSSHArguments.commandArgs).joined(separator: " "))
+            run(Self.remoteCommandString(modifiedCommandArgs: modifiedCommandArgs,
+                                         commandLine: parsedSSHArguments.commandLine) ?? "")
+        }
+    }
+
+    /// The command the remote login shell runs with `-c`, or nil for an interactive login shell.
+    ///
+    /// Unmodified, it is the command exactly as given, the string ssh would send. When shell
+    /// integration adjusted a shell named as the command (bash gets --posix), the arguments are
+    /// exact words by then and each is quoted, so none can be split or reinterpreted.
+    enum RemoteLaunchKind: Equatable {
+        /// No command: the login shell, interactively.
+        case interactive
+        /// A shell named as the command (`it2ssh host bash`): the session's shell, which shell
+        /// integration may adjust.
+        case customShell(String)
+        /// Anything else: run by the login shell exactly as given.
+        case command
+    }
+
+    /// Shells that can be the session's shell when named as the command.
+    private nonisolated static let shellNames: Set<String> = [
+        "sh", "bash", "zsh", "fish", "xonsh", "tcsh", "csh", "ksh", "mksh", "dash", "ash", "yash"
+    ]
+
+    nonisolated static func remoteLaunchKind(commandArgs: [String]) -> RemoteLaunchKind {
+        guard let first = commandArgs.first else {
+            return .interactive
+        }
+        if shellNames.contains((first as NSString).lastPathComponent) {
+            return .customShell(first)
+        }
+        return .command
+    }
+
+    /// What getshell sets up on the remote.
+    struct RemoteSetup: Equatable {
+        /// Adjust the shell so it loads the shell-integration scripts, and upload them.
+        var injectShellIntegration: Bool
+        /// Upload ~/.iterm2/bin/it2 and the interpreter it runs.
+        var uploadIT2: Bool
+        /// Mint the it2 socket and nonce and put IT2_SOCK, IT2_NONCE and IT2_PY in the shell's
+        /// environment.
+        var activateIT2: Bool
+    }
+
+    /// it2 used to come only with injection, so with "Load shell integration automatically" off,
+    /// or a shell that cannot be injected (tcsh, macOS bash 3.2), there was no socket at all and
+    /// every remote it2 feature failed silently. The socket is not shell integration: it only
+    /// needs the framer, and its variables reach any shell through setenv. So it is always
+    /// minted. The setting decides what is written to the host: off means nothing is uploaded,
+    /// though an it2 already there (installed by hand, or by an earlier session) still works.
+    nonisolated static func remoteSetup(launchKind: RemoteLaunchKind,
+                                        shellSupportsInjection: Bool,
+                                        shouldInjectShellIntegration: Bool,
+                                        haveHome: Bool) -> RemoteSetup {
+        guard haveHome else {
+            return RemoteSetup(injectShellIntegration: false, uploadIT2: false, activateIT2: false)
+        }
+        // A command is run by the login shell exactly as given, never through the scripts.
+        let inject = shouldInjectShellIntegration && launchKind != .command && shellSupportsInjection
+        return RemoteSetup(injectShellIntegration: inject,
+                           uploadIT2: shouldInjectShellIntegration,
+                           activateIT2: true)
+    }
+
+    /// Queues the shell-integration scripts for upload with the other payloads.
+    private func uploadShellIntegrationPayloads() {
+        let base = URL(fileURLWithPath: "/$HOME/.iterm2/shell-integration")
+        let it2 = ShellIntegrationInjector.instance.it2Files(dotIterm2: base.deletingLastPathComponent())
+        for (local, remote) in ShellIntegrationInjector.instance.files(destinationBase: base)
+        where it2[local] == nil {
+            payloads.append(Payload(path: local.path, destination: remote.path))
+        }
+    }
+
+    /// Queues ~/.iterm2/bin/it2 and its interpreter for upload with the other payloads.
+    private func uploadIT2Payloads() {
+        let dotIterm2 = URL(fileURLWithPath: "/$HOME/.iterm2")
+        for (local, remote) in ShellIntegrationInjector.instance.it2Files(dotIterm2: dotIterm2) {
+            payloads.append(Payload(path: local.path, destination: remote.path))
+        }
+    }
+
+    nonisolated static func remoteCommandString(modifiedCommandArgs: [String]?, commandLine: String) -> String? {
+        if let modifiedCommandArgs {
+            if modifiedCommandArgs.isEmpty {
+                return nil
+            }
+            return modifiedCommandArgs.map { "'" + $0.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+                .joined(separator: " ")
+        }
+        return commandLine.isEmpty ? nil : commandLine
+    }
+
+    /// `command` with ~/.iterm2/bin put on PATH first, in the syntax of the login shell that runs
+    /// it with -c. A command gets it2's environment at getshell, but PATH cannot go that way (see
+    /// activateIT2Proxy), and only the interactive shell-integration scripts add the directory.
+    /// It has to happen inside the command because a login shell's profile may reset PATH
+    /// outright (Debian's /etc/profile does). A shell whose syntax is unknown gets the command
+    /// unchanged.
+    nonisolated static func commandPuttingIT2OnPath(_ command: String, loginShell: String) -> String {
+        switch (loginShell as NSString).lastPathComponent {
+        case "sh", "bash", "zsh", "ksh", "mksh", "dash", "ash", "yash":
+            return #"PATH="$HOME/.iterm2/bin:$PATH"; export PATH; "# + command
+        case "csh", "tcsh":
+            return #"setenv PATH "${HOME}/.iterm2/bin:${PATH}"; "# + command
+        case "fish":
+            return #"set -gx PATH "$HOME/.iterm2/bin" $PATH; "# + command
+        default:
+            return command
+        }
+    }
+
+    /// Mints the it2 socket and nonce and sends IT2_SOCK, IT2_NONCE and IT2_PY, now that the
+    /// framer that binds the socket is about to start. They go by setenv to conductor.sh, which
+    /// then execs the framer, so the framer and the login shell it starts inherit them. Only here,
+    /// so a host without a usable Python never gets an IT2_SOCK that nothing listens on.
+    private func activatePendingIT2() {
+        guard let home = pendingIT2Home else {
+            return
+        }
+        pendingIT2Home = nil
+        var vars = [String: String]()
+        activateIT2Proxy(home: home, env: &vars)
+        for (key, value) in vars.sorted(by: { $0.key < $1.key }) {
+            send(.setenv(key: key, value: value), .failIfNonzeroStatus)
         }
     }
 
@@ -2131,7 +2316,8 @@ extension Conductor {
 
     struct IgnoreCommandError: Error { }
 
-    private func update(executionContext: ExecutionContext, result: PartialResult) throws {
+    // Internal for tests, which feed it the remote's answers.
+    func update(executionContext: ExecutionContext, result: PartialResult) throws {
         log("update \(executionContext) result=\(result)")
         switch executionContext.handler {
         case .handleNonFramerLogin:
@@ -2342,10 +2528,17 @@ extension Conductor {
                 }
                 // If you ran `it2ssh localhost /usr/local/bin/bash` then the shell is /usr/local/bin/bash.
                 // If you ran `it2ssh localhost` then the shell comes from the response to getshell.
+                // If you ran `it2ssh localhost claude`, the login shell from getshell runs claude.
                 let parts = lines.strings.joined(separator: "").components(separatedBy: "\n").map {
                     $0.trimmingCharacters(in: .whitespaces)
                 }
-                let shell = parsedSSHArguments.commandArgs.first ?? parts.get(0, default: "")
+                let launchKind = Self.remoteLaunchKind(commandArgs: parsedSSHArguments.commandArgs)
+                let shell: String
+                if case .customShell(let customShell) = launchKind {
+                    shell = customShell
+                } else {
+                    shell = parts.get(0, default: "")
+                }
                 let home = parts.get(1, default: "")
                 let version: String
                 if parts.count > 1 {
@@ -2353,9 +2546,13 @@ extension Conductor {
                 } else {
                     version = ""
                 }
-                if !shell.isEmpty &&
-                    !home.isEmpty &&
-                    shouldInjectShellIntegration && shellSupportsInjection(shell.lastPathComponent, version) {
+                let setup = Self.remoteSetup(
+                    launchKind: launchKind,
+                    shellSupportsInjection: !shell.isEmpty && shellSupportsInjection(shell.lastPathComponent, version),
+                    shouldInjectShellIntegration: shouldInjectShellIntegration,
+                    haveHome: !home.isEmpty)
+                DLog("getshell: shell=\(shell) launch=\(launchKind) setup=\(setup)")
+                if setup.injectShellIntegration {
                     (modifiedVars, modifiedCommandArgs) = ShellIntegrationInjector.instance.modifyRemoteShellEnvironment(
                         shellIntegrationDir: "\(home)/.iterm2/shell-integration",
                         env: varsToSend,
@@ -2381,16 +2578,17 @@ extension Conductor {
                     // before the inner interactive shell runs -- zsh's injected .zshenv unsets ZDOTDIR
                     // and skips its interactive-only shell-integration load -- so integration would
                     // never load.
-                    let dict = ShellIntegrationInjector.instance.files(
-                        destinationBase: URL(fileURLWithPath: "/$HOME/.iterm2/shell-integration"))
-                    for (local, remote) in dict {
-                        payloads.append(Payload(path: local.path,
-                                                destination: remote.path))
-                    }
-                    if var vars = modifiedVars {
-                        activateIT2Proxy(home: home, env: &vars)
-                        modifiedVars = vars
-                    }
+                    uploadShellIntegrationPayloads()
+                }
+                if setup.uploadIT2 {
+                    uploadIT2Payloads()
+                }
+                if setup.activateIT2 {
+                    // Not yet: the socket only exists if the framer starts, which needs a usable
+                    // Python, and that is checked next. See doFraming.
+                    pendingIT2Home = home
+                } else {
+                    RLog("No it2 socket for this connection: the remote home directory is unknown")
                 }
                 self.shell = shell
                 delegate?.conductorStateDidChange()
@@ -2902,7 +3100,7 @@ extension Conductor {
 
     // Produces the bytes written to the remote for `command`. Internal for testing.
     nonisolated static func encodeForWire(_ command: Command, linePrefix: String) -> String {
-        let encodedArgs = command.stringValue.components(separatedBy: "\n").map(\.base64Encoded)
+        let encodedArgs = command.wireArguments.map(\.base64Encoded)
         if command.isFramer {
             // framer.py reads one line per argument, joining a line that ends in a backslash
             // with the next, and an empty line ends the command. Split each argument on its

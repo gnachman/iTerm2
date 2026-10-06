@@ -36,9 +36,9 @@ extension Conductor: SSHCommandRunning {
         }
         if autopollEnabled {
             send(.framerAutopoll, .fireAndForget)
-            if let framedPID = framedPID {
-                sshProcessInfoProvider?.register(trackedPID: framedPID)
-            }
+            // The reset forgot every registration, and tmux panes on this host are tracked as
+            // well as the login shell.
+            sshProcessInfoProvider?.reregisterTrackedPIDs(including: framedPID)
         }
     }
 

@@ -468,8 +468,11 @@ async def poll_cpu():
 async def poll_ps():
     env = dict(os.environ)
     env["LANG"] = "C"
+    # -A, POSIX for "every process". Not -e: Linux and macOS read it the same way, but FreeBSD
+    # and OpenBSD read it as "also print each process's environment", which put every variable
+    # (IT2_NONCE among them) in front of each command and made the first one its name.
     proc = await asyncio.create_subprocess_shell(
-        "ps -eo pid,ppid,stat,lstart,command",
+        "ps -Ao pid,ppid,stat,lstart,command",
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
@@ -638,17 +641,27 @@ async def get_env_var(var_name):
     except Exception as e:
         log(f'get_env_var({var_name}) threw: {traceback.format_exc()}')
 
+def write_exec_file(code):
+    """Writes `code` to a new hidden file in ~/.iterm2, executable and private to the user, and
+    returns its path. Not /tmp: on a shared host that may be full or unwritable, and everything
+    else iTerm2 writes on a host lives in ~/.iterm2. The code (a jump script, say) removes the
+    file itself once it is running; see Conductor.jumpScript."""
+    directory = os.path.expanduser("~/.iterm2")
+    os.makedirs(directory, mode=0o700, exist_ok=True)
+    fd, path = tempfile.mkstemp(dir=directory, prefix=".eval-")
+    try:
+        os.write(fd, code.encode("utf-8"))
+        os.fchmod(fd, 0o700)
+    finally:
+        os.close(fd)
+    return path
+
 # Run the async function
 async def save_and_exec(identifier, code):
     log("begin save_and_exec")
     try:
-        tmp = tempfile.NamedTemporaryFile(delete=False)
-        tmpname = tmp.name
+        tmpname = write_exec_file(code)
         log(f'save_and_exec: tmp={tmpname}')
-        tmp.write(code.encode("utf-8"))
-        tmp.close()
-        st = os.stat(tmpname)
-        os.chmod(tmpname, st.st_mode | stat.S_IEXEC)
 
         e = dict(os.environ)
         e["SELF"] = tmpname

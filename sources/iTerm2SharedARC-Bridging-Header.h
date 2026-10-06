@@ -64,6 +64,8 @@
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermGCD.h"
 #import "iTermGenericEvaluator.h"
+#import "iTermGitPollWorker.h"
+#import "iTermShellIntegrationWindowController.h"
 #import "iTermGitPoller.h"
 #import "iTermGitState+MainApp.h"
 #import "iTermGitStringMaker.h"

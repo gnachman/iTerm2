@@ -33,26 +33,29 @@ extension PTYSession {
         showCodeReviewPromptOverlay { [weak self] text in
             guard let self else { return }
             RLog("PTYSession[\(self.guid)]: code-review overlay Start pressed, launching deferred program")
-            let wrapped = self.wrappedCommandForCodeReview(text: text,
-                                                            rawCommand: rawCommand)
-            let request = iTermSessionAttachOrLaunchRequest(
-                session: self,
-                canPrompt: false,
-                objectType: objectType,
-                hasServerConnection: false,
-                serverConnection: iTermGeneralServerConnection(),
-                urlString: urlString,
-                allowURLSubs: false,
-                environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
-                customShell: nil,
-                oldCWD: oldCWD,
-                forceUseOldCWD: true,
-                command: wrapped,
-                isUTF8: nil,
-                substitutions: nil,
-                windowController: windowController,
-                ready: nil) { _, _ in }
-            factory.attachOrLaunch(with: request)
+            self.prepareCodeReviewCommand(text: text,
+                                          rawCommand: rawCommand,
+                                          workgroupInstanceID: workgroupInstanceID) { [weak self] wrapped in
+                guard let self else { return }
+                let request = iTermSessionAttachOrLaunchRequest(
+                    session: self,
+                    canPrompt: false,
+                    objectType: objectType,
+                    hasServerConnection: false,
+                    serverConnection: iTermGeneralServerConnection(),
+                    urlString: urlString,
+                    allowURLSubs: false,
+                    environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
+                    customShell: nil,
+                    oldCWD: oldCWD,
+                    forceUseOldCWD: true,
+                    command: wrapped,
+                    isUTF8: nil,
+                    substitutions: nil,
+                    windowController: windowController,
+                    ready: nil) { _, _ in }
+                factory.attachOrLaunch(with: request)
+            }
         }
     }
 
@@ -76,9 +79,9 @@ extension PTYSession {
         showCodeReviewPromptOverlay { [weak self] text in
             guard let self else { return }
             RLog("PTYSession[\(self.guid)]: code-review overlay Start pressed, restarting program")
-            let wrapped = self.wrappedCommandForCodeReview(text: text,
-                                                            rawCommand: rawCommand)
-            self.restart(withCommand: wrapped ?? "")
+            self.prepareCodeReviewCommand(text: text, rawCommand: rawCommand) { [weak self] wrapped in
+                self?.restart(withCommand: wrapped ?? "")
+            }
         }
     }
 
@@ -147,8 +150,51 @@ extension PTYSession {
         (textview.enclosingScrollView as? PTYScrollView)?.detectUserScroll()
     }
 
+    /// The review command, ready to launch. A peer on a remote host first gets its input files
+    /// written there, since the command names them by path; that is asynchronous, and a second
+    /// request while it is pending is dropped. Otherwise `completion` is called at once.
+    private func prepareCodeReviewCommand(text: String,
+                                          rawCommand: String,
+                                          workgroupInstanceID: String? = nil,
+                                          completion: @escaping (String?) -> Void) {
+        guard let remote = workgroupRemoteHost else {
+            completion(wrappedCommandForCodeReview(text: text, rawCommand: rawCommand,
+                                                   workgroupInstanceID: workgroupInstanceID,
+                                                   remoteInputs: nil))
+            return
+        }
+        guard !swiftState.codeReviewLaunchPending else {
+            RLog("PTYSession[\(guid)]: code review already being prepared; ignoring this request")
+            return
+        }
+        swiftState.codeReviewLaunchPending = true
+        let it2 = CodeReviewIt2.command(onRemoteHost: true, bundlePath: Bundle.main.bundlePath)
+        let systemPrompt = CodeReviewIt2.substitute(
+            iTermPreferences.string(forKey: kPreferenceKeyAIPromptCodeReviewSystem) ?? "", command: it2)
+        let settings = CodeReviewIt2.substituteInJSON(
+            FileManager.default.contents(atPath: Self.bundledCodeReviewSettingsPath) ?? Data(), command: it2)
+        MainActor.assumeIsolated {
+            remote.writeCodeReviewInputs(systemPrompt: systemPrompt,
+                                         settings: settings,
+                                         name: guid) { [weak self] paths in
+                guard let self else { return }
+                self.swiftState.codeReviewLaunchPending = false
+                completion(self.wrappedCommandForCodeReview(text: text, rawCommand: rawCommand,
+                                                            workgroupInstanceID: workgroupInstanceID,
+                                                            remoteInputs: paths))
+            }
+        }
+    }
+
+    private static var bundledCodeReviewSettingsPath: String {
+        return NSString.path(withComponents:
+            [Bundle.main.bundlePath, "Contents", "Resources", "code-review-settings.txt"])
+    }
+
     private func wrappedCommandForCodeReview(text: String,
-                                               rawCommand: String) -> String? {
+                                               rawCommand: String,
+                                               workgroupInstanceID: String? = nil,
+                                               remoteInputs: (systemPrompt: String, settings: String)?) -> String? {
         // Single-quote wrap so the value is one positional arg in any
         // POSIX-style shell (bash, zsh, fish, …). Normalize line
         // endings first: a stray CR from NSTextView or pasted content
@@ -173,15 +219,23 @@ extension PTYSession {
         // fails so the command still has a usable system prompt.
         let bundledFallback = NSString.path(withComponents:
             [Bundle.main.bundlePath, "Contents", "Resources", "code-review-system-prompt.txt"])
-        let systemPromptPath = writeCodeReviewSystemPromptFile() ?? bundledFallback
-        genericScope.setValue(systemPromptPath, forVariableNamed: "codeReviewSystemPromptFile")
+        if let remoteInputs {
+            // Copies written on the remote host, where the review runs.
+            genericScope.setValue(remoteInputs.systemPrompt, forVariableNamed: "codeReviewSystemPromptFile")
+            genericScope.setValue(remoteInputs.settings, forVariableNamed: "codeReviewSettingsFile")
+        } else {
+            let systemPromptPath = writeCodeReviewSystemPromptFile() ?? bundledFallback
+            genericScope.setValue(systemPromptPath, forVariableNamed: "codeReviewSystemPromptFile")
+            genericScope.setValue(writeCodeReviewSettingsFile() ?? Self.bundledCodeReviewSettingsPath,
+                                  forVariableNamed: "codeReviewSettingsFile")
+        }
 
         let resolvedCommand = evaluateSwiftyTemplate(rawCommand)
         if resolvedCommand.isEmpty {
-            DLog("wrappedCommandForCodeReview: resolved command is empty, returning nil")
-            return nil
+            DLog("wrappedCommandForCodeReview: resolved command is empty")
         }
-        return ITAddressBookMgr.commandByWrapping(inLoginShell: resolvedCommand)
+        // On the leader's host when the leader is on one. See workgroupPeerLaunchCommand.
+        return workgroupPeerLaunchCommand(resolvedCommand, workgroupInstanceID: workgroupInstanceID)
     }
 
     // Writes the configured code-review system prompt to a stable
@@ -191,7 +245,9 @@ extension PTYSession {
     // kPreferenceKeyAIPromptCodeReviewSystem, whose registered default is
     // the bundled code-review-system-prompt.txt.
     private func writeCodeReviewSystemPromptFile() -> String? {
-        let text = iTermPreferences.string(forKey: kPreferenceKeyAIPromptCodeReviewSystem) ?? ""
+        let text = CodeReviewIt2.substitute(
+            iTermPreferences.string(forKey: kPreferenceKeyAIPromptCodeReviewSystem) ?? "",
+            command: CodeReviewIt2.command(onRemoteHost: false, bundlePath: Bundle.main.bundlePath))
         let filename = "iterm2-code-review-system-prompt-\(guid).txt"
         let path = NSString.path(withComponents: [NSTemporaryDirectory(), filename])
         do {
@@ -199,6 +255,24 @@ extension PTYSession {
             return path
         } catch {
             RLog("Failed to write code review system prompt to \(path): \(error)")
+            return nil
+        }
+    }
+
+    // The bundled settings with {{it2}} filled in, written beside the system prompt and for the
+    // same reason. nil if that fails, in which case the bundled copy is used as is.
+    private func writeCodeReviewSettingsFile() -> String? {
+        guard let template = FileManager.default.contents(atPath: Self.bundledCodeReviewSettingsPath) else {
+            return nil
+        }
+        let data = CodeReviewIt2.substituteInJSON(
+            template, command: CodeReviewIt2.command(onRemoteHost: false, bundlePath: Bundle.main.bundlePath))
+        let path = NSString.path(withComponents: [NSTemporaryDirectory(), "iterm2-code-review-settings-\(guid).json"])
+        do {
+            try data.write(to: URL(fileURLWithPath: path), options: .atomic)
+            return path
+        } catch {
+            RLog("Failed to write code review settings to \(path): \(error)")
             return nil
         }
     }
@@ -217,3 +291,38 @@ extension PTYSession {
         return resolved
     }
 }
+
+/// The code review prompt and settings say {{it2}} where they run it2. Claude Code runs it from
+/// its Bash tool, where a bare `it2` depends on PATH, and an old shell-integration install on a
+/// remote host does not put iTerm2's there. So iTerm2 fills in the one to run when it writes those
+/// files at launch. A customized prompt without the placeholder is left alone.
+enum CodeReviewIt2 {
+    static let placeholder = "{{it2}}"
+
+    /// One shell word: the wrapper iTerm2 uploads to a host reached through SSH Integration
+    /// ($HOME expanded by Claude's shell there), or this app's own it2.
+    static func command(onRemoteHost: Bool, bundlePath: String) -> String {
+        if onRemoteHost {
+            return #""$HOME/.iterm2/bin/it2""#
+        }
+        let path = NSString.path(withComponents: [bundlePath, "Contents", "Resources", "utilities", "it2"])
+        return "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    static func substitute(_ text: String, command: String) -> String {
+        return text.replacingOccurrences(of: placeholder, with: command)
+    }
+
+    /// For JSON text, where the placeholder sits inside a string: the command is escaped as a
+    /// JSON string's contents.
+    static func substituteInJSON(_ data: Data, command: String) -> Data {
+        guard let text = String(data: data, encoding: .utf8) else {
+            return data
+        }
+        let escaped = command
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        return Data(substitute(text, command: escaped).utf8)
+    }
+}
+

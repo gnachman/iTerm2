@@ -12,7 +12,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# ShellIntegrationVersion=4;shell=xonsh
+# ShellIntegrationVersion=5;shell=xonsh
 
 class _iTerm2Xonsh:
     """iTerm2 integration with Xonsh shell."""
@@ -22,7 +22,7 @@ class _iTerm2Xonsh:
     _PATH_SAFE = frozenset(b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/._~-")
 
     def __init__(self):
-        self.version = 4
+        self.version = 5
         self.stdout = @.imp.sys.__stdout__
         # Machine identity for OSC 7 localhost detection. Computed lazily below,
         # only for an interactive iTerm2 session: _compute_machine_id spawns a

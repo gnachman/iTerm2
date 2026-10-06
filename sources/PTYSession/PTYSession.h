@@ -783,6 +783,9 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly, nullable) id<ExternalSearchResultsController> externalSearchResultsController;
 @property(nonatomic, readonly, nullable) SSHIdentity *sshIdentity;
 @property(nonatomic, readonly, nullable) NSArray<iTermSSHReconnectionInfo *> *sshCommandLineSequence;
+// The ssh hops to replay when the program about to be launched connects through SSH Integration:
+// the first gives its directory, the rest are jumped to from there. See Duplicate Session.
+- (void)setPendingJumpsForNextLaunch:(NSArray<iTermSSHReconnectionInfo *> *)jumps;
 @property(nonatomic, readonly, nullable) id<ProcessInfoProvider> processInfoProvider;
 @property(nonatomic, readonly) BOOL shouldShowAutoComposer;
 @property(nonatomic, readonly) NSString *regularExpressonForNonLowPrecisionSmartSelectionRulesCombined;

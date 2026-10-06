@@ -172,6 +172,47 @@ final class ConductorIT2CommandTests: XCTestCase {
                   shouldInjectShellIntegration: false, parent: nil)
     }
 
+    // MARK: - IT2_SOCK only when it can work
+
+    /// Feeds `lines` and an exit status to the handler for `command`, as the remote's answer.
+    @MainActor
+    private func answer(_ conductor: Conductor, _ command: Conductor.Command,
+                        _ handler: Conductor.ExecutionContext.Handler, lines: [String], status: UInt8 = 0) throws {
+        let context = Conductor.ExecutionContext(command: command, handler: handler)
+        for line in lines {
+            try conductor.update(executionContext: context, result: .line(line))
+        }
+        try conductor.update(executionContext: context, result: .end(status))
+    }
+
+    // The socket needs the framer, which needs Python. getshell comes first, so it only notes
+    // that it2 should be set up; the socket, nonce and IT2_* come when framing starts.
+    @MainActor
+    func testNoSocketUntilFramingStarts() throws {
+        let conductor = makeConductor()
+        conductor.delegate = FakeIT2AuthDelegate()
+        try answer(conductor, .getshell, .handleGetShell(Conductor.StringArray()), lines: ["/bin/zsh\n/home/u\nzsh 5.9"])
+        XCTAssertNil(conductor.it2Nonce, "nothing to bind to yet")
+        XCTAssertNil(conductor.it2SocketPath)
+
+        try answer(conductor, .pythonversion, .handleCheckForPython(Conductor.StringArray()), lines: ["Python 3.12.1"])
+        XCTAssertNotNil(conductor.it2Nonce, "framing starts, so the socket will exist")
+        XCTAssertTrue(conductor.it2SocketPath?.hasPrefix("/home/u/") == true)
+    }
+
+    // No usable Python, no framer, so nothing would ever listen: no IT2_SOCK.
+    @MainActor
+    func testNoSocketWithoutAUsablePython() throws {
+        for answer in [["Python 2.7.18"], ["sh: python3: not found"]] {
+            let conductor = makeConductor()
+            conductor.delegate = FakeIT2AuthDelegate()
+            try self.answer(conductor, .getshell, .handleGetShell(Conductor.StringArray()), lines: ["/bin/zsh\n/home/u\nzsh 5.9"])
+            try self.answer(conductor, .pythonversion, .handleCheckForPython(Conductor.StringArray()), lines: answer,
+                            status: answer[0].hasPrefix("Python") ? 0 : 1)
+            XCTAssertNil(conductor.it2Nonce, "\(answer)")
+        }
+    }
+
     // MARK: - The interpreter a record names
 
     // A tmux -CC controller publishes this record, and it2.py re-execs the "py" it names, so a
@@ -440,6 +481,45 @@ final class ConductorIT2CommandTests: XCTestCase {
         XCTAssertTrue(delegate.hasPendingPrompt(guid: conductor.guid))
     }
 
+    // Under the user's home when it fits a socket address (104 bytes on macOS, 108 on Linux);
+    // otherwise a private random directory in /tmp.
+    @MainActor
+    func testIT2SocketPath() {
+        let ordinary = Conductor.it2SocketPath(home: "/home/u")
+        XCTAssertTrue(ordinary.hasPrefix("/home/u/.iterm2/it2/"), ordinary)
+        XCTAssertTrue(ordinary.hasSuffix(".sock"))
+        let longHome = "/net/" + String(repeating: "d", count: 80)
+        let fallback = Conductor.it2SocketPath(home: longHome)
+        XCTAssertTrue(fallback.hasPrefix("/tmp/.it2-"), fallback)
+        XCTAssertLessThanOrEqual(fallback.utf8.count, 100)
+    }
+
+    // The prompt goes where the user is looking: the pane the it2 ran in, which its request names.
+    @MainActor
+    func testPromptRequestNamesTheCallersPane() {
+        Conductor.it2APIEnabledForTesting = true
+        defer { Conductor.it2APIEnabledForTesting = nil }
+        let delegate = FakeIT2AuthDelegate()
+        let conductor = makeConductor()
+        conductor.delegate = delegate
+        conductor.it2Nonce = "nonce-1"
+
+        let json: [String: Any] = ["nonce": "nonce-1", "argv": ["session", "list"], "cwd": "/",
+                                   "term": "xterm", "isatty": true, "cols": 80, "rows": 24,
+                                   "env": ["TMUX": "/tmp/tmux-1/default,1,0", "TMUX_PANE": "%7"]]
+        let payload = try! JSONSerialization.data(withJSONObject: json)
+        var frame = Data([UInt8(ascii: "H")])
+        withUnsafeBytes(of: UInt32(payload.count).bigEndian) { frame.append(contentsOf: $0) }
+        frame.append(payload)
+
+        let demux = conductor.it2DemuxForHandling()
+        demux.handle("c1 open")
+        demux.handle("c1 data \(frame.base64EncodedString())")
+        pumpMain()
+
+        XCTAssertEqual(delegate.callerTmuxPanes, ["%7"])
+    }
+
     // MARK: - Always Allow This Host (3d), through the real authorization path
 
     private final class MemoryGrantBacking: IT2HostGrantBacking {
@@ -569,10 +649,12 @@ final class ConductorIT2CommandTests: XCTestCase {
 // derived from the guid the conductor passes, so distinct guids do not collide.
 private final class FakeIT2AuthDelegate: NSObject, ConductorDelegate {
     private var announcements: [String: (Bool, Bool, Bool) -> Void] = [:]
+    private(set) var callerTmuxPanes: [String?] = []
     private func identifier(_ guid: String) -> String { "IT2Authorization-\(guid)" }
 
-    func conductorRequestIT2Authorization(guid: String, displayName: String,
+    func conductorRequestIT2Authorization(guid: String, displayName: String, callerTmuxPane: String?,
                                           completion: @escaping (Bool, Bool, Bool) -> Void) {
+        callerTmuxPanes.append(callerTmuxPane)
         // queueAnnouncement dismisses any existing same-identifier prompt, firing its
         // completion as a -2 dismiss => (granted:false, remember:false).
         announcements.removeValue(forKey: identifier(guid))?(false, false, false)

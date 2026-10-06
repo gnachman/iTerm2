@@ -29,11 +29,6 @@ private final class LiveGrantBacking: IT2HostGrantBacking {
     func saveGrantData(_ data: Data?) { self.data = data }
 }
 
-private final class LiveHostStateBacking: ClaudeCodeRemoteHostStateBacking {
-    var configDirPathByHost: [String: String] = [:]
-    var hooksInstalledHosts: [String] = []
-}
-
 /// The real framer-backed file access, except that the host claims not to be this Mac, so the
 /// install path can run against localhost. Only the token is overridden; every read and write is
 /// real.
@@ -136,11 +131,13 @@ final class SSHIntegrationLiveHarness: XCTestCase {
     /// `forwardAgent` lets an ssh started on the remote host authenticate with this Mac's agent,
     /// which a second hop needs: the remote shell has no agent of its own.
     private func connect(forwardAgent: Bool = false,
+                         loadShellIntegration: Bool = true,
+                         command: String? = nil,
                          file: StaticString = #filePath, line: UInt = #line) -> PTYSession? {
         var profile = baseProfile()
         profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeSSHValue
-        profile[KEY_COMMAND_LINE] = forwardAgent ? "-A localhost" : "localhost"
-        profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY] = true
+        profile[KEY_COMMAND_LINE] = (forwardAgent ? "-A localhost" : "localhost") + (command.map { " " + $0 } ?? "")
+        profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY] = loadShellIntegration
         guard let session = launch(profile: profile) else {
             XCTFail("could not launch", file: file, line: line)
             return nil
@@ -357,6 +354,275 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         }
     }
 
+    // MARK: - Jobs
+
+    // What the Jobs toolbelt tool shows for an ssh session: the processes under the session's
+    // effective root pid, read from the session's process provider. Both must describe the remote
+    // host for a remote job to appear.
+    func testJobsToolSeesARemoteJob() throws {
+        let session = try XCTUnwrap(connect())
+        let conductor = try XCTUnwrap(session.conductor)
+        session.writeTask("sleep 120\r")
+        addTeardownBlock { @MainActor in session.writeTask("\u{3}") }
+        waitUntil("the remote job to appear in the session's process tree", timeout: commandTimeout) {
+            guard let root = session.genericScope.value(forVariableName: iTermVariableKeySessionEffectiveSessionRootPid) as? NSNumber,
+                  root.int32Value == conductor.framedPID,
+                  let info = session.processInfoProvider?.processInfo(for: root.int32Value) else {
+                return false
+            }
+            return info.descendants(skipping: 0).contains { $0.name == "sleep" }
+        }
+    }
+
+    // MARK: - Without injection
+
+    // it2's socket used to come only with shell-integration injection. With "Load shell
+    // integration automatically" off there was no socket and no IT2_SOCK, so every remote it2
+    // feature failed silently. Now the connection always has one; the setting decides only what
+    // is uploaded.
+    func testSettingOffStillGivesTheShellASocket() throws {
+        let session = try XCTUnwrap(connect(loadShellIntegration: false))
+        let conductor = try XCTUnwrap(session.conductor)
+        // The profile passed it2ssh --no-shell-integration, which reported si=0.
+        XCTAssertFalse(conductor.shouldInjectShellIntegration)
+        let environment = try XCTUnwrap(shellIT2Environment(session))
+        XCTAssertEqual(environment.sock, conductor.it2SocketPath)
+        XCTAssertEqual(environment.nonce, conductor.it2Nonce)
+    }
+
+    // tcsh cannot be injected, so it got no socket even with the setting on. It still cannot be
+    // injected, but it gets the socket and its variables.
+    func testShellThatCannotBeInjectedGetsASocket() throws {
+        guard FileManager.default.isExecutableFile(atPath: "/bin/tcsh") else {
+            throw XCTSkip("no /bin/tcsh")
+        }
+        let session = try XCTUnwrap(connect(command: "/bin/tcsh"))
+        let conductor = try XCTUnwrap(session.conductor)
+        XCTAssertTrue(conductor.shouldInjectShellIntegration)
+        let environment = try XCTUnwrap(shellIT2Environment(session))
+        XCTAssertEqual(environment.sock, conductor.it2SocketPath)
+        XCTAssertEqual(environment.nonce, conductor.it2Nonce)
+    }
+
+    // MARK: - Shell integration too old for Claude Code's it2
+
+    // The session keeps the version its remote shell reports. Injected scripts are current, so the
+    // check passes; a shell reporting an older version (a stale install, as on a host where the
+    // scripts are sourced by hand) is too old for Claude Code to find it2 on PATH.
+    func testReportedShellIntegrationVersionDecidesTheIt2Check() throws {
+        let session = try XCTUnwrap(connect())
+        waitUntil("the remote shell to report its shell integration", timeout: commandTimeout) {
+            session.reportedShellIntegration != nil
+        }
+        XCTAssertEqual(ClaudeIntegrationHealthMonitor.it2Verdict(for: session), .current,
+                       "\(String(describing: session.reportedShellIntegration))")
+
+        session.writeTask("printf '\\033]1337;ShellIntegrationVersion=19;shell=zsh\\007'\r")
+        waitUntil("the older version to be recorded", timeout: commandTimeout) {
+            session.reportedShellIntegration?.version == 19
+        }
+        XCTAssertEqual(ClaudeIntegrationHealthMonitor.it2Verdict(for: session),
+                       .tooOld(shell: "zsh", version: 19, minimum: 20))
+    }
+
+    // MARK: - Git status
+
+    /// A repository on branch trunk with one commit, a modified tracked.txt (one line changed)
+    /// and an untracked file.
+    private func makeDirtyRepository(at directory: String) throws {
+        func git(_ args: [String]) throws {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+            process.arguments = args
+            process.currentDirectoryURL = URL(fileURLWithPath: directory)
+            var environment = sshEnvironment()
+            environment["GIT_CONFIG_GLOBAL"] = "/dev/null"
+            process.environment = environment
+            try process.run()
+            process.waitUntilExit()
+            XCTAssertEqual(process.terminationStatus, 0, "git \(args)")
+        }
+        try git(["init", "-q", "-b", "trunk"])
+        try git(["config", "user.email", "t@example.com"])
+        try git(["config", "user.name", "T"])
+        try "one\n".write(toFile: directory + "/tracked.txt", atomically: false, encoding: .utf8)
+        try git(["add", "-A"])
+        try git(["commit", "-q", "-m", "one"])
+        try "two\n".write(toFile: directory + "/tracked.txt", atomically: false, encoding: .utf8)
+        try "new\n".write(toFile: directory + "/untracked.txt", atomically: false, encoding: .utf8)
+    }
+
+    private final class AlwaysPoll: NSObject, iTermGitPollerDelegate {
+        func gitPollerShouldPoll(_ poller: iTermGitPoller, after lastPoll: Date?) -> Bool { true }
+    }
+
+    // The status bar's git component and the workgroup toolbar read a repository on the host
+    // through the connection, the way they read one on this Mac. Before, off this Mac they only
+    // had the it2git user variables, which a host has to be set up to send, and no file list.
+    func testGitStatusComesFromTheRemoteHost() throws {
+        let session = try XCTUnwrap(connect())
+        let directory = (NSTemporaryDirectory() as NSString).appendingPathComponent("git-remote-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: directory) }
+        let realDirectory = (directory as NSString).resolvingSymlinksInPath
+        try makeDirtyRepository(at: directory)
+
+        session.writeTask("cd \(shellQuote(directory))\r")
+        waitUntil("the session's directory to be known", timeout: commandTimeout) {
+            guard let path = session.genericScope.value(forVariableName: iTermVariableKeySessionPath) as? String else {
+                return false
+            }
+            return (path as NSString).resolvingSymlinksInPath == realDirectory
+        }
+
+        // The loopback host is this Mac, so a session there rightly reads git locally. Resolve the
+        // worker the way a real remote session does, and read through it.
+        let conductor = try XCTUnwrap(session.conductor)
+        let worker = try XCTUnwrap(iTermRemoteGitPollWorker.worker(forScope: session.genericScope))
+        XCTAssertTrue(worker === conductor.remoteGitPollWorker)
+        let poller = iTermGitPoller(cadence: 1) {}
+        let delegate = AlwaysPoll()
+        poller.delegate = delegate
+        poller.includeDiffStats = true
+        poller.worker = worker
+        poller.enabled = true
+        poller.currentDirectory = directory
+        // state is declared nonnull but is nil until the first answer; KVC reads it safely.
+        func state() -> iTermGitState? { poller.value(forKey: "state") as? iTermGitState }
+        waitUntil("the git state of the remote repository", timeout: commandTimeout) {
+            state()?.branch == "trunk"
+        }
+        withExtendedLifetime(delegate) {}
+        let state = try XCTUnwrap(state())
+        XCTAssertTrue(state.dirty)
+        XCTAssertEqual(state.adds, 1)
+        XCTAssertEqual(state.filesModified, 1)
+        XCTAssertEqual(state.linesInserted, 1)
+        XCTAssertEqual(state.linesDeleted, 1)
+        XCTAssertEqual(state.fileStatuses?.map(\.path), ["tracked.txt"])
+        XCTAssertEqual(state.fileStatuses?.first?.workdirStatus, .modified)
+    }
+
+    // MARK: - Remote commands
+
+    // `it2ssh host <command>` runs <command> as ssh would: the remote shell gets it intact, quotes
+    // and all. Before, the words were split and rejoined, so the double space and the semicolon
+    // inside the quotes below were lost.
+    func testRemoteCommandKeepsItsQuoting() throws {
+        let output = NSTemporaryDirectory() + "it2ssh-quoting-\(UUID().uuidString)"
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: output) }
+        // The sleep keeps the session up past setup, as an interactive use of a command would.
+        let command = "printf '%s\\n' 'a  b;c' > " + shellQuote(output) + "; sleep 5"
+        var profile = baseProfile()
+        profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeSSHValue
+        profile[KEY_COMMAND_LINE] = "localhost " + shellQuote(command)
+        profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY] = true
+        var computed: String?
+        ITAddressBookMgr.computeCommand(forProfile: profile, objectType: .windowObject,
+                                        scope: iTermVariableScope()) { command, _ in computed = command }
+        waitUntil("the command to be computed", timeout: commandTimeout) { computed != nil }
+        let session = try XCTUnwrap(launch(profile: profile))
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 4))
+        let early = screenText(session)
+        let deadline = Date(timeIntervalSinceNow: connectTimeout)
+        while (try? String(contentsOfFile: output, encoding: .utf8)) != "a  b;c\n" && Date() < deadline {
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.1))
+        }
+        let written = try? String(contentsOfFile: output, encoding: .utf8)
+        XCTAssertEqual(written, "a  b;c\n", "Command:\n\(computed ?? "nil")\nScreen after 4s:\n\(early)\nScreen at the end:\n\(screenText(session))")
+    }
+
+    // A command run with `it2ssh host <command>` gets it2 too: IT2_SOCK and IT2_NONCE in its
+    // environment, and `it2` on PATH. Before, the command's first word was taken to be the shell,
+    // and shell integration skipped anything it did not recognize, so a remote `claude` could not
+    // report; then it had the environment but not PATH, so `it2` was not found.
+    // The conductor's shell is the real login shell, not the command.
+    func testRemoteCommandGetsIt2() throws {
+        let output = NSTemporaryDirectory() + "it2ssh-env-\(UUID().uuidString)"
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: output) }
+        // printf rather than printenv, which takes one name on macOS.
+        let command = #"printf '%s\n%s\n%s\n' "$IT2_SOCK" "$IT2_NONCE" "$(command -v it2)" > "# + shellQuote(output) + "; sleep 30"
+        var profile = baseProfile()
+        profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeSSHValue
+        profile[KEY_COMMAND_LINE] = "localhost " + shellQuote(command)
+        profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY] = true
+        let session = try XCTUnwrap(launch(profile: profile))
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 8))
+        let early = "file=\((try? String(contentsOfFile: output, encoding: .utf8)).debugDescription) conductor=\(session.conductor.debugDescription)\nScreen:\n\(screenText(session))"
+        waitUntil("the remote command to report its environment: \(early)", timeout: connectTimeout) {
+            // Three lines, the last possibly empty (it2 not found), each ending in a newline.
+            ((try? String(contentsOfFile: output, encoding: .utf8)) ?? "").components(separatedBy: "\n").count == 4
+        }
+        let lines = Array(try XCTUnwrap(try? String(contentsOfFile: output, encoding: .utf8)).components(separatedBy: "\n").dropLast())
+        let conductor = try XCTUnwrap(session.conductor)
+        XCTAssertEqual(lines.first, conductor.it2SocketPath)
+        XCTAssertEqual(lines[1], conductor.it2Nonce)
+        XCTAssertEqual(lines.last, NSHomeDirectory() + "/.iterm2/bin/it2")
+        let loginShell = try XCTUnwrap(conductor.shell)
+        XCTAssertNotEqual((loginShell as NSString).lastPathComponent, "printenv")
+        XCTAssertTrue(FileManager.default.isExecutableFile(atPath: loginShell), loginShell)
+    }
+
+    // MARK: - Workgroup peers
+
+    // A peer of a leader on a host reached through SSH Integration runs on that host, in the
+    // leader's directory there, with the workgroup's ID. IT2_SOCK is what tells it apart from a
+    // peer run on this Mac, which on localhost would otherwise see the same directory.
+    func testWorkgroupPeerRunsOnTheLeadersHost() throws {
+        let session = try XCTUnwrap(connect())
+        let directory = (NSTemporaryDirectory() as NSString).appendingPathComponent("wg-remote-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
+        let output = directory + "/peer-report"
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: directory) }
+        // A diff peer waits until the git poller sees a change, so give it one.
+        try makeDirtyRepository(at: directory)
+        let realDirectory = (directory as NSString).resolvingSymlinksInPath
+        session.writeTask("cd \(shellQuote(directory))\r")
+        waitUntil("the leader's directory to be known", timeout: commandTimeout) {
+            guard let path = session.genericScope.value(forVariableName: iTermVariableKeySessionPath) as? String else {
+                return false
+            }
+            return (path as NSString).resolvingSymlinksInPath == realDirectory
+        }
+
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(
+            parentID: root.uniqueIdentifier,
+            command: #"printf '%s\n%s\n%s\n' "$PWD" "$ITERM_WORKGROUP_ID" "$IT2_SOCK" > "# + shellQuote(output) + "; sleep 60")
+        let diffOutput = directory + "/diff-report"
+        let diffPeer = WGFix.makePeer(parentID: root.uniqueIdentifier,
+                                      displayName: "Diff",
+                                      command: "pwd > " + shellQuote(diffOutput) + "; sleep 60",
+                                      mode: .diff)
+        let workgroup = WGFix.wrap(name: "remote peer", sessions: [root, peer, diffPeer])
+        iTermWorkgroupModel.instance.add(workgroup)
+        addTeardownBlock { @MainActor in
+            iTermWorkgroupController.instance.exit(on: session)
+            iTermWorkgroupModel.instance.remove(uniqueIdentifier: workgroup.uniqueIdentifier)
+        }
+        XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
+                                                              on: session,
+                                                              mechanism: .menu))
+        let instanceID = try XCTUnwrap(iTermWorkgroupController.instance.workgroupInstance(on: session)?.instanceUniqueIdentifier)
+        waitUntil("the peer to report", timeout: connectTimeout) {
+            ((try? String(contentsOfFile: output, encoding: .utf8)) ?? "").split(separator: "\n").count == 3
+        }
+        let lines = try XCTUnwrap(try? String(contentsOfFile: output, encoding: .utf8))
+            .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        XCTAssertEqual((lines[0] as NSString).resolvingSymlinksInPath, realDirectory, "the leader's directory")
+        XCTAssertEqual(lines[1], instanceID, "the workgroup's ID")
+        XCTAssertFalse(lines[2].isEmpty, "started over SSH Integration, so it has it2")
+        // A diff peer starts when it is shown and the poller has seen a change, so its diff is of
+        // the tree as it is then.
+        let port = try XCTUnwrap(session.peerPort as? iTermWorkgroupPeerPort)
+        XCTAssertTrue(port.activate(identifier: diffPeer.uniqueIdentifier))
+        waitUntil("the diff peer to launch once shown", timeout: connectTimeout) {
+            let reported = (try? String(contentsOfFile: diffOutput, encoding: .utf8))?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return reported.map { ($0 as NSString).resolvingSymlinksInPath } == realDirectory
+        }
+    }
+
     // MARK: - Default target
 
     // With no target, a remote it2 addresses the session the call arrived on, not the focused one.
@@ -457,14 +723,14 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         let session = try XCTUnwrap(connect())
         let conductor = try XCTUnwrap(session.conductor)
         let directory = scratchConfigDirectory()
-        let state = ClaudeCodeRemoteHostState(backing: LiveHostStateBacking())
+        let facts = ClaudeCodeRemoteConnectionFacts()
         var result: ClaudeCodeRemoteHooks.InstallResult?
         ClaudeCodeOnboarding.installHooksRemotely(conductor: conductor, configDirectory: directory,
-                                                  grantAlwaysAllow: true, state: state) { result = $0 }
+                                                  grantAlwaysAllow: true, facts: facts) { result = $0 }
         waitUntil("the install to finish", timeout: connectTimeout) { result != nil }
         XCTAssertEqual(result, .thisMac)
         XCTAssertFalse(FileManager.default.fileExists(atPath: directory))
-        XCTAssertFalse(state.hooksInstalled(onHost: conductor.sshIdentity.stringIdentifier))
+        XCTAssertNil(facts.hookPresent(for: conductor))
         XCTAssertNil(store.grant(forHost: conductor.sshIdentity.stringIdentifier), "no grant for a refused install")
 
         // The same answer the health monitor uses to leave localhost alone.
@@ -483,13 +749,13 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         let home = try XCTUnwrap(conductor.homeDirectory)
         let directory = scratchConfigDirectory()
         let settingsPath = directory + "/settings.json"
-        let state = ClaudeCodeRemoteHostState(backing: LiveHostStateBacking())
+        let facts = ClaudeCodeRemoteConnectionFacts()
         let files = NotThisMacFiles(ConductorClaudeCodeRemoteFiles(conductor: conductor))
 
         var installed: ClaudeCodeRemoteHooks.InstallResult?
         ClaudeCodeOnboarding.installHooksRemotely(conductor: conductor, configDirectory: directory,
                                                   grantAlwaysAllow: true,
-                                                  files: files, state: state) { installed = $0 }
+                                                  files: files, facts: facts) { installed = $0 }
         waitUntil("the install to finish", timeout: connectTimeout) { installed != nil }
         XCTAssertEqual(installed, .installed)
         let data = try XCTUnwrap(FileManager.default.contents(atPath: settingsPath))
@@ -497,27 +763,30 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         XCTAssertNotNil(ClaudeCodeHookSettings.ourCommandsCoveringEveryEvent(
             settings, descriptor: .claudeCode,
             isOurs: { ClaudeCodeHookSettings.isRemoteHookCommand($0, home: home) }))
-        XCTAssertEqual(state.configDirectoryPath(forHost: host), directory)
-        XCTAssertTrue(state.hooksInstalled(onHost: host))
+        // Known for this connection only; nothing about the host is written to disk.
+        XCTAssertEqual(facts.configDirectory(for: conductor), directory)
+        XCTAssertEqual(facts.hookPresent(for: conductor), true)
+        XCTAssertNil(iTermUserDefaults.userDefaults().object(forKey: "NoSyncClaudeCodeHooksInstalledHosts"))
+        XCTAssertNil(iTermUserDefaults.userDefaults().object(forKey: "NoSyncClaudeCodeConfigDirPathByHost"))
         waitUntil("the grant to be minted", timeout: commandTimeout) {
             store.grant(forHost: host) != nil
         }
 
-        var healthy: Bool?
-        ClaudeCodeOnboarding.remoteHooksHealthy(conductor: conductor, files: files, state: state) { healthy = $0 }
-        waitUntil("the health check", timeout: connectTimeout) { healthy != nil }
-        XCTAssertEqual(healthy, true)
+        // Read from the host, in the directory found for this connection.
+        var status: ClaudeCodeRemoteHooks.HookStatus?
+        ClaudeCodeOnboarding.remoteHookStatus(conductor: conductor, files: files, facts: facts) { status = $0 }
+        waitUntil("the health check", timeout: connectTimeout) { status != nil }
+        XCTAssertEqual(status, .healthy)
 
         var uninstalled: ClaudeCodeUninstallHooksResult?
         ClaudeCodeOnboarding.uninstallHooksRemotely(conductor: conductor, revokeAlwaysAllow: true,
-                                                    files: files, state: state) { uninstalled = $0 }
+                                                    files: files, facts: facts) { uninstalled = $0 }
         waitUntil("the uninstall to finish", timeout: connectTimeout) { uninstalled != nil }
         XCTAssertEqual(uninstalled, .success)
         let after = try XCTUnwrap(JSONSerialization.jsonObject(
             with: try XCTUnwrap(FileManager.default.contents(atPath: settingsPath))) as? [String: Any])
         XCTAssertNil(after["hooks"], "nothing of ours left, and nothing else was there")
-        XCTAssertFalse(state.hooksInstalled(onHost: host))
-        XCTAssertEqual(state.configDirectoryPath(forHost: host), directory, "kept for a reinstall")
+        XCTAssertEqual(facts.hookPresent(for: conductor), false)
         XCTAssertNil(store.grant(forHost: host), "revoked, as the user chose")
     }
 
@@ -528,13 +797,13 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         let conductor = try XCTUnwrap(session.conductor)
         let host = conductor.sshIdentity.stringIdentifier
         let directory = scratchConfigDirectory()
-        let state = ClaudeCodeRemoteHostState(backing: LiveHostStateBacking())
+        let facts = ClaudeCodeRemoteConnectionFacts()
         let files = NotThisMacFiles(ConductorClaudeCodeRemoteFiles(conductor: conductor))
 
         var installed: ClaudeCodeRemoteHooks.InstallResult?
         ClaudeCodeOnboarding.installHooksRemotely(conductor: conductor, configDirectory: directory,
                                                   grantAlwaysAllow: false,
-                                                  files: files, state: state) { installed = $0 }
+                                                  files: files, facts: facts) { installed = $0 }
         waitUntil("the install to finish", timeout: connectTimeout) { installed != nil }
         XCTAssertEqual(installed, .installed)
         XCTAssertNil(store.grant(forHost: host), "no grant unless the user agreed to one")
@@ -543,7 +812,7 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         store.add(earlier)
         var uninstalled: ClaudeCodeUninstallHooksResult?
         ClaudeCodeOnboarding.uninstallHooksRemotely(conductor: conductor, revokeAlwaysAllow: false,
-                                                    files: files, state: state) { uninstalled = $0 }
+                                                    files: files, facts: facts) { uninstalled = $0 }
         waitUntil("the uninstall to finish", timeout: connectTimeout) { uninstalled != nil }
         XCTAssertEqual(uninstalled, .success)
         XCTAssertEqual(store.grant(forHost: host), earlier, "kept, as the user chose")

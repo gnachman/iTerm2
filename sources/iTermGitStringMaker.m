@@ -12,6 +12,7 @@
 #import "NSArray+iTerm.h"
 #import "NSHost+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermGitPoller.h"
 #import "iTermGitState.h"
 #import "iTermGitState+MainApp.h"
@@ -237,7 +238,9 @@
 }
 
 - (iTermGitState *)currentState {
-    if ([self onLocalhost]) {
+    // A poller with a remote worker reads the remote host itself, which beats the it2git
+    // variables: those exist only if the host was set up to report them, and lack the file list.
+    if ([self onLocalhost] || _gitPoller.worker != nil) {
         return _gitPoller.state;
     } else {
         return [[iTermGitState alloc] initWithScope:self.scope];
@@ -356,12 +359,21 @@
 }
 
 - (void)updatePollerEnabled {
+    // Off this Mac, read the host through its SSH Integration connection when the session is on
+    // the host that connection runs on. Re-evaluated whenever the host changes, so it follows the
+    // session into and out of it2ssh.
+    _maker.gitPoller.worker = _maker.onLocalhost ? nil : [iTermRemoteGitPollWorker workerForScope:_maker.scope];
     _maker.gitPoller.enabled = [self gitPollerShouldBeEnabled];
 }
 
 - (BOOL)gitPollerShouldBeEnabled {
     if (_maker.onLocalhost) {
         RLog(@"Enable git poller: on localhost");
+        return YES;
+    }
+
+    if (_maker.gitPoller.worker) {
+        RLog(@"Enable git poller: reading the remote host through its connection");
         return YES;
     }
 

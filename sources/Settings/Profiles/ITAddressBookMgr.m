@@ -873,15 +873,23 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
         return;
     }
 
-    DLog(@"Must evaluate swifty string: %@", swifty);
+    // The command line is an interpolated string whose value is the command. Evaluate it first
+    // and only then wrap the command for the shell: evaluating the wrapped form expanded the
+    // wrapper's own \\ and \" escapes, so a command with a backslash or a double quote arrived
+    // broken, and an interpolated value with a space ended the shell's -c argument early.
+    NSString *commandLine = [NSString castFrom:profile[KEY_COMMAND_LINE]] ?: @"";
+    DLog(@"Must evaluate command line: %@", commandLine);
     iTermExpressionEvaluator *evaluator =
-    [[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:swifty
+    [[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:commandLine
                                                                  scope:scope];
     [evaluator evaluateWithTimeout:5 sideEffectsAllowed:YES completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
-        NSString *string = [NSString castFrom:evaluator.value];
-        DLog(@"Evaluation finished with value %@", string);
-        string = [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        if (!string.length) {
+        NSString *value = [NSString castFrom:evaluator.value];
+        DLog(@"Evaluation finished with value %@", value);
+        value = [value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSString *string;
+        if (value.length) {
+            string = [ITAddressBookMgr commandByWrappingCommandLine:value forProfile:profile];
+        } else {
             string = [ITAddressBookMgr loginShellCommandForBookmark:profile
                                                       forObjectType:objectType];
         }
@@ -901,49 +909,62 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
     if (custom || ssh) {
         NSString *command = bookmark[KEY_COMMAND_LINE];
         if ([[command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] ] length] > 0) {
-            if (ssh) {
-                NSDictionary *dict = bookmark[KEY_SSH_CONFIG];
-                iTermSSHConfiguration *config = [[iTermSSHConfiguration alloc] initWithDictionary:dict];
-                if (!config.sshIntegration) {
-                    return [NSString stringWithFormat:@"ssh %@", command];
-                }
-                NSString *wrappedCommand = [NSString stringWithFormat:@"'%@' %@",
-                                            iTermPathToSSH(),
-                                            command];
-                // Run it2ssh through the user's login shell so dotfiles
-                // (.zshrc/.bashrc/etc.) run first and ssh sees the user's exported
-                // environment, e.g. a custom SSH_AUTH_SOCK pointing at an agent that
-                // holds their keys. ShellLauncher exec's the shell with
-                // argv[0] = "-<basename>" so login behavior is triggered uniformly
-                // across bash, zsh, fish, tcsh, and xonsh — tcsh in particular rejects
-                // -l combined with -c on the command line. it2ssh and the ssh binary
-                // it invokes are both referenced by absolute path, so a dotfile that
-                // rewrites $PATH can't stop them from launching.
-                NSString *shellLauncher = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"ShellLauncher"];
-                command = [NSString stringWithFormat:@"/usr/bin/login -fqpl %@ %@ --launch_shell - -i -c %@",
-                           [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
-                           [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
-                           [wrappedCommand stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
-                RLog(@"ssh login-shell wrapped command=%@, wrappedCommand=%@", RLogRedact(command, @(command.length)), RLogRedact(wrappedCommand, @(wrappedCommand.length)));
-            } else if (custom && [bookmark[KEY_RUN_COMMAND_IN_LOGIN_SHELL] boolValue]) {
-                // Wrap the user's command in their login shell so dotfiles (.zshrc/.bashrc/etc.)
-                // run first and the command sees the user's $PATH and exported environment.
-                // ShellLauncher exec's the shell with argv[0] = "-<basename>" so login behavior
-                // is triggered uniformly across bash, zsh, fish, tcsh, and xonsh — tcsh in
-                // particular rejects -l combined with -c on the command line.
-                NSString *shellLauncher = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"ShellLauncher"];
-                command = [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell - -i -c %@",
-                           [self hushlogin] ? @"q" : @"",
-                           [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
-                           [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
-                           [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
-                RLog(@"login-shell wrapped command=%@", RLogRedact(command, @(command.length)));
-            }
-            return command;
+            return [self commandByWrappingCommandLine:command forProfile:bookmark];
         }
     }
     return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
                                             forObjectType:objectType];
+}
+
+// The command a custom or SSH profile runs, given its command line's value: it2ssh or ssh for an
+// SSH profile, wrapped in the login shell when that applies, so the command arrives intact.
++ (NSString *)commandByWrappingCommandLine:(NSString *)command forProfile:(Profile *)bookmark {
+    const BOOL custom = [bookmark[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
+    const BOOL ssh = [bookmark[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue];
+    if (ssh) {
+        NSDictionary *dict = bookmark[KEY_SSH_CONFIG];
+        iTermSSHConfiguration *config = [[iTermSSHConfiguration alloc] initWithDictionary:dict];
+        if (!config.sshIntegration) {
+            return [NSString stringWithFormat:@"ssh %@", command];
+        }
+        // it2ssh loads shell integration on the host unless told not to; this profile's own
+        // "Load shell integration automatically" decides for it.
+        const BOOL loadShellIntegration = [iTermProfilePreferences boolForKey:KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY
+                                                                     inProfile:bookmark];
+        NSString *wrappedCommand = [NSString stringWithFormat:@"'%@' %@%@",
+                                    iTermPathToSSH(),
+                                    loadShellIntegration ? @"" : @"--no-shell-integration ",
+                                    command];
+        // Run it2ssh through the user's login shell so dotfiles
+        // (.zshrc/.bashrc/etc.) run first and ssh sees the user's exported
+        // environment, e.g. a custom SSH_AUTH_SOCK pointing at an agent that
+        // holds their keys. ShellLauncher exec's the shell with
+        // argv[0] = "-<basename>" so login behavior is triggered uniformly
+        // across bash, zsh, fish, tcsh, and xonsh — tcsh in particular rejects
+        // -l combined with -c on the command line. it2ssh and the ssh binary
+        // it invokes are both referenced by absolute path, so a dotfile that
+        // rewrites $PATH can't stop them from launching.
+        NSString *shellLauncher = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"ShellLauncher"];
+        command = [NSString stringWithFormat:@"/usr/bin/login -fqpl %@ %@ --launch_shell - -i -c %@",
+                   [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+                   [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+                   [wrappedCommand stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
+        RLog(@"ssh login-shell wrapped command=%@, wrappedCommand=%@", RLogRedact(command, @(command.length)), RLogRedact(wrappedCommand, @(wrappedCommand.length)));
+    } else if (custom && [bookmark[KEY_RUN_COMMAND_IN_LOGIN_SHELL] boolValue]) {
+        // Wrap the user's command in their login shell so dotfiles (.zshrc/.bashrc/etc.)
+        // run first and the command sees the user's $PATH and exported environment.
+        // ShellLauncher exec's the shell with argv[0] = "-<basename>" so login behavior
+        // is triggered uniformly across bash, zsh, fish, tcsh, and xonsh — tcsh in
+        // particular rejects -l combined with -c on the command line.
+        NSString *shellLauncher = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"ShellLauncher"];
+        command = [NSString stringWithFormat:@"/usr/bin/login -f%@pl %@ %@ --launch_shell - -i -c %@",
+                   [self hushlogin] ? @"q" : @"",
+                   [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+                   [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+                   [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
+        RLog(@"login-shell wrapped command=%@", RLogRedact(command, @(command.length)));
+    }
+    return command;
 }
 
 + (NSString *)customShellForProfile:(Profile *)profile {

@@ -1465,7 +1465,7 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
             .first
     }
 
-    // The login-shell-wrapped diff command matching the non-peer host's
+    // The diff command (the session wraps it for running) matching the non-peer host's
     // diff popup CURRENT selection: the per-file command when a file is
     // picked, the All Files command otherwise. Reload runs this rather
     // than replaying the session's stale _program so a popup that
@@ -1484,7 +1484,7 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
             resolved = cfg.resolvedCommand(gitBase: currentGitBase)
         }
         guard !resolved.isEmpty else { return nil }
-        return ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
+        return resolved
     }
 
     // The navigation cluster for a non-peer host's toolbar, used to
@@ -1512,8 +1512,7 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
         }
         let command = cfg.resolvedPerFileCommand(filename: filename,
                                                  gitBase: currentGitBase)
-        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
-        session.restart(withCommand: wrapped)
+        session.restart(withCommand: session.workgroupPeerLaunchCommand(command) ?? "")
     }
 
     func diffDidSelectAllFiles(sender: CCDiffSelectorItem) {
@@ -1528,8 +1527,7 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
             return
         }
         let resolved = cfg.resolvedCommand(gitBase: currentGitBase)
-        let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
-        session.restart(withCommand: wrapped)
+        session.restart(withCommand: session.workgroupPeerLaunchCommand(resolved) ?? "")
     }
 
     // Push the diff selector's can-navigate state and the "X/Y"
@@ -1680,9 +1678,7 @@ extension iTermWorkgroupInstance {
                 resolved = cfg.resolvedCommand(gitBase: base)
             }
             guard !resolved.isEmpty else { return }
-            let wrapped = ITAddressBookMgr.commandByWrapping(
-                inLoginShell: resolved)
-            session.restart(withCommand: wrapped)
+            session.restart(withCommand: session.workgroupPeerLaunchCommand(resolved) ?? "")
         }
     }
 

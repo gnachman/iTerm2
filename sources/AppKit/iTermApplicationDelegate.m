@@ -1827,6 +1827,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     // the migrated (now-flagged) state this launch rather than next launch.
     [iTermClaudeCodeOnboarding migrateExitTriggersToLeaderOnlyIfNeeded];
     [iTermClaudeCodeOnboarding reconcileTriggersCache];
+    // A tmux profile created later gets the triggers if they are installed elsewhere.
+    [iTermClaudeCodeOnboarding observeTmuxProfileCreation];
 
     // Sticky claudeCodeIntegrationCompleted flag was added after
     // 3.7.0beta1/beta2 shipped; users who installed the

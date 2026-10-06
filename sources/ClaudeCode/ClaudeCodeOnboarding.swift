@@ -451,39 +451,113 @@ class ClaudeCodeOnboarding: NSObject {
         guard let model = ProfileModel.sharedInstance() else { return false }
         var sawAny = false
         for profile in model.bookmarks() {
-            if profileIsDynamic(profile),
-               !iTermProfilePreferences.bool(forKey: KEY_DYNAMIC_PROFILE_REWRITABLE,
-                                             inProfile: profile) {
+            if !profileIsEligibleForClaudeTriggers(profile) {
                 continue
             }
             sawAny = true
-            let triggers = (profile[KEY_TRIGGERS] as? [[String: Any]]) ?? []
-            var hasEnter = false
-            var hasExit = false
-            for dict in triggers {
-                guard let action = dict[kTriggerActionKey] as? String else { continue }
-                if action == "iTermEnterWorkgroupTrigger",
-                   let param = dict[kTriggerParameterKey] as? String,
-                   param == ClaudeCodeWorkgroupTemplate.ID.workgroup {
-                    hasEnter = true
-                } else if action == "iTermExitWorkgroupTrigger",
-                          let params = dict[kTriggerEventParamsKey] as? [String: Any],
-                          (params["jobName"] as? String) == "claude",
-                          (params[ExitWorkgroupTrigger.leaderOnlyParamKey] as? NSNumber)?.boolValue == true {
-                    // Match the installer's scope: an Exit trigger
-                    // filtered on "claude". A user-added Exit trigger
-                    // for some other job is unrelated and shouldn't
-                    // count as "already installed." The leaderOnly
-                    // requirement also makes a pre-leaderOnly install
-                    // read as not-installed, so reinstalling upgrades it.
-                    hasExit = true
-                }
-            }
-            if !hasEnter || !hasExit {
+            if !profileHasClaudeWorkgroupTriggers(profile) {
                 return false
             }
         }
         return sawAny
+    }
+
+    // Eligibility rule mirrors install: skip non-rewritable dynamic
+    // profiles (regenerated from disk, can't hold a merge).
+    private static func profileIsEligibleForClaudeTriggers(_ profile: [AnyHashable: Any]) -> Bool {
+        return !profileIsDynamic(profile) ||
+            iTermProfilePreferences.bool(forKey: KEY_DYNAMIC_PROFILE_REWRITABLE, inProfile: profile)
+    }
+
+    // Both our Enter trigger (pointing at the Claude Code workgroup) and
+    // an Exit trigger filtered on "claude".
+    static func profileHasClaudeWorkgroupTriggers(_ profile: [AnyHashable: Any]) -> Bool {
+        let triggers = (profile[KEY_TRIGGERS] as? [[String: Any]]) ?? []
+        var hasEnter = false
+        var hasExit = false
+        for dict in triggers {
+            guard let action = dict[kTriggerActionKey] as? String else { continue }
+            if action == "iTermEnterWorkgroupTrigger",
+               let param = dict[kTriggerParameterKey] as? String,
+               param == ClaudeCodeWorkgroupTemplate.ID.workgroup {
+                hasEnter = true
+            } else if action == "iTermExitWorkgroupTrigger",
+                      let params = dict[kTriggerEventParamsKey] as? [String: Any],
+                      (params["jobName"] as? String) == "claude",
+                      (params[ExitWorkgroupTrigger.leaderOnlyParamKey] as? NSNumber)?.boolValue == true {
+                // Match the installer's scope: an Exit trigger
+                // filtered on "claude". A user-added Exit trigger
+                // for some other job is unrelated and shouldn't
+                // count as "already installed." The leaderOnly
+                // requirement also makes a pre-leaderOnly install
+                // read as not-installed, so reinstalling upgrades it.
+                hasExit = true
+            }
+        }
+        return hasEnter && hasExit
+    }
+
+    // MARK: - The tmux profile
+
+    // tmux Integration creates its "tmux" profile the first time it needs it,
+    // by copying the default profile. Someone who installed the triggers on
+    // other profiles but not the default one would get a tmux profile
+    // without them, and claude in a tmux tab would never enter the workgroup.
+    // So a tmux profile created after the triggers were installed anywhere
+    // gets them too. Creating the profile up front instead would add a
+    // "tmux" profile for everyone, tmux user or not.
+    static func newTmuxProfileNeedsClaudeTriggers(_ tmuxProfile: [AnyHashable: Any],
+                                                  otherProfiles: [[AnyHashable: Any]]) -> Bool {
+        guard profileIsEligibleForClaudeTriggers(tmuxProfile),
+              !profileHasClaudeWorkgroupTriggers(tmuxProfile) else {
+            return false
+        }
+        return otherProfiles.contains {
+            profileIsEligibleForClaudeTriggers($0) && profileHasClaudeWorkgroupTriggers($0)
+        }
+    }
+
+    // The dictionaries the installer writes.
+    static func claudeWorkgroupTriggerDictionaries() -> [[String: Any]] {
+        return [makeEnterWorkgroupTrigger(), makeExitWorkgroupTrigger()].compactMap {
+            $0?.dictionaryValue() as? [String: Any]
+        }
+    }
+
+    private static var tmuxProfileObserver: NSObjectProtocol?
+
+    @objc static func observeTmuxProfileCreation() {
+        guard tmuxProfileObserver == nil else {
+            return
+        }
+        tmuxProfileObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name.iTermProfileModelDidCreateTmuxProfile,
+            object: nil,
+            queue: nil) { notification in
+                guard let guid = notification.object as? String else {
+                    return
+                }
+                MainActor.assumeIsolated {
+                    tmuxProfileWasCreated(guid: guid)
+                }
+            }
+    }
+
+    private static func tmuxProfileWasCreated(guid: String) {
+        guard let model = ProfileModel.sharedInstance(),
+              let tmuxProfile = model.bookmark(withGuid: guid) else {
+            return
+        }
+        let others = model.bookmarks().filter { ($0[KEY_GUID] as? String) != guid }
+        guard newTmuxProfileNeedsClaudeTriggers(tmuxProfile, otherProfiles: others),
+              let enter = makeEnterWorkgroupTrigger(),
+              let exit = makeExitWorkgroupTrigger() else {
+            DLog("New tmux profile \(guid) needs no Claude Code triggers")
+            return
+        }
+        RLog("Adding Claude Code workgroup triggers to the new tmux profile \(guid)")
+        addClaudeWorkgroupTriggers([enter, exit], toProfileWithGUID: guid, in: model)
+        reconcileTriggersCache()
     }
 
     // Recompute the trigger cache from the profile model. Cheap to

@@ -39,8 +39,17 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         qos: .utility)
 
     // Guards against stacking the alert when multiple claude
-    // sessions launch in close succession. Cleared on dismiss.
-    private var alertInFlight = false
+    // sessions launch in close succession. Cleared on dismiss, which
+    // also runs any it2 check that waited for it.
+    private var alertInFlight = false {
+        didSet {
+            if oldValue && !alertInFlight {
+                DispatchQueue.main.async { [weak self] in
+                    self?.retryDeferredIt2Checks()
+                }
+            }
+        }
+    }
 
     // One disk read per launch is enough. Set after the first
     // claude-launch evaluation that *completes* — prompted,
@@ -67,6 +76,12 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
     private static let remoteWarningIdentifier =
         "NoSyncSuppressClaudeCodeRemoteIntegrationPrompt"
 
+    // Which connections' shell-integration version has been judged for Claude Code's use of it2
+    // (see ClaudeCodeIt2Reachability).
+    private let it2Scheduler = ClaudeCodeIt2CheckScheduler()
+    private static let it2WarningIdentifier =
+        "NoSyncSuppressClaudeCodeShellIntegrationTooOldPrompt"
+
     private override init() {
         super.init()
     }
@@ -77,6 +92,13 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
             self,
             selector: #selector(jobMonitorDidChange(_:)),
             name: GlobalJobMonitor.didChangeNotification,
+            object: nil)
+        // Try It Now enters the Claude Code workgroup after claude has already started, so the
+        // it2 check also runs on entry.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(workgroupDidEnter(_:)),
+            name: iTermWorkgroupController.didEnterNotification,
             object: nil)
         // Ask the upstream monitor to re-emit current state so we
         // see restored claude sessions even though we may have
@@ -112,6 +134,11 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
                     remote[host] = session
                 }
             }
+            for guid in sessions.subtracting(local).sorted() {
+                if let session = iTermController.sharedInstance().session(withGUID: guid) {
+                    checkIt2Reachability(session: session)
+                }
+            }
             if !local.isEmpty {
                 evaluateAndPromptIfBroken(sessionGUIDs: local)
             }
@@ -121,6 +148,82 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
                 }
             }
         }
+    }
+
+    // MARK: - it2 on PATH for Claude Code
+
+    @objc
+    private func workgroupDidEnter(_ notification: Notification) {
+        guard let session = notification.object as? PTYSession,
+              notification.userInfo?[iTermWorkgroupController.workgroupIDKey] as? String ==
+                ClaudeCodeWorkgroupTemplate.ID.workgroup else {
+            return
+        }
+        MainActor.assumeIsolated {
+            checkIt2Reachability(session: session)
+        }
+    }
+
+    // Claude Code runs it2 by name from `sh -c`, so on a remote host it needs the shell's
+    // integration script to have put ~/.iterm2/bin on PATH. Only where the integration is in use
+    // there; see ClaudeCodeIt2Reachability.shouldCheck.
+    @MainActor
+    private func checkIt2Reachability(session: PTYSession) {
+        guard let conductor = session.hostConductor, conductor.framing else {
+            return
+        }
+        let host = conductor.sshIdentity.stringIdentifier
+        let reported = session.reportedShellIntegration
+        let input = ClaudeCodeIt2CheckScheduler.Input(
+            connection: conductor.guid,
+            sessionGUID: session.guid,
+            shell: reported?.shell,
+            version: reported?.version,
+            inClaudeCodeWorkgroup: Self.inClaudeCodeWorkgroup(session),
+            hookPresent: ClaudeCodeRemoteConnectionFacts.shared.hookPresent(for: conductor) == true)
+        let action = it2Scheduler.evaluate(input, promptBusy: alertInFlight || iTermWarning.showingWarning())
+        DLog("it2 check: \(host) reported \(String(describing: reported)) workgroup=\(input.inClaudeCodeWorkgroup) hook=\(input.hookPresent): \(action)")
+        if action == .warn {
+            showShellIntegrationTooOld(host: host, session: session)
+        }
+    }
+
+    @MainActor
+    private func retryDeferredIt2Checks() {
+        for guid in it2Scheduler.takeDeferred() {
+            if let session = iTermController.sharedInstance().anySession(withGUID: guid) {
+                checkIt2Reachability(session: session)
+            }
+        }
+    }
+
+    private func showShellIntegrationTooOld(host: String, session: PTYSession) {
+        RLog("it2 check: shell integration on a remote host is too old for Claude Code to run it2")
+        alertInFlight = true
+        let warning = iTermWarning()
+        warning.heading = String(localized: "ClaudeHealthMonitor.ShellIntegrationTooOldHeading", defaultValue: "Update Shell Integration on \(host)?", comment: "Heading of the warning shown when shell integration on a remote host is too old for Claude Code to run it2; the value is the host")
+        warning.title = String(localized: "ClaudeHealthMonitor.ShellIntegrationTooOldTitle", defaultValue: "Claude Code on \(host) can\u{2019}t find the it2 command, which features such as Code Review ask it to run. The shell integration installed on \(host) is too old to make it available. To update it, exit Claude Code and choose iTerm2 > Install Shell Integration in that session.", comment: "Body of the warning shown when shell integration on a remote host is too old for Claude Code to run it2; the value is the host")
+        warning.warningType = .kiTermWarningTypePermanentlySilenceable
+        warning.identifier = Self.it2WarningIdentifier
+        warning.actionLabels = [String(localized: "ClaudeHealthMonitor.OK", defaultValue: "OK", comment: "Button to dismiss the warning that shell integration on a remote host is too old")]
+        warning.window = session.view?.window
+        warning.runModalAsync { [weak self] _, _ in
+            self?.alertInFlight = false
+        }
+    }
+
+    /// For tests: what the it2 check would conclude for `session`, or nil if it would not check.
+    @MainActor
+    static func it2Verdict(for session: PTYSession) -> ClaudeCodeIt2Reachability.Verdict? {
+        guard let conductor = session.hostConductor, conductor.framing else {
+            return nil
+        }
+        let reported = session.reportedShellIntegration
+        return ClaudeCodeIt2Reachability.verdict(shell: reported?.shell, version: reported?.version)
+    }
+
+    private static func inClaudeCodeWorkgroup(_ session: PTYSession) -> Bool {
+        return session.workgroupInstance?.workgroup.uniqueIdentifier == ClaudeCodeWorkgroupTemplate.ID.workgroup
     }
 
     // MARK: - Remote hosts
@@ -144,15 +247,15 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
             DLog("Health: another warning is on-screen, skipping \(host)")
             return
         }
-        let installed = ClaudeCodeRemoteHostState.shared.hooksInstalled(onHost: host)
-        // Offer an install only to someone who uses the integration: a recorded install on this
-        // host, or a completed setup on this Mac.
+        // Only for someone who uses the integration: set up on this Mac, or this session is in the
+        // Claude Code workgroup. Nothing about the host is remembered, so whether the hook is
+        // there is always read from the host.
         evaluatedConnections.insert(connection)
-        guard installed || iTermUserDefaults.claudeCodeIntegrationCompleted else {
-            DLog("Health: \(host) has no install and the integration was never set up; not offering")
+        guard iTermUserDefaults.claudeCodeIntegrationCompleted || Self.inClaudeCodeWorkgroup(session) else {
+            DLog("Health: the integration is not in use; not checking \(host)")
             return
         }
-        DLog("Health: checking \(host) (installed=\(installed))")
+        DLog("Health: checking \(host)")
         alertInFlight = true
         ClaudeCodeOnboarding.remoteHostIsThisMac(conductor: conductor) { [weak self, weak conductor, weak session] isThisMac in
             guard let self else {
@@ -165,19 +268,38 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
                 self.alertInFlight = false
                 return
             }
-            ClaudeCodeOnboarding.remoteHooksHealthy(conductor: conductor) { [weak self, weak session] healthy in
-                self?.remoteCheckCompleted(host: host, connection: connection, installed: installed,
-                                           healthy: healthy, session: session)
+            ClaudeCodeOnboarding.remoteHookStatus(conductor: conductor) { [weak self, weak session] status in
+                self?.remoteCheckCompleted(host: host, connection: connection, status: status, session: session)
             }
         }
     }
 
-    private func remoteCheckCompleted(host: String, connection: String, installed: Bool, healthy: Bool,
+    private func remoteCheckCompleted(host: String, connection: String,
+                                      status: ClaudeCodeRemoteHooks.HookStatus,
                                       session: PTYSession?) {
-        if healthy {
-            DLog("Health: \(host) is healthy")
+        let installed: Bool
+        switch status {
+        case .unknown:
+            DLog("Health: couldn't read \(host)'s settings; nothing to say")
             alertInFlight = false
             return
+        case .healthy:
+            DLog("Health: \(host) is healthy")
+            // The hook is there, so the integration is in use on this host and its shell
+            // integration matters.
+            it2Scheduler.hookFound(onConnection: connection)
+            alertInFlight = false
+            if let session {
+                MainActor.assumeIsolated {
+                    checkIt2Reachability(session: session)
+                }
+            }
+            return
+        case .broken:
+            it2Scheduler.hookFound(onConnection: connection)
+            installed = true
+        case .notInstalled:
+            installed = false
         }
         if iTermWarning.showingWarning() {
             RLog("Health: another warning came up during the remote check, deferring")

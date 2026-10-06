@@ -711,7 +711,7 @@ extension Conductor {
                     // for it: the agent would stall until the user noticed. The next hook after
                     // the user answers runs normally.
                     self.DLog("it2 hook on an undecided connection; prompting without blocking")
-                    self.authorizeIT2 { _ in }
+                    self.authorizeIT2(callerTmuxPane: clientContext.environment["TMUX_PANE"]) { _ in }
                     finish(0)
                     return cancel
                 case .authorizeThenRun:
@@ -720,7 +720,7 @@ extension Conductor {
                 // it2-over-ssh always requires an explicit per-connection grant; the
                 // local "allow all apps to connect" setting deliberately does not apply
                 // to a remote reaching back in over the conductor channel.
-                self.authorizeIT2 { granted in
+                self.authorizeIT2(callerTmuxPane: clientContext.environment["TMUX_PANE"]) { granted in
                     guard !cancel.isCancelled else {
                         // Remote disconnected while the prompt was up; nothing to run.
                         finish(1)
@@ -769,18 +769,18 @@ extension Conductor {
     // prior run) short-circuits; otherwise a single in-session announcement is presented
     // and its answer is fanned out (via an iTermPromise) to every concurrent it2 command
     // so they share one prompt. Must be called on the main thread.
-    func authorizeIT2(then completion: @escaping (Bool) -> Void) {
+    func authorizeIT2(callerTmuxPane: String? = nil, then completion: @escaping (Bool) -> Void) {
         if let decided = it2Authorized {
             completion(decided)
             return
         }
-        let promise = it2AuthPromise ?? makeIT2AuthorizationPromise()
+        let promise = it2AuthPromise ?? makeIT2AuthorizationPromise(callerTmuxPane: callerTmuxPane)
         promise.then { value in
             completion(value.boolValue)
         }
     }
 
-    private func makeIT2AuthorizationPromise() -> iTermPromise<NSNumber> {
+    private func makeIT2AuthorizationPromise(callerTmuxPane: String?) -> iTermPromise<NSNumber> {
         let promise = iTermPromise<NSNumber> { [weak self] seal in
             guard let self else {
                 seal.fulfill(NSNumber(value: false))
@@ -829,11 +829,11 @@ extension Conductor {
                     // Fall back to asking. Release the seal and take it back after presenting,
                     // for the same reason as the direct path below.
                     self.it2AuthSeal = nil
-                    self.presentIT2AuthorizationPrompt(delegate: delegate, seal: seal)
+                    self.presentIT2AuthorizationPrompt(delegate: delegate, seal: seal, callerTmuxPane: callerTmuxPane)
                 }
                 return
             }
-            self.presentIT2AuthorizationPrompt(delegate: delegate, seal: seal)
+            self.presentIT2AuthorizationPrompt(delegate: delegate, seal: seal, callerTmuxPane: callerTmuxPane)
         }
         it2AuthPromise = promise
         promise.then { [weak self] _ in
@@ -842,9 +842,10 @@ extension Conductor {
         return promise
     }
 
-    private func presentIT2AuthorizationPrompt(delegate: ConductorDelegate, seal: iTermPromiseSeal) {
+    private func presentIT2AuthorizationPrompt(delegate: ConductorDelegate, seal: iTermPromiseSeal, callerTmuxPane: String?) {
         delegate.conductorRequestIT2Authorization(guid: guid,
-                                                  displayName: it2DisplayName) { [weak self] granted, remember, alwaysForHost in
+                                                  displayName: it2DisplayName,
+                                                  callerTmuxPane: callerTmuxPane) { [weak self] granted, remember, alwaysForHost in
             self?.resolveIT2Authorization(granted, persist: remember)
             if granted && alwaysForHost {
                 self?.mintHostGrant()
@@ -989,10 +990,10 @@ extension Conductor {
 
     // Activate the it2 CLI proxy for this session: mint the auth nonce + a remote
     // socket path and inject IT2_SOCK/IT2_NONCE into the login shell's environment,
-    // so the remote it2 (materialized by the shell-integration scripts) can find and
-    // authenticate to the socket. framer binds the socket once framing starts (see
-    // it2Listen in doFraming). Called from the shell-integration path, which is what
-    // provides `it2` on the remote and implies we will frame.
+    // so the remote it2 (uploaded to ~/.iterm2/bin, materialized by the shell-integration
+    // scripts, or installed by hand) can find and authenticate to the socket. framer binds
+    // the socket once framing starts (see it2Listen in doFraming). Called at getshell for
+    // every connection with a known home, injected or not; see Conductor.remoteSetup.
     //
     // The socket lives in a dedicated directory under the user's home (framer
     // creates it 0700 before binding), not in a shared world-writable place: the
@@ -1032,12 +1033,14 @@ extension Conductor {
     // fire-and-forget, so that failure would be silent. Fall back to a short /tmp path in
     // that case (the framer still creates its parent 0700 and binds the socket 0600, and
     // the random directory name resists pre-creation) so it2 keeps working there.
-    private static func it2SocketPath(home: String) -> String {
+    static func it2SocketPath(home: String) -> String {
         let name = it2RandomHex(byteCount: 8) + ".sock"
         let homePath = "\(home)/.iterm2/it2/\(name)"
         if homePath.utf8.count <= 100 {
             return homePath
         }
+        // Rare enough, and visible enough in /tmp, that a debug log should say why.
+        RLog("it2 socket for a home of \(home.utf8.count) bytes would exceed the socket path limit; using /tmp")
         return "/tmp/.it2-\(it2RandomHex(byteCount: 4))/\(name)"
     }
 
