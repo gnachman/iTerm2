@@ -14401,7 +14401,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                [item action] == @selector(selectPaneDown:) ||
                [item action] == @selector(selectPaneLeft:) ||
                [item action] == @selector(selectPaneRight:)) {
-        result = ([[[self currentTab] sessions] count] > 1);
+        // Directional navigation is among tiled panes, and does nothing from a float.
+        result = ([[[self currentTab] tiledSessions] count] > 1 &&
+                  ![[self currentTab] sessionIsFloating:self.currentSession]);
     } else if ([item action] == @selector(closeCurrentSession:)) {
         NSWindowController* controller = [[NSApp keyWindow] windowController];
         if (controller) {

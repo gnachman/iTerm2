@@ -51,6 +51,13 @@ final class iTermFloatingPaneView: NSView {
     /// when there is room. Nil when it has the grid it wants.
     var desiredGrid: FloatingPaneGrid?
 
+    /// While the float is maximized, the outline frame to return to.
+    var outlineFrameBeforeMaximizing: NSRect?
+
+    @objc var isMaximized: Bool {
+        return outlineFrameBeforeMaximizing != nil
+    }
+
     @objc var isActive = false {
         didSet {
             outlineView.isActive = isActive

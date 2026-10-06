@@ -1613,6 +1613,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (PTYSession *)sessionAdjacentTo:(PTYSession *)session
                       verticalDir:(BOOL)verticalDir
                             after:(BOOL)after {
+    if ([self sessionIsFloating:session]) {
+        // Floats overlap, so they have no neighbors. Directional navigation from one does nothing.
+        return nil;
+    }
     NSArray<PTYSession *> *sessions = [self sessionsAdjacentToSession:session verticalDir:verticalDir after:after];
     if (sessions.count || ![iTermAdvancedSettingsModel wrapFocus]) {
         return [sessions maxWithComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
@@ -7842,6 +7846,22 @@ typedef struct {
 }
 
 - (void)toggleMaximizeSession:(PTYSession *)session {
+    iTermFloatingPaneView *floatingPane = self.isTmuxTab ? nil : [self floatingPaneForSession:session];
+    if (floatingPane) {
+        // A float maximizes within the floats: it fills the tab and moves behind the other floats,
+        // which stay visible. The tiled layout is not involved.
+        if (floatingPane.isMaximized) {
+            [iTermFloatingPaneLayout unmaximizeFloatingPane:floatingPane session:session];
+            [self bringFloatingPaneToFront:floatingPane];
+        } else {
+            [iTermFloatingPaneLayout maximizeFloatingPane:floatingPane session:session];
+            [self sendFloatingPaneToBack:floatingPane];
+        }
+        if (self.activeSession != session) {
+            [self setActiveSession:session];
+        }
+        return;
+    }
     if (session.isTmuxClient) {
         [session toggleTmuxZoom];
     } else if ([self hasMaximizedPane]) {

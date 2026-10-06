@@ -132,6 +132,27 @@ final class FloatingPaneLayout: NSObject {
         pane.desiredGrid = nil
     }
 
+    /// Makes a float fill its tab, remembering where it was.
+    @objc(maximizeFloatingPane:session:)
+    static func maximize(_ pane: iTermFloatingPaneView, session: PTYSession) {
+        guard !pane.isMaximized, let bounds = pane.superview?.bounds else {
+            return
+        }
+        let saved = pane.outlineFrame
+        fit(pane, session: session, toOutlineFrame: bounds)
+        pane.outlineFrameBeforeMaximizing = saved
+    }
+
+    /// Returns a maximized float to where it was.
+    @objc(unmaximizeFloatingPane:session:)
+    static func unmaximize(_ pane: iTermFloatingPaneView, session: PTYSession) {
+        guard let saved = pane.outlineFrameBeforeMaximizing else {
+            return
+        }
+        pane.outlineFrameBeforeMaximizing = nil
+        fit(pane, session: session, toOutlineFrame: saved)
+    }
+
     /// Moves a float by whole cells, as the keyboard move commands do.
     @objc(moveFloatingPane:session:columns:rows:)
     static func move(_ pane: iTermFloatingPaneView, session: PTYSession, columns: Int, rows: Int) {
@@ -171,6 +192,13 @@ final class FloatingPaneLayout: NSObject {
             return
         }
         guard container.width > 0, container.height > 0 else {
+            return
+        }
+        if pane.isMaximized {
+            // A maximized float keeps filling its tab.
+            let saved = pane.outlineFrameBeforeMaximizing
+            fit(pane, session: session, toOutlineFrame: CGRect(origin: .zero, size: container))
+            pane.outlineFrameBeforeMaximizing = saved
             return
         }
         // The visual frame was computed against the new height; recompute against the old one so a

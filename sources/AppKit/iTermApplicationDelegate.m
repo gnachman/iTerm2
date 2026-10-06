@@ -493,6 +493,9 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
             return NO;
         } else if ([[[[[iTermController sharedInstance] currentTerminal] currentTab] activeSession] isTmuxClient]) {
             return YES;
+        } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] floatingPaneForSession:[[[iTermController sharedInstance] currentTerminal] currentSession]]) {
+            // A float can always be maximized within its tab.
+            return YES;
         } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane]) {
             return YES;
         } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] hasMultipleSessions]) {
@@ -695,7 +698,10 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 }
 
 - (void)updateMaximizePaneMenuItem {
-    [maximizePane setState:[[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane] ? NSControlStateValueOn : NSControlStateValueOff];
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    iTermFloatingPaneView *floatingPane = [term.currentTab floatingPaneForSession:term.currentSession];
+    const BOOL maximized = floatingPane ? floatingPane.isMaximized : [term.currentTab hasMaximizedPane];
+    [maximizePane setState:maximized ? NSControlStateValueOn : NSControlStateValueOff];
 }
 
 - (void)updateUseTransparencyMenuItem {
