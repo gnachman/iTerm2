@@ -299,6 +299,10 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // frame in the tab's container, outline included.
 - (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame;
 
+// Hides or shows every floating pane in the tab. Their sessions keep running. Activating a float
+// shows them again.
+@property(nonatomic) BOOL floatingPanesHidden;
+
 // Change a float's z-order.
 - (void)bringFloatingPaneToFront:(iTermFloatingPaneView *)pane;
 - (void)sendFloatingPaneToBack:(iTermFloatingPaneView *)pane;

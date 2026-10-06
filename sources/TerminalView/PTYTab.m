@@ -205,6 +205,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // container -> iTermFloatingPaneView -> PTYSplitView -> SessionView
     NSMutableArray<iTermFloatingPaneView *> *_floatingPanes;
 
+    // Hides every float in the tab. Their sessions keep running.
+    BOOL _floatingPanesHidden;
+
     // The active pane is maximized, meaning there are other panes that are hidden.
     BOOL isMaximized_;
 
@@ -959,6 +962,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [session setActivityCounter:@(_activityCounter++)];
     }
     activeSession_ = session;
+    if (_floatingPanesHidden && [self sessionIsFloating:session]) {
+        // Focus entering a float shows the floats.
+        [self setFloatingPanesHidden:NO];
+    }
     [self updateFloatingPaneOutlines];
     if (activeSession_ == nil) {
         [self recheckBlur];
@@ -1769,10 +1776,34 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     session.view.frame = splitView.bounds;
     [self.viewToSessionMap setObject:session forKey:session.view];
 
+    pane.hidden = _floatingPanesHidden;
     [_floatingPanes addObject:pane];
     [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:nil];
     [self numberOfSessionsDidChange];
     [self updatePaneTitles];
+}
+
+- (BOOL)floatingPanesHidden {
+    return _floatingPanesHidden;
+}
+
+- (void)setFloatingPanesHidden:(BOOL)hidden {
+    if (_floatingPanesHidden == hidden) {
+        return;
+    }
+    DLog(@"setFloatingPanesHidden:%@", @(hidden));
+    _floatingPanesHidden = hidden;
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        pane.hidden = hidden;
+    }
+    if (hidden && [self sessionIsFloating:activeSession_]) {
+        // Focus goes to the most recently used session that is still visible.
+        PTYSession *successor = [self mostRecentlyActiveTiledSession];
+        if (successor) {
+            [self setActiveSession:successor];
+        }
+    }
+    [self updateUseMetal];
 }
 
 - (PTYSession *)mostRecentlyActiveTiledSession {
@@ -6076,6 +6107,10 @@ typedef struct {
 }
 
 - (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally {
+    if ([self sessionIsFloating:self.activeSession]) {
+        // The Move Divider commands resize a float by one cell.
+        return !self.realParentWindow.layoutLocked;
+    }
     SessionView *view = [[self activeSession] view];
     PTYSplitView *split = (PTYSplitView *)[view superview];
     if (horizontally) {
@@ -6094,6 +6129,15 @@ typedef struct {
 }
 
 - (void)moveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally {
+    iTermFloatingPaneView *floatingPane = [self floatingPaneForSession:self.activeSession];
+    if (floatingPane) {
+        // A float has no divider. Right and left change its width, down and up its height.
+        [iTermFloatingPaneLayout resizeFloatingPane:floatingPane
+                                            session:self.activeSession
+                                            columns:horizontally ? direction : 0
+                                               rows:horizontally ? 0 : direction];
+        return;
+    }
     SessionView *view = [[self activeSession] view];
     PTYSplitView *split = (PTYSplitView *)[view superview];
     // Either adjust the superview of the active session's view or the

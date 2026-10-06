@@ -2102,6 +2102,56 @@ DQ
                                                 </items>
                                             </menu>
                                         </menuItem>
+                                        <menuItem title="Floating Panes" id="fpn-sb-itm">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <menu key="submenu" title="Floating Panes" id="fpn-sb-mnu">
+                                                <items>
+                                                    <menuItem title="Bring to Front" identifier="Floating Panes.Bring to Front" id="fpn-br-frt">
+                                                        <connections>
+                                                            <action selector="bringFloatingPaneToFront:" target="-1" id="fpn-br-act"/>
+                                                        </connections>
+                                                        <accessibility identifier="Bring to Front"/>
+                                                    </menuItem>
+                                                    <menuItem title="Send to Back" identifier="Floating Panes.Send to Back" id="fpn-sn-bck">
+                                                        <connections>
+                                                            <action selector="sendFloatingPaneToBack:" target="-1" id="fpn-sn-act"/>
+                                                        </connections>
+                                                        <accessibility identifier="Send to Back"/>
+                                                    </menuItem>
+                                                    <menuItem title="Hide Floating Panes" identifier="Floating Panes.Hide Floating Panes" id="fpn-hd-tgl">
+                                                        <connections>
+                                                            <action selector="toggleFloatingPanesHidden:" target="-1" id="fpn-hd-act"/>
+                                                        </connections>
+                                                        <accessibility identifier="Hide Floating Panes"/>
+                                                    </menuItem>
+                                                    <menuItem isSeparatorItem="YES" id="fpn-sp-001"/>
+                                                    <menuItem title="Move Floating Pane Up" identifier="Floating Panes.Move Floating Pane Up" id="fpn-mv-up0">
+                                                        <connections>
+                                                            <action selector="moveFloatingPaneUp:" target="-1" id="fpn-mu-act"/>
+                                                        </connections>
+                                                        <accessibility identifier="Move Floating Pane Up"/>
+                                                    </menuItem>
+                                                    <menuItem title="Move Floating Pane Down" identifier="Floating Panes.Move Floating Pane Down" id="fpn-mv-dn0">
+                                                        <connections>
+                                                            <action selector="moveFloatingPaneDown:" target="-1" id="fpn-md-act"/>
+                                                        </connections>
+                                                        <accessibility identifier="Move Floating Pane Down"/>
+                                                    </menuItem>
+                                                    <menuItem title="Move Floating Pane Left" identifier="Floating Panes.Move Floating Pane Left" id="fpn-mv-lf0">
+                                                        <connections>
+                                                            <action selector="moveFloatingPaneLeft:" target="-1" id="fpn-ml-act"/>
+                                                        </connections>
+                                                        <accessibility identifier="Move Floating Pane Left"/>
+                                                    </menuItem>
+                                                    <menuItem title="Move Floating Pane Right" identifier="Floating Panes.Move Floating Pane Right" id="fpn-mv-rt0">
+                                                        <connections>
+                                                            <action selector="moveFloatingPaneRight:" target="-1" id="fpn-mr-act"/>
+                                                        </connections>
+                                                        <accessibility identifier="Move Floating Pane Right"/>
+                                                    </menuItem>
+                                                </items>
+                                            </menu>
+                                        </menuItem>
                                         <menuItem title="Lock Split Pane Width" identifier="Lock Split Pane Width" id="OsT-y6-DSn">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>

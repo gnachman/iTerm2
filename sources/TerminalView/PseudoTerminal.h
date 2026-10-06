@@ -444,6 +444,13 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Floating panes
 - (BOOL)canCreateFloatingPane;
 - (IBAction)newFloatingPaneWithCurrentProfile:(id)sender;
+- (IBAction)bringFloatingPaneToFront:(id)sender;
+- (IBAction)sendFloatingPaneToBack:(id)sender;
+- (IBAction)toggleFloatingPanesHidden:(id)sender;
+- (IBAction)moveFloatingPaneUp:(id)sender;
+- (IBAction)moveFloatingPaneDown:(id)sender;
+- (IBAction)moveFloatingPaneLeft:(id)sender;
+- (IBAction)moveFloatingPaneRight:(id)sender;
 - (PTYSession *)addFloatingPaneToTab:(PTYTab *)tab
                              profile:(Profile *)profile
                        parentSession:(PTYSession *)parentSession

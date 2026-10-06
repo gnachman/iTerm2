@@ -11768,6 +11768,53 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }];
 }
 
+- (iTermFloatingPaneView *)activeFloatingPane {
+    return [self.currentTab floatingPaneForSession:self.currentSession];
+}
+
+- (IBAction)bringFloatingPaneToFront:(id)sender {
+    iTermFloatingPaneView *pane = [self activeFloatingPane];
+    if (pane) {
+        [self.currentTab bringFloatingPaneToFront:pane];
+    }
+}
+
+- (IBAction)sendFloatingPaneToBack:(id)sender {
+    iTermFloatingPaneView *pane = [self activeFloatingPane];
+    if (pane) {
+        [self.currentTab sendFloatingPaneToBack:pane];
+    }
+}
+
+- (IBAction)toggleFloatingPanesHidden:(id)sender {
+    PTYTab *tab = self.currentTab;
+    tab.floatingPanesHidden = !tab.floatingPanesHidden;
+}
+
+- (void)moveActiveFloatingPaneByColumns:(int)columns rows:(int)rows {
+    iTermFloatingPaneView *pane = [self activeFloatingPane];
+    if (!pane || _layoutLocked) {
+        return;
+    }
+    [iTermFloatingPaneLayout moveFloatingPane:pane session:self.currentSession columns:columns rows:rows];
+}
+
+- (IBAction)moveFloatingPaneUp:(id)sender {
+    [self moveActiveFloatingPaneByColumns:0 rows:-1];
+}
+
+- (IBAction)moveFloatingPaneDown:(id)sender {
+    [self moveActiveFloatingPaneByColumns:0 rows:1];
+}
+
+- (IBAction)moveFloatingPaneLeft:(id)sender {
+    [self moveActiveFloatingPaneByColumns:-1 rows:0];
+}
+
+- (IBAction)moveFloatingPaneRight:(id)sender {
+    [self moveActiveFloatingPaneByColumns:1 rows:0];
+}
+
 // Creates a session, adds it to `tab` as a floating pane in front of the others, makes it active,
 // and launches it.
 - (PTYSession *)addFloatingPaneToTab:(PTYTab *)tab
@@ -14162,6 +14209,20 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         const SEL action = [item action];
         if (action == @selector(newFloatingPaneWithCurrentProfile:)) {
             return [self canCreateFloatingPane];
+        }
+        if (action == @selector(bringFloatingPaneToFront:) ||
+            action == @selector(sendFloatingPaneToBack:)) {
+            return [self activeFloatingPane] != nil;
+        }
+        if (action == @selector(moveFloatingPaneUp:) ||
+            action == @selector(moveFloatingPaneDown:) ||
+            action == @selector(moveFloatingPaneLeft:) ||
+            action == @selector(moveFloatingPaneRight:)) {
+            return [self activeFloatingPane] != nil && !_layoutLocked;
+        }
+        if (action == @selector(toggleFloatingPanesHidden:)) {
+            item.state = self.currentTab.floatingPanesHidden ? NSControlStateValueOn : NSControlStateValueOff;
+            return self.currentTab.floatingPanes.count > 0;
         }
         // A native float holds one session, so the menu items that split the current session are
         // disabled while one is active.
