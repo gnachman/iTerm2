@@ -341,6 +341,15 @@ final class FloatingPaneMouseTests: XCTestCase {
         XCTAssertEqual(grid(session), startGrid)
     }
 
+    /// A float that can't move must not start a pane drag instead, which would offer to dock it.
+    /// tmux 3.7's floats take this path; so does Lock Layout.
+    func testAFloatThatCannotMoveDoesNotStartAPaneDrag() {
+        let (_, pane) = addFloat()
+        XCTAssertTrue(pane.allowsPaneDrag)
+        fixture.terminal.perform(NSSelectorFromString("toggleLayoutLocked:"), with: nil)
+        XCTAssertFalse(pane.allowsPaneDrag)
+    }
+
     func testBandIsOnlyOutsideTheOutline() {
         let (_, pane) = addFloat()
         let band = iTermFloatingPaneView.resizeBandWidth

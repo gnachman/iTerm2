@@ -13531,6 +13531,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)textViewBeginDrag
 {
+    iTermFloatingPaneView *pane = self.floatingPane;
+    if (pane && !pane.allowsPaneDrag) {
+        DLog(@"This float can't be dragged");
+        return;
+    }
     [[MovePaneController sharedInstance] beginDrag:self];
 }
 

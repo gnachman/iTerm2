@@ -428,6 +428,13 @@ final class iTermFloatingPaneView: NSView {
 
     // MARK: - Moving (mouse events forwarded from the title bar)
 
+    /// Whether a drag that can't move the float may start a pane drag instead, which docks the float
+    /// or takes it to another tab or window. Not when the float can't leave its place, as in tmux
+    /// 3.7, which has no commands to move a float; then dragging does nothing.
+    @objc var allowsPaneDrag: Bool {
+        return delegate?.floatingPaneCanResize(self) ?? false
+    }
+
     /// The title bar's mouse-down. Returns whether a move may follow.
     @objc(titleBarMouseDown:)
     func titleBarMouseDown(_ event: NSEvent) -> Bool {

@@ -397,6 +397,10 @@ static const CGFloat kLockButtonSize = 14;
     if ([_floatingPaneBeingMoved titleBarMouseDragged:theEvent]) {
         return;
     }
+    iTermFloatingPaneView *pane = [self enclosingFloatingPane];
+    if (pane && !pane.allowsPaneDrag) {
+        return;
+    }
     if ([iTermAdvancedSettingsModel requireOptionToDragSplitPaneTitleBar]) {
         if ((NSApp.currentEvent.modifierFlags & NSEventModifierFlagOption) == 0) {
             return;
