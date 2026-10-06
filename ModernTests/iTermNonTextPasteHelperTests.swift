@@ -17,6 +17,7 @@ import XCTest
 final class iTermNonTextPasteHelperTests: XCTestCase {
     private typealias FileAction = iTermNonTextPasteHelper.FilePasteAction
     private typealias ImageAction = iTermNonTextPasteHelper.ImagePasteAction
+    private typealias FileDestination = iTermNonTextPasteHelper.FilePasteDestination
 
     private struct Dialog<Action: Hashable> {
         var name: String
@@ -31,7 +32,7 @@ final class iTermNonTextPasteHelperTests: XCTestCase {
     private var fileDialogs: [Dialog<FileAction>] {
         var result = [Dialog<FileAction>]()
         for singleFile in [true, false] {
-            for canUpload in [true, false] {
+            for destination in [FileDestination.local, .verifiedRemote, .unverifiedRemote] {
                 for isDirectory in [true, false] {
                     for canPasteAsText in [true, false] {
                         // handleFilePaste only reports these for a single regular file.
@@ -42,11 +43,11 @@ final class iTermNonTextPasteHelperTests: XCTestCase {
                             continue
                         }
                         let actions = iTermNonTextPasteHelper.fileActions(singleFile: singleFile,
-                                                                          canUpload: canUpload,
+                                                                          destination: destination,
                                                                           isDirectory: isDirectory,
                                                                           canPasteAsText: canPasteAsText)
                         result.append(
-                            Dialog(name: "singleFile=\(singleFile) canUpload=\(canUpload) isDirectory=\(isDirectory) canPasteAsText=\(canPasteAsText)",
+                            Dialog(name: "singleFile=\(singleFile) destination=\(destination) isDirectory=\(isDirectory) canPasteAsText=\(canPasteAsText)",
                                    actions: actions,
                                    identifier: iTermNonTextPasteHelper.fileWarningIdentifier(for: actions),
                                    options: Set(actions.filter { $0 != .cancel && $0 != .pasteAsText })))
@@ -61,11 +62,11 @@ final class iTermNonTextPasteHelperTests: XCTestCase {
     private var imageDialogs: [Dialog<ImageAction>] {
         var result = [Dialog<ImageAction>]()
         for hasFileExtension in [true, false] {
-            for canUpload in [true, false] {
+            for destination in [FileDestination.local, .verifiedRemote, .unverifiedRemote] {
                 let actions = iTermNonTextPasteHelper.imageActions(hasFileExtension: hasFileExtension,
-                                                                   canUpload: canUpload)
+                                                                   destination: destination)
                 result.append(
-                    Dialog(name: "hasFileExtension=\(hasFileExtension) canUpload=\(canUpload)",
+                    Dialog(name: "hasFileExtension=\(hasFileExtension) destination=\(destination)",
                            actions: actions,
                            identifier: iTermNonTextPasteHelper.imageWarningIdentifier(for: actions),
                            options: Set(actions.filter { $0 != .cancel })))
@@ -189,11 +190,11 @@ final class iTermNonTextPasteHelperTests: XCTestCase {
     // to resolve, not land on whatever moved into position 2.
     func testRememberedPasteAsTextDoesNotResolveForABinaryFile() {
         let text = iTermNonTextPasteHelper.fileActions(singleFile: true,
-                                                       canUpload: false,
+                                                       destination: .local,
                                                        isDirectory: false,
                                                        canPasteAsText: true)
         let binary = iTermNonTextPasteHelper.fileActions(singleFile: true,
-                                                         canUpload: false,
+                                                         destination: .local,
                                                          isDirectory: false,
                                                          canPasteAsText: false)
         XCTAssertEqual(iTermNonTextPasteHelper.fileWarningIdentifier(for: text),
@@ -210,11 +211,11 @@ final class iTermNonTextPasteHelperTests: XCTestCase {
     // host, where the first button is "Upload and Paste Path". Different options, so different keys.
     func testRememberedPastePathDoesNotBecomeAnUpload() {
         let local = iTermNonTextPasteHelper.fileActions(singleFile: true,
-                                                        canUpload: false,
+                                                        destination: .local,
                                                         isDirectory: false,
                                                         canPasteAsText: true)
         let remote = iTermNonTextPasteHelper.fileActions(singleFile: true,
-                                                         canUpload: true,
+                                                         destination: .verifiedRemote,
                                                          isDirectory: false,
                                                          canPasteAsText: true)
         XCTAssertEqual(local.first, .pastePath)
@@ -231,19 +232,19 @@ final class iTermNonTextPasteHelperTests: XCTestCase {
     // the tty is, so a session connected to a remote host is offered both.
     func testPasteAsTextIsOfferedOnARemoteHost() {
         let remoteText = iTermNonTextPasteHelper.fileActions(singleFile: true,
-                                                             canUpload: true,
+                                                             destination: .verifiedRemote,
                                                              isDirectory: false,
                                                              canPasteAsText: true)
         XCTAssertEqual(remoteText, [.uploadAndPastePath, .upload, .pasteBase64, .pasteAsText, .cancel])
 
         // Still gated on the file being text, and still absent for a folder.
         let remoteBinary = iTermNonTextPasteHelper.fileActions(singleFile: true,
-                                                               canUpload: true,
+                                                               destination: .verifiedRemote,
                                                                isDirectory: false,
                                                                canPasteAsText: false)
         XCTAssertEqual(remoteBinary, [.uploadAndPastePath, .upload, .pasteBase64, .cancel])
         let remoteFolder = iTermNonTextPasteHelper.fileActions(singleFile: true,
-                                                               canUpload: true,
+                                                               destination: .verifiedRemote,
                                                                isDirectory: true,
                                                                canPasteAsText: false)
         XCTAssertFalse(remoteFolder.contains(.pasteAsText))
@@ -256,14 +257,14 @@ final class iTermNonTextPasteHelperTests: XCTestCase {
     // because it names nothing there, and an upload-and-paste replaces it.
     func testLocalPathsAreNotOfferedOnARemoteHost() {
         let remoteMany = iTermNonTextPasteHelper.fileActions(singleFile: false,
-                                                             canUpload: true,
+                                                             destination: .verifiedRemote,
                                                              isDirectory: false,
                                                              canPasteAsText: false)
         XCTAssertEqual(remoteMany, [.uploadAndPastePaths, .upload, .cancel])
         XCTAssertFalse(remoteMany.contains(.pastePaths))
 
         let remoteOne = iTermNonTextPasteHelper.fileActions(singleFile: true,
-                                                            canUpload: true,
+                                                            destination: .verifiedRemote,
                                                             isDirectory: false,
                                                             canPasteAsText: false)
         XCTAssertFalse(remoteOne.contains(.pastePath))
@@ -271,7 +272,7 @@ final class iTermNonTextPasteHelperTests: XCTestCase {
 
         // Locally the paths are what you want, and there is nowhere to upload to.
         let localMany = iTermNonTextPasteHelper.fileActions(singleFile: false,
-                                                            canUpload: false,
+                                                            destination: .local,
                                                             isDirectory: false,
                                                             canPasteAsText: false)
         XCTAssertEqual(localMany, [.pastePaths, .cancel])
@@ -280,11 +281,11 @@ final class iTermNonTextPasteHelperTests: XCTestCase {
     // Likewise for a folder: the second button changes meaning between a file and a folder.
     func testRememberedPasteBase64DoesNotBecomeAnArchive() {
         let file = iTermNonTextPasteHelper.fileActions(singleFile: true,
-                                                       canUpload: false,
+                                                       destination: .local,
                                                        isDirectory: false,
                                                        canPasteAsText: false)
         let folder = iTermNonTextPasteHelper.fileActions(singleFile: true,
-                                                         canUpload: false,
+                                                         destination: .local,
                                                          isDirectory: true,
                                                          canPasteAsText: false)
         XCTAssertEqual(file, [.pastePath, .pasteBase64, .cancel])
@@ -293,5 +294,120 @@ final class iTermNonTextPasteHelperTests: XCTestCase {
                           iTermNonTextPasteHelper.fileWarningIdentifier(for: folder),
                           "A file and a folder share a saved answer")
         XCTAssertNotEqual(FileAction.pasteBase64.selection, FileAction.pasteBase64Archive.selection)
+    }
+    // MARK: - Unverified remote (issue 13117)
+
+    // A session judged remote only by hostname may really be local (a shell whose $HOST went stale
+    // sends a tokenless OSC 7 naming a host we don't recognize). The upload actions stay, but the
+    // local path is offered too so a wrong verdict doesn't leave the user with no way to paste it.
+    func testUnverifiedRemoteOffersLocalPathAfterUploads() {
+        let text = iTermNonTextPasteHelper.fileActions(singleFile: true,
+                                                       destination: .unverifiedRemote,
+                                                       isDirectory: false,
+                                                       canPasteAsText: true)
+        XCTAssertEqual(text, [.uploadAndPastePath, .upload, .pastePath, .pasteBase64, .pasteAsText, .cancel])
+
+        let binary = iTermNonTextPasteHelper.fileActions(singleFile: true,
+                                                         destination: .unverifiedRemote,
+                                                         isDirectory: false,
+                                                         canPasteAsText: false)
+        XCTAssertEqual(binary, [.uploadAndPastePath, .upload, .pastePath, .pasteBase64, .cancel])
+
+        let folder = iTermNonTextPasteHelper.fileActions(singleFile: true,
+                                                         destination: .unverifiedRemote,
+                                                         isDirectory: true,
+                                                         canPasteAsText: false)
+        XCTAssertEqual(folder, [.upload, .pastePath, .pasteBase64Archive, .cancel])
+
+        let many = iTermNonTextPasteHelper.fileActions(singleFile: false,
+                                                       destination: .unverifiedRemote,
+                                                       isDirectory: false,
+                                                       canPasteAsText: false)
+        XCTAssertEqual(many, [.uploadAndPastePaths, .upload, .pastePaths, .cancel])
+    }
+
+    // The first button is the default, so Return must still upload when the guess is right and the
+    // host really is remote. The escape hatch is never the default.
+    func testUnverifiedRemoteDefaultIsStillAnUpload() {
+        for singleFile in [true, false] {
+            for isDirectory in singleFile ? [true, false] : [false] {
+                let actions = iTermNonTextPasteHelper.fileActions(singleFile: singleFile,
+                                                                  destination: .unverifiedRemote,
+                                                                  isDirectory: isDirectory,
+                                                                  canPasteAsText: false)
+                XCTAssertTrue([FileAction.uploadAndPastePath, .uploadAndPastePaths, .upload].contains(actions.first!),
+                              "singleFile=\(singleFile) isDirectory=\(isDirectory) defaults to \(actions.first!)")
+            }
+        }
+    }
+
+    // Proven remote (ssh integration, or a machineID token that doesn't match ours): the local path
+    // names nothing there, so it isn't offered. Unchanged from before the escape hatch.
+    func testVerifiedRemoteDoesNotOfferLocalPath() {
+        let one = iTermNonTextPasteHelper.fileActions(singleFile: true,
+                                                      destination: .verifiedRemote,
+                                                      isDirectory: false,
+                                                      canPasteAsText: true)
+        XCTAssertEqual(one, [.uploadAndPastePath, .upload, .pasteBase64, .pasteAsText, .cancel])
+        let many = iTermNonTextPasteHelper.fileActions(singleFile: false,
+                                                       destination: .verifiedRemote,
+                                                       isDirectory: false,
+                                                       canPasteAsText: false)
+        XCTAssertEqual(many, [.uploadAndPastePaths, .upload, .cancel])
+    }
+
+    // Someone stuck in a misdetected local tab may tell the unverified dialog to always Paste Path.
+    // That answer must not carry over to an ssh integration session, where it would silently paste
+    // local paths into a remote shell, nor to the local dialog, which offers different choices.
+    func testRememberedPastePathInUnverifiedDialogDoesNotLeak() {
+        let unverified = iTermNonTextPasteHelper.fileActions(singleFile: true,
+                                                             destination: .unverifiedRemote,
+                                                             isDirectory: false,
+                                                             canPasteAsText: false)
+        let verified = iTermNonTextPasteHelper.fileActions(singleFile: true,
+                                                           destination: .verifiedRemote,
+                                                           isDirectory: false,
+                                                           canPasteAsText: false)
+        let local = iTermNonTextPasteHelper.fileActions(singleFile: true,
+                                                        destination: .local,
+                                                        isDirectory: false,
+                                                        canPasteAsText: false)
+        let unverifiedKey = iTermNonTextPasteHelper.fileWarningIdentifier(for: unverified)
+        XCTAssertNotEqual(unverifiedKey, iTermNonTextPasteHelper.fileWarningIdentifier(for: verified))
+        XCTAssertNotEqual(unverifiedKey, iTermNonTextPasteHelper.fileWarningIdentifier(for: local))
+        XCTAssertNil(verified.first { $0.selection == FileAction.pastePath.selection },
+                     "A remembered Paste Path resolves to something in the verified-remote dialog")
+    }
+    // Image paste follows the same rule as a file: saving to a local temp file and pasting its
+    // path is the way out when remoteness is only a guess, offered after the uploads so Return
+    // still uploads.
+    func testImageUnverifiedRemoteOffersLocalSaveAfterUploads() {
+        XCTAssertEqual(iTermNonTextPasteHelper.imageActions(hasFileExtension: true, destination: .unverifiedRemote),
+                       [.uploadAndPastePath, .upload, .saveTempAndPastePath, .pasteBase64, .cancel])
+        XCTAssertEqual(iTermNonTextPasteHelper.imageActions(hasFileExtension: true, destination: .verifiedRemote),
+                       [.uploadAndPastePath, .upload, .pasteBase64, .cancel])
+        XCTAssertEqual(iTermNonTextPasteHelper.imageActions(hasFileExtension: true, destination: .local),
+                       [.saveTempAndPastePath, .pasteBase64, .cancel])
+    }
+
+    // Without a known type there's nothing to name a file by, so only Base64 is offered wherever
+    // the session is.
+    func testImageWithoutExtensionIgnoresDestination() {
+        for destination in [FileDestination.local, .verifiedRemote, .unverifiedRemote] {
+            XCTAssertEqual(iTermNonTextPasteHelper.imageActions(hasFileExtension: false, destination: destination),
+                           [.pasteBase64, .cancel])
+        }
+    }
+
+    // A Save to Temp File answer remembered in the unverified dialog must not apply in a session
+    // proven remote, where it would paste a path that names nothing there.
+    func testRememberedSaveTempInUnverifiedImageDialogDoesNotLeak() {
+        let unverified = iTermNonTextPasteHelper.imageActions(hasFileExtension: true, destination: .unverifiedRemote)
+        let verified = iTermNonTextPasteHelper.imageActions(hasFileExtension: true, destination: .verifiedRemote)
+        let local = iTermNonTextPasteHelper.imageActions(hasFileExtension: true, destination: .local)
+        let unverifiedKey = iTermNonTextPasteHelper.imageWarningIdentifier(for: unverified)
+        XCTAssertNotEqual(unverifiedKey, iTermNonTextPasteHelper.imageWarningIdentifier(for: verified))
+        XCTAssertNotEqual(unverifiedKey, iTermNonTextPasteHelper.imageWarningIdentifier(for: local))
+        XCTAssertNil(verified.first { $0.selection == ImageAction.saveTempAndPastePath.selection })
     }
 }

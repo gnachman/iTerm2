@@ -239,6 +239,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)setColorsFromDictionary:(NSDictionary<NSNumber *, id> *)dict harmonize:(BOOL)harmonize;
 - (void)setColor:(nullable NSColor *)color forKey:(int)key;
 - (void)userDidPressReturn;
+// Input (not a report) is about to be written to the pty.
+- (void)inputWillBeWrittenToTask;
 
 - (BOOL)shouldExpectPromptMarks;
 - (BOOL)shouldExpectWorkingDirectoryUpdates;

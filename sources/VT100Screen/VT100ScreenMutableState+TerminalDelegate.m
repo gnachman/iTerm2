@@ -2609,6 +2609,7 @@ typedef struct {
 // FTCS B
 - (void)terminalCommandDidStart {
     RLog(@"begin currentPromptKind=%@", @(self.currentPromptKind));
+    [self closeVerifiedOSC7Window];
     const VT100PromptKind kind = self.currentPromptKind;
     self.currentPromptKind = VT100PromptKindInitial;
     // .unknown rides the initial path here too: the A handler above already
@@ -2727,6 +2728,7 @@ typedef struct {
 // output<D>
 - (void)terminalCommandDidEnd {
     DLog(@"begin");
+    [self closeVerifiedOSC7Window];
     [self invalidatePendingPromptState];
     [self commandDidEnd];
 }

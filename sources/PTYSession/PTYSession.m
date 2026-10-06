@@ -4235,6 +4235,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         // Abort early so the surrogate hack works.
         return;
     }
+    if (!reporting) {
+        // Whatever this starts (e.g. ssh) can make the next OSC 7 come from
+        // another machine.
+        [_screen inputWillBeWrittenToTask];
+    }
     if (canBroadcast && _screen.terminalSendReceiveMode && !self.isTmuxClient && !self.isTmuxGateway) {
         // Local echo. Only for broadcastable text to avoid printing passwords from the password manager.
         [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -20894,18 +20899,21 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return self.view.window;
 }
 
-- (BOOL)nonTextPasteHelperCanUpload:(iTermNonTextPasteHelper *)sender {
+- (iTermNonTextPasteDestination)nonTextPasteHelperDestination:(iTermNonTextPasteHelper *)sender {
     // Can upload if we have SSH integration (conductor) in framing mode, or if
-    // shell integration detected we're on a remote host.
-    DLog(@"nonTextPasteHelperCanUpload: conductor=%@ framing=%@ currentHost=%@ isLocalhost=%@",
-         self.conductor, @(self.conductor.framing), self.currentHost, @(self.currentHost.isLocalhost));
+    // shell integration detected we're on a remote host. Only the latter can be a
+    // wrong guess, and only when nothing proved it (see issue 13117).
+    id<VT100RemoteHostReading> host = self.currentHost;
+    DLog(@"nonTextPasteHelperDestination: conductor=%@ framing=%@ currentHost=%@ isLocalhost=%@",
+         self.conductor, @(self.conductor.framing), host, @(host.isLocalhost));
     if (self.conductor.framing) {
         DLog(@"Can upload via conductor");
-        return YES;
+        return iTermNonTextPasteDestinationVerifiedRemote;
     }
-    BOOL canUpload = self.currentHost != nil && !self.currentHost.isLocalhost;
-    DLog(@"canUpload=%@", @(canUpload));
-    return canUpload;
+    if (host == nil || host.isLocalhost) {
+        return iTermNonTextPasteDestinationLocal;
+    }
+    return host.localityVerified ? iTermNonTextPasteDestinationVerifiedRemote : iTermNonTextPasteDestinationUnverifiedRemote;
 }
 
 // Returns an SCPPath for the current remote host and working directory, or nil if not available.

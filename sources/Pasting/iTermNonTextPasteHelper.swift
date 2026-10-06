@@ -8,11 +8,37 @@
 import AppKit
 import UniformTypeIdentifiers
 
+// Where a pasted file's path would be used.
+@objc(iTermNonTextPasteDestination)
+enum iTermNonTextPasteDestination: Int, CustomStringConvertible {
+    // This machine. Its paths are meaningful.
+    case local
+    // Proven to be another machine: an ssh integration connection, or an OSC 7 machineID token
+    // that doesn't match ours. A local path names nothing there.
+    case verifiedRemote
+    // Judged remote only because the reported hostname isn't one of ours. That can be wrong (a
+    // shell whose $HOST went stale, a name we don't recognize), so the local path is still offered
+    // as a way out. See issue 13117.
+    case unverifiedRemote
+
+    var canUpload: Bool {
+        return self != .local
+    }
+
+    var description: String {
+        switch self {
+        case .local: return "local"
+        case .verifiedRemote: return "verifiedRemote"
+        case .unverifiedRemote: return "unverifiedRemote"
+        }
+    }
+}
+
 @objc(iTermNonTextPasteHelperDelegate)
 protocol iTermNonTextPasteHelperDelegate: AnyObject {
     func nonTextPasteHelper(_ sender: iTermNonTextPasteHelper, pasteString string: String)
     func nonTextPasteHelperWindow(_ sender: iTermNonTextPasteHelper) -> NSWindow?
-    func nonTextPasteHelperCanUpload(_ sender: iTermNonTextPasteHelper) -> Bool
+    func nonTextPasteHelperDestination(_ sender: iTermNonTextPasteHelper) -> iTermNonTextPasteDestination
     func nonTextPasteHelper(_ sender: iTermNonTextPasteHelper, uploadFiles paths: [String])
     func nonTextPasteHelper(_ sender: iTermNonTextPasteHelper, uploadFileAndPastePath path: String)
     func nonTextPasteHelper(_ sender: iTermNonTextPasteHelper, uploadFilesAndPastePaths paths: [String])
@@ -157,13 +183,19 @@ class iTermNonTextPasteHelper: NSObject {
                                  names: actions.filter { $0 != .cancel }.map { $0.rawValue })
     }
 
+    typealias FilePasteDestination = iTermNonTextPasteDestination
+
     // The buttons to offer for a file paste. Order is display order; each action carries its own
     // stable selection, so a remembered choice does not depend on where its button landed.
     static func fileActions(singleFile: Bool,
-                            canUpload: Bool,
+                            destination: FilePasteDestination,
                             isDirectory: Bool,
                             canPasteAsText: Bool) -> [FilePasteAction] {
         var actions = [FilePasteAction]()
+        // The local path, offered as the default locally and after the uploads when remoteness is
+        // only a guess, so Return still uploads on a host that really is remote.
+        let offerLocalPath = (destination != .verifiedRemote)
+        let canUpload = destination.canUpload
         if singleFile {
             // Naming the file. This is the only part that depends on where the session is
             // connected: a local path means nothing on the far host, so offer to put the file
@@ -173,7 +205,8 @@ class iTermNonTextPasteHelper: NSObject {
                     actions.append(.uploadAndPastePath)
                 }
                 actions.append(.upload)
-            } else {
+            }
+            if offerLocalPath {
                 actions.append(.pastePath)
             }
             // Sending the file's own bytes inline. These type into the tty, so they work the
@@ -192,7 +225,8 @@ class iTermNonTextPasteHelper: NSObject {
             if canUpload {
                 actions.append(.uploadAndPastePaths)
                 actions.append(.upload)
-            } else {
+            }
+            if offerLocalPath {
                 actions.append(.pastePaths)
             }
         }
@@ -219,14 +253,14 @@ class iTermNonTextPasteHelper: NSObject {
         }
 
         let singleFile = existingPaths.count == 1
-        let canUpload = delegate?.nonTextPasteHelperCanUpload(self) ?? false
+        let destination = delegate?.nonTextPasteHelperDestination(self) ?? .local
         let isDirectory = singleFile && isDirectoryPath(existingPaths.first!)
         let canPasteAsText = singleFile && !isDirectory && firstFileIsValidUTF8(existingPaths)
 
-        RLog("handleFilePaste: singleFile=\(singleFile) canUpload=\(canUpload) isDirectory=\(isDirectory) canPasteAsText=\(canPasteAsText)")
+        RLog("handleFilePaste: singleFile=\(singleFile) destination=\(destination) isDirectory=\(isDirectory) canPasteAsText=\(canPasteAsText)")
 
         let actions = Self.fileActions(singleFile: singleFile,
-                                       canUpload: canUpload,
+                                       destination: destination,
                                        isDirectory: isDirectory,
                                        canPasteAsText: canPasteAsText)
         DLog("handleFilePaste: actions=\(actions.map { $0.rawValue })")
@@ -359,15 +393,19 @@ class iTermNonTextPasteHelper: NSObject {
         }
     }
 
-    // The buttons to offer for an image paste, based on whether we can upload and whether we know
-    // the file type. As with fileActions, order is display order only.
-    static func imageActions(hasFileExtension: Bool, canUpload: Bool) -> [ImagePasteAction] {
+    // The buttons to offer for an image paste, based on where the session is and whether we know
+    // the file type. As with fileActions, order is display order only. Saving to a local temp file
+    // follows fileActions' Paste Path: the default locally, offered after the uploads when
+    // remoteness is only a guess, and absent on a host proven remote.
+    static func imageActions(hasFileExtension: Bool,
+                             destination: iTermNonTextPasteDestination) -> [ImagePasteAction] {
         var actions = [ImagePasteAction]()
         if hasFileExtension {
-            if canUpload {
+            if destination.canUpload {
                 actions.append(.uploadAndPastePath)
                 actions.append(.upload)
-            } else {
+            }
+            if destination != .verifiedRemote {
                 actions.append(.saveTempAndPastePath)
             }
         }
@@ -378,12 +416,12 @@ class iTermNonTextPasteHelper: NSObject {
 
     private func handleImageDataPaste(imageData: Data, fileExtension: String?) -> Bool {
         DLog("handleImageDataPaste: \(imageData.count) bytes, extension=\(fileExtension ?? "nil")")
-        let canUpload = delegate?.nonTextPasteHelperCanUpload(self) ?? false
+        let destination = delegate?.nonTextPasteHelperDestination(self) ?? .local
         let sizeDescription = ByteCountFormatter.string(fromByteCount: Int64(imageData.count), countStyle: .file)
 
-        DLog("handleImageDataPaste: canUpload=\(canUpload)")
+        DLog("handleImageDataPaste: destination=\(destination)")
 
-        let actions = Self.imageActions(hasFileExtension: fileExtension != nil, canUpload: canUpload)
+        let actions = Self.imageActions(hasFileExtension: fileExtension != nil, destination: destination)
         DLog("handleImageDataPaste: actions=\(actions.map { $0.rawValue })")
 
         let warning = iTermWarning()

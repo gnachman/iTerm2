@@ -490,6 +490,14 @@ Bug Fixes:
   API making a browser pane many times too big,
   squeezing the panes beside it, and sometimes
   crashing iTerm2.
+- Pasting or dropping a file or image into a
+  local tab no longer offers only to upload it
+  when another tool in your shell (such as
+  oh-my-zsh) reports an outdated host name. When
+  iTerm2 can’t be sure a session is on another
+  machine, the paste dialog now also offers to
+  paste a local path.
+  Issue 13117.
 - Make Text Bigger works again when you type it
   as ⌘⇧= (the way you type ⌘+). Since 3.7.0,
   that keystroke opened the Clippings panel

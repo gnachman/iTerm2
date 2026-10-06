@@ -38,6 +38,12 @@ NS_ASSUME_NONNULL_BEGIN
 // to publish a non-null isLocalhost variable).
 @property(nonatomic, readonly) VT100RemoteHostLocality localityState;
 
+// Whether localityState was proven rather than inferred from the hostname:
+// reached through ssh integration, vouched for by an OSC 7 machineID token, or
+// this machine's own +localhost. NO for a hostname compare, which can be wrong
+// (a stale $HOST, a name we don't recognize). See issue 13117.
+@property(nonatomic, readonly) BOOL localityVerified;
+
 // Whether this is the local host. Uses the frozen localityState; for older data
 // with no frozen bit, falls back to a best-effort name compare.
 @property(nonatomic, readonly) BOOL isLocalhost;
@@ -58,9 +64,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 // Convenience: locality unknown.
 - (instancetype)initWithUsername:(nullable NSString *)username hostname:(nullable NSString *)hostname;
+// Convenience: locality not verified.
 - (instancetype)initWithUsername:(nullable NSString *)username
                         hostname:(nullable NSString *)hostname
-                        locality:(VT100RemoteHostLocality)locality NS_DESIGNATED_INITIALIZER;
+                        locality:(VT100RemoteHostLocality)locality;
+- (instancetype)initWithUsername:(nullable NSString *)username
+                        hostname:(nullable NSString *)hostname
+                        locality:(VT100RemoteHostLocality)locality
+                localityVerified:(BOOL)localityVerified NS_DESIGNATED_INITIALIZER;
 
 + (instancetype)localhost;
 

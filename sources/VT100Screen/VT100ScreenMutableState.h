@@ -319,6 +319,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 // This is used when sending a command when the previous prompt was detected by a trigger since
 // we won't get any indication of the start/end of a running command.
 - (void)didSendCommand;
+// Bytes from the user (or from iTerm2 on the user's behalf) were written to the
+// pty. Ends the window in which a tokenless OSC 7 is treated as a duplicate of
+// shell integration's verified report for the same prompt. See issue 13117.
+- (void)inputWasWrittenToTask;
+// Ends that window on 133;B or 133;C.
+- (void)closeVerifiedOSC7Window;
+// Safe to call from any thread. Lets the main thread skip -inputWasWrittenToTask
+// when there's no window to close, which is nearly always.
+- (BOOL)verifiedOSC7WindowIsOpen;
 - (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord;
 - (void)setCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord;
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord;

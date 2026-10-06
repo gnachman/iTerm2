@@ -97,6 +97,20 @@ class SpyingScreenDelegate: FakeSession {
         sentReports.append(data)
     }
 
+    /// Hosts passed to screenCurrentHostDidChange, in order.
+    private(set) var currentHostDidChangeCalls: [any VT100RemoteHostReading] = []
+
+    /// Fired after each screenCurrentHostDidChange. Like screenSetWindowFrame, it
+    /// arrives on an unmanaged PAUSED side effect, so a test has to wait for it.
+    var onCurrentHostDidChange: ((any VT100RemoteHostReading) -> Void)?
+
+    override func screenCurrentHostDidChange(_ host: any VT100RemoteHostReading,
+                                             pwd workingDirectory: String?,
+                                             viaSSHIntegration: Bool) {
+        currentHostDidChangeCalls.append(host)
+        onCurrentHostDidChange?(host)
+    }
+
     func reset() {
         getWorkingDirectoryCalls.removeAll()
         pollLocalDirectoryOnlyCalls.removeAll()
@@ -108,6 +122,7 @@ class SpyingScreenDelegate: FakeSession {
         mouseModeDidChangeCount = 0
         setWindowFrameCalls.removeAll()
         sentReports.removeAll()
+        currentHostDidChangeCalls.removeAll()
     }
 
     // MARK: - Overrides

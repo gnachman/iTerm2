@@ -162,6 +162,20 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }];
 }
 
+- (void)inputWillBeWrittenToTask {
+    // Called on every write, so only hop to the mutation queue when there's a
+    // window to close. Not -mutateAsynchronously:, which would also exit copy mode
+    // and the like for writes that don't come from a keypress.
+    if (![_mutableState verifiedOSC7WindowIsOpen]) {
+        return;
+    }
+    [_mutableState performBlockAsynchronously:^(VT100Terminal * _Nullable terminal,
+                                                VT100ScreenMutableState * _Nonnull mutableState,
+                                                id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [mutableState inputWasWrittenToTask];
+    }];
+}
+
 - (void)setTerminalEnabled:(BOOL)enabled {
     if (_terminalEnabled == enabled) {
         return;

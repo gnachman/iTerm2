@@ -16,6 +16,7 @@ static NSString *const kRemoteHostHostNameKey = @"Host name";
 static NSString *const kRemoteHostUserNameKey = @"User name";
 static NSString *const kRemoteHostGuidKey = @"Guid";
 static NSString *const kRemoteHostLocalityKey = @"Locality";
+static NSString *const kRemoteHostLocalityVerifiedKey = @"Locality Verified";
 
 @implementation VT100RemoteHost {
     VT100RemoteHost *_doppelganger;
@@ -29,6 +30,7 @@ static NSString *const kRemoteHostLocalityKey = @"Locality";
 @synthesize hostname = _hostname;
 @synthesize guid = _guid;
 @synthesize localityState = _localityState;
+@synthesize localityVerified = _localityVerified;
 
 - (instancetype)initWithUsername:(NSString *)username hostname:(NSString *)hostname {
     return [self initWithUsername:username
@@ -39,22 +41,36 @@ static NSString *const kRemoteHostLocalityKey = @"Locality";
 - (instancetype)initWithUsername:(NSString *)username
                         hostname:(NSString *)hostname
                         locality:(VT100RemoteHostLocality)locality {
+    return [self initWithUsername:username
+                         hostname:hostname
+                         locality:locality
+                 localityVerified:NO];
+}
+
+- (instancetype)initWithUsername:(NSString *)username
+                        hostname:(NSString *)hostname
+                        locality:(VT100RemoteHostLocality)locality
+                localityVerified:(BOOL)localityVerified {
     self = [super init];
     if (self) {
         _username = [username copy];
         _hostname = [hostname copy];
         _localityState = locality;
+        _localityVerified = localityVerified;
         _guid = [[NSUUID UUID] UUIDString];
     }
     return self;
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
-    // Absent locality key (legacy data) deserializes as unknown.
+    // Absent locality key (legacy data) deserializes as unknown, and an absent
+    // verified key as unverified.
     NSNumber *locality = [NSNumber castFrom:dict[kRemoteHostLocalityKey]];
+    NSNumber *verified = [NSNumber castFrom:dict[kRemoteHostLocalityVerifiedKey]];
     self = [self initWithUsername:dict[kRemoteHostUserNameKey]
                          hostname:dict[kRemoteHostHostNameKey]
-                         locality:locality ? locality.integerValue : VT100RemoteHostLocalityUnknown];
+                         locality:locality ? locality.integerValue : VT100RemoteHostLocalityUnknown
+                 localityVerified:verified.boolValue];
     if (self) {
         NSString *savedGuid = dict[kRemoteHostGuidKey];
         if (savedGuid.length > 0) {
@@ -68,7 +84,8 @@ static NSString *const kRemoteHostLocalityKey = @"Locality";
 + (instancetype)localhost {
     VT100RemoteHost *localhost = [[self alloc] initWithUsername:NSUserName()
                                                        hostname:[NSHost fullyQualifiedDomainName]
-                                                       locality:VT100RemoteHostLocalityLocalhost];
+                                                       locality:VT100RemoteHostLocalityLocalhost
+                                               localityVerified:YES];
     return localhost;
 }
 
@@ -82,8 +99,8 @@ static NSString *const kRemoteHostLocalityKey = @"Locality";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p hostname=%@ username=%@ doppelganger=%p (%@) progenitor=%p>",
-            self.class, self, self.hostname, self.username, _doppelganger, _isDoppelganger ? @"IsDop" : @"NotDop", _progenitor];
+    return [NSString stringWithFormat:@"<%@: %p hostname=%@ username=%@ locality=%@ verified=%@ doppelganger=%p (%@) progenitor=%p>",
+            self.class, self, self.hostname, self.username, @(_localityState), @(_localityVerified), _doppelganger, _isDoppelganger ? @"IsDop" : @"NotDop", _progenitor];
 }
 
 - (BOOL)isEqualToRemoteHost:(nullable id<VT100RemoteHostReading>)other {
@@ -134,14 +151,16 @@ static NSString *const kRemoteHostLocalityKey = @"Locality";
         @{ kRemoteHostHostNameKey: _hostname ?: [NSNull null],
            kRemoteHostUserNameKey: _username ?: [NSNull null],
            kRemoteHostGuidKey: _guid ?: [NSNull null],
-           kRemoteHostLocalityKey: @(_localityState) };
+           kRemoteHostLocalityKey: @(_localityState),
+           kRemoteHostLocalityVerifiedKey: @(_localityVerified) };
     return [dict dictionaryByRemovingNullValues];
 }
 
 - (instancetype)copyOfIntervalTreeObject {
     VT100RemoteHost *copy = [[VT100RemoteHost alloc] initWithUsername:self.username
                                                             hostname:self.hostname
-                                                            locality:self.localityState];
+                                                            locality:self.localityState
+                                                    localityVerified:self.localityVerified];
     copy->_guid = [_guid copy];
     return copy;
 }
