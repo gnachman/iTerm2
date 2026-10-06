@@ -22,6 +22,7 @@ NSString *const kiTermIndicatorWrapToBottom = @"kiTermIndicatorWrapToBottom";
 NSString *const kItermIndicatorBroadcastInput = @"kItermIndicatorBroadcastInput";
 NSString *const kItermIndicatorBroadcastInputReceiver = @"kItermIndicatorBroadcastInputReceiver";
 NSString *const kiTermIndicatorMaximized = @"kiTermIndicatorMaximized";
+NSString *const kiTermIndicatorHiddenFloatingPanes = @"kiTermIndicatorHiddenFloatingPanes";
 NSString *const kiTermIndicatorCoprocess = @"kiTermIndicatorCoprocess";
 NSString *const kiTermIndicatorAlert = @"kiTermIndicatorAlert";
 NSString *const kiTermIndicatorAllOutputSuppressed = @"kiTermIndicatorAllOutputSuppressed";
@@ -99,6 +100,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             kItermIndicatorBroadcastInput: SFSymbolGetString(SFSymbolDotRadiowavesLeftAndRight),  // sends and receives (default, or for source)
             kItermIndicatorBroadcastInputReceiver: SFSymbolGetString(SFSymbolDotRadiowavesRight),  // receives only (rare, only for non-sources)
             kiTermIndicatorMaximized: maximizedSymbol,
+            kiTermIndicatorHiddenFloatingPanes: SFSymbolGetString(SFSymbolRectangleOnRectangleSlash),
             kiTermIndicatorCoprocess: SFSymbolGetString(SFSymbolRectangle2Swap),
             kiTermIndicatorAlert: SFSymbolGetString(SFSymbolEye),
             kiTermIndicatorAllOutputSuppressed: SFSymbolGetString(SFSymbolStopCircle),
@@ -301,6 +303,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
 + (NSArray *)sequentialIndicatorIdentifiers {
     return @[ kiTermIndicatorMaximized,
+              kiTermIndicatorHiddenFloatingPanes,
               kItermIndicatorBroadcastInput,
               kItermIndicatorBroadcastInputReceiver,
               kiTermIndicatorCoprocess,
@@ -375,6 +378,10 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 }
 
 - (NSString *)helpTextForIndicatorWithName:(NSString *)name sessionID:(NSString *)sessionID {
+    if ([name isEqualToString:kiTermIndicatorHiddenFloatingPanes]) {
+        return [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"Indicator.HiddenFloatingPanes", nil, [NSBundle mainBundle], @"%ld floating panes are hidden.", @"Help text for the indicator shown when a tab's floating panes are hidden. %ld is the number of hidden floating panes."),
+                (long)self.hiddenFloatingPaneCount];
+    }
     // NOTE: These messages are interpreted as markdown.
     NSDictionary<NSString *, NSString *> *messages = @{
         kItermIndicatorBroadcastInput: @"Keyboard input gets broadcast to other sessions.",

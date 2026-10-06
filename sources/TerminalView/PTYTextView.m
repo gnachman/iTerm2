@@ -2353,6 +2353,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
                             visible:[_delegate textViewIsMaximized]
                      darkBackground:isDark];
+    const NSInteger hiddenFloatingPanes = ([_delegate respondsToSelector:@selector(textViewNumberOfHiddenFloatingPanes)] ?
+                                           [_delegate textViewNumberOfHiddenFloatingPanes] : 0);
+    _indicatorsHelper.hiddenFloatingPaneCount = hiddenFloatingPanes;
+    [_indicatorsHelper setIndicator:kiTermIndicatorHiddenFloatingPanes
+                            visible:hiddenFloatingPanes > 0
+                     darkBackground:isDark];
     const BOOL receivesBroadcasts = [_delegate textViewSessionIsBroadcastingInput:YES];
     const BOOL sendsBroadcasts = [_delegate textViewSessionIsBroadcastingInput:NO];
     [_indicatorsHelper setIndicator:kItermIndicatorBroadcastInput

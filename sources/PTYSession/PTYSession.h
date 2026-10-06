@@ -174,6 +174,11 @@ typedef enum {
 // Is the session a floating pane in this tab?
 - (BOOL)sessionIsFloating:(PTYSession *)session;
 
+@optional
+// How many of the tab's floating panes are hidden.
+- (NSInteger)sessionNumberOfHiddenFloatingPanes;
+@required
+
 // Remove aSession from the tab.
 // Remove a dead session. This should be called from [session terminate] only.
 - (void)removeSession:(PTYSession *)aSession;

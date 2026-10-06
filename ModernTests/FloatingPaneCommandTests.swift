@@ -195,4 +195,32 @@ final class FloatingPaneCommandTests: XCTestCase {
     func testHideIsDisabledWithoutFloats() {
         XCTAssertFalse(isEnabled(#selector(PseudoTerminal.toggleFloatingPanesHidden(_:))))
     }
+
+    // MARK: - Hidden floats indicator
+
+    func testTiledPanesIndicateHiddenFloats() {
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = fixture.split(tiled, vertically: true)
+        let float = fixture.addFloat(frame: floatFrame)
+        fixture.addFloat(frame: floatFrame)
+        XCTAssertEqual(tiled.textViewNumberOfHiddenFloatingPanes(), 0, "nothing is hidden yet")
+
+        tab.floatingPanesHidden = true
+        XCTAssertEqual(tiled.textViewNumberOfHiddenFloatingPanes(), 2)
+        XCTAssertEqual(second.textViewNumberOfHiddenFloatingPanes(), 2, "every tiled pane shows it")
+        XCTAssertEqual(float.textViewNumberOfHiddenFloatingPanes(), 0, "a float never shows it")
+
+        tab.floatingPanesHidden = false
+        XCTAssertEqual(tiled.textViewNumberOfHiddenFloatingPanes(), 0)
+    }
+
+    func testHiddenFloatsIndicatorHelpTextHasTheCount() {
+        let helper = iTermIndicatorsHelper()
+        helper.hiddenFloatingPaneCount = 3
+        let text = helper.helpTextForIndicator(withName: kiTermIndicatorHiddenFloatingPanes, sessionID: "x") ?? ""
+        XCTAssertTrue(text.contains("3"), text)
+    }
 }

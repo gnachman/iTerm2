@@ -86812,6 +86812,30 @@
         }
       }
     },
+    "Indicator.HiddenFloatingPanes" : {
+      "comment" : "Help text for the indicator shown when a tab's floating panes are hidden. %ld is the number of hidden floating panes.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%ld floating pane is hidden."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%ld floating panes are hidden."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "InlineChatToolbar.HideChatTooltip" : {
       "comment" : "Tooltip for the hide chat toolbar button",
       "extractionState" : "extracted_with_value",

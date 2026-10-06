@@ -1793,6 +1793,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return _floatingPanesHidden;
 }
 
+- (NSInteger)sessionNumberOfHiddenFloatingPanes {
+    return _floatingPanesHidden ? (NSInteger)_floatingPanes.count : 0;
+}
+
 - (void)setFloatingPanesHidden:(BOOL)hidden {
     if (_floatingPanesHidden == hidden) {
         return;
@@ -1801,6 +1805,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _floatingPanesHidden = hidden;
     for (iTermFloatingPaneView *pane in _floatingPanes) {
         pane.hidden = hidden;
+    }
+    // Tiled panes show an indicator while floats are hidden.
+    for (PTYSession *session in [self tiledSessions]) {
+        [session.textview requestDelegateRedraw];
     }
     if (hidden && [self sessionIsFloating:activeSession_]) {
         // Focus goes to the most recently used session that is still visible.

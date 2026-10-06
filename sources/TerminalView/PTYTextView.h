@@ -138,6 +138,10 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewIsActiveSession;
 - (BOOL)textViewSessionIsBroadcastingInput:(BOOL)asReceiver;
 - (BOOL)textViewIsMaximized;
+@optional
+// The number of hidden floating panes this pane should show an indicator for.
+- (NSInteger)textViewNumberOfHiddenFloatingPanes;
+@required
 - (BOOL)textViewIsLocked;
 // YES when the enclosing window's layout is locked.
 - (BOOL)textViewWindowIsLayoutLocked;

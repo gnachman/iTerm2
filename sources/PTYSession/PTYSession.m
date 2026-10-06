@@ -13755,6 +13755,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return belongsToDomain && isSender;
 }
 
+- (NSInteger)textViewNumberOfHiddenFloatingPanes {
+    // Shown in every tiled pane of a tab with hidden floats, so it does not jump around as focus
+    // moves. A float never shows it.
+    if ([_delegate sessionIsFloating:self] ||
+        ![_delegate respondsToSelector:@selector(sessionNumberOfHiddenFloatingPanes)]) {
+        return 0;
+    }
+    return [_delegate sessionNumberOfHiddenFloatingPanes];
+}
+
 - (BOOL)textViewIsMaximized {
     return [_delegate hasMaximizedPane];
 }
