@@ -2325,17 +2325,19 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *resizeStr = [NSString stringWithFormat:@"resize-pane -%@ -t \"%%%d\" %d",
                            dir, wp, abs(amount)];
     NSString *listStr = [self commandToListWindows];
+    // The resize can fail, for example on a modal pane. A failed command in a list fails the rest
+    // of the list, so both tolerate errors. listWindowsResponse: handles a nil response.
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:resizeStr
                                          responseTarget:nil
                                        responseSelector:nil
                                          responseObject:nil
-                                                  flags:0],
+                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
                          [gateway_ dictionaryForCommand:listStr
                                          responseTarget:self
                                        responseSelector:@selector(listWindowsResponse:)
                                          responseObject:nil
-                                                  flags:0],
+                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
                          nil];
     ++numOutstandingWindowResizes_;
     [gateway_ sendCommandList:commands];
@@ -2374,7 +2376,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                         responseTarget:self
                                                       responseSelector:@selector(recordPanes:state:)
                                                         responseObject:state
-                                                                 flags:0];
+                                                                 flags:kTmuxGatewayCommandShouldTolerateErrors];
         NSDictionary *split = [gateway dictionaryForCommand:command
                                              responseTarget:nil
                                            responseSelector:nil
@@ -2527,7 +2529,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                         responseObject:[iTermTriple tripleWithObject:windowIdString
                                                                            andObject:[completion copy]
                                                                               object:index]
-                                                 flags:0]];
+                                                 flags:kTmuxGatewayCommandShouldTolerateErrors]];
     [gateway_ sendCommandList:commands];
 }
 
@@ -2737,7 +2739,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
            responseTarget:self
          responseSelector:@selector(windowPaneBrokeOutWithWindowId:setAffinityTo:)
            responseObject:sibling
-                    flags:0];
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (void)windowPaneBrokeOutWithWindowId:(NSString *)windowId
@@ -3314,16 +3316,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *swapPaneCommand = [NSString stringWithFormat:@"swap-pane -s \"%%%d\" -t \"%%%d\"",
                                  pane1, pane2];
 
+    // tmux refuses to swap a modal pane. A failed command in a list fails the rest of the list.
     NSArray *commands = @[ [gateway_ dictionaryForCommand:swapPaneCommand
                                            responseTarget:nil
                                          responseSelector:NULL
                                            responseObject:nil
-                                                    flags:0],
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:[self commandToListWindows]
                                            responseTarget:self
                                          responseSelector:@selector(parseListWindowsResponseAndUpdateLayouts:)
                                            responseObject:nil
-                                                    flags:0] ];
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors] ];
     [gateway_ sendCommandList:commands];
 }
 
@@ -3359,12 +3362,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                            responseTarget:self
                                          responseSelector:@selector(didSetLayout:)
                                            responseObject:nil
-                                                    flags:0],
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:[self commandToListWindowsForSession:sessionId_]
                                            responseTarget:self
                                          responseSelector:@selector(didListWindowsSubsequentToSettingLayout:)
                                            responseObject:nil
-                                                    flags:0] ];
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors] ];
     [gateway_ sendCommandList:commands];
 }
 
@@ -3926,7 +3929,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             [affinities_ removeValue:windowId];
         }
     } else {
+        // A nil response means new-window failed.
         RLog(@"Response to new-window doesn't look like a window id: \"%@\"", responseStr);
+        void (^completion)(int) = tuple.secondObject;
+        if (completion) {
+            completion(-1);
+        }
     }
 }
 
