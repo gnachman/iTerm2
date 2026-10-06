@@ -6942,6 +6942,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if ([iTermPreferences perPaneBackgroundImage]) {
         return _backgroundImage;
     } else {
+        if ([self floatingPane].hasBlurUnderlay) {
+            // The underlay already shows a blurred copy of the shared image beneath the float. A
+            // sharp slice over it would hide the blur.
+            return nil;
+        }
         return [self.delegate sessionBackgroundImage];
     }
 }

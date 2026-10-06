@@ -8835,7 +8835,9 @@ typedef struct {
 }
 
 - (NSView *)sessionContainerView:(PTYSession *)session {
-    return root_;
+    // The shared background image spans the whole tab. In a tmux tab the root can be smaller than
+    // the tab, and a float can lie outside it.
+    return _containerView;
 }
 
 - (void)sessionDraggingExited:(PTYSession *)session {

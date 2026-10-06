@@ -646,4 +646,12 @@ final class FloatingPaneCommandTests: XCTestCase {
         XCTAssertEqual(description?.commandName, "create floating pane")
         XCTAssertTrue(PTYSession.instancesRespond(to: NSSelectorFromString("handleCreateFloatingPane:")))
     }
+
+    // MARK: - Shared background image
+
+    func testTheSharedBackgroundImageSpansTheTabContainer() {
+        let float = fixture.addFloat(frame: floatFrame)
+        XCTAssertTrue(tab.sessionContainerView(float) === tab.realRootView,
+                      "slices are computed against the whole tab, which floats can be anywhere in")
+    }
 }
