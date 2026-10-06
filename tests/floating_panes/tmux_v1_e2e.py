@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Checks that a tmux without floating panes, which ignores the new-layouts opt-in and keeps sending
-# v1 layouts, still works. Run it through devapi.sh so it reaches the dev instance:
+# Checks that a tmux without JSON layouts (3.7 and older), which ignores the new-layouts opt-in and
+# keeps sending v1 layouts, still works. Run it through devapi.sh so it reaches the dev instance:
 #
 #   PYTHONPATH=api/library/python/iterm2 tests/floating_panes/devapi.sh tests/floating_panes/tmux_v1_e2e.py [path-to-tmux]
 #
