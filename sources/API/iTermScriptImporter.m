@@ -267,7 +267,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
                       reader.url.lastPathComponent,
                       ((cert.name ?: cert.longDescription) ?: NSLocalizedStringWithDefaultValue(@"ScriptImporter.UnknownAuthor", nil, [NSBundle mainBundle], @"Unknown", @"Fallback shown for a script author when the certificate has no name or description"))];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                 actions:@[ iTermLocalizedOK(), iTermLocalizedCancel(), NSLocalizedStringWithDefaultValue(@"ScriptImporter.RevealContents", nil, [NSBundle mainBundle], @"Reveal Contents", @"Button to reveal the contents of a script archive") ]
+                                                                 actions:@[ iTermLocalizedOK(), iTermLocalizedCancel(), [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"ScriptImporter.RevealContents", nil, [NSBundle mainBundle], @"Reveal Contents", @"Button to reveal the contents of a script archive")] ]
                                                                accessory:nil
                                                               identifier:nil
                                                              silenceable:kiTermWarningTypePersistent

@@ -208,6 +208,8 @@
     warning.warningType = kiTermWarningTypeTemporarilySilenceable;
     warning.heading = NSLocalizedStringWithDefaultValue(@"DynamicProfiles.ErrorHeading", nil, [NSBundle mainBundle], @"Dynamic Profiles Error", @"Heading of the dynamic profiles error alert");
     warning.doNotRememberLabels = @[ viewLog ];
+    // Opens the Script Console window.
+    warning.notOfferedRemotelyLabels = @[ viewLog ];
     const iTermWarningSelection selection = [warning runModal];
     if (selection == 1) {
         [[iTermScriptConsole sharedInstance] revealTailOfHistoryEntry:[iTermScriptHistoryEntry dynamicProfilesEntry]];

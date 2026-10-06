@@ -108,7 +108,8 @@ class iTermBrowserGateway: NSObject {
     @objc
     static func offerPlugin() {
         let selection = iTermWarning.show(withTitle: String(localized: "BrowserGateway.InstallPluginPrompt", defaultValue: "You must install the Browser Plugin first. Download it now?", comment: "Prompt asking whether to download the browser plugin"),
-                                          actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
+                                          // OK opens the download page in this Mac's browser.
+                                          actions: [iTermWarningAction.localOnlyAction(withLabel: iTermLocalizedOK()), iTermLocalizedCancel()],
                                           accessory: nil,
                                           identifier: nil,
                                           silenceable: .kiTermWarningTypePersistent,
@@ -141,7 +142,10 @@ class iTermBrowserGateway: NSObject {
         warning.title = String(localized: "BrowserGateway.UpsellTitle", defaultValue: "iTerm2 can display web pages! But first you must download the Browser Plugin.", comment: "Message offering to download the browser plugin")
         let download = String(localized: "BrowserGateway.Download", defaultValue: "Download", comment: "Button to download the browser plugin")
         let cancel = iTermLocalizedCancel()
-        warning.actionLabels = [download, String(localized: "BrowserGateway.UseSystemBrowser", defaultValue: "Use System Browser", comment: "Button to open the URL in the system default browser"), cancel]
+        let useSystemBrowser = String(localized: "BrowserGateway.UseSystemBrowser", defaultValue: "Use System Browser", comment: "Button to open the URL in the system default browser")
+        warning.actionLabels = [download, useSystemBrowser, cancel]
+        // Both open a web page in a browser on this Mac.
+        warning.notOfferedRemotelyLabels = [download, useSystemBrowser]
         warning.identifier = upsellWarningIdentifier
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
         warning.heading = String(localized: "BrowserGateway.PluginRequiredHeading", defaultValue: "Plugin Required", comment: "Heading for warning that the browser plugin must be installed")

@@ -718,6 +718,48 @@ final class iTermWarningRemoteAnswerTests: XCTestCase {
         XCTAssertEqual(selection, .kiTermWarningSelection2)
     }
 
+    /// The class methods take labels, and a button that only makes sense at
+    /// the Mac is given as a local-only action in the same list. It keeps its
+    /// place, so selections still mean what they did, but is not offered.
+    func testClassMethodAcceptsALocalOnlyActionAmongItsLabels() async throws {
+        let registry = ModalAlertRegistry.shared
+        let (changes, changesContinuation) = AsyncStream<Void>.makeStream()
+        let token = registry.addObserver { changesContinuation.yield() }
+        defer { _ = token }
+        let (finished, finishedContinuation) = AsyncStream<iTermWarningSelection>.makeStream()
+        DispatchQueue.main.async {
+            let selection = iTermWarning.show(withTitle: "The main text.",
+                                              actions: [iTermWarningAction.localOnlyAction(withLabel: "Locate"),
+                                                        "Skip",
+                                                        "Cancel"],
+                                              accessory: nil,
+                                              identifier: nil,
+                                              silenceable: .kiTermWarningTypePersistent,
+                                              heading: "Heading",
+                                              window: nil)
+            finishedContinuation.yield(selection)
+        }
+        let selection = try await endingHeadlessModalsOnFailure { () -> iTermWarningSelection in
+            let snapshot = try await nextRegisteredAlert(changes)
+            XCTAssertEqual(snapshot.buttons.map { $0.title }, ["Locate", "Skip", "Cancel"])
+            XCTAssertEqual(snapshot.buttons.map { $0.offered }, [false, true, true])
+            let refused = await registry.answer(id: snapshot.id, buttonIndex: 0, suppress: false)
+            XCTAssertFalse(refused)
+            let accepted = await registry.answer(id: snapshot.id, buttonIndex: 1, suppress: false)
+            XCTAssertTrue(accepted)
+            if !accepted {
+                Self.cancelHeadlessModals()
+            }
+            return try await FrozenMainQueue.withFailsafe("the warning to return") {
+                for await selection in finished {
+                    return selection
+                }
+                throw CancellationError()
+            }
+        }
+        XCTAssertEqual(selection, .kiTermWarningSelection1)
+    }
+
     /// A sheet on one window must not make the whole app behave as if an
     /// app-modal warning were up: terminals in other windows stop redrawing
     /// and the hotkey window stops hiding while showingWarning is true.

@@ -36,6 +36,12 @@ BOOL gShowRememberedAlerts = NO;
     return warningAction;
 }
 
++ (instancetype)localOnlyActionWithLabel:(NSString *)label {
+    iTermWarningAction *warningAction = [self warningActionWithLabel:label block:nil];
+    warningAction.notOfferedRemotely = YES;
+    return warningAction;
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p label=%@>",
             NSStringFromClass([self class]), self, _label];
@@ -373,7 +379,7 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
                                        window:(NSWindow *)window {
     iTermWarning *warning = [[iTermWarning alloc] init];
     warning.title = title;
-    warning.actionLabels = actions;
+    [warning setActionsFromLabelsOrActions:actions];
     warning.actionToSelectionMap = actionToSelectionMap;
     warning.accessory = accessory;
     warning.remoteInputs = remoteInputs;
@@ -401,7 +407,7 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
                        completion:(void (^)(iTermWarningSelection, iTermWarning *))completion {
     iTermWarning *warning = [[iTermWarning alloc] init];
     warning.title = title;
-    warning.actionLabels = actions;
+    [warning setActionsFromLabelsOrActions:actions];
     warning.actionToSelectionMap = actionToSelectionMap;
     warning.accessory = accessory;
     warning.identifier = identifier;
@@ -419,6 +425,14 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p title=%@ heading=%@ actions=%@ identifier=%@>",
             NSStringFromClass([self class]), self, _titleIsSecret ? @"(secret)" : _title, _heading, _warningActions, _identifier];
+}
+
+// For the class methods, whose `actions` may mix labels and iTermWarningAction objects.
+- (void)setActionsFromLabelsOrActions:(NSArray *)actions {
+    self.warningActions = [[actions mapWithBlock:^id(id element) {
+        iTermWarningAction *action = [iTermWarningAction castFrom:element];
+        return action ?: [iTermWarningAction warningActionWithLabel:element block:nil];
+    }] mutableCopy];
 }
 
 - (void)setActionLabels:(NSArray<NSString *> *)actionLabels {

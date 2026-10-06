@@ -252,10 +252,14 @@ class NotifyOnStatusChangeController: NSObject {
             let canReveal = sessionGuid.flatMap {
                 iTermController.sharedInstance()?.anySession(withGUID: $0)
             } != nil
+            var localOnlyLabels = [String]()
             if canReveal {
-                actions.append(String(localized: "StatusChange.Reveal", defaultValue: "Reveal", comment: "Button to reveal the session whose status changed"))
+                let reveal = String(localized: "StatusChange.Reveal", defaultValue: "Reveal", comment: "Button to reveal the session whose status changed")
+                actions.append(reveal)
+                localOnlyLabels.append(reveal)
             }
             warning.actionLabels = actions
+            warning.notOfferedRemotelyLabels = localOnlyLabels
             warning.warningType = .kiTermWarningTypePersistent
             // A sheet if there is a window, otherwise app-modal.
             warning.window = window

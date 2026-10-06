@@ -205,7 +205,10 @@ final class CompanionPairingController: NSObject {
                 + "stored on this Mac is missing (\(missing.joined(separator: ", "))). "
                 + "This can happen after reinstalling or rebuilding iTerm2, or after a "
                 + "keychain reset. Re-pair to fix it."
-            warning.actionLabels = ["Re-pair…", "Later"]
+            let repair = "Re-pair…"
+            warning.actionLabels = [repair, "Later"]
+            // Re-pair opens the Companion settings or setup wizard on this Mac.
+            warning.notOfferedRemotelyLabels = [repair]
             warning.cancelLabel = "Later"
             warning.warningType = .kiTermWarningTypePersistent
             if warning.runModal() == .kiTermWarningSelection0 {

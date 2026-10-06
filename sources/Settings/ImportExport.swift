@@ -126,7 +126,7 @@ class ImportExport: NSObject {
     static func eraseAll(window: NSWindow?) -> String? {
         let exportSelection = iTermWarning.show(
             withTitle: String(localized: "ImportExport.EraseExportFirstBody", defaultValue: "Would you like to export your settings and data first? You will be able to re-import the exported file later if you change your mind.", comment: "Body asking whether to export before erasing everything"),
-            actions: [String(localized: "ImportExport.ExportFirstAction", defaultValue: "Export First", comment: "Button to export settings before erasing"), String(localized: "ImportExport.SkipExportAction", defaultValue: "Skip Export", comment: "Button to skip exporting before erasing"), iTermLocalizedCancel()],
+            actions: [iTermWarningAction.localOnlyAction(withLabel: String(localized: "ImportExport.ExportFirstAction", defaultValue: "Export First", comment: "Button to export settings before erasing")), String(localized: "ImportExport.SkipExportAction", defaultValue: "Skip Export", comment: "Button to skip exporting before erasing"), iTermLocalizedCancel()],
             accessory: nil,
             identifier: nil,
             silenceable: .kiTermWarningTypePersistent,

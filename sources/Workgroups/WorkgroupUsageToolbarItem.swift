@@ -553,10 +553,12 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
         warning.title = String(localized: "WorkgroupUsage.ReportGuidanceIntro",
                                defaultValue: "iTerm2 couldn’t read the AI usage report. Updating iTerm2 to the latest version may fix this. If you’re already up to date, click “Report a Bug” to open a pre-filled report. The full details below are also copied to your clipboard.",
                                comment: "Guidance shown when the AI usage format couldn’t be parsed") + "\n\n" + report
-        warning.actionLabels = [String(localized: "WorkgroupUsage.ReportBug",
-                                       defaultValue: "Report a Bug",
-                                       comment: "Button that opens a pre-filled bug report and copies the details to the clipboard"),
-                                cancel]
+        let reportBug = String(localized: "WorkgroupUsage.ReportBug",
+                               defaultValue: "Report a Bug",
+                               comment: "Button that opens a pre-filled bug report and copies the details to the clipboard")
+        warning.actionLabels = [reportBug, cancel]
+        // Opens the bug report in the Mac's browser.
+        warning.notOfferedRemotelyLabels = [reportBug]
         warning.cancelLabel = cancel
         warning.warningType = .kiTermWarningTypePersistent
 

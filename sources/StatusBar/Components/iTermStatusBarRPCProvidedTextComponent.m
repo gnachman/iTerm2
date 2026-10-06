@@ -543,6 +543,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
             iTermWarningAction *reveal = [iTermWarningAction warningActionWithLabel:NSLocalizedStringWithDefaultValue(@"StatusBarRPC.RevealInFinder", nil, [NSBundle mainBundle], @"Reveal in Finder", @"Warning action to reveal a status bar script in Finder") block:^(iTermWarningSelection selection) {
                 [self revealInFinder];
             }];
+            reveal.notOfferedRemotely = YES;
             actions = [actions arrayByAddingObjectsFromArray:@[ launch, reveal ]];
 
             warning.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"StatusBarRPC.ScriptNotRunningFormat", nil, [NSBundle mainBundle], @"%@It looks like the script is not running. Launching it might fix the problem.", @"Appended to the error message when a status bar script is not running; placeholder is the existing error message"), _errorMessage];

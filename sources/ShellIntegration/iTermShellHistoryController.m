@@ -374,10 +374,11 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
         @"Select Output of Last Command, "
         @"and Automatic Profile Switching, "
         @"your shell must be properly configured.", @"Body text explaining what shell integration provides");
-    NSArray<NSString *> *actions = @[ NSLocalizedStringWithDefaultValue(@"ShellIntegration.LearnMore", nil, [NSBundle mainBundle], @"Learn More…", @"Button that opens shell integration documentation"),
-                                      iTermLocalizedOK() ];
+    // Learn More opens a web page and Install Now opens the installer window.
+    NSArray *actions = @[ [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"ShellIntegration.LearnMore", nil, [NSBundle mainBundle], @"Learn More…", @"Button that opens shell integration documentation")],
+                          iTermLocalizedOK() ];
     if (firstResponder) {
-        actions = [actions arrayByAddingObject:NSLocalizedStringWithDefaultValue(@"ShellIntegration.InstallNow", nil, [NSBundle mainBundle], @"Install Now", @"Button to install shell integration immediately")];
+        actions = [actions arrayByAddingObject:[iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"ShellIntegration.InstallNow", nil, [NSBundle mainBundle], @"Install Now", @"Button to install shell integration immediately")]];
     }
     [iTermWarning asyncShowWarningWithTitle:body
                                     actions:actions

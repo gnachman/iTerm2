@@ -166,6 +166,8 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         // dismiss path is rememberable; "Reinstall" always
         // requires a fresh click.
         warning.doNotRememberLabels = [reinstall]
+        // Reinstall opens the onboarding window on this Mac.
+        warning.notOfferedRemotelyLabels = [reinstall]
         warning.runModalAsync { [weak self] selection, _ in
             self?.alertInFlight = false
             if selection == .kiTermWarningSelection0 {

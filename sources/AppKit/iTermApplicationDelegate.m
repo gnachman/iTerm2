@@ -2438,7 +2438,7 @@ static iTermKeyEventReplayer *gReplayer;
     if (age > 30 * 24 * 60 * 60) {
         iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"NightlyBuild.OldWarning", nil, [NSBundle mainBundle], @"This nightly build is over 30 days old. Consider updating soon: you may be suffering from awful bugs in blissful ignorance.", @"Warning that the nightly build is over 30 days old")
-                                   actions:@[ NSLocalizedStringWithDefaultValue(@"NightlyBuild.TakeMyChances", nil, [NSBundle mainBundle], @"I’ll Take My Chances", @"Button to dismiss the old-nightly-build warning without updating"), NSLocalizedStringWithDefaultValue(@"NightlyBuild.UpdateNow", nil, [NSBundle mainBundle], @"Update Now", @"Button to update now") ]
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"NightlyBuild.TakeMyChances", nil, [NSBundle mainBundle], @"I’ll Take My Chances", @"Button to dismiss the old-nightly-build warning without updating"), [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"NightlyBuild.UpdateNow", nil, [NSBundle mainBundle], @"Update Now", @"Button to update now")] ]
                                 identifier:@"NoSyncVeryOldNightlyBuildWarning"
                                silenceable:kiTermWarningTypeSilenceableForOneMonth
                                     window:nil];

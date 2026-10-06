@@ -516,7 +516,7 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
         NSString *guid = [self stringForKey:KEY_GUID] ?: @"";
         const iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.UTF8MismatchWarning", nil, [NSBundle mainBundle], @"Warning! This profile uses a custom locale that doesn't use UTF-8 as its character encoding, but your profile *is* using UTF-8. This can cause error messages and non-ASCII text to appear wrong.", @"Warning shown when a custom locale does not use UTF-8 but the profile does")
-                                   actions:@[ NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.ChangeLocaleAction", nil, [NSBundle mainBundle], @"Change Locale", @"Button to change the custom locale"), NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.KeepLocaleAction", nil, [NSBundle mainBundle], @"Keep This Locale", @"Button to keep the current custom locale")]
+                                   actions:@[ [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.ChangeLocaleAction", nil, [NSBundle mainBundle], @"Change Locale", @"Button to change the custom locale")], NSLocalizedStringWithDefaultValue(@"ProfilesTerminal.KeepLocaleAction", nil, [NSBundle mainBundle], @"Keep This Locale", @"Button to keep the current custom locale")]
                                  accessory:nil
                                 identifier:[@"NoSyncUTF8Mismatch_" stringByAppendingString:guid]
                                silenceable:kiTermWarningTypePermanentlySilenceable

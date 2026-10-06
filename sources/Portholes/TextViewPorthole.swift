@@ -476,7 +476,8 @@ extension TextViewPorthole: NSTextViewDelegate {
         }
         if url.scheme == "file" {
             if iTermWarning.show(withTitle: String(localized: "TextViewPorthole.OpenFileConfirmation", defaultValue: "Open file at \(url.path)?", comment: "Confirmation prompt before opening a file from a Markdown link"),
-                                 actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
+                                 // OK opens the file in its default app on this Mac.
+                                 actions: [iTermWarningAction.localOnlyAction(withLabel: iTermLocalizedOK()), iTermLocalizedCancel()],
                                  accessory: nil,
                                  identifier: "NoSyncOpenFileFromMarkdownLink",
                                  silenceable: .kiTermWarningTypePermanentlySilenceable,
@@ -486,7 +487,8 @@ extension TextViewPorthole: NSTextViewDelegate {
             }
         } else {
             if iTermWarning.show(withTitle: String(localized: "TextViewPorthole.OpenURLConfirmation", defaultValue: "Open URL \(url.absoluteString)?", comment: "Confirmation prompt before opening a URL from a Markdown link"),
-                                 actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
+                                 // OK opens the URL in its default app on this Mac.
+                                 actions: [iTermWarningAction.localOnlyAction(withLabel: iTermLocalizedOK()), iTermLocalizedCancel()],
                                  accessory: nil,
                                  identifier: "NoSyncOpenURLFromMarkdownLink",
                                  silenceable: .kiTermWarningTypePermanentlySilenceable,

@@ -1253,6 +1253,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     warning.heading = NSLocalizedStringWithDefaultValue(@"ProfilePreferences.ChangesWillBeLost", nil, [NSBundle mainBundle], @"Changes Will Be Lost", @"Heading for the dynamic profile warning");
     warning.window = self.view.window;
     warning.doNotRememberLabels = @[ revealInFinder ];
+    warning.notOfferedRemotelyLabels = @[ revealInFinder ];
     const iTermWarningSelection selection = [warning runModal];
     switch (selection) {
         case kiTermWarningSelection0:

@@ -334,7 +334,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
 
     func browserViewController(_ controller: iTermBrowserViewController, openFile file: String) {
         guard iTermWarning.show(withTitle: String(localized: "PTYSessionBrowser.OKToOpenFile", defaultValue: "OK to open this file?\n\(file)", comment: "Confirmation prompt before opening a file; placeholder is the file path"),
-                                actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
+                                actions: [iTermWarningAction.localOnlyAction(withLabel: iTermLocalizedOK()), iTermLocalizedCancel()],
                                 accessory: nil,
                                 identifier: nil,
                                 silenceable: .kiTermWarningTypePersistent,

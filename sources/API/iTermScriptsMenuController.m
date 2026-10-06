@@ -971,6 +971,7 @@ NS_ASSUME_NONNULL_BEGIN
         warning.warningType = kiTermWarningTypeTemporarilySilenceable;
         warning.heading = NSLocalizedStringWithDefaultValue(@"ScriptsMenu.CannotRunHeading", nil, [NSBundle mainBundle], @"Cannot Run Script", @"Heading of the warning shown when a malformed script cannot be run");
         warning.doNotRememberLabels = @[ reveal ];
+        warning.notOfferedRemotelyLabels = @[ reveal ];
         iTermWarningSelection selection = [warning runModal];
         if (selection == kiTermWarningSelection1) {
             [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:fullPath] ]];
@@ -1269,6 +1270,7 @@ NS_ASSUME_NONNULL_BEGIN
         warning.identifier = @"NoSyncOpenNewPythonScriptInDefaultEditor";
         warning.warningType = kiTermWarningTypePermanentlySilenceable;
         warning.doNotRememberLabels = @[ showInFinder ];
+        warning.notOfferedRemotelyLabels = @[ showInFinder ];
         iTermWarningSelection selection = [warning runModal];
         if (selection == kiTermWarningSelection0) {
             [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:destinationTemplatePath]];
@@ -1476,7 +1478,7 @@ NS_ASSUME_NONNULL_BEGIN
         } else {
             const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.SpacesNotAllowedBody", nil, [NSBundle mainBundle], @"Scripts can't have space characters in their filenames.", @"Alert body shown when a script filename contains spaces")
                                                                                actions:@[ NSLocalizedStringWithDefaultValue(@"ScriptsMenu.UseUnderscore", nil, [NSBundle mainBundle], @"Use _ Instead of Space", @"Button to replace spaces with underscores in a script filename"),
-                                                                                          NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ChangeName", nil, [NSBundle mainBundle], @"Change Name", @"Button to change a script filename") ]
+                                                                                          [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"ScriptsMenu.ChangeName", nil, [NSBundle mainBundle], @"Change Name", @"Button to change a script filename")] ]
                                                                              accessory:nil
                                                                             identifier:nil
                                                                            silenceable:kiTermWarningTypePersistent

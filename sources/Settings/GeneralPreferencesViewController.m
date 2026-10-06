@@ -4128,7 +4128,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
-                               actions:@[ action, iTermLocalizedOK() ]
+                               actions:@[ [iTermWarningAction localOnlyActionWithLabel:action], iTermLocalizedOK() ]
                              accessory:nil
                             identifier:@"NoSyncWindowRestorationDisabled"
                            silenceable:kiTermWarningTypePersistent

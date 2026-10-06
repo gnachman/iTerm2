@@ -204,8 +204,12 @@ static NSInteger sWindowArrangementGeneration;
               offerExport:(BOOL)offerExport
                completion:(void (^)(NSString *name, iTermSavePanelItem *saveItem))completion {
     NSMutableArray<NSString *> *actions = [NSMutableArray arrayWithObject:iTermLocalizedOK()];
+    NSArray<NSString *> *localOnlyLabels = nil;
     if (offerExport) {
-        [actions addObject:NSLocalizedStringWithDefaultValue(@"WindowArrangements.SaveToFileButton", nil, [NSBundle mainBundle], @"Save to File with Contents…", @"Button to save a window arrangement to a file including its contents.")];
+        NSString *saveToFile = NSLocalizedStringWithDefaultValue(@"WindowArrangements.SaveToFileButton", nil, [NSBundle mainBundle], @"Save to File with Contents…", @"Button to save a window arrangement to a file including its contents.");
+        [actions addObject:saveToFile];
+        // Opens a save panel on the Mac.
+        localOnlyLabels = @[ saveToFile ];
     }
     [actions addObject:iTermLocalizedCancel()];
 
@@ -216,6 +220,7 @@ static NSInteger sWindowArrangementGeneration;
     warning.heading = prompt;
     warning.title = @"";
     warning.actionLabels = actions;
+    warning.notOfferedRemotelyLabels = localOnlyLabels;
     warning.cancelLabel = iTermLocalizedCancel();
     warning.warningType = kiTermWarningTypePersistent;
     warning.accessory = input;

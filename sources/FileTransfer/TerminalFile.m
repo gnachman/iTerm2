@@ -82,7 +82,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 - (BOOL)shouldPromptForDownloadLocationInWindow:(NSWindow *)window {
     const iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"TerminalFile.PromptTitle", nil, [NSBundle mainBundle], @"Where would you like to save this download?", @"Title of the dialog asking where to save a terminal-initiated download")
-                                   actions:@[ NSLocalizedStringWithDefaultValue(@"TerminalFile.SaveToDownloads", nil, [NSBundle mainBundle], @"Save to Downloads", @"Button to save a download to the Downloads folder"), NSLocalizedStringWithDefaultValue(@"TerminalFile.Choose", nil, [NSBundle mainBundle], @"Choose…", @"Button to choose a custom download destination") ]
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"TerminalFile.SaveToDownloads", nil, [NSBundle mainBundle], @"Save to Downloads", @"Button to save a download to the Downloads folder"), [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"TerminalFile.Choose", nil, [NSBundle mainBundle], @"Choose…", @"Button to choose a custom download destination")] ]
                                  accessory:nil
                                 identifier:@"NoSyncPromptForDownloadLocation"
                                silenceable:kiTermWarningTypePermanentlySilenceable

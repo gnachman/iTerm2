@@ -456,6 +456,8 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     warning.warningType = kiTermWarningTypePermanentlySilenceable;
     warning.heading = NSLocalizedStringWithDefaultValue(@"APIHelper.PermissionsResetHeading", nil, [NSBundle mainBundle], @"Python API Permissions Reset", @"Heading when API permissions were reset");
     warning.doNotRememberLabels = @[ revealPreference ];
+    // Reveal Preference opens the Settings window on this Mac.
+    warning.notOfferedRemotelyLabels = @[ revealPreference ];
     const iTermWarningSelection selection = [warning runModal];
     if (selection == kiTermWarningSelection1) {
         [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyAPIAuthentication];
@@ -467,7 +469,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 + (BOOL)createNoAuthFile:(NSWindow *)window {
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"APIHelper.DisablePerAppAuthMessage", nil, [NSBundle mainBundle], @"Do you want to allow all apps running on this machine to use the Python API?\n\nThis will disable the check for Automation permission. If you agree, you’ll be prompted for administrator access to make the change.", @"Prompt asking whether to disable per-app API authentication")
-                               actions:@[ iTermLocalizedOK(), iTermLocalizedCancel(), NSLocalizedStringWithDefaultValue(@"General.MoreInfo", nil, [NSBundle mainBundle], @"More Info", @"More Info button") ]
+                               actions:@[ iTermLocalizedOK(), iTermLocalizedCancel(), [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"General.MoreInfo", nil, [NSBundle mainBundle], @"More Info", @"More Info button")] ]
                              accessory:nil
                             identifier:@"NoSyncRequireApplescriptAuth"
                            silenceable:kiTermWarningTypePersistent
@@ -502,7 +504,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     [self setEnabled:NO];
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"APIHelper.RemoveNoAuthFailedMessage", nil, [NSBundle mainBundle], @"Failed to remove the file “%1$@”: %2$@\n\nPlease remove this file manually to require Automation permission for the Python API.\n\nThe Python API has been disabled for your security.", @"Error message; first %@ is the file path, second %@ is the error description"), path, error.localizedDescription]
-                               actions:@[ iTermLocalizedOK(), NSLocalizedStringWithDefaultValue(@"APIHelper.RevealInFinder", nil, [NSBundle mainBundle], @"Reveal In Finder", @"Button to reveal a file in Finder") ]
+                               actions:@[ iTermLocalizedOK(), [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"APIHelper.RevealInFinder", nil, [NSBundle mainBundle], @"Reveal In Finder", @"Button to reveal a file in Finder")] ]
                              accessory:nil
                             identifier:@"NoSyncFailedToRemoveNoAuth"
                            silenceable:kiTermWarningTypePersistent
@@ -570,7 +572,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     NSString *traceback = error.localizedFailureReason;
     NSArray *actions = @[ iTermLocalizedOK() ];
     if (traceback) {
-        actions = [actions arrayByAddingObject:NSLocalizedStringWithDefaultValue(@"APIHelper.RevealInScriptConsole", nil, [NSBundle mainBundle], @"Reveal in Script Console", @"Button to reveal an error in the Script Console")];
+        actions = [actions arrayByAddingObject:[iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"APIHelper.RevealInScriptConsole", nil, [NSBundle mainBundle], @"Reveal in Script Console", @"Button to reveal an error in the Script Console")]];
     }
     NSString *connectionKey = error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
     iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:connectionKey];
@@ -1575,7 +1577,8 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"APIHelper.NoCookieSuffix", nil, [NSBundle mainBundle], @"%@\n\nAlthough you have chosen to allow connections automatically, this script has not presented a valid cookie.", @"Suffix appended when a script did not present a valid cookie; %@ is the base message"), message];
     }
 
-    NSArray<NSString *> *actions = @[ iTermLocalizedOK(), iTermLocalizedCancel(), NSLocalizedStringWithDefaultValue(@"General.MoreInfo", nil, [NSBundle mainBundle], @"More Info", @"More Info button") ];
+    // Labels, plus an action for More Info, which opens a web page on this Mac.
+    NSArray *actions = @[ iTermLocalizedOK(), iTermLocalizedCancel(), [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"General.MoreInfo", nil, [NSBundle mainBundle], @"More Info", @"More Info button")] ];
     if (![iTermAdvancedSettingsModel setCookie]) {
         actions = [actions arrayByAddingObject:NSLocalizedStringWithDefaultValue(@"APIHelper.Always", nil, [NSBundle mainBundle], @"Always", @"Button to always allow API access")];
     }

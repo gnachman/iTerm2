@@ -37,7 +37,7 @@ class iTermAITermGatekeeper: NSObject {
         if !iTermAITermGatekeeper.pluginInstalled() {
             if !silent {
                 let selection = iTermWarning.show(withTitle: String(localized: "AITermGatekeeper.MustInstallPlugin", defaultValue: "You must install the AI plugin before you can use this feature.", comment: "Warning shown when the AI plugin is not installed"),
-                                                  actions: [String(localized: "AITermGatekeeper.RevealInSettings", defaultValue: "Reveal in Settings", comment: "Button that opens Settings to the relevant preference"), iTermLocalizedCancel()],
+                                                  actions: [iTermWarningAction.localOnlyAction(withLabel: String(localized: "AITermGatekeeper.RevealInSettings", defaultValue: "Reveal in Settings", comment: "Button that opens Settings to the relevant preference")), iTermLocalizedCancel()],
                                                   accessory: nil,
                                                   identifier: nil,
                                                   silenceable: .kiTermWarningTypePersistent,
@@ -52,7 +52,7 @@ class iTermAITermGatekeeper: NSObject {
         if !SecureUserDefaults.instance.enableAI.value {
             if !silent {
                 let selection = iTermWarning.show(withTitle: String(localized: "AITermGatekeeper.MustEnableAI", defaultValue: "You must enable AI features in settings before you can use this feature.", comment: "Warning shown when AI features are not yet enabled in settings"),
-                                                  actions: [String(localized: "AITermGatekeeper.Reveal", defaultValue: "Reveal", comment: "Button that reveals the relevant setting"), iTermLocalizedCancel()],
+                                                  actions: [iTermWarningAction.localOnlyAction(withLabel: String(localized: "AITermGatekeeper.Reveal", defaultValue: "Reveal", comment: "Button that reveals the relevant setting")), iTermLocalizedCancel()],
                                                   accessory: nil,
                                                   identifier: nil,
                                                   silenceable: .kiTermWarningTypePersistent,

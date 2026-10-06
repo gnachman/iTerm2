@@ -42,6 +42,11 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 + (instancetype)warningActionWithLabel:(NSString *)label
                                  block:(iTermWarningActionBlock _Nullable)block;
 
+// An action that only makes sense at this Mac (see notOfferedRemotely): choosing it opens a file
+// panel, another window, Finder, a web page, or the like. Use it in place of a label string in the
+// `actions` array of the +showWarningWithTitle:... methods, which accept either.
++ (instancetype)localOnlyActionWithLabel:(NSString *)label;
+
 @property(nonatomic, copy) NSString *label;
 @property(nonatomic, copy) iTermWarningActionBlock _Nullable block;
 
@@ -172,6 +177,9 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
 // Show a warning, optionally with a suppression checkbox. It may not be shown
 // if it was previously suppressed.
+//
+// In all of these, each element of `actions` is a button: either its label (an NSString) or an
+// iTermWarningAction, such as one from +[iTermWarningAction localOnlyActionWithLabel:].
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
                                    identifier:(NSString * _Nullable)identifier

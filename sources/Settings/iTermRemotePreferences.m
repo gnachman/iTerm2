@@ -210,9 +210,10 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
     NSString *heading = NSLocalizedStringWithDefaultValue(@"RemotePreferences.FailedToLoadFromURL", nil, [NSBundle mainBundle], @"Failed to load settings from URL. Falling back to local copy.", @"Alert title when settings could not be loaded from a URL");
     NSString *body = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"RemotePreferences.HTTPRequestFailed", nil, [NSBundle mainBundle], @"HTTP request failed: %@", @"Alert detail describing an HTTP request failure; %@ is the error description"),
                       [error localizedDescription] ?: NSLocalizedStringWithDefaultValue(@"RemotePreferences.UnknownError", nil, [NSBundle mainBundle], @"unknown error", @"Fallback text when the error description is unavailable")];
-    NSMutableArray<NSString *> *actions = [NSMutableArray array];
+    // Labels, or iTermWarningActions for buttons that only make sense at this Mac.
+    NSMutableArray *actions = [NSMutableArray array];
     [actions addObject:iTermLocalizedOK()];
-    [actions addObject:NSLocalizedStringWithDefaultValue(@"RemotePreferences.RevealInSettings", nil, [NSBundle mainBundle], @"Reveal in Settings", @"Button that reveals the relevant setting in Settings")];
+    [actions addObject:[iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"RemotePreferences.RevealInSettings", nil, [NSBundle mainBundle], @"Reveal in Settings", @"Button that reveals the relevant setting in Settings")]];
     if ([error.domain isEqual:NSURLErrorDomain] && error.code == NSURLErrorTimedOut) {
         [actions addObject:NSLocalizedStringWithDefaultValue(@"RemotePreferences.TryAgainWithoutTimeout", nil, [NSBundle mainBundle], @"Try Again Without Timeout", @"Button that retries loading without a timeout")];
     }

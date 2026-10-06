@@ -574,17 +574,20 @@ class LastPassUtils {
 
     // Returns true to show an open panel to locate it.
     private static func showCannotFindCLIMessage() -> Bool {
-        let selection = iTermWarning.show(withTitle: String(localized: "LastPass.CannotFindCLIMessage", defaultValue: "In order to use the LastPass integration, iTerm2 needs to know where to find the CLI app named “lpass”. Select Locate to provide its location.", comment: "Alert body when the LastPass CLI cannot be found"),
-                                          actions: [String(localized: "LastPass.Locate", defaultValue: "Locate", comment: "Button to locate the LastPass CLI"),
-                                                    iTermLocalizedCancel(),
-                                                    String(localized: "LastPass.Help", defaultValue: "Help", comment: "Help button")],
-                                          actionMapping: nil,
-                                          accessory: nil,
-                                          identifier: nil,
-                                          silenceable: .kiTermWarningTypePersistent,
-                                          heading: String(localized: "LastPass.CannotFindCLITitle", defaultValue: "Can’t Find LastPass CLI", comment: "Alert title when the LastPass CLI cannot be found"),
-                                          cancelLabel: iTermLocalizedCancel(),
-                                          window: nil)
+        let locate = String(localized: "LastPass.Locate", defaultValue: "Locate", comment: "Button to locate the LastPass CLI")
+        let help = String(localized: "LastPass.Help", defaultValue: "Help", comment: "Help button")
+        let warning = iTermWarning()
+        warning.heading = String(localized: "LastPass.CannotFindCLITitle", defaultValue: "Can’t Find LastPass CLI", comment: "Alert title when the LastPass CLI cannot be found")
+        warning.title = String(localized: "LastPass.CannotFindCLIMessage", defaultValue: "In order to use the LastPass integration, iTerm2 needs to know where to find the CLI app named “lpass”. Select Locate to provide its location.", comment: "Alert body when the LastPass CLI cannot be found")
+        warning.actionLabels = [locate,
+                                iTermLocalizedCancel(),
+                                help]
+        // Locate opens a file panel on this Mac, which the companion app cannot operate. Help opens
+        // a web page in this Mac's browser.
+        warning.notOfferedRemotelyLabels = [locate, help]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        let selection = warning.runModal()
         switch selection {
         case .kiTermWarningSelection0:
             return true

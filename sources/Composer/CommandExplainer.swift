@@ -73,7 +73,8 @@ class CommandExplainer: NSObject {
             return
         }
         let selection = iTermWarning.show(withTitle: String(localized: "CommandExplainer.OpenConfirmationMessage", defaultValue: "This will open \(url.absoluteString) in \(String(describing: browserName)).", comment: "Confirmation shown before opening a command explanation in the browser; first placeholder is the URL, second is the browser name"),
-                                          actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
+                                          // OK opens the page in this Mac's browser.
+                                          actions: [iTermWarningAction.localOnlyAction(withLabel: iTermLocalizedOK()), iTermLocalizedCancel()],
                                           accessory: nil,
                                           identifier: "NoSyncExplainShell",
                                           silenceable: .kiTermWarningTypePermanentlySilenceable,

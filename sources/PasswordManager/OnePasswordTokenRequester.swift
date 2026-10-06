@@ -139,16 +139,17 @@ class OnePasswordUtils {
 
     // Returns true to show an open panel to locate it.
     private static func showCannotFindCLIMessage() -> Bool {
-        let selection = iTermWarning.show(withTitle: String(localized: "OnePassword.CannotFindMessage", defaultValue: "In order to use the 1Password integration, iTerm2 needs to know where to find the CLI app named “op”. It’s normally in /usr/local/bin. If you have installed it elsewhere, please select Locate to provide its location.", comment: "Explanation shown when the 1Password CLI cannot be found automatically"),
-                                          actions: [String(localized: "OnePassword.Locate", defaultValue: "Locate", comment: "Button that lets the user locate the 1Password CLI"),
-                                                    iTermLocalizedCancel()],
-                                          actionMapping: nil,
-                                          accessory: nil,
-                                          identifier: nil,
-                                          silenceable: .kiTermWarningTypePersistent,
-                                          heading: String(localized: "OnePassword.CannotFindTitle", defaultValue: "Can’t Find 1Password CLI", comment: "Title of an alert shown when the 1Password CLI cannot be found"),
-                                          cancelLabel: iTermLocalizedCancel(),
-                                          window: nil)
+        let locate = String(localized: "OnePassword.Locate", defaultValue: "Locate", comment: "Button that lets the user locate the 1Password CLI")
+        let warning = iTermWarning()
+        warning.heading = String(localized: "OnePassword.CannotFindTitle", defaultValue: "Can’t Find 1Password CLI", comment: "Title of an alert shown when the 1Password CLI cannot be found")
+        warning.title = String(localized: "OnePassword.CannotFindMessage", defaultValue: "In order to use the 1Password integration, iTerm2 needs to know where to find the CLI app named “op”. It’s normally in /usr/local/bin. If you have installed it elsewhere, please select Locate to provide its location.", comment: "Explanation shown when the 1Password CLI cannot be found automatically")
+        warning.actionLabels = [locate,
+                                iTermLocalizedCancel()]
+        // Locate opens a file panel on this Mac, which the companion app cannot operate.
+        warning.notOfferedRemotelyLabels = [locate]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        let selection = warning.runModal()
         return selection == .kiTermWarningSelection0
     }
 

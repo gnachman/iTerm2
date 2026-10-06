@@ -181,7 +181,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     DLog(@"Offer to pick an app to open %@", fullPath);
     const iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"LaunchServices.ChooseAppMessage", nil, [NSBundle mainBundle], @"Choose an application on your computer to open this file.", @"Alert message asking the user to choose an application to open a file")
-                                   actions:@[ NSLocalizedStringWithDefaultValue(@"LaunchServices.ChooseApplicationButton", nil, [NSBundle mainBundle], @"Choose Application…", @"Button that lets the user choose an application to open a file"), iTermLocalizedCancel() ]
+                                   actions:@[ [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"LaunchServices.ChooseApplicationButton", nil, [NSBundle mainBundle], @"Choose Application…", @"Button that lets the user choose an application to open a file")], iTermLocalizedCancel() ]
                              actionMapping:nil
                                  accessory:nil
                                 identifier:nil

@@ -295,7 +295,7 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
 
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
-                               actions:@[ iTermLocalizedOK(), NSLocalizedStringWithDefaultValue(@"MigrationHelper.LearnMore", nil, [NSBundle mainBundle], @"Learn More", @"Button to learn more about removing deprecated key mappings"), iTermLocalizedCancel() ]
+                               actions:@[ iTermLocalizedOK(), [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"MigrationHelper.LearnMore", nil, [NSBundle mainBundle], @"Learn More", @"Button to learn more about removing deprecated key mappings")], iTermLocalizedCancel() ]
                              accessory:nil
                             identifier:nil
                            silenceable:kiTermWarningTypePersistent

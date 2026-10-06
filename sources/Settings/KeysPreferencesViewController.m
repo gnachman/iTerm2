@@ -391,14 +391,17 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
         }];
         NSString *joinedNames = [names componentsJoinedWithOxfordComma];
         NSString *namesSentence = nil;
-        NSArray *actions = @[ iTermLocalizedOK(), iTermLocalizedCancel()];
+        // OK goes on to a sheet on the Settings window where a hotkey must be typed.
+        iTermWarningAction *const ok = [iTermWarningAction localOnlyActionWithLabel:iTermLocalizedOK()];
+        NSArray *actions = @[ ok, iTermLocalizedCancel()];
 
         iTermWarningSelection cancel = kiTermWarningSelection1;
         iTermWarningSelection edit = kItermWarningSelectionError;
 
         if (profileHotKeys.count == 1) {
             namesSentence = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeysPreferences.ExistingHotkeyProfileSingular", nil, [NSBundle mainBundle], @"You already have a Profile with a Hotkey Window named %@", @"Warning when one existing profile already has a hotkey window; %@ is the profile name"), joinedNames];
-            actions = @[ iTermLocalizedOK(), NSLocalizedStringWithDefaultValue(@"KeysPreferences.ConfigureExistingProfile", nil, [NSBundle mainBundle], @"Configure Existing Profile", @"Button to configure an existing hotkey window profile"), iTermLocalizedCancel()];
+            // Configure Existing Profile opens Settings to that profile's hotkey editor.
+            actions = @[ ok, [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"KeysPreferences.ConfigureExistingProfile", nil, [NSBundle mainBundle], @"Configure Existing Profile", @"Button to configure an existing hotkey window profile")], iTermLocalizedCancel()];
             edit = kiTermWarningSelection1;
             cancel = kiTermWarningSelection2;
         } else {

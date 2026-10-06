@@ -3426,7 +3426,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (lang && self.encoding == NSUTF8StringEncoding && ![lang containsString:@"UTF-8"]) {
         const iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.SusLocaleWarning", nil, [NSBundle mainBundle], @"Warning! This profile uses a custom locale that doesn't use UTF-8 as its character encoding, but your profile *is* using UTF-8. This can cause error messages and non-ASCII text to appear wrong.", @"Warning that a profile’s locale does not use UTF-8 while the profile does")
-                                   actions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.ChangeLocale", nil, [NSBundle mainBundle], @"Change Locale", @"Button that changes the locale"), NSLocalizedStringWithDefaultValue(@"PTYSession.KeepThisLocale", nil, [NSBundle mainBundle], @"Keep This Locale", @"Button that keeps the current locale")]
+                                   actions:@[ [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"PTYSession.ChangeLocale", nil, [NSBundle mainBundle], @"Change Locale", @"Button that changes the locale")], NSLocalizedStringWithDefaultValue(@"PTYSession.KeepThisLocale", nil, [NSBundle mainBundle], @"Keep This Locale", @"Button that keeps the current locale")]
                                  accessory:nil
                                 identifier:[@"NoSyncUTF8Mismatch_" stringByAppendingString:guid ?: @""]
                                silenceable:kiTermWarningTypePermanentlySilenceable
@@ -3581,7 +3581,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                     return;
                 }
                 const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.BrowserPluginMissingMessage", nil, [NSBundle mainBundle], @"A browser session failed to start because the iTerm2 Browser Plugin couldn’t be found.", @"Warning that a browser session could not start because the browser plugin is missing")
-                                           actions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.Download", nil, [NSBundle mainBundle], @"Download", @"Button that downloads a plugin"), iTermLocalizedCancel() ]
+                                           actions:@[ [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"PTYSession.Download", nil, [NSBundle mainBundle], @"Download", @"Button that downloads a plugin")], iTermLocalizedCancel() ]
                                          accessory:nil
                                         identifier:nil
                                        silenceable:kiTermWarningTypePersistent
@@ -10998,11 +10998,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         // "Reveal Setting" is a one-time navigation action and shouldn't be remembered.
         iTermWarning *warning = [[iTermWarning alloc] init];
         warning.title = NSLocalizedStringWithDefaultValue(@"PTYSession.SlowTmuxResponseBody", nil, [NSBundle mainBundle], @"It's taking a long time for tmux to respond. If this is a old or funky system it might expect newline rather than carriage return to end commands. You can adjust the line terminator used by tmux integration in Settings.", @"Warning that tmux is slow to respond and how to adjust the line terminator setting");
-        warning.actionLabels = @[ iTermLocalizedOK(), NSLocalizedStringWithDefaultValue(@"PTYSession.RevealSetting", nil, [NSBundle mainBundle], @"Reveal Setting", @"Button that reveals a setting") ];
+        NSString *const revealSetting = NSLocalizedStringWithDefaultValue(@"PTYSession.RevealSetting", nil, [NSBundle mainBundle], @"Reveal Setting", @"Button that reveals a setting");
+        warning.actionLabels = @[ iTermLocalizedOK(), revealSetting ];
+        // Opens the Settings window.
+        warning.notOfferedRemotelyLabels = @[ revealSetting ];
         warning.identifier = @"NoSyncTmuxHung";
         warning.warningType = kiTermWarningTypePermanentlySilenceable;
         warning.heading = NSLocalizedStringWithDefaultValue(@"PTYSession.SlowTmuxResponseHeading", nil, [NSBundle mainBundle], @"Slow tmux Response", @"Heading for a warning that tmux is slow to respond");
-        warning.doNotRememberLabels = @[ NSLocalizedStringWithDefaultValue(@"PTYSession.RevealSetting", nil, [NSBundle mainBundle], @"Reveal Setting", @"Button that reveals a setting") ];
+        warning.doNotRememberLabels = @[ revealSetting ];
         const iTermWarningSelection selection = [warning runModal];
         if (selection == 1) {
             [self revealProfileSettingWithKey:KEY_TMUX_NEWLINE];
@@ -11353,7 +11356,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)tmuxDoubleAttachForSessionGUID:(NSString *)sessionGUID {
-    NSArray<NSString *> *actions = @[ iTermLocalizedOK(), NSLocalizedStringWithDefaultValue(@"PTYSession.Reveal", nil, [NSBundle mainBundle], @"Reveal", @"Button that reveals a session"), NSLocalizedStringWithDefaultValue(@"PTYSession.ForceDetachOther", nil, [NSBundle mainBundle], @"Force Detach Other", @"Button that forcibly detaches another tmux client") ];
+    // Reveal shows the attached session, or the tmux dashboard, on the Mac.
+    NSArray *actions = @[ iTermLocalizedOK(), [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"PTYSession.Reveal", nil, [NSBundle mainBundle], @"Reveal", @"Button that reveals a session")], NSLocalizedStringWithDefaultValue(@"PTYSession.ForceDetachOther", nil, [NSBundle mainBundle], @"Force Detach Other", @"Button that forcibly detaches another tmux client") ];
     TmuxController *controller = [[TmuxControllerRegistry sharedInstance] tmuxControllerWithSessionGUID:sessionGUID];
     if (!controller) {
         actions = @[ iTermLocalizedOK() ];
@@ -17019,8 +17023,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
     warning.heading = NSLocalizedStringWithDefaultValue(@"PTYSession.Alert", nil, [NSBundle mainBundle], @"Alert", @"Notification title for a session alert");
     warning.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.MarkSet", nil, [NSBundle mainBundle], @"Mark set in session “%@.”", @"Alert body reporting a mark was set; placeholder is the session name"), [self name]];
-    warning.actionLabels = @[ NSLocalizedStringWithDefaultValue(@"PTYSession.Reveal", nil, [NSBundle mainBundle], @"Reveal", @"Button that reveals a session"),
+    NSString *const reveal = NSLocalizedStringWithDefaultValue(@"PTYSession.Reveal", nil, [NSBundle mainBundle], @"Reveal", @"Button that reveals a session");
+    warning.actionLabels = @[ reveal,
                               iTermLocalizedOK() ];
+    warning.notOfferedRemotelyLabels = @[ reveal ];
     warning.warningType = kiTermWarningTypePersistent;
     warning.sessionGuid = self.stableID;
     if ([warning runModal] == kiTermWarningSelection0) {
@@ -19696,7 +19702,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     } else {
         iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.NotAtCommandPrompt", nil, [NSBundle mainBundle], @"It looks like you're not at a command prompt.", @"Warning shown before installing shell integration when the user may not be at a prompt")
-                                   actions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.RunInstallerAnyway", nil, [NSBundle mainBundle], @"Run Installer Anyway", @"Button that runs the installer despite a warning"), iTermLocalizedCancel() ]
+                                   actions:@[ [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"PTYSession.RunInstallerAnyway", nil, [NSBundle mainBundle], @"Run Installer Anyway", @"Button that runs the installer despite a warning")], iTermLocalizedCancel() ]
                                 identifier:nil
                                silenceable:kiTermWarningTypePersistent
                                     window:self.view.window];
@@ -25459,9 +25465,11 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
         iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
         warning.heading = message ?: @"";
         warning.title = @"";
+        NSString *const showSession = NSLocalizedStringWithDefaultValue(@"PTYSession.ShowSession", nil, [NSBundle mainBundle], @"Show Session", @"Button that reveals a session");
         warning.actionLabels = @[ iTermLocalizedOK(),
-                                  NSLocalizedStringWithDefaultValue(@"PTYSession.ShowSession", nil, [NSBundle mainBundle], @"Show Session", @"Button that reveals a session"),
+                                  showSession,
                                   NSLocalizedStringWithDefaultValue(@"PTYSession.DisableThisAlert", nil, [NSBundle mainBundle], @"Disable This Alert", @"Button that disables a recurring alert") ];
+        warning.notOfferedRemotelyLabels = @[ showSession ];
         warning.warningType = kiTermWarningTypePersistent;
         warning.sessionGuid = weakSelf.stableID;
         switch ([warning runModal]) {
