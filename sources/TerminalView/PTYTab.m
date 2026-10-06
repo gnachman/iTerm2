@@ -102,6 +102,17 @@ static NSString* TAB_ARRANGEMENT_GROUP_NAME = @"Tab Group Name";
 static NSString* TAB_ARRANGEMENT_GROUP_COLOR = @"Tab Group Color";
 static NSString* TAB_ARRANGEMENT_GROUP_COLLAPSED = @"Tab Group Collapsed";
 
+// Floating panes are an additive sibling of the tiled tree. Older builds ignore them.
+NSString *const TAB_ARRANGEMENT_FLOATING_PANES = @"Floating Panes";  // array, back to front
+static NSString *const TAB_ARRANGEMENT_FLOATING_PANES_HIDDEN = @"Floating Panes Hidden";
+// Keys of each floating pane record. Frames are in the container's visual coordinates (top left
+// origin, y down), so they do not depend on the container's flippedness.
+static NSString *const FLOATING_PANE_FRAME = @"Frame";
+static NSString *const FLOATING_PANE_CONTAINER_SIZE = @"Container Size";
+static NSString *const FLOATING_PANE_DESIRED_GRID_SIZE = @"Desired Grid Size";  // only if shrunk to fit
+static NSString *const FLOATING_PANE_SAVED_FRAME = @"Saved Frame";  // only while maximized
+NSString *const FLOATING_PANE_NODE = @"Node";  // same shape as a node in the tiled tree
+
 static const BOOL USE_THIN_SPLITTERS = YES;
 
 static void SwapSize(NSSize* size) {
@@ -335,8 +346,62 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+// The nodes of the floating panes in a tab arrangement. Each has the shape of a tiled tree node.
++ (NSArray<NSDictionary *> *)floatingNodesInArrangement:(NSDictionary *)arrangement {
+    NSMutableArray<NSDictionary *> *nodes = [NSMutableArray array];
+    for (NSDictionary *record in [NSArray castFrom:arrangement[TAB_ARRANGEMENT_FLOATING_PANES]]) {
+        NSDictionary *node = [NSDictionary castFrom:[NSDictionary castFrom:record][FLOATING_PANE_NODE]];
+        if (node) {
+            [nodes addObject:node];
+        }
+    }
+    return nodes;
+}
+
+// A copy of the arrangement with `transform` applied to the tiled root and to each float's node.
++ (NSDictionary *)arrangement:(NSDictionary *)arrangement
+            transformingNodes:(NSDictionary *(^NS_NOESCAPE)(NSDictionary *node))transform {
+    NSMutableDictionary *result = [arrangement mutableCopy];
+    result[TAB_ARRANGEMENT_ROOT] = transform(arrangement[TAB_ARRANGEMENT_ROOT]);
+    NSArray *records = [NSArray castFrom:arrangement[TAB_ARRANGEMENT_FLOATING_PANES]];
+    if (records) {
+        result[TAB_ARRANGEMENT_FLOATING_PANES] = [records mapWithBlock:^id(id record) {
+            NSDictionary *dict = [NSDictionary castFrom:record];
+            NSDictionary *node = [NSDictionary castFrom:dict[FLOATING_PANE_NODE]];
+            if (!node) {
+                return record;
+            }
+            NSMutableDictionary *copy = [dict mutableCopy];
+            copy[FLOATING_PANE_NODE] = transform(node) ?: node;
+            return copy;
+        }];
+    }
+    return result;
+}
+
++ (NSDictionary *)arrangementWithoutFloatingPanes:(NSDictionary *)arrangement {
+    NSMutableDictionary *result = [arrangement mutableCopy];
+    [result removeObjectForKey:TAB_ARRANGEMENT_FLOATING_PANES];
+    [result removeObjectForKey:TAB_ARRANGEMENT_FLOATING_PANES_HIDDEN];
+    return result;
+}
+
+// The record of the float holding the session with `guid`, or nil.
++ (NSDictionary *)floatingPaneRecordForSessionWithGUID:(NSString *)guid inArrangement:(NSDictionary *)arrangement {
+    for (NSDictionary *record in [NSArray castFrom:arrangement[TAB_ARRANGEMENT_FLOATING_PANES]]) {
+        NSDictionary *node = [NSDictionary castFrom:[NSDictionary castFrom:record][FLOATING_PANE_NODE]];
+        if ([[PTYSession guidInArrangement:node[TAB_ARRANGEMENT_SESSION]] isEqualToString:guid]) {
+            return record;
+        }
+    }
+    return nil;
+}
+
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
     [self _recursiveRegisterSessionsInArrangement:arrangement[TAB_ARRANGEMENT_ROOT]];
+    for (NSDictionary *node in [self floatingNodesInArrangement:arrangement]) {
+        [self _recursiveRegisterSessionsInArrangement:node];
+    }
 }
 
 + (void)registerBuiltInFunctions {
@@ -1764,6 +1829,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame {
+    iTermFloatingPaneView *pane = [self installFloatingSession:session outlineFrame:frame];
+    // The grid is canonical; derive it from the requested frame now that the session has its title
+    // bar, then the frame from the grid.
+    [iTermFloatingPaneLayout fitFloatingPane:pane session:session toOutlineFrame:frame];
+    [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
+}
+
+- (iTermFloatingPaneView *)installFloatingSession:(PTYSession *)session outlineFrame:(NSRect)frame {
     const NSSize splitViewSize = [iTermFloatingPaneView splitViewSizeForOutlineSize:frame.size];
     PTYSplitView *splitView = [[PTYSplitView alloc] initWithFrame:NSMakeRect(0, 0, splitViewSize.width, splitViewSize.height)];
     if (USE_THIN_SPLITTERS) {
@@ -1787,10 +1860,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:nil];
     [self numberOfSessionsDidChange];
     [self updatePaneTitles];
-    // The grid is canonical; derive it from the requested frame now that the session has its title
-    // bar, then the frame from the grid.
-    [iTermFloatingPaneLayout fitFloatingPane:pane session:session toOutlineFrame:frame];
-    [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
+    return pane;
 }
 
 - (BOOL)floatingPanesHidden {
@@ -3958,8 +4028,30 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 + (void)openPartialAttachmentsForArrangement:(NSDictionary *)arrangement
                                   completion:(void (^)(NSDictionary *))completion {
-    [self _recursiveOpenPartialAttachments:arrangement[TAB_ARRANGEMENT_ROOT]
-                                completion:completion];
+    NSArray<NSDictionary *> *floatingNodes = [self floatingNodesInArrangement:arrangement];
+    if (floatingNodes.count == 0) {
+        [self _recursiveOpenPartialAttachments:arrangement[TAB_ARRANGEMENT_ROOT]
+                                    completion:completion];
+        return;
+    }
+    // Without the floats, their processes would not be reattached: each float would start fresh
+    // and its old process would be adopted as an orphan.
+    NSArray<NSDictionary *> *nodes = [@[ arrangement[TAB_ARRANGEMENT_ROOT] ?: @{} ] arrayByAddingObjectsFromArray:floatingNodes];
+    __block NSDictionary *result = @{};
+    NSObject *lock = [[NSObject alloc] init];
+    dispatch_group_t group = dispatch_group_create();
+    for (NSDictionary *node in nodes) {
+        dispatch_group_enter(group);
+        [self _recursiveOpenPartialAttachments:node completion:^(NSDictionary *dict) {
+            @synchronized(lock) {
+                result = [result dictionaryByMergingDictionary:[dict copy]];
+            }
+            dispatch_group_leave(group);
+        }];
+    }
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        completion(result);
+    });
 }
 
 // reservedTabGUIDs gives GUIDs of other tabs which are not reachable through
@@ -4014,6 +4106,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                  forObjectType:objectType
                                             partialAttachments:partialAttachments
                                                        options:options]];
+    PTYSession *activeFloat = [theTab restoreFloatingPanesFromArrangement:arrangement
+                                                               sessionMap:sessionMap
+                                                       partialAttachments:partialAttachments
+                                                                  options:options];
+    if (activeFloat) {
+        [theTab setActiveSession:activeFloat];
+    }
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
     theTab->_pinned = [arrangement[TAB_ARRANGEMENT_PINNED] boolValue];
     theTab.tabGroupID = [arrangement[TAB_ARRANGEMENT_GROUP_ID] nilIfNull];
@@ -4038,62 +4137,69 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 + (BOOL)arrangement:(NSDictionary *)arrangement
          passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure {
-    return [PTYTab recursiveArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT] passesTest:closure];
+    if ([PTYTab recursiveArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT] passesTest:closure]) {
+        return YES;
+    }
+    for (NSDictionary *node in [self floatingNodesInArrangement:arrangement]) {
+        if ([PTYTab recursiveArrangementNode:node passesTest:closure]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 + (NSDictionary *)modifiedArrangement:(NSDictionary *)arrangement
                               mutator:(NSDictionary *(^)(NSDictionary *))mutator {
-    NSDictionary *newRoot = [PTYTab recursiveModifiedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
-                                                             mutator:mutator];
-    NSMutableDictionary *result = [arrangement mutableCopy];
-    result[TAB_ARRANGEMENT_ROOT] = newRoot;
-    return result;
+    return [self arrangement:arrangement transformingNodes:^NSDictionary *(NSDictionary *node) {
+        return [PTYTab recursiveModifiedArrangementNode:node mutator:mutator];
+    }];
 }
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
              replacingProfileWithGUID:(NSString *)badGuid
                           withProfile:(Profile *)goodProfile {
-    NSDictionary *newRoot = [PTYTab recursiveRepairedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
-                                            replacingProfileWithGUID:badGuid
-                                                         withProfile:goodProfile];
-    NSMutableDictionary *result = [arrangement mutableCopy];
-    result[TAB_ARRANGEMENT_ROOT] = newRoot;
-    return result;
+    return [self arrangement:arrangement transformingNodes:^NSDictionary *(NSDictionary *node) {
+        return [PTYTab recursiveRepairedArrangementNode:node
+                               replacingProfileWithGUID:badGuid
+                                            withProfile:goodProfile];
+    }];
 }
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
      replacingOldCWDOfSessionWithGUID:(NSString *)guid
                            withOldCWD:(NSString *)replacementOldCWD {
-    NSDictionary *newRoot = [PTYTab recursiveRepairedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
-                                    replacingOldCWDOfSessionWithGUID:guid
-                                                          withOldCWD:replacementOldCWD];
-    NSMutableDictionary *result = [arrangement mutableCopy];
-    result[TAB_ARRANGEMENT_ROOT] = newRoot;
-    return result;
+    return [self arrangement:arrangement transformingNodes:^NSDictionary *(NSDictionary *node) {
+        return [PTYTab recursiveRepairedArrangementNode:node
+                       replacingOldCWDOfSessionWithGUID:guid
+                                             withOldCWD:replacementOldCWD];
+    }];
 }
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
                        profileMutator:(Profile *(^)(Profile *))profileMutator {
-    NSDictionary *newRoot = [PTYTab recursiveRepairedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
-                                                      profileMutator:profileMutator];
-    NSMutableDictionary *result = [arrangement mutableCopy];
-    result[TAB_ARRANGEMENT_ROOT] = newRoot;
-    return result;
+    return [self arrangement:arrangement transformingNodes:^NSDictionary *(NSDictionary *node) {
+        return [PTYTab recursiveRepairedArrangementNode:node profileMutator:profileMutator];
+    }];
 }
 
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
                   settingCustomLocale:(NSString *)lang {
-    NSDictionary *newRoot = [PTYTab recursiveRepairedArrangementNode:arrangement[TAB_ARRANGEMENT_ROOT]
-                                                 settingCustomLocale:lang];
-    NSMutableDictionary *result = [arrangement mutableCopy];
-    result[TAB_ARRANGEMENT_ROOT] = newRoot;
-    return result;
+    return [self arrangement:arrangement transformingNodes:^NSDictionary *(NSDictionary *node) {
+        return [PTYTab recursiveRepairedArrangementNode:node settingCustomLocale:lang];
+    }];
 }
 
 + (NSDictionary *)arrangementForSessionWithGUID:(NSString *)sessionGUID
                                   inArrangement:(NSDictionary *)arrangement {
-    return [PTYTab recursiveFindSessionArrangementWithGUID:sessionGUID
-                                                      node:arrangement[TAB_ARRANGEMENT_ROOT]];
+    NSDictionary *found = [PTYTab recursiveFindSessionArrangementWithGUID:sessionGUID
+                                                                    node:arrangement[TAB_ARRANGEMENT_ROOT]];
+    for (NSDictionary *node in [self floatingNodesInArrangement:arrangement]) {
+        if (found) {
+            break;
+        }
+        found = [PTYTab recursiveFindSessionArrangementWithGUID:sessionGUID node:node];
+    }
+    return found;
 }
 
 // This can only be used in conjunction with
@@ -4375,7 +4481,7 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
         DLog(@"In screenshot mode - encoding live session instead of synthetic");
         sessionToEncode = sessionToEncode.liveSession;
     }
-    return [PTYTab encodeWithContents:contents
+    const BOOL ok = [PTYTab encodeWithContents:contents
                        constructIdMap:constructIdMap
                               encoder:encoder
                               options:options
@@ -4404,6 +4510,150 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                             }
                             return session;
                         }];
+    if (!ok) {
+        return NO;
+    }
+    return [self encodeFloatingPanesWithContents:contents
+                                         encoder:encoder
+                                         options:options
+                                   activeSession:sessionToEncode];
+}
+
+// Floats are encoded live, also while the tab is maximized, since they are never part of the
+// maximize snapshot. Omitted when encoding a single session.
+- (BOOL)encodeFloatingPanesWithContents:(BOOL)contents
+                                encoder:(id<iTermEncoderAdapter>)encoder
+                                options:(NSDictionary *)options
+                          activeSession:(PTYSession *)activeSession {
+    if (options[PTYTabArrangementOptionsOnlySessionID] != nil || _floatingPanes.count == 0) {
+        return YES;
+    }
+    encoder[TAB_ARRANGEMENT_FLOATING_PANES_HIDDEN] = @(_floatingPanesHidden);
+    PTYSession *(^sessionFinder)(SessionView *) = ^PTYSession *(SessionView *sessionView) {
+        PTYSession *session = [self sessionForSessionView:sessionView];
+        return session.liveSession ?: session;
+    };
+    // Keyed by session so the graph encoder can diff the array.
+    NSMutableArray<NSString *> *identifiers = [NSMutableArray array];
+    NSMutableDictionary<NSString *, iTermFloatingPaneView *> *panes = [NSMutableDictionary dictionary];
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        NSString *identifier = sessionFinder(pane.sessionView).stringUniqueIdentifier;
+        if (identifier.length == 0 || panes[identifier]) {
+            continue;
+        }
+        [identifiers addObject:identifier];
+        panes[identifier] = pane;
+    }
+    const NSSize containerSize = _containerView.bounds.size;
+    [encoder encodeArrayWithKey:TAB_ARRANGEMENT_FLOATING_PANES
+                           identifiers:identifiers
+                            generation:iTermGenerationAlwaysEncode
+                                 block:^BOOL(id<iTermEncoderAdapter> _Nonnull encoder,
+                                             NSInteger i,
+                                             NSString * _Nonnull identifier,
+                                             BOOL *stop) {
+        iTermFloatingPaneView *pane = panes[identifier];
+        encoder[FLOATING_PANE_FRAME] = [PTYTab frameToDict:[iTermFloatingPaneLayout visualOutlineFrameOfFloatingPane:pane]];
+        encoder[FLOATING_PANE_CONTAINER_SIZE] = [PTYTab frameToDict:NSMakeRect(0, 0, containerSize.width, containerSize.height)];
+        NSDictionary *desiredGrid = [iTermFloatingPaneLayout desiredGridDictionaryOfFloatingPane:pane];
+        if (desiredGrid) {
+            encoder[FLOATING_PANE_DESIRED_GRID_SIZE] = desiredGrid;
+        }
+        if (pane.isMaximized) {
+            encoder[FLOATING_PANE_SAVED_FRAME] = [PTYTab frameToDict:[iTermFloatingPaneLayout visualFrameBeforeMaximizingOfFloatingPane:pane]];
+        }
+        return [encoder encodeDictionaryWithKey:FLOATING_PANE_NODE
+                                     generation:iTermGenerationAlwaysEncode
+                                          block:^BOOL(id<iTermEncoderAdapter> _Nonnull encoder) {
+            return [PTYTab _recursiveEncodeArrangementForView:pane.sessionView
+                                                        idMap:nil
+                                                  isMaximized:NO
+                                                     contents:contents
+                                                      encoder:encoder
+                                                      options:options
+                                                activeSession:activeSession
+                                            sessionViewFinder:^SessionView *(NSString *guid) {
+                return [self sessionViewWithGUID:guid];
+            }
+                                                sessionFinder:sessionFinder];
+        }];
+    }];
+    return YES;
+}
+
+// Undo close or disinter of a float: put it back where the arrangement says it was, in front, with
+// no rebuild of the tiled layout.
+- (void)addRevivedFloatingSession:(PTYSession *)session fromArrangement:(NSDictionary *)arrangement {
+    NSDictionary *record = [PTYTab floatingPaneRecordForSessionWithGUID:session.guid inArrangement:arrangement];
+    const NSRect frame = [PTYTab dictToFrame:record[FLOATING_PANE_FRAME]];
+    const NSSize containerSize = [PTYTab dictToFrame:record[FLOATING_PANE_CONTAINER_SIZE]].size;
+    iTermFloatingPaneView *pane = [self installFloatingSession:session outlineFrame:frame];
+    [iTermFloatingPaneLayout setRestoredPlacementOfFloatingPane:pane
+                                                    visualFrame:frame
+                                                  containerSize:containerSize
+                                                    desiredGrid:[NSDictionary castFrom:record[FLOATING_PANE_DESIRED_GRID_SIZE]]
+                                    visualFrameBeforeMaximizing:NSZeroRect];
+    [iTermFloatingPaneLayout refitFloatingPane:pane session:session];
+    [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
+    [self setActiveSession:session];
+}
+
+// Restores the floats recorded in a tab arrangement. Returns the active session if it is one of
+// them.
+- (PTYSession *)restoreFloatingPanesFromArrangement:(NSDictionary *)arrangement
+                                         sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
+                                 partialAttachments:(NSDictionary *)partialAttachments
+                                            options:(NSDictionary *)options {
+    if (self.isTmuxTab) {
+        return nil;
+    }
+    PTYSession *active = nil;
+    for (NSDictionary *record in [NSArray castFrom:arrangement[TAB_ARRANGEMENT_FLOATING_PANES]]) {
+        NSDictionary *node = [NSDictionary castFrom:record[FLOATING_PANE_NODE]];
+        if (![node[TAB_ARRANGEMENT_VIEW_TYPE] isEqual:VIEW_TYPE_SESSIONVIEW]) {
+            // Splits inside a float are not supported yet.
+            DLog(@"Skip floating pane record without a session node: %@", record);
+            continue;
+        }
+        NSMutableArray<PTYSession *> *revived = [NSMutableArray array];
+        NSView *view = [PTYTab _recursiveRestoreSplitters:node
+                                                fromIdMap:nil
+                                               sessionMap:sessionMap
+                                          revivedSessions:revived];
+        if (![view isKindOfClass:[SessionView class]]) {
+            continue;
+        }
+        for (PTYSession *session in revived) {
+            [self.viewToSessionMap setObject:session forKey:session.view];
+        }
+        PTYSession *maybeActive = [self _recursiveRestoreSessions:node
+                                                            named:nil
+                                                           atNode:view
+                                                            inTab:self
+                                                    forObjectType:iTermPaneObject
+                                               partialAttachments:partialAttachments
+                                                          options:options];
+        PTYSession *session = [self sessionForSessionView:(SessionView *)view];
+        if (!session) {
+            continue;
+        }
+        const NSRect frame = [PTYTab dictToFrame:record[FLOATING_PANE_FRAME]];
+        const NSSize containerSize = [PTYTab dictToFrame:record[FLOATING_PANE_CONTAINER_SIZE]].size;
+        iTermFloatingPaneView *pane = [self installFloatingSession:session outlineFrame:frame];
+        [iTermFloatingPaneLayout setRestoredPlacementOfFloatingPane:pane
+                                                        visualFrame:frame
+                                                      containerSize:containerSize
+                                                        desiredGrid:[NSDictionary castFrom:record[FLOATING_PANE_DESIRED_GRID_SIZE]]
+                                        visualFrameBeforeMaximizing:record[FLOATING_PANE_SAVED_FRAME] ? [PTYTab dictToFrame:record[FLOATING_PANE_SAVED_FRAME]] : NSZeroRect];
+        // Applies the restored placement now if the tab has a size, else when it gets one.
+        [iTermFloatingPaneLayout refitFloatingPane:pane session:session];
+        [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
+        if (maybeActive) {
+            active = maybeActive;
+        }
+    }
+    self.floatingPanesHidden = [arrangement[TAB_ARRANGEMENT_FLOATING_PANES_HIDDEN] boolValue];
+    return active;
 }
 
 

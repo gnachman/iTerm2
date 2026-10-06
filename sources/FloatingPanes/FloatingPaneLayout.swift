@@ -80,6 +80,96 @@ final class FloatingPaneLayout: NSObject {
         relayout(pane, session: session, oldContainerSize: container)
     }
 
+    // MARK: - Persistence
+
+    /// The float's outline frame in visual coordinates (top left origin, y down) of its container.
+    @objc(visualOutlineFrameOfFloatingPane:)
+    static func visualOutlineFrame(of pane: iTermFloatingPaneView) -> NSRect {
+        guard let container = pane.superview else {
+            return pane.outlineFrame
+        }
+        return FloatingPaneGeometry.toVisual(pane.outlineFrame,
+                                             containerHeight: container.bounds.height,
+                                             containerIsFlipped: container.isFlipped)
+    }
+
+    /// While maximized, the visual frame the float returns to. NSZeroRect otherwise.
+    @objc(visualFrameBeforeMaximizingOfFloatingPane:)
+    static func visualFrameBeforeMaximizing(of pane: iTermFloatingPaneView) -> NSRect {
+        guard let saved = pane.outlineFrameBeforeMaximizing, let container = pane.superview else {
+            return .zero
+        }
+        return FloatingPaneGeometry.toVisual(saved,
+                                             containerHeight: container.bounds.height,
+                                             containerIsFlipped: container.isFlipped)
+    }
+
+    /// The grid the float wants if it was shrunk to fit its tab, as {"columns", "rows"}.
+    @objc(desiredGridDictionaryOfFloatingPane:)
+    static func desiredGridDictionary(of pane: iTermFloatingPaneView) -> [String: Int]? {
+        guard let grid = pane.desiredGrid else {
+            return nil
+        }
+        return ["columns": grid.columns, "rows": grid.rows]
+    }
+
+    /// Records a placement from a saved arrangement. It is applied the first time the float's
+    /// container has a size, by relayout.
+    @objc(setRestoredPlacementOfFloatingPane:visualFrame:containerSize:desiredGrid:visualFrameBeforeMaximizing:)
+    static func setRestoredPlacement(of pane: iTermFloatingPaneView,
+                                     visualFrame: NSRect,
+                                     containerSize: NSSize,
+                                     desiredGrid: [String: Any]?,
+                                     visualFrameBeforeMaximizing: NSRect) {
+        pane.pendingRestore = iTermFloatingPaneView.PendingRestore(
+            frame: visualFrame,
+            containerSize: containerSize,
+            frameBeforeMaximizing: visualFrameBeforeMaximizing.isEmpty ? nil : visualFrameBeforeMaximizing)
+        if let columns = (desiredGrid?["columns"] as? NSNumber)?.intValue,
+           let rows = (desiredGrid?["rows"] as? NSNumber)?.intValue {
+            pane.desiredGrid = FloatingPaneGrid(columns: columns, rows: rows)
+        }
+    }
+
+    /// Applies a saved placement: the origin scaled by the ratio of the new container to the saved
+    /// one, the size from the session's saved grid at the current font, then clamped.
+    private static func applyPendingRestore(_ pending: iTermFloatingPaneView.PendingRestore,
+                                            to pane: iTermFloatingPaneView,
+                                            session: PTYSession,
+                                            metrics: FloatingPaneMetrics,
+                                            container: CGSize) {
+        func scaled(_ rect: CGRect) -> CGPoint {
+            let sx = pending.containerSize.width > 0 ? container.width / pending.containerSize.width : 1
+            let sy = pending.containerSize.height > 0 ? container.height / pending.containerSize.height : 1
+            return CGPoint(x: (rect.minX * sx).rounded(), y: (rect.minY * sy).rounded())
+        }
+        let saved = FloatingPaneGrid(columns: Int(session.columns), rows: Int(session.rows))
+        let wanted = pane.desiredGrid ?? saved
+        if let beforeMaximizing = pending.frameBeforeMaximizing {
+            // Restore the frame to return to, then fill the tab.
+            let grid = metrics.grid(fitting: beforeMaximizing.size).clamped(
+                min: .minimum,
+                max: FloatingPaneGeometry.maximumGrid(container: container, metrics: metrics))
+            let frame = FloatingPaneGeometry.clamp(CGRect(origin: scaled(beforeMaximizing),
+                                                          size: metrics.frameSize(for: grid)),
+                                                   in: container)
+            fit(pane, session: session, toOutlineFrame: CGRect(origin: .zero, size: container))
+            if let superview = pane.superview {
+                pane.outlineFrameBeforeMaximizing = FloatingPaneGeometry.fromVisual(
+                    frame,
+                    containerHeight: container.height,
+                    containerIsFlipped: superview.isFlipped)
+            }
+            return
+        }
+        let grid = wanted.clamped(min: .minimum,
+                                  max: FloatingPaneGeometry.maximumGrid(container: container, metrics: metrics))
+        let frame = FloatingPaneGeometry.clamp(CGRect(origin: scaled(pending.frame), size: metrics.frameSize(for: grid)),
+                                               in: container)
+        apply(FloatingPanePlacement(frame: frame, grid: grid), to: pane, session: session)
+        pane.desiredGrid = FloatingPaneGeometry.desiredGrid(wanted: wanted, actual: grid)
+    }
+
     // MARK: - Appearance
 
     /// A float whose session is translucent gets a blur underlay so it stays legible.
@@ -192,6 +282,11 @@ final class FloatingPaneLayout: NSObject {
             return
         }
         guard container.width > 0, container.height > 0 else {
+            return
+        }
+        if let pending = pane.pendingRestore {
+            pane.pendingRestore = nil
+            applyPendingRestore(pending, to: pane, session: session, metrics: metrics, container: container)
             return
         }
         if pane.isMaximized {

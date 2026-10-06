@@ -11288,6 +11288,34 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
     RLog(@"OK");
+    // Revived sessions that were floats go back as floats. Only the tiled layout is rebuilt from
+    // the arrangement, and live floats are left alone.
+    NSMutableArray<PTYSession *> *floatingRevived = [NSMutableArray array];
+    NSMutableArray<PTYSession *> *tiledRevived = [NSMutableArray array];
+    for (PTYSession *session in sessions) {
+        if ([PTYTab floatingPaneRecordForSessionWithGUID:session.guid inArrangement:arrangement]) {
+            [floatingRevived addObject:session];
+        } else {
+            [tiledRevived addObject:session];
+        }
+    }
+    NSDictionary *fullArrangement = arrangement;
+    arrangement = [PTYTab arrangementWithoutFloatingPanes:arrangement];
+    sessions = tiledRevived;
+    void (^restoreFloats)(void) = ^{
+        for (PTYSession *session in floatingRevived) {
+            if (revive) {
+                [session revive];
+            }
+            [tab addRevivedFloatingSession:session fromArrangement:fullArrangement];
+        }
+    };
+    if (tiledRevived.count == 0 && floatingRevived.count > 0) {
+        RLog(@"Only floating panes come back; the tiled layout is unchanged");
+        restoreFloats();
+        [self addTabsForArchives:archives];
+        return;
+    }
     NSMutableArray *allSessions = [NSMutableArray array];
     [allSessions addObjectsFromArray:sessions];
     // Floating panes are not rebuilt from the arrangement; they stay as they are.
@@ -11323,6 +11351,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             }
             [self addRevivedSession:session];
         }
+        restoreFloats();
         [self addTabsForArchives:archives];
         return;
     }
@@ -11348,6 +11377,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [tab updatePaneTitles];
     [tab setActiveSession:nil];
     [tab setActiveSession:originalActiveSession];
+    restoreFloats();
 }
 
 - (void)addTabWithArrangement:(NSDictionary *)arrangement

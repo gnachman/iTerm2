@@ -17,6 +17,7 @@
 //   devctl click <pid> x y [n] [mods]   click; n is the click count; mods is e.g. ctrl,opt,cmd,shift
 //   devctl drag <pid> x0 y0 x1 y1 [steps] [mods]
 //   devctl key <pid> keycode [mods]     a key press posted to <pid>
+//   devctl type <pid> text              types text into <pid>; \n becomes Return
 
 import AppKit
 import ApplicationServices
@@ -234,6 +235,27 @@ case "key":
         event?.flags = modifiers
         event?.postToPid(pid)
         usleep(20_000)
+    }
+
+case "type":
+    let pid = pidArg(args, 0)
+    requireFrontmost(pid)
+    let text = arg(args, 1).replacingOccurrences(of: "\\n", with: "\n")
+    for character in text {
+        if character == "\n" {
+            for down in [true, false] {
+                CGEvent(keyboardEventSource: nil, virtualKey: 36, keyDown: down)?.postToPid(pid)
+                usleep(10_000)
+            }
+            continue
+        }
+        let utf16 = Array(String(character).utf16)
+        for down in [true, false] {
+            let event = CGEvent(keyboardEventSource: nil, virtualKey: 0, keyDown: down)
+            event?.keyboardSetUnicodeString(stringLength: utf16.count, unicodeString: utf16)
+            event?.postToPid(pid)
+            usleep(10_000)
+        }
     }
 
 default:

@@ -54,6 +54,16 @@ final class iTermFloatingPaneView: NSView {
     /// While the float is maximized, the outline frame to return to.
     var outlineFrameBeforeMaximizing: NSRect?
 
+    /// A placement read from a saved arrangement, applied once the float's tab has its real size:
+    /// the saved visual frame, the container size it was saved with, and (if it was maximized) the
+    /// visual frame to return to.
+    struct PendingRestore {
+        var frame: CGRect
+        var containerSize: CGSize
+        var frameBeforeMaximizing: CGRect?
+    }
+    var pendingRestore: PendingRestore?
+
     @objc var isMaximized: Bool {
         return outlineFrameBeforeMaximizing != nil
     }

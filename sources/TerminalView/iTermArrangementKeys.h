@@ -7,6 +7,9 @@ extern NSString *const TERMINAL_ARRANGEMENT_TABS;
 
 // Tab arrangement keys (defined in PTYTab.m).
 extern NSString *const TAB_ARRANGEMENT_ROOT;
+// An array of floating pane records, back to front. Each has its tree node under FLOATING_PANE_NODE.
+extern NSString *const TAB_ARRANGEMENT_FLOATING_PANES;
+extern NSString *const FLOATING_PANE_NODE;
 extern NSString *const TAB_ARRANGEMENT_VIEW_TYPE;
 extern NSString *const TAB_ARRANGEMENT_SESSION;
 extern NSString *const SUBVIEWS;

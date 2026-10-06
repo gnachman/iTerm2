@@ -308,6 +308,11 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (void)bringFloatingPaneToFront:(iTermFloatingPaneView *)pane;
 - (void)sendFloatingPaneToBack:(iTermFloatingPaneView *)pane;
 
+// Arrangement helpers for floating panes.
++ (NSDictionary *)arrangementWithoutFloatingPanes:(NSDictionary *)arrangement;
++ (NSDictionary *)floatingPaneRecordForSessionWithGUID:(NSString *)guid inArrangement:(NSDictionary *)arrangement;
+- (void)addRevivedFloatingSession:(PTYSession *)session fromArrangement:(NSDictionary *)arrangement;
+
 // The tiled session with the highest activity counter.
 - (PTYSession *)mostRecentlyActiveTiledSession;
 
