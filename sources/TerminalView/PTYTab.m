@@ -2170,7 +2170,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)updateFloatingPaneOutlines {
     for (iTermFloatingPaneView *pane in _floatingPanes) {
-        pane.isActive = ([self sessionForSessionView:pane.sessionView] == activeSession_);
+        PTYSession *session = [self sessionForSessionView:pane.sessionView];
+        [session updateFloatingPaneOutlineColor];
+        pane.isActive = (session == activeSession_);
     }
 }
 

@@ -282,6 +282,49 @@ final class FloatingPaneMouseTests: XCTestCase {
         XCTAssertEqual(FloatingPaneLayout.visualOutlineFrame(of: pane), frame)
     }
 
+    func testCornersHaveDiagonalCursors() {
+        for corner: FloatingPaneEdges in [[.top, .left], [.top, .right], [.bottom, .left], [.bottom, .right]] {
+            XCTAssertNotEqual(iTermFloatingPaneView.cursor(for: corner), NSCursor.crosshair)
+        }
+        XCTAssertNotEqual(iTermFloatingPaneView.cursor(for: [.top, .left]),
+                          iTermFloatingPaneView.cursor(for: [.top, .right]))
+    }
+
+    /// The corner's target reaches along both edges, well past the band's width.
+    func testTheCornerTargetReachesAlongTheEdges() {
+        let (_, pane) = addFloat()
+        let band = iTermFloatingPaneView.resizeBandWidth
+        let reach = iTermFloatingPaneView.cornerLength - 1
+        let lowY: FloatingPaneEdges = pane.isFlipped ? .top : .bottom
+        XCTAssertEqual(pane.edges(at: NSPoint(x: reach, y: band / 2)), [.left, lowY])
+        XCTAssertEqual(pane.edges(at: NSPoint(x: band / 2, y: reach)), [.left, lowY])
+        XCTAssertEqual(pane.edges(at: NSPoint(x: iTermFloatingPaneView.cornerLength + 1, y: band / 2)), [lowY],
+                       "past the corner it is just the edge")
+    }
+
+    /// The outline marks the active float only when the profile asks for a border around the
+    /// active pane, in that border's color.
+    func testTheOutlineMarksTheActiveFloatOnlyWithAnActivePaneBorder() {
+        let (session, pane) = addFloat()
+        tab.setActiveSession(session)
+        XCTAssertTrue(pane.isActive)
+        XCTAssertNil(pane.activeOutlineColor)
+
+        // The profile may have separate light and dark mode colors; set both.
+        func border(_ on: Bool) -> [String: Any] {
+            var values = [String: Any]()
+            for suffix in ["", COLORS_LIGHT_MODE_SUFFIX, COLORS_DARK_MODE_SUFFIX] {
+                values[KEY_USE_ACTIVE_PANE_BORDER + suffix] = on
+                values[KEY_ACTIVE_PANE_BORDER_COLOR + suffix] = NSColor.systemRed.dictionaryValue
+            }
+            return values
+        }
+        session.setSessionSpecificProfileValues(border(true))
+        XCTAssertNotNil(pane.activeOutlineColor)
+        session.setSessionSpecificProfileValues(border(false))
+        XCTAssertNil(pane.activeOutlineColor)
+    }
+
     func testResizeStopsAtTheMinimumGrid() {
         let (session, pane) = addFloat()
         let point = rightBandPoint(pane)

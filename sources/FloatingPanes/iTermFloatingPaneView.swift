@@ -52,7 +52,11 @@ final class iTermFloatingPaneView: NSView {
     @objc static let outlineWidth: CGFloat = 1
 
     /// Width of the invisible band around the outline that resizes the float.
-    @objc static let resizeBandWidth: CGFloat = 4
+    @objc static let resizeBandWidth: CGFloat = 6
+
+    /// How far each arm of a corner's L-shaped part of the band reaches along the edges. Corners
+    /// get a bigger target than edges because they are harder to hit.
+    static let cornerLength: CGFloat = resizeBandWidth * 4
 
     /// The float's root: a split view with one child, the session's view.
     @objc let splitView: PTYSplitView
@@ -91,6 +95,14 @@ final class iTermFloatingPaneView: NSView {
     @objc var isActive = false {
         didSet {
             outlineView.isActive = isActive
+        }
+    }
+
+    /// The outline's color while the float is active: the session's border around the active pane,
+    /// or nil where its profile doesn't ask for one, so active and inactive floats look alike.
+    @objc var activeOutlineColor: NSColor? {
+        didSet {
+            outlineView.activeColor = activeOutlineColor
         }
     }
 
@@ -239,21 +251,48 @@ final class iTermFloatingPaneView: NSView {
 
     // MARK: - Hit testing and cursors
 
-    private static func cursor(for edges: FloatingPaneEdges) -> NSCursor {
+    static func cursor(for edges: FloatingPaneEdges) -> NSCursor {
+        if #available(macOS 15, *), let position = frameResizePosition(for: edges) {
+            return NSCursor.frameResize(position: position, directions: .all)
+        }
         if edges == .left || edges == .right {
             return .resizeLeftRight
         }
         if edges == .top || edges == .bottom {
             return .resizeUpDown
         }
+        // Before macOS 15 the diagonal cursors are private, as the window uses them.
+        let diagonal = (edges == [.top, .left] || edges == [.bottom, .right])
+            ? "_windowResizeNorthWestSouthEastCursor"
+            : "_windowResizeNorthEastSouthWestCursor"
+        let selector = NSSelectorFromString(diagonal)
+        if NSCursor.responds(to: selector),
+           let cursor = NSCursor.perform(selector)?.takeUnretainedValue() as? NSCursor {
+            return cursor
+        }
         return .crosshair
+    }
+
+    @available(macOS 15, *)
+    private static func frameResizePosition(for edges: FloatingPaneEdges) -> NSCursor.FrameResizePosition? {
+        switch edges {
+        case .top: return .top
+        case .bottom: return .bottom
+        case .left: return .left
+        case .right: return .right
+        case [.top, .left]: return .topLeft
+        case [.top, .right]: return .topRight
+        case [.bottom, .left]: return .bottomLeft
+        case [.bottom, .right]: return .bottomRight
+        default: return nil
+        }
     }
 
     override func resetCursorRects() {
         super.resetCursorRects()
         let b = bounds
         let band = Self.resizeBandWidth
-        let corner = band * 3
+        let corner = Self.cornerLength
         let lowY: FloatingPaneEdges = isFlipped ? .top : .bottom
         let highY: FloatingPaneEdges = isFlipped ? .bottom : .top
         // Later rects win where they overlap, so corners go last.
@@ -277,7 +316,7 @@ final class iTermFloatingPaneView: NSView {
     }
 
     /// The edges a mouse-down at `point` (in this view's coordinates) resizes, or none if it is not
-    /// in the band. The band is L-shaped near each corner, three bands long, and there both edges
+    /// in the band. The band is L-shaped near each corner, `cornerLength` long, and there both edges
     /// move, matching the cursor rects.
     func edges(at point: NSPoint) -> FloatingPaneEdges {
         let b = bounds
@@ -285,7 +324,7 @@ final class iTermFloatingPaneView: NSView {
         guard b.contains(point), !b.insetBy(dx: band, dy: band).contains(point) else {
             return []
         }
-        let corner = band * 3
+        let corner = Self.cornerLength
         let lowY: FloatingPaneEdges = isFlipped ? .top : .bottom
         let highY: FloatingPaneEdges = isFlipped ? .bottom : .top
         let inLeftBand = point.x < b.minX + band
@@ -639,6 +678,12 @@ private final class FloatingPaneOutlineView: NSView {
         }
     }
 
+    var activeColor: NSColor? {
+        didSet {
+            updateColors()
+        }
+    }
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
@@ -670,7 +715,7 @@ private final class FloatingPaneOutlineView: NSView {
     }
 
     private func updateColors() {
-        let color = isActive ? NSColor.controlAccentColor : NSColor.separatorColor
+        let color = (isActive ? activeColor : nil) ?? NSColor.separatorColor
         effectiveAppearance.performAsCurrentDrawingAppearance {
             layer?.borderColor = color.cgColor
         }

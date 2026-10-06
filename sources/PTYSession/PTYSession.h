@@ -1096,6 +1096,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Change the size of the session and its tty.
 - (void)setSize:(VT100GridSize)size;
 
+// Gives the session's floating pane, if it has one, the outline color for when it is active: the
+// border around the active pane if the profile asks for one.
+- (void)updateFloatingPaneOutlineColor;
+
 // Resize the grid the way a terminal-initiated resize does, honoring the same
 // window-fitting logic. Note the unusual argument convention: proposedSize.width
 // is the desired row count and proposedSize.height is the desired column count

@@ -5894,6 +5894,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                          inProfile:aDict];
     self.activePaneBorderColor = [[iTermProfilePreferences objectForKey:iTermAmendedColorKey(KEY_ACTIVE_PANE_BORDER_COLOR, aDict, dark)
                                                               inProfile:aDict] colorValueForKey:iTermAmendedColorKey(KEY_ACTIVE_PANE_BORDER_COLOR, aDict, dark)];
+    [self updateFloatingPaneOutlineColor];
 
     [self setSmartCursorColor:[iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_SMART_CURSOR_COLOR, aDict, dark)
                                                         inProfile:aDict]];
@@ -15221,6 +15222,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return nil;
     }
     return [_delegate sessionFloatingPane:self];
+}
+
+- (void)updateFloatingPaneOutlineColor {
+    self.floatingPane.activeOutlineColor = self.useActivePaneBorder ? self.activePaneBorderColor : nil;
 }
 
 - (void)textViewFindCursorWillShowAtLocationInWindow:(NSPoint)point {
