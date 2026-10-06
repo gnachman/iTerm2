@@ -238,6 +238,11 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
         let hasWindow: Bool
         weak var window: NSWindow?
         let press: (Int, Bool, [String: String]) -> Bool
+        /// A press has already clicked one of this alert's buttons. An alert
+        /// that blocks stays registered, and in front, until its modal run
+        /// loop gets round to ending, and a second click in that time would
+        /// override the first.
+        var answered = false
     }
 
     /// The alerts on screen, bottom to top, with what is needed to press their
@@ -389,7 +394,19 @@ final class ModalAlertRegistry: NSObject, ModalAlertSource {
                 return false
             }
         }
-        return top.press(buttonIndex, suppress, inputs)
+        guard !top.answered else {
+            DLog("Modal alert answer refused: \(id) was already answered")
+            return false
+        }
+        guard top.press(buttonIndex, suppress, inputs) else {
+            return false
+        }
+        // The press may have unregistered the alert (a sheet's completion runs
+        // inside the click), so look it up again.
+        if let index = entries.firstIndex(where: { $0.snapshot.id == id }) {
+            entries[index].answered = true
+        }
+        return true
     }
 
     // MARK: ModalAlertSource

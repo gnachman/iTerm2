@@ -882,6 +882,9 @@ final class CompanionPairingController: NSObject {
         // delete-room call. Build it BEFORE wiping key material below; the
         // closure captures the room secret it needs.
         let relayDelete = relayDeleteWork()
+        // The link goes on receiving until its farewell is flushed. Before any
+        // key material is deleted, stop it storing a room secret.
+        bridge?.link.stopStoringRoomSecret()
         if let bridge {
             // Fire-and-forget: the farewell flush is async, but the bridge is
             // already detached from the controller so nothing else uses it.
@@ -950,6 +953,7 @@ final class CompanionPairingController: NSObject {
     private func peerDidUnpair() {
         relayLog("peerDidUnpair() called")
         RLog("Companion: peer unpaired; deleting key material")
+        bridge?.link.stopStoringRoomSecret()
         bridge?.stop()
         bridge = nil
         stopAdvertising()

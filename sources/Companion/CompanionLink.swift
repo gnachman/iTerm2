@@ -124,6 +124,8 @@ actor CompanionLink {
         var closeError: Error?
         var closeWaiters: [CheckedContinuation<Error?, Never>] = []
         var drainTask: Task<Void, Never>?
+        /// The pairing is being removed: store no room secret from here on.
+        var roomSecretStorageStopped = false
         /// While true the drain sends the peer nothing but hello, error, and
         /// unpaired. Mirrors `versionBlocked` for the drain task, which is not
         /// on the actor. The bridge learns of a blocked peer through an event
@@ -433,7 +435,15 @@ actor CompanionLink {
             // connect); a store failure simply withholds the ack, and the phone
             // retries on the next connection.
             do {
-                try storeRoomSecret(secret)
+                // Stored under the lock that stopStoringRoomSecret takes, so an
+                // unpair that has started deleting key material cannot have
+                // the secret written back behind it.
+                try shared.withLock { shared in
+                    guard !shared.roomSecretStorageStopped else {
+                        throw RoomSecretStorageStopped()
+                    }
+                    try storeRoomSecret(secret)
+                }
                 RLog("Companion link: stored relay room secret")
                 send(.relayRoomSecretStored, requestID: requestID)
             } catch {
@@ -633,6 +643,18 @@ actor CompanionLink {
     // MARK: Ending
 
     /// Report the end of the connection, once. Later calls do nothing.
+    /// The pairing is being removed. From now on a room secret the phone
+    /// couriers is not stored. Returns only once any store already under way
+    /// has finished, so the caller can delete the stored secret next and know
+    /// nothing will write it back.
+    nonisolated func stopStoringRoomSecret() {
+        shared.withLock { $0.roomSecretStorageStopped = true }
+    }
+
+    private struct RoomSecretStorageStopped: Error, CustomStringConvertible {
+        var description: String { "This Mac is no longer paired." }  // Localization unneeded
+    }
+
     private nonisolated func finish(error: Error?) {
         let waiters = shared.withLock { shared -> [CheckedContinuation<Error?, Never>]? in
             if shared.finished {

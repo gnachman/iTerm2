@@ -453,6 +453,18 @@ final class CompanionLinkTests: XCTestCase {
         XCTAssertEqual(fixture.roomSecrets.stored, [])
     }
 
+    /// Unpairing deletes the stored room secret, then says goodbye to the
+    /// phone a moment later. A secret the phone couriers in between must not
+    /// be written back: it would outlive the pairing it belonged to.
+    func testRoomSecretIsNotStoredOnceThePairingIsBeingRemoved() async throws {
+        let fixture = makeFixture()
+        fixture.link.stopStoringRoomSecret()
+        try await fixture.phone.send(.relayRoomSecret(Data(repeating: 7, count: 32)), requestID: 4)
+        let reply = try await fixture.phone.next()
+        XCTAssertEqual(reply, "error#4", "no ack, so the phone does not register a verifier for it")
+        XCTAssertEqual(fixture.roomSecrets.stored, [])
+    }
+
     /// The link answers the courier, but the bridge still sees it, because it
     /// classifies the connection as interactive just as it did before.
     func testRoomSecretIsForwardedAsHandledAndClassifiesAsUnsolicited() async throws {

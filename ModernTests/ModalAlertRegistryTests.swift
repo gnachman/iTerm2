@@ -167,6 +167,39 @@ final class ModalAlertRegistryTests: XCTestCase {
         XCTAssertEqual(presses.all, [.init(buttonIndex: 1, suppress: true, onMainThread: true)])
     }
 
+    /// An alert that blocks stays registered, and in front, until its modal
+    /// run loop gets round to ending. A second answer arriving in that time
+    /// (a retry, a second tap after the phone gave up waiting) must not click
+    /// another button: the later click would win.
+    func testASecondAnswerToAnAlertThatWasAlreadyAnsweredIsRefused() async {
+        let registry = ModalAlertRegistry(modalWindow: { nil })
+        let pressed = OSAllocatedUnfairLock(initialState: [Int]())
+        let id = await MainActor.run {
+            registry.register(descriptor("Heading"), window: nil) { index, _ in
+                pressed.withLock { $0.append(index) }
+                return true
+            }.identifier
+        }
+        let first = await registry.answer(id: id, buttonIndex: 1, suppress: false)
+        let second = await registry.answer(id: id, buttonIndex: 0, suppress: false)
+        XCTAssertTrue(first)
+        XCTAssertFalse(second)
+        XCTAssertEqual(pressed.withLock { $0 }, [1])
+    }
+
+    /// A press that was refused by the alert (a disabled button, a value it
+    /// would not take) leaves it open to another answer.
+    func testAnAnswerThatWasRefusedCanBeFollowedByAnother() async {
+        let registry = ModalAlertRegistry(modalWindow: { nil })
+        let id = await MainActor.run {
+            registry.register(descriptor("Heading"), window: nil) { index, _ in index == 1 }.identifier
+        }
+        let refused = await registry.answer(id: id, buttonIndex: 0, suppress: false)
+        let accepted = await registry.answer(id: id, buttonIndex: 1, suppress: false)
+        XCTAssertFalse(refused)
+        XCTAssertTrue(accepted)
+    }
+
     /// A button that only makes sense at the Mac is listed, so indexes still
     /// match the alert's, but an answer that names it is refused.
     func testButtonThatIsNotOfferedIsListedButCannotBePressed() async {
