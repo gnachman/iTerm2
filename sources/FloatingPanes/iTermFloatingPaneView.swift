@@ -38,8 +38,9 @@ protocol FloatingPaneViewDelegate: AnyObject {
     func floatingPane(_ pane: iTermFloatingPaneView, dragDidChangeToActive active: Bool)
 
     /// A live move left the tab, so it becomes an ordinary pane drag (to dock the float, make a
-    /// tab or a window of it).
-    func floatingPaneWantsPaneDrag(_ pane: iTermFloatingPaneView)
+    /// tab or a window of it). `grabPoint` is where the move's mouse-down was, in window
+    /// coordinates; the float is back where it was then.
+    func floatingPaneWantsPaneDrag(_ pane: iTermFloatingPaneView, grabPointInWindow grabPoint: NSPoint)
 }
 
 @objc(iTermFloatingPaneView)
@@ -401,7 +402,7 @@ final class iTermFloatingPaneView: NSView {
             DLog("Live move escalates to a pane drag")
             FloatingPaneLayout.apply(start, to: self, session: session)
             endDrag()
-            delegate?.floatingPaneWantsPaneDrag(self)
+            delegate?.floatingPaneWantsPaneDrag(self, grabPointInWindow: startPoint)
             return
         }
         let frame = FloatingPaneGeometry.move(start.frame,

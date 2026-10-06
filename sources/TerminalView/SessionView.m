@@ -123,6 +123,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 @end
 
 @implementation SessionView {
+    // The pane drag over this view will place a float rather than split this view.
+    BOOL _dragPlacesFloatingPane;
     NSMutableArray *_announcements;
     BOOL _inDealloc;
     iTermAnnouncementViewController *_currentAnnouncement;
@@ -2080,6 +2082,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (void)draggingSession:(NSDraggingSession *)session movedToPoint:(NSPoint)screenPoint {
     [[NSCursor closedHandCursor] set];
+    [[MovePaneController sharedInstance] dragDidMove];
 }
 
 - (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
@@ -2117,8 +2120,24 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     return NO;
 }
 
+// A pane drag that should end with the session floating where it is dropped, instead of split
+// halves.
+- (BOOL)dragPlacesFloatingPane:(id<NSDraggingInfo>)sender {
+    if (![[sender draggingPasteboard] availableTypeFromArray:@[ iTermMovePaneDragType ]]) {
+        return NO;
+    }
+    return [[MovePaneController sharedInstance] dropPlacesFloatingPaneOverFloat:[self isInFloatingPane]];
+}
+
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender {
-    if ([self draggingIsWholeTabGroup:sender] || [self isInFloatingPane]) {
+    if ([self draggingIsWholeTabGroup:sender]) {
+        return NSDragOperationNone;
+    }
+    _dragPlacesFloatingPane = [self dragPlacesFloatingPane:sender];
+    if (_dragPlacesFloatingPane) {
+        return NSDragOperationMove;
+    }
+    if ([self isInFloatingPane]) {
         // A float holds one session, so it is never split by a drop.
         return NSDragOperationNone;
     }
@@ -2132,7 +2151,26 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
-    if ([self draggingIsWholeTabGroup:sender] || [self isInFloatingPane]) {
+    if ([self draggingIsWholeTabGroup:sender]) {
+        return NSDragOperationNone;
+    }
+    // Pressing or releasing Control mid-drag switches between placing a float and docking it.
+    const BOOL placesFloatingPane = [self dragPlacesFloatingPane:sender];
+    if (placesFloatingPane != _dragPlacesFloatingPane) {
+        _dragPlacesFloatingPane = placesFloatingPane;
+        if (placesFloatingPane) {
+            [_delegate sessionViewDraggingExited:sender];
+            [_splitSelectionView removeFromSuperview];
+            _splitSelectionView = nil;
+        } else if (![self isInFloatingPane] &&
+                   [_delegate sessionViewDraggingEntered:sender] == NSDragOperationNone) {
+            return NSDragOperationNone;
+        }
+    }
+    if (placesFloatingPane) {
+        return NSDragOperationMove;
+    }
+    if ([self isInFloatingPane]) {
         return NSDragOperationNone;
     }
     if ([_delegate sessionViewShouldSplitSelectionAfterDragUpdate:sender]) {
@@ -2148,7 +2186,15 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     RLog(@"performDragOperation: %@", sender);
-    if ([self draggingIsWholeTabGroup:sender] || [self isInFloatingPane]) {
+    if ([self draggingIsWholeTabGroup:sender]) {
+        return NO;
+    }
+    if ([self dragPlacesFloatingPane:sender]) {
+        const BOOL placed = [_delegate sessionViewPlaceFloatingPaneAtWindowPoint:[sender draggingLocation]];
+        [_delegate sessionViewDraggingExited:sender];
+        return placed;
+    }
+    if ([self isInFloatingPane]) {
         return NO;
     }
     BOOL result = [_delegate sessionViewPerformDragOperation:sender];

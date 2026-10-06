@@ -21478,6 +21478,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [_delegate session:self performDragOperation:sender];
 }
 
+- (BOOL)sessionViewPlaceFloatingPaneAtWindowPoint:(NSPoint)point {
+    return [[MovePaneController sharedInstance] dropFloatingPaneInTab:[PTYTab castFrom:_delegate]
+                                                         atWindowPoint:point];
+}
+
 - (NSString *)sessionViewTitle {
     return _nameController.presentationSessionTitle;
 }

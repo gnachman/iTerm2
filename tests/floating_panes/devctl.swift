@@ -15,7 +15,10 @@
 //   devctl cookie <pid>                 request a Python API cookie and key from <pid> by Apple Event
 //   devctl move <pid> x y               move the pointer
 //   devctl click <pid> x y [n] [mods]   click; n is the click count; mods is e.g. ctrl,opt,cmd,shift
-//   devctl drag <pid> x0 y0 x1 y1 [steps] [mods]   mods are held after the button goes down
+//   devctl drag <pid> x0 y0 x1 y1 [steps] [mods] [hold]   mods are held after the button goes
+//                                                        down; hold is seconds to rest at the end
+//                                                        [x2 y2] continues the drag there after
+//                                                        the rest
 //   devctl key <pid> keycode [mods]     a key press posted to <pid>
 //   devctl type <pid> text              types text into <pid>; \n becomes Return
 
@@ -211,6 +214,8 @@ case "drag":
     let end = CGPoint(x: double(args, 3), y: double(args, 4))
     let steps = max(1, args.count > 5 ? Int(arg(args, 5)) ?? 20 : 20)
     let modifiers = flags(args.count > 6 ? args[6] : nil)
+    // Seconds to hold still at the end before releasing, as for spring-loading.
+    let hold = args.count > 7 ? Double(arg(args, 7)) ?? 0 : 0
     // The button goes down without modifiers (Control-click is a secondary click); they are
     // pressed during the drag.
     mouse(.leftMouseDown, start, [])
@@ -223,7 +228,26 @@ case "drag":
               modifiers)
         usleep(16_000)
     }
-    mouse(.leftMouseUp, end, modifiers)
+    var held = 0.0
+    while held < hold {
+        usleep(100_000)
+        held += 0.1
+        requireFrontmost(pid)
+        mouse(.leftMouseDragged, end, modifiers)
+    }
+    // An optional second leg after the rest, so a drag can spring-load a tab and then go on into it.
+    var last = end
+    if args.count > 9 {
+        let next = CGPoint(x: double(args, 8), y: double(args, 9))
+        for i in 1...steps {
+            requireFrontmost(pid)
+            let t = Double(i) / Double(steps)
+            last = CGPoint(x: end.x + (next.x - end.x) * t, y: end.y + (next.y - end.y) * t)
+            mouse(.leftMouseDragged, last, modifiers)
+            usleep(16_000)
+        }
+    }
+    mouse(.leftMouseUp, last, modifiers)
 
 case "key":
     let pid = pidArg(args, 0)

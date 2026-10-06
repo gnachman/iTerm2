@@ -257,6 +257,28 @@ final class FloatingPaneLayout: NSObject {
                                                             containerIsFlipped: container.isFlipped))
     }
 
+    /// Puts a float's top left at a point in visual coordinates (top left origin, y down) of its
+    /// container, keeping the given grid unless the container is too small for it. A float dropped
+    /// into a tab goes here.
+    @objc(placeFloatingPane:session:visualTopLeft:columns:rows:)
+    static func place(_ pane: iTermFloatingPaneView,
+                      session: PTYSession,
+                      visualTopLeft: NSPoint,
+                      columns: Int,
+                      rows: Int) {
+        guard let metrics = metrics(for: session), let container = containerSize(of: pane) else {
+            return
+        }
+        let grid = FloatingPaneGrid(columns: columns, rows: rows).clamped(
+            min: .minimum,
+            max: FloatingPaneGeometry.maximumGrid(container: container, metrics: metrics))
+        let frame = CGRect(origin: visualTopLeft, size: metrics.frameSize(for: grid))
+        apply(FloatingPanePlacement(frame: FloatingPaneGeometry.clamp(frame, in: container), grid: grid),
+              to: pane,
+              session: session)
+        pane.desiredGrid = nil
+    }
+
     /// Makes a float fill its tab, remembering where it was.
     @objc(maximizeFloatingPane:session:)
     static func maximize(_ pane: iTermFloatingPaneView, session: PTYSession) {

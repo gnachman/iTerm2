@@ -2085,14 +2085,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
-- (void)floatingPaneWantsPaneDrag:(iTermFloatingPaneView *)pane {
+- (void)floatingPaneWantsPaneDrag:(iTermFloatingPaneView *)pane grabPointInWindow:(NSPoint)grabPoint {
     PTYSession *session = [self sessionForSessionView:pane.sessionView];
     if (!session) {
         return;
     }
-    // The existing pane drag: drop it on a pane to dock it, on a tab bar for a new tab, or on
-    // nothing for a new window.
-    [[MovePaneController sharedInstance] beginDrag:session];
+    // The existing pane drag: drop it on a pane to dock it, on a tab bar for a new tab, on another
+    // tab's content to float it there, or on nothing for a new window.
+    [[MovePaneController sharedInstance] beginDrag:session grabPointInWindow:grabPoint];
 }
 
 // When the active session is removed from a float, which session takes over: the frontmost

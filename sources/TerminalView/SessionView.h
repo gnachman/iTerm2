@@ -93,6 +93,8 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
 // Perform a drag into this view.
 - (BOOL)sessionViewPerformDragOperation:(id<NSDraggingInfo>)sender;
+// Places the session being dragged as a float in this view's tab. Returns whether it was placed.
+- (BOOL)sessionViewPlaceFloatingPaneAtWindowPoint:(NSPoint)point;
 
 // Gives the title to show in the per-pane title bar.
 - (nullable NSString *)sessionViewTitle;
