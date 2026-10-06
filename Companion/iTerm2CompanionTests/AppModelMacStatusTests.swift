@@ -428,6 +428,110 @@ final class AppModelMacStatusTests: XCTestCase {
         XCTAssertEqual(model.macAlertPresentation, .overlay(asking, .ready))
     }
 
+    // MARK: Review findings, second round
+
+    /// The card was showing A when the user tapped, but the Mac replaced A
+    /// with B a moment before. A's button index, and anything typed for A,
+    /// must not be sent as an answer to B.
+    func test_answerMeantForAnAlertThatWasReplacedIsNotSent() {
+        var a = alert("A")
+        a.inputs = [.init(id: "password", label: nil, kind: CompanionModalAlert.Input.secretKind, value: "")]
+        var b = alert("B")
+        b.inputs = a.inputs
+        let model = connectedModel(status([a]))
+        model.testHandleHostEvent(.macStatusChanged(status: status([b])))
+
+        model.answerMacAlert(buttonIndex: 0, suppress: false, inputs: ["password": "for A"], shownAlertID: "A")
+        XCTAssertEqual(model.testSentAlertAnswers, [])
+        XCTAssertEqual(model.macAlertPresentation, .overlay(b, .ready))
+
+        model.answerMacAlert(buttonIndex: 0, suppress: false, inputs: ["password": "for B"], shownAlertID: "B")
+        XCTAssertEqual(model.testSentAlertAnswers.map { $0.alertID }, ["B"])
+    }
+
+    func test_notNowMeantForAnAlertThatWasReplacedLeavesTheNewOneUp() {
+        let model = connectedModel(status([alert("A")]))
+        model.testHandleHostEvent(.macStatusChanged(status: status([alert("B")])))
+        model.dismissMacAlert(shownAlertID: "A")
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("B"), .ready))
+        model.dismissMacAlert(shownAlertID: "B")
+        XCTAssertEqual(model.macAlertPresentation, .pill(alert("B")))
+    }
+
+    /// The wait that follows each answer belongs to that answer. The wait
+    /// from an earlier answer to the same alert must not cut a later one short.
+    func test_theWaitFromAnEarlierAnswerDoesNotEndALaterOne() {
+        let model = connectedModel(status([alert("A")]))
+        model.answerMacAlert(buttonIndex: 0, suppress: false)
+        let first = model.testAlertAnswerCount
+        model.testExpireAlertAnswerTimeout(alertID: "A", answer: first)
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .ready))
+
+        model.answerMacAlert(buttonIndex: 1, suppress: false)
+        let second = model.testAlertAnswerCount
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .sending))
+        // The first answer's wait runs out again (or late): nothing to do with this one.
+        model.testExpireAlertAnswerTimeout(alertID: "A", answer: first)
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .sending))
+        model.testExpireAlertAnswerTimeout(alertID: "A", answer: second)
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .ready))
+    }
+
+    /// “Not now” is about the alert, not the connection: the same alert
+    /// reported again after a reconnect stays set aside.
+    func test_notNowSurvivesAReconnect() {
+        let model = connectedModel(status([alert("A")], blocked: true))
+        let (client, _) = makeClient()
+        model.testInstallClient(client)
+        model.dismissMacAlert()
+        XCTAssertEqual(model.macAlertPresentation, .pill(alert("A")))
+
+        model.testClientDidClose(client, error: TransportError.closed)
+        XCTAssertEqual(model.macAlertPresentation, .none)
+        model.testApplyHandshake(handshake(macStatus: status([alert("A")], blocked: true)))
+        XCTAssertEqual(model.macAlertPresentation, .pill(alert("A")))
+
+        // Once the Mac says the alert is gone, it is forgotten.
+        model.testHandleHostEvent(.macStatusChanged(status: status([])))
+        model.testHandleHostEvent(.macStatusChanged(status: status([alert("A")], blocked: true)))
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .ready))
+    }
+
+    /// The Mac refused an answer because something else was in front. Its
+    /// list of alerts does not change when that thing closes, but whether it
+    /// is blocked usually does, and then the phone may try again.
+    func test_rejectionClearsWhenTheMacsBlockedStateChanges() {
+        let model = connectedModel(status([alert("A")], blocked: true))
+        model.answerMacAlert(buttonIndex: 0, suppress: false)
+        model.testHandleHostEvent(.modalAlertAnswerRejected(alertID: "A"))
+        model.testHandleHostEvent(.macStatusChanged(status: status([alert("A")], blocked: true)))
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .answerOnMac))
+
+        model.testHandleHostEvent(.macStatusChanged(status: status([alert("A")], blocked: false)))
+        model.showMacAlert()
+        XCTAssertEqual(model.macAlertPresentation, .overlay(alert("A"), .ready))
+    }
+
+    /// The probe pinged one connection and found it dead, but by the time it
+    /// reports, a reconnect attempt has replaced that connection. The new one
+    /// must not be closed for it.
+    func test_probeResultForAConnectionThatWasReplacedIsIgnored() async {
+        let model = connectedModel()
+        let (pinged, _) = makeClient()
+        let (current, currentTransport) = makeClient()
+        model.testInstallClient(current)
+        model.isReconnecting = true
+        model.testApplyHandshake(handshake(macStatus: status([alert("A")], blocked: true)))
+
+        model.testLivenessProbeFoundDeadConnection(pinged: pinged)
+
+        XCTAssertTrue(model.macIsBlocked, "the new connection's status was thrown away")
+        // Give a wrongly started close the chance to land before checking.
+        for _ in 0..<50 { await Task.yield() }
+        XCTAssertFalse(currentTransport.isClosed)
+        model.isReconnecting = false
+    }
+
     // MARK: Which connection a callback came from
 
     /// A transport that stays open until closed and says when it was.

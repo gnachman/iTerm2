@@ -689,6 +689,11 @@ final class AppModel {
     private var answeringAlertID: String?
     /// The alert the Mac could not press a button on for us.
     private var rejectedAlertID: String?
+    /// How many answers have been sent. Numbers each one, so the wait that
+    /// follows an answer can tell whether it is still the latest.
+    private var alertAnswerCount = 0
+    /// The wait for the Mac to act on the latest answer.
+    @ObservationIgnored private var alertAnswerTimeoutTask: Task<Void, Never>?
     /// Alerts the user set aside with “Not now”.
     private var dismissedAlertIDs: Set<String> = []
     /// Alerts the user opened from the pill.
@@ -750,19 +755,29 @@ final class AppModel {
         return macStatus.mainBlocked
     }
 
-    private func applyMacStatus(_ status: CompanionMacStatus) {
-        let alertsChanged = status.modalAlerts != macStatus.modalAlerts
+    /// - fromMac: false when the status is being cleared because the
+    ///   connection ended. What the user chose for each alert (“Not now”, or
+    ///   opening it from the pill) is then kept: the same alerts are usually
+    ///   reported again after the reconnect.
+    private func applyMacStatus(_ status: CompanionMacStatus, fromMac: Bool = true) {
+        let changed = status != macStatus
         macStatus = status
         let ids = Set(status.modalAlerts.map { $0.id })
-        dismissedAlertIDs.formIntersection(ids)
-        openedAlertIDs.formIntersection(ids)
+        if fromMac {
+            dismissedAlertIDs.formIntersection(ids)
+            openedAlertIDs.formIntersection(ids)
+        }
         if let answeringAlertID, !ids.contains(answeringAlertID) {
             self.answeringAlertID = nil
+            alertAnswerTimeoutTask?.cancel()
+            alertAnswerTimeoutTask = nil
         }
-        // A rejection stands while the Mac keeps reporting the same alerts (it
-        // repeats its status right after rejecting). Any change means whatever
-        // was in the way may be gone.
-        if alertsChanged {
+        // A rejection stands while the Mac keeps reporting exactly the same
+        // thing (it repeats its status right after rejecting). Any change,
+        // in the alerts or in whether the Mac is blocked, means whatever was
+        // in the way may be gone. The alerts alone are not enough to go by:
+        // they do not change when something that was in front of one closes.
+        if changed {
             rejectedAlertID = nil
         }
         companionLog("Mac status: \(status.modalAlerts.count) alert(s), mainBlocked=\(status.mainBlocked)")
@@ -778,7 +793,7 @@ final class AppModel {
     /// Forget the Mac's status: the connection it described is gone. Takes the
     /// card down, releases held timeouts, and stops the liveness probe.
     private func clearMacStatus() {
-        applyMacStatus(CompanionMacStatus(modalAlerts: [], mainBlocked: false))
+        applyMacStatus(CompanionMacStatus(modalAlerts: [], mainBlocked: false), fromMac: false)
     }
 
     /// How long the card waits, after an answer is sent, for the Mac to act on
@@ -787,8 +802,10 @@ final class AppModel {
 
     /// The Mac neither removed the alert nor rejected the answer in time. Give
     /// the buttons back, so the card is not stuck on its spinner.
-    private func alertAnswerTimedOut(alertID: String) {
-        guard answeringAlertID == alertID else {
+    private func alertAnswerTimedOut(alertID: String, answer: Int) {
+        // Only the latest answer's wait counts. One left over from an earlier
+        // answer to the same alert must not cut this one short.
+        guard answeringAlertID == alertID, answer == alertAnswerCount else {
             return
         }
         companionLog("No word from the Mac about the answer to alert \(alertID); re-enabling its buttons")
@@ -824,9 +841,11 @@ final class AppModel {
     /// Press a button on the alert being shown. `suppress` is the state of the
     /// “don’t ask again” toggle. `inputs` is what the user entered for the
     /// alert's inputs, by id; an input left out keeps what it holds on the Mac.
-    func answerMacAlert(buttonIndex: Int, suppress: Bool, inputs: [String: String] = [:]) {
+    func answerMacAlert(buttonIndex: Int, suppress: Bool, inputs: [String: String] = [:],
+                        shownAlertID: String? = nil) {
         guard macRevision >= CompanionProtocolVersion.modalAlertRevision,
               let alert = topMacAlert,
+              shownAlertID == nil || shownAlertID == alert.id,
               alert.buttons.indices.contains(buttonIndex),
               alert.buttons[buttonIndex].offered,
               answeringAlertID != alert.id,
@@ -862,9 +881,16 @@ final class AppModel {
         #endif
         // The Mac reports success only by the alert going away. If its click
         // had no effect, or it cannot run it yet, nothing would ever arrive.
-        Task { [weak self] in
-            try? await Task.sleep(nanoseconds: UInt64(Self.alertAnswerTimeoutSeconds * 1_000_000_000))
-            self?.alertAnswerTimedOut(alertID: alertID)
+        alertAnswerCount += 1
+        let answer = alertAnswerCount
+        alertAnswerTimeoutTask?.cancel()
+        alertAnswerTimeoutTask = Task { [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: UInt64(Self.alertAnswerTimeoutSeconds * 1_000_000_000))
+            } catch {
+                return
+            }
+            self?.alertAnswerTimedOut(alertID: alertID, answer: answer)
         }
         guard let client else {
             return
@@ -884,8 +910,8 @@ final class AppModel {
     }
 
     /// “Not now”: set the alert aside. It stays reachable from the pill.
-    func dismissMacAlert() {
-        guard let alert = topMacAlert else {
+    func dismissMacAlert(shownAlertID: String? = nil) {
+        guard let alert = topMacAlert, shownAlertID == nil || shownAlertID == alert.id else {
             return
         }
         dismissedAlertIDs.insert(alert.id)
@@ -912,6 +938,7 @@ final class AppModel {
     /// One strict ping. The Mac answers pings without its main thread, so this
     /// is never held.
     private func livenessPing() async -> Bool {
+        livenessPingedClient = client
         guard let client else {
             return true
         }
@@ -924,6 +951,9 @@ final class AppModel {
             return false
         }
     }
+
+    /// The connection the liveness probe last pinged.
+    @ObservationIgnored private weak var livenessPingedClient: CompanionClient?
 
     /// Whether `client` is the connection in use. A connection the phone gave
     /// up on (the liveness probe or the connection check found it dead) can
@@ -958,6 +988,12 @@ final class AppModel {
     }
 
     private func livenessProbeFoundDeadConnection() {
+        // The verdict is about the connection that was pinged. A reconnect
+        // attempt may have replaced it since.
+        guard isCurrent(livenessPingedClient) else {
+            companionLog("Liveness check failed for a connection that is no longer in use; ignoring")
+            return
+        }
         guard isReconnecting else {
             companionLog("Liveness check failed while the Mac was blocked -> treating connection as lost and reconnecting")
             connectionLost()
@@ -989,9 +1025,11 @@ final class AppModel {
     private(set) var testSentAlertAnswers: [TestAlertAnswer] = []
 
     /// Test hook: the wait for the Mac to act on an answer ran out.
-    func testExpireAlertAnswerTimeout(alertID: String) {
-        alertAnswerTimedOut(alertID: alertID)
+    func testExpireAlertAnswerTimeout(alertID: String, answer: Int? = nil) {
+        alertAnswerTimedOut(alertID: alertID, answer: answer ?? alertAnswerCount)
     }
+    /// How many answers have been sent, which numbers the latest one.
+    var testAlertAnswerCount: Int { alertAnswerCount }
 
     /// Test hooks for the connection a callback came from.
     func testInstallClient(_ client: CompanionClient?) { self.client = client }
@@ -1002,7 +1040,10 @@ final class AppModel {
     func testClientDidClose(_ client: CompanionClient, error: Error? = nil) {
         clientDidClose(client, error: error)
     }
-    func testLivenessProbeFoundDeadConnection() { livenessProbeFoundDeadConnection() }
+    func testLivenessProbeFoundDeadConnection(pinged: CompanionClient? = nil) {
+        livenessPingedClient = pinged ?? client
+        livenessProbeFoundDeadConnection()
+    }
 
     /// Test hook: apply a version handshake as the connect path does.
     func testApplyHandshake(_ handshake: CompanionClient.HandshakeResult) {
@@ -1740,6 +1781,10 @@ final class AppModel {
         // connection and receive loop do not linger.
         if let existing = client {
             client = nil
+            // What the Mac said over that connection goes with it. Otherwise a
+            // card from an attempt that failed part-way stays up, with live
+            // buttons, until some later connection says otherwise.
+            clearMacStatus()
             await existing.close()
         }
 
@@ -2402,6 +2447,11 @@ final class AppModel {
                 } catch is CancellationError {
                     // App-driven teardown; nothing to report.
                 } catch {
+                    // The attempt may have got as far as a hello that said the Mac
+                    // is blocked or showing an alert. That connection is finished,
+                    // so what it said no longer holds: take the card down and stop
+                    // holding request timeouts through the wait before the next try.
+                    clearMacStatus()
                     // The relay hit its daily data limit: back off long (the loop
                     // top waits it out) and show the limit banner instead of the
                     // ~2s poll, which would only keep tripping the same limit.

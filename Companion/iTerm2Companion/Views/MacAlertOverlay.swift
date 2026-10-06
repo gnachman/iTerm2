@@ -211,8 +211,13 @@ private struct MacAlertOverlayRoot: View {
                     .ignoresSafeArea()
                 MacAlertCard(alert: alert,
                              state: state,
-                             onAnswer: { model.answerMacAlert(buttonIndex: $0, suppress: $1, inputs: $2) },
-                             onNotNow: { model.dismissMacAlert() })
+                             // Named by id: the Mac may replace the alert between
+                             // this card being drawn and the tap.
+                             onAnswer: {
+                                 model.answerMacAlert(buttonIndex: $0, suppress: $1, inputs: $2,
+                                                      shownAlertID: alert.id)
+                             },
+                             onNotNow: { model.dismissMacAlert(shownAlertID: alert.id) })
                     // A different alert is a different card: start its toggle off.
                     .id(alert.id)
             }
