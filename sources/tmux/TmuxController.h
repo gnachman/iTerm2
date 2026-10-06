@@ -282,6 +282,20 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)savePerTabSettings;
 
 - (void)swapPane:(int)pane1 withPane:(int)pane2;
+// Floating panes (tmux 3.8 and later). Each change comes back as a layout change.
+// Whether the server sends layouts that include floating panes.
+@property (nonatomic, readonly) BOOL supportsFloatingPanes;
+- (void)moveFloatingPane:(int)wp byColumns:(int)columns rows:(int)rows;
+- (void)resizeFloatingPane:(int)wp
+              moveByColumns:(int)dx
+                       rows:(int)dy
+            growingByColumns:(int)dw
+                       rows:(int)dh;
+- (void)newFloatingPaneNearPane:(int)wp;
+// Calls completion with the new float's session once it exists, or nil if tmux refused.
+- (void)newFloatingPaneNearPane:(int)wp completion:(void (^)(PTYSession *))completion;
+- (void)tileFloatingPane:(int)wp;
+- (void)raiseFloatingPane:(int)wp toFront:(BOOL)toFront;
 - (void)toggleZoomForPane:(int)pane;
 - (void)setPartialWindowIdOrder:(NSArray *)partialOrder;
 - (void)setCurrentWindow:(int)windowId;

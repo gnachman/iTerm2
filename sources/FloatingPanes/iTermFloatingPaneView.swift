@@ -73,6 +73,10 @@ final class iTermFloatingPaneView: NSView {
     }
     var pendingRestore: PendingRestore?
 
+    /// tmux hides floats while a pane is zoomed, except ones made to show over zoom. Such a float
+    /// still exists; this is not the hide toggle.
+    @objc var isHiddenByTmux = false
+
     @objc var isMaximized: Bool {
         return outlineFrameBeforeMaximizing != nil
     }

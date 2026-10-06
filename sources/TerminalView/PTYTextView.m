@@ -6147,6 +6147,13 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return self.frame.size.height - NSMaxY(self.enclosingScrollView.documentVisibleRect);
 }
 
+- (NSPoint)gridOriginInView:(NSView *)view {
+    NSRect rect = [self rectForGridCoord:VT100GridCoordMake(0, 0)];
+    // Where the grid is when scrolled to the bottom, not where scrollback has moved it.
+    rect.origin.y -= [self verticalOffset];
+    return [self convertPoint:rect.origin toView:view];
+}
+
 // The center of the cursor in this view's coordinates.
 - (NSPoint)cursorCenter {
     NSPoint cursorCenter;

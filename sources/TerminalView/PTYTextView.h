@@ -908,6 +908,9 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
 - (NSRect)rectForCoord:(VT100GridCoord)coord;
+// The top left of the first visible grid cell in `view`'s coordinates, as it is when scrolled to
+// the bottom.
+- (NSPoint)gridOriginInView:(NSView *)view;
 - (void)updateSubviewFrames;
 - (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProviderUsingProcessedColors:(BOOL)processed
                                                                         elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor;

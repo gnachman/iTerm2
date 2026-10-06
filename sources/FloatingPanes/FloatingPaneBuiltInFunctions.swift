@@ -67,7 +67,8 @@ class FloatingPaneBuiltInFunctions: NSObject {
                                                  comment: "Error from create_floating_pane when the tab ID does not identify a tab")))
                     return
                 }
-                if tab.isTmuxTab || terminal.layoutLocked || terminal.inInstantReplay() {
+                let tmuxFloatsSupported = tab.tmuxController()?.supportsFloatingPanes ?? false
+                if (tab.isTmuxTab && !tmuxFloatsSupported) || terminal.layoutLocked || terminal.inInstantReplay() {
                     completion(nil, error(String(localized: "FloatingPane.CannotCreate",
                                                  defaultValue: "Can’t add a floating pane to this tab now",
                                                  comment: "Error from create_floating_pane when the tab is a tmux tab, its window’s layout is locked, or it is in instant replay")))
@@ -86,6 +87,19 @@ class FloatingPaneBuiltInFunctions: NSObject {
                     return
                 }
                 let parent = tab.activeSession
+                if tab.isTmuxTab, let controller = tab.tmuxController(), let parent {
+                    // tmux makes the pane; profiles do not apply.
+                    controller.newFloatingPaneNearPane(parent.tmuxPane, completion: { session in
+                        if let guid = session?.guid {
+                            completion(guid, nil)
+                        } else {
+                            completion(nil, error(String(localized: "FloatingPane.CreateFailed",
+                                                         defaultValue: "Failed to create the floating pane",
+                                                         comment: "Error from create_floating_pane when the session could not be created")))
+                        }
+                    })
+                    return
+                }
                 let create = { (oldCWD: String?) in
                     let session = terminal.addFloatingPane(to: tab,
                                                            profile: profile,
@@ -162,6 +176,23 @@ class FloatingPaneBuiltInFunctions: NSObject {
                     completion(nil, error(String(localized: "FloatingPane.CannotResize",
                                                  defaultValue: "Can’t move or resize this floating pane now",
                                                  comment: "Error from set_floating_pane_frame when the layout is locked or the float shows instant replay")))
+                    return
+                }
+                if tab.isTmuxTab, let controller = tab.tmuxController(),
+                   let metrics = FloatingPaneLayout.metrics(for: session) {
+                    // tmux owns the float: ask it to move and resize by whole cells.
+                    let current = FloatingPaneLayout.visualOutlineFrame(of: pane)
+                    let grid = metrics.grid(fitting: CGSize(width: width.doubleValue, height: height.doubleValue))
+                    let dx = ((x.doubleValue - Double(current.minX)) / Double(metrics.cellSize.width)).rounded()
+                    let dy = ((y.doubleValue - Double(current.minY)) / Double(metrics.cellSize.height)).rounded()
+                    let dw = Int32(max(1, grid.columns)) - session.columns
+                    let dh = Int32(max(1, grid.rows)) - session.rows
+                    controller.resizeFloatingPane(session.tmuxPane,
+                                                  moveByColumns: Int32(dx),
+                                                  rows: Int32(dy),
+                                                  growingByColumns: dw,
+                                                  rows: dh)
+                    completion(NSNull(), nil)
                     return
                 }
                 // The size is rounded to whole cells, and the frame is kept inside the tab.

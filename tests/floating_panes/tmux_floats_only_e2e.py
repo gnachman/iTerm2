@@ -43,6 +43,12 @@ async def main(connection):
     tmux("kill-server")
     app = await iterm2.async_get_app(connection)
     gateway = app.current_terminal_window.current_tab.current_session
+    # Typing before the shell is ready can lose the command.
+    for _ in range(50):
+        contents = await gateway.async_get_screen_contents()
+        if any(contents.line(i).string.strip() for i in range(contents.number_of_lines)):
+            break
+        await asyncio.sleep(0.2)
 
     async def connections():
         return await iterm2.async_get_tmux_connections(connection)

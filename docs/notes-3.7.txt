@@ -19,8 +19,8 @@ Major New Features:
   window. Window > Floating Panes can raise,
   dock, move and hide them. They are saved with
   window arrangements and can be controlled from
-  the Python API. tmux integration windows do not
-  show floating panes yet.
+  the Python API. tmux integration shows tmux’s
+  own floating panes (tmux 3.8 and later).
 
 New Features:
 - `it2` can now target a session by the tmux pane

@@ -11780,7 +11780,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     PTYTab *tab = [self currentTab];
     return (tab != nil &&
             !_layoutLocked &&
-            ![tab isTmuxTab] &&
+            (![tab isTmuxTab] || tab.tmuxController.supportsFloatingPanes) &&
             ![self inInstantReplay] &&
             self.currentSession != nil);
 }
@@ -11793,6 +11793,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (![self canCreateFloatingPane]) {
         RLog(@"Can't create a floating pane");
         NSBeep();
+        return;
+    }
+    if (self.currentTab.isTmuxTab) {
+        // tmux creates, places and sizes it, with the session's own settings rather than a profile.
+        [self.currentTab.tmuxController newFloatingPaneNearPane:self.currentSession.tmuxPane];
         return;
     }
     if (![iTermSessionLauncher profileIsWellFormed:profile]) {
@@ -11836,7 +11841,6 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return (session != nil &&
             [tab floatingPaneForSession:session] != nil &&
             !_layoutLocked &&
-            !tab.isTmuxTab &&
             session.liveSession == nil &&
             ![self inInstantReplay]);
 }
@@ -11852,6 +11856,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
     PTYTab *tab = [self tabForSession:session];
+    if (tab.isTmuxTab) {
+        // tmux decides where it goes.
+        [tab.tmuxController tileFloatingPane:session.tmuxPane];
+        return;
+    }
     PTYSession *target = [tab mostRecentlyActiveTiledSession];
     if (!target) {
         return;
@@ -11878,6 +11887,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)moveActiveFloatingPaneByColumns:(int)columns rows:(int)rows {
     iTermFloatingPaneView *pane = [self activeFloatingPane];
     if (!pane || _layoutLocked) {
+        return;
+    }
+    if (self.currentTab.isTmuxTab) {
+        [self.currentTab.tmuxController moveFloatingPane:self.currentSession.tmuxPane byColumns:columns rows:rows];
         return;
     }
     [iTermFloatingPaneLayout moveFloatingPane:pane session:self.currentSession columns:columns rows:rows];

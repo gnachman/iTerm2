@@ -78,6 +78,11 @@ static NSString *kCommandTimestamp = @"timestamp";
     // set.
     BOOL disconnected_;
 
+    // Every window's layout, which also changes without a %layout-change (focus raising a floating
+    // pane, another client moving one), and the last value seen per window.
+    iTermTmuxSubscriptionHandle *_layoutSubscription;
+    NSMutableDictionary<NSNumber *, NSString *> *_subscribedLayouts;
+
     // Data from parsing an incoming command
     ControlCommand command_;
 
@@ -314,6 +319,38 @@ static NSString *kCommandTimestamp = @"timestamp";
     }
     NSString *windowFlags = components[2];
     return @([windowFlags containsString:@"Z"]);
+}
+
+- (void)subscribeToWindowLayouts {
+    if (_layoutSubscription || ![self supportsSubscriptions]) {
+        return;
+    }
+    _subscribedLayouts = [NSMutableDictionary dictionary];
+    __weak __typeof(self) weakSelf = self;
+    // The same fields as %layout-change, so the value parses the same way.
+    _layoutSubscription = [self subscribeToFormat:@"#{window_layout} #{window_visible_layout} #{window_flags}"
+                                           target:@"@*"
+                                            block:^(NSString *value, NSArray<NSString *> *args) {
+        [weakSelf windowLayoutSubscriptionDidChange:value arguments:args];
+    }];
+}
+
+// args are: name $session @window index %pane
+- (void)windowLayoutSubscriptionDidChange:(NSString *)value arguments:(NSArray<NSString *> *)args {
+    if (args.count < 3 || ![args[2] hasPrefix:@"@"]) {
+        return;
+    }
+    const int window = [[args[2] substringFromIndex:1] intValue];
+    if ([_subscribedLayouts[@(window)] isEqualToString:value]) {
+        return;
+    }
+    _subscribedLayouts[@(window)] = value;
+    DLog(@"Subscribed layout of @%d changed to %@", window, value);
+    [delegate_ tmuxUpdateLayoutForWindow:window
+                                  layout:[self regularLayoutFromLayoutChange:value]
+                           visibleLayout:[self visibleLayoutFromLayoutChange:value]
+                                  zoomed:[self layoutIsZoomedInLayoutChange:value]
+                                    only:NO];  // Sizes come with a real %layout-change.
 }
 
 - (NSString *)regularLayoutFromLayoutChange:(NSString *)args {

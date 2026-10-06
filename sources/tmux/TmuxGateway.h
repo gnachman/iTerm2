@@ -186,6 +186,9 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
                                              block:(void (^)(NSString *, NSArray<NSString *> *))block;
 - (void)unsubscribe:(iTermTmuxSubscriptionHandle *)handle;
 - (BOOL)supportsSubscriptions;
+// Follows every window's layout through a subscription, for changes tmux sends no %layout-change
+// for. Each change reaches the delegate as a layout change.
+- (void)subscribeToWindowLayouts;
 - (void)enableWritesAfterDelay;
 
 @end
