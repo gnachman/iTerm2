@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DAB9BA82D680E9AB6B3043D7 /* iTermFloatingPaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F500F98D6607037DCEB270 /* iTermFloatingPaneView.swift */; };
 		016EA28EFFD974B8FFD140E3 /* KittyDnDMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F2877106D3AD27A8ED6583 /* KittyDnDMessage.swift */; };
 		01A01787661B9E1F5177DAB7 /* iTermJobTerminationMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 677BAE3BF6167A6719904C54 /* iTermJobTerminationMonitor.swift */; };
 		01D8567525D898E2B0DB6FF1 /* iTermWindowBorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77FCEB05FACE33F5F7947261 /* iTermWindowBorderView.swift */; };
@@ -5017,6 +5018,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F7F500F98D6607037DCEB270 /* iTermFloatingPaneView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermFloatingPaneView.swift; sourceTree = "<group>"; };
 		0071478CE7978AC6B38C5DF7 /* iTermWorkgroupSessionMode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupSessionMode.swift; sourceTree = "<group>"; };
 		00885D5646181ED6CFE9A2DE /* SetTabStatusTrigger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SetTabStatusTrigger.swift; sourceTree = "<group>"; };
 		01B39A6571770B2627411423 /* iTermTabGroupBuiltInFunctions.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermTabGroupBuiltInFunctions.h; sourceTree = "<group>"; };
@@ -9088,6 +9090,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CB8346FD2E66E07964DE2CCD /* FloatingPanes */ = {
+			isa = PBXGroup;
+			children = (
+				F7F500F98D6607037DCEB270 /* iTermFloatingPaneView.swift */,
+			);
+			path = FloatingPanes;
+			sourceTree = "<group>";
+		};
 		0464AB0D006CD2EC7F000001 = {
 			isa = PBXGroup;
 			children = (
@@ -9166,6 +9176,7 @@
 				A62A77A52F9874B3007CAA0B /* FileTransfer */,
 				A6B150022F985CA2006C7417 /* FileTypes */,
 				A6DC0A3A2F9852270071E6A1 /* FixBrokenAppleCrap */,
+				CB8346FD2E66E07964DE2CCD /* FloatingPanes */,
 				A672CC902F984B5300EAC0FB /* FocusFollowsMouse */,
 				A6CD8B4C2F983F89003EA0C1 /* Fonts */,
 				A6B14FFF2F985BF5006C7417 /* Formatting */,
@@ -18378,6 +18389,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DAB9BA82D680E9AB6B3043D7 /* iTermFloatingPaneView.swift in Sources */,
 				A62A79B12F98835A007CAA0B /* PillBackgroundRenderer.swift in Sources */,
 				A62A79B22F98835A007CAA0B /* iTermTexturePageCollection.mm in Sources */,
 				A62A79B32F98835A007CAA0B /* iTermBadgeRenderer.m in Sources */,

@@ -77,6 +77,18 @@ final class TerminalWindowTestFixture {
         return session
     }
 
+    /// Adds a floating session to the current tab with the given frame in the tab's container.
+    @discardableResult
+    func addFloat(frame: NSRect) -> PTYSession {
+        guard let tab = terminal.currentTab() else {
+            it_fatalError("No tab")
+        }
+        let session = makeSession()
+        terminal.setupSession(session, with: nil)
+        tab.addFloatingSession(session, frame: frame)
+        return session
+    }
+
     /// The center of a view, in window coordinates.
     func center(of view: NSView) -> NSPoint {
         return view.convert(NSPoint(x: view.bounds.midX, y: view.bounds.midY), to: nil)

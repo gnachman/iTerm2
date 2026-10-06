@@ -199,6 +199,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // NSTabView -> NSTabViewItem -> container -> NSSplitView (root) -> ... -> SessionView -> etc.
     NSSplitView* root_;
 
+    // Floating panes, back to front. Each is a sibling of root_ in the container, above it, and
+    // holds a split view with one session view:
+    //
+    // container -> iTermFloatingPaneView -> PTYSplitView -> SessionView
+    NSMutableArray<iTermFloatingPaneView *> *_floatingPanes;
+
     // The active pane is maximized, meaning there are other panes that are hidden.
     BOOL isMaximized_;
 
@@ -468,6 +474,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _containerView = [[iTermFlexibleView alloc] initWithFrame:NSZeroRect color:nil];
     _containerView.autoresizesSubviews = YES;
     _containerView.rootFillsBounds = YES;
+    _floatingPanes = [[NSMutableArray alloc] init];
     _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab
                                                    owner:self];
     _variables.primaryKey = @"id";
@@ -1071,6 +1078,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (PTYSession *)sessionWithViewId:(int)viewId {
     SessionView *sv = [self _recursiveSessionViewWithId:viewId atNode:root_];
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        if (sv) {
+            break;
+        }
+        sv = [self _recursiveSessionViewWithId:viewId atNode:pane.splitView];
+    }
     return [self sessionForSessionView:sv];
 }
 
@@ -1664,7 +1677,108 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return panes;
 }
 
-- (NSArray *)sessions {
+- (NSArray<PTYSession *> *)sessions {
+    NSArray<PTYSession *> *floating = [self floatingSessions];
+    NSArray<PTYSession *> *tiled = [self tiledSessions];
+    if (floating.count == 0) {
+        return tiled;
+    }
+    return [tiled arrayByAddingObjectsFromArray:floating];
+}
+
+- (NSArray<PTYSession *> *)floatingSessions {
+    NSMutableArray<PTYSession *> *result = [NSMutableArray array];
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        [self _recursiveSessions:result atNode:pane.splitView];
+    }
+    return result;
+}
+
+- (NSArray<SessionView *> *)floatingSessionViews {
+    NSMutableArray<SessionView *> *result = [NSMutableArray array];
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        [self _recursiveSessionViews:result atNode:pane.splitView];
+    }
+    return result;
+}
+
+- (NSArray<iTermFloatingPaneView *> *)floatingPanes {
+    return [_floatingPanes copy];
+}
+
+- (BOOL)sessionIsFloating:(PTYSession *)session {
+    return session != nil && [[self floatingSessions] containsObject:session];
+}
+
+- (iTermFloatingPaneView *)floatingPaneWithRoot:(NSView *)view {
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        if (pane.splitView == view) {
+            return pane;
+        }
+    }
+    return nil;
+}
+
+- (iTermFloatingPaneView *)floatingPaneForSession:(PTYSession *)session {
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        if ([[self _recursiveSessions:[NSMutableArray array] atNode:pane.splitView] containsObject:session]) {
+            return pane;
+        }
+    }
+    return nil;
+}
+
+// root_ or the split view inside a floating pane. Walks up the view hierarchy must stop at one of
+// these.
+- (BOOL)isRootSplitView:(NSView *)view {
+    return view != nil && (view == root_ || [self floatingPaneWithRoot:view] != nil);
+}
+
+- (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame {
+    PTYSplitView *splitView = [[PTYSplitView alloc] initWithFrame:[iTermFloatingPaneView splitViewFrameForBounds:NSMakeRect(0, 0, frame.size.width, frame.size.height)]];
+    if (USE_THIN_SPLITTERS) {
+        [splitView setDividerStyle:NSSplitViewDividerStyleThin];
+    }
+    [splitView setVertical:YES];
+    [splitView setAutoresizesSubviews:YES];
+    splitView.delegate = self;
+    iTermFloatingPaneView *pane = [[iTermFloatingPaneView alloc] initWithFrame:frame splitView:splitView];
+
+    session.delegate = self;
+    [session setActivityCounter:@(_activityCounter++)];
+    [splitView addSubview:session.view];
+    session.view.frame = splitView.bounds;
+    [self.viewToSessionMap setObject:session forKey:session.view];
+
+    [_floatingPanes addObject:pane];
+    [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:nil];
+    [self numberOfSessionsDidChange];
+}
+
+- (void)removeFloatingPane:(iTermFloatingPaneView *)pane {
+    [pane removeFromSuperview];
+    [_floatingPanes removeObject:pane];
+}
+
+// When the active session is removed from a float, which session takes over: the frontmost
+// remaining float, else the tiled session used most recently.
+- (PTYSession *)successorOfRemovedFloatingSession:(PTYSession *)removed {
+    for (PTYSession *session in [[self floatingSessions] reverseObjectEnumerator]) {
+        if (session != removed) {
+            return session;
+        }
+    }
+    PTYSession *best = nil;
+    for (PTYSession *session in [self tiledSessions]) {
+        if (session != removed &&
+            (!best || [session.activityCounter compare:best.activityCounter] == NSOrderedDescending)) {
+            best = session;
+        }
+    }
+    return best;
+}
+
+- (NSArray<PTYSession *> *)tiledSessions {
     if (idMap_) {
         NSArray<SessionView *> *sessionViews = [idMap_ allValues];
         NSMutableArray* result = [NSMutableArray arrayWithCapacity:[sessionViews count]];
@@ -1697,6 +1811,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (NSArray<SessionView *> *)sessionViews {
+    NSArray<SessionView *> *floating = [self floatingSessionViews];
+    NSArray<SessionView *> *tiled = [self tiledSessionViews];
+    if (floating.count == 0) {
+        return tiled;
+    }
+    return [tiled arrayByAddingObjectsFromArray:floating];
+}
+
+- (NSArray<SessionView *> *)tiledSessionViews {
     if (idMap_) {
         return [idMap_ allValues];
     } else {
@@ -2083,6 +2206,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)cleanupAfterRemove:(NSSplitView *)splitView {
+    iTermFloatingPaneView *floatingPane = [self floatingPaneWithRoot:splitView];
+    if (floatingPane) {
+        // A float holds one session. Once it is gone, so is the float.
+        if (splitView.subviews.count == 0) {
+            PtyLog(@"Remove floating pane");
+            [self removeFloatingPane:floatingPane];
+        }
+        return;
+    }
     const int initialNumberOfSubviews = [[splitView subviews] count];
     if (initialNumberOfSubviews == 1) {
         NSView *onlyChild = [[splitView subviews] objectAtIndex:0];
@@ -2160,7 +2292,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (NSRect)_recursiveViewFrame:(NSView*)aView {
     NSRect localFrame = [aView frame];
-    if (aView != root_) {
+    if (aView && ![self isRootSplitView:aView]) {
         NSRect parentFrame = [self _recursiveViewFrame:[aView superview]];
         localFrame.origin.x += parentFrame.origin.x;
         localFrame.origin.y += parentFrame.origin.y;
@@ -2319,12 +2451,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Grab the nearest neighbor (arbitrarily, the subview before if there is on or after if not)
     // to make its earliest descendent that is a session active.
     SessionView *nearestNeighbor = [self nearestNeighborOfSession:aSession];
+    PTYSession *floatingSuccessor = nil;
+    if (aSession == activeSession_ && [self sessionIsFloating:aSession]) {
+        floatingSuccessor = [self successorOfRemovedFloatingSession:aSession];
+    }
 
     // Remove the session.
     [self _recursiveRemoveView:[aSession view]];
 
     if (aSession == activeSession_) {
-        [self setActiveSession:[self sessionForSessionView:nearestNeighbor]];
+        [self setActiveSession:floatingSuccessor ?: [self sessionForSessionView:nearestNeighbor]];
     }
 
     [self recheckBlur];

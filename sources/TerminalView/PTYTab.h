@@ -12,6 +12,7 @@
 #import "Api.pbobjc.h"
 
 @class FakeWindow;
+@class iTermFloatingPaneView;
 @protocol iTermTabScope;
 @class iTermVariables;
 @class iTermVariableScope;
@@ -281,7 +282,23 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // Does any session in this tab require prompt on close?
 - (iTermPromptOnCloseReason *)promptOnCloseReason;
 
+// All sessions: the tiled ones first, then the floating ones back to front.
 - (NSArray<PTYSession *> *)sessions;
+
+// Sessions in the tiled layout only. May be empty in a tmux tab whose window has only floating
+// panes.
+- (NSArray<PTYSession *> *)tiledSessions;
+
+// Floating sessions, back to front.
+- (NSArray<PTYSession *> *)floatingSessions;
+@property(nonatomic, readonly) NSArray<iTermFloatingPaneView *> *floatingPanes;
+- (BOOL)sessionIsFloating:(PTYSession *)session;
+- (iTermFloatingPaneView *)floatingPaneForSession:(PTYSession *)session;
+
+// Adds an already set up session as a floating pane in front of the others. frame is the float's
+// frame in the tab's container, outline included.
+- (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame;
+
 - (void)removeSession:(PTYSession *)aSession;
 
 // Anyone changing the number of sessions must call this after the sessions
