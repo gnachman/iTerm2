@@ -165,8 +165,14 @@ typedef enum {
 // given tab.
 - (int)tabNumberForItermSessionId;
 
-// Sibling sessions in this tab.
+// Sibling sessions in this tab: tiled first, then floating.
 - (NSArray<PTYSession *> *)sessions;
+
+// Sibling sessions in the tab's tiled layout.
+- (NSArray<PTYSession *> *)tiledSessions;
+
+// Is the session a floating pane in this tab?
+- (BOOL)sessionIsFloating:(PTYSession *)session;
 
 // Remove aSession from the tab.
 // Remove a dead session. This should be called from [session terminate] only.

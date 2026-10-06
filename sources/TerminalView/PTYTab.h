@@ -230,7 +230,7 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (void)setIsProcessing:(BOOL)aFlag;
 - (void)terminateAllSessions;
 - (NSArray *)windowPanes;
-- (NSArray*)sessionViews;
+- (NSArray<SessionView *> *)sessionViews;
 - (void)setFilter:(NSString *)query inSession:(PTYSession *)oldSession;
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession;
 - (void)unmaximizeTemporarilyAndActivate:(PTYSession *(^)(void))sessionPicker;

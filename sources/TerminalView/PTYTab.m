@@ -456,7 +456,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self commonInit];
         [self setRoot:root];
         [PTYTab _recursiveSetDelegateIn:root_ to:self];
-        for (SessionView *sessionView in [self sessionViews]) {
+        for (SessionView *sessionView in [self tiledSessionViews]) {
             [self.viewToSessionMap setObject:[sessions objectForKey:sessionView] forKey:sessionView];
         }
         PtyLog(@"PTYTab initWithRoot - end %p", self);
@@ -624,8 +624,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     const BOOL anySessionHasTopStatusBar = statusBarsOnTop && [sessions anyWithBlock:^BOOL(PTYSession *session) {
         return [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:session.profile];
     }];
-    const BOOL shouldShowTitles = forceTitles || (showTitles && [sessions count] > 1) || anySessionHasTopStatusBar;
+    // A floating pane always has a title bar; it is the grab handle. Whether tiled panes have one
+    // depends on the number of tiled panes, so a float appearing does not change the layout.
+    const BOOL shouldShowTiledTitles = forceTitles || (showTitles && [[self tiledSessions] count] > 1) || anySessionHasTopStatusBar;
+    NSArray<PTYSession *> *floatingSessions = [self floatingSessions];
     for (PTYSession *aSession in sessions) {
+        const BOOL shouldShowTitles = shouldShowTiledTitles || [floatingSessions containsObject:aSession];
         const BOOL shouldShowBottomStatusBar = (perPaneStatusBars &&
                                                 !statusBarsOnTop &&
                                                 [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR
@@ -1098,14 +1102,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (NSArray *)orderedSessions {
     if ([iTermAdvancedSettingsModel navigatePanesInReadingOrder]) {
+        // Reading order means nothing for panes that overlap, so floats come after the tiled panes,
+        // back to front.
+        NSArray<PTYSession *> *floating = [self floatingSessions];
         if (self.isMaximized) {
-            return [_orderedSessionIDs mapWithBlock:^id(NSNumber *idMapKey) {
+            NSArray<PTYSession *> *tiled = [_orderedSessionIDs mapWithBlock:^id(NSNumber *idMapKey) {
                 SessionView *sessionView = idMap_[idMapKey];
                 return sessionView ? [self sessionForSessionView:sessionView] : nil;
             }];
+            return [tiled arrayByAddingObjectsFromArray:floating];
         }
         BOOL useTrueReadingOrder = !root_.isVertical;
-        return [[self sessions] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+        NSArray<PTYSession *> *tiled = [[self tiledSessions] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
             NSPoint origin1 = [self rootRelativeOriginOfSession:obj1];
             NSPoint origin2 = [self rootRelativeOriginOfSession:obj2];
             if (useTrueReadingOrder) {
@@ -1125,6 +1133,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 }
             }
         }];
+        return [tiled arrayByAddingObjectsFromArray:floating];
     } else {
         return [[self sessions] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
             PTYSession *session1 = obj1;
@@ -1413,7 +1422,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (isMaximized_) {
         return @[self.activeSession];
     }
-    return [self.sessions minimumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
+    return [self.tiledSessions minimumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
         const CGFloat y1 = round(NSMinY([root_ convertRect:session1.view.bounds fromView:session1.view]));
         const CGFloat y2 = round(NSMinY([root_ convertRect:session2.view.bounds fromView:session2.view]));
         return [@(y1) compare:@(y2)];
@@ -1424,7 +1433,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (isMaximized_) {
         return @[self.activeSession];
     }
-    return [self.sessions minimumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
+    return [self.tiledSessions minimumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
         const CGFloat y1 = round(NSMinX([root_ convertRect:session1.view.bounds fromView:session1.view]));
         const CGFloat y2 = round(NSMinX([root_ convertRect:session2.view.bounds fromView:session2.view]));
         return [@(y1) compare:@(y2)];
@@ -1435,7 +1444,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (isMaximized_) {
         return @[self.activeSession];
     }
-    return [self.sessions maximumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
+    return [self.tiledSessions maximumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
         const CGFloat x1 = round(NSMaxX([root_ convertRect:session1.view.bounds fromView:session1.view]));
         const CGFloat x2 = round(NSMaxX([root_ convertRect:session2.view.bounds fromView:session2.view]));
         return [@(x1) compare:@(x2)];
@@ -1446,7 +1455,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (isMaximized_) {
         return @[self.activeSession];
     }
-    return [self.sessions maximumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
+    return [self.tiledSessions maximumsWithComparator:^NSComparisonResult(PTYSession *_Nonnull session1, PTYSession *_Nonnull session2) {
         const CGFloat y1 = round(NSMaxY([root_ convertRect:session1.view.bounds fromView:session1.view]));
         const CGFloat y2 = round(NSMaxY([root_ convertRect:session2.view.bounds fromView:session2.view]));
         return [@(y1) compare:@(y2)];
@@ -1493,7 +1502,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // We did not consider D since it isn't in the projection.
 
 - (NSArray<PTYSession *> *)sessionsSatisfying:(BOOL (^)(PTYSession *otherSession))condition {
-    return [self.sessions filteredArrayUsingBlock:^BOOL(PTYSession *anObject) {
+    return [self.tiledSessions filteredArrayUsingBlock:^BOOL(PTYSession *anObject) {
         return condition(anObject);
     }];
 }
@@ -2332,7 +2341,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [root_ adjustSubviews];
 
     // Make scrollbars the right size and put them at the tops of their session views.
-    for (PTYSession *theSession in [self sessions]) {
+    for (PTYSession *theSession in [self tiledSessions]) {
         NSSize theSize = [theSession idealScrollViewSizeWithStyle:[parentWindow_ scrollerStyle]];
         [[theSession.view scrollview] setFrame:NSMakeRect(0,
                                                           0,
@@ -3219,7 +3228,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // Blur the window if any session is blurred.
 - (BOOL)blur {
     int y = 0;
-    NSArray<PTYSession *> *sessions = [self sessions];
+    NSArray<PTYSession *> *sessions = [self tiledSessions];
     for (PTYSession *session in sessions) {
         if ([session transparency] > 0 &&
             [[session textview] useTransparency] &&
@@ -3233,7 +3242,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (double)blurRadius {
     double sum = 0;
     double count = 0;
-    NSArray<PTYSession *> *sessions = [self sessions];
+    NSArray<PTYSession *> *sessions = [self tiledSessions];
     for (PTYSession *session in sessions) {
         if ([[[session profile] objectForKey:KEY_BLUR] boolValue]) {
             sum += [[session profile] objectForKey:KEY_BLUR_RADIUS] ? [[[session profile] objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0;
@@ -3665,7 +3674,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (tabToGut->isMaximized_) {
         [tabToGut unmaximize];
     }
-    for (PTYSession *aSession in [tabToGut sessions]) {
+    for (PTYSession *aSession in [tabToGut tiledSessions]) {
         aSession.delegate = self;
     }
     for (PTYSplitView *splitview in [self splitters]) {
@@ -4851,7 +4860,9 @@ typedef struct {
 
     // The size of a cell.
     NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
-    NSArray<SessionView *> *allSessionViews = self.isMaximized ? @[ self.activeSession.view ] : [self sessionViews];
+    // TODO: A tmux window can have only floating panes, which leaves this empty and the size zero.
+    // Derive a size from the container in that case.
+    NSArray<SessionView *> *allSessionViews = self.isMaximized ? @[ self.activeSession.view ] : [self tiledSessionViews];
 
     const CGSize margins = NSMakeSize([iTermPreferences sideMargins] * 2,
                                       [iTermPreferences topBottomMargins] * 2);
@@ -5263,7 +5274,7 @@ typedef struct {
         [self.parentWindow fitWindowToTab:self];
     } else {
         [self recursiveAdjustSubviews:root_];
-        for (PTYSession *session in self.sessions) {
+        for (PTYSession *session in self.tiledSessions) {
             [self fitSessionToCurrentViewSize:session];
         }
     }
@@ -5533,7 +5544,7 @@ typedef struct {
 
     // Create a map of window pane -> SessionView *
     NSMutableDictionary<NSNumber *, SessionView *> *idMap = [NSMutableDictionary dictionary];
-    for (PTYSession *aSession in [self sessions]) {
+    for (PTYSession *aSession in [self tiledSessions]) {
         idMap[@([aSession tmuxPane])] = aSession.view;
     }
     NSArray *preexistingPanes = [[idMap allKeys] copy];
@@ -5562,7 +5573,7 @@ typedef struct {
 
     // All sessions that remain in this tab have had their parentage changed so
     // -[sessions] returns only the ones that are to be terminated.
-    NSArray *sessionsToTerminate = [self sessions];
+    NSArray *sessionsToTerminate = [self tiledSessions];
 
     // Swap in the new root split view.
     [self setRoot:newRoot];
@@ -5573,7 +5584,7 @@ typedef struct {
     }
 
     if (!activeSession) {
-        NSArray *sessions = [self sessions];
+        NSArray *sessions = [self tiledSessions];
         if ([sessions count]) {
             PTYSession *session = nil;
             if (nearestNeighbor) {
@@ -5588,12 +5599,12 @@ typedef struct {
 
     const BOOL perPaneTitleBarEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
     const BOOL forceTitleBar = perPaneTitleBarEnabled && [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane];
-    const BOOL haveMultipleSessions = self.sessions.count > 1;
+    const BOOL haveMultipleSessions = self.tiledSessions.count > 1;
     const BOOL showTitles = forceTitleBar || (perPaneTitleBarEnabled && haveMultipleSessions);
 
     const BOOL hasScrollbar = [realParentWindow_ scrollbarShouldBeVisible];
     const NSScrollerStyle scrollerStyle = [realParentWindow_ scrollerStyle];
-    for (PTYSession *aSession in [self sessions]) {
+    for (PTYSession *aSession in [self tiledSessions]) {
         NSNumber *n = [NSNumber numberWithInt:[aSession tmuxPane]];
         if (![preexistingPanes containsObject:n]) {
             // This is a new pane so register it.
@@ -5832,7 +5843,7 @@ typedef struct {
 
 - (void)maximize {
     RLog(@"maximize %@", self);
-    for (PTYSession *session in [self sessions]) {
+    for (PTYSession *session in [self tiledSessions]) {
         session.savedRootRelativeOrigin = [self rootRelativeOriginOfSession:session];
     }
 
@@ -5967,7 +5978,7 @@ typedef struct {
     [[root_ window] makeFirstResponder:[activeSession_ mainResponder]];
     [realParentWindow_ invalidateRestorableState];
 
-    for (SessionView *sessionView in self.sessionViews) {
+    for (SessionView *sessionView in self.tiledSessionViews) {
         // I don't know why, but this doesn't get called automatically and so focus follows mouse
         // breaks. Issue 4810.
         [sessionView updateTrackingAreas];
@@ -7404,13 +7415,15 @@ typedef struct {
     const BOOL resizing = self.realParentWindow.windowIsResizing;
     const BOOL powerOK = [[iTermPowerManager sharedInstance] metalAllowed];
     __block iTermMetalUnavailableReason sessionReason = iTermMetalUnavailableReasonNone;
+    NSArray<PTYSession *> *floatingSessions = [self floatingSessions];
     NSArray<PTYSession *> *nonHiddenSessions = [self.sessions filteredArrayUsingBlock:^BOOL(PTYSession *session) {
         if (!self->isMaximized_) {
             // Invisible sessions in a maximized tab aren't in the view hierarchy and so will always
             // say Metal is disallowed.
             return YES;
         }
-        return session == self.activeSession;
+        // Floating panes stay visible over a maximized pane.
+        return session == self.activeSession || [floatingSessions containsObject:session];
     }];
     const BOOL allSessionsAllowMetal = [nonHiddenSessions allWithBlock:^BOOL(PTYSession *anObject) {
         return [anObject metalAllowed:&sessionReason];
@@ -7475,7 +7488,7 @@ typedef struct {
     DLog(@"_metalUnavailableReason = %@", iTermMetalUnavailableReasonDescription(_metalUnavailableReason));
     [self.sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (self->isMaximized_) {
-            obj.useMetal = useMetal && (obj == self.activeSession);
+            obj.useMetal = useMetal && (obj == self.activeSession || [floatingSessions containsObject:obj]);
             return;
         }
         obj.useMetal = useMetal;
@@ -7589,7 +7602,7 @@ typedef struct {
     // self is the destination tab. session is the session that's moving.
     if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound) {
         if ([[MovePaneController sharedInstance] isMovingSession:session]) {
-            if (self.sessions.count == 1 && !self.realParentWindow.anyFullScreen && self.realParentWindow.movesWhenDraggedOntoSelf) {
+            if (self.tiledSessions.count == 1 && !self.realParentWindow.anyFullScreen && self.realParentWindow.movesWhenDraggedOntoSelf) {
                 // If you dragged a session from a tab with split panes onto itself then do nothing.
                 // But if you drag a session onto itself in a tab WITHOUT split panes, then move the
                 // whole window.
@@ -7643,7 +7656,7 @@ typedef struct {
 }
 
 - (NSArray<PTYSession *> *)minimizedSessions {
-    return [[self sessions] arrayByRemovingObject:self.activeSession];
+    return [[self tiledSessions] arrayByRemovingObject:self.activeSession];
 }
 
 - (NSUInteger)sessionPaneNumber:(PTYSession *)session {

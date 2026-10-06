@@ -566,7 +566,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         return YES;
     } else if (menuItem.action == @selector(arrangeSplitPanesEvenly:)) {
         PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
-        return (tab.sessions.count > 0 && !tab.isMaximized);
+        return (tab.tiledSessions.count > 0 && !tab.isMaximized);
     } else if (menuItem.action == @selector(makeScreenshot:)) {
         PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
         return tab != nil;

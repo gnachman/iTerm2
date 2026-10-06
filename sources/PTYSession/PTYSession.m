@@ -22047,7 +22047,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         *allowedPtr = NO;
         return NO;
     }
-    if ([[_delegate sessions] count] == 1) {
+    if ([_delegate sessionIsFloating:self]) {
+        DLog(@"Floating");
+        *allowedPtr = NO;
+    } else if ([[_delegate tiledSessions] count] == 1) {
         DLog(@"Solo");
         *allowedPtr = NO;
     } else {

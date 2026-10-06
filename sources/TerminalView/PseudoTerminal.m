@@ -8184,10 +8184,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             const BOOL forcePerPaneTitleBar = perPaneTitleBarEnabled && [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane];
             const BOOL statusBarsOnTop = ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition] == iTermStatusBarPositionTop);
             const BOOL perPaneStatusBars = [self useSeparateStatusbarsPerPane];
-            const BOOL haveMultipleSessions = firstTab.sessions.count > 1;
+            // A floating pane always has a title bar. Tiled panes count only tiled panes.
+            const BOOL haveMultipleSessions = firstTab.tiledSessions.count > 1;
+            NSArray<PTYSession *> *floatingSessions = firstTab.floatingSessions;
             for (PTYSession *session in firstTab.sessions) {
                 const BOOL sessionHasStatusBar = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:session.profile];
-                const BOOL showTitleBar = forcePerPaneTitleBar || (perPaneTitleBarEnabled && (firstTab.isMaximized || haveMultipleSessions));
+                const BOOL showTitleBar = ([floatingSessions containsObject:session] ||
+                                           forcePerPaneTitleBar ||
+                                           (perPaneTitleBarEnabled && (firstTab.isMaximized || haveMultipleSessions)));
                 const BOOL showTopStatusBar = statusBarsOnTop && perPaneStatusBars && sessionHasStatusBar;
                 [[session view] setShowTitle:showTitleBar || showTopStatusBar adjustScrollView:YES];
             }
@@ -9276,7 +9280,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return YES;
     }
     const BOOL hasSingleTab = (self.numberOfTabs == 1);
-    const BOOL hasSplitPanes = (tab.sessions.count > 1);
+    const BOOL hasSplitPanes = (tab.tiledSessions.count > 1);
     const BOOL isHiddenInBar = [_contentView.tabBarControl tabIsHiddenInBarWithIdentifier:tab];
     const BOOL result = (hasSingleTab || hasSplitPanes || isHiddenInBar || !tabBarVisible);
     DLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isHiddenInBar=%d tabBarVisible=%d -> %d",
@@ -11286,7 +11290,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     RLog(@"OK");
     NSMutableArray *allSessions = [NSMutableArray array];
     [allSessions addObjectsFromArray:sessions];
-    [allSessions addObjectsFromArray:[tab sessions]];
+    // Floating panes are not rebuilt from the arrangement; they stay as they are.
+    [allSessions addObjectsFromArray:[tab tiledSessions]];
     NSDictionary<NSString *, PTYSession *> *theMap = [PTYTab sessionMapWithArrangement:arrangement
                                                                               sessions:allSessions];
 
@@ -11294,7 +11299,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (ok) {
         RLog(@"Found session map");
         // Make sure the proposed tab has at least all the sessions already in the current tab.
-        for (PTYSession *sessionInExistingTab in [tab sessions]) {
+        for (PTYSession *sessionInExistingTab in [tab tiledSessions]) {
             BOOL found = NO;
             for (PTYSession *sessionInProposedTab in [theMap allValues]) {
                 if (sessionInProposedTab == sessionInExistingTab) {
