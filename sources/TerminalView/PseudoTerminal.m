@@ -11826,11 +11826,22 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+// A synthetic session (instant replay, filter, zoom) is swapped in for the float's own, so the
+// float cannot leave its wrapper until it ends.
+- (BOOL)canDockCurrentSession {
+    PTYSession *session = self.currentSession;
+    return ([self.currentTab floatingPaneForSession:session] != nil &&
+            !_layoutLocked &&
+            !self.currentTab.isTmuxTab &&
+            session.liveSession == nil &&
+            ![self inInstantReplay]);
+}
+
 // Moves the active float into the tiled layout, to the right of the tiled pane used most recently.
 - (IBAction)dockFloatingPane:(id)sender {
     PTYTab *tab = self.currentTab;
     PTYSession *session = self.currentSession;
-    if (![tab floatingPaneForSession:session] || _layoutLocked || tab.isTmuxTab) {
+    if (![self canDockCurrentSession]) {
         return;
     }
     PTYSession *target = [tab mostRecentlyActiveTiledSession];
@@ -14303,10 +14314,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             return [self activeFloatingPane] != nil;
         }
         if (action == @selector(dockFloatingPane:)) {
-            return ([self activeFloatingPane] != nil &&
-                    !_layoutLocked &&
-                    !self.currentTab.isTmuxTab &&
-                    ![self inInstantReplay]);
+            return [self canDockCurrentSession];
         }
         if (action == @selector(moveFloatingPaneUp:) ||
             action == @selector(moveFloatingPaneDown:) ||

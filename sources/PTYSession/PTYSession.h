@@ -181,6 +181,9 @@ typedef enum {
 // For a native floating pane, the largest grid that fits in its tab, as (columns, rows). Zero
 // otherwise.
 - (NSSize)sessionMaximumFloatingGridSize:(PTYSession *)session;
+
+// Brings a floating pane to the front of the tab's floats, or sends it to the back.
+- (void)sessionRaiseFloatingPane:(PTYSession *)session toFront:(BOOL)toFront;
 @required
 
 // Remove aSession from the tab.

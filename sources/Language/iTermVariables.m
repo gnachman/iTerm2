@@ -70,6 +70,7 @@ NSString *const iTermVariableKeySessionForegroundJobAncestors = @"foregroundJobA
 NSString *const iTermVariableKeySessionCommandLine = @"commandLine";
 NSString *const iTermVariableKeySessionPresentationName = @"presentationName";
 NSString *const iTermVariableKeySessionTmuxPaneTitle = @"tmuxPaneTitle";
+NSString *const iTermVariableKeySessionIsFloating = @"isFloating";
 NSString *const iTermVariableKeySessionTmuxRole = @"tmuxRole";
 NSString *const iTermVariableKeySessionTmuxClientName = @"tmuxClientName";
 NSString *const iTermVariableKeySessionAutoNameFormat = @"autoNameFormat";

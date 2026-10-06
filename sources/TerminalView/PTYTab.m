@@ -705,7 +705,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     const BOOL shouldShowTiledTitles = forceTitles || (showTitles && [[self tiledSessions] count] > 1) || anySessionHasTopStatusBar;
     NSArray<PTYSession *> *floatingSessions = [self floatingSessions];
     for (PTYSession *aSession in sessions) {
-        const BOOL shouldShowTitles = shouldShowTiledTitles || [floatingSessions containsObject:aSession];
+        const BOOL isFloating = [floatingSessions containsObject:aSession];
+        // Every change between tiled and floating ends here. Unchanged values are not re-sent.
+        [aSession.variablesScope setValue:@(isFloating) forVariableNamed:iTermVariableKeySessionIsFloating];
+        const BOOL shouldShowTitles = shouldShowTiledTitles || isFloating;
         const BOOL shouldShowBottomStatusBar = (perPaneStatusBars &&
                                                 !statusBarsOnTop &&
                                                 [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR
@@ -1899,6 +1902,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [iTermFloatingPaneLayout maximumGridOfFloatingPane:pane session:session];
 }
 
+- (void)sessionRaiseFloatingPane:(PTYSession *)session toFront:(BOOL)toFront {
+    iTermFloatingPaneView *pane = [self floatingPaneForSession:session];
+    if (!pane) {
+        return;
+    }
+    if (toFront) {
+        [self bringFloatingPaneToFront:pane];
+    } else {
+        [self sendFloatingPaneToBack:pane];
+    }
+}
+
 - (BOOL)sessionResizeFloatingPane:(PTYSession *)session columns:(int)columns rows:(int)rows {
     iTermFloatingPaneView *pane = self.isTmuxTab ? nil : [self floatingPaneForSession:session];
     if (!pane) {
@@ -2026,6 +2041,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (BOOL)floatingPaneCanMoveOrResize:(iTermFloatingPaneView *)pane {
     return !self.realParentWindow.layoutLocked;
+}
+
+- (BOOL)floatingPaneCanResize:(iTermFloatingPaneView *)pane {
+    PTYSession *session = [self sessionForSessionView:pane.sessionView];
+    return [self floatingPaneCanMoveOrResize:pane] && session.liveSession == nil;
 }
 
 - (void)floatingPane:(iTermFloatingPaneView *)pane dragDidChangeToActive:(BOOL)active {
@@ -3372,6 +3392,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [viewImage unlockFocus];
 
     [self _recursiveDrawSplit:root_ inImage:viewImage atOrigin:NSMakePoint(xOrigin, yOrigin)];
+    if (!_floatingPanesHidden && !_floatingPanesTemporarilyHidden) {
+        // Floats go on top, back to front. root_ is flipped, as the origins here are.
+        for (iTermFloatingPaneView *pane in _floatingPanes) {
+            const NSRect rect = [root_ convertRect:pane.splitView.bounds fromView:pane.splitView];
+            [self _recursiveDrawSplit:pane.splitView
+                              inImage:viewImage
+                             atOrigin:NSMakePoint(xOrigin + rect.origin.x, yOrigin + rect.origin.y)];
+        }
+    }
 
     return viewImage;
 }
@@ -6515,6 +6544,9 @@ typedef struct {
 - (void)moveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally {
     iTermFloatingPaneView *floatingPane = [self floatingPaneForSession:self.activeSession];
     if (floatingPane) {
+        if (![self floatingPaneCanResize:floatingPane]) {
+            return;
+        }
         // A float has no divider. Right and left change its width, down and up its height.
         [iTermFloatingPaneLayout resizeFloatingPane:floatingPane
                                             session:self.activeSession

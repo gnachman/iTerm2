@@ -16327,6 +16327,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)reallySetPointSize:(NSSize)proposedSize {
+    if ([_delegate sessionIsFloating:self]) {
+        [self setFloatingPanePointSize:proposedSize];
+        return;
+    }
     const NSRect frame = [self screenWindowFrame];
     const NSRect screenFrame = [self screenWindowScreenFrame];
     CGFloat width = proposedSize.width;
@@ -16343,6 +16347,29 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         height = screenFrame.size.height;
     }
     [[_delegate realParentWindow] setFrameSize:NSMakeSize(width, height)];
+}
+
+// CSI 4 t for a float: the size of its text area, rounded to whole cells. 0 means as large as the
+// tab allows and a negative value leaves that dimension alone.
+- (void)setFloatingPanePointSize:(NSSize)proposedSize {
+    const NSSize cellSize = [self screenCellSize];
+    if (cellSize.width <= 0 || cellSize.height <= 0) {
+        return;
+    }
+    const VT100GridSize maximum = [self windowSizeInCells];
+    int (^cells)(CGFloat, CGFloat, int, int) = ^int(CGFloat points, CGFloat cellPoints, int current, int largest) {
+        if (points < 0) {
+            return current;
+        }
+        if (points == 0) {
+            return largest;
+        }
+        return MAX(1, (int)round(points / cellPoints));
+    };
+    const int columns = cells(proposedSize.width, cellSize.width, _screen.width, maximum.width);
+    const int rows = cells(proposedSize.height, cellSize.height, _screen.height, maximum.height);
+    DLog(@"Set float %@ to %dx%d for a point size of %@", self, columns, rows, NSStringFromSize(proposedSize));
+    [[_delegate realParentWindow] sessionInitiatedResize:self width:columns height:rows];
 }
 
 - (void)screenPrintStringIfAllowed:(NSString *)string
@@ -16494,10 +16521,20 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)screenWindowIsFullscreen {
+    if ([_delegate sessionIsFloating:self]) {
+        // This gates programs resizing their window. A float resizes within its tab, so full
+        // screen does not stop it.
+        return NO;
+    }
     return [[_delegate parentWindow] anyFullScreen];
 }
 
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
+    if ([_delegate sessionIsFloating:self]) {
+        // Screen coordinates mean nothing for a float.
+        DLog(@"Ignore moving the window of float %@", self);
+        return;
+    }
     NSRect screenFrame = [self screenWindowScreenFrame];
     point.x += screenFrame.origin.x;
     point.y = screenFrame.origin.y + screenFrame.size.height - point.y;
@@ -16505,6 +16542,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenSetWindowFrame:(NSRect)frame {
+    if ([_delegate sessionIsFloating:self]) {
+        DLog(@"Ignore setting the window frame of float %@", self);
+        return;
+    }
     // frame is already in global AppKit coordinates (points), so no conversion
     // is needed. AppKit constrains it to something sensible.
     [[_delegate parentWindow] windowSetFrame:frame];
@@ -16517,13 +16558,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (NSRect)windowFrame {
     NSRect frame = [self screenWindowFrame];
     NSRect screenFrame = [self screenWindowScreenFrame];
+    NSSize size = frame.size;
+    if ([_delegate sessionIsFloating:self]) {
+        // CSI 14 t reports a float's own size: the pane is the window.
+        size = _view.frame.size;
+    }
     return NSMakeRect(frame.origin.x - screenFrame.origin.x,
                       (screenFrame.origin.y + screenFrame.size.height) - (frame.origin.y + frame.size.height),
-                      frame.size.width,
-                      frame.size.height);
+                      size.width,
+                      size.height);
 }
 
 - (VT100GridSize)theoreticalGridSize {
+    if ([_delegate sessionIsFloating:self]) {
+        // CSI 19 t: the largest grid a float can have is the one that fills its tab.
+        return [self windowSizeInCells];
+    }
     //  TODO: WTF do we do with panes here?
     VT100GridSize result;
     NSRect screenFrame = [self screenWindowScreenFrame];
@@ -16542,6 +16592,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 // If flag is set, miniaturize; otherwise, deminiaturize.
 - (void)screenMiniaturizeWindow:(BOOL)flag {
+    if ([_delegate sessionIsFloating:self]) {
+        DLog(@"Ignore miniaturizing the window of float %@", self);
+        return;
+    }
     if (flag) {
         [[_delegate parentWindow] windowPerformMiniaturize:nil];
     } else {
@@ -16551,6 +16605,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 // If flag is set, bring to front; if not, move to back.
 - (void)screenRaise:(BOOL)flag {
+    if ([_delegate sessionIsFloating:self] &&
+        [_delegate respondsToSelector:@selector(sessionRaiseFloatingPane:toFront:)]) {
+        // For a float the pane is the window: raise or lower it among the tab's floats.
+        [_delegate sessionRaiseFloatingPane:self toFront:flag];
+        return;
+    }
     if (flag) {
         [[_delegate parentWindow] windowOrderFront:nil];
     } else {

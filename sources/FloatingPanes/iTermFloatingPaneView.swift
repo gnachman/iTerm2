@@ -30,6 +30,10 @@ protocol FloatingPaneViewDelegate: AnyObject {
     /// Whether the user may move or resize floats now (Lock Layout says no).
     func floatingPaneCanMoveOrResize(_ pane: iTermFloatingPaneView) -> Bool
 
+    /// Whether the user may change the float's size or take it out of the float (by docking or
+    /// dragging it out) now. Instant replay, filtering and zoom say no.
+    func floatingPaneCanResize(_ pane: iTermFloatingPaneView) -> Bool
+
     /// A move or resize began or ended.
     func floatingPane(_ pane: iTermFloatingPaneView, dragDidChangeToActive active: Bool)
 
@@ -312,7 +316,7 @@ final class iTermFloatingPaneView: NSView {
     }
 
     private func beginResize(edges: FloatingPaneEdges, event: NSEvent) {
-        guard delegate?.floatingPaneCanMoveOrResize(self) ?? false,
+        guard delegate?.floatingPaneCanResize(self) ?? false,
               let (placement, session) = currentPlacement() else {
             return
         }
@@ -390,7 +394,7 @@ final class iTermFloatingPaneView: NSView {
         let leftTheTab = superview.map {
             !$0.bounds.contains($0.convert(event.locationInWindow, from: nil))
         } ?? false
-        if leftTheTab || event.modifierFlags.contains(.control) {
+        if (leftTheTab || event.modifierFlags.contains(.control)) && delegate?.floatingPaneCanResize(self) ?? false {
             // Leaving the tab, or pressing Control during the move (to dock the float into its own
             // tab), escalates to the pane drag, which shows split halves and can dock the float or
             // move it to another tab or window.

@@ -243,6 +243,23 @@ final class FloatingPaneCommandTests: XCTestCase {
         XCTAssertTrue(float.view?.superview === tab.rootView)
     }
 
+    func testTheIsFloatingVariableFollowsTheSession() {
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let float = fixture.addFloat(frame: floatFrame)
+        let isFloating = { (session: PTYSession) in
+            session.genericScope.value(forVariableName: iTermVariableKeySessionIsFloating) as? Bool
+        }
+        XCTAssertEqual(isFloating(float), true)
+        XCTAssertEqual(isFloating(tiled), false)
+
+        tab.setActiveSession(float)
+        perform("dockFloatingPane:")
+        XCTAssertEqual(isFloating(float), false)
+    }
+
     func testDockIsDisabledForATiledPaneAndWhenLayoutIsLocked() {
         let float = fixture.addFloat(frame: floatFrame)
         guard let tiled = tab.tiledSessions()?.first else {
@@ -330,5 +347,39 @@ final class FloatingPaneCommandTests: XCTestCase {
         terminal.decreaseHeight(of: float)
         XCTAssertEqual(float.rows, floatRows, "the float is not resized")
         XCTAssertEqual(tiled.rows, tiledRows - 1, "the tiled session is")
+    }
+
+    // MARK: - Synthetic sessions
+
+    func testAFloatShowingASyntheticSessionCannotBeResizedOrDocked() {
+        let float = fixture.addFloat(frame: floatFrame)
+        tab.setActiveSession(float)
+        guard let synthetic = terminal.syntheticSession(for: float) else {
+            XCTFail("No synthetic session")
+            return
+        }
+        let floatPane = pane(float)
+        let frame = floatPane.outlineFrame
+        let grid = (float.columns, float.rows)
+        tab.replaceActiveSession(withSyntheticSession: synthetic)
+        XCTAssertTrue(tab.floatingPane(for: synthetic) === floatPane, "the synthetic session shows in the float")
+        XCTAssertTrue(tab.activeSession === synthetic)
+
+        XCTAssertFalse(isEnabled(#selector(PseudoTerminal.dockFloatingPane(_:))))
+        perform("movePaneDividerRight:")
+        XCTAssertEqual(floatPane.outlineFrame, frame, "the user cannot resize it")
+
+        // Replay resizes the synthetic session to each recorded frame's size.
+        XCTAssertTrue(terminal.sessionInitiatedResize(synthetic,
+                                                     width: Int32(grid.0 - 4),
+                                                     height: Int32(grid.1 - 2)))
+        XCTAssertEqual(Int(synthetic.columns), Int(grid.0) - 4)
+
+        terminal.perform(NSSelectorFromString("showLiveSession:inPlaceOf:"), with: float, with: synthetic)
+        XCTAssertTrue(tab.floatingPane(for: float) === floatPane)
+        XCTAssertEqual(float.columns, grid.0, "the float goes back to its own grid")
+        XCTAssertEqual(float.rows, grid.1)
+        XCTAssertEqual(floatPane.outlineFrame, frame)
+        XCTAssertTrue(isEnabled(#selector(PseudoTerminal.dockFloatingPane(_:))))
     }
 }
