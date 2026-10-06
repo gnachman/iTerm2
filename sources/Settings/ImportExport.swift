@@ -902,10 +902,20 @@ extension NSApplication {
         let pid = ProcessInfo().processIdentifier
         let pathToSelf = Bundle.main.bundlePath
         let quotedPathToSelf = pathToSelf.withEscapedShellCharacters(includingNewlines: true) as String
+        // Preserve -suite so the relaunched instance uses the same defaults domain. -n forces a
+        // new instance, since open ignores --args when it finds a running copy to activate.
+        let openCommand: String
+        if let suiteName = iTermUserDefaults.customSuiteName() {
+            let quotedSuiteName = suiteName.withEscapedShellCharacters(includingNewlines: true) as String
+            openCommand = "/usr/bin/open -n \(quotedPathToSelf) --args -suite \(quotedSuiteName)"
+        } else {
+            openCommand = "/usr/bin/open \(quotedPathToSelf)"
+        }
+        DLog("Relaunch with: \(openCommand)")
         let script = ["while /bin/kill -0 \(pid) >&/dev/null",
                       "do /bin/sleep 0.1",
                       "done",
-                      "/usr/bin/open \(quotedPathToSelf)"].joined(separator: ";")
+                      openCommand].joined(separator: ";")
         Process.launchedProcess(launchPath: "/bin/sh", arguments: ["-c", "(" + script + ")&"])
         exit(0)
     }
