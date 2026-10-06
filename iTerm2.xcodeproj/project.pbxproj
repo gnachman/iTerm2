@@ -1091,6 +1091,7 @@
 		912D29CFF1994D9E50295715 /* WorkgroupPresets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14CEFBAD0421B3A960496A9 /* WorkgroupPresets.swift */; };
 		913D206F542831FFE1244B1E /* KittyDnDPasteboardDropData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1778C425F487D1B0B80016 /* KittyDnDPasteboardDropData.swift */; };
 		92A29632EF0D9D0E455E2AA6 /* UserVariableAssignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467CB6090319516B1F45E9FD /* UserVariableAssignment.swift */; };
+		93192814C6B3391E62C3E35F /* FloatingPaneGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BF7D3BA2F495FEEAF1F1C9 /* FloatingPaneGeometry.swift */; };
 		9459958EBE38B60F9848F811 /* NSFont+BijectionIdentifiable.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB51348EA9D7FCF98DED3D17 /* NSFont+BijectionIdentifiable.swift */; };
 		95F16F4639DBF00DEBCCA4C5 /* AuthCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = C064EB0F853DE6D529AF6FD4 /* AuthCommand.swift */; };
 		97AE66776B767B3BB7AC7565 /* CompanionMessageSubstance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427970C67603E484CBA62CED /* CompanionMessageSubstance.swift */; };
@@ -5497,6 +5498,7 @@
 		2FAA0491F10CEBBC4BA051B1 /* OrchestratorCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestratorCommand.swift; sourceTree = "<group>"; };
 		2FBEEBCEC29954CD954C38E3 /* AIReasoningTypes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIReasoningTypes.swift; sourceTree = "<group>"; };
 		30BDC3CFCE129E42150030AF /* iTermRosettaSupport.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermRosettaSupport.swift; sourceTree = "<group>"; };
+		30BF7D3BA2F495FEEAF1F1C9 /* FloatingPaneGeometry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FloatingPaneGeometry.swift; sourceTree = "<group>"; };
 		31C2813D74024540BE832D8B /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermTextPopoverViewController.xcstrings; sourceTree = "<group>"; };
 		31CBF1015D2B6474294432E1 /* iTermUndoCloseShortcutChangeWarning.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermUndoCloseShortcutChangeWarning.swift; sourceTree = "<group>"; };
 		3227E6C120C7EDABDA77D963 /* TerminalCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TerminalCommand.swift; sourceTree = "<group>"; };
@@ -9094,6 +9096,7 @@
 			isa = PBXGroup;
 			children = (
 				F7F500F98D6607037DCEB270 /* iTermFloatingPaneView.swift */,
+				30BF7D3BA2F495FEEAF1F1C9 /* FloatingPaneGeometry.swift */,
 			);
 			path = FloatingPanes;
 			sourceTree = "<group>";
@@ -19983,6 +19986,7 @@
 				F8CE449366C8E4E273D52810 /* iTermKeyCodeZeroCharacters.swift in Sources */,
 				6694FCCBD604D6D56D6649F9 /* iTermUndoCloseArchives.swift in Sources */,
 				9459958EBE38B60F9848F811 /* NSFont+BijectionIdentifiable.swift in Sources */,
+				93192814C6B3391E62C3E35F /* FloatingPaneGeometry.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
