@@ -427,6 +427,34 @@ class Tab:
         return json.loads(
             response.invoke_function_response.success.json_result)
 
+    async def async_create_floating_session(
+            self,
+            profile: typing.Optional[str] = None) -> iterm2.session.Session:
+        """
+        Adds a floating pane to this tab. It floats over the split panes,
+        centered, and becomes the active session.
+
+        :param profile: The name of the profile to use, or `None` for the
+            default profile.
+
+        :returns: The new floating pane's session.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if the pane cannot be
+            created, for example because the window's layout is locked.
+        """
+        args = {"tab_id": self.tab_id}
+        if profile is not None:
+            args["profile"] = profile
+        session_id = await iterm2.session.async_invoke_floating_pane_function(
+            self.connection, "iterm2.create_floating_pane", args)
+        assert iterm2.session.Session.delegate
+        session = await iterm2.session.Session.delegate.session_delegate_create_session(
+            session_id)
+        if session is None:
+            raise iterm2.rpc.RPCException(
+                "No such session {}".format(session_id))
+        return session
+
     async def async_move_to_window(self) -> 'iterm2.window.Window':
         """
         Moves this tab to its own window, provided there are multiple tabs in

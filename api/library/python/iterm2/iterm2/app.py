@@ -3,6 +3,7 @@
 This module is the starting point for getting access to windows and other
 application-global data.
 """
+import asyncio
 import base64
 import json
 import typing
@@ -130,6 +131,10 @@ class App(
         # flight, another refresh would fetch the same inconsistent state and
         # recurse forever.
         self._refreshing = False
+        # The task running the refresh in flight, and an event set when it
+        # finishes, so a refresh from another task can wait for it.
+        self._refresh_task: typing.Optional[asyncio.Task] = None
+        self._refresh_finished: typing.Optional[asyncio.Event] = None
 
     async def async_activate(
             self,
@@ -300,19 +305,31 @@ class App(
         the REPL to pick up changes to the state, since it doesn't receive
         notifications at the Python prompt.
         """
-        if self._refreshing:
-            # Already refreshing. A nested refresh is triggered when focus info
-            # references a tab or session that isn't present in the layout we
-            # just fetched (e.g. an empty window). Re-fetching would return the
-            # same inconsistent state and recurse without bound, so stop here.
-            return None
+        while self._refreshing:
+            if self._refresh_task is asyncio.current_task():
+                # Already refreshing. A nested refresh is triggered when focus
+                # info references a tab or session that isn't present in the
+                # layout we just fetched (e.g. an empty window). Re-fetching
+                # would return the same inconsistent state and recurse without
+                # bound, so stop here.
+                return None
+            # Another task is refreshing, for example because a focus
+            # notification named a session this App had not seen. That refresh
+            # may have fetched the layout before the caller's change, so wait
+            # for it and then fetch again.
+            assert self._refresh_finished is not None
+            await self._refresh_finished.wait()
         self._refreshing = True
+        self._refresh_task = asyncio.current_task()
+        self._refresh_finished = asyncio.Event()
         try:
             layout = await iterm2.rpc.async_list_sessions(self.connection)
             return await self._async_handle_layout_change(
                 self.connection, layout)
         finally:
             self._refreshing = False
+            self._refresh_task = None
+            self._refresh_finished.set()
 
     # pylint: disable=too-many-locals
     async def _async_handle_layout_change(

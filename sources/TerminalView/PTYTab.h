@@ -318,6 +318,9 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 + (NSDictionary *)floatingPaneRecordForSessionWithGUID:(NSString *)guid inArrangement:(NSDictionary *)arrangement;
 - (void)addRevivedFloatingSession:(PTYSession *)session fromArrangement:(NSDictionary *)arrangement;
 
+// Whether the user may resize the float or take it out of the float now.
+- (BOOL)floatingPaneCanResize:(iTermFloatingPaneView *)pane;
+
 // For a native float: set its grid within the tab and return YES. NO for any other session.
 - (BOOL)sessionResizeFloatingPane:(PTYSession *)session columns:(int)columns rows:(int)rows;
 

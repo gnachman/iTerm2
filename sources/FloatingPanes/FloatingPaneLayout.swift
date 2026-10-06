@@ -243,6 +243,20 @@ final class FloatingPaneLayout: NSObject {
         pane.desiredGrid = nil
     }
 
+    /// Like fit(_:session:toOutlineFrame:), with the frame in visual coordinates (top left origin,
+    /// y down) of the container, as the API reports frames.
+    @objc(fitFloatingPane:session:toVisualOutlineFrame:)
+    static func fit(_ pane: iTermFloatingPaneView, session: PTYSession, toVisualOutlineFrame visualFrame: NSRect) {
+        guard let container = pane.superview else {
+            return
+        }
+        fit(pane,
+            session: session,
+            toOutlineFrame: FloatingPaneGeometry.fromVisual(visualFrame,
+                                                            containerHeight: container.bounds.height,
+                                                            containerIsFlipped: container.isFlipped))
+    }
+
     /// Makes a float fill its tab, remembering where it was.
     @objc(maximizeFloatingPane:session:)
     static func maximize(_ pane: iTermFloatingPaneView, session: PTYSession) {

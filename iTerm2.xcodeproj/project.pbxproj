@@ -4669,6 +4669,7 @@
 		E4BF4BC18C3054F2AD6145DC /* iTermWorkgroupSessionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0071478CE7978AC6B38C5DF7 /* iTermWorkgroupSessionMode.swift */; };
 		E4EA4D60601890AC28602616 /* iTermCharacterSets.m in Sources */ = {isa = PBXBuildFile; fileRef = 57EF08786C9D79C55CDAC970 /* iTermCharacterSets.m */; };
 		E507BE8F903FDB93A4E229AB /* CompanionMacIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC8FC88A15978777E09F166 /* CompanionMacIdentity.swift */; };
+		E51022C4CA99B9A7D4D73476 /* FloatingPaneBuiltInFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08E1B973FF717824BE54F906 /* FloatingPaneBuiltInFunctions.swift */; };
 		E5DD5C7CFB7DF710AB631CD4 /* AILiveChatQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D77A978A9DB0DB1AC8DE61 /* AILiveChatQueueTests.swift */; };
 		E5F055B01AF90C9AB70C098F /* IT2Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CEA115FC2CA543C1E989E37 /* IT2Error.swift */; };
 		E6858FA29C79F3E70DFCCA9C /* iTermStandardButtons.m in Sources */ = {isa = PBXBuildFile; fileRef = 0436163F14BE0D35B71494E9 /* iTermStandardButtons.m */; };
@@ -5038,6 +5039,7 @@
 		06E0C88C1DF9695400AA061B /* iTermServiceProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermServiceProvider.h; sourceTree = "<group>"; };
 		06E0C88D1DF9695400AA061B /* iTermServiceProvider.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermServiceProvider.m; sourceTree = "<group>"; };
 		08C19577D9B6A8202A0A8E07 /* MentionPlainTextRenderer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MentionPlainTextRenderer.swift; sourceTree = "<group>"; };
+		08E1B973FF717824BE54F906 /* FloatingPaneBuiltInFunctions.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FloatingPaneBuiltInFunctions.swift; sourceTree = "<group>"; };
 		099C8A86522346410F6224B1 /* ChatManualStackView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatManualStackView.swift; sourceTree = "<group>"; };
 		0A66CD0466A0D99AC697D076 /* AppCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppCommand.swift; path = it2cli/Sources/it2core/Commands/AppCommand.swift; sourceTree = "<group>"; };
 		0B7ADC37E1C84693B7DDCC43 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermsStatusBarComposerViewController.xib; sourceTree = "<group>"; };
@@ -9100,6 +9102,7 @@
 				F7F500F98D6607037DCEB270 /* iTermFloatingPaneView.swift */,
 				30BF7D3BA2F495FEEAF1F1C9 /* FloatingPaneGeometry.swift */,
 				2439B1C6616A31976B9C9969 /* FloatingPaneLayout.swift */,
+				08E1B973FF717824BE54F906 /* FloatingPaneBuiltInFunctions.swift */,
 			);
 			path = FloatingPanes;
 			sourceTree = "<group>";
@@ -19991,6 +19994,7 @@
 				9459958EBE38B60F9848F811 /* NSFont+BijectionIdentifiable.swift in Sources */,
 				93192814C6B3391E62C3E35F /* FloatingPaneGeometry.swift in Sources */,
 				9D0D14C1945083235F5403E0 /* FloatingPaneLayout.swift in Sources */,
+				E51022C4CA99B9A7D4D73476 /* FloatingPaneBuiltInFunctions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

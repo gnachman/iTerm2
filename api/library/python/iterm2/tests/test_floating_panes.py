@@ -91,3 +91,9 @@ def test_older_servers_report_no_floats():
     parsed = iterm2.Window.create_from_proto(connection, window).tabs[0]
     assert parsed.floating_sessions == []
     assert parsed.floating_panes_hidden is False
+
+
+def test_booleans_are_encoded_for_the_expression_language():
+    invocation = iterm2.util.invocation_string(
+        "iterm2.raise_floating_pane", {"session": "s", "to_front": False})
+    assert invocation == 'iterm2.raise_floating_pane(session: "s", to_front: false)'

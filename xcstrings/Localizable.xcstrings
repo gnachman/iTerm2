@@ -80909,6 +80909,102 @@
         }
       }
     },
+    "FloatingPane.CannotCreate" : {
+      "comment" : "Error from create_floating_pane when the tab is a tmux tab, its window’s layout is locked, or it is in instant replay",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can’t add a floating pane to this tab now"
+          }
+        }
+      }
+    },
+    "FloatingPane.CannotDock" : {
+      "comment" : "Error from dock_floating_pane when the layout is locked, the tab is a tmux tab, or instant replay is running",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can’t dock this floating pane now"
+          }
+        }
+      }
+    },
+    "FloatingPane.CannotResize" : {
+      "comment" : "Error from set_floating_pane_frame when the layout is locked or the float shows instant replay",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can’t move or resize this floating pane now"
+          }
+        }
+      }
+    },
+    "FloatingPane.CreateFailed" : {
+      "comment" : "Error from create_floating_pane when the session could not be created",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Failed to create the floating pane"
+          }
+        }
+      }
+    },
+    "FloatingPane.InvalidFrame" : {
+      "comment" : "Error from set_floating_pane_frame when an argument is missing or not a number",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Invalid frame"
+          }
+        }
+      }
+    },
+    "FloatingPane.NoSuchProfile" : {
+      "comment" : "Error from create_floating_pane when the profile name does not identify a profile",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No such profile"
+          }
+        }
+      }
+    },
+    "FloatingPane.NoSuchTab" : {
+      "comment" : "Error from create_floating_pane when the tab ID does not identify a tab",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No such tab"
+          }
+        }
+      }
+    },
+    "FloatingPane.NotAFloatingPane" : {
+      "comment" : "Error from a floating pane function called with a session that is not in a floating pane",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The session is not in a floating pane"
+          }
+        }
+      }
+    },
     "GPURenderer.Enabled" : {
       "comment" : "Message that GPU rendering is enabled",
       "extractionState" : "extracted_with_value",

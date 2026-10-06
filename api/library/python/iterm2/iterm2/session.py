@@ -1208,6 +1208,84 @@ class Session:
             response.invoke_function_response.success.json_result)
 
 
+    async def async_dock(self) -> None:
+        """
+        Moves this floating pane into its tab's split panes, to the right of
+        the split pane used most recently.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if the session is not in a
+            floating pane or cannot be docked now.
+        """
+        await async_invoke_floating_pane_function(
+            self.connection,
+            "iterm2.dock_floating_pane",
+            {"session": self.session_id})
+
+    async def async_set_floating_frame(self, frame: iterm2.util.Frame) -> None:
+        """
+        Moves and resizes this floating pane.
+
+        :param frame: The new frame in points, with the origin at the tab's
+            top left and y increasing downward, as `frame` reports it. The
+            size is rounded to whole cells and the frame is kept inside the
+            tab.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if the session is not in a
+            floating pane or cannot be moved now.
+        """
+        await async_invoke_floating_pane_function(
+            self.connection,
+            "iterm2.set_floating_pane_frame",
+            {"session": self.session_id,
+             "x": frame.origin.x,
+             "y": frame.origin.y,
+             "width": frame.size.width,
+             "height": frame.size.height})
+
+    async def async_bring_to_front(self) -> None:
+        """
+        Puts this floating pane in front of the tab's other floating panes.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if the session is not in a
+            floating pane.
+        """
+        await async_invoke_floating_pane_function(
+            self.connection,
+            "iterm2.raise_floating_pane",
+            {"session": self.session_id, "to_front": True})
+
+    async def async_send_to_back(self) -> None:
+        """
+        Puts this floating pane behind the tab's other floating panes.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if the session is not in a
+            floating pane.
+        """
+        await async_invoke_floating_pane_function(
+            self.connection,
+            "iterm2.raise_floating_pane",
+            {"session": self.session_id, "to_front": False})
+
+
+async def async_invoke_floating_pane_function(connection, name, args):
+    """Invokes one of iTerm2's floating pane functions and returns its result.
+
+    Do not call this yourself. It is shared by Session and Tab.
+    """
+    iterm2.capabilities.check_supports_floating_panes(connection)
+    invocation = iterm2.util.invocation_string(name, args)
+    response = await iterm2.rpc.async_invoke_function(connection, invocation)
+    which = response.invoke_function_response.WhichOneof('disposition')
+    if which == 'error':
+        raise iterm2.rpc.RPCException("{}: {}".format(
+            iterm2.api_pb2.InvokeFunctionResponse.Status.Name(
+                response.invoke_function_response.error.status),
+            response.invoke_function_response.error.error_reason))
+    result = response.invoke_function_response.success.json_result
+    # A function that returns nothing gives an empty result.
+    return json.loads(result) if result else None
+
+
 class InvalidSessionId(Exception):
     """The specified session ID is not allowed in this method."""
 
