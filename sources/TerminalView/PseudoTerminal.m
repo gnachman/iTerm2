@@ -11840,6 +11840,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     PTYTab *tab = [self tabForSession:session];
     return (session != nil &&
             [tab floatingPaneForSession:session] != nil &&
+            [tab tmuxAllowsChangingFloatingPanes] &&
             !_layoutLocked &&
             session.liveSession == nil &&
             ![self inInstantReplay]);
@@ -11886,7 +11887,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)moveActiveFloatingPaneByColumns:(int)columns rows:(int)rows {
     iTermFloatingPaneView *pane = [self activeFloatingPane];
-    if (!pane || _layoutLocked) {
+    if (!pane || _layoutLocked || ![self.currentTab tmuxAllowsChangingFloatingPanes]) {
         return;
     }
     if (self.currentTab.isTmuxTab) {
@@ -14343,7 +14344,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         }
         if (action == @selector(bringFloatingPaneToFront:) ||
             action == @selector(sendFloatingPaneToBack:)) {
-            return [self activeFloatingPane] != nil;
+            return [self activeFloatingPane] != nil && [self.currentTab tmuxAllowsChangingFloatingPanes];
         }
         if (action == @selector(dockFloatingPane:)) {
             return [self canDockFloatingSession:self.currentSession];
@@ -14352,19 +14353,19 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             action == @selector(moveFloatingPaneDown:) ||
             action == @selector(moveFloatingPaneLeft:) ||
             action == @selector(moveFloatingPaneRight:)) {
-            return [self activeFloatingPane] != nil && !_layoutLocked;
+            return [self activeFloatingPane] != nil && !_layoutLocked && [self.currentTab tmuxAllowsChangingFloatingPanes];
         }
         if (action == @selector(toggleFloatingPanesHidden:)) {
             item.state = self.currentTab.floatingPanesHidden ? NSControlStateValueOn : NSControlStateValueOff;
             return self.currentTab.floatingPanes.count > 0;
         }
         // A native float holds one session, so the menu items that split the current session are
-        // disabled while one is active.
+        // disabled while one is active. tmux 3.8 makes another float; 3.7 can't split one.
         if ((action == @selector(splitVertically:) ||
              action == @selector(splitHorizontally:) ||
              action == @selector(openSplitHorizontallySheet:) ||
              action == @selector(openSplitVerticallySheet:)) &&
-            !self.currentTab.isTmuxTab &&
+            (!self.currentTab.isTmuxTab || ![self.currentTab tmuxAllowsChangingFloatingPanes]) &&
             [self.currentTab sessionIsFloating:self.currentSession]) {
             return NO;
         }

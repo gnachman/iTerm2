@@ -16,6 +16,7 @@
 #import "TmuxLayoutParser.h"
 
 #import "DebugLogging.h"
+#import "NSArray+CommonAdditions.h"
 #import "RegexKitLite.h"
 #import "iTerm2SharedARC-Swift.h"
 
@@ -117,10 +118,38 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
     if (layout.length <= 5) {
         return nil;
     }
+    // tmux 3.7 has floating panes but no JSON layouts. It lists them front to back in a suffix,
+    // as in "csum,tree<float,float>", and also leaves each one in the tree as a child of a node.
+    NSArray<NSMutableDictionary *> *floats = nil;
+    const NSRange floatsStart = [layout rangeOfString:@"<"];
+    if (floatsStart.location != NSNotFound) {
+        floats = [self floatingLeavesInV1Suffix:[layout substringFromIndex:floatsStart.location]];
+        if (!floats) {
+            DLog(@"Malformed floating panes in layout %@", layout);
+            return nil;
+        }
+        layout = [layout substringToIndex:floatsStart.location];
+        if (layout.length <= 5) {
+            return nil;
+        }
+    }
     NSMutableArray *temp = [NSMutableArray array];
     if ([self parseLayout:layout range:NSMakeRange(5, layout.length - 5) intoTree:temp] &&
         temp.count > 0) {
         NSMutableDictionary *tree = [temp objectAtIndex:0];
+        if (floats.count) {
+            NSSet<NSNumber *> *floatPanes = [NSSet setWithArray:[floats mapWithBlock:^id(NSMutableDictionary *leaf) {
+                return leaf[kLayoutDictWindowPaneKey];
+            }]];
+            tree = [self tree:tree removingWindowPanes:floatPanes];
+            if (!tree) {
+                // Only floats.
+                tree = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+                        @(kVSplitLayoutNode), kLayoutDictNodeType,
+                        [NSMutableArray array], kLayoutDictChildrenKey,
+                        nil];
+            }
+        }
         if ([[tree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
             // Add a do-nothing root splitter so that the root is always a splitter.
             NSMutableDictionary *oldRoot = tree;
@@ -131,6 +160,11 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
         }
         // Get the size of the window.
         NSArray *components = [layout captureComponentsMatchedByRegex:@"^[0-9a-fA-F]{4},([0-9]+)x([0-9]+),[0-9]+,[0-9]+[\\[{]"];
+        if (floats && components.count != 3) {
+            // With floats taken out, the root can be a lone pane or nothing; it still has the
+            // window's size.
+            components = [layout captureComponentsMatchedByRegex:@"^[0-9a-fA-F]{4},([0-9]+)x([0-9]+),"];
+        }
         if (components.count == 3) {
             tree[kLayoutDictWidthKey] = @([components[1] intValue]);
             tree[kLayoutDictHeightKey] = @([components[2] intValue]);
@@ -138,10 +172,65 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
                  tree[kLayoutDictWidthKey],
                  tree[kLayoutDictHeightKey]);
         }
+        if (floats) {
+            // Back to front, like the JSON parser.
+            tree[kLayoutDictFloatingPanesKey] = floats.reverseObjectEnumerator.allObjects;
+        }
         return [self coalescedTree:tree];
     } else {
         return nil;
     }
+}
+
+// The floats in a tmux 3.7 layout's suffix ("<cell,cell>"), front to back, each with its z-index
+// (0 at the front). Nil if it is malformed.
+- (NSArray<NSMutableDictionary *> *)floatingLeavesInV1Suffix:(NSString *)suffix {
+    if (![suffix hasSuffix:@">"] || suffix.length < 3) {
+        return nil;
+    }
+    NSString *body = [suffix substringWithRange:NSMakeRange(1, suffix.length - 2)];
+    NSString *const cell = @"([0-9]+)x([0-9]+),(-?[0-9]+),(-?[0-9]+),([0-9]+)";
+    NSString *const pattern = [NSString stringWithFormat:@"^%@(,%@)*$", cell, cell];
+    if (![body isMatchedByRegex:pattern]) {
+        return nil;
+    }
+    NSMutableArray<NSMutableDictionary *> *result = [NSMutableArray array];
+    for (NSArray<NSString *> *components in [body arrayOfCaptureComponentsMatchedByRegex:cell]) {
+        NSMutableDictionary *leaf = [NSMutableDictionary dictionary];
+        leaf[kLayoutDictNodeType] = @(kLeafLayoutNode);
+        // Strings, as for tiled leaves. Readers use -intValue.
+        leaf[kLayoutDictWidthKey] = components[1];
+        leaf[kLayoutDictHeightKey] = components[2];
+        leaf[kLayoutDictXOffsetKey] = components[3];
+        leaf[kLayoutDictYOffsetKey] = components[4];
+        leaf[kLayoutDictWindowPaneKey] = @([components[5] intValue]);
+        leaf[kLayoutDictZIndexKey] = @(result.count);
+        [result addObject:leaf];
+    }
+    return result;
+}
+
+// The tree without the given panes. A node left with one child is replaced by it; one left with
+// none is removed, and nil means nothing is left.
+- (NSMutableDictionary *)tree:(NSMutableDictionary *)node removingWindowPanes:(NSSet<NSNumber *> *)panes {
+    if ([node[kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
+        return [panes containsObject:@([node[kLayoutDictWindowPaneKey] intValue])] ? nil : node;
+    }
+    NSMutableArray *children = [NSMutableArray array];
+    for (NSMutableDictionary *child in node[kLayoutDictChildrenKey]) {
+        NSMutableDictionary *kept = [self tree:child removingWindowPanes:panes];
+        if (kept) {
+            [children addObject:kept];
+        }
+    }
+    if (children.count == 0) {
+        return nil;
+    }
+    if (children.count == 1) {
+        return children[0];
+    }
+    node[kLayoutDictChildrenKey] = children;
+    return node;
 }
 
 - (NSMutableDictionary *)parseTree:(NSMutableDictionary *)parseTree

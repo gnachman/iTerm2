@@ -370,6 +370,10 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 // tmux changed which panes have no border (pane-border-lines none). Borderless floats hide their
 // title bars.
 - (void)tmuxPaneBordersDidChange;
+
+// Whether the floats can be moved, resized, raised or docked. tmux 3.7 has floating panes but no
+// commands to change them, so they only show.
+- (BOOL)tmuxAllowsChangingFloatingPanes;
 - (TmuxController *)tmuxController;
 
 - (void)setTmuxFontTable:(iTermFontTable *)fontTable

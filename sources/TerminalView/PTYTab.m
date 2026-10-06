@@ -2126,6 +2126,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return;
     }
     DLog(@"Bring %@ to front", pane);
+    if (![self tmuxAllowsChangingFloatingPanes]) {
+        // tmux would put it back on the next layout change.
+        return;
+    }
     if (self.isTmuxTab) {
         [self.tmuxController raiseFloatingPane:[self sessionForSessionView:pane.sessionView].tmuxPane toFront:YES];
     }
@@ -2140,6 +2144,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return;
     }
     DLog(@"Send %@ to back", pane);
+    if (![self tmuxAllowsChangingFloatingPanes]) {
+        // tmux would put it back on the next layout change.
+        return;
+    }
     if (self.isTmuxTab) {
         [self.tmuxController raiseFloatingPane:[self sessionForSessionView:pane.sessionView].tmuxPane toFront:NO];
     }
@@ -2163,7 +2171,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (BOOL)floatingPaneCanMoveOrResize:(iTermFloatingPaneView *)pane {
-    return !self.realParentWindow.layoutLocked;
+    return !self.realParentWindow.layoutLocked && [self tmuxAllowsChangingFloatingPanes];
+}
+
+- (BOOL)tmuxAllowsChangingFloatingPanes {
+    return !self.isTmuxTab || self.tmuxController.supportsFloatingPanes;
 }
 
 - (BOOL)floatingPaneCanResize:(iTermFloatingPaneView *)pane {
