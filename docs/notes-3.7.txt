@@ -819,6 +819,13 @@ Bug Fixes:
   $HOME, ~, or a wrapper script. Reinstalling
   also keeps such commands instead of adding a
   second copy of each hook.
+- Installing, reinstalling, or uninstalling the
+  Claude Code Integration now updates the file
+  that a symlinked settings.json points to (as
+  with GNU Stow or chezmoi). It used to replace
+  the link with a plain file that other users
+  could read, and Claude Code stopped seeing
+  edits to the original file. Issue 13098.
 - Fixed a crash when a program wrote a hyperlink
   whose web address contained an emoji or other
   character outside the Basic Multilingual

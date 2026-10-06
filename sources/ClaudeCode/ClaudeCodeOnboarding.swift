@@ -227,13 +227,33 @@ class ClaudeCodeOnboarding: NSObject {
         do {
             let out = try JSONSerialization.data(withJSONObject: settings,
                                                  options: [.prettyPrinted, .sortedKeys])
-            try out.write(to: settingsURL, options: .atomic)
+            try writeSettings(out, to: settingsURL)
             DLog("Onboarding: stripped cc-status hooks from \(settingsURL.path)")
             return .success
         } catch {
             RLog("Onboarding: failed to write settings.json during strip: \(error)")
             return .writeFailed
         }
+    }
+
+    // Write settings.json atomically without breaking a symlink. People who
+    // keep their Claude Code settings in a dotfiles repo (GNU Stow, chezmoi)
+    // have a settings.json that is a symlink into that repo. An atomic write
+    // renames a temp file over the path it's given, so writing to the link's
+    // own path replaces the link with a regular file: the real file silently
+    // stops getting changes, and the new copy doesn't inherit the real file's
+    // permissions (a 0600 file can end up world-readable). Resolving every
+    // symlink in the path first puts the rename next to the real file, so the
+    // link survives, and the atomic write carries the real file's mode over
+    // to its replacement (the symlink tests check both).
+    // resolvingSymlinksInPath() returns a dangling link's path unchanged, so
+    // writing through one replaces the link, as before.
+    private static func writeSettings(_ data: Data, to settingsURL: URL) throws {
+        let writeURL = settingsURL.resolvingSymlinksInPath()
+        if writeURL.path != settingsURL.path {
+            DLog("Onboarding: \(settingsURL.path) resolves to \(writeURL.path); writing there")
+        }
+        try data.write(to: writeURL, options: .atomic)
     }
 
     // True iff the Claude Code workgroup (identified by the stable
@@ -1775,7 +1795,7 @@ class ClaudeCodeOnboarding: NSObject {
 
             let data = try JSONSerialization.data(withJSONObject: settings,
                                                   options: [.prettyPrinted, .sortedKeys])
-            try data.write(to: settingsURL, options: .atomic)
+            try writeSettings(data, to: settingsURL)
             DLog("Onboarding: wrote settings.json")
         } catch {
             RLog("Onboarding: failed to write settings.json: \(error)")
