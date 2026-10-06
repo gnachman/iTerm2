@@ -11717,6 +11717,25 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 #pragma mark - Floating panes
 
+// A mouse-down anywhere in a floating pane (its text, title bar, scroller or resize band) raises
+// it before any view handles the event, so a drag-selection in a covered float happens in front.
+- (void)ptyWindow:(NSWindow *)window willDeliverMouseDown:(NSEvent *)event {
+    NSView *frameView = window.contentView.superview ?: window.contentView;
+    NSView *hit = [frameView hitTest:event.locationInWindow];
+    for (NSView *view = hit; view; view = view.superview) {
+        if ([view isKindOfClass:[iTermFloatingPaneView class]]) {
+            iTermFloatingPaneView *pane = (iTermFloatingPaneView *)view;
+            for (PTYTab *tab in self.tabs) {
+                if ([tab.floatingPanes containsObject:pane]) {
+                    [tab bringFloatingPaneToFront:pane];
+                    return;
+                }
+            }
+            return;
+        }
+    }
+}
+
 - (BOOL)canCreateFloatingPane {
     PTYTab *tab = [self currentTab];
     return (tab != nil &&

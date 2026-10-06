@@ -299,6 +299,10 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // frame in the tab's container, outline included.
 - (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame;
 
+// Change a float's z-order.
+- (void)bringFloatingPaneToFront:(iTermFloatingPaneView *)pane;
+- (void)sendFloatingPaneToBack:(iTermFloatingPaneView *)pane;
+
 // The tiled session with the highest activity counter.
 - (PTYSession *)mostRecentlyActiveTiledSession;
 

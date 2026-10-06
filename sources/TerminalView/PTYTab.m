@@ -148,7 +148,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     SetWithGrainDim(!isVertical, dest, value);
 }
 
-@interface PTYTab()<iTermObject>
+@interface PTYTab()<iTermObject, iTermFloatingPaneViewDelegate>
 @property(nonatomic, strong) NSMapTable<SessionView *, PTYSession *> *viewToSessionMap;
 @end
 
@@ -959,6 +959,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [session setActivityCounter:@(_activityCounter++)];
     }
     activeSession_ = session;
+    [self updateFloatingPaneOutlines];
     if (activeSession_ == nil) {
         [self recheckBlur];
         [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeyTabCurrentSession];
@@ -1750,7 +1751,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame {
-    PTYSplitView *splitView = [[PTYSplitView alloc] initWithFrame:[iTermFloatingPaneView splitViewFrameForBounds:NSMakeRect(0, 0, frame.size.width, frame.size.height)]];
+    const NSSize splitViewSize = [iTermFloatingPaneView splitViewSizeForOutlineSize:frame.size];
+    PTYSplitView *splitView = [[PTYSplitView alloc] initWithFrame:NSMakeRect(0, 0, splitViewSize.width, splitViewSize.height)];
     if (USE_THIN_SPLITTERS) {
         [splitView setDividerStyle:NSSplitViewDividerStyleThin];
     }
@@ -1758,7 +1760,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [splitView setAutoresizesSubviews:YES];
     // No delegate: with one child, NSSplitView's own layout gives it the whole split view, and the
     // tiled layout's resizing rules do not apply to a float.
-    iTermFloatingPaneView *pane = [[iTermFloatingPaneView alloc] initWithFrame:frame splitView:splitView];
+    iTermFloatingPaneView *pane = [[iTermFloatingPaneView alloc] initWithOutlineFrame:frame splitView:splitView];
+    pane.delegate = self;
 
     session.delegate = self;
     [session setActivityCounter:@(_activityCounter++)];
@@ -1804,6 +1807,47 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)removeFloatingPane:(iTermFloatingPaneView *)pane {
     [pane removeFromSuperview];
     [_floatingPanes removeObject:pane];
+}
+
+- (void)bringFloatingPaneToFront:(iTermFloatingPaneView *)pane {
+    if (![_floatingPanes containsObject:pane] || _floatingPanes.lastObject == pane) {
+        return;
+    }
+    DLog(@"Bring %@ to front", pane);
+    [_floatingPanes removeObject:pane];
+    [_floatingPanes addObject:pane];
+    [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:nil];
+}
+
+- (void)sendFloatingPaneToBack:(iTermFloatingPaneView *)pane {
+    if (![_floatingPanes containsObject:pane] || _floatingPanes.firstObject == pane) {
+        return;
+    }
+    DLog(@"Send %@ to back", pane);
+    [_floatingPanes removeObject:pane];
+    [_floatingPanes insertObject:pane atIndex:0];
+    // Floats stay above the root.
+    [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:root_];
+}
+
+- (void)updateFloatingPaneOutlines {
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        pane.isActive = ([self sessionForSessionView:pane.sessionView] == activeSession_);
+    }
+}
+
+#pragma mark - iTermFloatingPaneViewDelegate
+
+- (PTYSession *)floatingPaneSession:(iTermFloatingPaneView *)pane {
+    return [self sessionForSessionView:pane.sessionView];
+}
+
+- (BOOL)floatingPaneCanMoveOrResize:(iTermFloatingPaneView *)pane {
+    return !self.realParentWindow.layoutLocked;
+}
+
+- (void)floatingPane:(iTermFloatingPaneView *)pane dragDidChangeToActive:(BOOL)active {
+    DLog(@"Float %@ drag active=%@", pane, @(active));
 }
 
 // When the active session is removed from a float, which session takes over: the frontmost

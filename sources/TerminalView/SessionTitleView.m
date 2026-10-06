@@ -7,6 +7,7 @@
 //
 
 #import "SessionTitleView.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "PSMCachedTitle.h"
 #import "iTermHamburgerButton.h"
@@ -42,6 +43,8 @@ static const CGFloat kButtonSize = 17;
     NSButton *closeButton_;
     NSButton *lockButton_;
     iTermHamburgerButton *menuButton_;
+    // The floating pane this title bar belongs to, while a mouse-down in it may become a move.
+    __weak iTermFloatingPaneView *_floatingPaneBeingMoved;
 }
 
 @synthesize title = title_;
@@ -374,7 +377,26 @@ static const CGFloat kLockButtonSize = 14;
     [self setNeedsDisplay:YES];
 }
 
+- (iTermFloatingPaneView *)enclosingFloatingPane {
+    for (NSView *view = self.superview; view; view = view.superview) {
+        if ([view isKindOfClass:[iTermFloatingPaneView class]]) {
+            return (iTermFloatingPaneView *)view;
+        }
+    }
+    return nil;
+}
+
+- (void)mouseDown:(NSEvent *)theEvent {
+    // A floating pane's title bar is its grab handle: dragging it moves the float live.
+    iTermFloatingPaneView *pane = [self enclosingFloatingPane];
+    _floatingPaneBeingMoved = [pane titleBarMouseDown:theEvent] ? pane : nil;
+    [super mouseDown:theEvent];
+}
+
 - (void)mouseDragged:(NSEvent *)theEvent {
+    if ([_floatingPaneBeingMoved titleBarMouseDragged:theEvent]) {
+        return;
+    }
     if ([iTermAdvancedSettingsModel requireOptionToDragSplitPaneTitleBar]) {
         if ((NSApp.currentEvent.modifierFlags & NSEventModifierFlagOption) == 0) {
             return;
@@ -384,6 +406,12 @@ static const CGFloat kLockButtonSize = 14;
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
+    iTermFloatingPaneView *pane = _floatingPaneBeingMoved;
+    _floatingPaneBeingMoved = nil;
+    if ([pane titleBarMouseUp:theEvent]) {
+        // It was a move, not a click.
+        return;
+    }
     if (theEvent.clickCount == 2) {
         [self.delegate doubleClickOnTitleView];
     } else {

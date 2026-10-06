@@ -160,6 +160,21 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (void)sendEvent:(NSEvent *)event {
+    switch (event.type) {
+        case NSEventTypeLeftMouseDown:
+        case NSEventTypeRightMouseDown:
+        case NSEventTypeOtherMouseDown:
+            if ([self.ptyDelegate respondsToSelector:@selector(ptyWindow:willDeliverMouseDown:)]) {
+                [self.ptyDelegate ptyWindow:self willDeliverMouseDown:event];
+            }
+            break;
+        default:
+            break;
+    }
+    [super sendEvent:event];
+}
+
 - (void)performWindowDragWithEvent:(NSEvent *)event {
     if ([self.ptyDelegate ptyWindowIsDraggable:self]) {
         [super performWindowDragWithEvent:event];

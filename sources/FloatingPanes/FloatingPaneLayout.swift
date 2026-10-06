@@ -34,7 +34,7 @@ final class FloatingPaneLayout: NSObject {
         guard let container = pane.superview else {
             return nil
         }
-        let frame = FloatingPaneGeometry.toVisual(pane.frame,
+        let frame = FloatingPaneGeometry.toVisual(pane.outlineFrame,
                                                   containerHeight: container.bounds.height,
                                                   containerIsFlipped: container.isFlipped)
         return FloatingPanePlacement(frame: frame,
@@ -54,8 +54,8 @@ final class FloatingPaneLayout: NSObject {
                                                     containerHeight: container.bounds.height,
                                                     containerIsFlipped: container.isFlipped)
         DLog("Apply \(placement) to \(session) giving frame \(NSStringFromRect(frame))")
-        if pane.frame != frame {
-            pane.frame = frame
+        if pane.outlineFrame != frame {
+            pane.outlineFrame = frame
             pane.splitView.adjustSubviews()
         }
         let grid = VT100GridSizeMake(Int32(placement.grid.columns), Int32(placement.grid.rows))
@@ -123,10 +123,11 @@ final class FloatingPaneLayout: NSObject {
         // float touching the bottom edge is recognized.
         let oldFrame: CGRect
         if let superview = pane.superview, !superview.isFlipped {
-            oldFrame = CGRect(x: pane.frame.minX,
-                              y: oldContainerSize.height - pane.frame.maxY,
-                              width: pane.frame.width,
-                              height: pane.frame.height)
+            let outline = pane.outlineFrame
+            oldFrame = CGRect(x: outline.minX,
+                              y: oldContainerSize.height - outline.maxY,
+                              width: outline.width,
+                              height: outline.height)
         } else {
             oldFrame = start.frame
         }

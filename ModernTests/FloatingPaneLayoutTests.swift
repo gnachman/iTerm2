@@ -62,22 +62,22 @@ final class FloatingPaneLayoutTests: XCTestCase {
                                         file: StaticString = #filePath,
                                         line: UInt = #line) {
         let grid = FloatingPaneGrid(columns: Int(session.columns), rows: Int(session.rows))
-        XCTAssertEqual(pane.frame.size, metrics(session).frameSize(for: grid),
+        XCTAssertEqual(pane.outlineFrame.size, metrics(session).frameSize(for: grid),
                        "the frame follows from the grid", file: file, line: line)
-        XCTAssertTrue(container.bounds.contains(pane.frame), "the float is inside the tab", file: file, line: line)
+        XCTAssertTrue(container.bounds.contains(pane.outlineFrame), "the float is inside the tab", file: file, line: line)
     }
 
     func testNewFloatIsCenteredAndAbout80Percent() {
         let (session, pane) = newFloat()
         assertFrameMatchesGrid(session, pane)
         let bounds = container.bounds
-        XCTAssertEqual(pane.frame.midX, bounds.midX, accuracy: 1)
-        XCTAssertEqual(pane.frame.midY, bounds.midY, accuracy: 1)
+        XCTAssertEqual(pane.outlineFrame.midX, bounds.midX, accuracy: 1)
+        XCTAssertEqual(pane.outlineFrame.midY, bounds.midY, accuracy: 1)
         let m = metrics(session)
-        XCTAssertLessThanOrEqual(pane.frame.width, bounds.width * 0.8)
-        XCTAssertGreaterThan(pane.frame.width, bounds.width * 0.8 - m.cellSize.width)
-        XCTAssertLessThanOrEqual(pane.frame.height, bounds.height * 0.8)
-        XCTAssertGreaterThan(pane.frame.height, bounds.height * 0.8 - m.cellSize.height)
+        XCTAssertLessThanOrEqual(pane.outlineFrame.width, bounds.width * 0.8)
+        XCTAssertGreaterThan(pane.outlineFrame.width, bounds.width * 0.8 - m.cellSize.width)
+        XCTAssertLessThanOrEqual(pane.outlineFrame.height, bounds.height * 0.8)
+        XCTAssertGreaterThan(pane.outlineFrame.height, bounds.height * 0.8 - m.cellSize.height)
     }
 
     func testNewFloatHasATitleBar() {
@@ -97,15 +97,15 @@ final class FloatingPaneLayoutTests: XCTestCase {
 
     func testKeyboardMoveMovesByWholeCellsAndStaysInside() {
         let (session, pane) = newFloat()
-        let start = pane.frame
+        let start = pane.outlineFrame
         let m = metrics(session)
         FloatingPaneLayout.move(pane, session: session, columns: 2, rows: 0)
-        XCTAssertEqual(pane.frame.minX, start.minX + 2 * m.cellSize.width)
-        XCTAssertEqual(pane.frame.size, start.size, "moving does not change the grid")
+        XCTAssertEqual(pane.outlineFrame.minX, start.minX + 2 * m.cellSize.width)
+        XCTAssertEqual(pane.outlineFrame.size, start.size, "moving does not change the grid")
 
         FloatingPaneLayout.move(pane, session: session, columns: 10_000, rows: 10_000)
-        XCTAssertTrue(container.bounds.contains(pane.frame))
-        XCTAssertEqual(pane.frame.maxX, container.bounds.maxX)
+        XCTAssertTrue(container.bounds.contains(pane.outlineFrame))
+        XCTAssertEqual(pane.outlineFrame.maxX, container.bounds.maxX)
     }
 
     func testShrinkingTheWindowKeepsTheFloatInsideAndRemembersItsGrid() {
@@ -130,19 +130,19 @@ final class FloatingPaneLayoutTests: XCTestCase {
     func testAFloatAtTheRightEdgeStaysThereWhenTheWindowGrows() {
         let (session, pane) = newFloat()
         FloatingPaneLayout.move(pane, session: session, columns: 10_000, rows: 0)
-        XCTAssertEqual(pane.frame.maxX, container.bounds.maxX)
+        XCTAssertEqual(pane.outlineFrame.maxX, container.bounds.maxX)
 
         var frame = fixture.window.frame
         frame.size.width += 150
         fixture.window.setFrame(frame, display: true)
-        XCTAssertEqual(pane.frame.maxX, container.bounds.maxX)
+        XCTAssertEqual(pane.outlineFrame.maxX, container.bounds.maxX)
     }
 
     func testWindowResizeDoesNotChangeAFittingFloatsGrid() {
         let (session, pane) = newFloat()
         let columns = session.columns
         let rows = session.rows
-        let visualTop = container.bounds.height - pane.frame.maxY
+        let visualTop = container.bounds.height - pane.outlineFrame.maxY
 
         var frame = fixture.window.frame
         frame.size.width += 100
@@ -150,7 +150,7 @@ final class FloatingPaneLayoutTests: XCTestCase {
         fixture.window.setFrame(frame, display: true)
         XCTAssertEqual(session.columns, columns)
         XCTAssertEqual(session.rows, rows)
-        XCTAssertEqual(container.bounds.height - pane.frame.maxY, visualTop, accuracy: 0.5,
+        XCTAssertEqual(container.bounds.height - pane.outlineFrame.maxY, visualTop, accuracy: 0.5,
                        "the float keeps its distance from the top of the tab")
     }
 

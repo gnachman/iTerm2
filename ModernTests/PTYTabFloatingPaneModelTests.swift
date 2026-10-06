@@ -63,7 +63,7 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
         XCTAssertTrue(pane.superview === container)
         XCTAssertTrue(container.subviews.first === tab.rootView, "the root is at the back")
         XCTAssertTrue(container.subviews.last === pane, "the float is at the front")
-        XCTAssertEqual(pane.frame, floatFrame)
+        XCTAssertEqual(pane.outlineFrame, floatFrame)
         XCTAssertTrue(float.view?.superview === pane.splitView)
         XCTAssertEqual(pane.splitView.subviews.count, 1)
         XCTAssertEqual(tab.rootView?.frame, container.bounds, "a float does not change the tiled layout")
@@ -105,7 +105,7 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
 
         XCTAssertEqual(tab.tiledSessions(), [tiled])
         XCTAssertEqual(tab.floatingSessions(), [float])
-        XCTAssertEqual(tab.floatingPane(for: float)?.frame, floatFrame)
+        XCTAssertEqual(tab.floatingPane(for: float)?.outlineFrame, floatFrame)
     }
 
     func testRemovingTheActiveFloatActivatesTheFrontmostRemainingFloat() {
@@ -158,7 +158,7 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
         XCTAssertFalse(tab.isMaximized)
         XCTAssertTrue(pane.superview === container)
         XCTAssertEqual(tab.sessions(), [tiled, second, float])
-        XCTAssertEqual(pane.frame, floatFrame)
+        XCTAssertEqual(pane.outlineFrame, floatFrame)
     }
 
     func testActivatingAFloatWhileMaximizedLeavesItFloating() {
