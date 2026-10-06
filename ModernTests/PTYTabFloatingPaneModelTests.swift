@@ -63,7 +63,10 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
         XCTAssertTrue(pane.superview === container)
         XCTAssertTrue(container.subviews.first === tab.rootView, "the root is at the back")
         XCTAssertTrue(container.subviews.last === pane, "the float is at the front")
-        XCTAssertEqual(pane.outlineFrame, floatFrame)
+        XCTAssertEqual(pane.outlineFrame.minX, floatFrame.minX)
+        XCTAssertEqual(pane.outlineFrame.maxY, floatFrame.maxY, "the top left is kept; this container is not flipped")
+        XCTAssertLessThanOrEqual(pane.outlineFrame.width, floatFrame.width, "snapped down to whole cells")
+        XCTAssertLessThanOrEqual(pane.outlineFrame.height, floatFrame.height)
         XCTAssertTrue(float.view?.superview === pane.splitView)
         XCTAssertEqual(pane.splitView.subviews.count, 1)
         XCTAssertEqual(tab.rootView?.frame, container.bounds, "a float does not change the tiled layout")
@@ -100,12 +103,13 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
         let tiled = self.tiled
         let second = fixture.split(tiled, vertically: true)
         let float = fixture.addFloat(frame: floatFrame)
+        let frame = tab.floatingPane(for: float)?.outlineFrame
 
         tab.remove(second)
 
         XCTAssertEqual(tab.tiledSessions(), [tiled])
         XCTAssertEqual(tab.floatingSessions(), [float])
-        XCTAssertEqual(tab.floatingPane(for: float)?.outlineFrame, floatFrame)
+        XCTAssertEqual(tab.floatingPane(for: float)?.outlineFrame, frame)
     }
 
     func testRemovingTheActiveFloatActivatesTheFrontmostRemainingFloat() {
@@ -144,6 +148,7 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
             XCTFail("Missing views")
             return
         }
+        let frame = pane.outlineFrame
         tab.setActiveSession(second)
 
         tab.maximize()
@@ -158,7 +163,7 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
         XCTAssertFalse(tab.isMaximized)
         XCTAssertTrue(pane.superview === container)
         XCTAssertEqual(tab.sessions(), [tiled, second, float])
-        XCTAssertEqual(pane.outlineFrame, floatFrame)
+        XCTAssertEqual(pane.outlineFrame, frame)
     }
 
     func testActivatingAFloatWhileMaximizedLeavesItFloating() {
@@ -205,5 +210,73 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
         XCTAssertEqual(tab.floatingSessions(), [float], "a float holds exactly one session")
         XCTAssertEqual(tab.tiledSessions(), [tiled, added], "the split went to the tiled layout")
         XCTAssertEqual(tab.floatingPane(for: float)?.splitView.subviews.count, 1)
+    }
+
+    // MARK: - Promotion
+
+    func testRemovingTheLastTiledPanePromotesTheFrontFloat() {
+        let tiled = self.tiled
+        let back = fixture.addFloat(frame: floatFrame)
+        let front = fixture.addFloat(frame: floatFrame.offsetBy(dx: 20, dy: 20))
+        tab.setActiveSession(tiled)
+
+        tab.remove(tiled)
+
+        XCTAssertEqual(tab.tiledSessions(), [front], "the front float becomes the tiled pane")
+        XCTAssertEqual(tab.floatingSessions(), [back], "other floats stay floating")
+        XCTAssertTrue(front.view?.superview === tab.rootView)
+        XCTAssertEqual(front.view?.frame.size, tab.rootView?.bounds.size, "the promoted pane fills the tab")
+        XCTAssertNil(tab.floatingPane(for: front))
+        XCTAssertTrue(tab.activeSession === front)
+    }
+
+    func testRemovingATiledPaneThatIsNotTheLastDoesNotPromote() {
+        let tiled = self.tiled
+        let second = fixture.split(tiled, vertically: true)
+        let float = fixture.addFloat(frame: floatFrame)
+        tab.remove(second)
+        XCTAssertEqual(tab.tiledSessions(), [tiled])
+        XCTAssertEqual(tab.floatingSessions(), [float])
+    }
+
+    func testPromotionGrowsTheGridToFillTheTab() {
+        let float = fixture.addFloat(frame: floatFrame)
+        let floatColumns = float.columns
+        tab.remove(tiled)
+        XCTAssertGreaterThan(float.columns, floatColumns)
+    }
+
+    // MARK: - Refitting
+
+    func testFittingAFloatKeepsItsGrid() {
+        let float = fixture.addFloat(frame: floatFrame)
+        guard let pane = tab.floatingPane(for: float) else {
+            XCTFail("No pane")
+            return
+        }
+        let columns = float.columns
+        let rows = float.rows
+        // Something changes the frame behind the float's back; fitting restores it from the grid.
+        pane.outlineFrame = pane.outlineFrame.insetBy(dx: 30, dy: 20)
+        tab.fitSession(toCurrentViewSize: float)
+        XCTAssertEqual(float.columns, columns)
+        XCTAssertEqual(float.rows, rows)
+        guard let metrics = FloatingPaneLayout.metrics(for: float) else {
+            XCTFail("No metrics")
+            return
+        }
+        XCTAssertEqual(pane.outlineFrame.size,
+                       metrics.frameSize(for: FloatingPaneGrid(columns: Int(columns), rows: Int(rows))))
+    }
+
+    // MARK: - Minimum size
+
+    func testFloatsContributeTheirMinimumSizeNotTheirCurrentSize() {
+        let float = fixture.addFloat(frame: floatFrame)
+        let floatMinimum = FloatingPaneLayout.minimumSize(session: float)
+        let minSize = tab.minSize()
+        XCTAssertGreaterThanOrEqual(minSize.width, floatMinimum.width)
+        XCTAssertGreaterThanOrEqual(minSize.height, floatMinimum.height)
+        XCTAssertLessThan(floatMinimum.width, floatFrame.width, "the minimum is the 2x2 grid, not the current one")
     }
 }

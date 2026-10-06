@@ -1781,6 +1781,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:nil];
     [self numberOfSessionsDidChange];
     [self updatePaneTitles];
+    // The grid is canonical; derive it from the requested frame now that the session has its title
+    // bar, then the frame from the grid.
+    [iTermFloatingPaneLayout fitFloatingPane:pane session:session toOutlineFrame:frame];
 }
 
 - (BOOL)floatingPanesHidden {
@@ -1838,6 +1841,30 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)removeFloatingPane:(iTermFloatingPaneView *)pane {
     [pane removeFromSuperview];
     [_floatingPanes removeObject:pane];
+}
+
+// A native tab always has a tiled session. When the last one leaves while floats remain, the front
+// float becomes the tiled pane and fills the tab. Other floats stay floating. tmux tabs follow the
+// server instead and may have only floats. Returns the promoted session, if any.
+- (PTYSession *)promoteFrontFloatingPaneIfNeeded {
+    if (self.isTmuxTab || root_.subviews.count > 0 || _floatingPanes.count == 0) {
+        return nil;
+    }
+    iTermFloatingPaneView *pane = _floatingPanes.lastObject;
+    SessionView *view = pane.sessionView;
+    PTYSession *session = [self sessionForSessionView:view];
+    DLog(@"Promote floating session %@ to be the tiled pane", session);
+    [view removeFromSuperview];
+    [self removeFloatingPane:pane];
+    [root_ addSubview:view];
+    view.frame = root_.bounds;
+    [root_ adjustSubviews];
+    [self updatePaneTitles];
+    if (session) {
+        [self fitSessionToCurrentViewSize:session];
+    }
+    [self numberOfSessionsDidChange];
+    return session;
 }
 
 - (void)bringFloatingPaneToFront:(iTermFloatingPaneView *)pane {
@@ -2579,9 +2606,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // Remove the session.
     [self _recursiveRemoveView:[aSession view]];
+    PTYSession *promoted = [self promoteFrontFloatingPaneIfNeeded];
 
     if (aSession == activeSession_) {
-        [self setActiveSession:floatingSuccessor ?: [self sessionForSessionView:nearestNeighbor]];
+        [self setActiveSession:(floatingSuccessor ?:
+                                [self sessionForSessionView:nearestNeighbor] ?:
+                                promoted ?:
+                                [self successorOfRemovedFloatingSession:aSession])];
     }
 
     [self recheckBlur];
@@ -3068,7 +3099,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (NSSize)minSize {
-    return [self _recursiveMinSize:root_ respectPinning:YES];
+    NSSize size = [self _recursiveMinSize:root_ respectPinning:YES];
+    // A float contributes its minimum grid at its own font, not its current grid, so a large float
+    // does not keep the window from shrinking; it shrinks with it.
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        PTYSession *session = [self sessionForSessionView:pane.sessionView];
+        if (!session) {
+            continue;
+        }
+        const NSSize floatMin = [iTermFloatingPaneLayout minimumSizeOfFloatingPaneWithSession:session];
+        size.width = MAX(size.width, floatMin.width);
+        size.height = MAX(size.height, floatMin.height);
+    }
+    return size;
 }
 
 - (void)setSize:(NSSize)newSize {
@@ -3270,6 +3313,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // Resize a session's rows and columns for the existing pixel size of its
 // containing view.
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession *)aSession {
+    iTermFloatingPaneView *floatingPane = [self floatingPaneForSession:aSession];
+    if (floatingPane) {
+        // A float's grid is canonical. Keep it and change the frame, or every font, margin, scroller
+        // or title bar change would quietly cost it rows.
+        const VT100GridSize before = VT100GridSizeMake(aSession.columns, aSession.rows);
+        [iTermFloatingPaneLayout refitFloatingPane:floatingPane session:aSession];
+        return !VT100GridSizeEquals(before, VT100GridSizeMake(aSession.columns, aSession.rows));
+    }
     __block BOOL result = NO;
     [aSession resetMode];
     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {

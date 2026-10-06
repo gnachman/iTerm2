@@ -64,6 +64,22 @@ final class FloatingPaneLayout: NSObject {
         }
     }
 
+    /// The smallest a float may be: the minimum grid at its own font, plus its chrome.
+    @objc(minimumSizeOfFloatingPaneWithSession:)
+    static func minimumSize(session: PTYSession) -> NSSize {
+        return metrics(for: session)?.minimumFrameSize ?? .zero
+    }
+
+    /// Keeps the float's grid and recomputes its frame from its current metrics, after something
+    /// changed them: a font, margin, scroller, title bar or status bar change.
+    @objc(refitFloatingPane:session:)
+    static func refit(_ pane: iTermFloatingPaneView, session: PTYSession) {
+        guard let container = containerSize(of: pane) else {
+            return
+        }
+        relayout(pane, session: session, oldContainerSize: container)
+    }
+
     // MARK: - Operations
 
     /// Sizes and positions a float that was just added: 80% of the tab, centered.
@@ -73,6 +89,27 @@ final class FloatingPaneLayout: NSObject {
             return
         }
         apply(FloatingPaneGeometry.initialPlacement(container: container, metrics: metrics),
+              to: pane,
+              session: session)
+        pane.desiredGrid = nil
+    }
+
+    /// Gives a float the largest grid whose frame fits in `outlineFrame` (in the container's
+    /// coordinates), keeping its top left.
+    @objc(fitFloatingPane:session:toOutlineFrame:)
+    static func fit(_ pane: iTermFloatingPaneView, session: PTYSession, toOutlineFrame outlineFrame: NSRect) {
+        guard let metrics = metrics(for: session), let superview = pane.superview else {
+            return
+        }
+        let container = superview.bounds.size
+        let visual = FloatingPaneGeometry.toVisual(outlineFrame,
+                                                   containerHeight: container.height,
+                                                   containerIsFlipped: superview.isFlipped)
+        let grid = metrics.grid(fitting: visual.size).clamped(
+            min: .minimum,
+            max: FloatingPaneGeometry.maximumGrid(container: container, metrics: metrics))
+        let frame = CGRect(origin: visual.origin, size: metrics.frameSize(for: grid))
+        apply(FloatingPanePlacement(frame: FloatingPaneGeometry.clamp(frame, in: container), grid: grid),
               to: pane,
               session: session)
         pane.desiredGrid = nil

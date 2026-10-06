@@ -296,7 +296,8 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (iTermFloatingPaneView *)floatingPaneForSession:(PTYSession *)session;
 
 // Adds an already set up session as a floating pane in front of the others. frame is the float's
-// frame in the tab's container, outline included.
+// frame in the tab's container, outline included. The float gets the largest grid that fits in it,
+// keeping its top left, and its frame then follows from that grid.
 - (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame;
 
 // Hides or shows every floating pane in the tab. Their sessions keep running. Activating a float
