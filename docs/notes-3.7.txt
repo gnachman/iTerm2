@@ -20,7 +20,9 @@ Major New Features:
   dock, move and hide them. They are saved with
   window arrangements and can be controlled from
   the Python API. tmux integration shows tmux’s
-  own floating panes (tmux 3.8 and later).
+  own floating panes (tmux 3.7 and later; moving,
+  resizing, raising and docking them needs tmux
+  3.8).
 
 New Features:
 - `it2` can now target a session by the tmux pane
