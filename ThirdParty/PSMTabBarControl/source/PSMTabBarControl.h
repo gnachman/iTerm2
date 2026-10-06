@@ -315,11 +315,26 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // relaid out at most once per call.
 - (void)setTabGroupIdentifiers:(NSArray *)identifiers
                forTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems;
+// Like -setTabGroupIdentifiers:forTabViewItems:, also pushing each tab's
+// parent group (NSString, or NSNull for a top-level group or no group).
+// Nesting is one level deep: a sub-group's run, headed by its own chip, is
+// drawn inside its parent's run. A nil `parentIdentifiers` leaves parents
+// untouched.
+- (void)setTabGroupIdentifiers:(NSArray *)identifiers
+             parentIdentifiers:(nullable NSArray *)parentIdentifiers
+               forTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems;
 
 // Push per-tab collapsed state (parallel to setTabGroupIdentifiers:). A
 // collapsed member stays in the cell list and the tab view but is hidden in the
 // bar. `flags` are NSNumber booleans matched to `tabViewItems` by identity.
 - (void)setTabGroupCollapsedFlags:(NSArray<NSNumber *> *)flags
+                  forTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems;
+// Like -setTabGroupCollapsedFlags:forTabViewItems:, also pushing whether each
+// tab's PARENT group is collapsed (NSNumber booleans; a nil array leaves them
+// untouched). `flags` must already be YES for such a tab; this flag only
+// decides that the sub-group's chip is hidden along with its tabs.
+- (void)setTabGroupCollapsedFlags:(NSArray<NSNumber *> *)flags
+             parentCollapsedFlags:(nullable NSArray<NSNumber *> *)parentFlags
                   forTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems;
 
 // Enumerate each fully collapsed group's chip with its (derived) member count.

@@ -101,6 +101,10 @@ static NSString* TAB_ARRANGEMENT_GROUP_ID = @"Tab Group ID";
 static NSString* TAB_ARRANGEMENT_GROUP_NAME = @"Tab Group Name";
 static NSString* TAB_ARRANGEMENT_GROUP_COLOR = @"Tab Group Color";
 static NSString* TAB_ARRANGEMENT_GROUP_COLLAPSED = @"Tab Group Collapsed";
+static NSString* TAB_ARRANGEMENT_GROUP_PARENT_ID = @"Tab Group Parent ID";
+static NSString* TAB_ARRANGEMENT_GROUP_PARENT_NAME = @"Tab Group Parent Name";
+static NSString* TAB_ARRANGEMENT_GROUP_PARENT_COLOR = @"Tab Group Parent Color";
+static NSString* TAB_ARRANGEMENT_GROUP_PARENT_COLLAPSED = @"Tab Group Parent Collapsed";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -3688,6 +3692,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         theTab.tabGroupColor = [groupColorDict colorValue];
     }
     theTab.tabGroupCollapsed = [arrangement[TAB_ARRANGEMENT_GROUP_COLLAPSED] boolValue];
+    // A parent is meaningful only for a grouped tab.
+    if (theTab.tabGroupID) {
+        theTab.tabGroupParentID = [arrangement[TAB_ARRANGEMENT_GROUP_PARENT_ID] nilIfNull];
+    }
+    if (theTab.tabGroupParentID) {
+        theTab.tabGroupParentName = [arrangement[TAB_ARRANGEMENT_GROUP_PARENT_NAME] nilIfNull];
+        NSDictionary *parentColorDict = [arrangement[TAB_ARRANGEMENT_GROUP_PARENT_COLOR] nilIfNull];
+        if (parentColorDict) {
+            theTab.tabGroupParentColor = [parentColorDict colorValue];
+        }
+        theTab.tabGroupParentCollapsed = [arrangement[TAB_ARRANGEMENT_GROUP_PARENT_COLLAPSED] boolValue];
+    }
     NSString *guid = arrangement[TAB_GUID];
     if (guid) {
         if ([[iTermController sharedInstance] tabWithGUID:guid] ||
@@ -4032,6 +4048,16 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
             encoder[TAB_ARRANGEMENT_GROUP_COLOR] = self.tabGroupColor.dictionaryValue;
         }
         encoder[TAB_ARRANGEMENT_GROUP_COLLAPSED] = @(self.tabGroupCollapsed);
+        if (self.tabGroupParentID) {
+            encoder[TAB_ARRANGEMENT_GROUP_PARENT_ID] = self.tabGroupParentID;
+            if (self.tabGroupParentName) {
+                encoder[TAB_ARRANGEMENT_GROUP_PARENT_NAME] = self.tabGroupParentName;
+            }
+            if (self.tabGroupParentColor) {
+                encoder[TAB_ARRANGEMENT_GROUP_PARENT_COLOR] = self.tabGroupParentColor.dictionaryValue;
+            }
+            encoder[TAB_ARRANGEMENT_GROUP_PARENT_COLLAPSED] = @(self.tabGroupParentCollapsed);
+        }
     }
     // If in screenshot mode, encode the live session instead of the synthetic one
     PTYSession *sessionToEncode = self.activeSession;
@@ -6234,6 +6260,89 @@ typedef struct {
 
 - (BOOL)isPinned {
     return _pinned;
+}
+
+#pragma mark - Tab group nesting
+
+- (NSString *)nestedTabGroupParentID {
+    if (self.tabGroupID.length == 0 || self.tabGroupParentID.length == 0) {
+        return nil;
+    }
+    return self.tabGroupParentID;
+}
+
+- (NSString *)tabGroupTopLevelID {
+    return self.nestedTabGroupParentID ?: self.tabGroupID;
+}
+
+- (BOOL)isInTabGroup:(NSString *)groupID {
+    if (groupID.length == 0) {
+        return NO;
+    }
+    return [self.tabGroupID isEqualToString:groupID] || [self.tabGroupParentID isEqualToString:groupID];
+}
+
+- (BOOL)tabGroupHidden {
+    if (self.tabGroupID.length == 0) {
+        return NO;
+    }
+    return self.tabGroupCollapsed || (self.tabGroupParentID.length > 0 && self.tabGroupParentCollapsed);
+}
+
+- (BOOL)isParentTabGroup:(NSString *)groupID {
+    return groupID.length > 0 && [self.tabGroupParentID isEqualToString:groupID];
+}
+
+- (NSString *)nameOfTabGroup:(NSString *)groupID {
+    if ([self isParentTabGroup:groupID]) {
+        return self.tabGroupParentName;
+    }
+    return [self.tabGroupID isEqualToString:groupID] ? self.tabGroupName : nil;
+}
+
+- (NSColor *)colorOfTabGroup:(NSString *)groupID {
+    if ([self isParentTabGroup:groupID]) {
+        return self.tabGroupParentColor;
+    }
+    return [self.tabGroupID isEqualToString:groupID] ? self.tabGroupColor : nil;
+}
+
+- (BOOL)isTabGroupCollapsed:(NSString *)groupID {
+    if ([self isParentTabGroup:groupID]) {
+        return self.tabGroupParentCollapsed;
+    }
+    return [self.tabGroupID isEqualToString:groupID] && self.tabGroupCollapsed;
+}
+
+- (void)setName:(NSString *)name ofTabGroup:(NSString *)groupID {
+    if ([self isParentTabGroup:groupID]) {
+        self.tabGroupParentName = name;
+    } else if ([self.tabGroupID isEqualToString:groupID]) {
+        self.tabGroupName = name;
+    }
+}
+
+- (void)setColor:(NSColor *)color ofTabGroup:(NSString *)groupID {
+    if ([self isParentTabGroup:groupID]) {
+        self.tabGroupParentColor = color;
+    } else if ([self.tabGroupID isEqualToString:groupID]) {
+        self.tabGroupColor = color;
+    }
+}
+
+- (void)setCollapsed:(BOOL)collapsed ofTabGroup:(NSString *)groupID {
+    if ([self isParentTabGroup:groupID]) {
+        self.tabGroupParentCollapsed = collapsed;
+    } else if ([self.tabGroupID isEqualToString:groupID]) {
+        self.tabGroupCollapsed = collapsed;
+    }
+}
+
+- (void)clearTabGroupParent {
+    self.tabGroupParentID = nil;
+    self.tabGroupParentName = nil;
+    self.tabGroupParentColor = nil;
+    self.tabGroupParentCollapsed = NO;
 }
 
 - (void)setTitleOverride:(NSString *)titleOverride {

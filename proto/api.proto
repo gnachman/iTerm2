@@ -1620,6 +1620,14 @@ message ListSessionsResponse {
     optional string tab_group_name = 9;
     optional string tab_group_color = 10;
     optional bool tab_group_collapsed = 11;
+    // When the tab's group is a sub-group, the definition of its parent group.
+    // Nesting is one level deep. All of a parent's sub-group tabs carry the
+    // same parent values. tab_group_parent_id is unset for a top-level group;
+    // the other three are meaningful only when it is set. Added in protocol 1.21.
+    optional string tab_group_parent_id = 12;
+    optional string tab_group_parent_name = 13;
+    optional string tab_group_parent_color = 14;
+    optional bool tab_group_parent_collapsed = 15;
   }
   repeated Window windows = 1;
   repeated SessionSummary buried_sessions = 2;

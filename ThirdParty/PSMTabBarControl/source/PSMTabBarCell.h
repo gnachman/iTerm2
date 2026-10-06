@@ -61,6 +61,30 @@
 // nullability specifier: this header has no NS_ASSUME_NONNULL region and
 // annotating one pointer would force annotating them all.)
 @property(nonatomic, copy) NSString *tabGroupIdentifier;
+// The parent of this cell's group when that group is a sub-group, else nil.
+// Nesting is one level deep. On a chip cell it marks a sub-group's chip, which
+// the control draws inside its parent's run (the parent's run spans its direct
+// members, its sub-groups' chips, and their members).
+@property(nonatomic, copy) NSString *tabGroupParentIdentifier;
+// YES on a real tab cell whose group's PARENT is collapsed (the cell is then
+// also isCollapsedHidden). Lets the control tell "hidden because my sub-group
+// is collapsed" from "hidden because the enclosing group is collapsed", which
+// decides whether the sub-group's chip is hidden too.
+@property(nonatomic, assign) BOOL isTabGroupParentCollapsed;
+// YES if the cell belongs to `groupID` directly or as a member of one of its
+// sub-groups. For a chip cell: YES for its own group and for its parent.
+- (BOOL)isInTabGroup:(NSString *)groupID;
+// YES if this cell, found after the chip of `groupID`, continues that group's
+// run: a tab cell in the group (directly or through a sub-group), or the chip
+// of one of its sub-groups. Says nothing about placeholders.
+- (BOOL)continuesRunOfTabGroup:(NSString *)groupID;
+// For a tab cell in the run of `groupID`: YES if it is hidden by `groupID`'s OWN
+// collapsed state (as opposed to a collapsed sub-group of it).
+- (BOOL)isCollapsedByTabGroup:(NSString *)groupID;
+// This cell's group path, outermost first: @[] when ungrouped, @[gid] for a
+// top-level group, @[parent, gid] for a sub-group. For a chip, the path of its
+// group.
+- (NSArray<NSString *> *)tabGroupPath;
 // For a drag drop-slot placeholder that sits just after a group's last member:
 // the id of the group a tab dropped here should join (its "end of group" slot).
 // nil on every non-slot cell and on slots that don't join a group.

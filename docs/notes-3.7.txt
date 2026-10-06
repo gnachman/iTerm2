@@ -121,6 +121,13 @@ New Features:
   renamed, recolored, collapsed, or have tabs
   added or removed. iTerm2 keeps each group's
   tabs consecutive for you.
+- Tab groups can now be nested one level deep.
+  Right-click a tab in a group and choose “Move
+  Tab to New Sub-group…”. A sub-group gets its
+  own chip inside its parent's run, and each
+  level collapses on its own. In the Python API,
+  pass parent= to create_tab_group; a TabGroup
+  reports its parent_group_id.
 - A new “Set Profile Setting” trigger action turns
   a profile checkbox on or off for the session.
   Paired with Job Started and Job Ended matches it

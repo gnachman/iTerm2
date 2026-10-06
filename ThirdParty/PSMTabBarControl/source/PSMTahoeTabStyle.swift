@@ -832,6 +832,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private static let groupBAreaWidth: CGFloat = 3        // colored area between the name capsule and first tab (yields a 4pt name-to-tab gap)
     private static let groupChipToTabGap: CGFloat = 1      // bg gap between that colored area and the first tab
     private static let groupRunOutset: CGFloat = 2         // how far the enclosing pill extends past the wrapped tabs
+    // A sub-group's pill does not outset: it sits inside its parent's run, whose
+    // own outline already wraps it, so the two outlines stay visibly nested.
+    private static let subgroupRunOutset: CGFloat = 0
     private static let collapsedChipChevronWidth: CGFloat = 12  // room for the collapse chevron on a collapsed chip
 
     // The one font used for every group name/chip label; the measuring and drawing
@@ -858,6 +861,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return Self.groupRunOutset
     }
 
+    // How far `chip`'s group pill extends past the cells it wraps.
+    private func runOutset(forChip chip: PSMTabBarCell) -> CGFloat {
+        return (chip.tabGroupParentIdentifier?.isEmpty == false) ? Self.subgroupRunOutset : Self.groupRunOutset
+    }
+
     // The left outset the group pill actually uses for `chip` (see -drawTabGroupRun
     // / -drawCollapsedTabGroupChip): neighbor-aware on a horizontal bar (0 when the
     // preceding cell already covers the shared gap), the symmetric constant on a
@@ -865,7 +873,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     @objc func tabGroupChipLeftOutset(forChip chip: PSMTabBarCell, bar: PSMTabBarControl) -> CGFloat {
         return (bar.orientation == .horizontalOrientation)
             ? leftOutset(forChip: chip, bar: bar)
-            : Self.groupRunOutset
+            : runOutset(forChip: chip)
     }
 
     @objc func tabGroupChipCellWidth(forName name: String) -> CGFloat {
@@ -928,6 +936,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // so outsetting left too would overlap it. The neighbor scan lives on the
         // control (over its cells directly) so this draw-hot path does not bridge
         // the whole cells NSArray into a fresh Swift copy per run per frame.
+        if chip.tabGroupParentIdentifier?.isEmpty == false {
+            return Self.subgroupRunOutset
+        }
         return bar.cellPrecedingChipCoversInterGroupGap(chip) ? 0 : Self.groupRunOutset
     }
 
@@ -944,7 +955,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let font = Self.groupNameFont
         let textCol = NSColor.labelColor
 
-        let outset = Self.groupRunOutset
+        let outset = runOutset(forChip: chip)
         let base = backgroundRect(for: chip.frame)
         // Outset on all four sides (like the expanded run) so the outline sits
         // outside where a tab's own outline would be, covering the background
@@ -1076,7 +1087,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // background), covering the sliver of background around the run. The left
         // needs the outset too: without it the run outline lands on the first
         // tab's outline instead of outside it (asymmetric with the right).
-        let outset = Self.groupRunOutset
+        let outset = runOutset(forChip: chip)
         let leftOut = leftOutset(forChip: chip, bar: bar)
         // Take the pill's vertical extent from the chip (whose height is always
         // valid), not from tabsRect: mid-slide the member frames can be zero-width
@@ -1178,7 +1189,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let textCol = NSColor.labelColor
 
         let chipFrame = chip.frame
-        let outset = Self.groupRunOutset
+        let outset = runOutset(forChip: chip)
         var pill = NSRect(x: tabsRect.minX - outset,
                           y: chipFrame.minY,
                           width: tabsRect.width + 2 * outset,

@@ -57,7 +57,11 @@ class Tab:
             tab_group_id=None,
             tab_group_name=None,
             tab_group_color=None,
-            tab_group_collapsed=False):
+            tab_group_collapsed=False,
+            tab_group_parent_id=None,
+            tab_group_parent_name=None,
+            tab_group_parent_color=None,
+            tab_group_parent_collapsed=False):
         self.connection = connection
         self.__tab_id = tab_id
         self.__root = root
@@ -69,6 +73,10 @@ class Tab:
         self.__tab_group_name = tab_group_name
         self.__tab_group_color = tab_group_color
         self.__tab_group_collapsed = tab_group_collapsed
+        self.__tab_group_parent_id = tab_group_parent_id
+        self.__tab_group_parent_name = tab_group_parent_name
+        self.__tab_group_parent_color = tab_group_parent_color
+        self.__tab_group_parent_collapsed = tab_group_parent_collapsed
     # pylint: enable=too-many-arguments
 
     def __repr__(self):
@@ -91,6 +99,10 @@ class Tab:
         self.__tab_group_name = other._Tab__tab_group_name
         self.__tab_group_color = other._Tab__tab_group_color
         self.__tab_group_collapsed = other._Tab__tab_group_collapsed
+        self.__tab_group_parent_id = other._Tab__tab_group_parent_id
+        self.__tab_group_parent_name = other._Tab__tab_group_parent_name
+        self.__tab_group_parent_color = other._Tab__tab_group_parent_color
+        self.__tab_group_parent_collapsed = other._Tab__tab_group_parent_collapsed
         # pylint: enable=protected-access
 
     def update_session(self, session):
@@ -118,6 +130,9 @@ class Tab:
         are always kept consecutive in the tab bar; iTerm2 reorders tabs as
         needed to maintain that invariant.
 
+        If the group is a sub-group (see :attr:`~iterm2.tabgroup.TabGroup.parent_group_id`),
+        this is the sub-group; :attr:`tab_group_parent` is the group it is nested in.
+
         :returns: A :class:`~iterm2.tabgroup.TabGroup` or `None`.
         """
         if not self.__tab_group_id:
@@ -129,7 +144,30 @@ class Tab:
             self.__tab_group_id,
             self.__tab_group_name or "",
             color,
-            self.__tab_group_collapsed)
+            self.__tab_group_collapsed,
+            self.__tab_group_parent_id or None)
+
+    @property
+    def tab_group_parent(self) -> typing.Optional['iterm2.tabgroup.TabGroup']:
+        """
+        The group this tab's tab group is nested in, or `None` if the tab is not
+        in a sub-group.
+
+        Tab groups nest one level deep: a group may have a parent group, and its
+        tabs are kept consecutive inside the parent's tabs.
+
+        :returns: A :class:`~iterm2.tabgroup.TabGroup` or `None`.
+        """
+        if not self.__tab_group_id or not self.__tab_group_parent_id:
+            return None
+        color = iterm2.color.Color.from_hex(self.__tab_group_parent_color) if (
+            self.__tab_group_parent_color) else None
+        return iterm2.tabgroup.TabGroup(
+            self.connection,
+            self.__tab_group_parent_id,
+            self.__tab_group_parent_name or "",
+            color,
+            bool(self.__tab_group_parent_collapsed))
 
     @property
     def tmux_connection_id(self):
@@ -453,6 +491,9 @@ class Tab:
         iTerm2 moves the tab out of the group so the remaining members stay
         consecutive. If the tab was the group's only member, the group is
         dissolved. This is a no-op if the tab is not in a group.
+
+        A tab in a sub-group moves to the sub-group's parent group instead of
+        leaving every group; call this again to remove it from the parent.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
