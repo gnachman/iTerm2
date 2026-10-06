@@ -1151,7 +1151,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         maximize = YES;
         [self.activeSession toggleTmuxZoom];
     }
-    if (isMaximized_) {
+    // A float stays visible over the maximized pane, so it is activated where it is. Swapping its
+    // view into root_ would pull it into the tiled layout.
+    if (isMaximized_ && ![self sessionIsFloating:session]) {
         [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
                          with:[session view]];
     }
@@ -1215,7 +1217,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PTYSession *session = sessionPicker();
     DLog(@"%@", session);
     if (session) {
-        if (isMaximized_) {
+        if (isMaximized_ && ![self sessionIsFloating:session]) {
             [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
                              with:session.view];
         }

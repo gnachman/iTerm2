@@ -160,4 +160,35 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
         XCTAssertEqual(tab.sessions(), [tiled, second, float])
         XCTAssertEqual(pane.frame, floatFrame)
     }
+
+    func testActivatingAFloatWhileMaximizedLeavesItFloating() {
+        let tiled = self.tiled
+        let second = fixture.split(tiled, vertically: true)
+        let float = fixture.addFloat(frame: floatFrame)
+        guard let pane = tab.floatingPane(for: float) else {
+            XCTFail("No pane")
+            return
+        }
+        tab.setActiveSession(second)
+        tab.maximize()
+
+        tab.setActiveSessionPreservingMaximization(float)
+        XCTAssertTrue(tab.activeSession === float)
+        XCTAssertTrue(tab.isMaximized)
+        XCTAssertTrue(float.view?.superview === pane.splitView, "the float's view stays in the float")
+        XCTAssertTrue(tab.rootView?.subviews.first === second.view, "the maximized pane stays")
+
+        tab.unmaximizeTemporarilyAndActivate { tiled }
+        XCTAssertTrue(tab.activeSession === tiled)
+        XCTAssertTrue(tab.rootView?.subviews.first === tiled.view)
+        XCTAssertTrue(float.view?.superview === pane.splitView)
+
+        tab.unmaximizeTemporarilyAndActivate { float }
+        XCTAssertTrue(tab.activeSession === float)
+        XCTAssertTrue(tab.rootView?.subviews.first === tiled.view)
+        XCTAssertTrue(float.view?.superview === pane.splitView)
+
+        tab.perform(NSSelectorFromString("unmaximize"))
+        XCTAssertEqual(tab.sessions(), [tiled, second, float])
+    }
 }
