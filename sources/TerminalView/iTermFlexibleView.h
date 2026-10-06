@@ -22,6 +22,9 @@ NS_ASSUME_NONNULL_BEGIN
 // When YES, the root is laid out to fill the bounds whenever the container resizes.
 @property(nonatomic) BOOL rootFillsBounds;
 
+// Called after the container's size changes, with the old size.
+@property(nonatomic, copy, nullable) void (^sizeDidChange)(NSSize oldSize);
+
 - (instancetype)initWithFrame:(NSRect)frame color:(nullable NSColor*)color;
 - (void)setFlipped:(BOOL)value;
 

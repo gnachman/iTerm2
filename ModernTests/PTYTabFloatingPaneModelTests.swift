@@ -191,4 +191,19 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
         tab.perform(NSSelectorFromString("unmaximize"))
         XCTAssertEqual(tab.sessions(), [tiled, second, float])
     }
+
+    // MARK: - Splits
+
+    func testASplitAimedAtAFloatGoesToTheMostRecentTiledPane() {
+        let tiled = self.tiled
+        let float = fixture.addFloat(frame: floatFrame)
+        tab.setActiveSession(tiled)
+        tab.setActiveSession(float)
+        XCTAssertTrue(tab.splitTarget(for: float) === tiled)
+
+        let added = fixture.split(float, vertically: true)
+        XCTAssertEqual(tab.floatingSessions(), [float], "a float holds exactly one session")
+        XCTAssertEqual(tab.tiledSessions(), [tiled, added], "the split went to the tiled layout")
+        XCTAssertEqual(tab.floatingPane(for: float)?.splitView.subviews.count, 1)
+    }
 }

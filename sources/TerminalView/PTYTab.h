@@ -299,6 +299,13 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // frame in the tab's container, outline included.
 - (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame;
 
+// The tiled session with the highest activity counter.
+- (PTYSession *)mostRecentlyActiveTiledSession;
+
+// The session a split aimed at `session` should actually split. A native float holds one session,
+// so splits aimed at one go to the most recently active tiled session instead.
+- (PTYSession *)splitTargetForSession:(PTYSession *)session;
+
 - (void)removeSession:(PTYSession *)aSession;
 
 // Anyone changing the number of sessions must call this after the sessions

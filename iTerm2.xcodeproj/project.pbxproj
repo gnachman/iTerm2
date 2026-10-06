@@ -1106,6 +1106,7 @@
 		9C84C4320A70104EEB9C0D65 /* WindowLocationLockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE7A6B656E953B6C1CAA73F /* WindowLocationLockController.swift */; };
 		9CC7383F92969C8D5036CECB /* CompanionHEVCSampleBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5DDCA91496BE450D5BC387 /* CompanionHEVCSampleBuilder.swift */; };
 		9D00C0F07E4C2CD013AD0F47 /* OrchestratorClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A25904AA380F451E72C586 /* OrchestratorClient.swift */; };
+		9D0D14C1945083235F5403E0 /* FloatingPaneLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2439B1C6616A31976B9C9969 /* FloatingPaneLayout.swift */; };
 		9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D737D5D17495B4100B3334D /* PrefsGeneral.png */; };
 		9D737D6017495B4100B3334D /* PrefsGeneral@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9D737D5E17495B4100B3334D /* PrefsGeneral@2x.png */; };
 		9DB3D6E0176C8F0B0071CCF8 /* PrefsAppearance.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6DE176C8F0B0071CCF8 /* PrefsAppearance.png */; };
@@ -5475,6 +5476,7 @@
 		23DA26C236E4BC3ECF3CF916 /* WorkgroupModeSwitcherItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupModeSwitcherItem.swift; sourceTree = "<group>"; };
 		240C63271364D969B638DA6E /* ResilientCoordinateNotifications.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ResilientCoordinateNotifications.swift; sourceTree = "<group>"; };
 		2423D133EA9874246E972978 /* APIChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = APIChannel.swift; path = it2cli/Sources/it2core/Transport/APIChannel.swift; sourceTree = "<group>"; };
+		2439B1C6616A31976B9C9969 /* FloatingPaneLayout.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FloatingPaneLayout.swift; sourceTree = "<group>"; };
 		24E4996901DA8086C54D1664 /* SendCompanionNotificationBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SendCompanionNotificationBuiltInFunction.swift; sourceTree = "<group>"; };
 		25308DD4E67A2804961C3F3E /* Chat+Database.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Chat+Database.swift"; sourceTree = "<group>"; };
 		257048DB7F3343FA9AA49966 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermStatusBarSetupViewController.xcstrings; sourceTree = "<group>"; };
@@ -9097,6 +9099,7 @@
 			children = (
 				F7F500F98D6607037DCEB270 /* iTermFloatingPaneView.swift */,
 				30BF7D3BA2F495FEEAF1F1C9 /* FloatingPaneGeometry.swift */,
+				2439B1C6616A31976B9C9969 /* FloatingPaneLayout.swift */,
 			);
 			path = FloatingPanes;
 			sourceTree = "<group>";
@@ -19987,6 +19990,7 @@
 				6694FCCBD604D6D56D6649F9 /* iTermUndoCloseArchives.swift in Sources */,
 				9459958EBE38B60F9848F811 /* NSFont+BijectionIdentifiable.swift in Sources */,
 				93192814C6B3391E62C3E35F /* FloatingPaneGeometry.swift in Sources */,
+				9D0D14C1945083235F5403E0 /* FloatingPaneLayout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

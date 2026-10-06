@@ -441,6 +441,15 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)addSession:(PTYSession *)session inTabAtIndex:(NSNumber *)tabIndex;
 - (void)customizeCollectionBehaviorForProfile:(Profile *)profile;
 
+// Floating panes
+- (BOOL)canCreateFloatingPane;
+- (IBAction)newFloatingPaneWithCurrentProfile:(id)sender;
+- (PTYSession *)addFloatingPaneToTab:(PTYTab *)tab
+                             profile:(Profile *)profile
+                       parentSession:(PTYSession *)parentSession
+                              oldCWD:(NSString *)oldCWD
+                          completion:(void (^)(PTYSession *, BOOL))completion;
+
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;
 - (void)newTmuxTabAtIndex:(NSNumber *)index;

@@ -61,6 +61,9 @@
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
     [self layoutRootIfNeeded];
+    if (self.sizeDidChange && !NSEqualSizes(oldSize, self.bounds.size)) {
+        self.sizeDidChange(oldSize);
+    }
 }
 
 - (void)layoutRootIfNeeded {

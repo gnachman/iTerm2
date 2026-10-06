@@ -255,6 +255,12 @@
                                 </connections>
                                 <accessibility identifier="Split Vertically with Current Profile"/>
                             </menuItem>
+                            <menuItem title="New Floating Pane with Current Profile" identifier="New Floating Pane with Current Profile" id="fpn-nw-cur">
+                                <connections>
+                                    <action selector="newFloatingPaneWithCurrentProfile:" target="-1" id="fpn-nw-act"/>
+                                </connections>
+                                <accessibility identifier="New Floating Pane with Current Profile"/>
+                            </menuItem>
                             <menuItem title="Split Horizontally…" keyEquivalent="H" identifier="Split Horizontally…" id="1289">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>

@@ -21,6 +21,10 @@ final class iTermFloatingPaneView: NSView {
     /// The float's root: a split view with one child, the session's view.
     @objc let splitView: PTYSplitView
 
+    /// The grid this float wanted when it last had to shrink to fit its tab, so it can grow back
+    /// when there is room. Nil when it has the grid it wants.
+    var desiredGrid: FloatingPaneGrid?
+
     @objc var isActive = false {
         didSet {
             updateOutlineColor()

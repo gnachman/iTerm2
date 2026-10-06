@@ -475,6 +475,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     _containerView.autoresizesSubviews = YES;
     _containerView.rootFillsBounds = YES;
     _floatingPanes = [[NSMutableArray alloc] init];
+    __weak __typeof(self) weakTab = self;
+    _containerView.sizeDidChange = ^(NSSize oldSize) {
+        [weakTab containerDidChangeSizeFrom:oldSize];
+    };
     _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab
                                                    owner:self];
     _variables.primaryKey = @"id";
@@ -1752,7 +1756,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     [splitView setVertical:YES];
     [splitView setAutoresizesSubviews:YES];
-    splitView.delegate = self;
+    // No delegate: with one child, NSSplitView's own layout gives it the whole split view, and the
+    // tiled layout's resizing rules do not apply to a float.
     iTermFloatingPaneView *pane = [[iTermFloatingPaneView alloc] initWithFrame:frame splitView:splitView];
 
     session.delegate = self;
@@ -1764,6 +1769,36 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [_floatingPanes addObject:pane];
     [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:nil];
     [self numberOfSessionsDidChange];
+    [self updatePaneTitles];
+}
+
+- (PTYSession *)mostRecentlyActiveTiledSession {
+    PTYSession *best = nil;
+    for (PTYSession *session in [self tiledSessions]) {
+        if (!best || [session.activityCounter compare:best.activityCounter] == NSOrderedDescending) {
+            best = session;
+        }
+    }
+    return best;
+}
+
+- (PTYSession *)splitTargetForSession:(PTYSession *)session {
+    if (self.isTmuxTab || ![self sessionIsFloating:session]) {
+        return session;
+    }
+    // A float holds one session, so a split aimed at a native float goes to the tiled layout.
+    PTYSession *tiled = [self mostRecentlyActiveTiledSession];
+    DLog(@"Redirect split of floating session %@ to %@", session, tiled);
+    return tiled ?: session;
+}
+
+- (void)containerDidChangeSizeFrom:(NSSize)oldSize {
+    for (iTermFloatingPaneView *pane in [_floatingPanes copy]) {
+        PTYSession *session = [self sessionForSessionView:pane.sessionView];
+        if (session) {
+            [iTermFloatingPaneLayout relayoutFloatingPane:pane session:session oldContainerSize:oldSize];
+        }
+    }
 }
 
 - (void)removeFloatingPane:(iTermFloatingPaneView *)pane {
@@ -2485,7 +2520,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize {
-    NSSplitView *parentSplit = (NSSplitView *)[[activeSession_ view] superview];
+    PTYSession *target = [self splitTargetForSession:activeSession_];
+    NSSplitView *parentSplit = (NSSplitView *)[[target view] superview];
     if (isVertical == [parentSplit isVertical]) {
         // Add a child to parentSplit.
         // This is a slightly bogus heuristic: if any sibling of the active session has a violated min
@@ -2514,8 +2550,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         // Active session will be replaced with a splitter.
         // Another bogus heuristic: if the active session's constraints have been violated then you
         // can't split.
-        NSSize actualSize = [[activeSession_ view] frame].size;
-        NSSize minSize = [self _minSessionSize:[activeSession_ view]
+        NSSize actualSize = [[target view] frame].size;
+        NSSize minSize = [self _minSessionSize:[target view]
                                 respectPinning:isVertical];
         if (isVertical && actualSize.width < minSize.width) {
             DLog(@"Not enough width for vertical split");

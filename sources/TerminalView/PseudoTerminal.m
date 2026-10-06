@@ -11450,6 +11450,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
            performSetup:(BOOL)performSetup {
     RLog(@"splitVertically:%@ before:%@ addingSession:%@ targetSession:%@ performSetup:%@ self=%@",
          @(isVertical), @(before), newSession, targetSession, @(performSetup), self);
+    // Callers of this method cannot be refused (the session already exists), so a split aimed at a
+    // floating pane is redirected.
+    targetSession = [[self tabForSession:targetSession] splitTargetForSession:targetSession] ?: targetSession;
     [self.currentSession refuseFirstResponderAtCurrentMouseLocation];
     NSColor *tabColor;
     PTYTab *tab = [self tabForSession:targetSession] ?: [self currentTab];
@@ -11600,6 +11603,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
         return;
     }
+    targetSession = [[self tabForSession:targetSession] splitTargetForSession:targetSession] ?: targetSession;
     PTYSession *currentSession = [self currentSession];
     if (currentSession) {
         [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:theBookmark.sshIdentity
@@ -11654,6 +11658,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return nil;
     }
     RLog(@"--------- splitVertically -----------");
+    targetSession = [[self tabForSession:targetSession] splitTargetForSession:targetSession] ?: targetSession;
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
         RLog(@"Beep: can't split");
         NSBeep();
@@ -11701,6 +11706,111 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                           ready:^(BOOL ok) {
         if (!ok) {
             RLog(@"Launch failed");
+            [newSession terminate];
+            [[weakSelf tabForSession:newSession] removeSession:newSession];
+        }
+    }
+                                                     completion:completion];
+    [self.sessionFactory attachOrLaunchWithRequest:launchRequest];
+    return newSession;
+}
+
+#pragma mark - Floating panes
+
+- (BOOL)canCreateFloatingPane {
+    PTYTab *tab = [self currentTab];
+    return (tab != nil &&
+            !_layoutLocked &&
+            ![tab isTmuxTab] &&
+            ![self inInstantReplay] &&
+            self.currentSession != nil);
+}
+
+- (IBAction)newFloatingPaneWithCurrentProfile:(id)sender {
+    if (![self canCreateFloatingPane]) {
+        RLog(@"Can't create a floating pane");
+        NSBeep();
+        return;
+    }
+    Profile *profile = [self profileForSplittingCurrentSession];
+    if (![iTermSessionLauncher profileIsWellFormed:profile]) {
+        return;
+    }
+    PTYTab *tab = [self currentTab];
+    PTYSession *currentSession = [self currentSession];
+    __weak __typeof(self) weakSelf = self;
+    [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:profile.sshIdentity
+                                                                                   completion:^(NSString *oldCWD) {
+        [weakSelf addFloatingPaneToTab:tab
+                               profile:profile
+                         parentSession:currentSession
+                                oldCWD:oldCWD
+                            completion:nil];
+    }];
+}
+
+// Creates a session, adds it to `tab` as a floating pane in front of the others, makes it active,
+// and launches it.
+- (PTYSession *)addFloatingPaneToTab:(PTYTab *)tab
+                             profile:(Profile *)profile
+                       parentSession:(PTYSession *)parentSession
+                              oldCWD:(NSString *)oldCWD
+                          completion:(void (^)(PTYSession *, BOOL))completion {
+    if (![self.tabs containsObject:tab]) {
+        RLog(@"Tab %@ is gone; not adding a floating pane", tab);
+        return nil;
+    }
+    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:profile[KEY_GUID]]) {
+        // Same as splitting: don't let two divorced sessions share a guid.
+        NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
+        temp[KEY_GUID] = [ProfileModel freshGuid];
+        temp[KEY_ORIGINAL_GUID] = [[parentSession.originalProfile[KEY_GUID] copy] autorelease];
+        [[ProfileModel sessionsInstance] addBookmark:temp];
+        profile = temp;
+    }
+    PTYSession *newSession = [[self.sessionFactory newSessionWithProfile:profile
+                                                                  parent:parentSession] autorelease];
+    [self setupSession:newSession withSize:nil];
+    // The real frame comes from the float's grid, which is computed once the session has a view.
+    [tab addFloatingSession:newSession frame:NSMakeRect(0, 0, 200, 200)];
+    iTermFloatingPaneView *pane = [tab floatingPaneForSession:newSession];
+    [iTermFloatingPaneLayout placeNewFloatingPane:pane session:newSession];
+    [tab setActiveSession:newSession];
+    [tab recheckBlur];
+    [self setDimmingForSessions];
+    for (PTYSession *session in tab.sessions) {
+        [session.view updateDim];
+    }
+    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]] &&
+        parentSession.isDivorced) {
+        [newSession inheritDivorceFrom:parentSession
+                                decree:[NSString stringWithFormat:@"New floating pane with guid %@",
+                                        newSession.profile[KEY_GUID]]];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange"
+                                                        object:self
+                                                      userInfo:nil];
+
+    __weak __typeof(self) weakSelf = self;
+    iTermSessionAttachOrLaunchRequest *launchRequest =
+    [iTermSessionAttachOrLaunchRequest launchRequestWithSession:newSession
+                                                      canPrompt:YES
+                                                     objectType:iTermPaneObject
+                                            hasServerConnection:NO
+                                               serverConnection:(iTermGeneralServerConnection){}
+                                                      urlString:nil
+                                                   allowURLSubs:NO
+                                                    environment:@{}
+                                                    customShell:[ITAddressBookMgr customShellForProfile:profile]
+                                                         oldCWD:oldCWD
+                                                 forceUseOldCWD:NO
+                                                        command:nil
+                                                         isUTF8:nil
+                                                  substitutions:nil
+                                               windowController:self
+                                                          ready:^(BOOL ok) {
+        if (!ok) {
+            RLog(@"Launch of floating pane failed");
             [newSession terminate];
             [[weakSelf tabForSession:newSession] removeSession:newSession];
         }
@@ -14024,7 +14134,24 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             action == @selector(duplicateTab:) ||
             action == @selector(newTabToTheRight:) ||
             action == @selector(closeOtherTabs:) ||
-            action == @selector(closeTabsToTheRight:)) {
+            action == @selector(closeTabsToTheRight:) ||
+            action == @selector(newFloatingPaneWithCurrentProfile:)) {
+            return NO;
+        }
+    }
+    {
+        const SEL action = [item action];
+        if (action == @selector(newFloatingPaneWithCurrentProfile:)) {
+            return [self canCreateFloatingPane];
+        }
+        // A native float holds one session, so the menu items that split the current session are
+        // disabled while one is active.
+        if ((action == @selector(splitVertically:) ||
+             action == @selector(splitHorizontally:) ||
+             action == @selector(openSplitHorizontallySheet:) ||
+             action == @selector(openSplitVerticallySheet:)) &&
+            !self.currentTab.isTmuxTab &&
+            [self.currentTab sessionIsFloating:self.currentSession]) {
             return NO;
         }
     }

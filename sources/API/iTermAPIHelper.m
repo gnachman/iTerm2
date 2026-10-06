@@ -1069,7 +1069,37 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
     focusChange.session = session.guid;
     // Deferrable: held from a connection that is mid-CreateTab (see the deferral).
-    [self handleFocusChange:focusChange deferrable:YES];
+    [self handleFocusChange:focusChange
+                 deferrable:YES
+      floatingPaneAwareOnly:[session.delegate sessionIsFloating:session]];
+}
+
+// Python library versions before this one do not know about floating panes. A focus change to a
+// session that is missing from its tab's split tree sends them into an endless refresh: refresh,
+// fetch focus, fail to find the session, refresh again.
+static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
+
++ (BOOL)libraryVersionUnderstandsFloatingPanes:(NSString *)libraryVersion {
+    if (libraryVersion.length == 0) {
+        // No header: the in-process runtime, which ships the current library.
+        return YES;
+    }
+    NSArray<NSString *> *parts = [libraryVersion componentsSeparatedByString:@" "];
+    if (parts.count != 2 || ![parts[0] isEqualToString:@"python"]) {
+        return YES;
+    }
+    NSString *version = parts[1];
+    NSCharacterSet *allowed = [NSCharacterSet characterSetWithCharactersInString:@"0123456789."];
+    if (version.length == 0 ||
+        [version rangeOfCharacterFromSet:allowed.invertedSet].location != NSNotFound) {
+        return YES;
+    }
+    return [version compare:iTermAPIFloatingPanesFirstAwarePythonVersion
+                    options:NSNumericSearch] != NSOrderedAscending;
+}
+
+- (BOOL)connectionKeyUnderstandsFloatingPanes:(NSString *)connectionKey {
+    return [iTermAPIHelper libraryVersionUnderstandsFloatingPanes:[_apiServer libraryVersionForConnectionKey:connectionKey]];
 }
 
 - (void)broadcastDomainsDidChange:(NSNotification *)notification {
@@ -1101,10 +1131,20 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 // after its response); all other connections receive it normally. Non-deferrable
 // focus changes (window key, app active) always deliver.
 - (void)handleFocusChange:(ITMFocusChangedNotification *)notif deferrable:(BOOL)deferrable {
+    [self handleFocusChange:notif deferrable:deferrable floatingPaneAwareOnly:NO];
+}
+
+// `floatingPaneAwareOnly` withholds the change from clients too old to know about floating panes.
+- (void)handleFocusChange:(ITMFocusChangedNotification *)notif
+               deferrable:(BOOL)deferrable
+    floatingPaneAwareOnly:(BOOL)floatingPaneAwareOnly {
     void (^handle)(void) = ^{
         [self->_focusChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
             if (deferrable &&
                 [self->_createTabFocusDeferral shouldHoldFocusNotificationForConnectionGuid:key]) {
+                return;
+            }
+            if (floatingPaneAwareOnly && ![self connectionKeyUnderstandsFloatingPanes:key]) {
                 return;
             }
             ITMNotification *notification = [[ITMNotification alloc] init];
@@ -3372,7 +3412,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     handler(response);
 }
 
-- (void)apiServerFocus:(ITMFocusRequest *)request handler:(void (^)(ITMFocusResponse *))handler {
+- (void)apiServerFocus:(ITMFocusRequest *)request
+        libraryVersion:(NSString *)libraryVersion
+               handler:(void (^)(ITMFocusResponse *))handler {
+    const BOOL understandsFloatingPanes = [iTermAPIHelper libraryVersionUnderstandsFloatingPanes:libraryVersion];
     ITMFocusResponse *response = [[ITMFocusResponse alloc] init];
 
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
@@ -3409,6 +3452,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         [response.notificationsArray addObject:focusChange];
 
         for (PTYTab *tab in term.tabs) {
+            if (!understandsFloatingPanes && [tab sessionIsFloating:tab.activeSession]) {
+                // See iTermAPIFloatingPanesFirstAwarePythonVersion.
+                continue;
+            }
             focusChange = [[ITMFocusChangedNotification alloc] init];
             focusChange.session = tab.activeSession.guid;
             [response.notificationsArray addObject:focusChange];
