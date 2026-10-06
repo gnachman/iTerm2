@@ -564,8 +564,8 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         return [[NSPasteboard generalPasteboard] hasReadableFirstFile];
     }
     if (item.action == @selector(bury:)) {
-        // Disable bury for synthetic sessions - it doesn't work correctly
-        return ![_delegate textViewIsSyntheticSession];
+        // Disabled for synthetic sessions, where it doesn't work correctly, and for tmux floats.
+        return [_delegate textViewCanBury];
     }
     if (item.action == @selector(terminalStateToggleAlternateScreen:) ||
         item.action == @selector(terminalStateToggleFocusReporting:) ||

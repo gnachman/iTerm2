@@ -15189,6 +15189,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)textViewCanBury {
+    if (self.isTmuxClient && [_delegate sessionIsFloating:self]) {
+        // Burying a tmux pane hides its whole tmux window, which is not what burying a float means.
+        return NO;
+    }
     return !_synthetic;
 }
 
