@@ -31,6 +31,25 @@ func walkSplitTree(_ node: ITMSplitTreeNode?, visitor: (ITMSessionSummary) -> Vo
     }
 }
 
+/// Walk every session in a tab: its split tree, then its floating panes back to front.
+func walkSessions(in tab: ITMListSessionsResponse_Tab, visitor: (ITMSessionSummary) -> Void) {
+    walkSplitTree(tab.root, visitor: visitor)
+    for case let floatingPane as ITMFloatingPane in tab.floatingPanesArray ?? [] {
+        if let s = floatingPane.session {
+            visitor(s)
+        }
+    }
+}
+
+/// Collect the UUIDs of every session in a tab, including floating panes.
+func collectSessionIds(in tab: ITMListSessionsResponse_Tab) -> [String] {
+    var ids: [String] = []
+    walkSessions(in: tab) { s in
+        if let id = s.uniqueIdentifier { ids.append(id) }
+    }
+    return ids
+}
+
 /// Collect all session UUIDs from a split tree.
 func collectSessionIds(from node: ITMSplitTreeNode?) -> [String] {
     var ids: [String] = []

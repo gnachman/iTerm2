@@ -25,6 +25,7 @@ final class iTermLayoutResolverTests: XCTestCase {
         var profiles: Set<String> = []
         var sessionsByTab: [String: [String]] = [:]
         var tmuxTabs: Set<String> = []
+        var floatingSessions: Set<String> = []
 
         func sessionGUIDExists(_ guid: String) -> Bool { sessions.contains(guid) }
         func tabIDExists(_ tabID: String) -> Bool { tabs.contains(tabID) }
@@ -44,6 +45,10 @@ final class iTermLayoutResolverTests: XCTestCase {
 
         func isTmuxTab(_ tabID: String) -> Bool {
             tmuxTabs.contains(tabID)
+        }
+
+        func sessionIsFloating(_ guid: String) -> Bool {
+            floatingSessions.contains(guid)
         }
     }
 
@@ -119,6 +124,26 @@ final class iTermLayoutResolverTests: XCTestCase {
                 XCTFail("expected unknownSession, got \(err)"); return
             }
             XCTAssertEqual(guid, "c")
+        }
+    }
+
+    func testFloatingSessionAsLeafFails() {
+        // The float is not among the tab's tiled sessions, so it is not an orphan when left out.
+        let environment = env(["t1": ["a", "b"]])
+        environment.sessions.insert("f")
+        environment.floatingSessions.insert("f")
+        XCTAssertNoThrow(try LayoutResolver.resolve(makeSpec(tabs: [
+            tabSpec("t1", vsplit([session("a"), session("b")])),
+        ]), environment: environment))
+
+        let spec = makeSpec(tabs: [
+            tabSpec("t1", vsplit([session("a"), session("b"), session("f")])),
+        ])
+        XCTAssertThrowsError(try LayoutResolver.resolve(spec, environment: environment)) { err in
+            guard case LayoutResolverError.floatingSession(let guid) = err else {
+                XCTFail("expected floatingSession, got \(err)"); return
+            }
+            XCTAssertEqual(guid, "f")
         }
     }
 

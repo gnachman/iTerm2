@@ -33042,6 +33042,18 @@
         }
       }
     },
+    "ApplyLayout.FloatingSession" : {
+      "comment" : "Error shown when an apply_layout spec uses a session in a floating pane as a leaf. The placeholder is a session ID.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Session %@ is in a floating pane, which is not part of the split layout"
+          }
+        }
+      }
+    },
     "ApplyLayout.InvalidSpecJSON" : {
       "comment" : "Error shown when the apply_layout spec argument is not valid base64-encoded JSON",
       "extractionState" : "extracted_with_value",
@@ -102789,6 +102801,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "上传失败"
+          }
+        }
+      }
+    },
+    "MoveSession.DestinationIsFloating" : {
+      "comment" : "Error when the destination of a move_session call is a floating pane, which cannot be split",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can’t move a session into a floating pane"
           }
         }
       }

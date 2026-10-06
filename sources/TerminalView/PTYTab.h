@@ -23,6 +23,8 @@
 @class TmuxController;
 
 extern NSString *const iTermTabDidChangeWindowNotification;
+// A float was added, moved, resized, restacked, hidden or shown. The object is the tab.
+extern NSString *const iTermTabFloatingPanesDidChangeNotification;
 extern NSString *const iTermSessionBecameKey;
 extern NSString *const iTermCurrentSessionDidChange;
 extern NSString *const PTYTabVariableTitleOverride;
@@ -319,6 +321,9 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // For a native float: set its grid within the tab and return YES. NO for any other session.
 - (BOOL)sessionResizeFloatingPane:(PTYSession *)session columns:(int)columns rows:(int)rows;
 
+// Tells API clients that a float was added, moved, resized, restacked, hidden or shown.
+- (void)floatingPanesDidChange;
+
 // The tiled session with the highest activity counter.
 - (PTYSession *)mostRecentlyActiveTiledSession;
 
@@ -406,6 +411,8 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 
 - (void)updateUseMetal;
 - (ITMSplitTreeNode *)rootSplitTreeNode;
+// The tab's floating panes, back to front, for the API.
+- (NSArray<ITMFloatingPane *> *)floatingPaneMessages;
 
 - (void)setSizesFromSplitTreeNode:(ITMSplitTreeNode *)node;
 - (void)arrangeSplitPanesEvenly;

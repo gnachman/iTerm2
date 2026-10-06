@@ -57,7 +57,9 @@ class Tab:
             tab_group_id=None,
             tab_group_name=None,
             tab_group_color=None,
-            tab_group_collapsed=False):
+            tab_group_collapsed=False,
+            floating_sessions=[],
+            floating_panes_hidden=False):
         self.connection = connection
         self.__tab_id = tab_id
         self.__root = root
@@ -69,6 +71,8 @@ class Tab:
         self.__tab_group_name = tab_group_name
         self.__tab_group_color = tab_group_color
         self.__tab_group_collapsed = tab_group_collapsed
+        self.__floating_sessions = list(floating_sessions)
+        self.__floating_panes_hidden = floating_panes_hidden
     # pylint: enable=too-many-arguments
 
     def __repr__(self):
@@ -86,6 +90,8 @@ class Tab:
         """Copies state from another tab into this one."""
         self.__root = other.root
         self.__minimized_sessions = list(other.minimized_sessions)
+        self.__floating_sessions = list(other.floating_sessions)
+        self.__floating_panes_hidden = other.floating_panes_hidden
         # pylint: disable=protected-access
         self.__tab_group_id = other._Tab__tab_group_id
         self.__tab_group_name = other._Tab__tab_group_name
@@ -97,11 +103,11 @@ class Tab:
         """Replaces references to a session."""
         if self.__root.update_session(session):
             return
-        indexes = [idx for idx, candidate in enumerate(self.__minimized_sessions) if candidate.session_id == session.session_id]
-        if len(indexes) == 0:
-            return
-        i = indexes[0]
-        self.__minimized_sessions[i] = session
+        for sessions in (self.__minimized_sessions, self.__floating_sessions):
+            indexes = [idx for idx, candidate in enumerate(sessions) if candidate.session_id == session.session_id]
+            if len(indexes) > 0:
+                sessions[indexes[0]] = session
+                return
 
     @property
     def window(self) -> typing.Optional['iterm2.window.Window']:
@@ -150,8 +156,8 @@ class Tab:
         """
         A tab contains a list of sessions, which are its split panes.
 
-        This excludes minimized sessions. Use `all_sessions` to get both visible
-        and minimized sessions in this tab.
+        This excludes minimized sessions and floating panes. Use
+        `all_sessions` to get every session in this tab.
 
         :returns: The sessions belonging to this tab, in no particular order.
         """
@@ -160,14 +166,14 @@ class Tab:
     @property
     def all_sessions(self) -> typing.List['iterm2.session.Session']:
         """
-        Returns both visible and minimized sessions in this tab.
+        Returns the visible, minimized and floating sessions in this tab.
 
         A session would be minimized if another session in the tab is maximized.
 
-        :returns: All sessions in this tab, including minimized sessions, in no
-             particular order.
+        :returns: All sessions in this tab, including minimized sessions and
+             floating panes, in no particular order.
         """
-        return self.sessions + self.minimized_sessions
+        return self.sessions + self.minimized_sessions + self.floating_sessions
 
     @property
     def root(self) -> iterm2.session.Splitter:
@@ -191,7 +197,9 @@ class Tab:
         :returns: The active session in this tab or `None` if it could not be
             determined.
         """
-        for session in self.sessions:
+        # The active session can be a floating pane, or minimized while a
+        # floating pane covers a maximized one.
+        for session in self.all_sessions:
             if session.session_id == self.active_session_id:
                 return session
         return None
@@ -202,6 +210,25 @@ class Tab:
         :returns: Minimized sessions in this tab. Empty array if none.
         """
         return list(self.__minimized_sessions)
+
+    @property
+    def floating_sessions(self) -> typing.List[iterm2.session.Session]:
+        """
+        Sessions in floating panes, which float over the tab's split panes.
+        They are not in `root` or `sessions`.
+
+        Requires iTerm2 3.7 or later. Older versions report none.
+
+        :returns: The tab's floating sessions, back to front. Empty if none.
+        """
+        return list(self.__floating_sessions)
+
+    @property
+    def floating_panes_hidden(self) -> bool:
+        """
+        :returns: Whether the tab's floating panes are hidden.
+        """
+        return self.__floating_panes_hidden
 
     def pretty_str(self, indent: str = "") -> str:
         """

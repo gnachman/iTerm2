@@ -247,21 +247,30 @@ class Session:
         """
         return ProxySession(connection, "all")
 
-    def __init__(self, connection, link, summary=None):
+    def __init__(self, connection, link, summary=None, floating=False):
         """
         Do not call this yourself. Use :class:`~iterm2.app.App` instead.
 
         :param connection: :class:`Connection`
         :param link: :class:`iterm2.api_pb2.SplitTreeNode.SplitTreeLink`
         :param summary: :class:`iterm2.api_pb2.SessionSummary`
+        :param floating: If true, `summary` describes a floating pane, with
+            its frame and grid size.
         """
         self.connection = connection
+        self.floating = floating
 
         if link is not None:
             self.__session_id = link.session.unique_identifier
             self.frame = link.session.frame
             self.__grid_size = link.session.grid_size
             self.name = link.session.title
+            self.buried = False
+        elif summary is not None and floating:
+            self.__session_id = summary.unique_identifier
+            self.frame = summary.frame
+            self.__grid_size = summary.grid_size
+            self.name = summary.title
             self.buried = False
         elif summary is not None:
             self.__session_id = summary.unique_identifier
@@ -288,6 +297,7 @@ class Session:
         self.frame = session.frame
         self.__grid_size = session.grid_size
         self.name = session.name
+        self.floating = session.floating
 
     def pretty_str(self, indent: str = "") -> str:
         """

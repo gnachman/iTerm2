@@ -66,7 +66,7 @@ extension Session {
                 guard let tabs = window.tabsArray as? [ITMListSessionsResponse_Tab] else { continue }
                 for tab in tabs {
                     let isTmux = tab.tmuxWindowId != nil && tab.tmuxWindowId != "-1"
-                    walkSplitTree(tab.root) { s in
+                    walkSessions(in: tab) { s in
                         let cols = s.hasGridSize ? Int(s.gridSize.width) : 0
                         let rows = s.hasGridSize ? Int(s.gridSize.height) : 0
                         let id = s.uniqueIdentifier ?? ""
@@ -234,7 +234,7 @@ extension Session {
                 var count = 0
                 for win in windows {
                     if let tabs = win.tabsArray as? [ITMListSessionsResponse_Tab] {
-                        for tab in tabs { count += collectSessionIds(from: tab.root).count }
+                        for tab in tabs { count += collectSessionIds(in: tab).count }
                     }
                 }
                 if count > 1 {
@@ -289,7 +289,7 @@ extension Session {
                 var count = 0
                 for win in windows {
                     if let tabs = win.tabsArray as? [ITMListSessionsResponse_Tab] {
-                        for tab in tabs { count += collectSessionIds(from: tab.root).count }
+                        for tab in tabs { count += collectSessionIds(in: tab).count }
                     }
                 }
                 if count > 1 {

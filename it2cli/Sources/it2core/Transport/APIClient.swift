@@ -55,8 +55,9 @@ final class APIClient {
             return APIClient.normalizeSessionId(id)
         }
 
-        // Use focus state to find the key window's selected tab, then find
-        // the first session in that tab via ListSessions.
+        // Use focus state to find the key window's selected tab, then its
+        // active session via ListSessions. That can be a floating pane, which
+        // is not in the tab's tree.
         let focus = try fetchFocusState(client: self)
         guard let keyWindowId = focus.keyWindowId else {
             throw IT2Error.targetNotFound("No key window found")
@@ -72,12 +73,14 @@ final class APIClient {
                let tabs = win.tabsArray as? [ITMListSessionsResponse_Tab] {
                 for tab in tabs {
                     if tab.tabId == selectedTabId {
-                        let ids = collectSessionIds(from: tab.root)
+                        if let active = tab.activeSessionId, !active.isEmpty { return active }
+                        let ids = collectSessionIds(in: tab)
                         if let first = ids.first { return first }
                     }
                 }
                 if let firstTab = tabs.first {
-                    let ids = collectSessionIds(from: firstTab.root)
+                    if let active = firstTab.activeSessionId, !active.isEmpty { return active }
+                    let ids = collectSessionIds(in: firstTab)
                     if let first = ids.first { return first }
                 }
             }

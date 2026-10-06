@@ -454,7 +454,7 @@ extension Monitor {
                 for win in windows {
                     if let tabs = win.tabsArray as? [ITMListSessionsResponse_Tab] {
                         for tab in tabs {
-                            allSessionIds.append(contentsOf: collectSessionIds(from: tab.root))
+                            allSessionIds.append(contentsOf: collectSessionIds(in: tab))
                         }
                     }
                 }

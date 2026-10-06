@@ -147,7 +147,7 @@ struct LoadCommand: ParsableCommand, IT2Runnable {
                     if win.windowId == windowId,
                        let tabs = win.tabsArray as? [ITMListSessionsResponse_Tab] {
                         for tab in tabs {
-                            allSessions.append(contentsOf: collectSessionIds(from: tab.root))
+                            allSessions.append(contentsOf: collectSessionIds(in: tab))
                         }
                     }
                 }

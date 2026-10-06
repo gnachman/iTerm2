@@ -98,6 +98,8 @@ class ApplyLayoutBuiltInFunction: iTermBuiltInFunction {
             return String(localized: "ApplyLayout.UnknownWindow", defaultValue: "Unknown window: \(guid)", comment: "Error shown when a window GUID in an apply_layout spec does not exist")
         case .orphanedSession(let tabGUID, let sessionGUID):
             return String(localized: "ApplyLayout.OrphanedSession", defaultValue: "Session \(sessionGUID) in tab \(tabGUID) is unaccounted for; it must appear in the new layout or in close_sessions/close_tabs", comment: "Error shown when a session is left unaccounted for by an apply_layout spec")
+        case .floatingSession(let guid):
+            return String(localized: "ApplyLayout.FloatingSession", defaultValue: "Session \(guid) is in a floating pane, which is not part of the split layout", comment: "Error shown when an apply_layout spec uses a session in a floating pane as a leaf. The placeholder is a session ID.")
         case .tmuxTabNotSupported(let tabGUID):
             return String(localized: "ApplyLayout.TmuxTabNotSupported", defaultValue: "Tab \(tabGUID) is a tmux integration tab; layout application is not supported on tmux tabs", comment: "Error shown when apply_layout targets a tmux integration tab")
         case .newTabsNotSupported:

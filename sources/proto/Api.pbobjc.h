@@ -51,6 +51,7 @@ CF_EXTERN_C_BEGIN
 @class ITMCreateTabRequest;
 @class ITMCreateTabResponse;
 @class ITMCustomEscapeSequenceNotification;
+@class ITMFloatingPane;
 @class ITMFocusChangedNotification;
 @class ITMFocusChangedNotification_Window;
 @class ITMFocusRequest;
@@ -5297,6 +5298,27 @@ GPB_FINAL @interface ITMSplitTreeNode_SplitTreeLink : GPBMessage
  **/
 void ITMSplitTreeNode_SplitTreeLink_ClearChildOneOfCase(ITMSplitTreeNode_SplitTreeLink *message);
 
+#pragma mark - ITMFloatingPane
+
+typedef GPB_ENUM(ITMFloatingPane_FieldNumber) {
+  ITMFloatingPane_FieldNumber_Session = 1,
+};
+
+/**
+ * A pane that floats over its tab's split panes. Added in protocol 1.21.
+ **/
+GPB_FINAL @interface ITMFloatingPane : GPBMessage
+
+/**
+ * The session's frame is the float's frame in the tab, in points, with the
+ * origin at the tab's top left and y increasing downward.
+ **/
+@property(nonatomic, readwrite, strong, null_resettable) ITMSessionSummary *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+@end
+
 #pragma mark - ITMListSessionsResponse
 
 typedef GPB_ENUM(ITMListSessionsResponse_FieldNumber) {
@@ -5366,6 +5388,8 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
   ITMListSessionsResponse_Tab_FieldNumber_TabGroupName = 9,
   ITMListSessionsResponse_Tab_FieldNumber_TabGroupColor = 10,
   ITMListSessionsResponse_Tab_FieldNumber_TabGroupCollapsed = 11,
+  ITMListSessionsResponse_Tab_FieldNumber_FloatingPanesArray = 12,
+  ITMListSessionsResponse_Tab_FieldNumber_FloatingPanesHidden = 13,
 };
 
 GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
@@ -5421,6 +5445,18 @@ GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
 @property(nonatomic, readwrite) BOOL tabGroupCollapsed;
 
 @property(nonatomic, readwrite) BOOL hasTabGroupCollapsed;
+/**
+ * The tab's floating panes, back to front. Their sessions are not in
+ * `root`. Added in protocol 1.21.
+ **/
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMFloatingPane*> *floatingPanesArray;
+/** The number of items in @c floatingPanesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger floatingPanesArray_Count;
+
+/** Whether the tab's floating panes are hidden. Added in protocol 1.21. */
+@property(nonatomic, readwrite) BOOL floatingPanesHidden;
+
+@property(nonatomic, readwrite) BOOL hasFloatingPanesHidden;
 @end
 
 #pragma mark - ITMCreateTabRequest

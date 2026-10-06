@@ -64,6 +64,12 @@ class MoveSessionBuiltInFunction: iTermBuiltInFunction {
                           code: 6,
                           userInfo: [NSLocalizedDescriptionKey: String(localized: "MoveSession.Locked", defaultValue: "Can't move locked session", comment: "Error when trying to move a locked session")])
         }
+        if destinationTab.sessionIsFloating(destination) {
+            // Moving a float is allowed (it docks), but a float cannot be split.
+            throw NSError(domain: "com.iterm2.move-session",
+                          code: 7,
+                          userInfo: [NSLocalizedDescriptionKey: String(localized: "MoveSession.DestinationIsFloating", defaultValue: "Can’t move a session into a floating pane", comment: "Error when the destination of a move_session call is a floating pane, which cannot be split")])
+        }
         if destinationTab.hasMaximizedPane() {
             destinationTab.unmaximize()
         }

@@ -11878,6 +11878,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
     [iTermFloatingPaneLayout moveFloatingPane:pane session:self.currentSession columns:columns rows:rows];
+    [self.currentTab floatingPanesDidChange];
 }
 
 - (IBAction)moveFloatingPaneUp:(id)sender {

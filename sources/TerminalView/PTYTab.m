@@ -63,6 +63,7 @@
 #define PtyLog DLog
 
 NSString *const iTermTabDidChangeWindowNotification = @"iTermTabDidChangeWindowNotification";
+NSString *const iTermTabFloatingPanesDidChangeNotification = @"iTermTabFloatingPanesDidChangeNotification";
 NSString *const iTermSessionBecameKey = @"iTermSessionBecameKey";
 NSString *const iTermCurrentSessionDidChange = @"iTermCurrentSessionDidChange";
 
@@ -1872,6 +1873,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:nil];
     [self numberOfSessionsDidChange];
     [self updatePaneTitles];
+    [self floatingPanesDidChange];
     return pane;
 }
 
@@ -1939,6 +1941,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return _floatingPanesHidden ? (NSInteger)_floatingPanes.count : 0;
 }
 
+- (void)floatingPanesDidChange {
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermTabFloatingPanesDidChangeNotification
+                                                        object:self];
+}
+
 - (void)setFloatingPanesHidden:(BOOL)hidden {
     if (_floatingPanesHidden == hidden) {
         return;
@@ -1946,6 +1953,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     DLog(@"setFloatingPanesHidden:%@", @(hidden));
     _floatingPanesHidden = hidden;
     [self updateFloatingPaneVisibility];
+    [self floatingPanesDidChange];
     // Tiled panes show an indicator while floats are hidden.
     for (PTYSession *session in [self tiledSessions]) {
         [session.textview requestDelegateRedraw];
@@ -2015,6 +2023,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self fitSessionToCurrentViewSize:session];
     }
     [self numberOfSessionsDidChange];
+    [self floatingPanesDidChange];
     return session;
 }
 
@@ -2026,6 +2035,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [_floatingPanes removeObject:pane];
     [_floatingPanes addObject:pane];
     [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:nil];
+    [self floatingPanesDidChange];
 }
 
 - (void)sendFloatingPaneToBack:(iTermFloatingPaneView *)pane {
@@ -2037,6 +2047,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [_floatingPanes insertObject:pane atIndex:0];
     // Floats stay above the root.
     [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:root_];
+    [self floatingPanesDidChange];
 }
 
 - (void)updateFloatingPaneOutlines {
@@ -2069,6 +2080,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         if (session) {
             [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidResizeNotification object:session];
         }
+        [self floatingPanesDidChange];
     }
 }
 
@@ -6904,6 +6916,28 @@ typedef struct {
     return root;
 }
 
+- (NSArray<ITMFloatingPane *> *)floatingPaneMessages {
+    NSMutableArray<ITMFloatingPane *> *result = [NSMutableArray array];
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        PTYSession *session = [self sessionForSessionView:pane.sessionView];
+        if (!session) {
+            continue;
+        }
+        ITMFloatingPane *message = [[ITMFloatingPane alloc] init];
+        message.session.uniqueIdentifier = session.guid;
+        const NSRect frame = [iTermFloatingPaneLayout visualOutlineFrameOfFloatingPane:pane];
+        message.session.frame.origin.x = frame.origin.x;
+        message.session.frame.origin.y = frame.origin.y;
+        message.session.frame.size.width = frame.size.width;
+        message.session.frame.size.height = frame.size.height;
+        message.session.gridSize.width = session.screen.width;
+        message.session.gridSize.height = session.screen.height;
+        message.session.title = session.name;
+        [result addObject:message];
+    }
+    return result;
+}
+
 - (void)updateTabTitle {
     NSString *sessionName = [self.activeSession.variablesScope valueForVariableName:iTermVariableKeySessionPresentationName];
     [self updateTabTitleForCurrentSessionName:sessionName];
@@ -8233,7 +8267,12 @@ typedef struct {
 }
 
 - (NSArray<PTYSession *> *)minimizedSessions {
-    return [[self tiledSessions] arrayByRemovingObject:self.activeSession];
+    // The tiled sessions that maximizing took out of root_. With a float active, the maximized
+    // pane is not the active session, so it cannot be inferred from that.
+    NSArray<PTYSession *> *shown = [self _recursiveSessions:[NSMutableArray array] atNode:root_];
+    return [[self tiledSessions] filteredArrayUsingBlock:^BOOL(PTYSession *session) {
+        return ![shown containsObject:session];
+    }];
 }
 
 - (NSUInteger)sessionPaneNumber:(PTYSession *)session {

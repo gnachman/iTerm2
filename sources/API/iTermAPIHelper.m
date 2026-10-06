@@ -700,6 +700,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(layoutChanged:)
+                                                     name:iTermTabFloatingPanesDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
                                                      name:iTermTabDidChangePositionInWindowNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -2441,6 +2445,11 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
             ITMListSessionsResponse_Tab *tabMessage = [[ITMListSessionsResponse_Tab alloc] init];
             tabMessage.tabId = [@(tab.uniqueId) stringValue];
             tabMessage.root = [tab rootSplitTreeNode];
+            // Floats are not in root (protocol 1.21+). Older clients ignore the field.
+            [tabMessage.floatingPanesArray addObjectsFromArray:[tab floatingPaneMessages]];
+            if (tab.floatingPanes.count > 0) {
+                tabMessage.floatingPanesHidden = tab.floatingPanesHidden;
+            }
             // Report the tab's active session so clients know the current
             // session without waiting for a focus notification (protocol 1.18+).
             PTYSession *activeSession = tab.activeSession;
@@ -2657,7 +2666,12 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
 - (void)apiServerSplitPane:(ITMSplitPaneRequest *)request handler:(void (^)(ITMSplitPaneResponse *))handler {
     NSArray<PTYSession *> *sessions;
     if ([request.session isEqualToString:@"all"]) {
-        sessions = [self allSessions];
+        // A split aimed at a float goes to a tiled pane, which is already in the list. Leave floats
+        // out so no pane is split twice.
+        sessions = [[self allSessions] filteredArrayUsingBlock:^BOOL(PTYSession *session) {
+            PTYTab *tab = [[[iTermController sharedInstance] terminalWithSession:session] tabForSession:session];
+            return ![tab sessionIsFloating:session];
+        }];
     } else {
         PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
         if (!session) {
@@ -3167,7 +3181,8 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
             handler(response);
             return;
         }
-        if (tab.isMaximized && tab.activeSession != session) {
+        // A float shows over a maximized pane, so activating it leaves the maximized pane alone.
+        if (tab.isMaximized && tab.activeSession != session && ![tab sessionIsFloating:session]) {
             [tab unmaximize];
             [tab setActiveSession:session];
             [tab maximize];
