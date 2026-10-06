@@ -297,6 +297,15 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewDidUpdateDropTargetVisibility;
 - (void)textViewDidDetectMouseReportingFrustration;
 - (BOOL)textViewCanBury;
+- (BOOL)textViewIsFloating;
+// A cmd-opt-shift drag in a float's text moves the float. Mouse-down returns whether a move may
+// follow; if so, the drags and mouse-up come here too.
+- (BOOL)textViewFloatingPaneMoveMouseDown:(NSEvent *)event;
+- (void)textViewFloatingPaneMoveMouseDragged:(NSEvent *)event;
+- (void)textViewFloatingPaneMoveMouseUp:(NSEvent *)event;
+- (BOOL)textViewCanDockFloatingPane;
+- (void)textViewDockFloatingPane;
+- (void)textViewRaiseFloatingPaneToFront:(BOOL)toFront;
 - (void)textViewFindOnPageLocationsDidChange;
 - (void)textViewFindOnPageSelectedResultDidChange;
 - (CGFloat)textViewBlend;

@@ -138,6 +138,26 @@ final class FloatingPaneMouseTests: XCTestCase {
         XCTAssertEqual(grid(session), startGrid, "moving never resizes the PTY")
     }
 
+    func testCommandOptionShiftDragInTheTextMovesTheFloat() {
+        let (session, pane) = addFloat()
+        guard let textview = session.textview else {
+            XCTFail("No text view")
+            return
+        }
+        let start = pane.outlineFrame
+        let startGrid = grid(session)
+        let point = textview.convert(NSPoint(x: 30, y: 30), to: nil)
+        let modifiers: NSEvent.ModifierFlags = [.command, .option, .shift]
+
+        fixture.mouse.drag(from: point, to: NSPoint(x: point.x + 40, y: point.y - 20), steps: 3, modifiers: modifiers)
+
+        XCTAssertFalse(pane.isDragging)
+        XCTAssertEqual(pane.outlineFrame.origin.x, start.origin.x + 40)
+        XCTAssertEqual(pane.outlineFrame.origin.y, start.origin.y - 20)
+        XCTAssertEqual(grid(session), startGrid)
+        XCTAssertFalse(textview.selection.hasSelection, "the drag did not select text")
+    }
+
     func testMoveIsClampedToTheTab() {
         let (session, pane) = addFloat()
         let point = titleBarPoint(session)

@@ -1902,6 +1902,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [iTermFloatingPaneLayout maximumGridOfFloatingPane:pane session:session];
 }
 
+- (iTermFloatingPaneView *)sessionFloatingPane:(PTYSession *)session {
+    return [self floatingPaneForSession:session];
+}
+
 - (void)sessionRaiseFloatingPane:(PTYSession *)session toFront:(BOOL)toFront {
     iTermFloatingPaneView *pane = [self floatingPaneForSession:session];
     if (!pane) {

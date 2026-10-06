@@ -382,4 +382,56 @@ final class FloatingPaneCommandTests: XCTestCase {
         XCTAssertEqual(floatPane.outlineFrame, frame)
         XCTAssertTrue(isEnabled(#selector(PseudoTerminal.dockFloatingPane(_:))))
     }
+
+    // MARK: - Context menu
+
+    private func item(_ menu: NSMenu?, _ action: String) -> NSMenuItem? {
+        return menu?.items.first { $0.action == NSSelectorFromString(action) }
+    }
+
+    private func isEnabled(_ item: NSMenuItem?) -> Bool {
+        guard let item, let target = item.target as? NSObject else {
+            return false
+        }
+        let selector = NSSelectorFromString("validateMenuItem:")
+        typealias Validate = @convention(c) (AnyObject, Selector, NSMenuItem) -> Bool
+        return unsafeBitCast(target.method(for: selector), to: Validate.self)(target, selector, item)
+    }
+
+    private func choose(_ item: NSMenuItem?) {
+        guard let item, let action = item.action else {
+            XCTFail("No item")
+            return
+        }
+        NSApp.sendAction(action, to: item.target, from: item)
+    }
+
+    func testAFloatsContextMenuHasFloatItemsAndNoSplit() {
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let back = fixture.addFloat(frame: floatFrame)
+        let front = fixture.addFloat(frame: floatFrame.offsetBy(dx: 40, dy: 40))
+        let menu = back.textview?.titleBarMenu()
+
+        XCTAssertFalse(isEnabled(item(menu, "splitTextViewVertically:")))
+        XCTAssertFalse(isEnabled(item(menu, "splitTextViewHorizontally:")))
+        XCTAssertTrue(isEnabled(item(menu, "dockFloatingPaneFromContextMenu:")))
+
+        choose(item(menu, "bringFloatingPaneToFrontFromContextMenu:"))
+        XCTAssertEqual(tab.floatingSessions(), [front, back])
+        choose(item(menu, "sendFloatingPaneToBackFromContextMenu:"))
+        XCTAssertEqual(tab.floatingSessions(), [back, front])
+
+        // The menu acts on its own pane, not the active one.
+        tab.setActiveSession(front)
+        choose(item(menu, "dockFloatingPaneFromContextMenu:"))
+        XCTAssertEqual(tab.tiledSessions(), [tiled, back])
+        XCTAssertEqual(tab.floatingSessions(), [front])
+
+        let tiledMenu = tiled.textview?.titleBarMenu()
+        XCTAssertNil(item(tiledMenu, "dockFloatingPaneFromContextMenu:"))
+        XCTAssertTrue(isEnabled(item(tiledMenu, "splitTextViewVertically:")))
+    }
 }

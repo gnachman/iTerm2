@@ -63136,6 +63136,18 @@
         }
       }
     },
+    "ContextMenu.BringFloatingPaneToFront" : {
+      "comment" : "Context menu item that puts a floating pane in front of the tab's other floating panes",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bring to Front"
+          }
+        }
+      }
+    },
     "ContextMenu.Bury" : {
       "comment" : "Context menu item to bury the session",
       "extractionState" : "extracted_with_value",
@@ -63762,6 +63774,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "区分转义"
+          }
+        }
+      }
+    },
+    "ContextMenu.DockFloatingPane" : {
+      "comment" : "Context menu item that moves a floating pane into the tab's split pane layout",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dock Floating Pane"
           }
         }
       }
@@ -66353,6 +66377,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "给所选地址发送电子邮件"
+          }
+        }
+      }
+    },
+    "ContextMenu.SendFloatingPaneToBack" : {
+      "comment" : "Context menu item that puts a floating pane behind the tab's other floating panes",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Send to Back"
           }
         }
       }

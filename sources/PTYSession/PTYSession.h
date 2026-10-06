@@ -78,6 +78,7 @@ extern NSString *const PTYSessionArrangementOptionsInhibitRelaunch;
 @class FakeWindow;
 @class PTYSessionSwiftState;
 @class iTermAction;
+@class iTermFloatingPaneView;
 @class iTermAnnouncementViewController;
 @class iTermAutomaticProfileSwitcher;
 @class iTermAutomaticProfileSwitchingSession;
@@ -181,6 +182,9 @@ typedef enum {
 // For a native floating pane, the largest grid that fits in its tab, as (columns, rows). Zero
 // otherwise.
 - (NSSize)sessionMaximumFloatingGridSize:(PTYSession *)session;
+
+// The floating pane holding the session, or nil if it is tiled.
+- (nullable iTermFloatingPaneView *)sessionFloatingPane:(PTYSession *)session;
 
 // Brings a floating pane to the front of the tab's floats, or sends it to the back.
 - (void)sessionRaiseFloatingPane:(PTYSession *)session toFront:(BOOL)toFront;

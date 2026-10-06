@@ -11828,22 +11828,27 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 // A synthetic session (instant replay, filter, zoom) is swapped in for the float's own, so the
 // float cannot leave its wrapper until it ends.
-- (BOOL)canDockCurrentSession {
-    PTYSession *session = self.currentSession;
-    return ([self.currentTab floatingPaneForSession:session] != nil &&
+- (BOOL)canDockFloatingSession:(PTYSession *)session {
+    PTYTab *tab = [self tabForSession:session];
+    return (session != nil &&
+            [tab floatingPaneForSession:session] != nil &&
             !_layoutLocked &&
-            !self.currentTab.isTmuxTab &&
+            !tab.isTmuxTab &&
             session.liveSession == nil &&
             ![self inInstantReplay]);
 }
 
-// Moves the active float into the tiled layout, to the right of the tiled pane used most recently.
+// Moves the active float into the tiled layout.
 - (IBAction)dockFloatingPane:(id)sender {
-    PTYTab *tab = self.currentTab;
-    PTYSession *session = self.currentSession;
-    if (![self canDockCurrentSession]) {
+    [self dockFloatingSession:self.currentSession];
+}
+
+// Moves a float into the tiled layout, to the right of the tiled pane used most recently.
+- (void)dockFloatingSession:(PTYSession *)session {
+    if (![self canDockFloatingSession:session]) {
         return;
     }
+    PTYTab *tab = [self tabForSession:session];
     PTYSession *target = [tab mostRecentlyActiveTiledSession];
     if (!target) {
         return;
@@ -11917,7 +11922,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [tab addFloatingSession:newSession frame:NSMakeRect(0, 0, 200, 200)];
     iTermFloatingPaneView *pane = [tab floatingPaneForSession:newSession];
     [iTermFloatingPaneLayout placeNewFloatingPane:pane session:newSession];
-    [tab setActiveSession:newSession];
+    // The same rule as for a new split.
+    if (![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] ||
+        [iTermAdvancedSettingsModel focusNewSplitPaneWithFocusFollowsMouse]) {
+        [tab setActiveSession:newSession];
+    }
     [tab recheckBlur];
     [self setDimmingForSessions];
     for (PTYSession *session in tab.sessions) {
@@ -14314,7 +14323,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             return [self activeFloatingPane] != nil;
         }
         if (action == @selector(dockFloatingPane:)) {
-            return [self canDockCurrentSession];
+            return [self canDockFloatingSession:self.currentSession];
         }
         if (action == @selector(moveFloatingPaneUp:) ||
             action == @selector(moveFloatingPaneDown:) ||

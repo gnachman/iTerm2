@@ -134,6 +134,10 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // -refresh does not want to be reentrant.
     BOOL _inRefresh;
 
+    // A cmd-opt-shift drag in a floating pane's text moves the float. Its drags and mouse-up go to
+    // the move rather than the mouse handler.
+    BOOL _movingFloatingPane;
+
     // geometry
     double _lineHeight;
     double _charWidth;
@@ -1267,6 +1271,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)mouseUp:(NSEvent *)event {
+    if (_movingFloatingPane) {
+        _movingFloatingPane = NO;
+        [_delegate textViewFloatingPaneMoveMouseUp:event];
+        return;
+    }
     [_mouseHandler mouseUp:event];
 }
 
@@ -1366,6 +1375,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)mouseDragged:(NSEvent *)event {
+    if (_movingFloatingPane) {
+        [_delegate textViewFloatingPaneMoveMouseDragged:event];
+        return;
+    }
     [self updateButtonHover:event.locationInWindow pressed:YES];
     [_mouseHandler mouseDragged:event];
 }
@@ -7899,7 +7912,12 @@ static NSString *iTermStringFromRange(NSRange range) {
     [[self window] makeFirstResponder:self];
 }
 
-- (void)mouseHandlerWillBeginDragPane:(PTYMouseHandler *)handler {
+- (void)mouseHandler:(PTYMouseHandler *)handler willBeginDragPaneWithEvent:(NSEvent *)event {
+    // In a float this moves the float, as dragging its title bar does.
+    if (event.type == NSEventTypeLeftMouseDown && [_delegate textViewFloatingPaneMoveMouseDown:event]) {
+        _movingFloatingPane = YES;
+        return;
+    }
     [_delegate textViewBeginDrag];
 }
 

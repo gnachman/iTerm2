@@ -116,6 +116,10 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange;
 - (void)contextMenuRestartSession:(iTermTextViewContextMenuHelper *)contextMenu;
 - (BOOL)contextMenuCanBurySession:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenuBurySession:(iTermTextViewContextMenuHelper *)contextMenu;
+- (BOOL)contextMenuSessionIsFloating:(iTermTextViewContextMenuHelper *)contextMenu;
+- (BOOL)contextMenuCanDockFloatingPane:(iTermTextViewContextMenuHelper *)contextMenu;
+- (void)contextMenuDockFloatingPane:(iTermTextViewContextMenuHelper *)contextMenu;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu raiseFloatingPaneToFront:(BOOL)toFront;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu amend:(NSMenu *)menu;
 - (NSControlStateValue)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
      terminalStateForMenuItem:(NSMenuItem *)item;

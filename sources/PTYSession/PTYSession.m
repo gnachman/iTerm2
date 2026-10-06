@@ -15172,6 +15172,43 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return !_synthetic;
 }
 
+- (BOOL)textViewIsFloating {
+    return [_delegate sessionIsFloating:self];
+}
+
+- (iTermFloatingPaneView *)floatingPane {
+    if (![_delegate respondsToSelector:@selector(sessionFloatingPane:)]) {
+        return nil;
+    }
+    return [_delegate sessionFloatingPane:self];
+}
+
+- (BOOL)textViewFloatingPaneMoveMouseDown:(NSEvent *)event {
+    return [[self floatingPane] titleBarMouseDown:event];
+}
+
+- (void)textViewFloatingPaneMoveMouseDragged:(NSEvent *)event {
+    (void)[[self floatingPane] titleBarMouseDragged:event];
+}
+
+- (void)textViewFloatingPaneMoveMouseUp:(NSEvent *)event {
+    (void)[[self floatingPane] titleBarMouseUp:event];
+}
+
+- (BOOL)textViewCanDockFloatingPane {
+    return [[_delegate realParentWindow] canDockFloatingSession:self];
+}
+
+- (void)textViewDockFloatingPane {
+    [[_delegate realParentWindow] dockFloatingSession:self];
+}
+
+- (void)textViewRaiseFloatingPaneToFront:(BOOL)toFront {
+    if ([_delegate respondsToSelector:@selector(sessionRaiseFloatingPane:toFront:)]) {
+        [_delegate sessionRaiseFloatingPane:self toFront:toFront];
+    }
+}
+
 - (void)textViewFindOnPageLocationsDidChange {
     [_view.searchResultsMinimap invalidate];
     [_view.marksMinimap invalidate];

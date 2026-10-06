@@ -1904,6 +1904,22 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
     [self.delegate textViewBurySession];
 }
 
+- (BOOL)contextMenuSessionIsFloating:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewIsFloating];
+}
+
+- (BOOL)contextMenuCanDockFloatingPane:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewCanDockFloatingPane];
+}
+
+- (void)contextMenuDockFloatingPane:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewDockFloatingPane];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu raiseFloatingPaneToFront:(BOOL)toFront {
+    [self.delegate textViewRaiseFloatingPaneToFront:toFront];
+}
+
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu amend:(NSMenu *)menu {
     if ([[self delegate] respondsToSelector:@selector(menuForEvent:menu:)]) {
         [[self delegate] menuForEvent:nil menu:menu];
