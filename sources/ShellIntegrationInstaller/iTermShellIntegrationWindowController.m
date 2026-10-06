@@ -389,7 +389,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                                completion:(void (^)(void))completion {
     const BOOL reallySend = (completion != nil);
     NSMutableArray<NSString *> *strings = [NSMutableArray array];
-    NSArray<NSString *> *parts = [[[self launchBashString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] componentsSeparatedByString:@"\n"];
+    NSArray<NSString *> *parts = [[[self launchHelperShellString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] componentsSeparatedByString:@"\n"];
     parts = [parts mapWithBlock:^id(NSString *anObject) {
         return [anObject stringByAppendingString:@"\n"];
     }];
@@ -404,7 +404,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             script = [self.dotdir stringByAppendingPathComponent:@".zshrc"];
             break;
         case iTermShellIntegrationShellBash: {
-            NSString *assignment = @"IT2_INSTALLER_DOTFILE=$(test -f ~/.bash_profile && echo -n ~/.bash_profile || echo -n ~/.profile)\n";
+            NSString *assignment = @"IT2_INSTALLER_DOTFILE=$(if test -f ~/.bash_profile; then echo ~/.bash_profile; else echo ~/.profile; fi)\n";
             [strings addObject:assignment];
             script = @"\"$IT2_INSTALLER_DOTFILE\"";
             break;
@@ -444,7 +444,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                            reallySend:reallySend
                            afterRegex:@"^>> "
                           expectation:expectation]];
-    [strings addObject:[self sendText:self.exitBashString
+    [strings addObject:[self sendText:self.exitHelperShellString
                            reallySend:reallySend
                            afterRegex:@"^>> "
                           expectation:expectation
@@ -457,26 +457,31 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     return joined;
 }
 
-- (NSString *)launchBashString {
+// The installer runs its commands in a POSIX sh with known prompts rather than the user's
+// shell. Use sh, not bash, because bash is not installed by default on BSDs. If the helper
+// shell fails to launch, the heredocs run in the user's shell, and tcsh never terminates
+// <<'EOF' on a plain EOF line.
+- (NSString *)launchHelperShellString {
     if (self.shell == iTermShellIntegrationShellXonsh) {
-        // For xonsh, use bash -c to set PS1/PS2 properly (env would include literal quotes).
-        // The -c command sets prompts then runs an interactive bash.
-        return @"bash -c 'INPUTRC=/dev/null PS1=\">> \" PS2=\"> \" bash --noprofile --norc'\n";
+        // For xonsh, use sh -c to set PS1/PS2 properly (env would include literal quotes).
+        // The -c command sets prompts then runs an interactive sh.
+        return @"sh -c 'ENV=/dev/null INPUTRC=/dev/null PS1=\">> \" PS2=\"> \" sh'\n";
     }
-    return @"bash --noprofile --norc\nINPUTRC='/dev/null' bash --noprofile --norc\n PS1='>> '; PS2='> '\n";
+    // The first sh gives a known syntax for setting ENV, which an interactive sh would source.
+    return @"sh\nENV=/dev/null INPUTRC=/dev/null sh\n PS1='>> '; PS2='> '\n";
 }
 
-- (NSString *)exitBashString {
+- (NSString *)exitHelperShellString {
     if (self.shell == iTermShellIntegrationShellXonsh) {
-        // Only one bash shell for xonsh (see launchBashString)
+        // Only one sh for xonsh (see launchHelperShellString)
         return @"exit\n";
     }
     return @"exit\nexit\n";
 }
 
-- (NSString *)switchToBash:(BOOL)reallySend
-               expectation:(inout iTermExpectation **)expectation {
-    return [self sendText:self.launchBashString
+- (NSString *)switchToHelperShell:(BOOL)reallySend
+                      expectation:(inout iTermExpectation **)expectation {
+    return [self sendText:self.launchHelperShellString
                reallySend:reallySend
                afterRegex:@"."
               expectation:expectation];
@@ -487,7 +492,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
              reallySend:(BOOL)reallySend
             expectation:(out iTermExpectation **)expectation {
     NSMutableString *result = [NSMutableString string];
-    [result appendString:[self switchToBash:reallySend expectation:expectation]];
+    [result appendString:[self switchToHelperShell:reallySend expectation:expectation]];
     [result appendString:[self sendText:[NSString stringWithFormat:@"cat <<'EOF' > %@\n", path]
                              reallySend:reallySend
                              afterRegex:@"."
@@ -500,7 +505,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                           afterRegex:@"."
                             expectation:expectation]];
-    [result appendString:[self sendText:self.exitBashString
+    [result appendString:[self sendText:self.exitHelperShellString
                              reallySend:reallySend
                           afterRegex:@"> EOF"
                             expectation:expectation]];
@@ -515,7 +520,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     }
     NSMutableString *result = [NSMutableString string];
     iTermExpectation *expectation = nil;
-    [result appendString:[self switchToBash:reallySend expectation:&expectation]];
+    [result appendString:[self switchToHelperShell:reallySend expectation:&expectation]];
     if (self.shell == iTermShellIntegrationShellXonsh) {
         // Create the rc.d directory for xonsh (scripts there are auto-loaded)
         [result appendString:[self sendText:@"mkdir -p ~/.config/xonsh/rc.d\n"
@@ -531,7 +536,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                              afterRegex:@"^>> "
                             expectation:&expectation]];
-    [result appendString:[self sendText:self.exitBashString
+    [result appendString:[self sendText:self.exitHelperShellString
                              reallySend:reallySend
                           afterRegex:@"^>> "
                             expectation:&expectation
@@ -555,7 +560,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                   completion:(void (^)(void))completion {
     NSMutableString *result = [NSMutableString string];
     NSString *folder = [self.dotdir stringByAppendingPathComponent:@".iterm2"];
-    [result appendString:[self switchToBash:reallySend expectation:expectation]];
+    [result appendString:[self switchToHelperShell:reallySend expectation:expectation]];
     [result appendString:[self sendText:[NSString stringWithFormat:@"mkdir %@; echo ok\n", folder]
                              reallySend:reallySend
                              afterRegex:@"."
@@ -564,7 +569,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                              afterRegex:@"^ok$"
                             expectation:expectation]];
-    [result appendString:[self sendText:@"base64 -d <<'EOF'| tar xfz -\n"
+    // OpenBSD has no base64 command, but it has b64decode.
+    [result appendString:[self sendText:@"if command -v base64 >/dev/null 2>&1; then base64 -d; else b64decode -r; fi <<'EOF'| tar xfz -\n"
                              reallySend:reallySend
                              afterRegex:@"^ok$"
                             expectation:expectation]];
@@ -583,7 +589,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                              afterRegex:@"."
                             expectation:expectation]];
-    [result appendString:[self sendText:self.exitBashString
+    [result appendString:[self sendText:self.exitHelperShellString
                              reallySend:reallySend
                              afterRegex:@"> EOF"
                             expectation:expectation

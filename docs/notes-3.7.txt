@@ -1087,3 +1087,8 @@ Bug Fixes:
 - The API key field shown when AI features ask
   for a key now hides what you type instead of
   showing the key in plain text.
+- Installing shell integration without internet
+  access now works on systems that don’t have
+  bash, such as FreeBSD and OpenBSD. Before, the
+  installer could hang partway through writing
+  the script when your shell was tcsh.
