@@ -17,6 +17,7 @@
 
 #import "DebugLogging.h"
 #import "RegexKitLite.h"
+#import "iTerm2SharedARC-Swift.h"
 
 NSString *kLayoutDictChildrenKey = @"children";
 NSString *kLayoutDictWidthKey = @"width";
@@ -29,6 +30,8 @@ NSString *kLayoutDictPixelHeightKey = @"px-height";
 NSString *kLayoutDictMaximumPixelWidthKey = @"max-px-width";
 NSString *kLayoutDictMaximumPixelHeightKey = @"max-px-height";
 NSString *kLayoutDictWindowPaneKey = @"window-pane";
+NSString *kLayoutDictFloatingPanesKey = @"floating-panes";
+NSString *kLayoutDictZIndexKey = @"z-index";
 NSString *kLayoutDictHistoryKey = @"history";
 NSString *kLayoutDictAltHistoryKey = @"alt-history";
 NSString *kLayoutDictStateKey = @"state";
@@ -101,6 +104,10 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
 
 - (NSMutableDictionary *)parsedLayoutFromString:(NSString *)layout
 {
+    if ([iTermTmuxJSONLayoutParser isJSONLayout:layout]) {
+        NSMutableDictionary *tree = [iTermTmuxJSONLayoutParser parsedLayoutFromString:layout];
+        return tree ? [self coalescedTree:tree] : nil;
+    }
     // Every valid layout begins with a 5-character header ("xxxx,") followed by
     // at least a minimal cell. tmux 3.8 emits an empty layout for a window whose
     // panes are all floating, and truncated or otherwise malformed strings can
@@ -204,6 +211,13 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
                 return ret;
             }
         }
+        // Only the root has floats.
+        for (NSMutableDictionary *floatingLeaf in parseTree[kLayoutDictFloatingPanesKey]) {
+            id ret = [target performSelector:selector withObject:floatingLeaf withObject:obj];
+            if (ret) {
+                return ret;
+            }
+        }
         return nil;
     }
 }
@@ -224,6 +238,9 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
     } else {
         for (NSDictionary *child in [parseTree objectForKey:kLayoutDictChildrenKey]) {
             [result addObjectsFromArray:[self windowPanesInParseTree:child]];
+        }
+        for (NSDictionary *floatingLeaf in parseTree[kLayoutDictFloatingPanesKey]) {
+            [result addObject:@([floatingLeaf[kLayoutDictWindowPaneKey] intValue])];
         }
     }
     return result;

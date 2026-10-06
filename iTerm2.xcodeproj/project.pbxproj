@@ -1068,6 +1068,7 @@
 		8422940974ABE7710C510035 /* CompanionFrameChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A28E717306FFCBB02A7DB2 /* CompanionFrameChannel.swift */; };
 		84914ABAD880FC4B174DFAF5 /* iTermTouchIDHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207C83644F1E850C9F1E918A /* iTermTouchIDHelper.swift */; };
 		84ADC3D7A7ED48A3AB5F1210 /* ClippingsGutterPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E403008EA58864DB2A3AED2 /* ClippingsGutterPanel.swift */; };
+		855352C7250CEC10AF17E728 /* TmuxJSONLayoutParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 192AC5CD5EEBCEBCB0835AE3 /* TmuxJSONLayoutParser.swift */; };
 		85D0A2D91A48462806E331C8 /* CompanionWakeupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98005BEDAA8DAE394BB9427 /* CompanionWakeupCoordinator.swift */; };
 		86DC1B2A008D5CD98E8F1899 /* iTermUvMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8606A478BC8E0AE0DE9E10 /* iTermUvMigration.swift */; };
 		874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
@@ -5076,6 +5077,7 @@
 		1889B7BCB3C9FBBE656FC590 /* iTermRightGutterController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermRightGutterController.swift; sourceTree = "<group>"; };
 		18CB4B106AA1AA4EFB180EB7 /* WorkgroupNavigationToolbarItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupNavigationToolbarItem.swift; sourceTree = "<group>"; };
 		18F980FAE3B782F42E7DBBDE /* APIClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = APIClient.swift; path = it2cli/Sources/it2core/Transport/APIClient.swift; sourceTree = "<group>"; };
+		192AC5CD5EEBCEBCB0835AE3 /* TmuxJSONLayoutParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TmuxJSONLayoutParser.swift; sourceTree = "<group>"; };
 		19537E68A2ADEB03B3086882 /* iTermBlurRowBuffer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBlurRowBuffer.swift; sourceTree = "<group>"; };
 		1AE66769B8654316E249B74A /* iTermShellArguments.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermShellArguments.m; sourceTree = "<group>"; };
 		1AE7A6B656E953B6C1CAA73F /* WindowLocationLockController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowLocationLockController.swift; sourceTree = "<group>"; };
@@ -11891,6 +11893,7 @@
 				6834C48BEEB505536385AE57 /* TmuxPaneLocator.swift */,
 				4FE69A4E5E629BECA95BF11A /* TmuxPaneKeyMode.swift */,
 				415BDAAF720E15F25603BBC9 /* TmuxDroppedOutputScanner.swift */,
+				192AC5CD5EEBCEBCB0835AE3 /* TmuxJSONLayoutParser.swift */,
 			);
 			path = tmux;
 			sourceTree = "<group>";
@@ -19995,6 +19998,7 @@
 				93192814C6B3391E62C3E35F /* FloatingPaneGeometry.swift in Sources */,
 				9D0D14C1945083235F5403E0 /* FloatingPaneLayout.swift in Sources */,
 				E51022C4CA99B9A7D4D73476 /* FloatingPaneBuiltInFunctions.swift in Sources */,
+				855352C7250CEC10AF17E728 /* TmuxJSONLayoutParser.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -14,12 +14,17 @@ extern NSString *kLayoutDictNodeType;     // Node type from enum LayoutNodeType.
 // Intermediate nodes only:
 extern NSString *kLayoutDictChildrenKey;  // Sub-tree. Returns an array.
 
+// Root only, for JSON layouts: the window's floating panes as leaf dictionaries, back to front.
+// They are not in the tree.
+extern NSString *kLayoutDictFloatingPanesKey;
+
 // Leaf nodes only:
 extern NSString *kLayoutDictWidthKey;     // Width of node. String. Use -intValue.
 extern NSString *kLayoutDictHeightKey;    // Height. String. Use -intValue.
 extern NSString *kLayoutDictXOffsetKey;   // X position. String. Use -intValue.
 extern NSString *kLayoutDictYOffsetKey;   // Y position. String. Use -intValue.
 extern NSString *kLayoutDictWindowPaneKey;  // window pane number (leaf nodes only)
+extern NSString *kLayoutDictZIndexKey;      // Floating leaves only. NSNumber. 0 is the front.
 
 // These values are filled in by other classes:
 extern NSString *kLayoutDictPixelWidthKey;
@@ -57,6 +62,8 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value);
 @interface TmuxLayoutParser : NSObject
 
 + (instancetype)sharedInstance;
+
+// Accepts both the v1 format and the JSON format a client gets after opting in to new layouts.
 - (NSMutableDictionary *)parsedLayoutFromString:(NSString *)layout;
 
 // tmux 3.8 and later send an empty layout for a window whose panes are all floating to a client
@@ -82,12 +89,13 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value);
         adjustedForPaneBorderStatus:(iTermTmuxPaneBorderStatus)status;
 - (NSMutableDictionary *)windowPane:(int)windowPane
                         inParseTree:(NSMutableDictionary *)parseTree;
+// Tiled panes first, then floats back to front.
 - (NSArray *)windowPanesInParseTree:(NSDictionary *)parseTree;
 
 // For each leaf node, perform selector taking the NSMutableDictionary for the
 // current node as the first arg and obj as the second arg. If it returns
 // nil, the DFS continues; otherwise the DFS stops and that value is returned
-// here.
+// here. Floats are visited after the tiled leaves.
 - (id)depthFirstSearchParseTree:(NSMutableDictionary *)parseTree
                 callingSelector:(SEL)selector
                        onTarget:(id)target
