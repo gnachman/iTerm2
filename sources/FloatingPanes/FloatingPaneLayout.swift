@@ -80,6 +80,23 @@ final class FloatingPaneLayout: NSObject {
         relayout(pane, session: session, oldContainerSize: container)
     }
 
+    // MARK: - Appearance
+
+    /// A float whose session is translucent gets a blur underlay so it stays legible.
+    @objc(updateUnderlayOfFloatingPane:session:)
+    static func updateUnderlay(_ pane: iTermFloatingPaneView, session: PTYSession) {
+        let translucent = (session.textview?.transparencyAlpha ?? 1) < 1
+        pane.setBlurUnderlay(enabled: translucent, dark: isDark(session.processedBackgroundColor))
+    }
+
+    private static func isDark(_ color: NSColor?) -> Bool {
+        guard let rgb = color?.usingColorSpace(.sRGB) else {
+            return true
+        }
+        let luminance = 0.2126 * rgb.redComponent + 0.7152 * rgb.greenComponent + 0.0722 * rgb.blueComponent
+        return luminance < 0.5
+    }
+
     // MARK: - Operations
 
     /// Sizes and positions a float that was just added: 80% of the tab, centered.

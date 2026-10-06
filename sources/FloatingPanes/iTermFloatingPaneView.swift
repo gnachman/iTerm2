@@ -60,6 +60,10 @@ final class iTermFloatingPaneView: NSView {
     private let outlineView = FloatingPaneOutlineView()
     private var sizeReadout: NSTextField?
 
+    /// Shown under a translucent float's session so it blurs what is beneath it in the window
+    /// rather than showing the tiled panes' glyphs through it.
+    private var blurUnderlay: NSVisualEffectView?
+
     // MARK: - Drag state
 
     private enum DragState {
@@ -133,6 +137,40 @@ final class iTermFloatingPaneView: NSView {
         set {
             frame = Self.frame(forOutlineFrame: newValue)
         }
+    }
+
+    // MARK: - Blur underlay
+
+    /// Installs or removes the blur underlay. `dark` forces a dark material for a dark
+    /// background; otherwise the system appearance would tint it and wash out a dark terminal.
+    @objc(setBlurUnderlayEnabled:dark:)
+    func setBlurUnderlay(enabled: Bool, dark: Bool) {
+        guard enabled else {
+            blurUnderlay?.removeFromSuperview()
+            blurUnderlay = nil
+            return
+        }
+        let underlay: NSVisualEffectView
+        if let existing = blurUnderlay {
+            underlay = existing
+        } else {
+            underlay = NSVisualEffectView(frame: splitView.frame)
+            // Within-window blending blurs the tiled panes, lower floats and any shared background
+            // image beneath the float. Behind-window blending would show the desktop instead.
+            underlay.blendingMode = .withinWindow
+            // Some materials, such as .sheet, are opaque within a window. This one is translucent.
+            underlay.material = .hudWindow
+            // Always active, so floats do not go flat when the window loses key.
+            underlay.state = .active
+            underlay.autoresizingMask = [.width, .height]
+            addSubview(underlay, positioned: .below, relativeTo: splitView)
+            blurUnderlay = underlay
+        }
+        underlay.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+    }
+
+    @objc var hasBlurUnderlay: Bool {
+        return blurUnderlay != nil
     }
 
     // MARK: - Hit testing and cursors

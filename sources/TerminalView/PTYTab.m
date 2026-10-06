@@ -914,6 +914,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)didSelectTab {
     RLog(@"didSelectTab %@", self);
+    // Use Transparency may have changed while this tab was in the background.
+    [self updateFloatingPaneUnderlays];
     if (_tabStatusWaitingProminent) {
         _tabStatusWaitingProminent = NO;
         [self updateIcon];
@@ -1784,6 +1786,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // The grid is canonical; derive it from the requested frame now that the session has its title
     // bar, then the frame from the grid.
     [iTermFloatingPaneLayout fitFloatingPane:pane session:session toOutlineFrame:frame];
+    [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
 }
 
 - (BOOL)floatingPanesHidden {
@@ -3421,8 +3424,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (void)updateFloatingPaneUnderlays {
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        PTYSession *session = [self sessionForSessionView:pane.sessionView];
+        if (session) {
+            [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
+        }
+    }
+}
+
 - (void)recheckBlur {
     PtyLog(@"PTYTab recheckBlur");
+    // Transparency or the window's Use Transparency setting may have changed.
+    [self updateFloatingPaneUnderlays];
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
         if ([self blur]) {

@@ -154,6 +154,32 @@ final class FloatingPaneLayoutTests: XCTestCase {
                        "the float keeps its distance from the top of the tab")
     }
 
+    // MARK: - Blur underlay
+
+    func testTranslucentFloatGetsABlurUnderlay() {
+        let (session, pane) = newFloat()
+        XCTAssertFalse(pane.hasBlurUnderlay, "an opaque float needs no underlay")
+
+        if !fixture.terminal.useTransparency() {
+            fixture.terminal.perform(NSSelectorFromString("toggleUseTransparency:"), with: nil)
+        }
+        XCTAssertTrue(fixture.terminal.useTransparency())
+        session.setSessionSpecificProfileValues(["Transparency": 0.4])
+        tab.recheckBlur()
+        XCTAssertLessThan(session.textview?.transparencyAlpha ?? 1, 1)
+        XCTAssertTrue(pane.hasBlurUnderlay)
+
+        // Turning off the window's transparency makes the session opaque, so the underlay goes.
+        fixture.terminal.perform(NSSelectorFromString("toggleUseTransparency:"), with: nil)
+        XCTAssertFalse(pane.hasBlurUnderlay)
+        fixture.terminal.perform(NSSelectorFromString("toggleUseTransparency:"), with: nil)
+        XCTAssertTrue(pane.hasBlurUnderlay)
+
+        session.setSessionSpecificProfileValues(["Transparency": 0.0])
+        tab.recheckBlur()
+        XCTAssertFalse(pane.hasBlurUnderlay)
+    }
+
     // MARK: - API
 
     func testOldPythonLibrariesAreNotToldAboutFloats() {
