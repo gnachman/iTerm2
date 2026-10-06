@@ -349,7 +349,8 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         return [self.delegate contextMenu:self hasOutputForCommandMark:commandMark];
     }
     if ([item action] == @selector(openURLInVerticalSplitPane:) ||
-        [item action] == @selector(openURLInHorizontalSplitPane:)) {
+        [item action] == @selector(openURLInHorizontalSplitPane:) ||
+        [item action] == @selector(openURLInFloatingPane:)) {
         // These explicitly split the current window, so disable them when its
         // layout is locked (parallel to the greyed-out Split Pane menu items).
         iTermSelection *selection = [self.delegate contextMenuSelection:self];
@@ -569,6 +570,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         if ([[NSWorkspace sharedWorkspace] it_urlIsConditionallyLocallyOpenable:selectionURL]) {
             add(NSLocalizedStringWithDefaultValue(@"ContextMenu.OpenURLInVerticalSplitPane", nil, [NSBundle mainBundle], @"Open URL in Vertical Split Pane", @"Context menu item to open a URL in a vertical split pane"), @selector(openURLInVerticalSplitPane:));
             add(NSLocalizedStringWithDefaultValue(@"ContextMenu.OpenURLInHorizontalSplitPane", nil, [NSBundle mainBundle], @"Open URL in Horizontal Split Pane", @"Context menu item to open a URL in a horizontal split pane"), @selector(openURLInHorizontalSplitPane:));
+            add(NSLocalizedStringWithDefaultValue(@"ContextMenu.OpenURLInFloatingPane", nil, [NSBundle mainBundle], @"Open URL in Floating Pane", @"Context menu item to open a URL in a new floating pane, which floats over the tab’s split panes"), @selector(openURLInFloatingPane:));
             [theMenu addItem:[NSMenuItem separatorItem]];
         }
     }
@@ -1192,6 +1194,13 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0]
                   andOpenInBackground:NO
                                 style:iTermOpenStyleHorizontalSplit
+                       guessingScheme:YES];
+}
+
+- (void)openURLInFloatingPane:(id)sender {
+    [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0]
+                  andOpenInBackground:NO
+                                style:iTermOpenStyleFloatingPane
                        guessingScheme:YES];
 }
 

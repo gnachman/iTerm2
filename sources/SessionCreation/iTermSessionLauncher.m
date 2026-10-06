@@ -308,6 +308,15 @@
     session.browserTarget = self.browserTarget;
     const BOOL saved = windowController.automaticallySelectNewTabs;
     switch (_style) {
+        case iTermOpenStyleFloatingPane:
+            if (windowController.numberOfTabs > 0 && windowController.canCreateFloatingPane) {
+                [windowController installNewFloatingSession:session
+                                                      inTab:windowController.currentTab
+                                              parentSession:nil];
+                break;
+            }
+            // FALL THROUGH - create a new tab
+
         case iTermOpenStyleVerticalSplit:
         case iTermOpenStyleHorizontalSplit:
             if (windowController.numberOfTabs > 0) {
@@ -374,13 +383,23 @@
                        windowController:(PseudoTerminal *)windowController
                              completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
     switch (_style) {
+        case iTermOpenStyleFloatingPane:
+            if (windowController.numberOfTabs > 0 && windowController.canCreateFloatingPane) {
+                [self makeSessionByCreatingPaneWithProfile:profile
+                                                     style:_style
+                                          windowController:windowController
+                                                completion:completion];
+                break;
+            }
+            // FALL THROUGH - create a new tab
+
         case iTermOpenStyleVerticalSplit:
         case iTermOpenStyleHorizontalSplit:
             if (windowController.numberOfTabs > 0) {
-                [self makeSessionByCreatingSplitPaneWithProfile:profile
-                                                       vertical:_style == iTermOpenStyleVerticalSplit
-                                               windowController:windowController
-                                                     completion:completion];
+                [self makeSessionByCreatingPaneWithProfile:profile
+                                                     style:_style
+                                          windowController:windowController
+                                                completion:completion];
                 break;
             } else {
                 // FALL THROUGH - create a new tab
@@ -414,10 +433,11 @@
     ;
 }
 
-- (void)makeSessionByCreatingSplitPaneWithProfile:(Profile *)profile
-                                         vertical:(BOOL)vertical
-                                 windowController:(PseudoTerminal *)windowController
-                                       completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
+// A split pane or a floating pane, by style.
+- (void)makeSessionByCreatingPaneWithProfile:(Profile *)profile
+                                       style:(iTermOpenStyle)style
+                            windowController:(PseudoTerminal *)windowController
+                                  completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
     if (_command.length > 0) {
         profile = [[profile
                     dictionaryBySettingObject:kProfilePreferenceCommandTypeCustomValue
@@ -427,11 +447,17 @@
     }
     PTYSession *session = [windowController.sessionFactory newSessionWithProfile:profile
                                                                           parent:nil];
-    [windowController splitVertically:vertical
-                               before:NO
-                        addingSession:session
-                        targetSession:windowController.currentSession
-                         performSetup:YES];
+    if (style == iTermOpenStyleFloatingPane) {
+        [windowController installNewFloatingSession:session
+                                              inTab:windowController.currentTab
+                                      parentSession:nil];
+    } else {
+        [windowController splitVertically:style == iTermOpenStyleVerticalSplit
+                                   before:NO
+                            addingSession:session
+                            targetSession:windowController.currentSession
+                             performSetup:YES];
+    }
     __weak __typeof(self) weakSelf = self;
     iTermSessionAttachOrLaunchRequest *launchRequest =
     [iTermSessionAttachOrLaunchRequest launchRequestWithSession:session
@@ -695,7 +721,9 @@
 
 - (iTermObjectType)objectType {
     if (_windowController) {
-        if (_style == iTermOpenStyleVerticalSplit || _style == iTermOpenStyleHorizontalSplit) {
+        if (_style == iTermOpenStyleVerticalSplit ||
+            _style == iTermOpenStyleHorizontalSplit ||
+            _style == iTermOpenStyleFloatingPane) {
             return iTermPaneObject;
         }
         return iTermTabObject;

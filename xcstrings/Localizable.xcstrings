@@ -21246,37 +21246,37 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Wie sollen neue Instanzen geöffnet werden, wenn sie durch Skripte oder externe Anwendungen ausgelöst werden?\n-1: Alte Einstellungen verwenden (Standard)\n0: Neues Fenster\n1: Neuer Tab\n2: Vertikaler Split-Bereich\n3: Horizontaler Split-Bereich\nDies bietet eine einheitliche Einstellung zur Steuerung der externen Instanzerstellung."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "How should new instances be opened when triggered by scripts or external applications?\n-1: Use legacy settings (default)\n0: New Window\n1: New Tab\n2: Vertical Split Pane\n3: Horizontal Split Pane\nThis provides a unified setting for controlling external instance creation."
+            "value" : "How should new instances be opened when triggered by scripts or external applications?\n-1: Use legacy settings (default)\n0: New Window\n1: New Tab\n2: Vertical Split Pane\n3: Horizontal Split Pane\n4: Floating Pane\nThis provides a unified setting for controlling external instance creation."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "スクリプトや外部アプリケーションから起動されたとき、新しいインスタンスをどのように開くか？\n-1：従来の設定を使用する（デフォルト）\n0：新しいウィンドウ\n1：新しいタブ\n2：垂直分割ペイン\n3：水平分割ペイン\nこれは外部からのインスタンス作成を制御する統一設定です。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Como as novas instâncias devem ser abertas quando acionadas por scripts ou aplicativos externos?\n-1: Usar ajustes legados (padrão)\n0: Nova janela\n1: Nova aba\n2: Painel dividido vertical\n3: Painel dividido horizontal\nIsto fornece um ajuste unificado para controlar a criação de instâncias externas."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Как открывать новые экземпляры, запускаемые скриптами или внешними приложениями?\n-1: использовать устаревшие настройки (по умолчанию)\n0: новое окно\n1: новая вкладка\n2: вертикально разделённая панель\n3: горизонтально разделённая панель\nЭтот параметр объединяет управление созданием внешних экземпляров в одном месте."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "当由脚本或外部应用触发时，新实例应如何打开？\n-1：使用传统设置（默认）\n0：新窗口\n1：新标签页\n2：垂直分屏窗格\n3：水平分屏窗格\n这提供了控制外部实例创建的统一设置。"
           }
         }
@@ -65003,6 +65003,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "以 URL 打开所选内容"
+          }
+        }
+      }
+    },
+    "ContextMenu.OpenURLInFloatingPane" : {
+      "comment" : "Context menu item to open a URL in a new floating pane, which floats over the tab’s split panes",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open URL in Floating Pane"
           }
         }
       }
@@ -190306,6 +190318,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ 安全键盘输入会停用粘贴历史。"
+          }
+        }
+      }
+    },
+    "ToolProfiles.NewFloatingPane" : {
+      "comment" : "Menu item to open the profile in a new floating pane, which floats over the tab’s split panes",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane"
           }
         }
       }

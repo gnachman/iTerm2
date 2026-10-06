@@ -170,6 +170,7 @@ enum SpawnWindowChoice: String, Codable {
     case new
     case current
     case tab
+    case floating  // a floating pane over the current tab
 }
 
 enum SessionKind: String, Codable {

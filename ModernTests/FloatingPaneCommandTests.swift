@@ -573,4 +573,44 @@ final class FloatingPaneCommandTests: XCTestCase {
         wait(for: [created], timeout: 30)
         XCTAssertEqual(tab.floatingSessions()?.count, 1)
     }
+
+    // MARK: - Open style
+
+    func testTheFloatingPaneOpenStyleAddsAFloat() {
+        guard let tiled = tab.tiledSessions()?.first,
+              let profile = ProfileModel.sharedInstance().defaultProfile() else {
+            XCTFail("No profile")
+            return
+        }
+        let created = expectation(description: "float created")
+        iTermSessionLauncher.launchBookmark(profile,
+                                            in: terminal,
+                                            style: .floatingPane,
+                                            withURL: nil,
+                                            hotkeyWindowType: .none,
+                                            makeKey: false,
+                                            canActivate: false,
+                                            respectTabbingMode: false,
+                                            index: nil,
+                                            command: nil,
+                                            makeSession: nil,
+                                            didMakeSession: { _ in created.fulfill() },
+                                            completion: nil)
+        wait(for: [created], timeout: 30)
+        XCTAssertEqual(tab.floatingSessions()?.count, 1)
+        XCTAssertEqual(tab.tiledSessions(), [tiled])
+        XCTAssertEqual(terminal.tabs()?.count, 1, "no new tab")
+    }
+
+    // MARK: - AppleScript
+
+    func testAppleScriptHasACreateFloatingPaneCommand() {
+        func code(_ string: String) -> FourCharCode {
+            return string.utf8.reduce(0) { ($0 << 8) | FourCharCode($1) }
+        }
+        let description = NSScriptSuiteRegistry.shared().commandDescription(withAppleEventClass: code("Itrm"),
+                                                                            andAppleEventCode: code("cflp"))
+        XCTAssertEqual(description?.commandName, "create floating pane")
+        XCTAssertTrue(PTYSession.instancesRespond(to: NSSelectorFromString("handleCreateFloatingPane:")))
+    }
 }

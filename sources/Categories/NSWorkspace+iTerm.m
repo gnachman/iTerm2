@@ -434,6 +434,7 @@ withApplicationAtURL:appURL
             break;
         case iTermOpenStyleVerticalSplit:
         case iTermOpenStyleHorizontalSplit:
+        case iTermOpenStyleFloatingPane:
             // Implied consent - no way to open in a split otherwise!
             selection = kiTermWarningSelection1;
             break;

@@ -454,6 +454,15 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (IBAction)moveFloatingPaneDown:(id)sender;
 - (IBAction)moveFloatingPaneLeft:(id)sender;
 - (IBAction)moveFloatingPaneRight:(id)sender;
+// Opens a web page in a new floating pane in the current tab.
+- (void)openFloatingPaneWithURL:(NSURL *)url
+                         target:(NSString *)target
+                    baseProfile:(Profile *)base;
+// Puts a session that has not been launched yet into the tab as a float, centered and active.
+// The caller launches it.
+- (void)installNewFloatingSession:(PTYSession *)newSession
+                            inTab:(PTYTab *)tab
+                    parentSession:(PTYSession *)parentSession;
 - (PTYSession *)addFloatingPaneToTab:(PTYTab *)tab
                              profile:(Profile *)profile
                        parentSession:(PTYSession *)parentSession

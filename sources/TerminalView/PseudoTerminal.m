@@ -11921,30 +11921,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     PTYSession *newSession = [[self.sessionFactory newSessionWithProfile:profile
                                                                   parent:parentSession] autorelease];
-    [self setupSession:newSession withSize:nil];
-    // The real frame comes from the float's grid, which is computed once the session has a view.
-    [tab addFloatingSession:newSession frame:NSMakeRect(0, 0, 200, 200)];
-    iTermFloatingPaneView *pane = [tab floatingPaneForSession:newSession];
-    [iTermFloatingPaneLayout placeNewFloatingPane:pane session:newSession];
-    // The same rule as for a new split.
-    if (![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] ||
-        [iTermAdvancedSettingsModel focusNewSplitPaneWithFocusFollowsMouse]) {
-        [tab setActiveSession:newSession];
-    }
-    [tab recheckBlur];
-    [self setDimmingForSessions];
-    for (PTYSession *session in tab.sessions) {
-        [session.view updateDim];
-    }
-    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]] &&
-        parentSession.isDivorced) {
-        [newSession inheritDivorceFrom:parentSession
-                                decree:[NSString stringWithFormat:@"New floating pane with guid %@",
-                                        newSession.profile[KEY_GUID]]];
-    }
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange"
-                                                        object:self
-                                                      userInfo:nil];
+    [self installNewFloatingSession:newSession inTab:tab parentSession:parentSession];
 
     __weak __typeof(self) weakSelf = self;
     iTermSessionAttachOrLaunchRequest *launchRequest =
@@ -11973,6 +11950,35 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                      completion:completion];
     [self.sessionFactory attachOrLaunchWithRequest:launchRequest];
     return newSession;
+}
+
+- (void)installNewFloatingSession:(PTYSession *)newSession
+                            inTab:(PTYTab *)tab
+                    parentSession:(PTYSession *)parentSession {
+    [self setupSession:newSession withSize:nil];
+    // The real frame comes from the float's grid, which is computed once the session has a view.
+    [tab addFloatingSession:newSession frame:NSMakeRect(0, 0, 200, 200)];
+    iTermFloatingPaneView *pane = [tab floatingPaneForSession:newSession];
+    [iTermFloatingPaneLayout placeNewFloatingPane:pane session:newSession];
+    // The same rule as for a new split.
+    if (![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] ||
+        [iTermAdvancedSettingsModel focusNewSplitPaneWithFocusFollowsMouse]) {
+        [tab setActiveSession:newSession];
+    }
+    [tab recheckBlur];
+    [self setDimmingForSessions];
+    for (PTYSession *session in tab.sessions) {
+        [session.view updateDim];
+    }
+    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]] &&
+        parentSession.isDivorced) {
+        [newSession inheritDivorceFrom:parentSession
+                                decree:[NSString stringWithFormat:@"New floating pane with guid %@",
+                                        newSession.profile[KEY_GUID]]];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange"
+                                                        object:self
+                                                      userInfo:nil];
 }
 
 - (Profile *)profileForSplittingCurrentSession {
@@ -15359,6 +15365,24 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         session.browserTarget = target;
     }
                          ready:nil];
+}
+
+- (void)openFloatingPaneWithURL:(NSURL *)url
+                         target:(NSString *)target
+                    baseProfile:(Profile *)base {
+    PTYTab *tab = self.currentTab;
+    if (!tab || ![self canCreateFloatingPane]) {
+        return;
+    }
+    MutableProfile *profile = [[base mutableCopy] autorelease];
+    profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
+    profile[KEY_INITIAL_URL] = url.absoluteString;
+    PTYSession *session = [self addFloatingPaneToTab:tab
+                                             profile:profile
+                                       parentSession:self.currentSession
+                                              oldCWD:nil
+                                          completion:nil];
+    session.browserTarget = target;
 }
 
 - (iTermBrowserWebView *)openTabWithURL:(NSURL *)url

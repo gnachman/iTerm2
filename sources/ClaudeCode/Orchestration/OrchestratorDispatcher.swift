@@ -1702,6 +1702,7 @@ final class OrchestratorDispatcher {
             case .new: placement = "a new window"
             case .tab: placement = "a new tab in the current window"
             case .current: placement = "a vertical split of the current pane"
+            case .floating: placement = "a floating pane in the current tab"
             }
         } else {
             placement = "a new session"
@@ -3054,6 +3055,7 @@ final class OrchestratorDispatcher {
         case .new: style = .window
         case .tab: style = .tab
         case .current: style = .verticalSplit
+        case .floating: style = .floatingPane
         }
 
         // For the split case (window=current), launchBookmark needs the
@@ -3074,12 +3076,12 @@ final class OrchestratorDispatcher {
         // create a new one).
         let targetTerminal: PseudoTerminal?
         switch args.window ?? .tab {
-        case .current:
+        case .current, .floating:
             let controller = iTermController.sharedInstance()
             targetTerminal = controller?.keyTerminalWindow() ?? controller?.currentTerminal
             guard let t = targetTerminal, t.numberOfTabs() > 0 else {
                 throw OrchestratorError.unsupported(reason:
-                    "window=\u{201C}current\u{201D} splits the currently-focused terminal, "
+                    "window=\u{201C}\(args.window?.rawValue ?? "current")\u{201D} adds to the currently-focused terminal, "
                     + "but no terminal window is open. Use window=\u{201C}new\u{201D} or "
                     + "window=\u{201C}tab\u{201D} instead.")
             }

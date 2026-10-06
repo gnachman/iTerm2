@@ -76,6 +76,9 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         [[popup_ menu] addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ToolProfiles.NewVerticalSplit", nil, [NSBundle mainBundle], @"New Vertical Split", @"Menu item to open the profile in a new vertical split")
                                  action:@selector(toolProfilesNewVerticalSplit:)
                           keyEquivalent:@""];
+        [[popup_ menu] addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ToolProfiles.NewFloatingPane", nil, [NSBundle mainBundle], @"New Floating Pane", @"Menu item to open the profile in a new floating pane, which floats over the tab’s split panes")
+                                 action:@selector(toolProfilesNewFloatingPane:)
+                          keyEquivalent:@""];
         for (NSMenuItem *i in [[popup_ menu] itemArray]) {
             [i setTarget:self];
         }
@@ -184,6 +187,17 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
                          targetSession:[terminal currentSession]
                             completion:nil
                                  ready:nil];
+    }
+}
+
+- (void)toolProfilesNewFloatingPane:(id)sender {
+    PseudoTerminal *terminal = [[iTermController sharedInstance] currentTerminal];
+    for (NSString *guid in [listView_ selectedGuids]) {
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        if (!profile) {
+            continue;
+        }
+        [terminal newFloatingPaneWithProfile:profile];
     }
 }
 

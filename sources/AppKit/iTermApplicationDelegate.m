@@ -877,7 +877,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         RLog(@"application:openFile: launching new session in window %@", windowController);
         iTermOpenStyle style = iTermOpenStyleTab;
         NSInteger stylePreference = [iTermAdvancedSettingsModel newInstanceOpenStyle];
-        if (stylePreference >= 0 && stylePreference <= 3) {
+        if (stylePreference >= 0 && stylePreference <= iTermOpenStyleFloatingPane) {
             style = (iTermOpenStyle)stylePreference;
         } else if ([iTermAdvancedSettingsModel openFileInNewWindows]) {
             style = iTermOpenStyleWindow;
