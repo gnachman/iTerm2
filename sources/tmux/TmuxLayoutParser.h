@@ -59,6 +59,12 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value);
 + (instancetype)sharedInstance;
 - (NSMutableDictionary *)parsedLayoutFromString:(NSString *)layout;
 
+// tmux 3.8 and later send an empty layout for a window whose panes are all floating to a client
+// that has not opted in to the new layout format (verified against tmux next-3.9, in both
+// %layout-change and list-windows). Such a window has nothing a tiled layout can show. It is
+// not a malformed layout, so it must not end the connection.
+- (BOOL)layoutHasNoTiledPanes:(NSString *)layout;
+
 // tmux reserves a row of each pane for pane-border-status, but the layout string it
 // sends control clients does not encode that reservation: it reports the full window
 // height for every pane (see issue 12925). This adjusts leaf geometry in place so it

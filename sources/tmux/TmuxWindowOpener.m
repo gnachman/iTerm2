@@ -102,6 +102,10 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"WindowOpener.MissingLayout", nil, [NSBundle mainBundle], @"Can't open window: missing layout", @"Error shown when a tmux window cannot be opened because its layout is missing")]];
         return NO;
     }
+    if ([[TmuxLayoutParser sharedInstance] layoutHasNoTiledPanes:self.layout]) {
+        RLog(@"Not opening window %d because it has no tiled panes", self.windowIndex);
+        return NO;
+    }
     self.parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!self.parseTree) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"WindowOpener.ErrorParsingLayout", nil, [NSBundle mainBundle], @"Error parsing layout %@", @"Error shown when a tmux window layout string cannot be parsed; %@ is the raw layout"), self.layout]];
@@ -153,6 +157,12 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         return NO;
     }
 
+    if ([[TmuxLayoutParser sharedInstance] layoutHasNoTiledPanes:self.layout]) {
+        // The window's tiled panes are gone and only floating ones remain. Leave the tab as it is
+        // until a layout with tiled panes arrives.
+        RLog(@"Ignoring a layout with no tiled panes for window %d", self.windowIndex);
+        return NO;
+    }
     self.parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!self.parseTree) {
         RLog(@"Failed to create parse tree for %@", self.layout);

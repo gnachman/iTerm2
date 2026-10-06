@@ -696,7 +696,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                           initial:YES
                          tabIndex:nil];
     }
-    if (windowsToOpen.count == 0) {
+    // A window can be skipped instead of opened (for example, one with only floating panes). If
+    // every window was skipped, no initial command list ever completes to turn notifications on.
+    if (windowsToOpen.count == 0 || pendingWindowOpens_.count == 0) {
         DLog(@"Did not open any windows so turn on accept notifications in tmux gateway");
         gateway_.acceptNotifications = YES;
         [self sendInitialWindowsOpenedNotificationIfNeeded];

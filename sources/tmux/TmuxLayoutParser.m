@@ -91,6 +91,14 @@ iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
     return node;
 }
 
+- (BOOL)layoutHasNoTiledPanes:(NSString *)layout {
+    if (!layout) {
+        return NO;
+    }
+    // Accept a bare checksum too, in case a server sends one with no cell.
+    return [layout isMatchedByRegex:@"^([0-9a-fA-F]{4},)?$"];
+}
+
 - (NSMutableDictionary *)parsedLayoutFromString:(NSString *)layout
 {
     // Every valid layout begins with a 5-character header ("xxxx,") followed by
