@@ -62,9 +62,14 @@ async def main(connection):
     await gateway.async_send_text(f"{TMUX} -L {SOCKET} -f /dev/null -CC new -s e2e -x 100 -y 30 'sleep 600'\n")
     check(await wait_for(attached), "attached with tmux -CC")
 
-    tmux("new-pane", "-t", "e2e", "sleep 600")
+    tmux("new-pane", "-t", "e2e", "-x", "50", "-y", "12", "sleep 600")
     out = tmux("list-panes", "-t", "e2e", "-F", "#{pane_id} #{pane_floating_flag}").stdout.split()
     check(out == ["%0", "0", "%1", "1"], f"window has one tiled and one floating pane: {out}")
+
+    def float_size():
+        return tmux("display", "-p", "-t", "%1", "#{pane_width}x#{pane_height}").stdout.strip()
+
+    size_before = float_size()
 
     tmux("kill-pane", "-t", "%0")
     layout = tmux("list-windows", "-t", "e2e", "-F", "#{window_layout}").stdout.strip()
@@ -80,6 +85,8 @@ async def main(connection):
     check(await wait_for(attached), "reattached to a session whose only window is floats-only")
     await asyncio.sleep(1.5)
     check(await attached(), "connection survives attaching to a floats-only window")
+    # Attaching once made the client 2x3, which crushed every float to 1x1 on the server.
+    check(float_size() == size_before, f"the float keeps its size: {size_before} -> {float_size()}")
 
     connections_now = await connections()
     if connections_now:

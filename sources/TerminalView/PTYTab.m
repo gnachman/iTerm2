@@ -3438,8 +3438,22 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // This returns the content size that would best fit the existing panes. It is the minimum size that
 // fits them without having to resize downwards.
 - (NSSize)size {
+    const NSSize floatsOnly = [self tmuxFloatsOnlySize];
+    if (floatsOnly.width > 0 && floatsOnly.height > 0) {
+        return floatsOnly;
+    }
     BOOL ignore;
     return [self _recursiveSize:root_ containsLock:&ignore];
+}
+
+// A tmux window with only floating panes has an empty tiled tree, whose size says nothing. Its size
+// is the tmux window's, which the decorated layout gives in points. Zero for any other tab.
+- (NSSize)tmuxFloatsOnlySize {
+    if (!self.isTmuxTab || self.tiledSessions.count > 0) {
+        return NSZeroSize;
+    }
+    return NSMakeSize([_tmuxFloatParseTree[kLayoutDictPixelWidthKey] doubleValue],
+                      [_tmuxFloatParseTree[kLayoutDictPixelHeightKey] doubleValue]);
 }
 
 - (void)setReportIdealSizeAsCurrent:(BOOL)v {
@@ -3449,6 +3463,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 // This returns the current size
 - (NSSize)currentSize {
+    const NSSize floatsOnly = [self tmuxFloatsOnlySize];
+    if (floatsOnly.width > 0 && floatsOnly.height > 0) {
+        DLog(@"Reporting the floats-only tmux window's size %@ for tab %@", NSStringFromSize(floatsOnly), self);
+        return floatsOnly;
+    }
     if (_reportIdeal) {
         DLog(@"Reporting ideal size %@ for tab %@", NSStringFromSize(self.size), self);
         return [self size];
@@ -6469,6 +6488,12 @@ typedef struct {
     // The tree as parsed, with its floats and tmux's cell offsets. Variable window size tweaks a
     // copy below.
     NSMutableDictionary *untweakedParseTree = parseTree;
+    if (!parseTree[kLayoutDictWidthKey] && _tmuxFloatParseTree[kLayoutDictWidthKey]) {
+        // With one float left, tmux makes it the layout's root, and the layout no longer says how
+        // big the window is. It hasn't changed.
+        parseTree[kLayoutDictWidthKey] = _tmuxFloatParseTree[kLayoutDictWidthKey];
+        parseTree[kLayoutDictHeightKey] = _tmuxFloatParseTree[kLayoutDictHeightKey];
+    }
     _tmuxSessionsBecomingFloats = [NSMutableArray array];
     BOOL shouldZoom = isMaximized_;
     if (isMaximized_) {

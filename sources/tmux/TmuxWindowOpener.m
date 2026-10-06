@@ -91,6 +91,12 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     if (!parseTree) {
         return nil;
     }
+    if (!parseTree[kLayoutDictWidthKey] && self.size.width > 0 && self.size.height > 0) {
+        // With one float left, tmux makes it the layout's root, so the layout doesn't give the
+        // window's size. list-windows did.
+        parseTree[kLayoutDictWidthKey] = @(self.size.width);
+        parseTree[kLayoutDictHeightKey] = @(self.size.height);
+    }
     const iTermTmuxPaneBorderStatus status =
         [self.controller paneBorderStatusForWindow:self.windowIndex];
     return [parser parseTree:parseTree adjustedForPaneBorderStatus:status];

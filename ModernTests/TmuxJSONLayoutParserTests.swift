@@ -147,4 +147,20 @@ final class TmuxJSONLayoutParserTests: XCTestCase {
         XCTAssertEqual(children(tree).count, 2)
         XCTAssertTrue(floats(tree).isEmpty)
     }
+
+    /// With one float left, tmux makes it the layout's root, so the layout lacks the window's size.
+    /// The window opener fills it in from list-windows, or the window would be sized to nothing and
+    /// the client size it sends would crush the float.
+    func testTheWindowOpenerGivesAFloatingRootTheWindowsSize() {
+        let opener = TmuxWindowOpener()
+        opener.size = NSSize(width: 160, height: 45)
+        let selector = NSSelectorFromString("parsedAdjustedLayoutFromString:")
+        guard let tree = opener.perform(selector, with: floatingRoot)?.takeUnretainedValue() as? NSDictionary else {
+            XCTFail("Did not parse")
+            return
+        }
+        XCTAssertEqual(int(tree, kLayoutDictWidthKey), 160)
+        XCTAssertEqual(int(tree, kLayoutDictHeightKey), 45)
+        XCTAssertEqual(floats(tree).map { int($0, kLayoutDictWidthKey) }, [60], "the float keeps its own size")
+    }
 }
