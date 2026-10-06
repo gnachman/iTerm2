@@ -55,8 +55,13 @@ final class FloatingPaneLayout: NSObject {
                                                     containerIsFlipped: container.isFlipped)
         DLog("Apply \(placement) to \(session) giving frame \(NSStringFromRect(frame))")
         if pane.outlineFrame != frame {
+            // Resizing the split view would otherwise refit the float to its old grid, which is
+            // about to change, and put back the old frame.
+            let wasIgnoring = session.ignoreResizeNotifications
+            session.ignoreResizeNotifications = true
             pane.outlineFrame = frame
             pane.splitView.adjustSubviews()
+            session.ignoreResizeNotifications = wasIgnoring
         }
         let grid = VT100GridSizeMake(Int32(placement.grid.columns), Int32(placement.grid.rows))
         if session.columns != grid.width || session.rows != grid.height {

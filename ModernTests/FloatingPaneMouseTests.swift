@@ -226,6 +226,62 @@ final class FloatingPaneMouseTests: XCTestCase {
         XCTAssertEqual(pane.outlineFrame.maxY, start.maxY, "the top edge stays put")
     }
 
+    /// Shrinking a float from its top-left corner when the tab gets its split view's resizes. Setting
+    /// the frame used to make the tab refit the float to its old grid at its old top left, so the
+    /// corner didn't follow the mouse.
+    func testDraggingTheTopLeftCornerOfAShrunkFloatShrinksIt() {
+        let session = fixture.addFloat(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
+        guard let pane = tab.floatingPane(for: session) else {
+            XCTFail("No pane")
+            return
+        }
+        let m = metrics(session)
+        // Clear of the window's own resize area at its corner, and not touching any of the tab's
+        // edges, as after full screen left it a fraction of a point off.
+        let maximum = FloatingPaneGeometry.maximumGrid(container: container.bounds.size, metrics: m)
+        let full = FloatingPaneGrid(columns: maximum.columns - 6, rows: maximum.rows - 6)
+        let size = m.frameSize(for: full)
+        let origin = CGPoint(x: container.bounds.width - size.width - 20.5,
+                             y: container.bounds.height - size.height - 20.5)
+        FloatingPaneLayout.apply(FloatingPanePlacement(frame: CGRect(origin: origin, size: size), grid: full),
+                                 to: pane,
+                                 session: session)
+        XCTAssertEqual(grid(session), full)
+        // As in a window seen after leaving full screen: the float remembers a larger grid it wants
+        // back, and the tab handles its split view's resizes as it does the tiled ones.
+        pane.desiredGrid = maximum
+        pane.splitView.delegate = tab
+        let start = pane.outlineFrame
+        let band = iTermFloatingPaneView.resizeBandWidth
+        // The top-left corner in window coordinates (window y is up).
+        let point = pane.convert(NSPoint(x: band / 2, y: pane.isFlipped ? band / 2 : pane.bounds.maxY - band / 2),
+                                 to: nil)
+        let cell = m.cellSize
+        let end = NSPoint(x: point.x + cell.width * 3, y: point.y - cell.height * 2)
+        fixture.mouse.drag(from: point, to: end, steps: 4)
+
+        XCTAssertEqual(grid(session), FloatingPaneGrid(columns: full.columns - 3, rows: full.rows - 2))
+        XCTAssertEqual(pane.outlineFrame.size, m.frameSize(for: grid(session)), "the frame follows the grid")
+        XCTAssertEqual(pane.outlineFrame.maxX, start.maxX, "the right edge stays put")
+        // In the unflipped container, the visual bottom is minY.
+        XCTAssertEqual(pane.outlineFrame.minY, start.minY, "the bottom edge stays put")
+    }
+
+    /// Applying a placement gives the float exactly that frame and grid, even when the tab gets its
+    /// split view's resizes and the float remembers a larger grid. The resize used to refit the float
+    /// to its old grid partway through.
+    func testApplyingAPlacementIsNotUndoneByTheSplitViewResize() {
+        let (session, pane) = addFloat(columns: 40, rows: 12, at: NSPoint(x: 60, y: 60))
+        let m = metrics(session)
+        pane.desiredGrid = FloatingPaneGeometry.maximumGrid(container: container.bounds.size, metrics: m)
+        pane.splitView.delegate = tab
+        let grid = FloatingPaneGrid(columns: 30, rows: 9)
+        let frame = CGRect(origin: CGPoint(x: 130.5, y: 111.5), size: m.frameSize(for: grid))
+        FloatingPaneLayout.apply(FloatingPanePlacement(frame: frame, grid: grid), to: pane, session: session)
+        XCTAssertEqual(self.grid(session), grid)
+        XCTAssertEqual(FloatingPaneLayout.visualOutlineFrame(of: pane), frame)
+    }
+
     func testResizeStopsAtTheMinimumGrid() {
         let (session, pane) = addFloat()
         let point = rightBandPoint(pane)
