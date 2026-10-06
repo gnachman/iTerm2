@@ -6147,7 +6147,8 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return self.frame.size.height - NSMaxY(self.enclosingScrollView.documentVisibleRect);
 }
 
-- (NSPoint)cursorCenterInScreenCoords {
+// The center of the cursor in this view's coordinates.
+- (NSPoint)cursorCenter {
     NSPoint cursorCenter;
     if ([self hasMarkedText]) {
         cursorCenter = _drawingHelper.imeCursorLastPos;
@@ -6156,7 +6157,11 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     }
     cursorCenter.x += _charWidth / 2;
     cursorCenter.y += _lineHeight / 2;
-    NSPoint cursorCenterInWindowCoords = [self convertPoint:cursorCenter toView:nil];
+    return cursorCenter;
+}
+
+- (NSPoint)cursorCenterInScreenCoords {
+    NSPoint cursorCenterInWindowCoords = [self convertPoint:[self cursorCenter] toView:nil];
     return  [[self window] pointToScreenCoords:cursorCenterInWindowCoords];
 }
 
@@ -6220,6 +6225,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     _cursorVisible = YES;
     [self requestDelegateRedraw];
     if (!_findCursorView) {
+        [_delegate textViewFindCursorWillShowAtLocationInWindow:[self convertPoint:[self cursorCenter] toView:nil]];
         [self createFindCursorWindowWithFireworks:forceFireworks];
     }
     if (hold) {
@@ -6243,6 +6249,9 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 }
 
 - (void)endFindCursor {
+    if (_findCursorView) {
+        [_delegate textViewFindCursorDidEnd];
+    }
     [NSAnimationContext beginGrouping];
     NSWindow *theWindow = [_findCursorWindow retain];
     [[NSAnimationContext currentContext] setCompletionHandler:^{

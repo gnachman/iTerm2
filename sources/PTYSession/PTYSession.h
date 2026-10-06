@@ -183,6 +183,9 @@ typedef enum {
 // otherwise.
 - (NSSize)sessionMaximumFloatingGridSize:(PTYSession *)session;
 
+// Hides the tab's floats, or shows them again, without changing the hide toggle.
+- (void)sessionSetFloatingPanesTemporarilyHidden:(BOOL)hidden;
+
 // The floating pane holding the session, or nil if it is tiled.
 - (nullable iTermFloatingPaneView *)sessionFloatingPane:(PTYSession *)session;
 

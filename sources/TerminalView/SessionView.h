@@ -369,6 +369,9 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)updateForAppearanceChange;
 - (void)smearCursorFrom:(NSRect)from to:(NSRect)to color:(NSColor *)color;
 
+// Whether a view other than this one (a floating pane) is in front of it at the given point.
+- (BOOL)locationIsCoveredByAnotherView:(NSPoint)locationInWindow;
+
 // Uses the Metal debug offscreen rendering path to capture a frame as an NSImage.
 - (nullable NSImage *)drawMetalFrameToImage;
 

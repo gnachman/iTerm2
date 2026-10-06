@@ -298,6 +298,10 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewDidDetectMouseReportingFrustration;
 - (BOOL)textViewCanBury;
 - (BOOL)textViewIsFloating;
+// Find Cursor is about to show the cursor at this point. If a floating pane covers it, the floats
+// are hidden until Find Cursor ends.
+- (void)textViewFindCursorWillShowAtLocationInWindow:(NSPoint)point;
+- (void)textViewFindCursorDidEnd;
 // A cmd-opt-shift drag in a float's text moves the float. Mouse-down returns whether a move may
 // follow; if so, the drags and mouse-up come here too.
 - (BOOL)textViewFloatingPaneMoveMouseDown:(NSEvent *)event;

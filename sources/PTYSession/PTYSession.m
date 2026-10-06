@@ -774,6 +774,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // If true the session was just created and an offscreen mark alert would be annoying.
     BOOL _temporarilySuspendOffscreenMarkAlerts;
+
+    // Find Cursor hid the tab's floating panes because one covered the cursor.
+    BOOL _findCursorHidFloatingPanes;
     NSMutableArray<NSData *> *_dataQueue;
 
     BOOL _promptStateAllowsAutoComposer;
@@ -15183,6 +15186,25 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [_delegate sessionFloatingPane:self];
 }
 
+- (void)textViewFindCursorWillShowAtLocationInWindow:(NSPoint)point {
+    if (_findCursorHidFloatingPanes ||
+        ![_delegate respondsToSelector:@selector(sessionSetFloatingPanesTemporarilyHidden:)] ||
+        ![_view locationIsCoveredByAnotherView:point]) {
+        return;
+    }
+    DLog(@"A float covers the cursor of %@. Hide floats while finding the cursor.", self);
+    _findCursorHidFloatingPanes = YES;
+    [_delegate sessionSetFloatingPanesTemporarilyHidden:YES];
+}
+
+- (void)textViewFindCursorDidEnd {
+    if (!_findCursorHidFloatingPanes) {
+        return;
+    }
+    _findCursorHidFloatingPanes = NO;
+    [_delegate sessionSetFloatingPanesTemporarilyHidden:NO];
+}
+
 - (BOOL)textViewFloatingPaneMoveMouseDown:(NSEvent *)event {
     return [[self floatingPane] titleBarMouseDown:event];
 }
@@ -19399,7 +19421,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         DLog(@"_temporarilySuspendOffscreenMarkAlerts -> NO");
         return NO;
     }
-    if ([self.delegate hasMaximizedPane] && ![self.delegate sessionIsActiveInTab:self]) {
+    const BOOL isFloating = [self.delegate sessionIsFloating:self];
+    if (isFloating && self.view.isHiddenOrHasHiddenAncestor) {
+        DLog(@"Hidden float -> YES");
+        return YES;
+    }
+    // Floats stay visible over a maximized pane.
+    if ([self.delegate hasMaximizedPane] && ![self.delegate sessionIsActiveInTab:self] && !isFloating) {
         DLog(@"hasMaximizedPane && !sessionIsActiveInTab -> YES");
         return YES;
     }

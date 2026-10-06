@@ -1883,6 +1883,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     for (iTermFloatingPaneView *pane in _floatingPanes) {
         pane.hidden = _floatingPanesHidden || _floatingPanesTemporarilyHidden;
     }
+    // A hidden float counts as offscreen for Alert on Marks, which the session's config carries.
+    for (PTYSession *session in [self floatingSessions]) {
+        [session sync];
+    }
 }
 
 - (void)setFloatingPanesTemporarilyHidden:(BOOL)hidden {
@@ -1900,6 +1904,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         return NSZeroSize;
     }
     return [iTermFloatingPaneLayout maximumGridOfFloatingPane:pane session:session];
+}
+
+- (void)sessionSetFloatingPanesTemporarilyHidden:(BOOL)hidden {
+    self.floatingPanesTemporarilyHidden = hidden;
 }
 
 - (iTermFloatingPaneView *)sessionFloatingPane:(PTYSession *)session {

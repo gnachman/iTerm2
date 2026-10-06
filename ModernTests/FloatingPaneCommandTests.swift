@@ -434,4 +434,76 @@ final class FloatingPaneCommandTests: XCTestCase {
         XCTAssertNil(item(tiledMenu, "dockFloatingPaneFromContextMenu:"))
         XCTAssertTrue(isEnabled(item(tiledMenu, "splitTextViewVertically:")))
     }
+
+    // MARK: - Alert on Marks in Offscreen Sessions
+
+    /// Calls -[PTYSession shouldAlert], which is private.
+    private func shouldAlertOnMark(_ session: PTYSession) -> Bool {
+        let selector = NSSelectorFromString("shouldAlert")
+        typealias Fn = @convention(c) (AnyObject, Selector) -> Bool
+        return unsafeBitCast(session.method(for: selector), to: Fn.self)(session, selector)
+    }
+
+    func testHiddenFloatsAreOffscreenForMarkAlerts() {
+        let saved = iTermPreferences.bool(forKey: kPreferenceKeyAlertOnMarksInOffscreenSessions)
+        defer {
+            iTermPreferences.setBool(saved, forKey: kPreferenceKeyAlertOnMarksInOffscreenSessions)
+            NotificationCenter.default.post(name: .iTermDidToggleAlertOnMarksInOffscreenSessions,
+                                            object: nil)
+        }
+        iTermPreferences.setBool(true, forKey: kPreferenceKeyAlertOnMarksInOffscreenSessions)
+        NotificationCenter.default.post(name: .iTermDidToggleAlertOnMarksInOffscreenSessions,
+                                        object: nil)
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = fixture.split(tiled, vertically: true)
+        let float = fixture.addFloat(frame: floatFrame)
+        float.perform(NSSelectorFromString("enableOffscreenMarkAlertsIfNeeded"))
+
+        tab.setActiveSession(second)
+        tab.maximize()
+        XCTAssertTrue(shouldAlertOnMark(tiled), "a pane behind a maximized one is offscreen")
+        XCTAssertFalse(shouldAlertOnMark(float), "a float shows over a maximized pane")
+        tab.perform(NSSelectorFromString("unmaximize"))
+
+        tab.floatingPanesHidden = true
+        XCTAssertTrue(shouldAlertOnMark(float), "a hidden float is offscreen")
+        tab.floatingPanesHidden = false
+        XCTAssertFalse(shouldAlertOnMark(float))
+    }
+
+    // MARK: - Find Cursor
+
+    func testFindCursorHidesFloatsThatCoverTheCursor() {
+        guard let tiled = tab.tiledSessions()?.first, let textview = tiled.textview,
+              let container = tab.realRootView else {
+            XCTFail("No tiled session")
+            return
+        }
+        // The cursor is at the top left of the tiled pane. Cover it.
+        let top = container.bounds.maxY
+        let float = fixture.addFloat(frame: NSRect(x: 0, y: top - 200, width: 300, height: 200))
+        tab.setActiveSession(tiled)
+
+        textview.beginFindCursor(true)
+        XCTAssertTrue(pane(float).isHidden, "a float over the cursor is hidden")
+        XCTAssertFalse(tab.floatingPanesHidden, "the hide toggle is unchanged")
+        textview.endFindCursor()
+        XCTAssertFalse(pane(float).isHidden)
+    }
+
+    func testFindCursorLeavesFloatsThatDoNotCoverTheCursor() {
+        guard let tiled = tab.tiledSessions()?.first, let textview = tiled.textview else {
+            XCTFail("No tiled session")
+            return
+        }
+        let float = fixture.addFloat(frame: floatFrame)
+        tab.setActiveSession(tiled)
+
+        textview.beginFindCursor(true)
+        XCTAssertFalse(pane(float).isHidden)
+        textview.endFindCursor()
+    }
 }
