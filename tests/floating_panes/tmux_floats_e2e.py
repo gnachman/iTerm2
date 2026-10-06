@@ -219,6 +219,20 @@ async def main(connection):
     check(await wait_for(lambda: asyncio.sleep(0, result=front_float() != created_id)),
           f"send to back lowers it in tmux: front is {front_float()}")
 
+    # Splitting a float in tmux makes another float.
+    tab = await tmux_tab()
+    floats_before = len(tab.floating_sessions)
+    new_session = await created.async_split_pane(vertical=True)
+    new_id = "%" + str(await new_session.async_get_variable("tmuxWindowPane"))
+    check(pane_info(new_id)[4] == 1, f"splitting a tmux float makes tmux float {new_id}")
+
+    async def one_more_float():
+        tab = await tmux_tab()
+        return tab is not None and len(tab.floating_sessions) == floats_before + 1
+
+    check(await wait_for(one_more_float), "the new float appears as a float")
+    tmux("kill-pane", "-t", new_id)
+
     await created.async_dock()
 
     async def docked():
