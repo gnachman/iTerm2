@@ -2369,6 +2369,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     const NSInteger hiddenFloatingPanes = ([_delegate respondsToSelector:@selector(textViewNumberOfHiddenFloatingPanes)] ?
                                            [_delegate textViewNumberOfHiddenFloatingPanes] : 0);
     _indicatorsHelper.hiddenFloatingPaneCount = hiddenFloatingPanes;
+    if (hiddenFloatingPanes > 0 && [_delegate respondsToSelector:@selector(textViewHiddenFloatingPanesBadge)]) {
+        _indicatorsHelper.hiddenFloatingPanesBadge = [_delegate textViewHiddenFloatingPanesBadge];
+    } else {
+        _indicatorsHelper.hiddenFloatingPanesBadge = nil;
+    }
     [_indicatorsHelper setIndicator:kiTermIndicatorHiddenFloatingPanes
                             visible:hiddenFloatingPanes > 0
                      darkBackground:isDark];

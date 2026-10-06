@@ -251,6 +251,32 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     }
 }
 
+- (void)setHiddenFloatingPanesBadge:(NSImage *)hiddenFloatingPanesBadge {
+    if (hiddenFloatingPanesBadge == _hiddenFloatingPanesBadge) {
+        return;
+    }
+    _hiddenFloatingPanesBadge = hiddenFloatingPanesBadge;
+    // The cached image includes the badge.
+    if (_visibleIndicators[kiTermIndicatorHiddenFloatingPanes]) {
+        const BOOL dark = _visibleIndicators[kiTermIndicatorHiddenFloatingPanes].dark;
+        [_visibleIndicators removeObjectForKey:kiTermIndicatorHiddenFloatingPanes];
+        [self setIndicator:kiTermIndicatorHiddenFloatingPanes visible:YES darkBackground:dark];
+    }
+}
+
+// The indicator with a badge in its bottom right corner.
++ (NSImage *)image:(NSImage *)image withBadge:(NSImage *)badge {
+    const NSSize size = image.size;
+    const CGFloat side = size.width * 0.55;
+    return [NSImage imageOfSize:size drawBlock:^{
+        [image drawInRect:NSMakeRect(0, 0, size.width, size.height)];
+        [badge drawInRect:NSMakeRect(size.width - side, 0, side, side)
+                 fromRect:NSZeroRect
+                operation:NSCompositingOperationSourceOver
+                 fraction:1];
+    }];
+}
+
 - (void)setIndicatorSize:(CGFloat)indicatorSize {
     if (_indicatorSize != indicatorSize) {
         _indicatorSize = indicatorSize;
@@ -286,6 +312,15 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             indicator.image = darkBackground ? tuple.firstObject : tuple.secondObject;
         }
         assert(indicator.image);
+        if ([identifier isEqualToString:kiTermIndicatorHiddenFloatingPanes] && _hiddenFloatingPanesBadge) {
+            NSImage *base = indicator.image;
+            if (base.isTemplate) {
+                // The composed image can't be a template, or the badge would lose its colors, so
+                // color the symbol as a template would be colored.
+                base = [base it_imageWithTintColor:darkBackground ? [NSColor whiteColor] : [NSColor blackColor]];
+            }
+            indicator.image = [[self class] image:base withBadge:_hiddenFloatingPanesBadge];
+        }
         indicator.dark = darkBackground;
         _visibleIndicators[identifier] = indicator;
         [_delegate indicatorNeedsDisplay];

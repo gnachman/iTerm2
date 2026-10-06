@@ -141,6 +141,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 @optional
 // The number of hidden floating panes this pane should show an indicator for.
 - (NSInteger)textViewNumberOfHiddenFloatingPanes;
+- (NSImage *)textViewHiddenFloatingPanesBadge;
 @required
 - (BOOL)textViewIsLocked;
 // YES when the enclosing window's layout is locked.

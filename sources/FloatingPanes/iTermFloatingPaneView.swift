@@ -77,6 +77,10 @@ final class iTermFloatingPaneView: NSView {
     /// still exists; this is not the hide toggle.
     @objc var isHiddenByTmux = false
 
+    /// When this float was hidden (by the toggle or by tmux), seconds since the reference date, or
+    /// 0 while it shows. Activity after this decorates the hidden-floats indicator.
+    @objc var hiddenSince: TimeInterval = 0
+
     @objc var isMaximized: Bool {
         return outlineFrameBeforeMaximizing != nil
     }

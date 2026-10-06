@@ -224,6 +224,39 @@ final class FloatingPaneCommandTests: XCTestCase {
         XCTAssertTrue(text.contains("3"), text)
     }
 
+    func testTheIndicatorShowsWhatHappenedInHiddenFloats() {
+        let saved = iTermPreferences.bool(forKey: kPreferenceKeyShowNewOutputIndicator)
+        iTermPreferences.setBool(true, forKey: kPreferenceKeyShowNewOutputIndicator)
+        defer {
+            iTermPreferences.setBool(saved, forKey: kPreferenceKeyShowNewOutputIndicator)
+        }
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let float = fixture.addFloat(frame: floatFrame)
+        tab.setActiveSession(tiled)
+        tab.floatingPanesHidden = true
+        XCTAssertEqual(tab.hiddenFloatingPanesActivity, .none, "nothing has happened since hiding")
+        XCTAssertNil(tab.sessionHiddenFloatingPanesBadge())
+
+        // Output after hiding.
+        float.setValue(Date.timeIntervalSinceReferenceDate + 1, forKey: "lastOutputIgnoringOutputAfterResizing")
+        tab.perform(NSSelectorFromString("updateLabelAttributes"))
+        XCTAssertEqual(tab.hiddenFloatingPanesActivity, .newOutput)
+        XCTAssertNotNil(tab.sessionHiddenFloatingPanesBadge())
+
+        // A bell outranks new output.
+        float.bell = true
+        XCTAssertEqual(tab.hiddenFloatingPanesActivity, .bell)
+
+        // Showing the floats clears it.
+        float.bell = false
+        tab.floatingPanesHidden = false
+        XCTAssertEqual(tab.hiddenFloatingPanesActivity, .none)
+        XCTAssertEqual(tab.sessionNumberOfHiddenFloatingPanes(), 0)
+    }
+
     // MARK: - Docking
 
     func testDockMovesTheFloatIntoTheTiledLayout() {

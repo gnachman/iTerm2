@@ -225,6 +225,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // While zoomed: the tiled pane tmux zoomed, which is not the active session when a float is.
     PTYSession *_tmuxZoomedSession;
     NSMutableArray<PTYSession *> *_tmuxSessionsBecomingFloats;
+    // What has happened in the hidden floats, shown on the hidden-floats indicator.
+    iTermHiddenFloatingPanesActivity _hiddenFloatingPanesActivity;
     // Where a tmux float was when a move or resize began.
     NSRect _tmuxFloatDragStartFrame;
     VT100GridSize _tmuxFloatDragStartGrid;
@@ -880,6 +882,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setBell:(BOOL)flag {
     PtyLog(@"setBell:%d", (int)flag);
+    [self updateHiddenFloatingPanesActivity];
     if (flag) {
         [self setState:kPTYTabBellState reset:0];
     } else {
@@ -1774,6 +1777,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         // If possible, reset label attributes on this tab.
         [self resetLabelAttributesIfAppropriate];
     }
+    [self updateHiddenFloatingPanesActivity];
 }
 
 - (void)closeSession:(PTYSession *)session {
@@ -1895,9 +1899,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateFloatingPaneVisibility {
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     for (iTermFloatingPaneView *pane in _floatingPanes) {
         pane.hidden = _floatingPanesHidden || _floatingPanesTemporarilyHidden || pane.isHiddenByTmux;
+        // Activity in a hidden float counts from when it was hidden.
+        if (![self floatingPaneIsPersistentlyHidden:pane]) {
+            pane.hiddenSince = 0;
+        } else if (pane.hiddenSince == 0) {
+            pane.hiddenSince = now;
+        }
     }
+    [self updateHiddenFloatingPanesActivity];
     // A hidden float counts as offscreen for Alert on Marks, which the session's config carries.
     for (PTYSession *session in [self floatingSessions]) {
         [session sync];
@@ -1952,8 +1964,67 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return YES;
 }
 
+// Hidden by the toggle or by tmux's zoom. Temporary hides (Find Cursor, a drag) don't count.
+- (BOOL)floatingPaneIsPersistentlyHidden:(iTermFloatingPaneView *)pane {
+    return _floatingPanesHidden || pane.isHiddenByTmux;
+}
+
 - (NSInteger)sessionNumberOfHiddenFloatingPanes {
-    return _floatingPanesHidden ? (NSInteger)_floatingPanes.count : 0;
+    return (NSInteger)[_floatingPanes filteredArrayUsingBlock:^BOOL(iTermFloatingPaneView *pane) {
+        return [self floatingPaneIsPersistentlyHidden:pane];
+    }].count;
+}
+
+// What has happened in the hidden floats since they were hidden, by the tab icon's priorities.
+- (iTermHiddenFloatingPanesActivity)hiddenFloatingPanesActivity {
+    iTermHiddenFloatingPanesActivity result = iTermHiddenFloatingPanesActivityNone;
+    const BOOL showNewOutput = [iTermPreferences boolForKey:kPreferenceKeyShowNewOutputIndicator];
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        if (![self floatingPaneIsPersistentlyHidden:pane]) {
+            continue;
+        }
+        PTYSession *session = [self sessionForSessionView:pane.sessionView];
+        iTermHiddenFloatingPanesActivity activity = iTermHiddenFloatingPanesActivityNone;
+        if (session.exited) {
+            activity = iTermHiddenFloatingPanesActivityEnded;
+        } else if (session.bell) {
+            activity = iTermHiddenFloatingPanesActivityBell;
+        } else if (showNewOutput && session.lastOutputTime > pane.hiddenSince) {
+            activity = session.isIdle ? iTermHiddenFloatingPanesActivityIdle : iTermHiddenFloatingPanesActivityNewOutput;
+        }
+        result = MAX(result, activity);
+    }
+    return result;
+}
+
+- (NSImage *)sessionHiddenFloatingPanesBadge {
+    NSAppearance *appearance = self.realParentWindow.window.effectiveAppearance;
+    switch (_hiddenFloatingPanesActivity) {
+        case iTermHiddenFloatingPanesActivityNone:
+            return nil;
+        case iTermHiddenFloatingPanesActivityIdle:
+            return [PTYTab idleImageWithAppearance:appearance];
+        case iTermHiddenFloatingPanesActivityNewOutput:
+            return [PTYTab imageForNewOutputWithAppearance:appearance];
+        case iTermHiddenFloatingPanesActivityBell:
+            return [PTYTab bellImage];
+        case iTermHiddenFloatingPanesActivityEnded:
+            return [PTYTab deadImageWithAppearance:appearance];
+    }
+    return nil;
+}
+
+// The indicator is drawn by the tiled panes, so they redraw when the hidden floats' activity changes.
+- (void)updateHiddenFloatingPanesActivity {
+    const iTermHiddenFloatingPanesActivity activity = [self hiddenFloatingPanesActivity];
+    if (activity == _hiddenFloatingPanesActivity) {
+        return;
+    }
+    DLog(@"Hidden floats' activity is now %@", @(activity));
+    _hiddenFloatingPanesActivity = activity;
+    for (PTYSession *session in [self tiledSessions]) {
+        [session.textview requestDelegateRedraw];
+    }
 }
 
 - (void)floatingPanesDidChange {

@@ -47,6 +47,10 @@ extern CGFloat kiTermIndicatorStandardHeight;
 // How many floating panes the hidden-floats indicator stands for. Used in its help text.
 @property(nonatomic) NSInteger hiddenFloatingPaneCount;
 
+// Drawn over the corner of the hidden-floats indicator to show what has happened in them, like a
+// tab's icon. nil for none.
+@property(nonatomic, strong) NSImage *hiddenFloatingPanesBadge;
+
 @property(nonatomic, assign) id<iTermIndicatorsHelperDelegate> delegate;
 @property(nonatomic, readonly) NSInteger numberOfVisibleIndicators;
 @property(nonatomic, assign) BOOL backgroundlessMode;

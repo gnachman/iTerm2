@@ -36,6 +36,15 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 
 // This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support
 // is eventually dropped, change this to make it official.
+// What has happened in a tab's hidden floats, in increasing priority, as a tab's icon shows it.
+typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
+    iTermHiddenFloatingPanesActivityNone,
+    iTermHiddenFloatingPanesActivityIdle,
+    iTermHiddenFloatingPanesActivityNewOutput,
+    iTermHiddenFloatingPanesActivityBell,
+    iTermHiddenFloatingPanesActivityEnded
+};
+
 @interface PTYTab : NSObject <
   NSCopying,
   NSSplitViewDelegate,
@@ -328,6 +337,9 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 
 // Tells API clients that a float was added, moved, resized, restacked, hidden or shown.
 - (void)floatingPanesDidChange;
+
+// What has happened in the hidden floats since they were hidden.
+@property(nonatomic, readonly) iTermHiddenFloatingPanesActivity hiddenFloatingPanesActivity;
 
 // The tiled session with the highest activity counter.
 - (PTYSession *)mostRecentlyActiveTiledSession;

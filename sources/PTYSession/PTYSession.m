@@ -13775,6 +13775,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return belongsToDomain && isSender;
 }
 
+- (NSTimeInterval)lastOutputTime {
+    return self.lastOutputIgnoringOutputAfterResizing;
+}
+
+- (NSImage *)textViewHiddenFloatingPanesBadge {
+    if (![_delegate respondsToSelector:@selector(sessionHiddenFloatingPanesBadge)]) {
+        return nil;
+    }
+    return [_delegate sessionHiddenFloatingPanesBadge];
+}
+
 - (NSInteger)textViewNumberOfHiddenFloatingPanes {
     // Shown in every tiled pane of a tab with hidden floats, so it does not jump around as focus
     // moves. A float never shows it.

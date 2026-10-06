@@ -179,6 +179,9 @@ typedef enum {
 // How many of the tab's floating panes are hidden.
 - (NSInteger)sessionNumberOfHiddenFloatingPanes;
 
+// What has happened in the hidden floats (ended, bell, new output, idle) as a small image, or nil.
+- (nullable NSImage *)sessionHiddenFloatingPanesBadge;
+
 // For a native floating pane, the largest grid that fits in its tab, as (columns, rows). Zero
 // otherwise.
 - (NSSize)sessionMaximumFloatingGridSize:(PTYSession *)session;
@@ -667,6 +670,8 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 
 // Has it been at least a second since isProcessing became false?
 @property(nonatomic, readonly) BOOL isIdle;
+// When output last arrived, ignoring output caused by resizing. Seconds since the reference date.
+@property(nonatomic, readonly) NSTimeInterval lastOutputTime;
 
 // Tries to return the current local working directory without resolving symlinks (possible if
 // shell integration is on). If that can't be done then the current local working directory with
