@@ -40,17 +40,37 @@
 }
 
 - (void)drawRect:(NSRect)insaneRect {
+    if (!_color) {
+        [super drawRect:insaneRect];
+        return;
+    }
     const NSRect dirtyRect = NSIntersectionRect(insaneRect, self.bounds);
     [_color setFill];
     NSRectFill(dirtyRect);
 
-    // Draw around the subviews.
-    [[NSColor clearColor] set];
-    for (NSView *view in self.subviews) {
-        NSRectFillUsingOperation(view.frame, NSCompositingOperationCopy);
+    // Draw around the root.
+    NSView *rootView = self.rootView;
+    if (rootView.superview == self) {
+        [[NSColor clearColor] set];
+        NSRectFillUsingOperation(rootView.frame, NSCompositingOperationCopy);
     }
 
     [super drawRect:insaneRect];
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    [self layoutRootIfNeeded];
+}
+
+- (void)layoutRootIfNeeded {
+    NSView *rootView = self.rootView;
+    if (!_rootFillsBounds || rootView.superview != self) {
+        return;
+    }
+    if (!NSEqualRects(rootView.frame, self.bounds)) {
+        rootView.frame = self.bounds;
+    }
 }
 
 - (void)resizeWithOldSuperviewSize:(NSSize)oldSize {

@@ -186,18 +186,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     iTermSessionTabStatus *_aggregatedTabStatus;
     BOOL _tabStatusWaitingProminent;
 
-    // The root view of this tab. May be a SolidColorView for tmux tabs or the
-    // same as root_ otherwise (the normal case).
-    __weak NSView *tabView_;
+    // Every tab's view. It is the tab view item's view and holds root_. In a native tab root_
+    // fills it. In a tmux tab root_ can be smaller than it (see _tmuxContainer).
+    iTermFlexibleView *_containerView;
 
-    // If there is a flexible root view, this is set and is the tabview's view.
-    // Otherwise it is nil.
-    iTermFlexibleView *flexibleView_;
+    // YES when root_ is sized independently of _containerView, which then fills the space around
+    // it. Only tmux tabs do this.
+    BOOL _tmuxContainer;
 
-    // The root of a tree of split views whose leaves are SessionViews. The root is the view of the
-    // NSTabViewItem.
+    // The root of a tree of split views whose leaves are SessionViews.
     //
-    // NSTabView -> NSTabViewItem -> NSSplitView (root) -> ... -> SessionView -> PTYScrollView -> etc.
+    // NSTabView -> NSTabViewItem -> container -> NSSplitView (root) -> ... -> SessionView -> etc.
     NSSplitView* root_;
 
     // The active pane is maximized, meaning there are other panes that are hidden.
@@ -466,6 +465,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                           capacity:1];
     _tabNumberForItermSessionId = -1;
     hiddenLiveViews_ = [[NSMutableArray alloc] init];
+    _containerView = [[iTermFlexibleView alloc] initWithFrame:NSZeroRect color:nil];
+    _containerView.autoresizesSubviews = YES;
+    _containerView.rootFillsBounds = YES;
     _variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextTab
                                                    owner:self];
     _variables.primaryKey = @"id";
@@ -539,7 +541,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 
     root_ = nil;
-    flexibleView_ = nil;
+    _containerView = nil;
 }
 
 - (NSString *)description {
@@ -567,7 +569,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PTYTab *theCopy = [PTYTab tabWithArrangement:arrangement
                                            named:nil
                                       inTerminal:[self realParentWindow]
-                                 hasFlexibleView:flexibleView_ != nil
+                                 hasFlexibleView:_tmuxContainer
                                          viewMap:nil
                                       sessionMap:nil
                                   tmuxController:tmuxController_
@@ -591,10 +593,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (NSView *)realRootView {
-    if (flexibleView_) {
-        return flexibleView_;
-    }
-    return root_;
+    return _containerView;
 }
 
 - (BOOL)useSeparateStatusbarsPerPane {
@@ -1244,13 +1243,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateFlexibleViewColors {
-    if (!flexibleView_) {
+    if (!_tmuxContainer) {
         return;
     }
     Profile *profile = [self.tmuxController profileForWindow:self.tmuxWindow];
     NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
-    const NSSize delta = NSMakeSize(flexibleView_.frame.size.width - root_.frame.size.width,
-                                    flexibleView_.frame.size.height - root_.frame.size.height);
+    const NSSize delta = NSMakeSize(_containerView.frame.size.width - root_.frame.size.width,
+                                    _containerView.frame.size.height - root_.frame.size.height);
     if (![realParentWindow_ anyFullScreen] &&
         delta.width >= 0 && delta.width < cellSize.width &&
         delta.height >= 0 && delta.height < cellSize.height) {
@@ -1268,10 +1267,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
 
 
-        [flexibleView_ setColor:bgColor];
+        [_containerView setColor:bgColor];
     } else {
         // Fullscreen, overly large flexible view, or exact size flex view.
-        [flexibleView_ setColor:[self flexibleViewColor]];
+        [_containerView setColor:[self flexibleViewColor]];
     }
 }
 
@@ -1308,7 +1307,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         } else {
             [tabViewItem_ setLabel:@""];
         }
-        [tabViewItem_ setView:tabView_];
+        [tabViewItem_ setView:_containerView];
     }
 }
 
@@ -2816,11 +2815,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)setSize:(NSSize)newSize {
     if ([self isTmuxTab]) {
-        [tabView_ setFrameSize:newSize];
+        [_containerView setFrameSize:newSize];
     } else {
         PtyLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
         [self dumpSubviewsOf:root_];
-        [root_ setFrameSize:newSize];
+        [self setNativeRootFrameSize:newSize];
         [self adjustSubviewsOf:root_];
         [self _splitViewDidResizeSubviews:root_];
     }
@@ -2977,7 +2976,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)recompact {
     NSSize size = [self _recursiveRecompact:root_];
     DLog(@"Change size of root frame from %@ to %@", NSStringFromSize(root_.frame.size), NSStringFromSize(size));
-    [root_ setFrame:NSMakeRect(0, 0, size.width, size.height)];
+    if (_tmuxContainer) {
+        [root_ setFrame:NSMakeRect(0, 0, size.width, size.height)];
+    } else {
+        [self setNativeRootFrameSize:size];
+    }
     [self fitSubviewsToRoot];
 }
 
@@ -3559,27 +3562,24 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self updateAggregatedTabStatus];
 }
 
+// Lets the root be smaller than the tab, with the container filling the space around it.
 - (void)enableFlexibleView {
-    assert(!flexibleView_);
-    // Interpose a vew between the tab and the root so the root can be smaller than the tab.
-    flexibleView_ = [[iTermFlexibleView alloc] initWithFrame:root_.frame
-                                                       color:[self flexibleViewColor]];
-    [flexibleView_ setFlipped:YES];
-    tabView_ = flexibleView_;
+    assert(!_tmuxContainer);
+    _tmuxContainer = YES;
+    _containerView.rootFillsBounds = NO;
+    _containerView.color = [self flexibleViewColor];
+    [_containerView setFlipped:YES];
     [root_ setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];
-    [tabView_ setAutoresizesSubviews:YES];
-    [root_ removeFromSuperview];
-    [tabView_ addSubview:root_];
-    [tabViewItem_ setView:tabView_];
+    [root_ setFrameOrigin:NSZeroPoint];
 }
 
 - (void)notifyWindowChanged {
     if ([self isTmuxTab]) {
-        if (!flexibleView_) {
+        if (!_tmuxContainer) {
             [self enableFlexibleView];
         }
         [self updateFlexibleViewColors];
-        [flexibleView_ setFrameSize:[[realParentWindow_ tabView] frame].size];
+        [_containerView setFrameSize:[[realParentWindow_ tabView] frame].size];
         for (PTYSession *aSession in [self sessions]) {
             // Because it's a tmux view it won't automatically resize.
             [[aSession view] updateTitleFrame];
@@ -5122,7 +5122,7 @@ typedef struct {
     }
     CGSize newRootSize = [self setSizesFromSplitTreeNode:node splitView:root_];
     if (!self.realParentWindow.anyFullScreen) {
-        root_.frame = NSMakeRect(0, 0, newRootSize.width, newRootSize.height);
+        [self setNativeRootFrameSize:newRootSize];
         [self recursiveAdjustSubviews:root_];
         [self.parentWindow fitWindowToTab:self];
     } else {
@@ -5206,11 +5206,12 @@ typedef struct {
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
     [root_ setNeedsDisplay:YES];
-    [flexibleView_ setNeedsDisplay:YES];
+    [_containerView setNeedsDisplay:YES];
 }
 
 - (void)setRoot:(NSSplitView *)newRoot
 {
+    NSSplitView *oldRoot = root_;
     root_ = newRoot;
     if (USE_THIN_SPLITTERS) {
         [root_ setDividerStyle:NSSplitViewDividerStyleThin];
@@ -5218,13 +5219,31 @@ typedef struct {
     [root_ setAutoresizesSubviews:YES];
     [root_ setDelegate:self];
     [PTYTab _recursiveSetDelegateIn:root_ to:self];
-    [flexibleView_ setSubviews:[NSArray array]];
-    [flexibleView_ addSubview:newRoot];
-    if (!flexibleView_) {
-        [root_ setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];
-        tabView_ = newRoot;
+
+    // Replace only the root. Anything else in the container stays.
+    if (oldRoot.superview == _containerView) {
+        [oldRoot removeFromSuperview];
     }
-    [tabViewItem_ setView:tabView_];
+    [root_ setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];
+    if (_tmuxContainer) {
+        [root_ setFrameOrigin:NSZeroPoint];
+    } else {
+        // The root fills the container. Adopt the root's size, which may come from a saved
+        // arrangement, rather than the other way around; the tab view sizes the container later.
+        [_containerView setFrame:NSMakeRect(0, 0, root_.frame.size.width, root_.frame.size.height)];
+        [root_ setFrameOrigin:NSZeroPoint];
+    }
+    [_containerView addSubview:root_ positioned:NSWindowBelow relativeTo:nil];
+    _containerView.rootView = root_;
+    [tabViewItem_ setView:_containerView];
+}
+
+// Native tabs only. The root fills the container, so changing the root's size means changing the
+// container's.
+- (void)setNativeRootFrameSize:(NSSize)size {
+    assert(!_tmuxContainer);
+    [_containerView setFrameSize:size];
+    [_containerView layoutRootIfNeeded];
 }
 
 - (TmuxController *)tmuxController {
@@ -5267,8 +5286,8 @@ typedef struct {
 }
 
 - (NSSize)rootViewSize {
-    if (flexibleView_) {
-        return flexibleView_.frame.size;
+    if (_tmuxContainer) {
+        return _containerView.frame.size;
     }
     return root_.frame.size;
 }
@@ -5482,8 +5501,8 @@ typedef struct {
                      tmuxController:tmuxController];
     DLog(@"PTYTab maximizeAfterApplyingTmuxParseTree using width of %@", parseTree[kLayoutDictMaximumPixelWidthKey]);
     [self resizeViewsInViewHierarchy:root_ forNewLayout:maximizedParseTree];
-    DLog(@"After resizing views in maximize, root_.width=%f, flexibleView_.width=%f",
-          root_.frame.size.width, flexibleView_.frame.size.width);
+    DLog(@"After resizing views in maximize, root_.width=%f, _containerView.width=%f",
+          root_.frame.size.width, _containerView.frame.size.width);
     [self fitSubviewsToRoot];
 }
 
@@ -5541,11 +5560,11 @@ typedef struct {
             parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:[self rootViewSize]];
             DLog(@"Tweaked parse tree:\n%@", parseTree);
         }
-        DLog(@"PTYTab setTmuxLayout %@ visible parse tree yielding width of %@px. Will resize views. root_ width before=%f, flexibleView_ width before=%f",
+        DLog(@"PTYTab setTmuxLayout %@ visible parse tree yielding width of %@px. Will resize views. root_ width before=%f, container width before=%f",
              visibleParseTree ? @"with" : @"without",
              parseTree[kLayoutDictMaximumPixelWidthKey],
              root_.frame.size.width,
-             flexibleView_.frame.size.width);
+             _containerView.frame.size.width);
         [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
         [self fitSubviewsToRoot];
     } else {
@@ -5611,17 +5630,17 @@ typedef struct {
 }
 
 - (BOOL)updatedTmuxLayoutRequiresAdjustment {
-    if (!flexibleView_) {
+    if (!_tmuxContainer) {
         DLog(@"Not too large because there is no flexible view");
         return NO;
     }
     if ([iTermAdvancedSettingsModel disableTmuxWindowResizing]) {
-        const CGFloat dx = root_.frame.size.width - flexibleView_.frame.size.width;
-        const CGFloat dy = root_.frame.size.height - flexibleView_.frame.size.height;
+        const CGFloat dx = root_.frame.size.width - _containerView.frame.size.width;
+        const CGFloat dy = root_.frame.size.height - _containerView.frame.size.height;
         const NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
         DLog(@"updatedTmuxLayoutRequiresAdjustment: dx=%@ dy=%@ cellSize=%@ root.frame=%@ flexibleView.frame=%@",
              @(dx), @(dy), NSStringFromSize(cellSize), NSStringFromRect(root_.frame),
-             NSStringFromRect(flexibleView_.frame));
+             NSStringFromRect(_containerView.frame));
         if (dx > 0 || fabs(dx) >= cellSize.width) {
             DLog(@"updatedTmuxLayoutRequiresAdjustment: YES");
             return YES;
@@ -5636,9 +5655,9 @@ typedef struct {
     }
     DLog(@"updatedTmuxLayoutRequiresAdjustment: Using too-large check only. root %@ has size %@ vs flexible view %@ with size %@",
          root_, NSStringFromSize(root_.frame.size),
-         flexibleView_, NSStringFromSize(flexibleView_.frame.size));
-    return (root_.frame.size.width > flexibleView_.frame.size.width ||
-            root_.frame.size.height > flexibleView_.frame.size.height);
+         _containerView, NSStringFromSize(_containerView.frame.size));
+    return (root_.frame.size.width > _containerView.frame.size.width ||
+            root_.frame.size.height > _containerView.frame.size.height);
 }
 
 - (BOOL)hasMaximizedPane {
@@ -7556,7 +7575,7 @@ typedef struct {
         return VT100GridSizeMake([iTermProfilePreferences intForKey:KEY_COLUMNS inProfile:profile],
                                  [iTermProfilePreferences intForKey:KEY_ROWS inProfile:profile]);
     } else {
-        NSSize frameSize = tabView_.frame.size;
+        NSSize frameSize = _containerView.frame.size;
         DLog(@"Compute size from frame %@", NSStringFromSize(frameSize));
         PTYSession *anySession = self.sessions.firstObject;
 
