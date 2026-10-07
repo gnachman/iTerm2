@@ -13814,8 +13814,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)textViewIsMaximized {
     if ([_delegate sessionIsFloating:self]) {
-        // The tab's maximized pane is a tiled pane; a float shown over it is not maximized.
-        return NO;
+        // A float is maximized on its own, within the floats. A float shown over a maximized tiled
+        // pane is not.
+        return self.floatingPane.isMaximized;
     }
     return [_delegate hasMaximizedPane];
 }

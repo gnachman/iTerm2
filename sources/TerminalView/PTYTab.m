@@ -8806,6 +8806,8 @@ typedef struct {
             [iTermFloatingPaneLayout maximizeFloatingPane:floatingPane session:session];
             [self sendFloatingPaneToBack:floatingPane];
         }
+        // It shows the maximized indicator while maximized, as a tiled pane does.
+        [session.textview requestDelegateRedraw];
         if (self.activeSession != session) {
             [self setActiveSession:session];
         }

@@ -68,12 +68,15 @@ final class FloatingPaneMaximizeTests: XCTestCase {
         fixture.terminal.toggleMaximizeActivePane()
         XCTAssertTrue(pane(float).isMaximized)
         assertFillsTheTab(float)
+        XCTAssertTrue(float.textViewIsMaximized(), "it shows the maximized indicator")
+        XCTAssertFalse(other.textViewIsMaximized())
         XCTAssertEqual(tab.floatingSessions(), [float, other], "a maximized float goes behind the others")
         XCTAssertFalse(tab.hasMaximizedPane(), "the tiled layout is not maximized")
         XCTAssertEqual(tab.tiledSessions()?.count, 1)
 
         fixture.terminal.toggleMaximizeActivePane()
         XCTAssertFalse(pane(float).isMaximized)
+        XCTAssertFalse(float.textViewIsMaximized())
         XCTAssertEqual(pane(float).outlineFrame, start)
         XCTAssertEqual(tab.floatingSessions(), [other, float], "it comes back in front")
     }
