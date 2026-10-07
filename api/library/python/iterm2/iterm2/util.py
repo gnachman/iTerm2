@@ -448,9 +448,15 @@ def iterm2_encode(obj: typing.Any) -> str:
     """Encode an object into an iTerm2 expression.
 
     string -> "string"
+    bool -> true or false
     number -> number
     array -> [elt, elt, ...]
     """
+    if isinstance(obj, bool):
+        # Checked before numbers: bool is a subclass of int, and str() would
+        # give Python's True and False, which the expression language does
+        # not know.
+        return "true" if obj else "false"
     if isinstance(obj, str):
         return iterm2_encode_str(obj)
     if isinstance(obj, list):

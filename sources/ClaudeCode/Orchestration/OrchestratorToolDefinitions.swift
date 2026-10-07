@@ -200,13 +200,13 @@ extension OrchestratorCommand {
 
         ToolDefinition(
             name: ToolName.startSession.rawValue,
-            description: "Spawn a new terminal session. Use window=\u{201C}new\u{201D} to open a new window, \u{201C}tab\u{201D} (default) to add a tab to the current window, or \u{201C}current\u{201D} to split the current pane vertically. The user is always prompted to approve the spawn (and the command being run, if any). Returns the session_guid of the new session so you can immediately drive it with the other tools (send_text, get_screen_contents, etc.).",
+            description: "Spawn a new terminal session. Use window=\u{201C}new\u{201D} to open a new window, \u{201C}tab\u{201D} (default) to add a tab to the current window, \u{201C}current\u{201D} to split the current pane vertically, or \u{201C}floating\u{201D} to add a floating pane over the current tab. The user is always prompted to approve the spawn (and the command being run, if any). Returns the session_guid of the new session so you can immediately drive it with the other tools (send_text, get_screen_contents, etc.).",
             inputSchema: object([
                 ("profile", nullableString("Optional profile name. Use null to fall back to the default profile.")),
                 ("command", nullableString("Optional command to run in the new session. Use null for the profile's default shell.")),
                 ("cwd", nullableString("Optional working directory. Use null for the default.")),
-                ("window", nullableString("Where to put the new session. \u{201C}new\u{201D} for a new window, \u{201C}current\u{201D} to split the current pane, \u{201C}tab\u{201D} (default) for a new tab in the current window. Use null for tab.",
-                                          enumValues: ["new", "current", "tab"])),
+                ("window", nullableString("Where to put the new session. \u{201C}new\u{201D} for a new window, \u{201C}current\u{201D} to split the current pane, \u{201C}tab\u{201D} (default) for a new tab in the current window, \u{201C}floating\u{201D} for a floating pane over the current tab. Use null for tab.",
+                                          enumValues: ["new", "current", "tab", "floating"])),
             ], required: ["profile", "command", "cwd", "window"])),
 
         // -------- Watchers (async; non-blocking) --------

@@ -702,6 +702,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(layoutChanged:)
+                                                     name:iTermTabFloatingPanesDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
                                                      name:iTermTabDidChangePositionInWindowNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -1071,7 +1075,37 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
     focusChange.session = session.guid;
     // Deferrable: held from a connection that is mid-CreateTab (see the deferral).
-    [self handleFocusChange:focusChange deferrable:YES];
+    [self handleFocusChange:focusChange
+                 deferrable:YES
+      floatingPaneAwareOnly:[session.delegate sessionIsFloating:session]];
+}
+
+// Python library versions before this one do not know about floating panes. A focus change to a
+// session that is missing from its tab's split tree sends them into an endless refresh: refresh,
+// fetch focus, fail to find the session, refresh again.
+static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
+
++ (BOOL)libraryVersionUnderstandsFloatingPanes:(NSString *)libraryVersion {
+    if (libraryVersion.length == 0) {
+        // No header: the in-process runtime, which ships the current library.
+        return YES;
+    }
+    NSArray<NSString *> *parts = [libraryVersion componentsSeparatedByString:@" "];
+    if (parts.count != 2 || ![parts[0] isEqualToString:@"python"]) {
+        return YES;
+    }
+    NSString *version = parts[1];
+    NSCharacterSet *allowed = [NSCharacterSet characterSetWithCharactersInString:@"0123456789."];
+    if (version.length == 0 ||
+        [version rangeOfCharacterFromSet:allowed.invertedSet].location != NSNotFound) {
+        return YES;
+    }
+    return [version compare:iTermAPIFloatingPanesFirstAwarePythonVersion
+                    options:NSNumericSearch] != NSOrderedAscending;
+}
+
+- (BOOL)connectionKeyUnderstandsFloatingPanes:(NSString *)connectionKey {
+    return [iTermAPIHelper libraryVersionUnderstandsFloatingPanes:[_apiServer libraryVersionForConnectionKey:connectionKey]];
 }
 
 - (void)broadcastDomainsDidChange:(NSNotification *)notification {
@@ -1103,10 +1137,20 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 // after its response); all other connections receive it normally. Non-deferrable
 // focus changes (window key, app active) always deliver.
 - (void)handleFocusChange:(ITMFocusChangedNotification *)notif deferrable:(BOOL)deferrable {
+    [self handleFocusChange:notif deferrable:deferrable floatingPaneAwareOnly:NO];
+}
+
+// `floatingPaneAwareOnly` withholds the change from clients too old to know about floating panes.
+- (void)handleFocusChange:(ITMFocusChangedNotification *)notif
+               deferrable:(BOOL)deferrable
+    floatingPaneAwareOnly:(BOOL)floatingPaneAwareOnly {
     void (^handle)(void) = ^{
         [self->_focusChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
             if (deferrable &&
                 [self->_createTabFocusDeferral shouldHoldFocusNotificationForConnectionGuid:key]) {
+                return;
+            }
+            if (floatingPaneAwareOnly && ![self connectionKeyUnderstandsFloatingPanes:key]) {
                 return;
             }
             ITMNotification *notification = [[ITMNotification alloc] init];
@@ -2404,6 +2448,11 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             ITMListSessionsResponse_Tab *tabMessage = [[ITMListSessionsResponse_Tab alloc] init];
             tabMessage.tabId = [@(tab.uniqueId) stringValue];
             tabMessage.root = [tab rootSplitTreeNode];
+            // Floats are not in root (protocol 1.21+). Older clients ignore the field.
+            [tabMessage.floatingPanesArray addObjectsFromArray:[tab floatingPaneMessages]];
+            if (tab.floatingPanes.count > 0) {
+                tabMessage.floatingPanesHidden = tab.floatingPanesHidden;
+            }
             // Report the tab's active session so clients know the current
             // session without waiting for a focus notification (protocol 1.18+).
             PTYSession *activeSession = tab.activeSession;
@@ -2620,12 +2669,27 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 - (void)apiServerSplitPane:(ITMSplitPaneRequest *)request handler:(void (^)(ITMSplitPaneResponse *))handler {
     NSArray<PTYSession *> *sessions;
     if ([request.session isEqualToString:@"all"]) {
-        sessions = [self allSessions];
+        // A split aimed at a float goes to a tiled pane, which is already in the list. Leave floats
+        // out so no pane is split twice.
+        sessions = [[self allSessions] filteredArrayUsingBlock:^BOOL(PTYSession *session) {
+            PTYTab *tab = [[[iTermController sharedInstance] terminalWithSession:session] tabForSession:session];
+            return ![tab sessionIsFloating:session];
+        }];
     } else {
         PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
         if (!session) {
             ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
             response.status = ITMSplitPaneResponse_Status_SessionNotFound;
+            handler(response);
+            return;
+        }
+        // A native float holds one session and can't be split. Other ways of splitting one go to a
+        // tiled pane instead, but a script asked for this pane and should know. tmux makes another
+        // float, except tmux 3.7, which can't.
+        PTYTab *tab = [[[iTermController sharedInstance] terminalWithSession:session] tabForSession:session];
+        if ([tab sessionIsFloating:session] && (!tab.isTmuxTab || ![tab tmuxAllowsChangingFloatingPanes])) {
+            ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
+            response.status = ITMSplitPaneResponse_Status_CannotSplit;
             handler(response);
             return;
         }
@@ -3130,7 +3194,8 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             handler(response);
             return;
         }
-        if (tab.isMaximized && tab.activeSession != session) {
+        // A float shows over a maximized pane, so activating it leaves the maximized pane alone.
+        if (tab.isMaximized && tab.activeSession != session && ![tab sessionIsFloating:session]) {
             [tab unmaximize];
             [tab setActiveSession:session];
             [tab maximize];
@@ -3375,7 +3440,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     handler(response);
 }
 
-- (void)apiServerFocus:(ITMFocusRequest *)request handler:(void (^)(ITMFocusResponse *))handler {
+- (void)apiServerFocus:(ITMFocusRequest *)request
+        libraryVersion:(NSString *)libraryVersion
+               handler:(void (^)(ITMFocusResponse *))handler {
+    const BOOL understandsFloatingPanes = [iTermAPIHelper libraryVersionUnderstandsFloatingPanes:libraryVersion];
     ITMFocusResponse *response = [[ITMFocusResponse alloc] init];
 
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
@@ -3412,6 +3480,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         [response.notificationsArray addObject:focusChange];
 
         for (PTYTab *tab in term.tabs) {
+            if (!understandsFloatingPanes && [tab sessionIsFloating:tab.activeSession]) {
+                // See iTermAPIFloatingPanesFirstAwarePythonVersion.
+                continue;
+            }
             focusChange = [[ITMFocusChangedNotification alloc] init];
             focusChange.session = tab.activeSession.guid;
             [response.notificationsArray addObject:focusChange];

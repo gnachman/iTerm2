@@ -2120,6 +2120,18 @@ static const NSUInteger iTermUndoCloseStateMaximumCount = 20;
                                splitSessionGuid:term.currentSession.guid];
             }
             break;
+        case iTermOpenStyleFloatingPane:
+            term = [self currentTerminal];
+            if (term.canCreateFloatingPane) {
+                PTYSession *previous = term.currentSession;
+                [term openFloatingPaneWithURL:url target:target baseProfile:profile];
+                if (!select && previous) {
+                    [term.currentTab setActiveSession:previous];
+                }
+                return YES;
+            }
+            // Can't float here (layout lock, tmux, or no window): fall back to a tab or window.
+            break;
     }
     if (term.layoutLocked && term.numberOfTabs > 0) {
         // The current window’s layout is locked. Don’t split it or add a tab;

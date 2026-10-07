@@ -66,7 +66,7 @@ extension Session {
                 guard let tabs = window.tabsArray as? [ITMListSessionsResponse_Tab] else { continue }
                 for tab in tabs {
                     let isTmux = tab.tmuxWindowId != nil && tab.tmuxWindowId != "-1"
-                    walkSplitTree(tab.root) { s in
+                    walkSessions(in: tab) { s in
                         let cols = s.hasGridSize ? Int(s.gridSize.width) : 0
                         let rows = s.hasGridSize ? Int(s.gridSize.height) : 0
                         let id = s.uniqueIdentifier ?? ""
@@ -174,7 +174,7 @@ extension Session {
                 if splitResp.status == ITMSplitPaneResponse_Status.sessionNotFound {
                     throw IT2Error.targetNotFound("Session not found")
                 } else if splitResp.status == ITMSplitPaneResponse_Status.cannotSplit {
-                    throw IT2Error.apiError("Cannot split: pane may be too small")
+                    throw IT2Error.apiError("Cannot split this pane. A floating pane can’t be split, and a pane may be too small.")
                 } else {
                     throw IT2Error.apiError("Split failed with status \(splitResp.status.rawValue)")
                 }
@@ -234,7 +234,7 @@ extension Session {
                 var count = 0
                 for win in windows {
                     if let tabs = win.tabsArray as? [ITMListSessionsResponse_Tab] {
-                        for tab in tabs { count += collectSessionIds(from: tab.root).count }
+                        for tab in tabs { count += collectSessionIds(in: tab).count }
                     }
                 }
                 if count > 1 {
@@ -289,7 +289,7 @@ extension Session {
                 var count = 0
                 for win in windows {
                     if let tabs = win.tabsArray as? [ITMListSessionsResponse_Tab] {
-                        for tab in tabs { count += collectSessionIds(from: tab.root).count }
+                        for tab in tabs { count += collectSessionIds(in: tab).count }
                     }
                 }
                 if count > 1 {

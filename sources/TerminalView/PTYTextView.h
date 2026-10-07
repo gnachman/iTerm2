@@ -138,6 +138,11 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewIsActiveSession;
 - (BOOL)textViewSessionIsBroadcastingInput:(BOOL)asReceiver;
 - (BOOL)textViewIsMaximized;
+@optional
+// The number of hidden floating panes this pane should show an indicator for.
+- (NSInteger)textViewNumberOfHiddenFloatingPanes;
+- (NSImage *)textViewHiddenFloatingPanesBadge;
+@required
 - (BOOL)textViewIsLocked;
 // YES when the enclosing window's layout is locked.
 - (BOOL)textViewWindowIsLayoutLocked;
@@ -150,6 +155,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewWillNeedUpdateForBlink;
 - (BOOL)textViewDelegateHandlesAllKeystrokes;
 - (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid;
+- (void)textViewNewFloatingPaneWithProfileGuid:(NSString *)guid;
 - (void)textViewSelectNextTab;
 - (void)textViewSelectPreviousTab;
 - (void)textViewSelectNextWindow;
@@ -293,6 +299,19 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewDidUpdateDropTargetVisibility;
 - (void)textViewDidDetectMouseReportingFrustration;
 - (BOOL)textViewCanBury;
+- (BOOL)textViewIsFloating;
+// Find Cursor is about to show the cursor at this point. If a floating pane covers it, the floats
+// are hidden until Find Cursor ends.
+- (void)textViewFindCursorWillShowAtLocationInWindow:(NSPoint)point;
+- (void)textViewFindCursorDidEnd;
+// A cmd-opt-shift drag in a float's text moves the float. Mouse-down returns whether a move may
+// follow; if so, the drags and mouse-up come here too.
+- (BOOL)textViewFloatingPaneMoveMouseDown:(NSEvent *)event;
+- (void)textViewFloatingPaneMoveMouseDragged:(NSEvent *)event;
+- (void)textViewFloatingPaneMoveMouseUp:(NSEvent *)event;
+- (BOOL)textViewCanDockFloatingPane;
+- (void)textViewDockFloatingPane;
+- (void)textViewRaiseFloatingPaneToFront:(BOOL)toFront;
 - (void)textViewFindOnPageLocationsDidChange;
 - (void)textViewFindOnPageSelectedResultDidChange;
 - (CGFloat)textViewBlend;
@@ -890,6 +909,9 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
 - (NSRect)rectForCoord:(VT100GridCoord)coord;
+// The top left of the first visible grid cell in `view`'s coordinates, as it is when scrolled to
+// the bottom.
+- (NSPoint)gridOriginInView:(NSView *)view;
 - (void)updateSubviewFrames;
 - (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProviderUsingProcessedColors:(BOOL)processed
                                                                         elideDefaultBackgroundColor:(BOOL)elideDefaultBackgroundColor;

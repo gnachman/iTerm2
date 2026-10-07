@@ -215,7 +215,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             *sideEffects = iTermClickSideEffectsIgnore;
             return NO;
         }
-        [self.mouseDelegate mouseHandlerWillBeginDragPane:self];
+        [self.mouseDelegate mouseHandler:self willBeginDragPaneWithEvent:event];
         DLog(@"Returning because of drag starting");
         *sideEffects = iTermClickSideEffectsIgnore;
         return NO;

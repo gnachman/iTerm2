@@ -13,6 +13,7 @@ extern NSString *const kiTermIndicatorWrapToTop;
 extern NSString *const kiTermIndicatorWrapToBottom;
 
 extern NSString *const kiTermIndicatorMaximized;
+extern NSString *const kiTermIndicatorHiddenFloatingPanes;
 extern NSString *const kItermIndicatorBroadcastInput;
 extern NSString *const kItermIndicatorBroadcastInputReceiver;
 extern NSString *const kiTermIndicatorCoprocess;
@@ -42,6 +43,13 @@ extern CGFloat kiTermIndicatorStandardHeight;
 @end
 
 @interface iTermIndicatorsHelper : NSObject
+
+// How many floating panes the hidden-floats indicator stands for. Used in its help text.
+@property(nonatomic) NSInteger hiddenFloatingPaneCount;
+
+// Drawn over the corner of the hidden-floats indicator to show what has happened in them, like a
+// tab's icon. nil for none.
+@property(nonatomic, strong) NSImage *hiddenFloatingPanesBadge;
 
 @property(nonatomic, assign) id<iTermIndicatorsHelperDelegate> delegate;
 @property(nonatomic, readonly) NSInteger numberOfVisibleIndicators;

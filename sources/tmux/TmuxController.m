@@ -208,6 +208,10 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     // until the next relist; until then the geometry correction can be a row off in either
     // direction. A per-window option subscription would close that gap.
     NSMutableDictionary<NSNumber *, NSNumber *> *_paneBorderStatusByWindow;
+    // Panes with pane-border-lines none, kept current by a subscription once the server shows it
+    // has floating panes.
+    NSMutableSet<NSNumber *> *_borderlessPanes;
+    iTermTmuxSubscriptionHandle *_paneBorderLinesSubscription;
     BOOL _versionDetected;
     // terminal guid -> [(tmux window id, tab index), ...]
     NSMutableDictionary<NSString *, NSMutableArray<iTermTuple<NSNumber *, NSNumber *> *> *> *_buriedWindows;
@@ -333,6 +337,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
         _windowSizes = [[NSMutableDictionary alloc] init];
         _paneBorderStatusByWindow = [[NSMutableDictionary alloc] init];
+        _borderlessPanes = [[NSMutableSet alloc] init];
         RLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
@@ -696,7 +701,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                           initial:YES
                          tabIndex:nil];
     }
-    if (windowsToOpen.count == 0) {
+    // A window can be skipped instead of opened (for example, one with only floating panes). If
+    // every window was skipped, no initial command list ever completes to turn notifications on.
+    if (windowsToOpen.count == 0 || pendingWindowOpens_.count == 0) {
         DLog(@"Did not open any windows so turn on accept notifications in tmux gateway");
         gateway_.acceptNotifications = YES;
         [self sendInitialWindowsOpenedNotificationIfNeeded];
@@ -957,12 +964,56 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)didLearnLayout:(NSString *)layout forWindow:(int)windowId {
+    if (!_supportsFloatingPanes && [iTermTmuxJSONLayoutParser isJSONLayout:layout]) {
+        // Only a server that took the new-layouts flag sends JSON, and it has floating panes.
+        RLog(@"tmux sends JSON layouts, so it supports floating panes");
+        _supportsFloatingPanes = YES;
+        [self subscribeToPaneBorderLines];
+    }
     NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:layout];
     if (!parseTree) {
         return;
     }
     [_droppedOutputTracker didLearnPanes:[[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree]
                                   window:windowId];
+}
+
+- (BOOL)paneIsBorderless:(int)wp {
+    return [_borderlessPanes containsObject:@(wp)];
+}
+
+// A float with no border has no room for a title bar, so iTerm2 needs to know which panes have
+// none. The layout doesn't say.
+- (void)subscribeToPaneBorderLines {
+    if (_paneBorderLinesSubscription || ![gateway_ supportsSubscriptions]) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _paneBorderLinesSubscription = [gateway_ subscribeToFormat:@"#{pane-border-lines}"
+                                                        target:@"%*"
+                                                         block:^(NSString *value, NSArray<NSString *> *args) {
+        [weakSelf paneBorderLinesDidChange:value arguments:args];
+    }];
+}
+
+// args are: name $session @window index %pane
+- (void)paneBorderLinesDidChange:(NSString *)value arguments:(NSArray<NSString *> *)args {
+    if (args.count < 5 || ![args[2] hasPrefix:@"@"] || ![args[4] hasPrefix:@"%"]) {
+        return;
+    }
+    const int window = [[args[2] substringFromIndex:1] intValue];
+    NSNumber *wp = @([[args[4] substringFromIndex:1] intValue]);
+    const BOOL borderless = [value isEqualToString:@"none"];
+    if (borderless == [_borderlessPanes containsObject:wp]) {
+        return;
+    }
+    DLog(@"Pane %%%@ in @%d borderless=%@", wp, window, @(borderless));
+    if (borderless) {
+        [_borderlessPanes addObject:wp];
+    } else {
+        [_borderlessPanes removeObject:wp];
+    }
+    [[self window:window] tmuxPaneBordersDidChange];
 }
 
 - (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession<iTermTmuxControllerSession> *))block {
@@ -1296,6 +1347,19 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     _tmuxBufferMonitor = [[iTermTmuxBufferSizeMonitor alloc] initWithController:self
                                                                        pauseAge:age];
     _tmuxBufferMonitor.delegate = self;
+}
+
+// Asks for JSON layouts, which include floating panes (tmux 3.8 and later). Before this, tmux leaves
+// floats out of the layouts it sends. tmux 3.2 and later ignore a flag they don't know, and older
+// versions fail the command, so it is sent tolerantly and layouts beginning with { are what show
+// it took effect. It must precede the first list-windows.
+- (void)enableNewLayouts {
+    [gateway_ sendCommand:@"refresh-client -f new-layouts"
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+    [gateway_ subscribeToWindowLayouts];
 }
 
 - (void)didPausePane:(int)wp {
@@ -2073,6 +2137,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)didGuessVersion {
     RLog(@"didGuessVersion");
     [self enablePauseModeIfPossible];
+    [self enableNewLayouts];
     [self loadServerPID];
     // The reply advertises this client's it2 record; see advertiseIT2Client.
     [self loadTmuxClientName];
@@ -2323,17 +2388,19 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *resizeStr = [NSString stringWithFormat:@"resize-pane -%@ -t \"%%%d\" %d",
                            dir, wp, abs(amount)];
     NSString *listStr = [self commandToListWindows];
+    // The resize can fail, for example on a modal pane. A failed command in a list fails the rest
+    // of the list, so both tolerate errors. listWindowsResponse: handles a nil response.
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:resizeStr
                                          responseTarget:nil
                                        responseSelector:nil
                                          responseObject:nil
-                                                  flags:0],
+                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
                          [gateway_ dictionaryForCommand:listStr
                                          responseTarget:self
                                        responseSelector:@selector(listWindowsResponse:)
                                          responseObject:nil
-                                                  flags:0],
+                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
                          nil];
     ++numOutstandingWindowResizes_;
     [gateway_ sendCommandList:commands];
@@ -2372,7 +2439,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                         responseTarget:self
                                                       responseSelector:@selector(recordPanes:state:)
                                                         responseObject:state
-                                                                 flags:0];
+                                                                 flags:kTmuxGatewayCommandShouldTolerateErrors];
         NSDictionary *split = [gateway dictionaryForCommand:command
                                              responseTarget:nil
                                            responseSelector:nil
@@ -2525,7 +2592,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                         responseObject:[iTermTriple tripleWithObject:windowIdString
                                                                            andObject:[completion copy]
                                                                               object:index]
-                                                 flags:0]];
+                                                 flags:kTmuxGatewayCommandShouldTolerateErrors]];
     [gateway_ sendCommandList:commands];
 }
 
@@ -2735,7 +2802,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
            responseTarget:self
          responseSelector:@selector(windowPaneBrokeOutWithWindowId:setAffinityTo:)
            responseObject:sibling
-                    flags:0];
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (void)windowPaneBrokeOutWithWindowId:(NSString *)windowId
@@ -3312,17 +3379,128 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *swapPaneCommand = [NSString stringWithFormat:@"swap-pane -s \"%%%d\" -t \"%%%d\"",
                                  pane1, pane2];
 
+    // tmux refuses to swap a modal pane. A failed command in a list fails the rest of the list.
     NSArray *commands = @[ [gateway_ dictionaryForCommand:swapPaneCommand
                                            responseTarget:nil
                                          responseSelector:NULL
                                            responseObject:nil
-                                                    flags:0],
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:[self commandToListWindows]
                                            responseTarget:self
                                          responseSelector:@selector(parseListWindowsResponseAndUpdateLayouts:)
                                            responseObject:nil
-                                                    flags:0] ];
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors] ];
     [gateway_ sendCommandList:commands];
+}
+
+#pragma mark - Floating panes
+
+// A relative move flag: -R/-L for columns, -D/-U for rows. tmux takes the count after the flag.
+static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, NSString *left, NSString *down, NSString *up) {
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    if (columns) {
+        [parts addObject:[NSString stringWithFormat:@"-%@ %d", columns > 0 ? right : left, abs(columns)]];
+    }
+    if (rows) {
+        [parts addObject:[NSString stringWithFormat:@"-%@ %d", rows > 0 ? down : up, abs(rows)]];
+    }
+    return [parts componentsJoinedByString:@" "];
+}
+
+- (void)moveFloatingPane:(int)wp byColumns:(int)columns rows:(int)rows {
+    if (!columns && !rows) {
+        return;
+    }
+    // Relative moves avoid converting between tmux's inner (layout) and outer (with border)
+    // coordinates.
+    NSString *command = [NSString stringWithFormat:@"move-pane -t \"%%%d\" %@",
+                         wp, iTermTmuxRelativeFlags(columns, rows, @"R", @"L", @"D", @"U")];
+    [gateway_ sendCommand:command
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)resizeFloatingPane:(int)wp
+              moveByColumns:(int)dx
+                       rows:(int)dy
+            growingByColumns:(int)dw
+                       rows:(int)dh {
+    NSMutableArray<NSDictionary *> *commands = [NSMutableArray array];
+    if (dx || dy) {
+        [commands addObject:[gateway_ dictionaryForCommand:[NSString stringWithFormat:@"move-pane -t \"%%%d\" %@",
+                                                            wp, iTermTmuxRelativeFlags(dx, dy, @"R", @"L", @"D", @"U")]
+                                            responseTarget:nil
+                                          responseSelector:nil
+                                            responseObject:nil
+                                                     flags:kTmuxGatewayCommandShouldTolerateErrors]];
+    }
+    // For a float, -R and -D grow the right and bottom edges by the count, which may be negative.
+    NSMutableArray<NSString *> *grow = [NSMutableArray array];
+    if (dw) {
+        [grow addObject:[NSString stringWithFormat:@"-R %d", dw]];
+    }
+    if (dh) {
+        [grow addObject:[NSString stringWithFormat:@"-D %d", dh]];
+    }
+    if (grow.count) {
+        [commands addObject:[gateway_ dictionaryForCommand:[NSString stringWithFormat:@"resize-pane -t \"%%%d\" %@",
+                                                            wp, [grow componentsJoinedByString:@" "]]
+                                            responseTarget:nil
+                                          responseSelector:nil
+                                            responseObject:nil
+                                                     flags:kTmuxGatewayCommandShouldTolerateErrors]];
+    }
+    if (commands.count) {
+        [gateway_ sendCommandList:commands];
+    }
+}
+
+- (void)newFloatingPaneNearPane:(int)wp {
+    [self newFloatingPaneNearPane:wp completion:nil];
+}
+
+- (void)newFloatingPaneNearPane:(int)wp completion:(void (^)(PTYSession *))completion {
+    // tmux places and sizes the float. A layout change follows, which makes its session.
+    [gateway_ sendCommand:[NSString stringWithFormat:@"new-pane -P -F '#{pane_id}' -t \"%%%d\"", wp]
+           responseTarget:self
+         responseSelector:@selector(didMakeFloatingPane:completion:)
+           responseObject:[completion copy]
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)didMakeFloatingPane:(NSString *)response completion:(void (^)(PTYSession *))completion {
+    if (!completion) {
+        return;
+    }
+    NSString *paneID = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (![paneID hasPrefix:@"%"]) {
+        RLog(@"new-pane failed: %@", response);
+        completion(nil);
+        return;
+    }
+    [self whenPaneRegistered:[[paneID substringFromIndex:1] intValue] call:^(PTYSession<iTermTmuxControllerSession> *session) {
+        completion(session);
+    }];
+}
+
+- (void)tileFloatingPane:(int)wp {
+    // join-pane with the float as its own destination tiles it. tmux refuses while zoomed.
+    [gateway_ sendCommand:[NSString stringWithFormat:@"join-pane -s \"%%%d\" -t \"%%%d\"", wp, wp]
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)raiseFloatingPane:(int)wp toFront:(BOOL)toFront {
+    // -z 0 is the front. A large index sends it to the back.
+    [gateway_ sendCommand:[NSString stringWithFormat:@"move-pane -t \"%%%d\" -z %d", wp, toFront ? 0 : 9999]
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
 - (void)toggleZoomForPane:(int)pane {
@@ -3357,12 +3535,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                            responseTarget:self
                                          responseSelector:@selector(didSetLayout:)
                                            responseObject:nil
-                                                    flags:0],
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:[self commandToListWindowsForSession:sessionId_]
                                            responseTarget:self
                                          responseSelector:@selector(didListWindowsSubsequentToSettingLayout:)
                                            responseObject:nil
-                                                    flags:0] ];
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors] ];
     [gateway_ sendCommandList:commands];
 }
 
@@ -3924,7 +4102,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             [affinities_ removeValue:windowId];
         }
     } else {
+        // A nil response means new-window failed.
         RLog(@"Response to new-window doesn't look like a window id: \"%@\"", responseStr);
+        void (^completion)(int) = tuple.secondObject;
+        if (completion) {
+            completion(-1);
+        }
     }
 }
 

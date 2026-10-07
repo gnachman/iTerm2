@@ -293,12 +293,26 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(swapSessions:)) {
         return ![self.delegate contextMenuIsLocked:self] && ![self.delegate contextMenuWindowIsLayoutLocked:self];
     }
+    // A float cannot be split. Other ways to split one go to a tiled pane instead, but these
+    // items name this pane.
+    if (([item action] == @selector(splitTextViewVertically:) ||
+         [item action] == @selector(splitTextViewHorizontally:)) &&
+        [self.delegate contextMenuSessionIsFloating:self]) {
+        return NO;
+    }
     // These change the window's layout (split a pane or close a pane), so disable
     // them when the window's layout is locked.
     if ([item action] == @selector(splitTextViewVertically:) ||
         [item action] == @selector(splitTextViewHorizontally:) ||
         [item action] == @selector(closeTextViewSession:)) {
         return ![self.delegate contextMenuWindowIsLayoutLocked:self];
+    }
+    if ([item action] == @selector(dockFloatingPaneFromContextMenu:)) {
+        return [self.delegate contextMenuCanDockFloatingPane:self];
+    }
+    if ([item action] == @selector(bringFloatingPaneToFrontFromContextMenu:) ||
+        [item action] == @selector(sendFloatingPaneToBackFromContextMenu:)) {
+        return YES;
     }
     if ([item action] == @selector(toggleBroadcastingInput:) ||
         [item action] == @selector(toggleLock:) ||
@@ -335,7 +349,8 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         return [self.delegate contextMenu:self hasOutputForCommandMark:commandMark];
     }
     if ([item action] == @selector(openURLInVerticalSplitPane:) ||
-        [item action] == @selector(openURLInHorizontalSplitPane:)) {
+        [item action] == @selector(openURLInHorizontalSplitPane:) ||
+        [item action] == @selector(openURLInFloatingPane:)) {
         // These explicitly split the current window, so disable them when its
         // layout is locked (parallel to the greyed-out Split Pane menu items).
         iTermSelection *selection = [self.delegate contextMenuSelection:self];
@@ -555,6 +570,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         if ([[NSWorkspace sharedWorkspace] it_urlIsConditionallyLocallyOpenable:selectionURL]) {
             add(NSLocalizedStringWithDefaultValue(@"ContextMenu.OpenURLInVerticalSplitPane", nil, [NSBundle mainBundle], @"Open URL in Vertical Split Pane", @"Context menu item to open a URL in a vertical split pane"), @selector(openURLInVerticalSplitPane:));
             add(NSLocalizedStringWithDefaultValue(@"ContextMenu.OpenURLInHorizontalSplitPane", nil, [NSBundle mainBundle], @"Open URL in Horizontal Split Pane", @"Context menu item to open a URL in a horizontal split pane"), @selector(openURLInHorizontalSplitPane:));
+            add(NSLocalizedStringWithDefaultValue(@"ContextMenu.OpenURLInFloatingPane", nil, [NSBundle mainBundle], @"Open URL in Floating Pane", @"Context menu item to open a URL in a new floating pane, which floats over the tab’s split panes"), @selector(openURLInFloatingPane:));
             [theMenu addItem:[NSMenuItem separatorItem]];
         }
     }
@@ -608,6 +624,14 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
                      action:@selector(moveSessionToWindow:)
                 keyEquivalent:@""];
     add(NSLocalizedStringWithDefaultValue(@"ContextMenu.SwapWithSession", nil, [NSBundle mainBundle], @"Swap With Session…", @"Context menu item to swap with another session"), @selector(swapSessions:));
+
+    if ([self.delegate contextMenuSessionIsFloating:self]) {
+        // This is also the floating pane's title bar menu.
+        [theMenu addItem:[NSMenuItem separatorItem]];
+        add(NSLocalizedStringWithDefaultValue(@"ContextMenu.DockFloatingPane", nil, [NSBundle mainBundle], @"Dock Floating Pane", @"Context menu item that moves a floating pane into the tab's split pane layout"), @selector(dockFloatingPaneFromContextMenu:));
+        add(NSLocalizedStringWithDefaultValue(@"ContextMenu.BringFloatingPaneToFront", nil, [NSBundle mainBundle], @"Bring to Front", @"Context menu item that puts a floating pane in front of the tab's other floating panes"), @selector(bringFloatingPaneToFrontFromContextMenu:));
+        add(NSLocalizedStringWithDefaultValue(@"ContextMenu.SendFloatingPaneToBack", nil, [NSBundle mainBundle], @"Send to Back", @"Context menu item that puts a floating pane behind the tab's other floating panes"), @selector(sendFloatingPaneToBackFromContextMenu:));
+    }
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -1177,6 +1201,13 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
                        guessingScheme:YES];
 }
 
+- (void)openURLInFloatingPane:(id)sender {
+    [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0]
+                  andOpenInBackground:NO
+                                style:iTermOpenStyleFloatingPane
+                       guessingScheme:YES];
+}
+
 - (void)quickLook:(id)sender {
     NSString *string = [self.delegate contextMenuSelectedText:self capped:0];
     NSURL *url = [NSURL URLWithUserSuppliedString:string];
@@ -1267,6 +1298,18 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)swapSessions:(id)sender {
     [self.delegate contextMenuSwapSessions:self];
+}
+
+- (void)dockFloatingPaneFromContextMenu:(id)sender {
+    [self.delegate contextMenuDockFloatingPane:self];
+}
+
+- (void)bringFloatingPaneToFrontFromContextMenu:(id)sender {
+    [self.delegate contextMenu:self raiseFloatingPaneToFront:YES];
+}
+
+- (void)sendFloatingPaneToBackFromContextMenu:(id)sender {
+    [self.delegate contextMenu:self raiseFloatingPaneToFront:NO];
 }
 
 - (void)sendSelection:(id)sender {

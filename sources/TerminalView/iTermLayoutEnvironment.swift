@@ -48,10 +48,18 @@ final class iTermLayoutEnvironment: NSObject, LayoutResolverEnvironment {
 
     func sessionGUIDs(inTab tabID: String) -> [String] {
         guard let tab = controller.tab(withID: tabID),
-              let sessions = tab.sessions() else {
+              let sessions = tab.tiledSessions() else {
             return []
         }
         return sessions.compactMap { $0.guid }
+    }
+
+    func sessionIsFloating(_ guid: String) -> Bool {
+        guard let session = controller.session(withGUID: guid),
+              let tab = controller.tab(for: session) else {
+            return false
+        }
+        return tab.sessionIsFloating(session)
     }
 
     func isTmuxTab(_ tabID: String) -> Bool {

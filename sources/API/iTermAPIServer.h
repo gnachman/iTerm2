@@ -62,6 +62,7 @@ extern NSString *const iTermAPIServerConnectionClosed;
 - (void)apiServerSavedArrangement:(ITMSavedArrangementRequest *)request
                           handler:(void (^)(ITMSavedArrangementResponse *))response;
 - (void)apiServerFocus:(ITMFocusRequest *)request
+        libraryVersion:(NSString *)libraryVersion
                handler:(void (^)(ITMFocusResponse *))response;
 - (void)apiServerListProfiles:(ITMListProfilesRequest *)request
                       handler:(void (^)(ITMListProfilesResponse *))response;
@@ -108,6 +109,9 @@ extern NSString *const iTermAPIServerConnectionClosed;
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 - (NSString *)websocketKeyForConnectionKey:(NSString *)connectionKey;
+
+// The client's x-iterm2-library-version header, e.g. "python 2.25". Nil if unknown.
+- (NSString *)libraryVersionForConnectionKey:(NSString *)connectionKey;
 
 // Runs the block when the socket is ready. If already ready, runs immediately.
 - (void)whenReadyRunBlock:(void (^)(void))block;

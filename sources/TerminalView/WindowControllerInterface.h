@@ -103,6 +103,10 @@
 // like a delegate.
 @protocol iTermWindowController <WindowControllerInterface, PTYTabDelegate>
 
+// Whether a floating pane can move into the tab's split pane layout now, and doing it.
+- (BOOL)canDockFloatingSession:(PTYSession *)session;
+- (void)dockFloatingSession:(PTYSession *)session;
+
 // Is the toolbelt visible for this window?
 @property(nonatomic, readonly) BOOL shouldShowToolbelt;
 @property(nonatomic, readonly) NSArray *tabs;

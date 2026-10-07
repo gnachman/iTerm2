@@ -22,6 +22,7 @@ NSString *const kiTermIndicatorWrapToBottom = @"kiTermIndicatorWrapToBottom";
 NSString *const kItermIndicatorBroadcastInput = @"kItermIndicatorBroadcastInput";
 NSString *const kItermIndicatorBroadcastInputReceiver = @"kItermIndicatorBroadcastInputReceiver";
 NSString *const kiTermIndicatorMaximized = @"kiTermIndicatorMaximized";
+NSString *const kiTermIndicatorHiddenFloatingPanes = @"kiTermIndicatorHiddenFloatingPanes";
 NSString *const kiTermIndicatorCoprocess = @"kiTermIndicatorCoprocess";
 NSString *const kiTermIndicatorAlert = @"kiTermIndicatorAlert";
 NSString *const kiTermIndicatorAllOutputSuppressed = @"kiTermIndicatorAllOutputSuppressed";
@@ -99,6 +100,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             kItermIndicatorBroadcastInput: SFSymbolGetString(SFSymbolDotRadiowavesLeftAndRight),  // sends and receives (default, or for source)
             kItermIndicatorBroadcastInputReceiver: SFSymbolGetString(SFSymbolDotRadiowavesRight),  // receives only (rare, only for non-sources)
             kiTermIndicatorMaximized: maximizedSymbol,
+            kiTermIndicatorHiddenFloatingPanes: SFSymbolGetString(SFSymbolRectangleOnRectangleSlash),
             kiTermIndicatorCoprocess: SFSymbolGetString(SFSymbolRectangle2Swap),
             kiTermIndicatorAlert: SFSymbolGetString(SFSymbolEye),
             kiTermIndicatorAllOutputSuppressed: SFSymbolGetString(SFSymbolStopCircle),
@@ -249,6 +251,32 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     }
 }
 
+- (void)setHiddenFloatingPanesBadge:(NSImage *)hiddenFloatingPanesBadge {
+    if (hiddenFloatingPanesBadge == _hiddenFloatingPanesBadge) {
+        return;
+    }
+    _hiddenFloatingPanesBadge = hiddenFloatingPanesBadge;
+    // The cached image includes the badge.
+    if (_visibleIndicators[kiTermIndicatorHiddenFloatingPanes]) {
+        const BOOL dark = _visibleIndicators[kiTermIndicatorHiddenFloatingPanes].dark;
+        [_visibleIndicators removeObjectForKey:kiTermIndicatorHiddenFloatingPanes];
+        [self setIndicator:kiTermIndicatorHiddenFloatingPanes visible:YES darkBackground:dark];
+    }
+}
+
+// The indicator with a badge in its bottom right corner.
++ (NSImage *)image:(NSImage *)image withBadge:(NSImage *)badge {
+    const NSSize size = image.size;
+    const CGFloat side = size.width * 0.55;
+    return [NSImage imageOfSize:size drawBlock:^{
+        [image drawInRect:NSMakeRect(0, 0, size.width, size.height)];
+        [badge drawInRect:NSMakeRect(size.width - side, 0, side, side)
+                 fromRect:NSZeroRect
+                operation:NSCompositingOperationSourceOver
+                 fraction:1];
+    }];
+}
+
 - (void)setIndicatorSize:(CGFloat)indicatorSize {
     if (_indicatorSize != indicatorSize) {
         _indicatorSize = indicatorSize;
@@ -284,6 +312,15 @@ CGFloat kiTermIndicatorStandardHeight = 20;
             indicator.image = darkBackground ? tuple.firstObject : tuple.secondObject;
         }
         assert(indicator.image);
+        if ([identifier isEqualToString:kiTermIndicatorHiddenFloatingPanes] && _hiddenFloatingPanesBadge) {
+            NSImage *base = indicator.image;
+            if (base.isTemplate) {
+                // The composed image can't be a template, or the badge would lose its colors, so
+                // color the symbol as a template would be colored.
+                base = [base it_imageWithTintColor:darkBackground ? [NSColor whiteColor] : [NSColor blackColor]];
+            }
+            indicator.image = [[self class] image:base withBadge:_hiddenFloatingPanesBadge];
+        }
         indicator.dark = darkBackground;
         _visibleIndicators[identifier] = indicator;
         [_delegate indicatorNeedsDisplay];
@@ -301,6 +338,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
 + (NSArray *)sequentialIndicatorIdentifiers {
     return @[ kiTermIndicatorMaximized,
+              kiTermIndicatorHiddenFloatingPanes,
               kItermIndicatorBroadcastInput,
               kItermIndicatorBroadcastInputReceiver,
               kiTermIndicatorCoprocess,
@@ -375,6 +413,10 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 }
 
 - (NSString *)helpTextForIndicatorWithName:(NSString *)name sessionID:(NSString *)sessionID {
+    if ([name isEqualToString:kiTermIndicatorHiddenFloatingPanes]) {
+        return [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"Indicator.HiddenFloatingPanes", nil, [NSBundle mainBundle], @"%ld floating panes are hidden.", @"Help text for the indicator shown when a tab's floating panes are hidden. %ld is the number of hidden floating panes."),
+                (long)self.hiddenFloatingPaneCount];
+    }
     // NOTE: These messages are interpreted as markdown.
     NSDictionary<NSString *, NSString *> *messages = @{
         kItermIndicatorBroadcastInput: @"Keyboard input gets broadcast to other sessions.",

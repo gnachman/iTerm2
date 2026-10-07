@@ -244,6 +244,17 @@ def supports_session_note(connection):
     min_ver = (1, 20)
     return ge(connection.iterm2_protocol_version, min_ver)
 
+def supports_floating_panes(connection):
+    """Does iTerm2 report and arrange floating panes?"""
+    min_ver = (1, 21)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_floating_panes(connection):
+    if not supports_floating_panes(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to control floating panes " +
+            "via the Python API. You should upgrade to run this script.")
+
 def check_supports_session_note(connection):
     if not supports_session_note(connection):
         raise AppVersionTooOld(

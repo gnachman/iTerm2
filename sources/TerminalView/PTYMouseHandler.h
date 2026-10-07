@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol PTYMouseHandlerDelegate<NSObject>
 - (BOOL)mouseHandlerViewHasFocus:(PTYMouseHandler *)handler;
 - (void)mouseHandlerMakeFirstResponder:(PTYMouseHandler *)handler;
-- (void)mouseHandlerWillBeginDragPane:(PTYMouseHandler *)handler;
+- (void)mouseHandler:(PTYMouseHandler *)handler willBeginDragPaneWithEvent:(NSEvent *)event;
 - (BOOL)mouseHandlerSessionIsLocked:(PTYMouseHandler *)handler;
 - (BOOL)mouseHandlerIsInKeyWindow:(PTYMouseHandler *)handler;
 

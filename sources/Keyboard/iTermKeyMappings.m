@@ -354,6 +354,7 @@ static NSDictionary *gGlobalKeyMapping;
             action.keyAction == KEY_ACTION_NEW_WINDOW_WITH_PROFILE ||
             action.keyAction == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
             action.keyAction == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
+            action.keyAction == KEY_ACTION_NEW_FLOATING_PANE_WITH_PROFILE ||
             action.keyAction == KEY_ACTION_SET_PROFILE) {
             NSString *referencedGuid = action.parameter;
             if ([referencedGuid isEqualToString:guid]) {
@@ -402,6 +403,7 @@ static NSDictionary *gGlobalKeyMapping;
                 action.keyAction == KEY_ACTION_NEW_WINDOW_WITH_PROFILE ||
                 action.keyAction == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
                 action.keyAction == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
+            action.keyAction == KEY_ACTION_NEW_FLOATING_PANE_WITH_PROFILE ||
                 action.keyAction == KEY_ACTION_SET_PROFILE) {
                 NSString *referencedGuid = action.parameter;
                 if (![referencedGuid isEqualToString:guid]) {

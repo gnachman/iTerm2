@@ -1591,6 +1591,13 @@ message SplitTreeNode {
   }
 }
 
+// A pane that floats over its tab's split panes. Added in protocol 1.21.
+message FloatingPane {
+  // The session's frame is the float's frame in the tab, in points, with the
+  // origin at the tab's top left and y increasing downward.
+  optional SessionSummary session = 1;
+}
+
 message ListSessionsResponse {
   message Window {
     repeated Tab tabs = 1;
@@ -1620,6 +1627,11 @@ message ListSessionsResponse {
     optional string tab_group_name = 9;
     optional string tab_group_color = 10;
     optional bool tab_group_collapsed = 11;
+    // The tab's floating panes, back to front. Their sessions are not in
+    // `root`. Added in protocol 1.21.
+    repeated FloatingPane floating_panes = 12;
+    // Whether the tab's floating panes are hidden. Added in protocol 1.21.
+    optional bool floating_panes_hidden = 13;
   }
   repeated Window windows = 1;
   repeated SessionSummary buried_sessions = 2;

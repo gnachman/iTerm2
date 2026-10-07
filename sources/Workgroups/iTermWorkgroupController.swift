@@ -100,6 +100,8 @@ final class iTermWorkgroupController: NSObject {
                 RLog("iTermWorkgroupController.enter: no usable workgroup with id \(identifier)")
             case .nonLeaderMember(let member):
                 RLog("iTermWorkgroupController.enter: refusing to switch workgroups on \(session.guid), a non-leader member of \(member.instanceUniqueIdentifier)")
+            case .floatingPane:
+                RLog("iTermWorkgroupController.enter: refusing; session \(session.guid) is a floating pane")
             }
             return false
         case .proceed(let existing, let workgroup):
@@ -172,10 +174,16 @@ final class iTermWorkgroupController: NSObject {
         // close (child) that would kill the new workgroup moments
         // after it was entered.
         case nonLeaderMember(iTermWorkgroupInstance)
+        // `session` is a floating pane. A workgroup adds peers and split
+        // children around its leader, and a float holds one session.
+        case floatingPane
     }
 
     func enterDisposition(workgroupUniqueIdentifier identifier: String,
                           on session: PTYSession) -> EnterDisposition {
+        if session.delegate?.sessionIsFloating(session) == true {
+            return .refused(.floatingPane)
+        }
         let existing = registeredInstance(on: session)
         if let existing {
             if existing.workgroupUniqueIdentifier == identifier {

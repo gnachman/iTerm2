@@ -134,6 +134,10 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // -refresh does not want to be reentrant.
     BOOL _inRefresh;
 
+    // A cmd-opt-shift drag in a floating pane's text moves the float. Its drags and mouse-up go to
+    // the move rather than the mouse handler.
+    BOOL _movingFloatingPane;
+
     // geometry
     double _lineHeight;
     double _charWidth;
@@ -560,8 +564,8 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         return [[NSPasteboard generalPasteboard] hasReadableFirstFile];
     }
     if (item.action == @selector(bury:)) {
-        // Disable bury for synthetic sessions - it doesn't work correctly
-        return ![_delegate textViewIsSyntheticSession];
+        // Disabled for synthetic sessions, where it doesn't work correctly, and for tmux floats.
+        return [_delegate textViewCanBury];
     }
     if (item.action == @selector(terminalStateToggleAlternateScreen:) ||
         item.action == @selector(terminalStateToggleFocusReporting:) ||
@@ -1267,6 +1271,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)mouseUp:(NSEvent *)event {
+    if (_movingFloatingPane) {
+        _movingFloatingPane = NO;
+        [_delegate textViewFloatingPaneMoveMouseUp:event];
+        return;
+    }
     [_mouseHandler mouseUp:event];
 }
 
@@ -1366,6 +1375,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)mouseDragged:(NSEvent *)event {
+    if (_movingFloatingPane) {
+        [_delegate textViewFloatingPaneMoveMouseDragged:event];
+        return;
+    }
     [self updateButtonHover:event.locationInWindow pressed:YES];
     [_mouseHandler mouseDragged:event];
 }
@@ -1463,7 +1476,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
     [self updateUnderlinedURLs:event];
     NSScrollView *scrollView = self.enclosingScrollView;
-    if ([scrollView hitTest:[scrollView convertPoint:event.locationInWindow fromView:nil]] == nil) {
+    // The whole pane counts, title bar included: entering through the title bar is entering this
+    // pane, and no second entered event comes when the pointer goes on into the text.
+    NSView *pane = scrollView.superview ?: scrollView;
+    if ([pane hitTest:[pane.superview convertPoint:event.locationInWindow fromView:nil]] == nil) {
         DLog(@"hitTest at %@ in view (%@ in window) gives nil", NSStringFromPoint([self convertPoint:event.locationInWindow fromView:nil]),
               NSStringFromPoint(event.locationInWindow));
         DLog(@"Event %@ at window coord %@ failed hit test for view with window coords %@",
@@ -2352,6 +2368,17 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
                             visible:[_delegate textViewIsMaximized]
+                     darkBackground:isDark];
+    const NSInteger hiddenFloatingPanes = ([_delegate respondsToSelector:@selector(textViewNumberOfHiddenFloatingPanes)] ?
+                                           [_delegate textViewNumberOfHiddenFloatingPanes] : 0);
+    _indicatorsHelper.hiddenFloatingPaneCount = hiddenFloatingPanes;
+    if (hiddenFloatingPanes > 0 && [_delegate respondsToSelector:@selector(textViewHiddenFloatingPanesBadge)]) {
+        _indicatorsHelper.hiddenFloatingPanesBadge = [_delegate textViewHiddenFloatingPanesBadge];
+    } else {
+        _indicatorsHelper.hiddenFloatingPanesBadge = nil;
+    }
+    [_indicatorsHelper setIndicator:kiTermIndicatorHiddenFloatingPanes
+                            visible:hiddenFloatingPanes > 0
                      darkBackground:isDark];
     const BOOL receivesBroadcasts = [_delegate textViewSessionIsBroadcastingInput:YES];
     const BOOL sendsBroadcasts = [_delegate textViewSessionIsBroadcastingInput:NO];
@@ -6132,7 +6159,15 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return self.frame.size.height - NSMaxY(self.enclosingScrollView.documentVisibleRect);
 }
 
-- (NSPoint)cursorCenterInScreenCoords {
+- (NSPoint)gridOriginInView:(NSView *)view {
+    NSRect rect = [self rectForGridCoord:VT100GridCoordMake(0, 0)];
+    // Where the grid is when scrolled to the bottom, not where scrollback has moved it.
+    rect.origin.y -= [self verticalOffset];
+    return [self convertPoint:rect.origin toView:view];
+}
+
+// The center of the cursor in this view's coordinates.
+- (NSPoint)cursorCenter {
     NSPoint cursorCenter;
     if ([self hasMarkedText]) {
         cursorCenter = _drawingHelper.imeCursorLastPos;
@@ -6141,7 +6176,11 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     }
     cursorCenter.x += _charWidth / 2;
     cursorCenter.y += _lineHeight / 2;
-    NSPoint cursorCenterInWindowCoords = [self convertPoint:cursorCenter toView:nil];
+    return cursorCenter;
+}
+
+- (NSPoint)cursorCenterInScreenCoords {
+    NSPoint cursorCenterInWindowCoords = [self convertPoint:[self cursorCenter] toView:nil];
     return  [[self window] pointToScreenCoords:cursorCenterInWindowCoords];
 }
 
@@ -6205,6 +6244,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     _cursorVisible = YES;
     [self requestDelegateRedraw];
     if (!_findCursorView) {
+        [_delegate textViewFindCursorWillShowAtLocationInWindow:[self convertPoint:[self cursorCenter] toView:nil]];
         [self createFindCursorWindowWithFireworks:forceFireworks];
     }
     if (hold) {
@@ -6228,6 +6268,9 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 }
 
 - (void)endFindCursor {
+    if (_findCursorView) {
+        [_delegate textViewFindCursorDidEnd];
+    }
     [NSAnimationContext beginGrouping];
     NSWindow *theWindow = [_findCursorWindow retain];
     [[NSAnimationContext currentContext] setCompletionHandler:^{
@@ -7897,7 +7940,12 @@ static NSString *iTermStringFromRange(NSRange range) {
     [[self window] makeFirstResponder:self];
 }
 
-- (void)mouseHandlerWillBeginDragPane:(PTYMouseHandler *)handler {
+- (void)mouseHandler:(PTYMouseHandler *)handler willBeginDragPaneWithEvent:(NSEvent *)event {
+    // In a float this moves the float, as dragging its title bar does.
+    if (event.type == NSEventTypeLeftMouseDown && [_delegate textViewFloatingPaneMoveMouseDown:event]) {
+        _movingFloatingPane = YES;
+        return;
+    }
     [_delegate textViewBeginDrag];
 }
 
@@ -8797,6 +8845,10 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 
 - (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
     [_delegate textViewSplitVertically:NO withProfileGuid:guid];
+}
+
+- (void)newFloatingPaneWithProfile:(NSString *)guid withEvent:(NSEvent *)event {
+    [_delegate textViewNewFloatingPaneWithProfileGuid:guid];
 }
 
 - (void)selectNextPaneWithEvent:(NSEvent *)event {

@@ -1,0 +1,305 @@
+Manual testing of a development build: screenshots, mouse, drags, typing, tmux
+==============================================================================
+
+These are the tools in tests/floating_panes for driving a -suite development instance of iTerm2 by
+hand or from a script, as done while building floating panes. They work for any feature. Everything
+here assumes the checkout directory name is the suite name (iterm2-alt12 for this checkout).
+
+
+1. Ground rules
+---------------
+
+- Never launch iTerm2 without -suite <suite>. Use `make run`, or `make run-nobuild` after
+  `tools/build.sh`. Without -suite the dev build shares preferences with your main iTerm2.
+- Only one instance per suite. Check before launching:
+      pgrep -fl "iterm2-alt12/Build/Development/iTerm2.app/Contents/MacOS/iTerm2 -suite"
+  If one is running, use it or quit it first; a second instance in the same suite shares and
+  fights over its preferences.
+- Synthetic input goes only to the dev instance. Both apps are named iTerm2, so always target by
+  pid. devctl refuses to send input unless the pid you give it is the frontmost app, and checks
+  again during a drag.
+- Quit the instance you launched when you are done (devctl quit <pid>).
+- tmux: use your own sockets (-L fp-something) and kill only those servers
+  (tmux -L fp-something kill-server). Never `pkill tmux` or `kill-server` without -L.
+
+
+2. Building and launching
+-------------------------
+
+    tools/build.sh                     # debug build; errors land in tmp/build.log
+    make run-nobuild &                 # launch it with -suite <checkout name>
+    D=${TMPDIR}iterm2-devctl-$USER     # devctl, built by devapi.sh on first use
+    P=$($D devpid iterm2-alt12)        # the dev instance's pid
+
+To build devctl without running a Python script:
+
+    swiftc -O tests/floating_panes/devctl.swift -o ${TMPDIR}iterm2-devctl-$USER
+
+The Python API must be enabled in the dev instance (Settings > General > Magic > Enable Python
+API). devapi.sh asks the dev pid for a cookie by Apple Event, so the first run may show a
+permission prompt in the dev instance.
+
+To quit:
+
+    $D quit $P                         # prints "terminated" when it has exited
+
+Shells survive a quit (session restoration keeps them), so orphan login processes from the dev
+build are normal.
+
+
+3. The tools
+------------
+
+devctl (tests/floating_panes/devctl.swift)
+  devctl devpid <suite>               pid of the instance launched with -suite <suite>
+  devctl frontmost                    pid of the frontmost app
+  devctl activate <pid>               bring <pid> to the front (waits until it is)
+  devctl quit <pid>                   ask <pid> to quit and wait
+  devctl windows <pid> [all]          window number, x, y, width, height, title
+  devctl capture <windowNumber> <png> screenshot of one window, Metal layers included
+  devctl cookie <pid>                 Python API cookie and key for <pid>
+  devctl move <pid> x y               move the pointer
+  devctl click <pid> x y [n] [mods]   click; n is the click count; mods like ctrl,opt,cmd,shift
+  devctl drag <pid> x0 y0 x1 y1 [steps] [mods] [hold] [x2 y2]
+                                      drag; mods are pressed after the button goes down; hold is
+                                      seconds to rest at the end; x2 y2 continues the drag after
+                                      the rest
+  devctl key <pid> keycode [mods]     a key press posted to <pid>
+  devctl type <pid> text              types text into <pid>; \n becomes Return
+
+devapi.sh (tests/floating_panes/devapi.sh)
+  Runs a Python API script against the dev instance and never the main app:
+
+    PYTHONPATH=api/library/python/iterm2 tests/floating_panes/devapi.sh script.py [args]
+
+  PYTHONPATH picks up the checkout's Python client, which has the newest API (floating_sessions,
+  async_create_floating_session, async_set_floating_frame and so on). Without it you get the
+  installed client, which may lack them.
+
+reset_windows.py
+  Closes every window in the dev instance and opens one fresh window; prints its window ID.
+
+    PYTHONPATH=api/library/python/iterm2 tests/floating_panes/devapi.sh tests/floating_panes/reset_windows.py
+
+
+4. Coordinates
+--------------
+
+devctl uses global screen points with the origin at the top left of the main screen, y down (as
+CGEvent does). `devctl windows <pid>` reports each window's top left and size in those points:
+
+    $D windows $P
+    144221 1200 451 570 462 Python [user@host]
+    ^num   ^x   ^y  ^w  ^h  ^title
+
+So a point at (dx, dy) points from the window's top left is (1200 + dx, 451 + dy). The title bar
+is about 28 points tall on a standard window.
+
+Screenshots are at the display's backing scale, usually 2x. A feature at pixel (px, py) in a
+capture is at (x + px / 2, y + py / 2) on screen. Read a capture, find the thing you want in
+pixels, halve, add the window origin.
+
+The Python API's frames (Window.async_get_frame, Session.frame) use a different system (y up, and
+session frames are relative to the window), so convert through `devctl windows` rather than
+mixing them.
+
+
+5. Screenshots
+--------------
+
+    $D capture <windowNumber> /path/out.png
+
+This captures one window without its shadow, composited, so Metal-rendered content shows. It needs
+no input and does not require the app to be frontmost. Take captures before and after an action,
+and wait a moment (0.3 to 1 s) after input so the frame has been drawn.
+
+Capture the window you are acting on: tmux integration opens its tabs in a new window, separate
+from the window where you ran `tmux -CC`, so look up the right number with `devctl windows`.
+
+
+6. Mouse
+--------
+
+Before every burst of input:
+
+    $D activate $P && [ "$($D frontmost)" = "$P" ] || echo "not frontmost; stop"
+
+Move and click:
+
+    $D move  $P 1400 706
+    $D click $P 1400 706            # single click
+    $D click $P 1400 706 2          # double click
+    $D click $P 1400 706 1 cmd      # Command-click
+
+Hover. Tracking areas only fire on movement, so to hover over something move twice: once to a
+spot near it and once onto it. To see a hover effect, move, wait 0.3 to 0.5 s, then capture.
+Focus follows mouse works the same way; move onto the pane, then nudge by a couple of points.
+
+Drag:
+
+    $D drag $P 1300 500 1500 600            # 20 steps, no modifiers
+    $D drag $P 1300 500 1500 600 40         # slower: 40 steps
+    $D drag $P 1300 500 1500 600 20 ctrl    # Control held during the drag
+    $D drag $P 1300 500 600 470 20 "" 1.0 300 500
+        # drag to the tab bar, rest 1 s there (spring-loads the tab), then go on to (300, 500)
+
+Recipes for floating panes (all in screen points):
+- Move a float: drag from its title bar (left of center, clear of the close and menu buttons).
+- Resize: drag from the invisible band just outside the outline. The band is 6 points wide;
+  corners reach 24 points along each edge. Start 3 points outside the outline.
+- Dock a float or move it elsewhere: drag the title bar and hold Control during the drag
+  (mods ctrl), or drag past the edge of the tab.
+- Live move from inside the text: drag with Command-Option-Shift held (mods cmd,opt,shift).
+- Float in another tab: drag onto the tab bar, hold (spring-load), continue into the tab.
+- Avoid starting a drag on the window's own edge or corner: macOS starts a window resize there.
+
+
+7. Keyboard
+-----------
+
+Typing text into the focused session:
+
+    $D type $P 'echo hello\n'
+
+Single keys with modifiers, by virtual key code:
+
+    $D key $P 36            # Return
+    $D key $P 48            # Tab
+    $D key $P 49            # Space
+    $D key $P 51            # Delete (backspace)
+    $D key $P 53            # Escape
+    $D key $P 123           # Left arrow    124 Right   125 Down   126 Up
+    $D key $P 0 cmd         # Command-A (0 is the A key)
+
+For menu commands, prefer the Python API over shortcuts (see section 9); it doesn't depend on key
+bindings and doesn't need the app frontmost.
+
+Typing before a new shell has drawn its prompt can lose input. Wait for the prompt (section 9).
+
+
+8. tmux
+-------
+
+Build tmux from source if you need the newest features (floating panes need 3.8 or later for
+moving and resizing; tmux 3.7 shows them but cannot change them):
+
+    cd ~/git/tmux && make            # the binary is ~/git/tmux/tmux
+
+Always use a private socket, and start the server from the binary you mean to test. A client
+attaches to whatever server already owns the socket, so `~/git/tmux/tmux -CC` on the default
+socket talks to an old Homebrew server if one is running. Check what you are talking to:
+
+    ~/git/tmux/tmux -L fp-qa display -p 'server pid=#{pid} version=#{version}'
+
+Start an integration session from a dev-instance window, by typing or through the API:
+
+    $D type $P '~/git/tmux/tmux -L fp-qa -f /dev/null -CC new -s qa -x 120 -y 36\n'
+
+Then drive tmux from the shell and watch iTerm2 respond:
+
+    T="$HOME/git/tmux/tmux -L fp-qa"
+    $T split-window -h -t qa
+    $T new-pane -t qa -x 30 -y 8              # a floating pane
+    $T new-pane -t qa -x 30 -y 8 -B none      # a borderless one
+    $T move-pane -t %2 -R 5 -D 2              # move a float (3.8+)
+    $T resize-pane -t %2 -R 4                 # resize it
+    $T select-pane -t %2                      # focus raises a float
+    $T resize-pane -Z -t %0                   # zoom
+    $T list-panes -t qa -F '#{pane_id} #{pane_floating_flag} #{pane_z} #{pane_width}x#{pane_height}+#{pane_left}+#{pane_top}'
+    $T display -p -t qa '#{window_layout}'    # JSON ({"V":2,...}) or v1 (csum,WxH,...)
+
+Clean up:
+
+    $T kill-server
+
+
+9. Python API cookbook
+----------------------
+
+Run each with devapi.sh and PYTHONPATH=api/library/python/iterm2.
+
+    import asyncio, iterm2
+
+    async def main(connection):
+        app = await iterm2.async_get_app(connection)
+
+        # A new window, and its first session.
+        window = await iterm2.Window.async_create(connection)
+        await app.async_refresh()
+        session = app.get_window_by_id(window.window_id).current_tab.current_session
+
+        # Wait for the shell's prompt before typing.
+        for _ in range(50):
+            contents = await session.async_get_screen_contents()
+            if any(contents.line(i).string.strip() for i in range(contents.number_of_lines)):
+                break
+            await asyncio.sleep(0.2)
+        await session.async_send_text("echo hi\n")
+
+        # Floating panes.
+        tab = app.get_window_by_id(window.window_id).current_tab
+        float_session = await tab.async_create_floating_session()
+        await app.async_refresh()
+        tab = app.get_tab_by_id(tab.tab_id)
+        print([s.session_id for s in tab.floating_sessions], float_session.frame, float_session.grid_size)
+        await float_session.async_bring_to_front()
+        await float_session.async_dock()
+
+        # Menu items by title.
+        await iterm2.MainMenu.async_select_menu_item(connection, "New Floating Pane with Current Profile")
+
+        # Window frame.
+        frame = await window.async_get_frame()
+        await window.async_set_frame(iterm2.Frame(frame.origin, iterm2.Size(900, 600)))
+
+    iterm2.run_until_complete(main)
+
+Call app.async_refresh() after changes before reading the app's windows, tabs and sessions; the
+objects are snapshots.
+
+
+10. Debug logs
+--------------
+
+Choose Toggle Debug Logging in the dev instance, reproduce, and choose it again; the log is
+written to /tmp/debuglog.txt when logging is turned off. From a script:
+
+    await iterm2.MainMenu.async_select_menu_item(connection, "Toggle Debug Logging")
+
+Turning it on shows a modal alert, and the script's call doesn't return until it is dismissed. Find
+it with `devctl windows <pid> all` (a window at layer=8), then press Return in the dev instance:
+
+    $D activate $P && [ "$($D frontmost)" = "$P" ] && $D key $P 36
+
+Debug logging slows the app enough to hide timing bugs, so a bug that won't reproduce with it on
+may need temporary logging instead.
+
+The log is large. grep for the DLog text you care about (file names like
+FloatingPaneLayout.swift, PTYTab.m) rather than reading it whole.
+
+
+11. Scripted checks
+-------------------
+
+These use the tools above and print PASS or FAIL lines. Run each through devapi.sh with
+PYTHONPATH=api/library/python/iterm2:
+
+  tmux_floats_e2e.py             tmux floats: appear, move, resize, tile and float, raise, API
+  tmux_floats_only_e2e.py        a tmux window with only floats (exit status is the result)
+  tmux_floats_robustness_e2e.py  borderless and modal floats, resize, second client, reattach
+  tmux_v1_e2e.py                 a tmux that sends v1 layouts still works
+
+And one shell script:
+
+  ffm_occlusion_check.sh         focus follows mouse across a float's edge, with captures
+
+
+12. Gotchas
+-----------
+
+- A key or click right after `activate` can be lost; wait about 0.2 s.
+- The first hover after a window appears may not register; move twice.
+- Window numbers change when windows are recreated; look them up again.
+- Retina captures are 2x; halve pixel positions before adding the window origin.
+- tmux integration windows are separate from the window where -CC ran.
+- After rebuilding, the running instance still runs the old binary. Quit and relaunch.

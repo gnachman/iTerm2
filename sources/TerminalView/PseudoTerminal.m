@@ -3015,6 +3015,10 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     if (self.isShowingTransientTitle) {
         RLog(@"showing transient title");
         PTYSession *session = self.currentSession;
+        if ([self.currentTab sessionIsFloating:session]) {
+            // A float keeps its grid as the window resizes. Show a grid that changes with it.
+            session = [self.currentTab mostRecentlyActiveTiledSession] ?: session;
+        }
         NSString *aTitle;
         VT100GridSize size = VT100GridSizeMake(session.columns, session.rows);
         if (!_lockTransientTitle) {
@@ -5872,6 +5876,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return proposedFrameSize;
     }
     PTYSession* session = [tab activeSession];
+    if ([tab sessionIsFloating:session]) {
+        // The window is sized for the tiled layout, so snap to a tiled pane's cells, not a float's.
+        // A tmux tab may have no tiled pane, so fall back to the float.
+        session = [tab mostRecentlyActiveTiledSession] ?: session;
+    }
 
     // Get the width and height of characters in this session.
     float charWidth = [[session textview] charWidth];
@@ -7223,6 +7232,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
     RLog(@"sessionInitiatedResize: %dx%d", width, height);
+    // For a float the pane is the window: change its grid within the tab, never the window. This is
+    // allowed in full screen.
+    if ([[self tabForSession:session] sessionResizeFloatingPane:session columns:width rows:height]) {
+        return YES;
+    }
     DLog(@"%@", [NSThread callStackSymbols]);
     __block BOOL result;
     [session resetMode];
@@ -8188,10 +8202,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             const BOOL forcePerPaneTitleBar = perPaneTitleBarEnabled && [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane];
             const BOOL statusBarsOnTop = ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition] == iTermStatusBarPositionTop);
             const BOOL perPaneStatusBars = [self useSeparateStatusbarsPerPane];
-            const BOOL haveMultipleSessions = firstTab.sessions.count > 1;
+            // A floating pane always has a title bar. Tiled panes count only tiled panes.
+            const BOOL haveMultipleSessions = firstTab.tiledSessions.count > 1;
+            NSArray<PTYSession *> *floatingSessions = firstTab.floatingSessions;
             for (PTYSession *session in firstTab.sessions) {
                 const BOOL sessionHasStatusBar = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:session.profile];
-                const BOOL showTitleBar = forcePerPaneTitleBar || (perPaneTitleBarEnabled && (firstTab.isMaximized || haveMultipleSessions));
+                const BOOL showTitleBar = ([floatingSessions containsObject:session] ||
+                                           forcePerPaneTitleBar ||
+                                           (perPaneTitleBarEnabled && (firstTab.isMaximized || haveMultipleSessions)));
                 const BOOL showTopStatusBar = statusBarsOnTop && perPaneStatusBars && sessionHasStatusBar;
                 [[session view] setShowTitle:showTitleBar || showTopStatusBar adjustScrollView:YES];
             }
@@ -9280,7 +9298,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return YES;
     }
     const BOOL hasSingleTab = (self.numberOfTabs == 1);
-    const BOOL hasSplitPanes = (tab.sessions.count > 1);
+    const BOOL hasSplitPanes = (tab.tiledSessions.count > 1);
     const BOOL isHiddenInBar = [_contentView.tabBarControl tabIsHiddenInBarWithIdentifier:tab];
     const BOOL result = (hasSingleTab || hasSplitPanes || isHiddenInBar || !tabBarVisible);
     DLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isHiddenInBar=%d tabBarVisible=%d -> %d",
@@ -11288,9 +11306,38 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
     RLog(@"OK");
+    // Revived sessions that were floats go back as floats. Only the tiled layout is rebuilt from
+    // the arrangement, and live floats are left alone.
+    NSMutableArray<PTYSession *> *floatingRevived = [NSMutableArray array];
+    NSMutableArray<PTYSession *> *tiledRevived = [NSMutableArray array];
+    for (PTYSession *session in sessions) {
+        if ([PTYTab floatingPaneRecordForSessionWithGUID:session.guid inArrangement:arrangement]) {
+            [floatingRevived addObject:session];
+        } else {
+            [tiledRevived addObject:session];
+        }
+    }
+    NSDictionary *fullArrangement = arrangement;
+    arrangement = [PTYTab arrangementWithoutFloatingPanes:arrangement];
+    sessions = tiledRevived;
+    void (^restoreFloats)(void) = ^{
+        for (PTYSession *session in floatingRevived) {
+            if (revive) {
+                [session revive];
+            }
+            [tab addRevivedFloatingSession:session fromArrangement:fullArrangement];
+        }
+    };
+    if (tiledRevived.count == 0 && floatingRevived.count > 0) {
+        RLog(@"Only floating panes come back; the tiled layout is unchanged");
+        restoreFloats();
+        [self addTabsForArchives:archives];
+        return;
+    }
     NSMutableArray *allSessions = [NSMutableArray array];
     [allSessions addObjectsFromArray:sessions];
-    [allSessions addObjectsFromArray:[tab sessions]];
+    // Floating panes are not rebuilt from the arrangement; they stay as they are.
+    [allSessions addObjectsFromArray:[tab tiledSessions]];
     NSDictionary<NSString *, PTYSession *> *theMap = [PTYTab sessionMapWithArrangement:arrangement
                                                                               sessions:allSessions];
 
@@ -11298,7 +11345,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (ok) {
         RLog(@"Found session map");
         // Make sure the proposed tab has at least all the sessions already in the current tab.
-        for (PTYSession *sessionInExistingTab in [tab sessions]) {
+        for (PTYSession *sessionInExistingTab in [tab tiledSessions]) {
             BOOL found = NO;
             for (PTYSession *sessionInProposedTab in [theMap allValues]) {
                 if (sessionInProposedTab == sessionInExistingTab) {
@@ -11322,6 +11369,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             }
             [self addRevivedSession:session];
         }
+        restoreFloats();
         [self addTabsForArchives:archives];
         return;
     }
@@ -11347,6 +11395,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [tab updatePaneTitles];
     [tab setActiveSession:nil];
     [tab setActiveSession:originalActiveSession];
+    restoreFloats();
 }
 
 - (void)addTabWithArrangement:(NSDictionary *)arrangement
@@ -11449,6 +11498,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
            performSetup:(BOOL)performSetup {
     RLog(@"splitVertically:%@ before:%@ addingSession:%@ targetSession:%@ performSetup:%@ self=%@",
          @(isVertical), @(before), newSession, targetSession, @(performSetup), self);
+    // Callers of this method cannot be refused (the session already exists), so a split aimed at a
+    // floating pane is redirected.
+    targetSession = [[self tabForSession:targetSession] splitTargetForSession:targetSession] ?: targetSession;
     [self.currentSession refuseFirstResponderAtCurrentMouseLocation];
     NSColor *tabColor;
     PTYTab *tab = [self tabForSession:targetSession] ?: [self currentTab];
@@ -11599,6 +11651,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
         return;
     }
+    targetSession = [[self tabForSession:targetSession] splitTargetForSession:targetSession] ?: targetSession;
     PTYSession *currentSession = [self currentSession];
     if (currentSession) {
         [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:theBookmark.sshIdentity
@@ -11653,6 +11706,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return nil;
     }
     RLog(@"--------- splitVertically -----------");
+    targetSession = [[self tabForSession:targetSession] splitTargetForSession:targetSession] ?: targetSession;
     // An async split looks up the working directory before it gets here, and the target can leave
     // this window in the meantime (closed, or moved to another window). Splitting the current tab
     // instead would trip PTYTab's assertion that the target is in its split tree.
@@ -11718,6 +11772,247 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                      completion:completion];
     [self.sessionFactory attachOrLaunchWithRequest:launchRequest];
     return newSession;
+}
+
+#pragma mark - Floating panes
+
+// A mouse-down anywhere in a floating pane (its text, title bar, scroller or resize band) raises
+// it before any view handles the event, so a drag-selection in a covered float happens in front.
+- (void)ptyWindow:(NSWindow *)window willDeliverMouseDown:(NSEvent *)event {
+    NSView *frameView = window.contentView.superview ?: window.contentView;
+    NSView *hit = [frameView hitTest:event.locationInWindow];
+    for (NSView *view = hit; view; view = view.superview) {
+        if ([view isKindOfClass:[iTermFloatingPaneView class]]) {
+            iTermFloatingPaneView *pane = (iTermFloatingPaneView *)view;
+            for (PTYTab *tab in self.tabs) {
+                if ([tab.floatingPanes containsObject:pane]) {
+                    [tab bringFloatingPaneToFront:pane];
+                    return;
+                }
+            }
+            return;
+        }
+    }
+}
+
+- (BOOL)canCreateFloatingPane {
+    PTYTab *tab = [self currentTab];
+    return (tab != nil &&
+            !_layoutLocked &&
+            (![tab isTmuxTab] || tab.tmuxController.supportsFloatingPanes) &&
+            ![self inInstantReplay] &&
+            self.currentSession != nil);
+}
+
+- (IBAction)newFloatingPaneWithCurrentProfile:(id)sender {
+    [self newFloatingPaneWithProfile:[self profileForSplittingCurrentSession]];
+}
+
+- (void)newFloatingPaneWithProfile:(Profile *)profile {
+    if (![self canCreateFloatingPane]) {
+        RLog(@"Can't create a floating pane");
+        NSBeep();
+        return;
+    }
+    if (self.currentTab.isTmuxTab) {
+        // tmux creates, places and sizes it, with the session's own settings rather than a profile.
+        [self.currentTab.tmuxController newFloatingPaneNearPane:self.currentSession.tmuxPane];
+        return;
+    }
+    if (![iTermSessionLauncher profileIsWellFormed:profile]) {
+        return;
+    }
+    PTYTab *tab = [self currentTab];
+    PTYSession *currentSession = [self currentSession];
+    __weak __typeof(self) weakSelf = self;
+    [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:profile.sshIdentity
+                                                                                   completion:^(NSString *oldCWD) {
+        [weakSelf addFloatingPaneToTab:tab
+                               profile:profile
+                         parentSession:currentSession
+                                oldCWD:oldCWD
+                            completion:nil];
+    }];
+}
+
+- (iTermFloatingPaneView *)activeFloatingPane {
+    return [self.currentTab floatingPaneForSession:self.currentSession];
+}
+
+- (IBAction)bringFloatingPaneToFront:(id)sender {
+    iTermFloatingPaneView *pane = [self activeFloatingPane];
+    if (pane) {
+        [self.currentTab bringFloatingPaneToFront:pane];
+    }
+}
+
+- (IBAction)sendFloatingPaneToBack:(id)sender {
+    iTermFloatingPaneView *pane = [self activeFloatingPane];
+    if (pane) {
+        [self.currentTab sendFloatingPaneToBack:pane];
+    }
+}
+
+// A synthetic session (instant replay, filter, zoom) is swapped in for the float's own, so the
+// float cannot leave its wrapper until it ends.
+- (BOOL)canDockFloatingSession:(PTYSession *)session {
+    PTYTab *tab = [self tabForSession:session];
+    return (session != nil &&
+            [tab floatingPaneForSession:session] != nil &&
+            [tab tmuxAllowsChangingFloatingPanes] &&
+            !_layoutLocked &&
+            !session.locked &&
+            session.liveSession == nil &&
+            ![self inInstantReplay]);
+}
+
+// Moves the active float into the tiled layout.
+- (IBAction)dockFloatingPane:(id)sender {
+    [self dockFloatingSession:self.currentSession];
+}
+
+// Moves a float into the tiled layout, to the right of the tiled pane used most recently.
+- (void)dockFloatingSession:(PTYSession *)session {
+    if (![self canDockFloatingSession:session]) {
+        return;
+    }
+    PTYTab *tab = [self tabForSession:session];
+    if (tab.isTmuxTab) {
+        // tmux decides where it goes.
+        [tab.tmuxController tileFloatingPane:session.tmuxPane];
+        return;
+    }
+    PTYSession *target = [tab mostRecentlyActiveTiledSession];
+    if (!target) {
+        return;
+    }
+    DLog(@"Dock %@ next to %@", session, target);
+    [[session retain] autorelease];
+    [[session.view retain] autorelease];
+    [tab removeSession:session];
+    [self splitVertically:YES
+                   before:NO
+            addingSession:session
+            targetSession:target
+             performSetup:NO];
+    [tab fitSessionToCurrentViewSize:session];
+    [tab updateSessionOrdinals];
+    [tab setActiveSession:session];
+}
+
+- (IBAction)toggleFloatingPanesHidden:(id)sender {
+    PTYTab *tab = self.currentTab;
+    tab.floatingPanesHidden = !tab.floatingPanesHidden;
+}
+
+- (void)moveActiveFloatingPaneByColumns:(int)columns rows:(int)rows {
+    iTermFloatingPaneView *pane = [self activeFloatingPane];
+    if (!pane || _layoutLocked || self.currentSession.locked || ![self.currentTab tmuxAllowsChangingFloatingPanes]) {
+        return;
+    }
+    if (self.currentTab.isTmuxTab) {
+        [self.currentTab.tmuxController moveFloatingPane:self.currentSession.tmuxPane byColumns:columns rows:rows];
+        return;
+    }
+    [iTermFloatingPaneLayout moveFloatingPane:pane session:self.currentSession columns:columns rows:rows];
+    [self.currentTab floatingPanesDidChange];
+}
+
+- (IBAction)moveFloatingPaneUp:(id)sender {
+    [self moveActiveFloatingPaneByColumns:0 rows:-1];
+}
+
+- (IBAction)moveFloatingPaneDown:(id)sender {
+    [self moveActiveFloatingPaneByColumns:0 rows:1];
+}
+
+- (IBAction)moveFloatingPaneLeft:(id)sender {
+    [self moveActiveFloatingPaneByColumns:-1 rows:0];
+}
+
+- (IBAction)moveFloatingPaneRight:(id)sender {
+    [self moveActiveFloatingPaneByColumns:1 rows:0];
+}
+
+// Creates a session, adds it to `tab` as a floating pane in front of the others, makes it active,
+// and launches it.
+- (PTYSession *)addFloatingPaneToTab:(PTYTab *)tab
+                             profile:(Profile *)profile
+                       parentSession:(PTYSession *)parentSession
+                              oldCWD:(NSString *)oldCWD
+                          completion:(void (^)(PTYSession *, BOOL))completion {
+    if (![self.tabs containsObject:tab]) {
+        RLog(@"Tab %@ is gone; not adding a floating pane", tab);
+        return nil;
+    }
+    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:profile[KEY_GUID]]) {
+        // Same as splitting: don't let two divorced sessions share a guid.
+        NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
+        temp[KEY_GUID] = [ProfileModel freshGuid];
+        temp[KEY_ORIGINAL_GUID] = [[parentSession.originalProfile[KEY_GUID] copy] autorelease];
+        [[ProfileModel sessionsInstance] addBookmark:temp];
+        profile = temp;
+    }
+    PTYSession *newSession = [[self.sessionFactory newSessionWithProfile:profile
+                                                                  parent:parentSession] autorelease];
+    [self installNewFloatingSession:newSession inTab:tab parentSession:parentSession];
+
+    __weak __typeof(self) weakSelf = self;
+    iTermSessionAttachOrLaunchRequest *launchRequest =
+    [iTermSessionAttachOrLaunchRequest launchRequestWithSession:newSession
+                                                      canPrompt:YES
+                                                     objectType:iTermPaneObject
+                                            hasServerConnection:NO
+                                               serverConnection:(iTermGeneralServerConnection){}
+                                                      urlString:nil
+                                                   allowURLSubs:NO
+                                                    environment:@{}
+                                                    customShell:[ITAddressBookMgr customShellForProfile:profile]
+                                                         oldCWD:oldCWD
+                                                 forceUseOldCWD:NO
+                                                        command:nil
+                                                         isUTF8:nil
+                                                  substitutions:nil
+                                               windowController:self
+                                                          ready:^(BOOL ok) {
+        if (!ok) {
+            RLog(@"Launch of floating pane failed");
+            [newSession terminate];
+            [[weakSelf tabForSession:newSession] removeSession:newSession];
+        }
+    }
+                                                     completion:completion];
+    [self.sessionFactory attachOrLaunchWithRequest:launchRequest];
+    return newSession;
+}
+
+- (void)installNewFloatingSession:(PTYSession *)newSession
+                            inTab:(PTYTab *)tab
+                    parentSession:(PTYSession *)parentSession {
+    [self setupSession:newSession withSize:nil];
+    // The real frame comes from the float's grid, which is computed once the session has a view.
+    [tab addFloatingSession:newSession frame:NSMakeRect(0, 0, 200, 200)];
+    iTermFloatingPaneView *pane = [tab floatingPaneForSession:newSession];
+    [iTermFloatingPaneLayout placeNewFloatingPane:pane session:newSession];
+    // The same rule as for a new split.
+    if (![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] ||
+        [iTermAdvancedSettingsModel focusNewSplitPaneWithFocusFollowsMouse]) {
+        [tab setActiveSession:newSession];
+    }
+    [tab recheckBlur];
+    [self setDimmingForSessions];
+    for (PTYSession *session in tab.sessions) {
+        [session.view updateDim];
+    }
+    if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]] &&
+        parentSession.isDivorced) {
+        [newSession inheritDivorceFrom:parentSession
+                                decree:[NSString stringWithFormat:@"New floating pane with guid %@",
+                                        newSession.profile[KEY_GUID]]];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange"
+                                                        object:self
+                                                      userInfo:nil];
 }
 
 - (Profile *)profileForSplittingCurrentSession {
@@ -12366,7 +12661,23 @@ typedef struct {
     // Things would get really complicated if you could do this in IR, so just
     // close it.
     [self closeInstantReplay:nil orTerminateSession:NO];
+    // A float is never a place to move a session into, and floats would cover the panes that are,
+    // so they are hidden while picking. For a swap, floats are fair targets and stay visible. A
+    // float being moved stays visible: it shows which pane is moving and is where to click to
+    // cancel.
+    // For a swap, a float being swapped is translucent and lets clicks through, so the floats and
+    // panes it covers can be picked.
+    for (PTYTab *tab in self.tabs) {
+        tab.floatingSessionShownWhileTemporarilyHidden = (mode && move) ? session : nil;
+        tab.floatingPanesTemporarilyHidden = (mode && move);
+        for (iTermFloatingPaneView *pane in tab.floatingPanes) {
+            pane.isSourceOfSwapPicking = (mode && !move && [tab sessionForSessionView:pane.sessionView] == session);
+        }
+    }
     for (PTYSession *aSession in [self allSessions]) {
+        if (mode && move && aSession != session && [[self tabForSession:aSession] sessionIsFloating:aSession]) {
+            continue;
+        }
         if (mode) {
             [aSession setSplitSelectionMode:(aSession != session) ? kSplitSelectionModeOn : kSplitSelectionModeCancel
                                        move:move];
@@ -12499,25 +12810,39 @@ typedef struct {
 }
 
 
+// The Increase and Decrease Height and Width commands resize the window. With a float as the
+// receiver, they act on the tiled layout instead of the float.
+- (PTYSession *)windowResizeSessionForSession:(PTYSession *)session {
+    PTYTab *tab = [self tabForSession:session];
+    if ([tab sessionIsFloating:session]) {
+        return [tab mostRecentlyActiveTiledSession] ?: session;
+    }
+    return session;
+}
+
 - (IBAction)increaseHeightOfSession:(PTYSession *)session {
+    session = [self windowResizeSessionForSession:session];
     [self sessionInitiatedResize:session
                            width:session.columns
                           height:session.rows+1];
 }
 
 - (IBAction)decreaseHeightOfSession:(PTYSession *)session {
+    session = [self windowResizeSessionForSession:session];
     [self sessionInitiatedResize:session
                            width:session.columns
                           height:session.rows-1];
 }
 
 - (IBAction)increaseWidthOfSession:(PTYSession *)session {
+    session = [self windowResizeSessionForSession:session];
     [self sessionInitiatedResize:session
                            width:session.columns+1
                           height:session.rows];
 }
 
 - (IBAction)decreaseWidthOfSession:(PTYSession *)session {
+    session = [self windowResizeSessionForSession:session];
     [self sessionInitiatedResize:session
                            width:session.columns-1
                           height:session.rows];
@@ -14034,7 +14359,45 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             action == @selector(duplicateTab:) ||
             action == @selector(newTabToTheRight:) ||
             action == @selector(closeOtherTabs:) ||
-            action == @selector(closeTabsToTheRight:)) {
+            action == @selector(closeTabsToTheRight:) ||
+            action == @selector(newFloatingPaneWithCurrentProfile:) ||
+            action == @selector(dockFloatingPane:)) {
+            return NO;
+        }
+    }
+    {
+        const SEL action = [item action];
+        if (action == @selector(newFloatingPaneWithCurrentProfile:)) {
+            return [self canCreateFloatingPane];
+        }
+        if (action == @selector(bringFloatingPaneToFront:) ||
+            action == @selector(sendFloatingPaneToBack:)) {
+            return [self activeFloatingPane] != nil && [self.currentTab tmuxAllowsChangingFloatingPanes];
+        }
+        if (action == @selector(dockFloatingPane:)) {
+            return [self canDockFloatingSession:self.currentSession];
+        }
+        if (action == @selector(moveFloatingPaneUp:) ||
+            action == @selector(moveFloatingPaneDown:) ||
+            action == @selector(moveFloatingPaneLeft:) ||
+            action == @selector(moveFloatingPaneRight:)) {
+            return ([self activeFloatingPane] != nil &&
+                    !_layoutLocked &&
+                    !self.currentSession.locked &&
+                    [self.currentTab tmuxAllowsChangingFloatingPanes]);
+        }
+        if (action == @selector(toggleFloatingPanesHidden:)) {
+            item.state = self.currentTab.floatingPanesHidden ? NSControlStateValueOn : NSControlStateValueOff;
+            return self.currentTab.floatingPanes.count > 0;
+        }
+        // A native float holds one session, so the menu items that split the current session are
+        // disabled while one is active. tmux 3.8 makes another float; 3.7 can't split one.
+        if ((action == @selector(splitVertically:) ||
+             action == @selector(splitHorizontally:) ||
+             action == @selector(openSplitHorizontallySheet:) ||
+             action == @selector(openSplitVerticallySheet:)) &&
+            (!self.currentTab.isTmuxTab || ![self.currentTab tmuxAllowsChangingFloatingPanes]) &&
+            [self.currentTab sessionIsFloating:self.currentSession]) {
             return NO;
         }
     }
@@ -14204,7 +14567,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                [item action] == @selector(selectPaneDown:) ||
                [item action] == @selector(selectPaneLeft:) ||
                [item action] == @selector(selectPaneRight:)) {
-        result = ([[[self currentTab] sessions] count] > 1);
+        // Directional navigation is among tiled panes, and does nothing from a float.
+        result = ([[[self currentTab] tiledSessions] count] > 1 &&
+                  ![[self currentTab] sessionIsFloating:self.currentSession]);
     } else if ([item action] == @selector(closeCurrentSession:)) {
         NSWindowController* controller = [[NSApp keyWindow] windowController];
         if (controller) {
@@ -15045,6 +15410,24 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         session.browserTarget = target;
     }
                          ready:nil];
+}
+
+- (void)openFloatingPaneWithURL:(NSURL *)url
+                         target:(NSString *)target
+                    baseProfile:(Profile *)base {
+    PTYTab *tab = self.currentTab;
+    if (!tab || ![self canCreateFloatingPane]) {
+        return;
+    }
+    MutableProfile *profile = [[base mutableCopy] autorelease];
+    profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
+    profile[KEY_INITIAL_URL] = url.absoluteString;
+    PTYSession *session = [self addFloatingPaneToTab:tab
+                                             profile:profile
+                                       parentSession:self.currentSession
+                                              oldCWD:nil
+                                          completion:nil];
+    session.browserTarget = target;
 }
 
 - (iTermBrowserWebView *)openTabWithURL:(NSURL *)url

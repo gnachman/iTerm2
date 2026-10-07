@@ -44,6 +44,9 @@ NS_ASSUME_NONNULL_BEGIN
     iTermMetalRenderer *_metalRenderer;
     NSMutableArray<iTermIndicatorDescriptor *> *_indicatorDescriptors;
     NSMutableDictionary<NSString *, id<MTLTexture>> *_identifierToTextureMap;
+    // The image each cached texture was made from. An indicator's image can change (the
+    // hidden-floats indicator gets a badge), and then its texture must too.
+    NSMutableDictionary<NSString *, NSImage *> *_identifierToImageMap;
     iTermMetalBufferPool *_alphaBufferPool;
 }
 
@@ -57,6 +60,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                 transientStateClass:[iTermIndicatorRendererTransientState class]];
         _indicatorDescriptors = [NSMutableArray array];
         _identifierToTextureMap = [NSMutableDictionary dictionary];
+        _identifierToImageMap = [NSMutableDictionary dictionary];
         _alphaBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(float)];
     }
     return self;
@@ -166,11 +170,12 @@ NS_ASSUME_NONNULL_BEGIN
                             colorSpace:(NSColorSpace *)colorSpace {
     NSString *key = [NSString stringWithFormat:@"%@:%@:%@", identifier, @(dark), colorSpace.localizedName];
     id<MTLTexture> texture = _identifierToTextureMap[key];
-    if (!texture) {
+    if (!texture || _identifierToImageMap[key] != image) {
         texture = [_metalRenderer textureFromImage:[iTermImageWrapper withImage:image.it_verticallyFlippedImage]
                                            context:context
                                         colorSpace:colorSpace];
         _identifierToTextureMap[key] = texture;
+        _identifierToImageMap[key] = image;
     }
     return texture;
 }

@@ -27,6 +27,18 @@ final class iTermArrangementTrustGateTests: XCTestCase {
         ]
     }
 
+    func testCommandHiddenInAFloatingPaneIsReported() {
+        let program: [String: Any] = ["Type": "Command", "Command": "/usr/bin/evil"]
+        let tab: [String: Any] = [
+            "Root": splitter(subviews: [sessionView()]),
+            "Floating Panes": [["Node": sessionView(program: program)]]
+        ]
+        let summary = RiskAnalyzer.analyze(windows: [["Tabs": [tab]]])
+        XCTAssertTrue(summary.findings.contains { $0.contains("1 custom command") },
+                      "a float's session must not hide from the trust gate")
+        XCTAssertTrue(summary.findings.contains { $0.contains("2 embedded session profiles") })
+    }
+
     func testEmptyArrangementHasNoFindings() {
         let summary = RiskAnalyzer.analyze(windows: [])
         XCTAssertTrue(summary.findings.isEmpty)

@@ -51,6 +51,7 @@ GPBObjCClassDeclaration(ITMCoordRange);
 GPBObjCClassDeclaration(ITMCreateTabRequest);
 GPBObjCClassDeclaration(ITMCreateTabResponse);
 GPBObjCClassDeclaration(ITMCustomEscapeSequenceNotification);
+GPBObjCClassDeclaration(ITMFloatingPane);
 GPBObjCClassDeclaration(ITMFocusChangedNotification);
 GPBObjCClassDeclaration(ITMFocusChangedNotification_Window);
 GPBObjCClassDeclaration(ITMFocusRequest);
@@ -13135,6 +13136,51 @@ void ITMSplitTreeNode_SplitTreeLink_ClearChildOneOfCase(ITMSplitTreeNode_SplitTr
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
   GPBClearOneof(message, oneof);
 }
+#pragma mark - ITMFloatingPane
+
+@implementation ITMFloatingPane
+
+@dynamic hasSession, session;
+
+typedef struct ITMFloatingPane__storage_ {
+  uint32_t _has_storage_[1];
+  ITMSessionSummary *session;
+} ITMFloatingPane__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "session",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSessionSummary),
+        .number = ITMFloatingPane_FieldNumber_Session,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMFloatingPane__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMFloatingPane class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMFloatingPane__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
 #pragma mark - ITMListSessionsResponse
 
 @implementation ITMListSessionsResponse
@@ -13295,6 +13341,8 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
 @dynamic hasTabGroupName, tabGroupName;
 @dynamic hasTabGroupColor, tabGroupColor;
 @dynamic hasTabGroupCollapsed, tabGroupCollapsed;
+@dynamic floatingPanesArray, floatingPanesArray_Count;
+@dynamic hasFloatingPanesHidden, floatingPanesHidden;
 
 typedef struct ITMListSessionsResponse_Tab__storage_ {
   uint32_t _has_storage_[1];
@@ -13307,6 +13355,7 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
   NSString *tabGroupId;
   NSString *tabGroupName;
   NSString *tabGroupColor;
+  NSMutableArray *floatingPanesArray;
 } ITMListSessionsResponse_Tab__storage_;
 
 // This method is threadsafe because it is initially called
@@ -13402,6 +13451,24 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
         .number = ITMListSessionsResponse_Tab_FieldNumber_TabGroupCollapsed,
         .hasIndex = 8,
         .offset = 9,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "floatingPanesArray",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMFloatingPane),
+        .number = ITMListSessionsResponse_Tab_FieldNumber_FloatingPanesArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, floatingPanesArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "floatingPanesHidden",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMListSessionsResponse_Tab_FieldNumber_FloatingPanesHidden,
+        .hasIndex = 10,
+        .offset = 11,  // Stored in _has_storage_ to save space.
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeBool,
       },

@@ -153,7 +153,7 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
             ?? controller.currentTerminal
             ?? controller.terminals().first
         let reference =
-            (destinationTab?.sessions() as? [PTYSession])?.first
+            (destinationTab?.tiledSessions() as? [PTYSession])?.first
             ?? formerOccupant
             ?? window?.allSessions().first
             ?? controller.terminals().first?.allSessions().first
@@ -273,7 +273,7 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         // tree, so a subsequent `terminateSession(b)` would throw
         // `unknownSession` against a session that's still alive.
         let referencedGuids = collectReferencedGuids(layout)
-        let preExisting = tab.sessions() ?? []
+        let preExisting = tab.tiledSessions() ?? []
         for session in preExisting {
             let guid = session.guid
             if !referencedGuids.contains(guid) {
@@ -312,7 +312,7 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         // apply_layout calls into no-ops because they read the OLD
         // session ordering.
         if sessionsToAdopt.isEmpty,
-           let firstSession = tab.sessions()?.first {
+           let firstSession = tab.tiledSessions()?.first {
             NotificationCenter.default.post(
                 name: .iTermSessionDidChangeTab,
                 object: firstSession)

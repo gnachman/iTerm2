@@ -43,6 +43,10 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 
 // Extra methods for delegates of terminal windows to implement.
 @protocol PTYWindowDelegateProtocol<NSObject,NSWindowDelegate>
+@optional
+// Called before a mouse-down is delivered to its view.
+- (void)ptyWindow:(NSWindow *)window willDeliverMouseDown:(NSEvent *)event;
+@required
 - (BOOL)lionFullScreen;
 - (BOOL)anyFullScreen;
 - (BOOL)terminalWindowIsEnteringLionFullScreen;

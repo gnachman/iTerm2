@@ -44,6 +44,10 @@ protocol LayoutResolverEnvironment {
     /// True if the tab is a tmux integration tab (rejected by the
     /// resolver — tmux owns server-side layout).
     func isTmuxTab(_ tabID: String) -> Bool
+
+    /// True if the session is in a floating pane. Floats are not part of
+    /// a tab's split layout, so they cannot be leaves.
+    func sessionIsFloating(_ guid: String) -> Bool
 }
 
 /// Errors thrown during live-state resolution.
@@ -52,6 +56,7 @@ enum LayoutResolverError: Error, Equatable {
     case unknownTab(guid: String)
     case unknownWindow(guid: String)
     case orphanedSession(tabGUID: String, sessionGUID: String)
+    case floatingSession(guid: String)
     case tmuxTabNotSupported(tabGUID: String)
     case newTabsNotSupported
     case newWindowsNotSupported
@@ -202,6 +207,9 @@ enum LayoutResolver {
         case .session(let guid):
             if !environment.sessionGUIDExists(guid) {
                 throw LayoutResolverError.unknownSession(guid: guid)
+            }
+            if environment.sessionIsFloating(guid) {
+                throw LayoutResolverError.floatingSession(guid: guid)
             }
         case .newSession:
             break

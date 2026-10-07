@@ -69,6 +69,7 @@
                                     iTermVariableKeySessionShowingAlternateScreen,
                                     iTermVariableKeySessionTmuxPaneTitle,
                                     iTermVariableKeySessionTmuxRole,
+                                    iTermVariableKeySessionIsFloating,
                                     iTermVariableKeySessionTmuxClientName,
                                     iTermVariableKeySessionAutoNameFormat,
                                     iTermVariableKeySessionAutoName,

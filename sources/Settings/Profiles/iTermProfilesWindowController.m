@@ -116,6 +116,7 @@ typedef enum {
     IBOutlet NSSegmentedControl* actions_;
     IBOutlet NSButton* horizontalPaneButton_;
     IBOutlet NSButton* verticalPaneButton_;
+    IBOutlet NSButton* floatingPaneButton_;
     IBOutlet NSButton* closeAfterOpeningBookmark_;
     IBOutlet NSButton* newTabsInNewWindowButton_;
     IBOutlet NSButton* toggleTagsButton_;
@@ -315,6 +316,25 @@ typedef enum {
     }
 }
 
+// Each selected profile becomes a floating pane in the current window's tab.
+- (IBAction)openBookmarkInFloatingPane:(id)sender {
+    PseudoTerminal *terminal = [[iTermController sharedInstance] currentTerminal];
+    if (![terminal canCreateFloatingPane]) {
+        DLog(@"Beep: can't add a floating pane");
+        NSBeep();
+        return;
+    }
+    for (NSString *guid in [tableView_ orderedSelectedGuids]) {
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        if (profile) {
+            [terminal newFloatingPaneWithProfile:profile];
+        }
+    }
+    if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
+        [[self window] close];
+    }
+}
+
 - (IBAction)openBookmarkInTab:(id)sender{
     [self _openBookmarkInTab:YES firstInWindow:NO inPane:NO_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSControlStateValueOn) {
@@ -384,9 +404,11 @@ typedef enum {
             [horizontalPaneButton_ setEnabled:windowExists];
             [verticalPaneButton_ setEnabled:windowExists];
         }
+        [floatingPaneButton_ setEnabled:[[[iTermController sharedInstance] currentTerminal] canCreateFloatingPane]];
     } else {
         [horizontalPaneButton_ setEnabled:NO];
         [verticalPaneButton_ setEnabled:NO];
+        [floatingPaneButton_ setEnabled:NO];
         [tabButton_ setEnabled:NO];
         [windowButton_ setEnabled:NO];
         [newTabsInNewWindowButton_ setEnabled:NO];

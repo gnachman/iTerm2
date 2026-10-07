@@ -97,22 +97,29 @@ enum RiskAnalyzer {
             guard let tabs = window[TERMINAL_ARRANGEMENT_TABS] as? [[String: Any]] else { continue }
             for tab in tabs {
                 guard let root = tab[TAB_ARRANGEMENT_ROOT] as? [String: Any] else { continue }
-                walk(root) { session in
-                    sessionCount += 1
-                    if let program = session[SESSION_ARRANGEMENT_PROGRAM] as? [String: Any],
-                       let type = program[kProgramType] as? String,
-                       type == kProgramTypeCommand,
-                       let command = program[kProgramCommand] as? String,
-                       !command.isEmpty {
-                        programCount += 1
-                    }
-                    if let bookmark = session[SESSION_ARRANGEMENT_BOOKMARK] as? [String: Any] {
-                        analyze(bookmark: bookmark,
-                                customCommandCount: &customCommandCount,
-                                sshCount: &sshCount,
-                                initialTextCount: &initialTextCount,
-                                triggerCount: &triggerCount,
-                                smartRuleCount: &smartRuleCount)
+                // Floating panes are sessions too. Without them an arrangement could hide commands,
+                // initial text and triggers in a float and be reported as harmless.
+                let floatingNodes = (tab[TAB_ARRANGEMENT_FLOATING_PANES] as? [[String: Any]] ?? []).compactMap {
+                    $0[FLOATING_PANE_NODE] as? [String: Any]
+                }
+                for node in [root] + floatingNodes {
+                    walk(node) { session in
+                        sessionCount += 1
+                        if let program = session[SESSION_ARRANGEMENT_PROGRAM] as? [String: Any],
+                           let type = program[kProgramType] as? String,
+                           type == kProgramTypeCommand,
+                           let command = program[kProgramCommand] as? String,
+                           !command.isEmpty {
+                            programCount += 1
+                        }
+                        if let bookmark = session[SESSION_ARRANGEMENT_BOOKMARK] as? [String: Any] {
+                            analyze(bookmark: bookmark,
+                                    customCommandCount: &customCommandCount,
+                                    sshCount: &sshCount,
+                                    initialTextCount: &initialTextCount,
+                                    triggerCount: &triggerCount,
+                                    smartRuleCount: &smartRuleCount)
+                        }
                     }
                 }
             }

@@ -8779,6 +8779,138 @@
         }
       }
     },
+    "fpn-br-frt.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Bring to Front\"; ObjectID = \"fpn-br-frt\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bring to Front"
+          }
+        }
+      }
+    },
+    "fpn-dk-itm.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Dock Floating Pane\"; ObjectID = \"fpn-dk-itm\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dock Floating Pane"
+          }
+        }
+      }
+    },
+    "fpn-hd-tgl.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Hide Floating Panes\"; ObjectID = \"fpn-hd-tgl\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide Floating Panes"
+          }
+        }
+      }
+    },
+    "fpn-mv-dn0.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Move Floating Pane Down\"; ObjectID = \"fpn-mv-dn0\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Floating Pane Down"
+          }
+        }
+      }
+    },
+    "fpn-mv-lf0.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Move Floating Pane Left\"; ObjectID = \"fpn-mv-lf0\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Floating Pane Left"
+          }
+        }
+      }
+    },
+    "fpn-mv-rt0.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Move Floating Pane Right\"; ObjectID = \"fpn-mv-rt0\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Floating Pane Right"
+          }
+        }
+      }
+    },
+    "fpn-mv-up0.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Move Floating Pane Up\"; ObjectID = \"fpn-mv-up0\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Floating Pane Up"
+          }
+        }
+      }
+    },
+    "fpn-nw-cur.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"New Floating Pane with Current Profile\"; ObjectID = \"fpn-nw-cur\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane with Current Profile"
+          }
+        }
+      }
+    },
+    "fpn-sb-itm.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Floating Panes\"; ObjectID = \"fpn-sb-itm\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Floating Panes"
+          }
+        }
+      }
+    },
+    "fpn-sb-mnu.title" : {
+      "comment" : "Class = \"NSMenu\"; title = \"Floating Panes\"; ObjectID = \"fpn-sb-mnu\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Floating Panes"
+          }
+        }
+      }
+    },
+    "fpn-sn-bck.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Send to Back\"; ObjectID = \"fpn-sn-bck\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Send to Back"
+          }
+        }
+      }
+    },
     "ft3-BP-igZ.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Show Tip of the Day\"; ObjectID = \"ft3-BP-igZ\";",
       "extractionState" : "extracted_with_value",

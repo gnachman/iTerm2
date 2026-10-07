@@ -155,7 +155,14 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 - (BOOL)tabViewItemIsHiddenInBar:(NSTabViewItem *)item;
 @end
 
+// How long a drag must rest over a tab before that tab is selected.
+static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
+
 @implementation PSMTabBarControl {
+    // The tab a drag is resting over, which will be selected if it stays there. Not retained: it
+    // is checked against _cells before use.
+    PSMTabBarCell *_springLoadingCell;
+
     // control basics
     NSMutableArray<PSMTabBarCell *> *_cells; // the cells that draw the tabs
     NSButton *_overflowPopUpButton; // for too many tabs
@@ -434,6 +441,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(springLoadingTimerDidFire)
+                                               object:nil];
 
 
     // Remove bindings.
@@ -4103,6 +4113,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     } else if ([[self delegate] respondsToSelector:@selector(tabView:draggingEnteredTabBarForSender:)]) {
         NSDragOperation op = [[self delegate] tabView:_tabView draggingEnteredTabBarForSender:sender];
         if (op != NSDragOperationNone) {
+            [self updateSpringLoading];
             [[PSMTabDragAssistant sharedDragAssistant] startAnimationWithOrientation:_orientation width:_cellOptimumWidth];
             [[PSMTabDragAssistant sharedDragAssistant] draggingEnteredTabBar:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
         }
@@ -4129,6 +4140,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         return NSDragOperationMove;
     } else if ([[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)] &&
                [[self delegate] tabView:_tabView shouldAcceptDragFromSender:sender]) {
+        [self updateSpringLoading];
         [[PSMTabDragAssistant sharedDragAssistant] draggingUpdatedInTabBar:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
         return NSDragOperationMove;
     } else if (cell) {
@@ -4141,7 +4153,82 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 - (void)draggingExited:(id <NSDraggingInfo>)sender {
+    [self cancelSpringLoading];
     [[PSMTabDragAssistant sharedDragAssistant] draggingExitedTabBar:self];
+}
+
+#pragma mark Spring loading
+
+// A pane or other non-tab drag that rests over a tab selects that tab, so it can be dropped into
+// that tab's content. Tab drags are not spring-loaded: they rearrange the bar.
+- (void)updateSpringLoading {
+    PSMTabBarCell *cell = [self cellForPoint:[self freshDragMouseLocation] cellFrame:nil];
+    if (cell.isPlaceholder ||
+        cell.representedObject == nil ||
+        cell.representedObject == [_tabView selectedTabViewItem]) {
+        cell = nil;
+    }
+    if (cell == _springLoadingCell) {
+        return;
+    }
+    [self cancelSpringLoading];
+    _springLoadingCell = cell;
+    if (cell) {
+        // A drag session runs the run loop in event tracking mode.
+        [self performSelector:@selector(springLoadingTimerDidFire)
+                   withObject:nil
+                   afterDelay:PSMTabBarSpringLoadingDelay
+                      inModes:@[ NSRunLoopCommonModes ]];
+    }
+}
+
+- (void)cancelSpringLoading {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(springLoadingTimerDidFire)
+                                               object:nil];
+    _springLoadingCell = nil;
+}
+
+- (void)springLoadingTimerDidFire {
+    PSMTabBarCell *cell = _springLoadingCell;
+    _springLoadingCell = nil;
+    if (!cell || ![_cells containsObject:cell]) {
+        return;
+    }
+    if ([self cellForPoint:[self freshDragMouseLocation] cellFrame:nil] != cell) {
+        DLog(@"The drag left the tab before it sprang");
+        return;
+    }
+    NSTabViewItem *item = [cell representedObject];
+    if ([[_tabView tabViewItems] containsObject:item]) {
+        DLog(@"Spring-load tab %@", item);
+        [_tabView selectTabViewItem:item];
+        [self markSelectedCellWithoutLayout];
+    }
+}
+
+// During a drag the drag assistant lays out the bar and -update doesn't run, so a tab selected
+// meanwhile, as by spring-loading, has to be marked selected here.
+- (void)markSelectedCellWithoutLayout {
+    NSTabViewItem *selected = [_tabView selectedTabViewItem];
+    PSMTabBarCell *previous = nil;
+    for (PSMTabBarCell *cell in _cells) {
+        const BOOL isSelected = (selected != nil && [[cell representedObject] isEqualTo:selected]);
+        [cell setState:isSelected ? NSControlStateValueOn : NSControlStateValueOff];
+        int tabState = [cell tabState] & ~(PSMTab_SelectedMask | PSMTab_LeftIsSelectedMask | PSMTab_RightIsSelectedMask);
+        if (isSelected) {
+            tabState |= PSMTab_SelectedMask;
+            if (previous) {
+                [previous setTabState:[previous tabState] | PSMTab_RightIsSelectedMask];
+            }
+        }
+        if ([previous state] == NSControlStateValueOn) {
+            tabState |= PSMTab_LeftIsSelectedMask;
+        }
+        [cell setTabState:tabState];
+        previous = cell;
+    }
+    [self setNeedsDisplay:YES];
 }
 
 - (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender {
@@ -4162,6 +4249,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender {
     _haveInitialDragLocation = NO;
+    [self cancelSpringLoading];
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound ||
         [self _delegateAcceptsSender:sender]) {
         [[PSMTabDragAssistant sharedDragAssistant] performDragOperation:sender];

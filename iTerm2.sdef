@@ -440,6 +440,20 @@
       <result type="session" description="The session that was created"/>
     </command>
 
+    <command name="create floating pane" code="Itrmcflp"
+        description="Add a floating pane, which floats over the split panes, to the session's tab.">
+      <direct-parameter type="specifier" description="The object to send to"/>
+      <parameter name="with profile" code="Prfl" type="text" optional="yes"
+          description="Name of profile for new session. The default profile is used if omitted.">
+        <cocoa key="profile" />
+      </parameter>
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
+          description="Shell command to run">
+          <cocoa key="command"/>
+      </parameter>
+      <result type="session" description="The session that was created"/>
+    </command>
+
     <command name="split horizontally with same profile" code="Itrmshsp"
         description="Split a session horizontally, using the original session's profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
@@ -553,6 +567,9 @@
       </responds-to>
       <responds-to command="split horizontally with same profile">
         <cocoa method="handleSplitHorizontallyWithSameProfile:" />
+      </responds-to>
+      <responds-to command="create floating pane">
+        <cocoa method="handleCreateFloatingPane:" />
       </responds-to>
 
       <property name="id" code="ID  " description="The unique identifier of the session." type="text" access="r">

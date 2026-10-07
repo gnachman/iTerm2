@@ -11,6 +11,7 @@ typedef NS_ENUM(NSUInteger, iTermOpenStyle) {
     iTermOpenStyleWindow,
     iTermOpenStyleTab,
     iTermOpenStyleVerticalSplit,
-    iTermOpenStyleHorizontalSplit
+    iTermOpenStyleHorizontalSplit,
+    iTermOpenStyleFloatingPane
 };
 

@@ -337,7 +337,7 @@ extension App.Broadcast {
                 for win in windows {
                     if let tabs = win.tabsArray as? [ITMListSessionsResponse_Tab] {
                         for tab in tabs {
-                            let tabSessionIds = collectSessionIds(from: tab.root)
+                            let tabSessionIds = collectSessionIds(in: tab)
                             if tabSessionIds.contains(currentSessionId) {
                                 sessionIds = tabSessionIds
                                 break
@@ -409,7 +409,7 @@ extension App.Broadcast {
             for win in windows {
                 if let tabs = win.tabsArray as? [ITMListSessionsResponse_Tab] {
                     for tab in tabs {
-                        for id in collectSessionIds(from: tab.root) {
+                        for id in collectSessionIds(in: tab) {
                             knownIds.insert(id)
                         }
                     }

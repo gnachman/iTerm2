@@ -324,6 +324,13 @@ static NSString *GetProfileName(NSString *guid) {
                 actionString = NSLocalizedStringWithDefaultValue(@"KeyBindingAction.SplitHorizontallyWithUnavailableProfile", nil, [NSBundle mainBundle], @"Split Horizontally with unavailable Profile", @"Key binding action name shown when the referenced profile no longer exists");
             }
             break;
+        case KEY_ACTION_NEW_FLOATING_PANE_WITH_PROFILE:
+            if ([[ProfileModel sharedInstance] bookmarkWithGuid:_parameter]) {
+                actionString = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyBindingAction.NewFloatingPaneWithProfile", nil, [NSBundle mainBundle], @"New Floating Pane with “%@” Profile", @"Key binding action name; %@ is the profile name"), GetProfileName(_parameter)];
+            } else {
+                actionString = NSLocalizedStringWithDefaultValue(@"KeyBindingAction.NewFloatingPaneWithUnavailableProfile", nil, [NSBundle mainBundle], @"New Floating Pane with unavailable Profile", @"Key binding action name shown when the referenced profile no longer exists");
+            }
+            break;
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
             if ([[ProfileModel sharedInstance] bookmarkWithGuid:_parameter]) {
                 actionString = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyBindingAction.SplitVerticallyWithProfile", nil, [NSBundle mainBundle], @"Split Vertically with “%@” Profile", @"Key binding action name; %@ is the profile name"), GetProfileName(_parameter)];
@@ -569,6 +576,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
+        case KEY_ACTION_NEW_FLOATING_PANE_WITH_PROFILE:
         case KEY_ACTION_NEXT_PANE:
         case KEY_ACTION_PREVIOUS_PANE:
         case KEY_ACTION_NEXT_MRU_TAB:
@@ -656,6 +664,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
+        case KEY_ACTION_NEW_FLOATING_PANE_WITH_PROFILE:
         case KEY_ACTION_NEXT_PANE:
         case KEY_ACTION_PREVIOUS_PANE:
         case KEY_ACTION_NEXT_MRU_TAB:

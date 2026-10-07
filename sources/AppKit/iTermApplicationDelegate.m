@@ -493,6 +493,9 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
             return NO;
         } else if ([[[[[iTermController sharedInstance] currentTerminal] currentTab] activeSession] isTmuxClient]) {
             return YES;
+        } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] floatingPaneForSession:[[[iTermController sharedInstance] currentTerminal] currentSession]]) {
+            // A float can always be maximized within its tab.
+            return YES;
         } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane]) {
             return YES;
         } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] hasMultipleSessions]) {
@@ -566,7 +569,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         return YES;
     } else if (menuItem.action == @selector(arrangeSplitPanesEvenly:)) {
         PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
-        return (tab.sessions.count > 0 && !tab.isMaximized);
+        return (tab.tiledSessions.count > 0 && !tab.isMaximized);
     } else if (menuItem.action == @selector(makeScreenshot:)) {
         PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
         return tab != nil;
@@ -695,7 +698,10 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 }
 
 - (void)updateMaximizePaneMenuItem {
-    [maximizePane setState:[[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane] ? NSControlStateValueOn : NSControlStateValueOff];
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    iTermFloatingPaneView *floatingPane = [term.currentTab floatingPaneForSession:term.currentSession];
+    const BOOL maximized = floatingPane ? floatingPane.isMaximized : [term.currentTab hasMaximizedPane];
+    [maximizePane setState:maximized ? NSControlStateValueOn : NSControlStateValueOff];
 }
 
 - (void)updateUseTransparencyMenuItem {
@@ -874,7 +880,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         RLog(@"application:openFile: launching new session in window %@", windowController);
         iTermOpenStyle style = iTermOpenStyleTab;
         NSInteger stylePreference = [iTermAdvancedSettingsModel newInstanceOpenStyle];
-        if (stylePreference >= 0 && stylePreference <= 3) {
+        if (stylePreference >= 0 && stylePreference <= iTermOpenStyleFloatingPane) {
             style = (iTermOpenStyle)stylePreference;
         } else if ([iTermAdvancedSettingsModel openFileInNewWindows]) {
             style = iTermOpenStyleWindow;

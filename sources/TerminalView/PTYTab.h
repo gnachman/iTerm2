@@ -12,6 +12,7 @@
 #import "Api.pbobjc.h"
 
 @class FakeWindow;
+@class iTermFloatingPaneView;
 @protocol iTermTabScope;
 @class iTermVariables;
 @class iTermVariableScope;
@@ -22,6 +23,8 @@
 @class TmuxController;
 
 extern NSString *const iTermTabDidChangeWindowNotification;
+// A float was added, moved, resized, restacked, hidden or shown. The object is the tab.
+extern NSString *const iTermTabFloatingPanesDidChangeNotification;
 extern NSString *const iTermSessionBecameKey;
 extern NSString *const iTermCurrentSessionDidChange;
 extern NSString *const PTYTabVariableTitleOverride;
@@ -33,6 +36,15 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 
 // This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support
 // is eventually dropped, change this to make it official.
+// What has happened in a tab's hidden floats, in increasing priority, as a tab's icon shows it.
+typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
+    iTermHiddenFloatingPanesActivityNone,
+    iTermHiddenFloatingPanesActivityIdle,
+    iTermHiddenFloatingPanesActivityNewOutput,
+    iTermHiddenFloatingPanesActivityBell,
+    iTermHiddenFloatingPanesActivityEnded
+};
+
 @interface PTYTab : NSObject <
   NSCopying,
   NSSplitViewDelegate,
@@ -229,7 +241,7 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (void)setIsProcessing:(BOOL)aFlag;
 - (void)terminateAllSessions;
 - (NSArray *)windowPanes;
-- (NSArray*)sessionViews;
+- (NSArray<SessionView *> *)sessionViews;
 - (void)setFilter:(NSString *)query inSession:(PTYSession *)oldSession;
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession;
 - (void)unmaximizeTemporarilyAndActivate:(PTYSession *(^)(void))sessionPicker;
@@ -281,7 +293,65 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // Does any session in this tab require prompt on close?
 - (iTermPromptOnCloseReason *)promptOnCloseReason;
 
+// All sessions: the tiled ones first, then the floating ones back to front.
 - (NSArray<PTYSession *> *)sessions;
+
+// Sessions in the tiled layout only. May be empty in a tmux tab whose window has only floating
+// panes.
+- (NSArray<PTYSession *> *)tiledSessions;
+
+// Floating sessions, back to front.
+- (NSArray<PTYSession *> *)floatingSessions;
+@property(nonatomic, readonly) NSArray<iTermFloatingPaneView *> *floatingPanes;
+- (BOOL)sessionIsFloating:(PTYSession *)session;
+- (iTermFloatingPaneView *)floatingPaneForSession:(PTYSession *)session;
+
+// Adds an already set up session as a floating pane in front of the others. frame is the float's
+// frame in the tab's container, outline included. The float gets the largest grid that fits in it,
+// keeping its top left, and its frame then follows from that grid.
+- (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame;
+// Adds an existing session's view as a float with the given outline frame, keeping its grid.
+- (iTermFloatingPaneView *)installFloatingSession:(PTYSession *)session outlineFrame:(NSRect)frame;
+
+// Hides or shows every floating pane in the tab. Their sessions keep running. Activating a float
+// shows them again.
+@property(nonatomic) BOOL floatingPanesHidden;
+
+// Hides floats for a moment without the effects of the hide toggle.
+@property(nonatomic) BOOL floatingPanesTemporarilyHidden;
+
+// A float that stays visible while floats are temporarily hidden, such as the source of Move
+// Session to Split Pane, which shows how to cancel.
+@property(nonatomic, weak) PTYSession *floatingSessionShownWhileTemporarilyHidden;
+
+// Change a float's z-order.
+- (void)bringFloatingPaneToFront:(iTermFloatingPaneView *)pane;
+- (void)sendFloatingPaneToBack:(iTermFloatingPaneView *)pane;
+
+// Arrangement helpers for floating panes.
++ (NSDictionary *)arrangementWithoutFloatingPanes:(NSDictionary *)arrangement;
++ (NSDictionary *)floatingPaneRecordForSessionWithGUID:(NSString *)guid inArrangement:(NSDictionary *)arrangement;
+- (void)addRevivedFloatingSession:(PTYSession *)session fromArrangement:(NSDictionary *)arrangement;
+
+// Whether the user may resize the float or take it out of the float now.
+- (BOOL)floatingPaneCanResize:(iTermFloatingPaneView *)pane;
+
+// For a native float: set its grid within the tab and return YES. NO for any other session.
+- (BOOL)sessionResizeFloatingPane:(PTYSession *)session columns:(int)columns rows:(int)rows;
+
+// Tells API clients that a float was added, moved, resized, restacked, hidden or shown.
+- (void)floatingPanesDidChange;
+
+// What has happened in the hidden floats since they were hidden.
+@property(nonatomic, readonly) iTermHiddenFloatingPanesActivity hiddenFloatingPanesActivity;
+
+// The tiled session with the highest activity counter.
+- (PTYSession *)mostRecentlyActiveTiledSession;
+
+// The session a split aimed at `session` should actually split. A native float holds one session,
+// so splits aimed at one go to the most recently active tiled session instead.
+- (PTYSession *)splitTargetForSession:(PTYSession *)session;
+
 - (void)removeSession:(PTYSession *)aSession;
 
 // Anyone changing the number of sessions must call this after the sessions
@@ -301,6 +371,13 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
                zoomed:(NSNumber *)zoomed;
 // Returns true if the tmux layout is too large for the window to accommodate.
 - (BOOL)updatedTmuxLayoutRequiresAdjustment;
+// tmux changed which panes have no border (pane-border-lines none). Borderless floats hide their
+// title bars.
+- (void)tmuxPaneBordersDidChange;
+
+// Whether the floats can be moved, resized, raised or docked. tmux 3.7 has floating panes but no
+// commands to change them, so they only show.
+- (BOOL)tmuxAllowsChangingFloatingPanes;
 - (TmuxController *)tmuxController;
 
 - (void)setTmuxFontTable:(iTermFontTable *)fontTable
@@ -362,6 +439,8 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 
 - (void)updateUseMetal;
 - (ITMSplitTreeNode *)rootSplitTreeNode;
+// The tab's floating panes, back to front, for the API.
+- (NSArray<ITMFloatingPane *> *)floatingPaneMessages;
 
 - (void)setSizesFromSplitTreeNode:(ITMSplitTreeNode *)node;
 - (void)arrangeSplitPanesEvenly;

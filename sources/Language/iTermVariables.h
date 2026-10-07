@@ -58,6 +58,7 @@ extern NSString *const iTermVariableKeySessionForegroundJobAncestors;  // Newlin
 extern NSString *const iTermVariableKeySessionCommandLine;  // Current foreground job with arguments
 extern NSString *const iTermVariableKeySessionPresentationName;  // What's shown in the session title view
 extern NSString *const iTermVariableKeySessionTmuxPaneTitle;  // #{pane_title} for a particular session
+extern NSString *const iTermVariableKeySessionIsFloating;  // NSNumber. Whether the session is in a floating pane.
 extern NSString *const iTermVariableKeySessionTmuxRole;  // Unset (normal session), "gateway" (where you ran tmux -CC), or "client".
 extern NSString *const iTermVariableKeySessionTmuxClientName;  // Set on tmux gateways. Gives a name for the tmux session.
 extern NSString *const iTermVariableKeySessionTmuxWindowPane;  // NSNumber. Window pane number #{pane_id}. Set if the session is a tmux session;

@@ -93,6 +93,8 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 
 // Perform a drag into this view.
 - (BOOL)sessionViewPerformDragOperation:(id<NSDraggingInfo>)sender;
+// Places the session being dragged as a float in this view's tab. Returns whether it was placed.
+- (BOOL)sessionViewPlaceFloatingPaneAtWindowPoint:(NSPoint)point;
 
 // Gives the title to show in the per-pane title bar.
 - (nullable NSString *)sessionViewTitle;
@@ -368,6 +370,9 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)setMainResponder:(NSResponder *)responder;
 - (void)updateForAppearanceChange;
 - (void)smearCursorFrom:(NSRect)from to:(NSRect)to color:(NSColor *)color;
+
+// Whether a view other than this one (a floating pane) is in front of it at the given point.
+- (BOOL)locationIsCoveredByAnotherView:(NSPoint)locationInWindow;
 
 // Uses the Metal debug offscreen rendering path to capture a frame as an NSImage.
 - (nullable NSImage *)drawMetalFrameToImage;

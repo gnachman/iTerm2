@@ -3,6 +3,7 @@
 #import "FutureMethods.h"
 #import "iTermTexture.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermFlexibleView.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCursor.h"
 #import "iTermAnnouncementViewController.h"
@@ -122,6 +123,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 @end
 
 @implementation SessionView {
+    // The pane drag over this view will place a float rather than split this view.
+    BOOL _dragPlacesFloatingPane;
+    // Whether the pointer is over a part of this view that nothing covers, as far as entered, exited
+    // and moved events tell. Tracking areas ignore floating panes, so crossing a float's edge inside
+    // this view's tracking area produces no event of its own.
+    BOOL _pointerIsOverUncoveredPart;
     NSMutableArray *_announcements;
     BOOL _inDealloc;
     iTermAnnouncementViewController *_currentAnnouncement;
@@ -1539,7 +1546,8 @@ typedef struct {
     trackingOptions = (NSTrackingMouseEnteredAndExited |
                        NSTrackingActiveAlways |
                        NSTrackingEnabledDuringMouseDrag);
-    if ([self.delegate sessionViewCaresAboutMouseMovement]) {
+    if ([self.delegate sessionViewCaresAboutMouseMovement] || [self tabHasVisibleFloatingPanes]) {
+        // With floats in the tab, movement is how crossing a float's edge is noticed.
         DLog(@"Track mouse moved events");
         trackingOptions |= NSTrackingMouseMoved;
     } else {
@@ -1699,8 +1707,62 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     return [self.delegate sessionViewOffscreenCommandLineFrameForView:self];
 }
 
+#pragma mark - Floating pane occlusion
+
+// Tracking areas are not occlusion-aware: a pane under a floating pane gets entered and moved
+// events while the pointer is over the float. Only matters while the tab shows a float.
+- (BOOL)tabHasVisibleFloatingPanes {
+    for (NSView *view = self.superview; view; view = view.superview) {
+        if ([view isKindOfClass:[iTermFlexibleView class]]) {
+            for (NSView *subview in view.subviews) {
+                if ([subview isKindOfClass:[iTermFloatingPaneView class]] && !subview.isHidden) {
+                    return YES;
+                }
+            }
+            return NO;
+        }
+    }
+    return NO;
+}
+
+// The view at a window location, as a click there would find it.
+- (NSView *)viewHitAtLocationInWindow:(NSPoint)locationInWindow {
+    NSView *contentView = self.window.contentView;
+    return [contentView hitTest:[contentView.superview convertPoint:locationInWindow fromView:nil]];
+}
+
+- (BOOL)locationIsCoveredByAnotherView:(NSPoint)locationInWindow {
+    if (![self tabHasVisibleFloatingPanes]) {
+        return NO;
+    }
+    NSView *hit = [self viewHitAtLocationInWindow:locationInWindow];
+    iTermFloatingPaneView *hitFloat = [iTermFloatingPaneView castFrom:hit];
+    if ([hitFloat resizeBandContainsWindowPoint:locationInWindow]) {
+        // A float's resize band, even this float's own where it lies over its content.
+        return YES;
+    }
+    // Otherwise a view that contains this one, such as its float's outline or a split view's
+    // divider, does not cover it.
+    return hit != nil && ![hit isDescendantOf:self] && ![self isDescendantOf:hit];
+}
+
+- (SessionView *)sessionViewAtLocationInWindow:(NSPoint)locationInWindow {
+    for (NSView *view = [self viewHitAtLocationInWindow:locationInWindow]; view; view = view.superview) {
+        if ([view isKindOfClass:[SessionView class]]) {
+            return (SessionView *)view;
+        }
+    }
+    return nil;
+}
+
 - (void)mouseEntered:(NSEvent *)theEvent {
     DLog(@"mouseEntered %@", self);
+    if ([self locationIsCoveredByAnotherView:theEvent.locationInWindow]) {
+        DLog(@"Ignore mouseEntered: the pointer is over a view that covers this one");
+        _pointerIsOverUncoveredPart = NO;
+        return;
+    }
+    _pointerIsOverUncoveredPart = YES;
     switch ([theEvent.trackingArea.userInfo[@"mode"] unsignedIntegerValue]) {
         case SessionViewTrackingModeTrackTerminalFragile:
         case SessionViewTrackingModeTrackFirstResponderFragile:
@@ -1715,22 +1777,50 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (void)mouseExited:(NSEvent *)theEvent {
     DLog(@"mouseExited %@", self);
+    _pointerIsOverUncoveredPart = NO;
     switch ([theEvent.trackingArea.userInfo[@"mode"] unsignedIntegerValue]) {
         case SessionViewTrackingModeTrackFirstResponderFragile:
         case SessionViewTrackingModeTrackTerminalFragile:
             DLog(@"Mouse exited with mode immune or none");
             [self updateTrackingAreasOnMouseExit:YES];
             [_delegate sessionViewMouseEntered:theEvent];
+            [self enterSessionViewUnderPointerAfterExit:theEvent];
             return;
         case SessionViewTrackingModeNormal:
             break;
     }
     DLog(@"exit %@", theEvent.trackingArea);
     [_delegate sessionViewMouseExited:theEvent];
+    [self enterSessionViewUnderPointerAfterExit:theEvent];
+}
+
+// Leaving a float onto the pane beneath it: that pane never sees an entered event, because the
+// pointer was inside its tracking area all along. Tell it now.
+- (void)enterSessionViewUnderPointerAfterExit:(NSEvent *)theEvent {
+    if (![self tabHasVisibleFloatingPanes]) {
+        return;
+    }
+    SessionView *under = [self sessionViewAtLocationInWindow:theEvent.locationInWindow];
+    if (under && under != self) {
+        DLog(@"Pointer left %@ onto %@", self, under);
+        [under.delegate sessionViewMouseEntered:theEvent];
+    }
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {
     DLog(@"Mouse moved %@", self);
+    if ([self locationIsCoveredByAnotherView:theEvent.locationInWindow]) {
+        // Don't underline URLs, change the cursor, or report motion for a covered spot.
+        _pointerIsOverUncoveredPart = NO;
+        return;
+    }
+    if (!_pointerIsOverUncoveredPart && [self tabHasVisibleFloatingPanes]) {
+        // The pointer came out from under a float, or in past a float's resize band, without
+        // leaving this view's tracking area. That is entering this view.
+        DLog(@"Pointer moved onto an uncovered part of %@", self);
+        _pointerIsOverUncoveredPart = YES;
+        [_delegate sessionViewMouseEntered:theEvent];
+    }
     [_delegate sessionViewMouseMoved:theEvent];
 }
 
@@ -2015,6 +2105,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (void)draggingSession:(NSDraggingSession *)session movedToPoint:(NSPoint)screenPoint {
     [[NSCursor closedHandCursor] set];
+    [[MovePaneController sharedInstance] dragDidMove];
 }
 
 - (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
@@ -2043,8 +2134,34 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     return [[sender draggingPasteboard] availableTypeFromArray:@[ PSMTabDragIsGroupPasteboardType ]] != nil;
 }
 
+- (BOOL)isInFloatingPane {
+    for (NSView *view = self.superview; view; view = view.superview) {
+        if ([view isKindOfClass:[iTermFloatingPaneView class]]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+// A pane drag that should end with the session floating where it is dropped, instead of split
+// halves.
+- (BOOL)dragPlacesFloatingPane:(id<NSDraggingInfo>)sender {
+    if (![[sender draggingPasteboard] availableTypeFromArray:@[ iTermMovePaneDragType ]]) {
+        return NO;
+    }
+    return [[MovePaneController sharedInstance] dropPlacesFloatingPaneOverFloat:[self isInFloatingPane]];
+}
+
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender {
     if ([self draggingIsWholeTabGroup:sender]) {
+        return NSDragOperationNone;
+    }
+    _dragPlacesFloatingPane = [self dragPlacesFloatingPane:sender];
+    if (_dragPlacesFloatingPane) {
+        return NSDragOperationMove;
+    }
+    if ([self isInFloatingPane]) {
+        // A float holds one session, so it is never split by a drop.
         return NSDragOperationNone;
     }
     return [_delegate sessionViewDraggingEntered:sender];
@@ -2058,6 +2175,25 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
     if ([self draggingIsWholeTabGroup:sender]) {
+        return NSDragOperationNone;
+    }
+    // Pressing or releasing Control mid-drag switches between placing a float and docking it.
+    const BOOL placesFloatingPane = [self dragPlacesFloatingPane:sender];
+    if (placesFloatingPane != _dragPlacesFloatingPane) {
+        _dragPlacesFloatingPane = placesFloatingPane;
+        if (placesFloatingPane) {
+            [_delegate sessionViewDraggingExited:sender];
+            [_splitSelectionView removeFromSuperview];
+            _splitSelectionView = nil;
+        } else if (![self isInFloatingPane] &&
+                   [_delegate sessionViewDraggingEntered:sender] == NSDragOperationNone) {
+            return NSDragOperationNone;
+        }
+    }
+    if (placesFloatingPane) {
+        return NSDragOperationMove;
+    }
+    if ([self isInFloatingPane]) {
         return NSDragOperationNone;
     }
     if ([_delegate sessionViewShouldSplitSelectionAfterDragUpdate:sender]) {
@@ -2074,6 +2210,14 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     RLog(@"performDragOperation: %@", sender);
     if ([self draggingIsWholeTabGroup:sender]) {
+        return NO;
+    }
+    if ([self dragPlacesFloatingPane:sender]) {
+        const BOOL placed = [_delegate sessionViewPlaceFloatingPaneAtWindowPoint:[sender draggingLocation]];
+        [_delegate sessionViewDraggingExited:sender];
+        return placed;
+    }
+    if ([self isInFloatingPane]) {
         return NO;
     }
     BOOL result = [_delegate sessionViewPerformDragOperation:sender];

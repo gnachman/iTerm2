@@ -378,6 +378,18 @@
           }
         }
       }
+    },
+    "fpn-pw-btn.ibShadowedToolTip" : {
+      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"New Floating Pane\"; ObjectID = \"fpn-pw-btn\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -7,6 +7,7 @@
 #import "NSColor+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "ProfilesColorsPreferencesViewController.h"
+#import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "WindowControllerInterface.h"
 
@@ -216,6 +217,46 @@
                                              profileName]];
         return nil;
     }
+}
+
+- (id)handleCreateFloatingPane:(NSScriptCommand *)scriptCommand {
+    NSDictionary *args = [scriptCommand evaluatedArguments];
+    NSString *profileName = args[@"profile"];
+    Profile *profile = profileName ? [[ProfileModel sharedInstance] bookmarkWithName:profileName] : [[ProfileModel sharedInstance] defaultBookmark];
+    if (!profile) {
+        [scriptCommand setScriptErrorNumber:1];
+        [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
+                                             profileName]];
+        return nil;
+    }
+    NSString *command = args[@"command"];
+    if (command) {
+        NSMutableDictionary *temp = [profile mutableCopy];
+        temp[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeCustomValue;
+        temp[KEY_COMMAND_LINE] = command;
+        profile = temp;
+    }
+    PseudoTerminal *terminal = [PseudoTerminal castFrom:[self.delegate realParentWindow]];
+    PTYTab *tab = [PTYTab castFrom:self.delegate];
+    if (!terminal || !tab || tab.isTmuxTab || terminal.layoutLocked) {
+        [scriptCommand setScriptErrorNumber:2];
+        [scriptCommand setScriptErrorString:@"Can’t add a floating pane to this session’s tab."];
+        return nil;
+    }
+    [scriptCommand suspendExecution];
+    PTYSession *session = [terminal addFloatingPaneToTab:tab
+                                                 profile:profile
+                                           parentSession:self
+                                                  oldCWD:nil
+                                              completion:^(PTYSession *newSession, BOOL ok) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [scriptCommand resumeExecutionWithResult:(ok && newSession.objectSpecifier) ? newSession : nil];
+        });
+    }];
+    if (!session) {
+        [scriptCommand resumeExecutionWithResult:nil];
+    }
+    return nil;
 }
 
 - (id)handleSplitVerticallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {

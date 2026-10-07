@@ -75,6 +75,7 @@ NSString *kNewWindowWithProfilePointerAction = @"kNewWindowWithProfilePointerAct
 NSString *kNewTabWithProfilePointerAction = @"kNewTabWithProfilePointerAction";
 NSString *kNewVerticalSplitWithProfilePointerAction = @"kNewVerticalSplitWithProfilePointerAction";
 NSString *kNewHorizontalSplitWithProfilePointerAction = @"kNewHorizontalSplitWithProfilePointerAction";
+NSString *kNewFloatingPaneWithProfilePointerAction = @"kNewFloatingPaneWithProfilePointerAction";
 NSString *kSelectNextPanePointerAction = @"kSelectNextPanePointerAction";
 NSString *kSelectPreviousPanePointerAction = @"kSelectPreviousPanePointerAction";
 NSString *kExtendSelectionPointerAction = @"kExtendSelectionPointerAction";
@@ -434,6 +435,7 @@ typedef enum {
                            NSLocalizedStringWithDefaultValue(@"PointerPrefs.ActionNewTabWithProfile", nil, [NSBundle mainBundle], @"New Tab With Profile…", @"Pointer action name"), kNewTabWithProfilePointerAction,
                            NSLocalizedStringWithDefaultValue(@"PointerPrefs.ActionNewVerticalSplitWithProfile", nil, [NSBundle mainBundle], @"New Vertical Split With Profile…", @"Pointer action name"), kNewVerticalSplitWithProfilePointerAction,
                            NSLocalizedStringWithDefaultValue(@"PointerPrefs.ActionNewHorizontalSplitWithProfile", nil, [NSBundle mainBundle], @"New Horizontal Split With Profile…", @"Pointer action name"), kNewHorizontalSplitWithProfilePointerAction,
+                           NSLocalizedStringWithDefaultValue(@"PointerPrefs.ActionNewFloatingPaneWithProfile", nil, [NSBundle mainBundle], @"New Floating Pane With Profile…", @"Pointer action name. A floating pane floats over the tab’s split panes."), kNewFloatingPaneWithProfilePointerAction,
                            NSLocalizedStringWithDefaultValue(@"PointerPrefs.ActionQuickLook", nil, [NSBundle mainBundle], @"QuickLook", @"Pointer action name"), kQuickLookAction,
                            NSLocalizedStringWithDefaultValue(@"PointerPrefs.ActionSelectMenuItem", nil, [NSBundle mainBundle], @"Select Menu Item", @"Pointer action name"), kSelectMenuItemPointerAction,
                            NSLocalizedStringWithDefaultValue(@"PointerPrefs.ActionCopyLinkAddress", nil, [NSBundle mainBundle], @"Copy Link Address", @"Pointer action name"), kCopyLinkAddressPointerAction,
@@ -455,6 +457,7 @@ typedef enum {
                           @(kProfileArg), kNewTabWithProfilePointerAction,
                           @(kProfileArg), kNewVerticalSplitWithProfilePointerAction,
                           @(kProfileArg), kNewHorizontalSplitWithProfilePointerAction,
+                          @(kProfileArg), kNewFloatingPaneWithProfilePointerAction,
                           @(kAdvancedPasteArg), kPasteFromClipboardPointerAction,
                           @(kAdvancedPasteArg), kPasteFromSelectionPointerAction,
                           @(kMenuItemArg), kSelectMenuItemPointerAction,

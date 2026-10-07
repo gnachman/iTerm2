@@ -92,6 +92,12 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     if (!parseTree) {
         return nil;
     }
+    if (!parseTree[kLayoutDictWidthKey] && self.size.width > 0 && self.size.height > 0) {
+        // With one float left, tmux makes it the layout's root, so the layout doesn't give the
+        // window's size. list-windows did.
+        parseTree[kLayoutDictWidthKey] = @(self.size.width);
+        parseTree[kLayoutDictHeightKey] = @(self.size.height);
+    }
     const iTermTmuxPaneBorderStatus status =
         [self.controller paneBorderStatusForWindow:self.windowIndex];
     return [parser parseTree:parseTree adjustedForPaneBorderStatus:status];
@@ -101,6 +107,10 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     RLog(@"openWindows initial=%d", (int)initial);
     if (!self.layout) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"WindowOpener.MissingLayout", nil, [NSBundle mainBundle], @"Can't open window: missing layout", @"Error shown when a tmux window cannot be opened because its layout is missing")]];
+        return NO;
+    }
+    if ([[TmuxLayoutParser sharedInstance] layoutHasNoTiledPanes:self.layout]) {
+        RLog(@"Not opening window %d because it has no tiled panes", self.windowIndex);
         return NO;
     }
     self.parseTree = [self parsedAdjustedLayoutFromString:self.layout];
@@ -154,6 +164,12 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         return NO;
     }
 
+    if ([[TmuxLayoutParser sharedInstance] layoutHasNoTiledPanes:self.layout]) {
+        // The window's tiled panes are gone and only floating ones remain. Leave the tab as it is
+        // until a layout with tiled panes arrives.
+        RLog(@"Ignoring a layout with no tiled panes for window %d", self.windowIndex);
+        return NO;
+    }
     self.parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!self.parseTree) {
         RLog(@"Failed to create parse tree for %@", self.layout);

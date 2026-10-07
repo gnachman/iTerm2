@@ -9,6 +9,20 @@ Major New Features:
   your Mac’s language and is available in
   Brazilian Portuguese, German, Japanese, Russian,
   and Simplified Chinese.
+- Floating Panes: a pane that floats over a tab’s
+  split panes. Create one with Shell > New
+  Floating Pane with Current Profile, or with a
+  key binding or pointer action. Drag its title
+  bar to move it and its edges to resize it. Hold
+  Control while dragging to dock it into the
+  split panes or move it to another tab or
+  window. Window > Floating Panes can raise,
+  dock, move and hide them. They are saved with
+  window arrangements and can be controlled from
+  the Python API. tmux integration shows tmux’s
+  own floating panes (tmux 3.7 and later; moving,
+  resizing, raising and docking them needs tmux
+  3.8).
 
 New Features:
 - `it2` can now target a session by the tmux pane
@@ -455,6 +469,10 @@ Bug Fixes:
 - Fixed a crash when exiting full screen in a
   window without a title bar, such as a tmux
   integration window, on macOS 26.
+- tmux integration no longer disconnects when a
+  window has only floating panes (tmux 3.8 and
+  later), and tolerates commands that fail
+  because of a floating pane.
 - Closing an archived session soon after opening
   it no longer warns that the session ended very
   soon after starting.

@@ -441,6 +441,34 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)addSession:(PTYSession *)session inTabAtIndex:(NSNumber *)tabIndex;
 - (void)customizeCollectionBehaviorForProfile:(Profile *)profile;
 
+// Floating panes
+- (BOOL)canCreateFloatingPane;
+- (IBAction)newFloatingPaneWithCurrentProfile:(id)sender;
+// Adds a floating pane to the current tab, starting in the current session's directory.
+- (void)newFloatingPaneWithProfile:(Profile *)profile;
+- (IBAction)bringFloatingPaneToFront:(id)sender;
+- (IBAction)sendFloatingPaneToBack:(id)sender;
+- (IBAction)toggleFloatingPanesHidden:(id)sender;
+- (IBAction)dockFloatingPane:(id)sender;
+- (IBAction)moveFloatingPaneUp:(id)sender;
+- (IBAction)moveFloatingPaneDown:(id)sender;
+- (IBAction)moveFloatingPaneLeft:(id)sender;
+- (IBAction)moveFloatingPaneRight:(id)sender;
+// Opens a web page in a new floating pane in the current tab.
+- (void)openFloatingPaneWithURL:(NSURL *)url
+                         target:(NSString *)target
+                    baseProfile:(Profile *)base;
+// Puts a session that has not been launched yet into the tab as a float, centered and active.
+// The caller launches it.
+- (void)installNewFloatingSession:(PTYSession *)newSession
+                            inTab:(PTYTab *)tab
+                    parentSession:(PTYSession *)parentSession;
+- (PTYSession *)addFloatingPaneToTab:(PTYTab *)tab
+                             profile:(Profile *)profile
+                       parentSession:(PTYSession *)parentSession
+                              oldCWD:(NSString *)oldCWD
+                          completion:(void (^)(PTYSession *, BOOL))completion;
+
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;
 - (void)newTmuxTabAtIndex:(NSNumber *)index;

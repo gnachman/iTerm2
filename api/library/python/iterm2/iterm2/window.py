@@ -152,6 +152,10 @@ class Window:
             minimized_sessions = [
                 iterm2.session.Session(connection, None, summary)
                 for summary in (tab.minimized_sessions or [])]
+            floating_sessions = [
+                iterm2.session.Session(
+                    connection, None, floating_pane.session, floating=True)
+                for floating_pane in (tab.floating_panes or [])]
             new_tab = iterm2.tab.Tab(
                 connection,
                 tab.tab_id,
@@ -163,7 +167,9 @@ class Window:
                 tab.tab_group_name if tab.HasField("tab_group_name") else None,
                 tab.tab_group_color if tab.HasField("tab_group_color") else None,
                 tab.tab_group_collapsed if tab.HasField(
-                    "tab_group_collapsed") else None)
+                    "tab_group_collapsed") else None,
+                floating_sessions,
+                tab.floating_panes_hidden)
             # protocol 1.18+ reports the active session here, so current_session
             # is correct straight from a list-sessions refresh without waiting
             # for a focus notification. Older servers leave it unset.

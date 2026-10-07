@@ -56,6 +56,10 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 
 + (BOOL)confirmShouldStartServerAndUpdateUserDefaultsForced:(BOOL)forced;
 + (instancetype)sharedInstance;
+
+// Whether a client advertising `libraryVersion` (the x-iterm2-library-version header) knows about
+// floating panes. Older Python libraries loop forever on a focus change to one.
++ (BOOL)libraryVersionUnderstandsFloatingPanes:(NSString *)libraryVersion;
 + (instancetype)sharedInstanceFromExplicitUserAction;
 + (instancetype)sharedInstanceIfEnabled;
 

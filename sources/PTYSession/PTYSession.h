@@ -78,6 +78,7 @@ extern NSString *const PTYSessionArrangementOptionsInhibitRelaunch;
 @class FakeWindow;
 @class PTYSessionSwiftState;
 @class iTermAction;
+@class iTermFloatingPaneView;
 @class iTermAnnouncementViewController;
 @class iTermAutomaticProfileSwitcher;
 @class iTermAutomaticProfileSwitchingSession;
@@ -165,8 +166,35 @@ typedef enum {
 // given tab.
 - (int)tabNumberForItermSessionId;
 
-// Sibling sessions in this tab.
+// Sibling sessions in this tab: tiled first, then floating.
 - (NSArray<PTYSession *> *)sessions;
+
+// Sibling sessions in the tab's tiled layout.
+- (NSArray<PTYSession *> *)tiledSessions;
+
+// Is the session a floating pane in this tab?
+- (BOOL)sessionIsFloating:(PTYSession *)session;
+
+@optional
+// How many of the tab's floating panes are hidden.
+- (NSInteger)sessionNumberOfHiddenFloatingPanes;
+
+// What has happened in the hidden floats (ended, bell, new output, idle) as a small image, or nil.
+- (nullable NSImage *)sessionHiddenFloatingPanesBadge;
+
+// For a native floating pane, the largest grid that fits in its tab, as (columns, rows). Zero
+// otherwise.
+- (NSSize)sessionMaximumFloatingGridSize:(PTYSession *)session;
+
+// Hides the tab's floats, or shows them again, without changing the hide toggle.
+- (void)sessionSetFloatingPanesTemporarilyHidden:(BOOL)hidden;
+
+// The floating pane holding the session, or nil if it is tiled.
+- (nullable iTermFloatingPaneView *)sessionFloatingPane:(PTYSession *)session;
+
+// Brings a floating pane to the front of the tab's floats, or sends it to the back.
+- (void)sessionRaiseFloatingPane:(PTYSession *)session toFront:(BOOL)toFront;
+@required
 
 // Remove aSession from the tab.
 // Remove a dead session. This should be called from [session terminate] only.
@@ -642,6 +670,8 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 
 // Has it been at least a second since isProcessing became false?
 @property(nonatomic, readonly) BOOL isIdle;
+// When output last arrived, ignoring output caused by resizing. Seconds since the reference date.
+@property(nonatomic, readonly) NSTimeInterval lastOutputTime;
 
 // Tries to return the current local working directory without resolving symlinks (possible if
 // shell integration is on). If that can't be done then the current local working directory with
@@ -887,6 +917,8 @@ backgroundColor:(nullable NSColor *)backgroundColor;
                          workingDirectory:(NSString *)workingDirectory
                                      size:(VT100GridSize)size;
 + (nullable NSString *)guidInArrangement:(NSDictionary *)arrangement;
+// The grid a session had when its arrangement was saved, or 0x0 if it doesn't say.
++ (VT100GridSize)gridSizeInArrangement:(NSDictionary *)arrangement;
 // Returns a copy of the arrangement of a session archived at `path` that is
 // restored as an archive even when no archive option is given. A tab
 // arrangement containing it can be restored without a live session for it.
@@ -1065,6 +1097,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 // Change the size of the session and its tty.
 - (void)setSize:(VT100GridSize)size;
+
+// Gives the session's floating pane, if it has one, the outline color for when it is active: the
+// border around the active pane if the profile asks for one.
+- (void)updateFloatingPaneOutlineColor;
 
 // Resize the grid the way a terminal-initiated resize does, honoring the same
 // window-fitting logic. Note the unusual argument convention: proposedSize.width

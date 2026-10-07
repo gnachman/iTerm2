@@ -28,6 +28,21 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
     BOOL dragFailed_;
     BOOL didSplit_;
+
+    // The dragged session was a float when the drag began.
+    BOOL _draggingFloatingPane;
+
+    // Where the pointer held the dragged session's view, from its top left, in points.
+    NSSize _grabOffset;
+
+    // Tabs whose floats are hidden because Control is held during the drag.
+    NSMutableSet<PTYTab *> *_tabsHidingFloatingPanes;
+
+    // A float dropped during the drag and where its top left went, in screen coordinates. Tab bars
+    // shown for the drag can hide again afterward and move the content under it, so it is placed
+    // there again once the drag is over.
+    PTYSession *_droppedFloatingSession;
+    NSPoint _droppedFloatingPaneScreenTopLeft;
 }
 
 @synthesize dragFailed = dragFailed_;
@@ -311,7 +326,11 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 }
 
 - (void)beginDrag:(PTYSession *)session {
-    DLog(@"beginDrag:%@", session);
+    [self beginDrag:session grabPointInWindow:[NSApp currentEvent].locationInWindow];
+}
+
+- (void)beginDrag:(PTYSession *)session grabPointInWindow:(NSPoint)grabPoint {
+    DLog(@"beginDrag:%@ grabPoint:%@", session, NSStringFromPoint(grabPoint));
     if (session.delegate.realParentWindow.layoutLocked) {
         DLog(@"Layout is locked, refusing to drag");
         return;
@@ -335,6 +354,12 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
     SessionView *source = [session view];
     [source retain];
     didSplit_ = NO;
+    _grabOffset = NSMakeSize(grabPoint.x - NSMinX(rect), NSMaxY(rect) - grabPoint.y);
+    // Put the image under the pointer, held where the view was grabbed.
+    const NSPoint pointer = [NSApp currentEvent].locationInWindow;
+    const NSPoint imageOrigin = NSMakePoint(pointer.x - _grabOffset.width,
+                                            pointer.y + _grabOffset.height - NSHeight(rect));
+    _draggingFloatingPane = [theTab sessionIsFloating:session] && !theTab.isTmuxTab;
     NSWindow *theWindow = [[theTab realParentWindow] window];
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         [[term window] disableCursorRects];
@@ -346,20 +371,165 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
     // for tab drags in PSMTabDragAssistant. See iTerm2 issue 12846.
     [iTermPreferences setHideTabBarSuppressedDuringDrag:YES];
     [theWindow dragImage:[session dragImage]
-                      at:rect.origin
+                      at:imageOrigin
                   offset:NSZeroSize
                    event:[NSApp currentEvent]
               pasteboard:pboard
                   source:source
                slideBack:NO];
     [iTermPreferences setHideTabBarSuppressedDuringDrag:NO];
+    [self placeDroppedFloatingPaneAgain];
     _isDragInProgress = NO;
+    [self showFloatingPanesHiddenForDrag];
+    _draggingFloatingPane = NO;
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         [[term window] enableCursorRects];
     }
     [[NSCursor openHandCursor] set];
     [source autorelease];
     session_ = nil;
+}
+
+#pragma mark Floating panes
+
+- (BOOL)controlIsHeld {
+    return ([NSEvent modifierFlags] & NSEventModifierFlagControl) != 0;
+}
+
+- (BOOL)dropPlacesFloatingPaneOverFloat:(BOOL)overFloat {
+    if (!_isDragInProgress || !session_) {
+        return NO;
+    }
+    return overFloat || (_draggingFloatingPane && ![self controlIsHeld]);
+}
+
+- (void)dragDidMove {
+    if (!_isDragInProgress) {
+        return;
+    }
+    if (![self controlIsHeld]) {
+        [self showFloatingPanesHiddenForDrag];
+        return;
+    }
+    if (!_tabsHidingFloatingPanes) {
+        _tabsHidingFloatingPanes = [[NSMutableSet alloc] init];
+    }
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        PTYTab *tab = term.currentTab;
+        if (tab.floatingPanes.count == 0 || tab.floatingPanesTemporarilyHidden) {
+            continue;
+        }
+        DLog(@"Hide floats in %@ while Control is held during a drag", tab);
+        tab.floatingPanesTemporarilyHidden = YES;
+        [_tabsHidingFloatingPanes addObject:tab];
+    }
+}
+
+- (void)showFloatingPanesHiddenForDrag {
+    for (PTYTab *tab in _tabsHidingFloatingPanes) {
+        tab.floatingPanesTemporarilyHidden = NO;
+    }
+    [_tabsHidingFloatingPanes removeAllObjects];
+}
+
+- (BOOL)dropFloatingPaneInTab:(PTYTab *)destinationTab atWindowPoint:(NSPoint)point {
+    // The drop is handled here, so the end of the drag must not also move the session to a new
+    // window.
+    didSplit_ = YES;
+    PTYSession *movingSession = session_;
+    PTYTab *sourceTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
+    RLog(@"Drop %@ as a float in %@ at %@", movingSession, destinationTab, NSStringFromPoint(point));
+    if (!movingSession || !sourceTab || !destinationTab) {
+        return NO;
+    }
+    if (movingSession.isTmuxClient || sourceTab.isTmuxTab || destinationTab.isTmuxTab) {
+        DLog(@"tmux floats are not supported");
+        return NO;
+    }
+    if (destinationTab.realParentWindow.layoutLocked || movingSession.liveSession) {
+        DLog(@"Layout locked or showing a synthetic session");
+        return NO;
+    }
+    const BOOL wasFloating = [sourceTab sessionIsFloating:movingSession];
+    if (sourceTab == destinationTab && !wasFloating) {
+        DLog(@"A tiled pane dropped on a float in its own tab stays where it is");
+        return NO;
+    }
+    NSView *container = destinationTab.realRootView;
+    if (!container) {
+        return NO;
+    }
+    // Keep the pointer where it held the session's view. The float's outline sits just outside it.
+    const NSPoint topLeftInWindow = NSMakePoint(point.x - _grabOffset.width - [iTermFloatingPaneView outlineWidth],
+                                                point.y + _grabOffset.height + [iTermFloatingPaneView outlineWidth]);
+    const NSPoint visualTopLeft = [self visualPointInContainer:container forWindowPoint:topLeftInWindow];
+    [_droppedFloatingSession release];
+    _droppedFloatingSession = [movingSession retain];
+    _droppedFloatingPaneScreenTopLeft = [container.window convertPointToScreen:topLeftInWindow];
+    const int columns = movingSession.columns;
+    const int rows = movingSession.rows;
+
+    if (sourceTab == destinationTab) {
+        iTermFloatingPaneView *pane = [destinationTab floatingPaneForSession:movingSession];
+        [iTermFloatingPaneLayout placeFloatingPane:pane session:movingSession visualTopLeft:visualTopLeft columns:columns rows:rows];
+        [destinationTab floatingPanesDidChange];
+        return YES;
+    }
+
+    [[movingSession retain] autorelease];
+    [[movingSession.view retain] autorelease];
+    if ([sourceTab hasMaximizedPane]) {
+        [sourceTab unmaximize];
+    }
+    [sourceTab removeSession:movingSession];
+    if (sourceTab.sessions.count == 0) {
+        [[sourceTab realParentWindow] closeTab:sourceTab];
+    } else {
+        [sourceTab numberOfSessionsDidChange];
+        [sourceTab updateSessionOrdinals];
+    }
+
+    iTermFloatingPaneView *pane = [destinationTab installFloatingSession:movingSession
+                                                            outlineFrame:NSMakeRect(0, 0, 100, 100)];
+    [iTermFloatingPaneLayout placeFloatingPane:pane session:movingSession visualTopLeft:visualTopLeft columns:columns rows:rows];
+    [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:movingSession];
+    [destinationTab setActiveSession:movingSession];
+    [destinationTab updateSessionOrdinals];
+    [destinationTab recheckBlur];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:movingSession];
+    [movingSession didMoveSession];
+    return YES;
+}
+
+// A window point in a float container's visual coordinates (top left origin, y down).
+- (NSPoint)visualPointInContainer:(NSView *)container forWindowPoint:(NSPoint)windowPoint {
+    const NSPoint inContainer = [container convertPoint:windowPoint fromView:nil];
+    return NSMakePoint(inContainer.x,
+                       container.isFlipped ? inContainer.y : NSHeight(container.bounds) - inContainer.y);
+}
+
+// The tab bars shown for the drag are back to normal. If one was hidden again, the content of its
+// window moved, so put a float dropped there back where it was dropped.
+- (void)placeDroppedFloatingPaneAgain {
+    PTYSession *session = [_droppedFloatingSession autorelease];
+    _droppedFloatingSession = nil;
+    if (!session) {
+        return;
+    }
+    PTYTab *tab = [session.delegate.realParentWindow tabForSession:session];
+    iTermFloatingPaneView *pane = [tab floatingPaneForSession:session];
+    NSView *container = tab.realRootView;
+    if (!pane || !container.window) {
+        return;
+    }
+    const NSPoint windowPoint = [container.window convertPointFromScreen:_droppedFloatingPaneScreenTopLeft];
+    const NSPoint visualTopLeft = [self visualPointInContainer:container forWindowPoint:windowPoint];
+    DLog(@"Place dropped float %@ again at %@", session, NSStringFromPoint(visualTopLeft));
+    [iTermFloatingPaneLayout placeFloatingPane:pane
+                                       session:session
+                                 visualTopLeft:visualTopLeft
+                                       columns:session.columns
+                                          rows:session.rows];
 }
 
 #pragma mark Delegate
