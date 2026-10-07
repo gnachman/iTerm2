@@ -7324,6 +7324,16 @@ typedef struct {
     PTYSplitView *session2Superview = (PTYSplitView *)session2.view.superview;
     NSUInteger session2Index = [[session2Superview subviews] indexOfObject:session2.view];
 
+    // A float keeps its frame for whichever session it ends up holding.
+    iTermFloatingPaneView *float1 = [session1Tab floatingPaneForSession:session1];
+    iTermFloatingPaneView *float2 = [session2Tab floatingPaneForSession:session2];
+    const NSRect float1Frame = float1.outlineFrame;
+    const NSRect float2Frame = float2.outlineFrame;
+
+    // Each split view gets its own delegate back afterward. A float's has none; giving it the tab
+    // would make the tab refit the float to a stale grid on every resize.
+    id<PTYSplitViewDelegate> session1SuperviewDelegate = session1Superview.delegate;
+    id<PTYSplitViewDelegate> session2SuperviewDelegate = session2Superview.delegate;
     session1Superview.delegate = nil;
     session2Superview.delegate = nil;
     if (session1Superview == session2Superview) {
@@ -7337,8 +7347,8 @@ typedef struct {
         [session1Superview insertSubview:session2.view atIndex:session1Index];
         [session2Superview insertSubview:session1.view atIndex:session2Index];
     }
-    session1Superview.delegate = session1Tab;
-    session2Superview.delegate = session2Tab;
+    session1Superview.delegate = session1SuperviewDelegate;
+    session2Superview.delegate = session2SuperviewDelegate;
 
     session1.delegate = session2Tab;
     session2.delegate = session1Tab;
@@ -7371,6 +7381,13 @@ typedef struct {
 
     [session1Tab.viewToSessionMap setObject:session2 forKey:session2.view];
     [session2Tab.viewToSessionMap setObject:session1 forKey:session1.view];
+
+    if (float1) {
+        [iTermFloatingPaneLayout fitFloatingPane:float1 session:session2 toOutlineFrame:float1Frame];
+    }
+    if (float2) {
+        [iTermFloatingPaneLayout fitFloatingPane:float2 session:session1 toOutlineFrame:float2Frame];
+    }
 
     [session1 didMoveSession];
     [session2 didMoveSession];

@@ -346,6 +346,29 @@ final class FloatingPaneCommandTests: XCTestCase {
         terminal.setSplitSelectionMode(false, excludingSession: tiled, move: false)
     }
 
+    // MARK: - Swap
+
+    /// Each takes the other's place: the tiled pane becomes a float with the old float's frame, and
+    /// the float's split view still has no delegate (one made the tab refit it on every resize).
+    func testSwappingAFloatWithATiledPaneKeepsTheFloatsFrame() {
+        let float = fixture.addFloat(frame: floatFrame)
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let floatPane = pane(float)
+        let frame = floatPane.outlineFrame
+        tab.swapSession(float, with: tiled)
+
+        XCTAssertTrue(tab.floatingSessions()?.first === tiled)
+        XCTAssertTrue(tab.tiledSessions()?.first === float)
+        XCTAssertTrue(tab.floatingPane(for: tiled) === floatPane)
+        XCTAssertEqual(floatPane.outlineFrame.origin, frame.origin)
+        XCTAssertEqual(floatPane.outlineFrame.width, frame.width, accuracy: CGFloat(tiled.textview?.charWidth ?? 10))
+        XCTAssertEqual(floatPane.outlineFrame.height, frame.height, accuracy: CGFloat(tiled.textview?.lineHeight ?? 20))
+        XCTAssertNil(floatPane.splitView.delegate)
+    }
+
     // MARK: - Resize requests from the program
 
     func testAProgramResizingAFloatChangesItsGridAndNotTheWindow() {
