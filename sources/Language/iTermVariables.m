@@ -30,6 +30,8 @@ NSString *const iTermVariableKeyApplicationPID = @"pid";
 NSString *const iTermVariableKeyApplicationLocalhostName = @"localhostName";
 NSString *const iTermVariableKeyApplicationEffectiveTheme = @"effectiveTheme";
 NSString *const iTermVariableKeyApplicationBundlePath = @"appBundlePath";
+NSString *const iTermVariableKeyApplicationWorkingSessionCount = @"workingSessionCount";
+NSString *const iTermVariableKeyApplicationWaitingSessionCount = @"waitingSessionCount";
 
 #pragma mark - Tab Context
 

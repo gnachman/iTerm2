@@ -1830,6 +1830,8 @@ void TurnOnDebugLoggingAutomatically(void) {
         [iTermWorkgroupMenu attachTo:_workgroupsMenuItem
                            separator:_workgroupsSeparator];
     }
+    [[iTermSessionStatusCountVariables sharedInstance] start];
+    [[iTermAIMenuBarStatusController sharedInstance] start];
 #if DEBUG
     NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
     [appMenu addItem:[NSMenuItem separatorItem]];
@@ -1916,6 +1918,7 @@ static iTermKeyEventReplayer *gReplayer;
     [menu addItem:item];
 
     NSMenuItem *mainMenuItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusMenu.MainMenu", nil, [NSBundle mainBundle], @"Main Menu", @"Status-icon submenu title mirroring the main menu") action:nil keyEquivalent:@""] autorelease];
+    mainMenuItem.identifier = @"iTermStatusMenuMainMenu";
     mainMenuItem.submenu = [[NSApp mainMenu] it_deepCopy];
     [menu addItem:mainMenuItem];
     

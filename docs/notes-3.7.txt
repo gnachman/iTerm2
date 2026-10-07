@@ -274,6 +274,13 @@ New Features:
   and CSI 2 SP k make reordered lines
   left-to-right or right-to-left, and
   CSI 0 SP k restores the default.
+- New variables iterm2.workingSessionCount and
+  iterm2.waitingSessionCount count the sessions
+  whose status reads “working” or “waiting”. Use
+  them anywhere interpolated strings work, such
+  as badges, tab titles, and the status bar. The
+  “Menu bar item text” advanced setting shows an
+  interpolated string like these in the menu bar.
 
 Improvements:
 - If a profile archives sessions when they close
