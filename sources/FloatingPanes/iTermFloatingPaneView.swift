@@ -353,6 +353,32 @@ final class iTermFloatingPaneView: NSView {
         return b
     }
 
+    /// The title bar, in this view's coordinates, if it shows. It is the grab handle, so the band
+    /// that lies inside the outline on a flush edge stays out of it.
+    private var titleBarRect: NSRect? {
+        guard let sessionView, sessionView.showTitle(), let title = sessionView.title, !title.isHidden else {
+            return nil
+        }
+        return title.convert(title.bounds, to: self)
+    }
+
+    /// `rect` with any part over the title bar removed. The title bar spans the float's width at its
+    /// top, so this cuts the rect off where the title bar begins.
+    private func excludingTitleBar(_ rect: NSRect) -> NSRect {
+        guard let title = titleBarRect, rect.intersects(title) else {
+            return rect
+        }
+        var result = rect
+        if isFlipped {
+            let top = max(rect.minY, title.maxY)
+            result.size.height = max(0, rect.maxY - top)
+            result.origin.y = top
+        } else {
+            result.size.height = max(0, min(rect.maxY, title.minY) - rect.minY)
+        }
+        return result
+    }
+
     override func resetCursorRects() {
         super.resetCursorRects()
         let b = bandBounds
@@ -376,7 +402,10 @@ final class iTermFloatingPaneView: NSView {
             (NSRect(x: b.maxX - band, y: b.maxY - corner, width: band, height: corner), [.right, highY]),
         ]
         for (rect, edges) in rects {
-            addCursorRect(rect, cursor: Self.cursor(for: edges))
+            let clipped = excludingTitleBar(rect)
+            if !clipped.isEmpty {
+                addCursorRect(clipped, cursor: Self.cursor(for: edges))
+            }
         }
     }
 
@@ -386,7 +415,9 @@ final class iTermFloatingPaneView: NSView {
     func edges(at point: NSPoint) -> FloatingPaneEdges {
         let b = bandBounds
         let band = Self.resizeBandWidth
-        guard b.contains(point), !b.insetBy(dx: band, dy: band).contains(point) else {
+        guard b.contains(point),
+              !b.insetBy(dx: band, dy: band).contains(point),
+              !(titleBarRect?.contains(point) ?? false) else {
             return []
         }
         let corner = Self.cornerLength

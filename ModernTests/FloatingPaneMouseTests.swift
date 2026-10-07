@@ -375,6 +375,53 @@ final class FloatingPaneMouseTests: XCTestCase {
         XCTAssertFalse(tab.floatingSessions()?.contains(session) ?? true, "after the drag")
     }
 
+    /// The band inside the outline on a flush edge stays out of the title bar, which is the grab
+    /// handle. A float flush with the top of the tab moves when dragged by the middle of its title
+    /// bar.
+    func testAFloatFlushWithTheTopMovesByItsTitleBar() {
+        let (session, pane) = addFloat()
+        let m = metrics(session)
+        let size = m.frameSize(for: grid(session))
+        FloatingPaneLayout.apply(FloatingPanePlacement(frame: CGRect(x: 100, y: 0, width: size.width, height: size.height),
+                                                       grid: grid(session)),
+                                 to: pane,
+                                 session: session)
+        XCTAssertEqual(pane.outlineFrame.maxY, container.bounds.maxY, "test setup: flush with the top")
+        let startGrid = grid(session)
+        let start = pane.outlineFrame
+        let title = titleBarPoint(session)
+        XCTAssertTrue(pane.edges(at: pane.convert(title, from: nil)).isEmpty)
+        fixture.mouse.drag(from: title, to: NSPoint(x: title.x + 50, y: title.y - 40), steps: 3)
+        XCTAssertEqual(grid(session), startGrid, "moved, not resized")
+        XCTAssertEqual(pane.outlineFrame.size, start.size)
+        XCTAssertNotEqual(pane.outlineFrame.origin, start.origin)
+    }
+
+    func testDoubleClickingAMaximizedFloatsTitleBarRestoresIt() {
+        let (session, pane) = addFloat()
+        tab.setActiveSession(session)
+        fixture.terminal.toggleMaximizeActivePane()
+        XCTAssertTrue(pane.isMaximized)
+        fixture.mouse.doubleClick(at: titleBarPoint(session))
+        XCTAssertFalse(pane.isMaximized)
+    }
+
+    /// On a float flush with the left edge, the band inside the outline stops at the title bar, so
+    /// its close button isn't under a resize cursor.
+    func testTheTitleBarOfAFloatFlushWithTheLeftIsNotPartOfTheBand() {
+        let (session, pane) = addFloat(at: NSPoint(x: 0, y: 60))
+        guard let title = session.view?.title else {
+            XCTFail("No title bar")
+            return
+        }
+        XCTAssertEqual(pane.outlineFrame.minX, container.bounds.minX, "test setup: flush with the left")
+        let band = iTermFloatingPaneView.resizeBandWidth
+        let x = band + iTermFloatingPaneView.flushBandInset + band / 2
+        let inTitle = NSPoint(x: x, y: pane.convert(NSPoint(x: 0, y: title.bounds.midY), from: title).y)
+        XCTAssertTrue(pane.edges(at: inTitle).isEmpty)
+        XCTAssertEqual(pane.edges(at: NSPoint(x: x, y: pane.bounds.midY)), .left, "below the title bar it is band")
+    }
+
     func testResizeStopsAtTheMinimumGrid() {
         let (session, pane) = addFloat()
         let point = rightBandPoint(pane)
