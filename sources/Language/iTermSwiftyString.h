@@ -35,6 +35,13 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermAnnotatingSwiftyString : iTermSwiftyString
 @end
 
+// Like iTermSwiftyString, but a reference to an undefined variable is an evaluation error
+// regardless of the laxNilPolicyInInterpolatedStrings advanced setting. Use it where a typo
+// should be reported rather than rendered as an empty string. Write `name?` to allow an
+// undefined value.
+@interface iTermStrictSwiftyString : iTermSwiftyString
+@end
+
 @interface iTermExpressionObserver: iTermGenericEvaluator
 @end
 

@@ -127,6 +127,8 @@ NSString *const kPreferenceKeyScrollableSideTabBar = @"ScrollableSideTabBar";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
 NSString *const kPreferenceKeyUIElement = @"HideFromDockAndAppSwitcher";
 NSString *const kPreferenceKeyUIElementRequiresHotkeys = @"UIElementRequiresHotkeys";
+NSString *const kPreferenceKeyShowMenuBarItem = @"ShowMenuBarItem";
+NSString *const kPreferenceKeyMenuBarItemString = @"MenuBarItemString";
 NSString *const kPreferenceKeyFlashTabBarInFullscreen = @"FlashTabBarInFullscreen";
 NSString *const kPreferenceKeyShowWindowNumber = @"WindowNumber";
 NSString *const kPreferenceKeyShowJobName_Deprecated = @"JobName";
@@ -830,6 +832,8 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyHideMenuBarInFullscreen:@YES,
                   kPreferenceKeyUIElement: @NO,
                   kPreferenceKeyUIElementRequiresHotkeys: @NO,
+                  kPreferenceKeyShowMenuBarItem: @NO,
+                  kPreferenceKeyMenuBarItemString: @"",
                   kPreferenceKeyFlashTabBarInFullscreen:@NO,
                   kPreferenceKeyShowWindowNumber: @YES,
                   kPreferenceKeyShowJobName_Deprecated: @YES,

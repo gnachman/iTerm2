@@ -9,6 +9,9 @@
 #import "AppearancePreferencesViewController.h"
 #import "iTermHotKeyController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermFunctionCallTextFieldDelegate.h"
+#import "iTermVariableHistory.h"
 #import "iTermWarning.h"
 #import "PreferencePanel.h"
 
@@ -114,6 +117,10 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     IBOutlet NSStepper *_topBottomMarginsStepper;
 
     IBOutlet NSButton *_hideMenuItemIcons;
+
+    IBOutlet NSButton *_showMenuBarItem;
+    IBOutlet NSTextField *_menuBarItemString;
+    iTermFunctionCallTextFieldDelegate *_menuBarItemStringDelegate;
 }
 
 - (void)awakeFromNib {
@@ -279,8 +286,49 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         }
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
                                                             object:nil];
+        [weakSelf updateControlForKey:kPreferenceKeyShowMenuBarItem];
         [weakSelf updateHiddenAndEnabled];
     };
+
+    info = [self defineControl:_showMenuBarItem
+                           key:kPreferenceKeyShowMenuBarItem
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    // While excluded from the Dock the icon is the only way back to Settings, so
+    // the checkbox shows as on and can't be changed. The stored value is kept for
+    // when the app is back in the Dock.
+    info.onUpdate = ^BOOL{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return NO;
+        }
+        const BOOL on = [strongSelf menuBarItemIsForced] || [strongSelf boolForKey:kPreferenceKeyShowMenuBarItem];
+        strongSelf->_showMenuBarItem.state = on ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
+    };
+    info.shouldBeEnabled = ^BOOL{
+        return ![weakSelf menuBarItemIsForced];
+    };
+    info.hasDefaultValue = ^BOOL{
+        return [weakSelf menuBarItemIsForced] || [weakSelf valueOfKeyEqualsDefaultValue:kPreferenceKeyShowMenuBarItem];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyUIElement controller:self];
+    [self updateValueForInfo:info];
+
+    info = [self defineControl:_menuBarItemString
+                           key:kPreferenceKeyMenuBarItemString
+                   relatedView:nil
+                          type:kPreferenceInfoTypeStringTextField];
+    info.shouldBeEnabled = ^BOOL{
+        return [weakSelf menuBarItemIsForced] || [weakSelf boolForKey:kPreferenceKeyShowMenuBarItem];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyUIElement controller:self];
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyShowMenuBarItem controller:self];
+    _menuBarItemStringDelegate =
+        [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextApp]
+                                                           passthrough:_menuBarItemString.delegate
+                                                         functionsOnly:NO];
+    _menuBarItemString.delegate = _menuBarItemStringDelegate;
 
     info = [self defineControl:_uiElementRequiresHotkeyWindows
                            key:kPreferenceKeyUIElementRequiresHotkeys
@@ -417,6 +465,12 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+// Uses the preference, not the effective UI-element state, so the checkbox doesn't
+// change as windows open and close when UIElementRequiresHotkeys is on.
+- (BOOL)menuBarItemIsForced {
+    return [self boolForKey:kPreferenceKeyUIElement] && [iTermAdvancedSettingsModel statusBarIcon];
 }
 
 - (void)postUpdateLabelsNotification {

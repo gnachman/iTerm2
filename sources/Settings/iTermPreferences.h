@@ -291,6 +291,8 @@ extern NSString *const kPreferenceKeyPerPaneBackgroundImage;
 extern NSString *const kPreferenceKeyHideMenuBarInFullscreen;
 extern NSString *const kPreferenceKeyUIElement;
 extern NSString *const kPreferenceKeyUIElementRequiresHotkeys;
+extern NSString *const kPreferenceKeyShowMenuBarItem;
+extern NSString *const kPreferenceKeyMenuBarItemString;
 extern NSString *const kPreferenceKeyFlashTabBarInFullscreen;
 extern NSString *const kPreferenceKeyStretchTabsToFillBar;
 extern NSString *const kPreferenceKeyScrollableSideTabBar;

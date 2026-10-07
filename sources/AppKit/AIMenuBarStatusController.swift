@@ -44,8 +44,9 @@ class SessionStatusCountVariables: NSObject {
     }
 }
 
-// Owns the menu bar status item. Its content is the interpolated string in the
-// menuBarItemString advanced setting, evaluated in the global scope.
+// Owns the menu bar status item. It is shown when the Show Menu Bar Icon setting
+// is on, and always while the app is excluded from the Dock. Its text is the
+// interpolated string in the menu bar item setting, evaluated in the global scope.
 @objc(iTermAIMenuBarStatusController)
 class AIMenuBarStatusController: NSObject, NSMenuDelegate {
     @objc(sharedInstance) static let instance = AIMenuBarStatusController()
@@ -53,6 +54,9 @@ class AIMenuBarStatusController: NSObject, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private var swiftyString: iTermSwiftyString?
     private var evaluatedValue = ""
+    // Set while the template fails to evaluate. The item shows a bug and the
+    // status menu offers to show the error.
+    private var evaluationError: NSError?
     private var started = false
     private lazy var baseImage: NSImage? = {
         let image = NSImage(named: "StatusItem")
@@ -69,6 +73,11 @@ class AIMenuBarStatusController: NSObject, NSMenuDelegate {
             selector: #selector(refresh),
             name: NSNotification.Name(iTermAdvancedSettingsDidChange),
             object: nil)
+        for key in [kPreferenceKeyShowMenuBarItem, kPreferenceKeyMenuBarItemString] {
+            iTermPreferences.addObserver(forKey: key) { [weak self] _, _ in
+                self?.refresh()
+            }
+        }
         refreshOnMain()
     }
 
@@ -80,24 +89,23 @@ class AIMenuBarStatusController: NSObject, NSMenuDelegate {
     }
 
     private func refreshOnMain() {
-        let template = iTermAdvancedSettingsModel.menuBarItemString() ?? ""
         // The effective UI-element state, not the raw preference: with
         // UIElementRequiresHotkeys set, updateProcessType turns it off while
-        // ordinary windows are open.
-        let legacyMode = iTermApplication.shared().isUIElement &&
+        // ordinary windows are open, and then the Dock icon is available.
+        let requiredForSettingsAccess = iTermApplication.shared().isUIElement &&
             iTermAdvancedSettingsModel.statusBarIcon()
-        if template.isEmpty {
+        guard requiredForSettingsAccess || iTermPreferences.bool(forKey: kPreferenceKeyShowMenuBarItem) else {
             stopEvaluating()
-            if legacyMode {
-                installStatusItemIfNeeded()
-                render()
-            } else {
-                removeStatusItem()
-            }
+            removeStatusItem()
             return
         }
         installStatusItemIfNeeded()
-        startEvaluating(template)
+        let template = Self.template
+        if template.isEmpty {
+            stopEvaluating()
+        } else {
+            startEvaluating(template)
+        }
         render()
     }
 
@@ -110,25 +118,29 @@ class AIMenuBarStatusController: NSObject, NSMenuDelegate {
         let scope = iTermVariableScope()
         scope.add(iTermVariables.globalInstance(), toScopeNamed: nil)
         scope.add(iTermVariables.globalInstance(), toScopeNamed: iTermVariableKeyGlobalScopeName)
-        swiftyString = iTermSwiftyString(string: template,
+        // Strict so a typo shows the bug instead of silently rendering as empty.
+        swiftyString = iTermStrictSwiftyString(string: template,
                                          scope: scope,
                                          sideEffectsAllowed: false,
                                          observer: { [weak self] newValue, error in
             if let error {
                 RLog("Menu bar item string failed to evaluate: \(error)")
-                return newValue
             }
-            self?.evaluatedValue = (newValue as? String) ?? ""
+            self?.evaluationError = error as NSError?
+            self?.evaluatedValue = error == nil ? ((newValue as? String) ?? "") : ""
             self?.render()
             return newValue
         })
-        evaluatedValue = swiftyString?.evaluatedString ?? ""
+        if evaluationError == nil {
+            evaluatedValue = swiftyString?.evaluatedString ?? ""
+        }
     }
 
     private func stopEvaluating() {
         swiftyString?.invalidate()
         swiftyString = nil
         evaluatedValue = ""
+        evaluationError = nil
     }
 
     private func installStatusItemIfNeeded() {
@@ -155,6 +167,11 @@ class AIMenuBarStatusController: NSObject, NSMenuDelegate {
 
     private func render() {
         guard let button = statusItem?.button else { return }
+        if evaluationError != nil {
+            button.image = baseImage
+            button.title = Self.errorTitle
+            return
+        }
         let value = evaluatedValue
         if iTermAdvancedSettingsModel.menuBarItemDrawsBadge(),
            let label = Self.badgeLabel(for: value) {
@@ -225,6 +242,7 @@ class AIMenuBarStatusController: NSObject, NSMenuDelegate {
     // MARK: - NSMenuDelegate
 
     func menuNeedsUpdate(_ menu: NSMenu) {
+        updateErrorMenuItems(menu)
         // Re-copy the main menu on open so it never shows stale items.
         guard let item = menu.items.first(where: { $0.identifier == Self.mainMenuItemIdentifier }) else {
             return
@@ -232,5 +250,52 @@ class AIMenuBarStatusController: NSObject, NSMenuDelegate {
         item.submenu = NSApp.mainMenu?.deepCopy()
     }
 
+    private func updateErrorMenuItems(_ menu: NSMenu) {
+        for item in menu.items.filter({ $0.identifier == Self.errorMenuItemIdentifier }) {
+            menu.removeItem(item)
+        }
+        guard evaluationError != nil else {
+            return
+        }
+        let item = NSMenuItem(
+            title: String(localized: "StatusMenu.ShowMenuBarItemError",
+                          defaultValue: "Show Menu Bar Item Error…",
+                          comment: "Status-icon menu item, shown only when the menu bar item’s interpolated string fails to evaluate, that opens a dialog with the error"),
+            action: #selector(showEvaluationError(_:)),
+            keyEquivalent: "")
+        item.target = self
+        item.identifier = Self.errorMenuItemIdentifier
+        let separator = NSMenuItem.separator()
+        separator.identifier = Self.errorMenuItemIdentifier
+        menu.insertItem(item, at: 0)
+        menu.insertItem(separator, at: 1)
+    }
+
+    @objc private func showEvaluationError(_ sender: Any?) {
+        guard let evaluationError else {
+            return
+        }
+        let template = Self.template
+        iTermWarning.show(
+            withTitle: String(localized: "StatusMenu.MenuBarItemErrorMessage",
+                              defaultValue: "The menu bar item’s interpolated string “\(template)” could not be evaluated:\n\n\(evaluationError.localizedDescription)",
+                              comment: "Dialog body explaining why the menu bar item shows a bug. The first placeholder is the interpolated string from the menu bar item text setting in Settings > Appearance > General; the second is the error message."),
+            actions: [iTermLocalizedOK()],
+            accessory: nil,
+            identifier: nil,
+            silenceable: .kiTermWarningTypePersistent,
+            heading: String(localized: "StatusMenu.MenuBarItemErrorHeading",
+                            defaultValue: "Menu Bar Item Error",
+                            comment: "Heading of the dialog that explains why the menu bar item’s interpolated string failed to evaluate"),
+            window: nil)
+    }
+
+    private static var template: String {
+        iTermPreferences.string(forKey: kPreferenceKeyMenuBarItemString) ?? ""
+    }
+
     static let mainMenuItemIdentifier = NSUserInterfaceItemIdentifier("iTermStatusMenuMainMenu")
+    private static let errorMenuItemIdentifier = NSUserInterfaceItemIdentifier("iTermStatusMenuMenuBarItemError")
+    // Ladybug, shown in place of the evaluated string when evaluation fails.
+    private static let errorTitle = "\u{1F41E}"
 }

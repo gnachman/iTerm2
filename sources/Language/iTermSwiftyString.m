@@ -58,6 +58,15 @@
 
 @end
 
+@implementation iTermStrictSwiftyString
+
+- (iTermExpressionEvaluator *)expressionEvaluatorUsingScope:(iTermVariableScope *)scope {
+    return [[iTermExpressionEvaluator alloc] initWithStrictInterpolatedString:self.swiftyString
+                                                                        scope:scope];
+}
+
+@end
+
 @implementation iTermExpressionObserver
 
 - (iTermExpressionEvaluator *)expressionEvaluatorUsingScope:(iTermVariableScope *)scope {
