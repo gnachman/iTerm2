@@ -124,6 +124,28 @@ async def main(connection):
     tmux("kill-pane", "-t", modal)
     check(await wait_for(lambda: shows_floats(tmux_floats())), "closing the modal float removes it")
 
+    # A float made over a zoomed pane shows what tmux shows. Zoom used to resize the active
+    # session, which was the new float, to the whole window and back, scrolling its lines away.
+    tiled_pane = tmux("list-panes", "-t", "rob", "-F", "#{pane_id} #{pane_floating_flag}").stdout.split()[0]
+    tmux("resize-pane", "-Z", "-t", tiled_pane)
+    # A shell, so it has a prompt to show.
+    over_zoom = tmux("new-pane", "-t", "rob", "-P", "-F", "#{pane_id}", "-A", "-x", "30", "-y", "6").stdout.strip()
+    await asyncio.sleep(1)
+
+    async def over_zoom_matches():
+        floats = await floats_by_pane()
+        if over_zoom not in floats:
+            return False
+        contents = await floats[over_zoom].async_get_screen_contents()
+        ours = [contents.line(i).string.rstrip() for i in range(contents.number_of_lines)]
+        theirs = [line.rstrip() for line in tmux("capture-pane", "-p", "-t", over_zoom).stdout.splitlines()]
+        return ours[:len(theirs)] == theirs and any(theirs)
+
+    check(await wait_for(over_zoom_matches), "a float made over a zoomed pane shows tmux's contents")
+    tmux("kill-pane", "-t", over_zoom)
+    tmux("resize-pane", "-Z", "-t", tiled_pane)
+    check(await wait_for(lambda: shows_floats(tmux_floats())), "unzoomed with the floats as tmux has them")
+
     # Resizing the window resizes tmux's window and keeps the floats.
     def window_size():
         out = tmux("display", "-p", "-t", "rob", "#{window_width} #{window_height}").stdout.split()

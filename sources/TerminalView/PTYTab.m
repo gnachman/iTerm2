@@ -6707,7 +6707,18 @@ typedef struct {
                                                                    bookmark:profile
                                                              tmuxController:tmuxController
                                                                      window:self.tmuxWindow];
-    SessionView *view = [[SessionView alloc] initWithFrame:NSMakeRect(0, 0, 200, 200)];
+    // Make the view the size of tmux's grid, title bar included. A session made in a view of some
+    // other size starts with another grid, and tmux's screen contents loaded into it reflow or
+    // scroll into history when it is resized to the right one.
+    const NSSize viewSize = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:profile]
+                                                  dimensions:NSMakeSize([leaf[kLayoutDictWidthKey] intValue],
+                                                                        [leaf[kLayoutDictHeightKey] intValue])
+                                                  showTitles:YES
+                                         showBottomStatusBar:NO
+                                                 showToolbar:NO
+                                                  rightExtra:[PTYSession desiredRightExtraForProfile:profile session:nil]
+                                                  inTerminal:realParentWindow_];
+    SessionView *view = [[SessionView alloc] initWithFrame:NSMakeRect(0, 0, viewSize.width, viewSize.height)];
     PTYSession *session = [PTYSession sessionFromArrangement:arrangement
                                                        named:nil
                                                       inView:view
@@ -6720,7 +6731,11 @@ typedef struct {
         return nil;
     }
     [self.viewToSessionMap setObject:session forKey:view];
-    [self installFloatingSession:session outlineFrame:NSMakeRect(0, 0, 200, 200)];
+    const NSRect outlineFrame = NSMakeRect(0,
+                                           0,
+                                           viewSize.width + 2 * [iTermFloatingPaneView outlineWidth],
+                                           viewSize.height + 2 * [iTermFloatingPaneView outlineWidth]);
+    [self installFloatingSession:session outlineFrame:outlineFrame];
     [tmuxController registerSession:session withPane:wp inWindow:self.tmuxWindow];
     [session setTmuxController:tmuxController];
     [session setScrollBarVisible:[realParentWindow_ scrollbarShouldBeVisible]
@@ -6948,13 +6963,15 @@ typedef struct {
             [self.tmuxController paneBorderStatusForWindow:self.tmuxWindow] != iTermTmuxPaneBorderStatusOff) {
             gridSize.height -= 1;
         }
-        [self resizeSession:self.activeSession toSize:gridSize];
+        // The zoomed pane, which isn't the active session when a float over the zoom is active.
+        PTYSession *maximized = [self sessionToMaximize];
+        [self resizeSession:maximized toSize:gridSize];
 
         // Resize the scroll view
         [self fitSubviewsToRoot];
 
         // Resize the SessionView
-        [self resizeMaximizedTmuxSessionView:self.activeSession.view toGridSize:gridSize];
+        [self resizeMaximizedTmuxSessionView:maximized.view toGridSize:gridSize];
     }
 }
 
