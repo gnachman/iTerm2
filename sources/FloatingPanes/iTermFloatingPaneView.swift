@@ -594,6 +594,9 @@ final class iTermFloatingPaneView: NSView {
         let wasActive = isDragging
         dragState = .idle
         hideSizeReadout()
+        // Rendering switches back from the drag's mode afterward. Draw a fresh frame, or one made
+        // while the readout was showing can stay on screen until the content changes.
+        delegate?.floatingPaneSession(self)?.textview?.requestDelegateRedraw()
         window?.invalidateCursorRects(for: self)
         if wasActive {
             delegate?.floatingPane(self, dragDidChangeToActive: false)
