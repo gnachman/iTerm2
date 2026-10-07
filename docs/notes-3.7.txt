@@ -1128,3 +1128,6 @@ Bug Fixes:
   bash, such as FreeBSD and OpenBSD. Before, the
   installer could hang partway through writing
   the script when your shell was tcsh.
+- Choosing Show Session Note from Open Quickly no
+  longer makes an empty note appear briefly and
+  then disappear.

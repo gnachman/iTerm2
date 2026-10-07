@@ -28,6 +28,13 @@ private class SessionNoteTextView: NSTextView {
     private lazy var privateUndoManager = UndoManager()
     override var undoManager: UndoManager? { privateUndoManager }
 
+    // Without this, a window that becomes key while the note is first responder (e.g., after
+    // Open Quickly invokes Show Session Note) moves focus back to the session, and ending
+    // editing an empty note hides it.
+    override func it_preferredFirstResponder() -> Bool {
+        return true
+    }
+
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 36 /* Return */ && event.modifierFlags.contains(.shift) {
             collapseHandler?()
