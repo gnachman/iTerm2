@@ -82,11 +82,9 @@ final class FloatingPaneDropTests: XCTestCase {
         }
         let dropped = screenTopLeft()
 
-        // Shorter, with the bottom where it was: the content's top moves down on screen, as when a
-        // tab bar appears. The float's place in the tab moves with it.
-        var frame = destination.window.frame
-        frame.size.height -= 35
-        destination.window.setFrame(frame, display: true)
+        // Move the content on screen, as a tab bar hiding does. The float moves with it.
+        destination.window.setFrameOrigin(NSPoint(x: destination.window.frame.minX,
+                                                  y: destination.window.frame.minY - 35))
         XCTAssertNotEqual(screenTopLeft().y, dropped.y, accuracy: 1, "test setup: the content moved")
 
         controller.perform(NSSelectorFromString("placeDroppedFloatingPaneAgain"))
