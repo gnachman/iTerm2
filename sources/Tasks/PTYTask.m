@@ -648,7 +648,7 @@ static void HandleSigChld(int n) {
                                                                   @"MallocStackLogging"]];
         for (int i = 0; environ[i]; i++) {
             NSString *kvp = [NSString stringWithUTF8String:environ[i]];
-            NSRange equalsRange = [kvp rangeOfString:@"="];
+            NSRange equalsRange = [kvp rangeOfString:@"=" options:NSLiteralSearch];
             if (equalsRange.location != NSNotFound) {
                 NSString *key = [kvp substringToIndex:equalsRange.location];
                 NSString *value = [kvp substringFromIndex:equalsRange.location + 1];
