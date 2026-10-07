@@ -1365,7 +1365,11 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     DLog(@"Begin");
-    [iTermInstanceLock resolveConflictIfNeeded];
+    // Parallel test runs start several test hosts with the same suite on purpose. The modal warning
+    // about another instance would stall each one after the first.
+    if (![NSApp isRunningUnitTests]) {
+        [iTermInstanceLock resolveConflictIfNeeded];
+    }
     [[iTermApplication sharedApplication] updateAppearance];
     [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
                                                      block:^(id _Nonnull newValue) {
