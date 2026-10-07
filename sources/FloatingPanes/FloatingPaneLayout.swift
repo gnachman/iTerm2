@@ -158,9 +158,13 @@ final class FloatingPaneLayout: NSObject {
             grid: (grid.width > 0 && grid.height > 0)
                 ? FloatingPaneGrid(columns: Int(grid.width), rows: Int(grid.height))
                 : nil)
+        // What the arrangement says the float wants replaces anything relayouts recorded before it
+        // was restored, which came from a stale grid in a tab that wasn't its final size.
         if let columns = (desiredGrid?["columns"] as? NSNumber)?.intValue,
            let rows = (desiredGrid?["rows"] as? NSNumber)?.intValue {
             pane.desiredGrid = FloatingPaneGrid(columns: columns, rows: rows)
+        } else {
+            pane.desiredGrid = nil
         }
     }
 

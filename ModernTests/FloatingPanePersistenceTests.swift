@@ -192,6 +192,39 @@ final class FloatingPanePersistenceTests: XCTestCase {
         XCTAssertEqual(copyPane.outlineFrame, frame)
     }
 
+    /// Undo close of a tab: the window removes the tab, then adds one made from its arrangement with
+    /// its sessions revived. Every float comes back with its frame and grid.
+    func testUndoCloseOfATabRestoresEveryFloatsFrame() {
+        let back = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        let front = fixture.addFloat(frame: NSRect(x: 300, y: 200, width: 300, height: 200))
+        let closing = tab
+        let frames = [back, front].map { closing.floatingPane(for: $0)?.outlineFrame }
+        let grids = [back, front].map { ($0.columns, $0.rows) }
+        guard let arrangement = closing.arrangement(), let sessions = closing.sessions() else {
+            XCTFail("No arrangement")
+            return
+        }
+        let uniqueId = closing.uniqueId
+        _ = fixture.addTab()
+        fixture.terminal.perform(NSSelectorFromString("removeTab:"), with: closing)
+        fixture.terminal.addTab(withArrangement: arrangement,
+                                uniqueId: uniqueId,
+                                sessions: sessions,
+                                archives: nil,
+                                predecessors: [])
+        guard let restored = fixture.terminal.tabs().first(where: { $0.floatingSessions()?.contains(back) ?? false }) else {
+            XCTFail("No restored tab")
+            return
+        }
+        fixture.terminal.tabView()?.selectTabViewItem(restored.tabViewItem)
+        XCTAssertEqual(restored.floatingSessions(), [back, front])
+        XCTAssertEqual([back, front].map { restored.floatingPane(for: $0)?.outlineFrame }, frames)
+        XCTAssertEqual(back.columns, grids[0].0)
+        XCTAssertEqual(back.rows, grids[0].1)
+        XCTAssertEqual(front.columns, grids[1].0)
+        XCTAssertEqual(front.rows, grids[1].1)
+    }
+
     func testRoundTripRestoresHiddenState() {
         fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
         guard let tiled = tab.tiledSessions()?.first else {
