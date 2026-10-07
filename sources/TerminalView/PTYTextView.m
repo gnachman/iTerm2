@@ -131,6 +131,11 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 @end
 
 @implementation PTYTextView {
+    // The selection most recently set by an accessibility client, such as Voice Control selecting
+    // a word to correct. Forgotten on the next keypress or insertion.
+    BOOL _hasAccessibilitySelectedRange;
+    VT100GridAbsCoordRange _accessibilitySelectedRange;
+
     // -refresh does not want to be reentrant.
     BOOL _inRefresh;
 
@@ -768,6 +773,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
 }
 
 - (void)keyDown:(NSEvent *)event {
+    _hasAccessibilitySelectedRange = NO;
     [_mouseHandler keyDown:event];
     [_keyboardHandler keyDown:event inputContext:self.inputContext];
 }
@@ -5650,46 +5656,21 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return [self attributedSubstringForProposedRange:theRange actualRange:NULL];
 }
 
-- (NSAttributedString *)attributedSubstringForProposedRange:(NSRange)proposedRange
-                                                actualRange:(NSRangePointer)actualRange {
-    DLog(@"attributedSubstringForProposedRange:%@", NSStringFromRange(proposedRange));
-
-    // If the requested range overlaps with the IME marked text, return the
-    // marked text content. Otherwise fall through to the screen buffer, which
-    // Voice Control needs during composition to maintain context for spacing.
-    if (_drawingHelper.markedText.length > 0) {
-        NSRange mRange = [self markedRange];
-        NSRange overlap = NSIntersectionRange(proposedRange, mRange);
-        if (overlap.length > 0) {
-            NSUInteger startInMarked = overlap.location - mRange.location;
-            NSRange substringRange = NSMakeRange(startInMarked, overlap.length);
-            if (actualRange) {
-                *actualRange = overlap;
-            }
-            return [_drawingHelper.markedText attributedSubstringFromRange:substringRange];
-        }
-    }
-
-    // Fall back to reading from the terminal screen buffer. This is needed for
-    // Voice Control, which queries text near the cursor to decide whether to
-    // insert spaces between dictation chunks.
-    if (_dataSource.width <= 0 || proposedRange.length == 0) {
-        if (actualRange) {
-            *actualRange = NSMakeRange(NSNotFound, 0);
-        }
+// Returns the screen text in `range`, a range in the NSTextInputClient coordinate space (a flat grid
+// of cells). The result isn't clamped to range.length: a cell can hold more than one UTF-16 code
+// unit, as with a combining mark.
+- (NSString *)screenTextInNSRange:(NSRange)range {
+    if (_dataSource.width <= 0 || range.length == 0) {
         return nil;
     }
 
     // Convert NSRange to grid coordinates using the inverse of nsRangeForAbsCoordRange:.
     const long long overflow = _dataSource.totalScrollbackOverflow;
     const int numberOfLines = [_dataSource numberOfLines];
-    VT100GridAbsCoordRange absRange = [self absCoordRangeForNSRange:proposedRange];
+    VT100GridAbsCoordRange absRange = [self absCoordRangeForNSRange:range];
 
     // Clamp to available lines in the data source.
     if (absRange.start.y - overflow >= numberOfLines || absRange.end.y < overflow) {
-        if (actualRange) {
-            *actualRange = NSMakeRange(NSNotFound, 0);
-        }
         return nil;
     }
     if (absRange.start.y < overflow) {
@@ -5708,9 +5689,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             overflow,
             &valid);
     if (!valid) {
-        if (actualRange) {
-            *actualRange = NSMakeRange(NSNotFound, 0);
-        }
         return nil;
     }
 
@@ -5746,6 +5724,39 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                coords:nil
                     deduplicateDECDHL:NO];
         [result appendString:lineContent];
+    }
+    return result;
+}
+
+- (NSAttributedString *)attributedSubstringForProposedRange:(NSRange)proposedRange
+                                                actualRange:(NSRangePointer)actualRange {
+    DLog(@"attributedSubstringForProposedRange:%@", NSStringFromRange(proposedRange));
+
+    // If the requested range overlaps with the IME marked text, return the
+    // marked text content. Otherwise fall through to the screen buffer, which
+    // Voice Control needs during composition to maintain context for spacing.
+    if (_drawingHelper.markedText.length > 0) {
+        NSRange mRange = [self markedRange];
+        NSRange overlap = NSIntersectionRange(proposedRange, mRange);
+        if (overlap.length > 0) {
+            NSUInteger startInMarked = overlap.location - mRange.location;
+            NSRange substringRange = NSMakeRange(startInMarked, overlap.length);
+            if (actualRange) {
+                *actualRange = overlap;
+            }
+            return [_drawingHelper.markedText attributedSubstringFromRange:substringRange];
+        }
+    }
+
+    // Fall back to reading from the terminal screen buffer. This is needed for
+    // Voice Control, which queries text near the cursor to decide whether to
+    // insert spaces between dictation chunks.
+    NSMutableString *result = [[[self screenTextInNSRange:proposedRange] mutableCopy] autorelease];
+    if (!result) {
+        if (actualRange) {
+            *actualRange = NSMakeRange(NSNotFound, 0);
+        }
+        return nil;
     }
 
     // Clamp to the requested length.
@@ -7507,6 +7518,8 @@ static NSString *iTermStringFromRange(NSRange range) {
     const VT100GridAbsCoord absEnd = VT100GridAbsCoordFromCoord(coordRange.end, overflow);
     [_selection setSelectedLogicalRange:VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(absStart.x, absStart.y, absEnd.x, absEnd.y), 0, 0)
                                    mode:kiTermSelectionModeCharacter];
+    _hasAccessibilitySelectedRange = _selection.hasSelection;
+    _accessibilitySelectedRange = _selection.logicalSubSelections.lastObject.absRange.coordRange;
 }
 
 - (VT100GridCoordRange)accessibilityRangeOfCursor {
@@ -7638,6 +7651,7 @@ static NSString *iTermStringFromRange(NSRange range) {
 
 - (void)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
              insertText:(NSString *)aString {
+    _hasAccessibilitySelectedRange = NO;
     if ([self hasMarkedText]) {
         DLog(@"insertText: clear marked text");
         [self invalidateInputMethodEditorRect];
@@ -7673,10 +7687,72 @@ static NSString *iTermStringFromRange(NSRange range) {
     return self.window.windowNumber;
 }
 
-- (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler shouldBackspaceAt:(NSUInteger)location {
+- (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
+    shouldInsertTextReplacingSelectedCharacters:(NSInteger *)count {
+    *count = 0;
+    const BOOL hasAccessibilitySelectedRange = _hasAccessibilitySelectedRange;
+    _hasAccessibilitySelectedRange = NO;
+    const BOOL hasSelection = (_selection.hasSelection && _selection.logicalSubSelections.count == 1);
+    const VT100GridAbsCoordRange selection = hasSelection ? _selection.logicalSubSelections.firstObject.absRange.coordRange : VT100GridAbsCoordRangeMake(0, 0, 0, 0);
+    const long long offset = _dataSource.totalScrollbackOverflow + _dataSource.numberOfScrollbackLines;
+    const VT100GridAbsCoord cursor = VT100GridAbsCoordMake(_dataSource.cursorX - 1, _dataSource.cursorY - 1 + offset);
+    const iTermAccessibilitySelectionReplacementDecision decision =
+        [iTermAccessibilitySelectionReplacement decisionWithAccessibilityRange:_accessibilitySelectedRange
+                                                         hasAccessibilityRange:hasAccessibilitySelectedRange
+                                                                     selection:selection
+                                                                  hasSelection:hasSelection
+                                                                        cursor:cursor
+                                                       softAlternateScreenMode:_dataSource.terminalSoftAlternateScreenMode];
+    switch (decision) {
+        case iTermAccessibilitySelectionReplacementDecisionInsertNormally:
+            return YES;
+        case iTermAccessibilitySelectionReplacementDecisionDrop:
+            DLog(@"Can't replace accessibility selection %@ with cursor at %@",
+                 VT100GridAbsCoordRangeDescription(selection), VT100GridAbsCoordDescription(cursor));
+            return NO;
+        case iTermAccessibilitySelectionReplacementDecisionReplace: {
+            // Read the selected cells directly. -selectedText is the copy path, which can trim
+            // whitespace and would undercount.
+            NSString *selectedText = [self screenTextInNSRange:[self nsRangeForAbsCoordRange:selection]];
+            *count = [selectedText numberOfComposedCharacters];
+            DLog(@"Replace accessibility selection %@ of %@ characters",
+                 VT100GridAbsCoordRangeDescription(selection), @(*count));
+            [_selection clearSelection];
+            return YES;
+        }
+    }
+    return YES;
+}
+
+- (NSInteger)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
+    numberOfCharactersToReplaceInRange:(NSRange)range {
     const NSRange cursorRange = [self nsrangeOfCursor];
-    DLog(@"cursor range=%@ location=%@", @(NSMaxRange(cursorRange)), @(location));
-    return NSMaxRange(cursorRange) == location;
+    DLog(@"cursor range=%@ range=%@", @(NSMaxRange(cursorRange)), NSStringFromRange(range));
+    // Limitation: these ranges are in cells, but the text input system computes ranges from
+    // offsets into the strings returned by -attributedSubstringForProposedRange:actualRange:,
+    // which are in UTF-16 code units. If a double-width character precedes the cursor in the text
+    // it read, its range ends short of the cursor and we don't backspace.
+    if (NSMaxRange(range) != NSMaxRange(cursorRange)) {
+        return 0;
+    }
+    if (_dataSource.terminalSoftAlternateScreenMode &&
+        ![iTermAdvancedSettingsModel experimentalKeyHandling] &&
+        ![iTermAdvancedSettingsModel enableCharacterAccentMenu]) {
+        // A full-screen app may not treat backspaces as deleting text. Backspace only for the
+        // accent menu (and experimental key handling), where the replaced character was just
+        // typed, as before this path sent backspaces in every mode.
+        DLog(@"In soft alternate screen mode; not backspacing");
+        return 0;
+    }
+    // The range's length is in UTF-16 code units of the text before the cursor. Count the
+    // characters it covers, since the shell deletes one character per backspace. A cell holds at
+    // least one UTF-16 code unit, except the right half of a double-width character, so twice
+    // that many cells is always enough. The text may span rows if it wraps.
+    const NSUInteger cursorLocation = NSMaxRange(cursorRange);
+    const NSUInteger cells = MIN(cursorLocation, range.length * 2);
+    NSString *textBeforeCursor = [self screenTextInNSRange:NSMakeRange(cursorLocation - cells, cells)] ?: @"";
+    return [iTermReplacedTextCounter numberOfCharactersInLastUTF16Units:range.length
+                                                                 ofText:textBeforeCursor];
 }
 
 #pragma mark - iTermBadgeLabelDelegate

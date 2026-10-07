@@ -45,7 +45,17 @@ typedef struct {
              insertText:(NSString *)aString;
 
 - (NSInteger)keyboardHandlerWindowNumber:(iTermKeyboardHandler *)keyboardhandler;
-- (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler shouldBackspaceAt:(NSUInteger)location;
+// Returns the number of characters to backspace over so that text can replace `range`, which is
+// in the coordinate space of the NSTextInputClient methods. Returns 0 if it can't be replaced.
+- (NSInteger)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
+    numberOfCharactersToReplaceInRange:(NSRange)range;
+
+// Called before inserting text that has no replacement range. If an accessibility client (such as
+// Voice Control) selected text for the insertion to replace, set *count to the number of
+// characters to backspace over first. Return NO to drop the insertion because the selection can't
+// be replaced.
+- (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
+    shouldInsertTextReplacingSelectedCharacters:(NSInteger *)count;
 
 // Gives the delegate a chance to send this keystroke to a tmux control-mode
 // (-CC) pane as a key name (letting tmux re-encode it) instead of the mapper's

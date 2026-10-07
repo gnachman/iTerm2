@@ -320,24 +320,20 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     DLog(@"PTYTextView insertText:%@", aString);
     if (replacementRange.length > 0 && replacementRange.location != NSNotFound) {
         DLog(@"Replacement range has length %@", @(replacementRange.length));
-        NSEvent *saved = _eventBeingHandled;
-        if ([self.delegate keyboardHandler:self shouldBackspaceAt:NSMaxRange(replacementRange)]) {
-            DLog(@"Delegate allows us to backspace");
-            _eventBeingHandled = [NSEvent keyEventWithType:NSEventTypeKeyDown
-                                                  location:NSZeroPoint
-                                             modifierFlags:0
-                                                 timestamp:0
-                                              windowNumber:[self.delegate keyboardHandlerWindowNumber:self]
-                                                   context:nil
-                                                characters:[NSString stringWithLongCharacter:127]
-                               charactersIgnoringModifiers:[NSString stringWithLongCharacter:127]
-                                                 isARepeat:NO
-                                                   keyCode:kVK_Delete];
-            for (NSInteger i = 0; i < replacementRange.length; i++) {
-                [self doCommandBySelector:@selector(deleteBackward:)];
-            }
-            _eventBeingHandled = saved;
+        const NSInteger count = [self.delegate keyboardHandler:self
+                            numberOfCharactersToReplaceInRange:replacementRange];
+        DLog(@"Backspace over %@ characters", @(count));
+        [self sendBackspaces:count];
+    } else if (replacementRange.location == NSNotFound && !_eventBeingHandled) {
+        // Text inserted outside of a keypress, such as by Voice Control, may be meant to replace
+        // text that an accessibility client selected.
+        NSInteger count = 0;
+        if (![self.delegate keyboardHandler:self shouldInsertTextReplacingSelectedCharacters:&count]) {
+            DLog(@"Delegate says to drop insertion of %@", aString);
+            return;
         }
+        DLog(@"Backspace over %@ selected characters", @(count));
+        [self sendBackspaces:count];
     }
     aString = [_keyMapper transformedTextToInsert:aString];
     [self.delegate keyboardHandler:self insertText:aString];
@@ -348,6 +344,29 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 
 - (BOOL)hasMarkedText {
     return [self.delegate keyboardHandlerMarkedTextRange:self].length > 0;
+}
+
+// Deletes text that was already sent so that the text being inserted replaces it. The backspaces
+// are sent directly rather than through -doCommandBySelector:, which drops the command unless
+// experimental key handling or the accent menu is on. Otherwise the new text, such as a Voice
+// Control correction, would be appended after the old text.
+- (void)sendBackspaces:(NSInteger)count {
+    if (count <= 0) {
+        return;
+    }
+    NSEvent *deleteEvent = [NSEvent keyEventWithType:NSEventTypeKeyDown
+                                            location:NSZeroPoint
+                                       modifierFlags:0
+                                           timestamp:0
+                                        windowNumber:[self.delegate keyboardHandlerWindowNumber:self]
+                                             context:nil
+                                          characters:[NSString stringWithLongCharacter:127]
+                         charactersIgnoringModifiers:[NSString stringWithLongCharacter:127]
+                                           isARepeat:NO
+                                             keyCode:kVK_Delete];
+    for (NSInteger i = 0; i < count; i++) {
+        [self.delegate keyboardHandler:self sendEventToController:deleteEvent];
+    }
 }
 
 #pragma mark - Private

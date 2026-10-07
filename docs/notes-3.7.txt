@@ -1172,3 +1172,8 @@ Bug Fixes:
 - In tmux integration, iTerm2 could miss a
   window switch made by another tmux client or a
   script and keep showing the old tab.
+- Voice Control corrections, like “replace world
+  with there”, now replace the text when it ends
+  at the cursor. Before, the new text was typed
+  after the original. Corrections elsewhere, or
+  in full-screen apps like vim, are ignored.
