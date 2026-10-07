@@ -62,6 +62,38 @@ final class FloatingPaneDropTests: XCTestCase {
         return controller.dropFloatingPane(in: tab(fixture), atWindowPoint: windowPoint(fixture, visual: visual))
     }
 
+    /// The destination's tab bar is shown during a drag and may hide again afterward, which moves
+    /// its content. The dropped float is placed again so it stays where it was dropped on screen.
+    func testADroppedFloatStaysWhereItWasDroppedWhenTheContentMoves() {
+        let float = source.addFloat(frame: floatFrame)
+        guard let controller = MovePaneController.sharedInstance() else {
+            XCTFail("No controller")
+            return
+        }
+        XCTAssertTrue(drop(float, in: destination, visual: NSPoint(x: 100, y: 120)))
+        guard let pane = tab(destination).floatingPane(for: float) else {
+            XCTFail("No pane")
+            return
+        }
+        func screenTopLeft() -> NSPoint {
+            let frame = pane.convert(pane.bounds, to: nil)
+            let band = iTermFloatingPaneView.resizeBandWidth
+            return destination.window.convertPoint(toScreen: NSPoint(x: frame.minX + band, y: frame.maxY - band))
+        }
+        let dropped = screenTopLeft()
+
+        // Shorter, with the bottom where it was: the content's top moves down on screen, as when a
+        // tab bar appears. The float's place in the tab moves with it.
+        var frame = destination.window.frame
+        frame.size.height -= 35
+        destination.window.setFrame(frame, display: true)
+        XCTAssertNotEqual(screenTopLeft().y, dropped.y, accuracy: 1, "test setup: the content moved")
+
+        controller.perform(NSSelectorFromString("placeDroppedFloatingPaneAgain"))
+        XCTAssertEqual(screenTopLeft().x, dropped.x, accuracy: 1)
+        XCTAssertEqual(screenTopLeft().y, dropped.y, accuracy: 1)
+    }
+
     func testAFloatDroppedInAnotherWindowStaysAFloatWithItsGrid() {
         let float = source.addFloat(frame: floatFrame)
         let grid = (float.columns, float.rows)
