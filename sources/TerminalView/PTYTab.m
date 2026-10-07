@@ -7068,9 +7068,10 @@ typedef struct {
 }
 
 - (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally {
-    if ([self sessionIsFloating:self.activeSession]) {
-        // The Move Divider commands resize a float by one cell.
-        return !self.realParentWindow.layoutLocked;
+    iTermFloatingPaneView *floatingPane = [self floatingPaneForSession:self.activeSession];
+    if (floatingPane) {
+        // The Move Divider commands resize a float by one cell, when it can be resized.
+        return [self floatingPaneCanResize:floatingPane];
     }
     SessionView *view = [[self activeSession] view];
     PTYSplitView *split = (PTYSplitView *)[view superview];

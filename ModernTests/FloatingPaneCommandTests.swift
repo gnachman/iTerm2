@@ -307,6 +307,18 @@ final class FloatingPaneCommandTests: XCTestCase {
         perform("toggleLayoutLocked:")
     }
 
+    /// Move Divider resizes a float, so it is off when the float can't be resized: here, a locked
+    /// pane. (tmux 3.7's floats take the same path.)
+    func testMoveDividerIsDisabledForAFloatThatCannotBeResized() {
+        let float = fixture.addFloat(frame: floatFrame)
+        tab.setActiveSession(float)
+        XCTAssertTrue(isEnabled(NSSelectorFromString("movePaneDividerRight:")))
+        float.locked = true
+        XCTAssertFalse(isEnabled(NSSelectorFromString("movePaneDividerRight:")))
+        XCTAssertFalse(isEnabled(NSSelectorFromString("movePaneDividerDown:")))
+        float.locked = false
+    }
+
     // MARK: - Split selection
 
     func testPickingAPaneToMoveIntoHidesFloats() {
