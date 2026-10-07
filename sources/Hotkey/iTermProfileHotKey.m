@@ -1156,6 +1156,27 @@ static NSString *const kArrangement = @"Arrangement";
     }
 }
 
+// Is there a window other than this hotkey window that AppKit might bring to the front
+// if we order out while iTerm2 is still the active app?
+- (BOOL)hasPromotableBackgroundWindow {
+    NSWindow *myWindow = self.windowController.window;
+    for (NSWindow *window in [NSApp orderedWindows]) {
+        if (window == myWindow) {
+            continue;
+        }
+        if (!window.isVisible || window.isMiniaturized || window.alphaValue == 0) {
+            continue;
+        }
+        if (!window.isOnActiveSpace || !window.canBecomeKeyWindow) {
+            continue;
+        }
+        DLog(@"%@ could be promoted when the hotkey window orders out", window);
+        return YES;
+    }
+    DLog(@"No background window could be promoted");
+    return NO;
+}
+
 - (void)didFinishRollingOut:(BOOL)causedByKeypress {
     DLog(@"didFinishRollingOut");
     _activationPending = NO;
@@ -1173,8 +1194,10 @@ static NSString *const kArrangement = @"Arrangement";
             // ordering out. This keeps issue 11372 fixed (we don't wait a fixed
             // delay; we order out exactly when the app switch lands) while avoiding
             // the flash from issue 5313.
-            if (!NSApp.isActive) {
-                // Already yielded; nothing would be promoted, so order out now.
+            if (!NSApp.isActive || ![self hasPromotableBackgroundWindow]) {
+                // Either we already yielded or there is no other iTerm2 window that could
+                // flash to the front. Waiting would only leave the invisible hotkey window
+                // key, swallowing keystrokes meant for the other app (issue 11372).
                 if (self.rollingOut) {
                     DLog(@"Order out with secure keyboard entry=%@", @(IsSecureEventInputEnabled()));
                     _rollOutCancelable = NO;

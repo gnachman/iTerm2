@@ -439,6 +439,11 @@ Improvements:
   slowly get slower the longer they stayed open.
 
 Bug Fixes:
+- On macOS 26, hiding a hotkey window when no
+  other iTerm2 windows are open once again
+  returns focus to the previous app right away,
+  so text you type immediately afterward no
+  longer goes to the terminal.
 - Fixed a crash with the GPU renderer that
   could happen when switching to or from
   battery power.
