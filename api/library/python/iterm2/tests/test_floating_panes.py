@@ -97,3 +97,15 @@ def test_booleans_are_encoded_for_the_expression_language():
     invocation = iterm2.util.invocation_string(
         "iterm2.raise_floating_pane", {"session": "s", "to_front": False})
     assert invocation == 'iterm2.raise_floating_pane(session: "s", to_front: false)'
+
+
+def test_a_frame_that_is_not_finite_is_refused():
+    import asyncio
+    import math
+
+    import pytest
+
+    session = make_window().tabs[0].floating_sessions[0]
+    frame = iterm2.util.Frame(iterm2.util.Point(math.nan, 0), iterm2.util.Size(100, 50))
+    with pytest.raises(ValueError):
+        asyncio.run(session.async_set_floating_frame(frame))

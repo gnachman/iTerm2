@@ -1,6 +1,7 @@
 """Provides classes for interacting with iTerm2 sessions."""
 import abc
 import json
+import math
 import typing
 
 import iterm2.api_pb2
@@ -1232,7 +1233,11 @@ class Session:
 
         :throws: :class:`~iterm2.rpc.RPCException` if the session is not in a
             floating pane or cannot be moved now.
+        :throws: ValueError if a coordinate or size is not a finite number.
         """
+        values = [frame.origin.x, frame.origin.y, frame.size.width, frame.size.height]
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError(f"The frame must be finite numbers: {values}")
         await async_invoke_floating_pane_function(
             self.connection,
             "iterm2.set_floating_pane_frame",

@@ -2680,6 +2680,16 @@ static NSString *const iTermAPIFloatingPanesFirstAwarePythonVersion = @"2.26";
             handler(response);
             return;
         }
+        // A native float holds one session and can't be split. Other ways of splitting one go to a
+        // tiled pane instead, but a script asked for this pane and should know. tmux makes another
+        // float, except tmux 3.7, which can't.
+        PTYTab *tab = [[[iTermController sharedInstance] terminalWithSession:session] tabForSession:session];
+        if ([tab sessionIsFloating:session] && (!tab.isTmuxTab || ![tab tmuxAllowsChangingFloatingPanes])) {
+            ITMSplitPaneResponse *response = [[ITMSplitPaneResponse alloc] init];
+            response.status = ITMSplitPaneResponse_Status_CannotSplit;
+            handler(response);
+            return;
+        }
         sessions = @[ session ];
     }
 
