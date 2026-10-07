@@ -580,7 +580,7 @@ class ChatService {
             self.broker = broker
         }
         func registrationProviderRequestRegistration(_ completion: @escaping (AITermController.Registration?) -> ()) {
-            registrationProviderRequestRegistration(for: LLMMetadata.effectiveVendor, completion)
+            registrationProviderRequestRegistration(for: AITermControllerRegistrationHelper.instance.defaultKeyVendor, completion)
         }
 
         func registrationProviderRequestRegistration(for vendor: iTermAIVendor,

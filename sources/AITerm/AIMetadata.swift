@@ -224,6 +224,15 @@ class AIMetadata: NSObject {
         // carry the auth header it needs. Issue 12975.
         var customHeaders: [[String: String]] = []
 
+        // Which key authorizes this model. Always automatic for built-in models;
+        // a manual model may choose explicitly (issue 13105).
+        var credential: AIModelCredential = .automatic
+
+        // The ID of the manual model configuration this model came from, which
+        // names its keychain entry when credential is .modelKey. nil for built-in
+        // and legacy models.
+        var manualConfigurationID: String? = nil
+
         func supports(reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?) -> Bool {
             guard let reasoningEffort else {
                 return false

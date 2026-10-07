@@ -19,11 +19,12 @@ enum AIWithheldKeyAdvice {
     // model runs on-device and has no endpoint to authenticate to.
     static func hint(url: String,
                      api: iTermAIAPI,
+                     credential: AIModelCredential = .automatic,
                      customHeaders: [[String: String]]) -> String? {
-        switch AITermController.apiKeyPolicy(url: url, api: api) {
-        case .vendorKey, .placeholder(.onDevice):
+        switch AITermController.apiKeyPolicy(url: url, api: api, credential: credential) {
+        case .vendorKey, .modelKey, .placeholder(.onDevice):
             return nil
-        case .placeholder(.localEndpoint):
+        case .placeholder(.localEndpoint), .placeholder(.noKeySelected):
             break
         }
         let credentialHeaders = LLMAuthorizationProvider.credentialHeaderNames(url: url, api: api)
@@ -122,9 +123,10 @@ enum AIWithheldKeyAdvice {
                         statusText: String,
                         url: String,
                         api: iTermAIAPI,
+                        credential: AIModelCredential = .automatic,
                         customHeaders: [[String: String]]) -> String {
         guard looksLikeAuthFailure(message) || looksLikeAuthFailure(statusText),
-              let hint = hint(url: url, api: api, customHeaders: customHeaders) else {
+              let hint = hint(url: url, api: api, credential: credential, customHeaders: customHeaders) else {
             return message
         }
         return message.isEmpty ? hint : message + "\n\n" + hint

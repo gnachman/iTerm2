@@ -18,11 +18,12 @@ import AppKit
 @MainActor
 enum CompanionSetupState {
     /// AI is fully configured: the signed plugin is present, consent is granted,
-    /// and an API key is saved.
+    /// and the default model has the key it authorizes with (which, for a manual
+    /// model, may be its own key or none at all).
     static var aiConfigured: Bool {
         return iTermAITermGatekeeper.pluginInstalled()
             && SecureUserDefaults.instance.enableAI.value
-            && !(AITermControllerObjC.apiKey ?? "").isEmpty
+            && AITermControllerRegistrationHelper.instance.defaultModelRegistration != nil
     }
 
     /// Companion is fully configured: the signed plugin is present and consent

@@ -169,13 +169,18 @@ class AITermController {
     //   at, or it leaks off the intended vendor (issue 12477).
     //   Such an endpoint carries its own auth via the model's custom headers
     //   instead, which the user opts into explicitly.
+    // - .noKeySelected: the user chose to send no key (AIModelCredential.none).
+    //
+    // .modelKey is a key stored for one manual model (AIModelCredential.modelKey).
     enum APIKeyPolicy: Equatable {
         case vendorKey
+        case modelKey
         case placeholder(Reason)
 
         enum Reason: Equatable {
             case onDevice
             case localEndpoint
+            case noKeySelected
         }
     }
 
@@ -193,29 +198,93 @@ class AITermController {
         return .placeholder(.localEndpoint)
     }
 
-    static func usesPlaceholderAPIKey(url: String, api: iTermAIAPI) -> Bool {
-        return apiKeyPolicy(url: url, api: api) != .vendorKey
+    // An explicit credential overrides the inference above. Choosing a vendor's
+    // key sends it even to a local endpoint, because the user asked for that.
+    static func apiKeyPolicy(url: String,
+                             api: iTermAIAPI,
+                             credential: AIModelCredential) -> APIKeyPolicy {
+        if api == .appleIntelligence {
+            return .placeholder(.onDevice)
+        }
+        switch credential {
+        case .automatic:
+            return apiKeyPolicy(url: url, api: api)
+        case .vendorKey:
+            return .vendorKey
+        case .modelKey:
+            return .modelKey
+        case .none:
+            return .placeholder(.noKeySelected)
+        }
     }
 
-    private var _registration: Registration?
-    var registration: Registration? {
+    static func usesPlaceholderAPIKey(url: String, api: iTermAIAPI) -> Bool {
+        return usesPlaceholderAPIKey(url: url, api: api, credential: .automatic)
+    }
+
+    static func usesPlaceholderAPIKey(url: String,
+                                      api: iTermAIAPI,
+                                      credential: AIModelCredential) -> Bool {
+        if case .placeholder = apiKeyPolicy(url: url, api: api, credential: credential) {
+            return true
+        }
+        return false
+    }
+
+    // The registration `model` authorizes with, or nil when the key it needs is
+    // missing. The single rule shared by the controller and by the checks that
+    // run before one exists (AITermControllerRegistrationHelper.registration),
+    // so they cannot disagree about whether a model can authorize (issue 13105).
+    //
+    // `vendorRegistration` returns the stored registration for a vendor, if any.
+    // `modelKey` returns the key stored for a manual model's configuration ID.
+    // A nil model (no AI configured) falls back to `fallbackVendor`'s key.
+    static func resolvedRegistration(
+        model: AIMetadata.Model?,
+        fallbackVendor: iTermAIVendor,
+        vendorRegistration: (iTermAIVendor) -> Registration?,
+        modelKey: (String) -> String? = { AITermControllerObjC.modelAPIKey(forConfigurationID: $0) }) -> Registration? {
+        let stored = vendorRegistration(model?.keyVendor ?? fallbackVendor)
         // The App Review key contacts no service at all, so it has to win over
         // every other rule: requestCompletion short-circuits on it and answers
         // locally. Substituting the self-hosted placeholder first would send a
         // real request to whatever endpoint is configured, breaking the promise
         // in reviewPlaceholderResponse that no data leaves the Mac.
-        if let _registration, _registration.apiKey == Self.reviewPlaceholderAPIKey {
+        if let stored, stored.apiKey == reviewPlaceholderAPIKey {
+            return stored
+        }
+        guard let model else {
+            return stored
+        }
+        switch apiKeyPolicy(url: model.url, api: model.api, credential: model.credential) {
+        case .placeholder:
+            return Registration(apiKey: selfHostedPlaceholderAPIKey)
+        case .modelKey:
+            return Registration(apiKey: model.manualConfigurationID.flatMap(modelKey))
+        case .vendorKey:
+            return stored
+        }
+    }
+
+    // Shown when a model set to use its own key has none stored. The
+    // registration sheet can't help: it stores a vendor's key.
+    static var missingModelAPIKeyMessage: String {
+        return String(localized: "AITerm.NoModelAPIKey", defaultValue: "This model is set to use its own API key, but none has been entered. Edit the model in Manage AI Models to enter one.", comment: "Error shown when a manual AI model is configured to use its own API key but none is stored; “Manage AI Models” is the name of a settings window")
+    }
+
+    private var _registration: Registration?
+    var registration: Registration? {
+        let vendorRegistration = { [_registration] (vendor: iTermAIVendor) -> Registration? in
+            // The App Review key is honored whichever vendor it was issued for.
+            guard let _registration,
+                  _registration.apiKey == Self.reviewPlaceholderAPIKey || _registration.isValid(for: vendor) else {
+                return nil
+            }
             return _registration
         }
-        // Checked before the stored key so it always wins over _registration.
-        if usesPlaceholderAPIKey {
-            return Registration(apiKey: Self.selfHostedPlaceholderAPIKey)
-        }
-        let vendor = requiredRegistrationVendor
-        if let _registration, _registration.isValid(for: vendor) {
-            return _registration
-        }
-        return nil
+        return Self.resolvedRegistration(model: llmProvider?.model,
+                                         fallbackVendor: LLMMetadata.effectiveVendor,
+                                         vendorRegistration: vendorRegistration)
     }
     weak var delegate: AITermControllerDelegate?
 
@@ -384,18 +453,19 @@ class AITermController {
                                                    statusText: error,
                                                    url: requestURL,
                                                    api: model.api,
+                                                   credential: model.credential,
                                                    customHeaders: model.customHeaders))
     }
 
-    private var usesPlaceholderAPIKey: Bool {
-        guard let provider = llmProvider else {
-            return false
+    private var apiKeyPolicy: APIKeyPolicy {
+        guard let model = llmProvider?.model else {
+            return .vendorKey
         }
-        return Self.usesPlaceholderAPIKey(url: provider.model.url, api: provider.model.api)
+        return Self.apiKeyPolicy(url: model.url, api: model.api, credential: model.credential)
     }
 
     var requiredRegistrationVendor: iTermAIVendor {
-        return llmProvider?.model.vendor ?? LLMMetadata.effectiveVendor
+        return llmProvider?.model.keyVendor ?? LLMMetadata.effectiveVendor
     }
 
     private func handle(event: Event) {
@@ -594,6 +664,13 @@ class AITermController {
     }
 
     private func requestRegistration(continuation: State) {
+        // The registration sheet asks for a vendor's key, which is not where a
+        // model's own key lives. Point the user at the model editor instead.
+        if apiKeyPolicy == .modelKey {
+            state = continuation
+            handle(event: .error(AIError(Self.missingModelAPIKeyMessage)))
+            return
+        }
         state = .ground
         delegate?.aitermControllerRequestRegistration(self) { [weak self] registration in
             guard let self else {

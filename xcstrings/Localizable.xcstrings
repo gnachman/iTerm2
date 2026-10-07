@@ -295,6 +295,18 @@
         }
       }
     },
+    "AIConnectionTester.MissingModelAPIKey" : {
+      "comment" : "Result of the AI connection test when the model is set to use its own API key but the key field is empty",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter this model’s API key before testing the connection."
+          }
+        }
+      }
+    },
     "AIConnectionTester.ReviewPlaceholder" : {
       "comment" : "Result of the AI connection test when the App Review placeholder key is configured",
       "extractionState" : "extracted_with_value",
@@ -589,6 +601,30 @@
         }
       }
     },
+    "AIKeyHint.ModelKey" : {
+      "comment" : "Hint shown when a manual AI model uses its own API key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Authorizes with the API key entered for this model."
+          }
+        }
+      }
+    },
+    "AIKeyHint.ModelKeyMissing" : {
+      "comment" : "Hint shown when a manual AI model is set to use its own API key but none is stored",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No API key has been entered for this model yet."
+          }
+        }
+      }
+    },
     "AIKeyHint.NoKeySet" : {
       "comment" : "Hint telling the user no API key is set yet for a provider; %@ is the provider name",
       "extractionState" : "extracted_with_value",
@@ -669,6 +705,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未使用 API 密钥。"
+          }
+        }
+      }
+    },
+    "AIKeyHint.NoneSelected" : {
+      "comment" : "Hint shown when the user chose to send no API key for a manual AI model",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No API key is sent. If the endpoint requires authentication, use a custom header."
           }
         }
       }
@@ -1345,6 +1393,18 @@
         }
       }
     },
+    "AIModelEditor.APIKeyLabel" : {
+      "comment" : "Label for the popup that chooses which API key a manual AI model sends",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "API key:"
+          }
+        }
+      }
+    },
     "AIModelEditor.APILabel" : {
       "comment" : "Label for the API popup",
       "extractionState" : "extracted_with_value",
@@ -1509,6 +1569,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "该服务器已存在一个自动发现条目。"
+          }
+        }
+      }
+    },
+    "AIModelEditor.AutomaticNoKey" : {
+      "comment" : "API key popup option that infers the key; shown when the inferred provider uses no key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Automatic (none)"
+          }
+        }
+      }
+    },
+    "AIModelEditor.AutomaticNoKeyLocal" : {
+      "comment" : "API key popup option that infers the key; shown when the endpoint is local, so no key is sent",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Automatic (none for a local endpoint)"
+          }
+        }
+      }
+    },
+    "AIModelEditor.AutomaticVendorKey" : {
+      "comment" : "API key popup option that infers which provider's key to send; %@ is the provider it currently resolves to",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Automatic (%@ API key)"
           }
         }
       }
@@ -2815,6 +2911,30 @@
         }
       }
     },
+    "AIModelEditor.ModelAPIKeyPlaceholder" : {
+      "comment" : "Placeholder in the field for a manual AI model's own API key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Key for this model"
+          }
+        }
+      }
+    },
+    "AIModelEditor.ModelAPIKeyRequired" : {
+      "comment" : "Validation error when a manual AI model is set to use its own API key but none was entered",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter this model’s API key, or choose a different API key option."
+          }
+        }
+      }
+    },
     "AIModelEditor.ModelEntryExists" : {
       "comment" : "Validation error when an entry for this model already exists on a server",
       "extractionState" : "extracted_with_value",
@@ -2895,6 +3015,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "模型："
+          }
+        }
+      }
+    },
+    "AIModelEditor.ModelOwnAPIKey" : {
+      "comment" : "API key popup option for a key entered for one manual AI model",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This model’s own key"
           }
         }
       }
@@ -3134,6 +3266,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "手动模型名称必须唯一。"
+          }
+        }
+      }
+    },
+    "AIModelEditor.NoAPIKey" : {
+      "comment" : "API key popup option meaning no API key is sent",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "None"
           }
         }
       }
@@ -3680,6 +3824,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "向量存储："
+          }
+        }
+      }
+    },
+    "AIModelEditor.VendorAPIKey" : {
+      "comment" : "API key popup option for a provider's stored key; %@ is the provider name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ API key"
           }
         }
       }
@@ -5448,6 +5604,18 @@
         }
       }
     },
+    "AITerm.NoModelAPIKey" : {
+      "comment" : "Error shown when a manual AI model is configured to use its own API key but none is stored; “Manage AI Models” is the name of a settings window",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This model is set to use its own API key, but none has been entered. Edit the model in Manage AI Models to enter one."
+          }
+        }
+      }
+    },
     "AITerm.NoModelConfigured" : {
       "comment" : "Error shown when no AI model is configured in settings",
       "extractionState" : "extracted_with_value",
@@ -6116,6 +6284,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在设置中显示"
+          }
+        }
+      }
+    },
+    "AITermRegistration.NoModelAPIKeyHeading" : {
+      "comment" : "Heading of an alert shown when the default manual AI model is set to use its own API key but none is stored",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No API Key for This Model"
           }
         }
       }
@@ -87342,7 +87522,6 @@
     },
     "Indicator.HiddenFloatingPanes" : {
       "comment" : "Help text for the indicator shown when a tab's floating panes are hidden. %ld is the number of hidden floating panes.",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "variations" : {

@@ -24,6 +24,8 @@ class LLMMetadata: NSObject {
         static let configurableThinking = "configurableThinking"
         static let vision = "vision"
         static let customHeaders = "customHeaders"
+        // AIModelCredential.storedValue; absent means automatic.
+        static let credential = "credential"
         // A dynamic Ollama provider: the entry stores only the endpoint (+ auth
         // headers), and its models are discovered live from /api/tags rather than
         // named/capability-checkboxed by hand.
@@ -610,6 +612,8 @@ class LLMMetadata: NSObject {
         if let headers = configuration[ManualModelKey.customHeaders] as? [[String: String]] {
             model.customHeaders = headers
         }
+        model.credential = AIModelCredential(storedValue: configuration[ManualModelKey.credential])
+        model.manualConfigurationID = configuration[ManualModelKey.identifier] as? String
         return model
     }
 

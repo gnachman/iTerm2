@@ -19,6 +19,9 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     private let pleaseWait: PleaseWaitWindow
     private static let apiKeyQueue = DispatchQueue(label: "com.iterm2.aiterm-set-key")
     private static var cachedKeys = [UInt: CachedKey]()
+    // Keys stored for a single manual model (AIModelCredential.modelKey), by
+    // configuration ID.
+    private static var cachedModelKeys = [String: CachedKey]()
     private static let keychainService = "iTerm2 API Keys"
     private static let legacyKeychainAccount = "OpenAI API Key for iTerm2"
 
@@ -290,6 +293,46 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         if vendor == .openAI {
             persistAPIKey(normalized, account: legacyKeychainAccount)
         }
+    }
+
+    // The key stored for one manual model, which authorizes it when its
+    // credential is AIModelCredential.modelKey (issue 13105).
+    static func modelAPIKey(forConfigurationID id: String) -> String? {
+        apiKeyQueue.sync {
+            if let cached = cachedModelKeys[id], cached.valid {
+                return cached.value
+            }
+            let stored = readKeychainPassword(account: modelKeychainAccount(forConfigurationID: id))
+            // As in apiKeyOnQueue, a transient read failure is not cached as "no key".
+            if stored.hardError {
+                return nil
+            }
+            let value = keyIsEmpty(stored.value) ? nil : stored.value
+            cachedModelKeys[id] = CachedKey(valid: true, value: value)
+            return value
+        }
+    }
+
+    @objc(modelAPIKeyForConfigurationID:)
+    static func objcModelAPIKey(forConfigurationID id: String) -> String? {
+        return modelAPIKey(forConfigurationID: id)
+    }
+
+    // A nil or blank key deletes the stored one, which is also how a deleted
+    // model's key is cleaned up.
+    @objc(setModelAPIKey:forConfigurationID:)
+    static func setModelAPIKey(_ key: String?, forConfigurationID id: String) {
+        apiKeyQueue.sync {
+            let value = key?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalized = keyIsEmpty(value) ? nil : value
+            cachedModelKeys[id] = CachedKey(valid: true, value: normalized)
+            persistAPIKey(normalized, account: modelKeychainAccount(forConfigurationID: id))
+        }
+    }
+
+    private static func modelKeychainAccount(forConfigurationID id: String) -> String {
+        // Localization unneeded: a keychain account name.
+        return "AI Model \(id) API Key for iTerm2"
     }
 
     private static func cacheKey(for vendor: iTermAIVendor) -> UInt {

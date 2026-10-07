@@ -62,6 +62,18 @@ static NSString *const kAIManualModelDynamicModelsKey = @"dynamicModels";
 static NSString *const kAIManualModelDynamicSelectedModelKey = @"dynamicSelectedModel";
 // Array of {"name","value"} dictionaries. Must match LLMMetadata.ManualModelKey.customHeaders.
 static NSString *const kAIManualModelCustomHeadersKey = @"customHeaders";
+// Which key authorizes the model: an AIModelCredential.storedValue, absent for
+// automatic. Must match LLMMetadata.ManualModelKey.credential.
+static NSString *const kAIManualModelCredentialKey = @"credential";
+// Never persisted. A duplicated configuration gets a new ID, so this carries the
+// original's ID into the editor so it can offer the original's own key.
+static NSString *const kAIManualModelKeySourceIDKey = @"keySourceID";
+
+// Tags for the editor's API key popup. A vendor's stored key uses the vendor's
+// raw value, which is never negative.
+static const NSInteger kAICredentialTagAutomatic = -1;
+static const NSInteger kAICredentialTagModelKey = -2;
+static const NSInteger kAICredentialTagNone = -3;
 
 // Shows a non-blocking sheet on `window` with just an OK button.
 static void iTermGeneralPreferencesShowSheet(NSString *heading, NSString *body, NSWindow *window) {
@@ -187,6 +199,47 @@ static BOOL iTermAIVendorHasEnterableKey(iTermAIVendor vendor) {
             return NO;
     }
     return YES;
+}
+
+// The hint that says which key authorizes a model. Shared by the main AI panel
+// and the manual model editor so the two never describe the same model
+// differently. `vendor` is the vendor whose stored key would be used (the chosen
+// one for iTermAICredentialKindVendorKey, else the inferred one).
+// `withheldForLocalEndpoint` applies only to automatic, which is the only kind
+// that withholds a key from a local endpoint. When `reportMissingKey` is set, a
+// key that has not been entered is called out using `keyIsSet`.
+static NSString *iTermAIKeyHint(iTermAICredentialKind kind,
+                                iTermAIVendor vendor,
+                                BOOL withheldForLocalEndpoint,
+                                BOOL reportMissingKey,
+                                BOOL keyIsSet) {
+    switch (kind) {
+        case iTermAICredentialKindNone:
+            return NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoneSelected", nil, [NSBundle mainBundle], @"No API key is sent. If the endpoint requires authentication, use a custom header.", @"Hint shown when the user chose to send no API key for a manual AI model");
+        case iTermAICredentialKindModelKey:
+            if (reportMissingKey && !keyIsSet) {
+                return NSLocalizedStringWithDefaultValue(@"AIKeyHint.ModelKeyMissing", nil, [NSBundle mainBundle], @"No API key has been entered for this model yet.", @"Hint shown when a manual AI model is set to use its own API key but none is stored");
+            }
+            return NSLocalizedStringWithDefaultValue(@"AIKeyHint.ModelKey", nil, [NSBundle mainBundle], @"Authorizes with the API key entered for this model.", @"Hint shown when a manual AI model uses its own API key");
+        case iTermAICredentialKindAutomatic:
+            if (withheldForLocalEndpoint) {
+                return iTermAIKeyHintSelfHosted();
+            }
+            break;
+        case iTermAICredentialKindVendorKey:
+            break;
+    }
+    if (!iTermAIVendorHasEnterableKey(vendor)) {
+        // No key can be configured: self-hosted (Llama) or Apple Intelligence
+        // (which runs on-device or via Private Cloud Compute).
+        return NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoKeyUsed", nil, [NSBundle mainBundle], @"No API key is used.", @"Hint shown when the selected model needs no API key");
+    }
+    if (reportMissingKey && !keyIsSet) {
+        return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoKeySet", nil, [NSBundle mainBundle], @"No %@ API key is set yet.", @"Hint telling the user no API key is set yet for a provider; %@ is the provider name"),
+                iTermAIVendorProviderName(vendor)];
+    }
+    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.Authorizes", nil, [NSBundle mainBundle], @"Authorizes with your %@ API key.", @"Hint telling the user which provider's API key authorizes the model; %@ is the provider name"),
+            iTermAIVendorProviderName(vendor)];
 }
 
 static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
@@ -582,6 +635,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSTextField *_nameField;
     NSTextField *_urlField;
     NSPopUpButton *_apiPopup;
+    // Which key authorizes the model (issue 13105), and the field for the
+    // model's own key, shown only when that is the choice.
+    NSPopUpButton *_credentialPopup;
+    NSSecureTextField *_modelAPIKeyField;
     NSTextField *_apiKeyHintLabel;
     NSTextField *_contextField;
     NSTextField *_responseField;
@@ -661,8 +718,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // content flows downward from height-66 and the custom-headers add/remove
     // control lands at height-708, so the window has to be tall enough to keep
     // that (and the headers table above it) above the buttons with a small gap.
-    // The 14 over the old 756 is the second line the API-key hint can now use.
-    const CGFloat height = 770;
+    // The 14 over the old 756 is the second line the API-key hint can now use,
+    // and the 30 after that is the API key row.
+    const CGFloat height = 800;
     const CGFloat margin = 20;
     const CGFloat labelWidth = 150;
     const CGFloat fieldX = margin + labelWidth + 12;
@@ -777,6 +835,58 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _apiPopup.target = self;
     _apiPopup.action = @selector(apiKeyHintInputDidChange:);
     [content addSubview:_apiPopup];
+    y -= rowHeight;
+
+    // Which key to send. Automatic keeps the inference from the API, URL, and
+    // model name, which guesses wrong for a gateway whose model names mention
+    // another vendor (issue 13105), so the user can pick one explicitly.
+    addLabel(NSLocalizedStringWithDefaultValue(@"AIModelEditor.APIKeyLabel", nil, [NSBundle mainBundle], @"API key:", @"Label for the popup that chooses which API key a manual AI model sends"));
+    const CGFloat credentialPopupWidth = 210;
+    _credentialPopup = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(fieldX, y, credentialPopupWidth, 24)];
+    [_credentialPopup addItemWithTitle:@""];  // Titled by updateAutomaticCredentialTitle.
+    _credentialPopup.lastItem.tag = kAICredentialTagAutomatic;
+    [_credentialPopup.menu addItem:[NSMenuItem separatorItem]];
+    for (NSNumber *vendorNumber in [iTermAIModelCredential selectableVendors]) {
+        const iTermAIVendor vendor = (iTermAIVendor)vendorNumber.unsignedIntegerValue;
+        [_credentialPopup addItemWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIModelEditor.VendorAPIKey", nil, [NSBundle mainBundle], @"%@ API key", @"API key popup option for a provider's stored key; %@ is the provider name"),
+                                            iTermAIVendorProviderName(vendor)]];
+        _credentialPopup.lastItem.tag = (NSInteger)vendor;
+    }
+    [_credentialPopup.menu addItem:[NSMenuItem separatorItem]];
+    [_credentialPopup addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelOwnAPIKey", nil, [NSBundle mainBundle], @"This model’s own key", @"API key popup option for a key entered for one manual AI model")];
+    _credentialPopup.lastItem.tag = kAICredentialTagModelKey;
+    [_credentialPopup addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.NoAPIKey", nil, [NSBundle mainBundle], @"None", @"API key popup option meaning no API key is sent")];
+    _credentialPopup.lastItem.tag = kAICredentialTagNone;
+    id storedCredential = _base[kAIManualModelCredentialKey];
+    switch ([iTermAIModelCredential kindForStoredValue:storedCredential]) {
+        case iTermAICredentialKindAutomatic:
+            [_credentialPopup selectItemWithTag:kAICredentialTagAutomatic];
+            break;
+        case iTermAICredentialKindVendorKey:
+            [_credentialPopup selectItemWithTag:(NSInteger)[iTermAIModelCredential vendorForStoredValue:storedCredential]];
+            break;
+        case iTermAICredentialKindModelKey:
+            [_credentialPopup selectItemWithTag:kAICredentialTagModelKey];
+            break;
+        case iTermAICredentialKindNone:
+            [_credentialPopup selectItemWithTag:kAICredentialTagNone];
+            break;
+    }
+    _credentialPopup.target = self;
+    _credentialPopup.action = @selector(credentialPopupDidChange:);
+    [content addSubview:_credentialPopup];
+
+    _modelAPIKeyField = [[NSSecureTextField alloc] initWithFrame:NSMakeRect(fieldX + credentialPopupWidth + 6,
+                                                                            y,
+                                                                            fieldWidth - credentialPopupWidth - 6,
+                                                                            24)];
+    _modelAPIKeyField.placeholderString = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelAPIKeyPlaceholder", nil, [NSBundle mainBundle], @"Key for this model", @"Placeholder in the field for a manual AI model's own API key");
+    // A duplicate has a new ID; keySourceID names the original whose key it copies.
+    NSString *keySourceID = _base[kAIManualModelKeySourceIDKey] ?: _base[kAIManualModelIDKey];
+    if ([keySourceID isKindOfClass:NSString.class] && keySourceID.length > 0) {
+        _modelAPIKeyField.stringValue = [AITermControllerObjC modelAPIKeyForConfigurationID:keySourceID] ?: @"";
+    }
+    [content addSubview:_modelAPIKeyField];
     y -= 24;
 
     // Ollama can report its installed models and each model's capabilities from
@@ -996,26 +1106,78 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // the probe and the saved model correctly see a self-hosted one.
     NSString *url =
         [(_urlField.stringValue ?: @"") stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-    const iTermAIVendor vendor = [iTermLLMMetadata vendorForManualModelWithAPI:api
-                                                                           url:url
-                                                                     modelName:modelName];
-    if ([AITermControllerObjC modelWithholdsAPIKeyForLocalEndpointURL:url api:api]) {
-        // A local/private endpoint never receives the vendor key, whatever the
-        // vendor classification says, so don't promise one (issue 13021).
-        _apiKeyHintLabel.stringValue = iTermAIKeyHintSelfHosted();
-    } else if (iTermAIVendorHasEnterableKey(vendor)) {
-        _apiKeyHintLabel.stringValue =
-            [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.Authorizes", nil, [NSBundle mainBundle], @"Authorizes with your %@ API key.", @"Hint telling the user which provider's API key authorizes the model; %@ is the provider name"),
-             iTermAIVendorProviderName(vendor)];
-    } else {
-        // No key can be configured: self-hosted (Llama) or Apple Intelligence
-        // (which runs on-device or via Private Cloud Compute).
-        _apiKeyHintLabel.stringValue = NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoKeyUsed", nil, [NSBundle mainBundle], @"No API key is used.", @"Hint shown when the selected model needs no API key");
-    }
+    const iTermAIVendor inferredVendor = [iTermLLMMetadata vendorForManualModelWithAPI:api
+                                                                                   url:url
+                                                                             modelName:modelName];
+    // A local/private endpoint never receives the inferred vendor key, whatever
+    // the vendor classification says, so automatic must not promise one (issue
+    // 13021).
+    const BOOL withheld = [AITermControllerObjC modelWithholdsAPIKeyForLocalEndpointURL:url api:api];
+    [self updateAutomaticCredentialTitleWithVendor:inferredVendor withheld:withheld];
+    const iTermAICredentialKind kind = [self selectedCredentialKind];
+    const iTermAIVendor vendor = (kind == iTermAICredentialKindVendorKey)
+        ? (iTermAIVendor)_credentialPopup.selectedTag
+        : inferredVendor;
+    _modelAPIKeyField.hidden = (kind != iTermAICredentialKindModelKey);
+    _apiKeyHintLabel.stringValue = iTermAIKeyHint(kind, vendor, withheld, NO, YES);
     // The field wraps to at most two lines in a fixed-height window, which the
     // English text clears with room to spare but a long enough translation
     // would not. The tooltip keeps the whole sentence reachable either way.
     _apiKeyHintLabel.toolTip = _apiKeyHintLabel.stringValue;
+}
+
+// Automatic shows what it currently resolves to, so a wrong guess is visible
+// before the first request.
+- (void)updateAutomaticCredentialTitleWithVendor:(iTermAIVendor)vendor withheld:(BOOL)withheld {
+    NSString *title;
+    if (withheld) {
+        title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.AutomaticNoKeyLocal", nil, [NSBundle mainBundle], @"Automatic (none for a local endpoint)", @"API key popup option that infers the key; shown when the endpoint is local, so no key is sent");
+    } else if (!iTermAIVendorHasEnterableKey(vendor)) {
+        title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.AutomaticNoKey", nil, [NSBundle mainBundle], @"Automatic (none)", @"API key popup option that infers the key; shown when the inferred provider uses no key");
+    } else {
+        title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIModelEditor.AutomaticVendorKey", nil, [NSBundle mainBundle], @"Automatic (%@ API key)", @"API key popup option that infers which provider's key to send; %@ is the provider it currently resolves to"),
+                 iTermAIVendorProviderName(vendor)];
+    }
+    [_credentialPopup.menu itemWithTag:kAICredentialTagAutomatic].title = title;
+    // A popup keeps showing the old title of its selected item until told.
+    [_credentialPopup synchronizeTitleAndSelectedItem];
+}
+
+- (iTermAICredentialKind)selectedCredentialKind {
+    // Disabled while auto-discovery is on, where the key is always inferred.
+    if (!_credentialPopup.enabled) {
+        return iTermAICredentialKindAutomatic;
+    }
+    switch (_credentialPopup.selectedTag) {
+        case kAICredentialTagAutomatic:
+            return iTermAICredentialKindAutomatic;
+        case kAICredentialTagModelKey:
+            return iTermAICredentialKindModelKey;
+        case kAICredentialTagNone:
+            return iTermAICredentialKindNone;
+        default:
+            return iTermAICredentialKindVendorKey;
+    }
+}
+
+// The value persisted under kAIManualModelCredentialKey, or nil for automatic.
+- (NSString *)selectedCredentialStoredValue {
+    const iTermAICredentialKind kind = [self selectedCredentialKind];
+    const iTermAIVendor vendor = (kind == iTermAICredentialKindVendorKey)
+        ? (iTermAIVendor)_credentialPopup.selectedTag
+        : iTermAIVendorOpenAI;
+    return [iTermAIModelCredential storedValueForKind:kind vendor:vendor];
+}
+
+- (NSString *)trimmedModelAPIKey {
+    return [(_modelAPIKeyField.stringValue ?: @"") stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+}
+
+- (void)credentialPopupDidChange:(id)sender {
+    [self updateEditorAPIKeyHint];
+    if ([self selectedCredentialKind] == iTermAICredentialKindModelKey) {
+        [_window makeFirstResponder:_modelAPIKeyField];
+    }
 }
 
 - (void)apiKeyHintInputDidChange:(id)sender {
@@ -1351,6 +1513,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [_apiPopup selectItemWithTag:iTermAIAPILlama];
     }
     _apiPopup.enabled = !dynamic;
+    // Discovered models always authorize the automatic way (OllamaModelDiscovery
+    // builds them without a credential), so don't offer a choice that would be
+    // ignored. Custom headers still carry any auth the server needs.
+    if (dynamic) {
+        [_credentialPopup selectItemWithTag:kAICredentialTagAutomatic];
+    }
+    _credentialPopup.enabled = !dynamic;
+    [self updateEditorAPIKeyHint];
     _fetchModelsButton.title = dynamic ? NSLocalizedStringWithDefaultValue(@"AIModelEditor.RefreshModels", nil, [NSBundle mainBundle], @"Refresh Models", @"Button that re-lists models installed on the Ollama server")
                                        : NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchModels", nil, [NSBundle mainBundle], @"Fetch Models", @"Button that lists models installed on the server");
 }
@@ -1519,6 +1689,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [iTermAIConnectionTester testModelName:name
                                        url:url
                                        api:api
+                                credential:[self selectedCredentialStoredValue]
+                               modelAPIKey:[self trimmedModelAPIKey]
                            functionCalling:functionCalling
                        supportsTemperature:supportsTemperature
                              customHeaders:[self nonEmptyHeaders]
@@ -1586,6 +1758,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ContextTokensPositive", nil, [NSBundle mainBundle], @"Context tokens must be greater than zero.", @"Validation error when context tokens is not positive");
     } else if (!dynamic && _responseField.integerValue <= 0) {
         failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MaxResponseTokensPositive", nil, [NSBundle mainBundle], @"Max response tokens must be greater than zero.", @"Validation error when max response tokens is not positive");
+    } else if ([self selectedCredentialKind] == iTermAICredentialKindModelKey &&
+               [self trimmedModelAPIKey].length == 0) {
+        failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelAPIKeyRequired", nil, [NSBundle mainBundle], @"Enter this model’s API key, or choose a different API key option.", @"Validation error when a manual AI model is set to use its own API key but none was entered");
     } else if (_nameIsTaken && _nameIsTaken(storedName)) {
         failure = dynamic ? (selectedModel.length
                                 ? NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelEntryExists", nil, [NSBundle mainBundle], @"There is already an entry for this model on this server.", @"Validation error when an entry for this model already exists on a server")
@@ -1625,7 +1800,21 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
 
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
-    result[kAIManualModelIDKey] = _base[kAIManualModelIDKey] ?: NSUUID.UUID.UUIDString;
+    NSString *configurationID = _base[kAIManualModelIDKey] ?: NSUUID.UUID.UUIDString;
+    result[kAIManualModelIDKey] = configurationID;
+    // Absent means automatic, which is how configurations saved before this
+    // setting existed behave.
+    NSString *credential = [self selectedCredentialStoredValue];
+    if (credential) {
+        result[kAIManualModelCredentialKey] = credential;
+    }
+    // The model's own key lives in the keychain under its configuration ID, never
+    // in user defaults. Don't leave a key behind when the model stops using it.
+    if ([self selectedCredentialKind] == iTermAICredentialKindModelKey) {
+        [AITermControllerObjC setModelAPIKey:[self trimmedModelAPIKey] forConfigurationID:configurationID];
+    } else if ([iTermAIModelCredential kindForStoredValue:_base[kAIManualModelCredentialKey]] == iTermAICredentialKindModelKey) {
+        [AITermControllerObjC setModelAPIKey:nil forConfigurationID:configurationID];
+    }
     // The management-list row name: the URL-scoped label for a dynamic entry (the
     // picker shows the discovered tags, not this label), else the typed name.
     result[kAIManualModelNameKey] = storedName;
@@ -3321,35 +3510,47 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // For every other selection (a built-in vendor OR a manual model) spell out
     // which key authorizes it, and whether that key is set, so the situation is
     // clear before starting a chat.
-    const iTermAIVendor vendor = [self vendorForSelectedDefaultAIModel];
+    const iTermAIVendor inferredVendor = [self vendorForSelectedDefaultAIModel];
     _mainAIAPIKeyHint.hidden = NO;
     // A manual model pointed at a local endpoint never receives the vendor
     // key, whatever vendor it classifies as, so this must not promise one.
-    // Checked before the vendor branch, and using the same policy the request
-    // path and the model editor's own hint use, so the two hints cannot
-    // contradict each other (issue 13021).
+    // Uses the same policy the request path and the model editor's own hint
+    // use, so the two hints cannot contradict each other (issue 13021).
     NSString *modelURL = nil;
     iTermAIAPI modelAPI = iTermAIAPIChatCompletions;
     const BOOL isManual = [self selectedDefaultAIModelEndpoint:&modelURL api:&modelAPI];
-    if (isManual && [AITermControllerObjC modelWithholdsAPIKeyForLocalEndpointURL:modelURL
-                                                                              api:modelAPI]) {
-        _mainAIAPIKeyHint.stringValue = iTermAIKeyHintSelfHosted();
-    } else if (iTermAIVendorHasEnterableKey(vendor)) {
-        NSString *providerName = iTermAIVendorProviderName(vendor);
-        if ([AITermControllerObjC apiKeyIsConfiguredForVendor:vendor]) {
-            _mainAIAPIKeyHint.stringValue =
-                [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.Authorizes", nil, [NSBundle mainBundle], @"Authorizes with your %@ API key.", @"Hint telling the user which provider's API key authorizes the model; %@ is the provider name"),
-                 providerName];
-        } else {
-            _mainAIAPIKeyHint.stringValue =
-                [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoKeySet", nil, [NSBundle mainBundle], @"No %@ API key is set yet.", @"Hint telling the user no API key is set yet for a provider; %@ is the provider name"),
-                 providerName];
-        }
-    } else {
-        // No key can be configured: self-hosted (Llama) or Apple Intelligence
-        // (which runs on-device or via Private Cloud Compute).
-        _mainAIAPIKeyHint.stringValue = NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoKeyUsed", nil, [NSBundle mainBundle], @"No API key is used.", @"Hint shown when the selected model needs no API key");
+    const BOOL withheld = isManual && [AITermControllerObjC modelWithholdsAPIKeyForLocalEndpointURL:modelURL
+                                                                                               api:modelAPI];
+    // A manual model may name its key explicitly (issue 13105).
+    NSDictionary *configuration = nil;
+    if (isManual) {
+        NSString *identifier = _aiVendor.selectedItem.representedObject;
+        configuration = [self manualAIModelConfigurationNamed:[self manualModelNameFromDefaultAIModelIdentifier:identifier]
+                                             inConfigurations:[self mutableManualAIModelConfigurations]];
     }
+    id storedCredential = configuration[kAIManualModelCredentialKey];
+    const iTermAICredentialKind kind = [iTermAIModelCredential kindForStoredValue:storedCredential];
+    BOOL keyIsSet;
+    iTermAIVendor vendor = inferredVendor;
+    switch (kind) {
+        case iTermAICredentialKindModelKey: {
+            NSString *configurationID = configuration[kAIManualModelIDKey];
+            keyIsSet = [configurationID isKindOfClass:NSString.class] &&
+                [AITermControllerObjC modelAPIKeyForConfigurationID:configurationID].length > 0;
+            break;
+        }
+        case iTermAICredentialKindVendorKey:
+            vendor = [iTermAIModelCredential vendorForStoredValue:storedCredential];
+            keyIsSet = [AITermControllerObjC apiKeyIsConfiguredForVendor:vendor];
+            break;
+        case iTermAICredentialKindAutomatic:
+            keyIsSet = withheld || [AITermControllerObjC apiKeyIsConfiguredForVendor:vendor];
+            break;
+        case iTermAICredentialKindNone:
+            keyIsSet = YES;
+            break;
+    }
+    _mainAIAPIKeyHint.stringValue = iTermAIKeyHint(kind, vendor, withheld, YES, keyIsSet);
     // This label is a fixed-height single line in the xib, so a long enough
     // translation would be cut off. Truncate visibly rather than clipping
     // mid-glyph, and keep the whole sentence reachable on hover.
@@ -3832,6 +4033,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         return;
     }
     NSMutableDictionary *copy = [panel.configurations[(NSUInteger)row] mutableCopy];
+    copy[kAIManualModelKeySourceIDKey] = copy[kAIManualModelIDKey];
     copy[kAIManualModelIDKey] = NSUUID.UUID.UUIDString;
     copy[kAIManualModelNameKey] =
         [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIManualModels.CopySuffix", nil, [NSBundle mainBundle], @"%@ copy", @"Name given to a duplicated manual AI model; %@ is the original name"), copy[kAIManualModelNameKey] ?: NSLocalizedStringWithDefaultValue(@"AIManualModels.ManualModelDefault", nil, [NSBundle mainBundle], @"Manual model", @"Default name for a manual AI model with no name")];
@@ -3843,7 +4045,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         NSBeep();
         return;
     }
-    NSString *deletedName = panel.configurations[(NSUInteger)row][kAIManualModelNameKey];
+    NSDictionary *deletedConfiguration = panel.configurations[(NSUInteger)row];
+    NSString *deletedID = deletedConfiguration[kAIManualModelIDKey];
+    if ([deletedID isKindOfClass:NSString.class] &&
+        [iTermAIModelCredential kindForStoredValue:deletedConfiguration[kAIManualModelCredentialKey]] == iTermAICredentialKindModelKey) {
+        [AITermControllerObjC setModelAPIKey:nil forConfigurationID:deletedID];
+    }
+    NSString *deletedName = deletedConfiguration[kAIManualModelNameKey];
     const BOOL deletingDefault = [deletedName isKindOfClass:NSString.class] &&
         [deletedName isEqualToString:[self currentDefaultManualModelName]];
     const BOOL deletingEconomy = [deletedName isKindOfClass:NSString.class] &&

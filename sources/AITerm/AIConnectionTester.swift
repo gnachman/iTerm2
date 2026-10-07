@@ -19,71 +19,93 @@ enum AIConnectionTestOutcome: Int {
 // Drives a one-shot "does this configuration actually work?" probe for the
 // manual AI model editor's Test button. Given the in-progress form values, it
 // resolves the vendor exactly as request time would, obtains the API key that
-// request time would send (the self-hosted placeholder for a local endpoint,
-// otherwise that vendor's stored key, prompting for one via the normal
-// registration sheet if none is configured), sends a minimal non-streaming
+// request time would send (the placeholder when the model's credential or a
+// local endpoint withholds the key, the key typed for the model when it has its
+// own, otherwise the chosen vendor's stored key, prompting for one via the
+// normal registration sheet if none is configured), sends a minimal non-streaming
 // completion through the same plugin path a real chat uses, and classifies the
 // outcome into a success/failure message the caller shows in an alert.
 @objc(iTermAIConnectionTester)
 class AIConnectionTester: NSObject {
     // Sends the probe. `completion` is always called on the main thread.
-    @objc(testModelName:url:api:functionCalling:supportsTemperature:customHeaders:inWindow:completion:)
+    // `credential` is the editor's AIModelCredential.storedValue and
+    // `modelAPIKey` the key typed for this model, which may not be saved yet.
+    @objc(testModelName:url:api:credential:modelAPIKey:functionCalling:supportsTemperature:customHeaders:inWindow:completion:)
     static func test(modelName: String,
                      url: String,
                      api: iTermAIAPI,
+                     credential storedCredential: String?,
+                     modelAPIKey: String?,
                      functionCalling: Bool,
                      supportsTemperature: Bool,
                      customHeaders: [[String: String]],
                      inWindow window: NSWindow,
                      completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
+        let credential = AIModelCredential(storedValue: storedCredential)
         let vendor = LLMMetadata.objcManualVendor(api: api, url: url, modelName: modelName)
+        let keyVendor: iTermAIVendor
+        if case .vendorKey(let chosen) = credential {
+            keyVendor = chosen
+        } else {
+            keyVendor = vendor
+        }
+        let send = { (apiKey: String) in
+            Self.send(modelName: modelName,
+                      url: url,
+                      api: api,
+                      functionCalling: functionCalling,
+                      supportsTemperature: supportsTemperature,
+                      customHeaders: customHeaders,
+                      apiKey: apiKey,
+                      vendor: vendor,
+                      credential: credential,
+                      completion: completion)
+        }
         // The App Review key wins over the placeholder policy, exactly as it
         // does in AITermController.registration: send() answers locally for it
         // and contacts nothing, which must not be pre-empted by substituting
         // the placeholder and probing a real endpoint.
-        let storedKey = AITermControllerObjC.apiKey(for: vendor)
-        // A self-hosted endpoint gets the placeholder key at request time, so the
-        // probe must use it too. Sending the stored vendor key here made the test
-        // pass against an authenticated local server that every real request then
-        // 401'd (issue 13021). There is also nothing to prompt for: a key the user
-        // typed would never be sent.
-        if storedKey != AITermController.reviewPlaceholderAPIKey,
-           let apiKey = unpromptedAPIKey(url: url, api: api) {
-            send(modelName: modelName,
-                 url: url,
-                 api: api,
-                 functionCalling: functionCalling,
-                 supportsTemperature: supportsTemperature,
-                 customHeaders: customHeaders,
-                 apiKey: apiKey,
-                 vendor: vendor,
-                 completion: completion)
-            return
+        let storedKey = AITermControllerObjC.apiKey(for: keyVendor)
+        if storedKey != AITermController.reviewPlaceholderAPIKey {
+            // A self-hosted endpoint gets the placeholder key at request time, so the
+            // probe must use it too. Sending the stored vendor key here made the test
+            // pass against an authenticated local server that every real request then
+            // 401'd (issue 13021). There is also nothing to prompt for: a key the user
+            // typed would never be sent.
+            if let apiKey = unpromptedAPIKey(url: url, api: api, credential: credential) {
+                send(apiKey)
+                return
+            }
+            if credential == .modelKey {
+                guard let modelAPIKey,
+                      !modelAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    completion(.failure, String(localized: "AIConnectionTester.MissingModelAPIKey",
+                                                defaultValue: "Enter this model’s API key before testing the connection.",
+                                                comment: "Result of the AI connection test when the model is set to use its own API key but the key field is empty"))
+                    return
+                }
+                send(modelAPIKey.trimmingCharacters(in: .whitespacesAndNewlines))
+                return
+            }
         }
         // requestRegistration returns the stored key immediately when present,
         // otherwise presents the registration sheet on `window` and stores what
         // the user enters. A nil result means the user cancelled.
-        AITermControllerRegistrationHelper.instance.requestRegistration(in: window, for: vendor) { registration in
+        AITermControllerRegistrationHelper.instance.requestRegistration(in: window, for: keyVendor) { registration in
             guard let registration else {
                 completion(.cancelled, "")
                 return
             }
-            send(modelName: modelName,
-                 url: url,
-                 api: api,
-                 functionCalling: functionCalling,
-                 supportsTemperature: supportsTemperature,
-                 customHeaders: customHeaders,
-                 apiKey: registration.apiKey,
-                 vendor: vendor,
-                 completion: completion)
+            send(registration.apiKey)
         }
     }
 
-    // The key to probe with when it needs no input from the user, or nil when the
-    // vendor's stored key applies (which may mean prompting for one).
-    static func unpromptedAPIKey(url: String, api: iTermAIAPI) -> String? {
-        guard AITermController.usesPlaceholderAPIKey(url: url, api: api) else {
+    // The key to probe with when it needs no input from the user, or nil when a
+    // stored key applies (which may mean prompting for one).
+    static func unpromptedAPIKey(url: String,
+                                 api: iTermAIAPI,
+                                 credential: AIModelCredential = .automatic) -> String? {
+        guard AITermController.usesPlaceholderAPIKey(url: url, api: api, credential: credential) else {
             return nil
         }
         return AITermController.selfHostedPlaceholderAPIKey
@@ -97,6 +119,7 @@ class AIConnectionTester: NSObject {
                              customHeaders: [[String: String]],
                              apiKey: String,
                              vendor: iTermAIVendor,
+                             credential: AIModelCredential,
                              completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
         // The reviewer placeholder key contacts no service, so a live probe would
         // fail. Report success and explain, matching the runtime short-circuit.
@@ -172,6 +195,7 @@ class AIConnectionTester: NSObject {
                                                        statusText: response.error ?? "",
                                                        url: url,
                                                        api: api,
+                                                       credential: credential,
                                                        customHeaders: customHeaders))
             case .failure(let error):
                 // Same treatment as a WebResponse failure: if the plugin ever
@@ -182,6 +206,7 @@ class AIConnectionTester: NSObject {
                                                        statusText: error.reason,
                                                        url: url,
                                                        api: api,
+                                                       credential: credential,
                                                        customHeaders: customHeaders))
             }
         }

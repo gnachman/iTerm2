@@ -343,6 +343,14 @@ Improvements:
   Existing global headers are copied to your
   saved models. The editor also shows which
   API key (if any) each model uses. Issue 12975.
+- The manual AI model editor has a new API key
+  setting. It can send one provider’s stored
+  key, a key entered just for that model, or no
+  key. Automatic, the default, picks the key as
+  before and now shows which one it picked. This
+  helps with gateways like Open WebUI whose
+  model names mention another provider (such as
+  “gemini/…”). Issue 13105.
 - Settings search now reveals controls that live
   on an inner sub-tab (such as AI > Features). It
   switches to the correct nested tab before

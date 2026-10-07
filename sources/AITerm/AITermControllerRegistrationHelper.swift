@@ -8,11 +8,32 @@
 class AITermControllerRegistrationHelper {
     static var instance = AITermControllerRegistrationHelper()
 
+    // The registration the default model authorizes with. Resolved exactly as
+    // AITermController.registration resolves it, so a manual model whose API key
+    // setting names another vendor's key, its own key, or none passes the checks
+    // that run before a controller exists (issue 13105).
     var registration: AITermController.Registration? {
         if !iTermAITermGatekeeper.allowed {
             return nil
         }
-        return registration(for: LLMMetadata.effectiveVendor)
+        return defaultModelRegistration
+    }
+
+    // Like `registration`, without the AI-enabled check, for callers that make it
+    // themselves.
+    var defaultModelRegistration: AITermController.Registration? {
+        return AITermController.resolvedRegistration(model: LLMMetadata.model(),
+                                                     fallbackVendor: LLMMetadata.effectiveVendor,
+                                                     vendorRegistration: { vendor in
+            AITermController.Registration(apiKey: AITermControllerObjC.apiKey(for: vendor),
+                                          vendor: vendor)
+        })
+    }
+
+    // The vendor whose stored key the default model authorizes with, which is
+    // the one to prompt for when it is missing.
+    var defaultKeyVendor: iTermAIVendor {
+        return LLMMetadata.model()?.keyVendor ?? LLMMetadata.effectiveVendor
     }
 
     func registration(for vendor: iTermAIVendor) -> AITermController.Registration? {
@@ -32,7 +53,27 @@ class AITermControllerRegistrationHelper {
     }
 
     func requestRegistration(in window: NSWindow, completion: @escaping (AITermController.Registration?) -> ()) {
-        requestRegistration(in: window, for: LLMMetadata.effectiveVendor, completion: completion)
+        if let registration {
+            completion(registration)
+            return
+        }
+        // The registration sheet stores a vendor's key, which a model that uses
+        // its own key would never send. Point the user at the model editor.
+        if let model = LLMMetadata.model(),
+           AITermController.apiKeyPolicy(url: model.url, api: model.api, credential: model.credential) == .modelKey,
+           iTermAITermGatekeeper.check() {
+            let warning = iTermWarning()
+            warning.heading = String(localized: "AITermRegistration.NoModelAPIKeyHeading", defaultValue: "No API Key for This Model", comment: "Heading of an alert shown when the default manual AI model is set to use its own API key but none is stored")
+            warning.title = AITermController.missingModelAPIKeyMessage
+            warning.actionLabels = [iTermLocalizedOK()]
+            warning.warningType = .kiTermWarningTypePersistent
+            warning.window = window
+            warning.runModalAsync { _, _ in
+                completion(nil)
+            }
+            return
+        }
+        requestRegistration(in: window, for: defaultKeyVendor, completion: completion)
     }
 
     func requestRegistration(in window: NSWindow,
@@ -201,7 +242,7 @@ extension AIRegistrationProvider {
 
 extension NSWindow: AIRegistrationProvider {
     func registrationProviderRequestRegistration(_ completion: @escaping (AITermController.Registration?) -> ()) {
-        registrationProviderRequestRegistration(for: LLMMetadata.effectiveVendor, completion)
+        registrationProviderRequestRegistration(for: AITermControllerRegistrationHelper.instance.defaultKeyVendor, completion)
     }
 
     func registrationProviderRequestRegistration(for vendor: iTermAIVendor,
