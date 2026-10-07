@@ -1476,7 +1476,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     }
     [self updateUnderlinedURLs:event];
     NSScrollView *scrollView = self.enclosingScrollView;
-    if ([scrollView hitTest:[scrollView convertPoint:event.locationInWindow fromView:nil]] == nil) {
+    // The whole pane counts, title bar included: entering through the title bar is entering this
+    // pane, and no second entered event comes when the pointer goes on into the text.
+    NSView *pane = scrollView.superview ?: scrollView;
+    if ([pane hitTest:[pane.superview convertPoint:event.locationInWindow fromView:nil]] == nil) {
         DLog(@"hitTest at %@ in view (%@ in window) gives nil", NSStringFromPoint([self convertPoint:event.locationInWindow fromView:nil]),
               NSStringFromPoint(event.locationInWindow));
         DLog(@"Event %@ at window coord %@ failed hit test for view with window coords %@",
