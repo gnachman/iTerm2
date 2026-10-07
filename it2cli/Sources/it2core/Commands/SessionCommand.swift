@@ -174,7 +174,7 @@ extension Session {
                 if splitResp.status == ITMSplitPaneResponse_Status.sessionNotFound {
                     throw IT2Error.targetNotFound("Session not found")
                 } else if splitResp.status == ITMSplitPaneResponse_Status.cannotSplit {
-                    throw IT2Error.apiError("Cannot split: pane may be too small")
+                    throw IT2Error.apiError("Cannot split this pane. A floating pane can’t be split, and a pane may be too small.")
                 } else {
                     throw IT2Error.apiError("Split failed with status \(splitResp.status.rawValue)")
                 }
