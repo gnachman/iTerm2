@@ -1146,3 +1146,7 @@ Bug Fixes:
 - In tmux integration, a window created with
   “tmux new-window -d” now opens as a background
   tab instead of taking focus. Issue 13112.
+- Pressing space twice in a terminal no longer
+  types a period when macOS’s “Add period with
+  double-space” setting is on. In vim this could
+  repeat your last command. Issue 13123.
