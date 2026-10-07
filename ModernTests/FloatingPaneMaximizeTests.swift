@@ -52,12 +52,11 @@ final class FloatingPaneMaximizeTests: XCTestCase {
             XCTFail("No metrics", file: file, line: line)
             return
         }
-        let frame = pane(session).outlineFrame
-        XCTAssertTrue(container.bounds.contains(frame), file: file, line: line)
-        XCTAssertGreaterThan(frame.width + metrics.cellSize.width, container.bounds.width,
-                             "within a cell of the tab's width", file: file, line: line)
-        XCTAssertGreaterThan(frame.height + metrics.cellSize.height, container.bounds.height,
-                             "within a cell of the tab's height", file: file, line: line)
+        // Exactly, with the remainder of a cell in its margins, so nothing beneath shows at the edges.
+        XCTAssertEqual(pane(session).outlineFrame, container.bounds, file: file, line: line)
+        XCTAssertEqual(FloatingPaneGrid(columns: Int(session.columns), rows: Int(session.rows)),
+                       FloatingPaneGeometry.maximumGrid(container: container.bounds.size, metrics: metrics),
+                       "the largest grid that fits", file: file, line: line)
     }
 
     func testMaximizingAFloatFillsTheTabBehindTheOtherFloats() {

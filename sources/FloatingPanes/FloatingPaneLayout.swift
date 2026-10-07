@@ -186,7 +186,7 @@ final class FloatingPaneLayout: NSObject {
             let frame = FloatingPaneGeometry.clamp(CGRect(origin: scaled(beforeMaximizing),
                                                           size: metrics.frameSize(for: grid)),
                                                    in: container)
-            fit(pane, session: session, toOutlineFrame: CGRect(origin: .zero, size: container))
+            fill(pane, session: session, bounds: CGRect(origin: .zero, size: container))
             if let superview = pane.superview {
                 pane.outlineFrameBeforeMaximizing = FloatingPaneGeometry.fromVisual(
                     frame,
@@ -298,8 +298,21 @@ final class FloatingPaneLayout: NSObject {
             return
         }
         let saved = pane.outlineFrame
-        fit(pane, session: session, toOutlineFrame: bounds)
+        fill(pane, session: session, bounds: bounds)
         pane.outlineFrameBeforeMaximizing = saved
+    }
+
+    /// Gives a maximized float the largest grid that fits its tab and a frame that fills the tab,
+    /// as a tiled pane takes up the remainder of a cell in its margins. Otherwise slivers of what is
+    /// beneath show at the right and bottom.
+    static func fill(_ pane: iTermFloatingPaneView, session: PTYSession, bounds: NSRect) {
+        guard let metrics = metrics(for: session) else {
+            return
+        }
+        let grid = FloatingPaneGeometry.maximumGrid(container: bounds.size, metrics: metrics)
+        apply(FloatingPanePlacement(frame: CGRect(origin: .zero, size: bounds.size), grid: grid),
+              to: pane,
+              session: session)
     }
 
     /// Returns a maximized float to where it was.
@@ -361,7 +374,7 @@ final class FloatingPaneLayout: NSObject {
         if pane.isMaximized {
             // A maximized float keeps filling its tab.
             let saved = pane.outlineFrameBeforeMaximizing
-            fit(pane, session: session, toOutlineFrame: CGRect(origin: .zero, size: container))
+            fill(pane, session: session, bounds: CGRect(origin: .zero, size: container))
             pane.outlineFrameBeforeMaximizing = saved
             return
         }
