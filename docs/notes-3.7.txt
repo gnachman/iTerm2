@@ -517,7 +517,6 @@ Bug Fixes:
   save was in progress could store duplicate
   entries in the saved-state database, which
   later saves could not handle.
-||||||| parent of 25dca3b7b (Substitute the user's name and email placeholder in the crash report message again)
 - The crash reporter’s message fills in your
   name again instead of showing %%LONGUSERNAME
   and %%EMAILADDRESS.
