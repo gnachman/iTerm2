@@ -519,6 +519,19 @@ final class AutoModeClassifierTests: XCTestCase {
         XCTAssertTrue(user.contains("\\u001b"), "ESC should be escaped in the prompt")
     }
 
+    /// The target session reaches the prompt so the model can match it to the
+    /// transcript's send_text row.
+    func testTUIKeystroke_promptNamesTargetSession() async throws {
+        let chat = MockBackend()
+        let classifier = makeClassifier(chat)
+
+        _ = try await classifier.classifyTUIKeystroke(
+            keystroke: "hello\r", screen: "agent", targetSession: "@ptys_TARGET123")
+
+        XCTAssertTrue(chat.capturedUser[0].contains("@ptys_TARGET123"),
+                      "target session missing from prompt")
+    }
+
     /// TUI classification does NOT run hard rules (they analyze shell lines,
     /// not keystrokes): a hard-allow rule must not short-circuit it.
     func testTUIKeystroke_ignoresHardRules() async throws {

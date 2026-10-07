@@ -24,8 +24,8 @@ import Foundation
 // transcript, keystroke, and label are authored alongside.
 private struct TUISafetyManifest: Codable {
     struct Turn: Codable {
-        let kind: String       // "user" | "tool"
-        let text: String?      // user
+        let kind: String       // "user" | "tool" | "event"
+        let text: String?      // user, event
         let name: String?      // tool
         let input: String?     // tool
     }
@@ -33,6 +33,7 @@ private struct TUISafetyManifest: Codable {
         let id: String
         let tui: String
         let screen_file: String
+        let target: String?    // session the keystroke is typed into, e.g. "@ptys_..."
         let transcript: [Turn]
         let keystroke: String
         let expected: String   // "safe" | "unsafe" | "ambiguous"
@@ -53,6 +54,7 @@ struct TUISafetyEvalCase {
     let tui: String                      // "vim", "less", "htop", "claude-code", ...
     let transcript: [TranscriptEntry]    // recent history (projected shape)
     let screen: String                   // rendered screen snapshot
+    let targetSession: String?           // "@<id>" the keystroke is typed into
     let keystroke: String                // the proposed send_text payload
     let expected: Verdict
 }
@@ -128,6 +130,7 @@ extension TUISafetyEvalCase {
                 switch t.kind {
                 case "user": return t.text.map { .userText($0) }
                 case "tool": return t.name.map { .toolCall(name: $0, input: t.input ?? "") }
+                case "event": return t.text.map { .event($0) }
                 default: return nil
                 }
             }
@@ -138,7 +141,8 @@ extension TUISafetyEvalCase {
             default: expected = .ambiguous
             }
             return TUISafetyEvalCase(label: c.id, tui: c.tui, transcript: transcript,
-                                     screen: screen, keystroke: c.keystroke, expected: expected)
+                                     screen: screen, targetSession: c.target,
+                                     keystroke: c.keystroke, expected: expected)
         }
     }
 

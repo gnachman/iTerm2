@@ -222,7 +222,7 @@ extension AILiveHarness {
             var errored = false
             do {
                 decision = try await classifier.classifyTUIKeystroke(
-                    keystroke: c.keystroke, screen: c.screen)
+                    keystroke: c.keystroke, screen: c.screen, targetSession: c.targetSession)
                 reached += 1
             } catch {
                 errored = true

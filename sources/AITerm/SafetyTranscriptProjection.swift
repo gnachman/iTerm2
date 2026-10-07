@@ -55,14 +55,44 @@ enum SafetyTranscript {
                 out.append(.toolCall(name: payload.name,
                                      input: payload.markdownDescription))
 
+            case .watcherEvent(let update):
+                // A fired watch can be what a request hinges on ("when X
+                // finishes, tell Y..."), so the classifier needs to know it
+                // happened. Rendered from iTerm2-controlled fields only: the
+                // detail can carry agent-written condition text and the role
+                // name can be a title a program set.
+                out.append(.event(eventDescription(update)))
+
             default:
                 // Everything else (agent responses, streaming fragments,
-                // permissions, watcher events, system plumbing) has no bearing
-                // on user intent and is dropped.
+                // permissions, system plumbing) has no bearing on user intent
+                // and is dropped.
                 break
             }
         }
         return out
+    }
+
+    private static func eventDescription(_ update: StatusUpdate) -> String {
+        let prefix = WorkgroupIntrospection.syntheticWorkgroupIDPrefix
+        // A standalone session's synthetic workgroup ID embeds the session
+        // reference register_watch was given, so this matches how the
+        // transcript's register_watch row names it.
+        let target = update.workgroupID.hasPrefix(prefix)
+            ? "@" + update.workgroupID.dropFirst(prefix.count)
+            : "role \(update.roleID) of @\(update.workgroupID)"
+        switch update.reason {
+        case .stateReached:
+            return "Watch fired: \(target) reached state \u{2018}\(update.stateReached)\u{2019}."
+        case .conditionMet:
+            return "Watch fired: the condition being watched on \(target) was met."
+        case .timerFired:
+            return "A timer the agent set fired."
+        case .watcherDropped:
+            return "Watch on \(target) ended without firing because the session is gone."
+        case .watchTimedOut:
+            return "Watch on \(target) timed out without firing."
+        }
     }
 
     private static func appendUserText(_ text: String,

@@ -142,6 +142,7 @@ extension OrchestratorDispatcher {
     static func tuiKeystrokeOutcome(
         keystroke: String,
         screen: String,
+        targetSession: String? = nil,
         classifier: AutoModeClassifier
     ) async -> SafetyGateOutcome {
         // blockIsDeny: false -- see mapDecision. The TUI prompt asks the model to
@@ -152,7 +153,8 @@ extension OrchestratorDispatcher {
         // case. A hold is requireApproval ("a human should look"); the gate still
         // requires approval either way, so the fail-safe direction is unchanged.
         return await mappedOutcome(blockIsDeny: false) {
-            try await classifier.classifyTUIKeystroke(keystroke: keystroke, screen: screen)
+            try await classifier.classifyTUIKeystroke(keystroke: keystroke, screen: screen,
+                                                      targetSession: targetSession)
         }
     }
 

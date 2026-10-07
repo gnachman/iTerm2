@@ -1,0 +1,96 @@
+
+⏺ The original instance has quit. First I'll fix my launch helper so it refuses to start while another instance is running. Then
+  I'll relaunch and check the maximized float.
+
+  Ran 1 shell command
+
+⏺ Confirmed maximized floats survive relaunch and unmaximizing restores the (150,150) 397x249 frame, completing coverage of
+  floats, drags, persistence, API, CLI, and tmux 3.7/3.9. I'll now log the final results and harness incident, add a summary
+  index to the top of the report, and clean up.
+
+  Ran 1 shell command
+
+⏺ Now the summary index and an "unreproduced" section at the top of the report.
+
+  Ran 1 shell command
+
+⏺ I'll check that every file the report references exists, then clean up.
+
+  Ran 1 shell command
+
+⏺ I tested floating panes until I'd covered everything I could reach and found 23 bugs. Two are high severity; both lose data or
+  leak running processes. I ran 121 tests across native floats, mouse and drag, persistence, the API and it2, tmux next-3.9 and
+  Homebrew tmux 3.7c, multiple displays, and Metal rendering. Each bug has steps, expected and actual behavior, and screenshots
+  or logs.
+
+  High severity
+  - BUG-18, tmux floats-only window: attaching (fresh or reattach) to a tmux window that has only floats makes iTerm2 send
+    refresh-client -C @0:2x3. That crushes every float to 1x1 on the tmux server itself, so every client is affected, and the
+    iTerm2 window shrinks to 26x95 pt. The debug log with the command is attached.
+  - BUG-22, Undo Close of a window: the tiled panes come back as their original sessions, but the floats come back as brand-new
+    shells, so their output and jobs are gone. The original float shells keep running with no UI: after two close-and-undo
+    rounds there were four orphaned login processes. Undo Close of a tab also recreates its float as a new shell, but there the
+    old process is killed.
+
+  Medium severity
+  - BUG-9: Duplicate Tab and Restore Window Arrangement add a row to every float, and it compounds with each round trip. A
+    normal quit and relaunch keeps the sizes exactly.
+  - BUG-10: after anything that briefly shrinks the tab, floats end up pinned to the bottom-right corner. Triggers include a
+    window resize, Move Tab to New Window, toggling the Toolbelt, and a font change. In one case two floats ended up stacked
+    exactly on top of each other.
+  - BUG-12: at the 2x2 minimum size, typing a command makes zsh exit, so the float silently disappears.
+  - BUG-15: Move Session to Split Pane started from a float can't be cancelled. The source float is hidden along with the
+    others, so the cancel target never appears and Escape does nothing.
+  - BUG-16: after swapping a float with a tiled pane, the new float keeps the tiled pane's full-height size instead of taking
+    the old float's frame.
+  - BUG-17: in tmux, a float created with new-pane -A while zoomed shows the wrong screen contents (the top lines are missing),
+    and it stays wrong after unzoom.
+  - BUG-7: dragging a float into another window lands it 35 pt too high when the source window has a tab bar.
+  - BUG-1: a float pushed flush against the window's edge can't be resized from that edge; the drag resizes the window instead.
+
+  The other 13 are lower severity: cursor and readout glitches, Lock Pane not stopping a float from moving, an API split of a
+  float quietly splitting a tiled pane instead of failing, and a stale it2 binary in the Development build. Three of them
+  (BUG-13, BUG-21 and part of BUG-23) are older problems that floats make easier to hit; the report says so for each. One lost
+  window from the very first permission check didn't reproduce in two deliberate attempts, so it's listed as unreproduced.
+
+  Things you should know happened:
+  - Your main iTerm2: once, before I added a guard, a drag started on your main iTerm2 window. It only selected some text, which
+    may have changed your clipboard. After that, my patched devctl refuses any click or drag that doesn't start on a
+    dev-instance window.
+  - Mission Control: one test drag to the top of the screen triggered Mission Control. I backed out of it.
+  - Second dev instance: a quit got stuck behind a confirmation dialog, and my launch helper started a second dev instance in
+    the same suite for about a minute. I quit it, and the helper now refuses to launch while an instance is running.
+  - Cleanup: the dev instance is quit and the private tmux servers (fp-qa, fp-qa37) are shut down. I didn't touch -L relaywatch.
+    I put the suite settings I changed back to how they were. The suite's restored windows still contain one pane I locked.
+
+  Everything is in tmp/floating-panes-qa/:
+  - REPORT.txt
+  - TESTLOG.txt (every test with its result, so passing areas can be re-run)
+  - BUG-* screenshots and logs
+  - scripts/
+
+✻ Cooked for 1h 26m 3s · done 4:29 PM
+
+※ recap: I finished QA of floating panes: 121 tests and 23 bugs, two high severity (tmux floats-only attach crushes floats to
+  1x1, and Undo Close Window leaks float processes). Next, read tmp/floating-panes-qa/REPORT.txt, starting with its summary.
+  (disable recaps in /config)
+
+❯ copy report to this directory
+  ⎿  1 skill available
+
+  Ran 1 shell command
+
+⏺ I copied the report to /Users/gnachman/git/iterm2-alt12/REPORT.txt; there was no existing file there to overwrite. It's
+  untracked, and I haven't added it to git.
+
+  The report names its screenshots and logs (BUG-*.png and the others) without a path, and they're still in
+  tmp/floating-panes-qa/. So from the repo root, those names won't resolve. If you want them alongside the report, I can copy
+  the BUG-* files over too.
+
+✻ Cogitated for 11s · done 4:45 PM
+                                                                                        new task? /clear to save 675.7k tokens
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ ⟨dim⟩⟨cursor⟩copy the BUG files over too⟨/dim⟩
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  Mac:/Users/gnachman/git/iterm2-alt12
+  ⏵⏵ auto mode on (shift+tab to cycle) · ← 1 agent
