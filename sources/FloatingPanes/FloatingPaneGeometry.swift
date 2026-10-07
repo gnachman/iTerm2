@@ -18,8 +18,9 @@ struct FloatingPaneGrid: Equatable, CustomStringConvertible {
     var columns: Int
     var rows: Int
 
-    /// The smallest grid a float may have. It only prevents a degenerate frame.
-    static let minimum = FloatingPaneGrid(columns: 2, rows: 2)
+    /// The smallest grid a float may have. Larger than a tiled pane's 2x2: a login zsh exits when it
+    /// runs a command in a 2x2 terminal, and a float is easy to drag that small.
+    static let minimum = FloatingPaneGrid(columns: 10, rows: 3)
 
     var description: String {
         return "\(columns)x\(rows)"

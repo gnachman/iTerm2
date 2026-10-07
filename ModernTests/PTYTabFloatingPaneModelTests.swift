@@ -277,6 +277,6 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
         let minSize = tab.minSize()
         XCTAssertGreaterThanOrEqual(minSize.width, floatMinimum.width)
         XCTAssertGreaterThanOrEqual(minSize.height, floatMinimum.height)
-        XCTAssertLessThan(floatMinimum.width, floatFrame.width, "the minimum is the 2x2 grid, not the current one")
+        XCTAssertLessThan(floatMinimum.width, floatFrame.width, "the minimum is the minimum grid, not the current one")
     }
 }
