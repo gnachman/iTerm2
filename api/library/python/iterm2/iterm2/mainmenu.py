@@ -115,6 +115,7 @@ class MainMenu:
         DUPLICATE_TAB = MenuItemIdentifier("Duplicate Tab", "Duplicate Tab")
         SPLIT_HORIZONTALLY_WITH_CURRENT_PROFILE = MenuItemIdentifier("Split Horizontally with Current Profile", "Split Horizontally with Current Profile")
         SPLIT_VERTICALLY_WITH_CURRENT_PROFILE = MenuItemIdentifier("Split Vertically with Current Profile", "Split Vertically with Current Profile")
+        NEW_FLOATING_PANE_WITH_CURRENT_PROFILE = MenuItemIdentifier("New Floating Pane with Current Profile", "New Floating Pane with Current Profile")
         SPLIT_HORIZONTALLY = MenuItemIdentifier("Split Horizontally…", "Split Horizontally…")
         SPLIT_VERTICALLY = MenuItemIdentifier("Split Vertically…", "Split Vertically…")
         SAVE_CONTENTS = MenuItemIdentifier("Save Contents…", "Log.SaveContents")
@@ -345,6 +346,17 @@ class MainMenu:
             MOVE_DIVIDER_DOWN = MenuItemIdentifier("Move Divider Down", "Resize Split Pane.Move Divider Down")
             MOVE_DIVIDER_LEFT = MenuItemIdentifier("Move Divider Left", "Resize Split Pane.Move Divider Left")
             MOVE_DIVIDER_RIGHT = MenuItemIdentifier("Move Divider Right", "Resize Split Pane.Move Divider Right")
+
+
+        class FloatingPanes(enum.Enum):
+            BRING_TO_FRONT = MenuItemIdentifier("Bring to Front", "Floating Panes.Bring to Front")
+            SEND_TO_BACK = MenuItemIdentifier("Send to Back", "Floating Panes.Send to Back")
+            DOCK_FLOATING_PANE = MenuItemIdentifier("Dock Floating Pane", "Floating Panes.Dock Floating Pane")
+            HIDE_FLOATING_PANES = MenuItemIdentifier("Hide Floating Panes", "Floating Panes.Hide Floating Panes")
+            MOVE_FLOATING_PANE_UP = MenuItemIdentifier("Move Floating Pane Up", "Floating Panes.Move Floating Pane Up")
+            MOVE_FLOATING_PANE_DOWN = MenuItemIdentifier("Move Floating Pane Down", "Floating Panes.Move Floating Pane Down")
+            MOVE_FLOATING_PANE_LEFT = MenuItemIdentifier("Move Floating Pane Left", "Floating Panes.Move Floating Pane Left")
+            MOVE_FLOATING_PANE_RIGHT = MenuItemIdentifier("Move Floating Pane Right", "Floating Panes.Move Floating Pane Right")
 
 
         class ResizeWindow(enum.Enum):
