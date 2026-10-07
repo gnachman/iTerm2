@@ -322,6 +322,19 @@ final class FloatingPaneCommandTests: XCTestCase {
         XCTAssertFalse(pane(float).isHidden)
     }
 
+    /// Moving a float to a split: the float being moved stays visible, because it shows which pane
+    /// is moving and clicking it cancels. Other floats are hidden.
+    func testPickingWhereToMoveAFloatKeepsThatFloatVisible() {
+        let source = fixture.addFloat(frame: floatFrame)
+        let other = fixture.addFloat(frame: NSRect(x: 300, y: 250, width: 200, height: 150))
+        terminal.setSplitSelectionMode(true, excludingSession: source, move: true)
+        XCTAssertFalse(pane(source).isHidden, "the float being moved is where to cancel")
+        XCTAssertTrue(pane(other).isHidden)
+        terminal.setSplitSelectionMode(false, excludingSession: source, move: true)
+        XCTAssertFalse(pane(source).isHidden)
+        XCTAssertFalse(pane(other).isHidden)
+    }
+
     func testPickingAPaneToSwapWithKeepsFloatsVisible() {
         let float = fixture.addFloat(frame: floatFrame)
         guard let tiled = tab.tiledSessions()?.first else {

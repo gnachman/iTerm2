@@ -12642,8 +12642,11 @@ typedef struct {
     // close it.
     [self closeInstantReplay:nil orTerminateSession:NO];
     // A float is never a place to move a session into, and floats would cover the panes that are,
-    // so they are hidden while picking. For a swap, floats are fair targets and stay visible.
+    // so they are hidden while picking. For a swap, floats are fair targets and stay visible. A
+    // float being moved stays visible: it shows which pane is moving and is where to click to
+    // cancel.
     for (PTYTab *tab in self.tabs) {
+        tab.floatingSessionShownWhileTemporarilyHidden = (mode && move) ? session : nil;
         tab.floatingPanesTemporarilyHidden = (mode && move);
     }
     for (PTYSession *aSession in [self allSessions]) {

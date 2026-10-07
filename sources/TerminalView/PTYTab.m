@@ -1888,7 +1888,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     session.view.frame = splitView.bounds;
     [self.viewToSessionMap setObject:session forKey:session.view];
 
-    pane.hidden = _floatingPanesHidden || _floatingPanesTemporarilyHidden || pane.isHiddenByTmux;
+    pane.hidden = [self floatingPaneShouldBeHidden:pane];
     [_floatingPanes addObject:pane];
     [_containerView addSubview:pane positioned:NSWindowAbove relativeTo:nil];
     [self numberOfSessionsDidChange];
@@ -1901,10 +1901,21 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return _floatingPanesHidden;
 }
 
+- (BOOL)floatingPaneShouldBeHidden:(iTermFloatingPaneView *)pane {
+    if (_floatingPanesHidden || pane.isHiddenByTmux) {
+        return YES;
+    }
+    if (!_floatingPanesTemporarilyHidden) {
+        return NO;
+    }
+    PTYSession *exempt = self.floatingSessionShownWhileTemporarilyHidden;
+    return !(exempt && [self floatingPaneForSession:exempt] == pane);
+}
+
 - (void)updateFloatingPaneVisibility {
     const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     for (iTermFloatingPaneView *pane in _floatingPanes) {
-        pane.hidden = _floatingPanesHidden || _floatingPanesTemporarilyHidden || pane.isHiddenByTmux;
+        pane.hidden = [self floatingPaneShouldBeHidden:pane];
         // Activity in a hidden float counts from when it was hidden.
         if (![self floatingPaneIsPersistentlyHidden:pane]) {
             pane.hiddenSince = 0;

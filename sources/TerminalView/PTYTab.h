@@ -320,6 +320,10 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 // Hides floats for a moment without the effects of the hide toggle.
 @property(nonatomic) BOOL floatingPanesTemporarilyHidden;
 
+// A float that stays visible while floats are temporarily hidden, such as the source of Move
+// Session to Split Pane, which shows how to cancel.
+@property(nonatomic, weak) PTYSession *floatingSessionShownWhileTemporarilyHidden;
+
 // Change a float's z-order.
 - (void)bringFloatingPaneToFront:(iTermFloatingPaneView *)pane;
 - (void)sendFloatingPaneToBack:(iTermFloatingPaneView *)pane;
