@@ -95,14 +95,21 @@ final class FloatingPanePersistenceTests: XCTestCase {
 
     // MARK: - Round trip
 
-    /// Builds a new tab from this tab's arrangement, reviving its sessions, and puts it in the window.
-    private func roundTrip() -> PTYTab {
+    /// Builds a new tab from this tab's arrangement and puts it in the window. With `revive`, the
+    /// tab's own sessions are matched up as undo close does; without, new sessions are made from the
+    /// arrangement as Duplicate Tab and restoring an arrangement do.
+    private func roundTrip(revive: Bool = true) -> PTYTab {
         guard let arrangement = tab.arrangement(), let sessions = tab.sessions() else {
             it_fatalError("No arrangement")
         }
-        var sessionMap = [String: PTYSession]()
-        for session in sessions {
-            sessionMap[session.guid] = session
+        let sessionMap: [String: PTYSession]?
+        if revive {
+            guard let map = PTYTab.sessionMap(withArrangement: arrangement, sessions: sessions) else {
+                it_fatalError("No session map")
+            }
+            sessionMap = map
+        } else {
+            sessionMap = nil
         }
         guard let restored = PTYTab(arrangement: arrangement,
                                     named: nil,
@@ -143,6 +150,46 @@ final class FloatingPanePersistenceTests: XCTestCase {
         XCTAssertEqual(back.rows, backGrid.1)
         XCTAssertTrue(restored.activeSession === back, "the active float is restored as active")
         XCTAssertTrue(back.view?.showTitle() ?? false)
+    }
+
+    /// Undo close matches the closed tab's sessions to its arrangement. Floats must be matched too,
+    /// or they come back as new sessions and the old ones keep running.
+    func testTheSessionMapIncludesFloats() {
+        let float = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        guard let arrangement = tab.arrangement(), let sessions = tab.sessions() else {
+            XCTFail("No arrangement")
+            return
+        }
+        let map = PTYTab.sessionMap(withArrangement: arrangement, sessions: sessions)
+        XCTAssertTrue(map?[float.guid] === float)
+        XCTAssertEqual(map?.count, 2)
+    }
+
+    /// Duplicate Tab and restoring an arrangement make new sessions, which must get the float's
+    /// saved grid, not one more row.
+    func testNewSessionsFromAnArrangementKeepTheFloatsGrid() {
+        let float = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        guard let pane = tab.floatingPane(for: float), let metrics = FloatingPaneLayout.metrics(for: float) else {
+            XCTFail("No pane")
+            return
+        }
+        let grid = FloatingPaneGrid(columns: 30, rows: 8)
+        FloatingPaneLayout.apply(FloatingPanePlacement(frame: CGRect(origin: CGPoint(x: 40, y: 40),
+                                                                     size: metrics.frameSize(for: grid)),
+                                                       grid: grid),
+                                 to: pane,
+                                 session: float)
+        let frame = pane.outlineFrame
+
+        let restored = roundTrip(revive: false)
+        guard let copy = restored.floatingSessions()?.first, let copyPane = restored.floatingPane(for: copy) else {
+            XCTFail("No restored float")
+            return
+        }
+        XCTAssertFalse(copy === float)
+        XCTAssertEqual(copy.columns, 30)
+        XCTAssertEqual(copy.rows, 8)
+        XCTAssertEqual(copyPane.outlineFrame, frame)
     }
 
     func testRoundTripRestoresHiddenState() {

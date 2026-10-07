@@ -141,16 +141,20 @@ final class FloatingPaneLayout: NSObject {
 
     /// Records a placement from a saved arrangement. It is applied the first time the float's
     /// container has a size, by relayout.
-    @objc(setRestoredPlacementOfFloatingPane:visualFrame:containerSize:desiredGrid:visualFrameBeforeMaximizing:)
+    @objc(setRestoredPlacementOfFloatingPane:visualFrame:containerSize:grid:desiredGrid:visualFrameBeforeMaximizing:)
     static func setRestoredPlacement(of pane: iTermFloatingPaneView,
                                      visualFrame: NSRect,
                                      containerSize: NSSize,
+                                     grid: VT100GridSize,
                                      desiredGrid: [String: Any]?,
                                      visualFrameBeforeMaximizing: NSRect) {
         pane.pendingRestore = iTermFloatingPaneView.PendingRestore(
             frame: visualFrame,
             containerSize: containerSize,
-            frameBeforeMaximizing: visualFrameBeforeMaximizing.isEmpty ? nil : visualFrameBeforeMaximizing)
+            frameBeforeMaximizing: visualFrameBeforeMaximizing.isEmpty ? nil : visualFrameBeforeMaximizing,
+            grid: (grid.width > 0 && grid.height > 0)
+                ? FloatingPaneGrid(columns: Int(grid.width), rows: Int(grid.height))
+                : nil)
         if let columns = (desiredGrid?["columns"] as? NSNumber)?.intValue,
            let rows = (desiredGrid?["rows"] as? NSNumber)?.intValue {
             pane.desiredGrid = FloatingPaneGrid(columns: columns, rows: rows)
@@ -169,7 +173,7 @@ final class FloatingPaneLayout: NSObject {
             let sy = pending.containerSize.height > 0 ? container.height / pending.containerSize.height : 1
             return CGPoint(x: (rect.minX * sx).rounded(), y: (rect.minY * sy).rounded())
         }
-        let saved = FloatingPaneGrid(columns: Int(session.columns), rows: Int(session.rows))
+        let saved = pending.grid ?? FloatingPaneGrid(columns: Int(session.columns), rows: Int(session.rows))
         let wanted = pane.desiredGrid ?? saved
         if let beforeMaximizing = pending.frameBeforeMaximizing {
             // Restore the frame to return to, then fill the tab.

@@ -4895,9 +4895,11 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
     const NSRect frame = [PTYTab dictToFrame:record[FLOATING_PANE_FRAME]];
     const NSSize containerSize = [PTYTab dictToFrame:record[FLOATING_PANE_CONTAINER_SIZE]].size;
     iTermFloatingPaneView *pane = [self installFloatingSession:session outlineFrame:frame];
+    NSDictionary *node = [NSDictionary castFrom:record[FLOATING_PANE_NODE]];
     [iTermFloatingPaneLayout setRestoredPlacementOfFloatingPane:pane
                                                     visualFrame:frame
                                                   containerSize:containerSize
+                                                           grid:[PTYSession gridSizeInArrangement:node[TAB_ARRANGEMENT_SESSION]]
                                                     desiredGrid:[NSDictionary castFrom:record[FLOATING_PANE_DESIRED_GRID_SIZE]]
                                     visualFrameBeforeMaximizing:NSZeroRect];
     [iTermFloatingPaneLayout refitFloatingPane:pane session:session];
@@ -4950,6 +4952,7 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
         [iTermFloatingPaneLayout setRestoredPlacementOfFloatingPane:pane
                                                         visualFrame:frame
                                                       containerSize:containerSize
+                                                               grid:[PTYSession gridSizeInArrangement:node[TAB_ARRANGEMENT_SESSION]]
                                                         desiredGrid:[NSDictionary castFrom:record[FLOATING_PANE_DESIRED_GRID_SIZE]]
                                         visualFrameBeforeMaximizing:record[FLOATING_PANE_SAVED_FRAME] ? [PTYTab dictToFrame:record[FLOATING_PANE_SAVED_FRAME]] : NSZeroRect];
         // Applies the restored placement now if the tab has a size, else when it gets one.
@@ -5019,9 +5022,15 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                          withArrangement:arrangement[TAB_ARRANGEMENT_ROOT]
                                 sessions:sessions]) {
         return nil;
-    } else {
-        return sessionMap;
     }
+    // Floats too, or undoing a close would give them new sessions and leave the old ones running.
+    for (NSDictionary *record in [NSArray castFrom:arrangement[TAB_ARRANGEMENT_FLOATING_PANES]]) {
+        NSDictionary *node = [NSDictionary castFrom:record[FLOATING_PANE_NODE]];
+        if (node && ![self _recursiveBuildSessionMap:sessionMap withArrangement:node sessions:sessions]) {
+            return nil;
+        }
+    }
+    return sessionMap;
 }
 
 typedef struct {

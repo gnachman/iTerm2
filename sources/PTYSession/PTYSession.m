@@ -7655,6 +7655,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return [NSString castFrom:arrangement[SESSION_ARRANGEMENT_RESTORE_AS_ARCHIVE]] != nil;
 }
 
++ (VT100GridSize)gridSizeInArrangement:(NSDictionary *)arrangement {
+    return VT100GridSizeMake([arrangement[SESSION_ARRANGEMENT_COLUMNS] intValue],
+                             [arrangement[SESSION_ARRANGEMENT_ROWS] intValue]);
+}
+
 + (NSString *)guidInArrangement:(NSDictionary *)arrangement {
     NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
     if (guid) {

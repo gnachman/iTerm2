@@ -917,6 +917,8 @@ backgroundColor:(nullable NSColor *)backgroundColor;
                          workingDirectory:(NSString *)workingDirectory
                                      size:(VT100GridSize)size;
 + (nullable NSString *)guidInArrangement:(NSDictionary *)arrangement;
+// The grid a session had when its arrangement was saved, or 0x0 if it doesn't say.
++ (VT100GridSize)gridSizeInArrangement:(NSDictionary *)arrangement;
 // Returns a copy of the arrangement of a session archived at `path` that is
 // restored as an archive even when no archive option is given. A tab
 // arrangement containing it can be restored without a live session for it.

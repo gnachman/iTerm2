@@ -71,12 +71,15 @@ final class iTermFloatingPaneView: NSView {
     var outlineFrameBeforeMaximizing: NSRect?
 
     /// A placement read from a saved arrangement, applied once the float's tab has its real size:
-    /// the saved visual frame, the container size it was saved with, and (if it was maximized) the
-    /// visual frame to return to.
+    /// the saved visual frame, the container size it was saved with, (if it was maximized) the
+    /// visual frame to return to, and the saved grid.
     struct PendingRestore {
         var frame: CGRect
         var containerSize: CGSize
         var frameBeforeMaximizing: CGRect?
+        /// The saved grid. A session made from the arrangement is first sized before it has its
+        /// title bar, so its own grid can be a row off.
+        var grid: FloatingPaneGrid?
     }
     var pendingRestore: PendingRestore?
 
