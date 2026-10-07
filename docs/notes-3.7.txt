@@ -1155,3 +1155,7 @@ Bug Fixes:
   quotes and dashes. They could change what you
   type in a terminal. Text replacements still
   work.
+- Help popovers, such as the ones shown by the ?
+  buttons in Settings, no longer cut off the last
+  line of text, and no longer scroll when all of
+  their text fits.

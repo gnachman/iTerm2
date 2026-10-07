@@ -20,6 +20,16 @@ const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
 
 @implementation iTermTextPopoverViewController
 
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // When shown in a popover, the clip view adopts 6pt top and bottom content insets (macOS 27).
+    // Since -sizeToFit makes the view exactly as tall as the text, that clips the last line and
+    // lets the text scroll even when it fits.
+    NSClipView *clipView = _textView.enclosingScrollView.contentView;
+    clipView.automaticallyAdjustsContentInsets = NO;
+    clipView.contentInsets = NSEdgeInsetsZero;
+}
+
 - (void)appendString:(NSString *)string {
     if (!string.length) {
         return;
@@ -78,9 +88,12 @@ const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
     NSSize margins = [self marginSize];
     size.width += margins.width;
     size.height += margins.height;
-    if (_maxHeight > 0) {
-        size.height = MIN(_maxHeight, size.height);
+    const BOOL clipped = (_maxHeight > 0 && size.height > _maxHeight);
+    if (clipped) {
+        size.height = _maxHeight;
     }
+    // When all the text fits there is nothing to scroll, so don't let it rubber-band.
+    _textView.enclosingScrollView.verticalScrollElasticity = clipped ? NSScrollElasticityAutomatic : NSScrollElasticityNone;
     NSRect frame = self.view.frame;
     frame.size = size;
     self.view.frame = frame;
