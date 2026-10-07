@@ -400,6 +400,23 @@ final class FloatingPaneMouseTests: XCTestCase {
         XCTAssertFalse(pane.allowsPaneDrag)
     }
 
+    /// Lock Pane keeps a float from being moved, resized or docked, as Lock Layout does.
+    func testALockedFloatCannotBeMovedResizedOrDocked() {
+        let (session, pane) = addFloat()
+        session.locked = true
+        let frame = pane.outlineFrame
+        let startGrid = grid(session)
+
+        let title = titleBarPoint(session)
+        fixture.mouse.drag(from: title, to: NSPoint(x: title.x + 100, y: title.y - 60), steps: 3)
+        XCTAssertEqual(pane.outlineFrame, frame, "not moved")
+        let edge = rightBandPoint(pane)
+        fixture.mouse.drag(from: edge, to: NSPoint(x: edge.x + 100, y: edge.y), steps: 3)
+        XCTAssertEqual(grid(session), startGrid, "not resized")
+        XCTAssertFalse(fixture.terminal.canDockFloating(session))
+        XCTAssertFalse(pane.allowsPaneDrag)
+    }
+
     func testBandIsOnlyOutsideTheOutline() {
         let (_, pane) = addFloat()
         let band = iTermFloatingPaneView.resizeBandWidth

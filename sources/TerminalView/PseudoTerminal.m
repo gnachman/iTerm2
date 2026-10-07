@@ -11842,6 +11842,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             [tab floatingPaneForSession:session] != nil &&
             [tab tmuxAllowsChangingFloatingPanes] &&
             !_layoutLocked &&
+            !session.locked &&
             session.liveSession == nil &&
             ![self inInstantReplay]);
 }
@@ -11887,7 +11888,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)moveActiveFloatingPaneByColumns:(int)columns rows:(int)rows {
     iTermFloatingPaneView *pane = [self activeFloatingPane];
-    if (!pane || _layoutLocked || ![self.currentTab tmuxAllowsChangingFloatingPanes]) {
+    if (!pane || _layoutLocked || self.currentSession.locked || ![self.currentTab tmuxAllowsChangingFloatingPanes]) {
         return;
     }
     if (self.currentTab.isTmuxTab) {
@@ -14356,7 +14357,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             action == @selector(moveFloatingPaneDown:) ||
             action == @selector(moveFloatingPaneLeft:) ||
             action == @selector(moveFloatingPaneRight:)) {
-            return [self activeFloatingPane] != nil && !_layoutLocked && [self.currentTab tmuxAllowsChangingFloatingPanes];
+            return ([self activeFloatingPane] != nil &&
+                    !_layoutLocked &&
+                    !self.currentSession.locked &&
+                    [self.currentTab tmuxAllowsChangingFloatingPanes]);
         }
         if (action == @selector(toggleFloatingPanesHidden:)) {
             item.state = self.currentTab.floatingPanesHidden ? NSControlStateValueOn : NSControlStateValueOff;

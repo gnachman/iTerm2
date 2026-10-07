@@ -2198,7 +2198,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (BOOL)floatingPaneCanMoveOrResize:(iTermFloatingPaneView *)pane {
-    return !self.realParentWindow.layoutLocked && [self tmuxAllowsChangingFloatingPanes];
+    // Lock Pane keeps a float where it is, as it keeps a tiled pane from being moved.
+    return (!self.realParentWindow.layoutLocked &&
+            ![self sessionForSessionView:pane.sessionView].locked &&
+            [self tmuxAllowsChangingFloatingPanes]);
 }
 
 - (BOOL)tmuxAllowsChangingFloatingPanes {
