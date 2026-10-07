@@ -3,9 +3,8 @@
 #
 # Needs the dev instance running (make run) with Focus Follows Mouse turned on, and the Python API
 # enabled. It opens a window with a floating pane, then moves the pointer:
-#   1. over the float          -> the float should have focus (accent outline)
-#   2. onto the uncovered tiled pane -> the tiled pane should have focus (neutral outline,
-#                                       tiled text not dimmed)
+#   1. over the float          -> the float should have focus
+#   2. onto the uncovered tiled pane -> the tiled pane should have focus (tiled text not dimmed)
 #   3. back over the float     -> the float should have focus again
 # and saves a capture of each step. Synthetic input goes only to the dev instance's pid, and only
 # while it is frontmost.

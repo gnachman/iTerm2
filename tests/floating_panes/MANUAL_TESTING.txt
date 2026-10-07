@@ -261,8 +261,20 @@ objects are snapshots.
 10. Debug logs
 --------------
 
-Turn on debug logging in the dev instance, reproduce, and turn it off; the log goes to
-/tmp/debuglog.txt. It is large. grep for the DLog text you care about (file names like
+Choose Toggle Debug Logging in the dev instance, reproduce, and choose it again; the log is
+written to /tmp/debuglog.txt when logging is turned off. From a script:
+
+    await iterm2.MainMenu.async_select_menu_item(connection, "Toggle Debug Logging")
+
+Turning it on shows a modal alert, and the script's call doesn't return until it is dismissed. Find
+it with `devctl windows <pid> all` (a window at layer=8), then press Return in the dev instance:
+
+    $D activate $P && [ "$($D frontmost)" = "$P" ] && $D key $P 36
+
+Debug logging slows the app enough to hide timing bugs, so a bug that won't reproduce with it on
+may need temporary logging instead.
+
+The log is large. grep for the DLog text you care about (file names like
 FloatingPaneLayout.swift, PTYTab.m) rather than reading it whole.
 
 
