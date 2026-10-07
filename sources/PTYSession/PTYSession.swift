@@ -1679,8 +1679,12 @@ extension PTYSession {
     // Returns the path of the archive if it was saved.
     @discardableResult
     func saveArchive() -> String? {
-        guard let destination = iTermProfilePreferences.string(forKey: KEY_ARCHIVEDIR, inProfile: justProfile) else {
-            RLog("No archive dir in profile")
+        let configured = (iTermProfilePreferences.string(forKey: KEY_ARCHIVEDIR, inProfile: justProfile) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        // An empty folder would resolve to the working directory, which is the
+        // read-only root of the startup volume. Issue 12980.
+        guard let destination = configured.isEmpty ? FileManager.default.it_defaultArchiveDirectory() : (configured as NSString).expandingTildeInPath else {
+            RLog("No archive dir")
             return nil
         }
         let term = delegate?.realParentWindow() as? PseudoTerminal

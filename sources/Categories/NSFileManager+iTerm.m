@@ -155,6 +155,22 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return result;
 }
 
+- (NSString *)it_defaultArchiveDirectory {
+    if (![self applicationSupportDirectory]) {
+        return nil;
+    }
+    NSString *path = [self it_defaultArchiveDirectoryWithoutCreating];
+    NSError *error = nil;
+    if (![self createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&error]) {
+        RLog(@"Failed to create default archive directory %@: %@", path, error);
+    }
+    return path;
+}
+
+- (NSString *)it_defaultArchiveDirectoryWithoutCreating {
+    return [[self applicationSupportDirectoryWithoutCreating] stringByAppendingPathComponent:@"Archives"];
+}
+
 - (NSString *)applicationSupportDirectoryWithoutCreating {
     NSString *base = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) lastObject];
     NSString *suiteName = [iTermUserDefaults customSuiteName];

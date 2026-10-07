@@ -215,10 +215,15 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
         strongSelf->_changeArchiveDir.enabled = archivingEnabled;
         [strongSelf updateArchiveDirWarning];
     };
+    info.onChange = ^{
+        [weakSelf useDefaultArchiveDirIfNeeded];
+    };
     info = [self defineUnsearchableControl:_archiveDir
                                        key:KEY_ARCHIVEDIR
                                       type:kPreferenceInfoTypeStringTextField];
     info.observer = ^{ [weakSelf updateArchiveDirWarning]; };
+    // An empty folder means the default one. See -[PTYSession saveArchive].
+    _archiveDir.placeholderString = [[[NSFileManager defaultManager] it_defaultArchiveDirectoryWithoutCreating] stringByAbbreviatingWithTildeInPath];
 
     [self defineControl:_loggingStyle
                     key:KEY_LOGGING_STYLE
@@ -837,6 +842,25 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     [self updateArchiveDirWarning];
 }
 
+// Archiving with no folder would try to write to the root of the startup
+// volume, so pick a folder when the user turns it on without one.
+- (void)useDefaultArchiveDirIfNeeded {
+    if (![self boolForKey:KEY_ARCHIVE]) {
+        return;
+    }
+    NSString *current = [[self stringForKey:KEY_ARCHIVEDIR] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (current.length > 0) {
+        return;
+    }
+    NSString *path = [[[NSFileManager defaultManager] it_defaultArchiveDirectory] stringByAbbreviatingWithTildeInPath];
+    if (!path) {
+        return;
+    }
+    _archiveDir.stringValue = path;
+    [self setString:path forKey:KEY_ARCHIVEDIR];
+    [self updateArchiveDirWarning];
+}
+
 - (void)updateArchiveDirWarning {
     if ([_archive state] == NSControlStateValueOff) {
         _archiveDirWarning.hidden = YES;
@@ -851,7 +875,18 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 }
 
 - (BOOL)archiveDirIsWritable {
-    return [[NSFileManager defaultManager] directoryIsWritable:[_archiveDir stringValue].stringByExpandingTildeInPath];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *configured = [_archiveDir.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (configured.length > 0) {
+        return [fileManager directoryIsWritable:configured.stringByExpandingTildeInPath];
+    }
+    // Don't create the default folder just to show the icon. Saving an archive
+    // creates it, so check the nearest folder that already exists.
+    NSString *path = [fileManager it_defaultArchiveDirectoryWithoutCreating];
+    while (path.length > 1 && ![fileManager itemIsDirectory:path]) {
+        path = path.stringByDeletingLastPathComponent;
+    }
+    return [fileManager directoryIsWritable:path];
 }
 
 #pragma mark - Log directory

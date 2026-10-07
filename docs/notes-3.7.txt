@@ -1047,6 +1047,13 @@ Bug Fixes:
   cleanup now applies to automatic session log
   filenames, which used to handle only slashes.
   Issue 13094.
+- Archive Sessions on Closure failed with “the
+  volume is read only” when no archive folder
+  was chosen. Turning it on with an empty folder
+  now fills in ~/Library/Application Support/
+  iTerm2/Archives, and profiles that already
+  have it on with no folder archive there.
+  Issue 12980.
 - In Settings > General > Selection, the tooltip
   on “When pasting a dropped filename, wrap it in
   double quotes” now describes that setting. It

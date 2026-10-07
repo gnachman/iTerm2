@@ -33,6 +33,9 @@ extern NSNotificationName iTermScriptsFolderDidChange;
 - (NSString *)legacyApplicationSupportDirectory;
 - (NSString *)applicationSupportDirectory;
 - (NSString *)applicationSupportDirectoryWithoutCreating;
+// Where session archives go when a profile doesn't name a folder. Creates it if needed.
+- (NSString *)it_defaultArchiveDirectory;
+- (NSString *)it_defaultArchiveDirectoryWithoutCreating;
 - (NSString *)it_cachesDirectory;
 
 // Gives a symlink called ApplicationSupport because pip3 can't handle spaces and this breaks pyenv.
