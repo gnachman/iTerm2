@@ -8350,10 +8350,40 @@
       "comment" : "Shown after a password manager rejects a login session it just issued; the placeholder is the password manager’s name, such as Bitwarden",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat die bei Ihrer Anmeldung erstellte Sitzung abgelehnt. Daher versucht iTerm2 nicht mehr, sich erneut anzumelden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%@ rejected the session it created when you logged in, so iTerm2 stopped trying to log in again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ がログイン時に作成したセッションを拒否したため、iTerm2 は再ログインの試行を停止しました。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ rejeitou a sessão que criou quando você fez login, então o iTerm2 parou de tentar fazer login novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ отклонил сессию, созданную при вашем входе, поэтому iTerm2 прекратил попытки войти повторно."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 拒绝了您登录时它创建的会话，因此 iTerm2 已停止尝试重新登录。"
           }
         }
       }
@@ -18358,10 +18388,40 @@
       "comment" : "Advanced setting: honorBidiSupportModeEscapeSequence",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps die Steuerung der Rechts-nach-links-Neuanordnung über die Escape-Sequenzen BDSM und SCP erlauben?\nManche Vollbildanwendungen gestalten ihren Text selbst und werden durch die Neuanordnung durcheinandergebracht. Wenn diese Option aktiviert ist, bleibt Text, der nach CSI 8 l (expliziter Modus) geschrieben wird, unverändert, und CSI 8 h (impliziter Modus, die Standardeinstellung) schaltet die Neuanordnung wieder ein. CSI 1 SP k und CSI 2 SP k setzen die Grundrichtung neu angeordneter Zeilen auf links-nach-rechts bzw. rechts-nach-links, und CSI 0 SP k stellt die Standardeinstellung wieder her. Erfordert Unterstützung für Rechts-nach-links-Text."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Let apps control right-to-left reordering with the BDSM and SCP escape sequences?\nSome full-screen apps lay out their own text and are scrambled by reordering. When this is on, text written after CSI 8 l (explicit mode) is left as is, and CSI 8 h (implicit mode, the default) turns reordering back on. CSI 1 SP k and CSI 2 SP k set the base direction of reordered lines to left-to-right or right-to-left, and CSI 0 SP k restores the default. Requires right-to-left text support."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BDSM および SCP エスケープシーケンスで、アプリが右から左への並べ替えを制御できるようにしますか?\n一部のフルスクリーンアプリは自身でテキストをレイアウトしており、並べ替えによって表示が崩れます。これをオンにすると、CSI 8 l (明示モード) の後に書き込まれたテキストはそのまま表示され、CSI 8 h (暗黙モード、デフォルト) で並べ替えが再び有効になります。CSI 1 SP k と CSI 2 SP k は並べ替えられる行の基本方向をそれぞれ左から右、右から左に設定し、CSI 0 SP k はデフォルトに戻します。右から左のテキストサポートが必要です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir que apps controlem a reordenação da direita para a esquerda com as sequências de escape BDSM e SCP?\nAlguns apps de tela cheia organizam o próprio texto e ficam embaralhados com a reordenação. Quando esta opção está ativada, o texto escrito após CSI 8 l (modo explícito) é mantido como está, e CSI 8 h (modo implícito, o padrão) reativa a reordenação. CSI 1 SP k e CSI 2 SP k definem a direção base das linhas reordenadas como da esquerda para a direita ou da direita para a esquerda, e CSI 0 SP k restaura o padrão. Requer suporte a texto da direita para a esquerda."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешить приложениям управлять переупорядочиванием текста справа налево с помощью escape-последовательностей BDSM и SCP?\nНекоторые полноэкранные приложения сами располагают свой текст, и переупорядочивание его искажает. Если этот параметр включён, текст, выведенный после CSI 8 l (явный режим), остаётся без изменений, а CSI 8 h (неявный режим, по умолчанию) снова включает переупорядочивание. CSI 1 SP k и CSI 2 SP k задают базовое направление переупорядочиваемых строк слева направо или справа налево, а CSI 0 SP k восстанавливает значение по умолчанию. Требуется поддержка текста справа налево."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许应用通过 BDSM 和 SCP 转义序列控制从右到左的重新排序吗？\n某些全屏应用会自行排列文本，重新排序会使其显示错乱。开启此选项后，在 CSI 8 l（显式模式）之后写入的文本将保持原样，而 CSI 8 h（隐式模式，默认）会重新开启重新排序。CSI 1 SP k 和 CSI 2 SP k 分别将重新排序行的基本方向设为从左到右或从右到左，CSI 0 SP k 则恢复默认值。需要支持从右到左的文本。"
           }
         }
       }
@@ -52824,10 +52884,40 @@
       "comment" : "Body of the warning shown when the Claude Code status hook is missing from settings.json or points at a file that can’t run; the interpolated value is the absolute path to settings.json",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 konnte in %@ nicht für jedes Claude-Code-Ereignis einen funktionierenden cc-status-Hook finden. Soll der Hook neu installiert werden, damit die Statusanzeigen pro Tab („Arbeitet…“, „Wartet…“) wieder funktionieren?"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "iTerm2 couldn’t find a working cc-status hook for every Claude Code event in %@. Reinstall the hook so per-tab status indicators (“Working…,” “Waiting…”) work again?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2は%@で、Claude Codeのすべてのイベントに対して機能するcc-statusフックを見つけられませんでした。タブごとのステータス表示（「作業中…」「待機中…」）が再び機能するように、フックを再インストールしますか？"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não encontrou em %@ um hook cc-status funcionando para todos os eventos do Claude Code. Reinstalar o hook para que os indicadores de status por aba (“Trabalhando…”, “Aguardando…”) voltem a funcionar?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не нашёл в %@ работающего хука cc-status для каждого события Claude Code. Переустановить хук, чтобы индикаторы статуса на вкладках («Работает…», «Ожидание…») снова заработали?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 未能在 %@ 中为每个 Claude Code 事件找到可用的 cc-status 钩子。重新安装钩子，以便每个标签页的状态指示器（“正在处理…”、“正在等待…”）重新工作？"
           }
         }
       }
@@ -61029,10 +61119,40 @@
       "comment" : "Pairing failure shown when the list of relay servers could not be downloaded",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Liste der Relay-Server konnte nicht abgerufen werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Couldn’t get the list of relay servers."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リレーサーバーの一覧を取得できませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível obter a lista de servidores de retransmissão."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось получить список серверов-ретрансляторов."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法获取中继服务器列表。"
           }
         }
       }
@@ -61041,10 +61161,40 @@
       "comment" : "Pairing failure shown when the list of relay servers could not be downloaded because of a network problem",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Liste der Relay-Server konnte nicht abgerufen werden. Versuchen Sie es mit einem anderen Netzwerk oder einem VPN."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Couldn’t get the list of relay servers. Try another network or a VPN."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リレーサーバーの一覧を取得できませんでした。別のネットワークまたは VPN をお試しください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível obter a lista de servidores de retransmissão. Tente outra rede ou uma VPN."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось получить список серверов-ретрансляторов. Попробуйте другую сеть или VPN."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法获取中继服务器列表。请尝试其他网络或 VPN。"
           }
         }
       }
@@ -64266,7 +64416,7 @@
             "plural" : {
               "other" : {
                 "stringUnit" : {
-                  "state" : "needs_review",
+                  "state" : "translated",
                   "value" : "%1$ld 个十六进制字节"
                 }
               }
@@ -67061,13 +67211,13 @@
             "plural" : {
               "one" : {
                 "stringUnit" : {
-                  "state" : "needs_review",
+                  "state" : "translated",
                   "value" : "%1$ld byte UTF-8: %2$@"
                 }
               },
               "other" : {
                 "stringUnit" : {
-                  "state" : "needs_review",
+                  "state" : "translated",
                   "value" : "%1$ld bytes UTF-8: %2$@"
                 }
               }
@@ -70467,10 +70617,40 @@
       "comment" : "Error shown when an entry in a dynamic profiles file is not a dictionary; %@ is the file name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In der Datei für dynamische Profile %@ ist ein Eintrag in „Profiles“ kein Objekt (d. h. kein Dictionary) und wurde daher ignoriert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "In Dynamic Profiles file %@, an entry in “Profiles” is not an object (i.e., a dictionary), so it was ignored."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動的プロファイルファイル %@ で、「Profiles」内のエントリがオブジェクト (つまり辞書) ではないため、無視されました。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No arquivo de perfis dinâmicos %@, uma entrada em “Profiles” não é um objeto (ou seja, um dicionário) e, por isso, foi ignorada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В файле динамических профилей %@ запись в «Profiles» не является объектом (т. е. словарём), поэтому она была проигнорирована."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在动态配置文件的定义文件 %@ 中，“Profiles”中的某个条目不是对象（即字典），因此已被忽略。"
           }
         }
       }
@@ -70647,10 +70827,40 @@
       "comment" : "Error shown when a dynamic profile's Keyboard Map is not a dictionary; %@ is the file name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In der Datei für dynamische Profile %@ ist die „Keyboard Map“ eines Profils kein Objekt (d. h. kein Dictionary) und wurde daher ignoriert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "In Dynamic Profiles file %@, the “Keyboard Map” of a profile is not an object (i.e., a dictionary), so it was ignored."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動的プロファイルファイル %@ で、プロファイルの「Keyboard Map」がオブジェクト (つまり辞書) ではないため、無視されました。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No arquivo de perfis dinâmicos %@, o “Keyboard Map” de um perfil não é um objeto (ou seja, um dicionário) e, por isso, foi ignorado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В файле динамических профилей %@ «Keyboard Map» одного из профилей не является объектом (т. е. словарём), поэтому он был проигнорирован."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在动态配置文件的定义文件 %@ 中，某个配置文件的“Keyboard Map”不是对象（即字典），因此已被忽略。"
           }
         }
       }
@@ -70827,10 +71037,40 @@
       "comment" : "Error shown when the Profiles value of a dynamic profiles file is not an array; %@ is the file name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In der Datei für dynamische Profile %@ muss der Wert von „Profiles“ ein Array sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "In Dynamic Profiles file %@, the value of “Profiles” must be an array."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動的プロファイルファイル %@ では、「Profiles」の値は配列である必要があります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No arquivo de perfis dinâmicos %@, o valor de “Profiles” deve ser um array."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В файле динамических профилей %@ значение «Profiles» должно быть массивом."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在动态配置文件的定义文件 %@ 中，“Profiles”的值必须是数组。"
           }
         }
       }
@@ -87122,10 +87362,40 @@
       "comment" : "Heading of the warning shown when launching a second copy of iTerm2",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 läuft bereits"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "iTerm2 Is Already Running"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 はすでに実行中です"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 já está em execução"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 уже запущен"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 已在运行"
           }
         }
       }
@@ -87134,10 +87404,40 @@
       "comment" : "Button that keeps launching a second copy of iTerm2 despite the risk",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trotzdem starten"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Launch Anyway"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このまま起動"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir mesmo assim"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всё равно запустить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仍然启动"
           }
         }
       }
@@ -87146,10 +87446,40 @@
       "comment" : "Shown at launch when another instance of iTerm2 is already running. %d is a process ID.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine andere Instanz von iTerm2 (Prozess-ID %d) läuft bereits. Wenn zwei Instanzen gleichzeitig dieselben Einstellungen verwenden, können sie gegenseitig ihre Einstellungen und gespeicherten Fenster überschreiben."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Another copy of iTerm2 (process ID %d) is already running. If two copies use the same settings at once, they can overwrite each other’s preferences and saved windows."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別の iTerm2 (プロセス ID %d) がすでに実行中です。2 つの iTerm2 が同時に同じ設定を使用すると、互いの環境設定や保存されたウインドウを上書きする可能性があります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outra cópia do iTerm2 (ID do processo %d) já está em execução. Se duas cópias usarem as mesmas configurações ao mesmo tempo, elas podem sobrescrever as preferências e as janelas salvas uma da outra."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другая копия iTerm2 (идентификатор процесса %d) уже запущена. Если две копии одновременно используют одни и те же настройки, они могут перезаписать настройки и сохранённые окна друг друга."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另一个 iTerm2 副本（进程 ID %d）已在运行。如果两个副本同时使用相同的设置，它们可能会相互覆盖偏好设置和已保存的窗口。"
           }
         }
       }
@@ -87158,10 +87488,40 @@
       "comment" : "Button that quits this copy of iTerm2 and switches to the one already running",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beenden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Quit"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "終了"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encerrar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выйти"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出"
           }
         }
       }
@@ -87170,10 +87530,40 @@
       "comment" : "Shown at launch when another instance uses the same -suite. %1$d is a process ID; %2$@ is the suite name.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine andere Instanz von iTerm2 (Prozess-ID %1$d) läuft bereits mit der Einstellungs-Suite „%2$@“. Wenn zwei Instanzen gleichzeitig dieselben Einstellungen verwenden, können sie gegenseitig ihre Einstellungen und gespeicherten Fenster überschreiben."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Another copy of iTerm2 (process ID %1$d) is already running with the settings suite “%2$@”. If two copies use the same settings at once, they can overwrite each other’s preferences and saved windows."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別の iTerm2 (プロセス ID %1$d) が設定スイート「%2$@」ですでに実行中です。2 つの iTerm2 が同時に同じ設定を使用すると、互いの環境設定や保存されたウインドウを上書きする可能性があります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outra cópia do iTerm2 (ID do processo %1$d) já está em execução com o conjunto de configurações “%2$@”. Se duas cópias usarem as mesmas configurações ao mesmo tempo, elas podem sobrescrever as preferências e as janelas salvas uma da outra."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другая копия iTerm2 (идентификатор процесса %1$d) уже запущена с набором настроек «%2$@». Если две копии одновременно используют одни и те же настройки, они могут перезаписать настройки и сохранённые окна друг друга."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另一个 iTerm2 副本（进程 ID %1$d）已在使用设置套件“%2$@”运行。如果两个副本同时使用相同的设置，它们可能会相互覆盖偏好设置和已保存的窗口。"
           }
         }
       }
@@ -118652,7 +119042,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "会话在启动后很快结束。请检查配置文件“%@”中的命令是否正确。"
           }
         }
@@ -145464,7 +145854,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Python 运行时的签名未能通过验证：%@"
           }
         }
@@ -149790,7 +150180,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "“%@”处的文件缺失或格式错误"
           }
         }
@@ -165585,8 +165975,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "➡ 选择“继续”以发现"
+            "state" : "translated",
+            "value" : "➡ 选择“继续”以开始检测。"
           }
         }
       }
@@ -165627,8 +166017,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "➡ 选择“继续”以安装"
+            "state" : "translated",
+            "value" : "➡ 选择“继续”以安装 iTerm2 实用脚本。"
           }
         }
       }
@@ -165669,8 +166059,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "➡ 选择“继续”以更新"
+            "state" : "translated",
+            "value" : "➡ 选择“继续”以更新 shell 的 dotfile。"
           }
         }
       }
@@ -165711,8 +166101,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "➡ 选择“继续”以写入"
+            "state" : "translated",
+            "value" : "➡ 选择“继续”以写入 shell 集成脚本。"
           }
         }
       }
@@ -165837,8 +166227,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "✅ 已安装"
+            "state" : "translated",
+            "value" : "✅ 已安装 iTerm2 实用脚本。"
           }
         }
       }
@@ -166131,8 +166521,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1. 发现"
+            "state" : "translated",
+            "value" : "1. 检测。"
           }
         }
       }
@@ -166173,8 +166563,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "步骤 2. 写入"
+            "state" : "translated",
+            "value" : "步骤 2. 写入 shell 集成脚本。"
           }
         }
       }
@@ -166215,8 +166605,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "步骤 3. 安装"
+            "state" : "translated",
+            "value" : "步骤 3. 安装 iTerm2 实用脚本。"
           }
         }
       }
@@ -166257,8 +166647,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "步骤 %d. 更新"
+            "state" : "translated",
+            "value" : "步骤 %d. 更新 shell 的 dotfile。"
           }
         }
       }
@@ -166299,8 +166689,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "✅ 已更新"
+            "state" : "translated",
+            "value" : "✅ 已更新 shell 的 dotfile。"
           }
         }
       }
@@ -166425,8 +166815,8 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "✅ 已写入"
+            "state" : "translated",
+            "value" : "✅ 已写入 shell 集成脚本。"
           }
         }
       }
@@ -188384,7 +188774,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "tmux 中启用了“%@”选项。它与 iTerm2-tmux 集成不兼容。请将其停用后重试。"
           }
         }
