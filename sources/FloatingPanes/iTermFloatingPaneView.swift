@@ -423,7 +423,22 @@ final class iTermFloatingPaneView: NSView {
         return !edges(at: convert(windowPoint, from: nil)).isEmpty
     }
 
+    /// While picking a pane to swap this float with, it is translucent and clicks go through it to
+    /// the panes and floats it covers, except on its title bar, where a click cancels.
+    @objc var isSourceOfSwapPicking = false {
+        didSet {
+            alphaValue = isSourceOfSwapPicking ? 0.35 : 1
+        }
+    }
+
     override func hitTest(_ point: NSPoint) -> NSView? {
+        if isSourceOfSwapPicking {
+            guard let title = sessionView?.title,
+                  title.bounds.contains(title.convert(point, from: superview)) else {
+                return nil
+            }
+            return super.hitTest(point)
+        }
         // On a flush edge the band lies over the float's own content, which would otherwise get the
         // click. `point` is in the superview's coordinates.
         if !isHidden, !flushEdges.isEmpty, !edges(at: convert(point, from: superview)).isEmpty {

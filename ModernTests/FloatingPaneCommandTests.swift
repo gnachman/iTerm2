@@ -347,6 +347,34 @@ final class FloatingPaneCommandTests: XCTestCase {
         XCTAssertFalse(pane(other).isHidden)
     }
 
+    /// Picking a pane to swap a float with: the float is translucent and lets clicks through to what
+    /// it covers, so a float beneath it can be picked. Its title bar still takes clicks, to cancel.
+    func testTheSourceOfASwapLetsClicksThroughToWhatItCovers() {
+        let beneath = fixture.addFloat(frame: floatFrame)
+        let source = fixture.addFloat(frame: floatFrame)
+        guard let container = tab.realRootView, let title = source.view?.title else {
+            XCTFail("No container")
+            return
+        }
+        func hit(_ view: NSView, _ point: NSPoint) -> NSView? {
+            let inContainer = container.convert(view.convert(point, to: nil), from: nil)
+            return container.hitTest(container.superview?.convert(inContainer, from: container) ?? inContainer)
+        }
+        let content = NSPoint(x: pane(source).bounds.midX, y: pane(source).bounds.midY)
+        XCTAssertTrue(hit(pane(source), content)?.isDescendant(of: pane(source)) ?? false, "test setup")
+
+        terminal.setSplitSelectionMode(true, excludingSession: source, move: false)
+        XCTAssertLessThan(pane(source).alphaValue, 1)
+        XCTAssertTrue(hit(pane(source), content)?.isDescendant(of: pane(beneath)) ?? false,
+                      "the float beneath can be picked")
+        XCTAssertTrue(hit(title, NSPoint(x: title.bounds.midX, y: title.bounds.midY))?.isDescendant(of: pane(source)) ?? false,
+                      "the title bar still takes clicks")
+
+        terminal.setSplitSelectionMode(false, excludingSession: source, move: false)
+        XCTAssertEqual(pane(source).alphaValue, 1)
+        XCTAssertTrue(hit(pane(source), content)?.isDescendant(of: pane(source)) ?? false)
+    }
+
     func testPickingAPaneToSwapWithKeepsFloatsVisible() {
         let float = fixture.addFloat(frame: floatFrame)
         guard let tiled = tab.tiledSessions()?.first else {

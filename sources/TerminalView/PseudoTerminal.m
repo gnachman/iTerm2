@@ -12650,9 +12650,14 @@ typedef struct {
     // so they are hidden while picking. For a swap, floats are fair targets and stay visible. A
     // float being moved stays visible: it shows which pane is moving and is where to click to
     // cancel.
+    // For a swap, a float being swapped is translucent and lets clicks through, so the floats and
+    // panes it covers can be picked.
     for (PTYTab *tab in self.tabs) {
         tab.floatingSessionShownWhileTemporarilyHidden = (mode && move) ? session : nil;
         tab.floatingPanesTemporarilyHidden = (mode && move);
+        for (iTermFloatingPaneView *pane in tab.floatingPanes) {
+            pane.isSourceOfSwapPicking = (mode && !move && [tab sessionForSessionView:pane.sessionView] == session);
+        }
     }
     for (PTYSession *aSession in [self allSessions]) {
         if (mode && move && aSession != session && [[self tabForSession:aSession] sessionIsFloating:aSession]) {
