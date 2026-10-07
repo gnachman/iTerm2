@@ -188,6 +188,46 @@ final class FloatingPaneLayoutTests: XCTestCase {
                        "the float keeps its distance from the top of the tab")
     }
 
+    /// Shrinking the window pushes a float against the tab's edges. Growing it back must return the
+    /// float to where it was, not leave it anchored to the corner it was pushed into.
+    func testAFloatReturnsToItsPlaceAfterTheWindowShrinksAndGrows() {
+        let (session, pane) = newFloat()
+        let m = metrics(session)
+        let grid = FloatingPaneGrid(columns: 60, rows: 16)
+        FloatingPaneLayout.apply(FloatingPanePlacement(frame: CGRect(x: 100, y: 100,
+                                                                     width: m.frameSize(for: grid).width,
+                                                                     height: m.frameSize(for: grid).height),
+                                                       grid: grid),
+                                 to: pane,
+                                 session: session)
+        let visualFrame = FloatingPaneLayout.visualOutlineFrame(of: pane)
+        let original = fixture.window.frame
+
+        var small = original
+        small.size = NSSize(width: 400, height: 320)
+        fixture.window.setFrame(small, display: true)
+        XCTAssertNotEqual(FloatingPaneLayout.visualOutlineFrame(of: pane).origin, visualFrame.origin,
+                          "test setup: the float had to move")
+
+        fixture.window.setFrame(original, display: true)
+        XCTAssertEqual(FloatingPaneLayout.visualOutlineFrame(of: pane), visualFrame)
+    }
+
+    func testRememberedPositionIsOnlyForAxesClampingMoved() {
+        let container = CGSize(width: 500, height: 400)
+        let start = CGRect(x: 100, y: 50, width: 300, height: 200)
+        let pushedLeft = CGRect(x: 60, y: 50, width: 300, height: 200)
+        let remembered = FloatingPaneGeometry.desiredOrigin(start: start, result: pushedLeft, oldContainer: container)
+        XCTAssertEqual(remembered.x, 100)
+        XCTAssertNil(remembered.y, "it didn't move vertically")
+
+        let againstRight = CGRect(x: 200, y: 50, width: 300, height: 200)
+        let anchored = FloatingPaneGeometry.desiredOrigin(start: againstRight,
+                                                          result: CGRect(x: 100, y: 50, width: 300, height: 200),
+                                                          oldContainer: container)
+        XCTAssertNil(anchored.x, "a float put against the right edge stays anchored there")
+    }
+
     // MARK: - Blur underlay
 
     func testTranslucentFloatGetsABlurUnderlay() {

@@ -67,6 +67,11 @@ final class iTermFloatingPaneView: NSView {
     /// when there is room. Nil when it has the grid it wants.
     var desiredGrid: FloatingPaneGrid?
 
+    /// Where the float was, in visual coordinates, before its tab got too small and clamping moved
+    /// it, per axis, so it goes back when there is room. Nil on an axis it hasn't been moved along.
+    var desiredX: CGFloat?
+    var desiredY: CGFloat?
+
     /// While the float is maximized, the outline frame to return to.
     var outlineFrameBeforeMaximizing: NSRect?
 

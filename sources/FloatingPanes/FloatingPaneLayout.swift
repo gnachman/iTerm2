@@ -54,6 +54,9 @@ final class FloatingPaneLayout: NSObject {
                                                     containerHeight: container.bounds.height,
                                                     containerIsFlipped: container.isFlipped)
         DLog("Apply \(placement) to \(session) giving frame \(NSStringFromRect(frame))")
+        // A deliberate placement replaces any remembered one. Relayout sets its own afterward.
+        pane.desiredX = nil
+        pane.desiredY = nil
         if pane.outlineFrame != frame {
             // Resizing the split view would otherwise refit the float to its old grid, which is
             // about to change, and put back the old frame.
@@ -374,13 +377,20 @@ final class FloatingPaneLayout: NSObject {
         } else {
             oldFrame = start.frame
         }
+        // Start from where the float was put, not where an earlier shrink pushed it.
+        var startFrame = oldFrame
+        startFrame.origin.x = pane.desiredX ?? startFrame.origin.x
+        startFrame.origin.y = pane.desiredY ?? startFrame.origin.y
         let wanted = pane.desiredGrid ?? start.grid
-        let result = FloatingPaneGeometry.placement(after: FloatingPanePlacement(frame: oldFrame, grid: start.grid),
+        let result = FloatingPaneGeometry.placement(after: FloatingPanePlacement(frame: startFrame, grid: start.grid),
                                                     desiredGrid: pane.desiredGrid,
                                                     oldContainer: oldContainerSize,
                                                     newContainer: container,
                                                     metrics: metrics)
         apply(result, to: pane, session: session)
         pane.desiredGrid = FloatingPaneGeometry.desiredGrid(wanted: wanted, actual: result.grid)
+        (pane.desiredX, pane.desiredY) = FloatingPaneGeometry.desiredOrigin(start: startFrame,
+                                                                            result: result.frame,
+                                                                            oldContainer: oldContainerSize)
     }
 }

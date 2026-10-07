@@ -208,13 +208,30 @@ enum FloatingPaneGeometry {
         let wanted = desiredGrid ?? start.grid
         let grid = wanted.clamped(min: .minimum, max: maximumGrid(container: newContainer, metrics: metrics))
         let size = metrics.frameSize(for: grid)
-        let tolerance: CGFloat = 0.5
-        let touchesRight = abs(start.frame.maxX - oldContainer.width) < tolerance
-        let touchesBottom = abs(start.frame.maxY - oldContainer.height) < tolerance
+        let (touchesRight, touchesBottom) = anchoredEdges(of: start.frame, in: oldContainer)
         let origin = CGPoint(x: touchesRight ? newContainer.width - size.width : start.frame.minX,
                              y: touchesBottom ? newContainer.height - size.height : start.frame.minY)
         return FloatingPanePlacement(frame: clamp(CGRect(origin: origin, size: size), in: newContainer),
                                      grid: grid)
+    }
+
+    /// Whether a frame touches its container's right and bottom edges, so it stays against them
+    /// when the container changes size.
+    static func anchoredEdges(of frame: CGRect, in container: CGSize) -> (right: Bool, bottom: Bool) {
+        let tolerance: CGFloat = 0.5
+        return (abs(frame.maxX - container.width) < tolerance,
+                abs(frame.maxY - container.height) < tolerance)
+    }
+
+    /// The position to remember after `placement(after:...)`, per axis: where the float was if
+    /// clamping moved it, so it goes back there when there is room again, else nil. Clamping can
+    /// push a float against an edge; without this it would then count as anchored there.
+    static func desiredOrigin(start: CGRect,
+                              result: CGRect,
+                              oldContainer: CGSize) -> (x: CGFloat?, y: CGFloat?) {
+        let (right, bottom) = anchoredEdges(of: start, in: oldContainer)
+        return (x: (right || result.minX == start.minX) ? nil : start.minX,
+                y: (bottom || result.minY == start.minY) ? nil : start.minY)
     }
 
     /// The desired grid to remember after `placement(after:...)`: the wanted grid if the float had
