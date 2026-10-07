@@ -3011,6 +3011,10 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     if (self.isShowingTransientTitle) {
         RLog(@"showing transient title");
         PTYSession *session = self.currentSession;
+        if ([self.currentTab sessionIsFloating:session]) {
+            // A float keeps its grid as the window resizes. Show a grid that changes with it.
+            session = [self.currentTab mostRecentlyActiveTiledSession] ?: session;
+        }
         NSString *aTitle;
         VT100GridSize size = VT100GridSizeMake(session.columns, session.rows);
         if (!_lockTransientTitle) {
