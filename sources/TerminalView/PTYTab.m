@@ -276,6 +276,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     NSInteger _numberOfSplitViewDragsInProgress;
 
+    // Sessions whose program ended during a drag and that would have closed, if not for the drag.
+    // They close when it ends.
+    NSMutableArray<PTYSession *> *_sessionsWaitingForDragToClose;
+
     // If YES then force metal off. Does a hard reset when changing screens.
     BOOL _bounceMetal;
     NSString *_temporarilyUnmaximizedSessionGUID;
@@ -2225,6 +2229,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidResizeNotification object:session];
         }
         [self floatingPanesDidChange];
+        [self closeSessionsWaitingForDragToEnd];
     }
 }
 
@@ -7647,6 +7652,7 @@ typedef struct {
     RLog(@"%@: draggingDidEndOfSplit:%@", self, @(splitterIndex));
     _numberOfSplitViewDragsInProgress--;
     DLog(@"%@ split drags in progress", @(_numberOfSplitViewDragsInProgress));
+    [self closeSessionsWaitingForDragToEnd];
     for (PTYSession *session in [self sessionsAdjacentToSplitter:splitterIndex of:splitView]) {
         DLog(@"session did resize: %@", session);
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidResizeNotification object:session];
@@ -8949,8 +8955,39 @@ typedef struct {
 
 - (BOOL)sessionShouldAutoClose:(PTYSession *)session {
     // Closing a pane in the middle of a divider drag, or of a float's move or resize, pulls the
-    // view out from under the drag.
-    return _numberOfSplitViewDragsInProgress == 0 && ![self anyFloatingPaneIsBeingDragged];
+    // view out from under the drag. Close it when the drag ends instead.
+    if (_numberOfSplitViewDragsInProgress == 0 && ![self anyFloatingPaneIsBeingDragged]) {
+        return YES;
+    }
+    DLog(@"Close %@ when the drag ends", session);
+    if (!_sessionsWaitingForDragToClose) {
+        _sessionsWaitingForDragToClose = [NSMutableArray array];
+    }
+    if (![_sessionsWaitingForDragToClose containsObject:session]) {
+        [_sessionsWaitingForDragToClose addObject:session];
+    }
+    return NO;
+}
+
+// After a drag: close the sessions that ended during it and would have closed then.
+- (void)closeSessionsWaitingForDragToEnd {
+    if (_numberOfSplitViewDragsInProgress > 0 || [self anyFloatingPaneIsBeingDragged] ||
+        _sessionsWaitingForDragToClose.count == 0) {
+        return;
+    }
+    NSArray<PTYSession *> *sessions = [_sessionsWaitingForDragToClose copy];
+    [_sessionsWaitingForDragToClose removeAllObjects];
+    // Let the drag finish unwinding before its view goes away.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (PTYSession *session in sessions) {
+            if (weakSelf && [weakSelf.sessions containsObject:session] && session.exited &&
+                session.endAction == iTermSessionEndActionClose) {
+                DLog(@"The drag is over, so close %@", session);
+                [weakSelf closeSession:session];
+            }
+        }
+    });
 }
 
 - (void)sessionDidChangeGraphic:(PTYSession *)session shouldShow:(BOOL)shouldShow image:(NSImage *)image {

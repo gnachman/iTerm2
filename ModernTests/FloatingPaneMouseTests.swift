@@ -351,6 +351,30 @@ final class FloatingPaneMouseTests: XCTestCase {
                       "once it isn't flush, the band is outside the outline again")
     }
 
+    /// A float whose program ends during a resize can't close then, as the drag would lose its
+    /// view. It closes when the drag ends.
+    func testAFloatWhoseProgramEndsDuringADragClosesWhenTheDragEnds() {
+        let (session, pane) = addFloat()
+        session.endAction = .close
+        // A session that ends right after it starts gets a warning about its command.
+        session.setValue(Date.distantPast, forKey: "creationDate")
+        let point = rightBandPoint(pane)
+        fixture.mouse.down(at: point)
+        fixture.mouse.dragged(to: NSPoint(x: point.x + 20, y: point.y))
+        XCTAssertTrue(pane.isDragging)
+
+        session.perform(NSSelectorFromString("brokenPipe"))
+        XCTAssertTrue(tab.floatingSessions()?.contains(session) ?? false, "not during the drag")
+
+        fixture.mouse.up(at: NSPoint(x: point.x + 20, y: point.y))
+        let closed = expectation(description: "closed")
+        DispatchQueue.main.async {
+            closed.fulfill()
+        }
+        wait(for: [closed], timeout: 5)
+        XCTAssertFalse(tab.floatingSessions()?.contains(session) ?? true, "after the drag")
+    }
+
     func testResizeStopsAtTheMinimumGrid() {
         let (session, pane) = addFloat()
         let point = rightBandPoint(pane)
