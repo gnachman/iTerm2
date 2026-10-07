@@ -325,6 +325,32 @@ final class FloatingPaneMouseTests: XCTestCase {
         XCTAssertNil(pane.activeOutlineColor)
     }
 
+    /// A float flush with the tab's right edge has its band there just inside the outline, since
+    /// the usual band would be outside the window.
+    func testAFloatFlushWithTheTabsEdgeCanBeResizedFromThatEdge() {
+        let (session, pane) = addFloat()
+        let m = metrics(session)
+        let size = m.frameSize(for: grid(session))
+        let visual = CGRect(x: container.bounds.width - size.width, y: 60, width: size.width, height: size.height)
+        FloatingPaneLayout.apply(FloatingPanePlacement(frame: visual, grid: grid(session)), to: pane, session: session)
+        let start = pane.outlineFrame
+        XCTAssertEqual(start.maxX, container.bounds.maxX, "test setup: flush with the right edge")
+
+        let band = iTermFloatingPaneView.resizeBandWidth
+        // Past the window's own resize area, which is just inside its edge.
+        let inside = NSPoint(x: pane.bounds.maxX - band - iTermFloatingPaneView.flushBandInset - band / 2,
+                             y: pane.bounds.midY)
+        XCTAssertEqual(pane.edges(at: inside), .right)
+        let point = pane.convert(inside, to: nil)
+        let cell = m.cellSize
+        fixture.mouse.drag(from: point, to: NSPoint(x: point.x - cell.width * 3, y: point.y), steps: 3)
+        XCTAssertEqual(grid(session).columns, 27, "the right edge moved in")
+        XCTAssertEqual(pane.outlineFrame.minX, start.minX, "the left edge stays put")
+
+        XCTAssertTrue(pane.edges(at: inside).isEmpty,
+                      "once it isn't flush, the band is outside the outline again")
+    }
+
     func testResizeStopsAtTheMinimumGrid() {
         let (session, pane) = addFloat()
         let point = rightBandPoint(pane)

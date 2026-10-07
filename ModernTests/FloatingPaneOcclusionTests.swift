@@ -78,18 +78,21 @@ final class FloatingPaneOcclusionTests: XCTestCase {
                       "leaving the float finds the pane beneath it")
     }
 
-    /// Entering a float crosses its resize band, which belongs to the float's wrapper. That must not
-    /// count as covering the float, or the float would ignore the pointer coming in.
-    func testAFloatsOwnResizeBandDoesNotCoverIt() {
+    /// Entering a float crosses its outline, which belongs to the float's wrapper. That must not
+    /// count as covering the float, or the float would ignore the pointer coming in. The resize band
+    /// does count, for the float too, so its content doesn't take the pointer from a resize.
+    func testAFloatsOutlineDoesNotCoverItButItsResizeBandDoes() {
         let (tiled, float, _, _) = setUpCoveredPane()
         guard let tiledView = tiled.view, let floatView = float.view, let pane = tab.floatingPane(for: float) else {
             XCTFail("No views")
             return
         }
         let band = iTermFloatingPaneView.resizeBandWidth
+        let onOutline = pane.convert(NSPoint(x: band + iTermFloatingPaneView.outlineWidth / 2, y: pane.bounds.midY), to: nil)
+        XCTAssertFalse(isCovered(floatView, at: onOutline))
         let inBand = pane.convert(NSPoint(x: band / 2, y: pane.bounds.midY), to: nil)
-        XCTAssertFalse(isCovered(floatView, at: inBand))
-        XCTAssertTrue(isCovered(tiledView, at: inBand), "the band is still over the tiled pane")
+        XCTAssertTrue(isCovered(floatView, at: inBand))
+        XCTAssertTrue(isCovered(tiledView, at: inBand), "the band is over the tiled pane")
     }
 
     func testPanesTrackMouseMovementWhileTheTabHasFloats() {

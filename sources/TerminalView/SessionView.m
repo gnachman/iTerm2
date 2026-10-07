@@ -1736,8 +1736,13 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         return NO;
     }
     NSView *hit = [self viewHitAtLocationInWindow:locationInWindow];
-    // A view that contains this one, such as its float's resize band or a split view's divider,
-    // does not cover it.
+    iTermFloatingPaneView *hitFloat = [iTermFloatingPaneView castFrom:hit];
+    if ([hitFloat resizeBandContainsWindowPoint:locationInWindow]) {
+        // A float's resize band, even this float's own where it lies over its content.
+        return YES;
+    }
+    // Otherwise a view that contains this one, such as its float's outline or a split view's
+    // divider, does not cover it.
     return hit != nil && ![hit isDescendantOf:self] && ![self isDescendantOf:hit];
 }
 

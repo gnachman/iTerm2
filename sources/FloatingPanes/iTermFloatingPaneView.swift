@@ -296,9 +296,66 @@ final class iTermFloatingPaneView: NSView {
         }
     }
 
+    /// The edges of the float that are flush with its tab's edges. There the band outside the
+    /// outline is outside the tab, so it lies just inside the outline instead.
+    private var flushEdges: FloatingPaneEdges {
+        guard let container = superview else {
+            return []
+        }
+        let outline = outlineFrame
+        let bounds = container.bounds
+        let tolerance: CGFloat = 0.5
+        var result: FloatingPaneEdges = []
+        if outline.minX <= bounds.minX + tolerance {
+            result.insert(.left)
+        }
+        if outline.maxX >= bounds.maxX - tolerance {
+            result.insert(.right)
+        }
+        let lowY: FloatingPaneEdges = container.isFlipped ? .top : .bottom
+        let highY: FloatingPaneEdges = container.isFlipped ? .bottom : .top
+        if outline.minY <= bounds.minY + tolerance {
+            result.insert(lowY)
+        }
+        if outline.maxY >= bounds.maxY - tolerance {
+            result.insert(highY)
+        }
+        return result
+    }
+
+    /// How far in from a flush edge the band starts. The window's own resize area takes the first
+    /// few points inside its edge, and a tab's edges are often the window's.
+    static let flushBandInset: CGFloat = 6
+
+    /// The rectangle whose border, `resizeBandWidth` deep, is the resize band, in this view's
+    /// coordinates: the wrapper's bounds, pulled in on each flush edge past the outline and the
+    /// window's own resize area.
+    private var bandBounds: NSRect {
+        var b = bounds
+        let pullIn = Self.resizeBandWidth + Self.flushBandInset
+        let flush = flushEdges
+        let lowY: FloatingPaneEdges = isFlipped ? .top : .bottom
+        let highY: FloatingPaneEdges = isFlipped ? .bottom : .top
+        if flush.contains(.left) {
+            b.origin.x += pullIn
+            b.size.width -= pullIn
+        }
+        if flush.contains(.right) {
+            b.size.width -= pullIn
+        }
+        if flush.contains(lowY) {
+            b.origin.y += pullIn
+            b.size.height -= pullIn
+        }
+        if flush.contains(highY) {
+            b.size.height -= pullIn
+        }
+        return b
+    }
+
     override func resetCursorRects() {
         super.resetCursorRects()
-        let b = bounds
+        let b = bandBounds
         let band = Self.resizeBandWidth
         let corner = Self.cornerLength
         let lowY: FloatingPaneEdges = isFlipped ? .top : .bottom
@@ -327,7 +384,7 @@ final class iTermFloatingPaneView: NSView {
     /// in the band. The band is L-shaped near each corner, `cornerLength` long, and there both edges
     /// move, matching the cursor rects.
     func edges(at point: NSPoint) -> FloatingPaneEdges {
-        let b = bounds
+        let b = bandBounds
         let band = Self.resizeBandWidth
         guard b.contains(point), !b.insetBy(dx: band, dy: band).contains(point) else {
             return []
@@ -357,6 +414,33 @@ final class iTermFloatingPaneView: NSView {
             result.insert(highY)
         }
         return result
+    }
+
+    /// Whether a window point is in the resize band, for views beneath that must not treat it as
+    /// theirs.
+    @objc(resizeBandContainsWindowPoint:)
+    func resizeBandContains(windowPoint: NSPoint) -> Bool {
+        return !edges(at: convert(windowPoint, from: nil)).isEmpty
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        // On a flush edge the band lies over the float's own content, which would otherwise get the
+        // click. `point` is in the superview's coordinates.
+        if !isHidden, !flushEdges.isEmpty, !edges(at: convert(point, from: superview)).isEmpty {
+            return self
+        }
+        return super.hitTest(point)
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        // Which edges are flush can change, and with them where the band is.
+        window?.invalidateCursorRects(for: self)
+    }
+
+    override func setFrameOrigin(_ newOrigin: NSPoint) {
+        super.setFrameOrigin(newOrigin)
+        window?.invalidateCursorRects(for: self)
     }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
