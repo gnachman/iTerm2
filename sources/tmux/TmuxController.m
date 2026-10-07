@@ -243,8 +243,9 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     // If we don't tell tmux to change the active window or pane in response to its notification
     // we'll eventually catch up to its current state and remain stable.
     NSInteger _suppressActivityChanges;
-    // Number of window-change notifications to ignore. Incremented when we send select-window,
-    // decremented when we receive a session-window-changed notification. This prevents the UI
+    // Number of window-change notifications to ignore. Incremented when a select-window we sent
+    // will change tmux's current window (see -setCurrentWindow:), decremented when we receive a
+    // session-window-changed notification. This prevents the UI
     // from flickering when quickly switching tabs (e.g., cmd-2 then cmd-3) by ignoring the
     // stale notifications that arrive after the UI has already moved on.
     NSInteger _ignoreWindowChangeNotificationCount;
@@ -4263,11 +4264,36 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
         DLog(@"Not sending select-window -t %%%d because activity changes are suppressed", windowId);
         return;
     }
+    // tmux sends no %session-window-changed when the window is already current, so only expect
+    // an echo if it wasn't. Another client can change the current window at any time, so read it
+    // in the same command list as the select-window: tmux runs a client's command list without
+    // running other clients' commands in between. The echo always arrives after both responses
+    // because tmux holds back notifications until the command list's output is written.
+    NSArray *commands = @[
+        [gateway_ dictionaryForCommand:@"display -p \"#{window_id}\""
+                        responseTarget:self
+                      responseSelector:@selector(didGetCurrentWindow:beforeSelectingWindow:)
+                        responseObject:@(windowId)
+                                 flags:0],
+        [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"select-window -t @%d", windowId]
+                        responseTarget:nil
+                      responseSelector:nil
+                        responseObject:nil
+                                 flags:0]
+    ];
+    [gateway_ sendCommandList:commands];
+}
+
+// A failed command aborts the connection, so if this runs then the select-window will run too.
+- (void)didGetCurrentWindow:(NSString *)response beforeSelectingWindow:(NSNumber *)windowId {
+    NSString *current = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSString *target = [NSString stringWithFormat:@"@%d", windowId.intValue];
+    if ([current isEqualToString:target]) {
+        DLog(@"%@ is already current. Expect no session-window-changed.", target);
+        return;
+    }
+    DLog(@"Current window is %@. Expect session-window-changed for %@.", current, target);
     _ignoreWindowChangeNotificationCount++;
-    NSString *command = [NSString stringWithFormat:@"select-window -t @%d", windowId];
-    [gateway_ sendCommand:command
-           responseTarget:nil
-         responseSelector:nil];
 }
 
 - (NSString *)userVarsString:(int)paneID {

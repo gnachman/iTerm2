@@ -1159,3 +1159,6 @@ Bug Fixes:
   buttons in Settings, no longer cut off the last
   line of text, and no longer scroll when all of
   their text fits.
+- In tmux integration, iTerm2 could miss a
+  window switch made by another tmux client or a
+  script and keep showing the old tab.
