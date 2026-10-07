@@ -78,3 +78,8 @@ Bug Fixes:
   types a period when macOS’s “Add period with
   double-space” setting is on. In vim this could
   repeat your last command. Issue 13123.
+- iTerm2 no longer applies macOS’s automatic
+  spelling correction, capitalization, or smart
+  quotes and dashes. They could change what you
+  type in a terminal. Text replacements still
+  work.
