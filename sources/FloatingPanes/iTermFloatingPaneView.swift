@@ -327,6 +327,10 @@ final class iTermFloatingPaneView: NSView {
     /// few points inside its edge, and a tab's edges are often the window's.
     static let flushBandInset: CGFloat = 6
 
+    /// How much of the top of the title bar resizes the top edge of a float flush with the tab's
+    /// top. The rest of the title bar moves the float.
+    static let flushTopGrabDepth: CGFloat = 2
+
     /// The rectangle whose border, `resizeBandWidth` deep, is the resize band, in this view's
     /// coordinates: the wrapper's bounds, pulled in on each flush edge past the outline and the
     /// window's own resize area.
@@ -348,18 +352,27 @@ final class iTermFloatingPaneView: NSView {
             b.size.height -= pullIn
         }
         if flush.contains(highY) {
-            b.size.height -= pullIn
+            // The tab's top is usually below the window's title bar or tab bar, out of the window's
+            // own resize area, so the band starts right inside the outline. The title bar takes
+            // all but its top few points.
+            b.size.height -= Self.resizeBandWidth
         }
         return b
     }
 
-    /// The title bar, in this view's coordinates, if it shows. It is the grab handle, so the band
-    /// that lies inside the outline on a flush edge stays out of it.
+    /// The title bar, in this view's coordinates, if it shows, less its top `flushTopGrabDepth`
+    /// points. It is the grab handle, so the band that lies inside the outline on a flush edge stays
+    /// out of it, except for that sliver along the top.
     private var titleBarRect: NSRect? {
         guard let sessionView, sessionView.showTitle(), let title = sessionView.title, !title.isHidden else {
             return nil
         }
-        return title.convert(title.bounds, to: self)
+        var rect = title.convert(title.bounds, to: self)
+        rect.size.height = max(0, rect.height - Self.flushTopGrabDepth)
+        if isFlipped {
+            rect.origin.y += Self.flushTopGrabDepth
+        }
+        return rect
     }
 
     /// `rect` with any part over the title bar removed. The title bar spans the float's width at its

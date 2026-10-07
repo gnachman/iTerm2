@@ -397,6 +397,27 @@ final class FloatingPaneMouseTests: XCTestCase {
         XCTAssertNotEqual(pane.outlineFrame.origin, start.origin)
     }
 
+    /// The top couple of points of the title bar of a float flush with the top resize its top edge.
+    func testTheTopOfTheTitleBarResizesAFloatFlushWithTheTop() {
+        let (session, pane) = addFloat()
+        let m = metrics(session)
+        let size = m.frameSize(for: grid(session))
+        FloatingPaneLayout.apply(FloatingPanePlacement(frame: CGRect(x: 100, y: 0, width: size.width, height: size.height),
+                                                       grid: grid(session)),
+                                 to: pane,
+                                 session: session)
+        let start = pane.outlineFrame
+        let startGrid = grid(session)
+        let band = iTermFloatingPaneView.resizeBandWidth
+        // One point inside the outline's top, in the middle of its width.
+        let top = NSPoint(x: pane.bounds.midX, y: pane.isFlipped ? band + 1 : pane.bounds.maxY - band - 1)
+        XCTAssertEqual(pane.edges(at: top), pane.isFlipped ? .bottom : .top)
+        let point = pane.convert(top, to: nil)
+        fixture.mouse.drag(from: point, to: NSPoint(x: point.x, y: point.y - m.cellSize.height * 2), steps: 3)
+        XCTAssertEqual(grid(session).rows, startGrid.rows - 2, "the top edge moved down")
+        XCTAssertEqual(pane.outlineFrame.minY, start.minY, "the bottom edge stays put")
+    }
+
     func testDoubleClickingAMaximizedFloatsTitleBarRestoresIt() {
         let (session, pane) = addFloat()
         tab.setActiveSession(session)
