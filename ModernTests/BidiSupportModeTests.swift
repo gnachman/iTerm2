@@ -451,6 +451,14 @@ final class BidiSupportModeTests: XCTestCase {
                        "with the setting off mode 8 reports permanently reset, as before")
     }
 
+    func testRequestModeReportsPermanentlyResetWhenBidiIsOff() {
+        setBidiPreference(false)
+        let harness = makeHarness()
+        feed(harness, Self.requestMode)
+        XCTAssertEqual(lastReport(harness), "\(Self.ESC)[8;4$y",
+                       "with right-to-left support off nothing is reordered, so mode 8 reports permanently reset")
+    }
+
     func testStateDictionaryRoundTripsExplicitMode() {
         let harness = makeHarness()
         feed(harness, Self.explicitMode)

@@ -5765,7 +5765,10 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
         case 4:
             return VT100TerminalDECRPMSettingFromBoolean(self.insertMode);
         case 8:  // BDSM
-            if ([iTermAdvancedSettingsModel honorBidiSupportModeEscapeSequence]) {
+            // With right-to-left support off nothing is ever reordered, which
+            // is permanently explicit mode.
+            if ([iTermPreferences bidiEnabled] &&
+                [iTermAdvancedSettingsModel honorBidiSupportModeEscapeSequence]) {
                 return VT100TerminalDECRPMSettingFromBoolean(self.bidiSupportMode);
             }
             break;
