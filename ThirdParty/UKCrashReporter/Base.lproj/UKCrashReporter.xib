@@ -68,7 +68,7 @@ Crash logs from Apple are not sent to other developers, so this is the only way 
                                                         <size key="maxSize" width="512" height="10000000"/>
                                                         <attributedString key="textStorage">
                                                             <fragment>
-                                                                <string key="content">Hi, I'm %%LONGUSERNAME!
+                                                                <string key="content">Hi, I'm {USERNAME}!
 
 I was doing the following at the time of the crash:
 
@@ -76,7 +76,7 @@ I was doing the following at the time of the crash:
 - Step Two
 - ...
 
-My E-Mail address is %%EMAILADDRESS, in case you want to get back to me.
+My E-Mail address is {EMAIL}, in case you want to get back to me.
 </string>
                                                                 <attributes>
                                                                     <color key="NSColor" name="textColor" catalog="System" colorSpace="catalog"/>
