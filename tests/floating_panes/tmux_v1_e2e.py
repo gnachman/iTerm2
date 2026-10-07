@@ -84,6 +84,25 @@ async def main(connection):
     tab = await tmux_tab()
     check(len(tab.floating_sessions) == 0, "there are no floating panes")
 
+    # tmux 3.7 has floating panes but sends them in v1 layouts. They show as floats, not as split
+    # panes, and can't be moved from iTerm2.
+    floating = tmux("new-pane", "-t", "v1", "-P", "-F", "#{pane_id}", "-x", "30", "-y", "8", "sleep 600")
+    if floating.returncode == 0:
+        async def shows_float():
+            tab = await tmux_tab()
+            return tab is not None and len(tab.floating_sessions) == 1 and len(tab.sessions) == 2
+
+        check(await wait_for(shows_float), f"tmux 3.7's float {floating.stdout.strip()} shows as a float")
+        tmux("kill-pane", "-t", floating.stdout.strip())
+
+        async def float_gone():
+            tab = await tmux_tab()
+            return tab is not None and len(tab.floating_sessions) == 0
+
+        check(await wait_for(float_gone), "killing it removes the float")
+    else:
+        print("This tmux has no floating panes; skipping the float check")
+
     panes = tmux("list-panes", "-t", "v1", "-F", "#{pane_id}").stdout.split()
     tmux("resize-pane", "-t", panes[0], "-x", "40")
 
