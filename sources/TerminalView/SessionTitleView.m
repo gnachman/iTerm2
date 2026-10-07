@@ -120,8 +120,6 @@ static const CGFloat kLockButtonSize = 14;
         [menuButton_ setAutoresizingMask:NSViewMinXMargin];
         [lockButton_ setAutoresizingMask:NSViewMinXMargin]; // Stay at right side
         [label_ setAutoresizingMask:NSViewMaxYMargin | NSViewWidthSizable];
-        [self addCursorRect:NSMakeRect(0, 0, frame.size.width, frame.size.height)
-                     cursor:[NSCursor arrowCursor]];
 
         [self updateTextColor];
     }
@@ -384,6 +382,14 @@ static const CGFloat kLockButtonSize = 14;
         }
     }
     return nil;
+}
+
+// Cursor rects added once are dropped whenever the window recomputes them, so this is where the
+// arrow goes. Without it, the I-beam of a text view beneath a floating pane's title bar showed
+// through.
+- (void)resetCursorRects {
+    [super resetCursorRects];
+    [self addCursorRect:self.bounds cursor:[NSCursor arrowCursor]];
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
