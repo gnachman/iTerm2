@@ -8346,6 +8346,18 @@
         }
       }
     },
+    "AdapterPassword.FreshSessionRejected" : {
+      "comment" : "Shown after a password manager rejects a login session it just issued; the placeholder is the password manager’s name, such as Bitwarden",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ rejected the session it created when you logged in, so iTerm2 stopped trying to log in again."
+          }
+        }
+      }
+    },
     "AdapterPassword.HandshakeFailed" : {
       "comment" : "Error shown when the initial handshake with the adapter fails",
       "extractionState" : "extracted_with_value",
@@ -18338,6 +18350,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "高对比度模式可提升可见度。\n启用后，深色高对比度主题会更注重显示效果而非美观性。"
+          }
+        }
+      }
+    },
+    "AdvancedSetting.honorBidiSupportModeEscapeSequence" : {
+      "comment" : "Advanced setting: honorBidiSupportModeEscapeSequence",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Let apps control right-to-left reordering with the BDSM and SCP escape sequences?\nSome full-screen apps lay out their own text and are scrambled by reordering. When this is on, text written after CSI 8 l (explicit mode) is left as is, and CSI 8 h (implicit mode, the default) turns reordering back on. CSI 1 SP k and CSI 2 SP k set the base direction of reordered lines to left-to-right or right-to-left, and CSI 0 SP k restores the default. Requires right-to-left text support."
           }
         }
       }
@@ -52756,7 +52780,7 @@
     },
     "ClaudeHealthMonitor.BrokenTitle" : {
       "comment" : "Body of the warning shown when the Claude Code status hook is missing from settings.json; the interpolated value is the absolute path to settings.json",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -52792,6 +52816,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 的 cc-status 钩子已不在 %@ 中。这通常意味着 Claude Code 重写了该文件。重新安装钩子，以便每个标签页的状态指示器（“正在处理…”、“正在等待…”）重新工作？"
+          }
+        }
+      }
+    },
+    "ClaudeHealthMonitor.HookNotWorkingTitle" : {
+      "comment" : "Body of the warning shown when the Claude Code status hook is missing from settings.json or points at a file that can’t run; the interpolated value is the absolute path to settings.json",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t find a working cc-status hook for every Claude Code event in %@. Reinstall the hook so per-tab status indicators (“Working…,” “Waiting…”) work again?"
           }
         }
       }
@@ -60985,6 +61021,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "配对失败：%@"
+          }
+        }
+      }
+    },
+    "Companion.Status.RelayListUnavailable" : {
+      "comment" : "Pairing failure shown when the list of relay servers could not be downloaded",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn’t get the list of relay servers."
+          }
+        }
+      }
+    },
+    "Companion.Status.RelayListUnavailableTryAnotherNetwork" : {
+      "comment" : "Pairing failure shown when the list of relay servers could not be downloaded because of a network problem",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn’t get the list of relay servers. Try another network or a VPN."
           }
         }
       }
@@ -70403,6 +70463,18 @@
         }
       }
     },
+    "DynamicProfiles.EntryNotObject" : {
+      "comment" : "Error shown when an entry in a dynamic profiles file is not a dictionary; %@ is the file name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "In Dynamic Profiles file %@, an entry in “Profiles” is not an object (i.e., a dictionary), so it was ignored."
+          }
+        }
+      }
+    },
     "DynamicProfiles.ErrorHeading" : {
       "comment" : "Heading of the dynamic profiles error alert",
       "extractionState" : "extracted_with_value",
@@ -70571,6 +70643,18 @@
         }
       }
     },
+    "DynamicProfiles.KeyboardMapNotObject" : {
+      "comment" : "Error shown when a dynamic profile's Keyboard Map is not a dictionary; %@ is the file name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "In Dynamic Profiles file %@, the “Keyboard Map” of a profile is not an object (i.e., a dictionary), so it was ignored."
+          }
+        }
+      }
+    },
     "DynamicProfiles.MissingGuid" : {
       "comment" : "Error shown when a dynamic profile has no Guid field",
       "extractionState" : "extracted_with_value",
@@ -70735,6 +70819,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的一个动态配置文件出现问题：\n\n%@"
+          }
+        }
+      }
+    },
+    "DynamicProfiles.ProfilesNotArray" : {
+      "comment" : "Error shown when the Profiles value of a dynamic profiles file is not an array; %@ is the file name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "In Dynamic Profiles file %@, the value of “Profiles” must be an array."
           }
         }
       }
@@ -87018,6 +87114,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 聊天"
+          }
+        }
+      }
+    },
+    "InstanceLock.Heading" : {
+      "comment" : "Heading of the warning shown when launching a second copy of iTerm2",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 Is Already Running"
+          }
+        }
+      }
+    },
+    "InstanceLock.LaunchAnyway" : {
+      "comment" : "Button that keeps launching a second copy of iTerm2 despite the risk",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Launch Anyway"
+          }
+        }
+      }
+    },
+    "InstanceLock.Message" : {
+      "comment" : "Shown at launch when another instance of iTerm2 is already running. %d is a process ID.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Another copy of iTerm2 (process ID %d) is already running. If two copies use the same settings at once, they can overwrite each other’s preferences and saved windows."
+          }
+        }
+      }
+    },
+    "InstanceLock.Quit" : {
+      "comment" : "Button that quits this copy of iTerm2 and switches to the one already running",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Quit"
+          }
+        }
+      }
+    },
+    "InstanceLock.SuiteMessage" : {
+      "comment" : "Shown at launch when another instance uses the same -suite. %1$d is a process ID; %2$@ is the suite name.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Another copy of iTerm2 (process ID %1$d) is already running with the settings suite “%2$@”. If two copies use the same settings at once, they can overwrite each other’s preferences and saved windows."
           }
         }
       }

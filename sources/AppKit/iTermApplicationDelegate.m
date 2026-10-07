@@ -1359,6 +1359,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     DLog(@"Begin");
+    [iTermInstanceLock resolveConflictIfNeeded];
     [[iTermApplication sharedApplication] updateAppearance];
     [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
                                                      block:^(id _Nonnull newValue) {
