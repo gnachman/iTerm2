@@ -2591,18 +2591,23 @@ extension Message.Content {
             }
             return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor, atSignOptional: atSignOptional)
         case .markdown(let string), .explanationResponse(_, _, let string):
-            let rendered = AttributedStringForGPTMarkdown(
-                ChatViewController.trimLeadingWhitespaceForDisplay(string),
-                linkColor: linkColor,
-                textColor: textColor) { }
+            let markdown = ChatViewController.trimLeadingWhitespaceForDisplay(string)
+            let render = { (text: String) in
+                AttributedStringForGPTMarkdown(text,
+                                               linkColor: linkColor,
+                                               textColor: textColor) { }
+            }
             // Turn any @-prefixed session/workgroup ids the orchestrator
             // emitted into clickable links to the entity's current name.
             // Orchestration chats only (see renderMentions) so ordinary
             // markdown that happens to contain an @<uuid> isn't mutated.
             guard renderMentions else {
-                return rendered
+                return render(markdown)
             }
-            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor, atSignOptional: atSignOptional)
+            return OrchestrationMentionRenderer.linkMarkdown(markdown,
+                                                             linkColor: linkColor,
+                                                             atSignOptional: atSignOptional,
+                                                             render: render)
         case .explanationRequest(request: let request):
             let string =
             if let url = request.url {
@@ -2644,8 +2649,11 @@ extension Message.Content {
                 // @<guid> session/workgroup targets the activity line
                 // carries become clickable links (or "[defunct session]"
                 // once the target is gone).
-                let rendered = AttributedStringForSystemMessageMarkdown(ext.markdownDescription) {}
-                return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor, atSignOptional: atSignOptional)
+                return OrchestrationMentionRenderer.linkMarkdown(ext.markdownDescription,
+                                                                 linkColor: linkColor,
+                                                                 atSignOptional: atSignOptional) {
+                    AttributedStringForSystemMessageMarkdown($0) {}
+                }
             }
         case .remoteCommandResponse(let response, _, _, _):
             switch response {

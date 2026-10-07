@@ -59,6 +59,42 @@ enum OrchestrationMentionRenderer {
         return link(input, linkColor: linkColor, atSignOptional: atSignOptional, resolve: liveResolve)
     }
 
+    // Renders `markdown` with `render` and then links its mentions. Mentions
+    // are shielded from the markdown pass (see MentionParser.protect) because
+    // the "_" in a stableID can otherwise be eaten as an emphasis delimiter.
+    // `render` is expected to be SwiftyMarkdown-backed, which makes indented
+    // lines code blocks.
+    static func linkMarkdown(_ markdown: String,
+                             linkColor: NSColor,
+                             atSignOptional: Bool = false,
+                             render: (String) -> NSAttributedString) -> NSAttributedString {
+        return link(restore(MentionParser.protect(markdown, indentedCodeBlocks: true), in: render),
+                    linkColor: linkColor,
+                    atSignOptional: atSignOptional)
+    }
+
+    // Renders protected text and puts the original mention text back in place
+    // of each placeholder, keeping the attributes the renderer gave it.
+    static func restore(_ protected: MentionParser.Protected,
+                        in render: (String) -> NSAttributedString) -> NSAttributedString {
+        let rendered = render(protected.text)
+        guard !protected.substitutions.isEmpty else {
+            return rendered
+        }
+        let result = NSMutableAttributedString(attributedString: rendered)
+        for substitution in protected.substitutions {
+            let range = result.mutableString.range(of: substitution.placeholder)
+            if range.location != NSNotFound {
+                result.replaceCharacters(in: range, with: substitution.original)
+            } else {
+                // The renderer moved it out of the visible text (e.g. into a
+                // link target), so it stays a placeholder there.
+                DLog("Mention placeholder \(substitution.placeholder) for \(substitution.original) not found in rendered text")
+            }
+        }
+        return result
+    }
+
     // Testable core: pure aside from the injected `resolve`.
     static func link(_ input: NSAttributedString,
                      linkColor: NSColor,

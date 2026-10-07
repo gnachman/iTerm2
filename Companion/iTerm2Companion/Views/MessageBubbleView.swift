@@ -449,11 +449,24 @@ struct MessageBubbleView: View {
     }
 
     /// Best-effort inline markdown; falls back to the raw string if it does not
-    /// parse (e.g. a partial streaming chunk).
+    /// parse (e.g. a partial streaming chunk). Mentions are shielded from the
+    /// markdown pass so the "_" in a stableID isn't eaten as emphasis.
     private func renderMarkdown(_ text: String) -> AttributedString {
-        (try? AttributedString(
-            markdown: text,
-            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
-            ?? AttributedString(text)
+        let protected = MentionParser.protect(text)
+        guard var result = try? AttributedString(
+            markdown: protected.text,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) else {
+            return AttributedString(text)
+        }
+        for substitution in protected.substitutions {
+            guard let range = result.range(of: substitution.placeholder) else {
+                continue
+            }
+            // Keep the attributes markdown gave the placeholder.
+            var original = AttributedString(substitution.original)
+            original.mergeAttributes(result[range].runs.first?.attributes ?? AttributeContainer())
+            result.replaceSubrange(range, with: original)
+        }
+        return result
     }
 }

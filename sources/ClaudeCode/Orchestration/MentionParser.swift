@@ -101,6 +101,86 @@ enum MentionParser {
         }
     }
 
+    /// Text with its mentions swapped for opaque placeholders, so a markdown
+    /// pass can't mangle them. A stableID contains "_", so two of them in one
+    /// paragraph ("@ptys_A... and @ptys_B...") otherwise pair up as emphasis
+    /// delimiters and the underscores are consumed, leaving unlinkable text.
+    struct Protected {
+        /// The text to hand to the markdown renderer.
+        var text: String
+        /// (placeholder, original mention text) pairs. Each placeholder occurs
+        /// once in `text`; put the original back after rendering.
+        var substitutions: [(placeholder: String, original: String)]
+    }
+
+    /// Spans of raw markdown whose text is not subject to emphasis parsing, or
+    /// which don't end up in the visible string: fenced code blocks, inline
+    /// code spans, link destinations, autolinks, and bare URLs. Mentions there
+    /// are left alone by `protect` because markdown can't eat their
+    /// underscores, and a placeholder there would leak into a code block's
+    /// copy-button text or a link's target, where nothing restores it. This is
+    /// a deliberately loose approximation of CommonMark; erring toward
+    /// excluding a span only means a mention in it is no worse off than
+    /// before protection existed.
+    private static let unprotectedSpanRegex = try! NSRegularExpression(
+        pattern: [
+            // Fenced block: through the matching closing fence, or to the end.
+            "^[ \\t]{0,3}(`{3,}|~{3,}).*?(?:^[ \\t]{0,3}\\1|\\z)",
+            // Inline code: a backtick run through the next run of equal length,
+            // not crossing a blank line.
+            "(`+)(?:(?!\\n[ \\t]*\\n).)+?(?<!`)\\2(?!`)",
+            // Link destination: "](...)".
+            "\\]\\([^)\\n]*\\)",
+            // Autolink: "<scheme:...>".
+            "<[A-Za-z][A-Za-z0-9+.-]*:[^<>\\s]*>",
+            // Bare URL.
+            "https?://[^\\s<>()]+",
+        ].joined(separator: "|"),
+        options: [.anchorsMatchLines, .dotMatchesLineSeparators])
+
+    /// Lines SwiftyMarkdown (the Mac renderer) treats as code blocks: four
+    /// leading spaces, or a leading tab that isn't one of its tab-indented
+    /// list-item tokens ("\t- ", "\t* ", "\t1. ", and the "\t\t" forms),
+    /// which it matches first. It gives these lines a copy button too. The
+    /// phone's inline-only markdown has no such blocks, so this is opt-in.
+    private static let indentedCodeLineRegex = try! NSRegularExpression(
+        pattern: "^(?: {4}|\\t(?!\\t?(?:[-*] |1\\. )))[^\\n]*",
+        options: [.anchorsMatchLines])
+
+    /// Replaces every mention (including bare stableIDs) outside the spans
+    /// described at `unprotectedSpanRegex` with a purely alphanumeric
+    /// placeholder that has no markdown meaning. A random nonce keeps
+    /// placeholders from colliding with anything already in the text, and the
+    /// trailing "Z" keeps one index from being a prefix of another. Pass
+    /// `indentedCodeBlocks: true` when the renderer treats indented lines as
+    /// code (see `indentedCodeLineRegex`) so those are left alone too.
+    static func protect(_ string: String, indentedCodeBlocks: Bool = false) -> Protected {
+        var found = mentions(in: string, atSignOptional: true)
+        guard !found.isEmpty else {
+            return Protected(text: string, substitutions: [])
+        }
+        let fullRange = NSRange(location: 0, length: (string as NSString).length)
+        let regexes = indentedCodeBlocks
+            ? [unprotectedSpanRegex, indentedCodeLineRegex]
+            : [unprotectedSpanRegex]
+        let unprotected = regexes.flatMap { $0.matches(in: string, range: fullRange).map(\.range) }
+        found.removeAll { mention in
+            unprotected.contains { NSIntersectionRange($0, mention.range).length > 0 }
+        }
+        guard !found.isEmpty else {
+            return Protected(text: string, substitutions: [])
+        }
+        let nonce = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+        let result = NSMutableString(string: string)
+        var substitutions = [(placeholder: String, original: String)]()
+        for (i, mention) in found.enumerated().reversed() {
+            let placeholder = "iTermMention\(nonce)X\(i)Z"
+            substitutions.append((placeholder, result.substring(with: mention.range)))
+            result.replaceCharacters(in: mention.range, with: placeholder)
+        }
+        return Protected(text: result as String, substitutions: substitutions)
+    }
+
     private static func hasLeftBoundary(before location: Int, in ns: NSString) -> Bool {
         guard location > 0 else { return true }
         guard let scalar = Unicode.Scalar(ns.character(at: location - 1)) else {

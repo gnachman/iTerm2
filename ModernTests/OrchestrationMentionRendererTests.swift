@@ -210,4 +210,115 @@ final class OrchestrationMentionRendererTests: XCTestCase {
         XCTAssertEqual(afterAttrs[.font] as? NSFont, font)
         XCTAssertNil(afterAttrs[clickable])
     }
+
+    // MARK: - Markdown
+
+    // Two stableIDs in one paragraph put an underscore before each body, which
+    // markdown pairs up as emphasis delimiters. Without protection the
+    // underscores are consumed and the ids render as dead "ptysXXXX" text.
+    func test_linkMarkdown_stableIDUnderscoresSurviveMarkdown() {
+        let first = StableSessionID.generate()
+        let second = StableSessionID.generate()
+        let markdown = "Done, @\(first) finished, so I told @\(second) to re-run its tests."
+        let rendered = OrchestrationMentionRenderer.restore(MentionParser.protect(markdown)) {
+            AttributedStringForGPTMarkdown($0, linkColor: .blue, textColor: .black) {}
+        }
+        XCTAssertEqual(rendered.string, markdown)
+        XCTAssertEqual(MentionParser.mentions(in: rendered.string).map(\.token), [first, second])
+    }
+
+    func test_linkMarkdown_markdownOutsideMentionsStillRendered() {
+        let id = StableSessionID.generate()
+        let rendered = OrchestrationMentionRenderer.restore(MentionParser.protect("**bold** @\(id)")) {
+            AttributedStringForGPTMarkdown($0, linkColor: .blue, textColor: .black) {}
+        }
+        XCTAssertEqual(rendered.string, "bold @\(id)")
+    }
+
+    func test_protect_noMentions_isIdentity() {
+        let protected = MentionParser.protect("plain _text_ here")
+        XCTAssertEqual(protected.text, "plain _text_ here")
+        XCTAssertTrue(protected.substitutions.isEmpty)
+    }
+
+    // A code block's copy button captures the renderer's pre-restore string, so
+    // a placeholder inside a code block would end up on the pasteboard. Code
+    // isn't subject to emphasis parsing, so mentions there are left alone.
+    func test_protect_skipsFencedCodeBlock() {
+        let id = StableSessionID.generate()
+        let markdown = "Run this:\n```\nit2 session send --session @\(id) make\n```\nThen @\(id)"
+        let protected = MentionParser.protect(markdown)
+        XCTAssertEqual(protected.substitutions.map(\.original), ["@\(id)"])
+        let fence = (protected.text as NSString).range(of: "```\nit2 session send --session @\(id) make\n```")
+        XCTAssertNotEqual(fence.location, NSNotFound)
+
+        let rendered = OrchestrationMentionRenderer.restore(protected) {
+            AttributedStringForGPTMarkdown($0, linkColor: .blue, textColor: .black) {}
+        }
+        XCTAssertFalse(rendered.string.contains("iTermMention"))
+        XCTAssertTrue(rendered.string.contains("--session @\(id) make"))
+    }
+
+    // SwiftyMarkdown also makes a line indented by four spaces or a tab a code
+    // block with a copy button, nested list items included.
+    func test_protect_skipsIndentedCodeLines() {
+        let id = StableSessionID.generate()
+        for line in ["    it2 session send --session @\(id) make",
+                     "\tit2 session send --session @\(id) make",
+                     "    - ask @\(id) to rerun"] {
+            let markdown = "Steps:\n\(line)\nThen @\(id)"
+            let protected = MentionParser.protect(markdown, indentedCodeBlocks: true)
+            XCTAssertEqual(protected.substitutions.map(\.original), ["@\(id)"], line)
+            XCTAssertTrue(protected.text.contains("\n\(line)\n"), line)
+
+            let rendered = OrchestrationMentionRenderer.restore(protected) {
+                AttributedStringForGPTMarkdown($0, linkColor: .blue, textColor: .black) {}
+            }
+            XCTAssertFalse(rendered.string.contains("iTermMention"), line)
+        }
+    }
+
+    // SwiftyMarkdown matches its tab-indented list tokens before the tab code
+    // rule, so those lines are prose and still get protected.
+    func test_protect_tabIndentedListItemsStillProtected() {
+        let id = StableSessionID.generate()
+        for line in ["\t- ask @\(id)", "\t* ask @\(id)", "\t1. ask @\(id)", "\t\t- ask @\(id)"] {
+            let protected = MentionParser.protect(line, indentedCodeBlocks: true)
+            XCTAssertEqual(protected.substitutions.map(\.original), ["@\(id)"], line)
+        }
+    }
+
+    // The phone's inline-only markdown has no indented code blocks, so by
+    // default an indented line is protected like any other.
+    func test_protect_indentedLinesProtectedByDefault() {
+        let id = StableSessionID.generate()
+        let protected = MentionParser.protect("    - ask @\(id) to rerun")
+        XCTAssertEqual(protected.substitutions.map(\.original), ["@\(id)"])
+    }
+
+    func test_protect_skipsInlineCode() {
+        let id = StableSessionID.generate()
+        let protected = MentionParser.protect("use `@\(id)` here")
+        XCTAssertTrue(protected.substitutions.isEmpty)
+    }
+
+    // A placeholder in a link destination lands only in the .link attribute,
+    // where restore can't see it, so link targets are left alone.
+    func test_protect_skipsLinkDestinationsAndURLs() {
+        let id = StableSessionID.generate()
+        for markdown in ["[the build session](iterm2:reveal/@\(id))",
+                         "<iterm2:reveal/\(id)>",
+                         "see https://example.com/\(id) now"] {
+            let protected = MentionParser.protect(markdown)
+            XCTAssertTrue(protected.substitutions.isEmpty, markdown)
+            XCTAssertEqual(protected.text, markdown)
+        }
+    }
+
+    func test_protect_linkTextIsStillProtected() {
+        let id = StableSessionID.generate()
+        let other = StableSessionID.generate()
+        let protected = MentionParser.protect("[@\(id)](https://example.com) and @\(other)")
+        XCTAssertEqual(Set(protected.substitutions.map(\.original)), ["@\(id)", "@\(other)"])
+    }
 }
