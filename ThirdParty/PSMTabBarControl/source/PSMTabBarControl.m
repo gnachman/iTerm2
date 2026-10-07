@@ -4203,7 +4203,32 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     if ([[_tabView tabViewItems] containsObject:item]) {
         DLog(@"Spring-load tab %@", item);
         [_tabView selectTabViewItem:item];
+        [self markSelectedCellWithoutLayout];
     }
+}
+
+// During a drag the drag assistant lays out the bar and -update doesn't run, so a tab selected
+// meanwhile, as by spring-loading, has to be marked selected here.
+- (void)markSelectedCellWithoutLayout {
+    NSTabViewItem *selected = [_tabView selectedTabViewItem];
+    PSMTabBarCell *previous = nil;
+    for (PSMTabBarCell *cell in _cells) {
+        const BOOL isSelected = (selected != nil && [[cell representedObject] isEqualTo:selected]);
+        [cell setState:isSelected ? NSControlStateValueOn : NSControlStateValueOff];
+        int tabState = [cell tabState] & ~(PSMTab_SelectedMask | PSMTab_LeftIsSelectedMask | PSMTab_RightIsSelectedMask);
+        if (isSelected) {
+            tabState |= PSMTab_SelectedMask;
+            if (previous) {
+                [previous setTabState:[previous tabState] | PSMTab_RightIsSelectedMask];
+            }
+        }
+        if ([previous state] == NSControlStateValueOn) {
+            tabState |= PSMTab_LeftIsSelectedMask;
+        }
+        [cell setTabState:tabState];
+        previous = cell;
+    }
+    [self setNeedsDisplay:YES];
 }
 
 - (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender {
