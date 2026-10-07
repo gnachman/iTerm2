@@ -621,7 +621,8 @@ static int OctalValue(const char *bytes) {
                    visibleLayout:visibleParseTree
                           window:windowIndex_
                   tmuxController:controller_
-                            name:name_];
+                            name:name_
+                openInBackground:[self shouldOpenInBackground]];
 
             // Check if we know the position for the window
             NSArray *panes = [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree];
@@ -676,6 +677,22 @@ static int OctalValue(const char *bytes) {
     if (self.completion) {
         self.completion(windowIndex_);
     }
+}
+
+// A window that tmux created on its own (for example, `tmux new-window` run in a pane) takes focus
+// only if tmux made it the session's current window, so `new-window -d` opens it in the
+// background. This is decided as late as possible because the current window may have changed
+// while the window's contents were being fetched.
+- (BOOL)shouldOpenInBackground {
+    if ([iTermAdvancedSettingsModel tmuxWindowsOpenInBackground]) {
+        return YES;
+    }
+    if (self.initial || !self.anonymous) {
+        return NO;
+    }
+    const BOOL current = [self.controller windowIsCurrentInTmux:windowIndex_];
+    RLog(@"Anonymous window @%d is current in tmux: %@", windowIndex_, @(current));
+    return !current;
 }
 
 // Add info from command responses to leaf nodes of parse tree.

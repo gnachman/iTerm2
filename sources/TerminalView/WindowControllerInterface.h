@@ -394,12 +394,13 @@
 - (NSArray *)uniqueTmuxControllers;
 
 // Opens a new tmux tab. window gives the tmux window id. name gives the new
-// window title.
+// window title. If openInBackground is set, the new tab does not take focus.
 - (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
          visibleLayout:(NSMutableDictionary *)visibleParseTree
                 window:(int)window
         tmuxController:(TmuxController *)tmuxController
-                  name:(NSString *)name;
+                  name:(NSString *)name
+      openInBackground:(BOOL)openInBackground;
 
 #pragma mark - Splits
 

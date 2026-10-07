@@ -194,6 +194,11 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     NSMutableDictionary<NSNumber *, iTermTmuxPendingWindow *> *_pendingWindows;
     BOOL _hasStatusBar;
     int _currentWindowID;  // -1 if undefined
+    // The attached session's current window as tmux last reported it, or -1 if unknown. Unlike
+    // _currentWindowID, which is the window iTerm2 asked tmux to select, this follows tmux's
+    // ordered stream of %session-window-changed notifications and window_active fields, so it
+    // reflects changes made by other clients and can name a window that hasn't been opened yet.
+    int _tmuxCurrentWindowID;
     // Pane -> (Key -> Value)
     NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_userVars;
     NSMutableDictionary<NSNumber *, void (^)(PTYSession<iTermTmuxControllerSession> *)> *_when;
@@ -316,6 +321,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _pendingWindows = [[NSMutableDictionary alloc] init];
         _windowOpensAwaitingVersion = [[NSMutableArray alloc] init];
         _currentWindowID = -1;
+        _tmuxCurrentWindowID = -1;
         _userVars = [[NSMutableDictionary alloc] init];
         _when = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
@@ -550,6 +556,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     self.sessionName = newSessionName;
     sessionId_ = sessionid;
     _paneToActivateWhenCreated = -1;
+    _tmuxCurrentWindowID = -1;
     _detaching = YES;
     [self closeAllPanes];
     _detaching = NO;
@@ -3587,6 +3594,10 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
 }
 
 - (void)activeWindowDidChangeTo:(int)windowID {
+    // Record this before deciding whether to ignore the notification. Even a notification we
+    // ignore reports tmux's real state. When tmux creates a window without -d, this notification
+    // precedes %window-add, so windowID may not have a tab yet.
+    _tmuxCurrentWindowID = windowID;
     if (_ignoreWindowChangeNotificationCount > 0) {
         _ignoreWindowChangeNotificationCount--;
         return;
@@ -3972,6 +3983,7 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
         NSString *recordWindowId = [doc valueInRecord:record forField:@"window_id"];
         if ([self windowIdFromString:recordWindowId] == [windowId intValue]) {
             [self cachePaneBorderStatusFromDoc:doc record:record windowId:[windowId intValue]];
+            [self updateTmuxCurrentWindowFromDoc:doc record:record windowId:[windowId intValue]];
             [self openWindowWithIndex:[self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]]
                                  name:[[doc valueInRecord:record forField:@"window_name"] it_unescapedTmuxWindowName]
                                  size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
@@ -3991,6 +4003,32 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
         const int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
         [self didLearnLayout:[doc valueInRecord:record forField:@"window_layout"] forWindow:wid];
     }
+}
+
+// window_active describes the session that tmux picked when resolving the target. A window can be
+// linked into more than one session, so only trust it when that session is ours.
+- (void)updateTmuxCurrentWindowFromDoc:(TSVDocument *)doc
+                                record:(NSArray *)record
+                              windowId:(int)windowId {
+    NSString *sessionName = [doc valueInRecord:record forField:@"session_name"];
+    if (![sessionName isEqualToString:self.sessionName]) {
+        DLog(@"window_active for @%d describes session %@, not %@. Ignore it.",
+             windowId, sessionName, self.sessionName);
+        return;
+    }
+    const BOOL active = [[doc valueInRecord:record forField:@"window_active"] isEqualToString:@"1"];
+    DLog(@"window_active for @%d is %@. tmux current window was %d",
+         windowId, @(active), _tmuxCurrentWindowID);
+    if (active) {
+        _tmuxCurrentWindowID = windowId;
+    } else if (_tmuxCurrentWindowID == windowId) {
+        // tmux has since moved on to a window we haven't heard about yet.
+        _tmuxCurrentWindowID = -1;
+    }
+}
+
+- (BOOL)windowIsCurrentInTmux:(int)windowId {
+    return _tmuxCurrentWindowID == windowId;
 }
 
 // When an iTerm2 window is resized, a control -s client-size w,h

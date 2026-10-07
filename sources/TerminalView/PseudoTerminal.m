@@ -4003,15 +4003,16 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
          visibleLayout:(NSMutableDictionary *)visibleParseTree
                 window:(int)window
         tmuxController:(TmuxController *)tmuxController
-                  name:(NSString *)name {
-    RLog(@"begin loadTmuxLayout");
+                  name:(NSString *)name
+      openInBackground:(BOOL)openInBackground {
+    RLog(@"begin loadTmuxLayout openInBackground=%@", @(openInBackground));
     [self beginTmuxOriginatedResize];
     PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree
                                   visibleLayout:visibleParseTree
                                      inTerminal:self
                                      tmuxWindow:window
                                  tmuxController:tmuxController
-                               openInBackground:[iTermAdvancedSettingsModel tmuxWindowsOpenInBackground]];
+                               openInBackground:openInBackground];
     [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
     RLog(@"loadTmuxLayout: window frame before lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));

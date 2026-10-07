@@ -1134,3 +1134,6 @@ Bug Fixes:
 - Choosing Show Session Note from Open Quickly no
   longer makes an empty note appear briefly and
   then disappear.
+- In tmux integration, a window created with
+  “tmux new-window -d” now opens as a background
+  tab instead of taking focus. Issue 13112.

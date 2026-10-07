@@ -341,6 +341,8 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)didLearnLayout:(NSString *)layout forWindow:(int)windowId;
 - (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
 - (void)activeWindowDidChangeTo:(int)windowID;
+// Whether tmux last reported this window as the attached session's current window.
+- (BOOL)windowIsCurrentInTmux:(int)windowId;
 - (void)setCurrentLatency:(NSTimeInterval)latency forPane:(int)wp;
 - (void)copyBufferToLocalPasteboard:(NSString *)bufferName;
 - (void)restoreWindowFrame:(PseudoTerminal *)term;
