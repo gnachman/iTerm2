@@ -59,11 +59,23 @@ enum CCStatusHookCommand {
                 switch part {
                 case .variable, .home:
                     return true
-                case .literal, .unsupported:
+                case .literal, .unsupported, .substitution:
                     return false
                 }
             }
         }
+    }
+
+    /// True if running cc-status is all `command` does, apart from the tests and exits that guard it
+    /// in a wrapper like the one in issue 13099. Uninstall removes, and Reinstall replaces, only such
+    /// commands, so one that also runs something of the user’s (`cc-status && notify`) keeps
+    /// working.
+    static func runsOnlyCCStatus(_ command: String) -> Bool {
+        let words = Lexer.words(in: command)
+        guard words.contains(where: namesCCStatus) else {
+            return false
+        }
+        return Dictionary(grouping: words, by: \.commandIndex).values.allSatisfy(runsCCStatusOrGuard)
     }
 
     /// True if `command` is exactly one unquoted absolute path, the form the installer writes.
@@ -100,9 +112,12 @@ enum CCStatusHookCommand {
         case variable(String)
         /// An unquoted `~` at the start of a word, followed by `/` or the end of the word.
         case home
-        /// Anything that needs the shell to evaluate: `$(…)`, backticks, `${…}` with operators,
-        /// special parameters, `~user`.
+        /// Anything else that needs the shell to evaluate without running a command: `${…}` with
+        /// operators, special parameters such as `$@` and `$?`, `~user`.
         case unsupported
+        /// Command substitution, `$(…)` or backticks, which runs a command. Also `${…}`
+        /// containing one.
+        case substitution
     }
 
     fileprivate struct Word: Equatable {
@@ -110,6 +125,10 @@ enum CCStatusHookCommand {
         /// True if the word is in command position: the name of the program a simple command
         /// runs, as opposed to one of its arguments or a redirection target.
         var isCommand = false
+        /// True if the word follows a redirection operator, as in `> file`.
+        var isRedirectTarget = false
+        /// Which simple command the word belongs to. Words of one simple command share an index.
+        var commandIndex = 0
 
         mutating func append(_ text: String) {
             if case .literal(let existing) = parts.last {
@@ -130,16 +149,67 @@ enum CCStatusHookCommand {
 
     private static let name = "cc-status"
 
+    // Programs that only test, look up a program, or exit, as in `[ -x … ] || exit 0`. `fi`
+    // ends an `if`, whose other keywords keep command position (see keepsCommandPosition).
+    private static let guardPrograms: Set<String> = ["[", "[[", "test", "true", "false", ":", "exit",
+                                                     "type", "which", "fi"]
+
     private static func ccStatusWords(in command: String) -> [Word] {
-        return Lexer.words(in: command).filter { word in
-            let tail = word.literalTail
-            if tail == name && word.parts.count == 1 {
-                // A bare name, found through PATH. Only in command position: as an argument
-                // (`notify cc-status`) it is just text.
-                return word.isCommand
-            }
-            return tail.hasSuffix("/" + name)
+        return Lexer.words(in: command).filter(namesCCStatus)
+    }
+
+    private static func namesCCStatus(_ word: Word) -> Bool {
+        if word.isRedirectTarget {
+            // `> /tmp/cc-status` writes to a file of that name; it doesn't run it.
+            return false
         }
+        let tail = word.literalTail
+        if tail == name && word.parts.count == 1 {
+            // A bare name, found through PATH. Only in command position: as an argument
+            // (`notify cc-status`) it is just text.
+            return word.isCommand
+        }
+        return tail.hasSuffix("/" + name)
+    }
+
+    // True if the simple command made of `words` runs cc-status or is a guard.
+    private static func runsCCStatusOrGuard(_ words: [Word]) -> Bool {
+        // Command substitution outside a cc-status path runs code of the user's.
+        let substitutes = words.contains { word in
+            !namesCCStatus(word) && word.parts.contains(.substitution)
+        }
+        guard !substitutes else {
+            return false
+        }
+        let programIndex = words.firstIndex { $0.isCommand && !Lexer.keepsCommandPosition($0) }
+        if let programIndex, namesCCStatus(words[programIndex]) {
+            return true
+        }
+        // A guard's redirections may only discard output or duplicate a descriptor. Anything
+        // else, as in `: > /tmp/marker`, writes a file the user cares about.
+        let writesFile = words.contains { word in
+            word.isRedirectTarget && !(word.parts == [.literal("/dev/null")] || Lexer.isDescriptor(word))
+        }
+        guard !writesFile else {
+            return false
+        }
+        guard let programIndex else {
+            // Only assignments, redirections and keywords, as in `exec 2>/dev/null` or a `then`
+            // whose command is on the next line.
+            return true
+        }
+        let program = words[programIndex]
+        guard program.parts.count == 1 else {
+            return false
+        }
+        let text = program.literalTail
+        if programIndex > 0,
+           words[programIndex - 1].parts == [.literal("command")],
+           text == "-v" || text == "-V" {
+            // `command -v cc-status` looks cc-status up without running it.
+            return true
+        }
+        return guardPrograms.contains(text)
     }
 
     private static func resolve(_ word: Word,
@@ -160,7 +230,7 @@ enum CCStatusHookCommand {
                     return .unresolvable
                 }
                 path += home
-            case .unsupported:
+            case .unsupported, .substitution:
                 return .unresolvable
             }
         }
@@ -199,6 +269,8 @@ enum CCStatusHookCommand {
         private var expectingCommand = true
         /// Whether the next word to start is the target of a redirection.
         private var expectingRedirectTarget = false
+        /// The commandIndex of the next word to start.
+        private var commandIndex = 0
 
         static func words(in command: String) -> [Word] {
             var lexer = Lexer(command)
@@ -216,14 +288,25 @@ enum CCStatusHookCommand {
                 case " ", "\t":
                     finishWord()
                     i += 1
+                case "&" where i + 1 < chars.count && chars[i + 1] == ">":
+                    // bash's `&>file` and `&>>file` redirect stdout and stderr. /bin/sh on macOS
+                    // is bash, so this isn't `&` followed by `>file`.
+                    finishWord()
+                    i += 2
+                    while i < chars.count && chars[i] == ">" {
+                        i += 1
+                    }
+                    expectingRedirectTarget = true
                 case "\n", ";", "|", "&", "(":
                     finishWord()
                     i += 1
+                    commandIndex += 1
                     expectingCommand = true
                     expectingRedirectTarget = false
                 case ")":
                     finishWord()
                     i += 1
+                    commandIndex += 1
                     expectingCommand = false
                 case "<", ">":
                     // A file descriptor written before the operator (2>) is not a command.
@@ -275,7 +358,7 @@ enum CCStatusHookCommand {
                     lexDollar()
                 case "`":
                     skipBackticks()
-                    appendPart(.unsupported)
+                    appendPart(.substitution)
                 default:
                     appendLiteral(String(c))
                     i += 1
@@ -305,7 +388,7 @@ enum CCStatusHookCommand {
                         lexDollar()
                     } else {
                         skipBackticks()
-                        appendPart(.unsupported)
+                        appendPart(.substitution)
                     }
                 } else {
                     text.append(c)
@@ -333,8 +416,16 @@ enum CCStatusHookCommand {
                     i += 1
                 }
                 i += 1
-                appendPart(Self.isName(body) ? .variable(body) : .unsupported)
+                if Self.isName(body) {
+                    appendPart(.variable(body))
+                } else if body.contains("$(") || body.contains("`") {
+                    appendPart(.substitution)
+                } else {
+                    appendPart(.unsupported)
+                }
             } else if c == "(" {
+                let arithmetic = i + 1 < chars.count && chars[i + 1] == "("
+                var body = ""
                 var depth = 0
                 while i < chars.count {
                     if chars[i] == "(" {
@@ -346,9 +437,10 @@ enum CCStatusHookCommand {
                             break
                         }
                     }
+                    body.append(chars[i])
                     i += 1
                 }
-                appendPart(.unsupported)
+                appendPart(arithmetic && Self.isPlainArithmetic(body) ? .unsupported : .substitution)
             } else if c == "_" || c.isASCIILetter {
                 var variable = ""
                 while i < chars.count && (chars[i] == "_" || chars[i].isASCIILetter || chars[i].isASCIIDigit) {
@@ -373,11 +465,15 @@ enum CCStatusHookCommand {
             i += 1
         }
 
-        private static func keepsCommandPosition(_ word: Word) -> Bool {
+        // Words after which the next word is still the command.
+        private static let commandPrefixes: Set<String> = ["exec", "command",
+                                                           "if", "then", "elif", "else", "!"]
+
+        fileprivate static func keepsCommandPosition(_ word: Word) -> Bool {
             guard case .literal(let text) = word.parts.first else {
                 return false
             }
-            if word.parts.count == 1 && (text == "exec" || text == "command") {
+            if word.parts.count == 1 && commandPrefixes.contains(text) {
                 return true
             }
             guard let equals = text.firstIndex(of: "=") else {
@@ -386,11 +482,29 @@ enum CCStatusHookCommand {
             return isName(String(text[text.startIndex..<equals]))
         }
 
+        // `body` is the text of `$((…))` from the first `(` up to, not including, the last `)`.
+        // True if it is arithmetic that runs nothing: sh reads `$((` as arithmetic only when it
+        // ends with an adjacent `))`, and otherwise as a subshell in a command substitution
+        // (`$((notify) )`). Nested parentheses and backticks count as running something, which
+        // errs toward keeping a hook.
+        private static func isPlainArithmetic(_ body: String) -> Bool {
+            let inner = body.dropFirst(2)
+            guard !inner.contains("("), !body.contains("`"), let close = inner.firstIndex(of: ")") else {
+                return false
+            }
+            return inner.index(after: close) == inner.endIndex
+        }
+
         private static func isName(_ s: String) -> Bool {
             guard let first = s.first, first == "_" || first.isASCIILetter else {
                 return false
             }
             return s.allSatisfy { $0 == "_" || $0.isASCIILetter || $0.isASCIIDigit }
+        }
+
+        // A redirection target that names a file descriptor, as in `2>&1`, or closes one (`>&-`).
+        fileprivate static func isDescriptor(_ word: Word) -> Bool {
+            return word.parts == [.literal("-")] || (word.parts.count == 1 && isDigits(word.parts[0]))
         }
 
         private static func isDigits(_ part: Part) -> Bool {
@@ -404,7 +518,10 @@ enum CCStatusHookCommand {
             if let current {
                 return current
             }
-            return Word(parts: [], isCommand: expectingCommand && !expectingRedirectTarget)
+            return Word(parts: [],
+                        isCommand: expectingCommand && !expectingRedirectTarget,
+                        isRedirectTarget: expectingRedirectTarget,
+                        commandIndex: commandIndex)
         }
 
         private mutating func appendLiteral(_ text: String) {

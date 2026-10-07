@@ -67,6 +67,24 @@ final class CCStatusHookCommandTests: XCTestCase {
         XCTAssertTrue(CCStatusHookCommand.refersToCCStatus("[ -x /a/cc-status ]"))
     }
 
+    func testIgnoresRedirectTarget() {
+        // These write to a file named cc-status rather than run one.
+        XCTAssertFalse(CCStatusHookCommand.refersToCCStatus("echo done > /tmp/cc-status"))
+        XCTAssertFalse(CCStatusHookCommand.refersToCCStatus("foo 2>>/a/cc-status"))
+        XCTAssertTrue(CCStatusHookCommand.refersToCCStatus("/a/cc-status > /tmp/log"))
+    }
+
+    func testIfKeywordsKeepCommandPosition() {
+        XCTAssertTrue(CCStatusHookCommand.refersToCCStatus("if cc-status; then :; fi"))
+        XCTAssertTrue(CCStatusHookCommand.refersToCCStatus("if true; then cc-status; fi"))
+        XCTAssertTrue(CCStatusHookCommand.refersToCCStatus("! cc-status"))
+    }
+
+    func testAmpersandRedirectTarget() {
+        XCTAssertTrue(CCStatusHookCommand.refersToCCStatus("cc-status &>/dev/null"))
+        XCTAssertFalse(CCStatusHookCommand.refersToCCStatus("notify &>/tmp/cc-status"))
+    }
+
     func testIgnoresComment() {
         XCTAssertFalse(CCStatusHookCommand.refersToCCStatus("true # /a/cc-status"))
     }
@@ -187,6 +205,84 @@ final class CCStatusHookCommandTests: XCTestCase {
         XCTAssertEqual(resolutions(command), [.executable(installed), .executable(installed)])
     }
 
+    func testQuotedPathWithSpaces() {
+        XCTAssertEqual(resolutions("\"/Users/John Smith/cc-status\"", executables: ["/Users/John Smith/cc-status"]),
+                       [.executable("/Users/John Smith/cc-status")])
+    }
+
+    // MARK: - runsOnlyCCStatus
+
+    func testRunsOnlyCCStatus() {
+        let commands = [
+            installed,
+            "$HOME/.config/iterm2/cc-status",
+            "cc-status --verbose",
+            "exec cc-status",
+            "FOO=1 cc-status",
+            "cc-status 2>/dev/null",
+            "(cc-status)",
+            "true; cc-status",
+            "$(brew --prefix)/bin/cc-status",
+            "test -x /a/cc-status && /a/cc-status",
+            "[ -x \"$HOME/.config/iterm2/cc-status\" ] || exit 0; exec \"$HOME/.config/iterm2/cc-status\"",
+            "command -v cc-status >/dev/null && cc-status",
+            "command -V cc-status >/dev/null && cc-status",
+            "type cc-status >/dev/null 2>&1 && cc-status",
+            "which cc-status >/dev/null && cc-status",
+            "cc-status &>/dev/null",
+            "cc-status &>> /tmp/log",
+            "if [ -x ~/x/cc-status ]; then ~/x/cc-status; fi",
+            "if ! [ -x ~/x/cc-status ]; then exit 0; fi; ~/x/cc-status",
+            "if [ -x /a/cc-status ]; then /a/cc-status; elif [ -x /b/cc-status ]; then /b/cc-status; else exit 0; fi",
+            "cc-status \"$@\"",
+            "exec 2>/dev/null; /a/cc-status",
+            "[[ -x /a/cc-status ]] || exit 0; exec /a/cc-status",
+            "[[ -x \"$HOME/.config/iterm2/cc-status\" ]] || exit 0; exec \"$HOME/.config/iterm2/cc-status\"",
+            "/a/cc-status; exit $((0))",
+            "/a/cc-status; exit $((1 + 2))",
+            "test -x /a/cc-status 2>&1 >&- && /a/cc-status",
+            "/a/cc-status >> /tmp/cc.log 2>&1",
+            "[ -x ~/x/cc-status ] || exit 0; ~/x/cc-status; exit $?",
+            "cc-status \"${1:-stop}\"",
+            "if [ -x /a/cc-status ]; then\n/a/cc-status\nfi",
+        ]
+        for command in commands {
+            XCTAssertTrue(CCStatusHookCommand.runsOnlyCCStatus(command), command)
+        }
+    }
+
+    func testDoesNotRunOnlyCCStatus() {
+        let commands = [
+            "echo hi",
+            "echo done > /tmp/cc-status",
+            "/a/cc-status && /usr/local/bin/notify",
+            "notify; /a/cc-status",
+            "cat | cc-status",
+            "[ -x /a/cc-status ] && rm /tmp/x",
+            "/a/cc-status $(notify)",
+            "/a/cc-status `notify`",
+            "/a/cc-status \"${X:-$(notify)}\"",
+            ": > /tmp/claude-stopped; /a/cc-status",
+            "/a/cc-status; exit $(( $(notify) ))",
+            "/a/cc-status; exit $((`notify`))",
+            "/a/cc-status $((notify) )",
+            "/a/cc-status $((notify); true)",
+            "/a/cc-status $((notify",
+            "true >> ~/claude-stops.log && /a/cc-status",
+            "exec >>/tmp/hook.log 2>&1; /a/cc-status",
+            "[ -x /a/cc-status ] 2>/tmp/err && /a/cc-status",
+            "notify /a/cc-status",
+            "exec",
+            "cc-status & notify",
+            "command -p notify && cc-status",
+            "command notify; cc-status",
+            "if [ -x /a/cc-status ]; then /a/cc-status; else notify; fi",
+        ]
+        for command in commands {
+            XCTAssertFalse(CCStatusHookCommand.runsOnlyCCStatus(command), command)
+        }
+    }
+
     // MARK: - isPlainAbsolutePath
 
     func testPlainAbsolutePath() {
@@ -218,14 +314,18 @@ final class CCStatusHookCommandTests: XCTestCase {
         XCTAssertEqual(parsed, ["HOME": "/Users/a", "X": "a=b", "EMPTY": ""])
     }
 
-    // MARK: - shouldRewriteHookCommand
+    // MARK: - existingHookAction
 
-    private func shouldRewrite(_ command: String, executables: Set<String>) -> Bool {
-        return ClaudeCodeOnboarding.shouldRewriteHookCommand(command,
-                                                             ccStatusPath: installed,
-                                                             environment: env) {
+    private func action(_ command: String, executables: Set<String>) -> ClaudeCodeOnboarding.ExistingHookAction {
+        return ClaudeCodeOnboarding.existingHookAction(command,
+                                                       ccStatusPath: installed,
+                                                       environment: env) {
             executables.contains($0)
         }
+    }
+
+    private func shouldRewrite(_ command: String, executables: Set<String>) -> Bool {
+        return action(command, executables: executables) == .rewrite
     }
 
     func testRewriteLeavesCurrentPathAlone() {
@@ -255,6 +355,22 @@ final class CCStatusHookCommandTests: XCTestCase {
 
     func testRewriteFixesBrokenCustomCommand() {
         XCTAssertTrue(shouldRewrite("$HOME/gone/cc-status", executables: [installed]))
+        XCTAssertTrue(shouldRewrite("[ -x \"$HOME/gone/cc-status\" ] || exit 0; exec \"$HOME/gone/cc-status\"",
+                                    executables: [installed]))
+        XCTAssertTrue(shouldRewrite("if [ -x ~/gone/cc-status ]; then ~/gone/cc-status; fi",
+                                    executables: [installed]))
+        XCTAssertTrue(shouldRewrite("~/gone/cc-status &>/dev/null", executables: [installed]))
+    }
+
+    func testBrokenCompoundCommandIsKeptAndOursAdded() {
+        // Rewriting would drop the notifier.
+        XCTAssertEqual(action("$HOME/gone/cc-status && /usr/local/bin/notify", executables: [installed]),
+                       .addAlongside)
+    }
+
+    func testWorkingCompoundCommandIsKept() {
+        XCTAssertEqual(action("$HOME/.config/iterm2/cc-status && /usr/local/bin/notify", executables: [installed]),
+                       .keep)
     }
 
     // MARK: - hooksHealthy
@@ -295,9 +411,9 @@ final class CCStatusHookCommandTests: XCTestCase {
         XCTAssertTrue(healthy(settings(command: "cc-status"), executables: []))
     }
 
-    // Reinstall must fix whatever the health check calls broken, given the same environment;
-    // otherwise the warning comes back after every Reinstall. The installer's own symlink is
-    // executable, since it was just created.
+    // Reinstall must fix whatever the health check calls broken, given the same environment,
+    // by rewriting the command or adding an entry beside it; otherwise the warning comes back
+    // after every Reinstall. The installer's own symlink is executable, since it was just created.
     func testUnhealthyCommandsAreRewritten() {
         let commands = [
             installed,
@@ -312,6 +428,9 @@ final class CCStatusHookCommandTests: XCTestCase {
             "$(brew --prefix)/bin/cc-status",
             "[ -x \"$HOME/gone/cc-status\" ] || exit 0; exec \"$HOME/gone/cc-status\"",
             "[ -x \"$HOME/.config/iterm2/cc-status\" ] || exit 0; exec \"$HOME/.config/iterm2/cc-status\"",
+            "$HOME/gone/cc-status && /usr/local/bin/notify",
+            "if [ -x ~/gone/cc-status ]; then ~/gone/cc-status; fi",
+            "command -v cc-status >/dev/null && cc-status",
         ]
         let environments: [[String: String]] = [env, [:], ["HOME": "/Users/bob"]]
         let executableSets: [Set<String>] = [[installed],
@@ -324,11 +443,11 @@ final class CCStatusHookCommandTests: XCTestCase {
                     let healthy = ClaudeCodeOnboarding.hooksHealthy(inSettings: settings(command: command),
                                                                     environment: environment,
                                                                     isExecutable: isExecutable)
-                    let rewrite = ClaudeCodeOnboarding.shouldRewriteHookCommand(command,
-                                                                                ccStatusPath: installed,
-                                                                                environment: environment,
-                                                                                isExecutable: isExecutable)
-                    XCTAssertTrue(healthy || rewrite,
+                    let action = ClaudeCodeOnboarding.existingHookAction(command,
+                                                                         ccStatusPath: installed,
+                                                                         environment: environment,
+                                                                         isExecutable: isExecutable)
+                    XCTAssertTrue(healthy || action != .keep,
                                   "\(command) is unhealthy but kept with \(environment) and \(executables)")
                 }
             }

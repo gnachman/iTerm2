@@ -132,6 +132,56 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         XCTAssertEqual(commands, ["/usr/local/bin/other-hook"])
     }
 
+    func testStripRemovesWrapperButKeepsCompoundCommand() {
+        let wrapper = "[ -x \"$HOME/x/cc-status\" ] || exit 0; exec \"$HOME/x/cc-status\""
+        let compound = "$HOME/x/cc-status && /usr/local/bin/notify"
+        let redirect = "echo done > /tmp/cc-status"
+        let settings: [String: Any] = [
+            "hooks": [
+                "Stop": [
+                    ["hooks": [
+                        ["type": "command", "command": wrapper],
+                        ["type": "command", "command": compound],
+                        ["type": "command", "command": redirect],
+                    ]]
+                ]
+            ]
+        ]
+        let url = makeTempSettings(settings)
+        XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: url), .success)
+        guard let hooks = readJSON(url)?["hooks"] as? [String: Any],
+              let stop = hooks["Stop"] as? [[String: Any]],
+              let group = stop.first,
+              let entries = group["hooks"] as? [[String: Any]] else {
+            XCTFail("expected surviving Stop hook group")
+            return
+        }
+        let commands = entries.compactMap { $0["command"] as? String }
+        XCTAssertEqual(commands, [compound, redirect])
+    }
+
+    // Uninstall sets the installed flag from hooksInstalled(atSettingsURL:),
+    // which is also what the next launch's reconcile reads. After a strip it
+    // must report exactly the commands left behind, or the menu flips back.
+    func testInstalledStateAfterStrip() {
+        let compound = "~/.config/iterm2/cc-status && say done"
+        func settings(_ commands: [String]) -> [String: Any] {
+            let entries = commands.map { ["type": "command", "command": $0] }
+            return ["hooks": ["Stop": [["hooks": entries]], "Notification": [["hooks": entries]]]]
+        }
+
+        let removed = makeTempSettings(settings(["/x/y/cc-status", "/usr/local/bin/other-hook"]))
+        XCTAssertTrue(ClaudeCodeOnboarding.hooksInstalled(atSettingsURL: removed))
+        XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: removed), .success)
+        XCTAssertFalse(ClaudeCodeOnboarding.hooksInstalled(atSettingsURL: removed))
+
+        let kept = makeTempSettings(settings(["/x/y/cc-status", compound]))
+        XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: kept), .success)
+        XCTAssertTrue(ClaudeCodeOnboarding.hooksInstalled(atSettingsURL: kept))
+        let remaining = readJSON(kept).map(ClaudeCodeOnboarding.ccStatusCommands(inSettings:))
+        XCTAssertEqual(remaining, [compound, compound])
+    }
+
     // MARK: - Writing settings.json through a symlink
 
     // Lay out settings.json the way a dotfiles manager (GNU Stow, chezmoi)

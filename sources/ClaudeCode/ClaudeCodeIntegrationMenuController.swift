@@ -85,6 +85,8 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
             failure.cancelLabel = iTermLocalizedCancel()
             failure.warningType = .kiTermWarningTypePersistent
             guard failure.runModal() == .kiTermWarningSelection0 else { return }
+        } else {
+            warnAboutKeptHookCommands(settingsPath: settingsPath)
         }
 
         ClaudeCodeOnboarding.uninstallWorkgroup()
@@ -111,6 +113,28 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
                 iTermAPIHelper.setEnabled(false)
             }
         }
+    }
+
+    // Uninstall leaves a hook command that runs other programs as well as
+    // cc-status, since removing it would stop those too. Say so, or the
+    // user would think cc-status is gone while it keeps running. The list
+    // is every command that keeps hooksAlreadyInstalled true, so it also
+    // explains why Reinstall and Uninstall stay in the menu. Some of them
+    // may not actually run cc-status (its path is gone, or it's only an
+    // argument), so the text doesn't claim they do.
+    private func warnAboutKeptHookCommands(settingsPath: String) {
+        let kept = ClaudeCodeOnboarding.ccStatusCommandsOnDisk()
+        guard !kept.isEmpty else {
+            return
+        }
+        RLog("Uninstall left \(kept.count) cc-status hook command(s) in place")
+        let commands = kept.joined(separator: "\n")
+        let warning = iTermWarning()
+        warning.heading = String(localized: "ClaudeCode.HookCommandsKeptTitle", defaultValue: "Some Hooks Were Left in Place", comment: "Title shown after uninstalling when some Claude Code hook commands were not removed")
+        warning.title = String(localized: "ClaudeCode.HookCommandsKeptBody", defaultValue: "Some hook commands in \(settingsPath) mention cc-status but also run other programs, so Uninstall didn\u{2019}t remove them. If you don\u{2019}t want them anymore, edit the file by hand:\n\n\(commands)", comment: "Body shown after uninstalling when some Claude Code hook commands were not removed. The first interpolated value is the absolute path to settings.json; the second is the list of hook commands, one per line, shown verbatim")
+        warning.actionLabels = [iTermLocalizedOK()]
+        warning.warningType = .kiTermWarningTypePersistent
+        warning.runModal()
     }
 
     // MARK: - Menu Validation

@@ -885,7 +885,10 @@ Bug Fixes:
   commands in Claude Code’s settings.json to use
   $HOME, ~, or a wrapper script. Reinstalling
   also keeps such commands instead of adding a
-  second copy of each hook.
+  second copy of each hook. Uninstalling and
+  reinstalling leave a hook command alone if it
+  runs other programs besides the integration’s,
+  and Uninstall lists any it left in place.
 - Installing, reinstalling, or uninstalling the
   Claude Code Integration now updates the file
   that a symlinked settings.json points to (as

@@ -135,11 +135,27 @@ class ClaudeCodeOnboarding: NSObject {
     @objc
     @discardableResult
     static func uninstallHooks() -> ClaudeCodeUninstallHooksResult {
-        let result = stripCCStatusHooks(fromSettingsURL: claudeSettingsURL())
+        let settingsURL = claudeSettingsURL()
+        let result = stripCCStatusHooks(fromSettingsURL: settingsURL)
         if result == .success {
-            iTermUserDefaults.claudeCodeHooksInstalled = false
+            // Not simply false: the strip leaves a command that runs more
+            // than cc-status (see ccStatusCommandsOnDisk), and
+            // reconcileHooksCache would set the flag again at the next
+            // launch. Agreeing with it now keeps the menu stable.
+            iTermUserDefaults.claudeCodeHooksInstalled = hooksInstalled(atSettingsURL: settingsURL)
         }
         return result
+    }
+
+    // The distinct cc-status hook commands in settings.json. After
+    // uninstallHooks succeeds, these are the ones it left in place because
+    // they also run something of the user's.
+    static func ccStatusCommandsOnDisk() -> [String] {
+        guard let settings = loadSettings(at: claudeSettingsURL()) else {
+            return []
+        }
+        var seen = Set<String>()
+        return ccStatusCommands(inSettings: settings).filter { seen.insert($0).inserted }
     }
 
     // Strip every cc-status hook entry from the given settings.json. Returns
@@ -189,8 +205,17 @@ class ClaudeCodeOnboarding: NSObject {
                 guard var entries = groups[i]["hooks"] as? [[String: Any]] else { continue }
                 let before = entries.count
                 entries.removeAll { entry in
-                    guard let command = entry["command"] as? String else { return false }
-                    return CCStatusHookCommand.refersToCCStatus(command)
+                    guard let command = entry["command"] as? String,
+                          CCStatusHookCommand.refersToCCStatus(command) else {
+                        return false
+                    }
+                    // Removing a command that also runs something of the
+                    // user's would stop that from running too.
+                    guard CCStatusHookCommand.runsOnlyCCStatus(command) else {
+                        DLog("Onboarding: leaving \(command) because it runs more than cc-status")
+                        return false
+                    }
+                    return true
                 }
                 if entries.count != before {
                     groupsChanged = true
@@ -520,7 +545,8 @@ class ClaudeCodeOnboarding: NSObject {
     }
 
     // The cc-status hook commands in settings.json, across all our events.
-    private static func ccStatusCommands(inSettings settings: [String: Any]) -> [String] {
+    // internal (not private) for unit testing via @testable import.
+    static func ccStatusCommands(inSettings settings: [String: Any]) -> [String] {
         guard let hooks = settings["hooks"] as? [String: Any] else {
             return []
         }
@@ -625,25 +651,17 @@ class ClaudeCodeOnboarding: NSObject {
     // for the broken-install detector is
     // checkHooksHealth above.
     private static func hooksInstalledOnDisk() -> Bool {
-        let settingsURL = claudeSettingsURL()
-        guard let data = try? Data(contentsOf: settingsURL),
-              let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let hooks = parsed["hooks"] as? [String: Any] else {
+        return hooksInstalled(atSettingsURL: claudeSettingsURL())
+    }
+
+    // The settings.json half of hooksInstalledOnDisk, shared with
+    // uninstallHooks so the two agree.
+    // internal (not private) for unit testing via @testable import.
+    static func hooksInstalled(atSettingsURL settingsURL: URL) -> Bool {
+        guard let settings = loadSettings(at: settingsURL) else {
             return false
         }
-        for eventName in hookEventNames {
-            guard let groups = hooks[eventName] as? [[String: Any]] else { continue }
-            for group in groups {
-                guard let entries = group["hooks"] as? [[String: Any]] else { continue }
-                for entry in entries {
-                    if let command = entry["command"] as? String,
-                       CCStatusHookCommand.refersToCCStatus(command) {
-                        return true
-                    }
-                }
-            }
-        }
-        return false
+        return !ccStatusCommands(inSettings: settings).isEmpty
     }
 
     // Call once at app launch. Reconciles the on-disk truth with the
@@ -1747,7 +1765,7 @@ class ClaudeCodeOnboarding: NSObject {
             var eventHookGroups = (hooks[eventName] as? [[String: Any]]) ?? []
 
             // Find any existing cc-status hook and adopt it instead of
-            // appending a duplicate. See shouldRewriteHookCommand for when its
+            // appending a duplicate. See existingHookAction for when its
             // command is replaced with the current path.
             var foundCCStatus = false
             for groupIndex in eventHookGroups.indices {
@@ -1760,13 +1778,18 @@ class ClaudeCodeOnboarding: NSObject {
                           CCStatusHookCommand.refersToCCStatus(command) else {
                         continue
                     }
-                    foundCCStatus = true
-                    if shouldRewriteHookCommand(command,
-                                                ccStatusPath: ccStatusPath,
-                                                environment: environment) {
+                    switch existingHookAction(command,
+                                              ccStatusPath: ccStatusPath,
+                                              environment: environment) {
+                    case .keep:
+                        foundCCStatus = true
+                    case .rewrite:
+                        foundCCStatus = true
                         groupHooks[entryIndex]["command"] = ccStatusPath
                         groupChanged = true
                         DLog("Onboarding: updated stale cc-status hook for \(eventName) from \(command) to \(ccStatusPath)")
+                    case .addAlongside:
+                        DLog("Onboarding: \(command) for \(eventName) can't run cc-status but runs more than it; leaving it")
                     }
                 }
                 if groupChanged {
@@ -1859,39 +1882,55 @@ class ClaudeCodeOnboarding: NSObject {
         }
     }
 
-    // Whether reinstalling should replace an existing cc-status hook command
-    // with ccStatusPath. A plain absolute path is the form the installer
-    // writes, so it is updated whenever it differs; this corrects a hook left
-    // pointing at another dot dir (for example a `-suite` instance wrote
+    enum ExistingHookAction: Equatable {
+        /// The command runs cc-status, or might. It counts as our hook.
+        case keep
+        /// Replace the command with ccStatusPath.
+        case rewrite
+        /// The command can't run cc-status, but it runs something of the
+        /// user's too. Leave it and add an entry for ccStatusPath beside it.
+        case addAlongside
+    }
+
+    // What reinstalling does with an existing hook command that refers to
+    // cc-status. A plain absolute path is the form the installer writes, so it
+    // is updated whenever it differs; this corrects a hook left pointing at
+    // another dot dir (for example a `-suite` instance wrote
     // ~/.config/iterm2-alt4/cc-status and we're now reinstalling from the
     // default instance that wants ~/.config/iterm2/cc-status). Anything else
     // was written by the user, such as $HOME/.config/iterm2/cc-status for a
     // settings.json shared between Macs, or a wrapper that tolerates a
     // missing cc-status (issue 13099). Those are kept unless every reference
     // to cc-status resolves to a path that isn't executable, which means the
-    // hook can't work.
+    // hook can't work. Even then, a command that also runs something else
+    // (`~/gone/cc-status; notify`) isn't replaced, since that would drop the
+    // rest of it.
     // internal (not private) for unit testing via @testable import.
-    static func shouldRewriteHookCommand(_ command: String,
-                                         ccStatusPath: String,
-                                         environment: [String: String],
-                                         isExecutable: (String) -> Bool = {
-                                             FileManager.default.isExecutableFile(atPath: $0)
-                                         }) -> Bool {
+    static func existingHookAction(_ command: String,
+                                   ccStatusPath: String,
+                                   environment: [String: String],
+                                   isExecutable: (String) -> Bool = {
+                                       FileManager.default.isExecutableFile(atPath: $0)
+                                   }) -> ExistingHookAction {
         guard command != ccStatusPath else {
-            return false
+            return .keep
         }
         if CCStatusHookCommand.isPlainAbsolutePath(command) {
-            return true
+            return .rewrite
         }
         let resolutions = CCStatusHookCommand.resolutions(of: command,
                                                           environment: environment,
                                                           isExecutable: isExecutable)
-        return !resolutions.isEmpty && resolutions.allSatisfy { resolution in
+        let broken = !resolutions.isEmpty && resolutions.allSatisfy { resolution in
             if case .notExecutable = resolution {
                 return true
             }
             return false
         }
+        guard broken else {
+            return .keep
+        }
+        return CCStatusHookCommand.runsOnlyCCStatus(command) ? .rewrite : .addAlongside
     }
 
     // MARK: - Step: Install Workgroup
