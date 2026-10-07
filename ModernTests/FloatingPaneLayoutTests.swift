@@ -228,6 +228,24 @@ final class FloatingPaneLayoutTests: XCTestCase {
         XCTAssertNil(anchored.x, "a float put against the right edge stays anchored there")
     }
 
+    /// A float's font change changes the float's frame and keeps its grid; the window stays as it is
+    /// even when it isn't a whole number of the tiled panes' cells.
+    func testAFloatsFontChangeDoesNotResizeTheWindow() {
+        var frame = fixture.window.frame
+        frame.size = NSSize(width: 905, height: 653)
+        fixture.window.setFrame(frame, display: true)
+        let (session, _) = newFloat()
+        tab.setActiveSession(session)
+        let windowFrame = fixture.window.frame
+        let columns = session.columns
+        let rows = session.rows
+
+        fixture.terminal.perform(NSSelectorFromString("biggerFont:"), with: nil)
+        XCTAssertEqual(fixture.window.frame, windowFrame)
+        XCTAssertEqual(session.columns, columns)
+        XCTAssertEqual(session.rows, rows)
+    }
+
     // MARK: - Blur underlay
 
     func testTranslucentFloatGetsABlurUnderlay() {

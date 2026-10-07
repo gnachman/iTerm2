@@ -2899,7 +2899,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)reallyChangeSessionFontSize:(PTYSession *)session
                        adjustWindow:(BOOL)adjustWindow {
+    // A float keeps its grid and changes its own frame; the window doesn't change for it.
     if (adjustWindow &&
+        ![self sessionIsFloating:session] &&
         ![[self parentWindow] anyFullScreen] &&
         [iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
         [[self parentWindow] fitWindowToTab:self];
