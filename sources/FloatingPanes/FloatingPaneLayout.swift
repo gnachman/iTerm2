@@ -54,9 +54,18 @@ final class FloatingPaneLayout: NSObject {
                                                     containerHeight: container.bounds.height,
                                                     containerIsFlipped: container.isFlipped)
         DLog("Apply \(placement) to \(session) giving frame \(NSStringFromRect(frame))")
-        // A deliberate placement replaces any remembered one. Relayout sets its own afterward.
+        // A deliberate placement replaces any remembered one, and decides which edges the float is
+        // anchored to. Relayout restores its own afterward.
         pane.desiredX = nil
         pane.desiredY = nil
+        let (right, bottom) = FloatingPaneGeometry.anchoredEdges(of: placement.frame, in: container.bounds.size)
+        pane.anchoredEdges = []
+        if right {
+            pane.anchoredEdges.insert(.right)
+        }
+        if bottom {
+            pane.anchoredEdges.insert(.bottom)
+        }
         if pane.outlineFrame != frame {
             // Resizing the split view would otherwise refit the float to its old grid, which is
             // about to change, and put back the old frame.
@@ -398,16 +407,23 @@ final class FloatingPaneLayout: NSObject {
         var startFrame = oldFrame
         startFrame.origin.x = pane.desiredX ?? startFrame.origin.x
         startFrame.origin.y = pane.desiredY ?? startFrame.origin.y
+        // The edges the float was put against when it was placed. Touching an edge now doesn't
+        // count: the tab may have shrunk until its edge met the float, or clamping may have pushed
+        // the float there.
+        let anchorable = pane.anchoredEdges
         let wanted = pane.desiredGrid ?? start.grid
         let result = FloatingPaneGeometry.placement(after: FloatingPanePlacement(frame: startFrame, grid: start.grid),
                                                     desiredGrid: pane.desiredGrid,
                                                     oldContainer: oldContainerSize,
                                                     newContainer: container,
-                                                    metrics: metrics)
+                                                    metrics: metrics,
+                                                    anchorable: anchorable)
         apply(result, to: pane, session: session)
+        pane.anchoredEdges = anchorable
         pane.desiredGrid = FloatingPaneGeometry.desiredGrid(wanted: wanted, actual: result.grid)
         (pane.desiredX, pane.desiredY) = FloatingPaneGeometry.desiredOrigin(start: startFrame,
                                                                             result: result.frame,
-                                                                            oldContainer: oldContainerSize)
+                                                                            oldContainer: oldContainerSize,
+                                                                            anchorable: anchorable)
     }
 }

@@ -213,6 +213,77 @@ final class FloatingPaneLayoutTests: XCTestCase {
         XCTAssertEqual(FloatingPaneLayout.visualOutlineFrame(of: pane), visualFrame)
     }
 
+    /// Dragging the window's corner in to its minimum and back out resizes it in many small steps.
+    /// The float comes back where it was.
+    func testAFloatReturnsToItsPlaceAfterTheWindowIsDraggedToItsMinimumAndBack() {
+        let (session, pane) = newFloat()
+        let m = metrics(session)
+        let grid = FloatingPaneGrid(columns: 55, rows: 13)
+        FloatingPaneLayout.apply(FloatingPanePlacement(frame: CGRect(origin: CGPoint(x: 100, y: 100),
+                                                                     size: m.frameSize(for: grid)),
+                                                       grid: grid),
+                                 to: pane,
+                                 session: session)
+        let visualFrame = FloatingPaneLayout.visualOutlineFrame(of: pane)
+        let original = fixture.window.frame
+        // A corner drag keeps the top left of the window where it is.
+        func setSize(_ size: NSSize) {
+            var frame = original
+            frame.origin.y = original.maxY - size.height
+            frame.size = size
+            fixture.window.setFrame(frame, display: true)
+        }
+        // One-point steps, as a real drag has, so the tab's height at some step equals the float's
+        // remembered top plus its height, which once made the float count as anchored to the bottom.
+        let steps = Int(max(original.width, original.height)) - 50
+        for i in 1...steps {
+            let t = CGFloat(i) / CGFloat(steps)
+            setSize(NSSize(width: original.width - (original.width - 50) * t,
+                           height: original.height - (original.height - 50) * t))
+        }
+        for i in 1...steps {
+            let t = CGFloat(i) / CGFloat(steps)
+            let small = fixture.window.frame.size
+            setSize(NSSize(width: small.width + (original.width - small.width) * t,
+                           height: small.height + (original.height - small.height) * t))
+        }
+        setSize(original.size)
+        XCTAssertEqual(fixture.window.frame, original, "test setup: back to the original size")
+        XCTAssertEqual(FloatingPaneLayout.visualOutlineFrame(of: pane), visualFrame)
+        XCTAssertEqual(Int(session.rows), grid.rows)
+    }
+
+    /// A float put against the tab's right edge stays against it as the window grows.
+    func testAFloatPlacedAgainstTheRightEdgeStaysThere() {
+        let (session, pane) = newFloat()
+        let m = metrics(session)
+        let size = m.frameSize(for: FloatingPaneGrid(columns: 30, rows: 8))
+        FloatingPaneLayout.apply(FloatingPanePlacement(frame: CGRect(x: container.bounds.width - size.width, y: 100,
+                                                                     width: size.width, height: size.height),
+                                                       grid: FloatingPaneGrid(columns: 30, rows: 8)),
+                                 to: pane,
+                                 session: session)
+        var frame = fixture.window.frame
+        frame.size.width += 150
+        fixture.window.setFrame(frame, display: true)
+        XCTAssertEqual(pane.outlineFrame.maxX, container.bounds.maxX, accuracy: 0.5)
+    }
+
+    func testARememberedPositionThatTouchesTheEdgeIsNotAnchored() {
+        let container = CGSize(width: 500, height: 349)
+        // Remembered at y=100 with height 249: its bottom is exactly the old container's.
+        let start = CGRect(x: 100, y: 100, width: 300, height: 249)
+        let metrics = FloatingPaneMetrics(cellSize: CGSize(width: 7, height: 17), chrome: CGSize(width: 10, height: 28))
+        let grid = metrics.grid(fitting: start.size)
+        let result = FloatingPaneGeometry.placement(after: FloatingPanePlacement(frame: start, grid: grid),
+                                                    desiredGrid: nil,
+                                                    oldContainer: container,
+                                                    newContainer: CGSize(width: 900, height: 700),
+                                                    metrics: metrics,
+                                                    anchorable: [.right])
+        XCTAssertEqual(result.frame.minY, 100, "not pinned to the bottom")
+    }
+
     func testRememberedPositionIsOnlyForAxesClampingMoved() {
         let container = CGSize(width: 500, height: 400)
         let start = CGRect(x: 100, y: 50, width: 300, height: 200)

@@ -201,15 +201,22 @@ enum FloatingPaneGeometry {
     /// shrinks only when the container is too small, and the caller should remember the desired
     /// grid so it comes back when there is room. A float touching the right or bottom edge stays
     /// there; otherwise its top left stays put. Finally it is clamped.
+    ///
+    /// `anchorable` names the edges a float may be anchored to. An axis along which clamping moved the
+    /// float and its place is remembered isn't anchored, even if the remembered frame happens to
+    /// touch the old container's edge.
     static func placement(after start: FloatingPanePlacement,
                           desiredGrid: FloatingPaneGrid?,
                           oldContainer: CGSize,
                           newContainer: CGSize,
-                          metrics: FloatingPaneMetrics) -> FloatingPanePlacement {
+                          metrics: FloatingPaneMetrics,
+                          anchorable: FloatingPaneEdges = [.right, .bottom]) -> FloatingPanePlacement {
         let wanted = desiredGrid ?? start.grid
         let grid = wanted.clamped(min: .minimum, max: maximumGrid(container: newContainer, metrics: metrics))
         let size = metrics.frameSize(for: grid)
-        let (touchesRight, touchesBottom) = anchoredEdges(of: start.frame, in: oldContainer)
+        let (right, bottom) = anchoredEdges(of: start.frame, in: oldContainer)
+        let touchesRight = right && anchorable.contains(.right)
+        let touchesBottom = bottom && anchorable.contains(.bottom)
         let origin = CGPoint(x: touchesRight ? newContainer.width - size.width : start.frame.minX,
                              y: touchesBottom ? newContainer.height - size.height : start.frame.minY)
         return FloatingPanePlacement(frame: clamp(CGRect(origin: origin, size: size), in: newContainer),
@@ -229,8 +236,11 @@ enum FloatingPaneGeometry {
     /// push a float against an edge; without this it would then count as anchored there.
     static func desiredOrigin(start: CGRect,
                               result: CGRect,
-                              oldContainer: CGSize) -> (x: CGFloat?, y: CGFloat?) {
-        let (right, bottom) = anchoredEdges(of: start, in: oldContainer)
+                              oldContainer: CGSize,
+                              anchorable: FloatingPaneEdges = [.right, .bottom]) -> (x: CGFloat?, y: CGFloat?) {
+        let (anchoredRight, anchoredBottom) = anchoredEdges(of: start, in: oldContainer)
+        let right = anchoredRight && anchorable.contains(.right)
+        let bottom = anchoredBottom && anchorable.contains(.bottom)
         return (x: (right || result.minX == start.minX) ? nil : start.minX,
                 y: (bottom || result.minY == start.minY) ? nil : start.minY)
     }

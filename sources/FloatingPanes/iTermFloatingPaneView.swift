@@ -72,6 +72,10 @@ final class iTermFloatingPaneView: NSView {
     var desiredX: CGFloat?
     var desiredY: CGFloat?
 
+    /// The tab edges (right and bottom) the float was against when it was last placed, which it
+    /// stays against as the tab changes size.
+    var anchoredEdges: FloatingPaneEdges = []
+
     /// While the float is maximized, the outline frame to return to.
     var outlineFrameBeforeMaximizing: NSRect?
 
