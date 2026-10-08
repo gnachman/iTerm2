@@ -5,8 +5,9 @@
 # multi-byte, control bytes, and notably '+' and '%', which are NOT unreserved)
 # is percent-encoded. A shell that is not installed is skipped, not failed.
 #
-# Covers bash, zsh, fish, tcsh, and xonsh (the last by exec'ing its pure encoder
-# members into a stub class from python3).
+# Covers bash, zsh, fish, tcsh, xonsh (by exec'ing its pure encoder members into a
+# stub class from python3), and nu (by sourcing the script in a non-interactive nu,
+# where its top level defines the commands and does nothing else).
 #
 # Usage: tools/test_shell_integration_encoders.sh
 set -u
@@ -57,6 +58,11 @@ ns = {}
 exec("class Stub:\n    " + dedent(ps) + "\n    " + "\n    ".join(dedent(l) for l in body), ns)
 sys.stdout.write(ns["Stub"]()._encode_path(sys.argv[2]))
 PY
+}
+
+enc_nu() {
+  IT2_TEST_INPUT="$1" nu --no-config-file -c \
+    "source '$DIR/iterm2_shell_integration.nu'; print --no-newline (iterm2 encode-path \$env.IT2_TEST_INPUT)"
 }
 
 # --- test table: name | input | expected ---
@@ -154,6 +160,7 @@ run_machineid() {
       echo 'printf "%s" "$_iterm2_machine_id"'; } > "$tmp"
     check_mid tcsh "$(tcsh -f "$tmp")"; rm -f "$tmp"
   fi
+  have nu && check_mid nu "$(nu --no-config-file -c "source '$DIR/iterm2_shell_integration.nu'; print --no-newline (iterm2 machine-id)")"
   # xonsh's block uses xonsh-only syntax ($(), @.imp) that can't be run in
   # isolation, and its python hmac is definitionally the reference (openssl == python
   # hmac, verified above). Verify statically that it HMACs with the same key + algo.
@@ -223,6 +230,15 @@ run_fish_hostname_sanitize() {
   done
 }
 
+run_nu_hostname_sanitize() {
+  local h got
+  for h in "${_iterm2_bad_hosts[@]}"; do
+    got=$(IT2_TEST_HOST="$h" nu --no-config-file -c \
+      "source '$DIR/iterm2_shell_integration.nu'; \$env.iterm2_hostname = \$env.IT2_TEST_HOST; cd /tmp; iterm2 report-state '1:abc'" 2>/dev/null)
+    assert_sanitized_authority "nu-hostname-sanitize/[$h]" "$got" /tmp
+  done
+}
+
 # fish and xonsh have a native OSC 7 emitter that iTerm2 must suppress. Drive a real
 # pty and assert every OSC 7 emitted AFTER our ShellIntegrationVersion marker
 # carries ?machineID= (the one before it is xonsh's harmless pre-source startup
@@ -263,6 +279,81 @@ cd /usr" 2>&1)
       fail=1
     fi
   done
+}
+
+# nushell too has a native OSC 7 emitter ($env.config.shell_integration.osc7, on by
+# default) that the script turns off. Same assertion as run_single_emitter, driven the
+# way iTerm2 injects it: NU_VENDOR_AUTOLOAD_DIR names a directory whose .nu files nushell
+# sources at startup. HOME and the XDG directories point at a scratch directory so the
+# developer's own config stays out of it (0.100 would offer to create config files, so
+# empty ones are provided). reedline blocks on a cursor-position query (CSI 6n) until it
+# is answered, which `script` cannot do, so a small pty loop drives it and answers;
+# commands are typed only after the previous one finished (OSC 133;D) and a new prompt
+# is up (133;A).
+run_nu_single_emitter() {
+  have nu || { echo "skip single-emitter/nu (not installed)"; return; }
+  have python3 || { echo "skip single-emitter/nu (no python3)"; return; }
+  local out osc after seen bad
+  out=$(python3 - "$DIR/iterm2_shell_integration.nu" <<'PY'
+import os, pty, select, shutil, sys, tempfile, time
+home = tempfile.mkdtemp()
+for sub in (".config/nushell", ".local/share", "vendor"):
+    os.makedirs(os.path.join(home, sub))
+for name in ("env.nu", "config.nu"):
+    open(os.path.join(home, ".config", "nushell", name), "w").close()
+shutil.copy(sys.argv[1], os.path.join(home, "vendor", "iterm2_shell_integration.nu"))
+env = dict(os.environ, HOME=home, XDG_CONFIG_HOME=os.path.join(home, ".config"),
+           XDG_DATA_HOME=os.path.join(home, ".local", "share"),
+           NU_VENDOR_AUTOLOAD_DIR=os.path.join(home, "vendor"),
+           TERM="xterm", TERM_PROGRAM="iTerm.app")
+env.pop("ITERM_SHELL_INTEGRATION_INSTALLED", None)
+pid, fd = pty.fork()
+if pid == 0:
+    os.execvpe("nu", ["nu", "--interactive"], env)
+out = b""
+commands = [b"cd /tmp\r", b"cd /usr\r", b"exit\r"]
+sent_at = 0
+start = time.time()
+while time.time() - start < 20:
+    readable, _, _ = select.select([fd], [], [], 0.1)
+    if readable:
+        try:
+            data = os.read(fd, 65536)
+        except OSError:
+            break
+        if not data:
+            break
+        out += data
+        for _ in range(data.count(b"\x1b[6n")):
+            os.write(fd, b"\x1b[1;1R")
+    if commands:
+        tail = out[sent_at:]
+        done = tail.rfind(b"\x1b]133;D")
+        ready = (b"\x1b]133;A" in tail) if sent_at == 0 else (done >= 0 and b"\x1b]133;A" in tail[done:])
+        if ready:
+            sent_at = len(out)
+            os.write(fd, commands.pop(0))
+try:
+    os.kill(pid, 9)
+except OSError:
+    pass
+shutil.rmtree(home)
+sys.stdout.buffer.write(out)
+PY
+)
+  osc=$(printf '%s' "$out" | tr '\007' '\n')
+  after=$(printf '%s' "$osc" | sed -n '/ShellIntegrationVersion/,$p')
+  seen=$(printf '%s' "$osc" | grep -c '7;file://')
+  bad=$(printf '%s' "$after" | grep '7;file://' | grep -vc 'machineID=')
+  if [ "${seen:-0}" -lt 3 ]; then
+    echo "FAIL single-emitter/nu (expected a report per prompt, saw $seen - driver broken)"; fail=1
+  elif [ "${bad:-0}" -eq 0 ]; then
+    echo "ok   single-emitter/nu"
+  else
+    echo "FAIL single-emitter/nu ($bad OSC 7 without machineID)"
+    printf '%s\n' "$after" | grep '7;file://' | grep -v 'machineID=' | sed 's/^/     /'
+    fail=1
+  fi
 }
 
 # Degraded machine-id path: when the OS cannot be determined (uname missing), the
@@ -365,11 +456,14 @@ have awk  && run_cases tcsh-awk enc_tcsh || echo "skip tcsh-awk"
 have tcsh && run_tcsh_alias || echo "skip tcsh-alias (tcsh not installed)"
 have tcsh && run_tcsh_hostname_sanitize || echo "skip tcsh-hostname-sanitize (tcsh not installed)"
 have fish && run_fish_hostname_sanitize || echo "skip fish-hostname-sanitize (fish not installed)"
+have nu   && run_nu_hostname_sanitize || echo "skip nu-hostname-sanitize (nu not installed)"
 run_fish_machineid_degraded
 run_fish_empty_authority
 run_single_emitter
+run_nu_single_emitter
 run_fish_loader_order
 have python3 && run_cases xonsh enc_xonsh || echo "skip xonsh"
+have nu   && run_cases nu   enc_nu   || echo "skip nu"
 run_machineid
 
 exit $fail

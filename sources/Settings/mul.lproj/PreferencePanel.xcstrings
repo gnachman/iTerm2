@@ -29576,42 +29576,42 @@
       }
     },
     "iWk-HJ-EKg.ibShadowedToolTip" : {
-      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Available for bash, fish, tcsh, xonsh and zsh. This is an alternative to installing shell integration via other methods (such as the iTerm2 > Install Shell Integration menu item).\"; ObjectID = \"iWk-HJ-EKg\";",
+      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Available for bash, fish, nu, tcsh, xonsh and zsh. This is an alternative to installing shell integration via other methods (such as the iTerm2 > Install Shell Integration menu item).\"; ObjectID = \"iWk-HJ-EKg\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Verfügbar für bash, fish, tcsh, xonsh und zsh. Dies ist eine Alternative zur Installation der Shell-Integration über andere Methoden (wie den Menüpunkt iTerm2 > Shell-Integration installieren)."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Available for bash, fish, tcsh, xonsh and zsh. This is an alternative to installing shell integration via other methods (such as the iTerm2 > Install Shell Integration menu item)."
+            "value" : "Available for bash, fish, nu, tcsh, xonsh and zsh. This is an alternative to installing shell integration via other methods (such as the iTerm2 > Install Shell Integration menu item)."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "bash、fish、tcsh、xonsh、zshで利用できます。これは、シェル統合を他の方法(iTerm2 > Install Shell Integrationメニュー項目など)でインストールする場合の代替手段です。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Disponível para bash, fish, tcsh, xonsh e zsh. Esta é uma alternativa à instalação da Shell Integration por outros métodos (como o item de menu iTerm2 > Instalar Shell Integration)."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Доступно для bash, fish, tcsh, xonsh и zsh. Это альтернатива установке интеграции с оболочкой другими способами (например, через пункт меню «iTerm2» > «Установить интеграцию с оболочкой»)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "适用于 bash、fish、tcsh、xonsh 和 zsh。这是通过其他方式（如“iTerm2 > 安装 Shell 集成”菜单项）安装 Shell 集成的替代方法。"
           }
         }

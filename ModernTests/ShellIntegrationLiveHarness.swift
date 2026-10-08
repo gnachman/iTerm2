@@ -88,10 +88,14 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         throw XCTSkip("xonsh needs synthetic CPR responses from the harness; see method comment")
     }
 
+    func testNu_baseline_emitsOnePromptAPerCommand() throws {
+        try runShellBaseline(.nu)
+    }
+
     // MARK: - Implementation
 
     private enum SupportedShell: String {
-        case zsh, bash, fish, tcsh, xonsh
+        case zsh, bash, fish, tcsh, xonsh, nu
 
         func executablePath() -> String? {
             let candidates: [String]
@@ -101,6 +105,7 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             case .fish:  candidates = ["/usr/local/bin/fish", "/opt/homebrew/bin/fish", "/usr/bin/fish"]
             case .tcsh:  candidates = ["/bin/tcsh", "/usr/bin/tcsh", "/usr/local/bin/tcsh"]
             case .xonsh: candidates = ["/usr/local/bin/xonsh", "/opt/homebrew/bin/xonsh", "/usr/bin/xonsh"]
+            case .nu:    candidates = ["/opt/homebrew/bin/nu", "/usr/local/bin/nu", "/usr/bin/nu"]
             }
             return candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) })
         }
@@ -112,6 +117,29 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             case .fish:  return [executable, "-i", "-N"]
             case .tcsh:  return [executable, "-f", "-i"]
             case .xonsh: return [executable, "--no-rc", "-i"]
+            case .nu:    return [executable, "--no-config-file", "--interactive"]
+            }
+        }
+
+        // nushell's reedline asks for the cursor position on startup and
+        // waits for the answer before it reads any input.
+        var sendsCursorPositionRequest: Bool {
+            switch self {
+            case .nu:
+                return true
+            case .zsh, .bash, .fish, .tcsh, .xonsh:
+                return false
+            }
+        }
+
+        // nushell emits the OSC 133 marks itself (the script only turns that
+        // on), and reedline tags the primary prompt with k=i.
+        var marksAreTheShellsOwn: Bool {
+            switch self {
+            case .nu:
+                return true
+            case .zsh, .bash, .fish, .tcsh, .xonsh:
+                return false
             }
         }
 
@@ -122,6 +150,7 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             case .fish:  return "iterm2_shell_integration.fish"
             case .tcsh:  return "iterm2_shell_integration.tcsh"
             case .xonsh: return "iterm2_shell_integration.xonsh"
+            case .nu:    return "iterm2_shell_integration.nu"
             }
         }
 
@@ -131,6 +160,9 @@ final class ShellIntegrationLiveHarness: XCTestCase {
                 return "source \(integrationPath)\n"
             case .xonsh:
                 return "execx(open('\(integrationPath)').read())\n"
+            case .nu:
+                // source needs a parse-time constant path; a quoted literal is one.
+                return "source '\(integrationPath)'\n"
             }
         }
 
@@ -164,6 +196,7 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             shellPath: executable,
             arguments: shell.arguments(for: executable),
             environment: env,
+            answersCursorPositionRequests: shell.sendsCursorPositionRequest,
             onBytes: { bytes, length in
                 captureLock.lock()
                 capturedBytes.append(bytes, length: length)
@@ -221,10 +254,17 @@ final class ShellIntegrationLiveHarness: XCTestCase {
 
         // (c) None of today's A markers carry a `k=` attribute. PR 3 will
         // introduce `k=s` on PS2 lines for zsh/bash; that will rewrite this
-        // assertion shell-by-shell.
+        // assertion shell-by-shell. A shell that emits its own marks may tag
+        // the primary prompt as initial (k=i); nothing else is expected.
         for args in aOccurrences {
-            XCTAssertFalse(args.contains("k="),
-                           "[\(shell.rawValue)] OSC 133;A unexpectedly carries `k=` in args '\(args)'")
+            let kinds = args.split(separator: ";").filter { $0.hasPrefix("k=") }
+            if shell.marksAreTheShellsOwn {
+                XCTAssertTrue(kinds.allSatisfy { $0 == "k=i" },
+                              "[\(shell.rawValue)] OSC 133;A carries an unexpected `k=` in args '\(args)'")
+            } else {
+                XCTAssertTrue(kinds.isEmpty,
+                              "[\(shell.rawValue)] OSC 133;A unexpectedly carries `k=` in args '\(args)'")
+            }
         }
 
         // (d) D arguments parse as digits (return codes), or are empty.

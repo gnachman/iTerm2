@@ -283,6 +283,9 @@ New Features:
   shows an iTerm2 icon in the menu bar, optionally
   followed by an interpolated string such as
   \(iterm2.workingSessionCount).
+- nushell is now a supported shell for shell
+  integration, including automatic loading and
+  SSH integration.
 
 Improvements:
 - If a profile archives sessions when they close
