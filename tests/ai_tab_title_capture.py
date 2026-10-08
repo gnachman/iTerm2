@@ -32,6 +32,7 @@ this uses the shipping API against your normal iTerm2.
 import argparse
 import asyncio
 import difflib
+import hashlib
 import json
 import os
 import sys
@@ -185,6 +186,9 @@ async def build_record(session):
         "gitBranch": git_branch,
         "tmuxWindowName": tmux_window,
         "tmuxPaneTitle": tmux_pane,
+        # Same value as AITabTitleCorpus.sessionToken: a truncated SHA-256 of the
+        # session ID, so records group by tab without carrying the raw ID.
+        "sessionToken": hashlib.sha256(session.session_id.encode("utf-8")).hexdigest()[:16],
         "screen": screen,
         "context": build_context(job, command_line, at_prompt, last_command,
                                  cwd, user, host, home),

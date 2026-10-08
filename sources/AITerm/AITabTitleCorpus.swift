@@ -21,6 +21,7 @@
 //  verbatim: it is a developer tool, not something to leave running.
 //
 
+import CryptoKit
 import Foundation
 
 // One generation. Codable so a line round-trips through the grader unchanged.
@@ -50,6 +51,11 @@ struct AITabTitleRecord: Codable {
     // decode. (Other candidate metadata - icon name, git branch, tmux names - is not
     // captured until a harness experiment actually consumes it.)
     var windowName: String? = nil
+    // Opaque per-session token (see AITabTitleCorpus.sessionToken). Lets the grader
+    // separate one tab renaming itself repeatedly from several tabs each titled
+    // once, since records from concurrently generating tabs interleave. Optional
+    // with a nil default so older corpus lines still decode.
+    var sessionToken: String? = nil
     var screen: String
     var context: String            // the assembled context block fed to the model
     var instructions: String       // the system prompt used
@@ -66,6 +72,15 @@ final class AITabTitleCorpus {
 
     var isEnabled: Bool {
         return iTermAdvancedSettingsModel.logAITabTitleCorpus()
+    }
+
+    // A truncated SHA-256 of the session GUID rather than the GUID itself, so a
+    // shared corpus groups records by tab without carrying the raw identifier.
+    // Unsalted so a restored session (which keeps its GUID) keeps its token across
+    // restarts. tests/ai_tab_title_capture.py computes the same value.
+    static func sessionToken(forSessionID sessionID: String) -> String {
+        let digest = SHA256.hash(data: Data(sessionID.utf8))
+        return digest.prefix(8).map { String(format: "%02x", $0) }.joined()
     }
 
     static func corpusFileURL(createDirectory: Bool) -> URL? {

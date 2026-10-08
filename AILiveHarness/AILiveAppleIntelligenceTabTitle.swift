@@ -258,6 +258,7 @@ extension AILiveHarness {
             "No corpus. Enable the `logAITabTitleCorpus` advanced setting, use AI tab titles, then re-run. Path: \(AITabTitleCorpus.corpusFileURL(createDirectory: false)?.path ?? "?")")
 
         print("\n=== Corpus grade (\(corpus.count) records) ===")
+        Self.printChurn(corpus)
         var leakCounts: [String: Int] = [:]
         for (index, record) in corpus.enumerated() {
             let userPrompt: String
@@ -283,6 +284,43 @@ extension AILiveHarness {
         }
         print("\nfilename-leak counts by variant: \(leakCounts.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: " "))")
         print("=== end corpus grade ===\n")
+    }
+
+    // Per-tab churn of the LOGGED titles, which needs no model: how often a tab's
+    // title changed between consecutive generations, and how many of those changes
+    // were only rewordings that applyDecision now suppresses. Records without a
+    // sessionToken (logged before it existed) cannot be attributed and are skipped.
+    private static func printChurn(_ corpus: [AITabTitleRecord]) {
+        var bySession: [String: [String]] = [:]
+        var unattributed = 0
+        for record in corpus {
+            guard let token = record.sessionToken else {
+                unattributed += 1
+                continue
+            }
+            if let title = record.title, !title.isEmpty {
+                bySession[token, default: []].append(title)
+            }
+        }
+        var changes = 0
+        var rewordings = 0
+        var transitions = 0
+        for (token, titles) in bySession.sorted(by: { $0.key < $1.key }) {
+            var sessionChanges = 0
+            for (previous, next) in zip(titles, titles.dropFirst()) {
+                transitions += 1
+                guard previous != next else {
+                    continue
+                }
+                sessionChanges += 1
+                if AITabTitleGenerator.isEquivalentTitle(previous, next) {
+                    rewordings += 1
+                }
+            }
+            changes += sessionChanges
+            print("  tab \(token): \(titles.count) titles, \(sessionChanges) changes")
+        }
+        print("churn: \(changes) changes over \(transitions) consecutive pairs in \(bySession.count) tabs; \(rewordings) were rewordings; \(unattributed) records had no sessionToken")
     }
 
     // Ablation: what does the shipping (goal-inference) prompt produce with the

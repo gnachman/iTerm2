@@ -245,6 +245,44 @@ final class AITabTitleGeneratorTests: XCTestCase {
         XCTAssertNil(result.titleToApply)
     }
 
+    // A title that differs from the applied one only in casing is the same
+    // title; applying it would rename the tab to what it already says.
+    func testCaseOnlyVariantIsNotReapplied() {
+        let result = AITabTitleGenerator.applyDecision(
+            outcome: .produced("Deploy app"),
+            lastAppliedTitle: "Deploy App")
+        XCTAssertTrue(result.stampFingerprint)
+        XCTAssertNil(result.titleToApply)
+    }
+
+    // Same words in a different order ("Zsh Update" for "Update Zsh") is a
+    // rewording, not new work, so the existing title stays.
+    func testReorderedVariantIsNotReapplied() {
+        let result = AITabTitleGenerator.applyDecision(
+            outcome: .produced("Zsh Update"),
+            lastAppliedTitle: "Update Zsh")
+        XCTAssertTrue(result.stampFingerprint)
+        XCTAssertNil(result.titleToApply)
+    }
+
+    // A title that adds or drops a word is a different title and is applied.
+    func testAddedWordIsApplied() {
+        let result = AITabTitleGenerator.applyDecision(
+            outcome: .produced("UI Development"),
+            lastAppliedTitle: "Development")
+        XCTAssertEqual(result.titleToApply, "UI Development")
+    }
+
+    // The token is stable for a session, differs between sessions, and does not
+    // contain the raw session ID.
+    func testCorpusSessionToken() {
+        let a = AITabTitleCorpus.sessionToken(forSessionID: "w0t0p0:ABC")
+        XCTAssertEqual(a, AITabTitleCorpus.sessionToken(forSessionID: "w0t0p0:ABC"))
+        XCTAssertNotEqual(a, AITabTitleCorpus.sessionToken(forSessionID: "w0t0p1:ABC"))
+        XCTAssertEqual(a.count, 16)
+        XCTAssertFalse(a.contains("ABC"))
+    }
+
     // A genuinely new title is applied.
     func testChangedTitleIsApplied() {
         let result = AITabTitleGenerator.applyDecision(

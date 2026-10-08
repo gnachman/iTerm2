@@ -740,6 +740,18 @@ final class AITabTitleGenerator {
         return !worthTitling && (lastAppliedTitle?.isEmpty == false)
     }
 
+    // Two titles are equivalent when they have the same words ignoring case and
+    // order. Comparing rather than normalizing the title itself, because forcing a
+    // case would mangle names like iOS, npm, and kubectl.
+    static func isEquivalentTitle(_ a: String, _ b: String) -> Bool {
+        func words(_ s: String) -> [String] {
+            return s.split(whereSeparator: { $0.isWhitespace })
+                .map { $0.folding(options: [.caseInsensitive], locale: nil) }
+                .sorted()
+        }
+        return words(a) == words(b)
+    }
+
     static func applyDecision(outcome: TitleOutcome, lastAppliedTitle: String?) -> ApplyResult {
         switch outcome {
         case .transientFailure:
@@ -756,11 +768,13 @@ final class AITabTitleGenerator {
                 let cleared = (lastAppliedTitle?.isEmpty == false) ? "" : nil
                 return ApplyResult(stampFingerprint: true, titleToApply: cleared)
             }
-            if title == lastAppliedTitle {
+            if let lastAppliedTitle, Self.isEquivalentTitle(title, lastAppliedTitle) {
                 // Regeneration ran (an animated OSC token, one more line of steady
-                // output) but produced the same title. Re-applying it renames the
-                // tab to what it already says, which reads as churn while the user
-                // is looking at it - so stamp but do not re-apply.
+                // output) but produced the same title, or a reworded variant of it
+                // ("Deploy app" for "Deploy App", "Zsh Update" for "Update Zsh").
+                // Applying it renames the tab to what it already says, which reads
+                // as churn while the user is looking at it - so stamp but keep the
+                // existing title.
                 return ApplyResult(stampFingerprint: true, titleToApply: nil)
             }
             return ApplyResult(stampFingerprint: true, titleToApply: title)
@@ -1143,6 +1157,7 @@ final class AITabTitleGenerator {
                                                              user: context.user,
                                                              host: context.host,
                                                              windowName: context.windowName,
+                                                             sessionToken: AITabTitleCorpus.sessionToken(forSessionID: sessionID),
                                                              screen: screen,
                                                              context: context.text,
                                                              instructions: instructions,
