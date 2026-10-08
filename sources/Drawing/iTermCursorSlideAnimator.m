@@ -159,12 +159,13 @@
         DLog(@"cursorPixelOffset: animation complete, returning zero");
         dispatch_async(dispatch_get_main_queue(), ^{
             [self endMetalAnimation];
-            // This frame was rendered with animationInProgress still YES, so a box
-            // cursor's glyph-inversion redraw was suppressed (see
-            // iTermMetalPerFrameState's use of slideAnimationInProgress). Request one
-            // more redraw now that animationInProgress is NO so the character under
-            // the cursor's resting position gets its inverted color without waiting
-            // for an unrelated repaint.
+            // This frame already has pixelOffset == 0, so a box cursor's glyph
+            // color is already fully resolved to the resting color (see
+            // applyBoxCursorTextColorTweakForRow: in iTermMetalPerFrameState.m,
+            // which crossfades by coverage derived from pixelOffset, not from
+            // animationInProgress). This extra redraw is a safety net to settle
+            // the frame onto the plain resting render path (animationInProgress
+            // now NO) rather than relying on some unrelated event to do it.
             [self->_delegate cursorSlideAnimatorRequestDelegateRedraw];
         });
         return CGPointZero;

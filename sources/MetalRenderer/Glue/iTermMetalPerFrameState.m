@@ -455,12 +455,7 @@ typedef struct {
             _cursorInfo.backgroundColor = [self backgroundColorForCharacter:screenChar
                                                                    selected:[row->_selectedIndexSet containsIndex:_cursorInfo.coord.x]
                                                                   findMatch:row->_matches && CheckFindMatchAtIndex(row->_matches, _cursorInfo.coord.x)];
-            if (_cursorInfo.type == CURSOR_BOX && !_cursorInfo.slideAnimationInProgress) {
-                // While sliding, the box is just a plain colored rectangle
-                // (see cursorSupportsSmoothSlide); skip the glyph-inversion
-                // setup below, which is keyed to the discrete destination
-                // cell and would otherwise recolor that glyph before the
-                // rectangle visually arrives there.
+            if (_cursorInfo.type == CURSOR_BOX) {
                 _cursorInfo.shouldDrawText = YES;
                 iTermSmartCursorColor *smartCursorColor = nil;
                 // When the HDR hint applies, iTermCursorRenderer force-overrides
@@ -2145,17 +2140,17 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     }
 }
 
-// Tweaks the text color for the cell that has a box cursor. This is a per-frame
-// effect (it depends on the cursor position and fade animation, not the row's
-// content), so it is applied after both a cache hit and a fresh build.
+// Tweaks the text color for the cell(s) under a box cursor. This is a
+// per-frame effect (it depends on the cursor position and fade animation,
+// not the row's content), so it is applied after both a cache hit and a
+// fresh build.
 - (void)applyBoxCursorTextColorTweakForRow:(int)row
                                      width:(int)width
                                 attributes:(iTermMetalGlyphAttributes *)attributes {
     if (!(row == _cursorInfo.coord.y &&
           _cursorInfo.type == CURSOR_BOX &&
           _cursorInfo.cursorVisible &&
-          !_cursorInfo.frameOnly) ||
-        _cursorInfo.slideAnimationInProgress) {
+          !_cursorInfo.frameOnly)) {
         return;
     }
     vector_float4 cursorTextColor;
@@ -2173,19 +2168,33 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                              faint:NO
                                       isBackground:NO];
     }
-    if (_cursorInfo.coord.x < width) {
-        cursorTextColor.w = 1;
-        const CGFloat fade = _cursorInfo.fadeAlpha;
-        if (fade >= 1.0) {
-            attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor;
-        } else {
-            // Smooth blink: crossfade the glyph from its normal color toward
-            // the cursor text color as the cursor fades in, so it matches the
-            // box fill being composited at the same alpha underneath.
-            vector_float4 normal = attributes[_cursorInfo.coord.x].foregroundColor;
-            normal.w = 1;
-            attributes[_cursorInfo.coord.x].foregroundColor = simd_mix(normal, cursorTextColor, simd_make_float4(fade, fade, fade, fade));
+    cursorTextColor.w = 1;
+
+    // Follow the box's actual horizontal span in pixels rather than assuming
+    // it's exactly at coord.x: during a smooth slide the box only partially
+    // covers one or two adjacent columns (and a chained slide that starts
+    // before a prior one finishes can leave it more than one column from
+    // the destination), so crossfade each covered column's foreground color
+    // toward cursorTextColor in proportion to how much of that column the
+    // box currently covers. At rest pixelOffset is (0, 0), so this touches
+    // only coord.x with full coverage - identical to the pre-slide behavior.
+    const CGFloat cellWidthPixels = _configuration->_cellSize.width * _configuration->_scale;
+    const CGFloat boxLeft = _cursorInfo.coord.x + (cellWidthPixels > 0 ? _cursorInfo.pixelOffset.x / cellWidthPixels : 0);
+    const CGFloat boxRight = boxLeft + (_cursorInfo.doubleWidth ? 2 : 1);
+    const int firstColumn = MAX(0, (int)floor(boxLeft));
+    const int lastColumn = MIN(width - 1, (int)ceil(boxRight) - 1);
+    const CGFloat fade = _cursorInfo.fadeAlpha;
+    for (int x = firstColumn; x <= lastColumn; x++) {
+        const CGFloat coverage = MAX(0, MIN(boxRight, x + 1) - MAX(boxLeft, x)) * fade;
+        if (coverage <= 0.001) {
+            continue;
         }
+        // Smooth blink and the slide coverage share this crossfade: at fade
+        // or coverage 1.0 it reduces to a flat assignment, matching the
+        // pre-slide behavior exactly.
+        vector_float4 normal = attributes[x].foregroundColor;
+        normal.w = 1;
+        attributes[x].foregroundColor = simd_mix(normal, cursorTextColor, simd_make_float4(coverage, coverage, coverage, coverage));
     }
 }
 

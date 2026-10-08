@@ -43814,7 +43814,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Wenn aktiviert, werden kleine horizontale Cursorbewegungen animiert. Nicht verfügbar für Blockcursor."
+            "value" : "Wenn aktiviert, werden kleine horizontale Cursorbewegungen animiert."
           }
         },
         "en" : {
@@ -43826,25 +43826,25 @@
         "ja" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "有効にすると、小さな水平方向のカーソル移動がアニメーション化されます。ブロックカーソルでは使用できません。"
+            "value" : "有効にすると、小さな水平方向のカーソル移動がアニメーション化されます。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Quando ativado, pequenos movimentos horizontais do cursor são animados. Não disponível para cursores em bloco."
+            "value" : "Quando ativado, pequenos movimentos horizontais do cursor são animados."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Если этот параметр включён, небольшие горизонтальные перемещения курсора анимируются. Недоступно для блочных курсоров."
+            "value" : "Если этот параметр включён, небольшие горизонтальные перемещения курсора анимируются."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "启用后，小幅水平光标移动会带有动画。方块光标不可用。"
+            "value" : "启用后，小幅水平光标移动会带有动画。"
           }
         }
       }

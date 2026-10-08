@@ -1469,7 +1469,12 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                                                         cursorInfo.cursorColor.blueComponent,
                                                         1);
         const CGFloat fade = cursorInfo.fadeAlpha;
-        if (fade >= 1.0) {
+        // During a slide the per-frame state crossfades the foreground by how
+        // much of each column the box actually covers (see
+        // applyBoxCursorTextColorTweakForRow:); overwriting it here with the
+        // flat resting color would undo that. Fall through to the per-column
+        // crossfade path below instead, which only touches backgroundColor.
+        if (fade >= 1.0 && !cursorInfo.slideAnimationInProgress) {
             glyphAttributes[cursorInfo.coord.x].foregroundColor = cursorInfo.textColor;
             glyphAttributes[cursorInfo.coord.x].backgroundColor = cursorBg;
         } else {

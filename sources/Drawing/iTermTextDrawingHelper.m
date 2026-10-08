@@ -3924,10 +3924,13 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
         return NO;
     }
     // The box cursor normally redraws the character underneath it in an
-    // inverted color, which can't be interpolated between two cells. While
-    // the slide is in progress the cursor (and its glyph inversion) is
-    // hidden entirely via drawingHelperSlideAnimationInProgress, so only a
-    // plain colored rectangle needs to be animated, same as the other types.
+    // inverted color, which can't be interpolated between two cells with a
+    // single colored rectangle the way the legacy renderer's screenshot-based
+    // animation works - so PTYTextView additionally excludes the box cursor
+    // here for the legacy path only. The Metal renderer instead crossfades
+    // the glyph's foreground color by how much of each column the box
+    // covers (see applyBoxCursorTextColorTweakForRow: in
+    // iTermMetalPerFrameState.m), so it supports the box cursor fully.
     return _cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL || _cursorType == CURSOR_BOX;
 }
 
