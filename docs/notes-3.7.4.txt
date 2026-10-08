@@ -40,8 +40,29 @@ Bug Fixes:
   null value or a Keyboard Map that is not an
   object. These values are now ignored or
   reported instead.
+- Fixed a crash, repeated on every relaunch,
+  when a profile’s name began with a combining
+  mark.
 - Fixed various other crashes, including ones
   involving Find, the composer, splitting
   panes, Smart Selection, right-to-left text,
   VoiceOver, the GPU renderer, and quitting
   while iTerm2 was still starting up.
+- Pressing space twice in a terminal no longer
+  types a period when macOS’s “Add period with
+  double-space” setting is on. In vim this could
+  repeat your last command. Issue 13123.
+- iTerm2 no longer applies macOS’s automatic
+  spelling correction, capitalization, or smart
+  quotes and dashes. They could change what you
+  type in a terminal. Text replacements still
+  work.
+- Make Text Bigger works again when you type it
+  as ⌘⇧= (the way you type ⌘+). Since 3.7.0,
+  that keystroke opened the Clippings panel
+  instead, because Show Clippings had claimed it.
+  Show Clippings is now ⌘⇧⌥G. Issue 13022.
+- Help popovers, such as the ones shown by the ?
+  buttons in Settings, no longer cut off the last
+  line of text, and no longer scroll when all of
+  their text fits.

@@ -87,3 +87,6 @@ Bug Fixes:
   buttons in Settings, no longer cut off the last
   line of text, and no longer scroll when all of
   their text fits.
+- Fixed a crash, repeated on every relaunch,
+  when a profile’s name began with a combining
+  mark.
