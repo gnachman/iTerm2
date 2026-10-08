@@ -543,31 +543,31 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
     ITAssertWithMessage(original.type == iTermMultiServerRPCTypeLaunch, @"Type is %@", @(original.type));
 
     // Encode and decode the message so we can have our own copy of it.
+    // Parse mallocs its own strings. The temporary buffer is the same one
+    // iTermFileDescriptorMultiServer.c frees after parsing; without this free,
+    // every launch leaks it (malloc in iTermClientServerProtocolMessageInitialize).
     iTermClientServerProtocolMessage temp;
     iTermClientServerProtocolMessageInitialize(&temp);
 
-    {
-        const int status = iTermMultiServerProtocolEncodeMessageFromClient(&original, &temp);
-        ITAssertWithMessage(status == 0, @"On encode: status is %@", @(status));
+    const int encodeStatus = iTermMultiServerProtocolEncodeMessageFromClient(&original, &temp);
+    if (encodeStatus != 0) {
+        iTermClientServerProtocolMessageFree(&temp);
+        ITAssertWithMessage(encodeStatus == 0, @"On encode: status is %@", @(encodeStatus));
     }
 
     iTermMultiServerClientOriginatedMessage messageCopy;
-    {
-        const int status = iTermMultiServerProtocolParseMessageFromClient(&temp, &messageCopy);
-        if (status) {
-            iTermClientServerProtocolMessage temp;
-            iTermClientServerProtocolMessageInitialize(&temp);
-            (void)iTermMultiServerProtocolEncodeMessageFromClient(&original, &temp);
-            NSData *data = [NSData dataWithBytes:temp.ioVectors[0].iov_base
-                                          length:temp.ioVectors[0].iov_len];
-            NSString *description = iTermMultiServerStringForMessageFromClient(&messageCopy);
-            ITAssertWithMessage(status == 0, @"On decode: status is %@ for %@ based on %@",
-                                @(status),
-                                [data debugDescription],
-                                description);
-        }
+    const int status = iTermMultiServerProtocolParseMessageFromClient(&temp, &messageCopy);
+    if (status) {
+        NSData *data = [NSData dataWithBytes:temp.ioVectors[0].iov_base
+                                      length:temp.ioVectors[0].iov_len];
+        NSString *description = iTermMultiServerStringForMessageFromClient(&messageCopy);
+        iTermClientServerProtocolMessageFree(&temp);
+        ITAssertWithMessage(status == 0, @"On decode: status is %@ for %@ based on %@",
+                            @(status),
+                            [data debugDescription],
+                            description);
     }
-
+    iTermClientServerProtocolMessageFree(&temp);
     return messageCopy;
 }
 
