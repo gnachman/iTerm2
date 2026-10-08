@@ -264,6 +264,12 @@ New Features:
   option of it2 set-status, or the
   expires_on argument of the Python API’s
   set_status.
+- Each profile can now choose what its bell
+  sounds like, in Settings > Profiles > Terminal >
+  Bell sound. Pick one of the sounds installed on
+  your Mac or choose “Other…” for any audio file
+  of your own, and give noisy sessions a bell you
+  can tell apart from the rest.
 - Apps can now control right-to-left text
   reordering with the BDSM and SCP escape
   sequences. CSI 8 l enters explicit mode,
