@@ -2822,7 +2822,7 @@ typedef struct {
 // version is formatted as
 // <version number>;<key>=<value>;<key>=<value>...
 // Older scripts may have only a version number and no key-value pairs.
-// The only defined key is "shell", and the value will be tcsh, bash, zsh, or fish.
+// The only defined key is "shell", and the value will be tcsh, bash, zsh, fish, xonsh, or nu.
 - (void)terminalSetShellIntegrationVersion:(NSString *)version {
     RLog(@"begin %@", version);
     NSArray *parts = [version componentsSeparatedByString:@";"];

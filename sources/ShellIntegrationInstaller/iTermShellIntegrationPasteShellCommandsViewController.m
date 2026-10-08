@@ -43,6 +43,22 @@
 - (NSString *)waitingText {
     return NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.WaitingText", nil, [NSBundle mainBundle], @"⏳ Waiting for command to complete…", @"Status shown while waiting for a shell command to finish");
 }
+
+// The dotfile step for a shell that auto-loads the script, which is a no-op.
+- (NSString *)autoloadStepFormat {
+    if (self.shell == iTermShellIntegrationShellNu) {
+        return NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.NuStepFormat", nil, [NSBundle mainBundle], @"Step %d. nushell auto-loads scripts from its autoload directory (no dotfile update needed).", @"Numbered step for nushell, which needs no dotfile update; %d is the step number");
+    }
+    return NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.XonshStepFormat", nil, [NSBundle mainBundle], @"Step %d. Xonsh auto-loads scripts from rc.d (no dotfile update needed).", @"Numbered step for xonsh, which needs no dotfile update; %d is the step number");
+}
+
+- (NSString *)autoloadDoneMessage {
+    if (self.shell == iTermShellIntegrationShellNu) {
+        return NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.NuDone", nil, [NSBundle mainBundle], @"✅ nushell auto-loads scripts from its autoload directory (no dotfile update needed).", @"Completion message for nushell, which needs no dotfile update");
+    }
+    return NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.XonshDone", nil, [NSBundle mainBundle], @"✅ Xonsh auto-loads scripts from rc.d (no dotfile update needed).", @"Completion message for xonsh, which needs no dotfile update");
+}
+
 - (void)update {
     const int stage = _stage;
     if (stage < 0) {
@@ -65,7 +81,7 @@
         indexToBold = lines.count;
     } else {  // stage > 0
         if (self.shell == iTermShellIntegrationShellUnknown) {
-            step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.ShellNotSupported", nil, [NSBundle mainBundle], @"🛑 Your shell is not supported.\n\nOnly bash, fish, tcsh, xonsh, and zsh work with shell integration", @"Message shown when the detected shell is unsupported");
+            step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.ShellNotSupported", nil, [NSBundle mainBundle], @"🛑 Your shell is not supported.\n\nOnly bash, fish, nu, tcsh, xonsh, and zsh work with shell integration", @"Message shown when the detected shell is unsupported");
         } else {
             step = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.Discovered", nil, [NSBundle mainBundle], @"✅ Discovered your shell: you use “%@”.", @"Completed discover step; %@ is the detected shell name"), iTermShellIntegrationShellString(self.shell)];
         }
@@ -108,13 +124,13 @@
             [lines addObject:step];
         }
 
-        // Xonsh auto-loads scripts from rc.d, so no dotfile modification is needed.
-        // Show this step as already complete for xonsh.
-        if (self.shell == iTermShellIntegrationShellXonsh) {
+        // A shell that auto-loads the script needs no dotfile modification. Show this step as
+        // already complete for it.
+        if (iTermShellIntegrationShellLoadsScriptAutomatically(self.shell)) {
             if (stage < i) {
-                step = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.XonshStepFormat", nil, [NSBundle mainBundle], @"Step %d. Xonsh auto-loads scripts from rc.d (no dotfile update needed).", @"Numbered step for xonsh, which needs no dotfile update; %d is the step number"), i + 1];
+                step = [NSString stringWithFormat:[self autoloadStepFormat], i + 1];
             } else {
-                step = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.XonshDone", nil, [NSBundle mainBundle], @"✅ Xonsh auto-loads scripts from rc.d (no dotfile update needed).", @"Completion message for xonsh, which needs no dotfile update")];
+                step = [self autoloadDoneMessage];
             }
             [lines addObject:step];
         } else {
@@ -132,9 +148,9 @@
             [lines addObject:step];
         }
         
-        // For xonsh, stage >= i means we're at the dotfile step which is a no-op,
-        // so treat it as done. For other shells, we need stage > i.
-        BOOL isDone = (stage > i) || (stage >= i && self.shell == iTermShellIntegrationShellXonsh);
+        // For a shell that auto-loads the script, stage >= i means we're at the dotfile step
+        // which is a no-op, so treat it as done. For other shells, we need stage > i.
+        BOOL isDone = (stage > i) || (stage >= i && iTermShellIntegrationShellLoadsScriptAutomatically(self.shell));
         if (isDone) {
             [lines addObject:@""];
             indexToBold = lines.count;

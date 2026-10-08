@@ -2886,7 +2886,9 @@
 		A697E27B1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A697E27C1B42501000E175DA /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */; };
 		A6982A3B2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */ = {isa = PBXBuildFile; fileRef = A6982A3A2F69BA5500156A99 /* iterm2_shell_integration.xonsh */; };
+		A69B1D012F70C11100156A99 /* iterm2_shell_integration.nu in Resources */ = {isa = PBXBuildFile; fileRef = A69B1D002F70C11100156A99 /* iterm2_shell_integration.nu */; };
 		A6982A3C2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */ = {isa = PBXBuildFile; fileRef = A6982A3A2F69BA5500156A99 /* iterm2_shell_integration.xonsh */; };
+		A69B1D022F70C11100156A99 /* iterm2_shell_integration.nu in Resources */ = {isa = PBXBuildFile; fileRef = A69B1D002F70C11100156A99 /* iterm2_shell_integration.nu */; };
 		A69833F02F6B6CA500156A99 /* iTermLocalNetworkPermissionPrompter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69833EF2F6B6CA500156A99 /* iTermLocalNetworkPermissionPrompter.swift */; };
 		A698BF492A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */; };
 		A69941C82331F7C400C76EF2 /* ToolPasteHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */; };
@@ -7403,6 +7405,7 @@
 		A697CED22D9D8E540031583F /* VimKeyParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VimKeyParser.swift; sourceTree = "<group>"; };
 		A697E2791B42501000E175DA /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
 		A6982A3A2F69BA5500156A99 /* iterm2_shell_integration.xonsh */ = {isa = PBXFileReference; lastKnownFileType = text; path = iterm2_shell_integration.xonsh; sourceTree = "<group>"; };
+		A69B1D002F70C11100156A99 /* iterm2_shell_integration.nu */ = {isa = PBXFileReference; lastKnownFileType = text; path = iterm2_shell_integration.nu; sourceTree = "<group>"; };
 		A69833EF2F6B6CA500156A99 /* iTermLocalNetworkPermissionPrompter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermLocalNetworkPermissionPrompter.swift; sourceTree = "<group>"; };
 		A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveSessionBuiltInFunction.swift; sourceTree = "<group>"; };
 		A699507521E33827009916BC /* iTermRawKeyMapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermRawKeyMapper.h; sourceTree = "<group>"; };
@@ -10293,6 +10296,7 @@
 			isa = PBXGroup;
 			children = (
 				A6982A3A2F69BA5500156A99 /* iterm2_shell_integration.xonsh */,
+				A69B1D002F70C11100156A99 /* iterm2_shell_integration.nu */,
 				A629F57323AF2DD900C2F16B /* iterm2_shell_integration.bash */,
 				A629F57423AF2DD900C2F16B /* iterm2_shell_integration.tcsh */,
 				A629F57523AF2DD900C2F16B /* iterm2_shell_integration.zsh */,
@@ -17429,6 +17433,7 @@
 				A6A7ECBA2FA0634400B391BA /* graphic_claude_code.png in Resources */,
 				A6E7AE6C214394CA00DE9F3B /* graphic_bower.png in Resources */,
 				A6982A3C2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */,
+				A69B1D022F70C11100156A99 /* iterm2_shell_integration.nu in Resources */,
 				A6CBB90B2E0A832C00B2CCCB /* distraction-removal.js in Resources */,
 				1D6ED9EC19AEA20D005A7799 /* PrefsArrangements@2x.png in Resources */,
 				A6FE7A7A2E0E120100BEBCE4 /* indexeddb-demo.html in Resources */,
@@ -17665,6 +17670,7 @@
 				A6DEB2EB267BBE6C00192994 /* write_only_profile_prologue.txt in Resources */,
 				A62DBB9920F47CFA008B63D1 /* GoBack.png in Resources */,
 				A6982A3B2F69BA5500156A99 /* iterm2_shell_integration.xonsh in Resources */,
+				A69B1D012F70C11100156A99 /* iterm2_shell_integration.nu in Resources */,
 				A67F615E214395990093940A /* graphic_monitor@2x.png in Resources */,
 				A62A7A8C2F988A5F007CAA0B /* iTermsStatusBarComposerViewController.xib in Resources */,
 				A62A7A8D2F988A5F007CAA0B /* iTermMiniSearchFieldViewController.xib in Resources */,

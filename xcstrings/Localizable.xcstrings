@@ -136181,37 +136181,37 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Erfordert bash, fish, tcsh, xonsh oder zsh."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Requires bash, fish, tcsh, xonsh, or zsh."
+            "value" : "Requires bash, fish, nu, tcsh, xonsh, or zsh."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "bash、fish、tcsh、xonsh、またはzshが必要です。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Requer bash, fish, tcsh, xonsh ou zsh."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Требует bash, fish, tcsh, xonsh или zsh."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "需要 bash、fish、tcsh、xonsh 或 zsh。"
           }
         }
@@ -166634,6 +166634,30 @@
         }
       }
     },
+    "ShellIntegrationInstaller.NuDone" : {
+      "comment" : "Completion message for nushell, which needs no dotfile update",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✅ nushell auto-loads scripts from its autoload directory (no dotfile update needed)."
+          }
+        }
+      }
+    },
+    "ShellIntegrationInstaller.NuStepFormat" : {
+      "comment" : "Numbered step for nushell, which needs no dotfile update; %d is the step number",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Step %d. nushell auto-loads scripts from its autoload directory (no dotfile update needed)."
+          }
+        }
+      }
+    },
     "ShellIntegrationInstaller.PressContinueToRun" : {
       "comment" : "Prompt telling the user to press Continue to run a shell command.",
       "extractionState" : "extracted_with_value",
@@ -166766,37 +166790,37 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "🛑 Ihre Shell wird nicht unterstützt.\n\nNur bash, fish, tcsh, xonsh und zsh funktionieren mit der Shell-Integration"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "🛑 Your shell is not supported.\n\nOnly bash, fish, tcsh, xonsh, and zsh work with shell integration"
+            "value" : "🛑 Your shell is not supported.\n\nOnly bash, fish, nu, tcsh, xonsh, and zsh work with shell integration"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "🛑 お使いのシェルはサポートされていません。\n\nShell Integrationはbash、fish、tcsh、xonsh、zshでのみ動作します"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "🛑 Seu shell não é compatível.\n\nApenas bash, fish, tcsh, xonsh e zsh funcionam com o Shell Integration"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "🛑 Ваша оболочка не поддерживается.\n\nИнтеграция с оболочкой работает только с bash, fish, tcsh, xonsh и zsh"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "🛑 不支持你的 Shell。\n\n只有 bash、fish、tcsh、xonsh 和 zsh 可与 Shell 集成配合使用"
           }
         }

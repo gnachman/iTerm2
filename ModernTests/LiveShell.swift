@@ -34,6 +34,7 @@ final class LiveShell {
     private let childPID: pid_t
     private let stateLock = NSLock()
     private var _exited = false
+    private let answersCursorPositionRequests: Bool
 
     /// Whether the child process has exited.
     var hasExited: Bool {
@@ -44,13 +45,21 @@ final class LiveShell {
     /// Launch `shellPath` with the supplied argv (argv[0] included) and env.
     /// Each chunk the shell writes is delivered to `onBytes` synchronously
     /// from the reader thread.
+    ///
+    /// With `answersCursorPositionRequests`, every cursor-position request
+    /// (CSI 6n) the shell writes is answered with row 1, column 1. Line
+    /// editors such as nushell's reedline send one on startup and block
+    /// until it is answered, so without a reply the shell never reads the
+    /// commands the harness sends.
     init(shellPath: String,
          arguments: [String],
          environment: [String: String],
+         answersCursorPositionRequests: Bool = false,
          onBytes: @escaping (UnsafePointer<CChar>, Int) -> Void) throws {
         guard FileManager.default.fileExists(atPath: shellPath) else {
             throw LiveShellError.shellNotFound(path: shellPath)
         }
+        self.answersCursorPositionRequests = answersCursorPositionRequests
 
         var masterFD: Int32 = -1
         var term = termios.shellIntegrationDefault
@@ -142,6 +151,8 @@ final class LiveShell {
 
     private func readLoop(onBytes: (UnsafePointer<CChar>, Int) -> Void) {
         var buffer = [CChar](repeating: 0, count: 4096)
+        // The last bytes of the previous chunk, in case a CSI 6n straddles two reads.
+        var carry = [CChar]()
         while true {
             let n = buffer.withUnsafeMutableBufferPointer { ptr -> Int in
                 return read(masterFD, ptr.baseAddress, ptr.count)
@@ -149,6 +160,9 @@ final class LiveShell {
             if n > 0 {
                 buffer.withUnsafeBufferPointer { ptr in
                     onBytes(ptr.baseAddress!, n)
+                    if answersCursorPositionRequests {
+                        answerCursorPositionRequests(in: Array(ptr[0..<n]), carry: &carry)
+                    }
                 }
                 continue
             }
@@ -159,6 +173,27 @@ final class LiveShell {
                 _ = waitpid(childPID, nil, WNOHANG)
                 return
             }
+        }
+    }
+
+    private static let cursorPositionRequest: [CChar] = [0x1B, 0x5B, 0x36, 0x6E]  // ESC [ 6 n
+
+    private func answerCursorPositionRequests(in chunk: [CChar], carry: inout [CChar]) {
+        let request = Self.cursorPositionRequest
+        let bytes = carry + chunk
+        var requests = 0
+        var i = 0
+        while i + request.count <= bytes.count {
+            if Array(bytes[i..<(i + request.count)]) == request {
+                requests += 1
+                i += request.count
+            } else {
+                i += 1
+            }
+        }
+        carry = Array(bytes.suffix(request.count - 1))
+        for _ in 0..<requests {
+            send("\u{1B}[1;1R")
         }
     }
 

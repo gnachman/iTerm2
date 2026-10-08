@@ -1,7 +1,7 @@
 #!/bin/bash
 # Live shell-integration test harness runner. Drives
 # ShellIntegrationLiveHarness in the ModernTests bundle against real
-# shells (zsh, bash, fish, tcsh, xonsh). NOT a unit test — it spawns
+# shells (zsh, bash, fish, tcsh, xonsh, nu). NOT a unit test — it spawns
 # subprocesses and reads from a pseudo-tty.
 #
 # Usage:
@@ -49,9 +49,9 @@ if [[ -z "$filter" ]]; then
 elif [[ "$filter" == test_* ]]; then
     only_testing_args=( "${class_path}/${filter}" )
 else
-    # Treat as a shell name (zsh, bash, fish, tcsh, xonsh).
+    # Treat as a shell name (zsh, bash, fish, tcsh, xonsh, nu).
     case "$filter" in
-        zsh|bash|fish|tcsh|xonsh)
+        zsh|bash|fish|tcsh|xonsh|nu)
             # Match all tests whose method name starts with the capitalized shell name.
             cap="$(tr '[:lower:]' '[:upper:]' <<< "${filter:0:1}")${filter:1}"
             methods=(
@@ -63,7 +63,7 @@ else
             done
             ;;
         *)
-            echo "Unknown filter '$filter'. Pass a shell name (zsh/bash/fish/tcsh/xonsh) or an exact test method name." >&2
+            echo "Unknown filter '$filter'. Pass a shell name (zsh/bash/fish/tcsh/xonsh/nu) or an exact test method name." >&2
             exit 2
             ;;
     esac
