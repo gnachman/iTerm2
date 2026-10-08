@@ -40,6 +40,7 @@ cp $SUBMODULE/shell_integration/fish  Resources/shell_integration/iterm2_shell_i
 cp $SUBMODULE/shell_integration/tcsh  Resources/shell_integration/iterm2_shell_integration.tcsh
 cp $SUBMODULE/shell_integration/xonsh Resources/shell_integration/iterm2_shell_integration.xonsh
 cp $SUBMODULE/shell_integration/zsh   Resources/shell_integration/iterm2_shell_integration.zsh
+cp $SUBMODULE/shell_integration/nu    Resources/shell_integration/iterm2_shell_integration.nu
 # it2.py is owned by the shell-integration repo (it is embedded into the scripts
 # above and materialized on the remote). Copy it back for the app/tests.
 cp $SUBMODULE/shell_integration/it2.py OtherResources/it2.py

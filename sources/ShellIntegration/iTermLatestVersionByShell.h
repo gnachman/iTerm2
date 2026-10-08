@@ -5,4 +5,5 @@ latestVersionByShell = @{
     @"tcsh": @9,
     @"xonsh": @4,
     @"zsh": @19,
+    @"nu": @1,
 };
