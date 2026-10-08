@@ -15,8 +15,9 @@ final class PTYTabTiledSessionsTests: XCTestCase {
     private var savedShowPaneTitlesForOnePane = false
     private let floatFrame = NSRect(x: 40, y: 30, width: 300, height: 200)
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try OnscreenTestGate.skipUnlessEnabled()
         savedShowPaneTitles = iTermPreferences.bool(forKey: kPreferenceKeyShowPaneTitles)
         savedShowPaneTitlesForOnePane = iTermPreferences.bool(forKey: kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane)
         iTermPreferences.setBool(true, forKey: kPreferenceKeyShowPaneTitles)
@@ -25,10 +26,13 @@ final class PTYTabTiledSessionsTests: XCTestCase {
     }
 
     override func tearDown() {
-        fixture.close()
-        fixture = nil
-        iTermPreferences.setBool(savedShowPaneTitles, forKey: kPreferenceKeyShowPaneTitles)
-        iTermPreferences.setBool(savedShowPaneTitlesForOnePane, forKey: kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane)
+        // When setUp was skipped nothing was saved, so there is nothing to restore.
+        if let fixture {
+            fixture.close()
+            self.fixture = nil
+            iTermPreferences.setBool(savedShowPaneTitles, forKey: kPreferenceKeyShowPaneTitles)
+            iTermPreferences.setBool(savedShowPaneTitlesForOnePane, forKey: kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane)
+        }
         super.tearDown()
     }
 

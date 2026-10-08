@@ -14,8 +14,9 @@ final class FloatingPaneWindowOperationTests: XCTestCase {
     private var fixture: TerminalWindowTestFixture!
     private let floatFrame = NSRect(x: 60, y: 60, width: 300, height: 200)
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try OnscreenTestGate.skipUnlessEnabled()
         fixture = TerminalWindowTestFixture()
         var frame = fixture.window.frame
         frame.size = NSSize(width: 900, height: 650)
@@ -23,7 +24,7 @@ final class FloatingPaneWindowOperationTests: XCTestCase {
     }
 
     override func tearDown() {
-        fixture.close()
+        fixture?.close()
         fixture = nil
         super.tearDown()
     }

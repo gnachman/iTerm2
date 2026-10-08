@@ -41,13 +41,14 @@ private final class MouseRecordingView: NSView {
 final class TerminalWindowTestFixtureTests: XCTestCase {
     private var fixture: TerminalWindowTestFixture!
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try OnscreenTestGate.skipUnlessEnabled()
         fixture = TerminalWindowTestFixture()
     }
 
     override func tearDown() {
-        fixture.close()
+        fixture?.close()
         fixture = nil
         super.tearDown()
     }

@@ -415,20 +415,25 @@ final class SwiftyStringTextFieldReuseTests: XCTestCase {
 final class ToolStatusShortcutReloadTests: XCTestCase {
     private var window: NSWindow?
     private var savedLastUse: Any?
+    private var didSaveLastUse = false
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try OnscreenTestGate.skipUnlessEnabled()
         // A visible ToolStatus stamps this key on layout, and ClaudeWatcher
         // reads it as "the user has used the status tool". Put it back so
         // running the tests doesn't change the host's defaults.
         savedLastUse = iTermUserDefaults.userDefaults().object(forKey: ToolStatus.statusToolLastUseUserDefaultsKey)
+        didSaveLastUse = true
     }
 
     override func tearDown() {
         window?.orderOut(nil)
         window?.contentView = nil
         window = nil
-        iTermUserDefaults.userDefaults().set(savedLastUse, forKey: ToolStatus.statusToolLastUseUserDefaultsKey)
+        if didSaveLastUse {
+            iTermUserDefaults.userDefaults().set(savedLastUse, forKey: ToolStatus.statusToolLastUseUserDefaultsKey)
+        }
         super.tearDown()
     }
 

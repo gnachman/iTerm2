@@ -11,7 +11,8 @@ import XCTest
 
 final class NSAlert_iTermTests: XCTestCase {
 
-    func test_modalReturnsWhenParentWindowCloses() {
+    func test_modalReturnsWhenParentWindowCloses() throws {
+        try OnscreenTestGate.skipUnlessEnabled()
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 100, height: 100),
             styleMask: [.titled, .closable],

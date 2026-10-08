@@ -15,8 +15,9 @@ import XCTest
 final class FloatingPaneOcclusionTests: XCTestCase {
     private var fixture: TerminalWindowTestFixture!
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try OnscreenTestGate.skipUnlessEnabled()
         fixture = TerminalWindowTestFixture()
         var frame = fixture.window.frame
         frame.size = NSSize(width: 900, height: 650)
@@ -24,7 +25,7 @@ final class FloatingPaneOcclusionTests: XCTestCase {
     }
 
     override func tearDown() {
-        fixture.close()
+        fixture?.close()
         fixture = nil
         super.tearDown()
     }

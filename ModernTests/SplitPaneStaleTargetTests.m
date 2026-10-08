@@ -65,6 +65,9 @@
 
 - (void)setUp {
     [super setUp];
+    // Makes terminal windows key and orders them front. See OnscreenTestGate.swift.
+    XCTSkipUnless([NSProcessInfo.processInfo.environment[@"ITERM2_ONSCREEN_TESTS"] isEqualToString:@"1"],
+                  @"Puts windows on screen. Set ITERM2_ONSCREEN_TESTS=1 to run.");
     _profile = [[ProfileModel sharedInstance] defaultBookmark];
     _term = [[SplitSpyTerminal alloc] initWithSmartLayout:NO
                                                windowType:WINDOW_TYPE_NORMAL

@@ -15,8 +15,9 @@ final class FloatingPaneDropTests: XCTestCase {
     private var destination: TerminalWindowTestFixture!
     private let floatFrame = NSRect(x: 60, y: 60, width: 300, height: 200)
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try OnscreenTestGate.skipUnlessEnabled()
         source = TerminalWindowTestFixture()
         destination = TerminalWindowTestFixture()
         for fixture in [source!, destination!] {
@@ -28,8 +29,8 @@ final class FloatingPaneDropTests: XCTestCase {
 
     override func tearDown() {
         MovePaneController.sharedInstance()?.session = nil
-        source.close()
-        destination.close()
+        source?.close()
+        destination?.close()
         source = nil
         destination = nil
         super.tearDown()

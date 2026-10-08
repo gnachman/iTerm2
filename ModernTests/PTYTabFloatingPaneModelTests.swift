@@ -13,13 +13,14 @@ final class PTYTabFloatingPaneModelTests: XCTestCase {
     private var fixture: TerminalWindowTestFixture!
     private let floatFrame = NSRect(x: 40, y: 30, width: 300, height: 200)
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try OnscreenTestGate.skipUnlessEnabled()
         fixture = TerminalWindowTestFixture()
     }
 
     override func tearDown() {
-        fixture.close()
+        fixture?.close()
         fixture = nil
         super.tearDown()
     }
