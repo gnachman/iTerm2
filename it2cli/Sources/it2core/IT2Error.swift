@@ -3,6 +3,9 @@ import Foundation
 enum IT2Error: Error, CustomStringConvertible {
     case connectionError(String)
     case apiError(String)
+    /// A function invoked through the API ran and reported an error, as opposed
+    /// to the request itself failing. Only APIClient.invoke throws it.
+    case functionFailed(String)
     case targetNotFound(String)
     case invalidArgument(String)
     /// The user declined an interactive confirmation prompt.
@@ -12,6 +15,7 @@ enum IT2Error: Error, CustomStringConvertible {
         switch self {
         case .connectionError: return 2
         case .apiError: return 1
+        case .functionFailed: return 1
         case .targetNotFound: return 3
         case .invalidArgument: return 4
         case .cancelled: return 1
@@ -22,6 +26,7 @@ enum IT2Error: Error, CustomStringConvertible {
         switch self {
         case .connectionError(let msg),
              .apiError(let msg),
+             .functionFailed(let msg),
              .targetNotFound(let msg),
              .invalidArgument(let msg):
             return msg

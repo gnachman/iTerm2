@@ -93,7 +93,8 @@ final class APIClient {
     /// returned nothing. With a session ID the function runs in that session's
     /// context; without one it runs in the app context and names its own
     /// target. `failure` prefixes the reason when the function itself reports
-    /// an error.
+    /// an error, which throws `IT2Error.functionFailed`. Anything else, such as a
+    /// dropped connection, throws as `send` does.
     func invoke(_ invocation: String, sessionID: String? = nil, failure: String) throws -> String {
         let invoke = ITMInvokeFunctionRequest()
         if let sessionID {
@@ -116,7 +117,7 @@ final class APIClient {
         }
         if invokeResp.dispositionOneOfCase == .error {
             let reason = invokeResp.error?.errorReason ?? "unknown"
-            throw IT2Error.apiError("\(failure): \(reason)")
+            throw IT2Error.functionFailed("\(failure): \(reason)")
         }
         return invokeResp.success?.jsonResult ?? ""
     }

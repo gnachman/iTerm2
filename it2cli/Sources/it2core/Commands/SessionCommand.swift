@@ -45,9 +45,22 @@ extension Session {
         @Flag(name: .long, help: "Output as JSON.")
         var json = false
 
+        @Option(name: .long, help: ArgumentHelp(
+            "Print an interpolated string for each session instead of the usual columns.",
+            discussion: """
+                Evaluated in each session’s context, as in a badge. For example: \
+                --format '\\(session.id)\\t\\(session.path)\\t\\(session.jobName)'. \
+                An undefined variable becomes an empty string. With --json, the result \
+                is added to each session as “formatted”.
+                """,
+            valueName: "string"))
+        var format: String?
+
         func run(_ ctx: IT2Context) throws {
             let client = try ctx.makeClient()
             defer { client.disconnect() }
+
+            let formatInvocation = format.map { "iterm2.interpolate(string: \(swiftyStringLiteral($0)))" }
 
             let request = ITMClientOriginatedMessage()
             request.id_p = client.nextId()
@@ -61,30 +74,57 @@ extension Session {
 
             guard let windows = listResp.windowsArray as? [ITMListSessionsResponse_Window] else { return }
 
-            var sessionsData: [[String: Any]] = []
+            var sessions: [(window: ITMListSessionsResponse_Window,
+                            tab: ITMListSessionsResponse_Tab,
+                            summary: ITMSessionSummary)] = []
             for window in windows {
                 guard let tabs = window.tabsArray as? [ITMListSessionsResponse_Tab] else { continue }
                 for tab in tabs {
-                    let isTmux = tab.tmuxWindowId != nil && tab.tmuxWindowId != "-1"
                     walkSessions(in: tab) { s in
-                        let cols = s.hasGridSize ? Int(s.gridSize.width) : 0
-                        let rows = s.hasGridSize ? Int(s.gridSize.height) : 0
-                        let id = s.uniqueIdentifier ?? ""
-                        let vars = (try? fetchSessionVars(client: client, sessionId: id))
-                            ?? (name: "", tty: "")
-                        sessionsData.append([
-                            "id": id,
-                            "name": vars.name,
-                            "title": s.title ?? "",
-                            "tty": vars.tty,
-                            "cols": cols,
-                            "rows": rows,
-                            "window_id": window.windowId ?? "",
-                            "tab_id": tab.tabId ?? "",
-                            "is_tmux": isTmux,
-                        ])
+                        sessions.append((window, tab, s))
                     }
                 }
+            }
+
+            let formattedValues = try formatInvocation.map {
+                try formatAll(client: client,
+                              invocation: $0,
+                              sessionIds: sessions.map { $0.summary.uniqueIdentifier ?? "" },
+                              ctx: ctx)
+            }
+
+            // A formatted line replaces the columns, so text output doesn't need the
+            // variables behind them.
+            if let formattedValues, !json {
+                for value in formattedValues {
+                    ctx.out(value)
+                }
+                return
+            }
+
+            var sessionsData: [[String: Any]] = []
+            for (i, (window, tab, s)) in sessions.enumerated() {
+                let isTmux = tab.tmuxWindowId != nil && tab.tmuxWindowId != "-1"
+                let cols = s.hasGridSize ? Int(s.gridSize.width) : 0
+                let rows = s.hasGridSize ? Int(s.gridSize.height) : 0
+                let id = s.uniqueIdentifier ?? ""
+                let vars = (try? fetchSessionVars(client: client, sessionId: id))
+                    ?? (name: "", tty: "")
+                var entry: [String: Any] = [
+                    "id": id,
+                    "name": vars.name,
+                    "title": s.title ?? "",
+                    "tty": vars.tty,
+                    "cols": cols,
+                    "rows": rows,
+                    "window_id": window.windowId ?? "",
+                    "tab_id": tab.tabId ?? "",
+                    "is_tmux": isTmux,
+                ]
+                if let formattedValues {
+                    entry["formatted"] = formattedValues[i]
+                }
+                sessionsData.append(entry)
             }
 
             if json {
@@ -101,6 +141,49 @@ extension Session {
             }
         }
 
+
+        /// Evaluate the --format invocation in each session's context, in order.
+        ///
+        /// An iTerm2 that predates iterm2.interpolate fails the up-front probe, so
+        /// nothing is evaluated. Past that, a session that fails (it closed during
+        /// the listing, or the format calls a function that fails there) gets an
+        /// empty string, as an undefined variable does, and each distinct reason is
+        /// reported once on stderr. When every session fails the format itself is at
+        /// fault (a syntax error, say), so that throws. Only a failure the function
+        /// reports counts as a session's; a transport error such as iTerm2 quitting
+        /// mid-listing throws, rather than blanking the remaining sessions.
+        private func formatAll(client: APIClient,
+                               invocation: String,
+                               sessionIds: [String],
+                               ctx: IT2Context) throws -> [String] {
+            _ = try client.invoke("iterm2.interpolate(string: \"\")",
+                                  failure: "This version of iTerm2 doesn’t support --format")
+
+            var values: [String] = []
+            var failures: [(sessionId: String, error: Error)] = []
+            for sessionId in sessionIds {
+                do {
+                    let result = try client.invoke(invocation,
+                                                   sessionID: sessionId,
+                                                   failure: "Could not evaluate --format")
+                    values.append(decodeJSONString(result) ?? "")
+                } catch let error as IT2Error {
+                    guard case .functionFailed = error else {
+                        throw error
+                    }
+                    failures.append((sessionId, error))
+                    values.append("")
+                }
+            }
+            if let first = failures.first, failures.count == sessionIds.count {
+                throw first.error
+            }
+            var reported = Set<String>()
+            for failure in failures where reported.insert("\(failure.error)").inserted {
+                ctx.err("\(failure.error) (session \(failure.sessionId))")
+            }
+            return values
+        }
 
         /// Fetch session.name and session.tty via VariableRequest.
         private func fetchSessionVars(client: APIClient, sessionId: String) throws -> (name: String, tty: String) {

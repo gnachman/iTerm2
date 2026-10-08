@@ -106,6 +106,94 @@ func jsonString(_ s: String) -> String {
     return "\"\(escaped)\""
 }
 
+/// Quote the body of an interpolated string (such as `\(session.path) "x"`) as a
+/// string literal for an iTerm2 expression. A bare `"` or a trailing `\` in the
+/// literal text is escaped so it can't end the literal early. `\(...)` is copied
+/// unchanged, since quotes in there belong to the embedded expression. The scan
+/// mirrors iTerm2's iTermSwiftyStringParser.
+func swiftyStringLiteral(_ body: String) -> String {
+    enum State {
+        case literal
+        case expression
+        case expressionString
+        case expressionStringEscape
+    }
+    var state = State.literal
+    var parens = 0
+    var parensStack: [Int] = []
+    var result = "\""
+    let chars = Array(body)
+    var i = 0
+    while i < chars.count {
+        let c = chars[i]
+        i += 1
+        switch state {
+        case .literal:
+            if c == "\\" {
+                guard i < chars.count else {
+                    result += "\\\\"
+                    continue
+                }
+                let next = chars[i]
+                i += 1
+                result.append(c)
+                result.append(next)
+                if next == "(" {
+                    parens = 1
+                    state = .expression
+                }
+            } else if c == "\"" {
+                result += "\\\""
+            } else {
+                result.append(c)
+            }
+        case .expression:
+            result.append(c)
+            if c == "(" {
+                parens += 1
+            } else if c == ")" {
+                parens -= 1
+                if parens == 0 {
+                    if let outer = parensStack.popLast() {
+                        parens = outer
+                        state = .expressionString
+                    } else {
+                        state = .literal
+                    }
+                }
+            } else if c == "\"" {
+                state = .expressionString
+            }
+        case .expressionString:
+            result.append(c)
+            if c == "\\" {
+                state = .expressionStringEscape
+            } else if c == "\"" {
+                state = .expression
+            }
+        case .expressionStringEscape:
+            result.append(c)
+            if c == "(" {
+                parensStack.append(parens)
+                parens = 1
+                state = .expression
+            } else {
+                state = .expressionString
+            }
+        }
+    }
+    return result + "\""
+}
+
+/// Decode a JSON value that should be a string, as the API returns variable values
+/// and function results. Nil when it isn't a string (including JSON null).
+func decodeJSONString(_ json: String) -> String? {
+    guard let data = json.data(using: .utf8) else {
+        return nil
+    }
+    return (try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)) as? String
+}
+
 // MARK: - Focus State
 
 /// Parsed focus state from a FocusResponse.

@@ -454,6 +454,12 @@ Improvements:
   every time you switch tabs or the running
   command changes, which had been making windows
   slowly get slower the longer they stayed open.
+- “it2 session list” takes a --format option: an
+  interpolated string evaluated in each session,
+  such as '\(session.path)'. It prints one line
+  per session, or with --json adds the result to
+  each session as “formatted”. This lists every
+  session’s directory or job in one command.
 
 Bug Fixes:
 - On macOS 26, hiding a hotkey window when no

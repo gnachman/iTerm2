@@ -175,6 +175,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     [iTermSavePanelBuiltInFunction registerBuiltInFunction];
     [iTermGetProfilePropertyBuiltInFunction registerBuiltInFunction];
     [iTermColorAlphaBuiltInFunction registerBuiltInFunction];
+    [iTermInterpolateBuiltInFunction registerBuiltInFunction];
     [iTermURLEncodeBuiltInFunction registerBuiltInFunction];
     [iTermTmuxFormatBuiltInFunction registerBuiltInFunction];
     [iTermSetStatusBuiltInFunction registerBuiltInFunction];

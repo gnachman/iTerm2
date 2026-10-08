@@ -24,6 +24,23 @@ it2 session list
 Should print one line per session: `<UUID>\t<title>`. Verify the count matches
 the number of open sessions across all windows and tabs.
 
+### session list --format
+
+```
+it2 session list --format '\(session.id)\t\(session.path)\t\(session.jobName) "\(session.name)"'
+it2 session list --json --format '\(session.path)'
+```
+
+The first prints one line per session with its ID, working directory, foreground
+job, and quoted name, with real tabs and unescaped slashes. A session missing a
+variable prints an empty field rather than failing. The second adds a
+`formatted` key holding the directory to each session in the JSON. Against an
+iTerm2 that predates `iterm2.interpolate`, both fail before printing anything.
+
+A session that can’t be evaluated (for example, one closed mid-listing) prints
+an empty line and a note on stderr; the rest still print. A format that fails
+in every session, such as `--format '\(session.path'`, fails with no output.
+
 ### session split (horizontal)
 
 ```
