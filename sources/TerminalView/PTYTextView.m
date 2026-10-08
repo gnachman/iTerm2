@@ -1635,9 +1635,18 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         // - cursorSmoothSlide preference is enabled
         // - cursor type supports it (drawingHelper.cursorSupportsSmoothSlide)
         // - 1-cell horizontal move
+        // - not a box cursor on the legacy renderer: the legacy animator shows
+        //   a cached screenshot with the cursor hidden underneath the sliding
+        //   rectangle, so a box cursor's character-inversion would be hidden
+        //   entirely for the whole animation. The Metal renderer crossfades
+        //   the glyph color by how much of each column the box covers
+        //   instead (see applyBoxCursorTextColorTweakForRow: in
+        //   iTermMetalPerFrameState.m), so it isn't affected by this
+        //   exclusion; a box cursor still just jumps on the legacy renderer.
         const BOOL useSmoothSlide = (smoothSlideEnabled &&
                                      drawingHelper.cursorSupportsSmoothSlide &&
-                                     [self shouldSmoothSlideFrom:from to:to]);
+                                     [self shouldSmoothSlideFrom:from to:to] &&
+                                     !(isLegacyPath && drawingHelper.cursorType == CURSOR_BOX));
         if (useSmoothSlide) {
             DLog(@"Using smooth slide animation");
             if (isLegacyPath) {
