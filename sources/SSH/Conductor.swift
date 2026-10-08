@@ -2081,7 +2081,7 @@ extension Conductor {
     }
 
     private func shellSupportsInjection(_ shell: String, _ version: String) -> Bool {
-        let alwaysSupported = ["fish", "xonsh", "zsh"]
+        let alwaysSupported = ["fish", "nu", "xonsh", "zsh"]
         if alwaysSupported.contains(shell.lastPathComponent) {
             return true
         }
@@ -2345,7 +2345,7 @@ extension Conductor {
                         modifiedCommandArgs?.insert(shell, at: 0)
                     }
                     // Otherwise: a plain interactive session with purely env-based injection
-                    // (zsh/fish/xonsh add no argv). Leave modifiedCommandArgs empty so framerLogin
+                    // (zsh/fish/xonsh/nu add no argv). Leave modifiedCommandArgs empty so framerLogin
                     // passes no args and the framer execs the login shell *interactively*, inheriting
                     // the injected environment (e.g. ZDOTDIR). If we named the shell here the framer
                     // would run `login_shell -c "<shell>"`; when the login shell is the same shell

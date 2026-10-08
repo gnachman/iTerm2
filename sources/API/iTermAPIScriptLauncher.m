@@ -821,7 +821,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     // Run through the user's shell so their PATH is set properly.
     NSString *shell = [iTermOpenDirectory userShell];
     // I've tested these shells and they all work when run as: $SHELL -c command arg arg
-    NSArray<NSString *> *const knownShells = @[ @"bash", @"tcsh", @"zsh", @"fish", @"xonsh" ];
+    NSArray<NSString *> *const knownShells = @[ @"bash", @"tcsh", @"zsh", @"fish", @"xonsh", @"nu" ];
     if ([[NSFileManager defaultManager] fileExistsAtPath:shell] &&
         [knownShells containsObject:[shell lastPathComponent]]) {
         task.launchPath = shell;

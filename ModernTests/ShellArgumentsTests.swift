@@ -13,7 +13,7 @@ import XCTest
 
 final class ShellArgumentsTests: XCTestCase {
     private let script = "/tmp/script"
-    private let loginCapable = ["/bin/zsh", "/bin/bash", "/bin/sh", "/bin/dash", "/bin/ksh", "/opt/homebrew/bin/fish"]
+    private let loginCapable = ["/bin/zsh", "/bin/bash", "/bin/sh", "/bin/dash", "/bin/ksh", "/opt/homebrew/bin/fish", "/opt/homebrew/bin/nu"]
     private let loginIncapable = ["/bin/tcsh", "/bin/csh", "/opt/local/bin/tcsh", "/opt/homebrew/bin/elvish", "/usr/local/bin/xonsh"]
 
     private func arguments(_ shell: String, _ mode: iTermShellRunMode) -> [String] {

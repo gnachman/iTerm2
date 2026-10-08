@@ -5,9 +5,10 @@ report: the working directory percent-encoded byte-wise over UTF-8
 (RFC 3986), the username and hostname, and the `?machineID=` token.
 The percent-encoders are the subtle part (bash's `printf "%02X"`
 sign handling, zsh's `nomultibyte`, tcsh's awk `ord[]` table, fish's
-`string escape --style=url`, xonsh's `_encode_path`).
+`string escape --style=url`, xonsh's `_encode_path`, nu's
+`iterm2 encode-path`).
 
-The encoders for all five shells (bash, zsh, fish, tcsh, xonsh) are
+The encoders for all six shells (bash, zsh, fish, tcsh, xonsh, nu) are
 covered automatically by `tools/test_shell_integration_encoders.sh`
 (it runs each shell's encoder against a table of inputs and asserts
 the golden output; skips a shell that isn't installed). It also drives

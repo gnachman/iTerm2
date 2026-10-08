@@ -26,12 +26,37 @@ NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell) {
             return @"tcsh";
         case iTermShellIntegrationShellXonsh:
             return @"xonsh";
+        case iTermShellIntegrationShellNu:
+            return @"nu";
         case iTermShellIntegrationShellZsh:
             return @"zsh";
         case iTermShellIntegrationShellUnknown:
             return @"an unsupported shell";
     }
 }
+
+BOOL iTermShellIntegrationShellLoadsScriptAutomatically(iTermShellIntegrationShell shell) {
+    switch (shell) {
+        case iTermShellIntegrationShellXonsh:
+        case iTermShellIntegrationShellNu:
+            return YES;
+        case iTermShellIntegrationShellBash:
+        case iTermShellIntegrationShellTcsh:
+        case iTermShellIntegrationShellZsh:
+        case iTermShellIntegrationShellFish:
+        case iTermShellIntegrationShellUnknown:
+            return NO;
+    }
+    return NO;
+}
+
+// Asks nu where it autoloads per-user scripts from and keeps the answer in the helper shell.
+// nushell 0.102 and later read $nu.user-autoload-dirs; 0.100 and 0.101 only read the vendor
+// directories, so there the per-user one under the data directory is used, which later versions
+// read too. The website installers run the same query. Exported because catString:to: writes
+// the file from a nested helper shell.
+static NSString *const iTermShellIntegrationNuAutoloadDirCommand =
+    @"IT2_NU_AUTOLOAD_DIR=$(\"$SHELL\" --no-config-file -c 'print ($nu.user-autoload-dirs? | default [($nu.data-dir | path join vendor autoload)] | first)'); export IT2_NU_AUTOLOAD_DIR\n";
 
 typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     iTermShellIntegrationInstallationStateFirstPage,
@@ -274,6 +299,11 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         // Xonsh auto-loads scripts from rc.d, so put it there directly
         return @"~/.config/xonsh/rc.d/iterm2.xsh";
     }
+    if (self.shell == iTermShellIntegrationShellNu) {
+        // nushell sources the script from its autoload directory, which catToScript:completion:
+        // asks nu for. Quoted because on macOS it is under ~/Library/Application Support.
+        return @"\"$IT2_NU_AUTOLOAD_DIR/iterm2_shell_integration.nu\"";
+    }
     return [NSString stringWithFormat:@"%@/.iterm2_shell_integration.%@",
             self.dotdir, iTermShellIntegrationShellString(self.shell)];
 }
@@ -294,6 +324,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         string = [string stringByAppendingString:@"\n"];
         return [string stringByAppendingString:@"$PATH.insert(0, $HOME + '/.iterm2')"];
     }
+    if (self.shell == iTermShellIntegrationShellNu) {
+        string = [string stringByAppendingString:@"\n"];
+        return [string stringByAppendingString:@"$env.PATH = ($env.PATH | prepend ($env.HOME | path join \".iterm2\"))"];
+    }
 
     // Add aliases for other shells
     url = [[NSBundle bundleForClass:self.class] URLForResource:@"utilities-manifest" withExtension:@"txt"];
@@ -310,6 +344,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             case iTermShellIntegrationShellTcsh:
                 return [NSString stringWithFormat:@"alias %@ %@/.iterm2/%@", command, self.dotdir, command];
             case iTermShellIntegrationShellXonsh:
+            case iTermShellIntegrationShellNu:
             case iTermShellIntegrationShellUnknown:
                 return nil;
         }
@@ -332,6 +367,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         case iTermShellIntegrationShellZsh:
         case iTermShellIntegrationShellBash:
         case iTermShellIntegrationShellXonsh:
+        case iTermShellIntegrationShellNu:
             break;
         case iTermShellIntegrationShellFish:
             shell_and=@"; and";
@@ -359,7 +395,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)discoverShell:(BOOL)reallySend completion:(void (^)(NSString *shell, NSString *dotdir))completion {
     iTermExpectation *expectation = nil;
-    NSString *result = @"echo My shell is $SHELL\n";
+    // Through sh rather than a bare echo: nushell keeps the environment under $env and has no
+    // $SHELL, so echo would be a parse error there, while sh is what the rest of the installer
+    // runs its commands in anyway.
+    NSString *result = @"sh -c 'echo My shell is $SHELL'\n";
     [self sendText:result
         reallySend:reallySend
         afterRegex:@"^My shell is (.+)"
@@ -417,6 +456,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             [strings addObject:@"mkdir -p ~/.config/xonsh/rc.d\n"];
             script = @"~/.config/xonsh/rc.d/iterm2.xsh";
             break;
+        case iTermShellIntegrationShellNu:
+            // No dotfile: modifyStartupScriptsAndProceedTo:reallySend: skips this step for
+            // shells that autoload the script.
         case iTermShellIntegrationShellUnknown:
             assert(NO);
     }
@@ -462,9 +504,12 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 // shell fails to launch, the heredocs run in the user's shell, and tcsh never terminates
 // <<'EOF' on a plain EOF line.
 - (NSString *)launchHelperShellString {
-    if (self.shell == iTermShellIntegrationShellXonsh) {
+    if (self.shell == iTermShellIntegrationShellXonsh || self.shell == iTermShellIntegrationShellNu) {
         // For xonsh, use sh -c to set PS1/PS2 properly (env would include literal quotes).
         // The -c command sets prompts then runs an interactive sh.
+        // nushell needs the single line for another reason: reedline reads typeahead in bulk,
+        // so of the three lines below only `sh` would reach sh and the other two would run in
+        // nushell once sh exits. bash and zsh read a byte at a time and don't have this problem.
         return @"sh -c 'ENV=/dev/null INPUTRC=/dev/null PS1=\">> \" PS2=\"> \" sh'\n";
     }
     // The first sh gives a known syntax for setting ENV, which an interactive sh would source.
@@ -472,8 +517,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 - (NSString *)exitHelperShellString {
-    if (self.shell == iTermShellIntegrationShellXonsh) {
-        // Only one sh for xonsh (see launchHelperShellString)
+    if (self.shell == iTermShellIntegrationShellXonsh || self.shell == iTermShellIntegrationShellNu) {
+        // Only one sh for xonsh and nushell (see launchHelperShellString)
         return @"exit\n";
     }
     return @"exit\nexit\n";
@@ -524,6 +569,19 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     if (self.shell == iTermShellIntegrationShellXonsh) {
         // Create the rc.d directory for xonsh (scripts there are auto-loaded)
         [result appendString:[self sendText:@"mkdir -p ~/.config/xonsh/rc.d\n"
+                                 reallySend:reallySend
+                                 afterRegex:@"^>> "
+                                expectation:&expectation]];
+    } else if (self.shell == iTermShellIntegrationShellNu) {
+        // nushell sources every .nu file in its autoload directories at startup, after config.nu,
+        // so the script goes there and no dotfile is touched. The directory is asked from nu
+        // rather than guessed: it differs between macOS and Linux, honors XDG_CONFIG_HOME, and
+        // depends on the nushell version.
+        [result appendString:[self sendText:iTermShellIntegrationNuAutoloadDirCommand
+                                 reallySend:reallySend
+                                 afterRegex:@"^>> "
+                                expectation:&expectation]];
+        [result appendString:[self sendText:@"mkdir -p \"$IT2_NU_AUTOLOAD_DIR\"\n"
                                  reallySend:reallySend
                                  afterRegex:@"^>> "
                                 expectation:&expectation]];
@@ -613,7 +671,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                                                    @"bash": @(iTermShellIntegrationShellBash),
                                                    @"zsh": @(iTermShellIntegrationShellZsh),
                                                    @"fish": @(iTermShellIntegrationShellFish),
-                                                   @"xonsh": @(iTermShellIntegrationShellXonsh) };
+                                                   @"xonsh": @(iTermShellIntegrationShellXonsh),
+                                                   @"nu": @(iTermShellIntegrationShellNu) };
     NSNumber *number = map[shell ?: @""];
     self.dotdir = dotdir;
     if (number) {
@@ -654,8 +713,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)modifyStartupScriptsAndProceedTo:(int)nextStage
                                     reallySend:(BOOL)reallySend {
-    if (self.shell == iTermShellIntegrationShellXonsh) {
-        // Xonsh auto-loads scripts from rc.d, so no dotfile modification needed
+    if (iTermShellIntegrationShellLoadsScriptAutomatically(self.shell)) {
+        // The shell auto-loads the script, so no dotfile modification is needed.
         if (reallySend) {
             self.sendShellCommandsViewController.stage = nextStage;
         }
@@ -715,9 +774,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                 } else {
                     [self modifyStartupScriptsAndProceedTo:stage+1
                                                 reallySend:YES];
-                    // For xonsh, no dotfile modification is needed (rc.d auto-loads),
+                    // A shell that auto-loads the script needs no dotfile modification,
                     // so proceed directly to finish.
-                    if (self.shell == iTermShellIntegrationShellXonsh) {
+                    if (iTermShellIntegrationShellLoadsScriptAutomatically(self.shell)) {
                         [self finishSendShellCommandsInstall];
                     }
                 }
@@ -727,9 +786,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                 if (self.installUtilities) {
                     [self modifyStartupScriptsAndProceedTo:stage+1
                                                 reallySend:YES];
-                    // For xonsh, no dotfile modification is needed (rc.d auto-loads),
+                    // A shell that auto-loads the script needs no dotfile modification,
                     // so proceed directly to finish.
-                    if (self.shell == iTermShellIntegrationShellXonsh) {
+                    if (iTermShellIntegrationShellLoadsScriptAutomatically(self.shell)) {
                         [self finishSendShellCommandsInstall];
                     }
                 } else {

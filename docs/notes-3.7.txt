@@ -322,6 +322,9 @@ New Features:
   page fills the pane with Web > Show Toolbar, or
   from the Python API with
   Session.async_set_browser_toolbar_hidden.
+- nushell is now a supported shell for shell
+  integration, including automatic loading and
+  SSH integration.
 
 Improvements:
 - Pausing a spinning progress indicator with
