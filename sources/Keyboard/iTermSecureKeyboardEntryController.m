@@ -198,14 +198,12 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 }
 
 - (void)warnIfNeeded {
-    if (@available(macOS 12.0, *)) {
-        // This prevents reentrancy. If called during -windowDidBecomeKey showing the warning
-        // causes the window to resign key in the same stack which crashes.
-        [self performSelector:@selector(showMontereyWarning) withObject:nil afterDelay:0];
-    }
+    // This prevents reentrancy. If called during -windowDidBecomeKey showing the warning
+    // causes the window to resign key in the same stack which crashes.
+    [self performSelector:@selector(showMontereyWarning) withObject:nil afterDelay:0];
 }
 
-- (void)showMontereyWarning NS_AVAILABLE_MAC(12_0) {
+- (void)showMontereyWarning {
     if (!_enabledByUserDefault) {
         return;
     }
