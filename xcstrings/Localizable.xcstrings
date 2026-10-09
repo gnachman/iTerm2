@@ -23352,6 +23352,18 @@
         }
       }
     },
+    "AdvancedSetting.openQuicklySearchesClaudeCodeTranscripts" : {
+      "comment" : "Advanced setting: openQuicklySearchesClaudeCodeTranscripts",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When searching session contents in Open Quickly (“/g”), also search the conversation of Claude Code running in a session.\nClaude Code redraws its interface in place, so much of a conversation is never in the scrollback. Its transcript in ~/.claude has the full text."
+          }
+        }
+      }
+    },
     "AdvancedSetting.openUntitledFile" : {
       "comment" : "Advanced setting: openUntitledFile",
       "extractionState" : "extracted_with_value",
@@ -111903,6 +111915,30 @@
         }
       }
     },
+    "OpenQuickly.ContentMatchCount" : {
+      "comment" : "Open Quickly detail: number of times the query appears in a session’s contents",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%ld match"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%ld matches"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "OpenQuickly.CreateNewTabWithProfile" : {
       "comment" : "Open Quickly action: create a new tab with this profile",
       "extractionState" : "extracted_with_value",
@@ -113411,6 +113447,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行脚本"
+          }
+        }
+      }
+    },
+    "OpenQuickly.RestrictionSessionContents" : {
+      "comment" : "Open Quickly restriction description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "sessions containing text"
           }
         }
       }

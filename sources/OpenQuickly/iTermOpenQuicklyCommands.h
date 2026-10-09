@@ -27,6 +27,7 @@
 - (BOOL)supportsMenuItems;
 - (BOOL)supportsBookmarks;
 - (BOOL)supportsURLs;
+- (BOOL)supportsSessionContents;
 @end
 
 @interface iTermOpenQuicklyCommand : NSObject<iTermOpenQuicklyCommand>
@@ -40,6 +41,10 @@
 @end
 
 @interface iTermOpenQuicklySearchSessionsCommand : iTermOpenQuicklyCommand
+@end
+
+// Searches the text in every session's buffer, not just its metadata.
+@interface iTermOpenQuicklySearchSessionContentsCommand : iTermOpenQuicklyCommand
 @end
 
 @interface iTermOpenQuicklySearchWindowsCommand : iTermOpenQuicklyCommand
