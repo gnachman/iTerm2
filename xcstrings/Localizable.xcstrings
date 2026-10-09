@@ -304,6 +304,36 @@
             "state" : "new",
             "value" : "Enter this model’s API key before testing the connection."
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geben Sie den API-Schlüssel dieses Modells ein, bevor Sie die Verbindung testen."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続をテストする前に、このモデルのAPIキーを入力してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite a chave de API deste modelo antes de testar a conexão."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите ключ API этой модели перед проверкой подключения."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先输入此模型的 API 密钥，再测试连接。"
+          }
         }
       }
     },
@@ -610,6 +640,36 @@
             "state" : "new",
             "value" : "Authorizes with the API key entered for this model."
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Authentifiziert sich mit dem für dieses Modell eingegebenen API-Schlüssel."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このモデル用に入力されたAPIキーで認証します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriza com a chave de API inserida para este modelo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Авторизация выполняется с помощью ключа API, введённого для этой модели."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用为此模型输入的 API 密钥授权。"
+          }
         }
       }
     },
@@ -621,6 +681,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "No API key has been entered for this model yet."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für dieses Modell wurde noch kein API-Schlüssel eingegeben."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このモデルのAPIキーはまだ入力されていません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não foi inserida uma chave de API para este modelo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключ API для этой модели ещё не введён."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未为此模型输入 API 密钥。"
           }
         }
       }
@@ -717,6 +807,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "No API key is sent. If the endpoint requires authentication, use a custom header."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es wird kein API-Schlüssel gesendet. Wenn der Endpunkt eine Authentifizierung erfordert, verwenden Sie einen benutzerdefinierten Header."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "APIキーは送信されません。エンドポイントで認証が必要な場合は、カスタムヘッダーを使用してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma chave de API é enviada. Se o endpoint exigir autenticação, use um cabeçalho personalizado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключ API не отправляется. Если конечная точка требует аутентификации, используйте пользовательский заголовок."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不发送 API 密钥。如果端点需要身份验证，请使用自定义标头。"
           }
         }
       }
@@ -1402,6 +1522,36 @@
             "state" : "new",
             "value" : "API key:"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API-Schlüssel:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "APIキー:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave de API:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключ API:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API 密钥："
+          }
         }
       }
     },
@@ -1582,6 +1732,36 @@
             "state" : "new",
             "value" : "Automatic (none)"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch (keiner)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動（なし）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático (nenhuma)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматически (нет)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动（无）"
+          }
         }
       }
     },
@@ -1594,6 +1774,36 @@
             "state" : "new",
             "value" : "Automatic (none for a local endpoint)"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch (keiner bei lokalem Endpunkt)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動（ローカルエンドポイントではなし）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático (nenhuma para endpoint local)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматически (нет для локальной конечной точки)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动（本地端点不使用）"
+          }
         }
       }
     },
@@ -1605,6 +1815,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Automatic (%@ API key)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch (%@-API-Schlüssel)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動（%@ のAPIキー）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático (chave de API do %@)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматически (ключ API %@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动（%@ API 密钥）"
           }
         }
       }
@@ -2920,6 +3160,36 @@
             "state" : "new",
             "value" : "Key for this model"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlüssel für dieses Modell"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このモデル用のキー"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave para este modelo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключ для этой модели"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此模型的密钥"
+          }
         }
       }
     },
@@ -2931,6 +3201,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Enter this model’s API key, or choose a different API key option."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geben Sie den API-Schlüssel dieses Modells ein oder wählen Sie eine andere API-Schlüssel-Option."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このモデルのAPIキーを入力するか、別のAPIキーのオプションを選択してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite a chave de API deste modelo ou escolha outra opção de chave de API."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите ключ API этой модели или выберите другой вариант ключа API."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入此模型的 API 密钥，或选择其他 API 密钥选项。"
           }
         }
       }
@@ -3027,6 +3327,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "This model’s own key"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigener Schlüssel dieses Modells"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このモデル専用のキー"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave própria deste modelo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Собственный ключ этой модели"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此模型自己的密钥"
           }
         }
       }
@@ -3278,6 +3608,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "None"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keiner"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "なし"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无"
           }
         }
       }
@@ -3836,6 +4196,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%@ API key"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@-API-Schlüssel"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ のAPIキー"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave de API do %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключ API %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ API 密钥"
           }
         }
       }
@@ -5613,6 +6003,36 @@
             "state" : "new",
             "value" : "This model is set to use its own API key, but none has been entered. Edit the model in Manage AI Models to enter one."
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Modell ist so eingestellt, dass es einen eigenen API-Schlüssel verwendet, aber es wurde keiner eingegeben. Bearbeiten Sie das Modell unter „KI-Modelle verwalten“, um einen einzugeben."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このモデルは専用のAPIキーを使用するよう設定されていますが、キーが入力されていません。「AIモデルを管理」でモデルを編集してキーを入力してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este modelo está configurado para usar a própria chave de API, mas nenhuma foi inserida. Edite o modelo em “Gerenciar modelos de IA” para inserir uma."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта модель настроена на использование собственного ключа API, но он не введён. Измените модель в окне «Управление моделями ИИ», чтобы ввести ключ."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此模型设置为使用自己的 API 密钥，但尚未输入。请在“管理 AI 模型”中编辑此模型以输入密钥。"
+          }
         }
       }
     },
@@ -6296,6 +6716,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "No API Key for This Model"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein API-Schlüssel für dieses Modell"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このモデルのAPIキーがありません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma chave de API para este modelo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет ключа API для этой модели"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此模型没有 API 密钥"
           }
         }
       }
@@ -20244,6 +20694,48 @@
         }
       }
     },
+    "AdvancedSetting.menuBarItemDrawsBadge" : {
+      "comment" : "Advanced setting: menuBarItemDrawsBadge",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Draw the menu bar item text as a badge inside the icon?\nWhen enabled, a one-character result (or a number, with + for 10 or more) is drawn inside the icon instead of next to it, keeping the item square. An empty result or 0 shows the plain icon."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text des Menüleistenobjekts als Badge im Symbol zeichnen?\nWenn aktiviert, wird ein Ergebnis aus einem Zeichen (oder eine Zahl, mit + ab 10) im Symbol statt daneben gezeichnet, sodass das Objekt quadratisch bleibt. Ein leeres Ergebnis oder 0 zeigt das einfache Symbol."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバー項目のテキストをアイコン内のバッジとして描画するか？\n有効にすると、1文字の結果（または数値。10以上は+付き）がアイコンの横ではなく内側に描画され、項目が正方形に保たれます。結果が空または0の場合は通常のアイコンが表示されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenhar o texto do item da barra de menus como um selo dentro do ícone?\nQuando ativado, um resultado de um caractere (ou um número, com + para 10 ou mais) é desenhado dentro do ícone em vez de ao lado dele, mantendo o item quadrado. Um resultado vazio ou 0 mostra o ícone simples."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рисовать текст элемента строки меню как значок внутри иконки?\nЕсли включено, односимвольный результат (или число, с + для 10 и более) рисуется внутри иконки, а не рядом с ней, и элемент остаётся квадратным. При пустом результате или 0 показывается обычная иконка."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "是否将菜单栏项目文本绘制为图标内的角标？\n启用后，单字符结果（或数字，10 及以上显示 +）会绘制在图标内部而不是旁边，使项目保持正方形。结果为空或为 0 时显示普通图标。"
+          }
+        }
+      }
+    },
     "AdvancedSetting.menuTipDelay" : {
       "comment" : "Advanced setting: menuTipDelay",
       "extractionState" : "extracted_with_value",
@@ -21510,8 +22002,8 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Wie sollen neue Instanzen geöffnet werden, wenn sie durch Skripte oder externe Anwendungen ausgelöst werden?\n-1: Alte Einstellungen verwenden (Standard)\n0: Neues Fenster\n1: Neuer Tab\n2: Vertikaler Split-Bereich\n3: Horizontaler Split-Bereich\nDies bietet eine einheitliche Einstellung zur Steuerung der externen Instanzerstellung."
+            "state" : "translated",
+            "value" : "Wie sollen neue Instanzen geöffnet werden, wenn sie durch Skripte oder externe Anwendungen ausgelöst werden?\n-1: Alte Einstellungen verwenden (Standard)\n0: Neues Fenster\n1: Neuer Tab\n2: Vertikaler Split-Bereich\n3: Horizontaler Split-Bereich\n4: Schwebender Bereich\nDies bietet eine einheitliche Einstellung zur Steuerung der externen Instanzerstellung."
           }
         },
         "en" : {
@@ -21522,26 +22014,26 @@
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "スクリプトや外部アプリケーションから起動されたとき、新しいインスタンスをどのように開くか？\n-1：従来の設定を使用する（デフォルト）\n0：新しいウィンドウ\n1：新しいタブ\n2：垂直分割ペイン\n3：水平分割ペイン\nこれは外部からのインスタンス作成を制御する統一設定です。"
+            "state" : "translated",
+            "value" : "スクリプトや外部アプリケーションから起動されたとき、新しいインスタンスをどのように開くか？\n-1：従来の設定を使用する（デフォルト）\n0：新しいウィンドウ\n1：新しいタブ\n2：垂直分割ペイン\n3：水平分割ペイン\n4：フローティングペイン\nこれは外部からのインスタンス作成を制御する統一設定です。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Como as novas instâncias devem ser abertas quando acionadas por scripts ou aplicativos externos?\n-1: Usar ajustes legados (padrão)\n0: Nova janela\n1: Nova aba\n2: Painel dividido vertical\n3: Painel dividido horizontal\nIsto fornece um ajuste unificado para controlar a criação de instâncias externas."
+            "state" : "translated",
+            "value" : "Como as novas instâncias devem ser abertas quando acionadas por scripts ou aplicativos externos?\n-1: Usar ajustes legados (padrão)\n0: Nova janela\n1: Nova aba\n2: Painel dividido vertical\n3: Painel dividido horizontal\n4: Painel flutuante\nIsto fornece um ajuste unificado para controlar a criação de instâncias externas."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Как открывать новые экземпляры, запускаемые скриптами или внешними приложениями?\n-1: использовать устаревшие настройки (по умолчанию)\n0: новое окно\n1: новая вкладка\n2: вертикально разделённая панель\n3: горизонтально разделённая панель\nЭтот параметр объединяет управление созданием внешних экземпляров в одном месте."
+            "state" : "translated",
+            "value" : "Как открывать новые экземпляры, запускаемые скриптами или внешними приложениями?\n-1: использовать устаревшие настройки (по умолчанию)\n0: новое окно\n1: новая вкладка\n2: вертикально разделённая панель\n3: горизонтально разделённая панель\n4: плавающая панель\nЭтот параметр объединяет управление созданием внешних экземпляров в одном месте."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "当由脚本或外部应用触发时，新实例应如何打开？\n-1：使用传统设置（默认）\n0：新窗口\n1：新标签页\n2：垂直分屏窗格\n3：水平分屏窗格\n这提供了控制外部实例创建的统一设置。"
+            "state" : "translated",
+            "value" : "当由脚本或外部应用触发时，新实例应如何打开？\n-1：使用传统设置（默认）\n0：新窗口\n1：新标签页\n2：垂直分屏窗格\n3：水平分屏窗格\n4：浮动窗格\n这提供了控制外部实例创建的统一设置。"
           }
         }
       }
@@ -33314,6 +33806,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Session %@ is in a floating pane, which is not part of the split layout"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sitzung %@ befindet sich in einem schwebenden Bereich, der nicht Teil des geteilten Layouts ist"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セッション%@はフローティングペイン内にあり、分割レイアウトには含まれません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A sessão %@ está em um painel flutuante, que não faz parte do layout dividido"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сеанс %@ находится в плавающей панели, которая не входит в разделённую раскладку"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会话 %@ 位于浮动窗格中，不属于分屏布局"
           }
         }
       }
@@ -51014,6 +51536,90 @@
         }
       }
     },
+    "ClaudeCode.HookCommandsKeptBody" : {
+      "comment" : "Body shown after uninstalling when some Claude Code hook commands were not removed. The first interpolated value is the absolute path to settings.json; the second is the list of hook commands, one per line, shown verbatim",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Some hook commands in %1$@ mention cc-status but also run other programs, so Uninstall didn’t remove them. If you don’t want them anymore, edit the file by hand:\n\n%2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einige Hook-Befehle in %1$@ erwähnen cc-status, führen aber auch andere Programme aus, daher hat „Deinstallieren“ sie nicht entfernt. Wenn Sie sie nicht mehr benötigen, bearbeiten Sie die Datei von Hand:\n\n%2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 内の一部のフックコマンドはcc-statusに言及していますが、他のプログラムも実行するため、アンインストールでは削除されませんでした。不要な場合は、ファイルを手動で編集してください:\n\n%2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alguns comandos de hook em %1$@ mencionam cc-status, mas também executam outros programas, por isso a desinstalação não os removeu. Se você não os quiser mais, edite o arquivo manualmente:\n\n%2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Некоторые команды хуков в %1$@ упоминают cc-status, но также запускают другие программы, поэтому при удалении они не были удалены. Если они вам больше не нужны, отредактируйте файл вручную:\n\n%2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 中的部分钩子命令提及 cc-status，但也会运行其他程序，因此卸载时未将其移除。如果不再需要，请手动编辑该文件：\n\n%2$@"
+          }
+        }
+      }
+    },
+    "ClaudeCode.HookCommandsKeptTitle" : {
+      "comment" : "Title shown after uninstalling when some Claude Code hook commands were not removed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Some Hooks Were Left in Place"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einige Hooks wurden beibehalten"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一部のフックが残されました"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alguns hooks foram mantidos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Некоторые хуки остались на месте"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "部分钩子已保留"
+          }
+        }
+      }
+    },
     "ClaudeCode.HookMalformed" : {
       "comment" : "Detail shown when the Claude Code settings file is not valid JSON; the interpolated value is the absolute path to settings.json",
       "extractionState" : "extracted_with_value",
@@ -63547,6 +64153,36 @@
             "state" : "new",
             "value" : "Bring to Front"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach vorne bringen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最前面へ移動"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trazer para a frente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "На передний план"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移到最前面"
+          }
         }
       }
     },
@@ -64188,6 +64824,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Dock Floating Pane"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwebenden Bereich andocken"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フローティングペインをドッキング"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encaixar painel flutuante"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрепить плавающую панель"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停靠浮动窗格"
           }
         }
       }
@@ -65405,6 +66071,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Open URL in Floating Pane"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL in schwebendem Bereich öffnen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URLをフローティングペインで開く"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir URL em painel flutuante"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открыть URL в плавающей панели"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在浮动窗格中打开 URL"
           }
         }
       }
@@ -66803,6 +67499,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Send to Back"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach hinten stellen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最背面へ移動"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar para trás"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "На задний план"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移到最后面"
           }
         }
       }
@@ -72709,6 +73435,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "New Floating Pane with Profile"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer schwebender Bereich mit Profil"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロファイルを指定して新規フローティングペイン"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo painel flutuante com perfil"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая плавающая панель с профилем"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用配置文件新建浮动窗格"
           }
         }
       }
@@ -81458,6 +82214,36 @@
             "state" : "new",
             "value" : "Can’t add a floating pane to this tab now"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diesem Tab kann derzeit kein schwebender Bereich hinzugefügt werden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在このタブにフローティングペインを追加できません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não é possível adicionar um painel flutuante a esta aba agora"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сейчас нельзя добавить плавающую панель в эту вкладку"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前无法向此标签页添加浮动窗格"
+          }
         }
       }
     },
@@ -81469,6 +82255,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Can’t dock this floating pane now"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser schwebende Bereich kann derzeit nicht angedockt werden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在このフローティングペインをドッキングできません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não é possível encaixar este painel flutuante agora"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сейчас нельзя закрепить эту плавающую панель"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前无法停靠此浮动窗格"
           }
         }
       }
@@ -81482,6 +82298,36 @@
             "state" : "new",
             "value" : "Can’t move or resize this floating pane now"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser schwebende Bereich kann derzeit nicht verschoben oder in der Größe geändert werden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在このフローティングペインを移動またはサイズ変更できません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não é possível mover ou redimensionar este painel flutuante agora"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сейчас нельзя переместить эту плавающую панель или изменить её размер"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前无法移动此浮动窗格或调整其大小"
+          }
         }
       }
     },
@@ -81493,6 +82339,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Failed to create the floating pane"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der schwebende Bereich konnte nicht erstellt werden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フローティングペインを作成できませんでした"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falha ao criar o painel flutuante"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось создать плавающую панель"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法创建浮动窗格"
           }
         }
       }
@@ -81506,6 +82382,36 @@
             "state" : "new",
             "value" : "Hide Title Bar"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titelleiste ausblenden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タイトルバーを隠す"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar barra de título"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрыть строку заголовка"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏标题栏"
+          }
         }
       }
     },
@@ -81517,6 +82423,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Invalid frame"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungültige Position oder Größe"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無効な位置またはサイズ"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posição ou tamanho inválido"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недопустимое положение или размер"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无效的位置或大小"
           }
         }
       }
@@ -81530,6 +82466,36 @@
             "state" : "new",
             "value" : "No such profile"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein solches Profil"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのプロファイルは存在しません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfil inexistente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Такого профиля не существует"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有这样的配置文件"
+          }
         }
       }
     },
@@ -81541,6 +82507,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "No such tab"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein solcher Tab"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのタブは存在しません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aba inexistente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Такой вкладки не существует"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有这样的标签页"
           }
         }
       }
@@ -81554,6 +82550,36 @@
             "state" : "new",
             "value" : "The session is not in a floating pane"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Sitzung befindet sich nicht in einem schwebenden Bereich"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セッションはフローティングペイン内にありません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A sessão não está em um painel flutuante"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сеанс не находится в плавающей панели"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该会话不在浮动窗格中"
+          }
         }
       }
     },
@@ -81565,6 +82591,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Show Title Bar"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titelleiste einblenden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タイトルバーを表示"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar barra de título"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать строку заголовка"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示标题栏"
           }
         }
       }
@@ -87540,6 +88596,96 @@
               }
             }
           }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld schwebender Bereich ist ausgeblendet."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld schwebende Bereiche sind ausgeblendet."
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld 個のフローティングペインが非表示です。"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld painel flutuante está oculto."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld painéis flutuantes estão ocultos."
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld плавающая панель скрыта."
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld плавающие панели скрыты."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld плавающих панелей скрыто."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld плавающей панели скрыто."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld 个浮动窗格已隐藏。"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -88169,6 +89315,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置开始"
+          }
+        }
+      }
+    },
+    "Interpolate.MissingArgument" : {
+      "comment" : "Error when the interpolate function's string argument is missing",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "interpolate requires a string"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "interpolate erfordert einen String"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "interpolate には文字列が必要です"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "interpolate requer uma string"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для interpolate требуется строка"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "interpolate 需要一个字符串"
           }
         }
       }
@@ -91012,6 +92200,36 @@
             "state" : "new",
             "value" : "New Floating Pane with “%@” Profile"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer schwebender Bereich mit Profil „%@“"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」プロファイルで新規フローティングペイン"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo painel flutuante com o perfil “%@”"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая плавающая панель с профилем «%@»"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用“%@”配置文件新建浮动窗格"
+          }
         }
       }
     },
@@ -91023,6 +92241,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "New Floating Pane with unavailable Profile"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer schwebender Bereich mit nicht verfügbarem Profil"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "利用できないプロファイルで新規フローティングペイン"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo painel flutuante com perfil indisponível"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая плавающая панель с недоступным профилем"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用不可用的配置文件新建浮动窗格"
           }
         }
       }
@@ -103622,6 +104870,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Can’t move a session into a floating pane"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Sitzung kann nicht in einen schwebenden Bereich verschoben werden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セッションをフローティングペインに移動することはできません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não é possível mover uma sessão para um painel flutuante"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нельзя переместить сеанс в плавающую панель"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法将会话移入浮动窗格"
           }
         }
       }
@@ -127184,6 +128462,36 @@
             "state" : "new",
             "value" : "New Floating Pane With Profile…"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer schwebender Bereich mit Profil…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロファイルで新規フローティングペイン…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo painel flutuante com perfil…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая плавающая панель с профилем…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用配置文件新建浮动窗格…"
+          }
         }
       }
     },
@@ -139589,6 +140897,174 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在新窗口中全部打开"
+          }
+        }
+      }
+    },
+    "ProgramStatus.NeedsAnswer" : {
+      "comment" : "Detail line when a program is waiting for the user to type an answer",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Waiting for an answer"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wartet auf eine Antwort"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回答を待っています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aguardando uma resposta"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ожидание ответа"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待回答"
+          }
+        }
+      }
+    },
+    "ProgramStatus.NeedsApproval" : {
+      "comment" : "Detail line when a program is waiting for the user to approve something",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Waiting for approval"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wartet auf Genehmigung"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "承認を待っています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aguardando aprovação"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ожидание одобрения"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待批准"
+          }
+        }
+      }
+    },
+    "ProgramStatus.NeedsLogin" : {
+      "comment" : "Detail line when a program is waiting for a password, token or other credential",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Waiting for login"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wartet auf Anmeldung"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ログインを待っています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aguardando login"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ожидание входа"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待登录"
+          }
+        }
+      }
+    },
+    "ProgramStatus.TitledDetail" : {
+      "comment" : "Detail line for a program status that names one of several tasks. %1$@ is the task's name, %2$@ is what the task is doing or waiting for.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@：%2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@：%2$@"
           }
         }
       }
@@ -175418,6 +176894,90 @@
         }
       }
     },
+    "StatusMenu.MenuBarItemErrorHeading" : {
+      "comment" : "Heading of the dialog that explains why the menu bar item’s interpolated string failed to evaluate",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Menu Bar Item Error"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehler im Menüleistenobjekt"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバー項目のエラー"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erro no item da barra de menus"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ошибка элемента строки меню"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "菜单栏项目错误"
+          }
+        }
+      }
+    },
+    "StatusMenu.MenuBarItemErrorMessage" : {
+      "comment" : "Dialog body explaining why the menu bar item shows a bug. The first placeholder is the interpolated string from the menu bar item text setting in Settings > Appearance > General; the second is the error message.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The menu bar item’s interpolated string “%1$@” could not be evaluated:\n\n%2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der interpolierte String „%1$@“ des Menüleistenobjekts konnte nicht ausgewertet werden:\n\n%2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバー項目の補間文字列「%1$@」を評価できませんでした:\n\n%2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível avaliar a string interpolada “%1$@” do item da barra de menus:\n\n%2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось вычислить интерполированную строку «%1$@» элемента строки меню:\n\n%2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法对菜单栏项目的插值字符串“%1$@”求值：\n\n%2$@"
+          }
+        }
+      }
+    },
     "StatusMenu.QuitiTerm2" : {
       "comment" : "Status-icon menu item to quit iTerm2",
       "extractionState" : "extracted_with_value",
@@ -175498,6 +177058,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置"
+          }
+        }
+      }
+    },
+    "StatusMenu.ShowMenuBarItemError" : {
+      "comment" : "Status-icon menu item, shown only when the menu bar item’s interpolated string fails to evaluate, that opens a dialog with the error",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Menu Bar Item Error…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehler im Menüleistenobjekt anzeigen…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバー項目のエラーを表示…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar erro do item da barra de menus…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать ошибку элемента строки меню…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示菜单栏项目错误…"
           }
         }
       }
@@ -191164,6 +192766,36 @@
             "state" : "new",
             "value" : "New Floating Pane"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer schwebender Bereich"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新規フローティングペイン"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo painel flutuante"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая плавающая панель"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新建浮动窗格"
+          }
         }
       }
     },
@@ -191636,37 +193268,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "## Sitzungsstatus\n\nDas Werkzeug **Sitzungsstatus** zeigt den Status der Sitzungen in allen Tabs an. Jeder Eintrag zeigt den Sitzungsnamen, einen farbigen Indikatorpunkt, den Statustext und eine Tastenkombination, um zu dieser Sitzung zu springen.\n\n### Status festlegen\n\n**Trigger:** Fügen Sie unter **Einstellungen > Profile > Erweitert > Trigger** einen **Tab-Status festlegen**-Trigger hinzu. Damit können Sie den Statustext, die Punktfarbe und die Textfarbe festlegen, wenn ein regulärer Ausdruck auf die Terminalausgabe passt.\n\n**Steuersequenz (OSC 21337):** Programme können den Tab-Status direkt festlegen:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nUnterstützte Schlüssel (durch `;` getrennt):\n\n* `status=TEXT`: Legt den Statustext fest (z. B. „Working“, „Waiting“).\n* `indicator=COLOR`: Legt die Punktfarbe fest.\n* `status-color=COLOR`: Legt die Farbe des Statustexts fest.\n* `detail=TEXT`: Legt optionalen Detailtext fest, der unter dem Status angezeigt wird (bis zu 3 Zeilen Umbruch).\n\nFarben verwenden das xterm-Format: `rgb:RR/GG/BB` (hexadezimal, 1–4 Ziffern pro Komponente) oder `#RRGGBB`.\n\nSetzen Sie einen Schlüssel auf leer, um ihn zu löschen: `status=` löscht den Statustext.\n\n**Gesamten Status löschen:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Prioritätssortierung\n\nSitzungen werden nach Priorität sortiert. Klicken Sie auf die Schaltfläche ⚙, um festzulegen, welche Status-Schlüsselwörter die höchste Priorität haben. Die Standardreihenfolge lautet: waiting, working, idle.\n\n### Schlummern\n\nKlicken Sie mit der rechten Maustaste auf eine Zeile und wählen Sie **Schlummern**, um sie ans Ende der Liste zu verschieben und abzudunkeln. Ein schlummernder Eintrag wird automatisch reaktiviert, sobald sich sein Status das nächste Mal ändert."
+            "value" : "## Sitzungsstatus\n\nDas Werkzeug **Sitzungsstatus** zeigt den Status der Sitzungen in allen Tabs an. Jeder Eintrag zeigt den Sitzungsnamen, einen farbigen Indikatorpunkt, den Statustext und eine Tastenkombination, um zu dieser Sitzung zu springen.\n\n### Status festlegen\n\n**Trigger:** Fügen Sie unter **Einstellungen > Profile > Erweitert > Trigger** einen **Tab-Status festlegen**-Trigger hinzu. Damit können Sie den Statustext, die Punktfarbe und die Textfarbe festlegen, wenn ein regulärer Ausdruck auf die Terminalausgabe passt.\n\n**Steuersequenz (OSC 21337):** Programme können den Tab-Status direkt festlegen:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nUnterstützte Schlüssel (durch `;` getrennt):\n\n* `status=TEXT`: Legt den Statustext fest (z. B. „Working“, „Waiting“).\n* `indicator=COLOR`: Legt die Punktfarbe fest.\n* `status-color=COLOR`: Legt die Farbe des Statustexts fest.\n* `detail=TEXT`: Legt optionalen Detailtext fest, der unter dem Status angezeigt wird (bis zu 3 Zeilen Umbruch).\n\nFarben verwenden das xterm-Format: `rgb:RR/GG/BB` (hexadezimal, 1–4 Ziffern pro Komponente) oder `#RRGGBB`.\n\nSetzen Sie einen Schlüssel auf leer, um ihn zu löschen: `status=` löscht den Statustext.\n\n**Gesamten Status löschen:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Prioritätssortierung\n\nSitzungen werden nach Priorität sortiert. Klicken Sie auf die Schaltfläche ⚙, um festzulegen, welche Status-Schlüsselwörter die höchste Priorität haben. Die Standardreihenfolge lautet: waiting, done, error, working, idle.\n\n### Schlummern\n\nKlicken Sie mit der rechten Maustaste auf eine Zeile und wählen Sie **Schlummern**, um sie ans Ende der Liste zu verschieben und abzudunkeln. Ein schlummernder Eintrag wird automatisch reaktiviert, sobald sich sein Status das nächste Mal ändert."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "## Session Status\n\nThe **Session Status** tool shows the status of sessions across all tabs. Each entry displays the session name, a colored indicator dot, status text, and a keyboard shortcut to jump to that session.\n\n### Setting Status\n\n**Triggers:** Add a **Set Tab Status** trigger in **Prefs > Profiles > Advanced > Triggers**. It lets you set the status text, dot color, and text color when a regex matches terminal output.\n\n**Control Sequence (OSC 21337):** Programs can set tab status directly:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nSupported keys (separated by `;`):\n\n* `status=TEXT` — Sets the status text (e.g., “Working”, “Waiting”).\n* `indicator=COLOR` — Sets the dot color.\n* `status-color=COLOR` — Sets the status text color.\n* `detail=TEXT` — Sets optional detail text shown below the status (wraps up to 3 lines).\n\nColors use xterm format: `rgb:RR/GG/BB` (hex, 1–4 digits per component) or `#RRGGBB`.\n\nSet a key to empty to clear it: `status=` clears the status text.\n\n**Clear all status:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Priority Sorting\n\nSessions are sorted by priority. Click the ⚙ button to configure which status keywords have the highest priority. The default order is: waiting, working, idle.\n\n### Snoozing\n\nRight-click a row and choose **Snooze** to move it to the bottom of the list and dim it. A snoozed entry automatically un-snoozes the next time its status changes."
+            "value" : "## Session Status\n\nThe **Session Status** tool shows the status of sessions across all tabs. Each entry displays the session name, a colored indicator dot, status text, and a keyboard shortcut to jump to that session.\n\n### Setting Status\n\n**Triggers:** Add a **Set Tab Status** trigger in **Prefs > Profiles > Advanced > Triggers**. It lets you set the status text, dot color, and text color when a regex matches terminal output.\n\n**Control Sequence (OSC 21337):** Programs can set tab status directly:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nSupported keys (separated by `;`):\n\n* `status=TEXT` — Sets the status text (e.g., “Working”, “Waiting”).\n* `indicator=COLOR` — Sets the dot color.\n* `status-color=COLOR` — Sets the status text color.\n* `detail=TEXT` — Sets optional detail text shown below the status (wraps up to 3 lines).\n\nColors use xterm format: `rgb:RR/GG/BB` (hex, 1–4 digits per component) or `#RRGGBB`.\n\nSet a key to empty to clear it: `status=` clears the status text.\n\n**Clear all status:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Priority Sorting\n\nSessions are sorted by priority. Click the ⚙ button to configure which status keywords have the highest priority. The default order is: waiting, done, error, working, idle.\n\n### Snoozing\n\nRight-click a row and choose **Snooze** to move it to the bottom of the list and dim it. A snoozed entry automatically un-snoozes the next time its status changes."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "## セッションステータス\n\n**セッションステータス**ツールは、すべてのタブにわたるセッションの状態を表示します。各項目には、セッション名、色分けされたインジケータードット、ステータステキスト、そのセッションにジャンプするためのキーボードショートカットが表示されます。\n\n### ステータスの設定\n\n**トリガー:** **Prefs > Profiles > Advanced > Triggers**（設定 > プロファイル > 詳細設定 > トリガー）で**タブステータスを設定**トリガーを追加してください。正規表現がターミナルの出力に一致したときに、ステータステキスト、ドットの色、テキストの色を設定できます。\n\n**制御シーケンス（OSC 21337）:** プログラムはタブステータスを直接設定できます。\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nサポートされているキー（`;`区切り）:\n\n* `status=TEXT` ：ステータステキストを設定します（例：「Working」、「Waiting」）。\n* `indicator=COLOR` ：ドットの色を設定します。\n* `status-color=COLOR` ：ステータステキストの色を設定します。\n* `detail=TEXT` ：ステータスの下に表示される任意の詳細テキストを設定します（最大3行で折り返されます）。\n\n色にはxterm形式を使用します: `rgb:RR/GG/BB`（16進数、各成分1～4桁）または`#RRGGBB`。\n\nキーを空にすると、その項目はクリアされます: `status=`はステータステキストをクリアします。\n\n**すべてのステータスをクリア:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### 優先度によるソート\n\nセッションは優先度順にソートされます。⚙ボタンをクリックすると、どのステータスキーワードを最優先にするかを設定できます。デフォルトの順序は、waiting、working、idleです。\n\n### スヌーズ\n\n行を右クリックして**スヌーズ**を選ぶと、その行はリストの最後に移動して薄暗く表示されます。スヌーズした項目は、次にステータスが変化したときに自動的にスヌーズが解除されます。"
+            "value" : "## セッションステータス\n\n**セッションステータス**ツールは、すべてのタブにわたるセッションの状態を表示します。各項目には、セッション名、色分けされたインジケータードット、ステータステキスト、そのセッションにジャンプするためのキーボードショートカットが表示されます。\n\n### ステータスの設定\n\n**トリガー:** **Prefs > Profiles > Advanced > Triggers**（設定 > プロファイル > 詳細設定 > トリガー）で**タブステータスを設定**トリガーを追加してください。正規表現がターミナルの出力に一致したときに、ステータステキスト、ドットの色、テキストの色を設定できます。\n\n**制御シーケンス（OSC 21337）:** プログラムはタブステータスを直接設定できます。\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nサポートされているキー（`;`区切り）:\n\n* `status=TEXT` ：ステータステキストを設定します（例：「Working」、「Waiting」）。\n* `indicator=COLOR` ：ドットの色を設定します。\n* `status-color=COLOR` ：ステータステキストの色を設定します。\n* `detail=TEXT` ：ステータスの下に表示される任意の詳細テキストを設定します（最大3行で折り返されます）。\n\n色にはxterm形式を使用します: `rgb:RR/GG/BB`（16進数、各成分1～4桁）または`#RRGGBB`。\n\nキーを空にすると、その項目はクリアされます: `status=`はステータステキストをクリアします。\n\n**すべてのステータスをクリア:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### 優先度によるソート\n\nセッションは優先度順にソートされます。⚙ボタンをクリックすると、どのステータスキーワードを最優先にするかを設定できます。デフォルトの順序は、waiting、done、error、working、idleです。\n\n### スヌーズ\n\n行を右クリックして**スヌーズ**を選ぶと、その行はリストの最後に移動して薄暗く表示されます。スヌーズした項目は、次にステータスが変化したときに自動的にスヌーズが解除されます。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "## Status da sessão\n\nA ferramenta **Status da sessão** mostra o status das sessões em todas as abas. Cada entrada exibe o nome da sessão, um ponto indicador colorido, o texto de status e um atalho de teclado para saltar para essa sessão.\n\n### Definir o status\n\n**Gatilhos:** adicione um gatilho **Definir status da aba** em **Ajustes > Perfis > Avançado > Gatilhos**. Ele permite definir o texto de status, a cor do ponto e a cor do texto quando uma regex corresponde à saída do terminal.\n\n**Sequência de controle (OSC 21337):** os programas podem definir o status da aba diretamente:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nChaves suportadas (separadas por `;`):\n\n* `status=TEXT` — Define o texto de status (por exemplo, “Working”, “Waiting”).\n* `indicator=COLOR` — Define a cor do ponto.\n* `status-color=COLOR` — Define a cor do texto de status.\n* `detail=TEXT` — Define um texto de detalhe opcional exibido abaixo do status (quebra em até 3 linhas).\n\nAs cores usam o formato xterm: `rgb:RR/GG/BB` (hexadecimal, 1 a 4 dígitos por componente) ou `#RRGGBB`.\n\nDefina uma chave como vazia para limpá-la: `status=` limpa o texto de status.\n\n**Limpar todo o status:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Ordenação por prioridade\n\nAs sessões são ordenadas por prioridade. Clique no botão ⚙ para configurar quais palavras-chave de status têm a prioridade mais alta. A ordem padrão é: waiting, working, idle.\n\n### Adiamento\n\nClique com o botão direito em uma linha e escolha **Adiar** para movê-la para o fim da lista e escurecê-la. Uma entrada adiada é automaticamente reativada na próxima vez que seu status mudar."
+            "value" : "## Status da sessão\n\nA ferramenta **Status da sessão** mostra o status das sessões em todas as abas. Cada entrada exibe o nome da sessão, um ponto indicador colorido, o texto de status e um atalho de teclado para saltar para essa sessão.\n\n### Definir o status\n\n**Gatilhos:** adicione um gatilho **Definir status da aba** em **Ajustes > Perfis > Avançado > Gatilhos**. Ele permite definir o texto de status, a cor do ponto e a cor do texto quando uma regex corresponde à saída do terminal.\n\n**Sequência de controle (OSC 21337):** os programas podem definir o status da aba diretamente:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nChaves suportadas (separadas por `;`):\n\n* `status=TEXT` — Define o texto de status (por exemplo, “Working”, “Waiting”).\n* `indicator=COLOR` — Define a cor do ponto.\n* `status-color=COLOR` — Define a cor do texto de status.\n* `detail=TEXT` — Define um texto de detalhe opcional exibido abaixo do status (quebra em até 3 linhas).\n\nAs cores usam o formato xterm: `rgb:RR/GG/BB` (hexadecimal, 1 a 4 dígitos por componente) ou `#RRGGBB`.\n\nDefina uma chave como vazia para limpá-la: `status=` limpa o texto de status.\n\n**Limpar todo o status:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Ordenação por prioridade\n\nAs sessões são ordenadas por prioridade. Clique no botão ⚙ para configurar quais palavras-chave de status têm a prioridade mais alta. A ordem padrão é: waiting, done, error, working, idle.\n\n### Adiamento\n\nClique com o botão direito em uma linha e escolha **Adiar** para movê-la para o fim da lista e escurecê-la. Uma entrada adiada é automaticamente reativada na próxima vez que seu status mudar."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "## Статус сеанса\n\nИнструмент **Статус сеанса** показывает состояние сеансов во всех вкладках. Каждая запись отображает имя сеанса, цветной индикатор, текст статуса и сочетание клавиш для перехода к этому сеансу.\n\n### Установка статуса\n\n**Триггеры:** добавьте триггер **Задать статус вкладки** в **Настройки > Профили > Дополнительно > Триггеры**. Он позволяет задавать текст статуса, цвет индикатора и цвет текста при совпадении регулярного выражения с выводом терминала.\n\n**Управляющая последовательность (OSC 21337):** программы могут задавать статус вкладки напрямую:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nПоддерживаемые ключи (разделённые `;`):\n\n* `status=TEXT`: задаёт текст статуса (например, «Working», «Waiting»).\n* `indicator=COLOR`: задаёт цвет индикатора.\n* `status-color=COLOR`: задаёт цвет текста статуса.\n* `detail=TEXT`: задаёт необязательный текст с подробностями, отображаемый под статусом (переносится до 3 строк).\n\nЦвета указываются в формате xterm: `rgb:RR/GG/BB` (шестнадцатеричный, 1–4 цифры на компонент) или `#RRGGBB`.\n\nЧтобы очистить ключ, задайте ему пустое значение: `status=` очищает текст статуса.\n\n**Очистить весь статус:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Сортировка по приоритету\n\nСеансы сортируются по приоритету. Нажмите кнопку ⚙, чтобы настроить, какие ключевые слова статуса имеют наивысший приоритет. Порядок по умолчанию: waiting, working, idle.\n\n### Откладывание\n\nЩёлкните правой кнопкой мыши на строке и выберите **Отложить**, чтобы переместить её в конец списка и затемнить. Отложенная запись автоматически возвращается в обычный режим при следующем изменении её статуса."
+            "value" : "## Статус сеанса\n\nИнструмент **Статус сеанса** показывает состояние сеансов во всех вкладках. Каждая запись отображает имя сеанса, цветной индикатор, текст статуса и сочетание клавиш для перехода к этому сеансу.\n\n### Установка статуса\n\n**Триггеры:** добавьте триггер **Задать статус вкладки** в **Настройки > Профили > Дополнительно > Триггеры**. Он позволяет задавать текст статуса, цвет индикатора и цвет текста при совпадении регулярного выражения с выводом терминала.\n\n**Управляющая последовательность (OSC 21337):** программы могут задавать статус вкладки напрямую:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nПоддерживаемые ключи (разделённые `;`):\n\n* `status=TEXT`: задаёт текст статуса (например, «Working», «Waiting»).\n* `indicator=COLOR`: задаёт цвет индикатора.\n* `status-color=COLOR`: задаёт цвет текста статуса.\n* `detail=TEXT`: задаёт необязательный текст с подробностями, отображаемый под статусом (переносится до 3 строк).\n\nЦвета указываются в формате xterm: `rgb:RR/GG/BB` (шестнадцатеричный, 1–4 цифры на компонент) или `#RRGGBB`.\n\nЧтобы очистить ключ, задайте ему пустое значение: `status=` очищает текст статуса.\n\n**Очистить весь статус:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Сортировка по приоритету\n\nСеансы сортируются по приоритету. Нажмите кнопку ⚙, чтобы настроить, какие ключевые слова статуса имеют наивысший приоритет. Порядок по умолчанию: waiting, done, error, working, idle.\n\n### Откладывание\n\nЩёлкните правой кнопкой мыши на строке и выберите **Отложить**, чтобы переместить её в конец списка и затемнить. Отложенная запись автоматически возвращается в обычный режим при следующем изменении её статуса."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "## 会话状态\n\n**会话状态**工具显示所有标签页中各个会话的状态。每个条目显示会话名称、彩色指示点、状态文本以及跳转到该会话的键盘快捷键。\n\n### 设置状态\n\n**触发器：**在**偏好设置 > 配置文件 > 高级 > 触发器**中添加**设置标签页状态**触发器。当正则表达式匹配终端输出时，它可设置状态文本、指示点颜色和文本颜色。\n\n**控制序列（OSC 21337）：**程序可以直接设置标签页状态：\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\n支持的键（以 `;` 分隔）：\n\n* `status=TEXT` — 设置状态文本（例如“Working”“Waiting”）。\n* `indicator=COLOR` — 设置指示点颜色。\n* `status-color=COLOR` — 设置状态文本颜色。\n* `detail=TEXT` — 设置显示在状态下方的可选详细信息（最多换行 3 行）。\n\n颜色使用 xterm 格式：`rgb:RR/GG/BB`（十六进制，每个分量 1–4 位数字）或 `#RRGGBB`。\n\n将某个键设为空值可将其清除：`status=` 清除状态文本。\n\n**清除全部状态：**`printf '\\e]21337;status=;indicator=\\a'`\n\n### 优先级排序\n\n会话按优先级排序。点按 ⚙ 按钮配置哪些状态关键字具有最高优先级。默认顺序为：waiting、working、idle。\n\n### 暂缓\n\n右键点按某一行并选择**稍后提醒**，可将其移至列表底部并调暗显示。稍后提醒的条目会在其状态下次变化时自动恢复。"
+            "value" : "## 会话状态\n\n**会话状态**工具显示所有标签页中各个会话的状态。每个条目显示会话名称、彩色指示点、状态文本以及跳转到该会话的键盘快捷键。\n\n### 设置状态\n\n**触发器：**在**偏好设置 > 配置文件 > 高级 > 触发器**中添加**设置标签页状态**触发器。当正则表达式匹配终端输出时，它可设置状态文本、指示点颜色和文本颜色。\n\n**控制序列（OSC 21337）：**程序可以直接设置标签页状态：\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\n支持的键（以 `;` 分隔）：\n\n* `status=TEXT` — 设置状态文本（例如“Working”“Waiting”）。\n* `indicator=COLOR` — 设置指示点颜色。\n* `status-color=COLOR` — 设置状态文本颜色。\n* `detail=TEXT` — 设置显示在状态下方的可选详细信息（最多换行 3 行）。\n\n颜色使用 xterm 格式：`rgb:RR/GG/BB`（十六进制，每个分量 1–4 位数字）或 `#RRGGBB`。\n\n将某个键设为空值可将其清除：`status=` 清除状态文本。\n\n**清除全部状态：**`printf '\\e]21337;status=;indicator=\\a'`\n\n### 优先级排序\n\n会话按优先级排序。点按 ⚙ 按钮配置哪些状态关键字具有最高优先级。默认顺序为：waiting、done、error、working、idle。\n\n### 暂缓\n\n右键点按某一行并选择**稍后提醒**，可将其移至列表底部并调暗显示。稍后提醒的条目会在其状态下次变化时自动恢复。"
           }
         }
       }

@@ -34,6 +34,12 @@
             "state" : "translated",
             "value" : "Описание"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "描述"
+          }
         }
       }
     },
@@ -69,6 +75,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Журнал сбоя"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "崩溃日志"
           }
         }
       }
@@ -106,6 +118,12 @@
             "state" : "translated",
             "value" : "Отчёт о сбое"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "崩溃报告器"
+          }
         }
       }
     },
@@ -141,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Похоже, что {APPNAME} завершилось сбоем при последнем использовании. Хотите отправить журнал сбоя разработчикам?\n\nЖурналы сбоев от Apple не отправляются другим разработчикам, поэтому это единственный способ, с помощью которого разработчики {APPNAME} могут узнать об этом сбое и исправить его."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "{APPNAME} 上次使用时似乎发生了崩溃。是否要将崩溃日志发送给开发者？\n\nApple 的崩溃日志不会发送给其他开发者，因此这是 {APPNAME} 的开发者了解并修复此崩溃的唯一途径。"
           }
         }
       }
@@ -178,6 +202,12 @@
             "state" : "translated",
             "value" : "Вы можете удалить любую информацию, которую не хотите передавать, но это усложнит обнаружение ошибки. По умолчанию передаются журнал сбоя, а также сведения о вашем Mac и ваших настройках."
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您可以删除任何不想发送的信息，但这会使排查错误更加困难。默认情况下，将发送崩溃日志、您使用的 Mac 型号以及您的设置。"
+          }
         }
       }
     },
@@ -213,6 +243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отправить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送"
           }
         }
       }
@@ -250,6 +286,12 @@
             "state" : "translated",
             "value" : "Напомнить позже"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稍后提醒我"
+          }
         }
       }
     },
@@ -285,6 +327,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отклонить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "丢弃"
           }
         }
       }
