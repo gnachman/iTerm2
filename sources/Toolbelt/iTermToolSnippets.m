@@ -439,18 +439,11 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (void)currentSessionDidChange {
-    // Reloading an NSOutlineView permanently leaks its disclosure buttons:
-    // AppKit mints a fresh NSButton (plus its own backing subviews) for every
-    // expandable row on each reloadData and never releases the old ones.
-    // That part is AppKit's bug, but this runs from refreshTools on every tab
-    // switch and every foreground-job change, so over days it strands tens of
-    // thousands of dead views. Those cost more than their own memory: AppKit
-    // unregisters a dying view from the notification center with a sweep whose
-    // cost grows with the number of live views, so stranded views make every
-    // view teardown in the app slower.
-    //
-    // The part we control is not reloading when the result would be identical,
-    // which is the common case here. The model depends only on the query, the
+    // This runs from refreshTools on every tab switch and every foreground-job
+    // change, so avoid reloading when the result would be identical, which is
+    // the common case. Reloads used to strand disclosure buttons too (see
+    // -it_reloadDataWithoutLeaking); they no longer do, but skipping them
+    // still saves the work. The model depends only on the query, the
     // session's snippet tags, and the model's snippet list, so if none of those
     // changed since the last -updateModel there is nothing to do. Edits to a
     // snippet's contents arrive through -snippetsDidChange:, which always
@@ -608,14 +601,6 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (void)updateOutlineView {
     // It would be nice to do something fancy like diff the before-and-after trees and update only
     // the necessary rows but the complexity is too great for me to do that tonight.
-    //
-    // If anyone does build that diff, there is a second reason to want it.
-    // -reloadData and -reloadItem:reloadChildren: both permanently strand one
-    // disclosure button, plus its cell and backing views, for every visible
-    // expandable row. The batch API, -insertItemsAtIndexes:inParent:withAnimation:
-    // and -removeItemsAtIndexes:inParent:withAnimation:, does not. So an
-    // incremental path would avoid an AppKit leak as well as the work. See
-    // tests/outline-view-disclosure-button-leak.m.
     [_outlineView reloadPreservingExpansionAndScroll];
 }
 
