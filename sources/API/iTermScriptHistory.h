@@ -49,6 +49,14 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 - (void)addClientOriginatedRPC:(NSString *)rpc;
 - (void)addServerOriginatedRPC:(NSString *)rpc;
 - (void)stopRunning;
+// Connections can reuse a key after closing (it2 over SSH shares one key per
+// session; a client may reconnect with its old key), so a stopped entry can
+// come back to life.
+- (void)resumeRunning;
+// Track the API connections using this entry's key. The entry stops when the
+// last one closes, and resumes if one opens while it's stopped.
+- (void)connectionDidOpen;
+- (void)connectionDidClose;
 - (void)kill;
 
 @end

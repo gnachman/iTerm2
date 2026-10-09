@@ -91,4 +91,131 @@ final class iTermScriptHistoryTests: XCTestCase {
         XCTAssertTrue(history.entries.contains(stopped[50]))
         XCTAssertTrue(history.entries.contains(stopped[249]))
     }
+
+    func testStoppedEntryStopsLoggingAPITraffic() {
+        let running = makeEntry(UUID().uuidString)
+        let stopped = makeEntry(UUID().uuidString)
+        stopped.stopRunning()
+
+        for entry in [running, stopped] {
+            NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerDidReceiveMessage),
+                                            object: entry.identifier)
+        }
+
+        XCTAssertEqual(running.callEntries.count, 1)
+        XCTAssertEqual(stopped.callEntries.count, 0)
+    }
+
+    // A connection that reuses a closed connection's key (it2 over SSH, or a
+    // client reconnecting) resumes the old entry, which must log again.
+    func testResumedEntryLogsAPITrafficAgain() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.stopRunning()
+        entry.resumeRunning()
+
+        NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerDidReceiveMessage),
+                                        object: entry.identifier)
+
+        XCTAssertTrue(entry.isRunning)
+        XCTAssertEqual(entry.callEntries.count, 1)
+    }
+
+    func testResumedEntryIsNotEvictedAsTerminated() {
+        let history = iTermScriptHistory()
+        let resumed = makeEntry("resumed")
+        history.addEntry(resumed)
+        resumed.stopRunning()
+        resumed.resumeRunning()
+        for i in 0..<250 {
+            let entry = makeEntry("stopped \(i)")
+            history.addEntry(entry)
+            entry.stopRunning()
+        }
+        history.addEntry(makeEntry("trigger"))
+
+        XCTAssertTrue(history.entries.contains(resumed))
+    }
+
+    func testResumingARunningEntryRegistersOnce() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.resumeRunning()
+
+        NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerDidReceiveMessage),
+                                        object: entry.identifier)
+
+        XCTAssertEqual(entry.callEntries.count, 1)
+    }
+
+    func testResumingClearsTerminatedByUser() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.terminatedByUser = true
+        entry.stopRunning()
+
+        entry.resumeRunning()
+
+        XCTAssertFalse(entry.terminatedByUser)
+    }
+
+    private func postReceivedMessage(for entry: iTermScriptHistoryEntry) {
+        NotificationCenter.default.post(name: NSNotification.Name(iTermAPIServerDidReceiveMessage),
+                                        object: entry.identifier)
+    }
+
+    func testEntryStaysRunningUntilItsLastConnectionCloses() {
+        let history = iTermScriptHistory()
+        let entry = makeEntry(UUID().uuidString)
+        history.addEntry(entry)
+        entry.connectionDidOpen()  // A
+        entry.connectionDidOpen()  // B
+
+        entry.connectionDidClose()  // A
+        XCTAssertTrue(entry.isRunning)
+        postReceivedMessage(for: entry)
+        XCTAssertEqual(entry.callEntries.count, 1)
+        for i in 0..<201 {
+            let stopped = makeEntry("stopped \(i)")
+            history.addEntry(stopped)
+            stopped.stopRunning()
+        }
+        history.addEntry(makeEntry("trigger"))
+        XCTAssertTrue(history.entries.contains(entry))
+
+        entry.connectionDidClose()  // B
+        XCTAssertFalse(entry.isRunning)
+        postReceivedMessage(for: entry)
+        XCTAssertEqual(entry.callEntries.count, 1)
+    }
+
+    func testConnectionOpeningOnAStoppedEntryResumesIt() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.connectionDidOpen()
+        entry.connectionDidClose()
+        XCTAssertFalse(entry.isRunning)
+
+        entry.connectionDidOpen()
+        XCTAssertTrue(entry.isRunning)
+        postReceivedMessage(for: entry)
+        XCTAssertEqual(entry.callEntries.count, 1)
+    }
+
+    // Stopping for any other reason, like the API shutting down, forgets open
+    // connections so a close that never arrives can't keep the entry alive.
+    func testStoppingForgetsOpenConnections() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.connectionDidOpen()
+        entry.connectionDidOpen()
+        entry.stopRunning()
+
+        entry.connectionDidOpen()
+        entry.connectionDidClose()
+        XCTAssertFalse(entry.isRunning)
+    }
+
+    // An entry made outside connectionAccepted: (a launched script's) may see a
+    // close without a matching open; that still stops it.
+    func testCloseWithoutOpenStops() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.connectionDidClose()
+        XCTAssertFalse(entry.isRunning)
+    }
 }

@@ -603,7 +603,12 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         entry.pids = notification.userInfo[@"pids"];
         DLog(@"Add history entry");
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+    } else if (!entry.isRunning) {
+        // A new connection reusing a closed one's key may come from a different
+        // process, so don't let Terminate or an API shutdown signal the old pid.
+        entry.pids = notification.userInfo[@"pids"];
     }
+    [entry connectionDidOpen];
     entry.websocketConnection = notification.userInfo[@"websocket"];
     DLog(@"Adding output");
     [entry addOutput:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptConsole.ConnectionAccepted", nil, [NSBundle mainBundle], @"Connection accepted: %@\n", @"Script Console diagnostic logged when an API connection is accepted; %@ is the peer"), notification.userInfo[@"reason"]]
@@ -619,7 +624,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         return;
     }
     [entry addOutput:NSLocalizedStringWithDefaultValue(@"ScriptConsole.ConnectionClosed", nil, [NSBundle mainBundle], @"\nConnection closed.\n", @"Script Console diagnostic logged when an API connection is closed") completion:^{}];
-    [entry stopRunning];
+    [entry connectionDidClose];
 }
 
 #pragma mark - Private

@@ -29,6 +29,8 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
 @implementation iTermScriptHistoryEntry {
     NSMutableArray<NSString *> *_logLines;
     NSMutableArray<NSString *> *_callEntries;
+    // Open API connections using this entry's key. See -connectionDidOpen.
+    NSInteger _openConnections;
 }
 
 + (instancetype)globalEntry {
@@ -120,20 +122,33 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
                                             options:0
                                              locale:[NSLocale currentLocale]];
         });
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(apiServerDidReceiveMessage:)
-                                                     name:iTermAPIServerDidReceiveMessage
-                                                   object:identifier];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(apiServerWillSendMessage:)
-                                                     name:iTermAPIServerWillSendMessage
-                                                   object:identifier];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(apiDidStop:)
-                                                     name:iTermAPIHelperDidStopNotification
-                                                   object:nil];
+        [self registerForAPINotifications];
     }
     return self;
+}
+
+// Only a running entry observes these. See -stopRunning and -resumeRunning.
+- (void)registerForAPINotifications {
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self
+               selector:@selector(apiServerDidReceiveMessage:)
+                   name:iTermAPIServerDidReceiveMessage
+                 object:_identifier];
+    [center addObserver:self
+               selector:@selector(apiServerWillSendMessage:)
+                   name:iTermAPIServerWillSendMessage
+                 object:_identifier];
+    [center addObserver:self
+               selector:@selector(apiDidStop:)
+                   name:iTermAPIHelperDidStopNotification
+                 object:nil];
+}
+
+- (void)unregisterForAPINotifications {
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center removeObserver:self name:iTermAPIServerDidReceiveMessage object:nil];
+    [center removeObserver:self name:iTermAPIServerWillSendMessage object:nil];
+    [center removeObserver:self name:iTermAPIHelperDidStopNotification object:nil];
 }
 
 - (void)dealloc {
@@ -211,9 +226,50 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     killpg(pgid, signal);
 }
 - (void)stopRunning {
+    if (!_isRunning) {
+        return;
+    }
     _isRunning = NO;
+    _openConnections = 0;
+    // A stopped entry has no traffic to log until it resumes, and must not act
+    // on a later API shutdown: apiDidStop: would SIGKILL a pid that may since
+    // have been reused. Unregistering also keeps the notification center small,
+    // since terminated entries can stick around for a long time.
+    [self unregisterForAPINotifications];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
                                                         object:self];
+}
+
+- (void)resumeRunning {
+    if (_isRunning) {
+        return;
+    }
+    _isRunning = YES;
+    // That was about the previous run. It decides whether a launched script's
+    // exit gets reported as a failure.
+    _terminatedByUser = NO;
+    [self registerForAPINotifications];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
+                                                        object:self];
+}
+
+// Several connections can share a key at once: a script may open more than
+// one, and a client that reconnects can be accepted before its old
+// connection's close arrives. Stop only when the last one closes, or a
+// connection that is still open would stop being logged. Anything that
+// stops the entry (like the API shutting down) resets the count, so a lost
+// close can't leave it running forever.
+- (void)connectionDidOpen {
+    _openConnections += 1;
+    [self resumeRunning];
+}
+
+- (void)connectionDidClose {
+    if (_openConnections > 1) {
+        _openConnections -= 1;
+        return;
+    }
+    [self stopRunning];
 }
 
 - (void)appendLogs:(NSString *)rawLogs completion:(void (^)(void))completion {
