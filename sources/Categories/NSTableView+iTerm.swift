@@ -44,6 +44,90 @@ extension NSTableView {
 }
 
 extension NSOutlineView {
+    // A replacement for -reloadData that doesn't leak.
+    //
+    // Reloading the whole outline view (-reloadData, or -reloadItem:nil
+    // reloadChildren:YES) permanently leaks a disclosure button for every
+    // visible expandable row: -[NSOutlineView _makeOutlineControl] registers a
+    // notification observer whose block strongly retains the button and is
+    // never unregistered. Each stranded button also keeps the observer that
+    // -[NSView _commonAwake] adds, so the default notification center grows by
+    // two entries per button, and AppKit's teardown of every view in the app
+    // gets slower as it grows. See tests/outline-view-disclosure-button-leak.m.
+    //
+    // The batch update API doesn't leak, so remove every top-level row and
+    // insert the data source's current ones, then restore expansion,
+    // selection, and the scroll position. This differs from -reloadData in a
+    // few ways:
+    //
+    // - Expansion is restored by matching items with isEqual:, so items that
+    //   the data source recreates on each reload must implement it. An
+    //   expanded item under a collapsed parent stays expanded, where
+    //   -reloadData forgets it.
+    // - Selection follows the selected items, where -reloadData keeps the row
+    //   indexes even when rows above them came or went. If none of the
+    //   selected items can be found, as when items are recreated without
+    //   isEqual:, it falls back to keeping the row indexes, as -reloadData does.
+    // - The delegate hears about the restoration: it gets
+    //   outlineViewSelectionDidChange: and outlineViewItemDidExpand:, which
+    //   -reloadData doesn't send.
+    @objc(it_reloadDataWithoutLeaking)
+    func reloadDataWithoutLeaking() {
+        var expandedItems = Set<AnyHashable>()
+        var selectedItems = Set<AnyHashable>()
+        let selectedRows = selectedRowIndexes
+        // -numberOfChildrenOfItem: asks the data source, which may already
+        // describe the new model, so count the rows the view has.
+        var oldCount = 0
+        for row in 0..<numberOfRows {
+            if level(forRow: row) == 0 {
+                oldCount += 1
+            }
+            guard let item = item(atRow: row) as? AnyHashable else {
+                continue
+            }
+            if isItemExpanded(item) {
+                expandedItems.insert(item)
+            }
+            if isRowSelected(row) {
+                selectedItems.insert(item)
+            }
+        }
+        let scrollOrigin = enclosingScrollView?.contentView.bounds.origin
+        let newCount = dataSource?.outlineView?(self, numberOfChildrenOfItem: nil) ?? 0
+
+        beginUpdates()
+        removeItems(at: IndexSet(0..<oldCount), inParent: nil, withAnimation: [])
+        insertItems(at: IndexSet(0..<newCount), inParent: nil, withAnimation: [])
+        endUpdates()
+
+        // Expanding a row adds its children below it, so walking rows in order
+        // reaches nested items after their parents.
+        var row = 0
+        while row < numberOfRows {
+            if let item = item(atRow: row) as? AnyHashable, expandedItems.contains(item) {
+                expandItem(item)
+            }
+            row += 1
+        }
+
+        var selection = IndexSet()
+        for row in 0..<numberOfRows {
+            if let item = item(atRow: row) as? AnyHashable, selectedItems.contains(item) {
+                selection.insert(row)
+            }
+        }
+        if selection.isEmpty {
+            selection = selectedRows.filteredIndexSet { $0 < numberOfRows }
+        }
+        selectRowIndexes(selection, byExtendingSelection: false)
+
+        if let scrollOrigin, let clipView = enclosingScrollView?.contentView {
+            clipView.setBoundsOrigin(scrollOrigin)
+            enclosingScrollView?.reflectScrolledClipView(clipView)
+        }
+    }
+
     @objc
     func reloadPreservingExpansionAndScroll() {
         // Record expanded items by uniqueID
@@ -66,8 +150,7 @@ extension NSOutlineView {
         // Record scroll position
         let scrollOrigin = enclosingScrollView?.contentView.bounds.origin ?? .zero
 
-        // Reload data
-        reloadData()
+        reloadDataWithoutLeaking()
 
         // Recursively re-expand items whose stringUniqueIdentifier() is in the saved set.
         func expandItems(for item: Any?) {

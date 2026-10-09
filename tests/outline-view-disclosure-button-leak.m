@@ -30,9 +30,11 @@
 // unregisters a dying view with a sweep whose cost grows with the size of the
 // center, so this slows view teardown application wide.
 //
-// -reloadItem:reloadChildren: leaks identically. The batch update API,
-// -insertItemsAtIndexes:inParent:withAnimation: and -removeItemsAtIndexes:,
-// does not.
+// -reloadItem:nil reloadChildren:YES leaks identically. Reloading a specific
+// item, with or without its children, does not, and neither does the batch
+// update API, -insertItemsAtIndexes:inParent:withAnimation: and
+// -removeItemsAtIndexes:. -[NSOutlineView it_reloadDataWithoutLeaking] relies
+// on that.
 //
 // Reproduced on macOS 26A428 and 26B5091g, arm64.
 
