@@ -484,6 +484,8 @@ Improvements:
   every time you switch tabs or the running
   command changes, which had been making windows
   slowly get slower the longer they stayed open.
+  The Jobs tool had the same problem when you
+  switched tabs, and is fixed too.
 - “it2 session list” takes a --format option: an
   interpolated string evaluated in each session,
   such as '\(session.path)'. It prints one line

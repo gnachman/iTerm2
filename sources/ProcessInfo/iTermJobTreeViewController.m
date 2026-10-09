@@ -465,22 +465,24 @@ static int gSignalsToList[] = {
         return;
     }
     _pid = pid;
-    _root = nil;
     [self update];
 }
 
 - (void)update {
     iTermProcessInfo *info = [self.processInfoProvider processInfoForPid:_pid];
     if (!info) {
-        _root = nil;
-        [_outlineView reloadData];
+        if (_root) {
+            _root = nil;
+            [_outlineView it_reloadDataWithoutLeaking];
+        }
         return;
     }
     iTermJobProxy *newRoot = [[iTermJobProxy alloc] initWithProcessInfo:info depth:0];
-    if (!_root) {
+    if (!_root || _root.pid != newRoot.pid) {
+        // The pid changes on every tab switch in the toolbelt.
         _root = newRoot;
-        DLog(@"reloadData");
-        [_outlineView reloadData];
+        DLog(@"reload");
+        [_outlineView it_reloadDataWithoutLeaking];
         [_outlineView expandItem:nil expandChildren:YES];
         return;
     }
@@ -582,7 +584,7 @@ static int gSignalsToList[] = {
     _font = font;
     _outlineView.rowSizeStyle =  NSTableViewRowSizeStyleCustom;
     _outlineView.rowHeight = [NSTableView heightForTextCellUsingFont:font];
-    [_outlineView reloadData];
+    [_outlineView it_reloadDataWithoutLeaking];
 }
 
 - (void)sizeOutlineViewToFit {
