@@ -180,6 +180,9 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     PSMProgressIndicator *_indicator;
     NSTimeInterval _highlightChangeTime;
     PSMWeakTimer *_delayedStringValueTimer;  // For bug 3957
+    // Desired width when _delayedStringValueTimer was armed, i.e. the width
+    // the current layout was computed from. See -updateStringValue:.
+    float _desiredWidthBeforeStringChange;
     BOOL _hasIcon;
     BOOL _highlighted;
     NSAccessibilityElement *_element;
@@ -338,6 +341,11 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 - (void)reallySetStringValue:(NSString *)aString {
+    if (!_delayedStringValueTimer) {
+        // Capture before the string changes so -updateStringValue: can tell
+        // whether the layout can have changed.
+        _desiredWidthBeforeStringChange = [self desiredWidthOfCell];
+    }
     [super setStringValue:aString];
 
     if (!_delayedStringValueTimer) {
@@ -353,8 +361,18 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 - (void)updateStringValue:(NSTimer *)timer {
     _delayedStringValueTimer = nil;
     _stringSize = [[self cachedTitle] size];
+    NSView<PSMTabBarControlProtocol> *control = [self psmTabControlView];
+    if (!_isInOverflowMenu && [self desiredWidthOfCell] == _desiredWidthBeforeStringChange) {
+        // Same width, so no cell can move: repaint only this cell. A full
+        // -update: relays out and redraws the whole bar, which is expensive
+        // with many tabs whose titles churn (e.g. a spinner in the title).
+        // Overflowed cells still take the full path because -update: is what
+        // rebuilds the overflow menu's item titles.
+        [control setNeedsDisplayInRect:[[control style] dirtyFrameForCell:self]];
+        return;
+    }
     // need to redisplay now - binding observation was too quick.
-    [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]];
+    [control update:[control automaticallyAnimates]];
 }
 
 - (NSSize)stringSize {
