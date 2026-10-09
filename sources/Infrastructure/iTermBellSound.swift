@@ -4,6 +4,7 @@
 //
 
 import AppKit
+import AudioToolbox
 import UniformTypeIdentifiers
 
 // The sound a profile’s audible bell makes.
@@ -99,22 +100,8 @@ class iTermBellSound: NSObject {
         // would decode, and through NSSound’s name table permanently retain, every sound
         // installed.
         init(directories: [String], fileManager: FileManager = .default) {
-            let playableTypes = NSSound.soundUnfilteredTypes.compactMap { UTType($0) }
             for (precedence, directory) in directories.enumerated() {
-                let directoryURL = URL(fileURLWithPath: directory, isDirectory: true)
-                guard let filenames = try? fileManager.contentsOfDirectory(atPath: directory) else {
-                    continue
-                }
-                for filename in filenames.sorted() where !filename.hasPrefix(".") {
-                    let url = directoryURL.appendingPathComponent(filename)
-                    guard let type = UTType(filenameExtension: url.pathExtension),
-                          playableTypes.contains(where: { type.conforms(to: $0) }) else {
-                        continue
-                    }
-                    let name = url.deletingPathExtension().lastPathComponent
-                    guard !name.isEmpty else {
-                        continue
-                    }
+                for (name, url) in iTermBellSound.audioFiles(in: directory, fileManager: fileManager) {
                     entriesByName[name, default: []].append(
                         Entry(precedence: precedence,
                               url: url.resolvingSymlinksInPath().standardizedFileURL))
@@ -149,6 +136,46 @@ class iTermBellSound: NSObject {
             }
             return entries.filter { $0.precedence == first }.map(\.url)
         }
+    }
+
+    // The files in a directory that look like audio NSSound can play, judging by their
+    // extensions, with the names they would be looked up by. Sorted by filename.
+    static func audioFiles(in directory: String,
+                           fileManager: FileManager = .default) -> [(name: String, url: URL)] {
+        guard let filenames = try? fileManager.contentsOfDirectory(atPath: directory) else {
+            return []
+        }
+        let playableTypes = NSSound.soundUnfilteredTypes.compactMap { UTType($0) }
+        let directoryURL = URL(fileURLWithPath: directory, isDirectory: true)
+        return filenames.sorted().compactMap { filename in
+            guard !filename.hasPrefix(".") else {
+                return nil
+            }
+            let url = directoryURL.appendingPathComponent(filename)
+            guard let type = UTType(filenameExtension: url.pathExtension),
+                  playableTypes.contains(where: { type.conforms(to: $0) }) else {
+                return nil
+            }
+            let name = url.deletingPathExtension().lastPathComponent
+            return name.isEmpty ? nil : (name, url)
+        }
+    }
+
+    // The file NSSound(named:) would play for a name: the app’s own sounds first, then the
+    // Sounds folders in order. Like NSSound, this reads the folders on the calling thread.
+    static func url(forSoundNamed name: String,
+                    bundle: Bundle = .main,
+                    directories: [String] = soundDirectories,
+                    fileManager: FileManager = .default) -> URL? {
+        if let path = bundle.path(forSoundResource: name) {
+            return URL(fileURLWithPath: path)
+        }
+        for directory in directories {
+            if let match = audioFiles(in: directory, fileManager: fileManager).first(where: { $0.name == name }) {
+                return match.url
+            }
+        }
+        return nil
     }
 
     // Main thread only.
@@ -225,9 +252,13 @@ class iTermBellSound: NSObject {
     }
 }
 
-// Plays profiles’ bell sounds. Sessions share one player so that a sound is decoded
-// once rather than once per session, and so that a burst of bells from one session
-// does not pile up. Main thread only, like the rest of the bell path.
+// Plays profiles’ bell sounds. They play as alerts through System Sound Services, the
+// way NSBeep() plays the system alert sound, so they follow the alert volume, the
+// “Play sound effects through” device, and the accessibility setting that flashes the
+// screen for alerts. NSSound follows none of those. Sessions share one player so that a
+// sound is registered once rather than once per session. Playing a sound that is still
+// playing restarts it, so a burst of bells sounds like a burst instead of one long note.
+// Main thread only, like the rest of the bell path.
 @objc(iTermBellSoundPlayer)
 class iTermBellSoundPlayer: NSObject {
     @objc(sharedInstance) static let shared = iTermBellSoundPlayer()
@@ -264,10 +295,29 @@ class iTermBellSoundPlayer: NSObject {
         }
     }
 
+    // A sound registered with System Sound Services, unregistered when released.
+    private final class SystemSound {
+        let id: SystemSoundID
+
+        init?(url: URL) {
+            var id = SystemSoundID(0)
+            let status = AudioServicesCreateSystemSoundID(url as CFURL, &id)
+            guard status == noErr else {
+                DLog("Beep: can’t create a system sound from \(url.path): \(status)")
+                return nil
+            }
+            self.id = id
+        }
+
+        deinit {
+            AudioServicesDisposeSystemSoundID(id)
+        }
+    }
+
     private struct CachedSound {
-        var sound: NSSound
-        // Nil for a sound NSSound found by name.
-        var fileIdentity: FileIdentity?
+        var sound: SystemSound
+        var url: URL
+        var fileIdentity: FileIdentity
     }
 
     // The number of distinct sounds in play at once is bounded by the number of profiles,
@@ -278,78 +328,80 @@ class iTermBellSoundPlayer: NSObject {
     // The keys of `cache`, least recently used first.
     private var recency = [String]()
 
+    override init() {
+        super.init()
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(installedSoundsDidChange(_:)),
+                                               name: iTermBellSound.installedSoundsDidChangeNotification,
+                                               object: nil)
+    }
+
     @objc(playProfileValue:)
     func play(profileValue: String?) {
-        let source = iTermBellSound.source(of: profileValue)
-        guard let profileValue, source != .systemAlert else {
+        guard let profileValue, iTermBellSound.source(of: profileValue) != .systemAlert else {
             NSSound.beep()
             return
         }
-        guard let sound = sound(forProfileValue: profileValue, source: source) else {
+        guard let sound = sound(forProfileValue: profileValue) else {
             // The sound named by the profile is gone. Ring the ordinary bell rather than
             // nothing: a missing file shouldn’t mean a silent terminal.
             DLog("Beep: can’t load bell sound \(profileValue); using the system alert sound")
             NSSound.beep()
             return
         }
-        // A bell that lands while the last one is still playing restarts it, so that a
-        // burst of bells sounds like a burst instead of one long note.
-        if sound.isPlaying {
-            sound.stop()
-        }
-        sound.play()
+        AudioServicesPlayAlertSound(sound.id)
     }
 
     // Whether play(profileValue:) would play the sound the value names rather than falling
     // back to the system alert sound.
     func canPlay(profileValue: String?) -> Bool {
-        let source = iTermBellSound.source(of: profileValue)
-        guard let profileValue, source != .systemAlert else {
+        guard let profileValue, iTermBellSound.source(of: profileValue) != .systemAlert else {
             return true
         }
-        return sound(forProfileValue: profileValue, source: source) != nil
+        return sound(forProfileValue: profileValue) != nil
     }
 
-    private func sound(forProfileValue profileValue: String,
-                       source: iTermBellSound.Source) -> NSSound? {
-        let fileIdentity: FileIdentity?
-        switch source {
-        case .systemAlert:
-            return nil
-        case .named:
-            fileIdentity = nil
-        case .file(let url):
-            guard let identity = FileIdentity(url: url) else {
-                forget(profileValue)
-                return nil
-            }
-            fileIdentity = identity
-        }
+    private func sound(forProfileValue profileValue: String) -> SystemSound? {
         if let cached = cache[profileValue] {
-            if cached.fileIdentity == fileIdentity {
+            if FileIdentity(url: cached.url) == cached.fileIdentity {
                 recency.removeAll { $0 == profileValue }
                 recency.append(profileValue)
                 return cached.sound
             }
-            // The file changed since it was loaded.
+            // The file changed or went away since it was loaded. For a name, look it up
+            // again, since another folder may have a file by that name.
             forget(profileValue)
         }
-        let loaded: NSSound?
-        switch source {
-        case .systemAlert:
-            loaded = nil
-        case .named(let name):
-            loaded = NSSound(named: name)
-        case .file(let url):
-            loaded = NSSound(contentsOf: url, byReference: false)
-        }
-        guard let loaded else {
+        guard let url = url(forProfileValue: profileValue),
+              let fileIdentity = FileIdentity(url: url),
+              let sound = SystemSound(url: url) else {
             return nil
         }
-        cache[profileValue] = CachedSound(sound: loaded, fileIdentity: fileIdentity)
+        cache[profileValue] = CachedSound(sound: sound, url: url, fileIdentity: fileIdentity)
         recency.append(profileValue)
         evictIfNeeded()
-        return loaded
+        return sound
+    }
+
+    private func url(forProfileValue profileValue: String) -> URL? {
+        switch iTermBellSound.source(of: profileValue) {
+        case .systemAlert:
+            return nil
+        case .named(let name):
+            return iTermBellSound.url(forSoundNamed: name)
+        case .file(let url):
+            return url
+        }
+    }
+
+    // A file added to a Sounds folder can shadow the one a name was resolved to, so look
+    // names up again.
+    @objc private func installedSoundsDidChange(_ notification: Notification) {
+        for profileValue in Array(cache.keys) {
+            if case .named = iTermBellSound.source(of: profileValue) {
+                forget(profileValue)
+            }
+        }
     }
 
     private func forget(_ profileValue: String) {
@@ -357,20 +409,11 @@ class iTermBellSoundPlayer: NSObject {
         recency.removeAll { $0 == profileValue }
     }
 
-    // Drops the least recently used sounds until the cache is back under its cap. A sound
-    // that is playing is skipped because releasing the last reference to an NSSound stops
-    // it mid-note; the cache can run over the cap until it finishes. The most recent entry
-    // is the one just asked for, so it is never a candidate.
+    // Drops the least recently used sounds until the cache is back under its cap. The most
+    // recent entry is the one just asked for, so it is never dropped.
     private func evictIfNeeded() {
-        var i = 0
-        while cache.count > Self.maximumCachedSounds && i < recency.count - 1 {
-            let key = recency[i]
-            if cache[key]?.sound.isPlaying == true {
-                i += 1
-                continue
-            }
-            recency.remove(at: i)
-            cache.removeValue(forKey: key)
+        while cache.count > Self.maximumCachedSounds, recency.count > 1 {
+            cache.removeValue(forKey: recency.removeFirst())
         }
     }
 }

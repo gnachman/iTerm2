@@ -61,6 +61,10 @@ final class BellSoundTests: XCTestCase {
         XCTAssertTrue(iTermBellSound.isPlayable(profileValue: url.path))
     }
 
+    func test_installedSoundName_isPlayable() {
+        XCTAssertTrue(iTermBellSound.isPlayable(profileValue: "Glass"))
+    }
+
     func test_missingFileOrName_isNotPlayable() {
         XCTAssertFalse(iTermBellSound.isPlayable(profileValue: "/nonexistent/iTerm2BellSoundTest.aiff"))
         XCTAssertFalse(iTermBellSound.isPlayable(profileValue: "iTerm2BellSoundTestNoSuchSound"))
@@ -87,6 +91,28 @@ final class BellSoundTests: XCTestCase {
         try FileManager.default.removeItem(at: url)
         XCTAssertFalse(iTermBellSound.isPlayable(profileValue: url.path),
                        "a deleted file must not keep playing the sound loaded before")
+    }
+
+    // MARK: - Finding a sound by name
+
+    func test_soundName_findsTheFirstFolderThatHasIt() throws {
+        let first = try temporaryDirectory()
+        let second = try temporaryDirectory()
+        _ = try file(named: "Chime.txt", in: first)
+        let shadowing = try file(named: "Chime.wav", in: second)
+        _ = try file(named: "Chime.aiff", in: try temporaryDirectory())
+        let found = iTermBellSound.url(forSoundNamed: "Chime",
+                                       bundle: Bundle(for: Self.self),
+                                       directories: [first.path, second.path])
+        XCTAssertEqual(found?.standardizedFileURL, shadowing.standardizedFileURL)
+    }
+
+    func test_soundName_isNotFoundWhenNoFolderHasIt() throws {
+        let sounds = try temporaryDirectory()
+        _ = try file(named: "Other.aiff", in: sounds)
+        XCTAssertNil(iTermBellSound.url(forSoundNamed: "Chime",
+                                        bundle: Bundle(for: Self.self),
+                                        directories: [sounds.path, "/nonexistent"]))
     }
 
     // MARK: - Turning a chosen file into a stored value
