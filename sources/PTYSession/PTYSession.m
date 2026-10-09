@@ -1,6 +1,7 @@
 #import "PTYSession+ARC.h"
 #import "PTYSession+Private.h"
 #import "PTYSession.h"
+#import <WebKit/WebKit.h>
 
 #import "CVector.h"
 #import "CaptureTrigger.h"
@@ -24082,6 +24083,26 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                    target:self
                                                    action:@selector(loadURLWithCompletion:url:connectionKey:)];
         [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"browser_eval_js"
+                                            defaultValues:@{}
+                                                    types:@{ @"js": [NSString class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[browser_eval_js]"
+                                                   target:self
+                                                   action:@selector(browserEvalJSWithCompletion:js:connectionKey:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
+
+        method = [[iTermBuiltInMethod alloc] initWithName:@"browser_set_inspectable"
+                                            defaultValues:@{}
+                                                    types:@{ @"enabled": [NSNumber class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[browser_set_inspectable]"
+                                                   target:self
+                                                   action:@selector(browserSetInspectableWithCompletion:enabled:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
 }
@@ -24241,6 +24262,101 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)performLoadURL:(NSURL *)url completion:(void (^)(id, NSError *))completion {
     [self openURL:url];
     completion(@YES, nil);
+}
+
+#pragma mark - browser_eval_js
+
+// Runs a JavaScript function body in the page world of a browser session and returns its
+// value as a JSON string. The body may use await and must `return` its result. Like
+// load_url, the first use per domain asks the user; the answer is remembered.
+- (void)browserEvalJSWithCompletion:(void (^)(id, NSError *))completion
+                                 js:(NSString *)js
+                      connectionKey:(id)connectionKey {
+    if (!self.isBrowserSession || !_view.browserViewController) {
+        completion(nil, [self loadURLErrorWithCode:1
+                                           message:@"browser_eval_js is only supported in browser sessions"]);
+        return;
+    }
+    if (!connectionKey) {
+        completion(nil, [self loadURLErrorWithCode:3
+                                           message:@"browser_eval_js must be called from a Python script"]);
+        return;
+    }
+    WKWebView *webView = _view.browserViewController.webView;
+    // Approval is per web origin, so only pages that have one qualify. about:blank and
+    // file:// pages would otherwise all share a single approval.
+    NSURL *pageURL = webView.URL;
+    NSString *scheme = pageURL.scheme.lowercaseString;
+    NSString *domain = pageURL.host.lowercaseString;
+    if (!domain.length || !([scheme isEqualToString:@"https"] || [scheme isEqualToString:@"http"])) {
+        completion(nil, [self loadURLErrorWithCode:6
+                                           message:@"browser_eval_js requires an http or https page"]);
+        return;
+    }
+    NSString *origin = [NSString stringWithFormat:@"%@://%@:%@", scheme, domain, pageURL.port ?: @""];
+    iTermScriptHistoryEntry *entry = [[iTermAPIHelper sharedInstanceIfEnabled] scriptHistoryEntryForConnectionKey:connectionKey];
+    NSString *scriptName = entry.name ?: @"A script";
+    NSString *heading = [NSString stringWithFormat:
+        NSLocalizedStringWithDefaultValue(@"PTYSession.ScriptWantsToRunJavaScriptHeading", nil, [NSBundle mainBundle], @"%@ wants to run JavaScript in this browser session.", @"Heading for a prompt asking whether to allow a script to run JavaScript in a web page; placeholder is the script name"), scriptName];
+    NSString *title = [NSString stringWithFormat:
+        NSLocalizedStringWithDefaultValue(@"PTYSession.AllowRunningJavaScriptOn", nil, [NSBundle mainBundle], @"Allow scripts to read and control pages on %@?", @"Prompt asking whether to allow scripts to run JavaScript on a domain; placeholder is the domain"), domain];
+    NSString *identifier = [@"NoSyncBrowserJavaScriptAllowed_" stringByAppendingString:domain];
+    __weak __typeof(self) weakSelf = self;
+    [iTermWarning asyncShowWarningWithTitle:title
+                                    actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                              actionMapping:nil
+                                  accessory:nil
+                                 identifier:identifier
+                                silenceable:kiTermWarningTypePermanentlySilenceable
+                                    heading:heading
+                                cancelLabel:nil
+                                     window:self.delegate.realParentWindow.window
+                                 completion:^(iTermWarningSelection selection,
+                                              iTermWarning *warning) {
+        if (selection != kiTermWarningSelection0) {
+            completion(nil, [weakSelf loadURLErrorWithCode:4
+                                                   message:@"User denied permission to run JavaScript"]);
+            return;
+        }
+        // The prompt is asynchronous; the page may have navigated while it was up.
+        // Only run on the origin that was approved.
+        NSURL *nowURL = webView.URL;
+        NSString *nowOrigin = [NSString stringWithFormat:@"%@://%@:%@",
+                               nowURL.scheme.lowercaseString, nowURL.host.lowercaseString, nowURL.port ?: @""];
+        if (![nowOrigin isEqualToString:origin]) {
+            completion(nil, [weakSelf loadURLErrorWithCode:7
+                                                   message:@"The page navigated to a different site before the JavaScript could run"]);
+            return;
+        }
+        NSString *body = [NSString stringWithFormat:@"const __itermResult = await (async () => {\n%@\n})();\nreturn JSON.stringify(__itermResult === undefined ? null : __itermResult);", js];
+        [webView callAsyncJavaScript:body
+                           arguments:@{}
+                             inFrame:nil
+                      inContentWorld:WKContentWorld.pageWorld
+                   completionHandler:^(id result, NSError *error) {
+            if (error) {
+                completion(nil, error);
+            } else {
+                completion([result isKindOfClass:[NSString class]] ? result : @"null", nil);
+            }
+        }];
+    }];
+}
+
+// Lets Safari's Develop menu attach Web Inspector to this browser session.
+- (void)browserSetInspectableWithCompletion:(void (^)(id, NSError *))completion
+                                    enabled:(NSNumber *)enabled {
+    if (!self.isBrowserSession || !_view.browserViewController) {
+        completion(nil, [self loadURLErrorWithCode:1
+                                           message:@"browser_set_inspectable is only supported in browser sessions"]);
+        return;
+    }
+    if (@available(macOS 13.3, *)) {
+        _view.browserViewController.webView.inspectable = enabled.boolValue;
+        completion(@YES, nil);
+    } else {
+        completion(nil, [self loadURLErrorWithCode:5 message:@"Requires macOS 13.3"]);
+    }
 }
 
 - (void)setStatusBarComponentUnreadCountWithCompletion:(void (^)(id, NSError *))completion

@@ -135,6 +135,14 @@ New Features:
   renamed, recolored, collapsed, or have tabs
   added or removed. iTerm2 keeps each group's
   tabs consecutive for you.
+- The Python API can now run JavaScript in a
+  browser session’s page and get the result
+  back with Session.eval_javascript, so a
+  script can read a page or fill in a form
+  without clicking on the screen. The first time
+  a script does this on a site, iTerm2 asks you
+  to allow it. Scripts can also let Safari’s Web
+  Inspector attach to a browser session.
 - A new “Set Profile Setting” trigger action turns
   a profile checkbox on or off for the session.
   Paired with Job Started and Job Ended matches it
