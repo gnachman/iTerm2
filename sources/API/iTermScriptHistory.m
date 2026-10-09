@@ -396,7 +396,11 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
 }
 
 - (void)addHistoryEntry:(iTermScriptHistoryEntry *)entry {
+    if ([_entries indexOfObjectIdenticalTo:entry] != NSNotFound) {
+        return;
+    }
     [_entries addObject:entry];
+    [self removeExcessTerminatedEntries];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
                                                         object:self];
 }
@@ -408,6 +412,30 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
     [_entries removeObject:entry];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
                                                         object:self];
+}
+
+// Terminated entries are kept so their logs stay viewable in the Script
+// Console, but every API connection gets an entry, and clients like it2 make a
+// connection per command, so without a limit they pile up without bound. Drop
+// the oldest terminated entries beyond the limit. Running entries are never
+// dropped.
+- (void)removeExcessTerminatedEntries {
+    const NSUInteger maxTerminatedEntries = 200;
+    NSIndexSet *terminated = [_entries indexesOfObjectsPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger idx, BOOL *stop) {
+        return !entry.isRunning;
+    }];
+    if (terminated.count <= maxTerminatedEntries) {
+        return;
+    }
+    __block NSUInteger excessCount = terminated.count - maxTerminatedEntries;
+    NSMutableIndexSet *excess = [NSMutableIndexSet indexSet];
+    [terminated enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        [excess addIndex:idx];
+        excessCount -= 1;
+        *stop = (excessCount == 0);
+    }];
+    DLog(@"Remove %@ excess terminated entries", @(excess.count));
+    [_entries removeObjectsAtIndexes:excess];
 }
 
 - (void)removeTerminatedEntries {

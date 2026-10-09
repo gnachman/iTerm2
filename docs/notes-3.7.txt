@@ -500,6 +500,11 @@ Improvements:
 - Pasting a screenshot with “Upload and Paste
   Path” converts TIFF images to PNG and gives
   each one a unique name.
+- The Script Console now keeps only the 200 most
+  recent finished scripts and API connections.
+  It used to keep every one, and tools that
+  connect for each command, like it2, piled up
+  enough of them to slow iTerm2 down over time.
 
 Bug Fixes:
 - On macOS 26, hiding a hotkey window when no

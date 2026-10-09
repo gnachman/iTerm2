@@ -60,4 +60,35 @@ final class iTermScriptHistoryTests: XCTestCase {
         XCTAssertFalse(history.entries.contains(a))
         XCTAssertTrue(history.entries.contains(b))
     }
+
+    func testAddingTheSameEntryTwiceKeepsOneCopy() {
+        let history = iTermScriptHistory()
+        let entry = makeEntry("entry")
+        history.addEntry(entry)
+        history.addEntry(entry)
+
+        XCTAssertEqual(history.entries.filter { $0 === entry }.count, 1)
+    }
+
+    func testTerminatedEntriesAreCappedOldestFirst() {
+        let history = iTermScriptHistory()
+        let running = makeEntry("running")
+        history.addEntry(running)
+        var stopped = [iTermScriptHistoryEntry]()
+        for i in 0..<250 {
+            let entry = makeEntry("stopped \(i)")
+            history.addEntry(entry)
+            entry.stopRunning()
+            stopped.append(entry)
+        }
+        // The limit is enforced when an entry is added.
+        history.addEntry(makeEntry("trigger"))
+
+        let terminated = history.entries.filter { !$0.isRunning }
+        XCTAssertEqual(terminated.count, 200)
+        XCTAssertTrue(history.entries.contains(running))
+        XCTAssertFalse(history.entries.contains(stopped[49]))
+        XCTAssertTrue(history.entries.contains(stopped[50]))
+        XCTAssertTrue(history.entries.contains(stopped[249]))
+    }
 }
