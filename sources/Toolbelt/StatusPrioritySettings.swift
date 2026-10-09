@@ -13,13 +13,20 @@ class StatusPrioritySettings: NSObject {
     private static let defaultsKey = "StatusPriorities"
     private static let entriesDefaultsKey = "StatusPriorityEntries"
     private static let mergeWorkgroupsDefaultsKey = "StatusMergeWorkgroups"
+    // Set once a saved list has been given the done and error patterns, so a
+    // user who later removes them is not given them back. Synced along with
+    // the list it describes: a NoSync flag would be unset on another machine
+    // sharing the same prefs folder, which would add the patterns back to the
+    // shared list there.
+    private static let addedDoneAndErrorDefaultsKey = "StatusPriorityAddedDoneAndError"
 
     /// Default priority patterns. Matching is a lowercased-substring test
     /// against status text that arrives over the wire protocol, which is
     /// inherently English, so these stay stable English substrings regardless
-    /// of the app's UI language. Order matches the historical default priority
-    /// (waiting, working, idle).
-    static let defaultPatterns = ["wait", "work", "idle"]
+    /// of the app's UI language. A program waiting on the user comes first,
+    /// then one whose finished (or failed) result the user has not seen yet,
+    /// then one still working. Idle comes last: nothing there needs the user.
+    static let defaultPatterns = ["wait", "done", "error", "work", "idle"]
 
     /// When enabled, all sessions in a workgroup collapse to a single row in
     /// the Session Status tool. Defaults to off to preserve prior behavior.
@@ -48,6 +55,9 @@ class StatusPrioritySettings: NSObject {
         if let data = try? JSONEncoder().encode(entries) {
             iTermUserDefaults.userDefaults().set(data, forKey: Self.entriesDefaultsKey)
         }
+        // Whatever the user saves is already a list that knows about done and
+        // error; a pattern missing from it was left out on purpose.
+        iTermUserDefaults.userDefaults().set(true, forKey: Self.addedDoneAndErrorDefaultsKey)
         // Remove legacy key on save
         iTermUserDefaults.userDefaults().removeObject(forKey: Self.defaultsKey)
         NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
@@ -60,16 +70,69 @@ class StatusPrioritySettings: NSObject {
 
     private override init() {
         // Try new format first
-        if let data = iTermUserDefaults.userDefaults().data(forKey: Self.entriesDefaultsKey),
+        let userDefaults = iTermUserDefaults.userDefaults()
+        var loaded: [StatusPriorityEntry]?
+        if let data = userDefaults.data(forKey: Self.entriesDefaultsKey),
            let saved = try? JSONDecoder().decode([StatusPriorityEntry].self, from: data) {
-            entries = saved
-        } else if let saved = iTermUserDefaults.userDefaults().stringArray(forKey: Self.defaultsKey) {
+            loaded = saved
+        } else if let saved = userDefaults.stringArray(forKey: Self.defaultsKey) {
             // Migrate legacy string array
-            entries = saved.map { StatusPriorityEntry(pattern: $0) }
+            loaded = saved.map { StatusPriorityEntry(pattern: $0) }
+        }
+        var needsMigration = false
+        if let loaded {
+            if userDefaults.bool(forKey: Self.addedDoneAndErrorDefaultsKey) {
+                entries = loaded
+            } else {
+                entries = Self.addingDoneAndError(to: loaded)
+                needsMigration = true
+            }
         } else {
+            // Nothing saved, so nothing to migrate and nothing to record: the
+            // defaults already include done and error, and save() records the
+            // flag along with the first list the user saves.
             entries = Self.defaultPatterns.map { StatusPriorityEntry(pattern: $0) }
         }
         super.init()
+        if needsMigration {
+            // didSet does not run during init. Write the list directly rather
+            // than through save(), whose notification could reach an observer
+            // that reads `shared` while it is still being created.
+            if let data = try? JSONEncoder().encode(entries) {
+                userDefaults.set(data, forKey: Self.entriesDefaultsKey)
+                userDefaults.removeObject(forKey: Self.defaultsKey)
+            }
+            userDefaults.set(true, forKey: Self.addedDoneAndErrorDefaultsKey)
+        }
+    }
+
+    /// Lists saved before done and error existed rank those statuses below
+    /// everything the user listed. Puts them where the defaults do, just after
+    /// whatever matches “waiting” (or first, if nothing does), unless the list
+    /// already has a pattern that matches them.
+    static func addingDoneAndError(to saved: [StatusPriorityEntry]) -> [StatusPriorityEntry] {
+        func index(matching status: String, in entries: [StatusPriorityEntry]) -> Int? {
+            return entries.firstIndex { entry in
+                let pattern = entry.pattern.lowercased()
+                return !pattern.isEmpty && status.contains(pattern)
+            }
+        }
+        // Before done and error existed, a finished or failed turn reported
+        // idle, so whoever asked to be notified about that keeps being
+        // notified about the same moment under its new name.
+        let turnEndNotify = index(matching: "idle", in: saved).map { saved[$0].notify } ?? false
+        var result = saved
+        var insertionIndex = index(matching: "waiting", in: result).map { $0 + 1 } ?? 0
+        for status in ["done", "error"] {
+            if index(matching: status, in: result) == nil {
+                result.insert(StatusPriorityEntry(pattern: status, notify: turnEndNotify),
+                              at: insertionIndex)
+                insertionIndex += 1
+            } else {
+                DLog("Saved status priorities already match \(status)")
+            }
+        }
+        return result
     }
 
     /// Priority value for status text that doesn't match any pattern.

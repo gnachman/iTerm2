@@ -9,6 +9,10 @@ let waitingDot = "#5f87ff"
 let waitingText = "#5f87ff"
 let idleDot = "#00d75f"
 let idleText = "#888888"
+let doneDot = "#00d75f"
+let doneText = "#00d75f"
+let errorDot = "#ff3b30"
+let errorText = "#ff3b30"
 
 /// Which program's hooks are driving this run. Codex CLI (0.154+) runs the same hooks as Claude
 /// Code with the same payload shape, so one binary serves both, but the two differ in what they
@@ -100,9 +104,9 @@ struct StatusUpdate {
     var turnOpen: Bool? = nil
     // Send the update with preconditions that iTerm2 checks as it applies it:
     // the turn must still be closed and no work still counted, or the update is
-    // dropped whole. For an idle decided from a status read a round trip
+    // dropped whole. For a done decided from a status read a round trip
     // earlier: a prompt submitted in between has reopened the turn and written
-    // “working”, and an unconditional idle would cover it until the next tool
+    // “working”, and an unconditional done would cover it until the next tool
     // call, or for the whole turn if it uses none.
     var onlyWhenFinished = false
     // Set on the Codex path whenever the display about to be written says work
@@ -111,13 +115,14 @@ struct StatusUpdate {
     // stayed quiet (a turn ending) or wrote its own idle that this write is about
     // to cover (a sibling's SubagentStop). So the write asks for the status as it
     // stood once it landed: if no work is counted and the turn is closed, this
-    // is what idle says, in a second write. Reading it again afterwards would
+    // is how the turn ended, said in a second write. Reading it again afterwards would
     // cost the same round trip and leave the same gap open. Anything that
-    // finishes after this write lands sees “working” and reports idle itself
+    // finishes after this write lands sees “working” and reports done itself
     // (see SubagentStop). The second write carries what it assumed as
     // preconditions (see onlyWhenFinished), so a prompt that lands in between
-    // keeps its “working”.
-    var idleDetailIfTasksFinished: String? = nil
+    // keeps its “working”. The ending is the turn's own (done, error, or idle
+    // for a cancel), since it is this turn's end the second write reports.
+    var endingIfTasksFinished: (ending: TurnEnding, detail: String)? = nil
 
     /// Whether there is anything to send.
     var isEmpty: Bool {
@@ -145,6 +150,45 @@ struct StatusUpdate {
         dotColor = idleDot
         textColor = idleText
         self.detail = detail
+    }
+
+    /// The turn finished and its result is waiting for the user. iTerm2 ranks
+    /// this above work in progress and turns it idle once the user types in
+    /// the session.
+    mutating func showDone(detail: String?) {
+        status = "done"
+        dotColor = doneDot
+        textColor = doneText
+        self.detail = detail
+    }
+
+    /// The turn ended in an error. Dismissed like done.
+    mutating func showError(detail: String?) {
+        status = "error"
+        dotColor = errorDot
+        textColor = errorText
+        self.detail = detail
+    }
+
+    /// How a turn that ended with no work left reads.
+    enum TurnEnding {
+        /// Finished, with a result the user has not seen.
+        case done
+        /// Failed.
+        case error
+        /// Cancelled: nothing new to look at.
+        case idle
+    }
+
+    mutating func showEnded(_ ending: TurnEnding, detail: String?) {
+        switch ending {
+        case .done:
+            showDone(detail: detail)
+        case .error:
+            showError(detail: detail)
+        case .idle:
+            showIdle(detail: detail)
+        }
     }
 }
 
@@ -185,21 +229,21 @@ func statusUpdate(forEvent eventName: String,
     let isCodex = agent == .codex
     let lastMessage = lastMessageDetail(json)
 
-    /// The one rule for an event that ends a turn: stay working while background work remains, go
-    /// idle otherwise. Stop, StopFailure, Interrupt and the idle nudge all answer it the same way,
-    /// so they all come through here and cannot drift apart as events are added. On the Codex path
-    /// it also closes the turn and, with work still counted, asks for the status as it stood once
-    /// the write landed (see StatusUpdate.idleDetailIfTasksFinished).
-    func endTurn(running: Int, idleDetail: String) {
+    /// The one rule for an event that ends a turn: stay working while background work remains,
+    /// report how the turn ended otherwise. Stop, StopFailure, Interrupt and the idle nudge all
+    /// answer it the same way, so they all come through here and cannot drift apart as events are
+    /// added. On the Codex path it also closes the turn and, with work still counted, asks for the
+    /// status as it stood once the write landed (see StatusUpdate.endingIfTasksFinished).
+    func endTurn(running: Int, ending: StatusUpdate.TurnEnding, detail: String) {
         if running > 0 {
             update.showWorking(detail: backgroundDetail(count: running))
         } else {
-            update.showIdle(detail: idleDetail)
+            update.showEnded(ending, detail: detail)
         }
         if isCodex {
             update.turnOpen = false
             if running > 0 {
-                update.idleDetailIfTasksFinished = idleDetail
+                update.endingIfTasksFinished = (ending, detail)
             }
         }
     }
@@ -223,7 +267,16 @@ func statusUpdate(forEvent eventName: String,
             // fallback, the idle nudge (~60s after Stop) would flip a
             // working-because-background session to idle, resurrecting the
             // false-idle bug.
-            let running = backgroundTaskCount(json) ?? storedBackgroundTaskCount(addressArgs: address.args)
+            let current = storedStatus(addressArgs: address.args)
+            let running = backgroundTaskCount(json) ?? current?.backgroundTasks ?? 0
+            // The nudge repeats a turn ending that Stop already reported. When
+            // the tab still shows that ending, leave it: the nudge carries no
+            // message, and re-sending done would replace Stop's with nothing,
+            // or, after the user typed in the session and iTerm2 turned it
+            // idle, put a result they have seen back at the top of the list.
+            if running == 0, let shown = current?.status, ["done", "error", "idle"].contains(shown) {
+                return nil
+            }
             // Re-assert the last message when the payload has one. It also
             // replaces a stale "N background tasks running" line from an earlier
             // Stop. Without a message, clear the detail instead:
@@ -233,7 +286,7 @@ func statusUpdate(forEvent eventName: String,
             // be false. The cost is that Stop's last_assistant_message no longer
             // survives the nudge (2.1.201 idle_prompt payloads lack the message);
             // truthful-but-empty beats sticky-but-possibly-false.
-            endTurn(running: running, idleDetail: lastMessage)
+            endTurn(running: running, ending: .done, detail: lastMessage)
         } else {
             // Skip detail for permission_prompt (PermissionRequest carries it better).
             // Other subtypes (auth_success, elicitation_dialog, ...) get the message.
@@ -248,7 +301,7 @@ func statusUpdate(forEvent eventName: String,
         // Stop fires whenever the main loop finishes a turn, including while
         // background subagents (Agent tool with run_in_background) and
         // background Bash tasks keep working. In that case the session is not
-        // meaningfully idle: a completion watcher that trusts "idle" here
+        // meaningfully done: a completion watcher that trusts "done" here
         // fires on every between-subagents lull. background_tasks (Claude
         // Code 2.1.198+; shape verified against 2.1.201) lists the
         // still-running work; stay "working" until a Stop arrives with none.
@@ -265,7 +318,7 @@ func statusUpdate(forEvent eventName: String,
         } else {
             running = 0
         }
-        endTurn(running: running, idleDetail: lastMessage)
+        endTurn(running: running, ending: .done, detail: lastMessage)
     case "Interrupt":
         // Codex CLI only: Esc cancelled the turn and no Stop follows.
         guard isCodex else {
@@ -287,7 +340,7 @@ func statusUpdate(forEvent eventName: String,
         // drift, it costs one per dead agent, and any guard against it would
         // have to decide that long-running background work has stopped without
         // being told, which is the mistake this count exists to avoid.
-        endTurn(running: storedBackgroundTaskCount(addressArgs: address.args), idleDetail: "")
+        endTurn(running: storedBackgroundTaskCount(addressArgs: address.args), ending: .idle, detail: "")
     case "SubagentStart":
         // Codex CLI only; Claude Code reports the count in Stop/SubagentStop.
         guard isCodex else {
@@ -325,7 +378,7 @@ func statusUpdate(forEvent eventName: String,
             // for the rest of the session. The same call brings back the rest of
             // the status, so deciding the display costs no second round trip.
             guard let after = changeBackgroundTaskCount(by: -1, addressArgs: address.args) else {
-                // The count is now unknown. Saying idle here is the one thing that
+                // The count is now unknown. Saying done here is the one thing that
                 // would be actively wrong, so change nothing.
                 return nil
             }
@@ -334,18 +387,26 @@ func statusUpdate(forEvent eventName: String,
             // to iTerm2 unless the display has to change. That takes an explicit
             // closed turn: a flag iTerm2 has never been told (the hooks were
             // installed mid-session, or the session was resumed) reads as
-            // unknown, and calling it closed would report idle straight through
+            // unknown, and calling it closed would report done straight through
             // a running turn. It also takes a display that shows something other
-            // than idle: the last one to finish after the parent stopped is what
-            // left it at "working", or at "waiting" if it asked permission on the
-            // way and was refused, and nothing else will clear it. A utility
-            // agent Codex ran at an idle prompt finds the dot already idle, or
-            // finds nothing displayed at all, and re-sending idle would only
-            // replace the root turn's last message with the utility agent's.
-            // What was read is a round trip old by the time idle lands, so the
+            // than a turn that already ended (done, error, or the idle iTerm2
+            // turns those into once the user types): the last one to finish
+            // after the parent stopped is what left it at "working", or at
+            // "waiting" if it asked permission on the way and was refused, and
+            // nothing else will clear it. A utility agent Codex ran at an idle
+            // prompt finds the turn's ending already shown, or finds nothing
+            // displayed at all, and re-sending done would only replace the root
+            // turn's last message with the utility agent's, or bring back a
+            // result the user has already seen.
+            // It says done whatever ended the parent turn (a failure, or Esc):
+            // what finished here is background work whose result the user has
+            // not seen yet, which is what done means. Carrying the parent's
+            // ending this far would mean keeping it in iTerm2 like the count.
+            // What was read is a round trip old by the time done lands, so the
             // write carries it as preconditions rather than trusting it.
-            if remaining == 0, after.turnOpen == false, let shown = after.status, shown != "idle" {
-                update.showIdle(detail: lastMessage)
+            if remaining == 0, after.turnOpen == false, let shown = after.status,
+               !["done", "error", "idle"].contains(shown) {
+                update.showDone(detail: lastMessage)
                 update.onlyWhenFinished = true
             }
         } else {
@@ -354,9 +415,9 @@ func statusUpdate(forEvent eventName: String,
         if remaining > 0 {
             update.showWorking(detail: backgroundDetail(count: remaining))
             if isCodex {
-                // A sibling that reached zero in the meantime already wrote idle,
+                // A sibling that reached zero in the meantime already wrote done,
                 // and this "working" would cover it with nothing left to clear it.
-                update.idleDetailIfTasksFinished = lastMessage
+                update.endingIfTasksFinished = (.done, lastMessage)
             } else {
                 // This can land mid-turn, and re-asserting the status disowns
                 // whatever the turn's last event asked to happen when the turn
@@ -387,7 +448,7 @@ func statusUpdate(forEvent eventName: String,
         } else {
             running = storedBackgroundTaskCount(addressArgs: address.args)
         }
-        endTurn(running: running, idleDetail: "")
+        endTurn(running: running, ending: .error, detail: "")
     case "SessionStart", "SessionEnd":
         update.showIdle(detail: "")  // session boundary, wipe stale detail
         update.backgroundTasks = 0  // and the stored count with it

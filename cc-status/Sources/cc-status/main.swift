@@ -167,6 +167,14 @@ func storedBackgroundTaskCount(addressArgs: [String]) -> Int {
     return max(0, count)
 }
 
+/// The status iTerm2 holds for the session, or nil when it could not be read.
+func storedStatus(addressArgs: [String]) -> CurrentStatus? {
+    guard let output = quietIt2Output(["session", "get-status"] + addressArgs) else {
+        return nil
+    }
+    return CurrentStatus(json: output)
+}
+
 /// Adds to the stored background-task count and returns the status as it stands afterwards, or
 /// nil if the call failed or its answer could not be read. One it2 round trip, and atomic: iTerm2
 /// applies the delta where the count lives, so two hooks changing it at once cannot lose one.

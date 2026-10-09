@@ -34,7 +34,7 @@ final class It2Runner {
     /// whether an update is bookkeeping.
     ///
     /// Returns the status as it stood once the update landed when the update asked for it (see
-    /// StatusUpdate.idleDetailIfTasksFinished), or nil otherwise, including when it2 could not be
+    /// StatusUpdate.endingIfTasksFinished), or nil otherwise, including when it2 could not be
     /// run or its answer could not be read.
     @discardableResult
     func send(_ update: StatusUpdate) -> CurrentStatus? {
@@ -77,7 +77,7 @@ final class It2Runner {
         }
         // A guarded update may be dropped, and the status that comes back is
         // how to tell; the ring below waits for it.
-        let wantStatus = update.idleDetailIfTasksFinished != nil
+        let wantStatus = update.endingIfTasksFinished != nil
         let guarded = update.onlyWhenFinished
         if wantStatus || guarded {
             statusArgs.append("--json")
@@ -96,15 +96,15 @@ final class It2Runner {
             writeProgressRing(for: status)
         }
 
-        // Any sub-agent finishing from here on sees this write and reports idle
+        // Any sub-agent finishing from here on sees this write and reports done
         // itself. One that finished before it landed could not, or was covered by
         // it; the status that came back with the write says whether one did.
-        if let idleDetail = update.idleDetailIfTasksFinished,
+        if let (ending, detail) = update.endingIfTasksFinished,
            let after, after.backgroundTasks == 0, after.turnOpen == false {
-            var idle = StatusUpdate()
-            idle.showIdle(detail: idleDetail)
-            idle.onlyWhenFinished = true
-            send(idle)
+            var ended = StatusUpdate()
+            ended.showEnded(ending, detail: detail)
+            ended.onlyWhenFinished = true
+            send(ended)
         }
         return wantStatus ? after : nil
     }

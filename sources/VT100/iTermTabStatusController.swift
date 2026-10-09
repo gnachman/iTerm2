@@ -222,6 +222,39 @@ class TabStatusController: NSObject {
         expireNow()
     }
 
+    /// Whether a change happening now is the user acknowledging a result
+    /// rather than news, so it should not be announced with a notification.
+    @objc private(set) var isAcknowledging = false
+
+    /// Runs `block`, marking any status change it makes as an acknowledgment.
+    @objc(acknowledge:)
+    func acknowledge(_ block: () -> Void) {
+        let saved = isAcknowledging
+        isAcknowledging = true
+        defer {
+            isAcknowledging = saved
+        }
+        block()
+    }
+
+    /// The user pressed a key in the session, so they have seen a finished or
+    /// failed result the status was holding for them. It becomes idle, keeping
+    /// its detail, so the session drops to the bottom of the Session Status
+    /// tool. This covers statuses from OSC 21337 and the scripting API, which
+    /// is how cc-status reports; OSC 7501 records are turned idle the same way
+    /// by their own controller (ProgramStatusController.userDidPressKey).
+    @objc
+    func userDidPressKey() {
+        guard let text = statusIfPresent?.statusText?.lowercased(),
+              text == "done" || text == "error" else {
+            return
+        }
+        DLog("Keypress turns \(text) status idle")
+        let update = VT100TabStatusUpdate()
+        ProgramStatusController.setStatusAndColors(for: .idle, on: update)
+        apply(update)
+    }
+
     /// The program reported a progress state. Only what the program itself
     /// said belongs here: the screen's progress also changes on reset, which
     /// says nothing about whether the program's work is still running.

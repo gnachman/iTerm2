@@ -422,7 +422,7 @@ extension ToolStatus {
     ### Priority Sorting
 
     Sessions are sorted by priority. Click the ⚙ button to configure which status \
-    keywords have the highest priority. The default order is: waiting, working, idle.
+    keywords have the highest priority. The default order is: waiting, done, error, working, idle.
 
     ### Snoozing
 

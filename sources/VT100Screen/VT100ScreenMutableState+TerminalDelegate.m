@@ -903,6 +903,11 @@ typedef struct {
 - (void)terminalDidReset {
     [self invalidatePendingPromptState];
     self.progress = VT100ScreenProgressStopped;
+    self.progressGeneration += 1;
+    const NSInteger generation = self.progressGeneration;
+    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenProgressWasResetWithGeneration:generation];
+    } name:@"progress was reset"];
 }
 
 // Centralized cleanup for OSC 133 in-flight state. Called from the FTCS
@@ -1608,9 +1613,11 @@ typedef struct {
 // setting the property directly (as a reset does) because only the program's
 // own report says anything about whether its work is still running.
 - (void)setProgressFromProtocol:(VT100ScreenProgress)progress {
+    self.progressGeneration += 1;
+    const NSInteger generation = self.progressGeneration;
     [self setProgress:progress];
     [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenProgressProtocolDidReportProgress:progress];
+        [delegate screenProgressProtocolDidReportProgress:progress generation:generation];
     } name:@"progress protocol"];
 }
 
@@ -1650,9 +1657,14 @@ typedef struct {
                         } else if (!havePR) {
                             // Keep the percentage that is already showing and just recolor it,
                             // as Ghostty does: its docs say the value is used when specified and
-                            // the current one is left unchanged otherwise. There is no encoding
-                            // for a paused state without a percentage, so when there is nothing
-                            // to keep, show the minimum visible amount.
+                            // the current one is left unchanged otherwise. A spinner has no
+                            // percentage to keep, so it pauses as a spinner. When there is
+                            // nothing showing at all, show the minimum visible amount.
+                            if (self.progress == VT100ScreenProgressIndeterminate ||
+                                self.progress == VT100ScreenProgressPausedIndeterminate) {
+                                [self setProgressFromProtocol:VT100ScreenProgressPausedIndeterminate];
+                                break;
+                            }
                             const int currentPercentage = VT100ScreenProgressPercentage(self.progress);
                             const int percentage = currentPercentage > 0 ? currentPercentage : kMinimumVisibleProgressPercentage;
                             [self setProgressFromProtocol:VT100ScreenProgressWarningBase + percentage];
@@ -4285,6 +4297,20 @@ willExecuteToken:(VT100Token *)token
         [delegate screenExecDidFail];
         [unpauser unpause];
     } name:@"execDidFail"];
+}
+
+- (void)terminalRemoveProgramStatusRecords {
+    DLog(@"begin");
+    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenRemoveProgramStatusRecords];
+    } name:@"remove program status records"];
+}
+
+- (void)terminalReportProgramStatus:(iTermProgramStatusReport *)report {
+    DLog(@"begin %@", report);
+    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenReportProgramStatus:report];
+    } name:@"report program status"];
 }
 
 - (void)terminalSetTabStatus:(VT100TabStatusUpdate *)status {

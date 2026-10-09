@@ -26,6 +26,7 @@ typedef NS_ENUM(NSInteger, VT100TabStatusUpdateFieldPresence) {
 };
 
 @class VT100TabStatusUpdate;
+@class iTermProgramStatusReport;
 
 typedef NS_ENUM(NSInteger, MouseMode) {
     MOUSE_REPORTING_NONE = -1,
@@ -655,6 +656,12 @@ typedef NS_ENUM(NSUInteger, iTermUpdateBlockAction) {
 - (BOOL)terminalIsInDarkMode;
 
 - (void)terminalSetTabStatus:(VT100TabStatusUpdate *)status;
+
+// OSC 7501. The report has already been validated.
+- (void)terminalReportProgramStatus:(iTermProgramStatusReport *)report;
+
+// A full reset removes every OSC 7501 record. Other resets leave them alone.
+- (void)terminalRemoveProgramStatusRecords;
 
 @end
 

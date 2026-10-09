@@ -2310,6 +2310,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
             _progressBar.hidden = NO;
             break;
         case VT100ScreenProgressIndeterminate:
+        case VT100ScreenProgressPausedIndeterminate:
             _progressBar.hidden = NO;
             break;
         case VT100ScreenProgressSuccessBase:

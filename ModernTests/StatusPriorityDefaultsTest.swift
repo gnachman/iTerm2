@@ -113,4 +113,51 @@ final class StatusPriorityDefaultsTest: XCTestCase {
         XCTAssertTrue(!first.isEmpty && "waiting".contains(first),
                       "The first (highest-priority) default pattern is \"\(defaults[0])\", which does not correspond to the English \"Waiting\" status. index 0 is currently whatever localization sorts first in Bundle.main.localizations.")
     }
+
+    // A finished result the user has not seen outranks work in progress, and
+    // idle, which needs nothing from the user, comes last.
+    func testDefaultOrderRanksDoneAboveWorkingAndIdleLast() {
+        let settings = StatusPrioritySettings.shared
+        let saved = settings.entries
+        defer { settings.restoreEntries(saved) }
+
+        settings.restoreEntries(StatusPrioritySettings.defaultPatterns.map { StatusPriorityEntry(pattern: $0) })
+
+        let ordered = ["waiting", "done", "error", "working", "idle"].map { settings.priority(for: $0) }
+        XCTAssertEqual(ordered, ordered.sorted())
+        XCTAssertEqual(Set(ordered).count, ordered.count)
+        XCTAssertLessThan(settings.priority(for: "idle"), settings.unmatchedPriority)
+    }
+
+    func testMigrationInsertsDoneAndErrorAfterWaiting() {
+        let saved = ["idle", "wait", "work"].map { StatusPriorityEntry(pattern: $0) }
+        let migrated = StatusPrioritySettings.addingDoneAndError(to: saved)
+        XCTAssertEqual(migrated.map(\.pattern), ["idle", "wait", "done", "error", "work"])
+    }
+
+    func testMigrationPutsDoneAndErrorFirstWithoutWaiting() {
+        let saved = [StatusPriorityEntry(pattern: "work")]
+        let migrated = StatusPrioritySettings.addingDoneAndError(to: saved)
+        XCTAssertEqual(migrated.map(\.pattern), ["done", "error", "work"])
+    }
+
+    // A finished turn used to read idle, so done and error notify if idle did.
+    func testMigrationInheritsIdleNotify() {
+        let saved = [StatusPriorityEntry(pattern: "wait"),
+                     StatusPriorityEntry(pattern: "idle", notify: true)]
+        let migrated = StatusPrioritySettings.addingDoneAndError(to: saved)
+        XCTAssertEqual(migrated, [StatusPriorityEntry(pattern: "wait"),
+                                  StatusPriorityEntry(pattern: "done", notify: true),
+                                  StatusPriorityEntry(pattern: "error", notify: true),
+                                  StatusPriorityEntry(pattern: "idle", notify: true)])
+    }
+
+    func testMigrationKeepsExistingMatchesAndNotifyFlags() {
+        let saved = [StatusPriorityEntry(pattern: "wait", notify: true),
+                     StatusPriorityEntry(pattern: "err", notify: true)]
+        let migrated = StatusPrioritySettings.addingDoneAndError(to: saved)
+        XCTAssertEqual(migrated, [StatusPriorityEntry(pattern: "wait", notify: true),
+                                  StatusPriorityEntry(pattern: "done"),
+                                  StatusPriorityEntry(pattern: "err", notify: true)])
+    }
 }

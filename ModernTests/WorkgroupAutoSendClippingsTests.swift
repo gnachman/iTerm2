@@ -427,12 +427,27 @@ final class WorkgroupAutoSendClippingsTests: XCTestCase {
     @MainActor
     func test_reportedState_readsExplicitStatusText() {
         let cases: [(String, SessionState)] = [
-            ("idle", .idle), ("working", .working), ("waiting", .waiting)]
+            ("idle", .idle), ("working", .working), ("waiting", .waiting),
+            ("done", .idle), ("error", .idle)]
         for (text, expected) in cases {
             let status = tabStatus(sessionID: "s", statusText: text)
             XCTAssertEqual(WorkgroupIntrospection.reportedState(forTabStatus: status),
                            expected, "text=\(text)")
+            XCTAssertEqual(WorkgroupIntrospection.state(forTabStatus: status),
+                           expected, "text=\(text)")
         }
+    }
+
+    // Claude Code reports a finished turn as done rather than idle. The
+    // working -> done change has to be the same edge working -> idle was, or
+    // the auto behaviors would stop firing.
+    @MainActor
+    func test_decision_workingToDoneIsAWorkingToIdleEdge() {
+        let status = tabStatus(sessionID: "s", statusText: "done")
+        let newState = WorkgroupIntrospection.reportedState(forTabStatus: status)
+        XCTAssertTrue(iTermWorkgroupPeerPort.shouldAutoRequestReview(
+            previousState: .working, newState: newState,
+            isMainSession: true, toggleOn: true, reviewCount: 1))
     }
 
     // The restart-induced sequence working -> (cleared) is .working -> .unknown

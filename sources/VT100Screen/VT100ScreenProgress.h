@@ -12,6 +12,9 @@ typedef NS_ENUM(NSInteger, VT100ScreenProgress) {
     VT100ScreenProgressStopped = 0,
     VT100ScreenProgressError = -1,
     VT100ScreenProgressIndeterminate = -2,
+    // Paused with no percentage to show: an indeterminate operation that is
+    // waiting on something, such as the user.
+    VT100ScreenProgressPausedIndeterminate = -3,
     VT100ScreenProgressSuccessBase = 1000,  // values base...base+100 are percentages.
     VT100ScreenProgressErrorBase = 2000,  // same as .successBase
     VT100ScreenProgressWarningBase = 3000  // same as .successBase
@@ -33,7 +36,9 @@ NS_INLINE int VT100ScreenProgressPercentage(VT100ScreenProgress progress) {
 }
 
 NS_INLINE BOOL VT100ScreenProgressIsVisible(VT100ScreenProgress progress) {
-    if (progress == VT100ScreenProgressError || progress == VT100ScreenProgressIndeterminate) {
+    if (progress == VT100ScreenProgressError ||
+        progress == VT100ScreenProgressIndeterminate ||
+        progress == VT100ScreenProgressPausedIndeterminate) {
         return YES;
     }
     return VT100ScreenProgressPercentage(progress) >= 0;

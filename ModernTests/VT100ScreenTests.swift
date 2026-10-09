@@ -1662,6 +1662,23 @@ class VT100ScreenTests: XCTestCase {
                        VT100ScreenProgress.warningBase.rawValue + minimumVisibleProgressPercentage)
     }
 
+    // A spinner has no percentage to keep, so it pauses as a spinner rather than
+    // turning into a made-up percentage. Pausing again keeps it there.
+    func testProgressPauseWithoutPercentageOverSpinnerPausesSpinner() {
+        let screen = screen(width: 80, height: 24)
+        feed(screen, "\u{1b}]9;4;3\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.indeterminate.rawValue)
+
+        feed(screen, "\u{1b}]9;4;4\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.pausedIndeterminate.rawValue)
+
+        feed(screen, "\u{1b}]9;4;4\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.pausedIndeterminate.rawValue)
+
+        feed(screen, "\u{1b}]9;4;3\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.indeterminate.rawValue)
+    }
+
     // A percentage of 0 is showing but would be invisible, so it gets the minimum too.
     func testProgressPauseWithoutPercentageFromZeroUsesMinimum() {
         let screen = screen(width: 80, height: 24)
@@ -1768,6 +1785,12 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     /// Set true when screenDidReceiveOSC7WhileDisabled fires, so the acceptOSC7
     /// gate test can assert the warning path was taken.
     var didWarnOSC7Disabled = false
+
+    /// OSC 7501 reports delivered via screenReportProgramStatus, in order.
+    var programStatusReports = [ProgramStatusReport]()
+
+    /// Times screenRemoveProgramStatusRecords fired (a full reset).
+    var removeProgramStatusRecordsCount = 0
 
     func screenConvertAbsoluteRange(_ range: VT100GridAbsCoordRange, toTextDocumentOfType type: String?, filename: String?, forceWide: Bool) {
 
@@ -1898,7 +1921,23 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
-    func screenProgressProtocolDidReport(_ progress: VT100ScreenProgress) {
+    func screenReportProgramStatus(_ report: ProgramStatusReport) {
+        programStatusReports.append(report)
+    }
+
+    func screenDidClearTabStatusForReset() {
+
+    }
+
+    func screenRemoveProgramStatusRecords() {
+        removeProgramStatusRecordsCount += 1
+    }
+
+    func screenProgressWasReset(withGeneration generation: Int) {
+
+    }
+
+    func screenProgressProtocolDidReport(_ progress: VT100ScreenProgress, generation: Int) {
 
     }
 

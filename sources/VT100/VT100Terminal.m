@@ -482,6 +482,9 @@ static const int kMaxScreenRows = 4096;
                   resetParser:userInitiated
                   preserveSSH:userInitiated || controlSequence
                 modifyContent:YES];
+    if (userInitiated || controlSequence) {
+        [_delegate terminalRemoveProgramStatusRecords];
+    }
 }
 
 - (void)resetForSSH {
@@ -3162,6 +3165,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [self executeSetTabStatus:token];
             break;
 
+        case XTERMCC_PROGRAM_STATUS:
+            [self executeProgramStatus:token];
+            break;
+
         case XTERMCC_SET_PALETTE:
             [self executeXtermSetPalette:token];
             break;
@@ -4688,6 +4695,25 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
     }
     NSCharacterSet *illegalCharacters = [NSCharacterSet characterSetWithCharactersInString:@"abcdefABCDEF0123456789"].invertedSet;
     return [uid rangeOfCharacterFromSet:illegalCharacters].location == NSNotFound;
+}
+
+// OSC 7501: Program Status Protocol
+- (void)executeProgramStatus:(VT100Token *)token {
+    NSString *body = token.string;
+    if (!body) {
+        return;
+    }
+    if ([iTermProgramStatusReport isFeatureQuery:body]) {
+        // The reply is a constant, so it reads no state that could be stale.
+        if ([_delegate terminalShouldSendCoalescibleReport:YES]) {
+            [_delegate terminalSendReport:iTermProgramStatusReport.featureQueryReply];
+        }
+        return;
+    }
+    iTermProgramStatusReport *report = [iTermProgramStatusReport reportFromBody:body];
+    if (report) {
+        [_delegate terminalReportProgramStatus:report];
+    }
 }
 
 // OSC 21337: Tab status

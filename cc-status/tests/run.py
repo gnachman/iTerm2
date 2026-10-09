@@ -144,6 +144,8 @@ esac
 WORKING = ["--status=working", "--dot-color=#ff9500", "--text-color=#ff9500"]
 WAITING = ["--status=waiting", "--dot-color=#5f87ff", "--text-color=#5f87ff"]
 IDLE = ["--status=idle", "--dot-color=#00d75f", "--text-color=#888888"]
+DONE = ["--status=done", "--dot-color=#00d75f", "--text-color=#00d75f"]
+ERROR = ["--status=error", "--dot-color=#ff3b30", "--text-color=#ff3b30"]
 # What a Claude Code status scoped to the turn asks iTerm2 to do when the
 # session's progress protocol reports the turn ended. Never sent for Codex,
 # whose ring cc-status draws itself.
@@ -173,6 +175,10 @@ def get_background_tasks():
     return ["session", "get-background-tasks", *ADDRESS, *QUIET]
 
 
+def get_status():
+    return ["session", "get-status", *ADDRESS, *QUIET]
+
+
 # A change to the count asks for the status that results, in the same call.
 def background_tasks_delta(value):
     return ["set-status", *ADDRESS, "--background-tasks-delta=" + value, "--json", *QUIET]
@@ -182,15 +188,19 @@ TURN_OPEN = ["--turn-open=true"]
 TURN_CLOSED = ["--turn-open=false"]
 # A turn closing with work still counted asks for the status as of the close.
 TURN_CLOSED_COUNTING = TURN_CLOSED + ["--json"]
-# An idle decided from a status read a round trip earlier: it carries what it
+# A turn ending decided from a status read a round trip earlier: it carries what it
 # assumed, so iTerm2 drops it if a prompt reopened the turn in between, and it
 # asks for the result so the progress ring can wait for it.
-IDLE_IF_FINISHED = ["--if-turn-open=false", "--if-background-tasks=0", "--json"]
+IF_FINISHED = ["--if-turn-open=false", "--if-background-tasks=0", "--json"]
 
 # A step that, instead of running a hook, wipes the displayed status the way
 # iTerm2 does when the visible fields are cleared but the parked count and
 # turn flag live on.
 FORGET_STATUS = ("forget the displayed status",)
+
+# A step that, instead of running a hook, does what iTerm2 does when the user
+# types in a session showing a finished or failed turn: it becomes idle.
+USER_TYPED = ("user typed in the session",)
 
 
 # A step that checks what the fake session displays, for scenarios whose point
@@ -199,7 +209,8 @@ def expect_status(status):
     return ("expect displayed status", status)
 
 # OSC 9;4 progress ring the Codex path writes to the agent's terminal.
-RING = {"working": b"\x1b]9;4;3\x07", "waiting": b"\x1b]9;4;0\x07", "idle": b"\x1b]9;4;0\x07"}
+RING = {"working": b"\x1b]9;4;3\x07", "waiting": b"\x1b]9;4;0\x07", "idle": b"\x1b]9;4;0\x07",
+        "done": b"\x1b]9;4;0\x07", "error": b"\x1b]9;4;0\x07"}
 
 
 def expected_ring(fixture, expected, extra):
@@ -258,7 +269,7 @@ SCENARIOS = {
         ("codex/PreToolUse-Bash", [set_status(*WORKING, *detail(""))]),
         ("codex/PostToolUse-Bash", [set_status(*WORKING, *detail(""))]),
         ("codex/Stop-hello", [get_background_tasks(),
-                              set_status(*IDLE, *detail("HELLO"), *TURN_CLOSED)]),
+                              set_status(*DONE, *detail("HELLO"), *TURN_CLOSED)]),
     ],
     "codex: detached sub-agent outlives the parent turn": [
         ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
@@ -271,7 +282,7 @@ SCENARIOS = {
                                            *TURN_CLOSED_COUNTING)]),
         # Child finishes; nothing else will fire, so SubagentStop reports idle.
         ("codex/SubagentStop", [background_tasks_delta("-1"),
-                                set_status(*IDLE, *detail("DONE"), *IDLE_IF_FINISHED)]),
+                                set_status(*DONE, *detail("DONE"), *IF_FINISHED)]),
     ],
     "codex: sub-agent finishes while the parent's Stop is being written": [
         ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
@@ -283,10 +294,10 @@ SCENARIOS = {
         ("codex/Stop-spawned", [get_background_tasks(),
                                 set_status(*WORKING, *detail("1 background task running"),
                                            *TURN_CLOSED_COUNTING),
-                                set_status(*IDLE, *detail("SPAWNED"), *IDLE_IF_FINISHED)],
+                                set_status(*DONE, *detail("SPAWNED"), *IF_FINISHED)],
          {"CC_STATUS_TEST_FINISH_ON_STATUS_WRITE": "1"}),
     ],
-    "codex: a prompt lands before the parent's idle follow-up": [
+    "codex: a prompt lands before the parent's done follow-up": [
         ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
         ("codex/SubagentStart", [set_status("--background-tasks-delta=1")]),
         # As above, the child finished during the Stop's write, so a second
@@ -298,11 +309,11 @@ SCENARIOS = {
         ("codex/Stop-spawned", [get_background_tasks(),
                                 set_status(*WORKING, *detail("1 background task running"),
                                            *TURN_CLOSED_COUNTING),
-                                set_status(*IDLE, *detail("SPAWNED"), *IDLE_IF_FINISHED)],
+                                set_status(*DONE, *detail("SPAWNED"), *IF_FINISHED)],
          {"CC_STATUS_TEST_FINISH_ON_STATUS_WRITE": "1", "CC_STATUS_TEST_PROMPT_AFTER_JSON": "1"}),
         expect_status("working"),
     ],
-    "codex: a prompt lands before a sub-agent's idle": [
+    "codex: a prompt lands before a sub-agent's done": [
         ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
         ("codex/SubagentStart", [set_status("--background-tasks-delta=1")]),
         ("codex/Stop-spawned", [get_background_tasks(),
@@ -311,11 +322,11 @@ SCENARIOS = {
         # The decrement's answer said the turn was closed and nothing was
         # left, but a prompt reopened it before the idle could land.
         ("codex/SubagentStop", [background_tasks_delta("-1"),
-                                set_status(*IDLE, *detail("DONE"), *IDLE_IF_FINISHED)],
+                                set_status(*DONE, *detail("DONE"), *IF_FINISHED)],
          {"CC_STATUS_TEST_PROMPT_AFTER_JSON": "1"}),
         expect_status("working"),
         ("codex/Stop-hello", [get_background_tasks(),
-                              set_status(*IDLE, *detail("HELLO"), *TURN_CLOSED)]),
+                              set_status(*DONE, *detail("HELLO"), *TURN_CLOSED)]),
     ],
     "codex: waited sub-agent finishes inside the parent turn": [
         ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
@@ -324,13 +335,31 @@ SCENARIOS = {
         # the parent Stop's business, so there is nothing left to send.
         ("codex/SubagentStop", [background_tasks_delta("-1")]),
         ("codex/Stop-hello", [get_background_tasks(),
-                              set_status(*IDLE, *detail("HELLO"), *TURN_CLOSED)]),
+                              set_status(*DONE, *detail("HELLO"), *TURN_CLOSED)]),
     ],
     "codex: Esc cancels the turn": [
         ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
         ("codex/PreToolUse-Bash", [set_status(*WORKING, *detail(""))]),
         ("codex/Interrupt", [get_background_tasks(),
                              set_status(*IDLE, *detail(""), *TURN_CLOSED)]),
+    ],
+    "codex: a failed turn's work finishes during its write and it still reads error": [
+        ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
+        ("codex/SubagentStart", [set_status("--background-tasks-delta=1")]),
+        ("codex/StopFailure", [get_background_tasks(),
+                               set_status(*WORKING, *detail("1 background task running"),
+                                          *TURN_CLOSED_COUNTING),
+                               set_status(*ERROR, *detail(""), *IF_FINISHED)],
+         {"CC_STATUS_TEST_FINISH_ON_STATUS_WRITE": "1"}),
+    ],
+    "codex: a cancelled turn's work finishes during its write and it still reads idle": [
+        ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
+        ("codex/SubagentStart", [set_status("--background-tasks-delta=1")]),
+        ("codex/Interrupt", [get_background_tasks(),
+                             set_status(*WORKING, *detail("1 background task running"),
+                                        *TURN_CLOSED_COUNTING),
+                             set_status(*IDLE, *detail(""), *IF_FINISHED)],
+         {"CC_STATUS_TEST_FINISH_ON_STATUS_WRITE": "1"}),
     ],
     "codex: Esc while a detached sub-agent runs": [
         ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
@@ -339,7 +368,7 @@ SCENARIOS = {
                              set_status(*WORKING, *detail("1 background task running"),
                                         *TURN_CLOSED_COUNTING)]),
         ("codex/SubagentStop", [background_tasks_delta("-1"),
-                                set_status(*IDLE, *detail("DONE"), *IDLE_IF_FINISHED)]),
+                                set_status(*DONE, *detail("DONE"), *IF_FINISHED)]),
     ],
     "codex: detached sub-agent is refused permission and stops": [
         ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
@@ -353,12 +382,12 @@ SCENARIOS = {
         ("codex/PermissionRequest-apply_patch",
          [set_status(*WAITING, *detail("Allow Edit: Sources/cc-status/main.swift, tests/run.py?"))]),
         ("codex/SubagentStop", [background_tasks_delta("-1"),
-                                set_status(*IDLE, *detail("DONE"), *IDLE_IF_FINISHED)]),
+                                set_status(*DONE, *detail("DONE"), *IF_FINISHED)]),
     ],
     "codex: failed turn clears turn state": [
         ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
         ("codex/StopFailure", [get_background_tasks(),
-                                set_status(*IDLE, *detail(""), *TURN_CLOSED)]),
+                                set_status(*ERROR, *detail(""), *TURN_CLOSED)]),
     ],
     "codex: session boundaries": [
         ("codex/SessionStart", [set_status(*IDLE, *detail(""), "--background-tasks=0",
@@ -381,9 +410,9 @@ SCENARIOS = {
         ("codex/SessionStart", [set_status(*IDLE, *detail(""), "--background-tasks=0",
                                            *TURN_CLOSED, boundary=True)]),
         ("codex/Stop-hello", [get_background_tasks(),
-                              set_status(*IDLE, *detail("HELLO"), *TURN_CLOSED)]),
-        # Codex runs utility sub-agents at the prompt; the dot must stay idle
-        # and keep the root turn's message rather than take the utility's.
+                              set_status(*DONE, *detail("HELLO"), *TURN_CLOSED)]),
+        # Codex runs utility sub-agents at the prompt; the status must stay
+        # done and keep the root turn's message rather than take the utility's.
         ("codex/SubagentStart", [set_status("--background-tasks-delta=1")]),
         ("codex/SubagentStop", [background_tasks_delta("-1")]),
     ],
@@ -408,7 +437,7 @@ SCENARIOS = {
         # status that comes back with the write is what catches it.
         ("codex/SubagentStop", [background_tasks_delta("-1"),
                                 set_status(*WORKING, *detail("1 background task running"), "--json"),
-                                set_status(*IDLE, *detail("DONE"), *IDLE_IF_FINISHED)],
+                                set_status(*DONE, *detail("DONE"), *IF_FINISHED)],
          {"CC_STATUS_TEST_FINISH_ON_STATUS_WRITE": "1"}),
     ],
     "codex: Esc killed on its timeout still leaves the turn open": [
@@ -422,7 +451,7 @@ SCENARIOS = {
         ("codex/SubagentStop", [background_tasks_delta("-1")]),
         ("codex/UserPromptSubmit", [set_status(*WORKING, *detail(""), *TURN_OPEN)]),
         ("codex/Stop-hello", [get_background_tasks(),
-                              set_status(*IDLE, *detail("HELLO"), *TURN_CLOSED)]),
+                              set_status(*DONE, *detail("HELLO"), *TURN_CLOSED)]),
     ],
     "codex: an unhandled snake_case tool reads as words": [
         ("codex/PermissionRequest-read_file",
@@ -432,19 +461,39 @@ SCENARIOS = {
         ("claude/UserPromptSubmit", [set_status(*WORKING, *detail(""), *EXPIRES)]),
         ("claude/PreToolUse-Bash", [set_status(*WORKING, *detail(""), *EXPIRES)]),
         ("claude/PostToolUse-Bash", [set_status(*WORKING, *detail(""), *EXPIRES)]),
-        ("claude/Stop-nobg", [set_status(*IDLE, *detail("HELLO"), "--background-tasks=0")]),
+        ("claude/Stop-nobg", [set_status(*DONE, *detail("HELLO"), "--background-tasks=0")]),
+    ],
+    "claude: the idle nudge leaves a finished turn alone": [
+        ("claude/Stop-nobg", [set_status(*DONE, *detail("HELLO"), "--background-tasks=0")]),
+        # The nudge has no message; re-sending done would wipe Stop's.
+        ("claude/Notification-idle", [get_status()]),
+        expect_status("done"),
+    ],
+    "claude: the idle nudge does not undo the user seeing the result": [
+        ("claude/Stop-nobg", [set_status(*DONE, *detail("HELLO"), "--background-tasks=0")]),
+        USER_TYPED,
+        ("claude/Notification-idle", [get_status()]),
+        expect_status("idle"),
+    ],
+    "claude: a failed turn reports error and the nudge keeps it": [
+        ("claude/UserPromptSubmit", [set_status(*WORKING, *detail(""), *EXPIRES)]),
+        ("claude/StopFailure", [get_background_tasks(), set_status(*ERROR, *detail(""))]),
+        ("claude/Notification-idle", [get_status()]),
+        expect_status("error"),
     ],
     "claude: background work survives the idle nudge": [
         ("claude/Stop-bg1", [set_status(*WORKING, *detail("1 background task running"),
                                         "--background-tasks=1")]),
-        ("claude/Notification-idle", [get_background_tasks(),
+        ("claude/Notification-idle", [get_status(),
                                       set_status(*WORKING, *detail("1 background task running"))]),
         # The stopping agent is still listed as running; excluded by agent_id.
         ("claude/SubagentStop-last", [set_status("--background-tasks=0")]),
-        ("claude/Notification-idle", [get_background_tasks(), set_status(*IDLE, *detail(""))]),
+        # The last of the background work finished after Stop, so its result
+        # is what the user has not seen yet.
+        ("claude/Notification-idle", [get_status(), set_status(*DONE, *detail(""))]),
     ],
     "claude: payloads without background_tasks (before 2.1.198)": [
-        ("claude/Stop-legacy", [set_status(*IDLE, *detail("HELLO"))]),
+        ("claude/Stop-legacy", [set_status(*DONE, *detail("HELLO"))]),
         ("claude/SubagentStop-legacy", []),
     ],
     "claude: permission and session boundary": [
@@ -475,6 +524,17 @@ def run_scenario(name, steps, binary, workdir):
     }
     failures = []
     for step in steps:
+        if step == USER_TYPED:
+            status_file = os.path.join(session_dir, "status")
+            try:
+                with open(status_file) as f:
+                    shown = f.read().strip()
+            except FileNotFoundError:
+                shown = None
+            if shown in ("done", "error"):
+                with open(status_file, "w") as f:
+                    f.write("idle\n")
+            continue
         if step == FORGET_STATUS:
             status_file = os.path.join(session_dir, "status")
             if os.path.exists(status_file):

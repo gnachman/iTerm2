@@ -549,13 +549,9 @@ enum WorkgroupIntrospection {
     // to recover the session from a guid returns nil for the very roles
     // the orchestrator watches — which silently swallows watcher fires.
     static func state(forTabStatus status: iTermSessionTabStatus) -> SessionState {
-        if let text = status.statusText?.lowercased(), !text.isEmpty {
-            switch text {
-            case "idle": return .idle
-            case "working": return .working
-            case "waiting": return .waiting
-            default: break  // unrecognized status text — fall through
-            }
+        if let text = status.statusText?.lowercased(), !text.isEmpty,
+           let state = recognizedState(forStatusText: text) {
+            return state
         }
         // No status text from the hook / trigger: fall back to
         // indicator state. Indicator alone has weak semantics but
@@ -575,17 +571,26 @@ enum WorkgroupIntrospection {
         guard let text = status.statusText?.lowercased(), !text.isEmpty else {
             return .unknown
         }
+        return recognizedState(forStatusText: text) ?? .unknown
+    }
+
+    // The status texts cc-status and the Program Status Protocol (OSC 7501)
+    // write. Done and error are both a turn that ended and left the session
+    // ready for input, which is what .idle means here: the edge from working
+    // drives the workgroup's auto behaviors and the orchestrator's watchers,
+    // and before done and error existed those turns reported idle.
+    private static func recognizedState(forStatusText text: String) -> SessionState? {
         switch text {
-        case "idle": return .idle
+        case "idle", "done", "error": return .idle
         case "working": return .working
         case "waiting": return .waiting
-        default: return .unknown
+        default: return nil
         }
     }
 
     // Whether the session exposes a machine-readable status source we
     // can build exact tab-status-transition watchers on. True only when
-    // a recognized status string (idle/working/waiting) is currently
+    // a recognized status string (idle/done/error/working/waiting) is currently
     // present — the cc-status hook and set_status triggers always keep
     // one set, even at idle. Sessions without that source (plain TUIs,
     // coding agents that don't emit OSC 21337, bare shells) return false,
@@ -599,7 +604,7 @@ enum WorkgroupIntrospection {
               !text.isEmpty else {
             return false
         }
-        return text == "idle" || text == "working" || text == "waiting"
+        return recognizedState(forStatusText: text) != nil
     }
 
     // The agent-facing form of reportsSessionStatus, carried on

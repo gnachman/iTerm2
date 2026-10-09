@@ -275,6 +275,12 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (void)mutateAsynchronously:(void (^)(VT100Terminal * _Nullable terminal,
                                        VT100ScreenMutableState *mutableState,
                                        id<VT100ScreenDelegate> _Nullable delegate))block;
+// Like mutateAsynchronously: but leaves the session's mode alone. That one is
+// for changes the user made, which also end copy mode and the like; this is for
+// changes that follow from what the program printed.
+- (void)mutateAsynchronouslyKeepingMode:(void (^)(VT100Terminal * _Nullable terminal,
+                                                  VT100ScreenMutableState *mutableState,
+                                                  id<VT100ScreenDelegate> _Nullable delegate))block;
 - (void)setForegroundJobAncestorsForTriggerFiltering:(nullable NSArray<NSString *> *)ancestors;
 - (void)beginEchoProbeWithBackspace:(nullable NSData *)backspace
                            password:(NSString *)password

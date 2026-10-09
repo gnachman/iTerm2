@@ -13,6 +13,7 @@ typedef NS_ENUM(NSInteger, PSMProgress) {
     PSMProgressStopped = 0,
     PSMProgressError = -1,
     PSMProgressIndeterminate = -2,
+    PSMProgressPausedIndeterminate = -3,
     PSMProgressSuccessBase = 1000,  // values base...base+100 are percentages.
     PSMProgressErrorBase = 2000,  // values base...base+100 are percentages.
     PSMProgressWarningBase = 3000,  // values base...base+100 are percentages.
@@ -46,5 +47,7 @@ typedef NS_ENUM(NSInteger, PSMStatus) {
 // Enters determinate mode.
 - (void)becomeDeterminateWithFraction:(CGFloat)fraction status:(PSMStatus)PSMStatus animated:(BOOL)animated;
 - (void)becomeIndeterminate;
+// Paused with no fraction to show: a still pause glyph in the warning color.
+- (void)becomePausedIndeterminate;
 
 @end

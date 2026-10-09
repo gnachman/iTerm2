@@ -665,6 +665,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // stops being true.
     iTermTabStatusController *_tabStatusController;
 
+    // Holds the records a program reported through OSC 7501 and keeps the tab
+    // status and progress bar in line with them.
+    iTermProgramStatusController *_programStatusController;
+
+    // The newest VT100ScreenMutableState.progressGeneration this thread has
+    // heard about. Copied from each report rather than counted here, so a
+    // side effect that never arrived cannot leave the two out of step for good.
+    NSInteger _progressGenerationSeen;
+
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     // Used to render the background behind a screenshot with transparency forced off.
     // Held strongly because iTermBackgroundDrawingHelper's delegate is weak.
@@ -1261,6 +1270,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_backgroundImageSwiftyString release];
     [_subtitleSwiftyString release];
     [_tabStatusController release];
+    [_programStatusController release];
     [_autoNameSwiftyString release];
     [_statusBarViewController release];
     [_backgroundDrawingHelper release];
@@ -4822,6 +4832,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // gets a new guid, the next status update creates a fresh instance keyed by
     // the current guid instead of the stale one captured here at init time.
     [_tabStatusController programDidExit];
+    // Done and error records outlive the program, so the user can still find
+    // out how it ended.
+    [self restoreProgramStatus:^{
+        [_programStatusController commandDidEnd];
+    }];
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [_delegate updateLabelAttributes];
@@ -4974,6 +4989,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // The old program's Kitty drag-and-drop registration must not survive a shell
     // restart (the bridge is reused).
     [_kittyDnDBridge reset];
+    // A restarted program starts with no status. Clearing before dropping the
+    // instance tells the Session Status tool to forget the old guid's entry,
+    // and dropping it means the next status is keyed by the new guid.
+    [_programStatusController removeAllRecords];
+    [self clearTabStatus];
+    [_tabStatusController programDidExit];
     [self resetForRelaunch];
     __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
@@ -11814,6 +11835,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }
         _lastInput = [NSDate timeIntervalSinceReferenceDate];
         [_directoryTracker userDidPressKey];
+        // Typing in the session means its result has been seen. That is an
+        // acknowledgment, not news, so it posts no notification.
+        if (_programStatusController || _tabStatusController) {
+            [self.tabStatusController acknowledge:^{
+                [_programStatusController userDidPressKey];
+                [_tabStatusController userDidPressKey];
+            }];
+        }
         if ([_view.currentAnnouncement handleKeyDown:event]) {
             return NO;
         }
@@ -17234,8 +17263,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)screenPromptDidStartAtLine:(int)line {
     // Dispatch because we are in a side-effect and it wouldn't be safe to call clearTabStatus,
     // which can have big consequences (like terminating sessions if we're in CC integration mode).
+    // Records written after this point postdate the prompt and must survive
+    // the cleanup below, which runs later than the reports that follow it.
+    const NSInteger programStatusSerial = _programStatusController.serial;
     dispatch_async(dispatch_get_main_queue(), ^{
         [self clearTabStatus];
+        [self restoreProgramStatus:^{
+            [_programStatusController commandDidEndThroughSerial:programStatusSerial];
+        }];
     });
     [_pasteHelper unblock];
     // A program that used the Kitty drag-and-drop protocol has exited (the shell
@@ -26226,7 +26261,9 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 }
 
 - (void)tabStatusDidChangeFromStatusText:(NSString *)previousStatusText {
-    [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
+    if (!_tabStatusController.isAcknowledging) {
+        [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
+    }
     // Read from the status rather than from whatever update caused the change:
     // a status that expires on its own has no update to read, and the variable
     // would otherwise keep reporting what the program last said.
@@ -26236,7 +26273,83 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 
 - (void)screenSetTabStatus:(VT100TabStatusUpdate *)status {
     DLog(@"%@ screenSetTabStatus: %@", self, status.description);
+    // Only an update that changes what the session is showing replaces a
+    // status the records put up. cc-status parks counts and turn flags with
+    // updates that say nothing about the status, and an update whose
+    // preconditions fail is dropped.
+    if (_programStatusController &&
+        status.assertsStatus &&
+        [self.tabStatusController.status preconditionsHoldFor:status]) {
+        [_programStatusController otherWriterDidSetStatus];
+    }
     [self.tabStatusController apply:status];
+}
+
+// Created lazily: most programs never report through OSC 7501.
+- (iTermProgramStatusController *)programStatusController {
+    if (!_programStatusController) {
+        __weak __typeof(self) weakSelf = self;
+        _programStatusController =
+            [[iTermProgramStatusController alloc] initWithApplyStatus:^(VT100TabStatusUpdate *update) {
+                [weakSelf.tabStatusController apply:update];
+            } currentProgress:^VT100ScreenProgress{
+                return weakSelf.screen.progress;
+            } setProgress:^(VT100ScreenProgress progress) {
+                [weakSelf setProgressFromProgramStatus:progress];
+            }];
+    }
+    return _programStatusController;
+}
+
+- (void)screenReportProgramStatus:(iTermProgramStatusReport *)report {
+    DLog(@"%@ screenReportProgramStatus: %@", self, report);
+    [self.programStatusController handleReport:report];
+}
+
+// OSC 9;4 and resets set the progress on the mutation thread as soon as they
+// are parsed and tell this thread later. A change made from here must not land
+// on top of one this thread has not heard about yet, or it would overwrite the
+// program's newer word, or bring back a bar a reset took down, with a bar the
+// records no longer own.
+//
+// The change follows from what the program printed, not from anything the user
+// did, so it must not end copy mode the way a user's change would.
+- (void)setProgressFromProgramStatus:(VT100ScreenProgress)progress {
+    const NSInteger generationSeen = _progressGenerationSeen;
+    [_screen mutateAsynchronouslyKeepingMode:^(VT100Terminal *terminal,
+                                               VT100ScreenMutableState *mutableState,
+                                               id<VT100ScreenDelegate> delegate) {
+        if (mutableState.progressGeneration != generationSeen) {
+            DLog(@"Not setting progress from program status: OSC 9;4 or a reset got there first");
+            return;
+        }
+        mutableState.progress = progress;
+    }];
+}
+
+- (void)screenDidClearTabStatusForReset {
+    [self restoreProgramStatus:^{
+        [_programStatusController statusWasCleared];
+    }];
+}
+
+// The tab status was just cleared and OSC 7501 records that survived are
+// about to be shown again. That is the status the user already had, not news,
+// so it posts no notification.
+- (void)restoreProgramStatus:(void (^ NS_NOESCAPE)(void))block {
+    if (!_programStatusController) {
+        return;
+    }
+    [self.tabStatusController acknowledge:block];
+}
+
+- (void)screenRemoveProgramStatusRecords {
+    [_programStatusController removeAllRecords];
+}
+
+- (void)screenProgressWasResetWithGeneration:(NSInteger)generation {
+    _progressGenerationSeen = MAX(_progressGenerationSeen, generation);
+    [_programStatusController progressWasReset];
 }
 
 - (void)maybePostTabStatusNotificationWithPreviousStatusText:(NSString *)previousStatusText {
@@ -26267,7 +26380,10 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     [_delegate sessionTabStatusDidChange:self];
 }
 
-- (void)screenProgressProtocolDidReportProgress:(VT100ScreenProgress)progress {
+- (void)screenProgressProtocolDidReportProgress:(VT100ScreenProgress)progress
+                                     generation:(NSInteger)generation {
+    _progressGenerationSeen = MAX(_progressGenerationSeen, generation);
+    [_programStatusController progressProtocolDidReport];
     [self.tabStatusController progressProtocolDidReport:progress];
 }
 

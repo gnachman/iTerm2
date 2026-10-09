@@ -1687,6 +1687,12 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     [_mutableState performBlockAsynchronously:block];
 }
 
+- (void)mutateAsynchronouslyKeepingMode:(void (^)(VT100Terminal *terminal,
+                                                  VT100ScreenMutableState *mutableState,
+                                                  id<VT100ScreenDelegate> delegate))block {
+    [_mutableState performBlockAsynchronously:block];
+}
+
 - (VT100ScreenState *)immutableState {
     return _state;
 }

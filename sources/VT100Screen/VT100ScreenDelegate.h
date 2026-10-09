@@ -23,6 +23,7 @@ typedef NS_ENUM(NSInteger, iTermLinesShiftedReason) {
 @protocol VT100ScreenMarkReading;
 @class VT100Screen;
 @class VT100ScreenMutableState;
+@class iTermProgramStatusReport;
 @class iTermBackgroundCommandRunnerPool;
 @class iTermColorMap;
 @class iTermConductorRecovery;
@@ -563,11 +564,28 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 - (void)screenSetTabStatus:(VT100TabStatusUpdate * _Nonnull)status;
 
+// The program reported its status through OSC 7501.
+- (void)screenReportProgramStatus:(iTermProgramStatusReport * _Nonnull)report;
+
+// A reset cleared the tab status. OSC 7501 records survive every reset but RIS
+// (see screenRemoveProgramStatusRecords), so they are shown again.
+- (void)screenDidClearTabStatusForReset;
+
+// A full reset (RIS, or one the user asked for) removes every OSC 7501 record.
+- (void)screenRemoveProgramStatusRecords;
+
+// A reset of any kind stopped the progress bar. OSC 7501 records that survive
+// the reset put theirs back. The generation is
+// VT100ScreenMutableState.progressGeneration as of the reset.
+- (void)screenProgressWasResetWithGeneration:(NSInteger)generation;
+
 // The program used the progress protocol (OSC 9;4) to report the state of an
 // operation. Unlike the screen's progress property, which also changes when
 // the terminal is reset, this fires only for what the program itself said, so
 // it can be trusted to mean that an operation the program announced has
-// started or ended.
-- (void)screenProgressProtocolDidReportProgress:(VT100ScreenProgress)progress;
+// started or ended. The generation is VT100ScreenMutableState.progressGeneration
+// as of the report.
+- (void)screenProgressProtocolDidReportProgress:(VT100ScreenProgress)progress
+                                     generation:(NSInteger)generation;
 
 @end

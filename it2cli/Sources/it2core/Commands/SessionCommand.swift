@@ -1105,7 +1105,7 @@ struct SetStatusOptions: ParsableArguments {
 
     @OptionGroup var tmuxOptions: TmuxPaneOptions
 
-    @Option(name: .long, help: "Status text (idle, working, or waiting).")
+    @Option(name: .long, help: "Status text (waiting, done, error, working, or idle).")
     var status: String?
 
     @Option(name: .long, help: "Dot indicator color as #rrggbb.")

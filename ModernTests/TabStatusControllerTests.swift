@@ -495,4 +495,65 @@ final class TabStatusControllerTests: XCTestCase {
         XCTAssertEqual(changes.count, 2)
         XCTAssertEqual(changes[1], "working")
     }
+
+    // MARK: - Keypress dismissal
+
+    private func status(_ text: String, detail: String? = nil) -> VT100TabStatusUpdate {
+        let update = VT100TabStatusUpdate()
+        update.statusPresence = .set
+        update.status = text
+        if let detail {
+            update.detailPresence = .set
+            update.detail = detail
+        }
+        return update
+    }
+
+    func testKeypressTurnsDoneIdleKeepingDetail() {
+        controller.apply(status("done", detail: "All tests pass"))
+        controller.userDidPressKey()
+        XCTAssertEqual(controller.status.statusText, "idle")
+        XCTAssertEqual(controller.status.detailText, "All tests pass")
+        XCTAssertTrue(controller.status.hasIndicator)
+    }
+
+    func testKeypressTurnsErrorIdle() {
+        controller.apply(status("error"))
+        controller.userDidPressKey()
+        XCTAssertEqual(controller.status.statusText, "idle")
+    }
+
+    func testKeypressLeavesOtherStatusesAlone() {
+        for text in ["working", "waiting", "idle", "Deploying"] {
+            controller.apply(status(text))
+            changes = []
+            controller.userDidPressKey()
+            XCTAssertEqual(controller.status.statusText, text)
+            XCTAssertTrue(changes.isEmpty, text)
+        }
+    }
+
+    // PTYSession reads isAcknowledging when it hears of a change, to skip the
+    // notification for a status the user's own keypress changed.
+    func testKeypressChangeIsAnAcknowledgment() {
+        var acknowledgingDuringChange: Bool?
+        controller = TabStatusController(
+            sessionID: { "s" },
+            didChange: { [unowned self] _ in
+                acknowledgingDuringChange = controller.isAcknowledging
+            },
+            progressEndDelay: 1)
+        controller.apply(status("done"))
+        XCTAssertEqual(acknowledgingDuringChange, false)
+        controller.acknowledge {
+            controller.userDidPressKey()
+        }
+        XCTAssertEqual(acknowledgingDuringChange, true)
+        XCTAssertFalse(controller.isAcknowledging)
+    }
+
+    func testKeypressWithNoStatusCreatesNone() {
+        controller.userDidPressKey()
+        XCTAssertNil(controller.statusIfPresent)
+    }
 }

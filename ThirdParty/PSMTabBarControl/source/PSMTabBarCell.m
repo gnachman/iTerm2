@@ -413,6 +413,10 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
             self.indicator.hidden = NO;
             [self.indicator becomeDeterminateWithFraction:1.0 status: PSMStatusError animated:NO];
             return;
+        case PSMProgressPausedIndeterminate:
+            self.indicator.hidden = NO;
+            [self.indicator becomePausedIndeterminate];
+            return;
         case PSMProgressSuccessBase:
         case PSMProgressWarningBase:
         case PSMProgressErrorBase:

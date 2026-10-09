@@ -920,6 +920,7 @@
 		53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */ = {isa = PBXBuildFile; fileRef = 53AFFC8B1DD2A03800E6CEC6 /* iTermLSOF.m */; };
 		53AFFC8F1DD2A04600E6CEC6 /* iTermLSOF.h in Headers */ = {isa = PBXBuildFile; fileRef = 53AFFC8A1DD2A03800E6CEC6 /* iTermLSOF.h */; };
 		53AFFC921DD38F1500E6CEC6 /* ToolWebView.h in Headers */ = {isa = PBXBuildFile; fileRef = 53AFFC901DD38F1500E6CEC6 /* ToolWebView.h */; };
+		53B57BB186676B877DE205A6 /* iTermProgramStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9453AA959137BDC033498F2 /* iTermProgramStatus.swift */; };
 		53B93DE121F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53B93DE021F25E79001EC59C /* iterm2_git_wrapper.sh */; };
 		53B93DE321F25E79001EC59C /* iterm2_git_wrapper.sh in Resources */ = {isa = PBXBuildFile; fileRef = 53B93DE021F25E79001EC59C /* iterm2_git_wrapper.sh */; };
 		53B93DFD21F640B0001EC59C /* iTermBadgeConfigurationWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 53B93DFA21F640B0001EC59C /* iTermBadgeConfigurationWindowController.h */; };
@@ -8742,6 +8743,7 @@
 		C832F1FDBC038F9C98F04DE7 /* RemoteCommand+Mac.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "RemoteCommand+Mac.swift"; sourceTree = "<group>"; };
 		C8DE5AB65EE3E11037811D4A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermTriggersPanel.xib; sourceTree = "<group>"; };
 		C8EEBBD51AD44F3AB26B9B9A /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermStatusBarKnobNumericViewController.xcstrings; sourceTree = "<group>"; };
+		C9453AA959137BDC033498F2 /* iTermProgramStatus.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermProgramStatus.swift; sourceTree = "<group>"; };
 		C9C3CE71F77D41DCA78BDAF8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermGlobalSearch.xib; sourceTree = "<group>"; };
 		CA1C7B91071000DE37B9DA33 /* iTermSessionTabStatus.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSessionTabStatus.swift; sourceTree = "<group>"; };
 		CA34A6F29B10471D8FD572F6 /* GlobalJobMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GlobalJobMonitor.swift; sourceTree = "<group>"; };
@@ -13411,6 +13413,7 @@
 				FB45F0B45FE4C94EC43DF952 /* iTermTabStatusController.swift */,
 				D74E3B9CA959897D7EFF8DF2 /* VT100Terminal+Testing.h */,
 				467CB6090319516B1F45E9FD /* UserVariableAssignment.swift */,
+				C9453AA959137BDC033498F2 /* iTermProgramStatus.swift */,
 			);
 			path = VT100;
 			sourceTree = "<group>";
@@ -20051,6 +20054,7 @@
 				17D19B0676EC5B10EF7E14DA /* AIModelCredential.swift in Sources */,
 				7AB19E84C377B949FBA97C84 /* iTermAccessibilitySelectionReplacement.swift in Sources */,
 				827C03708D8C029F8EF36CAE /* InterpolateBuiltInFunction.swift in Sources */,
+				53B57BB186676B877DE205A6 /* iTermProgramStatus.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

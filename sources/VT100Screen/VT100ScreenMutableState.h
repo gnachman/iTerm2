@@ -49,6 +49,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface VT100ScreenMutableState: VT100ScreenState<NSCopying, VT100ScreenMutableState>
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *currentDirectoryDidChangeOrderEnforcer;
+// Advances whenever the progress changes behind the main thread's back: an
+// OSC 9;4 report, or a reset. A change the main thread queued before it heard
+// of one of those is stale and is dropped (see PTYSession).
+@property (nonatomic) NSInteger progressGeneration;
 @property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (atomic, weak, nullable) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;

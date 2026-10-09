@@ -1444,6 +1444,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (void)setParentScope:(nullable iTermVariableScope *)parentScope;
 - (void)setOrAppendComposerString:(nullable NSString *)string;
 
+// Posts a notification for a tab status change if the status priority
+// settings ask for one. Exposed so tests can observe which changes reach it.
+- (void)maybePostTabStatusNotificationWithPreviousStatusText:(nullable NSString *)previousStatusText;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -100,6 +100,8 @@ class iTermProgressBarView: NSView {
         case ground
         case error
         case indeterminate
+        // An indeterminate band in the paused color, standing still.
+        case pausedIndeterminate
         case determinate(success: Success, percentage: Int32)
     }
 
@@ -120,6 +122,9 @@ class iTermProgressBarView: NSView {
     }()
     private lazy var indeterminateLayer2: CALayer = {
         iTermProgressBarView.makeGradientLayer(colors: indeterminateColors(dark: darkMode))
+    }()
+    private lazy var pausedLayer: CALayer = {
+        iTermProgressBarView.makeGradientLayer(colors: pausedColors(dark: darkMode))
     }()
     private lazy var determinateLayer: CALayer = {
         iTermProgressBarView.makeGradientLayer(colors: determinateColors(success: .success,
@@ -168,6 +173,15 @@ private extension iTermProgressBarView {
             return (base: [baseLight1, baseLight2, baseLight3],
                     light: [lightLight1, lightLight2, lightLight3])
         }
+    }
+
+    // The indeterminate band's shape, fading to nothing at both ends so it
+    // cannot be read as a percentage, in the paused (warning) color.
+    private func pausedColors(dark: Bool) -> [NSColor] {
+        let color = dark ? NSColor(srgbRed: 1.0, green: 0.6, blue: 0.1, alpha: 1.0)
+                         : NSColor(srgbRed: 0.85, green: 0.65, blue: 0.0, alpha: 1.0)
+        let alphas: [CGFloat] = dark ? [0.0, 0.5, 1.0, 1.0, 0.5, 0.0] : [0.0, 0.3, 1.0, 0.3, 0.0]
+        return alphas.map { color.withAlphaComponent($0) }
     }
 
     private func indeterminateColors(dark: Bool) -> [NSColor] {
@@ -341,6 +355,14 @@ private extension iTermProgressBarView {
             startIndeterminateAnimation()
         }
 
+        if let paused = pausedLayer as? CAGradientLayer {
+            let colors = pausedColors(dark: darkMode)
+            paused.colors = colors.map { $0.cgColor }
+            paused.locations = (0..<colors.count).map {
+                NSNumber(value: Double($0) / Double(max(1, colors.count - 1)))
+            }
+        }
+
         // Update determinate layer colors
         if case let .determinate(success: success, percentage: _) = mode {
             updateDeterminateColors(success: success)
@@ -369,6 +391,9 @@ private extension iTermProgressBarView {
             return
         case .indeterminate:
             mode = .indeterminate
+            return
+        case .pausedIndeterminate:
+            mode = .pausedIndeterminate
             return
         case .successBase, .errorBase, .warningBase:
             break
@@ -402,6 +427,9 @@ private extension iTermProgressBarView {
             layer?.addSublayer(indeterminateContainer)
             setupIndeterminateLayers()
             startIndeterminateAnimation()
+        case .pausedIndeterminate:
+            layer(for: oldValue)?.removeFromSuperlayer()
+            layer?.addSublayer(pausedLayer)
         case let .determinate(success: success, percentage: percentage):
             if case .determinate = oldValue {
                 setDeterminate(success: success, percentage: percentage, animated: true)
@@ -535,6 +563,7 @@ private extension iTermProgressBarView {
         case .ground: return nil
         case .error: return errorLayer
         case .indeterminate: return indeterminateContainer
+        case .pausedIndeterminate: return pausedLayer
         case .determinate: return determinateLayer
         }
     }
@@ -593,7 +622,7 @@ extension iTermProgressBarView {
             if errorLayer.animation(forKey: "errorPulse") == nil {
                 startErrorPulseAnimation()
             }
-        case .determinate, .ground:
+        case .determinate, .ground, .pausedIndeterminate:
             break
         }
     }
@@ -632,6 +661,10 @@ extension iTermProgressBarView: CALayerDelegate {
                 width != indeterminateAnimationWidth {
                 startIndeterminateAnimation()
             }
+        case .pausedIndeterminate:
+            // Centered rather than frozen wherever the scrolling band happened
+            // to be, so it looks deliberate instead of stuck.
+            pausedLayer.frame = CGRect(x: 0, y: 0, width: width, height: height)
         case let .determinate(success: success, percentage: percentage):
             let clamped = max(0, min(100, percentage))
             let progressWidth = width * CGFloat(clamped) / 100.0

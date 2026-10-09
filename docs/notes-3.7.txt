@@ -5,6 +5,23 @@ right-to-left rendering, selection, and copy
 improvements in this release.
 
 Major New Features:
+- Support for the Program Status Protocol
+  (OSC 7501), which lets a program report that it
+  is working, waiting on you, done, or failed.
+  The tab shows the most urgent status the
+  program reported, along with its message and
+  progress.
+- Session Status has new “done” and “error”
+  statuses for work that finished or failed
+  while you were away. They sort just below
+  “waiting”, above “working”, and “idle” now
+  sorts last. Pressing a key in the session
+  marks the result as seen and turns it idle.
+  Claude Code and Codex now report a finished
+  turn as “done” and an API error as “error”.
+  Customized priority lists get the two new
+  statuses added below “waiting”, notifying if
+  “idle” did.
 - iTerm2 is now localized: the interface follows
   your Mac’s language and is available in
   Brazilian Portuguese, German, Japanese, Russian,
@@ -291,6 +308,10 @@ New Features:
   \(iterm2.workingSessionCount).
 
 Improvements:
+- Pausing a spinning progress indicator with
+  OSC 9;4;4 now shows a paused spinner: a still
+  yellow band in the session and a pause symbol
+  in the tab, instead of a yellow bar at 10%.
 - If a profile archives sessions when they close
   (Settings > Profiles > Session), Undo Close
   keeps working after its time limit runs out.
