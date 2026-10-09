@@ -1198,6 +1198,7 @@ typedef struct {
             [delegate screenSetWindowTitle:title];
         }
     } name:@"set window title"];
+    [self.tokenExecutor expediteSideEffectsForTitleChange];
 
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
@@ -1242,6 +1243,7 @@ typedef struct {
             [delegate screenSetIconName:title];
         }
     } name:@"set icon title"];
+    [self.tokenExecutor expediteSideEffectsForTitleChange];
 }
 
 - (void)terminalSetSubtitle:(NSString *)subtitle {
