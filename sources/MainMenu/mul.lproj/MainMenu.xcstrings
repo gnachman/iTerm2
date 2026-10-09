@@ -13177,6 +13177,18 @@
         }
       }
     },
+    "sSc-Qk-7Rt.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Search Session Contents…\"; ObjectID = \"sSc-Qk-7Rt\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Search Session Contents…"
+          }
+        }
+      }
+    },
     "STe-pB-R3v.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Edit Window Title\"; ObjectID = \"STe-pB-R3v\";",
       "extractionState" : "extracted_with_value",

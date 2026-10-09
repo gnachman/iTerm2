@@ -94,6 +94,7 @@
 #import "iTermModifierRemapper.h"
 #import "iTermNotificationController.h"
 #import "iTermOnboardingWindowController.h"
+#import "iTermOpenQuicklyCommands.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPasswordManagerWindowController.h"
@@ -3440,6 +3441,10 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)openQuickly:(id)sender {
     [[iTermOpenQuicklyWindowController sharedInstance] presentWindow];
+}
+
+- (IBAction)searchSessionContents:(id)sender {
+    [[iTermOpenQuicklyWindowController sharedInstance] presentWindowWithCommand:[iTermOpenQuicklySearchSessionContentsCommand class]];
 }
 
 - (IBAction)showAbout:(id)sender {
