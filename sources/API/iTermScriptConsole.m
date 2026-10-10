@@ -525,9 +525,10 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (void)updateButtonsEnabled {
     // The Clear Terminated button acts on the whole list, so its state depends
-    // only on whether any stopped entry exists, not on the current selection.
+    // only on whether any entry it would remove exists, not on the current
+    // selection.
     iTermScriptHistoryEntry *terminated = [[[iTermScriptHistory sharedInstance] entries] objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
-        return !entry.isRunning;
+        return entry.isFinished;
     }];
     _clearTerminatedButton.enabled = (terminated != nil);
 
@@ -558,20 +559,25 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     } else {
         key = [[NSUUID UUID] UUIDString];  // Just needs to be something unique to identify this now-immutable log
     }
-    if (!entry) {
-        NSString *name = [NSString castFrom:notification.userInfo[@"job"]];
-        if (!name) {
-            name = [self formatPIDs:notification.userInfo[@"pids"]];
-        }
-        if (!name) {
-            // Shouldn't happen as there ought to always be a PID
-            name = NSLocalizedStringWithDefaultValue(@"ScriptConsole.Unknown", nil, [NSBundle mainBundle], @"Unknown", @"Fallback name for a script with no identifiable name");
-        }
-        entry = [[iTermScriptHistoryEntry alloc] initWithName:name
-                                                     fullPath:nil
-                                                   identifier:key
-                                                     relaunch:nil];
+    if (entry) {
+        // Other connections may be using this key (it2 over SSH shares one per
+        // session), or it may belong to a launched script, so a rejected request
+        // must not stop the entry or replace its pids. Just log it.
+        [entry addOutput:notification.userInfo[@"reason"] completion:^{}];
+        return;
     }
+    NSString *name = [NSString castFrom:notification.userInfo[@"job"]];
+    if (!name) {
+        name = [self formatPIDs:notification.userInfo[@"pids"]];
+    }
+    if (!name) {
+        // Shouldn't happen as there ought to always be a PID
+        name = NSLocalizedStringWithDefaultValue(@"ScriptConsole.Unknown", nil, [NSBundle mainBundle], @"Unknown", @"Fallback name for a script with no identifiable name");
+    }
+    entry = [[iTermScriptHistoryEntry alloc] initWithName:name
+                                                 fullPath:nil
+                                               identifier:key
+                                                 relaunch:nil];
     entry.pids = notification.userInfo[@"pids"];
     [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
     [entry addOutput:notification.userInfo[@"reason"] completion:^{}];
@@ -603,12 +609,8 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         entry.pids = notification.userInfo[@"pids"];
         DLog(@"Add history entry");
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
-    } else if (!entry.isRunning) {
-        // A new connection reusing a closed one's key may come from a different
-        // process, so don't let Terminate or an API shutdown signal the old pid.
-        entry.pids = notification.userInfo[@"pids"];
     }
-    [entry connectionDidOpen];
+    [entry connectionDidOpenWithPIDs:notification.userInfo[@"pids"]];
     entry.websocketConnection = notification.userInfo[@"websocket"];
     DLog(@"Adding output");
     [entry addOutput:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptConsole.ConnectionAccepted", nil, [NSBundle mainBundle], @"Connection accepted: %@\n", @"Script Console diagnostic logged when an API connection is accepted; %@ is the peer"), notification.userInfo[@"reason"]]

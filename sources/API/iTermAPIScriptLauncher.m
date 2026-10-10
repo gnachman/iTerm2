@@ -854,7 +854,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     DLog(@"cookie=%@ standardEnv=%@ searchPath=%@, path=%@, standardPythonVersion=%@ environment=%@",
          cookie, standardEnv, searchPath, path, standardPythonVersion, task.environment);
     [task launch];   // This can throw
-    entry.pids = @[ @(task.processIdentifier) ];
+    [entry trackProcess:task.processIdentifier];
     [self waitForTask:task readFromPipe:pipe historyEntry:entry];
 }
 
@@ -1009,7 +1009,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                     });
                 }
             }
-            [entry stopRunning];
+            [entry processDidExit];
         });
         @synchronized(queues) {
             [queues removeObject:q];

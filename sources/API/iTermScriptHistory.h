@@ -33,6 +33,12 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 @property (nonatomic) BOOL terminatedByUser;
 @property (nonatomic, copy) NSString *path;
 @property (nonatomic, readonly, nullable) NSString *fullPath;  // This can be passed to launchScriptWithAbsolutePath:
+// Whether an API shutdown would kill this entry's process. See -trackProcess:.
+@property (nonatomic, readonly) BOOL observesAPIShutdown;
+// Stopped, with no launched process still alive. Only finished entries are
+// removed from the history, by the cap on finished entries or by Clear
+// Terminated.
+@property (nonatomic, readonly) BOOL isFinished;
 
 + (instancetype)globalEntry;
 + (instancetype)apsEntry;
@@ -54,9 +60,15 @@ extern NSString *const iTermScriptHistoryEntryFieldRPCValue;  // RPC changed
 // come back to life.
 - (void)resumeRunning;
 // Track the API connections using this entry's key. The entry stops when the
-// last one closes, and resumes if one opens while it's stopped.
-- (void)connectionDidOpen;
+// last one closes, and resumes if one opens while it's stopped. pids describes
+// the connecting process.
+- (void)connectionDidOpenWithPIDs:(nullable NSArray<NSNumber *> *)pids;
 - (void)connectionDidClose;
+// For a process iTerm2 launched. Its entry stays responsible for killing the
+// process when the API shuts down, even after its connections close, until
+// -processDidExit, which also stops the entry.
+- (void)trackProcess:(pid_t)pid;
+- (void)processDidExit;
 - (void)kill;
 
 @end
@@ -71,8 +83,8 @@ extern NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification;
 + (instancetype)sharedInstance;
 - (void)addHistoryEntry:(iTermScriptHistoryEntry *)entry;
 - (void)removeHistoryEntry:(iTermScriptHistoryEntry *)entry;
-// Removes every entry that has stopped running. Persistent pseudo-entries (the
-// app, APS, dynamic profiles, browser loggers) are always running and survive.
+// Removes every finished entry. Persistent pseudo-entries (the app, APS,
+// dynamic profiles, browser loggers) are always running and survive.
 - (void)removeTerminatedEntries;
 - (iTermScriptHistoryEntry *)entryWithIdentifier:(NSString *)identifier;
 - (iTermScriptHistoryEntry *)runningEntryWithPath:(NSString *)path;

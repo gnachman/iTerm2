@@ -165,8 +165,8 @@ final class iTermScriptHistoryTests: XCTestCase {
         let history = iTermScriptHistory()
         let entry = makeEntry(UUID().uuidString)
         history.addEntry(entry)
-        entry.connectionDidOpen()  // A
-        entry.connectionDidOpen()  // B
+        entry.connectionDidOpen(withPIDs: nil)  // A
+        entry.connectionDidOpen(withPIDs: nil)  // B
 
         entry.connectionDidClose()  // A
         XCTAssertTrue(entry.isRunning)
@@ -188,11 +188,11 @@ final class iTermScriptHistoryTests: XCTestCase {
 
     func testConnectionOpeningOnAStoppedEntryResumesIt() {
         let entry = makeEntry(UUID().uuidString)
-        entry.connectionDidOpen()
+        entry.connectionDidOpen(withPIDs: nil)
         entry.connectionDidClose()
         XCTAssertFalse(entry.isRunning)
 
-        entry.connectionDidOpen()
+        entry.connectionDidOpen(withPIDs: nil)
         XCTAssertTrue(entry.isRunning)
         postReceivedMessage(for: entry)
         XCTAssertEqual(entry.callEntries.count, 1)
@@ -202,11 +202,11 @@ final class iTermScriptHistoryTests: XCTestCase {
     // connections so a close that never arrives can't keep the entry alive.
     func testStoppingForgetsOpenConnections() {
         let entry = makeEntry(UUID().uuidString)
-        entry.connectionDidOpen()
-        entry.connectionDidOpen()
+        entry.connectionDidOpen(withPIDs: nil)
+        entry.connectionDidOpen(withPIDs: nil)
         entry.stopRunning()
 
-        entry.connectionDidOpen()
+        entry.connectionDidOpen(withPIDs: nil)
         entry.connectionDidClose()
         XCTAssertFalse(entry.isRunning)
     }
@@ -217,5 +217,202 @@ final class iTermScriptHistoryTests: XCTestCase {
         let entry = makeEntry(UUID().uuidString)
         entry.connectionDidClose()
         XCTAssertFalse(entry.isRunning)
+    }
+
+    // These pids are never signaled: nothing here posts the API shutdown
+    // notification, which other objects in the test host also observe.
+
+    func testAdHocEntryStopsObservingShutdownWhenItsConnectionCloses() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.connectionDidOpen(withPIDs: [111])
+        XCTAssertTrue(entry.observesAPIShutdown)
+
+        entry.connectionDidClose()
+
+        XCTAssertFalse(entry.observesAPIShutdown)
+    }
+
+    // A launched script can outlive its connection, for example while it waits
+    // to reconnect, and must still be killed if the API shuts down.
+    func testLaunchedEntryObservesShutdownUntilItsProcessExits() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.trackProcess(111)
+        entry.connectionDidOpen(withPIDs: [111])
+        entry.connectionDidClose()
+
+        XCTAssertFalse(entry.isRunning)
+        XCTAssertTrue(entry.observesAPIShutdown)
+
+        entry.processDidExit()
+        XCTAssertFalse(entry.observesAPIShutdown)
+    }
+
+    // Clear Terminated is enabled only for finished entries, so the console
+    // must hear when a stopped entry's process exits.
+    func testProcessExitOfAStoppedEntryPostsDidChange() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.trackProcess(111)
+        entry.connectionDidOpen(withPIDs: [111])
+        entry.connectionDidClose()
+        XCTAssertFalse(entry.isFinished)
+
+        let posted = expectation(forNotification: .iTermScriptHistoryEntryDidChange,
+                                 object: entry)
+        entry.processDidExit()
+
+        wait(for: [posted], timeout: 0)
+        XCTAssertTrue(entry.isFinished)
+    }
+
+    func testProcessExitStopsARunningEntry() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.trackProcess(111)
+
+        entry.processDidExit()
+
+        XCTAssertFalse(entry.isRunning)
+        XCTAssertFalse(entry.observesAPIShutdown)
+    }
+
+    func testReconnectingAdHocEntryTakesTheNewPIDs() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.connectionDidOpen(withPIDs: [111])
+        entry.connectionDidClose()
+
+        entry.connectionDidOpen(withPIDs: [222])
+
+        XCTAssertEqual(entry.onlyPid, 222)
+    }
+
+    func testReconnectingLaunchedEntryKeepsTheLaunchedPID() {
+        let entry = makeEntry(UUID().uuidString)
+        entry.trackProcess(111)
+        entry.connectionDidOpen(withPIDs: [111])
+        entry.connectionDidClose()
+
+        entry.connectionDidOpen(withPIDs: [111, 1])
+
+        XCTAssertEqual(entry.onlyPid, 111)
+        entry.processDidExit()
+    }
+
+    private func addFinishedEntries(_ count: Int, to history: iTermScriptHistory) {
+        for i in 0..<count {
+            let entry = makeEntry("finished \(i)")
+            history.addEntry(entry)
+            entry.stopRunning()
+        }
+        // The cap is enforced when an entry is added.
+        history.addEntry(makeEntry("trigger"))
+    }
+
+    // The built-in entries log iTerm2's own activity and have no process, so
+    // an API shutdown must not stop them and the cap must not drop them.
+    func testBuiltInEntriesNeverStop() {
+        let global = iTermScriptHistoryEntry.global()
+        XCTAssertFalse(global.observesAPIShutdown)
+
+        global.stopRunning()
+
+        XCTAssertTrue(global.isRunning)
+        XCTAssertFalse(global.isFinished)
+        let history = iTermScriptHistory()
+        addFinishedEntries(201, to: history)
+        XCTAssertTrue(history.entries.contains(global))
+    }
+
+    // A launched script can lose its connection and keep running; its entry
+    // must keep collecting its output and be found again when it reconnects.
+    func testLaunchedEntryWithLiveProcessIsNotRemoved() {
+        let history = iTermScriptHistory()
+        let launched = makeEntry(UUID().uuidString)
+        history.addEntry(launched)
+        launched.trackProcess(111)
+        launched.connectionDidOpen(withPIDs: [111])
+        launched.connectionDidClose()
+        XCTAssertFalse(launched.isFinished)
+
+        addFinishedEntries(201, to: history)
+        XCTAssertTrue(history.entries.contains(launched))
+        history.removeTerminatedEntries()
+        XCTAssertTrue(history.entries.contains(launched))
+
+        launched.processDidExit()
+        XCTAssertTrue(launched.isFinished)
+        history.removeTerminatedEntries()
+        XCTAssertFalse(history.entries.contains(launched))
+    }
+}
+
+// Drives the Script Console with the notifications iTermAPIServer posts. Uses
+// the shared console and history, with a unique key per test.
+final class iTermScriptConsoleConnectionTests: XCTestCase {
+    private let key = UUID().uuidString
+
+    override func setUp() {
+        super.setUp()
+        _ = iTermScriptConsole.sharedInstance()
+    }
+
+    private func post(_ name: String, userInfo: [String: Any]? = nil) {
+        NotificationCenter.default.post(name: NSNotification.Name(name),
+                                        object: key,
+                                        userInfo: userInfo)
+    }
+
+    private func accept(pids: [Int]) {
+        post(iTermAPIServerConnectionAccepted, userInfo: ["reason": "test", "job": "test", "pids": pids])
+    }
+
+    private var entry: iTermScriptHistoryEntry? {
+        return iTermScriptHistory.sharedInstance().entry(withIdentifier: key)
+    }
+
+    func testRejectedRequestDoesNotDisturbAnOpenConnectionsEntry() throws {
+        accept(pids: [111])
+        let entry = try XCTUnwrap(self.entry)
+
+        post(iTermAPIServerConnectionRejected, userInfo: ["reason": "bad cookie", "pids": [222]])
+
+        XCTAssertTrue(entry.isRunning)
+        XCTAssertEqual(entry.onlyPid, 111)
+        post(iTermAPIServerDidReceiveMessage)
+        XCTAssertEqual(entry.callEntries.count, 1)
+        post(iTermAPIServerConnectionClosed)
+        XCTAssertFalse(entry.isRunning)
+    }
+
+    func testRejectedRequestWithANewKeyMakesAStoppedEntry() throws {
+        post(iTermAPIServerConnectionRejected, userInfo: ["reason": "bad cookie", "pids": [222]])
+
+        let entry = try XCTUnwrap(self.entry)
+        XCTAssertFalse(entry.isRunning)
+        XCTAssertEqual(entry.onlyPid, 222)
+    }
+
+    func testEntryStopsWhenTheLastOfTwoConnectionsCloses() throws {
+        accept(pids: [111])
+        accept(pids: [111])
+        let entry = try XCTUnwrap(self.entry)
+
+        post(iTermAPIServerConnectionClosed)
+        XCTAssertTrue(entry.isRunning)
+
+        post(iTermAPIServerConnectionClosed)
+        XCTAssertFalse(entry.isRunning)
+    }
+
+    func testReacceptedKeyResumesTheEntryWithTheNewPIDs() throws {
+        accept(pids: [111])
+        post(iTermAPIServerConnectionClosed)
+        let entry = try XCTUnwrap(self.entry)
+
+        accept(pids: [222])
+
+        XCTAssertTrue(entry.isRunning)
+        XCTAssertEqual(entry.onlyPid, 222)
+        post(iTermAPIServerDidReceiveMessage)
+        XCTAssertEqual(entry.callEntries.count, 1)
+        post(iTermAPIServerConnectionClosed)
     }
 }

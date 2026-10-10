@@ -29,18 +29,34 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
 @implementation iTermScriptHistoryEntry {
     NSMutableArray<NSString *> *_logLines;
     NSMutableArray<NSString *> *_callEntries;
-    // Open API connections using this entry's key. See -connectionDidOpen.
+    // Open API connections using this entry's key. See -connectionDidOpenWithPIDs:.
     NSInteger _openConnections;
+    // Set by -trackProcess: for a process iTerm2 launched, until it exits.
+    BOOL _tracksProcess;
+    BOOL _observingMessages;
+    // iTerm2's own logs, like the iTerm2 App entry. See +persistentEntryWithName:identifier:.
+    BOOL _persistent;
+}
+
+// An entry for something in iTerm2 rather than an API client. It has no
+// process and stays running for as long as iTerm2 does, so it never leaves the
+// history.
++ (instancetype)persistentEntryWithName:(NSString *)name identifier:(NSString *)identifier {
+    iTermScriptHistoryEntry *entry = [[self alloc] initWithName:name
+                                                       fullPath:nil
+                                                     identifier:identifier
+                                                       relaunch:nil];
+    entry->_persistent = YES;
+    [entry updateObservers];
+    return entry;
 }
 
 + (instancetype)globalEntry {
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] initWithName:@"iTerm2 App"
-                                     fullPath:nil
-                                   identifier:@"iTerm2"
-                                     relaunch:nil];
+        instance = [self persistentEntryWithName:@"iTerm2 App"
+                                      identifier:@"iTerm2"];
     });
     return instance;
 }
@@ -49,10 +65,8 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] initWithName:NSLocalizedStringWithDefaultValue(@"ScriptHistory.APSName", nil, [NSBundle mainBundle], @"Automatic Profile Switching", @"Script Console entry name for automatic profile switching")
-                                     fullPath:nil
-                                   identifier:@"__APS"
-                                     relaunch:nil];
+        instance = [self persistentEntryWithName:NSLocalizedStringWithDefaultValue(@"ScriptHistory.APSName", nil, [NSBundle mainBundle], @"Automatic Profile Switching", @"Script Console entry name for automatic profile switching")
+                                      identifier:@"__APS"];
     });
     return instance;
 }
@@ -61,10 +75,8 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] initWithName:NSLocalizedStringWithDefaultValue(@"ScriptHistory.DynamicProfilesName", nil, [NSBundle mainBundle], @"Dynamic Profiles", @"Script Console entry name for dynamic profiles")
-                                     fullPath:nil
-                                   identifier:@"__DP"
-                                     relaunch:nil];
+        instance = [self persistentEntryWithName:NSLocalizedStringWithDefaultValue(@"ScriptHistory.DynamicProfilesName", nil, [NSBundle mainBundle], @"Dynamic Profiles", @"Script Console entry name for dynamic profiles")
+                                      identifier:@"__DP"];
     });
     return instance;
 }
@@ -79,10 +91,8 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     if (entry) {
         return entry;
     }
-    entry = [[self alloc] initWithName:[NSString stringWithFormat:@"Web Browser %@", identifier]
-                              fullPath:nil
-                            identifier:[@"__WB_" stringByAppendingString:identifier]
-                              relaunch:nil];
+    entry = [self persistentEntryWithName:[NSString stringWithFormat:@"Web Browser %@", identifier]
+                               identifier:[@"__WB_" stringByAppendingString:identifier]];
     browserEntries[identifier] = entry;
     return entry;
 }
@@ -91,10 +101,8 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] initWithName:NSLocalizedStringWithDefaultValue(@"ScriptHistory.SmartSelectionActionsName", nil, [NSBundle mainBundle], @"Smart Selection Actions", @"Script Console entry name for smart selection actions")
-                                     fullPath:nil
-                                   identifier:@"__SSA"
-                                     relaunch:nil];
+        instance = [self persistentEntryWithName:NSLocalizedStringWithDefaultValue(@"ScriptHistory.SmartSelectionActionsName", nil, [NSBundle mainBundle], @"Smart Selection Actions", @"Script Console entry name for smart selection actions")
+                                      identifier:@"__SSA"];
     });
     return instance;
 }
@@ -122,33 +130,72 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
                                             options:0
                                              locale:[NSLocale currentLocale]];
         });
-        [self registerForAPINotifications];
+        [self updateObservers];
     }
     return self;
 }
 
-// Only a running entry observes these. See -stopRunning and -resumeRunning.
-- (void)registerForAPINotifications {
+// Two concerns with different lifetimes:
+//
+// - The API traffic logged in the Calls tab belongs to a connection, so only a
+//   running entry observes it.
+// - An API shutdown kills the entry's process (apiDidStop:). That belongs to
+//   the process, which can outlive its connection: a launched script may wait
+//   to reconnect, or keep working without one. So an entry whose process
+//   iTerm2 launched observes the shutdown until the launcher says the process
+//   exited. Any other entry stops observing it when it stops running, because
+//   nothing tells us when its process exits, and afterward its pid could
+//   belong to some unrelated process.
+//
+// Unregistering also keeps the notification center small, since terminated
+// entries can stick around for a long time.
+- (void)updateObservers {
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-    [center addObserver:self
-               selector:@selector(apiServerDidReceiveMessage:)
-                   name:iTermAPIServerDidReceiveMessage
-                 object:_identifier];
-    [center addObserver:self
-               selector:@selector(apiServerWillSendMessage:)
-                   name:iTermAPIServerWillSendMessage
-                 object:_identifier];
-    [center addObserver:self
-               selector:@selector(apiDidStop:)
-                   name:iTermAPIHelperDidStopNotification
-                 object:nil];
+    if (_isRunning && !_observingMessages) {
+        _observingMessages = YES;
+        [center addObserver:self
+                   selector:@selector(apiServerDidReceiveMessage:)
+                       name:iTermAPIServerDidReceiveMessage
+                     object:_identifier];
+        [center addObserver:self
+                   selector:@selector(apiServerWillSendMessage:)
+                       name:iTermAPIServerWillSendMessage
+                     object:_identifier];
+    } else if (!_isRunning && _observingMessages) {
+        _observingMessages = NO;
+        [center removeObserver:self name:iTermAPIServerDidReceiveMessage object:nil];
+        [center removeObserver:self name:iTermAPIServerWillSendMessage object:nil];
+    }
+    const BOOL shouldObserveShutdown = !_persistent && (_isRunning || _tracksProcess);
+    if (shouldObserveShutdown && !_observesAPIShutdown) {
+        _observesAPIShutdown = YES;
+        [center addObserver:self
+                   selector:@selector(apiDidStop:)
+                       name:iTermAPIHelperDidStopNotification
+                     object:nil];
+    } else if (!shouldObserveShutdown && _observesAPIShutdown) {
+        _observesAPIShutdown = NO;
+        [center removeObserver:self name:iTermAPIHelperDidStopNotification object:nil];
+    }
 }
 
-- (void)unregisterForAPINotifications {
-    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-    [center removeObserver:self name:iTermAPIServerDidReceiveMessage object:nil];
-    [center removeObserver:self name:iTermAPIServerWillSendMessage object:nil];
-    [center removeObserver:self name:iTermAPIHelperDidStopNotification object:nil];
+- (void)trackProcess:(pid_t)pid {
+    self.pids = @[ @(pid) ];
+    _tracksProcess = YES;
+    [self updateObservers];
+}
+
+- (void)processDidExit {
+    _tracksProcess = NO;
+    if (_isRunning) {
+        [self stopRunning];
+    } else {
+        // It was already stopped, but only now is it finished, which enables
+        // Clear Terminated.
+        [self updateObservers];
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
+                                                            object:self];
+    }
 }
 
 - (void)dealloc {
@@ -225,17 +272,17 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
 
     killpg(pgid, signal);
 }
+- (BOOL)isFinished {
+    return !_isRunning && !_tracksProcess;
+}
+
 - (void)stopRunning {
-    if (!_isRunning) {
+    if (!_isRunning || _persistent) {
         return;
     }
     _isRunning = NO;
     _openConnections = 0;
-    // A stopped entry has no traffic to log until it resumes, and must not act
-    // on a later API shutdown: apiDidStop: would SIGKILL a pid that may since
-    // have been reused. Unregistering also keeps the notification center small,
-    // since terminated entries can stick around for a long time.
-    [self unregisterForAPINotifications];
+    [self updateObservers];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
                                                         object:self];
 }
@@ -248,7 +295,7 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     // That was about the previous run. It decides whether a launched script's
     // exit gets reported as a failure.
     _terminatedByUser = NO;
-    [self registerForAPINotifications];
+    [self updateObservers];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryEntryDidChangeNotification
                                                         object:self];
 }
@@ -259,7 +306,13 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
 // connection that is still open would stop being logged. Anything that
 // stops the entry (like the API shutting down) resets the count, so a lost
 // close can't leave it running forever.
-- (void)connectionDidOpen {
+- (void)connectionDidOpenWithPIDs:(nullable NSArray<NSNumber *> *)pids {
+    if (!_isRunning && !_tracksProcess) {
+        // Reusing a closed connection's key doesn't mean it's the same process,
+        // so don't let Terminate or an API shutdown signal the old pid. A
+        // launched process's pid comes from the launcher, so keep that one.
+        self.pids = pids;
+    }
     _openConnections += 1;
     [self resumeRunning];
 }
@@ -473,12 +526,11 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
 // Terminated entries are kept so their logs stay viewable in the Script
 // Console, but every API connection gets an entry, and clients like it2 make a
 // connection per command, so without a limit they pile up without bound. Drop
-// the oldest terminated entries beyond the limit. Running entries are never
-// dropped.
+// the oldest finished entries beyond the limit.
 - (void)removeExcessTerminatedEntries {
     const NSUInteger maxTerminatedEntries = 200;
     NSIndexSet *terminated = [_entries indexesOfObjectsPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger idx, BOOL *stop) {
-        return !entry.isRunning;
+        return entry.isFinished;
     }];
     if (terminated.count <= maxTerminatedEntries) {
         return;
@@ -496,7 +548,7 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
 
 - (void)removeTerminatedEntries {
     NSIndexSet *terminated = [_entries indexesOfObjectsPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger idx, BOOL *stop) {
-        return !entry.isRunning;
+        return entry.isFinished;
     }];
     if (terminated.count == 0) {
         return;
