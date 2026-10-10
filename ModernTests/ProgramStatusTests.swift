@@ -670,3 +670,323 @@ final class ProgramStatusTerminalTests: XCTestCase {
         XCTAssertTrue(harness.delegate.programStatusReports.isEmpty)
     }
 }
+
+final class ProgramStatusNotifierTests: XCTestCase {
+    private var time: TimeInterval = 100
+    private var scheduled = [(at: TimeInterval, block: () -> Void)]()
+    private var posted = [String]()
+    private var notifier: ProgramStatusNotifier!
+
+    override func setUp() {
+        super.setUp()
+        time = 100
+        scheduled = []
+        posted = []
+        notifier = ProgramStatusNotifier(
+            interval: 3,
+            now: { [unowned self] in time },
+            schedule: { [unowned self] delay, block in
+                scheduled.append((time + delay, block))
+            },
+            post: { [unowned self] text in
+                posted.append(text)
+            })
+    }
+
+    /// Advances the clock and runs whatever came due.
+    private func advance(to newTime: TimeInterval) {
+        time = newTime
+        let due = scheduled.filter { $0.at <= newTime }
+        scheduled.removeAll { $0.at <= newTime }
+        due.forEach { $0.block() }
+    }
+
+    private func notify(_ key: String, _ text: String) {
+        notifier.notify(key: key, description: text)
+    }
+
+    func testFirstPostsImmediately() {
+        notify("a", "a1")
+        XCTAssertEqual(posted, ["a1"])
+    }
+
+    func testNewerStateOfTheSameRecordReplacesTheOlder() {
+        notify("a", "a1")
+        advance(to: 101)
+        notify("b", "b1")
+        notify("b", "b2")
+        XCTAssertEqual(posted, ["a1"])
+        XCTAssertEqual(scheduled.count, 1)
+        XCTAssertEqual(scheduled.first?.at, 103)
+        advance(to: 103)
+        XCTAssertEqual(posted, ["a1", "b2"])
+    }
+
+    func testDifferentRecordsInOneIntervalAreAllShown() {
+        // A goes to waiting, then B to waiting, then C to done, inside one
+        // interval. B still needs the user, so it must not be lost behind C.
+        notify("a", "A is waiting")
+        advance(to: 101)
+        notify("b", "B is waiting")
+        notify("c", "C is done")
+        advance(to: 103)
+        XCTAssertEqual(posted, ["A is waiting", "B is waiting\nC is done"])
+    }
+
+    func testHeldNotificationForAStateTheRecordLeftIsDropped() {
+        // Root blocked posts; task a blocked is held; then a goes back to
+        // working (the user answered elsewhere), which does not notify.
+        notify("", "Status changed to waiting")
+        advance(to: 101)
+        notify("a", "a changed to waiting")
+        advance(to: 101.5)
+        notifier.retainPending(forKeys: [""])
+        advance(to: 103)
+        XCTAssertEqual(posted, ["Status changed to waiting"])
+    }
+
+    func testRetainKeepsWhatStillNotifies() {
+        notify("a", "a1")
+        advance(to: 101)
+        notify("b", "b1")
+        notify("c", "c1")
+        notifier.retainPending(forKeys: ["c"])
+        advance(to: 103)
+        XCTAssertEqual(posted, ["a1", "c1"])
+    }
+
+    func testAfterQuietIntervalPostsImmediately() {
+        notify("a", "a1")
+        advance(to: 104)
+        notify("a", "a2")
+        XCTAssertEqual(posted, ["a1", "a2"])
+        XCTAssertTrue(scheduled.isEmpty)
+    }
+
+    func testHeldPostRestartsTheInterval() {
+        notify("a", "a1")
+        advance(to: 101)
+        notify("b", "b1")
+        advance(to: 103)
+        XCTAssertEqual(posted, ["a1", "b1"])
+        advance(to: 104)
+        notify("c", "c1")
+        // Only one second since "b1" went out.
+        XCTAssertEqual(posted, ["a1", "b1"])
+        advance(to: 106)
+        XCTAssertEqual(posted, ["a1", "b1", "c1"])
+    }
+}
+
+final class ProgramStatusDisplayRecordTests: XCTestCase {
+    private var changes = 0
+    private var entered = [ProgramStatusDisplayRecord]()
+    private var controller: ProgramStatusController!
+
+    override func setUp() {
+        super.setUp()
+        changes = 0
+        entered = []
+        controller = ProgramStatusController(
+            applyStatus: { _ in },
+            currentProgress: { .stopped },
+            setProgress: { _ in },
+            recordsDidChange: { [unowned self] in changes += 1 },
+            recordDidChangeState: { [unowned self] in entered.append($0) })
+    }
+
+    private func send(_ body: String) {
+        controller.handle(ProgramStatusReport.parse(body)!)
+    }
+
+    func testStateChangesAreReportedButMessageChangesAreNot() {
+        send("state=working")
+        send("state=working:msg=\(b64("more"))")
+        send("state=blocked")
+        XCTAssertEqual(entered.map(\.statusText), ["working", "waiting"])
+        XCTAssertEqual(changes, 3)
+    }
+
+    func testClearIsNotAStateButIsAChange() {
+        send("state=working")
+        send("state=clear")
+        XCTAssertEqual(entered.count, 1)
+        XCTAssertEqual(changes, 2)
+        XCTAssertTrue(controller.displayRecords.isEmpty)
+    }
+
+    func testKeypressChangesRecordsWithoutReportingAState() {
+        send("state=done")
+        entered = []
+        changes = 0
+        controller.userDidPressKey()
+        XCTAssertEqual(changes, 1)
+        XCTAssertTrue(entered.isEmpty)
+        XCTAssertEqual(controller.displayRecords.map(\.statusText), ["idle"])
+    }
+
+    func testNothingChangedReportsNothing() {
+        send("state=working")
+        changes = 0
+        controller.userDidPressKey()
+        controller.commandDidEnd(through: controller.serial)
+        // The working record ended with the command, so that one is a change.
+        XCTAssertEqual(changes, 1)
+        changes = 0
+        controller.commandDidEnd(through: controller.serial)
+        XCTAssertEqual(changes, 0)
+    }
+
+    func testLabels() {
+        send("state=working:app=deploy")
+        send("state=working:id=build:title=\(b64("Build"))")
+        send("state=blocked:id=build/test")
+        send("state=done:id=lint")
+        let byStatus = Dictionary(grouping: controller.displayRecords, by: { $0.label ?? "" })
+        XCTAssertEqual(Set(byStatus.keys), ["deploy", "Build", "Build \u{203A} test", "lint"])
+        let root = controller.displayRecords.first { $0.isRoot }
+        XCTAssertEqual(root?.label, "deploy")
+    }
+
+    // The Session Status tool hides a session row's detail only while the
+    // records' status is the one showing; another writer's message has no
+    // child row to carry it.
+    func testIsShowingStatusTracksWhoSetTheStatus() {
+        XCTAssertFalse(controller.isShowingStatus)
+        send("state=working:id=a")
+        send("state=blocked:id=b")
+        XCTAssertTrue(controller.isShowingStatus)
+        controller.otherWriterDidSetStatus()
+        XCTAssertFalse(controller.isShowingStatus)
+        send("state=working:id=a")
+        XCTAssertTrue(controller.isShowingStatus)
+    }
+
+    func testChildInheritsAppButIsLabeledByPath() {
+        send("state=working:id=a:app=cargo")
+        XCTAssertEqual(controller.displayRecords.first?.label, "a")
+    }
+}
+
+final class ToolStatusChildRowTests: XCTestCase {
+    private func child(_ label: String, _ status: String, at time: TimeInterval) -> ToolStatus.ChildRow {
+        return ToolStatus.ChildRow(sessionID: "s",
+                                   recordKey: label,
+                                   label: label,
+                                   statusText: status,
+                                   indicatorColor: nil,
+                                   statusTextColor: nil,
+                                   progress: nil,
+                                   detail: nil,
+                                   updatedAt: time)
+    }
+
+    private let priorities = ["waiting": 0, "done": 1, "working": 2, "idle": 3]
+
+    private func split(_ rows: [ToolStatus.ChildRow], limit: Int = ToolStatus.maximumChildRows) -> (shown: [String], hidden: [String]) {
+        let result = ToolStatus.childRows(rows, limit: limit, priority: { self.priorities[$0] ?? 9 })
+        return (result.shown.map(\.label), result.hidden.map(\.label))
+    }
+
+    func testOrderedByPriorityThenMostRecent() {
+        let rows = [child("a", "working", at: 1),
+                    child("b", "waiting", at: 1),
+                    child("c", "working", at: 5),
+                    child("d", "done", at: 2)]
+        XCTAssertEqual(split(rows).shown, ["b", "d", "c", "a"])
+    }
+
+    func testSnoozedPeersChildrenSinkWhateverTheirPriority() {
+        var waiting = child("snoozed", "waiting", at: 9)
+        waiting.snoozed = true
+        let rows = [waiting, child("a", "idle", at: 1), child("b", "working", at: 1)]
+        XCTAssertEqual(split(rows).shown, ["b", "a", "snoozed"])
+    }
+
+    func testCapIsFour() {
+        XCTAssertEqual(ToolStatus.maximumChildRows, 4)
+        let rows = (0..<6).map { child("r\($0)", "working", at: TimeInterval($0)) }
+        let result = split(rows)
+        XCTAssertEqual(result.shown, ["r5", "r4", "r3", "r2"])
+        XCTAssertEqual(result.hidden, ["r1", "r0"])
+    }
+
+    func testProgressShowsAfterStatus() {
+        var row = child("a", "working", at: 0)
+        row.progress = 40
+        let text = ToolStatus.childStatusText(row)
+        XCTAssertTrue(text.hasPrefix("working"), text)
+        XCTAssertTrue(text.contains("40"), text)
+    }
+}
+
+final class ToolStatusChildSelectionTests: XCTestCase {
+    private typealias Key = ToolStatus.ChildKey
+    private let euWest = ToolStatus.ChildKey(sessionID: "peer1", recordKey: "eu-west")
+    private let usEast = ToolStatus.ChildKey(sessionID: "peer1", recordKey: "us-east")
+    private let review = ToolStatus.ChildKey(sessionID: "peer2", recordKey: "")
+
+    /// A merged workgroup row with children from two peers, after an
+    /// unrelated session's row.
+    private var mergedRows: [ToolStatus.SelectableRow] {
+        return [.session(matchesActive: false),
+                .session(matchesActive: true),
+                .child(euWest),
+                .child(review),
+                .child(usEast)]
+    }
+
+    private func select(_ rows: [ToolStatus.SelectableRow], active: String?, clicked: Key? = nil) -> Int? {
+        return ToolStatus.rowToSelect(rows, activeSessionID: active, clickedChild: clicked)
+    }
+
+    func testNavigatingToAPeerSelectsItsChild() {
+        XCTAssertEqual(select(mergedRows, active: "peer2"), 3)
+    }
+
+    func testNavigatingSelectsTheActivePeersMostUrgentChild() {
+        XCTAssertEqual(select(mergedRows, active: "peer1"), 2)
+    }
+
+    func testClickedChildStaysSelectedWhileItsSessionIsActive() {
+        XCTAssertEqual(select(mergedRows, active: "peer1", clicked: usEast), 4)
+    }
+
+    func testClickedChildLetsGoWhenAnotherSessionBecomesActive() {
+        XCTAssertEqual(select(mergedRows, active: "peer2", clicked: usEast), 3)
+    }
+
+    func testActiveMemberWithoutChildrenSelectsTheWorkgroupRow() {
+        XCTAssertEqual(select(mergedRows, active: "peer3"), 1)
+    }
+
+    func testChildrenAllFromOneSessionSelectTheSessionRow() {
+        // Not merged: the session row already is the active session.
+        let rows: [ToolStatus.SelectableRow] = [.session(matchesActive: true),
+                                                .child(Key(sessionID: "s", recordKey: "eu-west")),
+                                                .child(Key(sessionID: "s", recordKey: "us-east")),
+                                                .more]
+        XCTAssertEqual(select(rows, active: "s"), 0)
+    }
+
+    func testChildrenOfTheNextSessionAreNotConsidered() {
+        let rows: [ToolStatus.SelectableRow] = [.session(matchesActive: true),
+                                                .session(matchesActive: false),
+                                                .child(Key(sessionID: "x", recordKey: "a")),
+                                                .child(Key(sessionID: "s", recordKey: "b"))]
+        XCTAssertEqual(select(rows, active: "s"), 0)
+    }
+
+    func testSiblingsWithTheSameTitleStayDistinct() {
+        // ci/linux and ci/mac, both titled Build, read the same; the record
+        // key still tells them apart.
+        let linux = Key(sessionID: "s", recordKey: "ci/linux")
+        let mac = Key(sessionID: "s", recordKey: "ci/mac")
+        let rows: [ToolStatus.SelectableRow] = [.session(matchesActive: true), .child(linux), .child(mac)]
+        XCTAssertEqual(select(rows, active: "s", clicked: mac), 2)
+    }
+
+    func testNoActiveSessionSelectsNothing() {
+        XCTAssertNil(select(mergedRows.map { _ in .more }, active: "peer1"))
+    }
+}

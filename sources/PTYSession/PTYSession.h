@@ -95,6 +95,7 @@ extern NSString *const PTYSessionArrangementOptionsInhibitRelaunch;
 @class iTermSSHReconnectionInfo;
 @class iTermScriptHistoryEntry;
 @class iTermSessionTabStatus;
+@class iTermProgramStatusController;
 @class iTermSessionModeHandler;
 @class iTermStatusBarViewController;
 @class iTermSwiftyStringGraph;
@@ -644,6 +645,9 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly, nullable) NSString *badgeLabel;
 @property(nonatomic, readonly, nullable) NSString *subtitle;
 @property(nonatomic, readonly, nullable) iTermSessionTabStatus *tabStatus;
+// The session's OSC 7501 records, or nil if the program never reported any.
+// Never creates one, so views can ask about every session cheaply.
+@property(nonatomic, readonly, nullable) iTermProgramStatusController *programStatusControllerIfPresent;
 - (void)clearTabStatus;
 
 // Commands issued, directories entered, and hosts connected to during this session.
@@ -1447,6 +1451,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Posts a notification for a tab status change if the status priority
 // settings ask for one. Exposed so tests can observe which changes reach it.
 - (void)maybePostTabStatusNotificationWithPreviousStatusText:(nullable NSString *)previousStatusText;
+
+// Shows a notification about one OSC 7501 record. Exposed so tests can observe
+// which record changes reach it.
+- (void)postProgramStatusNotificationWithDescription:(NSString *)description;
 
 @end
 

@@ -674,6 +674,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // side effect that never arrived cannot leave the two out of step for good.
     NSInteger _progressGenerationSeen;
 
+    // Set while the OSC 7501 records are changing the tab status.
+    BOOL _applyingProgramStatus;
+
+    // Rate-limits notifications about OSC 7501 records.
+    iTermProgramStatusNotifier *_programStatusNotifier;
+
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
     // Used to render the background behind a screenshot with transparency forced off.
     // Held strongly because iTermBackgroundDrawingHelper's delegate is weak.
@@ -1271,6 +1277,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_subtitleSwiftyString release];
     [_tabStatusController release];
     [_programStatusController release];
+    [_programStatusNotifier release];
     [_autoNameSwiftyString release];
     [_statusBarViewController release];
     [_backgroundDrawingHelper release];
@@ -26261,7 +26268,7 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 }
 
 - (void)tabStatusDidChangeFromStatusText:(NSString *)previousStatusText {
-    if (!_tabStatusController.isAcknowledging) {
+    if (!_tabStatusController.isAcknowledging && !_applyingProgramStatus) {
         [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
     }
     // Read from the status rather than from whatever update caused the change:
@@ -26291,14 +26298,81 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         __weak __typeof(self) weakSelf = self;
         _programStatusController =
             [[iTermProgramStatusController alloc] initWithApplyStatus:^(VT100TabStatusUpdate *update) {
-                [weakSelf.tabStatusController apply:update];
+                [weakSelf applyTabStatusFromProgramStatus:update];
             } currentProgress:^VT100ScreenProgress{
                 return weakSelf.screen.progress;
             } setProgress:^(VT100ScreenProgress progress) {
                 [weakSelf setProgressFromProgramStatus:progress];
+            } recordsDidChange:^{
+                [weakSelf programStatusRecordsDidChange];
+            } recordDidChangeState:^(iTermProgramStatusDisplayRecord *record) {
+                [weakSelf programStatusRecordDidChangeState:record];
             }];
     }
     return _programStatusController;
+}
+
+// A change the records make to the tab status was already announced, record
+// by record, so it must not also post the session-level notification.
+- (void)applyTabStatusFromProgramStatus:(VT100TabStatusUpdate *)update {
+    const BOOL saved = _applyingProgramStatus;
+    _applyingProgramStatus = YES;
+    [self.tabStatusController apply:update];
+    _applyingProgramStatus = saved;
+}
+
+- (iTermProgramStatusController *)programStatusControllerIfPresent {
+    return _programStatusController;
+}
+
+- (void)programStatusRecordsDidChange {
+    if (_programStatusNotifier) {
+        // Keep held notifications only for records still in a state that
+        // notifies; anything else has been superseded or removed.
+        NSMutableSet<NSString *> *notifying = [NSMutableSet set];
+        iTermStatusPrioritySettings *settings = [iTermStatusPrioritySettings shared];
+        for (iTermProgramStatusDisplayRecord *record in _programStatusController.displayRecords) {
+            if ([settings shouldNotifyFor:record.statusText]) {
+                [notifying addObject:record.key];
+            }
+        }
+        [_programStatusNotifier retainPendingForKeys:notifying];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermProgramStatusController.recordsDidChangeNotificationName
+                                                        object:self.guid];
+}
+
+// Records notify one by one, so a second task that needs the user is not lost
+// behind the first. The session-level notification stays out of the way for
+// the changes records make to the tab status (see
+// tabStatusDidChangeFromStatusText:).
+- (void)programStatusRecordDidChangeState:(iTermProgramStatusDisplayRecord *)record {
+    if (![[iTermStatusPrioritySettings shared] shouldNotifyFor:record.statusText]) {
+        return;
+    }
+    NSString *status = [iTermSetTabStatusTrigger localizedStatusForDisplay:record.statusText] ?: record.statusText;
+    NSString *description;
+    if (record.isRoot || record.label.length == 0) {
+        description = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.StatusChangedDescription", nil, [NSBundle mainBundle], @"Status changed to \u201c%@\u201d", @"Notification description reporting a status change; placeholder is the new status"), status];
+    } else {
+        description = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.TaskStatusChangedDescription", nil, [NSBundle mainBundle], @"%1$@ changed to \u201c%2$@\u201d", @"Notification description reporting that one of several tasks a program reported on changed status. %1$@ is the task's name, %2$@ is its new status."), record.label, status];
+    }
+    if (!_programStatusNotifier) {
+        __weak __typeof(self) weakSelf = self;
+        _programStatusNotifier = [[iTermProgramStatusNotifier alloc] initWithPost:^(NSString *text) {
+            [weakSelf postProgramStatusNotificationWithDescription:text];
+        }];
+    }
+    [_programStatusNotifier notifyForKey:record.key description:description];
+}
+
+- (void)postProgramStatusNotificationWithDescription:(NSString *)description {
+    [[iTermNotificationController sharedInstance]
+        notify:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.SessionNameNotificationTitle", nil, [NSBundle mainBundle], @"Session \u201c%@\u201d", @"Notification title naming a session; placeholder is the session name"), [[self name] removingHTMLFromTabTitleIfNeeded]]
+        withDescription:description
+        windowIndex:[self screenWindowIndex]
+        tabIndex:[self screenTabIndex]
+        viewIndex:[self screenViewIndex]];
 }
 
 - (void)screenReportProgramStatus:(iTermProgramStatusReport *)report {

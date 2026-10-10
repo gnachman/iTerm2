@@ -2,26 +2,48 @@
 //  ProgramStatusSessionTests.swift
 //  ModernTests
 //
-//  The OSC 7501 wiring in PTYSession: which tab status changes reach the
-//  notification step. A record shown again after the status was cleared (at
-//  a prompt, or after a reset) is a status the user already had, and a
-//  keypress that marks a result seen is the user acting, so neither should
-//  notify. A program's own report should.
+//  The OSC 7501 wiring in PTYSession: which changes notify. A program's own
+//  report notifies, record by record. A record shown again after the status
+//  was cleared (at a prompt, or after a reset) is a status the user already
+//  had, and a keypress that marks a result seen is the user acting, so
+//  neither should notify, through either path.
 //
 
 import XCTest
 @testable import iTerm2SharedARC
 
 private final class NotificationSpySession: PTYSession {
-    /// The status text at each change that reached the notification step.
+    /// The status text at each change that reached the session-level
+    /// notification step.
     var notified = [String?]()
+    /// The description of each record notification.
+    var recordNotifications = [String]()
 
     override func maybePostTabStatusNotification(withPreviousStatusText previousStatusText: String?) {
         notified.append(tabStatus?.statusText)
     }
+
+    override func postProgramStatusNotification(withDescription description: String) {
+        recordNotifications.append(description)
+    }
 }
 
 final class ProgramStatusSessionTests: XCTestCase {
+    private var savedPriorities = [StatusPriorityEntry]()
+
+    override func setUp() {
+        super.setUp()
+        // Notify for every status, so a test sees whatever would notify.
+        savedPriorities = StatusPrioritySettings.shared.entries
+        StatusPrioritySettings.shared.restoreEntries(
+            ["wait", "done", "error", "work", "idle"].map { StatusPriorityEntry(pattern: $0, notify: true) })
+    }
+
+    override func tearDown() {
+        StatusPrioritySettings.shared.restoreEntries(savedPriorities)
+        super.tearDown()
+    }
+
     private func report(_ body: String) -> ProgramStatusReport {
         return ProgramStatusReport.parse(body)!
     }
@@ -35,27 +57,59 @@ final class ProgramStatusSessionTests: XCTestCase {
         wait(for: [drained], timeout: 5)
     }
 
-    func testReportNotifies() {
+    func testReportNotifiesOnceThroughRecordPath() {
         let session = NotificationSpySession(synthetic: false)!
         session.screenReportProgramStatus(report("state=done"))
-        XCTAssertEqual(session.notified, ["done"])
+        XCTAssertEqual(session.recordNotifications.count, 1)
+        // Not also through the session-level path.
+        XCTAssertEqual(session.notified, [])
+    }
+
+    func testChildRecordNotificationNamesIt() {
+        let session = NotificationSpySession(synthetic: false)!
+        session.screenReportProgramStatus(report("state=blocked:id=eu:title=\(Data("EU West".utf8).base64EncodedString())"))
+        XCTAssertEqual(session.recordNotifications.count, 1)
+        XCTAssertTrue(session.recordNotifications[0].contains("EU West"), session.recordNotifications[0])
+    }
+
+    func testMessageOnlyChangeDoesNotNotify() {
+        let session = NotificationSpySession(synthetic: false)!
+        session.screenReportProgramStatus(report("state=working"))
+        session.recordNotifications = []
+        session.screenReportProgramStatus(report("state=working:msg=\(Data("step 2".utf8).base64EncodedString())"))
+        XCTAssertEqual(session.recordNotifications, [])
+    }
+
+    func testSecondBlockedRecordIsNotSilent() {
+        // The tab already says waiting, so the session-level path would see
+        // no change; the record path still has news.
+        let session = NotificationSpySession(synthetic: false)!
+        session.screenReportProgramStatus(report("state=blocked:id=a"))
+        XCTAssertEqual(session.recordNotifications.count, 1)
+        session.screenReportProgramStatus(report("state=blocked:id=b"))
+        // Rate-limited: held rather than dropped (see ProgramStatusNotifierTests).
+        XCTAssertEqual(session.recordNotifications.count, 1)
+        XCTAssertEqual(session.notified, [])
     }
 
     func testDoneShownAgainAfterPromptDoesNotNotify() {
         let session = NotificationSpySession(synthetic: false)!
         session.screenReportProgramStatus(report("state=done"))
         session.notified = []
+        session.recordNotifications = []
 
         session.screenPromptDidStart(atLine: 0)
         drainMainQueue()
 
         XCTAssertEqual(session.tabStatus?.statusText, "done")
         XCTAssertEqual(session.notified, [])
+        XCTAssertEqual(session.recordNotifications, [])
     }
 
     func testDoneShownAgainAfterResetDoesNotNotify() {
         let session = NotificationSpySession(synthetic: false)!
         session.screenReportProgramStatus(report("state=done"))
+        session.recordNotifications = []
 
         // What a reset other than RIS does: clear the status, then let the
         // surviving records show again. Only the second step is in question.
@@ -65,6 +119,7 @@ final class ProgramStatusSessionTests: XCTestCase {
 
         XCTAssertEqual(session.tabStatus?.statusText, "done")
         XCTAssertEqual(session.notified, [])
+        XCTAssertEqual(session.recordNotifications, [])
     }
 
     func testRecordWrittenAfterPromptStillNotifies() {
@@ -75,7 +130,8 @@ final class ProgramStatusSessionTests: XCTestCase {
         drainMainQueue()
 
         XCTAssertEqual(session.tabStatus?.statusText, "done")
-        XCTAssertEqual(session.notified, ["done"])
+        XCTAssertEqual(session.recordNotifications.count, 1)
+        XCTAssertEqual(session.notified, [])
     }
 
     /// A session whose screen reports to it, as a fully set-up session's does

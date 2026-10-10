@@ -10,7 +10,10 @@ Major New Features:
   is working, waiting on you, done, or failed.
   The tab shows the most urgent status the
   program reported, along with its message and
-  progress.
+  progress. A program reporting on several tasks
+  at once gets them listed under its session in
+  the Session Status tool, and each task that
+  needs you can post its own notification.
 - Session Status has new “done” and “error”
   statuses for work that finished or failed
   while you were away. They sort just below

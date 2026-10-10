@@ -303,6 +303,9 @@ struct ProgramStatusRecords {
         /// When the record was last written, for eviction and for breaking
         /// ties between equally urgent records.
         var serial: Int
+        /// When the record was last written, in seconds since boot, for
+        /// ordering records across sessions, where serials mean nothing.
+        var updatedAt: TimeInterval
     }
 
     static let defaultCapacity = 256
@@ -344,7 +347,8 @@ struct ProgramStatusRecords {
                               app: report.app,
                               title: report.title,
                               msg: report.msg,
-                              serial: serial)
+                              serial: serial,
+                              updatedAt: NSDate.it_timeSinceBoot())
     }
 
     /// Removes records in any of the given states that were written no later
@@ -374,6 +378,31 @@ struct ProgramStatusRecords {
             changed = true
         }
         return changed
+    }
+
+    /// A name for the record a person can read: the titles (or, lacking
+    /// those, the id segments) along its path, so a child reads as part of
+    /// its parent. nil for the root record, which is named after the program.
+    func pathLabel(for record: Record) -> String? {
+        guard !record.id.isEmpty else {
+            return nil
+        }
+        var names = [String]()
+        for depth in 1...record.id.count {
+            let path = Array(record.id.prefix(depth))
+            let title = depth == record.id.count
+                ? record.title
+                : records[path.joined(separator: "/")]?.title
+            let name = title.map(ProgramStatusController.sanitized) ?? ""
+            names.append(name.isEmpty ? record.id[depth - 1] : name)
+        }
+        // Localization unneeded
+        return names.joined(separator: " \u{203A} ")
+    }
+
+    /// The app a record is shown with: its own, or its nearest ancestor's.
+    func effectiveApp(for record: Record) -> String? {
+        return record.app ?? inheritedApp(for: record.id)
     }
 
     /// The record most in need of the user, with its app filled in from its
@@ -418,6 +447,48 @@ struct ProgramStatusRecords {
     }
 }
 
+/// One record as the UI shows it: what to call it and what it says, already
+/// sanitized and mapped to the session status vocabulary.
+@objc(iTermProgramStatusDisplayRecord)
+final class ProgramStatusDisplayRecord: NSObject {
+    /// Identifies the record within its session: its id path, empty for the
+    /// root record.
+    @objc let key: String
+    /// Whether this is the root record, the one a program that reports only
+    /// on itself uses.
+    @objc let isRoot: Bool
+    /// The record's path label, or for the root record its program's name,
+    /// or nil when the root record has no program name.
+    @objc let label: String?
+    /// The status text, as StatusPrioritySettings matches it.
+    @objc let statusText: String
+    let indicatorColor: iTermSRGBColor
+    let statusTextColor: iTermSRGBColor
+    let progress: Int?
+    let detail: String?
+    let updatedAt: TimeInterval
+
+    init(key: String,
+         isRoot: Bool,
+         label: String?,
+         statusText: String,
+         indicatorColor: iTermSRGBColor,
+         statusTextColor: iTermSRGBColor,
+         progress: Int?,
+         detail: String?,
+         updatedAt: TimeInterval) {
+        self.key = key
+        self.isRoot = isRoot
+        self.label = label
+        self.statusText = statusText
+        self.indicatorColor = indicatorColor
+        self.statusTextColor = statusTextColor
+        self.progress = progress
+        self.detail = detail
+        self.updatedAt = updatedAt
+    }
+}
+
 /// Owns a session's OSC 7501 records and keeps the session's tab status and
 /// progress bar in line with them. The tab status is shared with OSC 21337,
 /// triggers and the scripting API: whichever wrote last is what shows.
@@ -433,7 +504,7 @@ final class ProgramStatusController: NSObject {
     /// Whether the tab status currently showing came from a record. Once
     /// something else writes the status, record changes that the program did
     /// not report (a prompt, a keypress) must not overwrite it.
-    private var isShowingStatus = false
+    @objc private(set) var isShowingStatus = false
 
     /// The progress a record last put on the bar, or nil when the bar is not
     /// the records' to change. A bar from OSC 9;4 is left alone by records
@@ -450,6 +521,12 @@ final class ProgramStatusController: NSObject {
     private static let transientStates: Set<ProgramStatusReport.State> = [.working, .blocked, .idle]
     private static let finishedStates: Set<ProgramStatusReport.State> = [.done, .error]
 
+    /// Posted with the session's guid as its object when its records change.
+    @objc static let recordsDidChangeNotificationName = Notification.Name("iTermProgramStatusRecordsDidChange")
+
+    private let recordsDidChange: () -> Void
+    private let recordDidChangeState: (ProgramStatusDisplayRecord) -> Void
+
     @objc
     /// - Parameters:
     ///   - applyStatus: Sets the session's tab status.
@@ -458,21 +535,70 @@ final class ProgramStatusController: NSObject {
     ///   - setProgress: Changes the screen's progress without going through
     ///     OSC 9;4, so it never starts or ends an operation that a status set
     ///     with expires-on=progress-end is waiting on.
+    ///   - recordsDidChange: Called after anything about the records changed,
+    ///     for views that list them.
+    ///   - recordDidChangeState: Called when the program puts a record into a
+    ///     state it was not in before (including a new record), for
+    ///     notifications. Not called for changes the program did not report,
+    ///     such as a keypress marking a result seen.
     init(applyStatus: @escaping (VT100TabStatusUpdate) -> Void,
          currentProgress: @escaping () -> VT100ScreenProgress,
-         setProgress: @escaping (VT100ScreenProgress) -> Void) {
+         setProgress: @escaping (VT100ScreenProgress) -> Void,
+         recordsDidChange: @escaping () -> Void = {},
+         recordDidChangeState: @escaping (ProgramStatusDisplayRecord) -> Void = { _ in }) {
         self.applyStatus = applyStatus
         self.currentProgress = currentProgress
         self.setProgress = setProgress
+        self.recordsDidChange = recordsDidChange
+        self.recordDidChangeState = recordDidChangeState
         super.init()
+    }
+
+    /// Every record, as the UI shows it.
+    @objc var displayRecords: [ProgramStatusDisplayRecord] {
+        return records.records.values.map { displayRecord(for: $0) }
     }
 
     /// The program sent a report.
     @objc(handleReport:)
     func handle(_ report: ProgramStatusReport) {
         DLog("Handle \(report)")
-        records.apply(report)
+        let key = report.id.joined(separator: "/")
+        let previousState = records.records[key]?.state
+        mutatingRecords {
+            records.apply(report)
+        }
+        if report.state != .clear,
+           report.state != previousState,
+           let record = records.records[key] {
+            recordDidChangeState(displayRecord(for: record))
+        }
         render()
+    }
+
+    /// Runs `block`, then reports whether it changed the records.
+    private func mutatingRecords(_ block: () -> Void) {
+        let before = records.records
+        block()
+        if records.records != before {
+            recordsDidChange()
+        }
+    }
+
+    private func displayRecord(for record: ProgramStatusRecords.Record) -> ProgramStatusDisplayRecord {
+        let update = VT100TabStatusUpdate()
+        Self.setStatusAndColors(for: record.state, on: update)
+        let label = record.id.isEmpty ? records.effectiveApp(for: record) : records.pathLabel(for: record)
+        let detail = record.msg.map(Self.sanitized) ?? Self.kindDescription(record.kind)
+        return ProgramStatusDisplayRecord(key: record.id.joined(separator: "/"),
+                                          isRoot: record.id.isEmpty,
+                                          label: label,
+                                          statusText: update.status ?? "",
+                                          indicatorColor: update.indicator,
+                                          statusTextColor: update.statusColor,
+                                          progress: record.progress,
+                                          detail: detail,
+                                          updatedAt: record.updatedAt)
     }
 
     /// The serial of the most recent record write, for commandDidEnd(through:).
@@ -493,7 +619,9 @@ final class ProgramStatusController: NSObject {
     /// record written after the prompt (by a background job, say) is spared.
     @objc(commandDidEndThroughSerial:)
     func commandDidEnd(through serial: Int) {
-        records.remove(states: Self.transientStates, writtenThrough: serial)
+        mutatingRecords {
+            records.remove(states: Self.transientStates, writtenThrough: serial)
+        }
         statusWasCleared()
     }
 
@@ -511,7 +639,11 @@ final class ProgramStatusController: NSObject {
     /// other way (see TabStatusController.userDidPressKey).
     @objc
     func userDidPressKey() {
-        guard records.markSeen(states: Self.finishedStates) else {
+        var changed = false
+        mutatingRecords {
+            changed = records.markSeen(states: Self.finishedStates)
+        }
+        guard changed else {
             return
         }
         DLog("Keypress marked finished records seen")
@@ -521,7 +653,9 @@ final class ProgramStatusController: NSObject {
     /// A full reset (RIS, or a reset the user asked for) removes every record.
     @objc
     func removeAllRecords() {
-        records.removeAll()
+        mutatingRecords {
+            records.removeAll()
+        }
         refresh(showingStatus: isShowingStatus)
     }
 
@@ -800,4 +934,100 @@ final class ProgramStatusController: NSObject {
     // ZWNJ, ZWJ, and the tag characters.
     private static let keptFormatCharacters: Set<UInt32> =
         Set([0x200C, 0x200D]).union(Set(0xE0020...0xE007F))
+}
+
+/// Rate-limits the notifications one session's records cause, as the spec
+/// asks of anything a record causes outside the terminal: a program can change
+/// state as fast as it can write. The first notification goes out at once.
+/// Later ones inside the interval are held, newest per record (an older one
+/// describes a state that record has already left), and when the interval
+/// ends they go out together as one notification with a line per record, so
+/// no task that needs the user is lost behind another.
+///
+/// Main thread only.
+@objc(iTermProgramStatusNotifier)
+final class ProgramStatusNotifier: NSObject {
+    static let defaultInterval: TimeInterval = 3
+
+    private let interval: TimeInterval
+    private let now: () -> TimeInterval
+    private let schedule: (TimeInterval, @escaping () -> Void) -> Void
+    private let post: (String) -> Void
+    private var lastPost: TimeInterval?
+    // Held descriptions, in the order their records first changed.
+    private var pendingKeys = [String]()
+    private var pending = [String: String]()
+
+    /// - Parameters:
+    ///   - schedule: Runs a block after a delay in seconds.
+    ///   - post: Shows one notification with the given description.
+    init(interval: TimeInterval,
+         now: @escaping () -> TimeInterval,
+         schedule: @escaping (TimeInterval, @escaping () -> Void) -> Void,
+         post: @escaping (String) -> Void) {
+        self.interval = interval
+        self.now = now
+        self.schedule = schedule
+        self.post = post
+        super.init()
+    }
+
+    @objc
+    convenience init(post: @escaping (String) -> Void) {
+        self.init(interval: Self.defaultInterval,
+                  now: { NSDate.it_timeSinceBoot() },
+                  schedule: { delay, block in
+                      DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: block)
+                  },
+                  post: post)
+    }
+
+    /// - Parameters:
+    ///   - key: Identifies the record, so a newer description of the same
+    ///     record replaces an older one while they are held.
+    @objc(notifyForKey:description:)
+    func notify(key: String, description: String) {
+        let time = now()
+        if pending.isEmpty, lastPost.map({ time - $0 >= interval }) ?? true {
+            lastPost = time
+            post(description)
+            return
+        }
+        let alreadyScheduled = !pending.isEmpty
+        if pending[key] == nil {
+            pendingKeys.append(key)
+        }
+        pending[key] = description
+        guard !alreadyScheduled else {
+            return
+        }
+        let delay = max(0, (lastPost ?? time) + interval - time)
+        schedule(delay) { [weak self] in
+            self?.postPending()
+        }
+    }
+
+    /// Drops whatever is held for records other than these. A held
+    /// notification describes a state its record may since have left, for one
+    /// that does not notify (the user answered, say), or the record may be
+    /// gone; either way it is no longer news.
+    @objc(retainPendingForKeys:)
+    func retainPending(forKeys keys: Set<String>) {
+        guard !pending.isEmpty else {
+            return
+        }
+        pendingKeys.removeAll { !keys.contains($0) }
+        pending = pending.filter { keys.contains($0.key) }
+    }
+
+    private func postPending() {
+        let descriptions = pendingKeys.compactMap { pending[$0] }
+        pendingKeys.removeAll()
+        pending.removeAll()
+        guard !descriptions.isEmpty else {
+            return
+        }
+        lastPost = now()
+        post(descriptions.joined(separator: "\n"))
+    }
 }

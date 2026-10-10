@@ -53,6 +53,16 @@ class ToolStatusCellView: NSTableCellView {
     private let detailIndent: CGFloat = 14
     private let maxDetailLines = 3
 
+    // Set for a row listing one of a session's records under the session's
+    // own row: it is indented to line up with the session's name, and its
+    // status sits at the end of the label's line rather than on a line of
+    // its own.
+    private var isChild = false
+
+    private var childIndent: CGFloat {
+        return isChild ? dotSize + dotNameSpacing : 0
+    }
+
     override init(frame: NSRect) {
         let font = NSFont.it_toolbelt()
 
@@ -149,7 +159,7 @@ class ToolStatusCellView: NSTableCellView {
 
     private var textLeft: CGFloat {
         let dotWidth = dotView.isHidden ? 0 : (dotSize + dotNameSpacing)
-        return margin + snoozeReserve + bellReserve + dotWidth
+        return margin + childIndent + snoozeReserve + bellReserve + dotWidth
     }
 
     override func resizeSubviews(withOldSize oldSize: NSSize) {
@@ -169,11 +179,14 @@ class ToolStatusCellView: NSTableCellView {
         let textWidth = max(0, width - textX - margin)
         var y: CGFloat = margin / 2
 
-        // Shortcut label — measure first so we can reserve space
+        // Shortcut label — measure first so we can reserve space. A child
+        // row has no shortcut; its status takes that place.
+        let trailingLabel = isChild ? statusLabel : shortcutLabel
         var shortcutWidth: CGFloat = 0
-        if !shortcutLabel.isHidden {
-            shortcutLabel.sizeToFit()
-            shortcutWidth = shortcutLabel.frame.width
+        if !trailingLabel.isHidden {
+            trailingLabel.sizeToFit()
+            // A long status may take at most half the row from the label.
+            shortcutWidth = isChild ? min(trailingLabel.frame.width, textWidth / 2) : trailingLabel.frame.width
         }
         let shortcutReserve = shortcutWidth > 0 ? shortcutWidth + dotNameSpacing : 0
 
@@ -207,9 +220,9 @@ class ToolStatusCellView: NSTableCellView {
         }
 
         // Place shortcut label right-aligned on the name row
-        if !shortcutLabel.isHidden {
+        if !trailingLabel.isHidden {
             let shortcutX = width - margin - shortcutWidth
-            shortcutLabel.frame = NSRect(x: shortcutX, y: y,
+            trailingLabel.frame = NSRect(x: shortcutX, y: y,
                                          width: shortcutWidth,
                                          height: nameLabel.frame.height)
         }
@@ -229,13 +242,13 @@ class ToolStatusCellView: NSTableCellView {
         // Dot — vertically centered with name label, after the snooze icon and bell.
         if !dotView.isHidden {
             let dotY = y + (nameLabel.frame.height - dotSize) / 2
-            dotView.frame = NSRect(x: margin + snoozeReserve + bellReserve, y: dotY, width: dotSize, height: dotSize)
+            dotView.frame = NSRect(x: margin + childIndent + snoozeReserve + bellReserve, y: dotY, width: dotSize, height: dotSize)
         }
 
         y += nameLabel.frame.height + rowSpacing
 
         // Status label
-        if !statusLabel.isHidden {
+        if !statusLabel.isHidden && !isChild {
             statusLabel.frame = NSRect(x: textX, y: y, width: textWidth, height: 0)
             statusLabel.sizeToFit()
             statusLabel.frame = NSRect(x: textX, y: y,
@@ -266,7 +279,7 @@ class ToolStatusCellView: NSTableCellView {
     override var fittingSize: NSSize {
         layoutManually()
         var maxY: CGFloat = nameLabel.frame.maxY
-        if !statusLabel.isHidden {
+        if !statusLabel.isHidden && !isChild {
             maxY = statusLabel.frame.maxY
         }
         if !detailLabel.isHidden {
@@ -280,6 +293,8 @@ class ToolStatusCellView: NSTableCellView {
     // ToolStatus.configureCell when it bails on an unresolvable row
     // without configuring.
     func clear() {
+        isChild = false
+        toolTip = nil
         nameLabel.clear()
         bellView.isHidden = true
         separatorView.isHidden = true
@@ -333,6 +348,8 @@ class ToolStatusCellView: NSTableCellView {
         // occupant's content; see clearConditionalFields for why this
         // is not the full clear().
         clearConditionalFields()
+        isChild = false
+        toolTip = nil
         setTextAlpha(dimmed ? 0.5 : 1.0)
         // A snoozed row both dims its text and shows the snooze glyph.
         snoozeIconView.isHidden = !dimmed
@@ -362,6 +379,40 @@ class ToolStatusCellView: NSTableCellView {
             detailLabel.isHidden = false
         }
 
+        layoutManually()
+    }
+
+    /// Configures a row listing one of a session's records under the
+    /// session's own row. The session's row carries the bell, snooze glyph,
+    /// shortcut and divider; this one only dims along with it.
+    func configureChild(dotImage: NSImage?,
+                        label: String,
+                        statusText: String?,
+                        statusColor: NSColor?,
+                        detail: String?,
+                        dimmed: Bool) {
+        clearConditionalFields()
+        isChild = true
+        toolTip = nil
+        setTextAlpha(dimmed ? 0.5 : 1.0)
+        snoozeIconView.isHidden = true
+        separatorView.isHidden = true
+        bellView.isHidden = true
+        nameLabel.clear()
+        nameLabel.stringValue = label
+        if let dotImage {
+            dotView.image = dotImage
+            dotView.isHidden = false
+        }
+        if let statusText, !statusText.isEmpty {
+            statusLabel.stringValue = statusText
+            statusLabel.textColor = statusColor ?? .secondaryLabelColor
+            statusLabel.isHidden = false
+        }
+        if let detail, !detail.isEmpty {
+            detailLabel.stringValue = detail
+            detailLabel.isHidden = false
+        }
         layoutManually()
     }
 }

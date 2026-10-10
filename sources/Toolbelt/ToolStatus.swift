@@ -59,6 +59,76 @@ class ToolStatus: NSView {
     // merging is off; otherwise each workgroup collapses to one representative
     // row here while `statuses` keeps every session.
     private var displayedStatuses = [Status]()
+    // The table's rows: each displayed status, followed by its OSC 7501
+    // records when it has more than one (see childRows). Every row knows
+    // which session it belongs to, so selection, snooze and the bell act on
+    // that session whichever of its rows was clicked.
+    private var displayedRows = [Row]()
+
+    /// One record (or, in a merged workgroup, one member's plain status)
+    /// listed under its session's row.
+    struct ChildRow {
+        /// The session the record belongs to. In a merged workgroup that
+        /// may be a member other than the one the row above stands for.
+        var sessionID: String
+        /// Identifies the record within its session (its id path; empty for
+        /// the root record). Labels can repeat, since siblings may share a
+        /// title, so this is what tells rows apart. A merged member listed by
+        /// its plain status has no records and uses the empty key.
+        var recordKey: String
+        var label: String
+        /// The status text, as StatusPrioritySettings matches it.
+        var statusText: String
+        var indicatorColor: iTermSRGBColor?
+        var statusTextColor: iTermSRGBColor?
+        var progress: Int?
+        var detail: String?
+        /// Seconds since boot.
+        var updatedAt: TimeInterval
+        /// Whether the session it belongs to is snoozed. In a merged
+        /// workgroup each peer can be snoozed on its own.
+        var snoozed = false
+    }
+
+    private enum Row {
+        case session(Status, hasChildren: Bool)
+        case child(Status, ChildRow)
+        // Records past the cap, named in a tooltip.
+        case more(Status, hidden: [ChildRow])
+
+        var status: Status {
+            switch self {
+            case .session(let status, _), .child(let status, _), .more(let status, _):
+                return status
+            }
+        }
+
+        /// The session the row is about. A child row is about the session
+        /// its record came from, so clicking it reveals that member.
+        var sessionID: String {
+            switch self {
+            case .child(_, let child):
+                return child.sessionID
+            case .session(let status, _), .more(let status, _):
+                return status.sessionID
+            }
+        }
+    }
+
+    /// How many records a session lists before the rest are summarized.
+    static let maximumChildRows = 4
+
+    /// Identifies a child row across reloads, which rebuild every row.
+    struct ChildKey: Equatable {
+        var sessionID: String
+        var recordKey: String
+    }
+
+    // The child row the user last clicked. It keeps the selection for as long
+    // as its session is the active one, so the click visibly took; otherwise
+    // the selection would snap back to the session's own row and the click
+    // would look like it did nothing.
+    private var selectedChild: ChildKey?
     // Coalesce bursts of status changes from the controller. Triggers can fire
     // several times in quick succession (e.g. an Idle match followed immediately
     // by a Working match when an interactive TUI repaints); collecting them and
@@ -66,6 +136,8 @@ class ToolStatus: NSView {
     private static let debounceInterval: TimeInterval = 0.05
     private var pendingKeys = Set<String>()
     private var pendingFlush: DispatchWorkItem?
+    // Some session's records changed since the last flush.
+    private var recordsChanged = false
     // Coalesce the shortcut reloads one user action triggers. A single tab
     // switch posts three of them: iTermSessionBecameKey from both
     // -[PTYTab setActiveSession:updateActivityCounter:] and
@@ -223,6 +295,10 @@ class ToolStatus: NSView {
         nc.addObserver(self,
                        selector: #selector(prioritiesDidChange(_:)),
                        name: StatusPrioritySettings.didChangeNotification,
+                       object: nil)
+        nc.addObserver(self,
+                       selector: #selector(programStatusRecordsDidChange(_:)),
+                       name: ProgramStatusController.recordsDidChangeNotificationName,
                        object: nil)
         // The armed state now lives in the centralized controller (so the
         // Window menu and Cockpit share it); keep the bell in sync when it
@@ -419,6 +495,10 @@ extension ToolStatus {
 
     **Clear all status:** `printf '\\e]21337;status=;indicator=\\a'`
 
+    **Program Status Protocol (OSC 7501):** A program can report that it is idle, working, \
+    waiting on you, done, or failed, and can report on several tasks at once. A session with \
+    more than one lists up to four of them, most urgent first, under its own row.
+
     ### Priority Sorting
 
     Sessions are sorted by priority. Click the ⚙ button to configure which status \
@@ -472,7 +552,7 @@ private extension ToolStatus {
             return
         }
         missedShortcutReloadWhileHidden = false
-        guard let tableView = _tableView, !displayedStatuses.isEmpty else {
+        guard let tableView = _tableView, !displayedRows.isEmpty else {
             return
         }
         shortcutReloadCount += 1
@@ -486,7 +566,7 @@ private extension ToolStatus {
         // toolbelt is small so the cost is trivial;
         // reloadData(forRowIndexes:) preserves selection/scroll,
         // unlike full reloadData().
-        let allRows = IndexSet(integersIn: 0..<displayedStatuses.count)
+        let allRows = IndexSet(integersIn: 0..<displayedRows.count)
         tableView.reloadData(forRowIndexes: allRows,
                              columnIndexes: IndexSet(integer: 0))
     }
@@ -497,19 +577,33 @@ private extension ToolStatus {
             disableSelectionCount -= 1
         }
         let guid = toolWrapper()?.delegate?.delegate?.toolbeltCurrentSessionGUID()
-        let i: Int?
-        if let guid, mergeWorkgroups {
-            // The active session may be a non-representative peer that has no
-            // row of its own, so match by workgroup: select the displayed
-            // representative whose group contains the active session.
-            let activeGroup = Self.groupKey(forSessionID: guid)
-            i = displayedStatuses.firstIndex { status in
-                Self.groupKey(forSessionID: status.sessionID) == activeGroup
+        let activeGroup = guid.map { Self.groupKey(forSessionID: $0) }
+        let selectable: [SelectableRow] = displayedRows.map { row in
+            switch row {
+            case .session(let status, _):
+                let matches: Bool
+                if mergeWorkgroups {
+                    // The active session may be a non-representative peer
+                    // that has no row of its own, so match by workgroup.
+                    matches = activeGroup != nil && Self.groupKey(forSessionID: status.sessionID) == activeGroup
+                } else {
+                    matches = status.sessionID == guid
+                }
+                return .session(matchesActive: matches)
+            case .child(_, let child):
+                return .child(ChildKey(sessionID: child.sessionID, recordKey: child.recordKey))
+            case .more:
+                return .more
             }
-        } else {
-            i = displayedStatuses.firstIndex { status in
-                status.sessionID == guid
-            }
+        }
+        let i = Self.rowToSelect(selectable, activeSessionID: guid, clickedChild: selectedChild)
+        // Forget the clicked child once the selection has moved off it.
+        var stillOnClickedChild = false
+        if let i, case .child(let key) = selectable[i] {
+            stillOnClickedChild = key == selectedChild
+        }
+        if !stillOnClickedChild {
+            selectedChild = nil
         }
         if let i {
             _tableView?.selectRowIndexes(IndexSet(integer: i), byExtendingSelection: false)
@@ -539,8 +633,8 @@ private extension ToolStatus {
     // forever, which is harmless and less surprising than silently
     // rescoping the click to the whole window.
     private var notifyTarget: NotifyTarget? {
-        if let row = _tableView?.selectedRow, row >= 0, row < displayedStatuses.count {
-            return .session(displayedStatuses[row].sessionID)
+        if let row = _tableView?.selectedRow, row >= 0, row < displayedRows.count {
+            return .session(displayedRows[row].sessionID)
         }
         if let windowGuid {
             return .window(windowGuid)
@@ -574,8 +668,8 @@ private extension ToolStatus {
         updateNotifyButtonAppearance()
         // Per-session bell indicators may have changed; refresh visible
         // rows (preserves selection/scroll, unlike full reloadData()).
-        if let tableView = _tableView, !displayedStatuses.isEmpty {
-            tableView.reloadData(forRowIndexes: IndexSet(integersIn: 0..<displayedStatuses.count),
+        if let tableView = _tableView, !displayedRows.isEmpty {
+            tableView.reloadData(forRowIndexes: IndexSet(integersIn: 0..<displayedRows.count),
                                  columnIndexes: IndexSet(integer: 0))
         }
     }
@@ -625,6 +719,23 @@ private extension ToolStatus {
         }
     }
 
+    // A session's records changed. That need not change its tab status, which
+    // is what the controller reports, so it is queued like a status change but
+    // without touching the model: the session keeps its place and its snooze.
+    @objc private func programStatusRecordsDidChange(_ notification: Notification) {
+        guard let guid = notification.object as? String,
+              displayedStatuses.contains(where: { $0.sessionID == guid }) || mergeWorkgroups else {
+            return
+        }
+        recordsChanged = true
+        if pendingFlush != nil {
+            return
+        }
+        let work = DispatchWorkItem { [weak self] in self?.flushPendingChanges() }
+        pendingFlush = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.debounceInterval, execute: work)
+    }
+
     func didChange(key: String, value: iTermSessionTabStatus?, change: NotifyingDictionaryChange) {
         DLog("ToolStatus didChange enqueue: key=\(key) change=\(change) window=\(window.d)")
         pendingKeys.insert(key)
@@ -641,20 +752,19 @@ private extension ToolStatus {
         pendingFlush = nil
         let keys = pendingKeys
         pendingKeys.removeAll()
-        if keys.isEmpty {
+        if keys.isEmpty && !recordsChanged {
             return
         }
-        // The session's iTermSessionTabStatus is a stable per-session reference
-        // whose state accumulates across partial updates, so the canonical
-        // current state is whatever the controller holds right now. Compare
-        // local presence to controller presence to derive the effective change:
-        // [.removed, .added] collapses to .updated, [.added, .removed] to a no-op.
-        if mergeWorkgroups {
-            // In merge mode a single session change can add, remove, or move a
-            // workgroup's representative row, and which row is representative
-            // depends on the group's other members. Those reorderings can't be
-            // derived locally, so update the model and rebuild the merged view
-            // in one reload rather than animating individual rows.
+        // Some changes can't be animated row by row, so update the model and
+        // rebuild the view in one reload instead:
+        // - In merge mode a single session change can add, remove, or move a
+        //   workgroup's representative row, and which row is representative
+        //   depends on the group's other members. Those reorderings can't be
+        //   derived locally.
+        // - Rows that list records come and go with the records, and their
+        //   positions follow from the session's.
+        if mergeWorkgroups || displayedRows.count != displayedStatuses.count || recordsChanged {
+            recordsChanged = false
             for key in keys {
                 applyModelChange(forKey: key)
             }
@@ -663,6 +773,11 @@ private extension ToolStatus {
             updateSelectionWithoutChangingFirstResponder()
             return
         }
+        // The session's iTermSessionTabStatus is a stable per-session reference
+        // whose state accumulates across partial updates, so the canonical
+        // current state is whatever the controller holds right now. Compare
+        // local presence to controller presence to derive the effective change:
+        // [.removed, .added] collapses to .updated, [.added, .removed] to a no-op.
         // Merge off: animate each row. Wrap the whole loop so multi-key bursts
         // coalesce into one animation instead of N cascading ones (the inner
         // begin/endUpdates inside animateRowMutation become harmless nested
@@ -674,9 +789,15 @@ private extension ToolStatus {
             // sync it before animating so the indices the mutation reports line
             // up with what the table reads back.
             displayedStatuses = statuses
+            displayedRows = statuses.map { .session($0, hasChildren: false) }
             animateRowMutation(mutation)
         }
         _tableView?.endUpdates()
+        // A change can give a session a second record to list.
+        rebuildDisplayed()
+        if displayedRows.count != displayedStatuses.count {
+            _tableView?.reloadData()
+        }
         // A status change can auto-un-snooze a row, shifting the snoozed/active
         // boundary onto a row the per-row animation above didn't reload. Refresh
         // the separator on every row so the divider lands in the right place.
@@ -690,10 +811,10 @@ private extension ToolStatus {
     private func refreshSeparators() {
         guard !snoozedSessionIDs.isEmpty,
               let tableView = _tableView,
-              !displayedStatuses.isEmpty else {
+              !displayedRows.isEmpty else {
             return
         }
-        tableView.reloadData(forRowIndexes: IndexSet(integersIn: 0..<displayedStatuses.count),
+        tableView.reloadData(forRowIndexes: IndexSet(integersIn: 0..<displayedRows.count),
                              columnIndexes: IndexSet(integer: 0))
     }
 
@@ -808,11 +929,112 @@ private extension ToolStatus {
 
     /// Recomputes the table-facing `displayedStatuses` from the full model.
     func rebuildDisplayed() {
-        guard mergeWorkgroups else {
+        if mergeWorkgroups {
+            displayedStatuses = Self.mergeByWorkgroup(statuses)
+        } else {
             displayedStatuses = statuses
-            return
         }
-        displayedStatuses = Self.mergeByWorkgroup(statuses)
+        displayedRows = []
+        for status in displayedStatuses {
+            let candidates = childCandidates(for: status)
+            guard candidates.count > 1 else {
+                displayedRows.append(.session(status, hasChildren: false))
+                continue
+            }
+            let split = Self.childRows(candidates,
+                                       limit: Self.maximumChildRows,
+                                       priority: { StatusPrioritySettings.shared.priority(for: $0) })
+            displayedRows.append(.session(status, hasChildren: true))
+            displayedRows.append(contentsOf: split.shown.map { .child(status, $0) })
+            if !split.hidden.isEmpty {
+                displayedRows.append(.more(status, hidden: split.hidden))
+            }
+        }
+    }
+
+    /// What to list under a displayed status: its session's records, or in a
+    /// merged workgroup every member's. A merged member with no records is
+    /// listed by its plain status so the row accounts for everyone, but only
+    /// when some member has records: a workgroup that uses none looks as it
+    /// always has.
+    private func childCandidates(for status: Status) -> [ChildRow] {
+        let members = groupMemberSessionIDs(forRepresentative: status.sessionID)
+        let prefixWithMember = members.count > 1
+        var fromRecords = [ChildRow]()
+        var fromStatuses = [ChildRow]()
+        for memberID in members {
+            guard let session = resolveSessionForReload(guid: memberID) else {
+                continue
+            }
+            let memberName = prefixWithMember ? Self.memberName(session) : nil
+            let records = session.programStatusControllerIfPresent?.displayRecords ?? []
+            if !records.isEmpty {
+                fromRecords.append(contentsOf: records.map {
+                    Self.childRow($0, sessionID: memberID, memberName: memberName)
+                })
+            } else if let memberName,
+                      let memberStatus = statuses.first(where: { $0.sessionID == memberID }),
+                      memberStatus.tabStatus.hasActiveStatus {
+                fromStatuses.append(Self.childRow(memberStatus, label: memberName))
+            }
+        }
+        guard !fromRecords.isEmpty else {
+            return []
+        }
+        return (fromRecords + fromStatuses).map { child in
+            var child = child
+            child.snoozed = snoozedSessionIDs.contains(child.sessionID)
+            return child
+        }
+    }
+
+    private static func memberName(_ session: PTYSession) -> String {
+        if let peer = session.peerDisplayLabel, !peer.isEmpty {
+            return peer
+        }
+        return session.name.removingHTMLFromTabTitleIfNeeded()
+    }
+
+    private static func childRow(_ record: ProgramStatusDisplayRecord,
+                                 sessionID: String,
+                                 memberName: String?) -> ChildRow {
+        let ownLabel: String? = record.isRoot ? nil : record.label
+        let label: String
+        switch (memberName, ownLabel) {
+        case let (member?, own?):
+            // Localization unneeded
+            label = "\(member) \u{203A} \(own)"
+        case let (member?, nil):
+            label = member
+        case let (nil, own?):
+            label = own
+        case (nil, nil):
+            label = record.label ?? String(localized: "ToolStatus.RootRecordLabel",
+                                           defaultValue: "Overall",
+                                           comment: "Label in the Session Status tool for the status a program reports about itself as a whole, as opposed to one of the tasks it reports on")
+        }
+        return ChildRow(sessionID: sessionID,
+                        recordKey: record.key,
+                        label: label,
+                        statusText: record.statusText,
+                        indicatorColor: record.indicatorColor,
+                        statusTextColor: record.statusTextColor,
+                        progress: record.progress,
+                        detail: record.detail,
+                        updatedAt: record.updatedAt)
+    }
+
+    private static func childRow(_ status: Status, label: String) -> ChildRow {
+        let tabStatus = status.tabStatus
+        return ChildRow(sessionID: status.sessionID,
+                        recordKey: "",
+                        label: label,
+                        statusText: tabStatus.statusText ?? "",
+                        indicatorColor: tabStatus.hasIndicator ? tabStatus.indicatorColor : nil,
+                        statusTextColor: tabStatus.hasStatusTextColor ? tabStatus.statusTextColor : nil,
+                        progress: nil,
+                        detail: tabStatus.detailText,
+                        updatedAt: status.lastChanged)
     }
 
     /// Groups sessions by workgroup, keeping one representative per group, then
@@ -1058,10 +1280,13 @@ private extension ToolStatus {
     // is not snoozed. A snoozed row at index 0 has no active rows above it
     // (everything is snoozed), so it draws no divider.
     private func isFirstSnoozedRow(_ row: Int) -> Bool {
-        guard row > 0, row < displayedStatuses.count, displayedStatuses[row].snoozed else {
+        guard row > 0,
+              row < displayedRows.count,
+              case .session(let status, _) = displayedRows[row],
+              status.snoozed else {
             return false
         }
-        return !displayedStatuses[row - 1].snoozed
+        return !displayedRows[row - 1].status.snoozed
     }
 
     // Builds a Status carrying the session's current snooze state.
@@ -1072,7 +1297,18 @@ private extension ToolStatus {
     }
 
     func configureCell(_ cell: ToolStatusCellView, for row: Int) {
-        let status = displayedStatuses[row]
+        let hasChildren: Bool
+        switch displayedRows[row] {
+        case .session(_, let children):
+            hasChildren = children
+        case .child(_, let child):
+            configureChildCell(cell, child: child, dimmed: child.snoozed)
+            return
+        case .more(let status, let hidden):
+            configureMoreCell(cell, hidden: hidden, dimmed: status.snoozed)
+            return
+        }
+        let status = displayedRows[row].status
         guard let session = resolveSessionForReload(guid: status.sessionID) else {
             // One dump per GUID per debug-logging session: configureCell
             // runs on every reload and height pass, and undeduped repeats
@@ -1112,17 +1348,72 @@ private extension ToolStatus {
                        shortcut: shortcutString(for: status.sessionID),
                        statusText: SetTabStatusTrigger.localizedStatusForDisplay(tabStatus.statusText),
                        statusColor: statusColor,
-                       detail: tabStatus.detailText,
+                       // When the records set the status, one of the child
+                       // rows already carries its message. When something
+                       // else did (OSC 21337, a trigger, the API), no child
+                       // has it, so the row keeps it.
+                       detail: hasChildren && session.programStatusControllerIfPresent?.isShowingStatus == true
+                           ? nil
+                           : tabStatus.detailText,
                        armed: NotifyOnStatusChangeController.instance.isSessionArmed(forGuid: status.sessionID),
                        dimmed: status.snoozed,
                        showSeparator: isFirstSnoozedRow(row))
     }
 }
 
+extension ToolStatus {
+    private static func dotImage(_ color: iTermSRGBColor?) -> NSImage? {
+        guard let c = color else {
+            return nil
+        }
+        let color = NSColor(srgbRed: c.r, green: c.g, blue: c.b, alpha: 1)
+        return iTermSessionTabStatus.dotImage(color: color, size: 10, dotDiameter: 6)
+    }
+
+    /// The status as a child row shows it, with the record's progress.
+    static func childStatusText(_ child: ChildRow) -> String {
+        let status = SetTabStatusTrigger.localizedStatusForDisplay(child.statusText) ?? child.statusText
+        guard let progress = child.progress else {
+            return status
+        }
+        let percent = NumberFormatter.localizedString(from: NSNumber(value: Double(progress) / 100.0),
+                                                      number: .percent)
+        // Localization unneeded
+        return "\(status) \u{00B7} \(percent)"
+    }
+
+    private func configureChildCell(_ cell: ToolStatusCellView, child: ChildRow, dimmed: Bool) {
+        cell.configureChild(dotImage: Self.dotImage(child.indicatorColor),
+                            label: child.label,
+                            statusText: Self.childStatusText(child),
+                            statusColor: child.statusTextColor.map {
+                                NSColor(srgbRed: $0.r, green: $0.g, blue: $0.b, alpha: 1)
+                            },
+                            detail: child.detail,
+                            dimmed: dimmed)
+    }
+
+    private func configureMoreCell(_ cell: ToolStatusCellView, hidden: [ChildRow], dimmed: Bool) {
+        // Localization unneeded
+        let label = "+\(hidden.count)"
+        let tooltip = hidden.map { child in
+            // Localization unneeded
+            "\(child.label): \(Self.childStatusText(child))"
+        }.joined(separator: "\n")
+        cell.configureChild(dotImage: nil,
+                            label: label,
+                            statusText: nil,
+                            statusColor: nil,
+                            detail: nil,
+                            dimmed: dimmed)
+        cell.toolTip = tooltip
+    }
+}
+
 extension ToolStatus: NSTableViewDataSource {
     @objc
     func numberOfRows(in tableView: NSTableView) -> Int {
-        return displayedStatuses.count
+        return displayedRows.count
     }
 }
 
@@ -1164,9 +1455,15 @@ extension ToolStatus: NSTableViewDelegate {
         updateSnoozeButtonAppearance()
         let row = _tableView!.selectedRow
         if row == -1 {
+            selectedChild = nil
             return
         }
-        let guid = displayedStatuses[row].sessionID
+        if case .child(_, let child) = displayedRows[row] {
+            selectedChild = ChildKey(sessionID: child.sessionID, recordKey: child.recordKey)
+        } else {
+            selectedChild = nil
+        }
+        let guid = displayedRows[row].sessionID
         guard let session = iTermController.sharedInstance()?.anySession(withGUID: guid) else {
             // Deliberately NOT deduped via DLogOncePerLoggingSession:
             // clicking a blank row is an explicit user action and the
@@ -1190,29 +1487,28 @@ extension ToolStatus: NSMenuDelegate {
             return
         }
         let row = tableView.clickedRow
-        guard row >= 0, row < displayedStatuses.count else {
+        guard row >= 0, row < displayedRows.count else {
             return
         }
-        let sessionID = displayedStatuses[row].sessionID
         // A merged row stands for a whole workgroup, so its checkmark reflects
         // (and its toggle affects) every member, not just the representative.
-        let members = groupMemberSessionIDs(forRepresentative: sessionID)
+        // A child row stands for the one peer its record came from.
+        let members = snoozeTargets(forRow: row)
         let item = NSMenuItem(title: String(localized: "ToolStatus.Snooze", defaultValue: "Snooze", comment: "Snooze label/accessibility description"),
                               action: #selector(toggleSnooze(_:)),
                               keyEquivalent: "")
         item.target = self
         item.state = allSnoozed(members) ? .on : .off
-        item.representedObject = sessionID
+        item.representedObject = members
         menu.addItem(item)
     }
 
     @objc func toggleSnooze(_ sender: NSMenuItem) {
-        guard let sessionID = sender.representedObject as? String else {
+        guard let members = sender.representedObject as? [String] else {
             return
         }
-        let members = groupMemberSessionIDs(forRepresentative: sessionID)
-        // Toggle the group as a unit: if every member is already snoozed,
-        // un-snooze them all; otherwise snooze them all so the merged row
+        // Toggle the targets as a unit: if every one is already snoozed,
+        // un-snooze them all; otherwise snooze them all so a merged row
         // reads as snoozed (a snoozed member only represents when all are).
         setSnoozed(!allSnoozed(members), forSessionIDs: members)
     }
@@ -1220,28 +1516,37 @@ extension ToolStatus: NSMenuDelegate {
     // The snooze toolbar button acts on the selected row, doing the same
     // thing as its right-click Snooze menu item.
     @objc func toggleSnoozeButton(_ sender: NSButton) {
-        guard let sessionID = selectedRepresentativeSessionID else {
+        guard let row = selectedRow else {
             return
         }
-        let members = groupMemberSessionIDs(forRepresentative: sessionID)
+        let members = snoozeTargets(forRow: row)
         setSnoozed(!allSnoozed(members), forSessionIDs: members)
     }
 
-    // The displayed row's session ID for the current selection, or nil when
-    // nothing is selected.
-    private var selectedRepresentativeSessionID: String? {
-        guard let row = _tableView?.selectedRow, row >= 0, row < displayedStatuses.count else {
+    private var selectedRow: Int? {
+        guard let row = _tableView?.selectedRow, row >= 0, row < displayedRows.count else {
             return nil
         }
-        return displayedStatuses[row].sessionID
+        return row
+    }
+
+    /// The sessions snoozing a row affects: a child row's own peer, or every
+    /// member a session row stands for.
+    private func snoozeTargets(forRow row: Int) -> [String] {
+        let displayed = displayedRows[row]
+        if case .child = displayed {
+            return [displayed.sessionID]
+        }
+        return groupMemberSessionIDs(forRepresentative: displayed.sessionID)
     }
 
     func updateSnoozeButtonAppearance() {
-        let sessionID = selectedRepresentativeSessionID
+        let row = selectedRow
+        let sessionID = row.map { displayedRows[$0].sessionID }
         // Only actionable with a selection, matching the right-click item's
         // requirement of a clicked row.
         snoozeButton.isEnabled = sessionID != nil
-        let snoozed = sessionID.map { allSnoozed(groupMemberSessionIDs(forRepresentative: $0)) } ?? false
+        let snoozed = row.map { allSnoozed(snoozeTargets(forRow: $0)) } ?? false
         snoozeButton.state = snoozed ? .on : .off
         snoozeButton.image = NSImage(systemSymbolName: SFSymbol.moonZzz.rawValue,
                                      accessibilityDescription: String(localized: "ToolStatus.Snooze", defaultValue: "Snooze", comment: "Snooze label/accessibility description"))
@@ -1291,6 +1596,82 @@ extension ToolStatus: NSMenuDelegate {
         rebuildDisplayed()
         _tableView?.reloadData()
         updateSelectionWithoutChangingFirstResponder()
+    }
+}
+
+// MARK: - Child rows (internal for testing)
+extension ToolStatus {
+    /// What selection needs to know about a table row.
+    enum SelectableRow: Equatable {
+        case session(matchesActive: Bool)
+        case child(ChildKey)
+        case more
+    }
+
+    /// Which row stands for the active session, so the selection follows it
+    /// whichever way the user got there.
+    ///
+    /// 1. The child row the user clicked, while its session is still the
+    ///    active one, so a click visibly takes.
+    /// 2. Otherwise, when the active session's row lists children from more
+    ///    than one session (a merged workgroup), the active member's first
+    ///    child: its most urgent, since children are sorted.
+    /// 3. Otherwise the active session's own row. When all of its children
+    ///    are its own, that row already is the active session.
+    static func rowToSelect(_ rows: [SelectableRow],
+                            activeSessionID: String?,
+                            clickedChild: ChildKey?) -> Int? {
+        if let clickedChild,
+           clickedChild.sessionID == activeSessionID,
+           let index = rows.firstIndex(of: .child(clickedChild)) {
+            return index
+        }
+        guard let sessionIndex = rows.firstIndex(of: .session(matchesActive: true)) else {
+            return nil
+        }
+        var children = [(index: Int, key: ChildKey)]()
+        var index = sessionIndex + 1
+        while index < rows.count {
+            switch rows[index] {
+            case .session:
+                index = rows.count
+                continue
+            case .child(let key):
+                children.append((index, key))
+            case .more:
+                break
+            }
+            index += 1
+        }
+        let sessions = Set(children.map(\.key.sessionID))
+        if sessions.count > 1,
+           let activeChild = children.first(where: { $0.key.sessionID == activeSessionID }) {
+            return activeChild.index
+        }
+        return sessionIndex
+    }
+
+    /// Orders a session's children the way sessions are ordered (by the
+    /// user's status priorities, most recent first among equals) and splits
+    /// off what does not fit under the cap. Pure, for testing.
+    static func childRows(_ candidates: [ChildRow],
+                          limit: Int,
+                          priority: (String) -> Int) -> (shown: [ChildRow], hidden: [ChildRow]) {
+        let sorted = candidates.sorted { lhs, rhs in
+            if lhs.snoozed != rhs.snoozed {
+                // A snoozed peer's children sink, like snoozed sessions.
+                return !lhs.snoozed
+            }
+            let (l, r) = (priority(lhs.statusText), priority(rhs.statusText))
+            if l != r {
+                return l < r
+            }
+            if lhs.updatedAt != rhs.updatedAt {
+                return lhs.updatedAt > rhs.updatedAt
+            }
+            return lhs.label < rhs.label
+        }
+        return (Array(sorted.prefix(limit)), Array(sorted.dropFirst(limit)))
     }
 }
 
