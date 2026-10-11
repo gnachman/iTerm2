@@ -514,6 +514,12 @@ Improvements:
   onto the terminal, turn on “…even to views
   like Search or Composer” under Settings >
   Pointer.
+- “Support basic HTML tags in tab titles” now
+  applies to pane title bars too, so <b>, <i>,
+  and <u> render as styled text there instead of
+  appearing literally. The window title shows the
+  text without the tags, including titles set by
+  a program or by tmux.
 
 Bug Fixes:
 - On macOS 26, hiding a hotkey window when no
