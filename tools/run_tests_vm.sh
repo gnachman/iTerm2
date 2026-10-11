@@ -33,6 +33,9 @@
 #   --runner R        gui (default): run as a LaunchAgent in the VM user's GUI login session,
 #                     which an app-hosted XCTest needs. direct: run in the ssh session.
 #   --no-sync         Skip copying the tree (rerun what is already on the VM).
+#   --idle-timeout S  Cancel the run if it prints nothing for S seconds (default 900; 0 never).
+#                     A test hung, or waiting on a modal alert nobody on the VM can answer, would
+#                     otherwise hold the VM forever. Exits 124 when it fires.
 #   --allow-physical  Allow a host that is not a virtual machine. The script always refuses
 #                     to run on this machine itself.
 #
@@ -50,6 +53,10 @@
 
 set -uo pipefail
 
+# Everything below is one compound command, so bash reads the whole file before running any of
+# it: editing this script while a run is in progress can't change what that run does.
+{
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 SSH_OPTS=(-T -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=30 -o ServerAliveCountMax=6)
@@ -64,7 +71,9 @@ wait_for_host=1
 runner=gui
 sync=1
 allow_physical=0
+idle_timeout=900
 forward_names=()
+explicit_command=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --host) hosts="$2"; shift 2 ;;
@@ -73,21 +82,24 @@ while [[ $# -gt 0 ]]; do
         -e) forward_names+=("$2"); shift 2 ;;
         --runner) runner="$2"; shift 2 ;;
         --no-sync) sync=0; shift ;;
+        --idle-timeout) idle_timeout="$2"; shift 2 ;;
         --allow-physical) allow_physical=1; shift ;;
         -h|--help) usage ;;
-        --) shift; break ;;
+        --) explicit_command=1; shift; break ;;
         *) break ;;
     esac
 done
 
 # The command to run on the VM.
 if [[ "${1:-}" == "--" ]]; then
+    explicit_command=1
     shift
 fi
 if [[ $# -eq 0 ]]; then
     usage
 fi
-if [[ "$1" == */* && "$1" != ModernTests/* && "$1" != iTerm2XCTests/* && -e "$PROJECT_DIR/$1" ]]; then
+if [[ $explicit_command == 1 ]] ||
+   [[ "$1" == */* && "$1" != ModernTests/* && "$1" != iTerm2XCTests/* && -e "$PROJECT_DIR/$1" ]]; then
     command=("$@")
 else
     command=(tools/run_tests.expect "$@")
@@ -278,7 +290,7 @@ cancel_remote() {
 }
 trap cancel_remote INT TERM
 
-remote_cmd="cd $(printf %q "$checkout") && tools/vm/remote_run.sh run --job $job --runner $runner --developer-dir $(printf %q "$developer_dir")"
+remote_cmd="cd $(printf %q "$checkout") && tools/vm/remote_run.sh run --job $job --runner $runner --idle-timeout $(printf %q "$idle_timeout") --developer-dir $(printf %q "$developer_dir")"
 for a in ${env_args[@]+"${env_args[@]}"}; do
     remote_cmd+=" $(printf %q "$a")"
 done
@@ -305,3 +317,4 @@ if [[ $rc != 0 ]]; then
     fi
 fi
 exit "$rc"
+}

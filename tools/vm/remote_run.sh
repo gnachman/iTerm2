@@ -10,10 +10,12 @@
 #
 # Usage:
 #   tools/vm/remote_run.sh run --job ID [--runner gui|direct] [--developer-dir DIR]
-#                          [--env NAME=VALUE]... -- COMMAND [ARG]...
+#                          [--idle-timeout SECONDS] [--env NAME=VALUE]... -- COMMAND [ARG]...
 #   tools/vm/remote_run.sh cancel --job ID
 #
-# Exits with the command's exit status (or 125 for an infrastructure failure here).
+# Exits with the command's exit status (or 125 for an infrastructure failure here). With
+# --idle-timeout, a job that writes no output for that long is cancelled and exits with 124: a
+# test is probably hung, or waiting on a modal alert nobody can answer.
 
 set -uo pipefail
 
@@ -52,12 +54,14 @@ shift || true
 job=""
 runner="gui"
 developer_dir=""
+idle_timeout=0
 envs=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --job) job="$2"; shift 2 ;;
         --runner) runner="$2"; shift 2 ;;
         --developer-dir) developer_dir="$2"; shift 2 ;;
+        --idle-timeout) idle_timeout="$2"; shift 2 ;;
         --env) envs+=("$2"); shift 2 ;;
         --) shift; break ;;
         *) die "unknown argument $1" ;;
@@ -153,7 +157,25 @@ esac
 # side learns the job ended; launchd gives no other completion signal to an ssh session.
 tail -n +1 -f "$log" &
 tail_pid=$!
+last_size=-1
+last_change=$(date +%s)
 while [[ ! -f "$dir/status" ]]; do
+    size=$(stat -f %z "$log" 2>/dev/null || echo 0)
+    now=$(date +%s)
+    if [[ "$size" != "$last_size" ]]; then
+        last_size=$size
+        last_change=$now
+    elif [[ "$idle_timeout" -gt 0 && $(( now - last_change )) -ge "$idle_timeout" ]]; then
+        echo "remote_run: no output for ${idle_timeout}s; cancelling. A test is probably hung or waiting on a modal alert." >> "$log"
+        cancel_job "$job"
+        # The job's own trap records 130 as it dies; record why instead, once it is gone.
+        for _ in $(seq 10); do
+            [[ -f "$dir/pid" ]] && kill -0 "$(cat "$dir/pid")" 2>/dev/null || break
+            sleep 1
+        done
+        echo 124 > "$dir/status"
+        break
+    fi
     if [[ -f "$dir/pid" ]] && ! kill -0 "$(cat "$dir/pid")" 2>/dev/null; then
         # The job script is gone. Give a status written at the last moment a chance to land.
         sleep 1
