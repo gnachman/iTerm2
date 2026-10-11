@@ -36,6 +36,15 @@ kill_tree() {
     kill -TERM "$pid" 2>/dev/null
 }
 
+# Test hosts, their XPC services, and the harnesses' private tmux servers are not in a job's
+# process tree (testmanagerd launches the host, launchd its services, and tmux servers daemonize),
+# so a cancelled or crashed run can leave them behind. A hung host's pidinfo service left running
+# makes every later host stop at launch, so the next run waits forever.
+kill_leftovers() {
+    pkill -9 -f '/Build/Products/[^ ]*/iTerm2\.app/Contents/' 2>/dev/null
+    pkill -f 'tmux -L iterm2wg' 2>/dev/null
+}
+
 cancel_job() {
     local job="$1"
     local dir="$JOBS_DIR/$job"
@@ -47,6 +56,7 @@ cancel_job() {
         kill_tree "$(cat "$dir/pid")"
     fi
     [[ -f "$dir/status" ]] || echo 130 > "$dir/status"
+    kill_leftovers
 }
 
 mode="${1:-}"
@@ -76,6 +86,9 @@ if [[ "$mode" == "cancel" ]]; then
 fi
 [[ "$mode" == "run" ]] || die "mode must be run or cancel"
 [[ $# -gt 0 ]] || die "no command given"
+
+# The caller holds this VM's lock, so nothing else of ours should be running.
+kill_leftovers
 
 checkout="$(pwd)"
 dir="$JOBS_DIR/$job"
@@ -167,6 +180,13 @@ while [[ ! -f "$dir/status" ]]; do
         last_change=$now
     elif [[ "$idle_timeout" -gt 0 && $(( now - last_change )) -ge "$idle_timeout" ]]; then
         echo "remote_run: no output for ${idle_timeout}s; cancelling. A test is probably hung or waiting on a modal alert." >> "$log"
+        # Where the test host is stuck: the main thread's stack, with the full samples kept in the
+        # job directory.
+        for host_pid in $(pgrep -x iTerm2); do
+            sample "$host_pid" 3 -file "$dir/sample-$host_pid.txt" >/dev/null 2>&1
+            echo "remote_run: main thread of iTerm2 $host_pid (full sample in $dir/sample-$host_pid.txt):" >> "$log"
+            awk '/^Call graph:/{on=1} on&&/^ *[0-9]+ Thread_/{n++} on&&n<=1' "$dir/sample-$host_pid.txt" | head -150 >> "$log"
+        done
         cancel_job "$job"
         # The job's own trap records 130 as it dies; record why instead, once it is gone.
         for _ in $(seq 10); do

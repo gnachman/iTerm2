@@ -128,8 +128,10 @@ job="$stamp-$$"
 
 lock_pid=""
 lock_fifo=""
+heartbeat_pid=""
 host=""
 cleanup() {
+    [[ -n "$heartbeat_pid" ]] && kill "$heartbeat_pid" 2>/dev/null
     if [[ -n "$lock_pid" ]]; then
         exec 9>&- 2>/dev/null
         kill "$lock_pid" 2>/dev/null
@@ -140,9 +142,11 @@ cleanup() {
 trap cleanup EXIT
 
 # Holds the per-host lock for as long as the ssh connection lives: the remote shell takes the
-# lock with mkdir (atomic), then blocks reading stdin, and removes the lock when stdin closes,
-# which happens when this script exits for any reason or the connection drops. A lock whose
-# holder process is gone is stale and is taken over.
+# lock with mkdir (atomic), then reads stdin, and removes the lock when stdin closes, which
+# happens when this script exits for any reason. This side sends a line every 30 seconds; a
+# connection that died without the VM noticing (sshd can take hours) sends none, so after two
+# minutes of silence the lock is released anyway. A lock whose holder process is gone is stale
+# and is taken over.
 LOCK_SCRIPT='
 d="$HOME/iterm2-vm-test"; l="$d/lock"; mkdir -p "$d"
 if ! mkdir "$l" 2>/dev/null; then
@@ -155,7 +159,7 @@ fi
 echo $$ > "$l/pid"; echo "$OWNER" > "$l/owner"
 trap "rm -rf \"$l\"" EXIT HUP TERM INT
 echo LOCKED
-cat > /dev/null
+while IFS= read -r -t 120 _; do :; done
 '
 
 # Returns 0 and leaves the lock held if this host was free.
@@ -174,6 +178,8 @@ try_lock() {
     while :; do
         line="$(head -n 1 "$lock_fifo.out" 2>/dev/null)"
         if [[ "$line" == LOCKED ]]; then
+            ( while sleep 30; do echo >&9 || exit 0; done ) &
+            heartbeat_pid=$!
             return 0
         fi
         if [[ -n "$line" ]] || ! kill -0 "$lock_pid" 2>/dev/null; then
@@ -265,7 +271,9 @@ if [[ $sync == 1 ]]; then
     ssh "${SSH_OPTS[@]}" "$host" "mkdir -p $(printf %q "$checkout")" || exit 125
     # Excluded paths are build products, caches, VCS metadata and local junk. Excluded paths
     # are also protected from --delete, so the VM's own build products survive.
-    if ! rsync -a --delete \
+    # One retry: a dropped connection mid-copy is not worth failing a run over.
+    for attempt in 1 2; do
+    if rsync -a --delete \
         --exclude='/.git' --exclude='.git' \
         --exclude='/Build/' --exclude='/Companion/Build/' --exclude='DerivedData/' \
         --exclude='.build/' --exclude='.build-arm64/' --exclude='.build-x86_64/' \
@@ -276,9 +284,14 @@ if [[ $sync == 1 ]]; then
         --exclude='/WebExtensionsFramework/build/' --exclude='/api/library/python/iterm2/build/' \
         -e "ssh ${SSH_OPTS[*]}" \
         "$PROJECT_DIR/" "$host:$checkout/"; then
+        break
+    fi
+    if [[ $attempt == 2 ]]; then
         echo "rsync to $host failed." >&2
         exit 125
     fi
+    echo "rsync to $host failed; retrying." >&2
+    done
     echo "Synced in $(( $(date +%s) - start ))s."
 fi
 
