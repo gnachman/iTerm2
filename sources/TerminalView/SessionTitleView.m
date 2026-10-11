@@ -14,6 +14,7 @@
 #import "iTermPreferences.h"
 #import "iTermStatusBarViewController.h"
 #import "NSAppearance+iTerm.h"
+#import "NSAttributedString+PSM.h"
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
@@ -279,17 +280,27 @@ static const CGFloat kLockButtonSize = 14;
 
 - (void)updateTitle {
     NSString *titleString = [self titleString];
-    if (_puaFontProvider) {
+    const BOOL parseHTML = [iTermPreferences boolForKey:kPreferenceKeyHTMLTabTitles];
+    if (_puaFontProvider || parseHTML) {
         NSFont *font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
         paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
-        NSAttributedString *plain = [[NSAttributedString alloc] initWithString:titleString
-                                                                    attributes:@{NSFontAttributeName: font,
-                                                                                 NSParagraphStyleAttributeName: paragraphStyle}];
-        NSAttributedString *withPUAFonts = PSMApplyPUAFonts(plain,
-                                                             _puaFontProvider,
-                                                             [NSFont smallSystemFontSize]);
-        [label_ setAttributedStringValue:withPUAFonts];
+        NSDictionary *attributes = @{NSFontAttributeName: font,
+                                     NSParagraphStyleAttributeName: paragraphStyle};
+        NSAttributedString *attributedTitle;
+        if (parseHTML) {
+            attributedTitle = [NSAttributedString newAttributedStringWithHTML:titleString
+                                                                   attributes:attributes];
+        } else {
+            attributedTitle = [[NSAttributedString alloc] initWithString:titleString
+                                                              attributes:attributes];
+        }
+        if (_puaFontProvider) {
+            attributedTitle = PSMApplyPUAFonts(attributedTitle,
+                                               _puaFontProvider,
+                                               [NSFont smallSystemFontSize]);
+        }
+        [label_ setAttributedStringValue:attributedTitle];
     } else {
         [label_ setStringValue:titleString];
     }

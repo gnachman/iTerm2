@@ -263,6 +263,13 @@ static NSString *iTermTitleIconWindowShellFallback(NSString *iconName, NSString 
                        components:(iTermTitleComponents)titleComponents
                     isWindowTitle:(BOOL)isWindowTitle {
     NSString *sessionName = isWindowTitle ? rawSessionName.removingHTMLFromTabTitleIfNeeded : rawSessionName;
+    if (isWindowTitle) {
+        tmuxPaneVariable = tmuxPaneVariable.removingHTMLFromTabTitleIfNeeded;
+        iconName = iconName.removingHTMLFromTabTitleIfNeeded;
+        windowName = windowName.removingHTMLFromTabTitleIfNeeded;
+        tmuxWindowName = tmuxWindowName.removingHTMLFromTabTitleIfNeeded;
+        tmuxWindowTitle = tmuxWindowTitle.removingHTMLFromTabTitleIfNeeded;
+    }
     DLog(@"sessionName=%@ profileName=%@ job=%@ commandLine=%@ pwd=%@ tty=%@ user=%@ host=%@ tmuxPane=%@ iconName=%@ windowName=%@ tmuxWindowName=%@ tmuxWindowTitle=%@ isWindowTitle=%@ rows=%@ columns=%@ titleComponents=%@",
          sessionName, profileName, jobVariable, commandLineVariable, pwdVariable, ttyVariable,
          userVariable, hostVariable, tmuxPaneVariable, iconName, windowName, tmuxWindowName,
