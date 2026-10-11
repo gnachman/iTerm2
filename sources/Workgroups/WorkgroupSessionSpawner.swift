@@ -18,29 +18,19 @@ import AppKit
 // spawnTab block until the new session is installed in its parent
 // view tree, matching iTermSessionLauncher's setupSession path.
 protocol WorkgroupSessionSpawner: AnyObject {
-    // `workgroupInstanceID` is the per-entry UUID of the
-    // iTermWorkgroupInstance that owns this spawn. It's threaded
-    // through the launch request's environment so the spawned shell
-    // sees ITERM_WORKGROUP_ID. Pass-by-value (vs reading from a
-    // back-pointer on the session) because the spawned session's
-    // workgroupInstance back-pointer is set by the caller AFTER the
-    // launch request fires — environment is built before then.
     func spawnPeer(parent: PTYSession,
-                   config: iTermWorkgroupSessionConfig,
-                   workgroupInstanceID: String) -> iTermPromise<PTYSession>
+                   config: iTermWorkgroupSessionConfig) -> iTermPromise<PTYSession>
 
     // Returns the live session installed as a split of `parent`, or
     // nil if `parent`'s window context is missing.
     func spawnSplit(parent: PTYSession,
                     config: iTermWorkgroupSessionConfig,
-                    settings: SplitSettings,
-                    workgroupInstanceID: String) -> PTYSession?
+                    settings: SplitSettings) -> PTYSession?
 
     // Returns the live session installed in a new tab of `parent`'s
     // window, or nil if the window context is missing.
     func spawnTab(parent: PTYSession,
-                  config: iTermWorkgroupSessionConfig,
-                  workgroupInstanceID: String) -> PTYSession?
+                  config: iTermWorkgroupSessionConfig) -> PTYSession?
 
     // Gather the tabs containing `sessions` into a single brand-new tab
     // group named `name`. Tabs already in a group are moved into the new
@@ -58,16 +48,13 @@ extension WorkgroupSessionSpawner {
 
 final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
     func spawnPeer(parent: PTYSession,
-                   config: iTermWorkgroupSessionConfig,
-                   workgroupInstanceID: String) -> iTermPromise<PTYSession> {
-        return parent.makeWorkgroupPeer(config: config,
-                                        workgroupInstanceID: workgroupInstanceID)
+                   config: iTermWorkgroupSessionConfig) -> iTermPromise<PTYSession> {
+        return parent.makeWorkgroupPeer(config: config)
     }
 
     func spawnSplit(parent: PTYSession,
                     config: iTermWorkgroupSessionConfig,
-                    settings: SplitSettings,
-                    workgroupInstanceID: String) -> PTYSession? {
+                    settings: SplitSettings) -> PTYSession? {
         guard let windowController =
                 parent.delegate?.realParentWindow() as? PseudoTerminal
             else { return nil }
@@ -91,14 +78,12 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                     objectType: .paneObject,
                     factory: factory,
                     windowController: windowController,
-                    parent: parent,
-                    workgroupInstanceID: workgroupInstanceID)
+                    parent: parent)
         return newSession
     }
 
     func spawnTab(parent: PTYSession,
-                  config: iTermWorkgroupSessionConfig,
-                  workgroupInstanceID: String) -> PTYSession? {
+                  config: iTermWorkgroupSessionConfig) -> PTYSession? {
         guard let windowController =
                 parent.delegate?.realParentWindow() as? PseudoTerminal
             else { return nil }
@@ -113,8 +98,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                     objectType: .tabObject,
                     factory: factory,
                     windowController: windowController,
-                    parent: parent,
-                    workgroupInstanceID: workgroupInstanceID)
+                    parent: parent)
         return newSession
     }
 
@@ -317,8 +301,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                                objectType: iTermObjectType,
                                factory: iTermSessionFactory,
                                windowController: PseudoTerminal,
-                               parent: PTYSession,
-                               workgroupInstanceID: String) {
+                               parent: PTYSession) {
         let mode = config.mode
         let urlString = config.urlString
         parent.asyncInitialDirectoryForNewSessionBased { [session] oldCWD in
@@ -347,8 +330,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                     objectType: objectType,
                     factory: factory,
                     windowController: windowController,
-                    oldCWD: oldCWD,
-                    workgroupInstanceID: workgroupInstanceID)
+                    oldCWD: oldCWD)
                 return
             }
             if mode == .diff {
@@ -384,8 +366,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                     let base = session.workgroupInstance?.currentGitBase
                         ?? CCGitBaseSelectorItem.defaultBase
                     let resolved = config.resolvedCommand(gitBase: base)
-                    let cmd = session.workgroupPeerLaunchCommand(
-                        resolved, workgroupInstanceID: workgroupInstanceID)
+                    let cmd = session.workgroupPeerLaunchCommand(resolved)
                     let request = iTermSessionAttachOrLaunchRequest(
                         session: session,
                         canPrompt: false,
@@ -394,7 +375,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                         serverConnection: iTermGeneralServerConnection(),
                         urlString: url,
                         allowURLSubs: false,
-                        environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
+                        environment: nil,
                         customShell: nil,
                         oldCWD: oldCWD,
                         forceUseOldCWD: true,
@@ -416,8 +397,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                 session.workgroupInstance?.fireDeferredDiffLaunchesIfReady()
                 return
             }
-            let cmd = session.workgroupPeerLaunchCommand(
-                config.command, workgroupInstanceID: workgroupInstanceID)
+            let cmd = session.workgroupPeerLaunchCommand(config.command)
             let request = iTermSessionAttachOrLaunchRequest(
                 session: session,
                 canPrompt: false,
@@ -426,7 +406,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                 serverConnection: iTermGeneralServerConnection(),
                 urlString: url,
                 allowURLSubs: false,
-                environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
+                environment: nil,
                 customShell: nil,
                 oldCWD: oldCWD,
                 forceUseOldCWD: true,

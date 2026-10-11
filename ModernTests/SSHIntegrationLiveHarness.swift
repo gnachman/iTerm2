@@ -5,7 +5,8 @@
 //  Live end-to-end harness for it2 over ssh integration, against `ssh localhost`. NOT a unit
 //  test: it opens real windows in the test host, runs the real conductor bootstrap and framer
 //  over a real ssh connection, and runs the uploaded it2 on the "remote" host, which is this Mac.
-//  Run it with tools/run_ssh_integration_live.sh; without ITERM2_SSH_LIVE every test skips.
+//  Because it opens windows it also needs ITERM2_ONSCREEN_TESTS=1 (see OnscreenTestGate): run it
+//  with ITERM2_ONSCREEN_TESTS=1 tools/run_ssh_integration_live.sh; otherwise every test skips.
 //
 //  Needs Remote Login on and `ssh -o BatchMode=yes localhost true` to succeed.
 //
@@ -66,6 +67,8 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         guard ProcessInfo.processInfo.environment["ITERM2_SSH_LIVE"] != nil else {
             throw XCTSkip("Live ssh integration harness; run tools/run_ssh_integration_live.sh")
         }
+        // It launches real sessions, in windows.
+        try OnscreenTestGate.skipUnlessEnabled()
         MainActor.assumeIsolated {
             savedGrantFile = FileManager.default.contents(atPath: grantFilePath)
             store = IT2HostGrantStore(backing: LiveGrantBacking())
@@ -566,7 +569,7 @@ final class SSHIntegrationLiveHarness: XCTestCase {
     // MARK: - Workgroup peers
 
     // A peer of a leader on a host reached through SSH Integration runs on that host, in the
-    // leader's directory there, with the workgroup's ID. IT2_SOCK is what tells it apart from a
+    // leader's directory there. IT2_SOCK is what tells it apart from a
     // peer run on this Mac, which on localhost would otherwise see the same directory.
     func testWorkgroupPeerRunsOnTheLeadersHost() throws {
         let session = try XCTUnwrap(connect())
@@ -588,7 +591,7 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         let root = WGFix.makeRoot()
         let peer = WGFix.makePeer(
             parentID: root.uniqueIdentifier,
-            command: #"printf '%s\n%s\n%s\n' "$PWD" "$ITERM_WORKGROUP_ID" "$IT2_SOCK" > "# + shellQuote(output) + "; sleep 60")
+            command: #"printf '%s\n%s\n' "$PWD" "$IT2_SOCK" > "# + shellQuote(output) + "; sleep 60")
         let diffOutput = directory + "/diff-report"
         let diffPeer = WGFix.makePeer(parentID: root.uniqueIdentifier,
                                       displayName: "Diff",
@@ -603,15 +606,13 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
                                                               on: session,
                                                               mechanism: .menu))
-        let instanceID = try XCTUnwrap(iTermWorkgroupController.instance.workgroupInstance(on: session)?.instanceUniqueIdentifier)
         waitUntil("the peer to report", timeout: connectTimeout) {
-            ((try? String(contentsOfFile: output, encoding: .utf8)) ?? "").split(separator: "\n").count == 3
+            ((try? String(contentsOfFile: output, encoding: .utf8)) ?? "").split(separator: "\n").count == 2
         }
         let lines = try XCTUnwrap(try? String(contentsOfFile: output, encoding: .utf8))
             .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         XCTAssertEqual((lines[0] as NSString).resolvingSymlinksInPath, realDirectory, "the leader's directory")
-        XCTAssertEqual(lines[1], instanceID, "the workgroup's ID")
-        XCTAssertFalse(lines[2].isEmpty, "started over SSH Integration, so it has it2")
+        XCTAssertFalse(lines[1].isEmpty, "started over SSH Integration, so it has it2")
         // A diff peer starts when it is shown and the poller has seen a change, so its diff is of
         // the tree as it is then.
         let port = try XCTUnwrap(session.peerPort as? iTermWorkgroupPeerPort)

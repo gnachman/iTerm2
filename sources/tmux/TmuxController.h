@@ -15,6 +15,7 @@
 
 @class iTermFontTable;
 @class iTermTmuxClientTracker;
+@class iTermTmuxWorkgroupAttacher;
 @class iTermVariableScope;
 @class PTYSession;
 @class PTYTab;
@@ -334,6 +335,24 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
                 vSpacing:(CGFloat)vs
                   window:(int)window;
 - (BOOL)windowIsHidden:(int)windowId;
+// A window holding a parked workgroup peer (see TmuxWorkgroupState). It is never opened as a tab
+// and is not offered as a hidden window.
+- (BOOL)isParkedWindow:(int)windowId;
+
+// Sessions for panes in parked windows (workgroup peers). They have no tab, so they hold no window
+// refcount; -sessionForWindowPane: finds them, so their pane's output reaches them as usual.
+- (void)registerBuriedSession:(PTYSession<iTermTmuxControllerSession> *)session withPane:(int)windowPane;
+- (void)deregisterBuriedSession:(PTYSession<iTermTmuxControllerSession> *)session withPane:(int)windowPane;
+// Removes and returns the buried session for a pane, e.g. to adopt it into a tab.
+- (PTYSession<iTermTmuxControllerSession> *)takeBuriedSessionForPane:(int)windowPane;
+- (NSArray<PTYSession<iTermTmuxControllerSession> *> *)buriedSessions;
+// Keeps a parked window's buried sessions the size of their panes. NO if the window is not parked.
+- (BOOL)parkedWindow:(int)windowId layoutDidChange:(NSString *)layout;
+// Re-reads one window's layout and applies it as a %layout-change would. tmux 3.2 sends no
+// %layout-change when swap-pane moves a pane between windows.
+- (void)refreshLayoutOfWindow:(int)windowId;
+// Adopts the workgroups on the server; nil until the initial windows are open.
+@property(nonatomic, readonly) iTermTmuxWorkgroupAttacher *workgroupAttacher;
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout;
 - (NSArray<PTYSession<iTermTmuxControllerSession> *> *)clientSessions;
 

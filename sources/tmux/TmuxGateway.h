@@ -155,6 +155,15 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
      responseObject:(id)obj
               flags:(int)flags;
 
+// Send a guarded command: a single `if -F` whose two branches are each exactly one command (see
+// TmuxWorkgroupCommands). tmux replies with two blocks, the `if` and then the branch it ran. The
+// target gets the branch's reply, or nil if the branch failed or the `if` itself failed (e.g. its
+// -t target is gone), in which case no branch ran. Errors are tolerated.
+- (void)sendGuardedCommand:(NSString *)command
+            responseTarget:(id)target
+          responseSelector:(SEL)selector
+            responseObject:(id)obj;
+
 - (void)sendCommandList:(NSArray *)commandDicts;
 // Set initial to YES when notifications should be accepted after the last
 // command gets a response.

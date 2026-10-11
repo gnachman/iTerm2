@@ -11,8 +11,8 @@
 # backed up and restored. Mac-side grants go to an in-memory store, not your settings.
 #
 # Usage:
-#   tools/run_ssh_integration_live.sh                 # everything
-#   tools/run_ssh_integration_live.sh <TestMethodName>
+#   ITERM2_ONSCREEN_TESTS=1 tools/run_ssh_integration_live.sh                 # everything
+#   ITERM2_ONSCREEN_TESTS=1 tools/run_ssh_integration_live.sh <TestMethodName>
 #       e.g. testTwoHops, testAlwaysAllowSurvivesReconnectUntilRevoked
 
 set -euo pipefail
@@ -32,9 +32,17 @@ else
     target="$class_path"
 fi
 
+# It opens windows in the test host, which disrupts whoever is using the machine, so the caller
+# has to ask for that explicitly, as for any test that puts windows on screen.
+if [[ "${ITERM2_ONSCREEN_TESTS:-}" != "1" ]]; then
+    echo "This harness opens windows. Run it with ITERM2_ONSCREEN_TESTS=1 $0 $*" >&2
+    exit 2
+fi
+
 # xcodebuild's test runner does not inherit the environment. The TEST_RUNNER_ prefix forwards
-# this into the test process, where the harness reads ITERM2_SSH_LIVE to opt in.
+# these into the test process, where the harness reads ITERM2_SSH_LIVE to opt in.
 export TEST_RUNNER_ITERM2_SSH_LIVE=1
+export TEST_RUNNER_ITERM2_ONSCREEN_TESTS=1
 
 cd "$PROJECT_DIR"
 echo "Running live ssh integration harness: $target"

@@ -10,10 +10,8 @@
 //  starts in the leader's directory. Only the connection is reused, never the leader's profile
 //  command, which could run anything.
 //
-//  ITERM_WORKGROUP_ID rides in the command itself (env … /bin/sh -c '<command>'): the launch
-//  request's environment only reaches the local it2ssh, and forwarding variables only works for
-//  the first hop. /bin/sh runs the command whatever the remote login shell is; the login shell
-//  has already read the user's profile, so PATH is the user's.
+//  The command runs as /bin/sh -c '<command>' so it behaves the same whatever the remote login
+//  shell is; the login shell has already read the user's profile, so PATH is the user's.
 //
 
 import Foundation
@@ -97,17 +95,9 @@ final class WorkgroupRemoteHost: NSObject {
     }
 
     /// An empty `remoteCommand` means an interactive login shell on the host.
-    func launchPlan(remoteCommand: String, workgroupInstanceID: String?,
-                    directory: String? = nil) -> LaunchPlan {
+    func launchPlan(remoteCommand: String, directory: String? = nil) -> LaunchPlan {
         let directory = directory ?? self.directory
-        var command: String?
-        if !remoteCommand.isEmpty {
-            var wrapped = "/bin/sh -c " + Self.shellQuote(remoteCommand)
-            if let workgroupInstanceID {
-                wrapped = "env ITERM_WORKGROUP_ID=" + Self.shellQuote(workgroupInstanceID) + " " + wrapped
-            }
-            command = wrapped
-        }
+        let command: String? = remoteCommand.isEmpty ? nil : "/bin/sh -c " + Self.shellQuote(remoteCommand)
         var jumps = hops
         let last = jumps.count - 1
         for i in jumps.indices {

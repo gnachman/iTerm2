@@ -6486,6 +6486,36 @@ typedef struct {
                                     floatingPanes:floatingPanes] enumerateKeysAndObjectsUsingBlock:^(NSNumber *pane, PTYSession *aSession, BOOL *stop) {
         idMap[pane] = aSession.view;
     }];
+    // A workgroup peer parked in a hidden window has a buried session. When its pane moves into
+    // this tab (swap-pane), adopt that session, which registers it with this tab's window, rather
+    // than making a new one for the pane.
+    NSMutableArray<PTYSession *> *adoptedBuriedSessions = [NSMutableArray array];
+    for (NSNumber *pane in [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree]) {
+        if (idMap[pane]) {
+            continue;
+        }
+        PTYSession *buried = [tmuxController takeBuriedSessionForPane:pane.intValue];
+        if (buried) {
+            RLog(@"Adopting buried session %@ for pane %@", buried, pane);
+            // As a local peer switch does (-sessionActivateSession:amongPeers:moveToolbar:): move
+            // the toolbar from the member leaving this slot before the layout below sizes the
+            // incoming view, so it is laid out with its toolbar from the start.
+            for (PTYSession *visiblePeer in [self sessions]) {
+                if (buried.peerPort && [visiblePeer sessionBelongsToPeers:buried.peerPort]) {
+                    [visiblePeer moveToolbarTo:buried];
+                    break;
+                }
+            }
+            [self adoptSession:buried];
+            // It counts as a preexisting pane below, so it would miss the scroll bar a new pane
+            // gets. Buried, it had none; without one here it would be sized wider than the slot
+            // when scroll bars are always shown.
+            [buried setScrollBarVisible:[realParentWindow_ scrollbarShouldBeVisible]
+                                  style:[realParentWindow_ scrollerStyle]];
+            idMap[pane] = buried.view;
+            [adoptedBuriedSessions addObject:buried];
+        }
+    }
     NSArray *preexistingPanes = [[idMap allKeys] copy];
     NSSplitView *newRoot = (NSSplitView *)[PTYTab _recursiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
                                                                    fromIdMap:idMap
@@ -6533,8 +6563,17 @@ typedef struct {
     // Swap in the new root split view.
     [self setRoot:newRoot];
 
-    // Terminate sessions that were removed from this tab.
+    // Terminate sessions that were removed from this tab, except that a workgroup member's pane
+    // usually left only to be parked in a hidden window: keep its session, buried, so its output
+    // keeps arriving and switching back to it is instant. Whether the pane really still exists is
+    // then checked with tmux.
     for (PTYSession *aSession in sessionsToTerminate) {
+        if (aSession.isTmuxClient && aSession.keepsTmuxSessionWhenItLeavesItsTab) {
+            [self.viewToSessionMap removeObjectForKey:aSession.view];
+            [aSession buryTmuxClientSession];
+            [aSession tmuxSessionWasBuried];
+            continue;
+        }
         [aSession terminate];
     }
 
@@ -6578,6 +6617,10 @@ typedef struct {
     }
     [self fitSubviewsToRoot];
     [self numberOfSessionsDidChange];
+    for (PTYSession *session in adoptedBuriedSessions) {
+        [session tmuxSessionWasAdoptedIntoTab];
+        [session.view layoutContentsForNewlyActiveSession];
+    }
     ++tmuxOriginatedResizeInProgress_;
 
     if (tmuxController.variableWindowSize) {

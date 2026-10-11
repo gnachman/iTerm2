@@ -3696,8 +3696,9 @@ final class OrchestratorDispatcher {
                 throw OrchestratorError.unsupported(reason: "Target \(resolved.roleName) in \(resolved.workgroupName) is busy (status: \(sessionState.rawValue)). Wait until it returns to idle before starting a review.")
             }
             // Reloading kills+relaunches the session, which requires a
-            // restartable session and the cached review command template.
-            guard resolved.session.isRestartable(),
+            // restartable session (or a tmux member, whose pane is
+            // respawned) and the cached review command template.
+            guard resolved.session.canRelaunchWorkgroupMember,
                   resolved.session.codeReviewRawCommand != nil else {
                 throw OrchestratorError.unsupported(reason: "Target \(resolved.roleName) in \(resolved.workgroupName) can't be reloaded to start a fresh review.")
             }

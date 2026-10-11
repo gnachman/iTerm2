@@ -392,6 +392,10 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         return true
     }
 
+    override func tmuxActiveMemberDidChange(to identifier: String) {
+        syncModeSwitchers(to: identifier)
+    }
+
     // The switchers were synced at commit time (above), but the swap
     // never ran; put the highlight back on the member that is really
     // active.
@@ -703,7 +707,7 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                 resolved = cfg.resolvedCommand(gitBase: base)
             }
             guard !resolved.isEmpty else { return }
-            session.restart(withCommand: session.workgroupPeerLaunchCommand(resolved) ?? "")
+            session.relaunchWorkgroupMember(command: resolved)
         }
     }
 
@@ -769,7 +773,7 @@ extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
                 })
             return
         }
-        guard session.isRestartable() else {
+        guard session.canRelaunchWorkgroupMember else {
             RLog("iTermWorkgroupPeerPort: nav Reload aborted, session not restartable owner=\(ownerPeerID) mode=\(session.workgroupSessionMode)")
             return
         }
@@ -784,6 +788,14 @@ extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
         // Reload re-runs whatever the session is currently set to run
         // (its _program), not the original cfg.command. Same rationale
         // as the workgroup instance's reload path.
+        if let binding = session.workgroupTmuxBinding,
+           let cfg = peerConfigs.first(where: { $0.uniqueIdentifier == ownerPeerID }) {
+            // Its program ran on the tmux server, not here; its command is evaluated again.
+            RLog("iTermWorkgroupPeerPort: nav Reload relaunching tmux member owner=\(ownerPeerID)")
+            let base = workgroupInstance?.currentGitBase ?? CCGitBaseSelectorItem.defaultBase
+            session.relaunchTmuxWorkgroupMember(binding, command: cfg.resolvedCommand(gitBase: base))
+            return
+        }
         RLog("iTermWorkgroupPeerPort: nav Reload restarting session owner=\(ownerPeerID) mode=\(session.workgroupSessionMode)")
         session.restart()
     }
@@ -831,7 +843,7 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
             RLog("iTermWorkgroupPeerPort.diffDidSelect aborted, resolved per-file command is empty for owner=\(ownerPeerID)")
             return
         }
-        session.restart(withCommand: session.workgroupPeerLaunchCommand(command) ?? "")
+        session.relaunchWorkgroupMember(command: command)
     }
 
     // Mirror the diff selector's can-navigate predicates onto the
@@ -874,7 +886,7 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
             return
         }
         let resolved = cfg.resolvedCommand(gitBase: currentGitBase)
-        session.restart(withCommand: session.workgroupPeerLaunchCommand(resolved) ?? "")
+        session.relaunchWorkgroupMember(command: resolved)
     }
 }
 

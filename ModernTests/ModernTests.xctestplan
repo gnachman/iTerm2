@@ -23,6 +23,10 @@
     ],
     "environmentVariableEntries" : [
       {
+        "key" : "ASAN_OPTIONS",
+        "value" : "malloc_context_size=0"
+      },
+      {
         "key" : "MallocStackLogging",
         "value" : "YES"
       },

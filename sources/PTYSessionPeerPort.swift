@@ -114,6 +114,20 @@ class PTYSessionPeerPort: NSObject {
         }
     }
     
+    /// A peer on a tmux server whose pane was replaced (see TmuxWorkgroupCommands.RelaunchMethod):
+    /// its new session takes its place, under the same identifier.
+    func replacePeer(identifier: String, with session: PTYSession) {
+        guard !invalidated, let old = peers[identifier]?.maybeValue, old !== session else {
+            return
+        }
+        RLog("PTYSessionPeerPort: peer \(identifier) is now \(session.guid), replacing \(old.guid)")
+        if old.peerPort === self {
+            old.peerPort = nil
+        }
+        peers[identifier] = iTermPromise<PTYSession>(value: session)
+        session.set(peerPort: self)
+    }
+
     func contains(session: PTYSession) -> Bool {
         return Array(peers.values).anySatisfies { $0.maybeValue === session }
     }
@@ -172,11 +186,40 @@ class PTYSessionPeerPort: NSObject {
         return peers[identifier]?.maybeValue
     }
 
+    func promise(forIdentifier identifier: String) -> iTermPromise<PTYSession>? {
+        return peers[identifier]
+    }
+
+    // For a peer group in a tmux Integration tab. The tab follows tmux's layout, so activating a
+    // member is a guarded swap-pane that this handles; the port neither swaps views nor needs an
+    // anchor. Set by the workgroup instance.
+    var tmuxActivation: ((String) -> Bool)?
+
+    // In a tmux tab, a member's pane moved into view, by this client's switch or another's: the tab
+    // already shows it, so only record it as active.
+    func tmuxMemberDidBecomeVisible(_ session: PTYSession) {
+        guard let identifier = identifier(for: session) else {
+            return
+        }
+        RLog("PTYSessionPeerPort: \(identifier) is now in view in its tmux tab")
+        activeSessionIdentifier = identifier
+        lastSwappedActiveIdentifier = identifier
+        tmuxActiveMemberDidChange(to: identifier)
+        didSwapInPeer(session)
+    }
+
+    // Hook for subclasses: the active member changed in a tmux tab.
+    func tmuxActiveMemberDidChange(to identifier: String) {
+    }
+
     @objc(activateIdentifier:)
     @discardableResult
     func activate(identifier: String) -> Bool {
         guard let promise = peers[identifier] else {
             return false
+        }
+        if let tmuxActivation {
+            return tmuxActivation(identifier)
         }
         // A spawn that already REJECTED can never be activated, so
         // refuse before committing. Committing would be worse than

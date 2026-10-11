@@ -451,6 +451,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 @end
 
 @implementation PTYSession {
+    // See -isTmuxBuried and -hasBeenTmuxBuried.
+    BOOL _tmuxBuried;
+    BOOL _hasBeenTmuxBuried;
     // A tmux pane on a host reached through SSH Integration: the pane's pid on that host, from
     // #{pane_pid}. Its jobs are read from the gateway conductor's view of the host's processes
     // (see remoteTmuxPaneProcessInfoProvider). nil for a pane on this Mac, which uses
@@ -3934,7 +3937,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (self.workgroupInstance != nil) {
         return;
     }
-    if (_tmuxMode == TMUX_CLIENT && (_tmuxController.detached || _tmuxController.detaching)) {
+    if (_tmuxMode == TMUX_CLIENT || _hasBeenTmuxBuried) {
+        // The pane closed on the server. No profile command ran, and tmux Integration closes
+        // panes it just made (e.g., a workgroup's placeholder windows) as a matter of course. A
+        // buried workgroup member may be ended after its connection is gone, too.
         return;
     }
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < [iTermAdvancedSettingsModel shortLivedSessionDuration]) {
@@ -4076,10 +4082,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [self _maybeWarnAboutShortLivedSessions];
     }
     if (self.tmuxMode == TMUX_CLIENT) {
-        assert([_delegate tmuxWindow] >= 0);
-        [_tmuxController deregisterWindow:[_delegate tmuxWindow]
-                               windowPane:self.tmuxPane
-                                  session:self];
+        if (_tmuxBuried) {
+            // No tab, so no window registration: see -buryTmuxClientSession.
+            [_tmuxController deregisterBuriedSession:(PTYSession<iTermTmuxControllerSession> *)self
+                                            withPane:self.tmuxPane];
+        } else {
+            assert([_delegate tmuxWindow] >= 0);
+            [_tmuxController deregisterWindow:[_delegate tmuxWindow]
+                                   windowPane:self.tmuxPane
+                                      session:self];
+        }
         // This call to fitLayoutToWindows is necessary to handle the case where
         // a small window closes and leaves behind a larger (e.g., fullscreen)
         // window. We want to set the client size to that of the smallest
@@ -6815,13 +6827,20 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)setDelegate:(id<PTYSessionDelegate>)delegate {
-    if ([self isTmuxClient]) {
+    // A buried session holds no window registration to release.
+    if ([self isTmuxClient] && !_tmuxBuried) {
         [_tmuxController deregisterWindow:[_delegate tmuxWindow]
                                windowPane:self.tmuxPane
                                   session:self];
     }
     BOOL needsTermID = (_delegate == nil);
     _delegate = delegate;
+    if (_tmuxBuried && delegate) {
+        // Adopted into a tab: see -buryTmuxClientSession.
+        RLog(@"Buried tmux session %@ for pane %d is adopted into a tab", self, self.tmuxPane);
+        _tmuxBuried = NO;
+        [self disinter];
+    }
     if ([self isTmuxClient]) {
         [_tmuxController registerSession:self
                                 withPane:self.tmuxPane
@@ -11136,6 +11155,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
          @(windowId), layout, zoomed, @(only));
     PTYTab *tab = [_tmuxController window:windowId];
     if (!tab) {
+        if ([_tmuxController parkedWindow:windowId layoutDidChange:layout]) {
+            DLog(@"* Parked window: resized its buried sessions");
+            return NO;
+        }
         DLog(@"* NO TAB, DO NOTHING");
         [_tmuxController didLearnLayout:layout forWindow:windowId];
         return NO;
@@ -15843,6 +15866,34 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     } else {
         [self.tmuxController pausePanes:@[ @(self.tmuxPane) ]];
     }
+}
+
+- (BOOL)isTmuxBuried {
+    return _tmuxBuried;
+}
+
+- (BOOL)hasBeenTmuxBuried {
+    return _hasBeenTmuxBuried;
+}
+
+- (void)markTmuxBuried {
+    _tmuxBuried = YES;
+    _hasBeenTmuxBuried = YES;
+    [_textview setDataSource:nil];
+    [_textview setDelegate:nil];
+}
+
+- (void)buryTmuxClientSession {
+    RLog(@"Bury tmux session %@ for pane %d", self, self.tmuxPane);
+    ITAssertWithMessage(self.isTmuxClient, @"Not a tmux client");
+    [_tmuxController deregisterWindow:[_delegate tmuxWindow]
+                           windowPane:self.tmuxPane
+                              session:self];
+    [self markTmuxBuried];
+    // Not through the setter, which would try to register the session with a window.
+    _delegate = nil;
+    [_tmuxController registerBuriedSession:(PTYSession<iTermTmuxControllerSession> *)self
+                                  withPane:self.tmuxPane];
 }
 
 - (void)bury {
@@ -26859,6 +26910,15 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     NSString *identifier = IT2AuthorizationAnnouncementIdentifier(guid);
     PTYSession *host = [self it2AuthorizationPromptSessionForIdentifier:identifier] ?: self;
     iTermAnnouncementViewController *announcement = host->_announcements[identifier];
+    if (!announcement) {
+        return NO;
+    }
+    [announcement debugSelectActionAtIndex:index];
+    return YES;
+}
+
+- (BOOL)debugSelectAction:(int)index ofAnnouncementWithIdentifier:(NSString *)identifier {
+    iTermAnnouncementViewController *announcement = _announcements[identifier];
     if (!announcement) {
         return NO;
     }

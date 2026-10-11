@@ -630,6 +630,18 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 
 @property(nonatomic, readonly) int tmuxPane;
 
+// A tmux client session for a pane in a parked window (a workgroup peer). It has no tab;
+// TmuxController keeps it in its buried registry and routes its pane's output to it. It leaves that
+// state when it is adopted into a tab.
+@property(nonatomic, readonly) BOOL isTmuxBuried;
+// Whether the session has ever been buried, i.e. its pane has been parked: a workgroup peer.
+@property(nonatomic, readonly) BOOL hasBeenTmuxBuried;
+// For a session created without a tab for a parked pane.
+- (void)markTmuxBuried;
+// Takes a tmux client session out of its tab (whose layout no longer has its pane) and keeps it
+// alive, buried, for its pane.
+- (void)buryTmuxClientSession;
+
 // FinalTerm
 @property(nonatomic, readonly, nullable) NSArray *autocompleteSuggestionsForCurrentCommand;
 @property(nonatomic, readonly, nullable) NSString *currentCommand;
@@ -891,6 +903,9 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // click would. Development builds only, for the ssh integration live harness, which has no other
 // way to answer the prompt. Returns NO when no such announcement is pending.
 - (BOOL)debugAnswerIT2AuthorizationForConductorGUID:(NSString *)guid selection:(int)index;
+// Presses button `index` of the announcement with `identifier`, as a click would. Returns NO when
+// there is none. For harnesses.
+- (BOOL)debugSelectAction:(int)index ofAnnouncementWithIdentifier:(NSString *)identifier;
 #endif
 
 // Register the contents in the arrangement so that if the session is later

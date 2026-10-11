@@ -1214,17 +1214,16 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
                        "enter() must not report success after a mid-spawn teardown")
 
         // No ghost: the aborted instance is not registered anywhere.
-        let abortedID = saboteur.workgroupInstanceIDsByConfigID.values.first
-        XCTAssertNotNil(abortedID)
-        if let abortedID {
-            XCTAssertNil(
-                iTermWorkgroupController.instance.mainSession(
-                    forInstanceUniqueIdentifier: abortedID))
-            XCTAssertFalse(
-                iTermWorkgroupController.instance.allInstances.contains {
-                    $0.instanceUniqueIdentifier == abortedID
-                })
-        }
+        // The workgroup is fresh to this test, so any registered
+        // instance of it, or any instance on this leader, is the ghost.
+        XCTAssertFalse(
+            iTermWorkgroupController.instance.allInstances.contains {
+                $0.workgroupUniqueIdentifier == wg.uniqueIdentifier
+            })
+        XCTAssertFalse(
+            iTermWorkgroupController.instance.allInstances.contains {
+                $0.mainSession === leader
+            })
         // Teardown cleaned the leader.
         XCTAssertNil(leader.workgroupInstance)
         XCTAssertNil(leader.peerPort)

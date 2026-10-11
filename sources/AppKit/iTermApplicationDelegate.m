@@ -1479,9 +1479,12 @@ void TurnOnDebugLoggingAutomatically(void) {
     // app actually accesses the local network. Without this, users may find that commands like
     // `ping 10.0.0.1` fail with "No route to host" until they reboot. Probing every launch is
     // silent once a decision exists and lets us recover after a TCC reset or OS upgrade (issue
-    // 12956).
-    DLog(@"Prompt for local network permission");
-    [[iTermLocalNetworkPermissionPrompter shared] prompt];
+    // 12956). Not for a unit test host: it needs no local network, and the prompt would sit
+    // unanswered on a machine running tests unattended.
+    if (![NSApp isRunningUnitTests]) {
+        DLog(@"Prompt for local network permission");
+        [[iTermLocalNetworkPermissionPrompter shared] prompt];
+    }
 
     // Bookmarks must be loaded for this to work since it needs to know if the hotkey's profile
     // exists.

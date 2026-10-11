@@ -92,6 +92,9 @@ class PTYSessionSwiftState: NSObject {
     // A remote review peer's input files are being written; a second Start (auto-request calls it
     // directly) must not launch twice.
     var codeReviewLaunchPending = false
+    // Whether a workgroup member on a tmux server shows that its program has not started (the code
+    // review prompt, or the diff waiting for changes). See syncTmuxWorkgroupWaiting.
+    var tmuxWorkgroupWaiting = TmuxWorkgroupWaitingDisplay.none
     // The last ShellIntegrationVersion the shell reported, forgotten when a new SSH Integration
     // connection starts so a remote shell that reports nothing does not inherit the local one's.
     var reportedShellIntegration: (shell: String?, version: Int)?
@@ -2133,22 +2136,29 @@ extension PTYSession {
     /// host, in the leader's directory there. Every launch and relaunch of a peer's program goes
     /// through here, so none can run locally by accident.
     ///
-    /// `workgroupInstanceID` is for a first launch, before the peer is linked to its instance.
     /// nil means "the profile's own command", which only a local peer with no command gets; a
     /// remote peer with no command gets an interactive login shell on the host instead, never the
     /// leader's profile command.
-    func workgroupPeerLaunchCommand(_ shellCommand: String, workgroupInstanceID: String? = nil) -> String? {
+    func workgroupPeerLaunchCommand(_ shellCommand: String) -> String? {
         guard let remote = workgroupRemoteHost else {
             return shellCommand.isEmpty ? nil : ITAddressBookMgr.commandByWrapping(inLoginShell: shellCommand)
         }
         let directory = MainActor.assumeIsolated { remote.currentDirectory }
-        let plan = remote.launchPlan(remoteCommand: shellCommand,
-                                     workgroupInstanceID: workgroupInstanceID ?? workgroupInstance?.instanceUniqueIdentifier,
-                                     directory: directory)
+        let plan = remote.launchPlan(remoteCommand: shellCommand, directory: directory)
         DLog("Workgroup peer \(guid) launches on its leader's host in \(plan.jumps.last?.initialDirectory ?? "(no directory: the host's default)")")
         setPendingJumpsForNextLaunch(plan.jumps.map { SSHReconnectionInfoObjC($0) })
         RLog("PTYSession[\(guid)]: workgroup peer runs on its leader's host")
         return remote.localCommand(for: plan)
+    }
+
+    /// Replaces what this workgroup member runs with the shell command `command`: in its pane on
+    /// its tmux server, or else here (on the leader's host when the leader is on one).
+    func relaunchWorkgroupMember(command: String) {
+        if let binding = workgroupTmuxBinding {
+            relaunchTmuxWorkgroupMember(binding, command: command)
+            return
+        }
+        restart(withCommand: workgroupPeerLaunchCommand(command) ?? "")
     }
 
     var pendingDiffLaunch: (() -> Void)? {
@@ -2301,7 +2311,7 @@ extension PTYSession {
             }
             return
         }
-        guard isRestartable() else {
+        guard canRelaunchWorkgroupMember else {
             RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded aborted, not restartable and no pending launch (State C)")
             return
         }
@@ -2313,6 +2323,15 @@ extension PTYSession {
         // self check.
         let restartWithCurrentSelection: () -> Void = { [weak self] in
             guard let self else { return }
+            if let binding = self.workgroupTmuxBinding {
+                // A member on a tmux server has no program here to restart; its pane is respawned.
+                guard let command = resolveCommand?() else {
+                    RLog("PTYSession[\(self.guid)]: reloadDiffWithDeferralIfNeeded has no command for the tmux member")
+                    return
+                }
+                self.relaunchTmuxWorkgroupMember(binding, command: command)
+                return
+            }
             // resolveCommand gives the plain diff command; it runs on the leader's host when the
             // leader is on one. See workgroupPeerLaunchCommand.
             if let command = resolveCommand?(),
@@ -2382,11 +2401,8 @@ extension PTYSession {
 
     // Build a peer session for a workgroup's configured peer, driven
     // by an iTermWorkgroupSessionConfig config (profile override, command
-    // override, buried until activated). `workgroupInstanceID` is
-    // injected as ITERM_WORKGROUP_ID in the launch request so the
-    // peer's shell sees the per-entry workgroup id.
-    func makeWorkgroupPeer(config: iTermWorkgroupSessionConfig,
-                           workgroupInstanceID: String) -> iTermPromise<PTYSession> {
+    // override, buried until activated).
+    func makeWorkgroupPeer(config: iTermWorkgroupSessionConfig) -> iTermPromise<PTYSession> {
         return iTermPromise<PTYSession> { seal in
             withDelegate { [weak self] delegate in
                 guard let self else {
@@ -2503,8 +2519,7 @@ extension PTYSession {
                             objectType: .paneObject,
                             factory: factory,
                             windowController: nil,
-                            oldCWD: oldCWD,
-                            workgroupInstanceID: workgroupInstanceID)
+                            oldCWD: oldCWD)
                         seal.fulfill(newSession)
                         return
                     }
@@ -2550,8 +2565,7 @@ extension PTYSession {
                             let base = newSession.workgroupInstance?.currentGitBase
                                 ?? CCGitBaseSelectorItem.defaultBase
                             let resolved = cfg.resolvedCommand(gitBase: base)
-                            let cmd = newSession.workgroupPeerLaunchCommand(
-                                resolved, workgroupInstanceID: workgroupInstanceID)
+                            let cmd = newSession.workgroupPeerLaunchCommand(resolved)
                             let request = iTermSessionAttachOrLaunchRequest(
                                 session: newSession,
                                 canPrompt: false,
@@ -2560,7 +2574,7 @@ extension PTYSession {
                                 serverConnection: iTermGeneralServerConnection(),
                                 urlString: urlString,
                                 allowURLSubs: false,
-                                environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
+                                environment: nil,
                                 customShell: nil,
                                 oldCWD: oldCWD,
                                 forceUseOldCWD: true,
@@ -2574,8 +2588,7 @@ extension PTYSession {
                         seal.fulfill(newSession)
                         return
                     }
-                    let command = newSession.workgroupPeerLaunchCommand(
-                        config.command, workgroupInstanceID: workgroupInstanceID)
+                    let command = newSession.workgroupPeerLaunchCommand(config.command)
                     let launchRequest = iTermSessionAttachOrLaunchRequest(
                         session: newSession,
                         canPrompt: false,
@@ -2584,7 +2597,7 @@ extension PTYSession {
                         serverConnection: iTermGeneralServerConnection(),
                         urlString: urlString,
                         allowURLSubs: false,
-                        environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
+                        environment: nil,
                         customShell: nil,
                         oldCWD: oldCWD,
                         forceUseOldCWD: true,

@@ -1391,6 +1391,43 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
     TmuxLog(@"Sent command with dictionary: %@", [dict objectForKey:kCommandString]);
 }
 
+// Enqueued as a two-command list so the existing list handling keeps the queue in step: if the
+// `if` fails, tmux sends no block for the branch, and the error autofails the second entry.
+- (void)sendGuardedCommand:(NSString *)command
+            responseTarget:(id)target
+          responseSelector:(SEL)selector
+            responseObject:(id)obj {
+    NS_VALID_UNTIL_END_OF_SCOPE TmuxGateway *selfRef = self;
+
+    if (detachSent_ || disconnected_) {
+        return;
+    }
+    NSString *commandWithNewline = [command stringByAppendingString:self.newline];
+    NSMutableDictionary *guardDict = [[self dictionaryForCommand:commandWithNewline
+                                                  responseTarget:nil
+                                                responseSelector:nil
+                                                  responseObject:nil
+                                                           flags:kTmuxGatewayCommandShouldTolerateErrors] mutableCopy];
+    guardDict[kCommandIsInList] = @YES;
+    NSMutableDictionary *branchDict = [[self dictionaryForCommand:[@"(branch of) " stringByAppendingString:commandWithNewline]
+                                                   responseTarget:target
+                                                 responseSelector:selector
+                                                   responseObject:obj
+                                                            flags:kTmuxGatewayCommandShouldTolerateErrors] mutableCopy];
+    branchDict[kCommandIsInList] = @YES;
+    branchDict[kCommandIsLastInList] = @YES;
+    [self enqueueCommandDict:guardDict];
+    if (disconnected_) {
+        return;
+    }
+    [self enqueueCommandDict:branchDict];
+    if (disconnected_) {
+        return;
+    }
+    TmuxLog(@"Send guarded command: %@", commandWithNewline);
+    [self write:commandWithNewline];
+}
+
 - (void)sendCommandList:(NSArray *)commandDicts {
     [self sendCommandList:commandDicts initial:NO];
 }

@@ -48,19 +48,16 @@ final class WorkgroupRemoteHostTests: XCTestCase {
 
     // MARK: - Building a peer's launch
 
-    private let id = "wg-1234"
-
     func testSingleHop() throws {
         let remote = WorkgroupRemoteHost(hops: [hop("host claude")], directory: "/srv/repo", sshConfig: nil)
-        let launch = remote.launchPlan(remoteCommand: "git diff", workgroupInstanceID: id)
+        let launch = remote.launchPlan(remoteCommand: "git diff")
         XCTAssertEqual(launch.jumps.count, 1)
         XCTAssertEqual(launch.jumps[0].initialDirectory, "/srv/repo", "starts in the leader's directory")
         let parsed = ParsedSSHArguments(launch.firstHopArguments, booleanArgs: "", hostnameFinder: iTermHostnameFinder())
         XCTAssertEqual(parsed.host, "host")
         XCTAssertEqual(launch.jumps[0].sshargs, launch.firstHopArguments)
-        // The workgroup ID travels in the command itself, so it reaches the host however many hops
-        // away it is, and the command runs under /bin/sh whatever the login shell is.
-        XCTAssertEqual(parsed.commandLine, "env ITERM_WORKGROUP_ID='wg-1234' /bin/sh -c 'git diff'")
+        // The command runs under /bin/sh whatever the login shell is.
+        XCTAssertEqual(parsed.commandLine, "/bin/sh -c 'git diff'")
     }
 
     // Each earlier hop is replayed as it was; only the last carries the command and the
@@ -68,21 +65,21 @@ final class WorkgroupRemoteHostTests: XCTestCase {
     func testSeveralHops() throws {
         let remote = WorkgroupRemoteHost(hops: [hop("bastion", "/home/me"), hop("-p 2200 internal claude")],
                                          directory: "/srv/repo", sshConfig: nil)
-        let launch = remote.launchPlan(remoteCommand: "git diff", workgroupInstanceID: id)
+        let launch = remote.launchPlan(remoteCommand: "git diff")
         XCTAssertEqual(launch.jumps.count, 2)
         XCTAssertEqual(launch.firstHopArguments, "'bastion'")
         XCTAssertEqual(launch.jumps[0].initialDirectory, "/home/me")
         let last = ParsedSSHArguments(launch.jumps[1].sshargs, booleanArgs: "", hostnameFinder: iTermHostnameFinder())
         XCTAssertEqual(last.host, "internal")
         XCTAssertEqual(last.port, 2200)
-        XCTAssertEqual(last.commandLine, "env ITERM_WORKGROUP_ID='wg-1234' /bin/sh -c 'git diff'")
+        XCTAssertEqual(last.commandLine, "/bin/sh -c 'git diff'")
         XCTAssertEqual(launch.jumps[1].initialDirectory, "/srv/repo")
     }
 
     // No command: an interactive login shell on the host, never the leader's command.
     func testEmptyCommandIsAnInteractiveShell() {
         let launch = WorkgroupRemoteHost(hops: [hop("host claude")], directory: "/srv", sshConfig: nil)
-            .launchPlan(remoteCommand: "", workgroupInstanceID: id)
+            .launchPlan(remoteCommand: "")
         let parsed = ParsedSSHArguments(launch.firstHopArguments, booleanArgs: "", hostnameFinder: iTermHostnameFinder())
         XCTAssertEqual(parsed.commandLine, "")
         XCTAssertEqual(launch.jumps[0].initialDirectory, "/srv")
@@ -92,7 +89,7 @@ final class WorkgroupRemoteHostTests: XCTestCase {
     func testAwkwardCommandSurvives() {
         let command = "claude 'review this;\nit'\\''s fine'"
         let launch = WorkgroupRemoteHost(hops: [hop("host")], directory: nil, sshConfig: nil)
-            .launchPlan(remoteCommand: command, workgroupInstanceID: nil)
+            .launchPlan(remoteCommand: command)
         let parsed = ParsedSSHArguments(launch.firstHopArguments, booleanArgs: "", hostnameFinder: iTermHostnameFinder())
         let words = BashWordSplitter.words(parsed.commandLine)
         XCTAssertEqual(words, ["/bin/sh", "-c", command])

@@ -15,27 +15,19 @@ extension PTYSession {
     // Initial spawn (deferred launch). The session has been created but
     // no program has run yet; on Start, fire attachOrLaunch with the
     // resolved command.
-    //
-    // `workgroupInstanceID` is captured for ITERM_WORKGROUP_ID just
-    // like the regular spawn paths in WorkgroupSessionSpawner.launch
-    // and PTYSession.makeWorkgroupPeer — without this, the deferred
-    // shell would launch with no workgroup-id env var.
     @objc
     func presentCodeReviewPromptOverlay(rawCommand: String,
                                          urlString: String?,
                                          objectType: iTermObjectType,
                                          factory: iTermSessionFactory,
                                          windowController: PseudoTerminal?,
-                                         oldCWD: String?,
-                                         workgroupInstanceID: String) {
+                                         oldCWD: String?) {
         RLog("PTYSession[\(guid)]: presentCodeReviewPromptOverlay (initial deferred launch)")
         codeReviewRawCommand = rawCommand
         showCodeReviewPromptOverlay { [weak self] text in
             guard let self else { return }
             RLog("PTYSession[\(self.guid)]: code-review overlay Start pressed, launching deferred program")
-            self.prepareCodeReviewCommand(text: text,
-                                          rawCommand: rawCommand,
-                                          workgroupInstanceID: workgroupInstanceID) { [weak self] wrapped in
+            self.prepareCodeReviewCommand(text: text, rawCommand: rawCommand) { [weak self] wrapped in
                 guard let self else { return }
                 let request = iTermSessionAttachOrLaunchRequest(
                     session: self,
@@ -45,7 +37,7 @@ extension PTYSession {
                     serverConnection: iTermGeneralServerConnection(),
                     urlString: urlString,
                     allowURLSubs: false,
-                    environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
+                    environment: nil,
                     customShell: nil,
                     oldCWD: oldCWD,
                     forceUseOldCWD: true,
@@ -64,11 +56,6 @@ extension PTYSession {
     // running; on Start, kill+restart the session with the new
     // resolved command. Reads the raw template from the cached
     // `codeReviewRawCommand` set during the initial spawn.
-    //
-    // restart(withCommand:) feeds through replaceTerminatedShellWith-
-    // NewInstance, which preserves the existing _environment — so
-    // ITERM_WORKGROUP_ID set during the initial deferred launch
-    // carries forward across reloads.
     @objc
     func reloadCodeReviewPromptOverlay() {
         RLog("PTYSession[\(guid)]: reloadCodeReviewPromptOverlay")
@@ -79,10 +66,65 @@ extension PTYSession {
         showCodeReviewPromptOverlay { [weak self] text in
             guard let self else { return }
             RLog("PTYSession[\(self.guid)]: code-review overlay Start pressed, restarting program")
+            if let binding = self.workgroupTmuxBinding {
+                self.startTmuxCodeReview(binding, text: text, rawCommand: rawCommand, onlyIfWaiting: false)
+                return
+            }
             self.prepareCodeReviewCommand(text: text, rawCommand: rawCommand) { [weak self] wrapped in
                 self?.restart(withCommand: wrapped ?? "")
             }
         }
+    }
+
+    /// A code review member on a tmux server that has not started: its prompt overlay, whose Start
+    /// starts it unless another client already did.
+    func presentTmuxCodeReviewPromptOverlay(rawCommand: String) {
+        RLog("PTYSession[\(guid)]: presentTmuxCodeReviewPromptOverlay")
+        codeReviewRawCommand = rawCommand
+        showCodeReviewPromptOverlay { [weak self] text in
+            guard let self, let binding = self.workgroupTmuxBinding else { return }
+            RLog("PTYSession[\(self.guid)]: code-review overlay Start pressed, starting the tmux member")
+            self.tmuxWorkgroupMemberWillStart()
+            self.startTmuxCodeReview(binding, text: text, rawCommand: rawCommand, onlyIfWaiting: true)
+        }
+    }
+
+    /// Runs the review in this member's tmux pane, its input files written by the same script under
+    /// the server's home, since the command names them by path and runs there.
+    private func startTmuxCodeReview(_ binding: TmuxWorkgroupBinding,
+                                     text: String,
+                                     rawCommand: String,
+                                     onlyIfWaiting: Bool) {
+        let onRemoteHost = MainActor.assumeIsolated { WorkgroupRemoteHost.forLeader(self) != nil }
+        let it2 = CodeReviewIt2.command(onRemoteHost: onRemoteHost, bundlePath: Bundle.main.bundlePath)
+        let systemPrompt = CodeReviewIt2.substitute(
+            iTermPreferences.string(forKey: kPreferenceKeyAIPromptCodeReviewSystem) ?? "", command: it2)
+        let settings = String(decoding: CodeReviewIt2.substituteInJSON(
+            FileManager.default.contents(atPath: Self.bundledCodeReviewSettingsPath) ?? Data(), command: it2),
+                              as: UTF8.self)
+        let promptName = "system-prompt-\(guid).txt"
+        let settingsName = "settings.txt"
+        binding.relaunch(paneID: Int(tmuxPane),
+                         onlyIfWaiting: onlyIfWaiting,
+                         needsHome: true,
+                         command: { [weak self] home in
+            guard let self, let home else { return nil }
+            let directory = home + "/.iterm2/code-review"
+            let resolved = self.resolvedCodeReviewCommand(
+                text: text,
+                rawCommand: rawCommand,
+                remoteInputs: (directory + "/" + promptName, directory + "/" + settingsName))
+            return TmuxWorkgroupCommands.writeFilesScript(directory: directory,
+                                                          files: [(promptName, systemPrompt),
+                                                                  (settingsName, settings)]) + "\n" + resolved
+        },
+                         completion: { [weak self] started in
+            guard let self else { return }
+            RLog("PTYSession[\(self.guid)]: code review in tmux started=\(started)")
+            if onlyIfWaiting {
+                self.tmuxWorkgroupMemberDidStart(started)
+            }
+        })
     }
 
     // Programmatically kick off a code review without a manual Start click.
@@ -97,7 +139,7 @@ extension PTYSession {
     //      text so its onStart fires.
     //   2. The review already ran and there's no overlay — re-present it
     //      (restart path) and immediately submit, so a fresh review runs.
-    //      Gated on isRestartable() exactly like the toolbar Reload button.
+    //      Gated on canRelaunchWorkgroupMember exactly like the toolbar Reload button.
     @objc @discardableResult
     func autoRequestCodeReview() -> Bool {
         RLog("PTYSession[\(guid)]: autoRequestCodeReview")
@@ -110,8 +152,8 @@ extension PTYSession {
             overlay.onStart?(overlay.text)
             return true
         }
-        guard isRestartable(), codeReviewRawCommand != nil else {
-            RLog("PTYSession[\(guid)]: autoRequestCodeReview aborted, restartable=\(isRestartable()) hasRawCommand=\(codeReviewRawCommand != nil)")
+        guard canRelaunchWorkgroupMember, codeReviewRawCommand != nil else {
+            RLog("PTYSession[\(guid)]: autoRequestCodeReview aborted, relaunchable=\(canRelaunchWorkgroupMember) hasRawCommand=\(codeReviewRawCommand != nil)")
             return false
         }
         reloadCodeReviewPromptOverlay()
@@ -155,11 +197,9 @@ extension PTYSession {
     /// request while it is pending is dropped. Otherwise `completion` is called at once.
     private func prepareCodeReviewCommand(text: String,
                                           rawCommand: String,
-                                          workgroupInstanceID: String? = nil,
                                           completion: @escaping (String?) -> Void) {
         guard let remote = workgroupRemoteHost else {
             completion(wrappedCommandForCodeReview(text: text, rawCommand: rawCommand,
-                                                   workgroupInstanceID: workgroupInstanceID,
                                                    remoteInputs: nil))
             return
         }
@@ -180,7 +220,6 @@ extension PTYSession {
                 guard let self else { return }
                 self.swiftState.codeReviewLaunchPending = false
                 completion(self.wrappedCommandForCodeReview(text: text, rawCommand: rawCommand,
-                                                            workgroupInstanceID: workgroupInstanceID,
                                                             remoteInputs: paths))
             }
         }
@@ -193,8 +232,17 @@ extension PTYSession {
 
     private func wrappedCommandForCodeReview(text: String,
                                                rawCommand: String,
-                                               workgroupInstanceID: String? = nil,
                                                remoteInputs: (systemPrompt: String, settings: String)?) -> String? {
+        let resolvedCommand = resolvedCodeReviewCommand(text: text, rawCommand: rawCommand, remoteInputs: remoteInputs)
+        // On the leader's host when the leader is on one. See workgroupPeerLaunchCommand.
+        return workgroupPeerLaunchCommand(resolvedCommand)
+    }
+
+    /// The review's shell command: the template evaluated with the prompt and the input files'
+    /// paths. `remoteInputs` are paths where the review runs, if not on this Mac.
+    private func resolvedCodeReviewCommand(text: String,
+                                           rawCommand: String,
+                                           remoteInputs: (systemPrompt: String, settings: String)?) -> String {
         // Single-quote wrap so the value is one positional arg in any
         // POSIX-style shell (bash, zsh, fish, …). Normalize line
         // endings first: a stray CR from NSTextView or pasted content
@@ -220,7 +268,7 @@ extension PTYSession {
         let bundledFallback = NSString.path(withComponents:
             [Bundle.main.bundlePath, "Contents", "Resources", "code-review-system-prompt.txt"])
         if let remoteInputs {
-            // Copies written on the remote host, where the review runs.
+            // Copies written where the review runs: a remote host, or a tmux server.
             genericScope.setValue(remoteInputs.systemPrompt, forVariableNamed: "codeReviewSystemPromptFile")
             genericScope.setValue(remoteInputs.settings, forVariableNamed: "codeReviewSettingsFile")
         } else {
@@ -232,10 +280,9 @@ extension PTYSession {
 
         let resolvedCommand = evaluateSwiftyTemplate(rawCommand)
         if resolvedCommand.isEmpty {
-            DLog("wrappedCommandForCodeReview: resolved command is empty")
+            DLog("resolvedCodeReviewCommand: resolved command is empty")
         }
-        // On the leader's host when the leader is on one. See workgroupPeerLaunchCommand.
-        return workgroupPeerLaunchCommand(resolvedCommand, workgroupInstanceID: workgroupInstanceID)
+        return resolvedCommand
     }
 
     // Writes the configured code-review system prompt to a stable
