@@ -17,7 +17,8 @@
 #      disables system sleep, and installs Homebrew.
 #   4. Downloads Xcode's Metal toolchain (for the shaders) and installs tmux with Homebrew (for
 #      the tmux live harnesses).
-#   5. Turns off the screen saver and crash-report dialogs, so nothing stalls a run.
+#   5. Turns off the screen saver, crash-report dialogs and iTerm2's first-run update prompt, so
+#      nothing stalls a run.
 #   6. Makes `ssh localhost` work with a key on the VM (for tools/run_ssh_integration_live.sh).
 #   7. Checks for a GUI login. Tests run as a LaunchAgent in the VM user's GUI session, so the
 #      user must be logged in at the VM's console. Turning on automatic login keeps that true
@@ -141,8 +142,14 @@ else
     echo "No Homebrew yet; skipping tmux. Rerun without --no-sudo." >&2
 fi
 
-step "Screen saver and crash dialogs"
-rsh_sh 'defaults -currentHost write com.apple.screensaver idleTime -int 0
+step "Screen saver, crash dialogs and first-run prompts"
+# The test host is iTerm2 itself, with its preferences in the iterm2-tests suite (see
+# ModernTests.xctestplan). On a fresh account Sparkle asks there whether to check for updates
+# automatically, in a modal alert that nobody answers; while it is up, AppKit delivers no actions
+# outside it, so tests that send menu actions or answer warnings fail.
+rsh_sh 'defaults write iterm2-tests SUEnableAutomaticChecks -bool false
+defaults write iterm2-tests SUSendProfileInfo -bool false
+defaults -currentHost write com.apple.screensaver idleTime -int 0
 defaults write com.apple.CrashReporter DialogType -string none
 defaults write com.apple.dt.Xcode IDEDisableStateRestoration -bool YES
 echo done'
