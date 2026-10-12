@@ -623,6 +623,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)terminalDidReadRawSSHData:(nullable NSData *)data
                               pid:(int)pid
                           channel:(int)channel;
+// Output of a pane process (SSH_OUTPUT_PANE_CHANNEL) started by the conductor at `depth`.
+- (void)terminalDidReadSSHPaneOutput:(nullable NSData *)data
+                                 pid:(int)pid
+                               depth:(int)depth;
 
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth;
 - (void)terminalHandleIT2:(nullable NSString *)string depth:(int)depth;

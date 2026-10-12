@@ -486,6 +486,8 @@ class Conductor: NSObject, SSHIdentityProvider {
         return provider
     }()
     var backgroundJobs = [Int32: State]()
+    // Pane processes this conductor's framer runs for workgroup peers. See Conductor+Panes.
+    var panes = [Int32: WeakBox<ConductorPaneClient>]()
 
     @objc weak var delegate: ConductorDelegate? {
         didSet {
@@ -992,6 +994,10 @@ extension Conductor {
         case framerIT2Send(connid: String, data: Data)
         case framerIT2Close(connid: String)
 
+        // A workgroup peer's program on its own pty (framer.py handle_pane), and its size.
+        case framerPane(rows: Int, cols: Int, cwd: String, command: String)
+        case framerPaneSize(pid: Int32, rows: Int, cols: Int)
+
         /// The lines sent for this command, each base64-encoded on its own. A command whose
         /// arguments are free text lists them, so an argument containing a newline (a multi-line
         /// remote command) stays one argument instead of being split by its newlines.
@@ -1001,6 +1007,8 @@ extension Conductor {
                 return ["login", cwd] + args
             case .framerRun(let command):
                 return ["run", command]
+            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command):
+                return ["pane", String(rows), String(cols), cwd, command]
             default:
                 return stringValue.components(separatedBy: "\n")
             }
@@ -1015,7 +1023,7 @@ extension Conductor {
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
                     .framerDeregister(_), .framerPoll, .framerReset1, .framerReset2, .framerAutopoll, .framerSave(_),
                     .framerFile(_), .framerEval, .framerGetenv, .framerExecPythonStatements,
-                    .framerIT2Listen, .framerIT2Send, .framerIT2Close:
+                    .framerIT2Listen, .framerIT2Send, .framerIT2Close, .framerPane, .framerPaneSize:
                 return true
             }
         }
@@ -1064,7 +1072,7 @@ extension Conductor {
             case .framerRegister(pid: let pid):
                 return ["register", String(pid)].joined(separator: "\n")
             case .framerDeregister(pid: let pid):
-                return ["dereigster", String(pid)].joined(separator: "\n")
+                return ["deregister", String(pid)].joined(separator: "\n")
             case .framerPoll:
                 return "poll"
             case .framerReset1:
@@ -1084,6 +1092,10 @@ extension Conductor {
                 return ["it2send", connid, data.base64EncodedString()].joined(separator: "\n")
             case .framerIT2Close(connid: let connid):
                 return ["it2close", connid].joined(separator: "\n")
+            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command):
+                return ["pane", String(rows), String(cols), cwd, command].joined(separator: "\n")
+            case .framerPaneSize(pid: let pid, rows: let rows, cols: let cols):
+                return ["panesize", String(pid), String(rows), String(cols)].joined(separator: "\n")
             }
         }
 
@@ -1132,7 +1144,7 @@ extension Conductor {
             case .framerRegister(pid: let pid):
                 return ["register", String(pid)].joined(separator: " ")
             case .framerDeregister(pid: let pid):
-                return ["dereigster", String(pid)].joined(separator: " ")
+                return ["deregister", String(pid)].joined(separator: " ")
             case .framerPoll:
                 return "poll"
             case .framerReset1:
@@ -1149,6 +1161,10 @@ extension Conductor {
                 return "it2send \(connid) \(data.semiVerboseDescription)"
             case .framerIT2Close(connid: let connid):
                 return "it2close \(connid)"
+            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command):
+                return "pane \(rows)x\(cols) cwd=\(cwd) “\(command)”"
+            case .framerPaneSize(pid: let pid, rows: let rows, cols: let cols):
+                return "panesize \(pid) \(rows)x\(cols)"
             }
         }
     }
@@ -2775,6 +2791,9 @@ extension Conductor {
             return
         }
         log("Process \(pid) terminated")
+        if handlePaneTermination(pid, code: code) {
+            return
+        }
         if pid == framedPID {
             send(.quit, .fireAndForget)
         } else if let jobState = backgroundJobs[pid] {
@@ -3100,24 +3119,28 @@ extension Conductor {
 
     // Produces the bytes written to the remote for `command`. Internal for testing.
     nonisolated static func encodeForWire(_ command: Command, linePrefix: String) -> String {
-        let encodedArgs = command.wireArguments.map(\.base64Encoded)
-        if command.isFramer {
-            // framer.py reads one line per argument, joining a line that ends in a backslash
-            // with the next, and an empty line ends the command. Split each argument on its
-            // own so a split never lands next to the newline between two arguments, which
-            // would put an empty line on the wire and cut the command in two.
-            return encodedArgs
-                .flatMap { arg -> [String] in
-                    // chunk() returns nothing for an empty argument; keep its (empty) line.
-                    let lines = arg.chunk(128, continuation: "\\")
-                    return lines.isEmpty ? [""] : lines
-                }
+        return encode(arguments: command.wireArguments,
+                      isFramer: command.isFramer,
+                      linePrefix: linePrefix)
+    }
+
+    /// The text written for a command's arguments, without the blank line that ends it.
+    nonisolated static func encode(arguments: [String], isFramer: Bool, linePrefix: String) -> String {
+        let encoded = arguments.map(\.base64Encoded)
+        guard isFramer else {
+            return encoded
+                .joined(separator: "\n")
+                .chunk(128)
+                .map { linePrefix + $0 }
                 .joined(separator: "\n") + "\n"
         }
-        return encodedArgs
-            .joined(separator: "\n")
-            .chunk(128)
-            .map { linePrefix + $0 }
+        // framer.py reads a line that ends in a backslash as continued on the next, and a blank
+        // line as the end of the command. Each argument is chunked on its own, since cutting
+        // the joined arguments could put a backslash just before a separating newline and
+        // leave a blank line. Base64 has no backslashes or newlines. An empty argument is
+        // sent as "=", which decodes to nothing.
+        return encoded
+            .flatMap { ($0.isEmpty ? "=" : $0).chunk(128, continuation: "\\") }
             .joined(separator: "\n") + "\n"
     }
 

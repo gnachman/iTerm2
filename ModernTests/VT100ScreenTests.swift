@@ -2157,6 +2157,9 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
+    func screenDidReadSSHPaneOutput(_ data: Data, pid: Int32, depth: Int32) {
+    }
+
     func screenDidReadRawSSHData(_ data: Data) {
 
     }

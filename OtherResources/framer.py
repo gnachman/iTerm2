@@ -15,6 +15,7 @@ import re
 import shutil
 import signal
 import stat
+import struct
 import subprocess
 import sys
 import tempfile
@@ -24,10 +25,12 @@ import threading
 import time
 import traceback
 import zipfile
-from concurrent.futures import ThreadPoolExecutor
 
 # pid -> Process
 PROCESSES = {}
+# %output channel for a pane process (see handle_pane). iTerm2 hands its bytes to the session
+# that owns the pane rather than parsing them as the login shell's output or as a command's.
+PANE_CHANNEL = 3
 # List of pids that are completed. Their tasks can be awaited and removed.
 COMPLETED = []
 VERBOSE=0
@@ -35,16 +38,15 @@ LOGFILE=None
 RUNLOOP=None
 TASKS=[]
 QUITTING=False
+# Identifiers whose reply has been ended, so handle() can tell whether a handler that raised
+# still owes one.
+REPLIED=set()
 REGISTERED=[]
 LASTPS={}
 AUTOPOLL = 0
 AUTOPOLL_TASK = None
 TTY_TASK = None
 RECOVERY_STATE={}
-# 0: Not blocking on stdin
-# 1: Blocking on stdin
-# 2: Not blocking on stdin but send %ping before reading next command.
-READSTATE=0
 #{SUB}
 BASEID=str(random.randint(0, 1048576)) + str(os.getpid()) + str(int(time.time() * 1000000))
 IDCOUNT=0
@@ -141,17 +143,451 @@ def unlock(writes):
             _write_all(sys.stdout.fileno(), data)
         sys.stdout.flush()
 
+## Flow control, version 1
+#
+# iTerm2 grants credit in bytes and the framer reads its programs' output only while it has
+# some, so a backlog waits in the remote pty, where Ctrl-C discards it, instead of in sshd's
+# and TCP's buffers, where it cannot be recalled. iTerm2 sizes the credit from one-way delay
+# measured with the timestamps on %output frames. Off until iTerm2 sends `flow on`; until then
+# the framer reads and frames output exactly as before.
+
+FLOW_VERSION = 1
+FLOW_READ_SIZE = 4096
+FLOW_INITIAL_CREDIT = 8192
+# A drain with no grant for this long ends itself, so a controller that dies mid-drain cannot
+# freeze the session.
+FLOW_DRAIN_TIMEOUT = 10.0
+FLOW_DRAIN_FLOOR = 2048
+# The safety valve: no grant of any kind (heartbeats included) for this long while commands
+# still arrive means the controller is dead but iTerm2 is not, so trickle output.
+FLOW_VALVE_SILENCE = 5.0
+FLOW_VALVE_RATE = 4096
+# The login shell may send small writes (echo, a prompt) outside credit, so they are not held
+# behind a side command that has used the credit up.
+FLOW_ECHO_ALLOWANCE = 256
+FLOW_ECHO_REFILL = 2560
+FLOW_TICK = 0.25
+FLOW_FLAG_LIMITED = 1
+FLOW_FLAG_EXEMPT = 2
+
+def _flow_clock():
+    """A clock that never jumps and counts time asleep, so its offset from iTerm2's stays put."""
+    if hasattr(time, 'CLOCK_BOOTTIME'):
+        return 'boottime', time.CLOCK_BOOTTIME
+    if platform.system() == 'Darwin':
+        # Counts sleep on macOS, unlike time.monotonic(), which uses mach_absolute_time().
+        return 'monotonic', time.CLOCK_MONOTONIC
+    return 'uptime', None
+
+FLOW_CLOCK_NAME, FLOW_CLOCK_ID = _flow_clock()
+
+def flow_clock_name():
+    return FLOW_CLOCK_NAME
+
+def _flow_ns():
+    if FLOW_CLOCK_ID is None:
+        return time.monotonic_ns()
+    return time.clock_gettime_ns(FLOW_CLOCK_ID)
+
+def flow_now():
+    return _flow_ns() / 1e9
+
+def flow_send_ms():
+    return _flow_ns() // 1000000
+
+class FlowControl:
+    """The framer's side of flow control: credit, drains, the valve and the echo allowance.
+    Takes its clock so tests can run it on fake time."""
+
+    def __init__(self, clock):
+        self.clock = clock
+        self.enabled = False
+        self.credit = 0
+        self.draining = False
+        self.drain_started = 0
+        self.valve_open = False
+        self.valve_at = 0
+        self.last_grant = 0
+        self.last_command = None
+        self.limited = False
+        self.bucket = 0
+        self.bucket_at = 0
+
+    def enable(self):
+        now = self.clock()
+        self.enabled = True
+        self.credit = FLOW_INITIAL_CREDIT
+        self.draining = False
+        self.valve_open = False
+        self.last_grant = now
+        self.limited = False
+        self.bucket = FLOW_ECHO_ALLOWANCE
+        self.bucket_at = now
+
+    def disable(self):
+        self.enabled = False
+        self.draining = False
+        self.valve_open = False
+
+    def budget(self):
+        """How many bytes may be read from a source now."""
+        if not self.enabled:
+            return FLOW_READ_SIZE
+        return max(0, min(self.credit, FLOW_READ_SIZE))
+
+    def spend(self, n):
+        if not self.enabled:
+            return
+        self.credit -= n
+        if self.credit <= 0:
+            self.credit = 0
+            self.limited = True
+
+    def take_flags(self, exempt=False):
+        """Flags for the frame about to be sent. LIMITED marks the frame that used up the
+        credit, which tells iTerm2 its rate samples were limited by the window."""
+        flags = FLOW_FLAG_LIMITED if self.limited else 0
+        self.limited = False
+        if exempt:
+            flags |= FLOW_FLAG_EXEMPT
+        return flags
+
+    def grant(self, n):
+        if not self.enabled:
+            return
+        self.credit += n
+        self.last_grant = self.clock()
+        self.draining = False
+        self.valve_open = False
+
+    def drain(self):
+        if not self.enabled:
+            return
+        self.credit = 0
+        self.draining = True
+        self.drain_started = self.clock()
+        self.valve_open = False
+
+    def recover(self):
+        """A new iTerm2 attached. Keep flow control on with no credit: everything sent before
+        the recovery block is backlog, and iTerm2 grants afresh once it has read it."""
+        if self.enabled:
+            self.drain()
+
+    def note_command(self):
+        self.last_command = self.clock()
+
+    def _refill(self):
+        now = self.clock()
+        self.bucket = min(FLOW_ECHO_ALLOWANCE,
+                          self.bucket + (now - self.bucket_at) * FLOW_ECHO_REFILL)
+        self.bucket_at = now
+
+    def take_echo_allowance(self, waiting):
+        """Whether the login shell may send `waiting` bytes outside credit. A flood never
+        qualifies: it always has more than the allowance waiting."""
+        if not self.enabled or waiting <= 0 or waiting > FLOW_ECHO_ALLOWANCE:
+            return False
+        self._refill()
+        if self.bucket < waiting:
+            return False
+        self.bucket -= waiting
+        return True
+
+    def echo_allowance_delay(self, waiting):
+        """Seconds until take_echo_allowance(waiting) could succeed."""
+        self._refill()
+        return max(0.0, (waiting - self.bucket) / FLOW_ECHO_REFILL)
+
+    def tick(self, waiting):
+        """Called every FLOW_TICK. `waiting` says whether output is held for lack of credit.
+        Returns True when the valve opens, so the caller can report it."""
+        if not self.enabled:
+            return False
+        now = self.clock()
+        if self.draining:
+            if now - self.drain_started >= FLOW_DRAIN_TIMEOUT:
+                self.draining = False
+                self.credit = max(self.credit, FLOW_DRAIN_FLOOR)
+            return False
+        if self.valve_open:
+            bytes_due = int((now - self.valve_at) * FLOW_VALVE_RATE)
+            self.credit += bytes_due
+            self.valve_at += bytes_due / FLOW_VALVE_RATE
+            return False
+        if (waiting and now - self.last_grant >= FLOW_VALVE_SILENCE and
+                self.last_command is not None and now - self.last_command < FLOW_VALVE_SILENCE):
+            self.valve_open = True
+            self.valve_at = now
+            self.credit += int(FLOW_VALVE_RATE * FLOW_TICK)
+            return True
+        return False
+
+FLOW = FlowControl(flow_now)
+
+class FlowSource:
+    """A program's pty, read through the pump so that reads respect credit."""
+
+    def __init__(self, fd, callback, channel, proc):
+        self.fd = fd
+        self.callback = callback
+        self.channel = channel
+        self.proc = proc
+        self.watching = False
+        # Readable but not yet read: waiting for the pump, or for credit.
+        self.ready = False
+        # Up to FLOW_ECHO_ALLOWANCE + 1 bytes read while there was no credit, held until there
+        # is. Reading them tells end of output apart from data, and echo from a flood, without
+        # FIONREAD, which reports 0 for a pty master on macOS.
+        self.pending = None
+        self.closed = False
+
+    @property
+    def is_login(self):
+        return self.proc is not None and self.proc.login
+
+    @property
+    def blocked(self):
+        return self.ready and not self.closed
+
+# Every program's pty, in the order the pump serves them.
+SOURCES = []
+PUMP_SCHEDULED = False
+PUMP_ROTATION = 0
+PUMP_TASKS = set()
+FLOW_TICK_HANDLE = None
+ECHO_TIMER = None
+IT2_GATE = None
+
+def add_source(source):
+    os.set_blocking(source.fd, False)
+    SOURCES.append(source)
+    _watch(source)
+
+def remove_source(source):
+    _unwatch(source)
+    source.closed = True
+    source.ready = False
+    if source in SOURCES:
+        SOURCES.remove(source)
+
+def _watch(source):
+    if source.watching or source.closed:
+        return
+    asyncio.get_event_loop().add_reader(source.fd, _on_readable, source)
+    source.watching = True
+
+def _unwatch(source):
+    if not source.watching:
+        return
+    with contextlib.suppress(Exception):
+        asyncio.get_event_loop().remove_reader(source.fd)
+    source.watching = False
+
+def _on_readable(source):
+    # Stop watching until the pump has read it; a source held for lack of credit would
+    # otherwise wake the loop continuously.
+    _unwatch(source)
+    source.ready = True
+    _schedule_pump()
+
+def _schedule_pump():
+    global PUMP_SCHEDULED
+    if PUMP_SCHEDULED:
+        return
+    PUMP_SCHEDULED = True
+    asyncio.get_event_loop().call_soon(pump_sources)
+
+def pump_sources():
+    """Read once from each ready source, round-robin, as far as credit allows. Sources that
+    cannot be read stay ready (held) until a grant or the valve adds credit."""
+    global PUMP_SCHEDULED, PUMP_ROTATION
+    PUMP_SCHEDULED = False
+    ready = [s for s in SOURCES if s.ready and not s.closed]
+    if not ready:
+        return
+    start = PUMP_ROTATION % len(ready)
+    PUMP_ROTATION += 1
+    for source in ready[start:] + ready[:start]:
+        _service(source)
+
+def _read(source, size):
+    try:
+        return os.read(source.fd, size)
+    except BlockingIOError:
+        return None
+    except OSError:
+        # EIO: the pty's other end is closed.
+        return b''
+
+def _service(source):
+    budget = FLOW.budget()
+    exempt = False
+    if budget == 0:
+        if source.pending is None:
+            peeked = _read(source, FLOW_ECHO_ALLOWANCE + 1)
+            if peeked is None:
+                _wait_for_more(source)
+                return
+            if peeked:
+                source.pending = peeked
+        if source.pending is None:
+            # End of output costs no credit, so the program's exit is reported at once.
+            data = b''
+        elif source.is_login and FLOW.take_echo_allowance(len(source.pending)):
+            data = source.pending
+            source.pending = None
+            exempt = True
+        else:
+            if source.is_login and len(source.pending) <= FLOW_ECHO_ALLOWANCE:
+                _retry_echo_after(FLOW.echo_allowance_delay(len(source.pending)))
+            return
+    elif source.pending is not None:
+        data = source.pending[:budget]
+        source.pending = source.pending[budget:] or None
+    else:
+        data = _read(source, budget)
+        if data is None:
+            _wait_for_more(source)
+            return
+    if source.pending is None:
+        source.ready = False
+    if not exempt:
+        FLOW.spend(len(data))
+    result = source.callback(source.channel, data, exempt)
+    if not data:
+        remove_source(source)
+    elif not source.ready:
+        if source.proc is not None and source.proc.exited and source.proc.holds_slave:
+            # No more data will come to make it readable, so read again until a read finds
+            # nothing, which releases the slave.
+            source.ready = True
+            _schedule_pump()
+        else:
+            _watch(source)
+    if asyncio.iscoroutine(result):
+        task = asyncio.ensure_future(result)
+        PUMP_TASKS.add(task)
+        task.add_done_callback(PUMP_TASKS.discard)
+
+def _wait_for_more(source):
+    """Nothing to read now. If the program has exited, its output is all read, so the framer
+    lets go of the slave and end of output follows once no other process holds it."""
+    source.ready = False
+    if source.proc is not None and source.proc.exited:
+        source.proc.release_slave()
+    _watch(source)
+
+def _retry_echo_after(delay):
+    global ECHO_TIMER
+    if ECHO_TIMER is not None:
+        return
+    def fire():
+        global ECHO_TIMER
+        ECHO_TIMER = None
+        _schedule_pump()
+    ECHO_TIMER = asyncio.get_event_loop().call_later(delay, fire)
+
+def flow_changed():
+    """Call after anything that can add credit or start or end a drain."""
+    if IT2_GATE is not None:
+        if FLOW.draining:
+            IT2_GATE.clear()
+        else:
+            IT2_GATE.set()
+    _schedule_flow_tick()
+    if FLOW.budget() > 0:
+        _schedule_pump()
+
+def flow_grant(n):
+    FLOW.grant(n)
+    flow_changed()
+
+def _schedule_flow_tick():
+    global FLOW_TICK_HANDLE
+    if FLOW_TICK_HANDLE is not None or not FLOW.enabled:
+        return
+    FLOW_TICK_HANDLE = asyncio.get_event_loop().call_later(FLOW_TICK, _flow_tick)
+
+def _flow_tick():
+    global FLOW_TICK_HANDLE
+    FLOW_TICK_HANDLE = None
+    waiting = any(s.ready for s in SOURCES)
+    if FLOW.tick(waiting):
+        q = lock()
+        send_esc(q, '%notif valve')
+        unlock(q)
+    flow_changed()
+
+async def it2_gate():
+    """Waits while a drain is in progress. it2 data is not under credit in version 1, but it
+    must not fill the path while a drain is measuring it empty."""
+    global IT2_GATE
+    if IT2_GATE is None:
+        IT2_GATE = asyncio.Event()
+        if not FLOW.draining:
+            IT2_GATE.set()
+    await IT2_GATE.wait()
+
+def _parse_grant(lines):
+    """The byte count if lines (ending in a blank line) are a grant command, else None."""
+    args = []
+    for line in lines:
+        if not line:
+            continue
+        if args and args[-1].endswith("\\"):
+            args[-1] = args[-1][:-1] + line
+        else:
+            args.append(line)
+    try:
+        if len(args) != 2 or base64.b64decode(args[0]) != b'grant':
+            return None
+        n = int(base64.b64decode(args[1]).decode('utf-8'))
+    except Exception:
+        return None
+    return n if n >= 0 else None
+
+def command_reader(stream, loop, queue):
+    """Reads commands on a thread of its own. A grant takes effect as soon as it is read, even
+    while a command handler is still running, and gets no reply. Every other line is queued
+    for mainloop unchanged. None marks the end of input."""
+    pending = []
+    while True:
+        try:
+            raw = stream.readline()
+        except Exception:
+            raw = ''
+        if raw == '':
+            loop.call_soon_threadsafe(queue.put_nowait, None)
+            return
+        line = raw.rstrip('\n')
+        pending.append(line)
+        if line:
+            continue
+        grant = _parse_grant(pending)
+        if grant is not None:
+            loop.call_soon_threadsafe(flow_grant, grant)
+        else:
+            if len(pending) > 1:
+                loop.call_soon_threadsafe(FLOW.note_command)
+            for pending_line in pending:
+                loop.call_soon_threadsafe(queue.put_nowait, pending_line)
+        pending = []
+
 class Process:
     @staticmethod
-    async def run_tty(executable, args, cwd, env):
+    async def run_tty(executable, args, cwd, env, window_size=None):
+        """window_size is a packed struct winsize; None means the framer's own size."""
         master, slave = pty.openpty()
         try:
             def set_ctty(ctty_fd, master_fd):
                 os.setsid()
                 os.close(master_fd)
                 fcntl.ioctl(ctty_fd, termios.TIOCSCTTY, 0)
-                window_size = fcntl.ioctl(sys.stdin.fileno(), termios.TIOCGWINSZ, '00000000')
-                fcntl.ioctl(ctty_fd, termios.TIOCSWINSZ, window_size)
+                size = window_size
+                if size is None:
+                    size = fcntl.ioctl(sys.stdin.fileno(), termios.TIOCGWINSZ, '00000000')
+                fcntl.ioctl(ctty_fd, termios.TIOCSWINSZ, size)
             log(env)
             log(f'create subprocess args={args} cwd={cwd} executable={executable}')
             proc = await asyncio.create_subprocess_exec(
@@ -163,9 +599,10 @@ class Process:
                 env=env,
                 executable=executable,
                 preexec_fn=lambda: set_ctty(slave, master))
-        finally:
+        except BaseException:
             os.close(slave)
-        return await Process.run_tty_proc(proc, master, f'run_tty({args})')
+            raise
+        return await Process.run_tty_proc(proc, master, slave, f'run_tty({args})')
 
     @staticmethod
     async def run_shell_tty(command):
@@ -173,24 +610,32 @@ class Process:
         try:
             env = dict(os.environ)
             env["LANG"] = "C"
+            # A process group of its own lets a signal reach everything the shell started.
+            # /bin/sh does not always exec a lone command (dash forks it), and signaling only
+            # the shell would leave the program running. Not a new session: a session leader
+            # can take the pty as its controlling terminal, and then its exit waits for
+            # output the framer may not have credit to read.
             proc = await asyncio.create_subprocess_shell(
                 command,
                 stdin=slave,
                 stdout=slave,
                 stderr=slave,
-                env=env)
-        finally:
+                env=env,
+                preexec_fn=os.setpgrp)
+        except BaseException:
             os.close(slave)
-        return await Process.run_tty_proc(proc, master, f'run_shell_tty({command})')
+            raise
+        return await Process.run_tty_proc(proc, master, slave, f'run_shell_tty({command})',
+                                          group=True)
 
     @staticmethod
-    async def run_tty_proc(proc, master, descr):
+    async def run_tty_proc(proc, master, slave, descr, group=False):
         pipe = open(master, 'wb', 0)
         writer = await Process._writer(pipe)
-        reader, read_transport = await Process._reader(open(master, 'rb', 0))
-        p = Process(proc, writer, reader, None, master=master, descr=descr)
-        p.add_cleanup(read_transport.close)
-        return p
+        # Output is read straight from master by the pump (see FlowSource), not through a
+        # stream reader: asyncio's pipe transport reads up to 256 KB at a time and keeps
+        # reading after pause_reading(), which would take more than the credit allows.
+        return Process(proc, writer, master=master, slave=slave, descr=descr, group=group)
 
     @staticmethod
     async def writer(fd):
@@ -209,26 +654,18 @@ class Process:
                 loop=loop)
         return writer
 
-    @staticmethod
-    async def reader(fd):
-        pipe = open(fd, 'rb', 0)
-        return Process._reader(pipe)
-
-    @staticmethod
-    async def _reader(pipe):
-        loop = asyncio.get_event_loop()
-        reader = asyncio.StreamReader()
-        protocol = asyncio.StreamReaderProtocol(reader)
-        transport, _ = await loop.connect_read_pipe(lambda: protocol, pipe)
-        return reader, transport
-
-    def __init__(self, process, writer, stdout_reader, stderr_reader, master=None, descr=""):
+    def __init__(self, process, writer, master=None, slave=None, descr="", group=False):
         self.__process = process
+        # The framer's own copy of the pty's slave end, kept until the program has exited and
+        # its output has been read. macOS discards unread output when the last copy of the
+        # slave closes, which would lose whatever a program wrote just before it exited, or
+        # all it wrote while the framer had no credit to read it.
+        self.__slave = slave
+        self.__exit_task = None
+        # Signals go to the whole process group, which the process leads.
+        self.__group = group
         self.__writer = writer
-        self.__stdout_reader = stdout_reader
-        self.__stderr_reader = stderr_reader
-        self.__stdout_read_handler = None
-        self.__stderr_read_handler = None
+        self.flow_source = None
         self.__cleanup = []
         self.__return_code = None
         self.__master = master
@@ -236,6 +673,8 @@ class Process:
         self.echo = True
         self.icanon = True
         self.login = False
+        # A pane process (see handle_pane) has its own window size and output channel.
+        self.pane = False
 
     @property
     def master(self):
@@ -252,20 +691,22 @@ class Process:
                 # Use os.kill directly to avoid asyncio bug with send_signal on dead processes
                 # https://github.com/python/cpython/issues/87744
                 # https://bugs.python.org/issue38630
-                os.kill(self.pid, signal.SIGKILL)
+                if not self.__group or not self._signal_group(signal.SIGKILL):
+                    os.kill(self.pid, signal.SIGKILL)
             except ProcessLookupError:
                 log(f'cleanup {self.__descr}: process already dead')
             except Exception as e:
                 log(f'cleanup {self.__descr}: exception {e} during kill')
             log(f'cleanup {self.__descr}: wait')
             await self.wait()
+        # Stop reading before the writer closes master, which the source reads from.
+        if self.flow_source is not None:
+            remove_source(self.flow_source)
+        if self.__exit_task is not None:
+            self.__exit_task.cancel()
+        self.release_slave()
         log(f'cleanup {self.__descr}: close writer tx')
         self.__writer.transport.close()
-        log(f'cleanup {self.__descr}: adding handlers to TASKS')
-        global TASKS
-        if self.__stderr_read_handler:
-            TASKS.append(self.__stderr_read_handler)
-        TASKS.append(self.__stdout_read_handler)
         log(f'cleanup {self.__descr}: running cleanup callbacks')
 
         # StreamReader doesn't have a transport so it must be closed by a __cleanup function.
@@ -277,7 +718,7 @@ class Process:
         self.__cleanup.append(coro)
 
     async def kill(self, signal):
-        self.__process.send_signal(signal)
+        self.send_signal(signal)
 
     async def wait(self):
         rc = await self.__process.wait()
@@ -292,39 +733,58 @@ class Process:
     def pid(self):
         return self.__process.pid
 
-    async def readline(self):
-        return await self.__stdout_reader.readline()
-
-    async def read_forever(self, reader, channel, callback):
-        try:
-            while True:
-                log(f'read_forever {self.__descr}: reading for channel {channel}')
-                value = await reader.read(256)
-                log(f'read_forever {self.__descr}: read {value} for channel {channel}')
-                coro = callback(channel, value)
-                if coro:
-                    log(f'read_forever {self.__descr}: await callback-returned coro {coro}')
-                    await coro
-                if len(value) == 0:
-                    return
-        except IOError:
-            log(f'read_forever {self.__descr}: stopping because of IOError')
-            coro = callback(channel, b'')
-            await coro
-            return
-        except Exception as e:
-            log(f'read_forever {self.__descr}: {e}')
-
     async def handle_read(self, callback):
-        self.__stdout_read_handler = asyncio.create_task(self.read_forever(self.__stdout_reader, 1, callback))
-        if self.__stderr_reader:
-            self.__stderr_read_handler = asyncio.create_task(self.read_forever(self.__stderr_reader, 2, callback))
+        """callback(channel, data, exempt) gets each read; empty data means end of output."""
+        self.flow_source = FlowSource(self.__master, callback, 1, self)
+        add_source(self.flow_source)
+        if self.__slave is not None:
+            self.__exit_task = asyncio.ensure_future(self._await_exit())
+
+    async def _await_exit(self):
+        await self.wait()
+        log(f'{self.__descr} exited; release the slave once its output is read')
+        # The pump releases the slave when a read finds nothing left.
+        source = self.flow_source
+        if source is not None and not source.closed:
+            _unwatch(source)
+            source.ready = True
+            _schedule_pump()
+
+    @property
+    def exited(self):
+        return self.__process.returncode is not None
+
+    @property
+    def holds_slave(self):
+        return self.__slave is not None
+
+    def release_slave(self):
+        if self.__slave is not None:
+            os.close(self.__slave)
+            self.__slave = None
 
     async def write(self, data):
         self.__writer.write(data)
 
     def send_signal(self, signal):
-        self.__process.send_signal(signal)
+        if self.__group and self._signal_group(signal):
+            return
+        try:
+            self.__process.send_signal(signal)
+        except ProcessLookupError:
+            # It has exited and been reaped, which now happens before its output ends.
+            log(f'send_signal {self.__descr}: already exited')
+
+    def _signal_group(self, sig):
+        """Returns whether the group got the signal. macOS fails with EPERM when only an
+        unreaped zombie is left, as does any system when no member may be signaled (a lone
+        sudo); the caller then signals the process alone, as it would without a group."""
+        try:
+            os.killpg(self.pid, sig)
+            return True
+        except (ProcessLookupError, PermissionError) as e:
+            log(f'signal group of {self.__descr}: {e}')
+            return False
 
 ## Login Shell
 
@@ -365,12 +825,17 @@ async def autopoll(delay):
     except Exception as e:
         log(f'autopoll threw {e}: {traceback.format_exc()}')
 
-def send_poll_output(q, cats):
+def poll_output_lines(cats):
     for catname in cats:
-        output = cats[catname]
-        send(q, f'$begin {catname}'.encode("utf-8") + b'\n')
-        for line in output:
-            send(q, line.encode("utf-8") + b'\n')
+        yield f'$begin {catname}'
+        for line in cats[catname]:
+            # Process names come from anyone on the host. Without control characters, one
+            # cannot end a frame early or smuggle in a frame of its own.
+            yield ''.join('?' if ord(c) < 0x20 or 0x7f <= ord(c) < 0xa0 else c for c in line)
+
+def send_poll_output(q, cats):
+    for line in poll_output_lines(cats):
+        send(q, line.encode("utf-8") + b'\n')
 
 def get_echo_icanon(tty):
     try:
@@ -597,6 +1062,10 @@ def procmon_parse(output):
 
 
 async def get_env_var(var_name):
+    """The variable as the user's shell sets it, or None when that cannot be learned."""
+    if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', var_name):
+        log(f'Not a variable name: {var_name!r}')
+        return None
     # Get the user's shell
     user_shell = os.environ.get('SHELL', '/bin/bash')
 
@@ -624,8 +1093,13 @@ async def get_env_var(var_name):
         # PATH-like variables to lists, which print renders as a table, so join them back.
         command = (f'print ($env.{var_name}? | default "" | '
                    'if ($in | describe | str starts-with "list") { str join (char esep) } else { into string })')
-    else:
+    elif shell_name == 'xonsh':
+        # xonsh does not expand variables inside quotes.
         command = f'echo ${var_name}'
+    else:
+        # Quoted so the value is not split or globbed, and printf rather than echo, which
+        # may take a value such as -n as an option or interpret backslashes.
+        command = f'printf "%s\\n" "${var_name}"'
 
     try:
         process = await asyncio.create_subprocess_exec(
@@ -635,11 +1109,14 @@ async def get_env_var(var_name):
         )
 
         stdout, stderr = await process.communicate()
-
-        # Print the value of the environment variable
-        return stdout.decode().strip()
+        if process.returncode != 0:
+            log(f'get_env_var({var_name}): {user_shell} exited {process.returncode}: {stderr!r}')
+            return None
+        value = stdout.decode()
+        return value[:-1] if value.endswith('\n') else value
     except Exception as e:
         log(f'get_env_var({var_name}) threw: {traceback.format_exc()}')
+        return None
 
 def write_exec_file(code):
     """Writes `code` to a new hidden file in ~/.iterm2, executable and private to the user, and
@@ -650,7 +1127,7 @@ def write_exec_file(code):
     os.makedirs(directory, mode=0o700, exist_ok=True)
     fd, path = tempfile.mkstemp(dir=directory, prefix=".eval-")
     try:
-        os.write(fd, code.encode("utf-8"))
+        os.write(fd, code.encode("utf-8", "surrogateescape"))
         os.fchmod(fd, 0o700)
     finally:
         os.close(fd)
@@ -731,6 +1208,79 @@ async def handle_run(identifier, args):
         end(q, identifier, 1)
     return False
 
+def pack_window_size(rows, cols):
+    """A struct winsize for rows x cols, or None unless both are sane."""
+    if not (0 < rows <= 10000 and 0 < cols <= 10000):
+        return None
+    return struct.pack('HHHH', rows, cols, 0, 0)
+
+async def handle_pane(identifier, args):
+    """pane <rows> <cols> <cwd> <command...>
+    Runs command with the login shell on a new pty of its own, as a workgroup peer's program.
+    Unlike `run` it gets a controlling terminal and the framer's environment unchanged; unlike
+    `login` its output goes out on PANE_CHANNEL, it keeps its own window size, and it is never
+    treated as the login shell. Answers with the pid."""
+    log(f'handle_pane {args}')
+    try:
+        rows = int(args[0])
+        cols = int(args[1])
+        cwd = os.path.expandvars(os.path.expanduser(args[2]))
+        command = " ".join(args[3:])
+    except Exception as e:
+        log(f'handle_pane: {e}')
+        fail(identifier, "bad arguments")
+        return False
+    window_size = pack_window_size(rows, cols)
+    if window_size is None or not command:
+        fail(identifier, "bad arguments")
+        return False
+    login_shell = guess_login_shell()
+    _, shell_name = os.path.split(login_shell)
+    try:
+        proc = await Process.run_tty(
+            login_shell,
+            ["-" + shell_name, "-c", command],
+            cwd,
+            os.environ,
+            window_size)
+    except Exception as e:
+        log(f'handle_pane: {e}')
+        q = begin(identifier)
+        send_esc(q, f'Command failed: {e}')
+        end(q, identifier, 1)
+        return False
+    proc.pane = True
+    PROCESSES[proc.pid] = proc
+    q = begin(identifier)
+    send_esc(q, proc.pid)
+    end(q, identifier, 0)
+    await proc.handle_read(make_monitor_process(proc, False))
+    return False
+
+async def handle_panesize(identifier, args):
+    """panesize <pid> <rows> <cols>: resize a pane process's pty."""
+    log(f'handle_panesize {args}')
+    try:
+        pid = int(args[0])
+        window_size = pack_window_size(int(args[1]), int(args[2]))
+    except Exception as e:
+        log(f'handle_panesize: {e}')
+        fail(identifier, "bad arguments")
+        return False
+    proc = PROCESSES.get(pid)
+    if window_size is None or proc is None or not proc.pane or proc.master is None:
+        fail(identifier, "no such pane")
+        return False
+    try:
+        fcntl.ioctl(proc.master, termios.TIOCSWINSZ, window_size)
+    except OSError as e:
+        log(f'handle_panesize: {e}')
+        fail(identifier, "resize failed")
+        return False
+    q = begin(identifier)
+    end(q, identifier, 0)
+    return False
+
 def start_tty_task(identifier, proc):
     proc.tty_task = asyncio.create_task(watch_tty(proc, 1))
 
@@ -769,8 +1319,14 @@ async def handle_getenv(identifier, args):
     log(f'handle_getenv {identifier} {args}')
     q = begin(identifier)
     value = await get_env_var(args[0])
-    if q:
-        send_esc(q, value)
+    if value is None:
+        # The framer's own environment came from the login shell, so it is the next best.
+        value = os.environ.get(args[0])
+    if value is None:
+        # iTerm2 records the first line as the value; with none it records nothing.
+        end(q, identifier, 1)
+        return
+    send_esc(q, value)
     end(q, identifier, 0)
 
 async def handle_runpy(identifier, args):
@@ -793,10 +1349,14 @@ async def handle_runpy(identifier, args):
 
 async def handle_eval(identifier, args):
     log(f'handle_eval {identifier} [{len(args[0])} bytes]')
-    await save_and_exec(identifier, base64.b64decode(args[0]).decode('latin1'))
+    # surrogateescape here and in write_exec_file writes the script's bytes unchanged.
+    await save_and_exec(identifier, base64.b64decode(args[0]).decode('utf-8', 'surrogateescape'))
 
 def make_path(b64path):
-    return os.path.expanduser(base64.b64decode(b64path)).decode('latin1')
+    # iTerm2 sends the path's bytes, UTF-8 for a name it typed. fsdecode is the inverse of the
+    # fsencode that os functions apply to a str path, so any bytes, UTF-8 or not, reach the
+    # filesystem unchanged.
+    return os.fsdecode(os.path.expanduser(base64.b64decode(b64path)))
 
 async def handle_file(identifier, args):
     log(f'handle_file {identifier} {args}')
@@ -930,11 +1490,9 @@ def file_error(q, identifier, e, path):
         raise e
     except OSError as e:
         log(f'file_error {path}: {traceback.format_exc()}')
-        errors = {errno.EPERM: 1, errno.ENOENT: 2, errno.ENOTDIR: 3, errno.ELOOP: 4}
+        errors = {errno.EPERM: 1, errno.EACCES: 1, errno.ENOENT: 2, errno.ENOTDIR: 3,
+                  errno.ELOOP: 4}
         end(q, identifier, errors.get(e.errno, 100))
-    except PermissionError as e:
-        log(f'file_error {path}: {traceback.format_exc()}')
-        end(q, identifier, 1)
     except Exception as e:
         log(f'file_error {path}: {traceback.format_exc()}')
         end(q, identifier, 255)
@@ -1004,12 +1562,17 @@ async def handle_file_suggest(q, identifier, prefix, directories, pwd, permissio
             log(f'joined directory is {directory}')
         temp = await really_find_completions_with_prefix(prefix, directory, max_count, 'x' in permissions)
         temp.sort()
-        combined.extend([entry.removeprefix(prefix) for entry in temp])
-        if len(combined) > max_count:
+        combined.extend([remove_prefix(entry, prefix) for entry in temp])
+        if len(combined) >= max_count:
             break
+    combined = combined[:max_count]
     log(f'Return suggestions: {combined}')
     send_esc(q, json.dumps(combined))
     end(q, identifier, 0)
+
+def remove_prefix(s, prefix):
+    # str.removeprefix is new in Python 3.9 and the framer must run on 3.7.
+    return s[len(prefix):] if prefix and s.startswith(prefix) else s
 
 def decode_base64_directories(encoded_directories):
     decoded_directories = []
@@ -1028,7 +1591,7 @@ async def really_find_completions_with_prefix(prefix, directory, max_count, exec
         temp = await really_find_completions_with_prefix(
             os.path.join(directory, prefix), '', max_count, executable)
         prefix_to_remove = directory if directory.endswith('/') else directory + '/'
-        return [entry.removeprefix(prefix_to_remove) for entry in temp]
+        return [remove_prefix(entry, prefix_to_remove) for entry in temp]
 
     if prefix.endswith('/'):
         log('Prefix ends in slash')
@@ -1120,10 +1683,6 @@ class Search:
         self.window_size = 16
         self.sema = threading.BoundedSemaphore(self.window_size)
 
-        self._executor = ThreadPoolExecutor(
-            max_workers=1,
-            thread_name_prefix=f"Search-{self.id}"
-        )
         self.task = asyncio.create_task(self.mainloop())
         self.loop: asyncio.AbstractEventLoop
 
@@ -1150,12 +1709,22 @@ class Search:
 
     async def mainloop(self) -> None:
         self.loop = asyncio.get_running_loop()
-        try:
-            await self.loop.run_in_executor(self._executor, self._scan_sync)
-        except Exception as e:
-            log(f"[Search {self.id}] error: {e!r}")
-        finally:
-            self._executor.shutdown(wait=False)
+        done = self.loop.create_future()
+
+        def scan():
+            try:
+                self._scan_sync()
+            except Exception as e:
+                log(f"[Search {self.id}] error: {e!r}")
+            finally:
+                # Queued after the matches, so they are all written before the task ends.
+                with contextlib.suppress(RuntimeError):
+                    self.loop.call_soon_threadsafe(
+                        lambda: done.done() or done.set_result(None))
+        # A daemon thread, unlike an executor's, does not keep the framer from exiting while
+        # the scan waits for acks that will never come.
+        threading.Thread(target=scan, name=f"Search-{self.id}", daemon=True).start()
+        await done
 
     def _scan_sync(self) -> None:
         stack = [self.basedir]
@@ -1177,7 +1746,11 @@ class Search:
                                     return
                                 log(f"Found match: {entry.name} for {self.query}")
                                 json = remote_file_json(entry.path)
-                                self.loop.call_soon_threadsafe(self.emit, json)
+                                try:
+                                    self.loop.call_soon_threadsafe(self.emit, json)
+                                except RuntimeError:
+                                    # The event loop is gone: the framer is exiting.
+                                    return
                         except OSError:
                             continue
             except OSError:
@@ -1237,7 +1810,8 @@ async def handle_file_fetch(q, identifier, path, offset, size):
 async def handle_file_rm(q, identifier, path, recursive):
     log(f'handle_file_rm {identifier} {path} {recursive}')
     try:
-        if os.path.isdir(path):
+        # A symlink is removed itself, never what it points to, even when that is a directory.
+        if os.path.isdir(path) and not os.path.islink(path):
             if recursive:
                 shutil.rmtree(path)
             else:
@@ -1283,7 +1857,7 @@ async def handle_file_create(q, identifier, path, content):
         send_remote_file(q, path)
         end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, path)
+        file_error(q, identifier, e, path)
 
 async def handle_file_append(q, identifier, path, content):
     log(f'handle_file_append {identifier} {path} length={len(content)} bytes')
@@ -1331,8 +1905,13 @@ async def handle_recover(identifier, args):
     # reader interleave that line into the recovery block.
     reset()
     _it2_close_connections()
+    FLOW.recover()
+    flow_changed()
     send_esc(q, f'begin-recovery')
     send_esc(q, f'recovery: version 2')
+    if FLOW.enabled:
+        # The end of this block doubles as a drain's reply: everything before it is backlog.
+        send_esc(q, f'recovery: flow {FLOW_VERSION} {FLOW_CLOCK_NAME}')
     for pid in PROCESSES:
         proc = PROCESSES[pid]
         if proc.login:
@@ -1389,10 +1968,12 @@ async def handle_autopoll(identifier, args):
 async def handle_poll(identifier, args):
     log(f'handle_poll({identifier}, {args})')
     output = await poll()
-    log(f'handle_poll({identifier}, {args}): read {len(output)} categories of output')
     q = begin(identifier)
     if output is not None:
-        send_poll_output(q,output)
+        log(f'handle_poll({identifier}, {args}): read {len(output)} categories of output')
+        # A reply's lines must each be a frame; iTerm2 leaves the protocol on raw text there.
+        for line in poll_output_lines(output):
+            send_esc(q, line)
         end(q,identifier, 0)
     else:
         end(q,identifier, 1)
@@ -1439,6 +2020,36 @@ async def handle_kill(identifier, args):
     end(q,identifier, 0)
     return False
 
+async def handle_flow(identifier, args):
+    """flow on: turn flow control on with the initial credit. Answers with the protocol
+    version and the clock that %output timestamps use. iTerm2 must not grant until it has the
+    answer. (A grant is a command too, but command_reader applies it as soon as it is read and
+    it gets no reply.)"""
+    if args != ["on"]:
+        fail(identifier, "bad arguments")
+        return False
+    FLOW.enable()
+    flow_changed()
+    q = begin(identifier)
+    send_esc(q, f'{FLOW_VERSION} {FLOW_CLOCK_NAME}')
+    end(q, identifier, 0)
+    return False
+
+async def handle_drain(identifier, args):
+    """Zero the credit and hold output (it2 data too) until the next grant. The reply
+    follows everything sent before it, so its arrival tells iTerm2 the path is empty."""
+    FLOW.drain()
+    flow_changed()
+    q = begin(identifier)
+    end(q, identifier, 0)
+    return False
+
+async def handle_ping(identifier, args):
+    """Answers at once. Sent after a drain to time a round trip across an empty path."""
+    q = begin(identifier)
+    end(q, identifier, 0)
+    return False
+
 async def handle_quit(identifier, args):
     q = begin(identifier)
     end(q,identifier, 0)
@@ -1453,7 +2064,14 @@ async def handle_quit(identifier, args):
             log('autopoll is now canceled')
         AUTOPOLL_TASK = None
     _it2_teardown_socket()
+    cancel_search()
     return True
+
+def cancel_search():
+    global SEARCH_TASK
+    if SEARCH_TASK:
+        SEARCH_TASK.cancel()
+        SEARCH_TASK = None
 
 ## Helpers for run()
 
@@ -1463,14 +2081,19 @@ async def start_process(args):
     return runid
 
 def make_monitor_process(proc, islogin):
-    def monitor_process(channel, value):
+    def monitor_process(channel, value, exempt=False):
         log(f'monitor_process called with channel={channel} islogin={islogin} value={value}')
         if len(value) == 0:
             global COMPLETED
             log(f'add {proc.pid} to list of completed PIDs')
             COMPLETED.append(proc.pid)
             return cleanup()
-        print_output(makeid(), proc.pid, channel, islogin, value)
+        if proc.pane:
+            # iTerm2 reads a pane's terminal modes from the pane's own session, and the
+            # %notif tty report names no process, so it would be taken as the leader's.
+            print_output(makeid(), proc.pid, PANE_CHANNEL, False, value, exempt)
+            return None
+        print_output(makeid(), proc.pid, channel, islogin, value, exempt)
         log("make_monitor_process: poll")
         try:
             poll_tty(proc)
@@ -1479,12 +2102,13 @@ def make_monitor_process(proc, islogin):
         return None
     return monitor_process
 
-def print_output(identifier, pid, channel, islogin, data):
+def print_output(identifier, pid, channel, islogin, data, exempt=False):
     q = lock()
     if islogin:
-        send_esc(q, f'%output {identifier} {pid} -1 {DEPTH}')
-    else:
-        send_esc(q, f'%output {identifier} {pid} {channel} {DEPTH}')
+        channel = -1
+    # Under flow control, the framer's clock (for iTerm2's one-way delay) and the flags.
+    flow = f' {flow_send_ms()} {FLOW.take_flags(exempt)}' if FLOW.enabled else ''
+    send_esc(q, f'%output {identifier} {pid} {channel} {DEPTH}{flow}')
     send(q, data)
     send_esc(q, f'%end {identifier}')
     unlock(q)
@@ -1512,6 +2136,7 @@ def end(q, identifier, status):
     else:
         type = "r"
     send_esc(q, f'end {identifier} {status} {type}')
+    REPLIED.add(identifier)
     unlock(q)
 
 async def cleanup():
@@ -1554,6 +2179,10 @@ async def handle(args):
             QUITTING=True
     except Exception as e:
         log(f'Handler for {cmd} threw {e}: {traceback.format_exc()}')
+        if identifier not in REPLIED:
+            # Whatever the handler queued is lost; without a reply iTerm2 would wait forever.
+            fail(identifier, f'{cmd} threw {e}')
+    REPLIED.discard(identifier)
     log("call cleanup()")
     await cleanup()
 
@@ -1568,33 +2197,25 @@ async def handle(args):
 
     return should_quit
 
-def read_line():
-    try:
-        log("Calling sys.stdin.readline")
-        return sys.stdin.readline().rstrip('\n')
-    except:
-        log("Caught exception")
-        sys.exit(1)
-
 async def mainloop():
     global RUNLOOP
-    global READSTATE
     RUNLOOP = asyncio.get_event_loop()
+    commands = asyncio.Queue()
+    threading.Thread(target=command_reader, args=(sys.stdin, RUNLOOP, commands),
+                     daemon=True).start()
     args = []
     while True:
         log("reading")
         try:
-            if READSTATE == 2:
-                log('mainloop: send deferred ping')
-                # It's safe to ping because we haven't sent a begin yet.
-                ping()
-            READSTATE = 1
-            line = await asyncio.get_event_loop().run_in_executor(None, read_line)
+            line = await commands.get()
         except:
             log("Exception while reading: " + traceback.format_exc())
             fail("none", "exception during read_line")
             return 0
-        READSDTATE = 0
+        if line is None:
+            log("End of input")
+            cancel_search()
+            return 0
         log(f'read from stdin "{line}" with length {len(line)}')
         if len(line):
             if len(args) and args[-1].endswith("\\"):
@@ -1603,7 +2224,15 @@ async def mainloop():
                 args.append(line)
             log(f'args is now {args}')
         else:
-            args = list(map(lambda s: base64.b64decode(s).decode('utf-8'), args))
+            try:
+                args = [base64.b64decode(s).decode('utf-8') for s in args]
+            except ValueError as e:
+                # binascii.Error and UnicodeDecodeError are both ValueErrors. Answer so iTerm2
+                # stays in step: it expects one reply per command.
+                log(f'Malformed command: {e}')
+                fail(makeid(), "malformed command")
+                args = []
+                continue
             quit = await handle(args)
             log("flush stdout")
             sys.stdout.flush()
@@ -1625,6 +2254,9 @@ async def update_pty_size():
     window_size = fcntl.ioctl(sys.stdin.fileno(), termios.TIOCGWINSZ, '00000000')
     for pid in PROCESSES:
         proc = PROCESSES[pid]
+        if proc.pane:
+            # A pane has its own size; iTerm2 sets it with panesize.
+            continue
         master = proc.master
         if master is not None:
             log(f'TIOCSWINSZ {proc}')
@@ -1639,12 +2271,10 @@ def on_sigwinch(_sig, _stack):
         # There may not be an event loop yet.
         log('Ignore because no runloop')
         return
-    global READSTATE
-    if READSTATE == 1:
-        log("send ping while blocked on stdin")
-        ping()
-    else:
-        READSTATE = 2
+    # A signal handler can run between any two bytecodes, including in the middle of
+    # writing a frame or a command's reply, so it must not write. The event loop runs
+    # the ping between callbacks, and every write finishes within a single callback.
+    RUNLOOP.call_soon_threadsafe(ping)
     asyncio.run_coroutine_threadsafe(update_pty_size(), RUNLOOP)
 
 # it2-over-ssh: proxy a remote unix socket to iTerm2. iTerm2's embedded it2 runs
@@ -1836,6 +2466,7 @@ async def handle_it2_connection(reader, writer):
         send_esc(q, f'%it2 {connid} open')
         unlock(q)
         while True:
+            await it2_gate()
             data = await reader.read(IT2_READ_CHUNK)
             if not data:
                 break
@@ -1939,6 +2570,8 @@ async def handle_it2close(identifier, args):
 HANDLERS = {
     "run": handle_run,
     "login": handle_login,
+    "pane": handle_pane,
+    "panesize": handle_panesize,
     "send": handle_send,
     "kill": handle_kill,
     "quit": handle_quit,
@@ -1956,7 +2589,10 @@ HANDLERS = {
     "runpy": handle_runpy,
     "it2listen": handle_it2listen,
     "it2send": handle_it2send,
-    "it2close": handle_it2close
+    "it2close": handle_it2close,
+    "flow": handle_flow,
+    "drain": handle_drain,
+    "ping": handle_ping
 }
 
 def _silence_shutdown_unraisable(unraisable):

@@ -127,15 +127,20 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 case .ground: "ground"
                 case .esc: "esc"
                 case .osc(let param): "osc(\(param))"
-                case .oscParam(let n, let param): "oscParam(\(n), \(param))"
-                case .oscEsc(let n, let param): "oscEsc(\(n), \(param))"
+                case .oscParam(let n, let param): "oscParam(\(n), \(Self.decode(param)))"
+                case .oscEsc(let n, let param): "oscEsc(\(n), \(Self.decode(param)))"
                 }
+            }
+            /// The framer writes its payloads as UTF-8. Anything else is read as Latin-1, as
+            /// every payload once was, so its bytes still come through one character apiece.
+            static func decode(_ bytes: [UInt8]) -> String {
+                return String(bytes: bytes, encoding: .utf8) ?? String(bytes: bytes, encoding: .isoLatin1)!
             }
             case ground
             case esc
             case osc(String)
-            case oscParam(Int, String)
-            case oscEsc(Int, String)
+            case oscParam(Int, [UInt8])
+            case oscEsc(Int, [UInt8])
         }
         let esc = 27
         let closeBracket = Character("]").asciiValue!
@@ -188,7 +193,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 if c >= zero && c <= nine {
                     state = .osc(param + String(ascii: c))
                 } else if c == semicolon, let code = Int(param) {
-                    state = .oscParam(code, "")
+                    state = .oscParam(code, [])
                 } else {
                     if !skipInitialGarbage {
                         DLog("backtracking and failing")
@@ -198,25 +203,25 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                     state = .ground
                 }
             case .oscParam(let code, let payload):
-                if c == bel, let result = specialOSCResult(code: code, payload: payload, start: checkpoint) {
+                if c == bel, let result = specialOSCResult(code: code, payload: State.decode(payload), start: checkpoint) {
                     DLog("Returning \(result.debugDescription)")
                     return result
                 }
                 if c == esc {
                     state = .oscEsc(code, payload)
                 } else {
-                    state = .oscParam(code, payload + String(ascii: c))
+                    state = .oscParam(code, payload + [c])
                 }
             case .oscEsc(let code, let payload):
                 if c == backslash {
-                    if let result = specialOSCResult(code: code, payload: payload, start: checkpoint) {
+                    if let result = specialOSCResult(code: code, payload: State.decode(payload), start: checkpoint) {
                         DLog("Returning \(result.debugDescription)")
                         return result
                     }
                     // Ignore any unrecognized paramters which may come before the colon and then
                     // ignore the colon itself.
                     DLog("Returning osc")
-                    return .osc(code, String(payload.substringAfterFirst(":")))
+                    return .osc(code, String(State.decode(payload).substringAfterFirst(":")))
                 } else {
                     // esc followed by anything but a backslash inside an OSC means the OSC was
                     // interrupted by another OSC. For example (newlines for clarity):

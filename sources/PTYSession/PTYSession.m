@@ -21337,6 +21337,10 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     }
 }
 
+- (void)screenDidReadSSHPaneOutput:(NSData *)data pid:(int)pid depth:(int)depth {
+    [_conductor handlePaneOutput:data pid:pid depth:depth];
+}
+
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth {
     [_conductor handleTerminatePID:pid withCode:code depth:depth];
 }

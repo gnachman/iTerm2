@@ -2181,3 +2181,41 @@ Bug Fixes:
   command.
 - The browser’s View Source now highlights
   attribute values.
+- With SSH Integration, the Composer now
+  suggests remote file names when the remote
+  host has Python 3.7 or 3.8.
+- With SSH Integration, a remote request that
+  fails unexpectedly, such as a file operation,
+  now reports an error instead of never
+  finishing.
+- With SSH Integration, asking for an immediate
+  update of the remote job list, as the Job
+  status bar component can, no longer ends the
+  integration for that session.
+- With SSH Integration to a Mac, output that a
+  remote command printed just before it exited
+  could be lost.
+- With SSH Integration, ending a connection
+  while a remote file search was running could
+  leave iTerm2’s helper program running on the
+  remote host.
+- With SSH Integration, deleting a remote
+  symbolic link to a folder now deletes the link
+  instead of failing.
+- With SSH Integration, iTerm2 now reads the
+  remote PATH correctly when it contains runs of
+  spaces or wildcard characters, and when the
+  remote login shell is one iTerm2 doesn’t
+  recognize.
+- With SSH Integration, remote files and folders
+  whose names contain non-ASCII characters, such
+  as accented letters, can now be downloaded,
+  deleted, renamed, and otherwise changed.
+  Before, they were reported as missing.
+- With SSH Integration, restoring a session that
+  had used ssh to reach a further host now works
+  when that ssh command has non-ASCII characters.
+- With SSH Integration, non-ASCII text that
+  iTerm2 reads from the remote host, such as a
+  remote PATH containing accented letters, is no
+  longer garbled.

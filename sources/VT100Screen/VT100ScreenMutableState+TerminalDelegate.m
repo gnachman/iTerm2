@@ -4079,6 +4079,20 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     } name:@"read raw ssh"];
 }
 
+- (void)terminalDidReadSSHPaneOutput:(NSData *)data
+                                 pid:(int)pid
+                               depth:(int)depth {
+    if (!data) {
+        return;
+    }
+    DLog(@"Add side effect to handle pane output %@ for pid %d", data.shortDebugString, pid);
+    // Urgent: it is another session's output, and that session is on screen exactly when this
+    // one (its workgroup's leader) is not.
+    [self addUrgentSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidReadSSHPaneOutput:data pid:pid depth:depth];
+    } name:@"read pane output"];
+}
+
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth {
     [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDidTerminateSSHProcess:pid code:code depth:depth];

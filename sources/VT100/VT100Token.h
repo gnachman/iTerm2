@@ -429,6 +429,10 @@ void iTermPreconvertedStringDataFree(PreconvertedStringData *data);
 
 #define SSH_OUTPUT_AUTOPOLL_PID -1000
 #define SSH_OUTPUT_NOTIF_PID -1001
+// %output channel of a pane process (framer.py PANE_CHANNEL): a workgroup peer's program run
+// through the leader's framer. Its bytes belong to the peer's terminal, so they are passed on
+// as they are instead of being parsed.
+#define SSH_OUTPUT_PANE_CHANNEL 3
 
 typedef struct {
     int8_t channel;

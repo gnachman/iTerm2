@@ -1856,7 +1856,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         return;
     }
     if (token.sshInfo.valid &&
-        token.sshInfo.channel >= 0) {
+        token.sshInfo.channel >= 0 &&
+        token->type != SSH_OUTPUT) {
         DLog(@"Token is from an ssh side-channel");
         // A side-channel produced output. Ignore anything that isn't plaintext to make parsing easy.
         VT100Token *wrapped = [[VT100Token alloc] init];
@@ -3274,6 +3275,12 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case SSH_OUTPUT:
             DLog(@"executing an ssh output token");
+            if (token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL) {
+                [self.delegate terminalDidReadSSHPaneOutput:token.savedData
+                                                        pid:token.csi->p[0]
+                                                      depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
+                break;
+            }
             [self.delegate terminalDidReadRawSSHData:token.savedData
                                                  pid:token.csi->p[0]
                                              channel:token.csi->p[1]];

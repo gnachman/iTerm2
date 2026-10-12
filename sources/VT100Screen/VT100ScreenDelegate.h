@@ -505,6 +505,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                  channel:(uint8_t)channel
                                    depth:(int)depth;
 - (void)screenDidReadRawSSHData:(NSData * _Nonnull)data;
+- (void)screenDidReadSSHPaneOutput:(NSData * _Nonnull)data pid:(int)pid depth:(int)depth;
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth;
 - (void)screenHandleIT2:(NSString * _Nullable)string depth:(int)depth;
 - (void)screenDidReceiveUnframedSSHPromptAtDepth:(int)depth;

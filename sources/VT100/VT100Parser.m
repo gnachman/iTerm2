@@ -203,6 +203,12 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
 
                     case SSH_OUTPUT: {
                         isSignaling = YES;
+                        if (token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL) {
+                            // Another session's terminal output. The token itself carries it,
+                            // at any depth (see below).
+                            DLog(@"%@: pane output for pid %d", self, token.csi->p[0]);
+                            break;
+                        }
                         const int pid = token.csi->p[0];
                         DLog(@"%@: handling SSH_OUTPUT", self);
                         VT100Parser *sshParser = _sshParsers[@(pid)];
@@ -249,8 +255,11 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                                 DLog(@"%@: Update ssh info in rewritten token %@ to %@", self, token, SSHInfoDescription(myInfo));
                                 switch (token.type) {
                                     case SSH_OUTPUT:
-                                        // VT100Parser cannot emit SSH_OUTPUT.
-                                        assert(NO);
+                                        // A child parser emits SSH_OUTPUT only for a pane, whose
+                                        // output it keeps whole. It came from the child's framer.
+                                        assert(token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL);
+                                        token.sshInfo = childInfo;
+                                        break;
                                     // Deliberate subset of VT100TokenTypeIsSSHMeta (see
                                     // VT100Token.h): SSH_OUTPUT is handled by the assert above,
                                     // and the synthetic SSH_SIDE_CHANNEL cannot be a %output
@@ -425,9 +434,11 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
         }
 
         // Don't append the outer wrapper to the output. Earlier, it was unwrapped and the inner
-        // tokens were already added.
+        // tokens were already added. Pane output was not unwrapped, so it goes on at any depth.
         if (token->type != DCS_TMUX_CODE_WRAP &&
-            (token->type != SSH_OUTPUT || self.depth == 0)) {
+            (token->type != SSH_OUTPUT ||
+             self.depth == 0 ||
+             token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL)) {
             [token retain];
             CVectorAppend(vector, token);
         }

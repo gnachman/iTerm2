@@ -4779,6 +4779,7 @@
 		F8ECBE597A69D02A7C924093 /* iTermPasswordInputDebouncer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F20922E7C56B246576E589A /* iTermPasswordInputDebouncer.swift */; };
 		F968986D3911FB8752DFAA33 /* OrchestrationToolProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC80F2A9A6FBB24419560FD1 /* OrchestrationToolProvider.swift */; };
 		F96B31FFBFC5DFE713E9C670 /* EnterWorkgroupBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171DC262300F3B977D7FF1DB /* EnterWorkgroupBrowserTrigger.swift */; };
+		F97014D02D2DF9126FFEEDE5 /* Conductor+Panes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F4FBFFB7556EFAE2CFB347 /* Conductor+Panes.swift */; };
 		FA10B94EEB6D07B5497126EB /* BashWordSplitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413B31365A66C69AAB923889 /* BashWordSplitter.swift */; };
 		FAD6DE861DB58FBEB8390E1F /* CompanionSessionStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C1A8905A6728CBE90BCD09 /* CompanionSessionStreamer.swift */; };
 		FB47A51FE147AA2BDA2FFFD4 /* SendCompanionNotificationBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24E4996901DA8086C54D1664 /* SendCompanionNotificationBuiltInFunction.swift */; };
@@ -8936,6 +8937,7 @@
 		E0E20BFEA58A4C03B21D22FD /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermOptionalComponentDownloadWindowController.xcstrings; sourceTree = "<group>"; };
 		E14CEFBAD0421B3A960496A9 /* WorkgroupPresets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupPresets.swift; sourceTree = "<group>"; };
 		E2BE75D00D5642419A4E0507 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/NumberOfSpacesAccessoryView.xcstrings; sourceTree = "<group>"; };
+		E2F4FBFFB7556EFAE2CFB347 /* Conductor+Panes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Conductor+Panes.swift"; sourceTree = "<group>"; };
 		E314DB340B9B495F8F6D1578 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/PasteView.xcstrings; sourceTree = "<group>"; };
 		E3C1692FB633AACA44AD2625 /* WorkgroupUsageToolbarItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupUsageToolbarItem.swift; sourceTree = "<group>"; };
 		E4FCBB8A80DB478BBE9D21E5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MinimalFindView.xib; sourceTree = "<group>"; };
@@ -11798,6 +11800,7 @@
 				A682DC98B9E2ECF3D7E1B80D /* IT2HostGrants.swift */,
 				413B31365A66C69AAB923889 /* BashWordSplitter.swift */,
 				BC40E77AF12D0B04983CA135 /* RemoteGitState.swift */,
+				E2F4FBFFB7556EFAE2CFB347 /* Conductor+Panes.swift */,
 			);
 			path = SSH;
 			sourceTree = "<group>";
@@ -20309,6 +20312,7 @@
 				20A35AB333469449066CC4EF /* FramerRecoveryRefusals.swift in Sources */,
 				232CB1EF1527990E6ADF64B1 /* TTYModeRepairer.swift in Sources */,
 				67C35F5A63227428A1D3D6F0 /* TmuxWorkgroupRepair.swift in Sources */,
+				F97014D02D2DF9126FFEEDE5 /* Conductor+Panes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
