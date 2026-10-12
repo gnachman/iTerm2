@@ -32,7 +32,12 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationShell) {
     iTermShellIntegrationShellZsh,
     iTermShellIntegrationShellFish,
     iTermShellIntegrationShellXonsh,
+    iTermShellIntegrationShellNu,
     iTermShellIntegrationShellUnknown
 };
 
 extern NSString *iTermShellIntegrationShellString(iTermShellIntegrationShell shell);
+
+// Shells that source the script from an autoload directory. The installer writes it there and
+// leaves the dotfiles alone.
+extern BOOL iTermShellIntegrationShellLoadsScriptAutomatically(iTermShellIntegrationShell shell);

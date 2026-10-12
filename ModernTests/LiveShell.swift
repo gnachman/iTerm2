@@ -34,6 +34,7 @@ final class LiveShell {
     private let childPID: pid_t
     private let stateLock = NSLock()
     private var _exited = false
+    private let answersTerminalQueries: Bool
 
     /// Whether the child process has exited.
     var hasExited: Bool {
@@ -44,13 +45,22 @@ final class LiveShell {
     /// Launch `shellPath` with the supplied argv (argv[0] included) and env.
     /// Each chunk the shell writes is delivered to `onBytes` synchronously
     /// from the reader thread.
+    ///
+    /// With `answersTerminalQueries`, the queries in `queryReplies` that the
+    /// shell writes are answered as a terminal would. Some shells send one on
+    /// startup and block until it is answered, so without a reply the shell
+    /// never reads the commands the harness sends: nushell's reedline asks for
+    /// the cursor position (CSI 6n), and fish 4 ends its startup queries with
+    /// Primary Device Attributes (CSI 0c).
     init(shellPath: String,
          arguments: [String],
          environment: [String: String],
+         answersTerminalQueries: Bool = false,
          onBytes: @escaping (UnsafePointer<CChar>, Int) -> Void) throws {
         guard FileManager.default.fileExists(atPath: shellPath) else {
             throw LiveShellError.shellNotFound(path: shellPath)
         }
+        self.answersTerminalQueries = answersTerminalQueries
 
         var masterFD: Int32 = -1
         var term = termios.shellIntegrationDefault
@@ -142,6 +152,8 @@ final class LiveShell {
 
     private func readLoop(onBytes: (UnsafePointer<CChar>, Int) -> Void) {
         var buffer = [CChar](repeating: 0, count: 4096)
+        // The last bytes of the previous chunk, in case a query straddles two reads.
+        var carry = [CChar]()
         while true {
             let n = buffer.withUnsafeMutableBufferPointer { ptr -> Int in
                 return read(masterFD, ptr.baseAddress, ptr.count)
@@ -149,6 +161,9 @@ final class LiveShell {
             if n > 0 {
                 buffer.withUnsafeBufferPointer { ptr in
                     onBytes(ptr.baseAddress!, n)
+                    if answersTerminalQueries {
+                        answerTerminalQueries(in: Array(ptr[0..<n]), carry: &carry)
+                    }
                 }
                 continue
             }
@@ -159,6 +174,44 @@ final class LiveShell {
                 _ = waitpid(childPID, nil, WNOHANG)
                 return
             }
+        }
+    }
+
+    /// Queries a shell may wait on, and the reply sent for each.
+    private static let queryReplies: [(query: [CChar], reply: String)] = [
+        // Cursor position: row 1, column 1.
+        (LiveShell.bytes("\u{1B}[6n"), "\u{1B}[1;1R"),
+        // Primary Device Attributes: a VT220 with ANSI color.
+        (LiveShell.bytes("\u{1B}[c"), "\u{1B}[?62;22c"),
+        (LiveShell.bytes("\u{1B}[0c"), "\u{1B}[?62;22c"),
+    ]
+
+    private static let longestQuery = LiveShell.queryReplies.map { $0.query.count }.max() ?? 0
+
+    private static func bytes(_ string: String) -> [CChar] {
+        return string.utf8.map { CChar(bitPattern: $0) }
+    }
+
+    private func answerTerminalQueries(in chunk: [CChar], carry: inout [CChar]) {
+        let bytes = carry + chunk
+        var replies = [String]()
+        var i = 0
+        scan: while i < bytes.count {
+            for (query, reply) in Self.queryReplies where i + query.count <= bytes.count {
+                if Array(bytes[i..<(i + query.count)]) == query {
+                    // A query that ends inside the carry was answered with the previous chunk.
+                    if i + query.count > carry.count {
+                        replies.append(reply)
+                    }
+                    i += query.count
+                    continue scan
+                }
+            }
+            i += 1
+        }
+        carry = Array(bytes.suffix(Self.longestQuery - 1))
+        for reply in replies {
+            send(reply)
         }
     }
 

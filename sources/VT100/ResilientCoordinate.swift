@@ -73,6 +73,11 @@ class ResilientCoordinate: NSObject {
         }
     }
 
+    // YES for the end of a half-open ResilientCoordinateRange. An exclusive end may sit one past the
+    // last column (x == width) to include a row's last cell, as a right prompt that ends at the
+    // margin does. Set by ResilientCoordinateRange.init(start:end:), which every range goes through.
+    fileprivate(set) var isExclusiveEnd = false
+
     @objc
     enum Status: Int {
         case valid
@@ -212,7 +217,8 @@ extension ResilientCoordinate {
         if coord.y >= numberOfLines + overflow {
             return .truncatedBelow
         }
-        if coord.x < 0 || coord.x >= dataSource.rcWidth {
+        let maxX = isExclusiveEnd ? dataSource.rcWidth : dataSource.rcWidth - 1
+        if coord.x < 0 || coord.x > maxX {
             return .invalid
         }
         return .valid
@@ -241,6 +247,7 @@ class ResilientCoordinateRange: NSObject {
     @objc init(start: ResilientCoordinate, end: ResilientCoordinate) {
         self.start = start
         self.end = end
+        end.isExclusiveEnd = true
         super.init()
     }
 
@@ -459,7 +466,18 @@ extension ResilientCoordinate {
         guard let convertObj = notification.userInfo?[RCResizeNotification.convertKey] else {
             return
         }
-        let converted = VT100GridAbsCoordByInvokingConverter(convertObj, unsafeCoord)
+        let converted: VT100GridAbsCoord
+        if isExclusiveEnd && unsafeCoord.x > 0 {
+            // An exclusive end follows the last cell it includes, which may be at the margin, so
+            // convert that cell and step past it.
+            let lastIncluded = VT100GridAbsCoord(x: unsafeCoord.x - 1, y: unsafeCoord.y)
+            let convertedLast = VT100GridAbsCoordByInvokingConverter(convertObj, lastIncluded)
+            converted = VT100GridAbsCoordIsValid(convertedLast)
+                ? VT100GridAbsCoord(x: convertedLast.x + 1, y: convertedLast.y)
+                : convertedLast
+        } else {
+            converted = VT100GridAbsCoordByInvokingConverter(convertObj, unsafeCoord)
+        }
         if VT100GridAbsCoordIsValid(converted) {
             location = .coord(converted)
         } else {

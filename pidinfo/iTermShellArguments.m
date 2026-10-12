@@ -14,7 +14,7 @@
     static NSSet<NSString *> *shells;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        shells = [NSSet setWithArray:@[ @"zsh", @"bash", @"sh", @"dash", @"fish", @"ksh" ]];
+        shells = [NSSet setWithArray:@[ @"zsh", @"bash", @"sh", @"dash", @"fish", @"ksh", @"nu" ]];
     });
     return shells;
 }

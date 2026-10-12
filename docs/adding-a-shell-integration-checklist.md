@@ -151,7 +151,11 @@ neighboring symbol.
 
 - [ ] `sources/API/iTermAPIScriptLauncher.m` - add `@"<shell>"` to
       `knownShells` (~line 818) so API scripts run through that login
-      shell.
+      shell. Only do this if `<shell> -c 'echo /tmp/a\ b'` prints
+      `/tmp/a b`: the command is built with POSIX backslash escaping, so
+      a shell that keeps the backslash (nushell does) splits paths with
+      spaces and every API script fails to launch. Leave such shells
+      out; they fall back to `/bin/bash`.
 - [ ] `sources/Settings/ProfilesGeneralPreferencesViewController.m` -
       TWO lists here, both updated by the xonsh commit:
   - the `shells` array (~line 743, code) that enables "Load shell

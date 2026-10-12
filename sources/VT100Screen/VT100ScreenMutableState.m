@@ -3767,6 +3767,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     count += 1;
     return count;
 }
+// Removes the excluded subranges of the prompt mark on lastPromptLine if its command hasn't been
+// recorded yet. Mutates only when there is something to clear so shells that redraw their prompt
+// on every keystroke without non-initial prompts pay nothing.
+- (void)clearExcludedSubrangesOfPromptMarkBeingBuilt {
+    const long long relativeLine = self.lastPromptLine - self.cumulativeScrollbackOverflow;
+    if (self.lastPromptLine < 0 || relativeLine < 0 || relativeLine > INT_MAX) {
+        return;
+    }
+    id<VT100ScreenMarkReading> mark = [self screenMarkOnLine:(int)relativeLine];
+    if (!mark || mark.firstLineOfCommand != nil || mark.excludedSubranges.count == 0) {
+        return;
+    }
+    DLog(@"Clearing %@ excluded subranges on redrawn prompt", @(mark.excludedSubranges.count));
+    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+        VT100ScreenMark *screenMark = (VT100ScreenMark *)obj;
+        screenMark.excludedSubranges = nil;
+    }];
+}
+
 // FTCS A
 - (VT100ScreenMark *)promptDidStartAt:(VT100GridAbsCoord)initialCoord
                          wasInCommand:(BOOL)wasInCommand
@@ -3797,6 +3816,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         // We want to avoid running a side effect in that case because it is very slow.
         // Issue 10963.
         DLog(@"Re-setting prompt mark. Short circuit.");
+        // The redraw replaces any right or continuation prompts drawn before, so their
+        // excluded subranges no longer describe what's on screen. nushell, for example,
+        // draws a "::: " continuation indicator while typing and drops it on submit.
+        [self clearExcludedSubrangesOfPromptMarkBeingBuilt];
         return nil;
     }
     self.shellIntegrationInstalled = YES;

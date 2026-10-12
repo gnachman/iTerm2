@@ -88,10 +88,14 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         throw XCTSkip("xonsh needs synthetic CPR responses from the harness; see method comment")
     }
 
+    func testNu_baseline_emitsOnePromptAPerCommand() throws {
+        try runShellBaseline(.nu)
+    }
+
     // MARK: - Implementation
 
     private enum SupportedShell: String {
-        case zsh, bash, fish, tcsh, xonsh
+        case zsh, bash, fish, tcsh, xonsh, nu
 
         func executablePath() -> String? {
             let candidates: [String]
@@ -101,6 +105,7 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             case .fish:  candidates = ["/usr/local/bin/fish", "/opt/homebrew/bin/fish", "/usr/bin/fish"]
             case .tcsh:  candidates = ["/bin/tcsh", "/usr/bin/tcsh", "/usr/local/bin/tcsh"]
             case .xonsh: candidates = ["/usr/local/bin/xonsh", "/opt/homebrew/bin/xonsh", "/usr/bin/xonsh"]
+            case .nu:    candidates = ["/opt/homebrew/bin/nu", "/usr/local/bin/nu", "/usr/bin/nu"]
             }
             return candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) })
         }
@@ -112,6 +117,30 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             case .fish:  return [executable, "-i", "-N"]
             case .tcsh:  return [executable, "-f", "-i"]
             case .xonsh: return [executable, "--no-rc", "-i"]
+            case .nu:    return [executable, "--no-config-file", "--interactive"]
+            }
+        }
+
+        // Shells that query the terminal on startup and wait for the answer
+        // before they read any input: nushell's reedline asks for the cursor
+        // position, and fish 4 for the device attributes.
+        var waitsForTerminalQueryReplies: Bool {
+            switch self {
+            case .nu, .fish:
+                return true
+            case .zsh, .bash, .tcsh, .xonsh:
+                return false
+            }
+        }
+
+        // nushell emits the OSC 133 marks itself (the script only turns that
+        // on), and reedline tags the primary prompt with k=i.
+        var marksAreTheShellsOwn: Bool {
+            switch self {
+            case .nu:
+                return true
+            case .zsh, .bash, .fish, .tcsh, .xonsh:
+                return false
             }
         }
 
@@ -122,6 +151,7 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             case .fish:  return "iterm2_shell_integration.fish"
             case .tcsh:  return "iterm2_shell_integration.tcsh"
             case .xonsh: return "iterm2_shell_integration.xonsh"
+            case .nu:    return "iterm2_shell_integration.nu"
             }
         }
 
@@ -131,6 +161,9 @@ final class ShellIntegrationLiveHarness: XCTestCase {
                 return "source \(integrationPath)\n"
             case .xonsh:
                 return "execx(open('\(integrationPath)').read())\n"
+            case .nu:
+                // source needs a parse-time constant path; a quoted literal is one.
+                return "source '\(integrationPath)'\n"
             }
         }
 
@@ -164,17 +197,42 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             shellPath: executable,
             arguments: shell.arguments(for: executable),
             environment: env,
+            answersTerminalQueries: shell.waitsForTerminalQueryReplies,
             onBytes: { bytes, length in
                 captureLock.lock()
                 capturedBytes.append(bytes, length: length)
                 captureLock.unlock()
             })
 
+        let launchDate = Date()
+
+        // Waits like LiveShell.waitUntil, but on a timeout records everything
+        // the shell wrote so far, so a failure shows where the shell stalled.
+        func waitUntil(_ description: String, timeout: TimeInterval, _ predicate: () -> Bool) throws {
+            do {
+                try liveShell.waitUntil(description, timeout: timeout, predicate)
+            } catch {
+                let snapshot: Data = {
+                    captureLock.lock(); defer { captureLock.unlock() }
+                    return capturedBytes as Data
+                }()
+                let elapsed = String(format: "%.1f", Date().timeIntervalSince(launchDate))
+                let dump = "[\(shell.rawValue)] \(error) after \(elapsed)s; captured \(snapshot.count) bytes:\n"
+                    + snapshot.escapedForLog
+                print(dump)
+                let attachment = XCTAttachment(string: dump)
+                attachment.name = "\(shell.rawValue) capture at timeout"
+                attachment.lifetime = .keepAlways
+                add(attachment)
+                throw error
+            }
+        }
+
         liveShell.send(shell.sourceCommand(integrationPath: integrationPath))
 
         // Wait for the integration's ShellIntegrationVersion announcement
         // (OSC 1337) which the script prints right after sourcing.
-        try liveShell.waitUntil("integration loaded", timeout: 8.0) {
+        try waitUntil("integration loaded", timeout: 8.0) {
             captureLock.lock(); defer { captureLock.unlock() }
             return capturedBytes.contains(asciiString: "ShellIntegrationVersion=")
         }
@@ -188,7 +246,7 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         // Wait for D;<code> *after* command start and a fresh A (the
         // post-command prompt). We count occurrences in the suffix after
         // the source-complete point.
-        try liveShell.waitUntil("post-command D and A", timeout: 8.0) {
+        try waitUntil("post-command D and A", timeout: 8.0) {
             captureLock.lock(); defer { captureLock.unlock() }
             let snapshot = capturedBytes as Data
             let suffix = snapshot.subdata(in: afterSourceByteCount..<snapshot.count)
@@ -221,10 +279,17 @@ final class ShellIntegrationLiveHarness: XCTestCase {
 
         // (c) None of today's A markers carry a `k=` attribute. PR 3 will
         // introduce `k=s` on PS2 lines for zsh/bash; that will rewrite this
-        // assertion shell-by-shell.
+        // assertion shell-by-shell. A shell that emits its own marks may tag
+        // the primary prompt as initial (k=i); nothing else is expected.
         for args in aOccurrences {
-            XCTAssertFalse(args.contains("k="),
-                           "[\(shell.rawValue)] OSC 133;A unexpectedly carries `k=` in args '\(args)'")
+            let kinds = args.split(separator: ";").filter { $0.hasPrefix("k=") }
+            if shell.marksAreTheShellsOwn {
+                XCTAssertTrue(kinds.allSatisfy { $0 == "k=i" },
+                              "[\(shell.rawValue)] OSC 133;A carries an unexpected `k=` in args '\(args)'")
+            } else {
+                XCTAssertTrue(kinds.isEmpty,
+                              "[\(shell.rawValue)] OSC 133;A unexpectedly carries `k=` in args '\(args)'")
+            }
         }
 
         // (d) D arguments parse as digits (return codes), or are empty.
@@ -242,6 +307,26 @@ final class ShellIntegrationLiveHarness: XCTestCase {
 // MARK: - OSC 133 byte-scanning helpers
 
 private extension Data {
+    /// The bytes as printable ASCII: ESC as \e, backslash, other control and
+    /// non-ASCII bytes as \xNN, and newlines kept so the dump reads like the
+    /// screen.
+    var escapedForLog: String {
+        var result = ""
+        for byte in self {
+            switch byte {
+            case 0x1B:
+                result += "\\e"
+            case 0x0A:
+                result += "\\n\n"
+            case 0x20..<0x7F where byte != 0x5C:
+                result.append(Character(UnicodeScalar(byte)))
+            default:
+                result += String(format: "\\x%02X", byte)
+            }
+        }
+        return result
+    }
+
     func contains(asciiString s: String) -> Bool {
         guard let needle = s.data(using: .ascii) else { return false }
         return range(of: needle) != nil

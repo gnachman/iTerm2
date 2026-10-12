@@ -919,6 +919,7 @@ typedef struct {
 - (void)invalidatePendingPromptState {
     self.currentPromptKind = VT100PromptKindInitial;
     self.pendingNonInitialPromptStart = nil;
+    self.primaryPromptAwaitingCommandStart = NO;
 }
 
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
@@ -2576,6 +2577,7 @@ typedef struct {
     // permanently hides a prompt from navigation/Cmd-Shift-Up.
     if (kind == VT100PromptKindInitial || kind == VT100PromptKindUnknown) {
         self.pendingNonInitialPromptStart = nil;
+        self.primaryPromptAwaitingCommandStart = YES;
         [self promptDidStartAt:VT100GridAbsCoordMake(self.currentGrid.cursor.x,
                                                      self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)
                   wasInCommand:wasInCommand
@@ -2636,8 +2638,17 @@ typedef struct {
         // subtract these from the typed-command region. PR 4 will plumb
         // through the consumer side.
         [self recordPendingExcludedSubrangeForNonInitialB];
+        if (self.primaryPromptAwaitingCommandStart) {
+            // A B ends the whole prompt, including a non-initial prompt nested
+            // inside it. reedline draws its right prompt between the primary
+            // A and its only B, so this B is also the primary prompt's B.
+            RLog(@"B closes a non-initial prompt nested in the primary prompt; starting command");
+            self.primaryPromptAwaitingCommandStart = NO;
+            [self commandDidStart];
+        }
         return;
     }
+    self.primaryPromptAwaitingCommandStart = NO;
     [self commandDidStart];
 }
 
@@ -2663,10 +2674,20 @@ typedef struct {
         return;
     }
     // Snapshot the closing coord. Build both pool variants below.
-    const VT100GridAbsCoord endCoord =
+    const VT100GridAbsCoord startCoord = pending.coord;
+    VT100GridAbsCoord endCoord =
         VT100GridAbsCoordMake(self.currentGrid.cursor.x,
                               self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
-    const VT100GridAbsCoord startCoord = pending.coord;
+    if (VT100GridAbsCoordOrder(endCoord, startCoord) == NSOrderedAscending) {
+        // The shell drew this prompt inside a cursor save/restore and put the
+        // cursor back before sending B (reedline's right prompt). The cursor
+        // doesn't say where the prompt ended; it runs to the end of its row.
+        RLog(@"B at %@ precedes its prompt start %@; excluding to end of row",
+             VT100GridAbsCoordDescription(endCoord), VT100GridAbsCoordDescription(startCoord));
+        // The range is half-open, so an end at x == width includes the row's
+        // last cell. The range's end coordinate allows that.
+        endCoord = VT100GridAbsCoordMake(self.width, startCoord.y);
+    }
     const VT100GridAbsCoordRange absRange =
         VT100GridAbsCoordRangeMake(startCoord.x, startCoord.y, endCoord.x, endCoord.y);
 
@@ -2834,7 +2855,7 @@ typedef struct {
 // version is formatted as
 // <version number>;<key>=<value>;<key>=<value>...
 // Older scripts may have only a version number and no key-value pairs.
-// The only defined key is "shell", and the value will be tcsh, bash, zsh, or fish.
+// The only defined key is "shell", and the value will be tcsh, bash, zsh, fish, xonsh, or nu.
 - (void)terminalSetShellIntegrationVersion:(NSString *)version {
     RLog(@"begin %@", version);
     NSArray *parts = [version componentsSeparatedByString:@";"];

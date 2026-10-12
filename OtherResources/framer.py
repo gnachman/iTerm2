@@ -598,10 +598,15 @@ async def get_env_var(var_name):
     user_shell = os.environ.get('SHELL', '/bin/bash')
 
     # Non-POSIX shells may leave POSIX shell path in the $SHELL; perform an additional check.
+    # Keep a full path to the shell, which may not be on the framer's PATH.
     if os.environ.get('XONSHRC', ''):
-        user_shell = 'xonsh'
+        if os.path.basename(user_shell) != 'xonsh':
+            user_shell = 'xonsh'
+    elif os.environ.get('NU_VENDOR_AUTOLOAD_DIR', ''):
+        if os.path.basename(user_shell) != 'nu':
+            user_shell = 'nu'
 
-    known_shells = ['bash', 'csh', 'dash', 'fish', 'ksh', 'sh', 'tcsh', 'xonsh', 'zsh']
+    known_shells = ['bash', 'csh', 'dash', 'fish', 'ksh', 'nu', 'sh', 'tcsh', 'xonsh', 'zsh']
 
     # Extract the last path component of the user's shell
     shell_name = os.path.basename(user_shell)
@@ -611,7 +616,13 @@ async def get_env_var(var_name):
         log(f'Unknown shell {shell_name}')
         return None
 
-    command = f'echo ${var_name}'
+    if shell_name == 'nu':
+        # nushell keeps the environment under $env and has no $VAR syntax. It also converts
+        # PATH-like variables to lists, which print renders as a table, so join them back.
+        command = (f'print ($env.{var_name}? | default "" | '
+                   'if ($in | describe | str starts-with "list") { str join (char esep) } else { into string })')
+    else:
+        command = f'echo ${var_name}'
 
     try:
         process = await asyncio.create_subprocess_exec(

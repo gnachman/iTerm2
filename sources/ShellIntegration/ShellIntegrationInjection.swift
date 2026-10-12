@@ -166,6 +166,8 @@ import Foundation
              destinationBase),
             (local("iterm2_shell_integration.xonsh"),
              destinationBase),
+            (local("iterm2_shell_integration.nu"),
+             destinationBase),
             (local("bash-si-loader"),
              destinationBase),
             (local(".zshenv"),
@@ -181,6 +183,7 @@ fileprivate class ShellIntegrationInjectionFactory {
     private enum Shell: String {
         case bash = "bash"
         case fish = "fish"
+        case nu = "nu"
         case xonsh = "xonsh"
         case zsh = "zsh"
 
@@ -225,6 +228,9 @@ fileprivate class ShellIntegrationInjectionFactory {
         case .fish:
             DLog("fish")
             return FishShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
+        case .nu:
+            DLog("nu")
+            return NuShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
         case .xonsh:
             DLog("xonsh")
             return XonshShellIntegrationInjection(shellIntegrationDir: shellIntegrationDir)
@@ -276,6 +282,26 @@ fileprivate class FishShellIntegrationInjection: BaseShellIntegrationInjection, 
         env[Env.XDG_DATA_DIRS] = shellIntegrationDir
         env[FishEnv.IT2_FISH_XDG_DATA_DIRS] = shellIntegrationDir
         return env
+    }
+}
+
+fileprivate class NuShellIntegrationInjection: BaseShellIntegrationInjection, ShellIntegrationInjecting {
+    fileprivate struct NuEnv {
+        // One extra vendor autoload directory, which nushell meant for exactly this: it sources
+        // every .nu file in it at startup, after config.nu, so the script's pre_prompt hook is
+        // appended to the user's hooks rather than overwritten by them. The value is used as is
+        // (no nushell/vendor/autoload suffix, unlike XDG_DATA_DIRS) and only adds to the autoload
+        // list, so the user's configuration still loads. Honored by every version from the
+        // script's 0.100 floor on. nushell takes a single directory here, so a value the user
+        // set is replaced for the session.
+        static let NU_VENDOR_AUTOLOAD_DIR = "NU_VENDOR_AUTOLOAD_DIR"
+    }
+
+    func computeModified(env: [String: String],
+                         argv: [String]) -> ([String: String], [String]) {
+        var modified = env
+        modified[NuEnv.NU_VENDOR_AUTOLOAD_DIR] = shellIntegrationDir
+        return (modified, argv)
     }
 }
 
