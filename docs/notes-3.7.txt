@@ -1283,3 +1283,6 @@ Bug Fixes:
   profile, and items in nested submenus of
   MainMenu could not be reached on Python 3.12
   and earlier.
+- Fixed Selection.async_get_string in the Python
+  API adding line breaks that copying the same
+  selection in iTerm2 leaves out.

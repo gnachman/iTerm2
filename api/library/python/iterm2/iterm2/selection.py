@@ -290,11 +290,11 @@ class Selection:
                 indexes |= indexes_to_add
 
                 # In multipart windowed ranges, add connectors for the endpoint
-                # of all but the last # range. Each enumerated range is on its
+                # of all but the last range. Each enumerated range is on its
                 # own line.
                 if (
                     outer.windowed_coord_range.hasWindow
-                    and outer_range.end == outer.windowed_coord_range.coordRange.end
+                    and outer_range.end != outer.windowed_coord_range.coordRange.end
                     and the_range.length > 0
                 ):
                     connectors |= {the_range.max}
@@ -328,13 +328,14 @@ class Selection:
 
         sorted_ranges = sorted(all_ranges, key=range_key)
         for idx, sorted_range in enumerate(sorted_ranges):
+            # Make the end exclusive, as connectors are, before finding its index.
+            sorted_range.end.x += 1
             end_index = (
                 sorted_range.start.x
                 + sorted_range.start.y * width
                 + sorted_range.length(width)
             )
             eol = (end_index not in connectors) and idx + 1 < len(sorted_ranges)
-            sorted_range.end.x += 1
             stop = await callback(WindowedCoordRange(sorted_range), eol)
             if stop:
                 break
