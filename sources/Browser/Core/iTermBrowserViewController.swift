@@ -144,6 +144,24 @@ class iTermBrowserViewController: NSViewController {
         }
     }
 
+    // When true, the toolbar (navigation buttons and URL bar) is removed and the page fills
+    // the session. Web > Show Toolbar toggles it, and Open Location brings it back.
+    @objc var toolbarHidden = false {
+        didSet {
+            guard toolbarHidden != oldValue, isViewLoaded else {
+                return
+            }
+            // Keystrokes must not keep going to a URL bar that can no longer be seen.
+            if toolbarHidden,
+               let responder = view.window?.firstResponder as? NSView,
+               responder.isDescendant(of: toolbar) {
+                view.window?.makeFirstResponder(browserManager.webView)
+            }
+            toolbar.isHidden = toolbarHidden
+            layoutSubviews()
+        }
+    }
+
     // 100.0 = 100%
     @objc var zoom: CGFloat {
         get {
@@ -815,6 +833,7 @@ extension iTermBrowserViewController {
         indicatorsHelper.backgroundlessMode = true
         indicatorsHelper.indicatorSize = 20.0
         toolbar.configureIndicators(indicatorsHelper: indicatorsHelper, sessionGuid: sessionGuid)
+        toolbar.isHidden = toolbarHidden
         view.addSubview(toolbar)
     }
 
@@ -844,14 +863,15 @@ extension iTermBrowserViewController {
         // Background view - full coverage
         backgroundView.frame = bounds
         
-        // Toolbar - top, full width, 44pt height
+        // Toolbar - top, full width, 44pt height (none when hidden)
+        let toolbarHeight: CGFloat = toolbarHidden ? 0 : 44
         toolbar.frame = NSRect(x: 0, y: bounds.height - 44,
                               width: bounds.width, height: 44)
-        
+
         // WebView - below toolbar
         browserManager.webView.frame = NSRect(x: 0, y: 0,
                                             width: bounds.width,
-                                            height: bounds.height - 44)
+                                            height: bounds.height - toolbarHeight)
         
         // Shade view - full coverage
         shadeView.frame = bounds
@@ -1312,6 +1332,10 @@ extension iTermBrowserViewController: NSMenuItemValidation {
         if menuItem.action == #selector(performFindPanelAction(_:)) {
             return menuItem.tag != NSFindPanelAction.selectAll.rawValue
         }
+        if menuItem.action == #selector(browserToggleToolbar(_:)) {
+            menuItem.state = toolbarHidden ? .off : .on
+            return true
+        }
         return true
     }
 }
@@ -1358,6 +1382,7 @@ extension iTermBrowserViewController {
     @objc
     @IBAction
     func browserOpenLocation(_ sender: Any) {
+        toolbarHidden = false
         toolbar.focusURLBar()
     }
 
@@ -1383,6 +1408,12 @@ extension iTermBrowserViewController {
     @IBAction
     func browserHistory(_ sender: Any) {
         browserManager.loadURL(iTermBrowserHistoryViewHandler.historyURL.absoluteString)
+    }
+
+    @objc
+    @IBAction
+    func browserToggleToolbar(_ sender: Any) {
+        toolbarHidden.toggle()
     }
 
     @objc(addNamedMark:)

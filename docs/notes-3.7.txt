@@ -309,6 +309,10 @@ New Features:
   shows an iTerm2 icon in the menu bar, optionally
   followed by an interpolated string such as
   \(iterm2.workingSessionCount).
+- You can hide a browser session’s toolbar so the
+  page fills the pane with Web > Show Toolbar, or
+  from the Python API with
+  Session.async_set_browser_toolbar_hidden.
 
 Improvements:
 - Pausing a spinning progress indicator with

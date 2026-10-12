@@ -172,3 +172,20 @@ def test_set_session_note_requires_app_support():
 
     with pytest.raises(iterm2.capabilities.AppVersionTooOld):
         asyncio.run(session.async_set_session_note(text="remember this"))
+
+def test_set_browser_toolbar_hidden_sends_a_number(monkeypatch):
+    """A bare Python True would be parsed as a variable reference, so 1/0 is sent."""
+    session, _ = make_session()
+    invocations = []
+
+    async def async_invoke_method(actual_connection, session_id, invocation, timeout):
+        invocations.append(invocation)
+        return True
+
+    monkeypatch.setattr(iterm2.rpc, "async_invoke_method", async_invoke_method)
+
+    asyncio.run(session.async_set_browser_toolbar_hidden(True))
+    asyncio.run(session.async_set_browser_toolbar_hidden(False))
+
+    assert invocations == ["iterm2.browser_set_toolbar_hidden(hidden: 1)",
+                           "iterm2.browser_set_toolbar_hidden(hidden: 0)"]

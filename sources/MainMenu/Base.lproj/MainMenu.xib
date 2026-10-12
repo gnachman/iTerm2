@@ -2541,6 +2541,14 @@ DQ
                             <action selector="browserHistory:" target="-1" id="3HV-iw-snb"/>
                         </connections>
                     </menuItem>
+                    <menuItem isSeparatorItem="YES" id="Sep-wT-b4r"/>
+                    <menuItem title="Show Toolbar" id="Tgl-bT-sh7">
+                        <modifierMask key="keyEquivalentModifierMask"/>
+                        <connections>
+                            <action selector="browserToggleToolbar:" target="-1" id="tBa-Rt-g9k"/>
+                        </connections>
+                        <accessibility identifier="Show Toolbar"/>
+                    </menuItem>
                 </items>
             </menu>
         </menuItem>
