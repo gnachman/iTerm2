@@ -8,23 +8,24 @@
 # exit status.
 #
 # Usage:
-#   tools/run_tests_vm.sh [options] [-parallel] TEST...
+#   tools/run_tests_vm.sh --host H [options] [-parallel] TEST...
 #       Same test arguments as tools/run_tests.expect, e.g.
-#         tools/run_tests_vm.sh ModernTests/TmuxWorkgroupBindingTests
-#         tools/run_tests_vm.sh ModernTests/iTermScriptFunctionCallTest/testSignature
-#         tools/run_tests_vm.sh -parallel                  # whole suite
+#         tools/run_tests_vm.sh --host vm1 ModernTests/TmuxWorkgroupBindingTests
+#         tools/run_tests_vm.sh --host vm1 ModernTests/iTermScriptFunctionCallTest/testSignature
+#         tools/run_tests_vm.sh --host vm1 -parallel       # whole suite
 #
-#   tools/run_tests_vm.sh [options] -- COMMAND [ARG]...
+#   tools/run_tests_vm.sh --host H [options] -- COMMAND [ARG]...
 #       Run any command from the checkout on the VM, e.g. a live harness:
-#         tools/run_tests_vm.sh -- tools/run_tmux_workgroup_live.sh
-#         ITERM2_ONSCREEN_TESTS=1 tools/run_tests_vm.sh -- tools/run_tmux_workgroup_live.sh --e2e
-#         ITERM2_ONSCREEN_TESTS=1 tools/run_tests_vm.sh -- tools/run_ssh_integration_live.sh
-#         tools/run_tests_vm.sh -e OPENAI_API_KEY -e ANTHROPIC_API_KEY -- tools/run_ai_live.sh smoke
+#         tools/run_tests_vm.sh --host vm1 -- tools/run_tmux_workgroup_live.sh
+#         ITERM2_ONSCREEN_TESTS=1 tools/run_tests_vm.sh --host vm1 -- tools/run_tmux_workgroup_live.sh --e2e
+#         ITERM2_ONSCREEN_TESTS=1 tools/run_tests_vm.sh --host vm1 -- tools/run_ssh_integration_live.sh
+#         tools/run_tests_vm.sh --host vm1 -e OPENAI_API_KEY -e ANTHROPIC_API_KEY -- tools/run_ai_live.sh smoke
 #
 # Options:
-#   --host H[,H...]   VM(s) to use. Defaults to $ITERM2_TEST_VM, else vm1. With several
-#                     hosts the first one not busy with another run is used; if all are busy,
-#                     it waits (unless --no-wait). Hosts are ssh destinations (ssh config names).
+#   --host H[,H...]   VM(s) to use. Required: there is no default, because the developer
+#                     decides which agent gets which VM, so ask them. With several hosts the
+#                     first one not busy with another run is used; if all are busy, it waits
+#                     (unless --no-wait). Hosts are ssh destinations (ssh config names).
 #   --no-wait         Fail instead of waiting when every host is busy.
 #   -e NAME           Forward local environment variable NAME to the command on the VM.
 #                     Repeatable. ITERM2_ONSCREEN_TESTS is forwarded automatically, but only
@@ -40,7 +41,6 @@
 #                     to run on this machine itself.
 #
 # Environment:
-#   ITERM2_TEST_VM            Default host list (comma separated).
 #   ITERM2_TEST_VM_CHECKOUT   Checkout path on the VM, relative to its home directory.
 #                             Default iterm2-vm-test/checkout. One checkout is shared by every
 #                             local worktree so its build products stay warm.
@@ -66,7 +66,7 @@ usage() {
     exit 2
 }
 
-hosts="${ITERM2_TEST_VM:-vm1}"
+hosts=""
 wait_for_host=1
 runner=gui
 sync=1
@@ -97,6 +97,10 @@ if [[ "${1:-}" == "--" ]]; then
 fi
 if [[ $# -eq 0 ]]; then
     usage
+fi
+if [[ -z "$hosts" ]]; then
+    echo "Pass --host with the VM the developer gave you. Ask them which one to use." >&2
+    exit 2
 fi
 if [[ $explicit_command == 1 ]] ||
    [[ "$1" == */* && "$1" != ModernTests/* && "$1" != iTerm2XCTests/* && -e "$PROJECT_DIR/$1" ]]; then
