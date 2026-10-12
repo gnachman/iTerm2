@@ -14,6 +14,7 @@
 #import "iTermWarning.h"
 #import "NSData+iTerm.h"
 #import "NSData+GZIP.h"
+#import "NSObject+iTerm.h"
 #import "PTYSession.h"
 #import "PseudoTerminal.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
@@ -82,8 +83,8 @@
     }
 
     NSDictionary *dvrDict = dict[@"dvr"];
-    Profile *dictProfile = dict[@"profile"];
-    if (!dvrDict || !dictProfile) {
+    Profile *untrustedProfile = [NSDictionary castFrom:dict[@"profile"]];
+    if (!dvrDict || !untrustedProfile) {
         [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"RecordingCodec.MissingInfo", nil, [NSBundle mainBundle], @"This recording could not be loaded because it is missing critical information.", @"Warning title shown when a recording is missing required data")
                                    actions:@[ iTermLocalizedOK() ]
                              actionMapping:nil
@@ -95,6 +96,9 @@
         return;
     }
 
+    // The recording may come from anyone, so keep only settings that affect
+    // drawing. Its triggers, key bindings, and so on must never take effect.
+    Profile *dictProfile = [iTermRecordingProfileSanitizer sanitizedProfile:untrustedProfile];
     if (![iTermSessionLauncher profileIsWellFormed:dictProfile]) {
         return;
     }

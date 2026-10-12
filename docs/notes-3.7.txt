@@ -1243,3 +1243,9 @@ Bug Fixes:
 - Cancelling an upload over SSH Integration no
   longer leaves a temporary file on the remote
   host or gets stuck at “Cancelling…”.
+- Opening an Instant Replay recording no longer
+  applies settings embedded in the file that
+  could run commands, such as triggers. Only
+  appearance settings like colors, fonts, and
+  cursor style are taken from a recording.
+  Issue 13128.
