@@ -507,6 +507,13 @@ Improvements:
   It used to keep every one, and tools that
   connect for each command, like it2, piled up
   enough of them to slow iTerm2 down over time.
+- Focus Follows Mouse no longer takes focus
+  away from the find bar, composer, or other
+  fields in a pane by accident. To have focus
+  follow the pointer onto those views and back
+  onto the terminal, turn on “…even to views
+  like Search or Composer” under Settings >
+  Pointer.
 
 Bug Fixes:
 - On macOS 26, hiding a hotkey window when no

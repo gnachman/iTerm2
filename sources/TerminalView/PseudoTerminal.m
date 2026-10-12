@@ -11502,7 +11502,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     // Callers of this method cannot be refused (the session already exists), so a split aimed at a
     // floating pane is redirected.
     targetSession = [[self tabForSession:targetSession] splitTargetForSession:targetSession] ?: targetSession;
-    [self.currentSession refuseFirstResponderAtCurrentMouseLocation];
+    // The relayout must not let the pane under a still pointer take focus.
+    [[iTermPaneFocusFollowsMouse shared] freeze];
     NSColor *tabColor;
     PTYTab *tab = [self tabForSession:targetSession] ?: [self currentTab];
     if (newSession.tabColor) {

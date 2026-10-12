@@ -9141,12 +9141,6 @@ backgroundColor:(NSColor *)backgroundColor {
     return self.delegate;
 }
 
-- (void)sessionDisableFocusFollowsMouseAtCurrentLocation {
-    for (PTYSession *session in self.sessions) {
-        [session refuseFirstResponderAtCurrentMouseLocation];
-    }
-}
-
 - (void)sessionDidResize:(PTYSession *)session {
     if (session != self.activeSession) {
         return;

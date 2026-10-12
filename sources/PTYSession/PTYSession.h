@@ -382,7 +382,6 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 - (void)sessionDidChangeDesiredToolbarItems:(PTYSession *)session;
 - (nullable id<iTermSwipeHandler>)sessionSwipeHandler;
 - (BOOL)sessionIsInSelectedTab:(PTYSession *)session;
-- (void)sessionDisableFocusFollowsMouseAtCurrentLocation;
 - (void)sessionDidResize:(PTYSession *)session;
 - (BOOL)sessionPasswordManagerWindowIsOpen;
 - (BOOL)sessionShouldDragWindowByPaneTitleBar:(PTYSession *)session;
@@ -1404,7 +1403,6 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (CGFloat)desiredPanelReservation;
 + (CGFloat)desiredPanelReservationForProfile:(Profile *)profile
                                      session:(nullable PTYSession *)session;
-- (void)refuseFirstResponderAtCurrentMouseLocation;
 - (void)showError:(NSString *)message suppressionKey:(NSString *)key identifier:(NSString *)identifier;
 - (void)dismissAnnouncementWithIdentifier:(NSString *)identifier;
 - (void)sync;

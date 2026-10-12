@@ -7,6 +7,8 @@ protocol SessionNoteViewDelegate: AnyObject {
     func sessionNoteViewTextDidChange(_ view: SessionNoteView)
     func sessionNoteViewDidBecomeEmpty(_ view: SessionNoteView)
     func sessionNoteViewDidUpdateFrame(_ view: SessionNoteView)
+    // The note collapsed while its text had keyboard focus.
+    func sessionNoteViewDidCollapseWithKeyboardFocus(_ view: SessionNoteView)
     func sessionNoteFont() -> NSFont?
 }
 
@@ -52,6 +54,11 @@ private class SessionNoteTextView: NSTextView {
 
 @objc(iTermSessionNoteView)
 class SessionNoteView: NSView, NSTextViewDelegate {
+    // Under focus follows mouse, the pointer anywhere over the note focuses its text.
+    override var it_focusFollowsMouseResponder: NSView? {
+        return textView
+    }
+
     @objc weak var delegate: SessionNoteViewDelegate?
     @objc var hasContent: Bool { !model.text.isEmpty }
 
@@ -102,6 +109,10 @@ class SessionNoteView: NSView, NSTextViewDelegate {
             model.isCollapsed = newValue
             animateCollapseChange()
             delegate?.sessionNoteViewDidUpdateFrame(self)
+            if newValue && window?.firstResponder === textView {
+                // Collapsing hides the text, which would leave focus with the window.
+                delegate?.sessionNoteViewDidCollapseWithKeyboardFocus(self)
+            }
         }
     }
 

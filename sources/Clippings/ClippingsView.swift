@@ -43,6 +43,11 @@ private let kClippingsCellDetailFont = NSFont.systemFont(ofSize: 11)
 
 @objc(iTermClippingsView)
 class iTermClippingsView: NSView {
+    // Under focus follows mouse, the pointer over the panel focuses its list.
+    override var it_focusFollowsMouseResponder: NSView? {
+        return tableView
+    }
+
     @objc static let fixedWidth: CGFloat = 300
 
     @objc weak var delegate: iTermClippingsViewDelegate? {

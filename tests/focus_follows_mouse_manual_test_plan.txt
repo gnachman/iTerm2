@@ -1,0 +1,71 @@
+Focus Follows Mouse manual test plan
+
+These need a real pointer, so they are not covered by ModernTests
+(PaneFocusFollowsMouseTests covers the decision logic).
+
+Setup: make run. In Settings > Pointer, turn on Focus Follows Mouse.
+Use a window with two side-by-side panes, A (left) and B (right).
+
+Moving between panes
+1. Move the pointer from A to B and back. Focus follows each crossing.
+2. Click in A, then press Cmd-] to move focus to B without moving
+   the pointer. Wiggle the pointer inside A: focus stays in B.
+   Move into B and back into A: A gets focus.
+3. Move from A up onto the tab bar and back into A: nothing changes.
+4. Press Cmd-] so B has focus while the pointer rests in A. Move up
+   onto the tab bar and back into A: A gets focus.
+
+Panels (find bar, composer, session note, inline AI chat, status bar
+search, browser URL bar, clippings)
+For 5 through 10 and 13, turn on “…even to views like Search or
+Composer” under Settings > Pointer. Status bar search needs separate
+status bars per pane; the shared status bar is outside every pane.
+5. Open the find bar. Move the pointer onto it: the find field gets
+   focus. Move onto the terminal: the terminal gets focus.
+6. Repeat 5 with the composer, a session note, the inline AI chat, and
+   a status bar search field.
+7. With the pointer resting on A's terminal, press Cmd-F. Nudge the
+   pointer around on the terminal: the find field keeps focus.
+8. Open the inline AI chat with the pointer resting where the panel
+   appears: the chat input keeps focus while the pointer moves around
+   inside the panel. Move onto the terminal, then onto the chat's
+   message list: the chat input gets focus.
+9. Move the pointer onto a panel's non-text part (the find bar's
+   buttons area, the composer's drag handle): the panel's text gets
+   focus. Move onto A's title bar: nothing changes.
+10. Focus the composer in A, move to B, then back into A over A's title
+    bar: the composer gets focus, and A becomes the active pane (A
+    undimmed, B dimmed).
+11. Turn the checkbox off. Open the find bar in A and move between the
+    find bar and A's terminal: focus doesn't change. Move to B and back
+    into A: the find field gets focus again.
+
+Windows and app switching
+12. Open a second window. Moving between windows focuses the pane
+    under the pointer, and the window becomes key.
+13. In window 2, open the composer and leave the pointer over it. Move
+    to window 1, then back into window 2 over its terminal: window 2
+    gets focus, and its terminal does (the composer was moused over).
+14. Cmd-Tab to another app and back without moving the pointer, with
+    the pointer over a pane that doesn't have focus: focus doesn't
+    change.
+15. Split a pane with Cmd-D while the pointer is still: the new pane
+    gets focus (Advanced setting “When focus follows mouse is enabled,
+    should new split panes automatically be focused?” on, the default)
+    and keeps it until the pointer moves into another pane.
+
+Floating panes
+16. tests/floating_panes/ffm_occlusion_check.sh still passes.
+
+Browser panes
+17. With a browser pane, moving the pointer into it (including from
+    another window) gives the web page focus.
+
+Stealing key focus (Advanced setting “When Focus Follows Mouse is
+enabled, steal key focus even when inactive.”)
+18. With another app active, move the pointer over an iTerm2 pane and
+    type: the text goes to that pane and its cursor draws filled.
+19. Move to another pane: typing goes there. Move off all iTerm2 panes
+    onto the other app's window: typing goes to the other app again.
+20. With the other app's window overlapping an iTerm2 pane, move the
+    pointer over the overlap: typing goes to the other app.

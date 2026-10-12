@@ -13674,6 +13674,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)textViewShouldDrawFilledInCursor {
+    if ([[iTermPaneFocusFollowsMouse shared] hasStolenKeyFocusFor:_view]) {
+        // Keystrokes come here even though the app isn't active.
+        return YES;
+    }
     // If the auto-command history popup is open for this session, the filled-in cursor should be
     // drawn even though the textview isn't in the key window.
     return [self textViewIsActiveSession] && [[_delegate realParentWindow] autoCommandHistoryIsOpenForSession:self];
@@ -17016,15 +17020,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     [_delegate setActiveSession:self];
-    [self.delegate sessionDisableFocusFollowsMouseAtCurrentLocation];
-}
-
-- (void)refuseFirstResponderAtCurrentMouseLocation {
-    if (_view.isBrowser) {
-        [_view.browserViewController refuseFirstResponderAtCurrentMouseLocation];
-        return;
-    }
-    [self.textview refuseFirstResponderAtCurrentMouseLocation];
+    // Don't let the pane under a still pointer take focus back.
+    [[iTermPaneFocusFollowsMouse shared] freeze];
 }
 
 // Switch the workgroup peer switcher to show this session in the pane it
@@ -21572,6 +21569,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewMouseMoved:(NSEvent *)event {
     [_textview mouseMoved:event];
+}
+
+- (NSView *)sessionViewFocusFollowsMouseMainResponder {
+    return self.mainResponder;
+}
+
+- (void)sessionViewFocusFollowsMouseActivateSession {
+    [self textViewDidBecomeFirstResponder];
+}
+
+- (void)sessionViewFocusFollowsMouseStolenKeyFocusDidChange {
+    [_textview requestDelegateRedraw];
 }
 
 - (void)sessionViewRightMouseDown:(NSEvent *)event {

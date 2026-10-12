@@ -183,6 +183,7 @@ NSString *const kPreferenceKeyRightClickClickBypassesContextMenu = @"ReportRight
 NSString *const kPreferenceKeyOptionClickMovesCursor = @"OptionClickMovesCursor";
 NSString *const kPreferenceKeyThreeFingerEmulatesMiddle = @"ThreeFingerEmulates";
 NSString *const kPreferenceKeyFocusFollowsMouse = @"FocusFollowsMouse";
+NSString *const kPreferenceKeyFocusFollowsMouseIncludingSubviews = @"FFM Including Subviews";
 NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines = @"TripleClickSelectsFullWrappedLines";
 NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection = @"DoubleClickPerformsSmartSelection";
 NSString *const kPreferenceKeyEnterCopyModeAutomatically = @"EnterCopyModeAutomatically";
@@ -901,6 +902,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyOptionClickMovesCursor: @YES,
                   kPreferenceKeyThreeFingerEmulatesMiddle: @NO,
                   kPreferenceKeyFocusFollowsMouse: @NO,
+                  kPreferenceKeyFocusFollowsMouseIncludingSubviews: @NO,
                   kPreferenceKeyFocusOnRightOrMiddleClick: @NO,
                   kPreferenceKeyReportHorizontalScrollEvents: @YES,
                   kPreferenceKeyTripleClickSelectsFullWrappedLines: @YES,

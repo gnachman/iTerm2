@@ -9,6 +9,6 @@
 #import "iTermSecureKeyboardEntryController.h"
 #import "PTYMouseHandler.h"
 
-@interface PTYTextView(MouseHandler)<iTermFocusFollowsMouseDelegate, iTermSecureInputRequesting, PTYMouseHandlerDelegate, iTermFocusFollowsMouseFocusReceiver>
+@interface PTYTextView(MouseHandler)<iTermSecureInputRequesting, PTYMouseHandlerDelegate>
 @end
 

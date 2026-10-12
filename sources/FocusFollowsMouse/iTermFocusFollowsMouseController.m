@@ -53,21 +53,17 @@
 
 - (void)handleActivationRegularly {
     DLog(@"Using non-aggressive FFM");
-    const NSPoint mouseLocation = [NSEvent mouseLocation];
-    NSView *view = [NSView viewAtScreenCoordinate:mouseLocation];
-    if (![view conformsToProtocol:@protocol(iTermFocusFollowsMouseFocusReceiver)]) {
-        return;
-    }
-    id<iTermFocusFollowsMouseFocusReceiver> receiver = (id)view;
-    [receiver refuseFirstResponderAtCurrentMouseLocation];
+    // Coming back to the app must not move focus to the pane under a still pointer.
+    [[iTermPaneFocusFollowsMouse shared] appDidBecomeActive];
 }
 
 - (void)handleActivationAggressively:(NSPoint)savedMouseLocation {
     DLog(@"Using aggressive FFM");
     const NSPoint mouseLocation = [NSEvent mouseLocation];
-    // If focus follows mouse is on, find the window under the cursor and make it key. If a
-    // id<iTermFocusFollowsMouseFocusReceiver> is under the cursor make it first responder.
+    // If focus follows mouse is on, find the window under the cursor and make it key. If a pane
+    // is under the cursor, focus it.
     if (NSEqualPoints(mouseLocation, savedMouseLocation)) {
+        [[iTermPaneFocusFollowsMouse shared] appDidBecomeActive];
         return;
     }
     // Dispatch async because when you cmd-tab into iTerm2 the windows are briefly
@@ -85,9 +81,7 @@
     if (view) {
         RLog(@"Will activate %@", window.title);
         [window makeKeyAndOrderFront:nil];
-        if ([view conformsToProtocol:@protocol(iTermFocusFollowsMouseFocusReceiver)]) {
-            [window makeFirstResponder:view];
-        }
+        [[iTermPaneFocusFollowsMouse shared] focusPaneUnderPointer];
         return;
     }
 }
@@ -98,14 +92,11 @@
 }
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
-    if (![iTermAdvancedSettingsModel aggressiveFocusFollowsMouse]) {
+    if (![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] ||
+        ![iTermAdvancedSettingsModel aggressiveFocusFollowsMouse]) {
         return;
     }
-    const NSPoint mouseLocation = [NSEvent mouseLocation];
-    NSView *view = [NSView viewAtScreenCoordinate:mouseLocation];
-    if ([view conformsToProtocol:@protocol(iTermFocusFollowsMouseFocusReceiver)]) {
-        [view.window makeFirstResponder:view];
-    }
+    [[iTermPaneFocusFollowsMouse shared] focusPaneUnderPointer];
 }
 
 @end

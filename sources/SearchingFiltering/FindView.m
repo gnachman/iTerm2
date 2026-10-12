@@ -29,8 +29,14 @@
 #import "PseudoTerminal.h"
 #import "NSBezierPath+iTerm.h"
 #import "NSResponder+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @implementation FindView
+
+// Under focus follows mouse, the pointer anywhere over the find bar focuses its search field.
+- (NSView *)it_focusFollowsMouseResponder {
+    return [self it_firstEditableTextDescendant];
+}
 
 - (BOOL)isFlipped
 {
@@ -107,8 +113,9 @@
 - (void)drawRect:(NSRect)dirtyRect {
 }
 
-- (BOOL)it_focusFollowsMouseImmune {
-    return YES;
+// Under focus follows mouse, the pointer anywhere over the find bar focuses its search field.
+- (NSView *)it_focusFollowsMouseResponder {
+    return [self it_firstEditableTextDescendant];
 }
 
 @end

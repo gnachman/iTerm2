@@ -29,8 +29,9 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 
 @implementation iTermMinimalComposerView
 
-- (BOOL)it_focusFollowsMouseImmune {
-    return YES;
+// Under focus follows mouse, the pointer anywhere over the composer focuses its text view.
+- (NSView *)it_focusFollowsMouseResponder {
+    return [self it_firstEditableTextDescendant];
 }
 
 // Track mouse movements when it enters the view

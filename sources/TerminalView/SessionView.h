@@ -72,6 +72,17 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 // Mouse moved within the view.
 - (void)sessionViewMouseMoved:(NSEvent *)event;
 
+// The view focus follows mouse focuses when the pane has no preferred overlay.
+- (NSView * _Nullable)sessionViewFocusFollowsMouseMainResponder;
+
+// Focus follows mouse is focusing this pane without its terminal getting a becomeFirstResponder
+// call: either the view is already first responder, or it is an overlay such as the composer.
+// Make this the active session. This may make the terminal first responder.
+- (void)sessionViewFocusFollowsMouseActivateSession;
+
+// Focus follows mouse started or stopped stealing key focus for this pane.
+- (void)sessionViewFocusFollowsMouseStolenKeyFocusDidChange;
+
 // Right mouse button depressed.
 - (void)sessionViewRightMouseDown:(NSEvent *)event;
 

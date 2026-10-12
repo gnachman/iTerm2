@@ -30,6 +30,7 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
 
     // Focus follows mouse.
     IBOutlet NSButton *_focusFollowsMouse;
+    IBOutlet NSButton *_focusFollowsMouseIncludingSubviews;
 
     // Focus on right or middle click
     IBOutlet NSButton *_focusOnRightOrMiddleClick;
@@ -80,6 +81,15 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
                     key:kPreferenceKeyFocusFollowsMouse
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_focusFollowsMouseIncludingSubviews
+                           key:kPreferenceKeyFocusFollowsMouseIncludingSubviews
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.shouldBeEnabled = ^BOOL {
+        return [weakSelf boolForKey:kPreferenceKeyFocusFollowsMouse];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyFocusFollowsMouse
+                                     controller:self];
     [self defineControl:_focusOnRightOrMiddleClick
                     key:kPreferenceKeyFocusOnRightOrMiddleClick
             relatedView:nil

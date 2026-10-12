@@ -395,11 +395,6 @@ extension iTermBrowserViewController {
         }
     }
 
-    @objc
-    func refuseFirstResponderAtCurrentMouseLocation() {
-        browserManager.webView.refuseFirstResponderAtCurrentMouseLocation()
-    }
-
     // MARK: - Search
 
     @objc(performDeferredInitializationInWindow:)

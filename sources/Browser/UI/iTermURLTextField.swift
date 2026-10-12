@@ -15,6 +15,11 @@ protocol iTermURLTextFieldDelegate: AnyObject {
 
 @MainActor
 class iTermURLTextField: NSScrollView {
+    // Under focus follows mouse, the pointer anywhere over the URL bar focuses its text.
+    override var it_focusFollowsMouseResponder: NSView? {
+        return textView
+    }
+
     weak var urlTextFieldDelegate: iTermURLTextFieldDelegate?
     
     // MARK: - Properties

@@ -71,6 +71,12 @@ class ChatViewControllerDividerView: GradientView {}
 class ChatViewControllerRootView: NSView {
     var didMoveToWindowHandler: (() -> Void)?
     var layoutHandler: (() -> Void)?
+    var focusFollowsMouseResponderProvider: (() -> NSView?)?
+
+    // Under focus follows mouse, the pointer anywhere over the inline chat panel focuses its input.
+    override var it_focusFollowsMouseResponder: NSView? {
+        return focusFollowsMouseResponderProvider?()
+    }
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
@@ -464,6 +470,9 @@ class ChatViewController: NSViewController {
             frame: NSRect(x: 0, y: 0, width: 400, height: 600))
         view.didMoveToWindowHandler = { [weak self] in
             self?.rootViewDidMoveToWindow()
+        }
+        view.focusFollowsMouseResponderProvider = { [weak self] in
+            return self?.inputView.it_focusFollowsMouseResponder
         }
         view.layoutHandler = { [weak self] in
             // Run the manual layout synchronously inside AppKit's

@@ -7,8 +7,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol iTermFocusFollowsMouseFocusReceiver;
-
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermFocusFollowsMouseController : NSObject

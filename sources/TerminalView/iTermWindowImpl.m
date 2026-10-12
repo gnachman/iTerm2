@@ -554,6 +554,9 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"%@", [NSThread callStackSymbols]);
     const BOOL result = [super makeFirstResponder:responder];
     DLog(@"After call to make %@ first responder, the actual first responder is %@", [responder description], self.firstResponder.description);
+    if (result) {
+        [[iTermPaneFocusFollowsMouse shared] firstResponderDidChangeTo:self.firstResponder];
+    }
     return result;
 }
 

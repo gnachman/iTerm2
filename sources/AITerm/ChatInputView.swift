@@ -18,6 +18,11 @@ protocol ChatInputViewDelegate: AnyObject {
 //   hintLabel floats inside the text field's right edge.
 @objc
 class ChatInputView: NSView, NSTextFieldDelegate {
+    // Under focus follows mouse, the pointer anywhere over the input area focuses its text view.
+    override var it_focusFollowsMouseResponder: NSView? {
+        return inputTextFieldContainer.textView
+    }
+
     private class SendButton: NSButton { }
     private class AddAttachmentButton: NSButton { }
 

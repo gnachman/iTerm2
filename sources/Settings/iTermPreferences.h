@@ -359,6 +359,8 @@ extern NSString *const kPreferenceKeyRightClickClickBypassesContextMenu;
 extern NSString *const kPreferenceKeyOptionClickMovesCursor;
 extern NSString *const kPreferenceKeyThreeFingerEmulatesMiddle;
 extern NSString *const kPreferenceKeyFocusFollowsMouse;
+// Focus follows mouse also moves focus between the terminal and views in a pane, like the find bar.
+extern NSString *const kPreferenceKeyFocusFollowsMouseIncludingSubviews;
 extern NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines;
 extern NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection;
 extern NSString *const kPreferenceKeyEnterCopyModeAutomatically;

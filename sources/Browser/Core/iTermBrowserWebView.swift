@@ -67,7 +67,6 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
     private var mouseDownLocationInWindow: NSPoint?
     private var hoverLinkSecret: String?
     private var trackingArea: NSTrackingArea?
-    private let focusFollowsMouse = iTermFocusFollowsMouse()
     private let contextMenuHelper = iTermBrowserContextMenuHelper()
     var receivingBroadcast = false
     @objc var isEditingText = false
@@ -93,7 +92,6 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
             isInspectable = true
         }
         contextMenuHelper.delegate = self
-        focusFollowsMouse.delegate = self
         allowsMagnification = true
         threeFingerTapGestureRecognizer = ThreeFingerTapGestureRecognizer(target: self,
                                                                           selector: #selector(threeFingerTap(_:)))
@@ -816,12 +814,9 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
 
         // Create new tracking area for mouse enter/exit
-        var options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeInKeyWindow]
-        if focusFollowsMouse.focusFollowsMouse {
-            options.insert(.mouseMoved)
-        }
+        // Focus follows mouse is handled by the enclosing SessionView.
         trackingArea = NSTrackingArea(rect: bounds,
-                                      options: options,
+                                      options: [.mouseEnteredAndExited, .activeInKeyWindow],
                                       owner: self,
                                       userInfo: nil)
 
@@ -830,47 +825,14 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
         }
     }
 
-    override func mouseEntered(with event: NSEvent) {
-        super.mouseEntered(with: event)
-        _ = focusFollowsMouse.mouseWillEnter(with: event)
-        focusFollowsMouse.mouseEntered(with: event)
-    }
-
     override func mouseExited(with event: NSEvent) {
         super.mouseExited(with: event)
-        _ = focusFollowsMouse.mouseExited(with: event)
         clearHover()
-    }
-
-    override func mouseMoved(with event: NSEvent) {
-        super.mouseMoved(with: event)
-        focusFollowsMouse.mouseMoved(with: event)
     }
     func clearHover() {
         browserDelegate?.webViewDidHoverURL(self, url: nil, frame: NSZeroRect)
     }
 
-}
-
-@MainActor
-extension iTermBrowserWebView: iTermFocusFollowsMouseDelegate {
-    func focusFollowsMouseDidBecomeFirstResponder() {
-        browserDelegate?.webViewDidBecomeFirstResponder(self)
-    }
-
-    func focusFollowsMouseDesiredFirstResponder() -> NSResponder {
-        return self
-    }
-
-    func focusFollowsMouseDidChangeMouseLocationToRefusFirstResponderAt() {
-    }
-}
-
-@MainActor
-extension iTermBrowserWebView {
-    func refuseFirstResponderAtCurrentMouseLocation() {
-        focusFollowsMouse.refuseFirstResponderAtCurrentMouseLocation()
-    }
 }
 
 @MainActor

@@ -275,9 +275,6 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         // to know I want to keep control over this because debugging it will be horrible. So every
         // draw call (NSRectFill, etc.) does a last-second translation by the virtual offset.
         [super setAlphaValue:0];
-        _focusFollowsMouse = [[iTermFocusFollowsMouse alloc] init];
-        _focusFollowsMouse.delegate = self;
-        [_focusFollowsMouse resetMouseLocationToRefuseFirstResponderAt];
         _drawingHelper = [[iTermTextDrawingHelper alloc] init];
         _drawingHelper.delegate = self;
 
@@ -353,7 +350,8 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         _badgeLabel = [[iTermBadgeLabel alloc] init];
         _badgeLabel.delegate = self;
 
-        [_focusFollowsMouse refuseFirstResponderAtCurrentMouseLocation];
+        // A new view under a still pointer must not take focus from the pane that has it.
+        [[iTermPaneFocusFollowsMouse shared] freeze];
 
         _scrollAccumulator = [[iTermScrollAccumulator alloc] init];
 
@@ -444,7 +442,6 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     [_selectCommandTimer release];
     [_marginColorWidthBuffer release];
     [_marginColorTwiceHeightBuffer release];
-    [_focusFollowsMouse release];
     _cursorSlideAnimator.delegate = nil;
     [_cursorSlideAnimator release];
 
@@ -1286,10 +1283,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (BOOL)wantsMouseMovementEvents {
-    if (_focusFollowsMouse.haveTrackedMovement) {
-        DLog(@"Have a mouse location to refuse first responder at, so track mouse moved");
-        return YES;
-    }
     const NSEventModifierFlags flags = [[iTermApplication sharedApplication] it_modifierFlags];
     const BOOL commandPressed = (flags & NSEventModifierFlagCommand) != 0;
     if (commandPressed) {
@@ -1373,7 +1366,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 // If this changes also update -wantsMouseMovementEvents.
 - (void)mouseMoved:(NSEvent *)event {
     DLog(@"mouseMoved:%@", event);
-    [_focusFollowsMouse mouseMoved:event];
     [self updateUnderlinedURLs:event];
     [self updateButtonHover:event.locationInWindow pressed:!!([NSEvent pressedMouseButtons] & 1)];
     [self updateCursor:event];
@@ -1456,9 +1448,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (void)mouseExited:(NSEvent *)event {
     DLog(@"Mouse exited %@", self);
-    if ([_focusFollowsMouse mouseExited:event]) {
-        [self requestDelegateRedraw];
-    }
     [self updateUnderlinedURLs:event];
 
     [_hoverBlockCopyButton autorelease];
@@ -1476,23 +1465,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (void)mouseEntered:(NSEvent *)event {
     DLog(@"Mouse entered %@", self);
     [_mouseHandler mouseEntered:event];
-
-    if ([_focusFollowsMouse mouseWillEnter:event]) {
-        [self requestDelegateRedraw];
-    }
     [self updateUnderlinedURLs:event];
-    NSScrollView *scrollView = self.enclosingScrollView;
-    // The whole pane counts, title bar included: entering through the title bar is entering this
-    // pane, and no second entered event comes when the pointer goes on into the text.
-    NSView *pane = scrollView.superview ?: scrollView;
-    if ([pane hitTest:[pane.superview convertPoint:event.locationInWindow fromView:nil]] == nil) {
-        DLog(@"hitTest at %@ in view (%@ in window) gives nil", NSStringFromPoint([self convertPoint:event.locationInWindow fromView:nil]),
-              NSStringFromPoint(event.locationInWindow));
-        DLog(@"Event %@ at window coord %@ failed hit test for view with window coords %@",
-             event, NSStringFromPoint(event.locationInWindow), NSStringFromRect([self convertRect:self.bounds toView:nil]));
-        return;
-    }
-    [_focusFollowsMouse mouseEntered:event];
 }
 
 #pragma mark - NSView Mouse Helpers
@@ -2146,7 +2119,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         helper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
         helper.textViewIsFirstResponder = self.window.firstResponder == self;
         helper.isInKeyWindow = [self isInKeyWindow];
-        helper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _focusFollowsMouse.haveStolenFocus);
+        helper.shouldDrawFilledInCursor = [self.delegate textViewShouldDrawFilledInCursor];
         helper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
         helper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
         helper.useThemeMarkColors = [_delegate textViewShouldUseThemeMarkColors];
@@ -7997,10 +7970,6 @@ static NSString *iTermStringFromRange(NSRange range) {
 
 @implementation PTYTextView(MouseHandler)
 
-- (void)refuseFirstResponderAtCurrentMouseLocation {
-    [_focusFollowsMouse refuseFirstResponderAtCurrentMouseLocation];
-}
-
 - (BOOL)mouseHandlerViewHasFocus:(PTYMouseHandler *)handler {
     return [[iTermController sharedInstance] frontTextView] == self;
 }
@@ -8756,20 +8725,6 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 
 - (BOOL)isRequestingSecureInput {
     return [self.delegate textViewPasswordInput];
-}
-
-#pragma mark - iTermFocusFollowsMouseDelegate
-
-- (void)focusFollowsMouseDidBecomeFirstResponder {
-    [self.delegate textViewDidBecomeFirstResponder];
-}
-
-- (NSResponder *)focusFollowsMouseDesiredFirstResponder {
-    return self;
-}
-
-- (void)focusFollowsMouseDidChangeMouseLocationToRefusFirstResponderAt {
-    [self.delegate textViewUpdateTrackingAreas];
 }
 
 @end
