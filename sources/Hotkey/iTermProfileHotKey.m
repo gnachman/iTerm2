@@ -429,10 +429,15 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return [windowController canonicalFrameForScreen:screen];
+
         case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_CENTERED_NO_TITLE_BAR:
-            return [windowController canonicalFrameForScreen:screen];
+            // Keep the user's manual resize and only re-center (issue 13125).
+            return [windowController canonicalFrameForScreen:screen
+                                                 windowFrame:windowController.window.frame
+                                                preserveSize:YES];
 
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:

@@ -1249,3 +1249,7 @@ Bug Fixes:
   appearance settings like colors, fonts, and
   cursor style are taken from a recording.
   Issue 13128.
+- Fixed hotkey windows with the Centered or
+  “Centered, No Title Bar” style returning to
+  their original size each time they were shown
+  after you resized them.

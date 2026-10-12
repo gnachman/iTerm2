@@ -520,6 +520,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Returns the preferred frame for the window if it were on a given screen.
 - (NSRect)canonicalFrameForScreen:(NSScreen *)screen;
+- (NSRect)canonicalFrameForScreen:(NSScreen *)screen
+                      windowFrame:(NSRect)frame
+                     preserveSize:(BOOL)preserveSize;
 
 // Swap pane with another in that direction
 - (void)swapPaneLeft;
