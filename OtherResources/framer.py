@@ -601,7 +601,9 @@ async def get_env_var(var_name):
     if os.environ.get('XONSHRC', ''):
         user_shell = 'xonsh'
     elif os.environ.get('NU_VENDOR_AUTOLOAD_DIR', ''):
-        user_shell = 'nu'
+        # Keep a full path to nu, which may not be on the framer's PATH.
+        if os.path.basename(user_shell) != 'nu':
+            user_shell = 'nu'
 
     known_shells = ['bash', 'csh', 'dash', 'fish', 'ksh', 'nu', 'sh', 'tcsh', 'xonsh', 'zsh']
 
@@ -614,8 +616,10 @@ async def get_env_var(var_name):
         return None
 
     if shell_name == 'nu':
-        # nushell keeps the environment under $env and has no $VAR syntax.
-        command = f'print ($env.{var_name}? | default "")'
+        # nushell keeps the environment under $env and has no $VAR syntax. It also converts
+        # PATH-like variables to lists, which print renders as a table, so join them back.
+        command = (f'print ($env.{var_name}? | default "" | '
+                   'if ($in | describe | str starts-with "list") { str join (char esep) } else { into string })')
     else:
         command = f'echo ${var_name}'
 
