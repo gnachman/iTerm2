@@ -74,6 +74,10 @@ TOP-LEVEL keys
     NoSyncClaudeCodeConfigDirPath  paths
   NoSyncSavePanelSavedSettings_* ......... nested "InitialDirectory" path
   PathToDatabase_* ....................... password-manager backend URL
+  NoSyncBrowserJavaScriptAllowed_* ....... site origin in the key name
+                                           (key removed, with its
+                                           _selection/_SilenceUntil kin)
+  NoSyncLoadURLAllowed_* ................. host in the key name (likewise)
   OnePasswordAccount, LastpassGroups ..... password-manager identifiers
   FakeFullyQualifiedDomainName, FakeBootSessionUUID, AlternateSSHIntegrationScript, SshSchemePath
   PasteSpecialRegex, PasteSpecialSubstitution
@@ -353,6 +357,9 @@ PREFIX_CONTENT = [
     ("PathToDatabase_", REDACT_V),
     ("NoSyncCompanion", REDACT_V),
     ("NoSyncSavePanelSavedSettings_", None),  # None => recurse (hits InitialDirectory)
+    # The key name itself holds the site, so the whole key goes.
+    ("NoSyncBrowserJavaScriptAllowed_", REMOVE),
+    ("NoSyncLoadURLAllowed_", REMOVE),
 ]
 
 

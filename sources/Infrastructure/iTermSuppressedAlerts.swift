@@ -209,6 +209,18 @@ class iTermSuppressedAlerts: NSObject {
         postDidChange()
     }
 
+    // Drops what was recorded about an alert without un-suppressing it, for when its
+    // remembered choice was changed some other way and the record may be wrong. It is
+    // recorded again, correctly, the next time it is auto-answered.
+    @objc func forgetIdentifier(_ identifier: String) {
+        guard catalog.removeValue(forKey: identifier) != nil else {
+            return
+        }
+        persist()
+        DLog("Forgot \(identifier)")
+        postDidChange()
+    }
+
     // Un-suppress all known suppressed alerts.
     @objc func unsuppressAll() {
         for identifier in catalog.keys {

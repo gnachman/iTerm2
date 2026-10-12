@@ -1889,6 +1889,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     IBOutlet NSButton *_maximizeThroughput;
     IBOutlet NSButton *_enableAPI;
     IBOutlet NSPopUpButton *_apiPermission;
+    IBOutlet NSButton *_browserScriptingPermissions;
+    iTermBrowserScriptingPermissionsWindowController *_browserScriptingPermissionsWindowController;
 
     // Enable bonjour
     IBOutlet NSButton *_enableBonjour;
@@ -2250,6 +2252,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     info.shouldBeEnabled = ^BOOL{
         return [weakSelf boolForKey:kPreferenceKeyEnableAPIServer];
     };
+
+    [self addViewToSearchIndex:_browserScriptingPermissions
+                   displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.BrowserScriptingPermissions", nil, [NSBundle mainBundle], @"Website permissions for scripts", @"Search index display name for the panel listing websites where Python API scripts may load URLs or run JavaScript in a browser session")
+                       phrases:@[ @"Python API browser JavaScript load URL allowed websites" ]
+                           key:nil];
 
     _advancedGPUWindowController = [[iTermAdvancedGPUSettingsWindowController alloc] initWithWindowNibName:@"iTermAdvancedGPUSettingsWindowController"];
     [_advancedGPUWindowController.window orderOut:nil];
@@ -4366,6 +4373,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (IBAction)advancedGPU:(NSView *)sender {
     [self.view.window beginSheet:_advancedGPUWindowController.window completionHandler:^(NSModalResponse returnCode) {
     }];
+}
+
+- (IBAction)showBrowserScriptingPermissions:(id)sender {
+    if (!_browserScriptingPermissionsWindowController) {
+        _browserScriptingPermissionsWindowController = [[iTermBrowserScriptingPermissionsWindowController alloc] init];
+    }
+    [_browserScriptingPermissionsWindowController beginSheetModalForWindow:self.view.window];
 }
 
 - (IBAction)pythonAPIAuthHelp:(id)sender {

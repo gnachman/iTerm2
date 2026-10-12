@@ -299,16 +299,16 @@
       "comment" : "Result of the AI connection test when the model is set to use its own API key but the key field is empty",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Enter this model’s API key before testing the connection."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geben Sie den API-Schlüssel dieses Modells ein, bevor Sie die Verbindung testen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter this model’s API key before testing the connection."
           }
         },
         "ja" : {
@@ -635,16 +635,16 @@
       "comment" : "Hint shown when a manual AI model uses its own API key",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Authorizes with the API key entered for this model."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Authentifiziert sich mit dem für dieses Modell eingegebenen API-Schlüssel."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Authorizes with the API key entered for this model."
           }
         },
         "ja" : {
@@ -677,16 +677,16 @@
       "comment" : "Hint shown when a manual AI model is set to use its own API key but none is stored",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "No API key has been entered for this model yet."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Für dieses Modell wurde noch kein API-Schlüssel eingegeben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No API key has been entered for this model yet."
           }
         },
         "ja" : {
@@ -803,16 +803,16 @@
       "comment" : "Hint shown when the user chose to send no API key for a manual AI model",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "No API key is sent. If the endpoint requires authentication, use a custom header."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Es wird kein API-Schlüssel gesendet. Wenn der Endpunkt eine Authentifizierung erfordert, verwenden Sie einen benutzerdefinierten Header."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No API key is sent. If the endpoint requires authentication, use a custom header."
           }
         },
         "ja" : {
@@ -1517,16 +1517,16 @@
       "comment" : "Label for the popup that chooses which API key a manual AI model sends",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "API key:"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "API-Schlüssel:"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "API key:"
           }
         },
         "ja" : {
@@ -1727,16 +1727,16 @@
       "comment" : "API key popup option that infers the key; shown when the inferred provider uses no key",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatic (none)"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatisch (keiner)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Automatic (none)"
           }
         },
         "ja" : {
@@ -1769,16 +1769,16 @@
       "comment" : "API key popup option that infers the key; shown when the endpoint is local, so no key is sent",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatic (none for a local endpoint)"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatisch (keiner bei lokalem Endpunkt)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Automatic (none for a local endpoint)"
           }
         },
         "ja" : {
@@ -1811,16 +1811,16 @@
       "comment" : "API key popup option that infers which provider's key to send; %@ is the provider it currently resolves to",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatic (%@ API key)"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatisch (%@-API-Schlüssel)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Automatic (%@ API key)"
           }
         },
         "ja" : {
@@ -3155,16 +3155,16 @@
       "comment" : "Placeholder in the field for a manual AI model's own API key",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Key for this model"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schlüssel für dieses Modell"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Key for this model"
           }
         },
         "ja" : {
@@ -3197,16 +3197,16 @@
       "comment" : "Validation error when a manual AI model is set to use its own API key but none was entered",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Enter this model’s API key, or choose a different API key option."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geben Sie den API-Schlüssel dieses Modells ein oder wählen Sie eine andere API-Schlüssel-Option."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter this model’s API key, or choose a different API key option."
           }
         },
         "ja" : {
@@ -3323,16 +3323,16 @@
       "comment" : "API key popup option for a key entered for one manual AI model",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "This model’s own key"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eigener Schlüssel dieses Modells"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This model’s own key"
           }
         },
         "ja" : {
@@ -3604,16 +3604,16 @@
       "comment" : "API key popup option meaning no API key is sent",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "None"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keiner"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "None"
           }
         },
         "ja" : {
@@ -4192,16 +4192,16 @@
       "comment" : "API key popup option for a provider's stored key; %@ is the provider name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%@ API key"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@-API-Schlüssel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ API key"
           }
         },
         "ja" : {
@@ -5998,16 +5998,16 @@
       "comment" : "Error shown when a manual AI model is configured to use its own API key but none is stored; “Manage AI Models” is the name of a settings window",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "This model is set to use its own API key, but none has been entered. Edit the model in Manage AI Models to enter one."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dieses Modell ist so eingestellt, dass es einen eigenen API-Schlüssel verwendet, aber es wurde keiner eingegeben. Bearbeiten Sie das Modell unter „KI-Modelle verwalten“, um einen einzugeben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This model is set to use its own API key, but none has been entered. Edit the model in Manage AI Models to enter one."
           }
         },
         "ja" : {
@@ -6712,16 +6712,16 @@
       "comment" : "Heading of an alert shown when the default manual AI model is set to use its own API key but none is stored",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "No API Key for This Model"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kein API-Schlüssel für dieses Modell"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No API Key for This Model"
           }
         },
         "ja" : {
@@ -20698,16 +20698,16 @@
       "comment" : "Advanced setting: menuBarItemDrawsBadge",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Draw the menu bar item text as a badge inside the icon?\nWhen enabled, a one-character result (or a number, with + for 10 or more) is drawn inside the icon instead of next to it, keeping the item square. An empty result or 0 shows the plain icon."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Text des Menüleistenobjekts als Badge im Symbol zeichnen?\nWenn aktiviert, wird ein Ergebnis aus einem Zeichen (oder eine Zahl, mit + ab 10) im Symbol statt daneben gezeichnet, sodass das Objekt quadratisch bleibt. Ein leeres Ergebnis oder 0 zeigt das einfache Symbol."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Draw the menu bar item text as a badge inside the icon?\nWhen enabled, a one-character result (or a number, with + for 10 or more) is drawn inside the icon instead of next to it, keeping the item square. An empty result or 0 shows the plain icon."
           }
         },
         "ja" : {
@@ -33802,16 +33802,16 @@
       "comment" : "Error shown when an apply_layout spec uses a session in a floating pane as a leaf. The placeholder is a session ID.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Session %@ is in a floating pane, which is not part of the split layout"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sitzung %@ befindet sich in einem schwebenden Bereich, der nicht Teil des geteilten Layouts ist"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Session %@ is in a floating pane, which is not part of the split layout"
           }
         },
         "ja" : {
@@ -38035,6 +38035,342 @@
         }
       }
     },
+    "BrowserEvalJS.Denied" : {
+      "comment" : "Error returned to a script when the user declined to let it run JavaScript on a website",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Benutzer hat die Erlaubnis zum Ausführen von JavaScript verweigert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The user denied permission to run JavaScript."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ユーザーがJavaScriptの実行を許可しませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O usuário negou permissão para executar JavaScript."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пользователь не разрешил выполнять JavaScript."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户拒绝了运行 JavaScript 的权限。"
+          }
+        }
+      }
+    },
+    "BrowserEvalJS.Exception" : {
+      "comment" : "Error returned to a script when JavaScript it ran in a browser page threw; placeholder is the exception’s message from the browser",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScript-Ausnahme: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "JavaScript exception: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScriptの例外: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exceção de JavaScript: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Исключение JavaScript: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScript 异常：%@"
+          }
+        }
+      }
+    },
+    "BrowserEvalJS.Navigated" : {
+      "comment" : "Error returned to a script when a browser page changed sites while the user was approving JavaScript",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Seite hat zu einer anderen Website gewechselt, bevor das JavaScript ausgeführt werden konnte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The page navigated to a different site before the JavaScript could run."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScriptを実行する前に、ページが別のサイトに移動しました。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A página navegou para outro site antes que o JavaScript pudesse ser executado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Страница перешла на другой сайт до того, как удалось выполнить JavaScript."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 JavaScript 运行之前，页面已跳转到其他网站。"
+          }
+        }
+      }
+    },
+    "BrowserEvalJS.NoResult" : {
+      "comment" : "Error returned to a script when JavaScript run in a browser page gave back nothing usable",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das JavaScript hat kein Ergebnis geliefert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The JavaScript did not produce a result."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScriptから結果が返されませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O JavaScript não produziu um resultado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScript не вернул результат."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScript 没有返回结果。"
+          }
+        }
+      }
+    },
+    "BrowserEvalJS.NotBrowser" : {
+      "comment" : "Error returned to a script that tried to run JavaScript in a session that is not a web browser; browser_eval_js is a function name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js wird nur in Browser-Sitzungen unterstützt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "browser_eval_js is only supported in browser sessions."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_jsはブラウザセッションでのみサポートされています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js só é compatível com sessões do navegador."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js поддерживается только в сессиях браузера."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js 仅支持浏览器会话。"
+          }
+        }
+      }
+    },
+    "BrowserEvalJS.NotFromScript" : {
+      "comment" : "Error returned when JavaScript is requested other than from a Python API script; browser_eval_js is a function name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js muss aus einem Python-Skript aufgerufen werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "browser_eval_js must be called from a Python script."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_jsはPythonスクリプトから呼び出す必要があります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js deve ser chamado de um script Python."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js нужно вызывать из скрипта Python."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js 必须从 Python 脚本中调用。"
+          }
+        }
+      }
+    },
+    "BrowserEvalJS.NotWebPage" : {
+      "comment" : "Error returned to a script that tried to run JavaScript on a page that is not a web page, such as a blank page or a local file; browser_eval_js is a function name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js benötigt eine http- oder https-Seite."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "browser_eval_js requires an http or https page."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_jsにはhttpまたはhttpsのページが必要です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js requer uma página http ou https."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для browser_eval_js нужна страница http или https."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "browser_eval_js 需要 http 或 https 页面。"
+          }
+        }
+      }
+    },
+    "BrowserEvalJS.SessionClosed" : {
+      "comment" : "Error returned to a script when its browser session closed while the user was approving JavaScript",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Browser-Sitzung wurde geschlossen, bevor das JavaScript ausgeführt werden konnte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The browser session closed before the JavaScript could run."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScriptを実行する前に、ブラウザセッションが閉じられました。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A sessão do navegador foi fechada antes que o JavaScript pudesse ser executado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сессия браузера закрылась до того, как удалось выполнить JavaScript."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 JavaScript 运行之前，浏览器会话已关闭。"
+          }
+        }
+      }
+    },
     "BrowserFileHandler.FailedToEncodeHTML" : {
       "comment" : "Error when the file listing HTML cannot be encoded",
       "extractionState" : "extracted_with_value",
@@ -40496,6 +40832,468 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择 %@"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.AddHeading" : {
+      "comment" : "Heading of the dialog for adding a website that scripts may control without asking",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripte auf einer Website erlauben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Allow Scripts on a Website"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webサイトでのスクリプトを許可"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir scripts em um site"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешить скрипты на веб-сайте"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许脚本在网站上操作"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.AddInfo" : {
+      "comment" : "Explains the dialog for adding a website that scripts may control; the buttons say what they will be able to do",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib eine Website ein, zum Beispiel https://example.com. Skripte können dies dann dort ohne Nachfrage tun."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter a website, such as https://example.com. Scripts will be able to do this on it without asking."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "https://example.com のようにWebサイトを入力してください。スクリプトは確認なしでこのWebサイトに対してこの操作を行えるようになります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite um site, como https://example.com. Os scripts poderão fazer isso nele sem perguntar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите веб-сайт, например https://example.com. Скрипты смогут делать это на нём без запроса."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入一个网站，例如 https://example.com。脚本将可以在该网站上执行此操作而无需询问。"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.AllowJavaScriptButton" : {
+      "comment" : "Button that lets scripts run JavaScript on the website the user entered",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausführen von JavaScript erlauben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Allow Running JavaScript"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScriptの実行を許可"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir execução de JavaScript"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешить выполнение JavaScript"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许运行 JavaScript"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.AllowLoadingURLsButton" : {
+      "comment" : "Button that lets scripts load URLs from the website the user entered",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laden von URLs erlauben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Allow Loading URLs"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URLの読み込みを許可"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir carregamento de URLs"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешить загрузку URL"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许载入 URL"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.AllowedColumn" : {
+      "comment" : "Column header for a checkbox saying whether scripts may do something on a website; unchecked means always denied",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaubt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Allowed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "許可"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешено"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.Explanation" : {
+      "comment" : "Explanation at the top of the panel listing websites that scripts may control in a browser session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bevor ein Skript URLs lädt oder JavaScript auf einer Website in einer Browser-Sitzung ausführt, fragt iTerm2 dich. Gespeicherte Antworten werden hier aufgeführt und gelten für alle Skripte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Before a script loads URLs or runs JavaScript on a website in a browser session, iTerm2 asks you. Remembered answers are listed here and apply to all scripts."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリプトがブラウザセッションでWebサイトのURLを読み込んだりJavaScriptを実行したりする前に、iTerm2は確認を求めます。記憶された回答はここに一覧表示され、すべてのスクリプトに適用されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antes de um script carregar URLs ou executar JavaScript em um site em uma sessão do navegador, o iTerm2 pergunta a você. As respostas lembradas aparecem aqui e valem para todos os scripts."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прежде чем скрипт загрузит URL или выполнит JavaScript на веб-сайте в сессии браузера, iTerm2 спрашивает вас. Запомненные ответы перечислены здесь и действуют для всех скриптов."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在脚本于浏览器会话中载入网站的 URL 或在网站上运行 JavaScript 之前，iTerm2 会先询问你。记住的回答会列在这里，并适用于所有脚本。"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.InvalidWebsite" : {
+      "comment" : "Error shown when the user enters something that is not a web address; placeholder is what they entered",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ ist keine Website-Adresse. Gib eine wie https://example.com ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%@” is not a website address. Enter one like https://example.com."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」はWebサイトのアドレスではありません。https://example.com のように入力してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” não é um endereço de site. Digite um como https://example.com."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%@» не является адресом веб-сайта. Введите адрес вида https://example.com."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”不是网站地址。请输入类似 https://example.com 的地址。"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.LoadURLs" : {
+      "comment" : "Kind of permission a website can grant to scripts: loading its URLs in a browser session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URLs laden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Load URLs"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URLの読み込み"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carregar URLs"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загрузка URL"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "载入 URL"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.PermissionColumn" : {
+      "comment" : "Column header for what scripts may do on a website, such as Run JavaScript",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berechtigung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Permission"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "権限"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permissão"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешение"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "权限"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.RunJavaScript" : {
+      "comment" : "Kind of permission a website can grant to scripts: running JavaScript in its pages",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScript ausführen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Run JavaScript"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScriptの実行"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executar JavaScript"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выполнение JavaScript"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "运行 JavaScript"
+          }
+        }
+      }
+    },
+    "BrowserScriptingPermissions.WebsiteColumn" : {
+      "comment" : "Column header for the website a permission applies to",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Website"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Website"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webサイト"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Site"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Веб-сайт"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网站"
           }
         }
       }
@@ -51540,16 +52338,16 @@
       "comment" : "Body shown after uninstalling when some Claude Code hook commands were not removed. The first interpolated value is the absolute path to settings.json; the second is the list of hook commands, one per line, shown verbatim",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Some hook commands in %1$@ mention cc-status but also run other programs, so Uninstall didn’t remove them. If you don’t want them anymore, edit the file by hand:\n\n%2$@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Einige Hook-Befehle in %1$@ erwähnen cc-status, führen aber auch andere Programme aus, daher hat „Deinstallieren“ sie nicht entfernt. Wenn Sie sie nicht mehr benötigen, bearbeiten Sie die Datei von Hand:\n\n%2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Some hook commands in %1$@ mention cc-status but also run other programs, so Uninstall didn’t remove them. If you don’t want them anymore, edit the file by hand:\n\n%2$@"
           }
         },
         "ja" : {
@@ -51582,16 +52380,16 @@
       "comment" : "Title shown after uninstalling when some Claude Code hook commands were not removed",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Some Hooks Were Left in Place"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Einige Hooks wurden beibehalten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Some Hooks Were Left in Place"
           }
         },
         "ja" : {
@@ -64148,16 +64946,16 @@
       "comment" : "Context menu item that puts a floating pane in front of the tab's other floating panes",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Bring to Front"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nach vorne bringen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bring to Front"
           }
         },
         "ja" : {
@@ -64820,16 +65618,16 @@
       "comment" : "Context menu item that moves a floating pane into the tab's split pane layout",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Dock Floating Pane"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schwebenden Bereich andocken"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dock Floating Pane"
           }
         },
         "ja" : {
@@ -66067,16 +66865,16 @@
       "comment" : "Context menu item to open a URL in a new floating pane, which floats over the tab’s split panes",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Open URL in Floating Pane"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "URL in schwebendem Bereich öffnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open URL in Floating Pane"
           }
         },
         "ja" : {
@@ -67495,16 +68293,16 @@
       "comment" : "Context menu item that puts a floating pane behind the tab's other floating panes",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Send to Back"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nach hinten stellen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Send to Back"
           }
         },
         "ja" : {
@@ -73431,16 +74229,16 @@
       "comment" : "Action name: New Floating Pane with Profile. A floating pane floats over the tab’s split panes.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "New Floating Pane with Profile"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neuer schwebender Bereich mit Profil"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane with Profile"
           }
         },
         "ja" : {
@@ -82209,16 +83007,16 @@
       "comment" : "Error from create_floating_pane when the tab is a tmux tab, its window’s layout is locked, or it is in instant replay",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Can’t add a floating pane to this tab now"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diesem Tab kann derzeit kein schwebender Bereich hinzugefügt werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can’t add a floating pane to this tab now"
           }
         },
         "ja" : {
@@ -82251,16 +83049,16 @@
       "comment" : "Error from dock_floating_pane when the layout is locked, the tab is a tmux tab, or instant replay is running",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Can’t dock this floating pane now"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dieser schwebende Bereich kann derzeit nicht angedockt werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can’t dock this floating pane now"
           }
         },
         "ja" : {
@@ -82293,16 +83091,16 @@
       "comment" : "Error from set_floating_pane_frame when the layout is locked or the float shows instant replay",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Can’t move or resize this floating pane now"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dieser schwebende Bereich kann derzeit nicht verschoben oder in der Größe geändert werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can’t move or resize this floating pane now"
           }
         },
         "ja" : {
@@ -82335,16 +83133,16 @@
       "comment" : "Error from create_floating_pane when the session could not be created",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Failed to create the floating pane"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der schwebende Bereich konnte nicht erstellt werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Failed to create the floating pane"
           }
         },
         "ja" : {
@@ -82377,16 +83175,16 @@
       "comment" : "Tooltip and accessibility description for a button on a floating pane with no border that hides the pane’s title bar",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Hide Title Bar"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Titelleiste ausblenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide Title Bar"
           }
         },
         "ja" : {
@@ -82419,16 +83217,16 @@
       "comment" : "Error from set_floating_pane_frame when an argument is missing or not a number",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Invalid frame"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ungültige Position oder Größe"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Invalid frame"
           }
         },
         "ja" : {
@@ -82461,16 +83259,16 @@
       "comment" : "Error from create_floating_pane when the profile name does not identify a profile",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "No such profile"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kein solches Profil"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No such profile"
           }
         },
         "ja" : {
@@ -82503,16 +83301,16 @@
       "comment" : "Error from create_floating_pane when the tab ID does not identify a tab",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "No such tab"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kein solcher Tab"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No such tab"
           }
         },
         "ja" : {
@@ -82545,16 +83343,16 @@
       "comment" : "Error from a floating pane function called with a session that is not in a floating pane",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The session is not in a floating pane"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Sitzung befindet sich nicht in einem schwebenden Bereich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The session is not in a floating pane"
           }
         },
         "ja" : {
@@ -82587,16 +83385,16 @@
       "comment" : "Tooltip and accessibility description for a button on a floating pane with no border that shows the pane’s title bar above it",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Show Title Bar"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Titelleiste einblenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Title Bar"
           }
         },
         "ja" : {
@@ -83797,6 +84595,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "热键窗口的存在会阻止在启动时打开窗口。"
+          }
+        }
+      }
+    },
+    "GeneralPrefs.BrowserScriptingPermissions" : {
+      "comment" : "Search index display name for the panel listing websites where Python API scripts may load URLs or run JavaScript in a browser session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Website-Berechtigungen für Skripte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Website permissions for scripts"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリプトのWebサイト権限"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permissões de sites para scripts"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешения веб-сайтов для скриптов"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "脚本的网站权限"
           }
         }
       }
@@ -88579,24 +89419,6 @@
     "Indicator.HiddenFloatingPanes" : {
       "comment" : "Help text for the indicator shown when a tab's floating panes are hidden. %ld is the number of hidden floating panes.",
       "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "new",
-                  "value" : "%ld floating pane is hidden."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "new",
-                  "value" : "%ld floating panes are hidden."
-                }
-              }
-            }
-          }
-        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -88610,6 +89432,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%ld schwebende Bereiche sind ausgeblendet."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%ld floating pane is hidden."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%ld floating panes are hidden."
                 }
               }
             }
@@ -88648,12 +89488,6 @@
         "ru" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%ld плавающая панель скрыта."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -88664,6 +89498,12 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%ld плавающих панелей скрыто."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld плавающая панель скрыта."
                 }
               },
               "other" : {
@@ -89323,16 +90163,16 @@
       "comment" : "Error when the interpolate function's string argument is missing",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "interpolate requires a string"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "interpolate erfordert einen String"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "interpolate requires a string"
           }
         },
         "ja" : {
@@ -92195,16 +93035,16 @@
       "comment" : "Key binding action name; %@ is the profile name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "New Floating Pane with “%@” Profile"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neuer schwebender Bereich mit Profil „%@“"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane with “%@” Profile"
           }
         },
         "ja" : {
@@ -92237,16 +93077,16 @@
       "comment" : "Key binding action name shown when the referenced profile no longer exists",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "New Floating Pane with unavailable Profile"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neuer schwebender Bereich mit nicht verfügbarem Profil"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane with unavailable Profile"
           }
         },
         "ja" : {
@@ -104866,16 +105706,16 @@
       "comment" : "Error when the destination of a move_session call is a floating pane, which cannot be split",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Can’t move a session into a floating pane"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eine Sitzung kann nicht in einen schwebenden Bereich verschoben werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can’t move a session into a floating pane"
           }
         },
         "ja" : {
@@ -110112,17 +110952,6 @@
         }
       }
     },
-    "NonTextPaste.CouldNotEncodeImage" : {
-      "comment" : "Error when clipboard image data cannot be converted to a PNG file",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Could not convert the clipboard image to PNG."
-          }
-        }
-      }
-    },
     "NonTextPaste.CouldNotCreateTempDir" : {
       "comment" : "Error when a temporary directory cannot be created",
       "extractionState" : "extracted_with_value",
@@ -110161,6 +110990,47 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法创建临时目录。"
+          }
+        }
+      }
+    },
+    "NonTextPaste.CouldNotEncodeImage" : {
+      "comment" : "Error when clipboard image data cannot be converted to a PNG file",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Bild in der Zwischenablage konnte nicht in PNG umgewandelt werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not convert the clipboard image to PNG."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クリップボードの画像をPNGに変換できませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível converter a imagem da área de transferência para PNG."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось преобразовать изображение из буфера обмена в PNG."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法将剪贴板中的图像转换为 PNG。"
           }
         }
       }
@@ -116132,6 +117002,48 @@
         }
       }
     },
+    "PTYSession.AllowRunningJavaScriptOn" : {
+      "comment" : "Prompt asking whether to allow scripts to run JavaScript on a website; placeholder is the site’s origin, such as https://example.com",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripten erlauben, Seiten auf %@ zu lesen und zu steuern?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Allow scripts to read and control pages on %@?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@上のページの読み取りと操作をスクリプトに許可しますか?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir que scripts leiam e controlem páginas em %@?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешить скриптам читать страницы на %@ и управлять ими?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "是否允许脚本读取和控制 %@ 上的页面？"
+          }
+        }
+      }
+    },
     "PTYSession.AlreadyAttachedTmux" : {
       "comment" : "Warning that this iTerm2 instance is already attached to a tmux session",
       "extractionState" : "extracted_with_value",
@@ -120054,6 +120966,48 @@
         }
       }
     },
+    "PTYSession.ScriptWantsToRunJavaScriptHeading" : {
+      "comment" : "Heading for a prompt asking whether to allow a script to run JavaScript in a web page; placeholder is the script name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ möchte JavaScript in dieser Browser-Sitzung ausführen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ wants to run JavaScript in this browser session."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@がこのブラウザセッションでJavaScriptを実行しようとしています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ quer executar JavaScript nesta sessão do navegador."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ хочет выполнить JavaScript в этой сессии браузера."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@想要在此浏览器会话中运行 JavaScript。"
+          }
+        }
+      }
+    },
     "PTYSession.SelectProfileForArrangement" : {
       "comment" : "Message asking the user to pick a profile to assign to a session in a saved arrangement",
       "extractionState" : "extracted_with_value",
@@ -121394,6 +122348,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "tar 命令失败，错误信息：%@"
+          }
+        }
+      }
+    },
+    "PTYSession.TaskStatusChangedDescription" : {
+      "comment" : "Notification description reporting that one of several tasks a program reported on changed status. %1$@ is the task's name, %2$@ is its new status.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ wurde zu „%2$@“ geändert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ changed to “%2$@”"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@が「%2$@」に変わりました"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ mudou para “%2$@”"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: статус изменён на «%2$@»"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 已变为“%2$@”"
           }
         }
       }
@@ -128468,16 +129464,16 @@
       "comment" : "Pointer action name. A floating pane floats over the tab’s split panes.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "New Floating Pane With Profile…"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neuer schwebender Bereich mit Profil…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane With Profile…"
           }
         },
         "ja" : {
@@ -140916,16 +141912,16 @@
       "comment" : "Detail line when a program is waiting for the user to type an answer",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Waiting for an answer"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wartet auf eine Antwort"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Waiting for an answer"
           }
         },
         "ja" : {
@@ -140958,16 +141954,16 @@
       "comment" : "Detail line when a program is waiting for the user to approve something",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Waiting for approval"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wartet auf Genehmigung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Waiting for approval"
           }
         },
         "ja" : {
@@ -141000,16 +141996,16 @@
       "comment" : "Detail line when a program is waiting for a password, token or other credential",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Waiting for login"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wartet auf Anmeldung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Waiting for login"
           }
         },
         "ja" : {
@@ -141042,15 +142038,15 @@
       "comment" : "Detail line for a program status that names one of several tasks. %1$@ is the task's name, %2$@ is what the task is doing or waiting for.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@: %2$@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
             "value" : "%1$@: %2$@"
           }
         },
@@ -176921,16 +177917,16 @@
       "comment" : "Heading of the dialog that explains why the menu bar item’s interpolated string failed to evaluate",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Menu Bar Item Error"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fehler im Menüleistenobjekt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Menu Bar Item Error"
           }
         },
         "ja" : {
@@ -176963,16 +177959,16 @@
       "comment" : "Dialog body explaining why the menu bar item shows a bug. The first placeholder is the interpolated string from the menu bar item text setting in Settings > Appearance > General; the second is the error message.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The menu bar item’s interpolated string “%1$@” could not be evaluated:\n\n%2$@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der interpolierte String „%1$@“ des Menüleistenobjekts konnte nicht ausgewertet werden:\n\n%2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The menu bar item’s interpolated string “%1$@” could not be evaluated:\n\n%2$@"
           }
         },
         "ja" : {
@@ -177089,16 +178085,16 @@
       "comment" : "Status-icon menu item, shown only when the menu bar item’s interpolated string fails to evaluate, that opens a dialog with the error",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Show Menu Bar Item Error…"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fehler im Menüleistenobjekt anzeigen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Menu Bar Item Error…"
           }
         },
         "ja" : {
@@ -192784,16 +193780,16 @@
       "comment" : "Menu item to open the profile in a new floating pane, which floats over the tab’s split panes",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "New Floating Pane"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neuer schwebender Bereich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Floating Pane"
           }
         },
         "ja" : {
@@ -193290,37 +194286,37 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "## Sitzungsstatus\n\nDas Werkzeug **Sitzungsstatus** zeigt den Status der Sitzungen in allen Tabs an. Jeder Eintrag zeigt den Sitzungsnamen, einen farbigen Indikatorpunkt, den Statustext und eine Tastenkombination, um zu dieser Sitzung zu springen.\n\n### Status festlegen\n\n**Trigger:** Fügen Sie unter **Einstellungen > Profile > Erweitert > Trigger** einen **Tab-Status festlegen**-Trigger hinzu. Damit können Sie den Statustext, die Punktfarbe und die Textfarbe festlegen, wenn ein regulärer Ausdruck auf die Terminalausgabe passt.\n\n**Steuersequenz (OSC 21337):** Programme können den Tab-Status direkt festlegen:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nUnterstützte Schlüssel (durch `;` getrennt):\n\n* `status=TEXT`: Legt den Statustext fest (z. B. „Working“, „Waiting“).\n* `indicator=COLOR`: Legt die Punktfarbe fest.\n* `status-color=COLOR`: Legt die Farbe des Statustexts fest.\n* `detail=TEXT`: Legt optionalen Detailtext fest, der unter dem Status angezeigt wird (bis zu 3 Zeilen Umbruch).\n\nFarben verwenden das xterm-Format: `rgb:RR/GG/BB` (hexadezimal, 1–4 Ziffern pro Komponente) oder `#RRGGBB`.\n\nSetzen Sie einen Schlüssel auf leer, um ihn zu löschen: `status=` löscht den Statustext.\n\n**Gesamten Status löschen:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Prioritätssortierung\n\nSitzungen werden nach Priorität sortiert. Klicken Sie auf die Schaltfläche ⚙, um festzulegen, welche Status-Schlüsselwörter die höchste Priorität haben. Die Standardreihenfolge lautet: waiting, done, error, working, idle.\n\n### Schlummern\n\nKlicken Sie mit der rechten Maustaste auf eine Zeile und wählen Sie **Schlummern**, um sie ans Ende der Liste zu verschieben und abzudunkeln. Ein schlummernder Eintrag wird automatisch reaktiviert, sobald sich sein Status das nächste Mal ändert."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "## Session Status\n\nThe **Session Status** tool shows the status of sessions across all tabs. Each entry displays the session name, a colored indicator dot, status text, and a keyboard shortcut to jump to that session.\n\n### Setting Status\n\n**Triggers:** Add a **Set Tab Status** trigger in **Prefs > Profiles > Advanced > Triggers**. It lets you set the status text, dot color, and text color when a regex matches terminal output.\n\n**Control Sequence (OSC 21337):** Programs can set tab status directly:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nSupported keys (separated by `;`):\n\n* `status=TEXT` — Sets the status text (e.g., “Working”, “Waiting”).\n* `indicator=COLOR` — Sets the dot color.\n* `status-color=COLOR` — Sets the status text color.\n* `detail=TEXT` — Sets optional detail text shown below the status (wraps up to 3 lines).\n\nColors use xterm format: `rgb:RR/GG/BB` (hex, 1–4 digits per component) or `#RRGGBB`.\n\nSet a key to empty to clear it: `status=` clears the status text.\n\n**Clear all status:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Priority Sorting\n\nSessions are sorted by priority. Click the ⚙ button to configure which status keywords have the highest priority. The default order is: waiting, done, error, working, idle.\n\n### Snoozing\n\nRight-click a row and choose **Snooze** to move it to the bottom of the list and dim it. A snoozed entry automatically un-snoozes the next time its status changes."
+            "value" : "## Session Status\n\nThe **Session Status** tool shows the status of sessions across all tabs. Each entry displays the session name, a colored indicator dot, status text, and a keyboard shortcut to jump to that session.\n\n### Setting Status\n\n**Triggers:** Add a **Set Tab Status** trigger in **Prefs > Profiles > Advanced > Triggers**. It lets you set the status text, dot color, and text color when a regex matches terminal output.\n\n**Control Sequence (OSC 21337):** Programs can set tab status directly:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nSupported keys (separated by `;`):\n\n* `status=TEXT` — Sets the status text (e.g., “Working”, “Waiting”).\n* `indicator=COLOR` — Sets the dot color.\n* `status-color=COLOR` — Sets the status text color.\n* `detail=TEXT` — Sets optional detail text shown below the status (wraps up to 3 lines).\n\nColors use xterm format: `rgb:RR/GG/BB` (hex, 1–4 digits per component) or `#RRGGBB`.\n\nSet a key to empty to clear it: `status=` clears the status text.\n\n**Clear all status:** `printf '\\e]21337;status=;indicator=\\a'`\n\n**Program Status Protocol (OSC 7501):** A program can report that it is idle, working, waiting on you, done, or failed, and can report on several tasks at once. A session with more than one lists up to four of them, most urgent first, under its own row.\n\n### Priority Sorting\n\nSessions are sorted by priority. Click the ⚙ button to configure which status keywords have the highest priority. The default order is: waiting, done, error, working, idle.\n\n### Snoozing\n\nRight-click a row and choose **Snooze** to move it to the bottom of the list and dim it. A snoozed entry automatically un-snoozes the next time its status changes."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "## セッションステータス\n\n**セッションステータス**ツールは、すべてのタブにわたるセッションの状態を表示します。各項目には、セッション名、色分けされたインジケータードット、ステータステキスト、そのセッションにジャンプするためのキーボードショートカットが表示されます。\n\n### ステータスの設定\n\n**トリガー:** **Prefs > Profiles > Advanced > Triggers**（設定 > プロファイル > 詳細設定 > トリガー）で**タブステータスを設定**トリガーを追加してください。正規表現がターミナルの出力に一致したときに、ステータステキスト、ドットの色、テキストの色を設定できます。\n\n**制御シーケンス（OSC 21337）:** プログラムはタブステータスを直接設定できます。\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nサポートされているキー（`;`区切り）:\n\n* `status=TEXT` ：ステータステキストを設定します（例：「Working」、「Waiting」）。\n* `indicator=COLOR` ：ドットの色を設定します。\n* `status-color=COLOR` ：ステータステキストの色を設定します。\n* `detail=TEXT` ：ステータスの下に表示される任意の詳細テキストを設定します（最大3行で折り返されます）。\n\n色にはxterm形式を使用します: `rgb:RR/GG/BB`（16進数、各成分1～4桁）または`#RRGGBB`。\n\nキーを空にすると、その項目はクリアされます: `status=`はステータステキストをクリアします。\n\n**すべてのステータスをクリア:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### 優先度によるソート\n\nセッションは優先度順にソートされます。⚙ボタンをクリックすると、どのステータスキーワードを最優先にするかを設定できます。デフォルトの順序は、waiting、done、error、working、idleです。\n\n### スヌーズ\n\n行を右クリックして**スヌーズ**を選ぶと、その行はリストの最後に移動して薄暗く表示されます。スヌーズした項目は、次にステータスが変化したときに自動的にスヌーズが解除されます。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "## Status da sessão\n\nA ferramenta **Status da sessão** mostra o status das sessões em todas as abas. Cada entrada exibe o nome da sessão, um ponto indicador colorido, o texto de status e um atalho de teclado para saltar para essa sessão.\n\n### Definir o status\n\n**Gatilhos:** adicione um gatilho **Definir status da aba** em **Ajustes > Perfis > Avançado > Gatilhos**. Ele permite definir o texto de status, a cor do ponto e a cor do texto quando uma regex corresponde à saída do terminal.\n\n**Sequência de controle (OSC 21337):** os programas podem definir o status da aba diretamente:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nChaves suportadas (separadas por `;`):\n\n* `status=TEXT` — Define o texto de status (por exemplo, “Working”, “Waiting”).\n* `indicator=COLOR` — Define a cor do ponto.\n* `status-color=COLOR` — Define a cor do texto de status.\n* `detail=TEXT` — Define um texto de detalhe opcional exibido abaixo do status (quebra em até 3 linhas).\n\nAs cores usam o formato xterm: `rgb:RR/GG/BB` (hexadecimal, 1 a 4 dígitos por componente) ou `#RRGGBB`.\n\nDefina uma chave como vazia para limpá-la: `status=` limpa o texto de status.\n\n**Limpar todo o status:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Ordenação por prioridade\n\nAs sessões são ordenadas por prioridade. Clique no botão ⚙ para configurar quais palavras-chave de status têm a prioridade mais alta. A ordem padrão é: waiting, done, error, working, idle.\n\n### Adiamento\n\nClique com o botão direito em uma linha e escolha **Adiar** para movê-la para o fim da lista e escurecê-la. Uma entrada adiada é automaticamente reativada na próxima vez que seu status mudar."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "## Статус сеанса\n\nИнструмент **Статус сеанса** показывает состояние сеансов во всех вкладках. Каждая запись отображает имя сеанса, цветной индикатор, текст статуса и сочетание клавиш для перехода к этому сеансу.\n\n### Установка статуса\n\n**Триггеры:** добавьте триггер **Задать статус вкладки** в **Настройки > Профили > Дополнительно > Триггеры**. Он позволяет задавать текст статуса, цвет индикатора и цвет текста при совпадении регулярного выражения с выводом терминала.\n\n**Управляющая последовательность (OSC 21337):** программы могут задавать статус вкладки напрямую:\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\nПоддерживаемые ключи (разделённые `;`):\n\n* `status=TEXT`: задаёт текст статуса (например, «Working», «Waiting»).\n* `indicator=COLOR`: задаёт цвет индикатора.\n* `status-color=COLOR`: задаёт цвет текста статуса.\n* `detail=TEXT`: задаёт необязательный текст с подробностями, отображаемый под статусом (переносится до 3 строк).\n\nЦвета указываются в формате xterm: `rgb:RR/GG/BB` (шестнадцатеричный, 1–4 цифры на компонент) или `#RRGGBB`.\n\nЧтобы очистить ключ, задайте ему пустое значение: `status=` очищает текст статуса.\n\n**Очистить весь статус:** `printf '\\e]21337;status=;indicator=\\a'`\n\n### Сортировка по приоритету\n\nСеансы сортируются по приоритету. Нажмите кнопку ⚙, чтобы настроить, какие ключевые слова статуса имеют наивысший приоритет. Порядок по умолчанию: waiting, done, error, working, idle.\n\n### Откладывание\n\nЩёлкните правой кнопкой мыши на строке и выберите **Отложить**, чтобы переместить её в конец списка и затемнить. Отложенная запись автоматически возвращается в обычный режим при следующем изменении её статуса."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "## 会话状态\n\n**会话状态**工具显示所有标签页中各个会话的状态。每个条目显示会话名称、彩色指示点、状态文本以及跳转到该会话的键盘快捷键。\n\n### 设置状态\n\n**触发器：**在**偏好设置 > 配置文件 > 高级 > 触发器**中添加**设置标签页状态**触发器。当正则表达式匹配终端输出时，它可设置状态文本、指示点颜色和文本颜色。\n\n**控制序列（OSC 21337）：**程序可以直接设置标签页状态：\n\n`printf '\\e]21337;status=Working;indicator=#ffa500\\a'`\n\n支持的键（以 `;` 分隔）：\n\n* `status=TEXT` — 设置状态文本（例如“Working”“Waiting”）。\n* `indicator=COLOR` — 设置指示点颜色。\n* `status-color=COLOR` — 设置状态文本颜色。\n* `detail=TEXT` — 设置显示在状态下方的可选详细信息（最多换行 3 行）。\n\n颜色使用 xterm 格式：`rgb:RR/GG/BB`（十六进制，每个分量 1–4 位数字）或 `#RRGGBB`。\n\n将某个键设为空值可将其清除：`status=` 清除状态文本。\n\n**清除全部状态：**`printf '\\e]21337;status=;indicator=\\a'`\n\n### 优先级排序\n\n会话按优先级排序。点按 ⚙ 按钮配置哪些状态关键字具有最高优先级。默认顺序为：waiting、done、error、working、idle。\n\n### 暂缓\n\n右键点按某一行并选择**稍后提醒**，可将其移至列表底部并调暗显示。稍后提醒的条目会在其状态下次变化时自动恢复。"
           }
         }
@@ -193490,6 +194486,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "窗格 %d"
+          }
+        }
+      }
+    },
+    "ToolStatus.RootRecordLabel" : {
+      "comment" : "Label in the Session Status tool for the status a program reports about itself as a whole, as opposed to one of the tasks it reports on",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Overall"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全体"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geral"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Общий"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "总体"
           }
         }
       }

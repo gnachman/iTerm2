@@ -24206,6 +24206,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                    action:@selector(browserSetToolbarHiddenWithCompletion:hidden:)];
         [_methods registerFunction:method namespace:@"iterm2"];
 
+        method = [[iTermBuiltInMethod alloc] initWithName:@"browser_eval_js"
+                                            defaultValues:@{}
+                                                    types:@{ @"js": [NSString class] }
+                                        optionalArguments:[NSSet set]
+                                                  context:iTermVariablesSuggestionContextSession
+                                   sideEffectsPlaceholder:@"[browser_eval_js]"
+                                                   target:self
+                                                   action:@selector(browserEvalJSWithCompletion:js:connectionKey:)];
+        [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
 }
@@ -24331,7 +24340,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
 
-    NSString *domain = url.host;
+    // Lowercased so it matches what the browser scripting permissions panel stores.
+    [iTermBrowserScriptingPermissions migrateLoadURLAnswerForHost:url.host];
+    NSString *domain = url.host.lowercaseString;
     iTermAPIHelper *apiHelper = [iTermAPIHelper sharedInstanceIfEnabled];
     iTermScriptHistoryEntry *entry = [apiHelper scriptHistoryEntryForConnectionKey:connectionKey];
     NSString *scriptName = entry.name ?: @"A script";
@@ -24340,7 +24351,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         NSLocalizedStringWithDefaultValue(@"PTYSession.ScriptWantsToLoadURLHeading", nil, [NSBundle mainBundle], @"%@ wants to load a URL in this browser session.", @"Heading for a prompt asking whether to allow a script to load a URL; placeholder is the script name"), scriptName];
     NSString *title = [NSString stringWithFormat:
         NSLocalizedStringWithDefaultValue(@"PTYSession.AllowLoadingURLsFrom", nil, [NSBundle mainBundle], @"Allow loading URLs from %@?", @"Prompt asking whether to allow loading URLs from a domain; placeholder is the domain"), domain];
-    NSString *identifier = [@"NoSyncLoadURLAllowed_" stringByAppendingString:domain];
+    NSString *identifier = [iTermBrowserScriptingPermissions loadURLIdentifierForHost:domain];
 
     [iTermWarning asyncShowWarningWithTitle:title
                                     actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
@@ -24378,6 +24389,96 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     _view.browserViewController.toolbarHidden = hidden.boolValue;
     completion(@YES, nil);
+}
+
+#pragma mark - browser_eval_js
+
+// Not an instance method so it can still report failure after the session is gone.
+static NSError *PTYSessionBrowserEvalJSError(NSInteger code, NSString *message) {
+    return [NSError errorWithDomain:@"com.iterm2.browser-eval-js"
+                               code:code
+                           userInfo:@{ NSLocalizedDescriptionKey: message }];
+}
+
+// Runs a JavaScript function body in the page world of a browser session and returns its
+// value as a JSON string. The body may use await and must `return` its result. Like
+// load_url, the first use per origin asks the user; the answer can be remembered.
+- (void)browserEvalJSWithCompletion:(void (^)(id, NSError *))completion
+                                 js:(NSString *)js
+                      connectionKey:(id)connectionKey {
+    if (!self.isBrowserSession || !_view.browserViewController) {
+        completion(nil, PTYSessionBrowserEvalJSError(1, NSLocalizedStringWithDefaultValue(@"BrowserEvalJS.NotBrowser", nil, [NSBundle mainBundle], @"browser_eval_js is only supported in browser sessions.", @"Error returned to a script that tried to run JavaScript in a session that is not a web browser; browser_eval_js is a function name")));
+        return;
+    }
+    if (!connectionKey) {
+        completion(nil, PTYSessionBrowserEvalJSError(3, NSLocalizedStringWithDefaultValue(@"BrowserEvalJS.NotFromScript", nil, [NSBundle mainBundle], @"browser_eval_js must be called from a Python script.", @"Error returned when JavaScript is requested other than from a Python API script; browser_eval_js is a function name")));
+        return;
+    }
+    // Ask the page for its origin rather than using its URL, which names the destination
+    // of a pending navigation instead of the document the JavaScript would run in.
+    __weak __typeof(self) weakSelf = self;
+    [_view.browserViewController fetchAPIScriptingOriginWithCompletion:^(NSString *pageOrigin, NSString *siteOrigin) {
+        if (!pageOrigin || !siteOrigin) {
+            completion(nil, PTYSessionBrowserEvalJSError(6, NSLocalizedStringWithDefaultValue(@"BrowserEvalJS.NotWebPage", nil, [NSBundle mainBundle], @"browser_eval_js requires an http or https page.", @"Error returned to a script that tried to run JavaScript on a page that is not a web page, such as a blank page or a local file; browser_eval_js is a function name")));
+            return;
+        }
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            completion(nil, PTYSessionBrowserEvalJSError(1, NSLocalizedStringWithDefaultValue(@"BrowserEvalJS.SessionClosed", nil, [NSBundle mainBundle], @"The browser session closed before the JavaScript could run.", @"Error returned to a script when its browser session closed while the user was approving JavaScript")));
+            return;
+        }
+        [strongSelf promptToEvaluateJavaScript:js
+                                    pageOrigin:pageOrigin
+                                    siteOrigin:siteOrigin
+                                 connectionKey:connectionKey
+                                    completion:completion];
+    }];
+}
+
+- (void)promptToEvaluateJavaScript:(NSString *)js
+                        pageOrigin:(NSString *)pageOrigin
+                        siteOrigin:(NSString *)siteOrigin
+                     connectionKey:(id)connectionKey
+                        completion:(void (^)(id, NSError *))completion {
+    iTermScriptHistoryEntry *entry = [[iTermAPIHelper sharedInstanceIfEnabled] scriptHistoryEntryForConnectionKey:connectionKey];
+    NSString *scriptName = entry.name ?: @"A script";
+    NSString *heading = [NSString stringWithFormat:
+        NSLocalizedStringWithDefaultValue(@"PTYSession.ScriptWantsToRunJavaScriptHeading", nil, [NSBundle mainBundle], @"%@ wants to run JavaScript in this browser session.", @"Heading for a prompt asking whether to allow a script to run JavaScript in a web page; placeholder is the script name"), scriptName];
+    NSString *title = [NSString stringWithFormat:
+        NSLocalizedStringWithDefaultValue(@"PTYSession.AllowRunningJavaScriptOn", nil, [NSBundle mainBundle], @"Allow scripts to read and control pages on %@?", @"Prompt asking whether to allow scripts to run JavaScript on a website; placeholder is the site’s origin, such as https://example.com"), siteOrigin];
+    // The origin includes the scheme so that approving https://example.com doesn't also
+    // approve plain-HTTP pages on the same host.
+    NSString *identifier = [iTermBrowserScriptingPermissions javaScriptIdentifierForOrigin:siteOrigin];
+    DLog(@"Request to run JavaScript on %@ from %@", siteOrigin, scriptName);
+    __weak __typeof(self) weakSelf = self;
+    [iTermWarning asyncShowWarningWithTitle:title
+                                    actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
+                              actionMapping:nil
+                                  accessory:nil
+                                 identifier:identifier
+                                silenceable:kiTermWarningTypePermanentlySilenceable
+                                    heading:heading
+                                cancelLabel:nil
+                                     window:self.delegate.realParentWindow.window
+                                 completion:^(iTermWarningSelection selection,
+                                              iTermWarning *warning) {
+        if (selection != kiTermWarningSelection0) {
+            completion(nil, PTYSessionBrowserEvalJSError(4, NSLocalizedStringWithDefaultValue(@"BrowserEvalJS.Denied", nil, [NSBundle mainBundle], @"The user denied permission to run JavaScript.", @"Error returned to a script when the user declined to let it run JavaScript on a website")));
+            return;
+        }
+        // The prompt is asynchronous, so the session may have closed while it was up.
+        __strong __typeof(self) strongSelf = weakSelf;
+        iTermBrowserViewController *browserViewController = strongSelf ? strongSelf->_view.browserViewController : nil;
+        if (!browserViewController) {
+            completion(nil, PTYSessionBrowserEvalJSError(1, NSLocalizedStringWithDefaultValue(@"BrowserEvalJS.SessionClosed", nil, [NSBundle mainBundle], @"The browser session closed before the JavaScript could run.", @"Error returned to a script when its browser session closed while the user was approving JavaScript")));
+            return;
+        }
+        [browserViewController evaluateJavaScriptFromAPI:js
+                                      expectedPageOrigin:pageOrigin
+                                              completion:^(NSString *json, NSError *error) {
+            completion(json, error);
+        }];
+    }];
 }
 
 - (void)setStatusBarComponentUnreadCountWithCompletion:(void (^)(id, NSError *))completion
