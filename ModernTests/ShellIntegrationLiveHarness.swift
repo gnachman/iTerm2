@@ -121,13 +121,14 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             }
         }
 
-        // nushell's reedline asks for the cursor position on startup and
-        // waits for the answer before it reads any input.
-        var sendsCursorPositionRequest: Bool {
+        // Shells that query the terminal on startup and wait for the answer
+        // before they read any input: nushell's reedline asks for the cursor
+        // position, and fish 4 for the device attributes.
+        var waitsForTerminalQueryReplies: Bool {
             switch self {
-            case .nu:
+            case .nu, .fish:
                 return true
-            case .zsh, .bash, .fish, .tcsh, .xonsh:
+            case .zsh, .bash, .tcsh, .xonsh:
                 return false
             }
         }
@@ -196,18 +197,42 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             shellPath: executable,
             arguments: shell.arguments(for: executable),
             environment: env,
-            answersCursorPositionRequests: shell.sendsCursorPositionRequest,
+            answersTerminalQueries: shell.waitsForTerminalQueryReplies,
             onBytes: { bytes, length in
                 captureLock.lock()
                 capturedBytes.append(bytes, length: length)
                 captureLock.unlock()
             })
 
+        let launchDate = Date()
+
+        // Waits like LiveShell.waitUntil, but on a timeout records everything
+        // the shell wrote so far, so a failure shows where the shell stalled.
+        func waitUntil(_ description: String, timeout: TimeInterval, _ predicate: () -> Bool) throws {
+            do {
+                try liveShell.waitUntil(description, timeout: timeout, predicate)
+            } catch {
+                let snapshot: Data = {
+                    captureLock.lock(); defer { captureLock.unlock() }
+                    return capturedBytes as Data
+                }()
+                let elapsed = String(format: "%.1f", Date().timeIntervalSince(launchDate))
+                let dump = "[\(shell.rawValue)] \(error) after \(elapsed)s; captured \(snapshot.count) bytes:\n"
+                    + snapshot.escapedForLog
+                print(dump)
+                let attachment = XCTAttachment(string: dump)
+                attachment.name = "\(shell.rawValue) capture at timeout"
+                attachment.lifetime = .keepAlways
+                add(attachment)
+                throw error
+            }
+        }
+
         liveShell.send(shell.sourceCommand(integrationPath: integrationPath))
 
         // Wait for the integration's ShellIntegrationVersion announcement
         // (OSC 1337) which the script prints right after sourcing.
-        try liveShell.waitUntil("integration loaded", timeout: 8.0) {
+        try waitUntil("integration loaded", timeout: 8.0) {
             captureLock.lock(); defer { captureLock.unlock() }
             return capturedBytes.contains(asciiString: "ShellIntegrationVersion=")
         }
@@ -221,7 +246,7 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         // Wait for D;<code> *after* command start and a fresh A (the
         // post-command prompt). We count occurrences in the suffix after
         // the source-complete point.
-        try liveShell.waitUntil("post-command D and A", timeout: 8.0) {
+        try waitUntil("post-command D and A", timeout: 8.0) {
             captureLock.lock(); defer { captureLock.unlock() }
             let snapshot = capturedBytes as Data
             let suffix = snapshot.subdata(in: afterSourceByteCount..<snapshot.count)
@@ -282,6 +307,26 @@ final class ShellIntegrationLiveHarness: XCTestCase {
 // MARK: - OSC 133 byte-scanning helpers
 
 private extension Data {
+    /// The bytes as printable ASCII: ESC as \e, backslash, other control and
+    /// non-ASCII bytes as \xNN, and newlines kept so the dump reads like the
+    /// screen.
+    var escapedForLog: String {
+        var result = ""
+        for byte in self {
+            switch byte {
+            case 0x1B:
+                result += "\\e"
+            case 0x0A:
+                result += "\\n\n"
+            case 0x20..<0x7F where byte != 0x5C:
+                result.append(Character(UnicodeScalar(byte)))
+            default:
+                result += String(format: "\\x%02X", byte)
+            }
+        }
+        return result
+    }
+
     func contains(asciiString s: String) -> Bool {
         guard let needle = s.data(using: .ascii) else { return false }
         return range(of: needle) != nil
