@@ -15,6 +15,7 @@
 #import "iTermCursorBlinkFadePreset.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermFontPanel.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "NSDictionary+iTerm.h"
@@ -44,6 +45,10 @@
     IBOutlet NSButton *_animateMovement;
     IBOutlet NSButton *_animateMovementOnlyInInteractiveApps;
     IBOutlet NSButton *_cursorSmoothSlide;
+    // The checkbox's tooltip as loaded from the xib (localized), captured
+    // once so it can be restored after temporarily showing the
+    // battery-caveat tooltip. See updateSmoothSlideEnabled.
+    NSString *_cursorSmoothSlideDefaultToolTip;
     IBOutlet NSButton *_cursorSmoothBlink;
     // Button that opens the smooth-blink configuration popover.
     IBOutlet NSButton *_cursorSmoothBlinkConfigureButton;
@@ -178,6 +183,21 @@
                     key:KEY_CURSOR_SMOOTH_SLIDE
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+    _cursorSmoothSlideDefaultToolTip = [_cursorSmoothSlide.toolTip copy];
+    // The box cursor's smooth slide only works with GPU rendering on (see
+    // cursorTypeSupportsSmoothSlide) and the checkbox's tooltip calls out
+    // when it won't run on battery power (see smoothSlideUnavailableOnBattery),
+    // so keep both in sync with the relevant General-settings preferences,
+    // which can change while this panel is open.
+    [iTermPreferenceDidChangeNotification subscribe:self block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
+        if ([notification.key isEqualToString:kPreferenceKeyUseMetal]) {
+            [weakSelf updateSmoothSlideEnabled];
+        }
+    }];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateSmoothSlideEnabled)
+                                                 name:iTermMetalSettingsDidChangeNotification
+                                               object:nil];
     [self updateSmoothSlideEnabled];
 
     info = [self defineControl:_cursorSmoothBlink
@@ -517,16 +537,43 @@
     switch ((ITermCursorType)[self intForKey:KEY_CURSOR_TYPE]) {
         case CURSOR_UNDERLINE:
         case CURSOR_VERTICAL:
-        case CURSOR_BOX:
             return YES;
+        case CURSOR_BOX:
+            // The box cursor's smooth slide only animates on the Metal
+            // renderer (see cursorSupportsSmoothSlide in
+            // iTermTextDrawingHelper.m), so don't offer it at all when GPU
+            // rendering is off in General settings - it would just silently
+            // do nothing.
+            return [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
         case CURSOR_DEFAULT:
             return NO;
     }
     return NO;
 }
 
+// YES if the box cursor's smooth slide is enabled in principle (GPU
+// rendering is on) but won't actually run while on battery power, because
+// "Disable GPU renderer when disconnected from power" is also on. In that
+// case the checkbox stays enabled - the user may plug in later - but its
+// tooltip should say so instead of silently doing nothing on battery.
+- (BOOL)smoothSlideUnavailableOnBattery {
+    return ((ITermCursorType)[self intForKey:KEY_CURSOR_TYPE] == CURSOR_BOX &&
+            [iTermPreferences boolForKey:kPreferenceKeyUseMetal] &&
+            [iTermPreferences boolForKey:kPreferenceKeyDisableMetalWhenUnplugged]);
+}
+
 - (void)updateSmoothSlideEnabled {
     _cursorSmoothSlide.enabled = [self cursorTypeSupportsSmoothSlide];
+    if ([self smoothSlideUnavailableOnBattery]) {
+        _cursorSmoothSlide.toolTip = NSLocalizedStringWithDefaultValue(
+            @"ProfilesTextPreferences.SmoothSlideUnavailableOnBatteryToolTip",
+            nil,
+            [NSBundle mainBundle],
+            @"When enabled, small horizontal cursor movements are animated. Because “Disable GPU renderer when disconnected from power” is turned on in General settings, this won’t animate while running on battery power.",
+            @"Tooltip for the Smooth-typing animation checkbox in Edit Session > Text, shown when the box cursor is selected and GPU rendering would be disabled on battery power");
+    } else {
+        _cursorSmoothSlide.toolTip = _cursorSmoothSlideDefaultToolTip;
+    }
 }
 
 // Smooth blink only matters when the cursor blinks, so its checkbox is enabled
