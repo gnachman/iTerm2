@@ -14,9 +14,12 @@ time.
 There are two kinds of catalog, and you must translate **both** to fully
 localize the app:
 
-1. **Code strings** - one big catalog at `sources/Localizable.xcstrings`. Keys
+1. **Code strings** - one big catalog at `xcstrings/Localizable.xcstrings`. Keys
    are symbolic (`PseudoTerminal.CloseTabsHeading`). This covers everything
    produced in code: alerts, menus built at runtime, status text, errors, etc.
+   (The build copies it to `sources/Localizable.xcstrings`, which is not tracked
+   by git. Edit the `xcstrings/` copy, or your changes will not be in your pull
+   request.)
 
 2. **XIB strings** - about 70 per-window/per-view catalogs, each named after its
    XIB and living in a sibling `mul.lproj/` directory (e.g.
@@ -53,7 +56,9 @@ concern, not yours.
 If you prefer to edit the JSON by hand instead of using Xcode's editor (the files
 are plain JSON), you simply add a `"<lang>"` key under a string's
 `"localizations"` object; see the shapes below. Either way, keep each file's
-existing on-disk formatting.
+existing on-disk formatting. For `xcstrings/Localizable.xcstrings`, editing the
+JSON by hand is strongly preferred: Xcode's editor reorders the whole file, which
+turns a small change into a huge, unreviewable diff.
 
 ## Step 2 - Translate a plain string
 
@@ -213,7 +218,7 @@ in the plain-plural case.
 Before building the whole app, sanity-check the catalog compiles:
 
 ```
-xcrun xcstringstool compile --output-directory /tmp/loc-check sources/Localizable.xcstrings
+xcrun xcstringstool compile --output-directory /tmp/loc-check xcstrings/Localizable.xcstrings
 ```
 
 It must succeed. For a plural entry you can confirm the rule was produced:

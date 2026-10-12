@@ -11,8 +11,9 @@ iTerm2 localizes with Apple **String Catalogs** (`.xcstrings`). The source
 language is **English**; any untranslated string falls back to English, so
 partial translations are safe. There are three kinds of catalog:
 
-- **Code strings** - `sources/Localizable.xcstrings`, keyed by symbolic keys
-  (`Feature.Name`). This is what you edit when writing code.
+- **Code strings** - `xcstrings/Localizable.xcstrings`, keyed by symbolic keys
+  (`Feature.Name`). This is what you edit when writing code. The build copies
+  it to `sources/Localizable.xcstrings`, which is gitignored; never edit that copy.
 - **XIB strings** - one `mul.lproj/<name>.xcstrings` per XIB, keyed by object ID.
   Populated automatically by the build's extraction step; you don't hand-write
   these.
@@ -137,7 +138,7 @@ not a regenerate, so it preserves those variations (and translations) across
 future extractions. Verify with:
 
 ```
-xcrun xcstringstool compile --output-directory <dir> sources/Localizable.xcstrings
+xcrun xcstringstool compile --output-directory <dir> xcstrings/Localizable.xcstrings
 ```
 
 The key's compiled `en.lproj/Localizable.stringsdict` entry should have
@@ -180,13 +181,13 @@ straight ones. Translators use their own language's marks.
 Swift emits `.stringsdata` during the build (`SWIFT_EMIT_LOC_STRINGS=YES`); ObjC
 is scanned by `extractLocStrings`. `tools/extract_strings.sh` (run by the Beta and
 Deployment targets, and standalone via `make extract-strings`) merges both into
-`sources/Localizable.xcstrings` with `xcstringstool sync`. So a new code string
+`xcstrings/Localizable.xcstrings` with `xcstringstool sync`. So a new code string
 appears in the catalog after an extraction, not immediately.
 
 ### `extract_strings.sh` is the only canonical way to write the catalog
 
 `tools/extract_strings.sh` (i.e. `make extract-strings`) owns the exact
-serialization of `sources/Localizable.xcstrings`: key ordering, Unicode escaping,
+serialization of `xcstrings/Localizable.xcstrings`: key ordering, Unicode escaping,
 and whitespace. Treat its output as the canonical form and regenerate the catalog
 only through it.
 
