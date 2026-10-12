@@ -466,6 +466,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // nil means "no pending range".
 @property (nonatomic, strong, nullable) iTermResilientCoordinate *pendingNonInitialPromptStart;
 
+// YES between an initial OSC 133;A and the B that ends that prompt. A B ends
+// the whole prompt, so a B that closes a right or continuation prompt nested
+// inside the primary prompt (reedline draws its right prompt before its only
+// B) also starts the command. A B that closes a non-initial prompt drawn after
+// the primary B (powerlevel10k's separate RPROMPT bracket) only closes it.
+@property (nonatomic) BOOL primaryPromptAwaitingCommandStart;
+
 // Registry of currently-open command marks keyed by OSC 133 `aid=<id>`.
 // Populated when an aid'd prompt mark is created (at A) and removed when
 // that aid's matching D arrives (or its parent closes via cascade).

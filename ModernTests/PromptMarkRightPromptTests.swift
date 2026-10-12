@@ -21,7 +21,10 @@
 //
 //  These tests replay the exact byte sequences through the real parser so
 //  VT100Terminal's inCommand_ bookkeeping and the cursor save/restore are
-//  exercised.
+//  exercised. They use feedEscapeSequence, which parses and executes on the
+//  joined thread, so assertions never race the mutation thread. The prompt is
+//  drawn on the second row, below a "Last login" line, as in a new session,
+//  except in the bottom-row tests, where an idle prompt usually sits.
 //
 
 import XCTest
@@ -32,9 +35,21 @@ final class PromptMarkRightPromptTests: XCTestCase {
     private let leftPrompt = "/tmp> "
     private let rightPrompt = " 10/12/2026 10:12:24 AM"
 
-    /// Column where reedline places the right prompt so it ends at the margin.
-    private var rightPromptColumn: Int {
+    private let height = 24
+
+    /// Zero-based row the prompt is drawn on. Bottom-row tests change it
+    /// before calling makeHarness().
+    private var promptRow = 1
+
+    /// reedline right-aligns the right prompt so it ends exactly at the margin
+    /// (start_col = screen width - prompt width).
+    private var reedlineRightPromptColumn: Int {
         return width - rightPrompt.count
+    }
+
+    /// zsh leaves ZLE_RPROMPT_INDENT columns (1 by default) after RPROMPT.
+    private func zshRightPromptColumn(indent: Int) -> Int {
+        return width - rightPrompt.count - indent
     }
 
     // MARK: - reedline: right prompt nested before the single B
@@ -46,14 +61,14 @@ final class PromptMarkRightPromptTests: XCTestCase {
     func test_reedline_idlePrompt_BAfterNestedRightPrompt_startsCommand() {
         let harness = makeHarness()
 
-        harness.send(reedlinePaint(buffer: ""))
+        harness.feedEscapeSequence(reedlinePaint(buffer: ""))
         harness.sync()
 
         let start = commandStartCoord(in: harness)
         XCTAssertEqual(start.x, Int32(leftPrompt.count),
                        "The command should start right after the left prompt, "
                        + "where the cursor was restored before B")
-        XCTAssertEqual(start.y, 0)
+        XCTAssertEqual(start.y, Int64(promptRow))
         XCTAssertGreaterThanOrEqual(harness.screen.commandRange().start.x, 0,
                                     "commandRange (isAtShellPrompt) must be valid at the idle prompt")
     }
@@ -65,39 +80,44 @@ final class PromptMarkRightPromptTests: XCTestCase {
         let harness = makeHarness()
 
         for buffer in ["", "e", "ec", "ech", "echo"] {
-            harness.send(reedlinePaint(buffer: buffer))
+            harness.feedEscapeSequence(reedlinePaint(buffer: buffer))
         }
         harness.sync()
 
         XCTAssertEqual(promptMarks(in: harness).count, 1)
         let start = commandStartCoord(in: harness)
         XCTAssertEqual(start.x, Int32(leftPrompt.count))
-        XCTAssertEqual(start.y, 0)
+        XCTAssertEqual(start.y, Int64(promptRow))
     }
 
     /// The right prompt is drawn after ESC7 and the cursor is restored with
     /// ESC8 before B, so the cursor at B is to the left of where P;k=r was
     /// seen. The excluded subrange must still cover the right prompt's cells
-    /// rather than run backwards from the P column to the B column.
+    /// rather than run backwards from the P column to the B column. The right
+    /// prompt ends exactly at the margin, so the end must also be valid there.
     func test_reedline_rightPromptExcludedSubrange_coversRightPromptCells() {
         let harness = makeHarness()
 
-        harness.send(reedlinePaint(buffer: ""))
+        harness.feedEscapeSequence(reedlinePaint(buffer: ""))
         harness.sync()
 
-        let mark = onlyPromptMark(in: harness)
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
         guard let ranges = mark.excludedSubranges, ranges.count == 1 else {
             XCTFail("Expected one excluded subrange for the right prompt, got "
                     + "\(mark.excludedSubranges?.count ?? 0)")
             return
         }
         let range = ranges[0].absRange
-        XCTAssertEqual(range.start.y, range.end.y, "The right prompt is on the prompt row")
-        XCTAssertEqual(range.start.x, Int32(rightPromptColumn),
+        XCTAssertEqual(range.start.y, Int64(promptRow))
+        XCTAssertEqual(range.start.x, Int32(reedlineRightPromptColumn),
                        "The exclusion starts where P;k=r was received")
-        XCTAssertGreaterThanOrEqual(range.end.x, Int32(rightPromptColumn + rightPrompt.count),
-                                    "The exclusion must reach the end of the right prompt, "
-                                    + "not stop at the restored cursor before it")
+        XCTAssertGreaterThanOrEqual(linearPosition(range.end),
+                                    linearPosition(VT100GridAbsCoordMake(Int32(width),
+                                                                         Int64(promptRow))),
+                                    "The exclusion must reach the end of the right prompt at the "
+                                    + "margin, not stop at the restored cursor before it")
     }
 
     /// Each repaint draws the right prompt again. The exclusions from earlier
@@ -107,11 +127,13 @@ final class PromptMarkRightPromptTests: XCTestCase {
         let harness = makeHarness()
 
         for buffer in ["", "e", "ec", "ech", "echo"] {
-            harness.send(reedlinePaint(buffer: buffer))
+            harness.feedEscapeSequence(reedlinePaint(buffer: buffer))
         }
         harness.sync()
 
-        let mark = onlyPromptMark(in: harness)
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
         XCTAssertEqual(mark.excludedSubranges?.count, 1,
                        "Only the most recent paint's right prompt should be excluded")
     }
@@ -123,35 +145,38 @@ final class PromptMarkRightPromptTests: XCTestCase {
         let harness = makeHarness()
 
         for buffer in ["", "e", "echo", "echo hi"] {
-            harness.send(reedlinePaint(buffer: buffer))
+            harness.feedEscapeSequence(reedlinePaint(buffer: buffer))
         }
-        harness.send(reedlineSubmit(buffer: "echo hi", keepRightPrompt: false))
-        harness.send(Array("hi\r\n".utf8))
-        harness.send(osc133("D;0"))
+        harness.feedEscapeSequence(reedlineSubmit(buffer: "echo hi", keepRightPrompt: false))
+        harness.feedEscapeSequence(Array("hi\r\n".utf8))
+        harness.feedEscapeSequence(osc133("D;0"))
         harness.sync()
 
-        let mark = onlyPromptMark(in: harness)
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
         XCTAssertEqual(mark.fullCommand, "echo hi")
         XCTAssertEqual(mark.firstLineOfCommand, "echo hi")
         XCTAssertTrue(mark.hasCode)
         XCTAssertEqual(mark.code, 0)
     }
 
-    /// Full cycle when the right prompt stays on screen after Return (a
-    /// configuration without transient prompts, and reedline's final repaint
-    /// in some modes). The only B before C follows the nested right prompt, so
-    /// the command is recorded only if that B starts it, and the right prompt
-    /// text must not leak into the recorded command.
+    /// Full cycle when the right prompt stays on screen after Return (no
+    /// transient right prompt). The only B before C follows the nested right
+    /// prompt, so the command is recorded only if that B starts it, and the
+    /// right prompt text must not leak into the recorded command.
     func test_reedline_fullCycle_rightPromptKeptOnSubmit_recordsCommandWithoutRightPrompt() {
         let harness = makeHarness()
 
-        harness.send(reedlinePaint(buffer: ""))
-        harness.send(reedlineSubmit(buffer: "echo hi", keepRightPrompt: true))
-        harness.send(Array("hi\r\n".utf8))
-        harness.send(osc133("D;1"))
+        harness.feedEscapeSequence(reedlinePaint(buffer: ""))
+        harness.feedEscapeSequence(reedlineSubmit(buffer: "echo hi", keepRightPrompt: true))
+        harness.feedEscapeSequence(Array("hi\r\n".utf8))
+        harness.feedEscapeSequence(osc133("D;1"))
         harness.sync()
 
-        let mark = onlyPromptMark(in: harness)
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
         XCTAssertEqual(mark.fullCommand, "echo hi",
                        "The right prompt's cells must be subtracted from the command")
         XCTAssertEqual(mark.firstLineOfCommand, "echo hi")
@@ -159,19 +184,97 @@ final class PromptMarkRightPromptTests: XCTestCase {
         XCTAssertEqual(mark.code, 1)
     }
 
-    /// The shell's history in the Command History tool comes from C. With the
-    /// right prompt nested before B at an idle prompt, pressing Return on an
-    /// empty line must not record a command.
+    /// Pressing Return on an empty line must not record a command, even though
+    /// the B before C now starts one.
     func test_reedline_emptySubmit_recordsNoCommand() {
         let harness = makeHarness()
 
-        harness.send(reedlinePaint(buffer: ""))
-        harness.send(reedlineSubmit(buffer: "", keepRightPrompt: true))
+        harness.feedEscapeSequence(reedlinePaint(buffer: ""))
+        harness.feedEscapeSequence(reedlineSubmit(buffer: "", keepRightPrompt: true))
         harness.sync()
 
-        let mark = onlyPromptMark(in: harness)
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
         XCTAssertNil(mark.fullCommand)
         XCTAssertNil(mark.firstLineOfCommand)
+    }
+
+    /// While typing a multi-line command, reedline draws a "::: " indicator
+    /// between A;k=s and B on each continuation line. The final repaint on
+    /// Return draws those lines without it. Exclusions from the typing repaints
+    /// must not survive, or the first four characters of each continuation line
+    /// are cut from the recorded command.
+    func test_reedline_multiLine_continuationIndicatorDroppedOnSubmit_keepsFullCommand() {
+        let harness = makeHarness()
+        let lines = ["let y = [", "\"AAAAAAA\" \"BBBBBBB\"", "] | length"]
+
+        harness.feedEscapeSequence(reedlinePaint(buffer: ""))
+        for count in 1...lines.count {
+            harness.feedEscapeSequence(reedlineMultiLinePaint(lines: Array(lines.prefix(count)),
+                                                continuationIndicator: "::: "))
+        }
+        var submit = reedlineMultiLinePaint(lines: lines, continuationIndicator: "")
+        submit += csi("J")
+        submit += Array("\r\n".utf8)
+        submit += osc133("C")
+        harness.feedEscapeSequence(submit)
+        harness.feedEscapeSequence(Array("2\r\n".utf8))
+        harness.feedEscapeSequence(osc133("D;0"))
+        harness.sync()
+
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
+        XCTAssertEqual(mark.fullCommand, lines.joined(separator: "\n"))
+        XCTAssertEqual(mark.firstLineOfCommand, lines[0])
+    }
+
+    // MARK: - Prompt on the bottom row
+
+    /// An idle prompt usually sits on the last row. reedline's right prompt
+    /// ends at the margin there too, and its exclusion must not depend on a
+    /// row below the prompt existing, or Select Current Command picks up the
+    /// right prompt.
+    func test_reedline_bottomRow_rightPromptExcludedFromCurrentCommand() {
+        promptRow = height - 1
+        let harness = makeHarness()
+
+        harness.feedEscapeSequence(reedlinePaint(buffer: "echo hi"))
+        harness.sync()
+
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
+        guard let range = mark.excludedSubranges?.first else {
+            XCTFail("Expected an excluded subrange for the right prompt")
+            return
+        }
+        XCTAssertEqual(range.start.status, .valid)
+        XCTAssertEqual(range.end.status, .valid,
+                       "An end at the margin of the last row must be valid")
+        XCTAssertEqual(currentCommandText(in: harness, mark: mark), "echo hi")
+    }
+
+    /// Same for p10k with ZLE_RPROMPT_INDENT=0 on the last row.
+    func test_p10k_bottomRow_rightPromptAtMargin_excludedFromCurrentCommand() {
+        promptRow = height - 1
+        let harness = makeHarness()
+
+        harness.feedEscapeSequence(p10kPaint(buffer: "echo hi",
+                                             rightPromptColumn: zshRightPromptColumn(indent: 0)))
+        harness.sync()
+
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
+        guard let range = mark.excludedSubranges?.first else {
+            XCTFail("Expected an excluded subrange for the right prompt")
+            return
+        }
+        XCTAssertEqual(range.end.status, .valid,
+                       "An end at the margin of the last row must be valid")
+        XCTAssertEqual(currentCommandText(in: harness, mark: mark), "echo hi")
     }
 
     // MARK: - powerlevel10k: right prompt bracketed separately after B
@@ -182,36 +285,58 @@ final class PromptMarkRightPromptTests: XCTestCase {
     /// right prompt ended.
     func test_p10k_secondBAfterRightPrompt_doesNotMoveCommandStart() {
         let harness = makeHarness()
+        let column = zshRightPromptColumn(indent: 1)
 
-        harness.send(p10kPaint(buffer: "echo hi"))
+        harness.feedEscapeSequence(p10kPaint(buffer: "echo hi", rightPromptColumn: column))
         harness.sync()
 
         let start = commandStartCoord(in: harness)
         XCTAssertEqual(start.x, 2, "Command starts after \"$ \"")
-        XCTAssertEqual(start.y, 0)
+        XCTAssertEqual(start.y, Int64(promptRow))
 
-        let mark = onlyPromptMark(in: harness)
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
         XCTAssertEqual(mark.excludedSubranges?.count, 1)
-        let range = mark.excludedSubranges!.first!.absRange
-        XCTAssertEqual(range.start.x, Int32(rightPromptColumn))
-        XCTAssertEqual(range.end.x, Int32(rightPromptColumn + rightPrompt.count))
+        guard let range = mark.excludedSubranges?.first?.absRange else {
+            return
+        }
+        XCTAssertEqual(range.start.x, Int32(column))
+        XCTAssertEqual(range.end.x, Int32(column + rightPrompt.count))
+        XCTAssertEqual(range.end.y, Int64(promptRow))
     }
 
-    /// Full p10k cycle: the right prompt is subtracted from the command.
+    /// Full p10k cycle with zsh's default ZLE_RPROMPT_INDENT=1: the right
+    /// prompt is subtracted from the command.
     func test_p10k_fullCycle_recordsCommandWithoutRightPrompt() {
         let harness = makeHarness()
 
-        harness.send(p10kPaint(buffer: "echo hi"))
-        harness.send(Array("\r\n".utf8))
-        harness.send(osc133("C"))
-        harness.send(Array("hi\r\n".utf8))
-        harness.send(osc133("D;0"))
+        harness.feedEscapeSequence(p10kCycle(buffer: "echo hi", rightPromptColumn: zshRightPromptColumn(indent: 1)))
         harness.sync()
 
-        let mark = onlyPromptMark(in: harness)
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
         XCTAssertEqual(mark.fullCommand, "echo hi")
         XCTAssertEqual(mark.firstLineOfCommand, "echo hi")
         XCTAssertEqual(mark.code, 0)
+    }
+
+    /// p10k recommends ZLE_RPROMPT_INDENT=0, which puts the right prompt's last
+    /// cell in the last column. The B that closes it then arrives with the
+    /// cursor at the margin (x == width). The exclusion must survive that and
+    /// still subtract the right prompt from the command.
+    func test_p10k_fullCycle_rightPromptAtMargin_recordsCommandWithoutRightPrompt() {
+        let harness = makeHarness()
+
+        harness.feedEscapeSequence(p10kCycle(buffer: "echo hi", rightPromptColumn: zshRightPromptColumn(indent: 0)))
+        harness.sync()
+
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
+        XCTAssertEqual(mark.fullCommand, "echo hi")
+        XCTAssertEqual(mark.firstLineOfCommand, "echo hi")
     }
 
     // MARK: - P;k=i (Ghostty and WezTerm bash/zsh)
@@ -226,13 +351,13 @@ final class PromptMarkRightPromptTests: XCTestCase {
         bytes += osc133("P;k=i")
         bytes += Array("$ ".utf8)
         bytes += osc133("B")
-        harness.send(bytes)
+        harness.feedEscapeSequence(bytes)
         harness.sync()
 
         XCTAssertEqual(promptMarks(in: harness).count, 1)
         let start = commandStartCoord(in: harness)
         XCTAssertEqual(start.x, 2)
-        XCTAssertEqual(start.y, 0)
+        XCTAssertEqual(start.y, Int64(promptRow))
     }
 
     /// A P;k=i that arrives mid-line must not insert a newline (that is the
@@ -244,11 +369,11 @@ final class PromptMarkRightPromptTests: XCTestCase {
         bytes += osc133("P;k=i")
         bytes += Array("$ ".utf8)
         bytes += osc133("B")
-        harness.send(bytes)
+        harness.feedEscapeSequence(bytes)
         harness.sync()
 
         let start = commandStartCoord(in: harness)
-        XCTAssertEqual(start.y, 0, "P must not move to a fresh line")
+        XCTAssertEqual(start.y, Int64(promptRow), "P must not move to a fresh line")
         XCTAssertEqual(start.x, Int32("partial$ ".count))
     }
 
@@ -263,23 +388,52 @@ final class PromptMarkRightPromptTests: XCTestCase {
         return Array("\u{1B}[\(body)".utf8)
     }
 
-    /// One reedline paint of the primary prompt on row 0, as captured from
-    /// nushell 0.116.1 (colors removed): hide the cursor, home to the prompt
-    /// row, erase below, A, left prompt, then the right prompt inside a cursor
+    /// CUP to a zero-based column on the prompt row.
+    private func moveToPromptRow(column: Int) -> [UInt8] {
+        return csi("\(promptRow + 1);\(column + 1)H")
+    }
+
+    /// One reedline paint of the primary prompt, as captured from nushell
+    /// 0.116.1 (colors removed): hide the cursor, move to the prompt row, erase
+    /// below, A, left prompt, then the right prompt inside a cursor
     /// save/restore, then B and the buffer.
     private func reedlinePaint(buffer: String) -> [UInt8] {
         var bytes = csi("?25l")
-        bytes += csi("1;1H")
+        bytes += moveToPromptRow(column: 0)
         bytes += csi("J")
         bytes += osc133("A;k=i;click_events=1")
         bytes += Array(leftPrompt.utf8)
         bytes += Array("\u{1B}7".utf8)
-        bytes += csi("1;\(rightPromptColumn + 1)H")
+        bytes += moveToPromptRow(column: reedlineRightPromptColumn)
         bytes += osc133("P;k=r")
         bytes += Array(rightPrompt.utf8)
         bytes += Array("\u{1B}8".utf8)
         bytes += osc133("B")
         bytes += Array(buffer.utf8)
+        bytes += csi("?25h")
+        return bytes
+    }
+
+    /// A reedline paint of a multi-line buffer, as captured from nushell
+    /// 0.116.1: the first line follows the primary prompt, and each later line
+    /// is bracketed by A;k=s and B around the continuation indicator. The right
+    /// prompt is left out for brevity.
+    private func reedlineMultiLinePaint(lines: [String], continuationIndicator: String) -> [UInt8] {
+        var bytes = csi("?25l")
+        bytes += moveToPromptRow(column: 0)
+        bytes += csi("J")
+        bytes += osc133("A;k=i;click_events=1")
+        bytes += Array(leftPrompt.utf8)
+        bytes += osc133("B")
+        for (i, line) in lines.enumerated() {
+            if i > 0 {
+                bytes += Array("\r\n".utf8)
+                bytes += osc133("A;k=s;click_events=1")
+                bytes += Array(continuationIndicator.utf8)
+                bytes += osc133("B")
+            }
+            bytes += Array(line.utf8)
+        }
         bytes += csi("?25h")
         return bytes
     }
@@ -292,7 +446,7 @@ final class PromptMarkRightPromptTests: XCTestCase {
             bytes = reedlinePaint(buffer: buffer)
         } else {
             bytes = csi("?25l")
-            bytes += csi("1;1H")
+            bytes += moveToPromptRow(column: 0)
             bytes += csi("J")
             bytes += osc133("A;k=i;click_events=1")
             bytes += Array(leftPrompt.utf8)
@@ -309,23 +463,60 @@ final class PromptMarkRightPromptTests: XCTestCase {
     /// powerlevel10k's order: PS1 is wrapped in A … B, and RPROMPT in
     /// P;k=r … B. zsh draws the left prompt and the buffer, then moves right
     /// to draw RPROMPT, then moves the cursor back to the end of the buffer.
-    private func p10kPaint(buffer: String) -> [UInt8] {
+    private func p10kPaint(buffer: String, rightPromptColumn: Int) -> [UInt8] {
         var bytes = osc133("A")
         bytes += Array("$ ".utf8)
         bytes += osc133("B")
         bytes += Array(buffer.utf8)
-        bytes += csi("1;\(rightPromptColumn + 1)H")
+        bytes += moveToPromptRow(column: rightPromptColumn)
         bytes += osc133("P;k=r")
         bytes += Array(rightPrompt.utf8)
         bytes += osc133("B")
-        bytes += csi("1;\(2 + buffer.count + 1)H")
+        bytes += moveToPromptRow(column: 2 + buffer.count)
+        return bytes
+    }
+
+    /// A p10k paint followed by Return, C, output, and D;0.
+    private func p10kCycle(buffer: String, rightPromptColumn: Int) -> [UInt8] {
+        var bytes = p10kPaint(buffer: buffer, rightPromptColumn: rightPromptColumn)
+        bytes += Array("\r\n".utf8)
+        bytes += osc133("C")
+        bytes += Array("hi\r\n".utf8)
+        bytes += osc133("D;0")
         return bytes
     }
 
     // MARK: - Helpers
 
+    /// A harness whose cursor is at the start of the prompt row, below a
+    /// "Last login" line.
     private func makeHarness() -> TerminalTestHarness {
-        return TerminalTestHarness(width: width, height: 24)
+        let harness = TerminalTestHarness(width: width, height: height)
+        var preamble = "Last login: Mon Oct 12 10:06:41 on ttys001\r\n"
+        for i in 1..<max(promptRow, 1) {
+            preamble += "output \(i)\r\n"
+        }
+        harness.feedEscapeSequence(Array(preamble.utf8))
+        harness.sync()
+        return harness
+    }
+
+    /// The text from the command start to the end of the prompt row with the
+    /// mark's exclusions removed, as Select Current Command extracts it.
+    private func currentCommandText(in harness: TerminalTestHarness,
+                                    mark: any VT100ScreenMarkReading) -> String? {
+        let start = commandStartCoord(in: harness)
+        let range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(start.x,
+                                                                       Int32(start.y),
+                                                                       Int32(width),
+                                                                       Int32(promptRow)),
+                                               0, 0)
+        return iTermTextExtractor(dataSource: harness.screen).content(in: range,
+                                                                      excludingSubranges: mark.excludedSubranges)
+    }
+
+    private func linearPosition(_ coord: VT100GridAbsCoord) -> Int64 {
+        return coord.y * Int64(width) + Int64(coord.x)
     }
 
     private func commandStartCoord(in harness: TerminalTestHarness) -> VT100GridAbsCoord {
@@ -342,9 +533,9 @@ final class PromptMarkRightPromptTests: XCTestCase {
 
     private func onlyPromptMark(in harness: TerminalTestHarness,
                                 file: StaticString = #file,
-                                line: UInt = #line) -> any VT100ScreenMarkReading {
+                                line: UInt = #line) -> (any VT100ScreenMarkReading)? {
         let marks = promptMarks(in: harness)
         XCTAssertEqual(marks.count, 1, "Expected exactly one prompt mark", file: file, line: line)
-        return marks.first!
+        return marks.first
     }
 }
