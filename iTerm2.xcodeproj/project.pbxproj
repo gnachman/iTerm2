@@ -37,6 +37,7 @@
 		0C8691424C40627F505DDE94 /* PTYSessionPeerPort.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8721B9515977EC8CB513CDAA /* PTYSessionPeerPort.swift */; };
 		0C9EC47197770F9F682B6F8D /* RemoteCommandToolProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7BADF8FB7DD7E1B851F797 /* RemoteCommandToolProvider.swift */; };
 		0CA1074480F384E60CA30B2F /* AILiveDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E07413F98A022F224813BE /* AILiveDriver.swift */; };
+		0D49835D514FB95A6E3F87FF /* RestoredArrangementFrameGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA1BE7F237BB7FEFEBB54BA /* RestoredArrangementFrameGuard.swift */; };
 		0E2A5ED423A079E312DF135B /* iTermLayoutMutator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89D3137ADD4526A5A2012D83 /* iTermLayoutMutator.swift */; };
 		0EBFA4D421C1D324DCE01133 /* ResilientCoordinateNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 240C63271364D969B638DA6E /* ResilientCoordinateNotifications.swift */; };
 		1025FC686CC215C5276A1630 /* CompanionAlert+Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 915FC56D082AE9C9EF31D4D5 /* CompanionAlert+Database.swift */; };
@@ -5343,6 +5344,7 @@
 		1DA02CFA1327612600D7E7DB /* bell.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = bell.png; path = images/bell.png; sourceTree = "<group>"; };
 		1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = wrap_to_bottom.png; path = images/wrap_to_bottom.png; sourceTree = "<group>"; };
 		1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = wrap_to_top.png; path = images/wrap_to_top.png; sourceTree = "<group>"; };
+		1DA1BE7F237BB7FEFEBB54BA /* RestoredArrangementFrameGuard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RestoredArrangementFrameGuard.swift; sourceTree = "<group>"; };
 		1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSTableColumn+iTerm.h"; sourceTree = "<group>"; };
 		1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTableColumn+iTerm.m"; sourceTree = "<group>"; };
 		1DA26ABE15007507004B5792 /* BackgroundThread.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = BackgroundThread.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -13072,6 +13074,7 @@
 				DA0CFFDB39BB7970E0D4AF2A /* WindowLocationLock.swift */,
 				1AE7A6B656E953B6C1CAA73F /* WindowLocationLockController.swift */,
 				9017D92D04ABF4EF3FC05999 /* iTermAccessibilitySelectionReplacement.swift */,
+				1DA1BE7F237BB7FEFEBB54BA /* RestoredArrangementFrameGuard.swift */,
 			);
 			path = TerminalView;
 			sourceTree = "<group>";
@@ -20061,6 +20064,7 @@
 				0C1B7AF329EFE71B706E946C /* ConductorUpload.swift in Sources */,
 				0502659F6CBB57AA8D29AD3B /* PaneFocusFollowsMouse.swift in Sources */,
 				F148F6D5482B21DB6E8171C2 /* PaneFocusFollowsMouseAppEnvironment.swift in Sources */,
+				0D49835D514FB95A6E3F87FF /* RestoredArrangementFrameGuard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

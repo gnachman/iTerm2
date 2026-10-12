@@ -519,6 +519,13 @@ Improvements:
   the tab.
 
 Bug Fixes:
+- Restoring a saved window arrangement now keeps
+  the window on the display it was saved on. With
+  more than one display and “Displays have
+  separate Spaces” turned on, macOS could move
+  the window to whichever display held the active
+  Space, either while its tabs were being
+  restored or shortly afterward. Issue 13002.
 - On macOS 26, hiding a hotkey window when no
   other iTerm2 windows are open once again
   returns focus to the previous app right away,

@@ -154,10 +154,21 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     return sharedApplication;
 }
 
+// These notifications are posted for every window, including panels, so say which one it was.
+- (NSString *)it_descriptionOfOrderedObject:(NSObject *)object {
+    if ([object isKindOfClass:[NSWindow class]]) {
+        NSWindow *window = (NSWindow *)object;
+        return [NSString stringWithFormat:@"%@<%p> number=%@ frame=%@ delegate=%@",
+                NSStringFromClass(window.class), window, @(window.windowNumber),
+                NSStringFromRect(window.frame), window.delegate];
+    }
+    return [NSString stringWithFormat:@"%@<%p>", NSStringFromClass(object.class), object];
+}
+
 // Giant pile of private API hacks for issue 7521.
 - (void)it_windowDidOrderOnScreen:(NSNotification *)notification {
-    RLog(@"windowDidOrderOnScreen");
     NSObject *object = notification.object;
+    RLog(@"windowDidOrderOnScreen %@", [self it_descriptionOfOrderedObject:object]);
     if ([NSStringFromClass(object.class) isEqualToString:@"NSPanelViewBridge"]) {
         _it_imeOpen = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationInputMethodEditorDidOpen object:nil];
@@ -165,8 +176,8 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (void)it_windowDidOrderOffScreen:(NSNotification *)notification {
-    RLog(@"windowDidOrderOffScreen");
     NSObject *object = notification.object;
+    RLog(@"windowDidOrderOffScreen %@", [self it_descriptionOfOrderedObject:object]);
     if ([NSStringFromClass(object.class) isEqualToString:@"NSPanelViewBridge"]) {
         _it_imeOpen = NO;
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationInputMethodEditorDidClose object:nil];

@@ -572,7 +572,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     NSScreen *screen = nil;
     if (screenNumber == -1 || screenNumber >= [[NSScreen screens] count])  {
         screen = [[self window] screen];
-        RLog(@"Screen number %d is out of range [0,%d] so using 0",
+        RLog(@"Screen number %d is not in [0,%d), so using the window's current screen and clearing the anchor",
              screenNumber, (int)[[NSScreen screens] count]);
         [_windowPositioner setAnchoredScreenNumber:-1];
     } else if (screenNumber >= 0) {
@@ -597,6 +597,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                                                        profileGUID:profile[KEY_GUID]
                                                                                           delegate:self];
     _locationLockController = [[iTermWindowLocationLockController alloc] initWithDelegate:self];
+    _restoredFrameGuard = [[iTermRestoredArrangementFrameGuard alloc] init];
     _titlebarAccessoryNanny = [[iTermTitlebarAccessoryNanny alloc] init];
     _titlebarAccessoryNanny.windowController = self;
     _titlebarAccessoryNanny.defaultHeight = [self desiredTabBarHeight];
@@ -1113,6 +1114,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_broadcastInputHelper release];
     [_windowPositioner release];
     [_locationLockController release];
+    [_restoredFrameGuard release];
     [autocompleteView shutdown];
     [commandHistoryPopup shutdown];
     [_directoriesPopupWindowController shutdown];
@@ -4200,11 +4202,29 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     if (self.hotkeyWindowType != iTermHotkeyWindowTypeNone) {
         _suppressMakeCurrentTerminal |= iTermSuppressMakeCurrentTerminalHotkey;
     }
+    // Inserting a tab makes the window key and orders it front, and AppKit's
+    // -[NSWindow _reallyDoOrderWindowAboveOrBelow:] takes that as license to move the window to
+    // whichever display holds the active Space when displays have separate Spaces. It does that by
+    // calling -setFrame:display: on us, so refuse frame changes for the duration and let ordering
+    // and keyness proceed normally. The saved frame is applied below, once the tabs are in. Issue
+    // 13002.
+    //
+    // Fullscreen windows are excluded because they take the setFrame = NO branch below and depend
+    // on AppKit sizing them to the fullscreen tile. This mirrors what
+    // -[iTermRestorableStateDriver restoreWindows:] does for system window restoration.
+    const BOOL isFullScreenArrangement = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
+                                          windowType == WINDOW_TYPE_LION_FULL_SCREEN);
+    const BOOL savedPreventFrameChange = self.ptyWindow.it_preventFrameChange;
+    if (!isFullScreenArrangement) {
+        RLog(@"Prevent frame changes while restoring tabs in %@", self);
+        self.ptyWindow.it_preventFrameChange = YES;
+    }
     const BOOL restoreTabsOK = [self restoreTabsFromArrangement:arrangement
                                                           named:arrangementName
                                                        sessions:sessions
                                              partialAttachments:partialAttachments
                                            largeContentProvider:largeContentProvider];
+    self.ptyWindow.it_preventFrameChange = savedPreventFrameChange;
     _suppressMakeCurrentTerminal &= ~iTermSuppressMakeCurrentTerminalHotkey;
     _restoringWindow = savedRestoringWindow;
     if (!restoreTabsOK) {
@@ -4301,6 +4321,12 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
             [[self window] setFrame:frame display:YES];
             RLog(@"Now canonicalize the frame %@", self);
             [self canonicalizeWindowFrame];
+            // macOS can still move the window to the active Space's display after this returns,
+            // from the window server, where the bracket above can't reach. Issue 13002.
+            if ([iTermAdvancedSettingsModel workAroundMultiDisplayOSBug]) {
+                [_restoredFrameGuard armWithFrame:self.window.frame
+                              screenConfiguration:[self screenConfiguration]];
+            }
         } else {
             RLog(@"No change needed");
         }
@@ -6164,13 +6190,26 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)windowDidChangeScreen:(NSNotification *)notification {
     // See comments on -forceFrame:
-    RLog(@"windowDidChangeScreen frame=%@ forceFrame=%@ time left in forceFrameUntil=%@ screenConfig=%@",
+    RLog(@"windowDidChangeScreen frame=%@ lastFrameSetByApp=%@ forceFrame=%@ time left in forceFrameUntil=%@ screenConfig=%@",
          NSStringFromRect(self.window.frame),
+         NSStringFromRect(self.ptyWindow.it_lastFrameSetByApp),
          NSStringFromRect(_forceFrame),
-         @([NSDate it_timeSinceBoot] - _forceFrameUntil),
+         @(_forceFrameUntil - [NSDate it_timeSinceBoot]),
          _screenConfigurationAtTimeOfForceFrame);
     DLog(@"%@",
          [NSThread callStackSymbols]);
+    if (_restoredFrameGuard.isArmed) {
+        const NSRect restoredFrame =
+            [_restoredFrameGuard frameToRestoreForWindowFrame:self.window.frame
+                                            lastFrameSetByApp:self.ptyWindow.it_lastFrameSetByApp
+                                          screenConfiguration:[self screenConfiguration]];
+        if (!NSEqualRects(restoredFrame, NSZeroRect)) {
+            [self.window setFrame:restoredFrame display:YES animate:NO];
+            RLog(@"Put restored arrangement window back. Frame is now %@. Returning early.",
+                 NSStringFromRect(self.window.frame));
+            return;
+        }
+    }
     if (!NSEqualRects(self.window.frame, _forceFrame) &&
         !NSEqualRects(NSZeroRect, _forceFrame) &&
         [NSDate it_timeSinceBoot] < _forceFrameUntil &&
@@ -6248,6 +6287,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)userDragOfWindowMayBeBeginning {
     [self clearForceFrame];
+    [_restoredFrameGuard disarmBecause:@"the user is dragging the window"];
     _windowIsMoving = YES;
     _screenBeforeMoving = [[NSScreen screens] indexOfObject:self.window.screen];
 }
@@ -6727,6 +6767,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 - (void)windowWillStartLiveResize:(NSNotification *)notification {
     RLog(@"self=%@", self);
+    [_restoredFrameGuard disarmBecause:@"the user is resizing the window"];
     RLog(@"minSize=%@ contentMinSize=%@ frame=%@",
          NSStringFromSize(self.window.minSize),
          NSStringFromSize(self.window.contentMinSize),
@@ -7099,6 +7140,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
     RLog(@"windowWillEnterFullScreen window=%d", (int)self.window.windowNumber);
+    [_restoredFrameGuard disarmBecause:@"the window is entering full screen"];
     _titlebarAccessoryNanny.enteringFullScreen = YES;
     [iTermWindowCornerRadiusDetector windowWillTransitionFullScreen:self.window];
     [self windowWillEnterFullScreenImpl:notification];

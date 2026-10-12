@@ -34,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _it_restorableStateInvalid;
     BOOL _validatingMenuItems;
     BOOL _it_preventFrameChange;
+    NSRect _it_lastFrameSetByApp;
 #if BETA
     NSString *_lastAlphaChangeStack;
 #endif
@@ -46,6 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 @synthesize it_becomingKey;
 @synthesize it_accessibilityResizing;
 @synthesize it_preventFrameChange;
+@synthesize it_lastFrameSetByApp = _it_lastFrameSetByApp;
 
 - (instancetype)initWithContentRect:(NSRect)contentRect
                           styleMask:(NSWindowStyleMask)aStyle
@@ -618,6 +620,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([self.ptyDelegate terminalWindowIsEnteringLionFullScreen]) {
             RLog(@"Allowing frame change during Lion fullscreen transition");
             [super setFrame:frameRect display:flag];
+            _it_lastFrameSetByApp = self.frame;
             return;
         }
 
@@ -630,11 +633,13 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [super setFrame:frameRect display:flag];
+    _it_lastFrameSetByApp = self.frame;
 }
 
 - (void)setFrameOrigin:(NSPoint)point {
     DLog(@"Set frame origin to %@\n%@", NSStringFromPoint(point), [NSThread callStackSymbols]);
     [super setFrameOrigin:point];
+    _it_lastFrameSetByApp = self.frame;
     DLog(@"Frame is now: %@", NSStringFromRect(self.frame));
 }
 

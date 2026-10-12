@@ -13,6 +13,7 @@
 @class iTermTitlebarAccessoryNanny;
 @class iTermWindowInitialPositioner;
 @class iTermWindowLocationLockController;
+@class iTermRestoredArrangementFrameGuard;
 
 // Constants for saved window arrangement key names.
 extern NSString *const TERMINAL_ARRANGEMENT_OLD_X_ORIGIN;
@@ -122,6 +123,10 @@ extern NSString *const TERMINAL_ARRANGEMENT_LAYOUT_LOCKED;
     // belongs, and when to put it back. Independent of _sizeLocked and
     // _layoutLocked; all three can be on at once.
     iTermWindowLocationLockController *_locationLockController;
+
+    // Keeps a window restored from an arrangement on the arrangement's display
+    // when macOS moves it to the active Space's display afterward. Issue 13002.
+    iTermRestoredArrangementFrameGuard *_restoredFrameGuard;
 }
 
 @property (nonatomic, retain) NSCustomTouchBarItem *tabsTouchBarItem;

@@ -97,6 +97,10 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 @property (nonatomic) NSInteger it_accessibilityResizing;
 @property(nonatomic) BOOL it_restorableStateInvalid;
 @property(nonatomic) BOOL it_preventFrameChange;
+// The window's frame right after the app last set it with -setFrame:display: or
+// -setFrameOrigin:. A frame that differs from this came from outside the app, such
+// as a move by the window server. NSZeroRect if never set.
+@property(nonatomic, readonly) NSRect it_lastFrameSetByApp;
 @property(nonatomic, readonly) BOOL it_isMovingScreen;
 - (NSColor *)it_terminalWindowDecorationBackgroundColor;
 - (NSColor *)it_terminalWindowDecorationTextColorForBackgroundColor:(NSColor *)backgroundColor;
