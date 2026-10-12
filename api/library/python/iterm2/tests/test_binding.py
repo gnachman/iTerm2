@@ -1,6 +1,6 @@
 """Tests for iterm2.binding module."""
+
 import json
-import pytest
 from iterm2.binding import PasteConfiguration
 
 
@@ -10,21 +10,21 @@ class TestPasteConfiguration:
     def make_config(self, **kwargs):
         """Helper to create a PasteConfiguration with defaults."""
         defaults = {
-            'base64': False,
-            'wait_for_prompts': False,
-            'tab_transform': PasteConfiguration.TabTransform.NONE,
-            'tab_stop_size': 4,
-            'delay': 0.01,
-            'chunk_size': 1024,
-            'convert_newlines': True,
-            'remove_newlines': False,
-            'convert_unicode_punctuation': False,
-            'escape_for_shell': False,
-            'remove_controls': False,
-            'bracket_allowed': True,
-            'use_regex_substitution': False,
-            'regex': '',
-            'substitution': ''
+            "base64": False,
+            "wait_for_prompts": False,
+            "tab_transform": PasteConfiguration.TabTransform.NONE,
+            "tab_stop_size": 4,
+            "delay": 0.01,
+            "chunk_size": 1024,
+            "convert_newlines": True,
+            "remove_newlines": False,
+            "convert_unicode_punctuation": False,
+            "escape_for_shell": False,
+            "remove_controls": False,
+            "bracket_allowed": True,
+            "use_regex_substitution": False,
+            "regex": "",
+            "substitution": "",
         }
         defaults.update(kwargs)
         return PasteConfiguration(**defaults)
@@ -44,7 +44,9 @@ class TestPasteConfiguration:
 
     def test_tab_transform_property(self):
         """Test tab_transform property getter."""
-        config = self.make_config(tab_transform=PasteConfiguration.TabTransform.CONVERT_TO_SPACES)
+        config = self.make_config(
+            tab_transform=PasteConfiguration.TabTransform.CONVERT_TO_SPACES
+        )
         assert config.tab_transform == PasteConfiguration.TabTransform.CONVERT_TO_SPACES
 
     def test_tab_stop_size_property(self):
@@ -99,13 +101,13 @@ class TestPasteConfiguration:
 
     def test_regex_property(self):
         """Test regex property getter."""
-        config = self.make_config(regex=r'\d+')
-        assert config.regex == r'\d+'
+        config = self.make_config(regex=r"\d+")
+        assert config.regex == r"\d+"
 
     def test_substitution_property(self):
         """Test substitution property getter."""
-        config = self.make_config(substitution='replacement')
-        assert config.substitution == 'replacement'
+        config = self.make_config(substitution="replacement")
+        assert config.substitution == "replacement"
 
     def test_base64_setter(self):
         """Test base64 property setter."""
@@ -117,7 +119,10 @@ class TestPasteConfiguration:
         """Test tab_transform property setter."""
         config = self.make_config()
         config.tab_transform = PasteConfiguration.TabTransform.ESCAPE_WITH_CONTROL_V
-        assert config.tab_transform == PasteConfiguration.TabTransform.ESCAPE_WITH_CONTROL_V
+        assert (
+            config.tab_transform
+            == PasteConfiguration.TabTransform.ESCAPE_WITH_CONTROL_V
+        )
 
 
 class TestPasteConfigurationEncode:
@@ -139,27 +144,27 @@ class TestPasteConfigurationEncode:
             remove_controls=False,
             bracket_allowed=True,
             use_regex_substitution=False,
-            regex='',
-            substitution=''
+            regex="",
+            substitution="",
         )
         encoded = config._encode()
         parsed = json.loads(encoded)
 
-        assert parsed['Base64'] is True
-        assert parsed['WaitForPrompts'] is False
-        assert parsed['TabTransform'] == 0
-        assert parsed['TabStopSize'] == 4
-        assert parsed['Delay'] == 0.01
-        assert parsed['ChunkSize'] == 1024
-        assert parsed['ConvertNewlines'] is True
-        assert parsed['RemoveNewlines'] is False
-        assert parsed['ConvertUnicodePunctuation'] is False
-        assert parsed['EscapeForShell'] is False
-        assert parsed['RemoveControls'] is False
-        assert parsed['BracketAllowed'] is True
-        assert parsed['UseRegexSubstitution'] is False
-        assert parsed['Regex'] == ''
-        assert parsed['Substitution'] == ''
+        assert parsed["Base64"] is True
+        assert parsed["WaitForPrompts"] is False
+        assert parsed["TabTransform"] == 0
+        assert parsed["TabStopSize"] == 4
+        assert parsed["Delay"] == 0.01
+        assert parsed["ChunkSize"] == 1024
+        assert parsed["ConvertNewlines"] is True
+        assert parsed["RemoveNewlines"] is False
+        assert parsed["ConvertUnicodePunctuation"] is False
+        assert parsed["EscapeForShell"] is False
+        assert parsed["RemoveControls"] is False
+        assert parsed["BracketAllowed"] is True
+        assert parsed["UseRegexSubstitution"] is False
+        assert parsed["Regex"] == ""
+        assert parsed["Substitution"] == ""
 
     def test_encode_tab_transform_values(self):
         """Test that tab_transform enum values are encoded correctly."""
@@ -178,11 +183,11 @@ class TestPasteConfigurationEncode:
                 remove_controls=False,
                 bracket_allowed=True,
                 use_regex_substitution=False,
-                regex='',
-                substitution=''
+                regex="",
+                substitution="",
             )
             parsed = json.loads(config._encode())
-            assert parsed['TabTransform'] == transform.value
+            assert parsed["TabTransform"] == transform.value
 
 
 class TestTabTransform:
@@ -198,31 +203,39 @@ class TestTabTransform:
 class TestKeyBindingKey:
     """Tests for KeyBinding.key, the dictionary key iTerm2 stores bindings under."""
 
-    ENTRY = {'Action': 11, 'Text': '0x4'}
+    ENTRY = {"Action": 11, "Text": "0x4"}
 
     def _round_trip(self, key):
         from iterm2.binding import KeyBinding
+
         return KeyBinding._make(key, self.ENTRY).key
 
     def test_new_binding_with_keycode_uses_four_parts(self):
         import iterm2.keyboard
         from iterm2.binding import KeyBinding, BindingAction
-        binding = KeyBinding(ord(';'), [iterm2.keyboard.Modifier.CONTROL],
-                             iterm2.keyboard.Keycode.ANSI_A, BindingAction(11), '0x4',
-                             None, None)
-        assert binding.key == '0x3b-0x40000-0x0-0x1'
+
+        binding = KeyBinding(
+            ord(";"),
+            [iterm2.keyboard.Modifier.CONTROL],
+            iterm2.keyboard.Keycode.ANSI_A,
+            BindingAction(11),
+            "0x4",
+            None,
+            None,
+        )
+        assert binding.key == "0x3b-0x40000-0x0-0x1"
 
     def test_binding_without_keycode_uses_two_parts(self):
-        assert self._round_trip('0x62-0x40000') == '0x62-0x40000'
+        assert self._round_trip("0x62-0x40000") == "0x62-0x40000"
 
     def test_four_part_key_round_trips(self):
-        assert self._round_trip('0x3b-0x40000-0x0-0x1') == '0x3b-0x40000-0x0-0x1'
+        assert self._round_trip("0x3b-0x40000-0x0-0x1") == "0x3b-0x40000-0x0-0x1"
 
     def test_three_part_nonzero_keycode_becomes_four_parts(self):
-        assert self._round_trip('0x74-0x100000-0x11') == '0x74-0x100000-0x11-0x1'
+        assert self._round_trip("0x74-0x100000-0x11") == "0x74-0x100000-0x11-0x1"
 
     def test_three_part_keycode_zero_round_trips_unchanged(self):
         # Keycode 0 in the old format may mean "unknown"; writing it as four parts would
         # make iTerm2 treat it as the A key.
-        assert self._round_trip('0xf728-0x0-0x0') == '0xf728-0x0-0x0'
-        assert self._round_trip('0x61-0x40000-0x0') == '0x61-0x40000-0x0'
+        assert self._round_trip("0xf728-0x0-0x0") == "0xf728-0x0-0x0"
+        assert self._round_trip("0x61-0x40000-0x0") == "0x61-0x40000-0x0"

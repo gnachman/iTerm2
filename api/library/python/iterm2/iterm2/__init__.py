@@ -1,109 +1,189 @@
 """
 The iTerm2 module provides a Python interface for controlling iTerm2.
 """
-from iterm2.alert import Alert, TextInputAlert, PolyModalAlert
 
-from iterm2.app import (
-    async_get_app, App, async_invoke_function,
-    async_get_variable)
+from __future__ import annotations
 
-from iterm2.arrangement import SavedArrangementException, Arrangement
+from ._version import __version__
+from .alert import Alert, PolyModalAlert, TextInputAlert
+from .app import App, async_get_app, async_get_variable, async_invoke_function
+from .arrangement import Arrangement, SavedArrangementException
+from .binding import (
+    BindingAction,
+    KeyBinding,
+    MoveSelectionUnit,
+    PasteConfiguration,
+    SnippetIdentifier,
+    async_get_global_key_bindings,
+    async_set_global_key_bindings,
+    decode_key_binding,
+)
+from .broadcast import BroadcastDomain, async_set_broadcast_domains
+from .color import Color, ColorSpace
+from .colorpresets import ColorPreset, GetPresetException, ListPresetsException
+from .connection import (
+    Connection,
+    add_disconnect_callback,
+    run_forever,
+    run_until_complete,
+)
+from .customcontrol import CustomControlSequenceMonitor
+from .filepanel import OpenPanel, SavePanel
+from .focus import (
+    FocusMonitor,
+    FocusUpdate,
+    FocusUpdateActiveSessionChanged,
+    FocusUpdateApplicationActive,
+    FocusUpdateSelectedTabChanged,
+    FocusUpdateWindowChanged,
+)
+from .keyboard import (
+    Keycode,
+    Keystroke,
+    KeystrokeFilter,
+    KeystrokeMonitor,
+    KeystrokePattern,
+    Modifier,
+)
+from .lifecycle import (
+    EachSessionOnceMonitor,
+    LayoutChangeMonitor,
+    NewSessionMonitor,
+    SessionTerminationMonitor,
+)
+from .mainmenu import (
+    MainMenu,
+    MenuItemException,
+    MenuItemIdentifier,
+    MenuItemState,
+)
+from .preferences import (
+    PreferenceKey,
+    async_get_preference,
+    async_set_preference,
+)
+from .profile import (
+    BackgroundImageMode,
+    BadGUIDException,
+    CharacterEncoding,
+    CursorType,
+    IconMode,
+    InitialWorkingDirectory,
+    LocalWriteOnlyProfile,
+    OptionKeySends,
+    PartialProfile,
+    Profile,
+    ThinStrokes,
+    TitleComponents,
+    UnicodeNormalization,
+    WriteOnlyProfile,
+)
+from .prompt import (
+    Prompt,
+    PromptMonitor,
+    PromptState,
+    async_get_last_prompt,
+    async_get_prompt_by_id,
+    async_list_prompts,
+)
+from .registration import (
+    RPC,
+    ContextMenuProviderRPC,
+    Reference,
+    StatusBarRPC,
+    TitleProviderRPC,
+)
+from .rpc import RPCException
+from .screen import LineContents, ScreenContents, ScreenStreamer
+from .selection import Selection, SelectionMode, SubSelection
+from .session import (
+    InvalidSessionId,
+    Session,
+    SessionNote,
+    SplitPaneException,
+    Splitter,
+)
+from .statusbar import (
+    CheckboxKnob,
+    ColorKnob,
+    PositiveFloatingPointKnob,
+    StatusBarComponent,
+    StringKnob,
+)
+from .tab import NavigationDirection, Tab
+from .tabgroup import TabGroup
+from .tmux import (
+    TmuxConnection,
+    TmuxException,
+    async_get_tmux_connection_by_connection_id,
+    async_get_tmux_connections,
+)
+from .tool import async_register_web_view_tool
+from .transaction import Transaction
 
-from iterm2.binding import PasteConfiguration, MoveSelectionUnit, SnippetIdentifier, BindingAction, KeyBinding, async_get_global_key_bindings, async_set_global_key_bindings, decode_key_binding
-
-from iterm2.broadcast import BroadcastDomain, async_set_broadcast_domains
-
-from iterm2.color import Color, ColorSpace
-
-from iterm2.colorpresets import (
-    ColorPreset, ListPresetsException, GetPresetException)
-
-from iterm2.connection import Connection, run_until_complete, run_forever, add_disconnect_callback
-
-from iterm2.customcontrol import CustomControlSequenceMonitor
-
-from iterm2.filepanel import OpenPanel, SavePanel
-
-from iterm2.focus import (
-    FocusMonitor, FocusUpdateApplicationActive, FocusUpdateWindowChanged,
-    FocusUpdateSelectedTabChanged, FocusUpdateActiveSessionChanged,
-    FocusUpdate)
-
-from iterm2.lifecycle import (
-    EachSessionOnceMonitor, SessionTerminationMonitor, LayoutChangeMonitor,
-    NewSessionMonitor)
-
-from iterm2.mainmenu import MenuItemState, MainMenu, MenuItemException, MenuItemIdentifier
-
-from iterm2.keyboard import (
-    Modifier, Keycode, Keystroke, KeystrokePattern, KeystrokeMonitor,
-    KeystrokeFilter)
-
-from iterm2.preferences import PreferenceKey, async_get_preference, async_set_preference
-
-from iterm2.profile import (
-    Profile, PartialProfile, BadGUIDException, LocalWriteOnlyProfile,
-    BackgroundImageMode, CursorType, ThinStrokes, UnicodeNormalization,
-    CharacterEncoding, OptionKeySends, InitialWorkingDirectory, IconMode,
-    TitleComponents, WriteOnlyProfile)
-
-from iterm2.prompt import (
-    Prompt, PromptMonitor, PromptState, async_get_last_prompt,
-    async_list_prompts, async_get_prompt_by_id)
-
-from iterm2.registration import RPC, ContextMenuProviderRPC, TitleProviderRPC, StatusBarRPC, Reference
-
-from iterm2.screen import ScreenStreamer, LineContents, ScreenContents
-
-from iterm2.selection import SelectionMode, SubSelection, Selection
-
-from iterm2.session import (
-    SplitPaneException, Splitter, Session, SessionNote, InvalidSessionId)
-
-from iterm2.statusbar import (
-    StatusBarComponent, CheckboxKnob, StringKnob, PositiveFloatingPointKnob,
-    ColorKnob)
-
-from iterm2.transaction import Transaction
-
-from iterm2.tab import Tab, NavigationDirection
-
-from iterm2.tabgroup import TabGroup
-
-from iterm2.tmux import (
-    TmuxException, TmuxConnection, async_get_tmux_connections,
-    async_get_tmux_connection_by_connection_id)
-
-from iterm2.tool import async_register_web_view_tool
-
-from iterm2.triggers import (
-    decode_trigger, MatchType, Trigger, AlertTrigger, AnnotateTrigger,
-    BellTrigger, BounceTrigger, BufferInputTrigger, CaptureTrigger,
-    CoprocessTrigger, FoldTrigger, HighlightLineTrigger, HighlightTrigger,
-    HyperlinkTrigger, InjectTrigger, MarkTrigger, MuteCoprocessTrigger,
-    PasswordTrigger, RPCTrigger, RunCommandTrigger, SendTextTrigger,
-    SetDirectoryTrigger, SetHostnameTrigger, SetNamedMarkTrigger,
-    SetTitleTrigger, SetUserVariableTrigger, SGRTrigger, ShellPromptTrigger,
-    StopTrigger, UserNotificationTrigger,
-    # Event-based triggers
-    EventTrigger, ExitCodeFilter, PromptDetectedEventTrigger,
-    CommandFinishedEventTrigger, DirectoryChangedEventTrigger,
-    HostChangedEventTrigger, UserChangedEventTrigger, IdleEventTrigger,
-    ActivityAfterIdleEventTrigger, SessionEndedEventTrigger,
-    BellReceivedEventTrigger, LongRunningCommandEventTrigger,
+# Event-based triggers
+from .triggers import (
+    ActivityAfterIdleEventTrigger,
+    AlertTrigger,
+    AnnotateTrigger,
+    BellReceivedEventTrigger,
+    BellTrigger,
+    BounceTrigger,
+    BufferInputTrigger,
+    CaptureTrigger,
+    CommandFinishedEventTrigger,
+    CoprocessTrigger,
     CustomEscapeSequenceEventTrigger,
-    NotificationPostedEventTrigger)
-
-from iterm2.util import (
-    frame_str, size_str, Size, Point, Frame, CoordRange, Range,
-    WindowedCoordRange, async_wait_forever)
-
-from iterm2.window import (
-    CreateTabException, CreateWindowException, SetPropertyException,
-    GetPropertyException, Window)
-
-from iterm2._version import __version__
-
-from iterm2.rpc import RPCException
-
-from iterm2.variables import VariableMonitor, VariableScopes
+    DirectoryChangedEventTrigger,
+    EventTrigger,
+    ExitCodeFilter,
+    FoldTrigger,
+    HighlightLineTrigger,
+    HighlightTrigger,
+    HostChangedEventTrigger,
+    HyperlinkTrigger,
+    IdleEventTrigger,
+    InjectTrigger,
+    LongRunningCommandEventTrigger,
+    MarkTrigger,
+    MatchType,
+    MuteCoprocessTrigger,
+    NotificationPostedEventTrigger,
+    PasswordTrigger,
+    PromptDetectedEventTrigger,
+    RPCTrigger,
+    RunCommandTrigger,
+    SendTextTrigger,
+    SessionEndedEventTrigger,
+    SetDirectoryTrigger,
+    SetHostnameTrigger,
+    SetNamedMarkTrigger,
+    SetTitleTrigger,
+    SetUserVariableTrigger,
+    SGRTrigger,
+    ShellPromptTrigger,
+    StopTrigger,
+    Trigger,
+    UserChangedEventTrigger,
+    UserNotificationTrigger,
+    decode_trigger,
+)
+from .util import (
+    CoordRange,
+    Frame,
+    Point,
+    Range,
+    Size,
+    WindowedCoordRange,
+    async_wait_forever,
+    frame_str,
+    size_str,
+)
+from .variables import VariableMonitor, VariableScopes
+from .window import (
+    CreateTabException,
+    CreateWindowException,
+    GetPropertyException,
+    SetPropertyException,
+    Window,
+)

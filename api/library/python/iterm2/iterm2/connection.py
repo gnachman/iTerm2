@@ -1,32 +1,68 @@
-"""Manages the details of the websocket connection. """
+"""Manages the details of the websocket connection."""
 
-import asyncio
-import iterm2.auth
+from __future__ import annotations
+
 import os
 import sys
 import traceback
 import types
-import typing
+from asyncio import (
+    AbstractEventLoop,
+    CancelledError,
+    Future,
+    ensure_future,
+    get_running_loop,
+    new_event_loop,
+    set_event_loop,
+    sleep,
+)
+from collections.abc import Callable, Coroutine
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
+
 import websockets
 
-gDisconnectCallbacks: typing.List[typing.Callable[[], None]] = []
+gDisconnectCallbacks: list[Callable[[], None]] = []
 
 # websockets 9.0 moved client into legacy.client and didn't document how to
 # migrate to the new API :(. Stick with the old one until I have time to deal
 # with this.
 websockets_client: types.ModuleType
 try:
-  import websockets.legacy.client
-  websockets_client = websockets.legacy.client
-  from websockets.legacy.client import connect as websockets_connect
-except:
-  websockets_client = websockets.client
-  from websockets import connect as websockets_connect  # type: ignore[assignment]
+    import websockets.legacy.client
 
-import iterm2.api_pb2
-from iterm2._version import __version__
+    websockets_client = websockets.legacy.client
+except:  # noqa: E722
+    websockets_client = websockets.client
 
-def _getenv(key):
+# The legacy client raises InvalidStatusCode, not the newer InvalidStatus.
+# websockets 14.0 moved it into legacy.exceptions and deprecated the old name.
+try:
+    from websockets.legacy.exceptions import InvalidStatusCode
+except ImportError:
+    from websockets.exceptions import InvalidStatusCode  # type: ignore[attr-defined,no-redef]
+
+from ._version import __version__
+from .api_pb2 import ServerOriginatedMessage
+from .auth import AuthenticationException, get_script_name
+from .auth import authenticate as _auth_authenticate
+
+if TYPE_CHECKING:
+    from typing import TypeAlias
+
+    from websockets.legacy.client import Connect, WebSocketClientProtocol
+    from websockets.typing import Subprotocol
+
+    from .api_pb2 import ClientOriginatedMessage
+
+    _T = TypeVar("_T")
+
+    ConnectionCoroutine: TypeAlias = Callable[["Connection"], Coroutine[Any, Any, None]]
+    ConnectionHelper: TypeAlias = Callable[
+        ["Connection", ServerOriginatedMessage], Coroutine[Any, Any, Any]
+    ]
+
+
+def _getenv(key: str):
     """Gets an environment variable safely.
 
     Returns None if it does not exist.
@@ -37,19 +73,21 @@ def _getenv(key):
 
 
 def _cookie_and_key():
-    cookie = _getenv('ITERM2_COOKIE')
-    key = _getenv('ITERM2_KEY')
+    cookie = _getenv("ITERM2_COOKIE")
+    key = _getenv("ITERM2_KEY")
     return cookie, key
 
 
 def _headers():
     cookie, key = _cookie_and_key()
-    headers = {"origin": "ws://localhost/",
-               "x-iterm2-library-version": "python {}".format(__version__),
-               "x-iterm2-disable-auth-ui": "true"}
+    headers = {
+        "origin": "ws://localhost/",
+        "x-iterm2-library-version": f"python {__version__}",
+        "x-iterm2-disable-auth-ui": "true",
+    }
     if cookie is not None:
         headers["x-iterm2-cookie"] = cookie
-    headers["x-iterm2-advisory-name"] = iterm2.auth.get_script_name()
+    headers["x-iterm2-advisory-name"] = get_script_name()  # type: ignore[assignment]
     if key is not None:
         headers["x-iterm2-key"] = key
     return headers
@@ -59,8 +97,8 @@ def _uri():
     return "ws://localhost:1912"
 
 
-def _subprotocols():
-    return ['api.iterm2.com']
+def _subprotocols() -> list[Subprotocol]:
+    return [cast("Subprotocol", "api.iterm2.com")]
 
 
 class Connection:
@@ -69,13 +107,10 @@ class Connection:
     Provides functionality for sending and receiving messages. Supports
     dispatching incoming messages."""
 
-    helpers: typing.List[
-        typing.Callable[
-            ['Connection', typing.Any],
-            typing.Coroutine[typing.Any, typing.Any, None]]] = []
+    helpers: ClassVar[list[ConnectionHelper]] = []
 
     @staticmethod
-    def register_helper(helper):
+    def register_helper(helper: ConnectionHelper) -> None:
         """
         Registers a function that handles incoming messages.
 
@@ -90,7 +125,7 @@ class Connection:
         Connection.helpers.append(helper)
 
     @staticmethod
-    async def async_create() -> 'Connection':
+    async def async_create() -> Connection:
         """Creates a new connection.
 
         This is intended for use in an apython REPL. It constructs a new
@@ -110,11 +145,11 @@ class Connection:
             try:
                 connection.websocket = await connection._get_connect_coro()
                 # pylint: disable=protected-access
-                connection.__dispatch_forever_future = asyncio.ensure_future(
-                    connection._async_dispatch_forever(
-                        connection, asyncio.get_running_loop()))
+                connection.__dispatch_forever_future = ensure_future(
+                    connection._async_dispatch_forever(connection, get_running_loop())
+                )
                 return connection
-            except websockets.exceptions.InvalidStatusCode as status_code_exception:  # type: ignore[attr-defined]
+            except InvalidStatusCode as status_code_exception:
                 if status_code_exception.status_code == 401:
                     if have_fresh_cookie:
                         raise
@@ -125,25 +160,31 @@ class Connection:
                         # Didn't get a cookie, so no point trying again.
                         raise
                 elif status_code_exception.status_code == 406:
-                    print("This version of the iterm2 module is too old for " +
-                          "the current version of iTerm2. Please upgrade.")
+                    print(
+                        "This version of the iterm2 module is too old for "
+                        + "the current version of iTerm2. Please upgrade."
+                    )
                     sys.exit(1)
                     raise
                 else:
                     raise
 
-
-    def __init__(self):
-        self.websocket = None
+    def __init__(self) -> None:
+        self.websocket: WebSocketClientProtocol | None = None
         # A list of tuples of (match_func, future). When a message is received
         # each match_func is called with the message as an argument. The first
         # one that returns true gets its future's result set with that message.
         # If none returns True it is dispatched through the helpers. Typically
         # that would be a notification.
-        self.__receivers = []
-        self.__dispatch_forever_future = None
-        self.__tasks = []
-        self.loop = None
+        self.__receivers: list[
+            tuple[
+                Callable[[ServerOriginatedMessage], bool],
+                Future[ServerOriginatedMessage],
+            ]
+        ] = []
+        self.__dispatch_forever_future: Future[None] | None = None
+        self.__tasks: list[Future[None]] = []
+        self.loop: AbstractEventLoop | None = None
 
     def _collect_garbage(self):
         """Asyncio seems to want you to keep a reference to a task that's being
@@ -152,16 +193,28 @@ class Connection:
         don't need to any more."""
         self.__tasks = list(filter(lambda t: not t.done(), self.__tasks))
 
-    def run_until_complete(self, coro, retry, debug=False):
+    def run_until_complete(
+        self,
+        coro: Callable[[Connection], Coroutine[Any, Any, _T]],
+        retry: bool,
+        debug: bool = False,
+    ) -> _T:
         """Runs `coro` and returns when it finishes."""
         return self.run(False, coro, retry, debug)
 
-    def run_forever(self, coro, retry, debug=False):
+    def run_forever(
+        self,
+        coro: Callable[[Connection], Coroutine[Any, Any, Any]],
+        retry: bool,
+        debug: bool = False,
+    ) -> None:
         """Runs `coro` and never returns."""
         self.run(True, coro, retry, debug)
 
     # pylint: disable=no-self-use
-    def set_message_in_future(self, loop, message, future):
+    def set_message_in_future(
+        self, loop: AbstractEventLoop, message: _T, future: Future[_T]
+    ) -> None:
         """Sets message as the future's result soon."""
         assert future is not None
         # Is the response to an RPC that is being awaited.
@@ -174,18 +227,20 @@ class Connection:
 
         loop.call_soon(set_result)
 
-    async def _async_dispatch_forever(self, connection, loop):
+    async def _async_dispatch_forever(
+        self, connection: Connection, loop: AbstractEventLoop
+    ) -> None:
         """
         Read messages from websocket and call helpers or message responders.
         """
         self.__tasks = []
         try:
             while True:
-                data = await self.websocket.recv()
+                data = await self.websocket.recv()  # type: ignore[union-attr]
                 self._collect_garbage()
 
-                message = iterm2.api_pb2.ServerOriginatedMessage()
-                message.ParseFromString(data)
+                message = ServerOriginatedMessage()
+                message.ParseFromString(data)  # type: ignore
 
                 future = self._get_receiver_future(message)
                 # Note that however we decide to handle this message,
@@ -194,11 +249,11 @@ class Connection:
                 if future is None:
                     # May be a notification.
                     self.__tasks.append(
-                        asyncio.ensure_future(
-                            self._async_dispatch_to_helper(message)))
+                        ensure_future(self._async_dispatch_to_helper(message))
+                    )
                 else:
                     self.set_message_in_future(loop, message, future)
-        except asyncio.CancelledError:
+        except CancelledError:
             # Presumably a run_until_complete script
             pass
         except:
@@ -207,7 +262,13 @@ class Connection:
             traceback.print_exc()
             raise
 
-    def run(self, forever, coro, retry, debug=False):
+    def run(
+        self,
+        forever: bool,
+        coro: Callable[[Connection], Coroutine[Any, Any, _T]],
+        retry: bool,
+        debug: bool = False,
+    ) -> _T:
         """
         Convenience method to start a program.
 
@@ -222,15 +283,16 @@ class Connection:
         if self.loop is not None:
             self.loop.close()
 
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        loop = new_event_loop()
+        set_event_loop(loop)
 
-        async def async_main(connection):
+        async def async_main(connection: Connection):
             # Set __tasks here in case coro returns before
             # _async_dispatch_forever starts.
             self.__tasks = []
-            dispatch_forever_task = asyncio.ensure_future(
-                self._async_dispatch_forever(connection, loop))
+            dispatch_forever_task = ensure_future(
+                self._async_dispatch_forever(connection, loop)
+            )
             result = await coro(connection)
             if forever:
                 await dispatch_forever_task
@@ -251,7 +313,7 @@ class Connection:
             callback()
         return result
 
-    async def async_send_message(self, message):
+    async def async_send_message(self, message: ClientOriginatedMessage) -> None:
         """
         Sends a message.
 
@@ -261,31 +323,33 @@ class Connection:
         message: A protocol buffer of type
             iterm2.api_pb2.ClientOriginatedMessage to send.
         """
-        await self.websocket.send(message.SerializeToString())
+        await self.websocket.send(message.SerializeToString())  # type: ignore[union-attr]
 
-    def _receiver_index(self, message):
+    def _receiver_index(self, message: ServerOriginatedMessage) -> int | None:
         """
         Searches __receivers for the receiver that should handle message and
         returns its index.
         """
         for i in range(len(self.__receivers)):
             match_func = self.__receivers[i][0]
-            if match_func and match_func(message):
+            if match_func(message):
                 return i
         # This says that the first receiver always gets the message if no other
         # receiver can handle it.
         return None
 
-    def _get_receiver_future(self, message):
+    def _get_receiver_future(
+        self, message: ServerOriginatedMessage
+    ) -> Future[ServerOriginatedMessage] | None:
         """Removes the receiver for message and returns its future."""
         i = self._receiver_index(message)
         if i is None:
             return None
-        match_func, future = self.__receivers[i]  # pylint: disable=unused-variable
+        _match_func, future = self.__receivers[i]  # pylint: disable=unused-variable
         del self.__receivers[i]
         return future
 
-    async def async_dispatch_until_id(self, reqid):
+    async def async_dispatch_until_id(self, reqid: int) -> ServerOriginatedMessage:
         """
         Handle incoming messages until one with the specified id is received.
 
@@ -299,44 +363,41 @@ class Connection:
 
         Returns: A message with the specified request id.
         """
-        my_future = asyncio.Future()
+        my_future: Future[ServerOriginatedMessage] = Future()
 
-        def match_func(incoming_message):
+        def match_func(incoming_message: ServerOriginatedMessage) -> bool:
             return incoming_message.id == reqid
 
         my_receiver = (match_func, my_future)
         self.__receivers.append(my_receiver)
         return await my_future
 
-    async def _async_dispatch_to_helper(self, message):
+    async def _async_dispatch_to_helper(self, message: ServerOriginatedMessage) -> None:
         """
         Dispatch a message to all registered helpers.
         """
         for helper in Connection.helpers:
             # pylint: disable=try-except-raise
             assert helper is not None
-            try:
-                if await helper(self, message):
-                    break
-            except Exception:
-                raise
+            if await helper(self, message):
+                break
 
     @property
-    def iterm2_protocol_version(self):
+    def iterm2_protocol_version(self) -> tuple[int, int]:
         """
         Returns a tuple (major version, minor version) or 0,0 if it's an old
         version of iTerm2 that doesn't report its version or it's unknown.
         """
         key = "X-iTerm2-Protocol-Version"
-        if key not in self.websocket.response_headers:
+        if key not in self.websocket.response_headers:  # type: ignore[union-attr]
             return (0, 0)
-        header_value = self.websocket.response_headers[key]
+        header_value = self.websocket.response_headers[key]  # type: ignore[union-attr]
         parts = header_value.split(".")
         if len(parts) != 2:
             return (0, 0)
         return (int(parts[0]), int(parts[1]))
 
-    def _get_connect_coro(self):
+    def _get_connect_coro(self) -> Connect:
         path = self._unix_domain_socket_path()
         exists = os.path.exists(path)
 
@@ -354,10 +415,11 @@ class Connection:
     def _unix_domain_socket_path(self):
         suite = os.environ.get("IT2_SUITE", "iTerm2")
         applicationSupport = os.path.expanduser(
-            "~/Library/Application Support/" + suite)
+            "~/Library/Application Support/" + suite
+        )
         return os.path.join(applicationSupport, "private", "socket")
 
-    def _get_unix_connect_coro(self):
+    def _get_unix_connect_coro(self) -> Connect:
         """Experimental: connect with unix domain socket."""
         path = self._unix_domain_socket_path()
         return websockets_client.unix_connect(
@@ -367,18 +429,20 @@ class Connection:
             close_timeout=0,
             extra_headers=_headers(),
             subprotocols=_subprotocols(),
-            max_size=None)
+            max_size=None,
+        )
 
-
-    def _get_tcp_connect_coro(self):
+    def _get_tcp_connect_coro(self) -> Connect:
         """Legacy: connect with tcp socket."""
-        return websockets_connect(_uri(),
-                                        ping_interval=None,
-                                        close_timeout=0,
-                                        extra_headers=_headers(),
-                                        subprotocols=_subprotocols())
+        return websockets_client.connect(
+            _uri(),
+            ping_interval=None,
+            close_timeout=0,
+            extra_headers=_headers(),
+            subprotocols=_subprotocols(),
+        )
 
-    def authenticate(self, force):
+    def authenticate(self, force: bool) -> bool:
         """
         Request a cookie via Applescript.
 
@@ -393,11 +457,13 @@ class Connection:
         if force:
             self._remove_auth()
         try:
-            return iterm2.auth.authenticate()
-        except iterm2.auth.AuthenticationException:
+            return _auth_authenticate()
+        except AuthenticationException:
             return False
 
-    async def async_connect(self, coro, retry=False):
+    async def async_connect(
+        self, coro: Callable[[Connection], Coroutine[Any, Any, _T]], retry: bool = False
+    ) -> _T:
         """
         Establishes a websocket connection.
 
@@ -415,6 +481,7 @@ class Connection:
         :param retry: Keep trying to connect until it succeeds?
         """
         done = False
+        result: _T
         while not done:
             # Set ITERM2_COOKIE and ITERM2_KEY if needed by making an
             # Applescript request. This cookie might be stale, but we'll try it
@@ -427,17 +494,18 @@ class Connection:
                     self.websocket = websocket
                     # pylint: disable=broad-except
                     try:
-                        return await coro(self)
-                    except Exception as _err:
+                        result = await coro(self)
+                    except Exception as _err:  # noqa: BLE001
                         traceback.print_exc()
                         sys.exit(1)
-            except websockets.exceptions.InvalidStatusCode as exception:  # type: ignore[attr-defined]
+                return result
+            except InvalidStatusCode as exception:
                 if exception.status_code == 401:
                     # Auth failure.
                     if retry:
                         # Sleep and try to authenticate until successful.
                         while not have_fresh_cookie:
-                            await asyncio.sleep(0.5)
+                            await sleep(0.5)
                             have_fresh_cookie = self.authenticate(True)
                     else:
                         # Not retrying forever.
@@ -452,8 +520,10 @@ class Connection:
                             # Failed to get a cookie. Give up.
                             raise
                 elif exception.status_code == 406:
-                    print("This version of the iterm2 module is too old " +
-                          "for the current version of iTerm2. Please upgrade.")
+                    print(
+                        "This version of the iterm2 module is too old "
+                        + "for the current version of iTerm2. Please upgrade."
+                    )
                     sys.exit(1)
                     raise
                 else:
@@ -467,14 +537,14 @@ class Connection:
                 # I'm leaving the print statement in because I'm worried this
                 # might have unexpected consequences, as InvalidMessage is
                 # certainly not very specific.
-                print("websockets.connect failed with InvalidMessage. " +
-                      "Retrying.")
-            except (ConnectionRefusedError, OSError) as exception:
+                print("websockets.connect failed with InvalidMessage. " + "Retrying.")
+            except (ConnectionRefusedError, OSError):
                 # https://github.com/aaugustin/websockets/issues/593
                 if retry:
-                    await asyncio.sleep(0.5)
+                    await sleep(0.5)
                 else:
-                    print("""
+                    print(
+                        """
 There was a problem connecting to iTerm2.
 
 Please check the following:
@@ -486,22 +556,30 @@ If you'd prefer to retry connecting automatically instead of
 raising an exception, pass retry=true to run_until_complete()
 or run_forever().
 
-""", file=sys.stderr)
+""",
+                        file=sys.stderr,
+                    )
                     path = self._unix_domain_socket_path()
                     exists = os.path.exists(path)
                     if exists:
-                        print(f"If you have downgraded from iTerm2 3.3.12+ to an older version, you must\nmanually delete the file at {path}.\n", file=sys.stderr)
+                        print(
+                            f"If you have downgraded from iTerm2 3.3.12+ to an older version, you must\nmanually delete the file at {path}.\n",
+                            file=sys.stderr,
+                        )
                     done = True
                     raise ConnectionRefusedError("Problem connecting to iTerm2")
             finally:
                 self._remove_auth()
+        # The loop only ends without returning when done was set, which
+        # happens just before coro runs; coro either produced result or the
+        # process exited. This is reached when closing the websocket raised
+        # an exception that was handled above. Type checkers can't prove that.
+        return None  # type: ignore[return-value]
 
 
 def run_until_complete(
-        coro: typing.Callable[[Connection],
-                              typing.Coroutine[typing.Any, typing.Any, None]],
-        retry=False,
-        debug=False) -> None:
+    coro: ConnectionCoroutine, retry: bool = False, debug: bool = False
+) -> None:
     """
     Convenience method to run an async function taking an
     :class:`~iterm2.Connection` as an argument.
@@ -515,16 +593,13 @@ def run_until_complete(
     """
     try:
         return Connection().run_until_complete(coro, retry, debug)
-    except (ConnectionRefusedError) as exception:
+    except ConnectionRefusedError:
         sys.exit(1)
 
 
 def run_forever(
-        coro: typing.Callable[[Connection],
-                              typing.Coroutine[typing.Any,
-                                               typing.Any, None]],
-        retry=False,
-        debug=False) -> None:
+    coro: ConnectionCoroutine, retry: bool = False, debug: bool = False
+) -> None:
     """
     Convenience method to run an async function taking an
     :class:`~iterm2.Connection` as an argument.
@@ -538,10 +613,11 @@ def run_forever(
     """
     try:
         Connection().run_forever(coro, retry, debug)
-    except (ConnectionRefusedError) as exception:
+    except ConnectionRefusedError:
         sys.exit(1)
 
-def add_disconnect_callback(callback: typing.Callable[[], None]):
+
+def add_disconnect_callback(callback: Callable[[], None]) -> None:
     """Add a function to run on the next disconnection.
 
     The provided function gets called next time a connection closes, even if one
@@ -549,5 +625,4 @@ def add_disconnect_callback(callback: typing.Callable[[], None]):
 
     :param callback: Takes no arguments.
     """
-    global gDisconnectCallbacks
     gDisconnectCallbacks.append(callback)

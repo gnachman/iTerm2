@@ -1,4 +1,5 @@
 """Tests for registering context menu providers."""
+
 import asyncio
 import warnings
 from types import SimpleNamespace
@@ -22,7 +23,9 @@ def register(monkeypatch, protocol_version=(1, 23), **kwargs):
         pass
 
     connection = SimpleNamespace(iterm2_protocol_version=protocol_version)
-    asyncio.run(handler.async_register(connection, "Unbind", "com.example.unbind", **kwargs))
+    asyncio.run(
+        handler.async_register(connection, "Unbind", "com.example.unbind", **kwargs)
+    )
     return captured["rpc_registration_request"]
 
 

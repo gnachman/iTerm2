@@ -1,4 +1,6 @@
 """Tests for floating panes in iterm2.tab and iterm2.window."""
+
+import asyncio
 from types import SimpleNamespace
 
 import iterm2
@@ -25,7 +27,9 @@ def make_window(active_session_id="float-front", hidden=False):
     summary(link.session, "tiled")
     for i, session_id in enumerate(("float-back", "float-front")):
         floating_pane = tab.floating_panes.add()
-        summary(floating_pane.session, session_id, x=10 * i, y=20 * i, width=300, height=200)
+        summary(
+            floating_pane.session, session_id, x=10 * i, y=20 * i, width=300, height=200
+        )
     tab.floating_panes_hidden = hidden
     tab.active_session_id = active_session_id
     connection = SimpleNamespace(iterm2_protocol_version=(1, 21))
@@ -35,8 +39,15 @@ def make_window(active_session_id="float-front", hidden=False):
 def test_floats_are_listed_apart_from_the_tree():
     tab = make_window().tabs[0]
     assert [s.session_id for s in tab.sessions] == ["tiled"]
-    assert [s.session_id for s in tab.floating_sessions] == ["float-back", "float-front"]
-    assert [s.session_id for s in tab.all_sessions] == ["tiled", "float-back", "float-front"]
+    assert [s.session_id for s in tab.floating_sessions] == [
+        "float-back",
+        "float-front",
+    ]
+    assert [s.session_id for s in tab.all_sessions] == [
+        "tiled",
+        "float-back",
+        "float-front",
+    ]
     assert tab.floating_panes_hidden is False
 
 
@@ -95,7 +106,8 @@ def test_older_servers_report_no_floats():
 
 def test_booleans_are_encoded_for_the_expression_language():
     invocation = iterm2.util.invocation_string(
-        "iterm2.raise_floating_pane", {"session": "s", "to_front": False})
+        "iterm2.raise_floating_pane", {"session": "s", "to_front": False}
+    )
     assert invocation == 'iterm2.raise_floating_pane(session: "s", to_front: false)'
 
 
@@ -109,3 +121,28 @@ def test_a_frame_that_is_not_finite_is_refused():
     frame = iterm2.util.Frame(iterm2.util.Point(math.nan, 0), iterm2.util.Size(100, 50))
     with pytest.raises(ValueError):
         asyncio.run(session.async_set_floating_frame(frame))
+
+
+def test_create_floating_session_returns_the_new_session(monkeypatch):
+    tab = make_window().tabs[0]
+    calls = []
+    created = object()
+
+    async def invoke(connection, name, args):
+        calls.append((name, args))
+        return "new-float"
+
+    class Delegate:
+        async def session_delegate_create_session(self, session_id):
+            assert session_id == "new-float"
+            return created
+
+    monkeypatch.setattr(iterm2.tab, "async_invoke_floating_pane_function", invoke)
+    monkeypatch.setattr(iterm2.Session, "delegate", Delegate())
+
+    session = asyncio.run(tab.async_create_floating_session(profile="Floaty"))
+
+    assert session is created
+    assert calls == [
+        ("iterm2.create_floating_pane", {"tab_id": "1", "profile": "Floaty"})
+    ]

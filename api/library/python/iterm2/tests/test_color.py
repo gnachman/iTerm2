@@ -1,4 +1,5 @@
 """Tests for iterm2.color module."""
+
 import pytest
 from iterm2.color import Color, ColorSpace, MissingDependency
 
@@ -46,9 +47,9 @@ class TestColorFromHex:
         """Test parsing a 6-digit hex color."""
         color = Color.from_hex("#aabbcc")
         assert color is not None
-        assert color.red == 0xaa
-        assert color.green == 0xbb
-        assert color.blue == 0xcc
+        assert color.red == 0xAA
+        assert color.green == 0xBB
+        assert color.blue == 0xCC
         assert color.alpha == 255
 
     def test_from_hex_12_digit(self):
@@ -98,13 +99,15 @@ class TestColorDict:
     def test_from_dict(self):
         """Test loading color from dictionary."""
         color = Color()
-        color.from_dict({
-            "Red Component": 1.0,
-            "Green Component": 0.5,
-            "Blue Component": 0.25,
-            "Alpha Component": 0.75,
-            "Color Space": "P3"
-        })
+        color.from_dict(
+            {
+                "Red Component": 1.0,
+                "Green Component": 0.5,
+                "Blue Component": 0.25,
+                "Alpha Component": 0.75,
+                "Color Space": "P3",
+            }
+        )
 
         assert color.red == 255
         assert color.green == pytest.approx(127.5)
@@ -115,11 +118,9 @@ class TestColorDict:
     def test_from_dict_defaults(self):
         """Test loading color from dict with missing optional fields."""
         color = Color()
-        color.from_dict({
-            "Red Component": 0.5,
-            "Green Component": 0.5,
-            "Blue Component": 0.5
-        })
+        color.from_dict(
+            {"Red Component": 0.5, "Green Component": 0.5, "Blue Component": 0.5}
+        )
 
         assert color.alpha == 255
         assert color.color_space == ColorSpace.CALIBRATED

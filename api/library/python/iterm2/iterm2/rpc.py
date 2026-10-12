@@ -1,11 +1,21 @@
 """Provides methods that build and send RPCs to iTerm2."""
+
+from __future__ import annotations
+
+import itertools
 import json
+from collections.abc import Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any
 
-import iterm2.api_pb2
-import iterm2.connection
+from . import api_pb2
 
-ACTIVATE_RAISE_ALL_WINDOWS = 1
-ACTIVATE_IGNORING_OTHER_APPS = 2
+if TYPE_CHECKING:
+    from .connection import Connection
+    from .selection import Selection
+    from .util import Size, WindowedCoordRange
+
+ACTIVATE_RAISE_ALL_WINDOWS: int = 1
+ACTIVATE_IGNORING_OTHER_APPS: int = 2
 
 
 # pylint and protobufs can't be friends so disable a bunch of stuff.
@@ -17,10 +27,13 @@ class RPCException(Exception):
     """
     Raised when a response contains an error signaling a malformed request."""
 
+
 # APIs -----------------------------------------------------------------------
 
 
-async def async_list_sessions(connection):
+async def async_list_sessions(
+    connection: Connection,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Requests a list of sessions.
 
@@ -34,16 +47,17 @@ async def async_list_sessions(connection):
 
 
 async def async_notification_request(
-        connection,
-        subscribe,
-        notification_type,
-        session=None,
-        rpc_registration_request=None,
-        keystroke_monitor_request=None,
-        variable_monitor_request=None,
-        profile_change_request=None,
-        prompt_monitor_modes=None,
-        keystroke_filter_request=None):
+    connection: Connection,
+    subscribe: bool,
+    notification_type: api_pb2.NotificationType.ValueType,
+    session: str | None = None,
+    rpc_registration_request: api_pb2.RPCRegistrationRequest | None = None,
+    keystroke_monitor_request: api_pb2.KeystrokeMonitorRequest | None = None,
+    variable_monitor_request: api_pb2.VariableMonitorRequest | None = None,
+    profile_change_request: api_pb2.ProfileChangeRequest | None = None,
+    prompt_monitor_modes: Iterable[api_pb2.PromptMonitorMode.ValueType] | None = None,
+    keystroke_filter_request: api_pb2.KeystrokeFilterRequest | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Requests a change to a notification subscription.
 
@@ -71,29 +85,35 @@ async def async_notification_request(
         request.notification_request.session = session
     if rpc_registration_request is not None:
         request.notification_request.rpc_registration_request.CopyFrom(
-            rpc_registration_request)
+            rpc_registration_request
+        )
     if keystroke_monitor_request:
         request.notification_request.keystroke_monitor_request.CopyFrom(
-            keystroke_monitor_request)
+            keystroke_monitor_request
+        )
     if keystroke_filter_request:
         request.notification_request.keystroke_filter_request.CopyFrom(
-            keystroke_filter_request)
+            keystroke_filter_request
+        )
     if variable_monitor_request:
         request.notification_request.variable_monitor_request.CopyFrom(
-            variable_monitor_request)
+            variable_monitor_request
+        )
     if profile_change_request:
         request.notification_request.profile_change_request.CopyFrom(
-            profile_change_request)
+            profile_change_request
+        )
     if prompt_monitor_modes:
         for mode in prompt_monitor_modes:
-            request.notification_request.prompt_monitor_request.modes.append(
-                mode)
+            request.notification_request.prompt_monitor_request.modes.append(mode)
     request.notification_request.subscribe = subscribe
     request.notification_request.notification_type = notification_type
     return await _async_call(connection, request)
 
 
-async def async_send_text(connection, session, text, suppress_broadcast):
+async def async_send_text(
+    connection: Connection, session: str, text: str, suppress_broadcast: bool
+) -> api_pb2.ServerOriginatedMessage:
     """
     Sends text to a session, as though it had been typed.
 
@@ -112,7 +132,9 @@ async def async_send_text(connection, session, text, suppress_broadcast):
     return await _async_call(connection, request)
 
 
-async def async_screenshot(connection, session):
+async def async_screenshot(
+    connection: Connection, session: str
+) -> api_pb2.ServerOriginatedMessage:
     """
     Captures a PNG screenshot of a session's visible screen contents.
 
@@ -127,12 +149,13 @@ async def async_screenshot(connection, session):
 
 
 async def async_split_pane(
-        connection,
-        session,
-        vertical,
-        before,
-        profile=None,
-        profile_customizations=None):
+    connection: Connection,
+    session: str | None,
+    vertical: bool,
+    before: bool,
+    profile: str | None = None,
+    profile_customizations: Mapping[str, str | None] | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Splits a session into two.
 
@@ -151,40 +174,40 @@ async def async_split_pane(
     if session is not None:
         request.split_pane_request.session = session
     if vertical:
-        request.split_pane_request.split_direction = (
-            iterm2.api_pb2.SplitPaneRequest.VERTICAL)
+        request.split_pane_request.split_direction = api_pb2.SplitPaneRequest.VERTICAL
     else:
-        request.split_pane_request.split_direction = (
-            iterm2.api_pb2.SplitPaneRequest.HORIZONTAL)
+        request.split_pane_request.split_direction = api_pb2.SplitPaneRequest.HORIZONTAL
     request.split_pane_request.before = before
     if profile is not None:
         request.split_pane_request.profile_name = profile
     if profile_customizations is not None:
         request.split_pane_request.custom_profile_properties.extend(
-            _profile_properties_from_dict(profile_customizations))
+            _profile_properties_from_dict(profile_customizations)
+        )
 
     return await _async_call(connection, request)
 
 
-def _profile_properties_from_dict(profile_customizations):
-    props = []
+def _profile_properties_from_dict(profile_customizations: Mapping[str, str | None]):
+    props: list[api_pb2.ProfileProperty] = []
     for key in profile_customizations:
         value = profile_customizations[key]
-        entry = iterm2.api_pb2.ProfileProperty()
+        entry = api_pb2.ProfileProperty()
         entry.key = key
-        entry.json_value = value
+        entry.json_value = value  # type: ignore[assignment]
         props.append(entry)
     return props
 
 
 async def async_create_tab(
-        connection,
-        profile=None,
-        window=None,
-        index=None,
-        command=None,
-        profile_customizations=None,
-        select=True):
+    connection: Connection,
+    profile: str | None = None,
+    window: str | None = None,
+    index: int | None = None,
+    command: str | None = None,
+    profile_customizations: Mapping[str, str | None] | None = None,
+    select: bool = True,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Creates a new tab or window.
 
@@ -212,20 +235,25 @@ async def async_create_tab(
     if index is not None:
         request.create_tab_request.tab_index = index
     if command is not None:
-        profile_customizations = iterm2.LocalWriteOnlyProfile()
-        profile_customizations.set_use_custom_command("Yes")
-        profile_customizations.set_command(command)
+        from .profile import LocalWriteOnlyProfile
+
+        lwop = LocalWriteOnlyProfile()
+        lwop.set_use_custom_command("Yes")
+        lwop.set_command(command)
+        profile_customizations = lwop  # type: ignore[assignment]
     if profile_customizations is not None:
         request.create_tab_request.custom_profile_properties.extend(
-            _profile_properties_from_dict(profile_customizations))
+            _profile_properties_from_dict(profile_customizations)
+        )
     return await _async_call(connection, request)
 
 
 async def async_get_screen_contents(
-        connection,
-        session,
-        windowed_coord_range=None,
-        style=False):
+    connection: Connection,
+    session: str | None,
+    windowed_coord_range: WindowedCoordRange | None = None,
+    style: bool = False,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Gets screen contents, including both the mutable area and history.
 
@@ -241,14 +269,16 @@ async def async_get_screen_contents(
     request.get_buffer_request.include_styles = style
     if windowed_coord_range:
         request.get_buffer_request.line_range.windowed_coord_range.CopyFrom(
-            windowed_coord_range.proto)
+            windowed_coord_range.proto
+        )
     else:
         request.get_buffer_request.line_range.screen_contents_only = True
     return await _async_call(connection, request)
 
 
 async def async_get_prompt(
-    connection, session=None, prompt_id=None):
+    connection: Connection, session: str | None = None, prompt_id: str | None = None
+) -> api_pb2.ServerOriginatedMessage:
     """
     Gets info about the last prompt in a session
 
@@ -268,7 +298,8 @@ async def async_get_prompt(
 
 
 async def async_list_prompts(
-    connection, session, first, last):
+    connection: Connection, session: str, first: str | None, last: str | None
+) -> api_pb2.ServerOriginatedMessage:
     """
     Fetches a list of prompts in a session.
 
@@ -289,7 +320,9 @@ async def async_list_prompts(
     return await _async_call(connection, request)
 
 
-async def async_start_transaction(connection):
+async def async_start_transaction(
+    connection: Connection,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Begins a transaction, locking iTerm2 until the transaction ends. Be careful
     with this.
@@ -303,7 +336,9 @@ async def async_start_transaction(connection):
     return await _async_call(connection, request)
 
 
-async def async_end_transaction(connection):
+async def async_end_transaction(
+    connection: Connection,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Ends a transaction begun with start_transaction()
 
@@ -316,11 +351,13 @@ async def async_end_transaction(connection):
     return await _async_call(connection, request)
 
 
-async def async_register_web_view_tool(connection,
-                                       display_name,
-                                       identifier,
-                                       reveal_if_already_registered,
-                                       url):
+async def async_register_web_view_tool(
+    connection: Connection,
+    display_name: str,
+    identifier: str,
+    reveal_if_already_registered: bool,
+    url: str,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Registers a toolbelt tool showing a webview.
 
@@ -337,15 +374,22 @@ async def async_register_web_view_tool(connection,
     request.register_tool_request.name = display_name
     request.register_tool_request.identifier = identifier
     request.register_tool_request.reveal_if_already_registered = (
-        reveal_if_already_registered)
+        reveal_if_already_registered
+    )
     request.register_tool_request.tool_type = (
-        iterm2.api_pb2.RegisterToolRequest.ToolType.Value("WEB_VIEW_TOOL"))
+        api_pb2.RegisterToolRequest.ToolType.Value("WEB_VIEW_TOOL")
+    )
     request.register_tool_request.URL = url
     return await _async_call(connection, request)
 
 
 async def async_set_profile_property(
-        connection, session_id, key, value, guids=None):
+    connection: Connection,
+    session_id: str | None,
+    key: str,
+    value: Any,
+    guids: Iterable[str] | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Sets a property of a session's profile.
     TODO: Add async_set_profile_properties and deprecate this.
@@ -361,11 +405,17 @@ async def async_set_profile_property(
     :returns: iterm2.api_pb2.ServerOriginatedMessage
     """
     return await async_set_profile_property_json(
-        connection, session_id, key, json.dumps(value), guids)
+        connection, session_id, key, json.dumps(value), guids
+    )
 
 
 async def async_set_profile_property_json(
-        connection, session_id, key, json_value, guids=None):
+    connection: Connection,
+    session_id: str | None,
+    key: str,
+    json_value: str,
+    guids: Iterable[str] | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """Like async_set_profile_property but takes a json-encoded value.
     DEPRECATED. Prefer async_set_profile_properties_json."""
     request = _alloc_request()
@@ -379,16 +429,20 @@ async def async_set_profile_property_json(
 
 
 async def async_set_profile_properties_json(
-        connection, session_id, assignments, guids=None):
+    connection: Connection,
+    session_id: str | None,
+    assignments: Iterable[Sequence[str]],
+    guids: Iterable[str] | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """Like async_set_profile_properties but takes a json-encoded value."""
     request = _alloc_request()
     if session_id is None:
         request.set_profile_property_request.guid_list.guids.extend(guids)
     else:
         request.set_profile_property_request.session = session_id
-    protos = []
+    protos: list[api_pb2.SetProfilePropertyRequest.Assignment] = []
     for assignment in assignments:
-        value = iterm2.api_pb2.SetProfilePropertyRequest.Assignment()
+        value = api_pb2.SetProfilePropertyRequest.Assignment()
         value.key = assignment[0]
         value.json_value = assignment[1]
         protos.append(value)
@@ -396,7 +450,11 @@ async def async_set_profile_properties_json(
     return await _async_call(connection, request)
 
 
-async def async_get_profile(connection, session=None, keys=None):
+async def async_get_profile(
+    connection: Connection,
+    session: str | None = None,
+    keys: Iterable[str] | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Fetches a session's profile
 
@@ -417,7 +475,12 @@ async def async_get_profile(connection, session=None, keys=None):
 
 
 async def async_set_property(
-        connection, name, json_value, window_id=None, session_id=None):
+    connection: Connection,
+    name: str,
+    json_value: str,
+    window_id: str | None = None,
+    session_id: str | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Sets a property of an object (currently only of a window).
     """
@@ -434,7 +497,11 @@ async def async_set_property(
 
 
 async def async_get_property(
-        connection, name, window_id=None, session_id=None):
+    connection: Connection,
+    name: str,
+    window_id: str | None = None,
+    session_id: str | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Gets a property of a window or session.
     """
@@ -448,7 +515,9 @@ async def async_get_property(
     return await _async_call(connection, request)
 
 
-async def async_inject(connection, data, sessions):
+async def async_inject(
+    connection: Connection, data: bytes, sessions: Iterable[str]
+) -> api_pb2.ServerOriginatedMessage:
     """
     Injects bytes/string into sessions, as though it was program output.
     """
@@ -459,14 +528,16 @@ async def async_inject(connection, data, sessions):
     return await _async_call(connection, request)
 
 
-async def async_activate(connection,
-                         select_session,
-                         select_tab,
-                         order_window_front,
-                         session_id=None,
-                         tab_id=None,
-                         window_id=None,
-                         activate_app_opts=None):
+async def async_activate(
+    connection: Connection,
+    select_session: bool,
+    select_tab: bool,
+    order_window_front: bool,
+    session_id: str | None = None,
+    tab_id: str | None = None,
+    window_id: str | None = None,
+    activate_app_opts: Sequence[int] | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Activates a session, tab, or window.
     """
@@ -490,12 +561,13 @@ async def async_activate(connection,
 
 
 async def async_variable(
-        connection,
-        session_id=None,
-        sets=None,
-        gets=None,
-        tab_id=None,
-        window_id=None):
+    connection: Connection,
+    session_id: str | None = None,
+    sets: Iterable[tuple[str, str]] | None = None,
+    gets: Iterable[str] | None = None,
+    tab_id: str | None = None,
+    window_id: str | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Gets or sets session variables.
 
@@ -516,49 +588,62 @@ async def async_variable(
         request.variable_request.app = True
 
     request.variable_request.get.extend(gets)
-    for (name, value) in sets:
-        kvp = iterm2.api_pb2.VariableRequest.Set()
+    for name, value in sets:
+        kvp = api_pb2.VariableRequest.Set()
         kvp.name = name
         kvp.value = value
         request.variable_request.set.extend([kvp])
     return await _async_call(connection, request)
 
 
-async def async_save_arrangement(connection, name, window_id=None):
+async def async_save_arrangement(
+    connection: Connection, name: str, window_id: str | None = None
+) -> api_pb2.ServerOriginatedMessage:
     """
     Save a window arrangement.
     """
     request = _alloc_request()
     request.saved_arrangement_request.name = name
     request.saved_arrangement_request.action = (
-        iterm2.api_pb2.SavedArrangementRequest.Action.Value("SAVE"))
+        api_pb2.SavedArrangementRequest.Action.Value("SAVE")
+    )
     if window_id is not None:
         request.saved_arrangement_request.window_id = window_id
     return await _async_call(connection, request)
 
 
-async def async_restore_arrangement(connection, name, window_id=None):
+async def async_restore_arrangement(
+    connection: Connection, name: str, window_id: str | None = None
+) -> api_pb2.ServerOriginatedMessage:
     """
     Restore a window arrangement.
     """
     request = _alloc_request()
     request.saved_arrangement_request.name = name
     request.saved_arrangement_request.action = (
-        iterm2.api_pb2.SavedArrangementRequest.Action.Value("RESTORE"))
+        api_pb2.SavedArrangementRequest.Action.Value("RESTORE")
+    )
     if window_id is not None:
         request.saved_arrangement_request.window_id = window_id
     return await _async_call(connection, request)
 
-async def async_list_arrangements(connection):
+
+async def async_list_arrangements(
+    connection: Connection,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Fetch a list of window arrangement names.
     """
     request = _alloc_request()
     request.saved_arrangement_request.action = (
-        iterm2.api_pb2.SavedArrangementRequest.Action.Value("LIST"))
+        api_pb2.SavedArrangementRequest.Action.Value("LIST")
+    )
     return await _async_call(connection, request)
 
-async def async_get_focus_info(connection):
+
+async def async_get_focus_info(
+    connection: Connection,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Fetches the focused state of everything.
     """
@@ -567,7 +652,11 @@ async def async_get_focus_info(connection):
     return await _async_call(connection, request)
 
 
-async def async_list_profiles(connection, guids, properties):
+async def async_list_profiles(
+    connection: Connection,
+    guids: Iterable[str] | None,
+    properties: Iterable[str] | None,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Gets a list of all profiles.
 
@@ -585,20 +674,24 @@ async def async_list_profiles(connection, guids, properties):
     return await _async_call(connection, request)
 
 
-async def async_send_rpc_result(connection, request_id, is_exception, value):
+async def async_send_rpc_result(
+    connection: Connection, request_id: str, is_exception: bool, value: Any
+) -> api_pb2.ServerOriginatedMessage:
     """Sends an RPC response."""
     request = _alloc_request()
     request.server_originated_rpc_result_request.request_id = request_id
     if is_exception:
-        (request.server_originated_rpc_result_request.
-         json_exception) = json.dumps(value)
+        (request.server_originated_rpc_result_request.json_exception) = json.dumps(
+            value
+        )
     else:
-        request.server_originated_rpc_result_request.json_value = json.dumps(
-            value)
+        request.server_originated_rpc_result_request.json_value = json.dumps(value)
     return await _async_call(connection, request)
 
 
-async def async_restart_session(connection, session_id, only_if_exited):
+async def async_restart_session(
+    connection: Connection, session_id: str, only_if_exited: bool
+) -> api_pb2.ServerOriginatedMessage:
     """Restarts a session."""
     request = _alloc_request()
     request.restart_session_request.SetInParent()
@@ -607,7 +700,9 @@ async def async_restart_session(connection, session_id, only_if_exited):
     return await _async_call(connection, request)
 
 
-async def async_menu_item(connection, identifier, query_only):
+async def async_menu_item(
+    connection: Connection, identifier: str, query_only: bool
+) -> api_pb2.ServerOriginatedMessage:
     """Selects or queries a menu item."""
     request = _alloc_request()
     request.menu_item_request.SetInParent()
@@ -616,7 +711,9 @@ async def async_menu_item(connection, identifier, query_only):
     return await _async_call(connection, request)
 
 
-async def async_set_tab_layout(connection, tab_id, tree):
+async def async_set_tab_layout(
+    connection: Connection, tab_id: str, tree: api_pb2.SplitTreeNode
+) -> api_pb2.ServerOriginatedMessage:
     """Adjusts the layout of split panes in a tab.
 
     :param tree: a `iterm2.api_pb2.SplitTreeNode` forming the root of the tree.
@@ -628,14 +725,18 @@ async def async_set_tab_layout(connection, tab_id, tree):
     return await _async_call(connection, request)
 
 
-async def async_get_broadcast_domains(connection):
+async def async_get_broadcast_domains(
+    connection: Connection,
+) -> api_pb2.ServerOriginatedMessage:
     """Fetches the current broadcast domains."""
     request = _alloc_request()
     request.get_broadcast_domains_request.SetInParent()
     return await _async_call(connection, request)
 
 
-async def async_rpc_list_tmux_connections(connection):
+async def async_rpc_list_tmux_connections(
+    connection: Connection,
+) -> api_pb2.ServerOriginatedMessage:
     """Requests a list of tmux connections."""
     _assert_not_in_transaction()
     request = _alloc_request()
@@ -644,7 +745,9 @@ async def async_rpc_list_tmux_connections(connection):
     return await _async_call(connection, request)
 
 
-async def async_rpc_send_tmux_command(connection, tmux_connection_id, command):
+async def async_rpc_send_tmux_command(
+    connection: Connection, tmux_connection_id: str, command: str
+) -> api_pb2.ServerOriginatedMessage:
     """Sends a command to the tmux server."""
     _assert_not_in_transaction()
     request = _alloc_request()
@@ -656,7 +759,8 @@ async def async_rpc_send_tmux_command(connection, tmux_connection_id, command):
 
 
 async def async_rpc_set_tmux_window_visible(
-        connection, tmux_connection_id, window_id, visible):
+    connection: Connection, tmux_connection_id: str, window_id: str, visible: bool
+) -> api_pb2.ServerOriginatedMessage:
     """Hides/shows a tmux window (which is an iTerm2 tab)"""
     _assert_not_in_transaction()
     request = _alloc_request()
@@ -669,7 +773,8 @@ async def async_rpc_set_tmux_window_visible(
 
 
 async def async_rpc_create_tmux_window(
-        connection, tmux_connection_id, affinity=None):
+    connection: Connection, tmux_connection_id: str, affinity: str | None = None
+) -> api_pb2.ServerOriginatedMessage:
     """Creates a new tmux window."""
     _assert_not_in_transaction()
     request = _alloc_request()
@@ -681,7 +786,9 @@ async def async_rpc_create_tmux_window(
     return await _async_call(connection, request)
 
 
-async def async_reorder_tabs(connection, assignments):
+async def async_reorder_tabs(
+    connection: Connection, assignments: Iterable[tuple[str, Iterable[str]]]
+) -> api_pb2.ServerOriginatedMessage:
     """Reassigns tabs to windows and specifies their orders.
 
     :param assignments: a list of tuples of (window_id, [tab_id, ...])
@@ -689,54 +796,62 @@ async def async_reorder_tabs(connection, assignments):
     request = _alloc_request()
     request.reorder_tabs_request.SetInParent()
 
-    def make_assignment(window_id, tab_ids):
-        assignment = iterm2.api_pb2.ReorderTabsRequest.Assignment()
+    def make_assignment(window_id: str, tab_ids: Iterable[str]):
+        assignment = api_pb2.ReorderTabsRequest.Assignment()
         assignment.window_id = window_id
         assignment.tab_ids.extend(tab_ids)
         return assignment
 
-    protos = list(map(lambda a: make_assignment(a[0], a[1]), assignments))
+    protos = [make_assignment(a[0], a[1]) for a in assignments]
     request.reorder_tabs_request.assignments.extend(protos)
     return await _async_call(connection, request)
 
 
-async def async_get_default_profile(connection):
+async def async_get_default_profile(
+    connection: Connection,
+) -> api_pb2.ServerOriginatedMessage:
     """Gets the default profile."""
     request = _alloc_request()
     request.preferences_request.SetInParent()
-    my_request = iterm2.api_pb2.PreferencesRequest.Request()
+    my_request = api_pb2.PreferencesRequest.Request()
     my_request.get_default_profile_request.SetInParent()
     request.preferences_request.requests.extend([my_request])
     return await _async_call(connection, request)
 
 
-async def async_set_default_profile(connection, guid):
+async def async_set_default_profile(
+    connection: Connection, guid: str
+) -> api_pb2.ServerOriginatedMessage:
     """Sets the default profile."""
     request = _alloc_request()
     request.preferences_request.SetInParent()
-    my_request = iterm2.api_pb2.PreferencesRequest.Request()
+    my_request = api_pb2.PreferencesRequest.Request()
     my_request.set_default_profile_request.SetInParent()
     my_request.set_default_profile_request.guid = guid
     request.preferences_request.requests.extend([my_request])
     return await _async_call(connection, request)
 
 
-async def async_get_preference(connection, key):
+async def async_get_preference(
+    connection: Connection, key: str
+) -> api_pb2.ServerOriginatedMessage:
     """Gets a preference from user defaults."""
     request = _alloc_request()
     request.preferences_request.SetInParent()
-    my_request = iterm2.api_pb2.PreferencesRequest.Request()
+    my_request = api_pb2.PreferencesRequest.Request()
     my_request.get_preference_request.SetInParent()
     my_request.get_preference_request.key = key
     request.preferences_request.requests.extend([my_request])
     return await _async_call(connection, request)
 
 
-async def async_set_preference(connection, key, value):
+async def async_set_preference(
+    connection: Connection, key: str, value: str
+) -> api_pb2.ServerOriginatedMessage:
     """Sets a preference in user defaults."""
     request = _alloc_request()
     request.preferences_request.SetInParent()
-    my_request = iterm2.api_pb2.PreferencesRequest.Request()
+    my_request = api_pb2.PreferencesRequest.Request()
     my_request.set_preference_request.SetInParent()
     my_request.set_preference_request.key = key
     my_request.set_preference_request.json_value = value
@@ -744,7 +859,9 @@ async def async_set_preference(connection, key, value):
     return await _async_call(connection, request)
 
 
-async def async_list_color_presets(connection):
+async def async_list_color_presets(
+    connection: Connection,
+) -> api_pb2.ServerOriginatedMessage:
     """Gets a list of color preset names."""
     request = _alloc_request()
     request.color_preset_request.SetInParent()
@@ -752,7 +869,9 @@ async def async_list_color_presets(connection):
     return await _async_call(connection, request)
 
 
-async def async_get_color_preset(connection, name):
+async def async_get_color_preset(
+    connection: Connection, name: str
+) -> api_pb2.ServerOriginatedMessage:
     """Gets the content of a color preset by name."""
     request = _alloc_request()
     request.color_preset_request.SetInParent()
@@ -761,7 +880,9 @@ async def async_get_color_preset(connection, name):
     return await _async_call(connection, request)
 
 
-async def async_get_selection(connection, session_id):
+async def async_get_selection(
+    connection: Connection, session_id: str
+) -> api_pb2.ServerOriginatedMessage:
     """
     Return info about the current selected text.
     """
@@ -771,7 +892,9 @@ async def async_get_selection(connection, session_id):
     return await _async_call(connection, request)
 
 
-async def async_set_selection(connection, session_id, selection):
+async def async_set_selection(
+    connection: Connection, session_id: str, selection: Selection
+) -> api_pb2.ServerOriginatedMessage:
     """
     Set the selected text ranges.
     """
@@ -780,14 +903,17 @@ async def async_set_selection(connection, session_id, selection):
     request.selection_request.set_selection_request.session_id = session_id
     request.selection_request.set_selection_request.selection.SetInParent()
     for sub in selection.subSelections:
-        (request.selection_request.
-         set_selection_request.selection.sub_selections.extend(
-             [sub.proto]))
+        (
+            request.selection_request.set_selection_request.selection.sub_selections.extend(
+                [sub.proto]
+            )
+        )
     return await _async_call(connection, request)
 
 
 async def async_open_status_bar_component_popover(
-        connection, identifier, session_id, html, size):
+    connection: Connection, identifier: str, session_id: str, html: str, size: Size
+) -> api_pb2.ServerOriginatedMessage:
     """
     Send a request to open a popover.
     """
@@ -800,24 +926,30 @@ async def async_open_status_bar_component_popover(
     return await _async_call(connection, request)
 
 
-async def async_set_broadcast_domains(connection, list_of_list_of_session_ids):
+async def async_set_broadcast_domains(
+    connection: Connection, list_of_list_of_session_ids: Iterable[Iterable[str]]
+) -> api_pb2.ServerOriginatedMessage:
     """
     Send a request to set the current broadcast domains.
     """
     request = _alloc_request()
     request.set_broadcast_domains_request.SetInParent()
-    domains_protos = []
+    domains_protos: list[api_pb2.BroadcastDomain] = []
     for list_of_session_ids in list_of_list_of_session_ids:
-        proto = iterm2.api_pb2.BroadcastDomain()
+        proto = api_pb2.BroadcastDomain()
         proto.session_ids.extend(list_of_session_ids)
         domains_protos.append(proto)
-    request.set_broadcast_domains_request.broadcast_domains.extend(
-        domains_protos)
+    request.set_broadcast_domains_request.broadcast_domains.extend(domains_protos)
     return await _async_call(connection, request)
 
 
 async def async_close(
-        connection, sessions=None, tabs=None, windows=None, force=False):
+    connection: Connection,
+    sessions: Iterable[str] | None = None,
+    tabs: Iterable[str] | None = None,
+    windows: Iterable[str] | None = None,
+    force: bool = False,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Send a close request.
     """
@@ -838,13 +970,14 @@ async def async_close(
 
 
 async def async_invoke_function(
-        connection,
-        invocation,
-        session_id=None,
-        tab_id=None,
-        window_id=None,
-        timeout=-1,
-        receiver=None):
+    connection: Connection,
+    invocation: str,
+    session_id: str | None = None,
+    tab_id: str | None = None,
+    window_id: str | None = None,
+    timeout: float = -1,
+    receiver: str | None = None,
+) -> api_pb2.ServerOriginatedMessage:
     """
     Invoke a function in iTerm2, possibly as a method call on an object.
     """
@@ -865,57 +998,64 @@ async def async_invoke_function(
     return await _async_call(connection, request)
 
 
-def _invocation_result(response):
+def _invocation_result(response: api_pb2.ServerOriginatedMessage) -> Any:
     """Unwraps an invoke-function response, raising RPCException on error."""
-    which = response.invoke_function_response.WhichOneof('disposition')
-    if which == 'error':
-        if (response.invoke_function_response.error.status ==
-                iterm2.api_pb2.InvokeFunctionResponse.Status.Value("TIMEOUT")):
-            raise iterm2.rpc.RPCException("Timeout")
-        raise iterm2.rpc.RPCException("{}: {}".format(
-            iterm2.api_pb2.InvokeFunctionResponse.Status.Name(
-                response.invoke_function_response.error.status),
-            response.invoke_function_response.error.error_reason))
+    which = response.invoke_function_response.WhichOneof("disposition")
+    if which == "error":
+        if (
+            response.invoke_function_response.error.status
+            == api_pb2.InvokeFunctionResponse.Status.Value("TIMEOUT")
+        ):
+            raise RPCException("Timeout")
+        raise RPCException(
+            "{}: {}".format(
+                api_pb2.InvokeFunctionResponse.Status.Name(
+                    response.invoke_function_response.error.status
+                ),
+                response.invoke_function_response.error.error_reason,
+            )
+        )
     return json.loads(response.invoke_function_response.success.json_result)
 
 
-async def async_invoke_method(connection, receiver, invocation, timeout):
+async def async_invoke_method(
+    connection: Connection, receiver: str, invocation: str, timeout: float
+) -> Any:
     """Convenience wrapper around async_invoke_function for methods."""
     assert receiver
-    response = await iterm2.rpc.async_invoke_function(
-        connection,
-        invocation,
-        receiver=receiver,
-        timeout=timeout)
+    response = await async_invoke_function(
+        connection, invocation, receiver=receiver, timeout=timeout
+    )
     return _invocation_result(response)
 
 
-async def async_invoke_app_function(connection, invocation, timeout=-1):
+async def async_invoke_app_function(
+    connection: Connection, invocation: str, timeout: float = -1
+) -> Any:
     """Convenience wrapper for invoking an app-scope (receiver-less) function."""
-    response = await iterm2.rpc.async_invoke_function(
-        connection,
-        invocation,
-        timeout=timeout)
+    response = await async_invoke_function(connection, invocation, timeout=timeout)
     return _invocation_result(response)
+
 
 # Private --------------------------------------------------------------------
 
 
+_next_id = itertools.count()
+
+
 def _alloc_id():
-    if not hasattr(_alloc_id, 'next_id'):
-        _alloc_id.next_id = 0
-    result = _alloc_id.next_id
-    _alloc_id.next_id += 1
-    return result
+    return next(_next_id)
 
 
 def _alloc_request():
-    request = iterm2.api_pb2.ClientOriginatedMessage()
+    request = api_pb2.ClientOriginatedMessage()
     request.id = _alloc_id()
     return request
 
 
-async def _async_call(connection, request):
+async def _async_call(
+    connection: Connection, request: api_pb2.ClientOriginatedMessage
+) -> api_pb2.ServerOriginatedMessage:
     await connection.async_send_message(request)
     response = await connection.async_dispatch_until_id(request.id)
     if response.HasField("error"):
@@ -924,4 +1064,7 @@ async def _async_call(connection, request):
 
 
 def _assert_not_in_transaction():
-    assert not iterm2.Transaction.current()
+    # Imported here because the transaction module imports this one.
+    from .transaction import Transaction
+
+    assert not Transaction.current()

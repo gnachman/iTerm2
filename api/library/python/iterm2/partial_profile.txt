@@ -7,10 +7,10 @@ class PartialProfile(Profile):
     # pylint: disable=dangerous-default-value
     @staticmethod
     async def async_query(
-            connection: iterm2.connection.Connection,
-            guids: typing.Optional[typing.List[str]] = None,
-            properties: typing.List[str] = [
-                "Guid", "Name"]) -> typing.List['PartialProfile']:
+            connection: Connection,
+            guids: Iterable[str] | None = None,
+            properties: Iterable[str] | None = [
+                "Guid", "Name"]) -> list[PartialProfile]:
         """
         Fetches a list of profiles by guid, populating the requested
         properties.
@@ -28,9 +28,9 @@ class PartialProfile(Profile):
             * Example ":ref:`theme_example`"
             * Example ":ref:`darknight_example`"
         """
-        response = await iterm2.rpc.async_list_profiles(
+        response = await async_list_profiles(
             connection, guids, properties)
-        profiles = []
+        profiles: list[PartialProfile] = []
         for response_profile in response.list_profiles_response.profiles:
             profile = PartialProfile(
                 None, connection, response_profile.properties)
@@ -41,12 +41,12 @@ class PartialProfile(Profile):
     # pylint: disable=arguments-differ
     @staticmethod
     async def async_get_default(
-            connection: iterm2.connection.Connection,
-            properties: typing.List[str] = [
-                "Guid", "Name"]) -> 'PartialProfile':
+            connection: Connection,
+            properties: Iterable[str] | None = [
+                "Guid", "Name"]) -> PartialProfile:
         """Returns the default profile."""
-        iterm2.capabilities.check_supports_get_default_profile(connection)
-        result = await iterm2.rpc.async_get_default_profile(connection)
+        check_supports_get_default_profile(connection)
+        result = await async_get_default_profile(connection)
         guid = (result.preferences_response.results[0].
                 get_default_profile_result.guid)
         profiles = await PartialProfile.async_query(
@@ -66,7 +66,7 @@ class PartialProfile(Profile):
         """
         if not self.guid:
             raise BadGUIDException()
-        response = await iterm2.rpc.async_list_profiles(
+        response = await async_list_profiles(
             self.connection, [self.guid], None)
         if len(response.list_profiles_response.profiles) != 1:
             raise BadGUIDException()
@@ -75,6 +75,6 @@ class PartialProfile(Profile):
             self.connection,
             response.list_profiles_response.profiles[0].properties)
 
-    async def async_make_default(self):
+    async def async_make_default(self) -> None:
         """Makes this profile the default profile."""
-        await iterm2.rpc.async_set_default_profile(self.connection, self.guid)
+        await async_set_default_profile(self.connection, self.guid)  # type: ignore[arg-type]

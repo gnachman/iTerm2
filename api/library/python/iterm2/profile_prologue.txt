@@ -4,11 +4,14 @@ class Profile(WriteOnlyProfile):
     If a session_id is set then this is the profile attached to a session.
     Otherwise, it is a shared profile."""
 
-    USE_CUSTOM_COMMAND_ENABLED = "Yes"
-    USE_CUSTOM_COMMAND_DISABLED = "No"
+    USE_CUSTOM_COMMAND_ENABLED: str = "Yes"
+    USE_CUSTOM_COMMAND_DISABLED: str = "No"
 
     @staticmethod
-    async def async_get(connection, guids=None) -> typing.List['Profile']:
+    async def async_get(
+            connection: Connection,
+            guids: Iterable[str] | None = None
+            ) -> list[Profile]:
         """Fetches all profiles with the specified GUIDs.
 
         :param guids: The profiles to get, or if `None` then all will be
@@ -16,26 +19,31 @@ class Profile(WriteOnlyProfile):
 
         :returns: A list of :class:`Profile` objects.
         """
-        response = await iterm2.rpc.async_list_profiles(
+        response = await async_list_profiles(
             connection, guids, None)
-        profiles = []
+        profiles: list[Profile] = []
         for response_profile in response.list_profiles_response.profiles:
             profile = Profile(None, connection, response_profile.properties)
             profiles.append(profile)
         return profiles
 
     @staticmethod
-    async def async_get_default(connection) -> 'Profile':
+    async def async_get_default(
+            connection: Connection) -> Profile:
         """Returns the default profile."""
-        iterm2.capabilities.check_supports_get_default_profile(connection)
-        result = await iterm2.rpc.async_get_default_profile(connection)
+        check_supports_get_default_profile(connection)
+        result = await async_get_default_profile(connection)
         guid = (result.preferences_response.results[0].
                 get_default_profile_result.guid)
         profiles = await Profile.async_get(connection, [guid])
         return profiles[0]
 
-    def __init__(self, session_id, connection, profile_property_list):
-        props = {}
+    def __init__(
+            self,
+            session_id: str | None,
+            connection: Connection,
+            profile_property_list: Iterable[ProfileProperty]) -> None:
+        props: dict[str, Any] = {}
         for prop in profile_property_list:
             props[prop.key] = json.loads(prop.json_value)
 
@@ -44,21 +52,23 @@ class Profile(WriteOnlyProfile):
 
         super().__init__(session_id, connection, guid)
 
-        self.connection = connection
-        self.session_id = session_id
+        self.connection: Connection = connection
+        self.session_id: str | None = session_id
         self.__props = props
 
-    def _simple_get(self, key):
+    def _simple_get(self, key: str) -> Any:
+        """Returns the JSON-decoded value for key, or None if it is absent."""
         if key in self.__props:
             return self.__props[key]
         return None
 
-    def _get_optional_bool(self, key):
+    def _get_optional_bool(self, key: str) -> bool | None:
         if key not in self.__props:
             return None
         return bool(self.__props[key])
 
-    def get_color_with_key(self, key):
+    def get_color_with_key(
+            self, key: str) -> Color | None:
         """Returns the color for the request key, or None.
 
         :param key: A string describing the color. Corresponds to the keys in
@@ -67,7 +77,7 @@ class Profile(WriteOnlyProfile):
         :returns: Either a :class:`~iterm2.color.Color` or `None`.
         """
         try:
-            color = iterm2.color.Color()
+            color = Color()
             color.from_dict(self.__props[key])
             return color
         except ValueError:
@@ -84,22 +94,24 @@ class Profile(WriteOnlyProfile):
         return LocalWriteOnlyProfile(self.__props)
 
     @property
-    def all_properties(self):
+    def all_properties(self) -> dict[str, Any]:
         """Returns the internal dictionary value."""
         return dict(self.__props)
 
     @property
     def title_components(
-            self) -> typing.Optional[typing.List[TitleComponents]]:
+            self) -> list[TitleComponents] | None:
         """
         Returns which components are visible in the session's title, or selects
         a custom component.
 
         If it is set to `CUSTOM` then the title_function must be set properly.
+
+        :returns: A list of :class:`TitleComponents`, or `None` if not set.
         """
-        parts = []
-        bit = 1
         value = self._simple_get("Title Components")
+        parts: list[TitleComponents] = []
+        bit = 1
         while bit <= value:
             if bit & value:
                 parts.append(TitleComponents(bit))
@@ -107,41 +119,42 @@ class Profile(WriteOnlyProfile):
         return parts
 
     @property
-    def title_function(self) -> typing.Optional[typing.Tuple[str, str]]:
+    def title_function(self) -> tuple[str, str] | None:
         """
         Returns the function call for the session title provider and its
         display name for the UI.
 
-        :returns: (display name, unique identifier)
+        :returns: (display name, unique identifier), or `None` if not set.
         """
         values = self._simple_get("Title Function")
         return (values[0], values[1])
 
-    async def async_make_default(self):
+    async def async_make_default(self) -> None:
         """Makes this profile the default profile."""
-        await iterm2.rpc.async_set_default_profile(self.connection, self.guid)
+        await async_set_default_profile(self.connection, self.guid)  # type: ignore[arg-type]
 
     @property
-    def guid(self):
+    def guid(self) -> str | None:
         """Returns globally unique ID for this profile.
 
-        :returns: A string identifying this profile
+        :returns: A string identifying this profile, or `None` if not set (e.g.,
+            a :class:`PartialProfile` that did not fetch it).
         """
         return self._simple_get("Guid")
 
     @property
-    def original_guid(self):
+    def original_guid(self) -> str | None:
         """The GUID of the original profile from which this one was derived.
 
         Used for sessions whose profile has been modified from the underlying
         profile. Otherwise not set.
 
-        :returns: Guid
+        :returns: Guid, or `None` if not set.
         """
         return self._simple_get("Original Guid")
 
     @property
-    def dynamic_profile_parent_name(self):
+    def dynamic_profile_parent_name(self) -> str | None:
         """
         If the profile is a dynamic profile, returns the name of the parent
         profile.
@@ -151,7 +164,7 @@ class Profile(WriteOnlyProfile):
         return self._simple_get("Dynamic Profile Parent Name")
 
     @property
-    def dynamic_profile_file_name(self):
+    def dynamic_profile_file_name(self) -> str | None:
         """If the profile is a dynamic profile, returns the path to the file
         from which it came.
 

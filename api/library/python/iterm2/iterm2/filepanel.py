@@ -1,10 +1,17 @@
 """Open and Save panels."""
+
+from __future__ import annotations
+
 import enum
 import json
-import typing
+from typing import TYPE_CHECKING
 
-import iterm2.capabilities
-import iterm2.connection
+from .app import async_invoke_function
+from .capabilities import check_supports_file_panels
+
+if TYPE_CHECKING:
+    from .connection import Connection
+
 
 class OpenPanel:
     """
@@ -18,41 +25,42 @@ class OpenPanel:
     """
 
     class Options(enum.Enum):
-        CAN_CREATE_DIRECTORIES = (1 << 0)
-        TREATS_FILE_PACKAGES_AS_DIRECTORIES = (1 << 1)
-        SHOWS_HIDDEN_FILES = (1 << 2)
-        RESOLVES_ALIASES = (1 << 32)
-        CAN_CHOOSE_DIRECTORIES = (1 << 33)
-        ALLOWS_MULTIPLE_SELECTION = (1 << 34)
-        CAN_CHOOSE_FILES = (1 << 35)
+        CAN_CREATE_DIRECTORIES = 1 << 0
+        TREATS_FILE_PACKAGES_AS_DIRECTORIES = 1 << 1
+        SHOWS_HIDDEN_FILES = 1 << 2
+        RESOLVES_ALIASES = 1 << 32
+        CAN_CHOOSE_DIRECTORIES = 1 << 33
+        ALLOWS_MULTIPLE_SELECTION = 1 << 34
+        CAN_CHOOSE_FILES = 1 << 35
 
     class Result:
         """Holds the results of a successful open panel."""
-        def __init__(self, files):
+
+        def __init__(self, files: list[str]) -> None:
             self.__files = files
 
         @property
-        def files(self) -> typing.List[str]:
+        def files(self) -> list[str]:
             return self.__files
 
-    def __init__(self):
-        self.__path = None
+    def __init__(self) -> None:
+        self.__path: str | None = None
         self.__options = [OpenPanel.Options(OpenPanel.Options.CAN_CHOOSE_FILES)]
-        self.__extensions = None
-        self.__prompt = None
-        self.__message = None
+        self.__extensions: list[str] | None = None
+        self.__prompt: str | None = None
+        self.__message: str | None = None
 
     @property
-    def path(self) -> typing.Optional[str]:
+    def path(self) -> str | None:
         """Initial directory for panel."""
         return self.__path
 
     @path.setter
-    def path(self, value: str):
+    def path(self, value: str) -> None:
         self.__path = value
 
     @property
-    def options(self) -> typing.List['iterm2.OpenPanel.Options']:
+    def options(self) -> list[OpenPanel.Options]:
         """Flags controlling the panel.
 
         Defaults to [Options(CAN_CHOOSE_FILES)].
@@ -60,51 +68,54 @@ class OpenPanel:
         return self.__options
 
     @options.setter
-    def options(self, value: typing.List['iterm2.OpenPanel.Options']):
+    def options(self, value: list[OpenPanel.Options]) -> None:
         self.__options = value
 
     @property
-    def extensions(self) -> typing.Optional[typing.List[str]]:
+    def extensions(self) -> list[str] | None:
         """List of file extensions that are allowed."""
         return self.__extensions
 
     @extensions.setter
-    def extensions(self, value: typing.Optional[typing.List[str]]):
+    def extensions(self, value: list[str] | None) -> None:
         self.__extensions = value
 
     @property
-    def prompt(self) -> typing.Optional[str]:
+    def prompt(self) -> str | None:
         """Text for OK button."""
         return self.__prompt
 
     @prompt.setter
-    def prompt(self, value: str):
+    def prompt(self, value: str) -> None:
         self.__prompt = value
 
     @property
-    def message(self) -> typing.Optional[str]:
+    def message(self) -> str | None:
         """Text for panel title."""
         return self.__message
 
     @message.setter
-    def message(self, value: str):
+    def message(self, value: str) -> None:
         self.__message = value
 
-    async def async_run(self, connection) -> typing.Optional['iterm2.OpenPanel.Result']:
+    async def async_run(self, connection: Connection) -> OpenPanel.Result | None:
         """Show the panel.
 
         :returns: A :class:`~iterm2.OpenPanel.Result` if successful,
             or `None` if the user cancels.
         """
-        iterm2.capabilities.check_supports_file_panels(connection)
-        bitmap = sum(map(lambda option: option.value, self.options))
-        response = await iterm2.async_invoke_function(
+        check_supports_file_panels(connection)
+        bitmap = sum(option.value for option in self.options)
+        response = await async_invoke_function(
             connection,
-            (f'iterm2.open_panel(path: {json.dumps(self.path)}, ' +
-             f'options: {bitmap},' +
-             f'extensions: {json.dumps(self.extensions)},' +
-             f'prompt: {json.dumps(self.prompt)},' +
-             f'message: {json.dumps(self.message)})'))
+            (
+                f"iterm2.open_panel(path: {json.dumps(self.path)}, "
+                f"options: {bitmap},"
+                f"extensions: {json.dumps(self.extensions)},"
+                f"prompt: {json.dumps(self.prompt)},"
+                f"message: {json.dumps(self.message)})"
+            ),
+        )
         if response:
             return OpenPanel.Result(response)
         return None
@@ -125,43 +136,44 @@ class SavePanel:
     """
 
     class Options(enum.Enum):
-        CAN_CREATE_DIRECTORIES = (1 << 0)
-        TREATS_FILE_PACKAGES_AS_DIRECTORIES = (1 << 1)
-        SHOWS_HIDDEN_FILES = (1 << 2)
-        ALLOWS_OTHER_FILE_TYPES = (1 << 3)
-        CAN_SELECT_HIDDEN_EXTENSION = (1 << 4)
-        EXTENSION_HIDDEN = (1 << 5)
+        CAN_CREATE_DIRECTORIES = 1 << 0
+        TREATS_FILE_PACKAGES_AS_DIRECTORIES = 1 << 1
+        SHOWS_HIDDEN_FILES = 1 << 2
+        ALLOWS_OTHER_FILE_TYPES = 1 << 3
+        CAN_SELECT_HIDDEN_EXTENSION = 1 << 4
+        EXTENSION_HIDDEN = 1 << 5
 
     class Result:
         """Holds the results of a successful save panel."""
-        def __init__(self, file):
+
+        def __init__(self, file: str) -> None:
             self.__file = file
 
         @property
         def file(self) -> str:
             return self.__file
 
-    def __init__(self):
-        self.__path = None
-        self.__options = []
-        self.__extensions = None
-        self.__prompt = None
-        self.__title = None
-        self.__message = None
-        self.__name_field_label = None
-        self.__default_filename = None
+    def __init__(self) -> None:
+        self.__path: str | None = None
+        self.__options: list[SavePanel.Options] = []
+        self.__extensions: list[str] | None = None
+        self.__prompt: str | None = None
+        self.__title: str | None = None
+        self.__message: str | None = None
+        self.__name_field_label: str | None = None
+        self.__default_filename: str | None = None
 
     @property
-    def path(self) -> str:
+    def path(self) -> str | None:
         """Initial directory."""
         return self.__path
 
     @path.setter
-    def path(self, value: str):
+    def path(self, value: str) -> None:
         self.__path = value
 
     @property
-    def options(self) -> typing.List['iterm2.SavePanel.Options']:
+    def options(self) -> list[SavePanel.Options]:
         """Flags controlling the panel.
 
         Defaults to [].
@@ -169,81 +181,84 @@ class SavePanel:
         return self.__options
 
     @options.setter
-    def options(self, value: typing.List['iterm2.SavePanel.Options']):
+    def options(self, value: list[SavePanel.Options]) -> None:
         self.__options = value
 
     @property
-    def extensions(self) -> typing.Optional[typing.List[str]]:
+    def extensions(self) -> list[str] | None:
         """List of file extensions that are allowed."""
         return self.__extensions
 
     @extensions.setter
-    def extensions(self, value: typing.Optional[typing.List[str]]):
+    def extensions(self, value: list[str] | None) -> None:
         self.__extensions = value
 
     @property
-    def prompt(self) -> typing.Optional[str]:
+    def prompt(self) -> str | None:
         """Text for OK button."""
         return self.__prompt
 
     @prompt.setter
-    def prompt(self, value: typing.Optional[str]):
+    def prompt(self, value: str | None) -> None:
         self.__prompt = value
 
     @property
-    def title(self) -> typing.Optional[str]:
+    def title(self) -> str | None:
         """Text for panel title."""
         return self.__title
 
     @title.setter
-    def title(self, value: typing.Optional[str]):
+    def title(self, value: str | None) -> None:
         self.__title = value
 
     @property
-    def message(self) -> typing.Optional[str]:
+    def message(self) -> str | None:
         """Text for subtitle."""
         return self.__message
 
     @message.setter
-    def message(self, value: typing.Optional[str]):
+    def message(self, value: str | None) -> None:
         self.__message = value
 
     @property
-    def name_field_label(self) -> typing.Optional[str]:
+    def name_field_label(self) -> str | None:
         """Text before filename field."""
         return self.__name_field_label
 
     @name_field_label.setter
-    def name_field_label(self, value: typing.Optional[str]):
+    def name_field_label(self, value: str | None) -> None:
         self.__name_field_label = value
 
     @property
-    def default_filename(self) -> typing.Optional[str]:
+    def default_filename(self) -> str | None:
         """Pre-fill filename field with this."""
         return self.__default_filename
 
     @default_filename.setter
-    def default_filename(self, value: typing.Optional[str]):
+    def default_filename(self, value: str | None) -> None:
         self.__default_filename = value
 
-    async def async_run(self, connection) -> typing.Optional['iterm2.SavePanel.Result']:
+    async def async_run(self, connection: Connection) -> SavePanel.Result | None:
         """Show the panel.
 
         :returns: A :class:`~iterm2.SavePanel.Result` if successful,
             or `None` if the user cancels.
         """
-        iterm2.capabilities.check_supports_file_panels(connection)
-        bitmap = sum(map(lambda option: option.value, self.options))
-        response = await iterm2.async_invoke_function(
-                connection,
-                (f'iterm2.save_panel(path: {json.dumps(self.path)}, ' +
-                f'options: {bitmap},' +
-                f'extensions: {json.dumps(self.extensions)},' +
-                f'prompt: {json.dumps(self.prompt)},' +
-                f'title: {json.dumps(self.title)},' +
-                f'message: {json.dumps(self.message)},' +
-                f'name_field_label: {json.dumps(self.name_field_label)},'
-                f'default_filename: {json.dumps(self.default_filename)})'))
+        check_supports_file_panels(connection)
+        bitmap = sum(option.value for option in self.options)
+        response = await async_invoke_function(
+            connection,
+            (
+                f"iterm2.save_panel(path: {json.dumps(self.path)}, "
+                + f"options: {bitmap},"
+                + f"extensions: {json.dumps(self.extensions)},"
+                + f"prompt: {json.dumps(self.prompt)},"
+                + f"title: {json.dumps(self.title)},"
+                + f"message: {json.dumps(self.message)},"
+                + f"name_field_label: {json.dumps(self.name_field_label)},"
+                f"default_filename: {json.dumps(self.default_filename)})"
+            ),
+        )
         if response:
             return SavePanel.Result(response)
         return None

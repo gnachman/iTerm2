@@ -1,4 +1,5 @@
-"""Tests for Session Note support in iterm2.session."""
+"""Tests for iterm2.session."""
+
 import asyncio
 import json
 from types import SimpleNamespace
@@ -42,36 +43,39 @@ def test_get_session_note_requests_and_parses_complete_state(monkeypatch):
         return SimpleNamespace(
             get_property_response=SimpleNamespace(
                 status=iterm2.api_pb2.GetPropertyResponse.Status.Value("OK"),
-                json_value=json.dumps({
-                    "text": "remember this",
-                    "visible": True,
-                    "collapsed": False,
-                })))
+                json_value=json.dumps(
+                    {
+                        "text": "remember this",
+                        "visible": True,
+                        "collapsed": False,
+                    }
+                ),
+            )
+        )
 
-    monkeypatch.setattr(iterm2.rpc, "async_get_property", async_get_property)
+    monkeypatch.setattr(iterm2.session, "async_get_property", async_get_property)
 
     note = asyncio.run(session.async_get_session_note())
 
     assert calls == [(connection, "session_note", "session-id")]
     assert isinstance(note, iterm2.SessionNote)
-    assert (note.text, note.visible, note.collapsed) == (
-        "remember this", True, False)
+    assert (note.text, note.visible, note.collapsed) == ("remember this", True, False)
 
 
-def test_set_session_note_sends_only_text_when_other_fields_are_omitted(
-        monkeypatch):
+def test_set_session_note_sends_only_text_when_other_fields_are_omitted(monkeypatch):
     """A text-only update does not overwrite visibility or collapse state."""
     session, connection = make_session()
     calls = []
 
-    async def async_set_property(
-            actual_connection, name, json_value, session_id):
+    async def async_set_property(actual_connection, name, json_value, session_id):
         calls.append((actual_connection, name, json_value, session_id))
         return SimpleNamespace(
             set_property_response=SimpleNamespace(
-                status=iterm2.api_pb2.SetPropertyResponse.Status.Value("OK")))
+                status=iterm2.api_pb2.SetPropertyResponse.Status.Value("OK")
+            )
+        )
 
-    monkeypatch.setattr(iterm2.rpc, "async_set_property", async_set_property)
+    monkeypatch.setattr(iterm2.session, "async_set_property", async_set_property)
 
     asyncio.run(session.async_set_session_note(text="updated"))
 
@@ -93,12 +97,15 @@ def test_set_session_note_serializes_a_complete_patch(monkeypatch):
         values.append(json_value)
         return SimpleNamespace(
             set_property_response=SimpleNamespace(
-                status=iterm2.api_pb2.SetPropertyResponse.Status.Value("OK")))
+                status=iterm2.api_pb2.SetPropertyResponse.Status.Value("OK")
+            )
+        )
 
-    monkeypatch.setattr(iterm2.rpc, "async_set_property", async_set_property)
+    monkeypatch.setattr(iterm2.session, "async_set_property", async_set_property)
 
-    asyncio.run(session.async_set_session_note(
-        text="updated", visible=False, collapsed=True))
+    asyncio.run(
+        session.async_set_session_note(text="updated", visible=False, collapsed=True)
+    )
 
     assert json.loads(values[0]) == {
         "text": "updated",
@@ -117,7 +124,7 @@ def test_set_session_note_rejects_an_empty_patch_before_rpc(monkeypatch):
         del args, kwargs
         raise AssertionError("RPC must not be called for an empty patch")
 
-    monkeypatch.setattr(iterm2.rpc, "async_set_property", unexpected_rpc)
+    monkeypatch.setattr(iterm2.session, "async_set_property", unexpected_rpc)
 
     with pytest.raises(ValueError, match="At least one Session Note field"):
         asyncio.run(session.async_set_session_note())
@@ -132,10 +139,13 @@ def test_get_session_note_raises_rpc_exception_for_non_ok_status(monkeypatch):
         return SimpleNamespace(
             get_property_response=SimpleNamespace(
                 status=iterm2.api_pb2.GetPropertyResponse.Status.Value(
-                    "INVALID_TARGET"),
-                json_value=""))
+                    "INVALID_TARGET"
+                ),
+                json_value="",
+            )
+        )
 
-    monkeypatch.setattr(iterm2.rpc, "async_get_property", async_get_property)
+    monkeypatch.setattr(iterm2.session, "async_get_property", async_get_property)
 
     with pytest.raises(iterm2.rpc.RPCException, match="INVALID_TARGET"):
         asyncio.run(session.async_get_session_note())
@@ -149,10 +159,11 @@ def test_set_session_note_raises_rpc_exception_for_non_ok_status(monkeypatch):
         del connection, name, json_value, session_id
         return SimpleNamespace(
             set_property_response=SimpleNamespace(
-                status=iterm2.api_pb2.SetPropertyResponse.Status.Value(
-                    "INVALID_VALUE")))
+                status=iterm2.api_pb2.SetPropertyResponse.Status.Value("INVALID_VALUE")
+            )
+        )
 
-    monkeypatch.setattr(iterm2.rpc, "async_set_property", async_set_property)
+    monkeypatch.setattr(iterm2.session, "async_set_property", async_set_property)
 
     with pytest.raises(iterm2.rpc.RPCException, match="INVALID_VALUE"):
         asyncio.run(session.async_set_session_note(text="updated"))
@@ -173,6 +184,7 @@ def test_set_session_note_requires_app_support():
     with pytest.raises(iterm2.capabilities.AppVersionTooOld):
         asyncio.run(session.async_set_session_note(text="remember this"))
 
+
 def test_set_browser_toolbar_hidden_sends_a_number(monkeypatch):
     """A bare Python True would be parsed as a variable reference, so 1/0 is sent."""
     session, _ = make_session()
@@ -182,13 +194,15 @@ def test_set_browser_toolbar_hidden_sends_a_number(monkeypatch):
         invocations.append(invocation)
         return True
 
-    monkeypatch.setattr(iterm2.rpc, "async_invoke_method", async_invoke_method)
+    monkeypatch.setattr(iterm2.session, "async_invoke_method", async_invoke_method)
 
     asyncio.run(session.async_set_browser_toolbar_hidden(True))
     asyncio.run(session.async_set_browser_toolbar_hidden(False))
 
-    assert invocations == ["iterm2.browser_set_toolbar_hidden(hidden: 1)",
-                           "iterm2.browser_set_toolbar_hidden(hidden: 0)"]
+    assert invocations == [
+        "iterm2.browser_set_toolbar_hidden(hidden: 1)",
+        "iterm2.browser_set_toolbar_hidden(hidden: 0)",
+    ]
 
 
 def test_eval_javascript_invokes_builtin_and_decodes_json(monkeypatch):
@@ -200,13 +214,19 @@ def test_eval_javascript_invokes_builtin_and_decodes_json(monkeypatch):
         calls.append((actual_connection, session_id, invocation, timeout))
         return json.dumps({"title": "Example Domain", "count": 2})
 
-    monkeypatch.setattr(iterm2.rpc, "async_invoke_method", async_invoke_method)
+    monkeypatch.setattr(iterm2.session, "async_invoke_method", async_invoke_method)
 
     result = asyncio.run(session.async_eval_javascript('return "a" + "b"'))
 
     assert result == {"title": "Example Domain", "count": 2}
-    assert calls == [(connection, "session-id",
-                      'iterm2.browser_eval_js(js: "return \\"a\\" + \\"b\\"")', -1)]
+    assert calls == [
+        (
+            connection,
+            "session-id",
+            'iterm2.browser_eval_js(js: "return \\"a\\" + \\"b\\"")',
+            -1,
+        )
+    ]
 
 
 def test_browser_scripting_requires_app_support():
@@ -215,3 +235,33 @@ def test_browser_scripting_requires_app_support():
 
     with pytest.raises(iterm2.capabilities.AppVersionTooOld):
         asyncio.run(session.async_eval_javascript("return 1"))
+
+
+def test_pretty_str_describes_a_linked_session():
+    """A session from a layout link reports its title, id, size, and frame."""
+    link = iterm2.api_pb2.SplitTreeNode.SplitTreeLink()
+    link.session.unique_identifier = "session-id"
+    link.session.title = "Title"
+    link.session.grid_size.width = 80
+    link.session.grid_size.height = 25
+    link.session.frame.origin.x = 1
+    link.session.frame.origin.y = 2
+    link.session.frame.size.width = 100
+    link.session.frame.size.height = 50
+    session = iterm2.Session(SimpleNamespace(), link)
+
+    assert session.pretty_str("  ") == (
+        '  Session "Title" id=session-id (80 x 25) frame=[(1, 2) (100 x 50)]\n'
+    )
+
+
+def test_pretty_str_describes_a_buried_session_without_size_or_frame():
+    """A buried session has no size or frame, which prints as undefined."""
+    summary = iterm2.api_pb2.SessionSummary()
+    summary.unique_identifier = "buried-id"
+    summary.title = "Buried"
+    session = iterm2.Session(SimpleNamespace(), None, summary)
+
+    assert session.pretty_str() == (
+        'Session "Buried" id=buried-id [Undefined] frame=[Undefined]\n'
+    )

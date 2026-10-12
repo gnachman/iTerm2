@@ -1,9 +1,17 @@
 """Provides handy functions."""
+
+from __future__ import annotations
+
 import asyncio
 import json
-import typing
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
-import iterm2.api_pb2
+from . import api_pb2
+
+if TYPE_CHECKING:
+    import builtins
+
 
 # pylint: disable=invalid-name
 class Size:
@@ -11,7 +19,7 @@ class Size:
 
     Can be used where api_pb2.Size is accepted."""
 
-    def __init__(self, width: int, height: int):
+    def __init__(self, width: int, height: int) -> None:
         """Constructs a new size.
 
         :param width: A nonnegative number giving the width.
@@ -26,7 +34,7 @@ class Size:
         return self.__width
 
     @width.setter
-    def width(self, value: int):
+    def width(self, value: int) -> None:
         """Sets the width"""
         self.__width = value
 
@@ -36,18 +44,18 @@ class Size:
         return self.__height
 
     @height.setter
-    def height(self, value: int):
+    def height(self, value: int) -> None:
         """Sets the height"""
         self.__height = value
 
     @property
-    def dict(self):
+    def dict(self) -> builtins.dict[str, int]:
         """
         Returns a dict representation of the size.
         """
         return {"width": self.width, "height": self.height}
 
-    def load_from_dict(self, dictionary):
+    def load_from_dict(self, dictionary: Mapping[str, int]) -> None:
         """
         Initializes the size from a dict representation.
         """
@@ -62,9 +70,9 @@ class Size:
         return json.dumps(self.dict)
 
     @property
-    def proto(self):
+    def proto(self) -> api_pb2.Size:
         """Returns the protobuf Size representation."""
-        size = iterm2.api_pb2.Size()
+        size = api_pb2.Size()
         size.width = self.width
         size.height = self.height
         return size
@@ -75,7 +83,7 @@ class Point:
 
     Can be used where api_pb2.Point is accepted."""
 
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int, y: int) -> None:
         """Constructs a new point.
 
         :param x: A number giving the X coordinate.
@@ -85,10 +93,10 @@ class Point:
         self.__y = y
 
     def __repr__(self):
-        return "({}, {})".format(self.x, self.y)
+        return f"({self.x}, {self.y})"
 
     @staticmethod
-    def from_coord_proto(proto):
+    def from_coord_proto(proto: api_pb2.Coord) -> Point:
         """Creates a new Point from a Coord protobuf"""
         return Point(proto.x, proto.y)
 
@@ -98,7 +106,7 @@ class Point:
         return self.__x
 
     @x.setter
-    def x(self, value: int):
+    def x(self, value: int) -> None:
         """Sets the x coordinate"""
         self.__x = value
 
@@ -108,16 +116,16 @@ class Point:
         return self.__y
 
     @y.setter
-    def y(self, value: int):
+    def y(self, value: int) -> None:
         """Sets the y coordinate"""
         self.__y = value
 
     @property
-    def dict(self):
+    def dict(self) -> builtins.dict[str, int]:
         """Returns a dict representation of the point."""
         return {"x": self.x, "y": self.y}
 
-    def load_from_dict(self, dict):  # pylint: disable=redefined-builtin
+    def load_from_dict(self, dict: Mapping[str, int]) -> None:  # pylint: disable=redefined-builtin
         """Initializes the point from a dict representation."""
         self.x = dict["x"]
         self.y = dict["y"]
@@ -128,31 +136,32 @@ class Point:
         return json.dumps(self.dict)
 
     @property
-    def proto(self):
+    def proto(self) -> api_pb2.Coord:
         """Returns the protobuf Coord representation."""
-        coord = iterm2.api_pb2.Coord()
+        coord = api_pb2.Coord()
         coord.x = self.x
         coord.y = self.y
         return coord
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Point):
             return self.x == other.x and self.y == other.y
         return NotImplemented
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(tuple(sorted(self.__dict__.items())))
 
 
 class Frame:
     """Describes a bounding rectangle. 0,0 is the bottom left coordinate."""
-    def __init__(self, origin: Point = Point(0, 0), size: Size = Size(0, 0)):
+
+    def __init__(self, origin: Point = Point(0, 0), size: Size = Size(0, 0)) -> None:
         """Constructs a new frame."""
         self.__origin = origin
         self.__size = size
 
     def __repr__(self):
-        return "<Frame origin={} size={}>".format(self.origin, self.size)
+        return f"<Frame origin={self.origin} size={self.size}>"
 
     @property
     def origin(self) -> Point:
@@ -163,7 +172,7 @@ class Frame:
         return self.__origin
 
     @origin.setter
-    def origin(self, value: Point):
+    def origin(self, value: Point) -> None:
         """Sets the top-left coordinate.
 
         :param value: A :class:`Point`.
@@ -179,20 +188,20 @@ class Frame:
         return self.__size
 
     @size.setter
-    def size(self, value: Size):
+    def size(self, value: Size) -> None:
         """Sets the size.
 
         :param value: A :class:`Size`.
         """
         self.__size = value
 
-    def load_from_dict(self, dict):  # pylint: disable=redefined-builtin
+    def load_from_dict(self, dict: Mapping[str, Mapping[str, int]]) -> None:  # pylint: disable=redefined-builtin
         """Sets the frame's values from a dict representation."""
         self.origin.load_from_dict(dict["origin"])
         self.size.load_from_dict(dict["size"])
 
     @property
-    def dict(self):
+    def dict(self) -> builtins.dict[str, builtins.dict[str, int]]:
         """Returns a dict representation of the frame."""
         return {"origin": self.origin.dict, "size": self.size.dict}
 
@@ -202,7 +211,7 @@ class Frame:
         return json.dumps(self.dict)
 
 
-def frame_str(frame: Frame) -> str:
+def frame_str(frame: Frame | api_pb2.Frame | None) -> str:
     """Formats a :class:`Frame` as a human-readable string.
 
     :param frame: The frame to convert.
@@ -211,13 +220,10 @@ def frame_str(frame: Frame) -> str:
     if frame is None:
         return "[Undefined]"
 
-    return "[(%s, %s) %s]" % (
-        frame.origin.x,
-        frame.origin.y,
-        size_str(frame.size))
+    return "[(%s, %s) %s]" % (frame.origin.x, frame.origin.y, size_str(frame.size))
 
 
-def size_str(size: Size) -> str:
+def size_str(size: Size | api_pb2.Size | None) -> str:
     """Formats a :class:`Size` as a human-readable string.
 
     :param size: The size to convert.
@@ -225,12 +231,10 @@ def size_str(size: Size) -> str:
     :returns: A human-readable string."""
     if size is None:
         return "[Undefined]"
-    return "(%s x %s)" % (
-        size.width,
-        size.height)
+    return "(%s x %s)" % (size.width, size.height)
 
 
-def point_str(point: Point) -> str:
+def point_str(point: Point | None) -> str:
     """Formats a :class:`Point` as a human-readable string.
 
     :param point: The point to convert.
@@ -241,7 +245,7 @@ def point_str(point: Point) -> str:
     return "(%s, %s)" % (point.x, point.y)
 
 
-def distance(point_a, point_b, grid_width):
+def distance(point_a: Point, point_b: Point, grid_width: int) -> int:
     """
     Returns the distance from Point point_a to Point point_b, as measured by
     the number of cells in left-to-right, top-to-bottom order.
@@ -262,19 +266,20 @@ class CoordRange:
 
     :param start: The start point.
     :param end: The first point after the start point not in the range."""
-    def __init__(self, start: Point, end: Point):
+
+    def __init__(self, start: Point, end: Point) -> None:
         self.__start = start
         self.__end = end
 
     def __repr__(self):
-        return "CoordRange({} to {})".format(self.start, self.end)
+        return f"CoordRange({self.start} to {self.end})"
 
     @staticmethod
-    def from_proto(proto):
+    def from_proto(proto: api_pb2.CoordRange) -> CoordRange:
         """Creates a new CoordRange from a protobuf"""
         return CoordRange(
-            Point.from_coord_proto(proto.start),
-            Point.from_coord_proto(proto.end))
+            Point.from_coord_proto(proto.start), Point.from_coord_proto(proto.end)
+        )
 
     @property
     def start(self) -> Point:
@@ -289,15 +294,15 @@ class CoordRange:
         return self.__end
 
     @property
-    def proto(self):
+    def proto(self) -> api_pb2.CoordRange:
         """Returns the protobuf CoordRange representation."""
         # pylint: disable=no-member
-        coord = iterm2.api_pb2.CoordRange()
+        coord = api_pb2.CoordRange()
         coord.start.CopyFrom(self.start.proto)
         coord.end.CopyFrom(self.end.proto)
         return coord
 
-    def length(self, width) -> int:
+    def length(self, width: int) -> int:
         """Returns the number of cells from start to end."""
         return distance(self.start, self.end, width)
 
@@ -307,12 +312,13 @@ class Range:
 
     :param location: The first value in the range.
     :param length: The number of values in the range."""
-    def __init__(self, location: int, length: int):
+
+    def __init__(self, location: int, length: int) -> None:
         self.__location = location
         self.__length = length
 
     def __repr__(self):
-        return "[{}, {})".format(self.location, self.location + self.length)
+        return f"[{self.location}, {self.location + self.length})"
 
     @property
     def location(self) -> int:
@@ -330,20 +336,20 @@ class Range:
         return self.location + self.length
 
     @property
-    def proto(self):
+    def proto(self) -> api_pb2.Range:
         """Returns the protobuf Range representation."""
-        protobuf = iterm2.api_pb2.Range()
+        protobuf = api_pb2.Range()
         protobuf.location = self.location
         protobuf.length = self.length
         return protobuf
 
     @property
-    def toSet(self):
+    def toSet(self) -> set[int]:
         """Deprecated. Use to_set instead."""
         return self.to_set
 
     @property
-    def to_set(self):
+    def to_set(self) -> set[int]:
         """Returns a `set` containing all values in the range."""
         return set(range(self.location, self.location + self.length))
 
@@ -357,10 +363,10 @@ class WindowedCoordRange:
     :param columnRange: The range of columns to intersect with `coordRange` to
         get the described region, or `None` if unwindowed.
     """
+
     def __init__(
-            self,
-            coordRange: CoordRange,
-            columnRange: typing.Optional[Range] = None):
+        self, coordRange: CoordRange, columnRange: Range | None = None
+    ) -> None:
         self.___coord_range = coordRange
         if columnRange:
             self.__column_range = columnRange
@@ -368,8 +374,9 @@ class WindowedCoordRange:
             self.__column_range = Range(0, 0)
 
     def __repr__(self):
-        return "WindowedCoordRange(coordRange={} cols={})".format(
-            self.coordRange, self.columnRange)
+        return (
+            f"WindowedCoordRange(coordRange={self.coordRange} cols={self.columnRange})"
+        )
 
     @property
     def coordRange(self) -> CoordRange:
@@ -384,10 +391,10 @@ class WindowedCoordRange:
         return self.__column_range
 
     @property
-    def proto(self):
+    def proto(self) -> api_pb2.WindowedCoordRange:
         """Returns the protobuf WindowedCoordRange representation."""
         # pylint: disable=no-member
-        windowed_coord_range = iterm2.api_pb2.WindowedCoordRange()
+        windowed_coord_range = api_pb2.WindowedCoordRange()
         windowed_coord_range.coord_range.CopyFrom(self.coordRange.proto)
         windowed_coord_range.columns.CopyFrom(self.columnRange.proto)
         return windowed_coord_range
@@ -397,8 +404,10 @@ class WindowedCoordRange:
         """The first point in the region."""
         x, y = self.coordRange.start.x, self.coordRange.start.y
         if self.columnRange.length:
-            x = min(max(x, self.columnRange.location),
-                    self.columnRange.location + self.columnRange.length)
+            x = min(
+                max(x, self.columnRange.location),
+                self.columnRange.location + self.columnRange.length,
+            )
         return Point(x, y)
 
     @property
@@ -432,19 +441,20 @@ class WindowedCoordRange:
         return self.__column_range.length > 0
 
 
-
-async def async_wait_forever():
+async def async_wait_forever() -> None:
     """A convenience function that never returns."""
     await asyncio.wait([asyncio.Future()])
 
 
 def iterm2_encode_str(s: str) -> str:
-    return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
-def iterm2_encode_list(obj: list) -> str:
+
+def iterm2_encode_list(obj: list[Any]) -> str:
     return "[" + ", ".join(map(iterm2_encode, obj)) + "]"
 
-def iterm2_encode(obj: typing.Any) -> str:
+
+def iterm2_encode(obj: Any) -> str:
     """Encode an object into an iTerm2 expression.
 
     string -> "string"
@@ -460,13 +470,13 @@ def iterm2_encode(obj: typing.Any) -> str:
     if isinstance(obj, str):
         return iterm2_encode_str(obj)
     if isinstance(obj, list):
-        return iterm2_encode_list(obj)
+        return iterm2_encode_list(obj)  # type: ignore
     return str(obj)
 
-def invocation_string(
-        method_name: str, argdict: typing.Dict[str, typing.Any]) -> str:
+
+def invocation_string(method_name: str, argdict: Mapping[str, Any]) -> str:
     """Gives the invocation string for a method call with given arguments."""
-    parts = []
+    parts: list[str] = []
     for name, value in argdict.items():
         parts.append(f"{name}: {iterm2_encode(value)}")
     return method_name + "(" + ", ".join(parts) + ")"

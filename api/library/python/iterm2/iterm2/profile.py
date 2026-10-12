@@ -1,16 +1,29 @@
-
 """
 Provides classes for representing, querying, and modifying iTerm2 profiles.
 """
+
+from __future__ import annotations
+
 import asyncio
 import enum
 import json
-import typing
+from typing import TYPE_CHECKING, Any
 
-import iterm2.capabilities
-import iterm2.color
-import iterm2.colorpresets
-import iterm2.rpc
+from .capabilities import check_supports_get_default_profile
+from .color import Color
+from .rpc import (
+    async_get_default_profile,
+    async_list_profiles,
+    async_set_default_profile,
+    async_set_profile_property,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine, Iterable, Mapping
+
+    from .api_pb2 import ProfileProperty
+    from .colorpresets import ColorPreset
+    from .connection import Connection
 
 
 # pylint: disable=too-many-public-methods
@@ -18,12 +31,13 @@ import iterm2.rpc
 # pylint: disable=line-too-long
 class BackgroundImageMode(enum.Enum):
     """Describes how the background image should be accommodated to fit the window."""
+
     STRETCH = 0  #: Stretch to fit
     TILE = 1  #: Full size, undistorted, and tessellated if needed.
     ASPECT_FILL = 2  #: Scale to fill the space, cropping if needed. Does not distort.
     ASPECT_FIT = 3  #: Scale to fit the space, adding letterboxes or pillarboxes if needed. Does not distort.
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
@@ -33,93 +47,104 @@ class BadGUIDException(Exception):
 
 class CursorType(enum.Enum):
     """Describes the type of the cursor."""
+
     CURSOR_TYPE_UNDERLINE = 0  #: Underline cursor
     CURSOR_TYPE_VERTICAL = 1  #: Vertical bar cursor
     CURSOR_TYPE_BOX = 2  #: Box cursor
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
 class ThinStrokes(enum.Enum):
     """When thin strokes should be used."""
+
     THIN_STROKES_SETTING_NEVER = 0  #: NEver
-    THIN_STROKES_SETTING_RETINA_DARK_BACKGROUNDS_ONLY = 1  #: When the background is dark and the display is a retina display.
+    #: When the background is dark and the display is a retina display.
+    THIN_STROKES_SETTING_RETINA_DARK_BACKGROUNDS_ONLY = 1
     THIN_STROKES_SETTING_DARK_BACKGROUNDS_ONLY = 2  #: When the background is dark.
     THIN_STROKES_SETTING_ALWAYS = 3  #: Always.
     THIN_STROKES_SETTING_RETINA_ONLY = 4  #: When the display is a retina display.
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
 class UnicodeNormalization(enum.Enum):
     """How to perform Unicode normalization."""
+
     UNICODE_NORMALIZATION_NONE = 0  #: Do not modify input
     UNICODE_NORMALIZATION_NFC = 1  #: Normalization form C
     UNICODE_NORMALIZATION_NFD = 2  #: Normalization form D
     UNICODE_NORMALIZATION_HFSPLUS = 3  #: Apple's HFS+ normalization form
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
 class CharacterEncoding(enum.Enum):
     """String encodings."""
+
     CHARACTER_ENCODING_UTF_8 = 4
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
 class OptionKeySends(enum.Enum):
     """How should the option key behave?"""
+
     OPTION_KEY_NORMAL = 0  #: Standard behavior
     OPTION_KEY_META = 1  #: Acts like Meta. Not recommended.
     OPTION_KEY_ESC = 2  #: Adds ESC prefix.
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
 class InitialWorkingDirectory(enum.Enum):
     """How should the initial working directory of a session be set?"""
+
     INITIAL_WORKING_DIRECTORY_CUSTOM = "Yes"  #: Custom directory, specified elsewhere
     INITIAL_WORKING_DIRECTORY_HOME = "No"  #: Use default of home directory
-    INITIAL_WORKING_DIRECTORY_RECYCLE = "Recycle"  #: Reuse the "current" directory, or home if there is no current.
+    #: Reuse the "current" directory, or home if there is no current.
+    INITIAL_WORKING_DIRECTORY_RECYCLE = "Recycle"
     INITIAL_WORKING_DIRECTORY_ADVANCED = "Advanced"  #: Use advanced settings, which specify more granular behavior depending on whether the new session is a new window, tab, or split pane.
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
 # pylint: enable=line-too-long
 
+
 class IconMode(enum.Enum):
     """How should session icons be selected?"""
+
     NONE = 0
     AUTOMATIC = 1
     CUSTOM = 2
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
 class TitleComponents(enum.Enum):
     """Which title components should be present?"""
-    SESSION_NAME = (1 << 0)
-    JOB = (1 << 1)
-    WORKING_DIRECTORY = (1 << 2)
-    TTY = (1 << 3)
-    CUSTOM = (1 << 4)  #: Mutually exclusive with all other options.
-    PROFILE_NAME = (1 << 5)
-    PROFILE_AND_SESSION_NAME = (1 << 6)
-    USER = (1 << 7)
-    HOST = (1 << 8)
-    COMMAND_LINE = (1 << 9)
-    SIZE = (1 << 10)
 
-    def toJSON(self):
+    SESSION_NAME = 1 << 0
+    JOB = 1 << 1
+    WORKING_DIRECTORY = 1 << 2
+    TTY = 1 << 3
+    CUSTOM = 1 << 4  #: Mutually exclusive with all other options.
+    PROFILE_NAME = 1 << 5
+    PROFILE_AND_SESSION_NAME = 1 << 6
+    USER = 1 << 7
+    HOST = 1 << 8
+    COMMAND_LINE = 1 << 9
+    SIZE = 1 << 10
+
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
@@ -137,35 +162,36 @@ class LocalWriteOnlyProfile:
       * Example ":ref:`settabcolor_example`"
       * Example ":ref:`increase_font_size_example`"
     """
-    def __init__(self, values=None):
+
+    def __init__(self, values: Mapping[str, str | None] | None = None) -> None:
         if not values:
             values = {}
-        self.__values = {}
+        self.__values: dict[str, str] = {}
         for key, value in values.items():
             self.__values[key] = json.dumps(value)
 
     @property
-    def values(self):
+    def values(self) -> dict[str, str]:
         """Returns the internal values dict."""
         return self.__values
 
-    def _simple_set(self, key, value):
+    def _simple_set(self, key: str, value: Any):
         """value is a json type"""
-        if key is None:
-            self.__values[key] = None
+        if value is None:
+            self.__values[key] = "null"
         else:
             if hasattr(value, "toJSON"):
                 self.__values[key] = value.toJSON()
             else:
                 self.__values[key] = json.dumps(value)
 
-    def _color_set(self, key, value):
+    def _color_set(self, key: str, value: Color | None):
         if value is None:
             self.__values[key] = "null"
         else:
             self.__values[key] = json.dumps(value.get_dict())
 
-    def set_title_components(self, value: typing.List[TitleComponents]):
+    def set_title_components(self, value: Iterable[TitleComponents]) -> None:
         """
         Sets which components are visible in the session's title, or selects a
         custom component.
@@ -177,7 +203,7 @@ class LocalWriteOnlyProfile:
             bitmask += component.value
         return self._simple_set("Title Components", bitmask)
 
-    def set_title_function(self, display_name: str, identifier: str):
+    def set_title_function(self, display_name: str, identifier: str) -> None:
         """
         Sets the function call for the session title provider and its display
         name for the UI.
@@ -191,8 +217,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Title Function", [display_name, identifier])
 
-
-    def set_use_separate_colors_for_light_and_dark_mode(self, value: bool):
+    def set_use_separate_colors_for_light_and_dark_mode(self, value: bool) -> None:
         """
         Sets whether to use separate colors for light and dark mode.
 
@@ -203,7 +228,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Separate Colors for Light and Dark Mode", value)
 
-    def set_foreground_color(self, value: 'iterm2.color.Color'):
+    def set_foreground_color(self, value: Color) -> None:
         """
         Sets the foreground color. This is used only when separate light/dark
         mode colors are not enabled.
@@ -212,7 +237,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Foreground Color", value)
 
-    def set_foreground_color_light(self, value: 'iterm2.color.Color'):
+    def set_foreground_color_light(self, value: Color) -> None:
         """
         Sets the foreground color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -221,7 +246,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Foreground Color (Light)", value)
 
-    def set_foreground_color_dark(self, value: 'iterm2.color.Color'):
+    def set_foreground_color_dark(self, value: Color) -> None:
         """
         Sets the foreground color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -230,7 +255,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Foreground Color (Dark)", value)
 
-    def set_background_color(self, value: 'iterm2.color.Color'):
+    def set_background_color(self, value: Color) -> None:
         """
         Sets the background color. This is used only when separate light/dark
         mode colors are not enabled.
@@ -239,7 +264,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Background Color", value)
 
-    def set_background_color_light(self, value: 'iterm2.color.Color'):
+    def set_background_color_light(self, value: Color) -> None:
         """
         Sets the background color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -248,7 +273,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Background Color (Light)", value)
 
-    def set_background_color_dark(self, value: 'iterm2.color.Color'):
+    def set_background_color_dark(self, value: Color) -> None:
         """
         Sets the background color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -257,7 +282,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Background Color (Dark)", value)
 
-    def set_bold_color(self, value: 'iterm2.color.Color'):
+    def set_bold_color(self, value: Color) -> None:
         """
         Sets the bold text color. This is used only when separate light/dark
         mode colors are not enabled.
@@ -266,7 +291,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Bold Color", value)
 
-    def set_bold_color_light(self, value: 'iterm2.color.Color'):
+    def set_bold_color_light(self, value: Color) -> None:
         """
         Sets the bold text color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -275,7 +300,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Bold Color (Light)", value)
 
-    def set_bold_color_dark(self, value: 'iterm2.color.Color'):
+    def set_bold_color_dark(self, value: Color) -> None:
         """
         Sets the bold text color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -284,7 +309,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Bold Color (Dark)", value)
 
-    def set_use_bright_bold(self, value: bool):
+    def set_use_bright_bold(self, value: bool) -> None:
         """
         Sets  how bold text is rendered. This is used only when separate
         light/dark mode colors are not enabled.
@@ -309,7 +334,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Bright Bold", value)
 
-    def set_use_bright_bold_light(self, value: bool):
+    def set_use_bright_bold_light(self, value: bool) -> None:
         """
         Sets  how bold text is rendered. This affects the light-mode variant
         when separate light/dark mode colors are enabled.
@@ -334,7 +359,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Bright Bold (Light)", value)
 
-    def set_use_bright_bold_dark(self, value: bool):
+    def set_use_bright_bold_dark(self, value: bool) -> None:
         """
         Sets  how bold text is rendered. This affects the dark-mode variant
         when separate light/dark mode colors are enabled.
@@ -359,7 +384,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Bright Bold (Dark)", value)
 
-    def set_use_bold_color(self, value: bool):
+    def set_use_bold_color(self, value: bool) -> None:
         """
         Sets whether the profile-specified bold color is used for
         default-colored bold text. This is used only when separate light/dark
@@ -372,7 +397,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Bright Bold", value)
 
-    def set_use_bold_color_light(self, value: bool):
+    def set_use_bold_color_light(self, value: bool) -> None:
         """
         Sets whether the profile-specified bold color is used for
         default-colored bold text. This affects the light-mode variant when
@@ -385,7 +410,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Bright Bold (Light)", value)
 
-    def set_use_bold_color_dark(self, value: bool):
+    def set_use_bold_color_dark(self, value: bool) -> None:
         """
         Sets whether the profile-specified bold color is used for
         default-colored bold text. This affects the dark-mode variant when
@@ -398,7 +423,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Bright Bold (Dark)", value)
 
-    def set_brighten_bold_text(self, value: bool):
+    def set_brighten_bold_text(self, value: bool) -> None:
         """
         Sets whether Dark ANSI colors get replaced with their light
         counterparts for bold text. This is used only when separate light/dark
@@ -410,7 +435,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Brighten Bold Text", value)
 
-    def set_brighten_bold_text_light(self, value: bool):
+    def set_brighten_bold_text_light(self, value: bool) -> None:
         """
         Sets whether Dark ANSI colors get replaced with their light
         counterparts for bold text. This affects the light-mode variant when
@@ -422,7 +447,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Brighten Bold Text (Light)", value)
 
-    def set_brighten_bold_text_dark(self, value: bool):
+    def set_brighten_bold_text_dark(self, value: bool) -> None:
         """
         Sets whether Dark ANSI colors get replaced with their light
         counterparts for bold text. This affects the dark-mode variant when
@@ -434,7 +459,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Brighten Bold Text (Dark)", value)
 
-    def set_link_color(self, value: 'iterm2.color.Color'):
+    def set_link_color(self, value: Color) -> None:
         """
         Sets the link color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -443,7 +468,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Link Color", value)
 
-    def set_link_color_light(self, value: 'iterm2.color.Color'):
+    def set_link_color_light(self, value: Color) -> None:
         """
         Sets the link color. This affects the light-mode variant when separate
         light/dark mode colors are enabled.
@@ -452,7 +477,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Link Color (Light)", value)
 
-    def set_link_color_dark(self, value: 'iterm2.color.Color'):
+    def set_link_color_dark(self, value: Color) -> None:
         """
         Sets the link color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -461,7 +486,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Link Color (Dark)", value)
 
-    def set_selection_color(self, value: 'iterm2.color.Color'):
+    def set_selection_color(self, value: Color) -> None:
         """
         Sets the selection background color. This is used only when separate
         light/dark mode colors are not enabled.
@@ -470,7 +495,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Selection Color", value)
 
-    def set_selection_color_light(self, value: 'iterm2.color.Color'):
+    def set_selection_color_light(self, value: Color) -> None:
         """
         Sets the selection background color. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
@@ -479,7 +504,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Selection Color (Light)", value)
 
-    def set_selection_color_dark(self, value: 'iterm2.color.Color'):
+    def set_selection_color_dark(self, value: Color) -> None:
         """
         Sets the selection background color. This affects the dark-mode variant
         when separate light/dark mode colors are enabled.
@@ -488,7 +513,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Selection Color (Dark)", value)
 
-    def set_selected_text_color(self, value: 'iterm2.color.Color'):
+    def set_selected_text_color(self, value: Color) -> None:
         """
         Sets the selection text color. This is used only when separate
         light/dark mode colors are not enabled.
@@ -497,7 +522,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Selected Text Color", value)
 
-    def set_selected_text_color_light(self, value: 'iterm2.color.Color'):
+    def set_selected_text_color_light(self, value: Color) -> None:
         """
         Sets the selection text color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -506,7 +531,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Selected Text Color (Light)", value)
 
-    def set_selected_text_color_dark(self, value: 'iterm2.color.Color'):
+    def set_selected_text_color_dark(self, value: Color) -> None:
         """
         Sets the selection text color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -515,7 +540,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Selected Text Color (Dark)", value)
 
-    def set_cursor_color(self, value: 'iterm2.color.Color'):
+    def set_cursor_color(self, value: Color) -> None:
         """
         Sets the cursor color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -524,7 +549,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Cursor Color", value)
 
-    def set_cursor_color_light(self, value: 'iterm2.color.Color'):
+    def set_cursor_color_light(self, value: Color) -> None:
         """
         Sets the cursor color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -533,7 +558,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Cursor Color (Light)", value)
 
-    def set_cursor_color_dark(self, value: 'iterm2.color.Color'):
+    def set_cursor_color_dark(self, value: Color) -> None:
         """
         Sets the cursor color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -542,7 +567,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Cursor Color (Dark)", value)
 
-    def set_cursor_text_color(self, value: 'iterm2.color.Color'):
+    def set_cursor_text_color(self, value: Color) -> None:
         """
         Sets the cursor text color. This is used only when separate light/dark
         mode colors are not enabled.
@@ -551,7 +576,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Cursor Text Color", value)
 
-    def set_cursor_text_color_light(self, value: 'iterm2.color.Color'):
+    def set_cursor_text_color_light(self, value: Color) -> None:
         """
         Sets the cursor text color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -560,7 +585,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Cursor Text Color (Light)", value)
 
-    def set_cursor_text_color_dark(self, value: 'iterm2.color.Color'):
+    def set_cursor_text_color_dark(self, value: Color) -> None:
         """
         Sets the cursor text color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -569,7 +594,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Cursor Text Color (Dark)", value)
 
-    def set_ansi_0_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_0_color(self, value: Color) -> None:
         """
         Sets the ANSI 0 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -578,7 +603,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 0 Color", value)
 
-    def set_ansi_0_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_0_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 0 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -587,7 +612,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 0 Color (Light)", value)
 
-    def set_ansi_0_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_0_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 0 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -596,7 +621,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 0 Color (Dark)", value)
 
-    def set_ansi_1_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_1_color(self, value: Color) -> None:
         """
         Sets the ANSI 1 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -605,7 +630,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 1 Color", value)
 
-    def set_ansi_1_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_1_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 1 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -614,7 +639,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 1 Color (Light)", value)
 
-    def set_ansi_1_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_1_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 1 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -623,7 +648,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 1 Color (Dark)", value)
 
-    def set_ansi_2_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_2_color(self, value: Color) -> None:
         """
         Sets the ANSI 2 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -632,7 +657,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 2 Color", value)
 
-    def set_ansi_2_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_2_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 2 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -641,7 +666,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 2 Color (Light)", value)
 
-    def set_ansi_2_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_2_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 2 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -650,7 +675,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 2 Color (Dark)", value)
 
-    def set_ansi_3_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_3_color(self, value: Color) -> None:
         """
         Sets the ANSI 3 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -659,7 +684,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 3 Color", value)
 
-    def set_ansi_3_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_3_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 3 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -668,7 +693,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 3 Color (Light)", value)
 
-    def set_ansi_3_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_3_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 3 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -677,7 +702,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 3 Color (Dark)", value)
 
-    def set_ansi_4_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_4_color(self, value: Color) -> None:
         """
         Sets the ANSI 4 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -686,7 +711,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 4 Color", value)
 
-    def set_ansi_4_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_4_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 4 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -695,7 +720,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 4 Color (Light)", value)
 
-    def set_ansi_4_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_4_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 4 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -704,7 +729,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 4 Color (Dark)", value)
 
-    def set_ansi_5_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_5_color(self, value: Color) -> None:
         """
         Sets the ANSI 5 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -713,7 +738,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 5 Color", value)
 
-    def set_ansi_5_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_5_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 5 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -722,7 +747,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 5 Color (Light)", value)
 
-    def set_ansi_5_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_5_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 5 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -731,7 +756,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 5 Color (Dark)", value)
 
-    def set_ansi_6_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_6_color(self, value: Color) -> None:
         """
         Sets the ANSI 6 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -740,7 +765,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 6 Color", value)
 
-    def set_ansi_6_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_6_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 6 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -749,7 +774,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 6 Color (Light)", value)
 
-    def set_ansi_6_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_6_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 6 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -758,7 +783,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 6 Color (Dark)", value)
 
-    def set_ansi_7_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_7_color(self, value: Color) -> None:
         """
         Sets the ANSI 7 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -767,7 +792,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 7 Color", value)
 
-    def set_ansi_7_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_7_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 7 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -776,7 +801,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 7 Color (Light)", value)
 
-    def set_ansi_7_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_7_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 7 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -785,7 +810,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 7 Color (Dark)", value)
 
-    def set_ansi_8_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_8_color(self, value: Color) -> None:
         """
         Sets the ANSI 8 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -794,7 +819,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 8 Color", value)
 
-    def set_ansi_8_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_8_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 8 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -803,7 +828,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 8 Color (Light)", value)
 
-    def set_ansi_8_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_8_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 8 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -812,7 +837,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 8 Color (Dark)", value)
 
-    def set_ansi_9_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_9_color(self, value: Color) -> None:
         """
         Sets the ANSI 9 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -821,7 +846,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 9 Color", value)
 
-    def set_ansi_9_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_9_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 9 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -830,7 +855,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 9 Color (Light)", value)
 
-    def set_ansi_9_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_9_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 9 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -839,7 +864,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 9 Color (Dark)", value)
 
-    def set_ansi_10_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_10_color(self, value: Color) -> None:
         """
         Sets the ANSI 10 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -848,7 +873,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 10 Color", value)
 
-    def set_ansi_10_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_10_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 10 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -857,7 +882,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 10 Color (Light)", value)
 
-    def set_ansi_10_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_10_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 10 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -866,7 +891,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 10 Color (Dark)", value)
 
-    def set_ansi_11_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_11_color(self, value: Color) -> None:
         """
         Sets the ANSI 11 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -875,7 +900,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 11 Color", value)
 
-    def set_ansi_11_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_11_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 11 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -884,7 +909,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 11 Color (Light)", value)
 
-    def set_ansi_11_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_11_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 11 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -893,7 +918,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 11 Color (Dark)", value)
 
-    def set_ansi_12_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_12_color(self, value: Color) -> None:
         """
         Sets the ANSI 12 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -902,7 +927,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 12 Color", value)
 
-    def set_ansi_12_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_12_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 12 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -911,7 +936,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 12 Color (Light)", value)
 
-    def set_ansi_12_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_12_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 12 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -920,7 +945,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 12 Color (Dark)", value)
 
-    def set_ansi_13_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_13_color(self, value: Color) -> None:
         """
         Sets the ANSI 13 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -929,7 +954,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 13 Color", value)
 
-    def set_ansi_13_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_13_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 13 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -938,7 +963,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 13 Color (Light)", value)
 
-    def set_ansi_13_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_13_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 13 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -947,7 +972,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 13 Color (Dark)", value)
 
-    def set_ansi_14_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_14_color(self, value: Color) -> None:
         """
         Sets the ANSI 14 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -956,7 +981,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 14 Color", value)
 
-    def set_ansi_14_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_14_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 14 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -965,7 +990,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 14 Color (Light)", value)
 
-    def set_ansi_14_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_14_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 14 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -974,7 +999,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 14 Color (Dark)", value)
 
-    def set_ansi_15_color(self, value: 'iterm2.color.Color'):
+    def set_ansi_15_color(self, value: Color) -> None:
         """
         Sets the ANSI 15 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -983,7 +1008,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 15 Color", value)
 
-    def set_ansi_15_color_light(self, value: 'iterm2.color.Color'):
+    def set_ansi_15_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 15 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -992,7 +1017,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 15 Color (Light)", value)
 
-    def set_ansi_15_color_dark(self, value: 'iterm2.color.Color'):
+    def set_ansi_15_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 15 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -1001,7 +1026,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Ansi 15 Color (Dark)", value)
 
-    def set_smart_cursor_color(self, value: bool):
+    def set_smart_cursor_color(self, value: bool) -> None:
         """
         Sets whether to use smart cursor color. This only applies to box
         cursors. This is used only when separate light/dark mode colors are not
@@ -1011,7 +1036,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Smart Cursor Color", value)
 
-    def set_smart_cursor_color_light(self, value: bool):
+    def set_smart_cursor_color_light(self, value: bool) -> None:
         """
         Sets whether to use smart cursor color. This only applies to box
         cursors. This affects the light-mode variant when separate light/dark
@@ -1021,7 +1046,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Smart Cursor Color (Light)", value)
 
-    def set_smart_cursor_color_dark(self, value: bool):
+    def set_smart_cursor_color_dark(self, value: bool) -> None:
         """
         Sets whether to use smart cursor color. This only applies to box
         cursors. This affects the dark-mode variant when separate light/dark
@@ -1031,7 +1056,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Smart Cursor Color (Dark)", value)
 
-    def set_minimum_contrast(self, value: float):
+    def set_minimum_contrast(self, value: float) -> None:
         """
         Sets the minimum contrast, in 0 to 1. This is used only when separate
         light/dark mode colors are not enabled.
@@ -1040,7 +1065,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Minimum Contrast", value)
 
-    def set_minimum_contrast_light(self, value: float):
+    def set_minimum_contrast_light(self, value: float) -> None:
         """
         Sets the minimum contrast, in 0 to 1. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
@@ -1049,7 +1074,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Minimum Contrast (Light)", value)
 
-    def set_minimum_contrast_dark(self, value: float):
+    def set_minimum_contrast_dark(self, value: float) -> None:
         """
         Sets the minimum contrast, in 0 to 1. This affects the dark-mode
         variant when separate light/dark mode colors are enabled.
@@ -1058,7 +1083,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Minimum Contrast (Dark)", value)
 
-    def set_tab_color(self, value: 'iterm2.color.Color'):
+    def set_tab_color(self, value: Color) -> None:
         """
         Sets the tab color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -1067,7 +1092,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Tab Color", value)
 
-    def set_tab_color_light(self, value: 'iterm2.color.Color'):
+    def set_tab_color_light(self, value: Color) -> None:
         """
         Sets the tab color. This affects the light-mode variant when separate
         light/dark mode colors are enabled.
@@ -1076,7 +1101,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Tab Color (Light)", value)
 
-    def set_tab_color_dark(self, value: 'iterm2.color.Color'):
+    def set_tab_color_dark(self, value: Color) -> None:
         """
         Sets the tab color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -1085,7 +1110,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Tab Color (Dark)", value)
 
-    def set_use_tab_color(self, value: bool):
+    def set_use_tab_color(self, value: bool) -> None:
         """
         Sets whether the tab color should be used. This is used only when
         separate light/dark mode colors are not enabled.
@@ -1094,7 +1119,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Tab Color", value)
 
-    def set_use_tab_color_light(self, value: bool):
+    def set_use_tab_color_light(self, value: bool) -> None:
         """
         Sets whether the tab color should be used. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
@@ -1103,7 +1128,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Tab Color (Light)", value)
 
-    def set_use_tab_color_dark(self, value: bool):
+    def set_use_tab_color_dark(self, value: bool) -> None:
         """
         Sets whether the tab color should be used. This affects the dark-mode
         variant when separate light/dark mode colors are enabled.
@@ -1112,34 +1137,34 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Tab Color (Dark)", value)
 
-    def set_underline_color(self, value: typing.Optional['iterm2.color.Color']):
+    def set_underline_color(self, value: Color | None) -> None:
         """
         Sets the underline color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :param value: A typing.Optional['iterm2.color.Color']
+        :param value: A :class:`Color` or `None`
         """
         return self._color_set("Underline Color", value)
 
-    def set_underline_color_light(self, value: typing.Optional['iterm2.color.Color']):
+    def set_underline_color_light(self, value: Color | None) -> None:
         """
         Sets the underline color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :param value: A typing.Optional['iterm2.color.Color']
+        :param value: A :class:`Color` or `None`
         """
         return self._color_set("Underline Color (Light)", value)
 
-    def set_underline_color_dark(self, value: typing.Optional['iterm2.color.Color']):
+    def set_underline_color_dark(self, value: Color | None) -> None:
         """
         Sets the underline color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :param value: A typing.Optional['iterm2.color.Color']
+        :param value: A :class:`Color` or `None`
         """
         return self._color_set("Underline Color (Dark)", value)
 
-    def set_use_underline_color(self, value: bool):
+    def set_use_underline_color(self, value: bool) -> None:
         """
         Sets whether to use the specified underline color. This is used only
         when separate light/dark mode colors are not enabled.
@@ -1148,7 +1173,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Underline Color", value)
 
-    def set_use_underline_color_light(self, value: bool):
+    def set_use_underline_color_light(self, value: bool) -> None:
         """
         Sets whether to use the specified underline color. This affects the
         light-mode variant when separate light/dark mode colors are enabled.
@@ -1157,7 +1182,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Underline Color (Light)", value)
 
-    def set_use_underline_color_dark(self, value: bool):
+    def set_use_underline_color_dark(self, value: bool) -> None:
         """
         Sets whether to use the specified underline color. This affects the
         dark-mode variant when separate light/dark mode colors are enabled.
@@ -1166,7 +1191,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Underline Color (Dark)", value)
 
-    def set_cursor_boost(self, value: float):
+    def set_cursor_boost(self, value: float) -> None:
         """
         Sets the cursor boost level, in 0 to 1. This is used only when separate
         light/dark mode colors are not enabled.
@@ -1175,7 +1200,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Cursor Boost", value)
 
-    def set_cursor_boost_light(self, value: float):
+    def set_cursor_boost_light(self, value: float) -> None:
         """
         Sets the cursor boost level, in 0 to 1. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
@@ -1184,7 +1209,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Cursor Boost (Light)", value)
 
-    def set_cursor_boost_dark(self, value: float):
+    def set_cursor_boost_dark(self, value: float) -> None:
         """
         Sets the cursor boost level, in 0 to 1. This affects the dark-mode
         variant when separate light/dark mode colors are enabled.
@@ -1193,7 +1218,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Cursor Boost (Dark)", value)
 
-    def set_use_cursor_guide(self, value: bool):
+    def set_use_cursor_guide(self, value: bool) -> None:
         """
         Sets whether the cursor guide should be used. This is used only when
         separate light/dark mode colors are not enabled.
@@ -1202,7 +1227,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Cursor Guide", value)
 
-    def set_use_cursor_guide_light(self, value: bool):
+    def set_use_cursor_guide_light(self, value: bool) -> None:
         """
         Sets whether the cursor guide should be used. This affects the
         light-mode variant when separate light/dark mode colors are enabled.
@@ -1211,7 +1236,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Cursor Guide (Light)", value)
 
-    def set_use_cursor_guide_dark(self, value: bool):
+    def set_use_cursor_guide_dark(self, value: bool) -> None:
         """
         Sets whether the cursor guide should be used. This affects the
         dark-mode variant when separate light/dark mode colors are enabled.
@@ -1220,7 +1245,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Cursor Guide (Dark)", value)
 
-    def set_cursor_guide_color(self, value: 'iterm2.color.Color'):
+    def set_cursor_guide_color(self, value: Color) -> None:
         """
         Sets the cursor guide color. The alpha value is respected. This is used
         only when separate light/dark mode colors are not enabled.
@@ -1229,7 +1254,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Cursor Guide Color", value)
 
-    def set_cursor_guide_color_light(self, value: 'iterm2.color.Color'):
+    def set_cursor_guide_color_light(self, value: Color) -> None:
         """
         Sets the cursor guide color. The alpha value is respected. This affects
         the light-mode variant when separate light/dark mode colors are
@@ -1239,7 +1264,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Cursor Guide Color (Light)", value)
 
-    def set_cursor_guide_color_dark(self, value: 'iterm2.color.Color'):
+    def set_cursor_guide_color_dark(self, value: Color) -> None:
         """
         Sets the cursor guide color. The alpha value is respected. This affects
         the dark-mode variant when separate light/dark mode colors are enabled.
@@ -1248,7 +1273,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Cursor Guide Color (Dark)", value)
 
-    def set_badge_color(self, value: 'iterm2.color.Color'):
+    def set_badge_color(self, value: Color) -> None:
         """
         Sets the badge color. The alpha value is respected. This is used only
         when separate light/dark mode colors are not enabled.
@@ -1257,7 +1282,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Badge Color", value)
 
-    def set_badge_color_light(self, value: 'iterm2.color.Color'):
+    def set_badge_color_light(self, value: Color) -> None:
         """
         Sets the badge color. The alpha value is respected. This affects the
         light-mode variant when separate light/dark mode colors are enabled.
@@ -1266,7 +1291,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Badge Color (Light)", value)
 
-    def set_badge_color_dark(self, value: 'iterm2.color.Color'):
+    def set_badge_color_dark(self, value: Color) -> None:
         """
         Sets the badge color. The alpha value is respected. This affects the
         dark-mode variant when separate light/dark mode colors are enabled.
@@ -1275,7 +1300,7 @@ class LocalWriteOnlyProfile:
         """
         return self._color_set("Badge Color (Dark)", value)
 
-    def set_name(self, value: str):
+    def set_name(self, value: str) -> None:
         """
         Sets the name.
 
@@ -1283,7 +1308,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Name", value)
 
-    def set_badge_text(self, value: str):
+    def set_badge_text(self, value: str) -> None:
         """
         Sets the badge text.
 
@@ -1291,7 +1316,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Badge Text", value)
 
-    def set_subtitle(self, value: str):
+    def set_subtitle(self, value: str) -> None:
         """
         Sets the subtitle, an interpolated string.
 
@@ -1299,7 +1324,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Subtitle", value)
 
-    def set_answerback_string(self, value: str):
+    def set_answerback_string(self, value: str) -> None:
         """
         Sets the answerback string.
 
@@ -1307,7 +1332,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Answerback String", value)
 
-    def set_blinking_cursor(self, value: bool):
+    def set_blinking_cursor(self, value: bool) -> None:
         """
         Sets whether the cursor blinks.
 
@@ -1315,7 +1340,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Blinking Cursor", value)
 
-    def set_cursor_shadow(self, value: bool):
+    def set_cursor_shadow(self, value: bool) -> None:
         """
         Sets whether the vertical bar and horizontal line cursor have a shadow.
 
@@ -1323,7 +1348,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Cursor Shadow", value)
 
-    def set_use_bold_font(self, value: bool):
+    def set_use_bold_font(self, value: bool) -> None:
         """
         Sets whether to use the bold variant of the font for bold text.
 
@@ -1331,7 +1356,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Bold Font", value)
 
-    def set_ascii_ligatures(self, value: bool):
+    def set_ascii_ligatures(self, value: bool) -> None:
         """
         Sets whether ligatures should be used for ASCII text.
 
@@ -1339,7 +1364,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("ASCII Ligatures", value)
 
-    def set_non_ascii_ligatures(self, value: bool):
+    def set_non_ascii_ligatures(self, value: bool) -> None:
         """
         Sets whether ligatures should be used for non-ASCII text.
 
@@ -1347,7 +1372,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Non-ASCII Ligatures", value)
 
-    def set_blink_allowed(self, value: bool):
+    def set_blink_allowed(self, value: bool) -> None:
         """
         Sets whether blinking text is allowed.
 
@@ -1355,7 +1380,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Blink Allowed", value)
 
-    def set_use_italic_font(self, value: bool):
+    def set_use_italic_font(self, value: bool) -> None:
         """
         Sets whether italic text is allowed.
 
@@ -1363,7 +1388,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Italic Font", value)
 
-    def set_ambiguous_double_width(self, value: bool):
+    def set_ambiguous_double_width(self, value: bool) -> None:
         """
         Sets whether ambiguous-width text should be treated as double-width.
 
@@ -1371,7 +1396,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Ambiguous Double Width", value)
 
-    def set_horizontal_spacing(self, value: float):
+    def set_horizontal_spacing(self, value: float) -> None:
         """
         Sets the fraction of horizontal spacing. Must be non-negative.
 
@@ -1379,7 +1404,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Horizontal Spacing", value)
 
-    def set_vertical_spacing(self, value: float):
+    def set_vertical_spacing(self, value: float) -> None:
         """
         Sets the fraction of vertical spacing. Must be non-negative.
 
@@ -1387,7 +1412,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Vertical Spacing", value)
 
-    def set_use_non_ascii_font(self, value: bool):
+    def set_use_non_ascii_font(self, value: bool) -> None:
         """
         Sets whether to use a different font for non-ASCII text.
 
@@ -1395,7 +1420,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Non-ASCII Font", value)
 
-    def set_transparency(self, value: float):
+    def set_transparency(self, value: float) -> None:
         """
         Sets the level of transparency.
 
@@ -1405,7 +1430,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Transparency", value)
 
-    def set_blur(self, value: bool):
+    def set_blur(self, value: bool) -> None:
         """
         Sets whether background blur should be enabled.
 
@@ -1413,7 +1438,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Blur", value)
 
-    def set_blur_radius(self, value: float):
+    def set_blur_radius(self, value: float) -> None:
         """
         Sets the blur radius (how blurry). Requires blur to be enabled.
 
@@ -1423,7 +1448,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Blur Radius", value)
 
-    def set_background_image_mode(self, value: BackgroundImageMode):
+    def set_background_image_mode(self, value: BackgroundImageMode) -> None:
         """
         Sets how the background image is drawn.
 
@@ -1431,7 +1456,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Background Image Mode", value)
 
-    def set_blend(self, value: float):
+    def set_blend(self, value: float) -> None:
         """
         Sets how much the default background color gets blended with the
         background image.
@@ -1444,7 +1469,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Blend", value)
 
-    def set_sync_title(self, value: bool):
+    def set_sync_title(self, value: bool) -> None:
         """
         Sets whether the profile name stays in the tab title, even if changed
         by an escape sequence.
@@ -1453,7 +1478,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Sync Title", value)
 
-    def set_use_built_in_powerline_glyphs(self, value: bool):
+    def set_use_built_in_powerline_glyphs(self, value: bool) -> None:
         """
         Sets whether powerline glyphs should be drawn by iTerm2 or left to the
         font.
@@ -1462,7 +1487,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Draw Powerline Glyphs", value)
 
-    def set_disable_window_resizing(self, value: bool):
+    def set_disable_window_resizing(self, value: bool) -> None:
         """
         Sets whether the terminal can resize the window with an escape
         sequence.
@@ -1471,7 +1496,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Disable Window Resizing", value)
 
-    def set_allow_change_cursor_blink(self, value: bool):
+    def set_allow_change_cursor_blink(self, value: bool) -> None:
         """
         Sets whether the terminal can change the cursor blink setting with an
         escape sequence.
@@ -1480,7 +1505,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Allow Change Cursor Blink", value)
 
-    def set_only_the_default_bg_color_uses_transparency(self, value: bool):
+    def set_only_the_default_bg_color_uses_transparency(self, value: bool) -> None:
         """
         Sets whether window transparency shows through non-default background
         colors.
@@ -1489,7 +1514,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Only The Default BG Color Uses Transparency", value)
 
-    def set_ascii_anti_aliased(self, value: bool):
+    def set_ascii_anti_aliased(self, value: bool) -> None:
         """
         Sets whether ASCII text is anti-aliased.
 
@@ -1497,7 +1522,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("ASCII Anti Aliased", value)
 
-    def set_non_ascii_anti_aliased(self, value: bool):
+    def set_non_ascii_anti_aliased(self, value: bool) -> None:
         """
         Sets whether non-ASCII text is anti-aliased.
 
@@ -1505,7 +1530,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Non-ASCII Anti Aliased", value)
 
-    def set_scrollback_lines(self, value: int):
+    def set_scrollback_lines(self, value: int) -> None:
         """
         Sets the number of scrollback lines.
 
@@ -1515,7 +1540,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Scrollback Lines", value)
 
-    def set_unlimited_scrollback(self, value: bool):
+    def set_unlimited_scrollback(self, value: bool) -> None:
         """
         Sets whether the scrollback buffer's length is unlimited.
 
@@ -1523,7 +1548,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Unlimited Scrollback", value)
 
-    def set_scrollback_with_status_bar(self, value: bool):
+    def set_scrollback_with_status_bar(self, value: bool) -> None:
         """
         Sets whether text gets appended to scrollback when there is an app
         status bar
@@ -1532,7 +1557,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Scrollback With Status Bar", value)
 
-    def set_scrollback_in_alternate_screen(self, value: bool):
+    def set_scrollback_in_alternate_screen(self, value: bool) -> None:
         """
         Sets whether text gets appended to scrollback in alternate screen mode.
 
@@ -1540,7 +1565,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Scrollback in Alternate Screen", value)
 
-    def set_mouse_reporting(self, value: bool):
+    def set_mouse_reporting(self, value: bool) -> None:
         """
         Sets whether mouse reporting is allowed
 
@@ -1548,7 +1573,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Mouse Reporting", value)
 
-    def set_mouse_reporting_allow_mouse_wheel(self, value: bool):
+    def set_mouse_reporting_allow_mouse_wheel(self, value: bool) -> None:
         """
         Sets whether mouse reporting reports the mouse wheel's movements.
 
@@ -1556,7 +1581,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Mouse Reporting allow mouse wheel", value)
 
-    def set_allow_title_reporting(self, value: bool):
+    def set_allow_title_reporting(self, value: bool) -> None:
         """
         Sets whether the session title can be reported
 
@@ -1564,7 +1589,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Allow Title Reporting", value)
 
-    def set_allow_title_setting(self, value: bool):
+    def set_allow_title_setting(self, value: bool) -> None:
         """
         Sets whether the session title can be changed by escape sequence
 
@@ -1572,7 +1597,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Allow Title Setting", value)
 
-    def set_disable_printing(self, value: bool):
+    def set_disable_printing(self, value: bool) -> None:
         """
         Sets whether printing by escape sequence is disabled.
 
@@ -1580,7 +1605,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Disable Printing", value)
 
-    def set_disable_smcup_rmcup(self, value: bool):
+    def set_disable_smcup_rmcup(self, value: bool) -> None:
         """
         Sets whether alternate screen mode is disabled
 
@@ -1588,7 +1613,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Disable Smcup Rmcup", value)
 
-    def set_silence_bell(self, value: bool):
+    def set_silence_bell(self, value: bool) -> None:
         """
         Sets whether the bell makes noise.
 
@@ -1596,7 +1621,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Silence Bell", value)
 
-    def set_bm_growl(self, value: bool):
+    def set_bm_growl(self, value: bool) -> None:
         """
         Sets whether notifications should be shown.
 
@@ -1604,7 +1629,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("BM Growl", value)
 
-    def set_send_bell_alert(self, value: bool):
+    def set_send_bell_alert(self, value: bool) -> None:
         """
         Sets whether notifications should be shown for the bell ringing
 
@@ -1612,7 +1637,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Send Bell Alert", value)
 
-    def set_send_idle_alert(self, value: bool):
+    def set_send_idle_alert(self, value: bool) -> None:
         """
         Sets whether notifications should be shown for becoming idle
 
@@ -1620,7 +1645,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Send Idle Alert", value)
 
-    def set_send_new_output_alert(self, value: bool):
+    def set_send_new_output_alert(self, value: bool) -> None:
         """
         Sets whether notifications should be shown for new output
 
@@ -1628,7 +1653,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Send New Output Alert", value)
 
-    def set_send_session_ended_alert(self, value: bool):
+    def set_send_session_ended_alert(self, value: bool) -> None:
         """
         Sets whether notifications should be shown for a session ending
 
@@ -1636,7 +1661,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Send Session Ended Alert", value)
 
-    def set_send_terminal_generated_alerts(self, value: bool):
+    def set_send_terminal_generated_alerts(self, value: bool) -> None:
         """
         Sets whether notifications should be shown for escape-sequence
         originated notifications
@@ -1645,7 +1670,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Send Terminal Generated Alerts", value)
 
-    def set_flashing_bell(self, value: bool):
+    def set_flashing_bell(self, value: bool) -> None:
         """
         Sets whether the bell should flash the screen
 
@@ -1653,7 +1678,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Flashing Bell", value)
 
-    def set_visual_bell(self, value: bool):
+    def set_visual_bell(self, value: bool) -> None:
         """
         Sets whether a bell should be shown when the bell rings
 
@@ -1661,7 +1686,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Visual Bell", value)
 
-    def set_close_sessions_on_end(self, value: bool):
+    def set_close_sessions_on_end(self, value: bool) -> None:
         """
         Sets whether the session should close when it ends.
 
@@ -1669,7 +1694,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Close Sessions On End", value)
 
-    def set_prompt_before_closing(self, value: bool):
+    def set_prompt_before_closing(self, value: bool) -> None:
         """
         Sets whether the session should prompt before closing.
 
@@ -1677,7 +1702,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Prompt Before Closing 2", value)
 
-    def set_session_close_undo_timeout(self, value: float):
+    def set_session_close_undo_timeout(self, value: float) -> None:
         """
         Sets the amount of time you can undo closing a session
 
@@ -1687,7 +1712,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Session Close Undo Timeout", value)
 
-    def set_reduce_flicker(self, value: bool):
+    def set_reduce_flicker(self, value: bool) -> None:
         """
         Sets whether the flicker fixer is on.
 
@@ -1695,7 +1720,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Reduce Flicker", value)
 
-    def set_send_code_when_idle(self, value: bool):
+    def set_send_code_when_idle(self, value: bool) -> None:
         """
         Sets whether to send a code when idle
 
@@ -1703,7 +1728,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Send Code When Idle", value)
 
-    def set_application_keypad_allowed(self, value: bool):
+    def set_application_keypad_allowed(self, value: bool) -> None:
         """
         Sets whether the terminal may be placed in application keypad mode
 
@@ -1711,7 +1736,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Application Keypad Allowed", value)
 
-    def set_place_prompt_at_first_column(self, value: bool):
+    def set_place_prompt_at_first_column(self, value: bool) -> None:
         """
         Sets whether the prompt should always begin at the first column
         (requires shell integration)
@@ -1720,7 +1745,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Place Prompt at First Column", value)
 
-    def set_show_mark_indicators(self, value: bool):
+    def set_show_mark_indicators(self, value: bool) -> None:
         """
         Sets whether mark indicators should be visible
 
@@ -1728,7 +1753,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Show Mark Indicators", value)
 
-    def set_idle_code(self, value: int):
+    def set_idle_code(self, value: int) -> None:
         """
         Sets the ASCII code to send on idle
 
@@ -1738,7 +1763,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Idle Code", value)
 
-    def set_idle_period(self, value: float):
+    def set_idle_period(self, value: float) -> None:
         """
         Sets how often to send a code when idle
 
@@ -1748,7 +1773,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Idle Period", value)
 
-    def set_unicode_version(self, value: bool):
+    def set_unicode_version(self, value: bool) -> None:
         """
         Sets the unicode version for wcwidth
 
@@ -1756,7 +1781,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Unicode Version", value)
 
-    def set_cursor_type(self, value: CursorType):
+    def set_cursor_type(self, value: CursorType) -> None:
         """
         Sets the cursor type
 
@@ -1764,7 +1789,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Cursor Type", value)
 
-    def set_thin_strokes(self, value: ThinStrokes):
+    def set_thin_strokes(self, value: ThinStrokes) -> None:
         """
         Sets whether thin strokes are used.
 
@@ -1772,7 +1797,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Thin Strokes", value)
 
-    def set_unicode_normalization(self, value: UnicodeNormalization):
+    def set_unicode_normalization(self, value: UnicodeNormalization) -> None:
         """
         Sets the unicode normalization form to use
 
@@ -1780,7 +1805,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Unicode Normalization", value)
 
-    def set_character_encoding(self, value: CharacterEncoding):
+    def set_character_encoding(self, value: CharacterEncoding) -> None:
         """
         Sets the character encoding
 
@@ -1788,7 +1813,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Character Encoding", value)
 
-    def set_left_option_key_sends(self, value: OptionKeySends):
+    def set_left_option_key_sends(self, value: OptionKeySends) -> None:
         """
         Sets the behavior of the left option key.
 
@@ -1796,7 +1821,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Option Key Sends", value)
 
-    def set_right_option_key_sends(self, value: OptionKeySends):
+    def set_right_option_key_sends(self, value: OptionKeySends) -> None:
         """
         Sets the behavior of the right option key.
 
@@ -1804,7 +1829,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Right Option Key Sends", value)
 
-    def set_triggers(self, value: typing.List[typing.Dict[str, typing.Any]]):
+    def set_triggers(self, value: list[dict[str, Any]]) -> None:
         """
         Sets the triggers.
 
@@ -1812,22 +1837,22 @@ class LocalWriteOnlyProfile:
         an encoded trigger to an object. Trigger objects can be encoded using
         the encode property.
 
-        :param value: A typing.List[typing.Dict[str, typing.Any]]
+        :param value: A list[dict[str, Any]]
         """
         return self._simple_set("Triggers", value)
 
-    def set_smart_selection_rules(self, value: typing.List[typing.Dict[str, typing.Any]]):
+    def set_smart_selection_rules(self, value: list[dict[str, Any]]) -> None:
         """
         Sets the smart selection rules.
 
         The value is a list of dicts of smart selection rules (currently
         undocumented)
 
-        :param value: A typing.List[typing.Dict[str, typing.Any]]
+        :param value: A list[dict[str, Any]]
         """
         return self._simple_set("Smart Selection Rules", value)
 
-    def set_smart_selection_actions_use_interpolated_strings(self, value: bool):
+    def set_smart_selection_actions_use_interpolated_strings(self, value: bool) -> None:
         """
         Sets whether smart selection action parameters are interpolated
         strings.
@@ -1837,27 +1862,31 @@ class LocalWriteOnlyProfile:
 
         :param value: A bool
         """
-        return self._simple_set("Smart Selection Actions Use Interpolated Strings", value)
+        return self._simple_set(
+            "Smart Selection Actions Use Interpolated Strings", value
+        )
 
-    def set_semantic_history(self, value: typing.Dict[str, typing.Any]):
+    def set_semantic_history(self, value: dict[str, Any]) -> None:
         """
         Sets the semantic history prefs.
 
-        :param value: A typing.Dict[str, typing.Any]
+        :param value: A dict[str, Any]
         """
         return self._simple_set("Semantic History", value)
 
-    def set_automatic_profile_switching_rules(self, value: typing.List[str]):
+    def set_automatic_profile_switching_rules(self, value: list[str]) -> None:
         """
         Sets the automatic profile switching rules.
 
         Value is a list of strings, each giving a rule.
 
-        :param value: A typing.List[str]
+        :param value: A list[str]
         """
         return self._simple_set("Bound Hosts", value)
 
-    def set_advanced_working_directory_window_setting(self, value: InitialWorkingDirectory):
+    def set_advanced_working_directory_window_setting(
+        self, value: InitialWorkingDirectory
+    ) -> None:
         """
         Sets the advanced working directory window setting.
 
@@ -1867,7 +1896,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("AWDS Window Option", value)
 
-    def set_advanced_working_directory_window_directory(self, value: str):
+    def set_advanced_working_directory_window_directory(self, value: str) -> None:
         """
         Sets the advanced working directory window directory.
 
@@ -1875,7 +1904,9 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("AWDS Window Directory", value)
 
-    def set_advanced_working_directory_tab_setting(self, value: InitialWorkingDirectory):
+    def set_advanced_working_directory_tab_setting(
+        self, value: InitialWorkingDirectory
+    ) -> None:
         """
         Sets the advanced working directory tab setting.
 
@@ -1885,7 +1916,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("AWDS Tab Option", value)
 
-    def set_advanced_working_directory_tab_directory(self, value: str):
+    def set_advanced_working_directory_tab_directory(self, value: str) -> None:
         """
         Sets the advanced working directory tab directory.
 
@@ -1893,7 +1924,9 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("AWDS Tab Directory", value)
 
-    def set_advanced_working_directory_pane_setting(self, value: InitialWorkingDirectory):
+    def set_advanced_working_directory_pane_setting(
+        self, value: InitialWorkingDirectory
+    ) -> None:
         """
         Sets the advanced working directory pane setting.
 
@@ -1903,7 +1936,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("AWDS Pane Option", value)
 
-    def set_advanced_working_directory_pane_directory(self, value: str):
+    def set_advanced_working_directory_pane_directory(self, value: str) -> None:
         """
         Sets the advanced working directory pane directory.
 
@@ -1911,7 +1944,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("AWDS Pane Directory", value)
 
-    def set_normal_font(self, value: str):
+    def set_normal_font(self, value: str) -> None:
         """
         Sets the normal font.
 
@@ -1926,7 +1959,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Normal Font", value)
 
-    def set_non_ascii_font(self, value: str):
+    def set_non_ascii_font(self, value: str) -> None:
         """
         Sets the non-ASCII font.
 
@@ -1937,7 +1970,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Non Ascii Font", value)
 
-    def set_background_image_location(self, value: str):
+    def set_background_image_location(self, value: str) -> None:
         """
         Sets or clears the path to a background image.
 
@@ -1948,7 +1981,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Background Image Location", value)
 
-    def set_key_mappings(self, value: typing.Dict[str, typing.Any]):
+    def set_key_mappings(self, value: dict[str, Any]) -> None:
         """
         Sets the keyboard shortcuts.
 
@@ -1956,21 +1989,21 @@ class LocalWriteOnlyProfile:
         between the values in this dictionary and a :class:`~iterm2.KeyBinding`
         using `iterm2.decode_key_binding`
 
-        :param value: A typing.Dict[str, typing.Any]
+        :param value: A dict[str, Any]
         """
         return self._simple_set("Keyboard Map", value)
 
-    def set_touchbar_mappings(self, value: typing.Dict[str, typing.Any]):
+    def set_touchbar_mappings(self, value: dict[str, Any]) -> None:
         """
         Sets the touchbar actions.
 
         The value is a Dictionary mapping touch bar item to action
 
-        :param value: A typing.Dict[str, typing.Any]
+        :param value: A dict[str, Any]
         """
         return self._simple_set("Touch Bar Map", value)
 
-    def set_use_custom_command(self, value: str):
+    def set_use_custom_command(self, value: str) -> None:
         """
         Sets whether to use a custom command when the session is created.
 
@@ -1980,7 +2013,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Custom Command", value)
 
-    def set_command(self, value: str):
+    def set_command(self, value: str) -> None:
         """
         Sets the command to run when the session starts.
 
@@ -1990,7 +2023,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Command", value)
 
-    def set_initial_directory_mode(self, value: InitialWorkingDirectory):
+    def set_initial_directory_mode(self, value: InitialWorkingDirectory) -> None:
         """
         Sets whether to use a custom (not home) initial working directory.
 
@@ -1998,7 +2031,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Custom Directory", value.value)
 
-    def set_custom_directory(self, value: str):
+    def set_custom_directory(self, value: str) -> None:
         """
         Sets the initial working directory.
 
@@ -2010,7 +2043,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Working Directory", value)
 
-    def set_icon_mode(self, value: IconMode):
+    def set_icon_mode(self, value: IconMode) -> None:
         """
         Sets the icon mode.
 
@@ -2018,7 +2051,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Icon", value.value)
 
-    def set_custom_icon_path(self, value: str):
+    def set_custom_icon_path(self, value: str) -> None:
         """
         Sets the path of the custom icon.
 
@@ -2028,7 +2061,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Custom Icon Path", value)
 
-    def set_badge_top_margin(self, value: int):
+    def set_badge_top_margin(self, value: int) -> None:
         """
         Sets the top margin of the badge.
 
@@ -2038,7 +2071,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Badge Top Margin", value)
 
-    def set_badge_right_margin(self, value: int):
+    def set_badge_right_margin(self, value: int) -> None:
         """
         Sets the right margin of the badge.
 
@@ -2048,7 +2081,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Badge Right Margin", value)
 
-    def set_badge_max_width(self, value: int):
+    def set_badge_max_width(self, value: int) -> None:
         """
         Sets the max width of the badge.
 
@@ -2058,7 +2091,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Badge Max Width", value)
 
-    def set_badge_max_height(self, value: int):
+    def set_badge_max_height(self, value: int) -> None:
         """
         Sets the max height of the badge.
 
@@ -2068,7 +2101,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Badge Max Height", value)
 
-    def set_badge_font(self, value: str):
+    def set_badge_font(self, value: str) -> None:
         """
         Sets the font of the badge.
 
@@ -2078,7 +2111,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Badge Font", value)
 
-    def set_use_custom_window_title(self, value: bool):
+    def set_use_custom_window_title(self, value: bool) -> None:
         """
         Sets whether the custom window title is used.
 
@@ -2088,18 +2121,18 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use Custom Window Title", value)
 
-    def set_custom_window_title(self, value: typing.Optional[str]):
+    def set_custom_window_title(self, value: str | None) -> None:
         """
         Sets the custom window title.
 
         This will only be used if use_custom_window_title is True.
         The value is an interpolated string.
 
-        :param value: A typing.Optional[str]
+        :param value: A str | None
         """
         return self._simple_set("Custom Window Title", value)
 
-    def set_use_transparency_initially(self, value: bool):
+    def set_use_transparency_initially(self, value: bool) -> None:
         """
         Sets whether a window created with this profile respect the
         transparency setting.
@@ -2111,7 +2144,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Initial Use Transparency", value)
 
-    def set_status_bar_enabled(self, value: bool):
+    def set_status_bar_enabled(self, value: bool) -> None:
         """
         Sets whether the status bar be enabled.
 
@@ -2121,7 +2154,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Show Status Bar", value)
 
-    def set_use_csi_u(self, value: bool):
+    def set_use_csi_u(self, value: bool) -> None:
         """
         Sets whether to report keystrokes with CSI u protocol.
 
@@ -2131,7 +2164,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Use libtickit protocol", value)
 
-    def set_triggers_use_interpolated_strings(self, value: bool):
+    def set_triggers_use_interpolated_strings(self, value: bool) -> None:
         """
         Sets whether trigger parameters should be interpreted as interpolated
         strings.
@@ -2140,7 +2173,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Triggers Use Interpolated Strings", value)
 
-    def set_left_option_key_changeable(self, value: bool):
+    def set_left_option_key_changeable(self, value: bool) -> None:
         """
         Sets whether apps should be able to change the left option key to send
         esc+.
@@ -2151,7 +2184,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Left Option Key Changeable", value)
 
-    def set_right_option_key_changeable(self, value: bool):
+    def set_right_option_key_changeable(self, value: bool) -> None:
         """
         Sets whether apps should be able to change the right option key to send
         esc+.
@@ -2162,7 +2195,7 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Right Option Key Changeable", value)
 
-    def set_open_password_manager_automatically(self, value: bool):
+    def set_open_password_manager_automatically(self, value: bool) -> None:
         """
         Sets if the password manager should open automatically.
 
@@ -2172,43 +2205,42 @@ class LocalWriteOnlyProfile:
         """
         return self._simple_set("Open Password Manager Automatically", value)
 
+
 class WriteOnlyProfile:
     """
     A profile that can be modified but not read. Useful for changing many
     sessions' profiles at once without knowing what they are.
     """
-    def __init__(self, session_id, connection, guid=None):
+
+    def __init__(
+        self, session_id: str | None, connection: Connection, guid: str | None = None
+    ) -> None:
         assert session_id != "all"
-        self.connection = connection
-        self.session_id = session_id
+        self.connection: Connection = connection
+        self.session_id: str | None = session_id
         self.__guid = guid
 
-    async def _async_simple_set(self, key: str, value: typing.Any):
+    async def _async_simple_set(self, key: str, value: Any):
         """
         :param value: a json type
         """
-        await iterm2.rpc.async_set_profile_property(
-            self.connection,
-            self.session_id,
-            key,
-            value,
-            self._guids_for_set())
+        await async_set_profile_property(
+            self.connection, self.session_id, key, value, self._guids_for_set()
+        )
 
-    async def _async_color_set(self, key, value):
+    async def _async_color_set(self, key: str, value: Color | None):
         if value is None:
-            await iterm2.rpc.async_set_profile_property(
-                self.connection,
-                self.session_id,
-                key,
-                "null",
-                self._guids_for_set())
+            await async_set_profile_property(
+                self.connection, self.session_id, key, "null", self._guids_for_set()
+            )
         else:
-            await iterm2.rpc.async_set_profile_property(
+            await async_set_profile_property(
                 self.connection,
                 self.session_id,
                 key,
                 value.get_dict(),
-                self._guids_for_set())
+                self._guids_for_set(),
+            )
 
     def _guids_for_set(self):
         if self.session_id is None:
@@ -2216,8 +2248,7 @@ class WriteOnlyProfile:
             return [self.__guid]
         return self.session_id
 
-    async def async_set_color_preset(
-            self, preset: iterm2.colorpresets.ColorPreset):
+    async def async_set_color_preset(self, preset: ColorPreset) -> None:
         """
         Sets the color preset.
 
@@ -2229,21 +2260,20 @@ class WriteOnlyProfile:
             * Example ":ref:`theme_example`"
             * Example ":ref:`darknight_example`"
         """
-        coros = []
+        coros: list[Coroutine[Any, Any, Any]] = []
         for value in preset.values:
             coro = self._async_color_set(
                 value.key,
-                iterm2.color.Color(
-                    value.red,
-                    value.green,
-                    value.blue,
-                    value.alpha,
-                    value.color_space))
+                Color(
+                    value.red, value.green, value.blue, value.alpha, value.color_space
+                ),
+            )
             coros.append(coro)
         await asyncio.gather(*coros)
 
     async def async_set_title_components(
-            self, value: typing.List[TitleComponents]):
+        self, value: Iterable[TitleComponents]
+    ) -> None:
         """
         Sets which components are visible in the session's title, or selects a
         custom component.
@@ -2256,7 +2286,8 @@ class WriteOnlyProfile:
         return await self._async_simple_set("Title Components", bitmask)
 
     async def async_set_title_function(
-            self, display_name: str, identifier: str):
+        self, display_name: str, identifier: str
+    ) -> None:
         """
         Sets the function call for the session title provider and its display
         name for the UI.
@@ -2269,10 +2300,12 @@ class WriteOnlyProfile:
         `CUSTOM`.
         """
         return await self._async_simple_set(
-            "Title Function", [display_name, identifier])
+            "Title Function", [display_name, identifier]
+        )
 
-
-    async def async_set_use_separate_colors_for_light_and_dark_mode(self, value: bool):
+    async def async_set_use_separate_colors_for_light_and_dark_mode(
+        self, value: bool
+    ) -> None:
         """
         Sets whether to use separate colors for light and dark mode.
 
@@ -2281,9 +2314,11 @@ class WriteOnlyProfile:
 
         :param value: Whether to use separate colors for light and dark mode.
         """
-        return await self._async_simple_set("Use Separate Colors for Light and Dark Mode", value)
+        return await self._async_simple_set(
+            "Use Separate Colors for Light and Dark Mode", value
+        )
 
-    async def async_set_foreground_color(self, value: 'iterm2.color.Color'):
+    async def async_set_foreground_color(self, value: Color) -> None:
         """
         Sets the foreground color. This is used only when separate light/dark
         mode colors are not enabled.
@@ -2292,7 +2327,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Foreground Color", value)
 
-    async def async_set_foreground_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_foreground_color_light(self, value: Color) -> None:
         """
         Sets the foreground color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2301,7 +2336,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Foreground Color (Light)", value)
 
-    async def async_set_foreground_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_foreground_color_dark(self, value: Color) -> None:
         """
         Sets the foreground color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -2310,7 +2345,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Foreground Color (Dark)", value)
 
-    async def async_set_background_color(self, value: 'iterm2.color.Color'):
+    async def async_set_background_color(self, value: Color) -> None:
         """
         Sets the background color. This is used only when separate light/dark
         mode colors are not enabled.
@@ -2319,7 +2354,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Background Color", value)
 
-    async def async_set_background_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_background_color_light(self, value: Color) -> None:
         """
         Sets the background color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2328,7 +2363,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Background Color (Light)", value)
 
-    async def async_set_background_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_background_color_dark(self, value: Color) -> None:
         """
         Sets the background color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -2337,7 +2372,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Background Color (Dark)", value)
 
-    async def async_set_bold_color(self, value: 'iterm2.color.Color'):
+    async def async_set_bold_color(self, value: Color) -> None:
         """
         Sets the bold text color. This is used only when separate light/dark
         mode colors are not enabled.
@@ -2346,7 +2381,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Bold Color", value)
 
-    async def async_set_bold_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_bold_color_light(self, value: Color) -> None:
         """
         Sets the bold text color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2355,7 +2390,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Bold Color (Light)", value)
 
-    async def async_set_bold_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_bold_color_dark(self, value: Color) -> None:
         """
         Sets the bold text color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -2364,7 +2399,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Bold Color (Dark)", value)
 
-    async def async_set_use_bright_bold(self, value: bool):
+    async def async_set_use_bright_bold(self, value: bool) -> None:
         """
         Sets  how bold text is rendered. This is used only when separate
         light/dark mode colors are not enabled.
@@ -2387,7 +2422,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Bright Bold", value)
 
-    async def async_set_use_bright_bold_light(self, value: bool):
+    async def async_set_use_bright_bold_light(self, value: bool) -> None:
         """
         Sets  how bold text is rendered. This affects the light-mode variant
         when separate light/dark mode colors are enabled.
@@ -2410,7 +2445,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Bright Bold (Light)", value)
 
-    async def async_set_use_bright_bold_dark(self, value: bool):
+    async def async_set_use_bright_bold_dark(self, value: bool) -> None:
         """
         Sets  how bold text is rendered. This affects the dark-mode variant
         when separate light/dark mode colors are enabled.
@@ -2433,7 +2468,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Bright Bold (Dark)", value)
 
-    async def async_set_use_bold_color(self, value: bool):
+    async def async_set_use_bold_color(self, value: bool) -> None:
         """
         Sets whether the profile-specified bold color is used for
         default-colored bold text. This is used only when separate light/dark
@@ -2444,7 +2479,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Bright Bold", value)
 
-    async def async_set_use_bold_color_light(self, value: bool):
+    async def async_set_use_bold_color_light(self, value: bool) -> None:
         """
         Sets whether the profile-specified bold color is used for
         default-colored bold text. This affects the light-mode variant when
@@ -2455,7 +2490,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Bright Bold (Light)", value)
 
-    async def async_set_use_bold_color_dark(self, value: bool):
+    async def async_set_use_bold_color_dark(self, value: bool) -> None:
         """
         Sets whether the profile-specified bold color is used for
         default-colored bold text. This affects the dark-mode variant when
@@ -2466,7 +2501,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Bright Bold (Dark)", value)
 
-    async def async_set_brighten_bold_text(self, value: bool):
+    async def async_set_brighten_bold_text(self, value: bool) -> None:
         """
         Sets whether Dark ANSI colors get replaced with their light
         counterparts for bold text. This is used only when separate light/dark
@@ -2476,7 +2511,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Brighten Bold Text", value)
 
-    async def async_set_brighten_bold_text_light(self, value: bool):
+    async def async_set_brighten_bold_text_light(self, value: bool) -> None:
         """
         Sets whether Dark ANSI colors get replaced with their light
         counterparts for bold text. This affects the light-mode variant when
@@ -2486,7 +2521,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Brighten Bold Text (Light)", value)
 
-    async def async_set_brighten_bold_text_dark(self, value: bool):
+    async def async_set_brighten_bold_text_dark(self, value: bool) -> None:
         """
         Sets whether Dark ANSI colors get replaced with their light
         counterparts for bold text. This affects the dark-mode variant when
@@ -2496,7 +2531,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Brighten Bold Text (Dark)", value)
 
-    async def async_set_link_color(self, value: 'iterm2.color.Color'):
+    async def async_set_link_color(self, value: Color) -> None:
         """
         Sets the link color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2505,7 +2540,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Link Color", value)
 
-    async def async_set_link_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_link_color_light(self, value: Color) -> None:
         """
         Sets the link color. This affects the light-mode variant when separate
         light/dark mode colors are enabled.
@@ -2514,7 +2549,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Link Color (Light)", value)
 
-    async def async_set_link_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_link_color_dark(self, value: Color) -> None:
         """
         Sets the link color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2523,7 +2558,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Link Color (Dark)", value)
 
-    async def async_set_selection_color(self, value: 'iterm2.color.Color'):
+    async def async_set_selection_color(self, value: Color) -> None:
         """
         Sets the selection background color. This is used only when separate
         light/dark mode colors are not enabled.
@@ -2532,7 +2567,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Selection Color", value)
 
-    async def async_set_selection_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_selection_color_light(self, value: Color) -> None:
         """
         Sets the selection background color. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
@@ -2541,7 +2576,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Selection Color (Light)", value)
 
-    async def async_set_selection_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_selection_color_dark(self, value: Color) -> None:
         """
         Sets the selection background color. This affects the dark-mode variant
         when separate light/dark mode colors are enabled.
@@ -2550,7 +2585,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Selection Color (Dark)", value)
 
-    async def async_set_selected_text_color(self, value: 'iterm2.color.Color'):
+    async def async_set_selected_text_color(self, value: Color) -> None:
         """
         Sets the selection text color. This is used only when separate
         light/dark mode colors are not enabled.
@@ -2559,7 +2594,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Selected Text Color", value)
 
-    async def async_set_selected_text_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_selected_text_color_light(self, value: Color) -> None:
         """
         Sets the selection text color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2568,7 +2603,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Selected Text Color (Light)", value)
 
-    async def async_set_selected_text_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_selected_text_color_dark(self, value: Color) -> None:
         """
         Sets the selection text color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -2577,7 +2612,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Selected Text Color (Dark)", value)
 
-    async def async_set_cursor_color(self, value: 'iterm2.color.Color'):
+    async def async_set_cursor_color(self, value: Color) -> None:
         """
         Sets the cursor color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2586,7 +2621,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Cursor Color", value)
 
-    async def async_set_cursor_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_cursor_color_light(self, value: Color) -> None:
         """
         Sets the cursor color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2595,7 +2630,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Cursor Color (Light)", value)
 
-    async def async_set_cursor_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_cursor_color_dark(self, value: Color) -> None:
         """
         Sets the cursor color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2604,7 +2639,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Cursor Color (Dark)", value)
 
-    async def async_set_cursor_text_color(self, value: 'iterm2.color.Color'):
+    async def async_set_cursor_text_color(self, value: Color) -> None:
         """
         Sets the cursor text color. This is used only when separate light/dark
         mode colors are not enabled.
@@ -2613,7 +2648,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Cursor Text Color", value)
 
-    async def async_set_cursor_text_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_cursor_text_color_light(self, value: Color) -> None:
         """
         Sets the cursor text color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2622,7 +2657,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Cursor Text Color (Light)", value)
 
-    async def async_set_cursor_text_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_cursor_text_color_dark(self, value: Color) -> None:
         """
         Sets the cursor text color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -2631,7 +2666,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Cursor Text Color (Dark)", value)
 
-    async def async_set_ansi_0_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_0_color(self, value: Color) -> None:
         """
         Sets the ANSI 0 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2640,7 +2675,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 0 Color", value)
 
-    async def async_set_ansi_0_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_0_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 0 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2649,7 +2684,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 0 Color (Light)", value)
 
-    async def async_set_ansi_0_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_0_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 0 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2658,7 +2693,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 0 Color (Dark)", value)
 
-    async def async_set_ansi_1_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_1_color(self, value: Color) -> None:
         """
         Sets the ANSI 1 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2667,7 +2702,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 1 Color", value)
 
-    async def async_set_ansi_1_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_1_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 1 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2676,7 +2711,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 1 Color (Light)", value)
 
-    async def async_set_ansi_1_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_1_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 1 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2685,7 +2720,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 1 Color (Dark)", value)
 
-    async def async_set_ansi_2_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_2_color(self, value: Color) -> None:
         """
         Sets the ANSI 2 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2694,7 +2729,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 2 Color", value)
 
-    async def async_set_ansi_2_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_2_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 2 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2703,7 +2738,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 2 Color (Light)", value)
 
-    async def async_set_ansi_2_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_2_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 2 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2712,7 +2747,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 2 Color (Dark)", value)
 
-    async def async_set_ansi_3_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_3_color(self, value: Color) -> None:
         """
         Sets the ANSI 3 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2721,7 +2756,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 3 Color", value)
 
-    async def async_set_ansi_3_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_3_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 3 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2730,7 +2765,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 3 Color (Light)", value)
 
-    async def async_set_ansi_3_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_3_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 3 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2739,7 +2774,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 3 Color (Dark)", value)
 
-    async def async_set_ansi_4_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_4_color(self, value: Color) -> None:
         """
         Sets the ANSI 4 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2748,7 +2783,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 4 Color", value)
 
-    async def async_set_ansi_4_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_4_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 4 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2757,7 +2792,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 4 Color (Light)", value)
 
-    async def async_set_ansi_4_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_4_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 4 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2766,7 +2801,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 4 Color (Dark)", value)
 
-    async def async_set_ansi_5_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_5_color(self, value: Color) -> None:
         """
         Sets the ANSI 5 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2775,7 +2810,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 5 Color", value)
 
-    async def async_set_ansi_5_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_5_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 5 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2784,7 +2819,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 5 Color (Light)", value)
 
-    async def async_set_ansi_5_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_5_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 5 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2793,7 +2828,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 5 Color (Dark)", value)
 
-    async def async_set_ansi_6_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_6_color(self, value: Color) -> None:
         """
         Sets the ANSI 6 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2802,7 +2837,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 6 Color", value)
 
-    async def async_set_ansi_6_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_6_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 6 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2811,7 +2846,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 6 Color (Light)", value)
 
-    async def async_set_ansi_6_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_6_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 6 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2820,7 +2855,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 6 Color (Dark)", value)
 
-    async def async_set_ansi_7_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_7_color(self, value: Color) -> None:
         """
         Sets the ANSI 7 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2829,7 +2864,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 7 Color", value)
 
-    async def async_set_ansi_7_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_7_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 7 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2838,7 +2873,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 7 Color (Light)", value)
 
-    async def async_set_ansi_7_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_7_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 7 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2847,7 +2882,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 7 Color (Dark)", value)
 
-    async def async_set_ansi_8_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_8_color(self, value: Color) -> None:
         """
         Sets the ANSI 8 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2856,7 +2891,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 8 Color", value)
 
-    async def async_set_ansi_8_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_8_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 8 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2865,7 +2900,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 8 Color (Light)", value)
 
-    async def async_set_ansi_8_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_8_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 8 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2874,7 +2909,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 8 Color (Dark)", value)
 
-    async def async_set_ansi_9_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_9_color(self, value: Color) -> None:
         """
         Sets the ANSI 9 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2883,7 +2918,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 9 Color", value)
 
-    async def async_set_ansi_9_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_9_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 9 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2892,7 +2927,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 9 Color (Light)", value)
 
-    async def async_set_ansi_9_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_9_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 9 color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -2901,7 +2936,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 9 Color (Dark)", value)
 
-    async def async_set_ansi_10_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_10_color(self, value: Color) -> None:
         """
         Sets the ANSI 10 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2910,7 +2945,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 10 Color", value)
 
-    async def async_set_ansi_10_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_10_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 10 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2919,7 +2954,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 10 Color (Light)", value)
 
-    async def async_set_ansi_10_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_10_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 10 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -2928,7 +2963,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 10 Color (Dark)", value)
 
-    async def async_set_ansi_11_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_11_color(self, value: Color) -> None:
         """
         Sets the ANSI 11 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2937,7 +2972,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 11 Color", value)
 
-    async def async_set_ansi_11_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_11_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 11 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2946,7 +2981,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 11 Color (Light)", value)
 
-    async def async_set_ansi_11_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_11_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 11 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -2955,7 +2990,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 11 Color (Dark)", value)
 
-    async def async_set_ansi_12_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_12_color(self, value: Color) -> None:
         """
         Sets the ANSI 12 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2964,7 +2999,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 12 Color", value)
 
-    async def async_set_ansi_12_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_12_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 12 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -2973,7 +3008,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 12 Color (Light)", value)
 
-    async def async_set_ansi_12_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_12_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 12 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -2982,7 +3017,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 12 Color (Dark)", value)
 
-    async def async_set_ansi_13_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_13_color(self, value: Color) -> None:
         """
         Sets the ANSI 13 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -2991,7 +3026,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 13 Color", value)
 
-    async def async_set_ansi_13_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_13_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 13 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -3000,7 +3035,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 13 Color (Light)", value)
 
-    async def async_set_ansi_13_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_13_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 13 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -3009,7 +3044,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 13 Color (Dark)", value)
 
-    async def async_set_ansi_14_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_14_color(self, value: Color) -> None:
         """
         Sets the ANSI 14 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -3018,7 +3053,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 14 Color", value)
 
-    async def async_set_ansi_14_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_14_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 14 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -3027,7 +3062,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 14 Color (Light)", value)
 
-    async def async_set_ansi_14_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_14_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 14 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -3036,7 +3071,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 14 Color (Dark)", value)
 
-    async def async_set_ansi_15_color(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_15_color(self, value: Color) -> None:
         """
         Sets the ANSI 15 color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -3045,7 +3080,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 15 Color", value)
 
-    async def async_set_ansi_15_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_15_color_light(self, value: Color) -> None:
         """
         Sets the ANSI 15 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
@@ -3054,7 +3089,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 15 Color (Light)", value)
 
-    async def async_set_ansi_15_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_ansi_15_color_dark(self, value: Color) -> None:
         """
         Sets the ANSI 15 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
@@ -3063,7 +3098,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Ansi 15 Color (Dark)", value)
 
-    async def async_set_smart_cursor_color(self, value: bool):
+    async def async_set_smart_cursor_color(self, value: bool) -> None:
         """
         Sets whether to use smart cursor color. This only applies to box
         cursors. This is used only when separate light/dark mode colors are not
@@ -3073,7 +3108,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Smart Cursor Color", value)
 
-    async def async_set_smart_cursor_color_light(self, value: bool):
+    async def async_set_smart_cursor_color_light(self, value: bool) -> None:
         """
         Sets whether to use smart cursor color. This only applies to box
         cursors. This affects the light-mode variant when separate light/dark
@@ -3083,7 +3118,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Smart Cursor Color (Light)", value)
 
-    async def async_set_smart_cursor_color_dark(self, value: bool):
+    async def async_set_smart_cursor_color_dark(self, value: bool) -> None:
         """
         Sets whether to use smart cursor color. This only applies to box
         cursors. This affects the dark-mode variant when separate light/dark
@@ -3093,7 +3128,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Smart Cursor Color (Dark)", value)
 
-    async def async_set_minimum_contrast(self, value: float):
+    async def async_set_minimum_contrast(self, value: float) -> None:
         """
         Sets the minimum contrast, in 0 to 1. This is used only when separate
         light/dark mode colors are not enabled.
@@ -3102,7 +3137,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Minimum Contrast", value)
 
-    async def async_set_minimum_contrast_light(self, value: float):
+    async def async_set_minimum_contrast_light(self, value: float) -> None:
         """
         Sets the minimum contrast, in 0 to 1. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
@@ -3111,7 +3146,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Minimum Contrast (Light)", value)
 
-    async def async_set_minimum_contrast_dark(self, value: float):
+    async def async_set_minimum_contrast_dark(self, value: float) -> None:
         """
         Sets the minimum contrast, in 0 to 1. This affects the dark-mode
         variant when separate light/dark mode colors are enabled.
@@ -3120,7 +3155,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Minimum Contrast (Dark)", value)
 
-    async def async_set_tab_color(self, value: 'iterm2.color.Color'):
+    async def async_set_tab_color(self, value: Color) -> None:
         """
         Sets the tab color. This is used only when separate light/dark mode
         colors are not enabled.
@@ -3129,7 +3164,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Tab Color", value)
 
-    async def async_set_tab_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_tab_color_light(self, value: Color) -> None:
         """
         Sets the tab color. This affects the light-mode variant when separate
         light/dark mode colors are enabled.
@@ -3138,7 +3173,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Tab Color (Light)", value)
 
-    async def async_set_tab_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_tab_color_dark(self, value: Color) -> None:
         """
         Sets the tab color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
@@ -3147,7 +3182,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Tab Color (Dark)", value)
 
-    async def async_set_use_tab_color(self, value: bool):
+    async def async_set_use_tab_color(self, value: bool) -> None:
         """
         Sets whether the tab color should be used. This is used only when
         separate light/dark mode colors are not enabled.
@@ -3156,7 +3191,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Tab Color", value)
 
-    async def async_set_use_tab_color_light(self, value: bool):
+    async def async_set_use_tab_color_light(self, value: bool) -> None:
         """
         Sets whether the tab color should be used. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
@@ -3165,7 +3200,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Tab Color (Light)", value)
 
-    async def async_set_use_tab_color_dark(self, value: bool):
+    async def async_set_use_tab_color_dark(self, value: bool) -> None:
         """
         Sets whether the tab color should be used. This affects the dark-mode
         variant when separate light/dark mode colors are enabled.
@@ -3174,34 +3209,34 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Tab Color (Dark)", value)
 
-    async def async_set_underline_color(self, value: typing.Optional['iterm2.color.Color']):
+    async def async_set_underline_color(self, value: Color | None) -> None:
         """
         Sets the underline color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :param value: A typing.Optional['iterm2.color.Color']
+        :param value: A :class:`Color` or `None`
         """
         return await self._async_color_set("Underline Color", value)
 
-    async def async_set_underline_color_light(self, value: typing.Optional['iterm2.color.Color']):
+    async def async_set_underline_color_light(self, value: Color | None) -> None:
         """
         Sets the underline color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :param value: A typing.Optional['iterm2.color.Color']
+        :param value: A :class:`Color` or `None`
         """
         return await self._async_color_set("Underline Color (Light)", value)
 
-    async def async_set_underline_color_dark(self, value: typing.Optional['iterm2.color.Color']):
+    async def async_set_underline_color_dark(self, value: Color | None) -> None:
         """
         Sets the underline color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :param value: A typing.Optional['iterm2.color.Color']
+        :param value: A :class:`Color` or `None`
         """
         return await self._async_color_set("Underline Color (Dark)", value)
 
-    async def async_set_use_underline_color(self, value: bool):
+    async def async_set_use_underline_color(self, value: bool) -> None:
         """
         Sets whether to use the specified underline color. This is used only
         when separate light/dark mode colors are not enabled.
@@ -3210,7 +3245,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Underline Color", value)
 
-    async def async_set_use_underline_color_light(self, value: bool):
+    async def async_set_use_underline_color_light(self, value: bool) -> None:
         """
         Sets whether to use the specified underline color. This affects the
         light-mode variant when separate light/dark mode colors are enabled.
@@ -3219,7 +3254,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Underline Color (Light)", value)
 
-    async def async_set_use_underline_color_dark(self, value: bool):
+    async def async_set_use_underline_color_dark(self, value: bool) -> None:
         """
         Sets whether to use the specified underline color. This affects the
         dark-mode variant when separate light/dark mode colors are enabled.
@@ -3228,7 +3263,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Underline Color (Dark)", value)
 
-    async def async_set_cursor_boost(self, value: float):
+    async def async_set_cursor_boost(self, value: float) -> None:
         """
         Sets the cursor boost level, in 0 to 1. This is used only when separate
         light/dark mode colors are not enabled.
@@ -3237,7 +3272,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Cursor Boost", value)
 
-    async def async_set_cursor_boost_light(self, value: float):
+    async def async_set_cursor_boost_light(self, value: float) -> None:
         """
         Sets the cursor boost level, in 0 to 1. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
@@ -3246,7 +3281,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Cursor Boost (Light)", value)
 
-    async def async_set_cursor_boost_dark(self, value: float):
+    async def async_set_cursor_boost_dark(self, value: float) -> None:
         """
         Sets the cursor boost level, in 0 to 1. This affects the dark-mode
         variant when separate light/dark mode colors are enabled.
@@ -3255,7 +3290,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Cursor Boost (Dark)", value)
 
-    async def async_set_use_cursor_guide(self, value: bool):
+    async def async_set_use_cursor_guide(self, value: bool) -> None:
         """
         Sets whether the cursor guide should be used. This is used only when
         separate light/dark mode colors are not enabled.
@@ -3264,7 +3299,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Cursor Guide", value)
 
-    async def async_set_use_cursor_guide_light(self, value: bool):
+    async def async_set_use_cursor_guide_light(self, value: bool) -> None:
         """
         Sets whether the cursor guide should be used. This affects the
         light-mode variant when separate light/dark mode colors are enabled.
@@ -3273,7 +3308,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Cursor Guide (Light)", value)
 
-    async def async_set_use_cursor_guide_dark(self, value: bool):
+    async def async_set_use_cursor_guide_dark(self, value: bool) -> None:
         """
         Sets whether the cursor guide should be used. This affects the
         dark-mode variant when separate light/dark mode colors are enabled.
@@ -3282,7 +3317,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Cursor Guide (Dark)", value)
 
-    async def async_set_cursor_guide_color(self, value: 'iterm2.color.Color'):
+    async def async_set_cursor_guide_color(self, value: Color) -> None:
         """
         Sets the cursor guide color. The alpha value is respected. This is used
         only when separate light/dark mode colors are not enabled.
@@ -3291,7 +3326,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Cursor Guide Color", value)
 
-    async def async_set_cursor_guide_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_cursor_guide_color_light(self, value: Color) -> None:
         """
         Sets the cursor guide color. The alpha value is respected. This affects
         the light-mode variant when separate light/dark mode colors are
@@ -3301,7 +3336,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Cursor Guide Color (Light)", value)
 
-    async def async_set_cursor_guide_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_cursor_guide_color_dark(self, value: Color) -> None:
         """
         Sets the cursor guide color. The alpha value is respected. This affects
         the dark-mode variant when separate light/dark mode colors are enabled.
@@ -3310,7 +3345,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Cursor Guide Color (Dark)", value)
 
-    async def async_set_badge_color(self, value: 'iterm2.color.Color'):
+    async def async_set_badge_color(self, value: Color) -> None:
         """
         Sets the badge color. The alpha value is respected. This is used only
         when separate light/dark mode colors are not enabled.
@@ -3319,7 +3354,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Badge Color", value)
 
-    async def async_set_badge_color_light(self, value: 'iterm2.color.Color'):
+    async def async_set_badge_color_light(self, value: Color) -> None:
         """
         Sets the badge color. The alpha value is respected. This affects the
         light-mode variant when separate light/dark mode colors are enabled.
@@ -3328,7 +3363,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Badge Color (Light)", value)
 
-    async def async_set_badge_color_dark(self, value: 'iterm2.color.Color'):
+    async def async_set_badge_color_dark(self, value: Color) -> None:
         """
         Sets the badge color. The alpha value is respected. This affects the
         dark-mode variant when separate light/dark mode colors are enabled.
@@ -3337,7 +3372,7 @@ class WriteOnlyProfile:
         """
         return await self._async_color_set("Badge Color (Dark)", value)
 
-    async def async_set_name(self, value: str):
+    async def async_set_name(self, value: str) -> None:
         """
         Sets the name.
 
@@ -3345,7 +3380,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Name", value)
 
-    async def async_set_badge_text(self, value: str):
+    async def async_set_badge_text(self, value: str) -> None:
         """
         Sets the badge text.
 
@@ -3353,7 +3388,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Badge Text", value)
 
-    async def async_set_subtitle(self, value: str):
+    async def async_set_subtitle(self, value: str) -> None:
         """
         Sets the subtitle, an interpolated string.
 
@@ -3361,7 +3396,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Subtitle", value)
 
-    async def async_set_answerback_string(self, value: str):
+    async def async_set_answerback_string(self, value: str) -> None:
         """
         Sets the answerback string.
 
@@ -3369,7 +3404,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Answerback String", value)
 
-    async def async_set_blinking_cursor(self, value: bool):
+    async def async_set_blinking_cursor(self, value: bool) -> None:
         """
         Sets whether the cursor blinks.
 
@@ -3377,7 +3412,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Blinking Cursor", value)
 
-    async def async_set_cursor_shadow(self, value: bool):
+    async def async_set_cursor_shadow(self, value: bool) -> None:
         """
         Sets whether the vertical bar and horizontal line cursor have a shadow.
 
@@ -3385,7 +3420,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Cursor Shadow", value)
 
-    async def async_set_use_bold_font(self, value: bool):
+    async def async_set_use_bold_font(self, value: bool) -> None:
         """
         Sets whether to use the bold variant of the font for bold text.
 
@@ -3393,7 +3428,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Bold Font", value)
 
-    async def async_set_ascii_ligatures(self, value: bool):
+    async def async_set_ascii_ligatures(self, value: bool) -> None:
         """
         Sets whether ligatures should be used for ASCII text.
 
@@ -3401,7 +3436,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("ASCII Ligatures", value)
 
-    async def async_set_non_ascii_ligatures(self, value: bool):
+    async def async_set_non_ascii_ligatures(self, value: bool) -> None:
         """
         Sets whether ligatures should be used for non-ASCII text.
 
@@ -3409,7 +3444,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Non-ASCII Ligatures", value)
 
-    async def async_set_blink_allowed(self, value: bool):
+    async def async_set_blink_allowed(self, value: bool) -> None:
         """
         Sets whether blinking text is allowed.
 
@@ -3417,7 +3452,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Blink Allowed", value)
 
-    async def async_set_use_italic_font(self, value: bool):
+    async def async_set_use_italic_font(self, value: bool) -> None:
         """
         Sets whether italic text is allowed.
 
@@ -3425,7 +3460,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Italic Font", value)
 
-    async def async_set_ambiguous_double_width(self, value: bool):
+    async def async_set_ambiguous_double_width(self, value: bool) -> None:
         """
         Sets whether ambiguous-width text should be treated as double-width.
 
@@ -3433,7 +3468,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Ambiguous Double Width", value)
 
-    async def async_set_horizontal_spacing(self, value: float):
+    async def async_set_horizontal_spacing(self, value: float) -> None:
         """
         Sets the fraction of horizontal spacing. Must be non-negative.
 
@@ -3441,7 +3476,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Horizontal Spacing", value)
 
-    async def async_set_vertical_spacing(self, value: float):
+    async def async_set_vertical_spacing(self, value: float) -> None:
         """
         Sets the fraction of vertical spacing. Must be non-negative.
 
@@ -3449,7 +3484,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Vertical Spacing", value)
 
-    async def async_set_use_non_ascii_font(self, value: bool):
+    async def async_set_use_non_ascii_font(self, value: bool) -> None:
         """
         Sets whether to use a different font for non-ASCII text.
 
@@ -3457,7 +3492,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Non-ASCII Font", value)
 
-    async def async_set_transparency(self, value: float):
+    async def async_set_transparency(self, value: float) -> None:
         """
         Sets the level of transparency.
 
@@ -3465,7 +3500,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Transparency", value)
 
-    async def async_set_blur(self, value: bool):
+    async def async_set_blur(self, value: bool) -> None:
         """
         Sets whether background blur should be enabled.
 
@@ -3473,7 +3508,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Blur", value)
 
-    async def async_set_blur_radius(self, value: float):
+    async def async_set_blur_radius(self, value: float) -> None:
         """
         Sets the blur radius (how blurry). Requires blur to be enabled.
 
@@ -3481,7 +3516,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Blur Radius", value)
 
-    async def async_set_background_image_mode(self, value: BackgroundImageMode):
+    async def async_set_background_image_mode(self, value: BackgroundImageMode) -> None:
         """
         Sets how the background image is drawn.
 
@@ -3489,7 +3524,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Background Image Mode", value)
 
-    async def async_set_blend(self, value: float):
+    async def async_set_blend(self, value: float) -> None:
         """
         Sets how much the default background color gets blended with the
         background image.
@@ -3500,7 +3535,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Blend", value)
 
-    async def async_set_sync_title(self, value: bool):
+    async def async_set_sync_title(self, value: bool) -> None:
         """
         Sets whether the profile name stays in the tab title, even if changed
         by an escape sequence.
@@ -3509,7 +3544,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Sync Title", value)
 
-    async def async_set_use_built_in_powerline_glyphs(self, value: bool):
+    async def async_set_use_built_in_powerline_glyphs(self, value: bool) -> None:
         """
         Sets whether powerline glyphs should be drawn by iTerm2 or left to the
         font.
@@ -3518,7 +3553,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Draw Powerline Glyphs", value)
 
-    async def async_set_disable_window_resizing(self, value: bool):
+    async def async_set_disable_window_resizing(self, value: bool) -> None:
         """
         Sets whether the terminal can resize the window with an escape
         sequence.
@@ -3527,7 +3562,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Disable Window Resizing", value)
 
-    async def async_set_allow_change_cursor_blink(self, value: bool):
+    async def async_set_allow_change_cursor_blink(self, value: bool) -> None:
         """
         Sets whether the terminal can change the cursor blink setting with an
         escape sequence.
@@ -3536,16 +3571,20 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Allow Change Cursor Blink", value)
 
-    async def async_set_only_the_default_bg_color_uses_transparency(self, value: bool):
+    async def async_set_only_the_default_bg_color_uses_transparency(
+        self, value: bool
+    ) -> None:
         """
         Sets whether window transparency shows through non-default background
         colors.
 
         :param value: A bool
         """
-        return await self._async_simple_set("Only The Default BG Color Uses Transparency", value)
+        return await self._async_simple_set(
+            "Only The Default BG Color Uses Transparency", value
+        )
 
-    async def async_set_ascii_anti_aliased(self, value: bool):
+    async def async_set_ascii_anti_aliased(self, value: bool) -> None:
         """
         Sets whether ASCII text is anti-aliased.
 
@@ -3553,7 +3592,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("ASCII Anti Aliased", value)
 
-    async def async_set_non_ascii_anti_aliased(self, value: bool):
+    async def async_set_non_ascii_anti_aliased(self, value: bool) -> None:
         """
         Sets whether non-ASCII text is anti-aliased.
 
@@ -3561,7 +3600,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Non-ASCII Anti Aliased", value)
 
-    async def async_set_scrollback_lines(self, value: int):
+    async def async_set_scrollback_lines(self, value: int) -> None:
         """
         Sets the number of scrollback lines.
 
@@ -3569,7 +3608,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Scrollback Lines", value)
 
-    async def async_set_unlimited_scrollback(self, value: bool):
+    async def async_set_unlimited_scrollback(self, value: bool) -> None:
         """
         Sets whether the scrollback buffer's length is unlimited.
 
@@ -3577,7 +3616,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Unlimited Scrollback", value)
 
-    async def async_set_scrollback_with_status_bar(self, value: bool):
+    async def async_set_scrollback_with_status_bar(self, value: bool) -> None:
         """
         Sets whether text gets appended to scrollback when there is an app
         status bar
@@ -3586,7 +3625,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Scrollback With Status Bar", value)
 
-    async def async_set_scrollback_in_alternate_screen(self, value: bool):
+    async def async_set_scrollback_in_alternate_screen(self, value: bool) -> None:
         """
         Sets whether text gets appended to scrollback in alternate screen mode.
 
@@ -3594,7 +3633,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Scrollback in Alternate Screen", value)
 
-    async def async_set_mouse_reporting(self, value: bool):
+    async def async_set_mouse_reporting(self, value: bool) -> None:
         """
         Sets whether mouse reporting is allowed
 
@@ -3602,7 +3641,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Mouse Reporting", value)
 
-    async def async_set_mouse_reporting_allow_mouse_wheel(self, value: bool):
+    async def async_set_mouse_reporting_allow_mouse_wheel(self, value: bool) -> None:
         """
         Sets whether mouse reporting reports the mouse wheel's movements.
 
@@ -3610,7 +3649,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Mouse Reporting allow mouse wheel", value)
 
-    async def async_set_allow_title_reporting(self, value: bool):
+    async def async_set_allow_title_reporting(self, value: bool) -> None:
         """
         Sets whether the session title can be reported
 
@@ -3618,7 +3657,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Allow Title Reporting", value)
 
-    async def async_set_allow_title_setting(self, value: bool):
+    async def async_set_allow_title_setting(self, value: bool) -> None:
         """
         Sets whether the session title can be changed by escape sequence
 
@@ -3626,7 +3665,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Allow Title Setting", value)
 
-    async def async_set_disable_printing(self, value: bool):
+    async def async_set_disable_printing(self, value: bool) -> None:
         """
         Sets whether printing by escape sequence is disabled.
 
@@ -3634,7 +3673,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Disable Printing", value)
 
-    async def async_set_disable_smcup_rmcup(self, value: bool):
+    async def async_set_disable_smcup_rmcup(self, value: bool) -> None:
         """
         Sets whether alternate screen mode is disabled
 
@@ -3642,7 +3681,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Disable Smcup Rmcup", value)
 
-    async def async_set_silence_bell(self, value: bool):
+    async def async_set_silence_bell(self, value: bool) -> None:
         """
         Sets whether the bell makes noise.
 
@@ -3650,7 +3689,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Silence Bell", value)
 
-    async def async_set_bm_growl(self, value: bool):
+    async def async_set_bm_growl(self, value: bool) -> None:
         """
         Sets whether notifications should be shown.
 
@@ -3658,7 +3697,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("BM Growl", value)
 
-    async def async_set_send_bell_alert(self, value: bool):
+    async def async_set_send_bell_alert(self, value: bool) -> None:
         """
         Sets whether notifications should be shown for the bell ringing
 
@@ -3666,7 +3705,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Send Bell Alert", value)
 
-    async def async_set_send_idle_alert(self, value: bool):
+    async def async_set_send_idle_alert(self, value: bool) -> None:
         """
         Sets whether notifications should be shown for becoming idle
 
@@ -3674,7 +3713,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Send Idle Alert", value)
 
-    async def async_set_send_new_output_alert(self, value: bool):
+    async def async_set_send_new_output_alert(self, value: bool) -> None:
         """
         Sets whether notifications should be shown for new output
 
@@ -3682,7 +3721,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Send New Output Alert", value)
 
-    async def async_set_send_session_ended_alert(self, value: bool):
+    async def async_set_send_session_ended_alert(self, value: bool) -> None:
         """
         Sets whether notifications should be shown for a session ending
 
@@ -3690,7 +3729,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Send Session Ended Alert", value)
 
-    async def async_set_send_terminal_generated_alerts(self, value: bool):
+    async def async_set_send_terminal_generated_alerts(self, value: bool) -> None:
         """
         Sets whether notifications should be shown for escape-sequence
         originated notifications
@@ -3699,7 +3738,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Send Terminal Generated Alerts", value)
 
-    async def async_set_flashing_bell(self, value: bool):
+    async def async_set_flashing_bell(self, value: bool) -> None:
         """
         Sets whether the bell should flash the screen
 
@@ -3707,7 +3746,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Flashing Bell", value)
 
-    async def async_set_visual_bell(self, value: bool):
+    async def async_set_visual_bell(self, value: bool) -> None:
         """
         Sets whether a bell should be shown when the bell rings
 
@@ -3715,7 +3754,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Visual Bell", value)
 
-    async def async_set_close_sessions_on_end(self, value: bool):
+    async def async_set_close_sessions_on_end(self, value: bool) -> None:
         """
         Sets whether the session should close when it ends.
 
@@ -3723,7 +3762,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Close Sessions On End", value)
 
-    async def async_set_prompt_before_closing(self, value: bool):
+    async def async_set_prompt_before_closing(self, value: bool) -> None:
         """
         Sets whether the session should prompt before closing.
 
@@ -3731,7 +3770,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Prompt Before Closing 2", value)
 
-    async def async_set_session_close_undo_timeout(self, value: float):
+    async def async_set_session_close_undo_timeout(self, value: float) -> None:
         """
         Sets the amount of time you can undo closing a session
 
@@ -3739,7 +3778,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Session Close Undo Timeout", value)
 
-    async def async_set_reduce_flicker(self, value: bool):
+    async def async_set_reduce_flicker(self, value: bool) -> None:
         """
         Sets whether the flicker fixer is on.
 
@@ -3747,7 +3786,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Reduce Flicker", value)
 
-    async def async_set_send_code_when_idle(self, value: bool):
+    async def async_set_send_code_when_idle(self, value: bool) -> None:
         """
         Sets whether to send a code when idle
 
@@ -3755,7 +3794,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Send Code When Idle", value)
 
-    async def async_set_application_keypad_allowed(self, value: bool):
+    async def async_set_application_keypad_allowed(self, value: bool) -> None:
         """
         Sets whether the terminal may be placed in application keypad mode
 
@@ -3763,7 +3802,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Application Keypad Allowed", value)
 
-    async def async_set_place_prompt_at_first_column(self, value: bool):
+    async def async_set_place_prompt_at_first_column(self, value: bool) -> None:
         """
         Sets whether the prompt should always begin at the first column
         (requires shell integration)
@@ -3772,7 +3811,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Place Prompt at First Column", value)
 
-    async def async_set_show_mark_indicators(self, value: bool):
+    async def async_set_show_mark_indicators(self, value: bool) -> None:
         """
         Sets whether mark indicators should be visible
 
@@ -3780,7 +3819,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Show Mark Indicators", value)
 
-    async def async_set_idle_code(self, value: int):
+    async def async_set_idle_code(self, value: int) -> None:
         """
         Sets the ASCII code to send on idle
 
@@ -3788,7 +3827,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Idle Code", value)
 
-    async def async_set_idle_period(self, value: float):
+    async def async_set_idle_period(self, value: float) -> None:
         """
         Sets how often to send a code when idle
 
@@ -3796,7 +3835,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Idle Period", value)
 
-    async def async_set_unicode_version(self, value: bool):
+    async def async_set_unicode_version(self, value: bool) -> None:
         """
         Sets the unicode version for wcwidth
 
@@ -3804,7 +3843,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Unicode Version", value)
 
-    async def async_set_cursor_type(self, value: CursorType):
+    async def async_set_cursor_type(self, value: CursorType) -> None:
         """
         Sets the cursor type
 
@@ -3812,7 +3851,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Cursor Type", value)
 
-    async def async_set_thin_strokes(self, value: ThinStrokes):
+    async def async_set_thin_strokes(self, value: ThinStrokes) -> None:
         """
         Sets whether thin strokes are used.
 
@@ -3820,7 +3859,9 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Thin Strokes", value)
 
-    async def async_set_unicode_normalization(self, value: UnicodeNormalization):
+    async def async_set_unicode_normalization(
+        self, value: UnicodeNormalization
+    ) -> None:
         """
         Sets the unicode normalization form to use
 
@@ -3828,7 +3869,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Unicode Normalization", value)
 
-    async def async_set_character_encoding(self, value: CharacterEncoding):
+    async def async_set_character_encoding(self, value: CharacterEncoding) -> None:
         """
         Sets the character encoding
 
@@ -3836,7 +3877,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Character Encoding", value)
 
-    async def async_set_left_option_key_sends(self, value: OptionKeySends):
+    async def async_set_left_option_key_sends(self, value: OptionKeySends) -> None:
         """
         Sets the behavior of the left option key.
 
@@ -3844,7 +3885,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Option Key Sends", value)
 
-    async def async_set_right_option_key_sends(self, value: OptionKeySends):
+    async def async_set_right_option_key_sends(self, value: OptionKeySends) -> None:
         """
         Sets the behavior of the right option key.
 
@@ -3852,7 +3893,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Right Option Key Sends", value)
 
-    async def async_set_triggers(self, value: typing.List[typing.Dict[str, typing.Any]]):
+    async def async_set_triggers(self, value: list[dict[str, Any]]) -> None:
         """
         Sets the triggers.
 
@@ -3862,7 +3903,9 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Triggers", value)
 
-    async def async_set_smart_selection_rules(self, value: typing.List[typing.Dict[str, typing.Any]]):
+    async def async_set_smart_selection_rules(
+        self, value: list[dict[str, Any]]
+    ) -> None:
         """
         Sets the smart selection rules.
 
@@ -3871,7 +3914,9 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Smart Selection Rules", value)
 
-    async def async_set_smart_selection_actions_use_interpolated_strings(self, value: bool):
+    async def async_set_smart_selection_actions_use_interpolated_strings(
+        self, value: bool
+    ) -> None:
         """
         Sets whether smart selection action parameters are interpolated
         strings.
@@ -3879,17 +3924,21 @@ class WriteOnlyProfile:
         Should smart selection actions' parameters be treated as interpolated
         strings? If false, use the backward-compatibility syntax.
         """
-        return await self._async_simple_set("Smart Selection Actions Use Interpolated Strings", value)
+        return await self._async_simple_set(
+            "Smart Selection Actions Use Interpolated Strings", value
+        )
 
-    async def async_set_semantic_history(self, value: typing.Dict[str, typing.Any]):
+    async def async_set_semantic_history(self, value: dict[str, Any]) -> None:
         """
         Sets the semantic history prefs.
 
-        :param value: A typing.Dict[str, typing.Any]
+        :param value: A dict[str, Any]
         """
         return await self._async_simple_set("Semantic History", value)
 
-    async def async_set_automatic_profile_switching_rules(self, value: typing.List[str]):
+    async def async_set_automatic_profile_switching_rules(
+        self, value: list[str]
+    ) -> None:
         """
         Sets the automatic profile switching rules.
 
@@ -3897,7 +3946,9 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Bound Hosts", value)
 
-    async def async_set_advanced_working_directory_window_setting(self, value: InitialWorkingDirectory):
+    async def async_set_advanced_working_directory_window_setting(
+        self, value: InitialWorkingDirectory
+    ) -> None:
         """
         Sets the advanced working directory window setting.
 
@@ -3905,7 +3956,9 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("AWDS Window Option", value)
 
-    async def async_set_advanced_working_directory_window_directory(self, value: str):
+    async def async_set_advanced_working_directory_window_directory(
+        self, value: str
+    ) -> None:
         """
         Sets the advanced working directory window directory.
 
@@ -3913,7 +3966,9 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("AWDS Window Directory", value)
 
-    async def async_set_advanced_working_directory_tab_setting(self, value: InitialWorkingDirectory):
+    async def async_set_advanced_working_directory_tab_setting(
+        self, value: InitialWorkingDirectory
+    ) -> None:
         """
         Sets the advanced working directory tab setting.
 
@@ -3921,7 +3976,9 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("AWDS Tab Option", value)
 
-    async def async_set_advanced_working_directory_tab_directory(self, value: str):
+    async def async_set_advanced_working_directory_tab_directory(
+        self, value: str
+    ) -> None:
         """
         Sets the advanced working directory tab directory.
 
@@ -3929,7 +3986,9 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("AWDS Tab Directory", value)
 
-    async def async_set_advanced_working_directory_pane_setting(self, value: InitialWorkingDirectory):
+    async def async_set_advanced_working_directory_pane_setting(
+        self, value: InitialWorkingDirectory
+    ) -> None:
         """
         Sets the advanced working directory pane setting.
 
@@ -3937,7 +3996,9 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("AWDS Pane Option", value)
 
-    async def async_set_advanced_working_directory_pane_directory(self, value: str):
+    async def async_set_advanced_working_directory_pane_directory(
+        self, value: str
+    ) -> None:
         """
         Sets the advanced working directory pane directory.
 
@@ -3945,7 +4006,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("AWDS Pane Directory", value)
 
-    async def async_set_normal_font(self, value: str):
+    async def async_set_normal_font(self, value: str) -> None:
         """
         Sets the normal font.
 
@@ -3958,7 +4019,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Normal Font", value)
 
-    async def async_set_non_ascii_font(self, value: str):
+    async def async_set_non_ascii_font(self, value: str) -> None:
         """
         Sets the non-ASCII font.
 
@@ -3967,18 +4028,18 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Non Ascii Font", value)
 
-    async def async_set_background_image_location(self, value: str):
+    async def async_set_background_image_location(self, value: str) -> None:
         """
         Sets or clears the path to a background image.
 
         The value is a string with the path to the image file,
         or an empty string to clear the setting.
-        
+
         :param value: A str
         """
         return await self._async_simple_set("Background Image Location", value)
 
-    async def async_set_key_mappings(self, value: typing.Dict[str, typing.Any]):
+    async def async_set_key_mappings(self, value: dict[str, Any]) -> None:
         """
         Sets the keyboard shortcuts.
 
@@ -3988,7 +4049,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Keyboard Map", value)
 
-    async def async_set_touchbar_mappings(self, value: typing.Dict[str, typing.Any]):
+    async def async_set_touchbar_mappings(self, value: dict[str, Any]) -> None:
         """
         Sets the touchbar actions.
 
@@ -3996,7 +4057,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Touch Bar Map", value)
 
-    async def async_set_use_custom_command(self, value: str):
+    async def async_set_use_custom_command(self, value: str) -> None:
         """
         Sets whether to use a custom command when the session is created.
 
@@ -4004,7 +4065,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Custom Command", value)
 
-    async def async_set_command(self, value: str):
+    async def async_set_command(self, value: str) -> None:
         """
         Sets the command to run when the session starts.
 
@@ -4012,7 +4073,9 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Command", value)
 
-    async def async_set_initial_directory_mode(self, value: InitialWorkingDirectory):
+    async def async_set_initial_directory_mode(
+        self, value: InitialWorkingDirectory
+    ) -> None:
         """
         Sets whether to use a custom (not home) initial working directory.
 
@@ -4020,7 +4083,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Custom Directory", value.value)
 
-    async def async_set_custom_directory(self, value: str):
+    async def async_set_custom_directory(self, value: str) -> None:
         """
         Sets the initial working directory.
 
@@ -4030,7 +4093,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Working Directory", value)
 
-    async def async_set_icon_mode(self, value: IconMode):
+    async def async_set_icon_mode(self, value: IconMode) -> None:
         """
         Sets the icon mode.
 
@@ -4038,7 +4101,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Icon", value.value)
 
-    async def async_set_custom_icon_path(self, value: str):
+    async def async_set_custom_icon_path(self, value: str) -> None:
         """
         Sets the path of the custom icon.
 
@@ -4046,7 +4109,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Custom Icon Path", value)
 
-    async def async_set_badge_top_margin(self, value: int):
+    async def async_set_badge_top_margin(self, value: int) -> None:
         """
         Sets the top margin of the badge.
 
@@ -4054,7 +4117,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Badge Top Margin", value)
 
-    async def async_set_badge_right_margin(self, value: int):
+    async def async_set_badge_right_margin(self, value: int) -> None:
         """
         Sets the right margin of the badge.
 
@@ -4062,7 +4125,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Badge Right Margin", value)
 
-    async def async_set_badge_max_width(self, value: int):
+    async def async_set_badge_max_width(self, value: int) -> None:
         """
         Sets the max width of the badge.
 
@@ -4070,7 +4133,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Badge Max Width", value)
 
-    async def async_set_badge_max_height(self, value: int):
+    async def async_set_badge_max_height(self, value: int) -> None:
         """
         Sets the max height of the badge.
 
@@ -4078,7 +4141,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Badge Max Height", value)
 
-    async def async_set_badge_font(self, value: str):
+    async def async_set_badge_font(self, value: str) -> None:
         """
         Sets the font of the badge.
 
@@ -4086,7 +4149,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Badge Font", value)
 
-    async def async_set_use_custom_window_title(self, value: bool):
+    async def async_set_use_custom_window_title(self, value: bool) -> None:
         """
         Sets whether the custom window title is used.
 
@@ -4094,7 +4157,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use Custom Window Title", value)
 
-    async def async_set_custom_window_title(self, value: typing.Optional[str]):
+    async def async_set_custom_window_title(self, value: str | None) -> None:
         """
         Sets the custom window title.
 
@@ -4103,7 +4166,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Custom Window Title", value)
 
-    async def async_set_use_transparency_initially(self, value: bool):
+    async def async_set_use_transparency_initially(self, value: bool) -> None:
         """
         Sets whether a window created with this profile respect the
         transparency setting.
@@ -4113,7 +4176,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Initial Use Transparency", value)
 
-    async def async_set_status_bar_enabled(self, value: bool):
+    async def async_set_status_bar_enabled(self, value: bool) -> None:
         """
         Sets whether the status bar be enabled.
 
@@ -4121,7 +4184,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Show Status Bar", value)
 
-    async def async_set_use_csi_u(self, value: bool):
+    async def async_set_use_csi_u(self, value: bool) -> None:
         """
         Sets whether to report keystrokes with CSI u protocol.
 
@@ -4129,7 +4192,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Use libtickit protocol", value)
 
-    async def async_set_triggers_use_interpolated_strings(self, value: bool):
+    async def async_set_triggers_use_interpolated_strings(self, value: bool) -> None:
         """
         Sets whether trigger parameters should be interpreted as interpolated
         strings.
@@ -4138,7 +4201,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Triggers Use Interpolated Strings", value)
 
-    async def async_set_left_option_key_changeable(self, value: bool):
+    async def async_set_left_option_key_changeable(self, value: bool) -> None:
         """
         Sets whether apps should be able to change the left option key to send
         esc+.
@@ -4147,7 +4210,7 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Left Option Key Changeable", value)
 
-    async def async_set_right_option_key_changeable(self, value: bool):
+    async def async_set_right_option_key_changeable(self, value: bool) -> None:
         """
         Sets whether apps should be able to change the right option key to send
         esc+.
@@ -4156,13 +4219,16 @@ class WriteOnlyProfile:
         """
         return await self._async_simple_set("Right Option Key Changeable", value)
 
-    async def async_set_open_password_manager_automatically(self, value: bool):
+    async def async_set_open_password_manager_automatically(self, value: bool) -> None:
         """
         Sets if the password manager should open automatically.
 
         The values gives whether it should open automatically.
         """
-        return await self._async_simple_set("Open Password Manager Automatically", value)
+        return await self._async_simple_set(
+            "Open Password Manager Automatically", value
+        )
+
 
 class Profile(WriteOnlyProfile):
     """Represents a profile.
@@ -4170,11 +4236,13 @@ class Profile(WriteOnlyProfile):
     If a session_id is set then this is the profile attached to a session.
     Otherwise, it is a shared profile."""
 
-    USE_CUSTOM_COMMAND_ENABLED = "Yes"
-    USE_CUSTOM_COMMAND_DISABLED = "No"
+    USE_CUSTOM_COMMAND_ENABLED: str = "Yes"
+    USE_CUSTOM_COMMAND_DISABLED: str = "No"
 
     @staticmethod
-    async def async_get(connection, guids=None) -> typing.List['Profile']:
+    async def async_get(
+        connection: Connection, guids: Iterable[str] | None = None
+    ) -> list[Profile]:
         """Fetches all profiles with the specified GUIDs.
 
         :param guids: The profiles to get, or if `None` then all will be
@@ -4182,26 +4250,29 @@ class Profile(WriteOnlyProfile):
 
         :returns: A list of :class:`Profile` objects.
         """
-        response = await iterm2.rpc.async_list_profiles(
-            connection, guids, None)
-        profiles = []
+        response = await async_list_profiles(connection, guids, None)
+        profiles: list[Profile] = []
         for response_profile in response.list_profiles_response.profiles:
             profile = Profile(None, connection, response_profile.properties)
             profiles.append(profile)
         return profiles
 
     @staticmethod
-    async def async_get_default(connection) -> 'Profile':
+    async def async_get_default(connection: Connection) -> Profile:
         """Returns the default profile."""
-        iterm2.capabilities.check_supports_get_default_profile(connection)
-        result = await iterm2.rpc.async_get_default_profile(connection)
-        guid = (result.preferences_response.results[0].
-                get_default_profile_result.guid)
+        check_supports_get_default_profile(connection)
+        result = await async_get_default_profile(connection)
+        guid = result.preferences_response.results[0].get_default_profile_result.guid
         profiles = await Profile.async_get(connection, [guid])
         return profiles[0]
 
-    def __init__(self, session_id, connection, profile_property_list):
-        props = {}
+    def __init__(
+        self,
+        session_id: str | None,
+        connection: Connection,
+        profile_property_list: Iterable[ProfileProperty],
+    ) -> None:
+        props: dict[str, Any] = {}
         for prop in profile_property_list:
             props[prop.key] = json.loads(prop.json_value)
 
@@ -4210,21 +4281,22 @@ class Profile(WriteOnlyProfile):
 
         super().__init__(session_id, connection, guid)
 
-        self.connection = connection
-        self.session_id = session_id
+        self.connection: Connection = connection
+        self.session_id: str | None = session_id
         self.__props = props
 
-    def _simple_get(self, key):
+    def _simple_get(self, key: str) -> Any:
+        """Returns the JSON-decoded value for key, or None if it is absent."""
         if key in self.__props:
             return self.__props[key]
         return None
 
-    def _get_optional_bool(self, key):
+    def _get_optional_bool(self, key: str) -> bool | None:
         if key not in self.__props:
             return None
         return bool(self.__props[key])
 
-    def get_color_with_key(self, key):
+    def get_color_with_key(self, key: str) -> Color | None:
         """Returns the color for the request key, or None.
 
         :param key: A string describing the color. Corresponds to the keys in
@@ -4233,7 +4305,7 @@ class Profile(WriteOnlyProfile):
         :returns: Either a :class:`~iterm2.color.Color` or `None`.
         """
         try:
-            color = iterm2.color.Color()
+            color = Color()
             color.from_dict(self.__props[key])
             return color
         except ValueError:
@@ -4250,22 +4322,23 @@ class Profile(WriteOnlyProfile):
         return LocalWriteOnlyProfile(self.__props)
 
     @property
-    def all_properties(self):
+    def all_properties(self) -> dict[str, Any]:
         """Returns the internal dictionary value."""
         return dict(self.__props)
 
     @property
-    def title_components(
-            self) -> typing.Optional[typing.List[TitleComponents]]:
+    def title_components(self) -> list[TitleComponents] | None:
         """
         Returns which components are visible in the session's title, or selects
         a custom component.
 
         If it is set to `CUSTOM` then the title_function must be set properly.
+
+        :returns: A list of :class:`TitleComponents`, or `None` if not set.
         """
-        parts = []
-        bit = 1
         value = self._simple_get("Title Components")
+        parts: list[TitleComponents] = []
+        bit = 1
         while bit <= value:
             if bit & value:
                 parts.append(TitleComponents(bit))
@@ -4273,41 +4346,42 @@ class Profile(WriteOnlyProfile):
         return parts
 
     @property
-    def title_function(self) -> typing.Optional[typing.Tuple[str, str]]:
+    def title_function(self) -> tuple[str, str] | None:
         """
         Returns the function call for the session title provider and its
         display name for the UI.
 
-        :returns: (display name, unique identifier)
+        :returns: (display name, unique identifier), or `None` if not set.
         """
         values = self._simple_get("Title Function")
         return (values[0], values[1])
 
-    async def async_make_default(self):
+    async def async_make_default(self) -> None:
         """Makes this profile the default profile."""
-        await iterm2.rpc.async_set_default_profile(self.connection, self.guid)
+        await async_set_default_profile(self.connection, self.guid)  # type: ignore[arg-type]
 
     @property
-    def guid(self):
+    def guid(self) -> str | None:
         """Returns globally unique ID for this profile.
 
-        :returns: A string identifying this profile
+        :returns: A string identifying this profile, or `None` if not set (e.g.,
+            a :class:`PartialProfile` that did not fetch it).
         """
         return self._simple_get("Guid")
 
     @property
-    def original_guid(self):
+    def original_guid(self) -> str | None:
         """The GUID of the original profile from which this one was derived.
 
         Used for sessions whose profile has been modified from the underlying
         profile. Otherwise not set.
 
-        :returns: Guid
+        :returns: Guid, or `None` if not set.
         """
         return self._simple_get("Original Guid")
 
     @property
-    def dynamic_profile_parent_name(self):
+    def dynamic_profile_parent_name(self) -> str | None:
         """
         If the profile is a dynamic profile, returns the name of the parent
         profile.
@@ -4317,7 +4391,7 @@ class Profile(WriteOnlyProfile):
         return self._simple_get("Dynamic Profile Parent Name")
 
     @property
-    def dynamic_profile_file_name(self):
+    def dynamic_profile_file_name(self) -> str | None:
         """If the profile is a dynamic profile, returns the path to the file
         from which it came.
 
@@ -4326,109 +4400,109 @@ class Profile(WriteOnlyProfile):
         return self._simple_get("Dynamic Profile Filename")
 
     @property
-    def use_separate_colors_for_light_and_dark_mode(self) -> bool:
+    def use_separate_colors_for_light_and_dark_mode(self) -> bool | None:
         """
         Returns whether to use separate colors for light and dark mode.
 
         When this is enabled, use [set_]xxx_color_light and
         set_[xxx_]color_dark instead of [set_]xxx_color.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Separate Colors for Light and Dark Mode")
 
     @property
-    def foreground_color(self) -> 'iterm2.color.Color':
+    def foreground_color(self) -> Color | None:
         """
         Returns the foreground color. This is used only when separate
         light/dark mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Foreground Color")
 
     @property
-    def foreground_color_light(self) -> 'iterm2.color.Color':
+    def foreground_color_light(self) -> Color | None:
         """
         Returns the foreground color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Foreground Color (Light)")
 
     @property
-    def foreground_color_dark(self) -> 'iterm2.color.Color':
+    def foreground_color_dark(self) -> Color | None:
         """
         Returns the foreground color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Foreground Color (Dark)")
 
     @property
-    def background_color(self) -> 'iterm2.color.Color':
+    def background_color(self) -> Color | None:
         """
         Returns the background color. This is used only when separate
         light/dark mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Background Color")
 
     @property
-    def background_color_light(self) -> 'iterm2.color.Color':
+    def background_color_light(self) -> Color | None:
         """
         Returns the background color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Background Color (Light)")
 
     @property
-    def background_color_dark(self) -> 'iterm2.color.Color':
+    def background_color_dark(self) -> Color | None:
         """
         Returns the background color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Background Color (Dark)")
 
     @property
-    def bold_color(self) -> 'iterm2.color.Color':
+    def bold_color(self) -> Color | None:
         """
         Returns the bold text color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Bold Color")
 
     @property
-    def bold_color_light(self) -> 'iterm2.color.Color':
+    def bold_color_light(self) -> Color | None:
         """
         Returns the bold text color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Bold Color (Light)")
 
     @property
-    def bold_color_dark(self) -> 'iterm2.color.Color':
+    def bold_color_dark(self) -> Color | None:
         """
         Returns the bold text color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Bold Color (Dark)")
 
     @property
-    def use_bright_bold(self) -> bool:
+    def use_bright_bold(self) -> bool | None:
         """
         Returns  how bold text is rendered. This is used only when separate
         light/dark mode colors are not enabled.
@@ -4449,12 +4523,12 @@ class Profile(WriteOnlyProfile):
         Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
         later instead of this method.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Bright Bold")
 
     @property
-    def use_bright_bold_light(self) -> bool:
+    def use_bright_bold_light(self) -> bool | None:
         """
         Returns  how bold text is rendered. This affects the light-mode variant
         when separate light/dark mode colors are enabled.
@@ -4475,12 +4549,12 @@ class Profile(WriteOnlyProfile):
         Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
         later instead of this method.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Bright Bold (Light)")
 
     @property
-    def use_bright_bold_dark(self) -> bool:
+    def use_bright_bold_dark(self) -> bool | None:
         """
         Returns  how bold text is rendered. This affects the dark-mode variant
         when separate light/dark mode colors are enabled.
@@ -4501,12 +4575,12 @@ class Profile(WriteOnlyProfile):
         Use `use_bold_color` and `brighten_bold_text` in 3.3.7 and
         later instead of this method.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Bright Bold (Dark)")
 
     @property
-    def use_bold_color(self) -> bool:
+    def use_bold_color(self) -> bool | None:
         """
         Returns whether the profile-specified bold color is used for
         default-colored bold text. This is used only when separate light/dark
@@ -4515,12 +4589,12 @@ class Profile(WriteOnlyProfile):
         Note: In versions of iTerm2 prior to 3.3.7, this behaves like
         use_bright_bold().
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Bright Bold")
 
     @property
-    def use_bold_color_light(self) -> bool:
+    def use_bold_color_light(self) -> bool | None:
         """
         Returns whether the profile-specified bold color is used for
         default-colored bold text. This affects the light-mode variant when
@@ -4529,12 +4603,12 @@ class Profile(WriteOnlyProfile):
         Note: In versions of iTerm2 prior to 3.3.7, this behaves like
         use_bright_bold().
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Bright Bold (Light)")
 
     @property
-    def use_bold_color_dark(self) -> bool:
+    def use_bold_color_dark(self) -> bool | None:
         """
         Returns whether the profile-specified bold color is used for
         default-colored bold text. This affects the dark-mode variant when
@@ -4543,12 +4617,12 @@ class Profile(WriteOnlyProfile):
         Note: In versions of iTerm2 prior to 3.3.7, this behaves like
         use_bright_bold().
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Bright Bold (Dark)")
 
     @property
-    def brighten_bold_text(self) -> bool:
+    def brighten_bold_text(self) -> bool | None:
         """
         Returns whether Dark ANSI colors get replaced with their light
         counterparts for bold text. This is used only when separate light/dark
@@ -4556,12 +4630,12 @@ class Profile(WriteOnlyProfile):
 
         This is only supported in iTerm2 version 3.3.7 and later.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Brighten Bold Text")
 
     @property
-    def brighten_bold_text_light(self) -> bool:
+    def brighten_bold_text_light(self) -> bool | None:
         """
         Returns whether Dark ANSI colors get replaced with their light
         counterparts for bold text. This affects the light-mode variant when
@@ -4569,12 +4643,12 @@ class Profile(WriteOnlyProfile):
 
         This is only supported in iTerm2 version 3.3.7 and later.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Brighten Bold Text (Light)")
 
     @property
-    def brighten_bold_text_dark(self) -> bool:
+    def brighten_bold_text_dark(self) -> bool | None:
         """
         Returns whether Dark ANSI colors get replaced with their light
         counterparts for bold text. This affects the dark-mode variant when
@@ -4582,1123 +4656,1123 @@ class Profile(WriteOnlyProfile):
 
         This is only supported in iTerm2 version 3.3.7 and later.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Brighten Bold Text (Dark)")
 
     @property
-    def link_color(self) -> 'iterm2.color.Color':
+    def link_color(self) -> Color | None:
         """
         Returns the link color. This is used only when separate light/dark mode
         colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Link Color")
 
     @property
-    def link_color_light(self) -> 'iterm2.color.Color':
+    def link_color_light(self) -> Color | None:
         """
         Returns the link color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Link Color (Light)")
 
     @property
-    def link_color_dark(self) -> 'iterm2.color.Color':
+    def link_color_dark(self) -> Color | None:
         """
         Returns the link color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Link Color (Dark)")
 
     @property
-    def selection_color(self) -> 'iterm2.color.Color':
+    def selection_color(self) -> Color | None:
         """
         Returns the selection background color. This is used only when separate
         light/dark mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Selection Color")
 
     @property
-    def selection_color_light(self) -> 'iterm2.color.Color':
+    def selection_color_light(self) -> Color | None:
         """
         Returns the selection background color. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Selection Color (Light)")
 
     @property
-    def selection_color_dark(self) -> 'iterm2.color.Color':
+    def selection_color_dark(self) -> Color | None:
         """
         Returns the selection background color. This affects the dark-mode
         variant when separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Selection Color (Dark)")
 
     @property
-    def selected_text_color(self) -> 'iterm2.color.Color':
+    def selected_text_color(self) -> Color | None:
         """
         Returns the selection text color. This is used only when separate
         light/dark mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Selected Text Color")
 
     @property
-    def selected_text_color_light(self) -> 'iterm2.color.Color':
+    def selected_text_color_light(self) -> Color | None:
         """
         Returns the selection text color. This affects the light-mode variant
         when separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Selected Text Color (Light)")
 
     @property
-    def selected_text_color_dark(self) -> 'iterm2.color.Color':
+    def selected_text_color_dark(self) -> Color | None:
         """
         Returns the selection text color. This affects the dark-mode variant
         when separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Selected Text Color (Dark)")
 
     @property
-    def cursor_color(self) -> 'iterm2.color.Color':
+    def cursor_color(self) -> Color | None:
         """
         Returns the cursor color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Cursor Color")
 
     @property
-    def cursor_color_light(self) -> 'iterm2.color.Color':
+    def cursor_color_light(self) -> Color | None:
         """
         Returns the cursor color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Cursor Color (Light)")
 
     @property
-    def cursor_color_dark(self) -> 'iterm2.color.Color':
+    def cursor_color_dark(self) -> Color | None:
         """
         Returns the cursor color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Cursor Color (Dark)")
 
     @property
-    def cursor_text_color(self) -> 'iterm2.color.Color':
+    def cursor_text_color(self) -> Color | None:
         """
         Returns the cursor text color. This is used only when separate
         light/dark mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Cursor Text Color")
 
     @property
-    def cursor_text_color_light(self) -> 'iterm2.color.Color':
+    def cursor_text_color_light(self) -> Color | None:
         """
         Returns the cursor text color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Cursor Text Color (Light)")
 
     @property
-    def cursor_text_color_dark(self) -> 'iterm2.color.Color':
+    def cursor_text_color_dark(self) -> Color | None:
         """
         Returns the cursor text color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Cursor Text Color (Dark)")
 
     @property
-    def ansi_0_color(self) -> 'iterm2.color.Color':
+    def ansi_0_color(self) -> Color | None:
         """
         Returns the ANSI 0 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 0 Color")
 
     @property
-    def ansi_0_color_light(self) -> 'iterm2.color.Color':
+    def ansi_0_color_light(self) -> Color | None:
         """
         Returns the ANSI 0 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 0 Color (Light)")
 
     @property
-    def ansi_0_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_0_color_dark(self) -> Color | None:
         """
         Returns the ANSI 0 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 0 Color (Dark)")
 
     @property
-    def ansi_1_color(self) -> 'iterm2.color.Color':
+    def ansi_1_color(self) -> Color | None:
         """
         Returns the ANSI 1 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 1 Color")
 
     @property
-    def ansi_1_color_light(self) -> 'iterm2.color.Color':
+    def ansi_1_color_light(self) -> Color | None:
         """
         Returns the ANSI 1 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 1 Color (Light)")
 
     @property
-    def ansi_1_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_1_color_dark(self) -> Color | None:
         """
         Returns the ANSI 1 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 1 Color (Dark)")
 
     @property
-    def ansi_2_color(self) -> 'iterm2.color.Color':
+    def ansi_2_color(self) -> Color | None:
         """
         Returns the ANSI 2 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 2 Color")
 
     @property
-    def ansi_2_color_light(self) -> 'iterm2.color.Color':
+    def ansi_2_color_light(self) -> Color | None:
         """
         Returns the ANSI 2 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 2 Color (Light)")
 
     @property
-    def ansi_2_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_2_color_dark(self) -> Color | None:
         """
         Returns the ANSI 2 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 2 Color (Dark)")
 
     @property
-    def ansi_3_color(self) -> 'iterm2.color.Color':
+    def ansi_3_color(self) -> Color | None:
         """
         Returns the ANSI 3 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 3 Color")
 
     @property
-    def ansi_3_color_light(self) -> 'iterm2.color.Color':
+    def ansi_3_color_light(self) -> Color | None:
         """
         Returns the ANSI 3 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 3 Color (Light)")
 
     @property
-    def ansi_3_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_3_color_dark(self) -> Color | None:
         """
         Returns the ANSI 3 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 3 Color (Dark)")
 
     @property
-    def ansi_4_color(self) -> 'iterm2.color.Color':
+    def ansi_4_color(self) -> Color | None:
         """
         Returns the ANSI 4 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 4 Color")
 
     @property
-    def ansi_4_color_light(self) -> 'iterm2.color.Color':
+    def ansi_4_color_light(self) -> Color | None:
         """
         Returns the ANSI 4 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 4 Color (Light)")
 
     @property
-    def ansi_4_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_4_color_dark(self) -> Color | None:
         """
         Returns the ANSI 4 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 4 Color (Dark)")
 
     @property
-    def ansi_5_color(self) -> 'iterm2.color.Color':
+    def ansi_5_color(self) -> Color | None:
         """
         Returns the ANSI 5 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 5 Color")
 
     @property
-    def ansi_5_color_light(self) -> 'iterm2.color.Color':
+    def ansi_5_color_light(self) -> Color | None:
         """
         Returns the ANSI 5 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 5 Color (Light)")
 
     @property
-    def ansi_5_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_5_color_dark(self) -> Color | None:
         """
         Returns the ANSI 5 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 5 Color (Dark)")
 
     @property
-    def ansi_6_color(self) -> 'iterm2.color.Color':
+    def ansi_6_color(self) -> Color | None:
         """
         Returns the ANSI 6 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 6 Color")
 
     @property
-    def ansi_6_color_light(self) -> 'iterm2.color.Color':
+    def ansi_6_color_light(self) -> Color | None:
         """
         Returns the ANSI 6 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 6 Color (Light)")
 
     @property
-    def ansi_6_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_6_color_dark(self) -> Color | None:
         """
         Returns the ANSI 6 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 6 Color (Dark)")
 
     @property
-    def ansi_7_color(self) -> 'iterm2.color.Color':
+    def ansi_7_color(self) -> Color | None:
         """
         Returns the ANSI 7 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 7 Color")
 
     @property
-    def ansi_7_color_light(self) -> 'iterm2.color.Color':
+    def ansi_7_color_light(self) -> Color | None:
         """
         Returns the ANSI 7 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 7 Color (Light)")
 
     @property
-    def ansi_7_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_7_color_dark(self) -> Color | None:
         """
         Returns the ANSI 7 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 7 Color (Dark)")
 
     @property
-    def ansi_8_color(self) -> 'iterm2.color.Color':
+    def ansi_8_color(self) -> Color | None:
         """
         Returns the ANSI 8 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 8 Color")
 
     @property
-    def ansi_8_color_light(self) -> 'iterm2.color.Color':
+    def ansi_8_color_light(self) -> Color | None:
         """
         Returns the ANSI 8 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 8 Color (Light)")
 
     @property
-    def ansi_8_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_8_color_dark(self) -> Color | None:
         """
         Returns the ANSI 8 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 8 Color (Dark)")
 
     @property
-    def ansi_9_color(self) -> 'iterm2.color.Color':
+    def ansi_9_color(self) -> Color | None:
         """
         Returns the ANSI 9 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 9 Color")
 
     @property
-    def ansi_9_color_light(self) -> 'iterm2.color.Color':
+    def ansi_9_color_light(self) -> Color | None:
         """
         Returns the ANSI 9 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 9 Color (Light)")
 
     @property
-    def ansi_9_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_9_color_dark(self) -> Color | None:
         """
         Returns the ANSI 9 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 9 Color (Dark)")
 
     @property
-    def ansi_10_color(self) -> 'iterm2.color.Color':
+    def ansi_10_color(self) -> Color | None:
         """
         Returns the ANSI 10 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 10 Color")
 
     @property
-    def ansi_10_color_light(self) -> 'iterm2.color.Color':
+    def ansi_10_color_light(self) -> Color | None:
         """
         Returns the ANSI 10 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 10 Color (Light)")
 
     @property
-    def ansi_10_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_10_color_dark(self) -> Color | None:
         """
         Returns the ANSI 10 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 10 Color (Dark)")
 
     @property
-    def ansi_11_color(self) -> 'iterm2.color.Color':
+    def ansi_11_color(self) -> Color | None:
         """
         Returns the ANSI 11 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 11 Color")
 
     @property
-    def ansi_11_color_light(self) -> 'iterm2.color.Color':
+    def ansi_11_color_light(self) -> Color | None:
         """
         Returns the ANSI 11 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 11 Color (Light)")
 
     @property
-    def ansi_11_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_11_color_dark(self) -> Color | None:
         """
         Returns the ANSI 11 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 11 Color (Dark)")
 
     @property
-    def ansi_12_color(self) -> 'iterm2.color.Color':
+    def ansi_12_color(self) -> Color | None:
         """
         Returns the ANSI 12 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 12 Color")
 
     @property
-    def ansi_12_color_light(self) -> 'iterm2.color.Color':
+    def ansi_12_color_light(self) -> Color | None:
         """
         Returns the ANSI 12 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 12 Color (Light)")
 
     @property
-    def ansi_12_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_12_color_dark(self) -> Color | None:
         """
         Returns the ANSI 12 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 12 Color (Dark)")
 
     @property
-    def ansi_13_color(self) -> 'iterm2.color.Color':
+    def ansi_13_color(self) -> Color | None:
         """
         Returns the ANSI 13 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 13 Color")
 
     @property
-    def ansi_13_color_light(self) -> 'iterm2.color.Color':
+    def ansi_13_color_light(self) -> Color | None:
         """
         Returns the ANSI 13 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 13 Color (Light)")
 
     @property
-    def ansi_13_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_13_color_dark(self) -> Color | None:
         """
         Returns the ANSI 13 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 13 Color (Dark)")
 
     @property
-    def ansi_14_color(self) -> 'iterm2.color.Color':
+    def ansi_14_color(self) -> Color | None:
         """
         Returns the ANSI 14 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 14 Color")
 
     @property
-    def ansi_14_color_light(self) -> 'iterm2.color.Color':
+    def ansi_14_color_light(self) -> Color | None:
         """
         Returns the ANSI 14 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 14 Color (Light)")
 
     @property
-    def ansi_14_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_14_color_dark(self) -> Color | None:
         """
         Returns the ANSI 14 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 14 Color (Dark)")
 
     @property
-    def ansi_15_color(self) -> 'iterm2.color.Color':
+    def ansi_15_color(self) -> Color | None:
         """
         Returns the ANSI 15 color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 15 Color")
 
     @property
-    def ansi_15_color_light(self) -> 'iterm2.color.Color':
+    def ansi_15_color_light(self) -> Color | None:
         """
         Returns the ANSI 15 color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 15 Color (Light)")
 
     @property
-    def ansi_15_color_dark(self) -> 'iterm2.color.Color':
+    def ansi_15_color_dark(self) -> Color | None:
         """
         Returns the ANSI 15 color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Ansi 15 Color (Dark)")
 
     @property
-    def smart_cursor_color(self) -> bool:
+    def smart_cursor_color(self) -> bool | None:
         """
         Returns whether to use smart cursor color. This only applies to box
         cursors. This is used only when separate light/dark mode colors are not
         enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Smart Cursor Color")
 
     @property
-    def smart_cursor_color_light(self) -> bool:
+    def smart_cursor_color_light(self) -> bool | None:
         """
         Returns whether to use smart cursor color. This only applies to box
         cursors. This affects the light-mode variant when separate light/dark
         mode colors are enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Smart Cursor Color (Light)")
 
     @property
-    def smart_cursor_color_dark(self) -> bool:
+    def smart_cursor_color_dark(self) -> bool | None:
         """
         Returns whether to use smart cursor color. This only applies to box
         cursors. This affects the dark-mode variant when separate light/dark
         mode colors are enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Smart Cursor Color (Dark)")
 
     @property
-    def minimum_contrast(self) -> float:
+    def minimum_contrast(self) -> float | None:
         """
         Returns the minimum contrast, in 0 to 1. This is used only when
         separate light/dark mode colors are not enabled.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Minimum Contrast")
 
     @property
-    def minimum_contrast_light(self) -> float:
+    def minimum_contrast_light(self) -> float | None:
         """
         Returns the minimum contrast, in 0 to 1. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Minimum Contrast (Light)")
 
     @property
-    def minimum_contrast_dark(self) -> float:
+    def minimum_contrast_dark(self) -> float | None:
         """
         Returns the minimum contrast, in 0 to 1. This affects the dark-mode
         variant when separate light/dark mode colors are enabled.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Minimum Contrast (Dark)")
 
     @property
-    def tab_color(self) -> 'iterm2.color.Color':
+    def tab_color(self) -> Color | None:
         """
         Returns the tab color. This is used only when separate light/dark mode
         colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Tab Color")
 
     @property
-    def tab_color_light(self) -> 'iterm2.color.Color':
+    def tab_color_light(self) -> Color | None:
         """
         Returns the tab color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Tab Color (Light)")
 
     @property
-    def tab_color_dark(self) -> 'iterm2.color.Color':
+    def tab_color_dark(self) -> Color | None:
         """
         Returns the tab color. This affects the dark-mode variant when separate
         light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Tab Color (Dark)")
 
     @property
-    def use_tab_color(self) -> bool:
+    def use_tab_color(self) -> bool | None:
         """
         Returns whether the tab color should be used. This is used only when
         separate light/dark mode colors are not enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Tab Color")
 
     @property
-    def use_tab_color_light(self) -> bool:
+    def use_tab_color_light(self) -> bool | None:
         """
         Returns whether the tab color should be used. This affects the
         light-mode variant when separate light/dark mode colors are enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Tab Color (Light)")
 
     @property
-    def use_tab_color_dark(self) -> bool:
+    def use_tab_color_dark(self) -> bool | None:
         """
         Returns whether the tab color should be used. This affects the
         dark-mode variant when separate light/dark mode colors are enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Tab Color (Dark)")
 
     @property
-    def underline_color(self) -> typing.Optional['iterm2.color.Color']:
+    def underline_color(self) -> Color | None:
         """
         Returns the underline color. This is used only when separate light/dark
         mode colors are not enabled.
 
-        :returns: A typing.Optional['iterm2.color.Color']
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Underline Color")
 
     @property
-    def underline_color_light(self) -> typing.Optional['iterm2.color.Color']:
+    def underline_color_light(self) -> Color | None:
         """
         Returns the underline color. This affects the light-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A typing.Optional['iterm2.color.Color']
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Underline Color (Light)")
 
     @property
-    def underline_color_dark(self) -> typing.Optional['iterm2.color.Color']:
+    def underline_color_dark(self) -> Color | None:
         """
         Returns the underline color. This affects the dark-mode variant when
         separate light/dark mode colors are enabled.
 
-        :returns: A typing.Optional['iterm2.color.Color']
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Underline Color (Dark)")
 
     @property
-    def use_underline_color(self) -> bool:
+    def use_underline_color(self) -> bool | None:
         """
         Returns whether to use the specified underline color. This is used only
         when separate light/dark mode colors are not enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Underline Color")
 
     @property
-    def use_underline_color_light(self) -> bool:
+    def use_underline_color_light(self) -> bool | None:
         """
         Returns whether to use the specified underline color. This affects the
         light-mode variant when separate light/dark mode colors are enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Underline Color (Light)")
 
     @property
-    def use_underline_color_dark(self) -> bool:
+    def use_underline_color_dark(self) -> bool | None:
         """
         Returns whether to use the specified underline color. This affects the
         dark-mode variant when separate light/dark mode colors are enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Underline Color (Dark)")
 
     @property
-    def cursor_boost(self) -> float:
+    def cursor_boost(self) -> float | None:
         """
         Returns the cursor boost level, in 0 to 1. This is used only when
         separate light/dark mode colors are not enabled.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Cursor Boost")
 
     @property
-    def cursor_boost_light(self) -> float:
+    def cursor_boost_light(self) -> float | None:
         """
         Returns the cursor boost level, in 0 to 1. This affects the light-mode
         variant when separate light/dark mode colors are enabled.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Cursor Boost (Light)")
 
     @property
-    def cursor_boost_dark(self) -> float:
+    def cursor_boost_dark(self) -> float | None:
         """
         Returns the cursor boost level, in 0 to 1. This affects the dark-mode
         variant when separate light/dark mode colors are enabled.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Cursor Boost (Dark)")
 
     @property
-    def use_cursor_guide(self) -> bool:
+    def use_cursor_guide(self) -> bool | None:
         """
         Returns whether the cursor guide should be used. This is used only when
         separate light/dark mode colors are not enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Cursor Guide")
 
     @property
-    def use_cursor_guide_light(self) -> bool:
+    def use_cursor_guide_light(self) -> bool | None:
         """
         Returns whether the cursor guide should be used. This affects the
         light-mode variant when separate light/dark mode colors are enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Cursor Guide (Light)")
 
     @property
-    def use_cursor_guide_dark(self) -> bool:
+    def use_cursor_guide_dark(self) -> bool | None:
         """
         Returns whether the cursor guide should be used. This affects the
         dark-mode variant when separate light/dark mode colors are enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Cursor Guide (Dark)")
 
     @property
-    def cursor_guide_color(self) -> 'iterm2.color.Color':
+    def cursor_guide_color(self) -> Color | None:
         """
         Returns the cursor guide color. The alpha value is respected. This is
         used only when separate light/dark mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Cursor Guide Color")
 
     @property
-    def cursor_guide_color_light(self) -> 'iterm2.color.Color':
+    def cursor_guide_color_light(self) -> Color | None:
         """
         Returns the cursor guide color. The alpha value is respected. This
         affects the light-mode variant when separate light/dark mode colors are
         enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Cursor Guide Color (Light)")
 
     @property
-    def cursor_guide_color_dark(self) -> 'iterm2.color.Color':
+    def cursor_guide_color_dark(self) -> Color | None:
         """
         Returns the cursor guide color. The alpha value is respected. This
         affects the dark-mode variant when separate light/dark mode colors are
         enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Cursor Guide Color (Dark)")
 
     @property
-    def badge_color(self) -> 'iterm2.color.Color':
+    def badge_color(self) -> Color | None:
         """
         Returns the badge color. The alpha value is respected. This is used
         only when separate light/dark mode colors are not enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Badge Color")
 
     @property
-    def badge_color_light(self) -> 'iterm2.color.Color':
+    def badge_color_light(self) -> Color | None:
         """
         Returns the badge color. The alpha value is respected. This affects the
         light-mode variant when separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Badge Color (Light)")
 
     @property
-    def badge_color_dark(self) -> 'iterm2.color.Color':
+    def badge_color_dark(self) -> Color | None:
         """
         Returns the badge color. The alpha value is respected. This affects the
         dark-mode variant when separate light/dark mode colors are enabled.
 
-        :returns: A :class:`Color`
+        :returns: A :class:`Color` or `None`
         """
         return self.get_color_with_key("Badge Color (Dark)")
 
     @property
-    def name(self) -> str:
+    def name(self) -> str | None:
         """
         Returns the name.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Name")
 
     @property
-    def badge_text(self) -> str:
+    def badge_text(self) -> str | None:
         """
         Returns the badge text.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Badge Text")
 
     @property
-    def subtitle(self) -> str:
+    def subtitle(self) -> str | None:
         """
         Returns the subtitle, an interpolated string.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Subtitle")
 
     @property
-    def answerback_string(self) -> str:
+    def answerback_string(self) -> str | None:
         """
         Returns the answerback string.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Answerback String")
 
     @property
-    def blinking_cursor(self) -> bool:
+    def blinking_cursor(self) -> bool | None:
         """
         Returns whether the cursor blinks.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Blinking Cursor")
 
     @property
-    def cursor_shadow(self) -> bool:
+    def cursor_shadow(self) -> bool | None:
         """
         Returns whether the vertical bar and horizontal line cursor have a
         shadow.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Cursor Shadow")
 
     @property
-    def use_bold_font(self) -> bool:
+    def use_bold_font(self) -> bool | None:
         """
         Returns whether to use the bold variant of the font for bold text.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Bold Font")
 
     @property
-    def ascii_ligatures(self) -> bool:
+    def ascii_ligatures(self) -> bool | None:
         """
         Returns whether ligatures should be used for ASCII text.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("ASCII Ligatures")
 
     @property
-    def non_ascii_ligatures(self) -> bool:
+    def non_ascii_ligatures(self) -> bool | None:
         """
         Returns whether ligatures should be used for non-ASCII text.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Non-ASCII Ligatures")
 
     @property
-    def blink_allowed(self) -> bool:
+    def blink_allowed(self) -> bool | None:
         """
         Returns whether blinking text is allowed.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Blink Allowed")
 
     @property
-    def use_italic_font(self) -> bool:
+    def use_italic_font(self) -> bool | None:
         """
         Returns whether italic text is allowed.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Italic Font")
 
     @property
-    def ambiguous_double_width(self) -> bool:
+    def ambiguous_double_width(self) -> bool | None:
         """
         Returns whether ambiguous-width text should be treated as double-width.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Ambiguous Double Width")
 
     @property
-    def horizontal_spacing(self) -> float:
+    def horizontal_spacing(self) -> float | None:
         """
         Returns the fraction of horizontal spacing. Must be non-negative.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Horizontal Spacing")
 
     @property
-    def vertical_spacing(self) -> float:
+    def vertical_spacing(self) -> float | None:
         """
         Returns the fraction of vertical spacing. Must be non-negative.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Vertical Spacing")
 
     @property
-    def use_non_ascii_font(self) -> bool:
+    def use_non_ascii_font(self) -> bool | None:
         """
         Returns whether to use a different font for non-ASCII text.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Non-ASCII Font")
 
     @property
-    def transparency(self) -> float:
+    def transparency(self) -> float | None:
         """
         Returns the level of transparency.
 
         The value is between 0 and 1.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Transparency")
 
     @property
-    def blur(self) -> bool:
+    def blur(self) -> bool | None:
         """
         Returns whether background blur should be enabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Blur")
 
     @property
-    def blur_radius(self) -> float:
+    def blur_radius(self) -> float | None:
         """
         Returns the blur radius (how blurry). Requires blur to be enabled.
 
         The value is between 0 and 30.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Blur Radius")
 
     @property
-    def background_image_mode(self) -> BackgroundImageMode:
+    def background_image_mode(self) -> BackgroundImageMode | None:
         """
         Returns how the background image is drawn.
 
-        :returns: A `BackgroundImageMode`
+        :returns: A `BackgroundImageMode` or `None`
         """
         return BackgroundImageMode(self._simple_get("Background Image Mode"))
 
     @property
-    def blend(self) -> float:
+    def blend(self) -> float | None:
         """
         Returns how much the default background color gets blended with the
         background image.
@@ -5707,17 +5781,17 @@ class Profile(WriteOnlyProfile):
 
         .. seealso:: Example ":ref:`blending_example`
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Blend")
 
     @property
-    def sync_title(self) -> bool:
+    def sync_title(self) -> bool | None:
         """
         Returns whether the profile name stays in the tab title, even if
         changed by an escape sequence.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Sync Title")
 
@@ -5732,391 +5806,391 @@ class Profile(WriteOnlyProfile):
         return bool(self._simple_get("Draw Powerline Glyphs"))
 
     @property
-    def disable_window_resizing(self) -> bool:
+    def disable_window_resizing(self) -> bool | None:
         """
         Returns whether the terminal can resize the window with an escape
         sequence.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Disable Window Resizing")
 
     @property
-    def allow_change_cursor_blink(self) -> bool:
+    def allow_change_cursor_blink(self) -> bool | None:
         """
         Returns whether the terminal can change the cursor blink setting with
         an escape sequence.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Allow Change Cursor Blink")
 
     @property
-    def only_the_default_bg_color_uses_transparency(self) -> bool:
+    def only_the_default_bg_color_uses_transparency(self) -> bool | None:
         """
         Returns whether window transparency shows through non-default
         background colors.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Only The Default BG Color Uses Transparency")
 
     @property
-    def ascii_anti_aliased(self) -> bool:
+    def ascii_anti_aliased(self) -> bool | None:
         """
         Returns whether ASCII text is anti-aliased.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("ASCII Anti Aliased")
 
     @property
-    def non_ascii_anti_aliased(self) -> bool:
+    def non_ascii_anti_aliased(self) -> bool | None:
         """
         Returns whether non-ASCII text is anti-aliased.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Non-ASCII Anti Aliased")
 
     @property
-    def scrollback_lines(self) -> int:
+    def scrollback_lines(self) -> int | None:
         """
         Returns the number of scrollback lines.
 
         Value must be at least 0.
 
-        :returns: An int
+        :returns: An int or `None`
         """
         return self._simple_get("Scrollback Lines")
 
     @property
-    def unlimited_scrollback(self) -> bool:
+    def unlimited_scrollback(self) -> bool | None:
         """
         Returns whether the scrollback buffer's length is unlimited.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Unlimited Scrollback")
 
     @property
-    def scrollback_with_status_bar(self) -> bool:
+    def scrollback_with_status_bar(self) -> bool | None:
         """
         Returns whether text gets appended to scrollback when there is an app
         status bar
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Scrollback With Status Bar")
 
     @property
-    def scrollback_in_alternate_screen(self) -> bool:
+    def scrollback_in_alternate_screen(self) -> bool | None:
         """
         Returns whether text gets appended to scrollback in alternate screen
         mode.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Scrollback in Alternate Screen")
 
     @property
-    def mouse_reporting(self) -> bool:
+    def mouse_reporting(self) -> bool | None:
         """
         Returns whether mouse reporting is allowed
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Mouse Reporting")
 
     @property
-    def mouse_reporting_allow_mouse_wheel(self) -> bool:
+    def mouse_reporting_allow_mouse_wheel(self) -> bool | None:
         """
         Returns whether mouse reporting reports the mouse wheel's movements.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Mouse Reporting allow mouse wheel")
 
     @property
-    def allow_title_reporting(self) -> bool:
+    def allow_title_reporting(self) -> bool | None:
         """
         Returns whether the session title can be reported
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Allow Title Reporting")
 
     @property
-    def allow_title_setting(self) -> bool:
+    def allow_title_setting(self) -> bool | None:
         """
         Returns whether the session title can be changed by escape sequence
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Allow Title Setting")
 
     @property
-    def disable_printing(self) -> bool:
+    def disable_printing(self) -> bool | None:
         """
         Returns whether printing by escape sequence is disabled.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Disable Printing")
 
     @property
-    def disable_smcup_rmcup(self) -> bool:
+    def disable_smcup_rmcup(self) -> bool | None:
         """
         Returns whether alternate screen mode is disabled
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Disable Smcup Rmcup")
 
     @property
-    def silence_bell(self) -> bool:
+    def silence_bell(self) -> bool | None:
         """
         Returns whether the bell makes noise.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Silence Bell")
 
     @property
-    def bm_growl(self) -> bool:
+    def bm_growl(self) -> bool | None:
         """
         Returns whether notifications should be shown.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("BM Growl")
 
     @property
-    def send_bell_alert(self) -> bool:
+    def send_bell_alert(self) -> bool | None:
         """
         Returns whether notifications should be shown for the bell ringing
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Send Bell Alert")
 
     @property
-    def send_idle_alert(self) -> bool:
+    def send_idle_alert(self) -> bool | None:
         """
         Returns whether notifications should be shown for becoming idle
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Send Idle Alert")
 
     @property
-    def send_new_output_alert(self) -> bool:
+    def send_new_output_alert(self) -> bool | None:
         """
         Returns whether notifications should be shown for new output
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Send New Output Alert")
 
     @property
-    def send_session_ended_alert(self) -> bool:
+    def send_session_ended_alert(self) -> bool | None:
         """
         Returns whether notifications should be shown for a session ending
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Send Session Ended Alert")
 
     @property
-    def send_terminal_generated_alerts(self) -> bool:
+    def send_terminal_generated_alerts(self) -> bool | None:
         """
         Returns whether notifications should be shown for escape-sequence
         originated notifications
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Send Terminal Generated Alerts")
 
     @property
-    def flashing_bell(self) -> bool:
+    def flashing_bell(self) -> bool | None:
         """
         Returns whether the bell should flash the screen
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Flashing Bell")
 
     @property
-    def visual_bell(self) -> bool:
+    def visual_bell(self) -> bool | None:
         """
         Returns whether a bell should be shown when the bell rings
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Visual Bell")
 
     @property
-    def close_sessions_on_end(self) -> bool:
+    def close_sessions_on_end(self) -> bool | None:
         """
         Returns whether the session should close when it ends.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Close Sessions On End")
 
     @property
-    def prompt_before_closing(self) -> bool:
+    def prompt_before_closing(self) -> bool | None:
         """
         Returns whether the session should prompt before closing.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Prompt Before Closing 2")
 
     @property
-    def session_close_undo_timeout(self) -> float:
+    def session_close_undo_timeout(self) -> float | None:
         """
         Returns the amount of time you can undo closing a session
 
         The value is at least 0.
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Session Close Undo Timeout")
 
     @property
-    def reduce_flicker(self) -> bool:
+    def reduce_flicker(self) -> bool | None:
         """
         Returns whether the flicker fixer is on.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Reduce Flicker")
 
     @property
-    def send_code_when_idle(self) -> bool:
+    def send_code_when_idle(self) -> bool | None:
         """
         Returns whether to send a code when idle
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Send Code When Idle")
 
     @property
-    def application_keypad_allowed(self) -> bool:
+    def application_keypad_allowed(self) -> bool | None:
         """
         Returns whether the terminal may be placed in application keypad mode
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Application Keypad Allowed")
 
     @property
-    def place_prompt_at_first_column(self) -> bool:
+    def place_prompt_at_first_column(self) -> bool | None:
         """
         Returns whether the prompt should always begin at the first column
         (requires shell integration)
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Place Prompt at First Column")
 
     @property
-    def show_mark_indicators(self) -> bool:
+    def show_mark_indicators(self) -> bool | None:
         """
         Returns whether mark indicators should be visible
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Show Mark Indicators")
 
     @property
-    def idle_code(self) -> int:
+    def idle_code(self) -> int | None:
         """
         Returns the ASCII code to send on idle
 
         Value is an int in 0 through 255.
 
-        :returns: An int
+        :returns: An int or `None`
         """
         return self._simple_get("Idle Code")
 
     @property
-    def idle_period(self) -> float:
+    def idle_period(self) -> float | None:
         """
         Returns how often to send a code when idle
 
         Value is a float at least 0
 
-        :returns: A float
+        :returns: A float or `None`
         """
         return self._simple_get("Idle Period")
 
     @property
-    def unicode_version(self) -> bool:
+    def unicode_version(self) -> bool | None:
         """
         Returns the unicode version for wcwidth
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Unicode Version")
 
     @property
-    def cursor_type(self) -> CursorType:
+    def cursor_type(self) -> int | None:
         """
         Returns the cursor type
 
-        :returns: A CursorType
+        :returns: A CursorType or `None`
         """
         return self._simple_get("Cursor Type")
 
     @property
-    def thin_strokes(self) -> ThinStrokes:
+    def thin_strokes(self) -> int | None:
         """
         Returns whether thin strokes are used.
 
-        :returns: A ThinStrokes
+        :returns: A ThinStrokes or `None`
         """
         return self._simple_get("Thin Strokes")
 
     @property
-    def unicode_normalization(self) -> UnicodeNormalization:
+    def unicode_normalization(self) -> int | None:
         """
         Returns the unicode normalization form to use
 
-        :returns: An UnicodeNormalization
+        :returns: An UnicodeNormalization or `None`
         """
         return self._simple_get("Unicode Normalization")
 
     @property
-    def character_encoding(self) -> CharacterEncoding:
+    def character_encoding(self) -> int | None:
         """
         Returns the character encoding
 
-        :returns: A CharacterEncoding
+        :returns: A CharacterEncoding or `None`
         """
         return self._simple_get("Character Encoding")
 
     @property
-    def left_option_key_sends(self) -> OptionKeySends:
+    def left_option_key_sends(self) -> int | None:
         """
         Returns the behavior of the left option key.
 
-        :returns: An OptionKeySends
+        :returns: An OptionKeySends or `None`
         """
         return self._simple_get("Option Key Sends")
 
     @property
-    def right_option_key_sends(self) -> OptionKeySends:
+    def right_option_key_sends(self) -> int | None:
         """
         Returns the behavior of the right option key.
 
-        :returns: An OptionKeySends
+        :returns: An OptionKeySends or `None`
         """
         return self._simple_get("Right Option Key Sends")
 
     @property
-    def triggers(self) -> typing.List[typing.Dict[str, typing.Any]]:
+    def triggers(self) -> list[dict[str, Any]] | None:
         """
         Returns the triggers.
 
@@ -6124,24 +6198,24 @@ class Profile(WriteOnlyProfile):
         an encoded trigger to an object. Trigger objects can be encoded using
         the encode property.
 
-        :returns: A typing.List[typing.Dict[str, typing.Any]]
+        :returns: A list[dict[str, Any]] or `None`
         """
         return self._simple_get("Triggers")
 
     @property
-    def smart_selection_rules(self) -> typing.List[typing.Dict[str, typing.Any]]:
+    def smart_selection_rules(self) -> list[dict[str, Any]] | None:
         """
         Returns the smart selection rules.
 
         The value is a list of dicts of smart selection rules (currently
         undocumented)
 
-        :returns: A typing.List[typing.Dict[str, typing.Any]]
+        :returns: A list[dict[str, Any]] or `None`
         """
         return self._simple_get("Smart Selection Rules")
 
     @property
-    def smart_selection_actions_use_interpolated_strings(self) -> bool:
+    def smart_selection_actions_use_interpolated_strings(self) -> bool | None:
         """
         Returns whether smart selection action parameters are interpolated
         strings.
@@ -6149,92 +6223,92 @@ class Profile(WriteOnlyProfile):
         Should smart selection actions' parameters be treated as interpolated
         strings? If false, use the backward-compatibility syntax.
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Smart Selection Actions Use Interpolated Strings")
 
     @property
-    def semantic_history(self) -> typing.Dict[str, typing.Any]:
+    def semantic_history(self) -> dict[str, Any] | None:
         """
         Returns the semantic history prefs.
 
-        :returns: A typing.Dict[str, typing.Any]
+        :returns: A dict[str, Any] or `None`
         """
         return self._simple_get("Semantic History")
 
     @property
-    def automatic_profile_switching_rules(self) -> typing.List[str]:
+    def automatic_profile_switching_rules(self) -> list[str] | None:
         """
         Returns the automatic profile switching rules.
 
         Value is a list of strings, each giving a rule.
 
-        :returns: A typing.List[str]
+        :returns: A list[str] or `None`
         """
         return self._simple_get("Bound Hosts")
 
     @property
-    def advanced_working_directory_window_setting(self) -> InitialWorkingDirectory:
+    def advanced_working_directory_window_setting(self) -> str | None:
         """
         Returns the advanced working directory window setting.
 
         Value excludes Advanced.
 
-        :returns: An InitialWorkingDirectory
+        :returns: An InitialWorkingDirectory or `None`
         """
         return self._simple_get("AWDS Window Option")
 
     @property
-    def advanced_working_directory_window_directory(self) -> str:
+    def advanced_working_directory_window_directory(self) -> str | None:
         """
         Returns the advanced working directory window directory.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("AWDS Window Directory")
 
     @property
-    def advanced_working_directory_tab_setting(self) -> InitialWorkingDirectory:
+    def advanced_working_directory_tab_setting(self) -> str | None:
         """
         Returns the advanced working directory tab setting.
 
         Value excludes Advanced.
 
-        :returns: An InitialWorkingDirectory
+        :returns: An InitialWorkingDirectory or `None`
         """
         return self._simple_get("AWDS Tab Option")
 
     @property
-    def advanced_working_directory_tab_directory(self) -> str:
+    def advanced_working_directory_tab_directory(self) -> str | None:
         """
         Returns the advanced working directory tab directory.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("AWDS Tab Directory")
 
     @property
-    def advanced_working_directory_pane_setting(self) -> InitialWorkingDirectory:
+    def advanced_working_directory_pane_setting(self) -> str | None:
         """
         Returns the advanced working directory pane setting.
 
         Value excludes Advanced.
 
-        :returns: An InitialWorkingDirectory
+        :returns: An InitialWorkingDirectory or `None`
         """
         return self._simple_get("AWDS Pane Option")
 
     @property
-    def advanced_working_directory_pane_directory(self) -> str:
+    def advanced_working_directory_pane_directory(self) -> str | None:
         """
         Returns the advanced working directory pane directory.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("AWDS Pane Directory")
 
     @property
-    def normal_font(self) -> str:
+    def normal_font(self) -> str | None:
         """
         Returns the normal font.
 
@@ -6245,33 +6319,33 @@ class Profile(WriteOnlyProfile):
         .. seealso::
           * Example ":ref:`increase_font_size_example`"
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Normal Font")
 
     @property
-    def non_ascii_font(self) -> str:
+    def non_ascii_font(self) -> str | None:
         """
         Returns the non-ASCII font.
 
         This is used for non-ASCII characters if use_non_ascii_font is enabled.
         The value is the font name and size as a string.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Non Ascii Font")
 
     @property
-    def background_image_location(self) -> str:
+    def background_image_location(self) -> str | None:
         """
         Returns the path to the background image.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Background Image Location")
 
     @property
-    def key_mappings(self) -> typing.Dict[str, typing.Any]:
+    def key_mappings(self) -> dict[str, Any] | None:
         """
         Returns the keyboard shortcuts.
 
@@ -6279,54 +6353,54 @@ class Profile(WriteOnlyProfile):
         between the values in this dictionary and a :class:`~iterm2.KeyBinding`
         using `iterm2.decode_key_binding`
 
-        :returns: A typing.Dict[str, typing.Any]
+        :returns: A dict[str, Any] or `None`
         """
         return self._simple_get("Keyboard Map")
 
     @property
-    def touchbar_mappings(self) -> typing.Dict[str, typing.Any]:
+    def touchbar_mappings(self) -> dict[str, Any] | None:
         """
         Returns the touchbar actions.
 
         The value is a Dictionary mapping touch bar item to action
 
-        :returns: A typing.Dict[str, typing.Any]
+        :returns: A dict[str, Any] or `None`
         """
         return self._simple_get("Touch Bar Map")
 
     @property
-    def use_custom_command(self) -> str:
+    def use_custom_command(self) -> str | None:
         """
         Returns whether to use a custom command when the session is created.
 
         The value is the string Yes or No
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Custom Command")
 
     @property
-    def command(self) -> str:
+    def command(self) -> str | None:
         """
         Returns the command to run when the session starts.
 
         The value is a string giving the command to run
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Command")
 
     @property
-    def initial_directory_mode(self) -> InitialWorkingDirectory:
+    def initial_directory_mode(self) -> str | None:
         """
         Returns whether to use a custom (not home) initial working directory.
 
-        :returns: An InitialWorkingDirectory
+        :returns: An InitialWorkingDirectory or `None`
         """
         return self._simple_get("Custom Directory")
 
     @property
-    def custom_directory(self) -> str:
+    def custom_directory(self) -> str | None:
         """
         Returns the initial working directory.
 
@@ -6334,110 +6408,110 @@ class Profile(WriteOnlyProfile):
         `InitialWorkingDirectory.INITIAL_WORKING_DIRECTORY_CUSTOM` for this to
         take effect.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Working Directory")
 
     @property
-    def icon_mode(self) -> IconMode:
+    def icon_mode(self) -> int | None:
         """
         Returns the icon mode.
 
-        :returns: An IconMode
+        :returns: An IconMode or `None`
         """
         return self._simple_get("Icon")
 
     @property
-    def custom_icon_path(self) -> str:
+    def custom_icon_path(self) -> str | None:
         """
         Returns the path of the custom icon.
 
         The `icon_mode` must be set to `CUSTOM`.
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Custom Icon Path")
 
     @property
-    def badge_top_margin(self) -> int:
+    def badge_top_margin(self) -> int | None:
         """
         Returns the top margin of the badge.
 
         The value is in points.
 
-        :returns: An int
+        :returns: An int or `None`
         """
         return self._simple_get("Badge Top Margin")
 
     @property
-    def badge_right_margin(self) -> int:
+    def badge_right_margin(self) -> int | None:
         """
         Returns the right margin of the badge.
 
         The value is in points.
 
-        :returns: An int
+        :returns: An int or `None`
         """
         return self._simple_get("Badge Right Margin")
 
     @property
-    def badge_max_width(self) -> int:
+    def badge_max_width(self) -> int | None:
         """
         Returns the max width of the badge.
 
         The value is in points.
 
-        :returns: An int
+        :returns: An int or `None`
         """
         return self._simple_get("Badge Max Width")
 
     @property
-    def badge_max_height(self) -> int:
+    def badge_max_height(self) -> int | None:
         """
         Returns the max height of the badge.
 
         The value is in points.
 
-        :returns: An int
+        :returns: An int or `None`
         """
         return self._simple_get("Badge Max Height")
 
     @property
-    def badge_font(self) -> str:
+    def badge_font(self) -> str | None:
         """
         Returns the font of the badge.
 
         The font name is a string like "Helvetica".
 
-        :returns: A str
+        :returns: A str or `None`
         """
         return self._simple_get("Badge Font")
 
     @property
-    def use_custom_window_title(self) -> bool:
+    def use_custom_window_title(self) -> bool | None:
         """
         Returns whether the custom window title is used.
 
         Should the custom window title in the profile be used?
 
-        :returns: A bool
+        :returns: A bool or `None`
         """
         return self._simple_get("Use Custom Window Title")
 
     @property
-    def custom_window_title(self) -> typing.Optional[str]:
+    def custom_window_title(self) -> str | None:
         """
         Returns the custom window title.
 
         This will only be used if use_custom_window_title is True.
         The value is an interpolated string.
 
-        :returns: A typing.Optional[str]
+        :returns: A str or `None`
         """
         return self._simple_get("Custom Window Title")
 
     @property
-    def use_transparency_initially(self) -> typing.Optional[bool]:
+    def use_transparency_initially(self) -> bool | None:
         """
         Returns whether a window created with this profile respect the
         transparency setting.
@@ -6445,74 +6519,74 @@ class Profile(WriteOnlyProfile):
         If True, use transparency; if False, force the window to
         be opaque (but it can be toggled with View > Use Transparency).
 
-        :returns: A typing.Optional[bool]
+        :returns: A bool or `None`
         """
         return self._get_optional_bool("Initial Use Transparency")
 
     @property
-    def status_bar_enabled(self) -> typing.Optional[bool]:
+    def status_bar_enabled(self) -> bool | None:
         """
         Returns whether the status bar be enabled.
 
         If True, the status bar will be shown.
 
-        :returns: A typing.Optional[bool]
+        :returns: A bool or `None`
         """
         return self._get_optional_bool("Show Status Bar")
 
     @property
-    def use_csi_u(self) -> typing.Optional[bool]:
+    def use_csi_u(self) -> bool | None:
         """
         Returns whether to report keystrokes with CSI u protocol.
 
         If True, CSI u will be enabled.
 
-        :returns: A typing.Optional[bool]
+        :returns: A bool or `None`
         """
         return self._get_optional_bool("Use libtickit protocol")
 
     @property
-    def triggers_use_interpolated_strings(self) -> typing.Optional[bool]:
+    def triggers_use_interpolated_strings(self) -> bool | None:
         """
         Returns whether trigger parameters should be interpreted as
         interpolated strings.
 
-        :returns: A typing.Optional[bool]
+        :returns: A bool or `None`
         """
         return self._get_optional_bool("Triggers Use Interpolated Strings")
 
     @property
-    def left_option_key_changeable(self) -> typing.Optional[bool]:
+    def left_option_key_changeable(self) -> bool | None:
         """
         Returns whether apps should be able to change the left option key to
         send esc+.
 
         The values gives whether it should be allowed.
 
-        :returns: A typing.Optional[bool]
+        :returns: A bool or `None`
         """
         return self._get_optional_bool("Left Option Key Changeable")
 
     @property
-    def right_option_key_changeable(self) -> typing.Optional[bool]:
+    def right_option_key_changeable(self) -> bool | None:
         """
         Returns whether apps should be able to change the right option key to
         send esc+.
 
         The values gives whether it should be allowed.
 
-        :returns: A typing.Optional[bool]
+        :returns: A bool or `None`
         """
         return self._get_optional_bool("Right Option Key Changeable")
 
     @property
-    def open_password_manager_automatically(self) -> typing.Optional[bool]:
+    def open_password_manager_automatically(self) -> bool | None:
         """
         Returns if the password manager should open automatically.
 
         The values gives whether it should open automatically.
 
-        :returns: A typing.Optional[bool]
+        :returns: A bool or `None`
         """
         return self._get_optional_bool("Open Password Manager Automatically")
 
@@ -6522,13 +6596,14 @@ class PartialProfile(Profile):
     Represents a profile that has only a subset of fields available for
     reading.
     """
+
     # pylint: disable=dangerous-default-value
     @staticmethod
     async def async_query(
-            connection: iterm2.connection.Connection,
-            guids: typing.Optional[typing.List[str]] = None,
-            properties: typing.List[str] = [
-                "Guid", "Name"]) -> typing.List['PartialProfile']:
+        connection: Connection,
+        guids: Iterable[str] | None = None,
+        properties: Iterable[str] | None = ["Guid", "Name"],
+    ) -> list[PartialProfile]:
         """
         Fetches a list of profiles by guid, populating the requested
         properties.
@@ -6546,12 +6621,10 @@ class PartialProfile(Profile):
             * Example ":ref:`theme_example`"
             * Example ":ref:`darknight_example`"
         """
-        response = await iterm2.rpc.async_list_profiles(
-            connection, guids, properties)
-        profiles = []
+        response = await async_list_profiles(connection, guids, properties)
+        profiles: list[PartialProfile] = []
         for response_profile in response.list_profiles_response.profiles:
-            profile = PartialProfile(
-                None, connection, response_profile.properties)
+            profile = PartialProfile(None, connection, response_profile.properties)
             profiles.append(profile)
         return profiles
 
@@ -6559,17 +6632,15 @@ class PartialProfile(Profile):
     # pylint: disable=arguments-differ
     @staticmethod
     async def async_get_default(
-            connection: iterm2.connection.Connection,
-            properties: typing.List[str] = [
-                "Guid", "Name"]) -> 'PartialProfile':
+        connection: Connection, properties: Iterable[str] | None = ["Guid", "Name"]
+    ) -> PartialProfile:
         """Returns the default profile."""
-        iterm2.capabilities.check_supports_get_default_profile(connection)
-        result = await iterm2.rpc.async_get_default_profile(connection)
-        guid = (result.preferences_response.results[0].
-                get_default_profile_result.guid)
-        profiles = await PartialProfile.async_query(
-            connection, [guid], properties)
+        check_supports_get_default_profile(connection)
+        result = await async_get_default_profile(connection)
+        guid = result.preferences_response.results[0].get_default_profile_result.guid
+        profiles = await PartialProfile.async_query(connection, [guid], properties)
         return profiles[0]
+
     # pylint: enable=dangerous-default-value
 
     async def async_get_full_profile(self) -> Profile:
@@ -6584,16 +6655,15 @@ class PartialProfile(Profile):
         """
         if not self.guid:
             raise BadGUIDException()
-        response = await iterm2.rpc.async_list_profiles(
-            self.connection, [self.guid], None)
+        response = await async_list_profiles(self.connection, [self.guid], None)
         if len(response.list_profiles_response.profiles) != 1:
             raise BadGUIDException()
         return Profile(
             None,
             self.connection,
-            response.list_profiles_response.profiles[0].properties)
+            response.list_profiles_response.profiles[0].properties,
+        )
 
-    async def async_make_default(self):
+    async def async_make_default(self) -> None:
         """Makes this profile the default profile."""
-        await iterm2.rpc.async_set_default_profile(self.connection, self.guid)
-
+        await async_set_default_profile(self.connection, self.guid)  # type: ignore[arg-type]

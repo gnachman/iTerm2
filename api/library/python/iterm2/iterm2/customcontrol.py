@@ -1,10 +1,25 @@
 """Enables defining a custom control sequence."""
-import asyncio
-import re
-import typing
 
-import iterm2.connection
-import iterm2.notifications
+from __future__ import annotations
+
+import re
+from asyncio import Queue
+from typing import TYPE_CHECKING
+
+from . import api_pb2
+from .notifications import (
+    SubscriptionException,
+    async_subscribe_to_custom_escape_sequence_notification,
+    async_unsubscribe,
+)
+
+if TYPE_CHECKING:
+    import types
+
+    from typing_extensions import Self
+
+    from .connection import Connection
+    from .notifications import NotificationToken
 
 
 class CustomControlSequenceMonitor:
@@ -33,21 +48,26 @@ class CustomControlSequenceMonitor:
                   match = await mon.async_get()
                   await iterm2.Window.async_create(connection)
     """
+
     def __init__(
-            self,
-            connection: iterm2.connection.Connection,
-            identity: str,
-            regex: str,
-            session_id: typing.Optional[str] = None):
+        self,
+        connection: Connection,
+        identity: str,
+        regex: str,
+        session_id: str | None = None,
+    ) -> None:
         self.__connection = connection
         self.__regex = regex
         self.__identity = identity
         self.__session_id = session_id
-        self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue()
+        self.__token: NotificationToken | None = None
+        self.__queue: Queue[re.Match[str]] = Queue()
 
-    async def __aenter__(self):
-        async def internal_callback(_connection, notification):
+    async def __aenter__(self) -> Self:
+        async def internal_callback(
+            _connection: Connection,
+            notification: api_pb2.CustomEscapeSequenceNotification,
+        ):
             if notification.sender_identity != self.__identity:
                 return
             match = re.search(self.__regex, notification.payload)
@@ -55,15 +75,12 @@ class CustomControlSequenceMonitor:
                 return
             await self.__queue.put(match)
 
-        self.__token = await (
-            iterm2.notifications.
-            async_subscribe_to_custom_escape_sequence_notification(
-                self.__connection,
-                internal_callback,
-                self.__session_id))
+        self.__token = await async_subscribe_to_custom_escape_sequence_notification(
+            self.__connection, internal_callback, self.__session_id
+        )
         return self
 
-    async def async_get(self) -> typing.Match:
+    async def async_get(self) -> re.Match[str]:
         """
         Blocks until a matching control sequence is returned.
 
@@ -73,10 +90,13 @@ class CustomControlSequenceMonitor:
         """
         return await self.__queue.get()
 
-    async def __aexit__(self, exc_type, exc, _tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: types.TracebackType | None,
+    ) -> None:
         try:
-            await iterm2.notifications.async_unsubscribe(
-                self.__connection,
-                self.__token)
-        except iterm2.notifications.SubscriptionException:
+            await async_unsubscribe(self.__connection, self.__token)  # type: ignore[arg-type]
+        except SubscriptionException:
             pass

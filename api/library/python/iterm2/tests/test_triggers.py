@@ -1,9 +1,9 @@
 """Tests for iterm2.triggers module."""
+
 from iterm2.triggers import (
     Trigger,
     AlertTrigger,
     BellTrigger,
-    HighlightTrigger,
     decode_trigger,
     MatchType,
     EventTrigger,
@@ -28,7 +28,7 @@ class TestTriggerBaseName:
 
     def test_trigger_base_has_name(self):
         """Test that Trigger base class defines _name."""
-        assert hasattr(Trigger, '_name')
+        assert hasattr(Trigger, "_name")
 
     def test_trigger_base_name_returns_trigger(self):
         """Test that Trigger._name() returns 'Trigger'."""
@@ -180,7 +180,7 @@ class TestEventTrigger:
             action_name="AlertTrigger",
             param="Hello",
             enabled=True,
-            event_params={"key": "value"}
+            event_params={"key": "value"},
         )
         assert trigger.match_type == MatchType.EVENT_PROMPT_DETECTED
         assert trigger.action_name == "AlertTrigger"
@@ -194,7 +194,7 @@ class TestEventTrigger:
             match_type=MatchType.EVENT_SESSION_ENDED,
             action_name="AlertTrigger",
             param="Session ended!",
-            enabled=True
+            enabled=True,
         )
         encoded = trigger.encode
         assert encoded["regex"] == ""
@@ -210,19 +210,19 @@ class TestEventTrigger:
             match_type=MatchType.EVENT_BELL_RECEIVED,
             action_name="AlertTrigger",
             param="Bell!",
-            enabled=True
+            enabled=True,
         )
         trigger2 = EventTrigger(
             match_type=MatchType.EVENT_BELL_RECEIVED,
             action_name="AlertTrigger",
             param="Bell!",
-            enabled=True
+            enabled=True,
         )
         trigger3 = EventTrigger(
             match_type=MatchType.EVENT_BELL_RECEIVED,
             action_name="AlertTrigger",
             param="Different",
-            enabled=True
+            enabled=True,
         )
         assert trigger1 == trigger2
         assert trigger1 != trigger3
@@ -230,11 +230,12 @@ class TestEventTrigger:
     def test_to_json(self):
         """Test EventTrigger toJSON method."""
         import json
+
         trigger = EventTrigger(
             match_type=MatchType.EVENT_SESSION_ENDED,
             action_name="AlertTrigger",
             param="Ended",
-            enabled=True
+            enabled=True,
         )
         json_str = trigger.toJSON()
         parsed = json.loads(json_str)
@@ -251,7 +252,7 @@ class TestCommandFinishedEventTrigger:
             action_name="AlertTrigger",
             param="Failed!",
             enabled=True,
-            exit_code_filter=ExitCodeFilter.NON_ZERO
+            exit_code_filter=ExitCodeFilter.NON_ZERO,
         )
         assert trigger.exit_code_filter == ExitCodeFilter.NON_ZERO
         assert trigger.event_params["exitCodeFilter"] == "!0"
@@ -262,7 +263,7 @@ class TestCommandFinishedEventTrigger:
             action_name="AlertTrigger",
             param="Exit 42!",
             enabled=True,
-            exit_code_filter=42
+            exit_code_filter=42,
         )
         assert trigger.exit_code_filter == 42
         assert trigger.event_params["exitCodeFilter"] == "42"
@@ -273,7 +274,7 @@ class TestCommandFinishedEventTrigger:
             action_name="AlertTrigger",
             param="Success!",
             enabled=True,
-            exit_code_filter=ExitCodeFilter.ZERO
+            exit_code_filter=ExitCodeFilter.ZERO,
         )
         encoded = trigger.encode
         assert encoded["matchType"] == 101
@@ -287,7 +288,7 @@ class TestCommandFinishedEventTrigger:
             "parameter": "Command done",
             "disabled": False,
             "matchType": 101,
-            "eventParams": {"exitCodeFilter": "!0"}
+            "eventParams": {"exitCodeFilter": "!0"},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, CommandFinishedEventTrigger)
@@ -300,7 +301,7 @@ class TestCommandFinishedEventTrigger:
             "regex": "",
             "parameter": "Exit 1",
             "matchType": 101,
-            "eventParams": {"exitCodeFilter": "1"}
+            "eventParams": {"exitCodeFilter": "1"},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, CommandFinishedEventTrigger)
@@ -313,9 +314,7 @@ class TestDirectoryChangedEventTrigger:
     def test_create_without_regex(self):
         """Test creating without a directory regex."""
         trigger = DirectoryChangedEventTrigger(
-            action_name="AlertTrigger",
-            param="Dir changed",
-            enabled=True
+            action_name="AlertTrigger", param="Dir changed", enabled=True
         )
         assert trigger.directory_regex is None
         assert "directoryRegex" not in trigger.event_params
@@ -326,7 +325,7 @@ class TestDirectoryChangedEventTrigger:
             action_name="AlertTrigger",
             param="In project",
             enabled=True,
-            directory_regex="/Users/.*/projects"
+            directory_regex="/Users/.*/projects",
         )
         assert trigger.directory_regex == "/Users/.*/projects"
         assert trigger.event_params["directoryRegex"] == "/Users/.*/projects"
@@ -338,7 +337,7 @@ class TestDirectoryChangedEventTrigger:
             "regex": "",
             "parameter": "Dir",
             "matchType": 102,
-            "eventParams": {"directoryRegex": "^/home"}
+            "eventParams": {"directoryRegex": "^/home"},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, DirectoryChangedEventTrigger)
@@ -351,19 +350,14 @@ class TestIdleEventTrigger:
     def test_create_with_default_timeout(self):
         """Test creating with default timeout."""
         trigger = IdleEventTrigger(
-            action_name="AlertTrigger",
-            param="Idle",
-            enabled=True
+            action_name="AlertTrigger", param="Idle", enabled=True
         )
         assert trigger.timeout == 30.0
 
     def test_create_with_custom_timeout(self):
         """Test creating with custom timeout."""
         trigger = IdleEventTrigger(
-            action_name="AlertTrigger",
-            param="Idle",
-            enabled=True,
-            timeout=120.0
+            action_name="AlertTrigger", param="Idle", enabled=True, timeout=120.0
         )
         assert trigger.timeout == 120.0
         assert trigger.event_params["timeout"] == 120.0
@@ -371,10 +365,7 @@ class TestIdleEventTrigger:
     def test_encode(self):
         """Test encoding an IdleEventTrigger."""
         trigger = IdleEventTrigger(
-            action_name="AlertTrigger",
-            param="Idle",
-            enabled=True,
-            timeout=60.0
+            action_name="AlertTrigger", param="Idle", enabled=True, timeout=60.0
         )
         encoded = trigger.encode
         assert encoded["matchType"] == 105
@@ -387,7 +378,7 @@ class TestIdleEventTrigger:
             "regex": "",
             "parameter": "Idle",
             "matchType": 105,
-            "eventParams": {"timeout": 45.0}
+            "eventParams": {"timeout": 45.0},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, IdleEventTrigger)
@@ -400,9 +391,7 @@ class TestLongRunningCommandEventTrigger:
     def test_create_with_defaults(self):
         """Test creating with default values."""
         trigger = LongRunningCommandEventTrigger(
-            action_name="AlertTrigger",
-            param="Still running",
-            enabled=True
+            action_name="AlertTrigger", param="Still running", enabled=True
         )
         assert trigger.threshold == 60.0
         assert trigger.command_regex is None
@@ -414,7 +403,7 @@ class TestLongRunningCommandEventTrigger:
             param="Make is slow",
             enabled=True,
             threshold=120.0,
-            command_regex="^make "
+            command_regex="^make ",
         )
         assert trigger.threshold == 120.0
         assert trigger.command_regex == "^make "
@@ -427,7 +416,7 @@ class TestLongRunningCommandEventTrigger:
             "regex": "",
             "parameter": "Slow",
             "matchType": 109,
-            "eventParams": {"threshold": 300.0, "commandRegex": "npm"}
+            "eventParams": {"threshold": 300.0, "commandRegex": "npm"},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, LongRunningCommandEventTrigger)
@@ -444,7 +433,7 @@ class TestCustomEscapeSequenceEventTrigger:
             action_name="AlertTrigger",
             param="Custom!",
             enabled=True,
-            sequence_id="my-event"
+            sequence_id="my-event",
         )
         assert trigger.sequence_id == "my-event"
         assert trigger.event_params["sequenceId"] == "my-event"
@@ -456,7 +445,7 @@ class TestCustomEscapeSequenceEventTrigger:
             "regex": "",
             "parameter": "Custom",
             "matchType": 110,
-            "eventParams": {"sequenceId": "notify"}
+            "eventParams": {"sequenceId": "notify"},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, CustomEscapeSequenceEventTrigger)
@@ -469,9 +458,7 @@ class TestHostChangedEventTrigger:
     def test_create_without_regex(self):
         """Test creating without a host regex."""
         trigger = HostChangedEventTrigger(
-            action_name="AlertTrigger",
-            param="Host changed",
-            enabled=True
+            action_name="AlertTrigger", param="Host changed", enabled=True
         )
         assert trigger.host_regex is None
         assert "hostRegex" not in trigger.event_params
@@ -482,7 +469,7 @@ class TestHostChangedEventTrigger:
             action_name="AlertTrigger",
             param="Production!",
             enabled=True,
-            host_regex="prod-.*\\.example\\.com"
+            host_regex="prod-.*\\.example\\.com",
         )
         assert trigger.host_regex == "prod-.*\\.example\\.com"
         assert trigger.event_params["hostRegex"] == "prod-.*\\.example\\.com"
@@ -490,10 +477,7 @@ class TestHostChangedEventTrigger:
     def test_encode(self):
         """Test encoding a HostChangedEventTrigger."""
         trigger = HostChangedEventTrigger(
-            action_name="AlertTrigger",
-            param="Host",
-            enabled=True,
-            host_regex="server"
+            action_name="AlertTrigger", param="Host", enabled=True, host_regex="server"
         )
         encoded = trigger.encode
         assert encoded["matchType"] == 103
@@ -506,7 +490,7 @@ class TestHostChangedEventTrigger:
             "regex": "",
             "parameter": "Host",
             "matchType": 103,
-            "eventParams": {"hostRegex": "^web"}
+            "eventParams": {"hostRegex": "^web"},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, HostChangedEventTrigger)
@@ -519,9 +503,7 @@ class TestUserChangedEventTrigger:
     def test_create_without_regex(self):
         """Test creating without a user regex."""
         trigger = UserChangedEventTrigger(
-            action_name="AlertTrigger",
-            param="User changed",
-            enabled=True
+            action_name="AlertTrigger", param="User changed", enabled=True
         )
         assert trigger.user_regex is None
         assert "userRegex" not in trigger.event_params
@@ -529,10 +511,7 @@ class TestUserChangedEventTrigger:
     def test_create_with_regex(self):
         """Test creating with a user regex."""
         trigger = UserChangedEventTrigger(
-            action_name="AlertTrigger",
-            param="Root!",
-            enabled=True,
-            user_regex="^root$"
+            action_name="AlertTrigger", param="Root!", enabled=True, user_regex="^root$"
         )
         assert trigger.user_regex == "^root$"
         assert trigger.event_params["userRegex"] == "^root$"
@@ -540,10 +519,7 @@ class TestUserChangedEventTrigger:
     def test_encode(self):
         """Test encoding a UserChangedEventTrigger."""
         trigger = UserChangedEventTrigger(
-            action_name="AlertTrigger",
-            param="User",
-            enabled=True,
-            user_regex="admin"
+            action_name="AlertTrigger", param="User", enabled=True, user_regex="admin"
         )
         encoded = trigger.encode
         assert encoded["matchType"] == 104
@@ -556,7 +532,7 @@ class TestUserChangedEventTrigger:
             "regex": "",
             "parameter": "User",
             "matchType": 104,
-            "eventParams": {"userRegex": "sudo"}
+            "eventParams": {"userRegex": "sudo"},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, UserChangedEventTrigger)
@@ -569,19 +545,14 @@ class TestActivityAfterIdleEventTrigger:
     def test_create_with_default_timeout(self):
         """Test creating with default timeout."""
         trigger = ActivityAfterIdleEventTrigger(
-            action_name="AlertTrigger",
-            param="Activity!",
-            enabled=True
+            action_name="AlertTrigger", param="Activity!", enabled=True
         )
         assert trigger.timeout == 30.0
 
     def test_create_with_custom_timeout(self):
         """Test creating with custom timeout."""
         trigger = ActivityAfterIdleEventTrigger(
-            action_name="AlertTrigger",
-            param="Activity!",
-            enabled=True,
-            timeout=60.0
+            action_name="AlertTrigger", param="Activity!", enabled=True, timeout=60.0
         )
         assert trigger.timeout == 60.0
         assert trigger.event_params["timeout"] == 60.0
@@ -589,10 +560,7 @@ class TestActivityAfterIdleEventTrigger:
     def test_encode(self):
         """Test encoding an ActivityAfterIdleEventTrigger."""
         trigger = ActivityAfterIdleEventTrigger(
-            action_name="AlertTrigger",
-            param="Activity",
-            enabled=True,
-            timeout=45.0
+            action_name="AlertTrigger", param="Activity", enabled=True, timeout=45.0
         )
         encoded = trigger.encode
         assert encoded["matchType"] == 106
@@ -605,7 +573,7 @@ class TestActivityAfterIdleEventTrigger:
             "regex": "",
             "parameter": "Activity",
             "matchType": 106,
-            "eventParams": {"timeout": 120.0}
+            "eventParams": {"timeout": 120.0},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, ActivityAfterIdleEventTrigger)
@@ -618,9 +586,7 @@ class TestSimpleEventTriggers:
     def test_prompt_detected(self):
         """Test PromptDetectedEventTrigger."""
         trigger = PromptDetectedEventTrigger(
-            action_name="AlertTrigger",
-            param="Prompt!",
-            enabled=True
+            action_name="AlertTrigger", param="Prompt!", enabled=True
         )
         assert trigger.match_type == MatchType.EVENT_PROMPT_DETECTED
         encoded = trigger.encode
@@ -629,9 +595,7 @@ class TestSimpleEventTriggers:
     def test_session_ended(self):
         """Test SessionEndedEventTrigger."""
         trigger = SessionEndedEventTrigger(
-            action_name="AlertTrigger",
-            param="Goodbye",
-            enabled=True
+            action_name="AlertTrigger", param="Goodbye", enabled=True
         )
         assert trigger.match_type == MatchType.EVENT_SESSION_ENDED
         encoded = trigger.encode
@@ -640,9 +604,7 @@ class TestSimpleEventTriggers:
     def test_bell_received(self):
         """Test BellReceivedEventTrigger."""
         trigger = BellReceivedEventTrigger(
-            action_name="AlertTrigger",
-            param="Bell!",
-            enabled=True
+            action_name="AlertTrigger", param="Bell!", enabled=True
         )
         assert trigger.match_type == MatchType.EVENT_BELL_RECEIVED
         encoded = trigger.encode
@@ -654,7 +616,7 @@ class TestSimpleEventTriggers:
             "action": "AlertTrigger",
             "regex": "",
             "parameter": "Prompt",
-            "matchType": 100
+            "matchType": 100,
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, PromptDetectedEventTrigger)
@@ -665,7 +627,7 @@ class TestSimpleEventTriggers:
             "action": "AlertTrigger",
             "regex": "",
             "parameter": "Goodbye",
-            "matchType": 107
+            "matchType": 107,
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, SessionEndedEventTrigger)
@@ -676,7 +638,7 @@ class TestSimpleEventTriggers:
             "action": "AlertTrigger",
             "regex": "",
             "parameter": "Bell",
-            "matchType": 108
+            "matchType": 108,
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, BellReceivedEventTrigger)
@@ -691,7 +653,7 @@ class TestNotificationPostedEventTrigger:
             action_name="AlertTrigger",
             param="Got notification!",
             enabled=True,
-            message_regex="error.*"
+            message_regex="error.*",
         )
         assert trigger.message_regex == "error.*"
         assert trigger.event_params["messageRegex"] == "error.*"
@@ -699,9 +661,7 @@ class TestNotificationPostedEventTrigger:
     def test_create_without_message_regex(self):
         """Test creating without a message regex."""
         trigger = NotificationPostedEventTrigger(
-            action_name="AlertTrigger",
-            param="Got notification!",
-            enabled=True
+            action_name="AlertTrigger", param="Got notification!", enabled=True
         )
         assert trigger.message_regex is None
         assert "messageRegex" not in trigger.event_params
@@ -713,7 +673,7 @@ class TestNotificationPostedEventTrigger:
             "regex": "",
             "parameter": "Notified",
             "matchType": 111,
-            "eventParams": {"messageRegex": "build.*"}
+            "eventParams": {"messageRegex": "build.*"},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, NotificationPostedEventTrigger)
@@ -725,7 +685,7 @@ class TestNotificationPostedEventTrigger:
             "action": "AlertTrigger",
             "regex": "",
             "parameter": "Notified",
-            "matchType": 111
+            "matchType": 111,
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, NotificationPostedEventTrigger)
@@ -737,7 +697,7 @@ class TestNotificationPostedEventTrigger:
             action_name="AlertTrigger",
             param="Notified!",
             enabled=True,
-            message_regex="deploy"
+            message_regex="deploy",
         )
         encoded = original.encode
         decoded = decode_trigger(encoded)
@@ -757,7 +717,7 @@ class TestEventTriggerRoundTrip:
             action_name="AlertTrigger",
             param="Done!",
             enabled=True,
-            exit_code_filter=ExitCodeFilter.NON_ZERO
+            exit_code_filter=ExitCodeFilter.NON_ZERO,
         )
         encoded = original.encode
         decoded = decode_trigger(encoded)
@@ -773,7 +733,7 @@ class TestEventTriggerRoundTrip:
             action_name="UserNotificationTrigger",
             param="Idle!",
             enabled=False,
-            timeout=90.0
+            timeout=90.0,
         )
         encoded = original.encode
         decoded = decode_trigger(encoded)
@@ -788,7 +748,7 @@ class TestEventTriggerRoundTrip:
             param="Slow!",
             enabled=True,
             threshold=180.0,
-            command_regex="^rsync"
+            command_regex="^rsync",
         )
         encoded = original.encode
         decoded = decode_trigger(encoded)
@@ -807,7 +767,7 @@ class TestUnknownEventTrigger:
             "regex": "",
             "parameter": "Unknown",
             "matchType": 999,  # Unknown future event type
-            "eventParams": {"someKey": "someValue"}
+            "eventParams": {"someKey": "someValue"},
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, EventTrigger)

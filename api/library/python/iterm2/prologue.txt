@@ -2,15 +2,27 @@
 """
 Provides classes for representing, querying, and modifying iTerm2 profiles.
 """
+from __future__ import annotations
+
 import asyncio
 import enum
 import json
-import typing
+from typing import TYPE_CHECKING, Any
 
-import iterm2.capabilities
-import iterm2.color
-import iterm2.colorpresets
-import iterm2.rpc
+from .capabilities import check_supports_get_default_profile
+from .color import Color
+from .rpc import (
+    async_get_default_profile,
+    async_list_profiles,
+    async_set_default_profile,
+    async_set_profile_property)
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine, Iterable, Mapping
+
+    from .api_pb2 import ProfileProperty
+    from .colorpresets import ColorPreset
+    from .connection import Connection
 
 
 # pylint: disable=too-many-public-methods
@@ -23,7 +35,7 @@ class BackgroundImageMode(enum.Enum):
     ASPECT_FILL = 2  #: Scale to fill the space, cropping if needed. Does not distort.
     ASPECT_FIT = 3  #: Scale to fit the space, adding letterboxes or pillarboxes if needed. Does not distort.
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
@@ -37,19 +49,20 @@ class CursorType(enum.Enum):
     CURSOR_TYPE_VERTICAL = 1  #: Vertical bar cursor
     CURSOR_TYPE_BOX = 2  #: Box cursor
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
 class ThinStrokes(enum.Enum):
     """When thin strokes should be used."""
     THIN_STROKES_SETTING_NEVER = 0  #: NEver
-    THIN_STROKES_SETTING_RETINA_DARK_BACKGROUNDS_ONLY = 1  #: When the background is dark and the display is a retina display.
+    #: When the background is dark and the display is a retina display.
+    THIN_STROKES_SETTING_RETINA_DARK_BACKGROUNDS_ONLY = 1
     THIN_STROKES_SETTING_DARK_BACKGROUNDS_ONLY = 2  #: When the background is dark.
     THIN_STROKES_SETTING_ALWAYS = 3  #: Always.
     THIN_STROKES_SETTING_RETINA_ONLY = 4  #: When the display is a retina display.
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
@@ -60,7 +73,7 @@ class UnicodeNormalization(enum.Enum):
     UNICODE_NORMALIZATION_NFD = 2  #: Normalization form D
     UNICODE_NORMALIZATION_HFSPLUS = 3  #: Apple's HFS+ normalization form
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
@@ -68,7 +81,7 @@ class CharacterEncoding(enum.Enum):
     """String encodings."""
     CHARACTER_ENCODING_UTF_8 = 4
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
@@ -78,7 +91,7 @@ class OptionKeySends(enum.Enum):
     OPTION_KEY_META = 1  #: Acts like Meta. Not recommended.
     OPTION_KEY_ESC = 2  #: Adds ESC prefix.
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
@@ -86,10 +99,11 @@ class InitialWorkingDirectory(enum.Enum):
     """How should the initial working directory of a session be set?"""
     INITIAL_WORKING_DIRECTORY_CUSTOM = "Yes"  #: Custom directory, specified elsewhere
     INITIAL_WORKING_DIRECTORY_HOME = "No"  #: Use default of home directory
-    INITIAL_WORKING_DIRECTORY_RECYCLE = "Recycle"  #: Reuse the "current" directory, or home if there is no current.
+    #: Reuse the "current" directory, or home if there is no current.
+    INITIAL_WORKING_DIRECTORY_RECYCLE = "Recycle"
     INITIAL_WORKING_DIRECTORY_ADVANCED = "Advanced"  #: Use advanced settings, which specify more granular behavior depending on whether the new session is a new window, tab, or split pane.
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
@@ -101,7 +115,7 @@ class IconMode(enum.Enum):
     AUTOMATIC = 1
     CUSTOM = 2
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
@@ -119,7 +133,7 @@ class TitleComponents(enum.Enum):
     COMMAND_LINE = (1 << 9)
     SIZE = (1 << 10)
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.value)
 
 
@@ -137,35 +151,38 @@ class LocalWriteOnlyProfile:
       * Example ":ref:`settabcolor_example`"
       * Example ":ref:`increase_font_size_example`"
     """
-    def __init__(self, values=None):
+    def __init__(
+            self,
+            values: Mapping[str, str | None] | None = None) -> None:
         if not values:
             values = {}
-        self.__values = {}
+        self.__values: dict[str, str] = {}
         for key, value in values.items():
             self.__values[key] = json.dumps(value)
 
     @property
-    def values(self):
+    def values(self) -> dict[str, str]:
         """Returns the internal values dict."""
         return self.__values
 
-    def _simple_set(self, key, value):
+    def _simple_set(self, key: str, value: Any):
         """value is a json type"""
-        if key is None:
-            self.__values[key] = None
+        if value is None:
+            self.__values[key] = "null"
         else:
             if hasattr(value, "toJSON"):
                 self.__values[key] = value.toJSON()
             else:
                 self.__values[key] = json.dumps(value)
 
-    def _color_set(self, key, value):
+    def _color_set(self, key: str, value: Color | None):
         if value is None:
             self.__values[key] = "null"
         else:
             self.__values[key] = json.dumps(value.get_dict())
 
-    def set_title_components(self, value: typing.List[TitleComponents]):
+    def set_title_components(
+            self, value: Iterable[TitleComponents]) -> None:
         """
         Sets which components are visible in the session's title, or selects a
         custom component.
@@ -177,7 +194,7 @@ class LocalWriteOnlyProfile:
             bitmask += component.value
         return self._simple_set("Title Components", bitmask)
 
-    def set_title_function(self, display_name: str, identifier: str):
+    def set_title_function(self, display_name: str, identifier: str) -> None:
         """
         Sets the function call for the session title provider and its display
         name for the UI.

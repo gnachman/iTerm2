@@ -3,33 +3,37 @@ class WriteOnlyProfile:
     A profile that can be modified but not read. Useful for changing many
     sessions' profiles at once without knowing what they are.
     """
-    def __init__(self, session_id, connection, guid=None):
+    def __init__(
+            self,
+            session_id: str | None,
+            connection: Connection,
+            guid: str | None = None) -> None:
         assert session_id != "all"
-        self.connection = connection
-        self.session_id = session_id
+        self.connection: Connection = connection
+        self.session_id: str | None = session_id
         self.__guid = guid
 
-    async def _async_simple_set(self, key: str, value: typing.Any):
+    async def _async_simple_set(self, key: str, value: Any):
         """
         :param value: a json type
         """
-        await iterm2.rpc.async_set_profile_property(
+        await async_set_profile_property(
             self.connection,
             self.session_id,
             key,
             value,
             self._guids_for_set())
 
-    async def _async_color_set(self, key, value):
+    async def _async_color_set(self, key: str, value: Color | None):
         if value is None:
-            await iterm2.rpc.async_set_profile_property(
+            await async_set_profile_property(
                 self.connection,
                 self.session_id,
                 key,
                 "null",
                 self._guids_for_set())
         else:
-            await iterm2.rpc.async_set_profile_property(
+            await async_set_profile_property(
                 self.connection,
                 self.session_id,
                 key,
@@ -43,7 +47,7 @@ class WriteOnlyProfile:
         return self.session_id
 
     async def async_set_color_preset(
-            self, preset: iterm2.colorpresets.ColorPreset):
+            self, preset: ColorPreset) -> None:
         """
         Sets the color preset.
 
@@ -55,11 +59,11 @@ class WriteOnlyProfile:
             * Example ":ref:`theme_example`"
             * Example ":ref:`darknight_example`"
         """
-        coros = []
+        coros: list[Coroutine[Any, Any, Any]] = []
         for value in preset.values:
             coro = self._async_color_set(
                 value.key,
-                iterm2.color.Color(
+                Color(
                     value.red,
                     value.green,
                     value.blue,
@@ -69,7 +73,7 @@ class WriteOnlyProfile:
         await asyncio.gather(*coros)
 
     async def async_set_title_components(
-            self, value: typing.List[TitleComponents]):
+            self, value: Iterable[TitleComponents]) -> None:
         """
         Sets which components are visible in the session's title, or selects a
         custom component.
@@ -82,7 +86,7 @@ class WriteOnlyProfile:
         return await self._async_simple_set("Title Components", bitmask)
 
     async def async_set_title_function(
-            self, display_name: str, identifier: str):
+            self, display_name: str, identifier: str) -> None:
         """
         Sets the function call for the session title provider and its display
         name for the UI.

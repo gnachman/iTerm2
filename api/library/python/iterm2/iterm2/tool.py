@@ -1,15 +1,24 @@
 """Provides functions to register toolbelt webivew tools."""
-import iterm2.api_pb2
-import iterm2.connection
-import iterm2.rpc
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from .api_pb2 import RegisterToolResponse
+from .rpc import RPCException
+from .rpc import async_register_web_view_tool as _rpc_async_register_web_view_tool
+
+if TYPE_CHECKING:
+    from .connection import Connection
 
 
 async def async_register_web_view_tool(
-        connection: iterm2.connection.Connection,
-        display_name: str,
-        identifier: str,
-        reveal_if_already_registered: bool,
-        url: str) -> None:
+    connection: Connection,
+    display_name: str,
+    identifier: str,
+    reveal_if_already_registered: bool,
+    url: str,
+) -> None:
     """
     Registers a toolbelt tool that shows a webview.
 
@@ -25,14 +34,11 @@ async def async_register_web_view_tool(
 
     .. seealso:: Example ":ref:`targeted_input_example`"
     """
-    result = await iterm2.rpc.async_register_web_view_tool(
-        connection,
-        display_name,
-        identifier,
-        reveal_if_already_registered,
-        url)
+    result = await _rpc_async_register_web_view_tool(
+        connection, display_name, identifier, reveal_if_already_registered, url
+    )
     status = result.register_tool_response.status
     # pylint: disable=no-member
-    if status == iterm2.api_pb2.RegisterToolResponse.Status.Value("OK"):
-        return None
-    raise iterm2.rpc.RPCException(result.register_tool_response)
+    if status == RegisterToolResponse.Status.Value("OK"):
+        return
+    raise RPCException(result.register_tool_response)

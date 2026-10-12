@@ -1,24 +1,28 @@
+from __future__ import annotations
+
 try:
     import AppKit
     import Foundation
+
     gAppKitAvailable = True
 except:
     gAppKitAvailable = False
-import __main__
-import inspect
 import os
 import pathlib
 import re
 import subprocess
 import sys
-import typing
+
+import __main__
+
 
 class AuthenticationException(Exception):
     pass
 
+
 class AppKitApplescriptRunner:
     def __init__(self, script):
-        assert(gAppKitAvailable)
+        assert gAppKitAvailable
         self._script = script
 
     def execute(self):
@@ -37,12 +41,18 @@ class AppKitApplescriptRunner:
     def get_error_reason(self):
         return self._value[1]["NSAppleScriptErrorBriefMessage"]
 
+
 class CommandLineApplescriptRunner:
     def __init__(self, script):
         self._script = script.encode("utf-8")
 
     def execute(self):
-        p = subprocess.Popen(['/usr/bin/osascript', '-'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(
+            ["/usr/bin/osascript", "-"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         stdout, stderr = p.communicate(self._script)
         self._returncode = p.returncode
         self._output = stdout.decode("utf-8").rstrip()
@@ -62,6 +72,7 @@ class CommandLineApplescriptRunner:
         result = re.search(r"^[0-9]+:[0-9]+: (.*) \((?:-)?[0-9]+\)$", self._error)
         return result.group(1)
 
+
 def get_script_name():
     name = None
     if hasattr(__main__, "__file__"):
@@ -75,6 +86,7 @@ def get_script_name():
         name = "Unknown"
     return name
 
+
 def _applescript_target():
     """Returns the AppleScript application clause for cookie requests.
 
@@ -83,12 +95,12 @@ def _applescript_target():
     """
     path = os.environ.get("IT2_APP_PATH")
     if path:
-        escaped = path.replace('\\', '\\\\').replace('"', '\\"')
+        escaped = path.replace("\\", "\\\\").replace('"', '\\"')
         return f'application "{escaped}"'
     return 'application "iTerm2"'
 
-def request_cookie_and_key(
-        launch_if_needed: bool, myname: typing.Optional[str], runner_class):
+
+def request_cookie_and_key(launch_if_needed: bool, myname: str | None, runner_class):
     target = _applescript_target()
     if not launch_if_needed:
         runner = runner_class(
@@ -98,7 +110,8 @@ def request_cookie_and_key(
             else
                 return "no"
             end if
-            """)
+            """
+        )
         runner.execute()
         is_running = runner.get_string()
         if is_running == "no":
@@ -107,8 +120,8 @@ def request_cookie_and_key(
     if justName is None:
         justName = get_script_name()
     runner = runner_class(
-            f'tell {target} to request cookie and key ' +
-            f'for app named "{justName}"')
+        f"tell {target} to request cookie and key " + f'for app named "{justName}"'
+    )
     runner.execute()
     if runner.has_error():
         if runner.get_error() == -2740 or runner.get_error() == -2741:
@@ -118,11 +131,13 @@ def request_cookie_and_key(
         raise AuthenticationException(reason)
     return runner.get_string()
 
-class LSBackgroundContextManager():
+
+class LSBackgroundContextManager:
     def __init__(self):
-        assert(gAppKitAvailable)
-        self.__value = AppKit.NSBundle.mainBundle().infoDictionary().get(
-                "LSBackgroundOnly")
+        assert gAppKitAvailable
+        self.__value = (
+            AppKit.NSBundle.mainBundle().infoDictionary().get("LSBackgroundOnly")
+        )
 
     def __enter__(self):
         info = AppKit.NSBundle.mainBundle().infoDictionary()
@@ -135,10 +150,12 @@ class LSBackgroundContextManager():
         else:
             del info["LSBackgroundOnly"]
 
+
 def applescript_auth_disabled():
     suite = os.environ.get("IT2_SUITE", "iTerm2")
     filename = os.path.expanduser(
-        f"~/Library/Application Support/{suite}/disable-automation-auth")
+        f"~/Library/Application Support/{suite}/disable-automation-auth"
+    )
     try:
         magic = "61DF88DC-3423-4823-B725-22570E01C027"
         expected = filename.encode("utf-8").hex() + " " + magic
@@ -152,9 +169,8 @@ def applescript_auth_disabled():
     except:
         return False
 
-def authenticate(
-        launch_if_needed: bool = False,
-        myname: typing.Optional[str] = None) -> bool:
+
+def authenticate(launch_if_needed: bool = False, myname: str | None = None) -> bool:
     """Attempts to authenticate before connecting to iTerm2 API.
 
     :param launch_if_needed: If iTerm2 is not running, try to launch it first.
@@ -172,9 +188,13 @@ def authenticate(
         return False
     if gAppKitAvailable:
         with LSBackgroundContextManager() as _:
-            cookie_and_key = request_cookie_and_key(launch_if_needed, myname, AppKitApplescriptRunner)
+            cookie_and_key = request_cookie_and_key(
+                launch_if_needed, myname, AppKitApplescriptRunner
+            )
     else:
-        cookie_and_key = request_cookie_and_key(launch_if_needed, myname, CommandLineApplescriptRunner)
+        cookie_and_key = request_cookie_and_key(
+            launch_if_needed, myname, CommandLineApplescriptRunner
+        )
     cookie, key = cookie_and_key.split(" ")
     os.environ["ITERM2_COOKIE"] = cookie
     os.environ["ITERM2_KEY"] = key

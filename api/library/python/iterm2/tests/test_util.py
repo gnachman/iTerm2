@@ -1,10 +1,21 @@
 """Tests for iterm2.util module."""
+
 import json
-import pytest
 from iterm2.util import (
-    Size, Point, Frame, Range, CoordRange, WindowedCoordRange,
-    frame_str, size_str, point_str, distance,
-    iterm2_encode, iterm2_encode_str, iterm2_encode_list, invocation_string
+    Size,
+    Point,
+    Frame,
+    Range,
+    CoordRange,
+    WindowedCoordRange,
+    frame_str,
+    size_str,
+    point_str,
+    distance,
+    iterm2_encode,
+    iterm2_encode_str,
+    iterm2_encode_list,
+    invocation_string,
 )
 
 
@@ -138,10 +149,9 @@ class TestFrame:
     def test_load_from_dict(self):
         """Test Frame load_from_dict."""
         frame = Frame()
-        frame.load_from_dict({
-            "origin": {"x": 10, "y": 20},
-            "size": {"width": 30, "height": 40}
-        })
+        frame.load_from_dict(
+            {"origin": {"x": 10, "y": 20}, "size": {"width": 30, "height": 40}}
+        )
         assert frame.origin.x == 10
         assert frame.origin.y == 20
         assert frame.size.width == 30
