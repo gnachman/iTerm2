@@ -28333,6 +28333,48 @@
         }
       }
     },
+    "hJS-kY-Hc7.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"Manage Permissions…\"; ObjectID = \"hJS-kY-Hc7\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berechtigungen verwalten…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Manage Permissions…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "権限を管理…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerenciar permissões…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Управление разрешениями…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理权限…"
+          }
+        }
+      }
+    },
     "HjY-AY-eaJ.title" : {
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Allow sending of clipboard contents?\"; ObjectID = \"HjY-AY-eaJ\";",
       "extractionState" : "extracted_with_value",
