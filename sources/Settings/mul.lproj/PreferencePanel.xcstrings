@@ -29683,8 +29683,8 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Verfügbar für bash, fish, tcsh, xonsh und zsh. Dies ist eine Alternative zur Installation der Shell-Integration über andere Methoden (wie den Menüpunkt iTerm2 > Shell-Integration installieren)."
+            "state" : "translated",
+            "value" : "Verfügbar für bash, fish, nu, tcsh, xonsh und zsh. Dies ist eine Alternative zur Installation der Shell-Integration über andere Methoden (wie den Menüpunkt iTerm2 > Shell-Integration installieren)."
           }
         },
         "en" : {
@@ -29695,26 +29695,26 @@
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "bash、fish、tcsh、xonsh、zshで利用できます。これは、シェル統合を他の方法(iTerm2 > Install Shell Integrationメニュー項目など)でインストールする場合の代替手段です。"
+            "state" : "translated",
+            "value" : "bash、fish、nu、tcsh、xonsh、zshで利用できます。これは、シェル統合を他の方法(iTerm2 > Install Shell Integrationメニュー項目など)でインストールする場合の代替手段です。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Disponível para bash, fish, tcsh, xonsh e zsh. Esta é uma alternativa à instalação da Shell Integration por outros métodos (como o item de menu iTerm2 > Instalar Shell Integration)."
+            "state" : "translated",
+            "value" : "Disponível para bash, fish, nu, tcsh, xonsh e zsh. Esta é uma alternativa à instalação da Shell Integration por outros métodos (como o item de menu iTerm2 > Instalar Shell Integration)."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Доступно для bash, fish, tcsh, xonsh и zsh. Это альтернатива установке интеграции с оболочкой другими способами (например, через пункт меню «iTerm2» > «Установить интеграцию с оболочкой»)."
+            "state" : "translated",
+            "value" : "Доступно для bash, fish, nu, tcsh, xonsh и zsh. Это альтернатива установке интеграции с оболочкой другими способами (например, через пункт меню «iTerm2» > «Установить интеграцию с оболочкой»)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "适用于 bash、fish、tcsh、xonsh 和 zsh。这是通过其他方式（如“iTerm2 > 安装 Shell 集成”菜单项）安装 Shell 集成的替代方法。"
+            "state" : "translated",
+            "value" : "适用于 bash、fish、nu、tcsh、xonsh 和 zsh。这是通过其他方式（如“iTerm2 > 安装 Shell 集成”菜单项）安装 Shell 集成的替代方法。"
           }
         }
       }
