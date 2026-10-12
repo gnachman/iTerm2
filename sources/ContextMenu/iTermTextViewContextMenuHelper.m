@@ -19,6 +19,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermContextMenuUtilities.h"
+#import "iTermExpressionEvaluator.h"
 #import "iTermImageInfo.h"
 #import "iTermPreferences.h"
 #import "iTermScriptFunctionCall.h"
@@ -932,16 +933,90 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     if (reqs.count == 0) {
         return NO;
     }
+    NSArray<NSMenuItem *> *items = [iTermTextViewContextMenuHelper menuItemsForAPIRegistrationRequests:reqs
+                                                                                                 scope:[self.delegate contextMenuSessionScope:self]
+                                                                                                target:self
+                                                                                                action:@selector(apiMenuItem:)];
+    if (items.count == 0) {
+        return NO;
+    }
     [theMenu addItem:[NSMenuItem separatorItem]];
-    for (ITMRPCRegistrationRequest *req in reqs) {
-        NSMenuItem *theItem = [[NSMenuItem alloc] initWithTitle:req.contextMenuAttributes.displayName
-                                                         action:@selector(apiMenuItem:)
-                                                  keyEquivalent:@""];
-        theItem.representedObject = req.contextMenuAttributes.uniqueIdentifier;
-        theItem.target = self;
-        [theMenu addItem:theItem];
+    for (NSMenuItem *item in items) {
+        [theMenu addItem:item];
     }
     return YES;
+}
+
++ (NSArray<NSMenuItem *> *)menuItemsForAPIRegistrationRequests:(NSArray<ITMRPCRegistrationRequest *> *)reqs
+                                                         scope:(iTermVariableScope *)scope
+                                                        target:(id)target
+                                                        action:(SEL)action {
+    NSMutableArray<NSMenuItem *> *topLevelItems = [NSMutableArray array];
+    NSMutableDictionary<NSString *, NSMenuItem *> *submenuItems = [NSMutableDictionary dictionary];
+    // reqs is sorted by display name, so items within each submenu are too.
+    for (ITMRPCRegistrationRequest *req in reqs) {
+        if (![self apiContextMenuItemIsVisible:req scope:scope]) {
+            continue;
+        }
+        NSMenuItem *theItem = [[NSMenuItem alloc] initWithTitle:req.contextMenuAttributes.displayName
+                                                         action:action
+                                                  keyEquivalent:@""];
+        theItem.representedObject = req.contextMenuAttributes.uniqueIdentifier;
+        theItem.target = target;
+
+        NSString *submenuTitle = req.contextMenuAttributes.submenu;
+        if (submenuTitle.length == 0) {
+            [topLevelItems addObject:theItem];
+            continue;
+        }
+        NSMenuItem *parent = submenuItems[submenuTitle];
+        if (!parent) {
+            parent = [[NSMenuItem alloc] initWithTitle:submenuTitle action:nil keyEquivalent:@""];
+            parent.submenu = [[NSMenu alloc] initWithTitle:submenuTitle];
+            submenuItems[submenuTitle] = parent;
+            [topLevelItems addObject:parent];
+        }
+        [parent.submenu addItem:theItem];
+    }
+    [topLevelItems sortWithOptions:NSSortStable usingComparator:^NSComparisonResult(NSMenuItem *lhs, NSMenuItem *rhs) {
+        return [lhs.title localizedCaseInsensitiveCompare:rhs.title];
+    }];
+    return topLevelItems;
+}
+
+// Evaluated synchronously so that opening the menu never waits on a script.
+// Registration rejects expressions that call functions, so none of them need
+// an RPC. A missing variable or an evaluation error hides the item. Only a
+// true or nonzero number shows it. Strings (including "1", which is what a
+// user variable set from the shell holds) hide it, matching the expression
+// language's truthiness rules. Scripts should write `user.flag == 1`, which
+// converts numeric strings.
++ (BOOL)apiContextMenuItemIsVisible:(ITMRPCRegistrationRequest *)req
+                              scope:(iTermVariableScope *)scope {
+    NSString *expression = req.contextMenuAttributes.visibleWhen;
+    if (expression.length == 0) {
+        return YES;
+    }
+    if (!scope) {
+        return NO;
+    }
+    iTermExpressionEvaluator *evaluator = [[iTermExpressionEvaluator alloc] initWithExpressionString:expression
+                                                                                               scope:scope];
+    __block BOOL visible = NO;
+    [evaluator evaluateWithTimeout:0
+                sideEffectsAllowed:NO
+                        completion:^(iTermExpressionEvaluator *evaluator) {
+        if (evaluator.error) {
+            DLog(@"visible_when %@ for %@ failed: %@", expression, req.contextMenuAttributes.uniqueIdentifier, evaluator.error);
+            return;
+        }
+        NSNumber *number = [NSNumber castFrom:evaluator.value];
+        if (!number) {
+            DLog(@"visible_when %@ for %@ evaluated to non-number %@; hiding", expression, req.contextMenuAttributes.uniqueIdentifier, evaluator.value);
+        }
+        visible = number.boolValue;
+    }];
+    return visible;
 }
 
 - (NSMenu *)menuForMark:(id<VT100ScreenMarkReading>)mark directory:(NSString *)directory {

@@ -304,7 +304,9 @@ async def async_subscribe_to_server_originated_rpc_notification(
         session_title_unique_id=None,
         status_bar_component=None,
         context_menu_display_name=None,
-        context_menu_unique_id=None):
+        context_menu_unique_id=None,
+        context_menu_submenu=None,
+        context_menu_visible_when=None):
     """
     Registers a callback to be run when the server wants to invoke an RPC.
 
@@ -326,6 +328,10 @@ async def async_subscribe_to_server_originated_rpc_notification(
     :param context_menu_display_name: Used by the `RPC_ROLE_CONTEXT_MENU`
         role to give the name of the menu item.
     :param context_menu_unique_id: Unique ID for the context menu provider.
+    :param context_menu_submenu: Used by the `RPC_ROLE_CONTEXT_MENU` role to
+        put the item in a submenu with this title.
+    :param context_menu_visible_when: Used by the `RPC_ROLE_CONTEXT_MENU` role
+        to give an expression that controls whether the item is shown.
 
     :returns: A token that can be passed to unsubscribe.
     """
@@ -371,6 +377,12 @@ async def async_subscribe_to_server_originated_rpc_notification(
         assert context_menu_unique_id
         (rpc_registration_request.context_menu_attributes.
                 unique_identifier) = context_menu_unique_id
+        if context_menu_submenu:
+            (rpc_registration_request.context_menu_attributes.
+                    submenu) = context_menu_submenu
+        if context_menu_visible_when:
+            (rpc_registration_request.context_menu_attributes.
+                    visible_when) = context_menu_visible_when
 
     return await _async_subscribe(
         connection,

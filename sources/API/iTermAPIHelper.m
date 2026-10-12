@@ -38,6 +38,7 @@
 #import "iTermBuriedSessions.h"
 #import "iTermColorPresets.h"
 #import "iTermController.h"
+#import "iTermExpressionParser.h"
 #import "iTermDisclosableView.h"
 #import "iTermKeyMappings.h"
 #import "iTermLSOF.h"
@@ -159,6 +160,27 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             return NO;
         }
         [args addObject:name];
+    }
+    if (self.roleSpecificAttributesOneOfCase == ITMRPCRegistrationRequest_RoleSpecificAttributes_OneOfCase_ContextMenuAttributes &&
+        self.contextMenuAttributes.visibleWhen.length > 0) {
+        // Parse against placeholders since there is no session yet. The real
+        // evaluation happens synchronously when the menu opens, so function
+        // calls (which may need an RPC) are not allowed.
+        NSString *expression = self.contextMenuAttributes.visibleWhen;
+        iTermParsedExpression *parsed = [[iTermExpressionParser expressionParser] parse:expression
+                                                                                  scope:[[iTermVariablePlaceholderScope alloc] init]];
+        if (parsed.expressionType == iTermParsedExpressionTypeError) {
+            if (error) {
+                *error = newErrorWithReason([NSString stringWithFormat:@"visible_when expression '%@' is invalid: %@", expression, parsed.error.localizedDescription]);
+            }
+            return NO;
+        }
+        if ([parsed containsAnyFunctionCall]) {
+            if (error) {
+                *error = newErrorWithReason([NSString stringWithFormat:@"visible_when expression '%@' may not call functions", expression]);
+            }
+            return NO;
+        }
     }
 
     return YES;

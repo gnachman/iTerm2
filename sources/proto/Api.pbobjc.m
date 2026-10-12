@@ -8212,11 +8212,15 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__stor
 
 @dynamic hasDisplayName, displayName;
 @dynamic hasUniqueIdentifier, uniqueIdentifier;
+@dynamic hasSubmenu, submenu;
+@dynamic hasVisibleWhen, visibleWhen;
 
 typedef struct ITMRPCRegistrationRequest_ContextMenuAttributes__storage_ {
   uint32_t _has_storage_[1];
   NSString *displayName;
   NSString *uniqueIdentifier;
+  NSString *submenu;
+  NSString *visibleWhen;
 } ITMRPCRegistrationRequest_ContextMenuAttributes__storage_;
 
 // This method is threadsafe because it is initially called
@@ -8240,6 +8244,24 @@ typedef struct ITMRPCRegistrationRequest_ContextMenuAttributes__storage_ {
         .number = ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_UniqueIdentifier,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_ContextMenuAttributes__storage_, uniqueIdentifier),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "submenu",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_Submenu,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_ContextMenuAttributes__storage_, submenu),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "visibleWhen",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_VisibleWhen,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_ContextMenuAttributes__storage_, visibleWhen),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },

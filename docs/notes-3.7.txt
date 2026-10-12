@@ -328,6 +328,11 @@ Improvements:
   OSC 9;4;4 now shows a paused spinner: a still
   yellow band in the session and a pause symbol
   in the tab, instead of a yellow bar at 10%.
+- Python API context menu items can be grouped
+  into submenus and shown only in sessions where
+  an expression is true, such as a user variable
+  your script sets. See ContextMenuProviderRPC’s
+  submenu and visible_when arguments.
 - If a profile archives sessions when they close
   (Settings > Profiles > Session), Undo Close
   keeps working after its time limit runs out.

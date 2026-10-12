@@ -3243,17 +3243,35 @@ class RPCRegistrationRequest(_message.Message):
 
         DISPLAY_NAME_FIELD_NUMBER: _builtins.int
         UNIQUE_IDENTIFIER_FIELD_NUMBER: _builtins.int
+        SUBMENU_FIELD_NUMBER: _builtins.int
+        VISIBLE_WHEN_FIELD_NUMBER: _builtins.int
         display_name: _builtins.str
         unique_identifier: _builtins.str
+        submenu: _builtins.str
+        """If set, the item appears in a submenu with this title. Items from any
+        script that share a submenu title are grouped together. Added in
+        protocol 1.23.
+        """
+        visible_when: _builtins.str
+        """If set, an expression evaluated in the clicked session's scope when the
+        menu opens. The item is shown only if it evaluates to a boolean or
+        number that is true or nonzero; a string result (even "1") hides it, as
+        do undefined variables and errors. To test a flag that may have been set
+        from the shell (and so be a string), compare it: `user.flag == 1`. It must not call functions, since it
+        is evaluated synchronously. When unset the item is always shown. Added
+        in protocol 1.23.
+        """
         def __init__(
             self,
             *,
             display_name: _builtins.str | None = ...,
             unique_identifier: _builtins.str | None = ...,
+            submenu: _builtins.str | None = ...,
+            visible_when: _builtins.str | None = ...,
         ) -> None: ...
-        _HasFieldArgType: _TypeAlias = _typing.Literal["display_name", b"display_name", "unique_identifier", b"unique_identifier"]  # noqa: Y015
+        _HasFieldArgType: _TypeAlias = _typing.Literal["display_name", b"display_name", "submenu", b"submenu", "unique_identifier", b"unique_identifier", "visible_when", b"visible_when"]  # noqa: Y015
         def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-        _ClearFieldArgType: _TypeAlias = _typing.Literal["display_name", b"display_name", "unique_identifier", b"unique_identifier"]  # noqa: Y015
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["display_name", b"display_name", "submenu", b"submenu", "unique_identifier", b"unique_identifier", "visible_when", b"visible_when"]  # noqa: Y015
         def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
         def WhichOneof(self, oneof_group: _Never) -> None: ...
 

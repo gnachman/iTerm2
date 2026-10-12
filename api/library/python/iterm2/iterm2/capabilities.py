@@ -249,6 +249,14 @@ def supports_floating_panes(connection):
     min_ver = (1, 21)
     return ge(connection.iterm2_protocol_version, min_ver)
 
+def supports_context_menu_submenus_and_visibility(connection):
+    """Does iTerm2 honor the `submenu` and `visible_when` arguments when
+    registering a context menu provider? Requires iTerm2 3.7.6 or later.
+    Older versions accept them but show the item at the top level of every
+    session's context menu."""
+    min_ver = (1, 23)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
 def check_supports_floating_panes(connection):
     if not supports_floating_panes(connection):
         raise AppVersionTooOld(

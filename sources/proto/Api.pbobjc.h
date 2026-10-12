@@ -3562,6 +3562,8 @@ GPB_FINAL @interface ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon
 typedef GPB_ENUM(ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber) {
   ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_DisplayName = 1,
   ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_UniqueIdentifier = 2,
+  ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_Submenu = 3,
+  ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_VisibleWhen = 4,
 };
 
 GPB_FINAL @interface ITMRPCRegistrationRequest_ContextMenuAttributes : GPBMessage
@@ -3573,6 +3575,28 @@ GPB_FINAL @interface ITMRPCRegistrationRequest_ContextMenuAttributes : GPBMessag
 @property(nonatomic, readwrite, copy, null_resettable) NSString *uniqueIdentifier;
 /** Test to see if @c uniqueIdentifier has been set. */
 @property(nonatomic, readwrite) BOOL hasUniqueIdentifier;
+
+/**
+ * If set, the item appears in a submenu with this title. Items from any
+ * script that share a submenu title are grouped together. Added in
+ * protocol 1.23.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *submenu;
+/** Test to see if @c submenu has been set. */
+@property(nonatomic, readwrite) BOOL hasSubmenu;
+
+/**
+ * If set, an expression evaluated in the clicked session's scope when the
+ * menu opens. The item is shown only if it evaluates to a boolean or
+ * number that is true or nonzero; a string result (even "1") hides it, as
+ * do undefined variables and errors. To test a flag that may have been set
+ * from the shell (and so be a string), compare it: `user.flag == 1`. It must not call functions, since it
+ * is evaluated synchronously. When unset the item is always shown. Added
+ * in protocol 1.23.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *visibleWhen;
+/** Test to see if @c visibleWhen has been set. */
+@property(nonatomic, readwrite) BOOL hasVisibleWhen;
 
 @end
 

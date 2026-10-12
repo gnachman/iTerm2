@@ -3,6 +3,7 @@ import inspect
 import json
 import traceback
 import typing
+import warnings
 import websockets
 
 import iterm2.capabilities
@@ -156,14 +157,63 @@ def ContextMenuProviderRPC(func):  # pylint: disable=invalid-name
     :param unique_identifier: Globally unique identifier for this provider
         (e.g., "com.example.my-provider")
     :param timeout: Max number of seconds to wait, or None to use the default.
+    :param submenu: If given, the item appears in a submenu with this title
+        instead of at the top level of the context menu. Items that share a
+        submenu title are grouped together, even if different scripts
+        registered them. Requires iTerm2 3.7.6 or later; older versions show
+        the item at the top level.
+    :param visible_when: If given, an expression evaluated in the clicked
+        session's context each time the menu opens. The item is shown only if
+        the result is a boolean or number that is true or nonzero, for example
+        ``profileName == "Work"``. A string result hides the item, even
+        ``"1"``. User variables set from the shell (with
+        ``iterm2_set_user_var``) are always strings, so to test a flag write
+        ``user.ezboot_bound == 1``: that works whether the variable was set
+        to ``True`` from Python or to ``1`` from the shell, because ``==``
+        converts numeric strings to numbers. An undefined variable or an
+        evaluation error also hides the item. Because it is evaluated without
+        waiting on any script, it may not call functions. When omitted the
+        item is always shown. Requires iTerm2 3.7.6 or later; older versions
+        always show the item.
+
+    If you pass `submenu` or `visible_when` and the running iTerm2 is too old
+    to honor them, a warning is issued and the item is registered without
+    them. Use
+    :func:`~iterm2.capabilities.supports_context_menu_submenus_and_visibility`
+    to check in advance.
+
+    Example:
+
+      .. code-block:: python
+
+          @iterm2.ContextMenuProviderRPC
+          async def unbind(session_id=iterm2.Reference("id")):
+              ...
+
+          await unbind.async_register(
+              connection,
+              "Unbind this session",
+              "com.example.ezboot.unbind",
+              submenu="EzBoot",
+              visible_when="user.ezboot_bound == 1")
     """
     async def async_register(
             connection: iterm2.connection.Connection,
             display_name: str,
             unique_identifier: str,
-            timeout: typing.Optional[float] = None):
+            timeout: typing.Optional[float] = None,
+            submenu: typing.Optional[str] = None,
+            visible_when: typing.Optional[str] = None):
         assert unique_identifier
         iterm2.capabilities.check_supports_context_menu_provider(connection)
+        if ((submenu or visible_when) and
+                not iterm2.capabilities.
+                supports_context_menu_submenus_and_visibility(connection)):
+            warnings.warn(
+                f"iTerm2 is too old to honor submenu or visible_when for the "
+                f"context menu item “{display_name}”. It will appear at the "
+                f"top level of every session’s context menu. Upgrade to "
+                f"iTerm2 3.7.6 or later.")
         signature = inspect.signature(func)
         defaults = {}
         for key, value in signature.parameters.items():
@@ -184,7 +234,9 @@ def ContextMenuProviderRPC(func):  # pylint: disable=invalid-name
                 defaults=defaults,
                 role=iterm2.notifications.RPC_ROLE_CONTEXT_MENU,
                 context_menu_display_name=display_name,
-                context_menu_unique_id=unique_identifier))
+                context_menu_unique_id=unique_identifier,
+                context_menu_submenu=submenu,
+                context_menu_visible_when=visible_when))
         func.rpc_connection = connection
 
     func.async_register = async_register

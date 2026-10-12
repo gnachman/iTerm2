@@ -850,6 +850,20 @@ message RPCRegistrationRequest {
   message ContextMenuAttributes {
     optional string display_name = 1;
     optional string unique_identifier = 2;
+
+    // If set, the item appears in a submenu with this title. Items from any
+    // script that share a submenu title are grouped together. Added in
+    // protocol 1.23.
+    optional string submenu = 3;
+
+    // If set, an expression evaluated in the clicked session's scope when the
+    // menu opens. The item is shown only if it evaluates to a boolean or
+    // number that is true or nonzero; a string result (even "1") hides it, as
+    // do undefined variables and errors. To test a flag that may have been set
+    // from the shell (and so be a string), compare it: `user.flag == 1`. It must not call functions, since it
+    // is evaluated synchronously. When unset the item is always shown. Added
+    // in protocol 1.23.
+    optional string visible_when = 4;
   }
 
   oneof RoleSpecificAttributes {
