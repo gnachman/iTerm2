@@ -76,5 +76,11 @@ class PartialProfile(Profile):
             response.list_profiles_response.profiles[0].properties)
 
     async def async_make_default(self) -> None:
-        """Makes this profile the default profile."""
-        await async_set_default_profile(self.connection, self.guid)  # type: ignore[arg-type]
+        """Makes this profile the default profile.
+
+        Raises BadGUIDException if the Guid is not set.
+        """
+        guid = self.guid
+        if guid is None:
+            raise BadGUIDException()
+        await async_set_default_profile(self.connection, guid)

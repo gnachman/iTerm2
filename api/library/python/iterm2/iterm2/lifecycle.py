@@ -123,8 +123,10 @@ class EachSessionOnceMonitor:
         exc: BaseException | None,
         _tb: types.TracebackType | None,
     ) -> None:
+        if self.__token is None:
+            return
         try:
-            await async_unsubscribe(self.__connection, self.__token)  # type: ignore[arg-type]
+            await async_unsubscribe(self.__connection, self.__token)
         except SubscriptionException:
             pass
 
@@ -180,8 +182,10 @@ class SessionTerminationMonitor:
         exc: BaseException | None,
         _tb: types.TracebackType | None,
     ) -> None:
+        if self.__token is None:
+            return
         try:
-            await async_unsubscribe(self.__connection, self.__token)  # type: ignore[arg-type]
+            await async_unsubscribe(self.__connection, self.__token)
         except SubscriptionException:
             pass
 
@@ -244,8 +248,10 @@ class LayoutChangeMonitor:
         exc: BaseException | None,
         _tb: types.TracebackType | None,
     ) -> None:
+        if self.__token is None:
+            return
         try:
-            await async_unsubscribe(self.__connection, self.__token)  # type: ignore[arg-type]
+            await async_unsubscribe(self.__connection, self.__token)
         except SubscriptionException:
             pass
 
@@ -299,7 +305,9 @@ class NewSessionMonitor:
         exc: BaseException | None,
         _tb: types.TracebackType | None,
     ) -> None:
+        if self.__token is None:
+            return
         try:
-            await async_unsubscribe(self.__connection, self.__token)  # type: ignore[arg-type]
+            await async_unsubscribe(self.__connection, self.__token)
         except SubscriptionException:
             pass

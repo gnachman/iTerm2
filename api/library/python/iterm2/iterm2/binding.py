@@ -350,7 +350,12 @@ if TYPE_CHECKING:
 
 def parse_binding_param(action: BindingAction, param: Any) -> _BindingParam:
     constructor = get_constructor(action)
-    return constructor(param)  # type: ignore[misc]
+    if constructor is None:
+        # Every BindingAction has a constructor (actions without a parameter
+        # use NoParamConstructor), so this means an action was added without
+        # teaching get_constructor about it.
+        raise ValueError(f"No parameter constructor for binding action {action}")
+    return constructor(param)
 
 
 def get_constructor(action: BindingAction) -> Callable[[Any], _BindingParam] | None:
@@ -665,7 +670,9 @@ class KeyBinding:
         self.__version = version
         self.__label = label
 
-    def __eq__(self, other: KeyBinding) -> bool:  # type: ignore[override]
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, KeyBinding):
+            return NotImplemented
         return (
             self.__keycode == other.__keycode
             and self.__character == other.__character

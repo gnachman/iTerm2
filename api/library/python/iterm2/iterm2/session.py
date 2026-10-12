@@ -344,8 +344,10 @@ class Session:
         # pylint: disable=no-member
         summary = api_pb2.SessionSummary()
         summary.unique_identifier = self.session_id
-        summary.grid_size.width = self.preferred_size.width  # type: ignore[union-attr]
-        summary.grid_size.height = self.preferred_size.height  # type: ignore[union-attr]
+        preferred_size = self.preferred_size
+        if preferred_size is not None:
+            summary.grid_size.width = preferred_size.width
+            summary.grid_size.height = preferred_size.height
         return summary
 
     def update_from(self, session: Session) -> None:
@@ -961,10 +963,11 @@ class Session:
 
         :returns: A string with the selection's contents. Discontiguous
             selections are combined with newlines."""
+        grid_size = self.grid_size
+        if grid_size is None:
+            raise RPCException("Session has no grid size (it may be buried or a proxy)")
         return await selection.async_get_string(
-            self.connection,
-            self.session_id,
-            self.grid_size.width,  # type: ignore[union-attr]
+            self.connection, self.session_id, grid_size.width
         )
 
     async def async_set_selection(self, selection: Selection) -> None:
@@ -1391,7 +1394,12 @@ class ProxySession(Session):
     """
 
     def __init__(self, connection: Connection, session_id: str) -> None:
-        super().__init__(connection, session_id)  # type: ignore[arg-type]
+        # Proxies have no split tree link, so describe the abstract session
+        # ID with a summary instead.
+        summary = api_pb2.SessionSummary()
+        summary.unique_identifier = session_id
+        super().__init__(connection, None, summary)
+        self.buried = False
         self.__session_id = session_id
 
     def __repr__(self):

@@ -4337,6 +4337,8 @@ class Profile(WriteOnlyProfile):
         :returns: A list of :class:`TitleComponents`, or `None` if not set.
         """
         value = self._simple_get("Title Components")
+        if value is None:
+            return None
         parts: list[TitleComponents] = []
         bit = 1
         while bit <= value:
@@ -4354,11 +4356,19 @@ class Profile(WriteOnlyProfile):
         :returns: (display name, unique identifier), or `None` if not set.
         """
         values = self._simple_get("Title Function")
+        if values is None:
+            return None
         return (values[0], values[1])
 
     async def async_make_default(self) -> None:
-        """Makes this profile the default profile."""
-        await async_set_default_profile(self.connection, self.guid)  # type: ignore[arg-type]
+        """Makes this profile the default profile.
+
+        Raises BadGUIDException if the Guid is not set.
+        """
+        guid = self.guid
+        if guid is None:
+            raise BadGUIDException()
+        await async_set_default_profile(self.connection, guid)
 
     @property
     def guid(self) -> str | None:
@@ -5769,7 +5779,10 @@ class Profile(WriteOnlyProfile):
 
         :returns: A `BackgroundImageMode` or `None`
         """
-        return BackgroundImageMode(self._simple_get("Background Image Mode"))
+        value = self._simple_get("Background Image Mode")
+        if value is None:
+            return None
+        return BackgroundImageMode(value)
 
     @property
     def blend(self) -> float | None:
@@ -6665,5 +6678,11 @@ class PartialProfile(Profile):
         )
 
     async def async_make_default(self) -> None:
-        """Makes this profile the default profile."""
-        await async_set_default_profile(self.connection, self.guid)  # type: ignore[arg-type]
+        """Makes this profile the default profile.
+
+        Raises BadGUIDException if the Guid is not set.
+        """
+        guid = self.guid
+        if guid is None:
+            raise BadGUIDException()
+        await async_set_default_profile(self.connection, guid)

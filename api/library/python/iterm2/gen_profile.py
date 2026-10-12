@@ -1101,7 +1101,10 @@ def generate_profile():
         if wrapper == "bool":
             print(f'        return bool(self.{getter}("{key}"))')
         elif wrapper:
-            print(f'        return {wrapper}(self.{getter}("{key}"))')
+            print(f'        value = self.{getter}("{key}")')
+            print(f'        if value is None:')
+            print(f'            return None')
+            print(f'        return {wrapper}(value)')
         else:
             print(f'        return self.{getter}("{key}")')
         print("")

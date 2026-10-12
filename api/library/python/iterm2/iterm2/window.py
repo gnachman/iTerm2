@@ -55,7 +55,7 @@ class GetPropertyException(Exception):
     """Something went wrong fetching a property."""
 
 
-DELEGATE_FACTORY: Callable[[Connection], Awaitable[Window.Delegate]] | None = None
+gDELEGATE_FACTORY: Callable[[Connection], Awaitable[Window.Delegate]] | None = None
 
 
 # pylint: disable=too-many-public-methods
@@ -183,9 +183,7 @@ class Window:
                 tab.tab_group_id if tab.HasField("tab_group_id") else None,
                 tab.tab_group_name if tab.HasField("tab_group_name") else None,
                 tab.tab_group_color if tab.HasField("tab_group_color") else None,
-                tab.tab_group_collapsed
-                if tab.HasField("tab_group_collapsed")
-                else None,  # type: ignore[arg-type]
+                tab.tab_group_collapsed,
                 floating_sessions,
                 tab.floating_panes_hidden,
             )
@@ -393,8 +391,8 @@ class Window:
             )
         tab_id = response.tmux_response.create_window.tab_id
         if not Window.delegate:
-            assert DELEGATE_FACTORY
-            Window.delegate = await DELEGATE_FACTORY(self.connection)
+            assert gDELEGATE_FACTORY
+            Window.delegate = await gDELEGATE_FACTORY(self.connection)
         return await Window.delegate.window_delegate_get_tab_by_id(tab_id)
 
     async def async_create_tab(

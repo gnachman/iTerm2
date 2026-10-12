@@ -96,9 +96,18 @@ def _spec_has_new_session(spec: dict[str, Any]) -> bool:
     return any(_node_has_new_session(tab.get("root")) for tab in spec.get("tabs", []))
 
 
+async def _async_get_app_as_delegate(connection: Connection) -> App:
+    app = await async_get_app(connection)
+    if app is None:
+        # Unreachable: async_get_app creates the app when create_if_needed is
+        # True, which is the default.
+        raise RuntimeError("Unable to create the App instance")
+    return app
+
+
 # See note in tmux.async_get_tmux_connections()
-_tmux.DELEGATE_FACTORY = async_get_app  # type: ignore[assignment]
-_window.DELEGATE_FACTORY = async_get_app  # type: ignore[assignment]
+_tmux.gDELEGATE_FACTORY = _async_get_app_as_delegate
+_window.gDELEGATE_FACTORY = _async_get_app_as_delegate
 
 
 # pylint: disable=too-many-public-methods
@@ -133,7 +142,7 @@ class App(Session.Delegate, Tab.Delegate, _tmux.Delegate, Window.Delegate):
         Session.delegate = app
         Tab.delegate = app
         Window.delegate = app
-        _tmux.DELEGATE = app
+        _tmux.gDELEGATE = app
 
         # pylint: disable=protected-access
         await app._async_listen()
@@ -284,7 +293,8 @@ class App(Session.Delegate, Tab.Delegate, _tmux.Delegate, Window.Delegate):
 
         :returns: A :class:`Session` or `None`.
         """
-        assert session_id
+        if session_id is None:
+            return None
         return self._search_for_session_id(session_id, include_buried)
 
     def get_tab_by_id(self, tab_id: str) -> Tab | None:
@@ -534,7 +544,9 @@ class App(Session.Delegate, Tab.Delegate, _tmux.Delegate, Window.Delegate):
 
         :returns: A :class:`Window` or `None`.
         """
-        return self.get_window_by_id(self.current_terminal_window_id)  # type: ignore[arg-type]
+        if self.current_terminal_window_id is None:
+            return None
+        return self.get_window_by_id(self.current_terminal_window_id)
 
     @property
     def current_terminal_window(self) -> Window | None:
@@ -579,7 +591,9 @@ class App(Session.Delegate, Tab.Delegate, _tmux.Delegate, Window.Delegate):
         Deprecated because the name is wrong for the order of return
         arguments.
         """
-        return self.get_window_and_tab_for_session(session)  # type: ignore[arg-type]
+        if session is None:
+            return None, None
+        return self.get_window_and_tab_for_session(session)
 
     def get_window_and_tab_for_session(
         self, session: Session

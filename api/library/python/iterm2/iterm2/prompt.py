@@ -212,7 +212,7 @@ async def async_list_prompts(
     if status == ListPromptsResponse.Status.Value("OK"):
         return response.list_prompts_response.unique_prompt_id
 
-    raise RPCException(GetPromptResponse.Status.Name(status))  # type: ignore[arg-type]
+    raise RPCException(ListPromptsResponse.Status.Name(status))
 
 
 class PromptMonitor:
@@ -357,7 +357,9 @@ class PromptMonitor:
         exc: BaseException | None,
         _tb: types.TracebackType | None,
     ) -> None:
+        if self.__token is None:
+            return
         try:
-            await async_unsubscribe(self.connection, self.__token)  # type: ignore[arg-type]
+            await async_unsubscribe(self.connection, self.__token)
         except SubscriptionException:
             pass

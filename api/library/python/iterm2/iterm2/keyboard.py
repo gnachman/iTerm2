@@ -425,7 +425,7 @@ class KeystrokeMonitor:
         if advanced:
             check_supports_advanced_key_notifications(connection)
         # The protobuf field is a bool and rejects None.
-        self.__advanced = advanced
+        self.__advanced = bool(advanced)
         self.__token: NotificationToken | None = None
         self.__queue: Queue[api_pb2.KeystrokeNotification] = Queue()
 
@@ -438,10 +438,7 @@ class KeystrokeMonitor:
 
         # pylint: enable=unused-argument
         self.__token = await async_subscribe_to_keystroke_notification(
-            self.__connection,
-            callback,
-            self.__session,
-            self.__advanced,  # type: ignore[arg-type]
+            self.__connection, callback, self.__session, self.__advanced
         )
         return self
 
@@ -456,8 +453,10 @@ class KeystrokeMonitor:
         exc: BaseException | None,
         _tb: TracebackType | None,
     ) -> None:
+        if self.__token is None:
+            return
         try:
-            await async_unsubscribe(self.__connection, self.__token)  # type: ignore[arg-type]
+            await async_unsubscribe(self.__connection, self.__token)
         except SubscriptionException:
             pass
 
@@ -513,7 +512,9 @@ class KeystrokeFilter:
         exc: BaseException | None,
         _tb: TracebackType | None,
     ) -> None:
+        if self.__token is None:
+            return
         try:
-            await async_unsubscribe(self.__connection, self.__token)  # type: ignore[arg-type]
+            await async_unsubscribe(self.__connection, self.__token)
         except SubscriptionException:
             pass

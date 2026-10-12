@@ -529,8 +529,10 @@ class ScreenStreamer:
         exc: BaseException | None,
         _tb: types.TracebackType | None,
     ) -> None:
+        if self.token is None:
+            return
         try:
-            await async_unsubscribe(self.connection, self.token)  # type: ignore[arg-type]
+            await async_unsubscribe(self.connection, self.token)
         except SubscriptionException:
             pass
 

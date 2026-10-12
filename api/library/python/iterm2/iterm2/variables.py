@@ -109,7 +109,9 @@ class VariableMonitor:
         exc: BaseException | None,
         _tb: TracebackType | None,
     ) -> None:
+        if self.__token is None:
+            return
         try:
-            await async_unsubscribe(self.__connection, self.__token)  # type: ignore[arg-type]
+            await async_unsubscribe(self.__connection, self.__token)
         except SubscriptionException:
             pass

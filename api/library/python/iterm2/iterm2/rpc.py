@@ -194,7 +194,7 @@ def _profile_properties_from_dict(profile_customizations: Mapping[str, str | Non
         value = profile_customizations[key]
         entry = api_pb2.ProfileProperty()
         entry.key = key
-        entry.json_value = value  # type: ignore[assignment]
+        entry.json_value = value or "null"
         props.append(entry)
     return props
 
@@ -235,12 +235,14 @@ async def async_create_tab(
     if index is not None:
         request.create_tab_request.tab_index = index
     if command is not None:
-        from .profile import LocalWriteOnlyProfile
-
-        lwop = LocalWriteOnlyProfile()
-        lwop.set_use_custom_command("Yes")
-        lwop.set_command(command)
-        profile_customizations = lwop  # type: ignore[assignment]
+        # Layer the command on top of any other customizations so both apply.
+        # Values are JSON-encoded, as in LocalWriteOnlyProfile.values (which
+        # can't be used here because the profile module imports this one).
+        profile_customizations = {
+            **(profile_customizations or {}),
+            "Custom Command": json.dumps("Yes"),
+            "Command": json.dumps(command),
+        }
     if profile_customizations is not None:
         request.create_tab_request.custom_profile_properties.extend(
             _profile_properties_from_dict(profile_customizations)

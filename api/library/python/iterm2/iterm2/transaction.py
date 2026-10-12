@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
     from .connection import Connection
 
-CURRENT_TRANSACTION: Transaction | None = None
+gCURRENT_TRANSACTION: Transaction | None = None
 
 
 class Transaction:
@@ -39,9 +39,9 @@ class Transaction:
 
     async def __aenter__(self) -> None:
         # pylint: disable=global-statement
-        global CURRENT_TRANSACTION
-        if not CURRENT_TRANSACTION:
-            CURRENT_TRANSACTION = self
+        global gCURRENT_TRANSACTION
+        if not gCURRENT_TRANSACTION:
+            gCURRENT_TRANSACTION = self
 
         await async_start_transaction(self.connection)
 
@@ -54,11 +54,11 @@ class Transaction:
         await async_end_transaction(self.connection)
 
         # pylint: disable=global-statement
-        global CURRENT_TRANSACTION
-        if CURRENT_TRANSACTION == self:
-            CURRENT_TRANSACTION = None
+        global gCURRENT_TRANSACTION
+        if gCURRENT_TRANSACTION == self:
+            gCURRENT_TRANSACTION = None
 
     @staticmethod
     def current() -> Transaction | None:
         """Returns the current transaction."""
-        return CURRENT_TRANSACTION
+        return gCURRENT_TRANSACTION

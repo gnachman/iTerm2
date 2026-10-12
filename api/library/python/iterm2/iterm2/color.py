@@ -266,12 +266,17 @@ class Color:
     @property
     def hex(self) -> str:
         """Returns a #rrggbb representation of this color. Assumes srgb colorspace."""
-        two_digit_hex = "02x"
+
+        def two_digit_hex(component: float) -> str:
+            # Components may be non-integral (e.g., from from_dict), and the
+            # 'x' format only accepts ints, so round and clamp to 0-255.
+            return format(min(255, max(0, round(component))), "02x")
+
         code = (
             "#"
-            + format(self.red, two_digit_hex)
-            + format(self.green, two_digit_hex)
-            + format(self.blue, two_digit_hex)
+            + two_digit_hex(self.red)
+            + two_digit_hex(self.green)
+            + two_digit_hex(self.blue)
         )
         if self.color_space == ColorSpace.P3:
             return "p3" + code

@@ -209,7 +209,9 @@ class Trigger:
     def __repr__(self):
         return f"<{self.__class__.__name__}: regex={self.__regex} instant={self.__instant} enabled={self.__enabled} param={self._param}>"
 
-    def __eq__(self, other: Trigger) -> bool:  # type: ignore[override]
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Trigger):
+            return NotImplemented
         return (
             self.__regex == other.__regex
             and self.__param == other.__param
@@ -1045,8 +1047,8 @@ class PasswordTrigger(Trigger):
 
     @property
     def _param(self) -> str:
-        if len(self.__user_name) > 0:  # type: ignore[arg-type]
-            return self.__account_name + PasswordTrigger.SEPARATOR + self.__user_name  # type: ignore[operator]
+        if self.__user_name is not None and len(self.__user_name) > 0:
+            return self.__account_name + PasswordTrigger.SEPARATOR + self.__user_name
         return self.__account_name
 
 
@@ -1283,7 +1285,7 @@ class EventTrigger:
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params,  # type: ignore[arg-type]
+            event_params=dict(event_params) if event_params is not None else None,
         )
 
 

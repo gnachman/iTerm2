@@ -500,11 +500,11 @@ async def async_subscribe_to_profile_change_notification(
     """
     request = api_pb2.ProfileChangeRequest()
     request.guid = guid
-    key = (guid, api_PB2.NOTIFY_ON_PROFILE_CHANGE)  # type: ignore[name-defined]  # noqa: F821
+    key = (guid, api_pb2.NOTIFY_ON_PROFILE_CHANGE)
     return await _async_subscribe(
         connection,
         True,
-        api_PB2.NOTIFY_ON_PROFILE_CHANGE,  # type: ignore[name-defined]  # noqa: F821
+        api_pb2.NOTIFY_ON_PROFILE_CHANGE,
         callback,
         session=None,
         profile_change_request=request,
@@ -541,7 +541,11 @@ async def _async_subscribe(
     prompt_monitor_modes: Iterable[api_pb2.PromptMonitorMode.ValueType] | None = None,
     keystroke_filter_request: api_pb2.KeystrokeFilterRequest | None = None,
 ) -> NotificationToken:
-    """Note: session argument is ignored for variable-change notifications."""
+    """Note: session argument is ignored for variable-change notifications.
+
+    :returns: The token for the subscription, whether subscribing or
+        unsubscribing.
+    """
     _register_helper_if_needed()
     token = (key or (session, notification_type), callback)
 
@@ -602,7 +606,7 @@ async def _async_subscribe(
 
         if not subscribe and status_ok:
             # Normal code path for unsubscribe
-            return None  # type: ignore[return-value]
+            return token
 
     # pylint: disable=no-member
     raise SubscriptionException(api_pb2.NotificationResponse.Status.Name(status))

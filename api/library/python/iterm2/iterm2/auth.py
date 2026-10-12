@@ -146,7 +146,7 @@ class LSBackgroundContextManager:
     def __exit__(self, exc_type, exc_value, exc_traceback):
         info = AppKit.NSBundle.mainBundle().infoDictionary()
         if self.__value:
-            info["LSBackgroundOnly"] = __value
+            info["LSBackgroundOnly"] = self.__value
         else:
             del info["LSBackgroundOnly"]
 

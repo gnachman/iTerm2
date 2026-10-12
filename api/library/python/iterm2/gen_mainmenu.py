@@ -57,6 +57,10 @@ class Emitter:
         if isinstance(v, dict):
             if self.needsNewline:
                 yield ""
+            if depth > 1:
+                # A submenu nested in another menu's enum is a namespace, not
+                # one of that enum's members.
+                yield f"{'    ' * depth}@_nonmember"
             yield f"{'    ' * depth}class {k.translate(RemoveNonAlphanumeric())}(enum.Enum):"
             yield f"{'    ' * (depth + 1)}_value_: MenuItemIdentifier"
 
@@ -105,6 +109,7 @@ print(
 from __future__ import annotations
 
 import enum
+import sys
 from typing import TYPE_CHECKING
 
 from . import api_pb2
@@ -112,6 +117,14 @@ from .rpc import async_menu_item
 
 if TYPE_CHECKING:
     from .connection import Connection
+
+if sys.version_info >= (3, 11):
+    from enum import nonmember as _nonmember
+else:
+    # Enum doesn't make descriptors into members, and a staticmethod returns
+    # the class it wraps when accessed.
+    def _nonmember(cls):
+        return staticmethod(cls)
 
 class MenuItemException(Exception):
     \"\"\"A problem was encountered while selecting a menu item.\"\"\"

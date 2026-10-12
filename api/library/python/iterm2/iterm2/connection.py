@@ -87,7 +87,7 @@ def _headers():
     }
     if cookie is not None:
         headers["x-iterm2-cookie"] = cookie
-    headers["x-iterm2-advisory-name"] = get_script_name()  # type: ignore[assignment]
+    headers["x-iterm2-advisory-name"] = str(get_script_name())
     if key is not None:
         headers["x-iterm2-key"] = key
     return headers
@@ -235,8 +235,9 @@ class Connection:
         """
         self.__tasks = []
         try:
+            assert self.websocket is not None
             while True:
-                data = await self.websocket.recv()  # type: ignore[union-attr]
+                data = await self.websocket.recv()
                 self._collect_garbage()
 
                 message = ServerOriginatedMessage()
@@ -323,7 +324,9 @@ class Connection:
         message: A protocol buffer of type
             iterm2.api_pb2.ClientOriginatedMessage to send.
         """
-        await self.websocket.send(message.SerializeToString())  # type: ignore[union-attr]
+        if self.websocket is None:
+            raise RuntimeError("Not connected to iTerm2")
+        await self.websocket.send(message.SerializeToString())
 
     def _receiver_index(self, message: ServerOriginatedMessage) -> int | None:
         """
@@ -389,9 +392,11 @@ class Connection:
         version of iTerm2 that doesn't report its version or it's unknown.
         """
         key = "X-iTerm2-Protocol-Version"
-        if key not in self.websocket.response_headers:  # type: ignore[union-attr]
+        if self.websocket is None:
             return (0, 0)
-        header_value = self.websocket.response_headers[key]  # type: ignore[union-attr]
+        if key not in self.websocket.response_headers:
+            return (0, 0)
+        header_value = self.websocket.response_headers[key]
         parts = header_value.split(".")
         if len(parts) != 2:
             return (0, 0)
@@ -574,7 +579,7 @@ or run_forever().
         # happens just before coro runs; coro either produced result or the
         # process exited. This is reached when closing the websocket raised
         # an exception that was handled above. Type checkers can't prove that.
-        return None  # type: ignore[return-value]
+        return result  # pyright: ignore[reportPossiblyUnboundVariable, reportReturnType]
 
 
 def run_until_complete(

@@ -258,6 +258,15 @@ class StatusBarComponent:
         if self.__update_cadence is not None:
             proto.update_cadence = self.__update_cadence
 
+    def __registered_connection(self) -> Connection:
+        """Returns the connection passed to async_register."""
+        if self.__connection is None:
+            raise RuntimeError(
+                "The status bar component must be registered with "
+                "async_register before this method can be used."
+            )
+        return self.__connection
+
     async def async_open_popover(self, session_id: str, html: str, size: Size) -> None:
         """Open a popover with a webview.
 
@@ -269,11 +278,7 @@ class StatusBarComponent:
         .. seealso:: Example ":ref:`jsonpretty_example`"
         """
         await async_open_status_bar_component_popover(
-            self.__connection,  # type: ignore[arg-type]
-            self.__identifier,
-            session_id,
-            html,
-            size,
+            self.__registered_connection(), self.__identifier, session_id, html, size
         )
 
     async def async_set_unread_count(self, session_id: str | None, count: int) -> None:
@@ -288,7 +293,8 @@ class StatusBarComponent:
         :param count: The number to show, or 0 to remove it.
         :raises: AppVersionTooOld if not supported by this version of iTerm2.
         """
-        if not supports_status_bar_unread_count(self.__connection):  # type: ignore[arg-type]
+        connection = self.__registered_connection()
+        if not supports_status_bar_unread_count(connection):
             raise AppVersionTooOld(
                 "Unread count in status bar components is not "
                 "supported in this version of iTerm2. Please upgrade "
@@ -300,10 +306,9 @@ class StatusBarComponent:
             {"identifier": self.__identifier, "count": count},
         )
         if session_id:
-            await async_invoke_method(self.__connection, session_id, invocation, -1)  # type: ignore[arg-type]
+            await async_invoke_method(connection, session_id, invocation, -1)
         else:
-            assert self.__connection
-            await async_invoke_function(self.__connection, invocation)
+            await async_invoke_function(connection, invocation)
 
     async def async_register(
         self,

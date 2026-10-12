@@ -14,6 +14,8 @@ from .screen import ScreenContents
 from .util import CoordRange, Point, Range, WindowedCoordRange
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .connection import Connection
 
 
@@ -122,19 +124,20 @@ class SubSelection:
             api_pb2.GetBufferResponse.Status.Name(result.get_buffer_response.status)
         )
 
-    def enumerate_ranges(self, callback: Callable[..., Any]) -> None:
+    def enumerate_ranges(self, callback: Callable[[Self, CoordRange], Any]) -> None:
         """Invoke callback for each selected range."""
         if self.__windowed_coord_range.hasWindow:
             right = self.__windowed_coord_range.right
             start_x = self.__windowed_coord_range.start.x
             y = self.__windowed_coord_range.coordRange.start.y
             while y < self.__windowed_coord_range.coordRange.end.y:
-                callback(CoordRange(Point(start_x, y), Point(right, y)))
+                callback(self, CoordRange(Point(start_x, y), Point(right, y)))
                 start_x = self.__windowed_coord_range.left
 
                 y += 1
 
             callback(
+                self,
                 CoordRange(
                     Point(start_x, self.__windowed_coord_range.coordRange.end.y),
                     Point(
@@ -144,7 +147,7 @@ class SubSelection:
                 ),
             )
         else:
-            callback(self.__windowed_coord_range.coordRange, self)
+            callback(self, self.__windowed_coord_range.coordRange)
 
     # pylint: enable=invalid-name
 
@@ -214,9 +217,10 @@ class Selection:
             content = await self._async_get_content_in_range(
                 connection, session_id, coord_range
             )
+            assert content is not None
             nonlocal result
-            result += content  # type: ignore[operator]
-            if eol and not content.endswith("\n"):  # type: ignore[union-attr]
+            result += content
+            if eol and not content.endswith("\n"):
                 result += "\n"
 
         await self.async_enumerate_ranges(width, handle_range)
@@ -255,7 +259,7 @@ class Selection:
 
             the_range = Range(0, 0)
 
-            def handle_range(outer_range: CoordRange):
+            def _handle_range(outer: SubSelection, outer_range: CoordRange):
                 # pylint: disable=invalid-name
                 nonlocal indexes
                 nonlocal the_range
@@ -279,9 +283,9 @@ class Selection:
                     enumerate(sorted(indexes_of_interest)), f
                 ):
                     # range exists in both indexes and the_range
-                    values_in_range = map(itemgetter(1), g)
-                    indexes_to_remove |= set(values_in_range)
-                    indexes_to_add -= set(values_in_range)
+                    values_in_range = set(map(itemgetter(1), g))
+                    indexes_to_remove |= values_in_range
+                    indexes_to_add -= values_in_range
                 indexes -= indexes_to_remove
                 indexes |= indexes_to_add
 
@@ -295,7 +299,7 @@ class Selection:
                 ):
                     connectors |= {the_range.max}
 
-            outer.enumerate_ranges(handle_range)
+            outer.enumerate_ranges(_handle_range)
 
         # The ranges may be out of order so put them in an array and then sort
         # it.

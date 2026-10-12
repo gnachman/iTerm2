@@ -41,8 +41,8 @@ class Delegate(abc.ABC):
         ...
 
 
-DELEGATE: Delegate | None = None
-DELEGATE_FACTORY: Callable[[Connection], Awaitable[Delegate]] | None = None
+gDELEGATE: Delegate | None = None
+gDELEGATE_FACTORY: Callable[[Connection], Awaitable[Delegate]] | None = None
 
 
 class TmuxException(Exception):
@@ -165,20 +165,19 @@ async def async_get_tmux_connections(connection: Connection) -> list[TmuxConnect
     # by adding a delegate, but you can call this before creating App. The
     # solution is to use a delegate factory so we can make an App just in time
     # without tmux knowing about it.
-    global DELEGATE  # pylint: disable=global-statement
-    if not DELEGATE:
-        assert DELEGATE_FACTORY
-        DELEGATE = await DELEGATE_FACTORY(connection)
+    global gDELEGATE  # pylint: disable=global-statement
+    if not gDELEGATE:
+        assert gDELEGATE_FACTORY
+        gDELEGATE = await gDELEGATE_FACTORY(connection)
 
     response = await async_rpc_list_tmux_connections(connection)
     # pylint: disable=no-member
     if response.tmux_response.status == TmuxResponse.Status.Value("OK"):
 
         def make_connection(proto: TmuxResponse.ListConnections.Connection):
+            assert gDELEGATE is not None
             return TmuxConnection(
-                proto.connection_id,
-                proto.owning_session_id,
-                DELEGATE,  # type: ignore[arg-type]
+                proto.connection_id, proto.owning_session_id, gDELEGATE
             )
 
         return list(

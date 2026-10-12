@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import enum
+import sys
 from typing import TYPE_CHECKING
 
 from . import api_pb2
@@ -10,6 +11,14 @@ from .rpc import async_menu_item
 
 if TYPE_CHECKING:
     from .connection import Connection
+
+if sys.version_info >= (3, 11):
+    from enum import nonmember as _nonmember
+else:
+    # Enum doesn't make descriptors into members, and a staticmethod returns
+    # the class it wraps when accessed.
+    def _nonmember(cls):
+        return staticmethod(cls)
 
 
 class MenuItemException(Exception):
@@ -203,6 +212,7 @@ class MainMenu:
         )
         UNDO_CLOSE = MenuItemIdentifier("Undo Close", "Undo Close")
 
+        @_nonmember
         class Archives(enum.Enum):
             _value_: MenuItemIdentifier
             SAVE_ARCHIVE_OF_CURRENT_SESSION = MenuItemIdentifier(
@@ -210,10 +220,12 @@ class MainMenu:
             )
             RESTORE_ARCHIVE = MenuItemIdentifier("Restore Archive…", "Restore Archive")
 
+        @_nonmember
         class Workgroups(enum.Enum):
             _value_: MenuItemIdentifier
             EXIT_WORKGROUP = MenuItemIdentifier("Exit Workgroup", "Exit Workgroup")
 
+        @_nonmember
         class BroadcastInput(enum.Enum):
             _value_: MenuItemIdentifier
             SEND_INPUT_TO_CURRENT_SESSION_ONLY = MenuItemIdentifier(
@@ -245,6 +257,7 @@ class MainMenu:
             "Toggle Buffer Input", "Toggle Buffer Input"
         )
 
+        @_nonmember
         class tmux(enum.Enum):
             _value_: MenuItemIdentifier
             DETACH = MenuItemIdentifier("Detach", "tmux.Detach")
@@ -256,6 +269,7 @@ class MainMenu:
             PAUSE_PANE = MenuItemIdentifier("Pause Pane", "trmux.Pause Pane")
             DASHBOARD = MenuItemIdentifier("Dashboard", "tmux.Dashboard")
 
+        @_nonmember
         class ssh(enum.Enum):
             _value_: MenuItemIdentifier
             DISCONNECT = MenuItemIdentifier("Disconnect", "ssh.Disconnect")
@@ -266,6 +280,7 @@ class MainMenu:
 
         PAGE_SETUP = MenuItemIdentifier("Page Setup…", "Page Setup...")
 
+        @_nonmember
         class Print(enum.Enum):
             _value_: MenuItemIdentifier
             SCREEN = MenuItemIdentifier("Screen", "Print.Screen")
@@ -285,6 +300,7 @@ class MainMenu:
         COPY_MODE = MenuItemIdentifier("Copy Mode", "Copy Mode")
         PASTE = MenuItemIdentifier("Paste", "Paste")
 
+        @_nonmember
         class PasteSpecial(enum.Enum):
             _value_: MenuItemIdentifier
             ADVANCED_PASTE = MenuItemIdentifier(
@@ -328,6 +344,7 @@ class MainMenu:
                 "Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt",
             )
 
+        @_nonmember
         class ReplaceSelection(enum.Enum):
             _value_: MenuItemIdentifier
             RENDER_SELECTION_NATIVELY = MenuItemIdentifier(
@@ -367,6 +384,7 @@ class MainMenu:
             "Select Current Command", "Select Current Command"
         )
 
+        @_nonmember
         class Find(enum.Enum):
             _value_: MenuItemIdentifier
             FIND = MenuItemIdentifier("Find…", "Find.Find...")
@@ -392,6 +410,7 @@ class MainMenu:
             )
             FILTER = MenuItemIdentifier("Filter", "Find.Filter")
 
+        @_nonmember
         class MarksandAnnotations(enum.Enum):
             _value_: MenuItemIdentifier
             SET_MARK = MenuItemIdentifier("Set Mark", "Marks and Annotations.Set Mark")
@@ -418,6 +437,7 @@ class MainMenu:
                 "Previous Annotation", "Marks and Annotations.Previous  Annotation"
             )
 
+            @_nonmember
             class Alerts(enum.Enum):
                 _value_: MenuItemIdentifier
                 ALERT_ON_NEXT_MARK = MenuItemIdentifier(
@@ -468,6 +488,7 @@ class MainMenu:
             "Toggle Full Screen", "Toggle Full Screen"
         )
 
+        @_nonmember
         class Toolbelt(enum.Enum):
             _value_: MenuItemIdentifier
             SHOW_TOOLBELT = MenuItemIdentifier("Show Toolbelt", "Show Toolbelt")
@@ -536,6 +557,7 @@ class MainMenu:
         )
         OPEN_AI_CHAT = MenuItemIdentifier("Open AI Chat…", "Open AI Chat")
 
+        @_nonmember
         class Triggers(enum.Enum):
             _value_: MenuItemIdentifier
             ADD_TRIGGER = MenuItemIdentifier("Add Trigger…", "Add Trigger")
@@ -552,6 +574,7 @@ class MainMenu:
             "Reset Character Set", "Reset Character Set"
         )
 
+        @_nonmember
         class MoveSession(enum.Enum):
             _value_: MenuItemIdentifier
             MOVE_SESSION_TO_WINDOW = MenuItemIdentifier(
@@ -564,6 +587,7 @@ class MainMenu:
                 "Move Session to Split Pane", "Move Session to Split Pane"
             )
 
+        @_nonmember
         class Log(enum.Enum):
             _value_: MenuItemIdentifier
             LOG_TO_FILE = MenuItemIdentifier("Log to File", "Log.Toggle")
@@ -579,6 +603,7 @@ class MainMenu:
 
         MAKE_SCREENSHOT = MenuItemIdentifier("Make Screenshot…", "Make Screenshot")
 
+        @_nonmember
         class TerminalState(enum.Enum):
             _value_: MenuItemIdentifier
             ALTERNATE_SCREEN = MenuItemIdentifier(
@@ -630,6 +655,7 @@ class MainMenu:
                 "Literal Controls", "Terminal State.Literal Mode"
             )
 
+            @_nonmember
             class EmulationLevel(enum.Enum):
                 _value_: MenuItemIdentifier
                 VT100 = MenuItemIdentifier(
@@ -655,6 +681,7 @@ class MainMenu:
     class Scripts(enum.Enum):
         _value_: MenuItemIdentifier
 
+        @_nonmember
         class Manage(enum.Enum):
             _value_: MenuItemIdentifier
             NEW_PYTHON_SCRIPT = MenuItemIdentifier(
@@ -695,6 +722,7 @@ class MainMenu:
         MINIMIZE = MenuItemIdentifier("Minimize", "Minimize")
         ZOOM = MenuItemIdentifier("Zoom", "Zoom")
 
+        @_nonmember
         class Arrangements(enum.Enum):
             _value_: MenuItemIdentifier
             SAVE_WINDOW_ARRANGEMENT = MenuItemIdentifier(
@@ -713,10 +741,12 @@ class MainMenu:
 
         EDIT_WINDOW_TITLE = MenuItemIdentifier("Edit Window Title", "Edit Window Title")
 
+        @_nonmember
         class Tab(enum.Enum):
             _value_: MenuItemIdentifier
             EDIT_TAB_TITLE = MenuItemIdentifier("Edit Tab Title", "Edit Tab Title")
 
+            @_nonmember
             class SelectTab(enum.Enum):
                 _value_: MenuItemIdentifier
                 SELECT_NEXT_TAB = MenuItemIdentifier(
@@ -732,6 +762,7 @@ class MainMenu:
                     "Select Previous Tab Group", "Select Previous Tab Group"
                 )
 
+            @_nonmember
             class MoveTab(enum.Enum):
                 _value_: MenuItemIdentifier
                 MOVE_TAB_TO_NEW_WINDOW = MenuItemIdentifier(
@@ -747,9 +778,11 @@ class MainMenu:
                 "Remove Tab from Group", "Remove Tab from Group"
             )
 
+        @_nonmember
         class SplitPane(enum.Enum):
             _value_: MenuItemIdentifier
 
+            @_nonmember
             class SelectSplitPane(enum.Enum):
                 _value_: MenuItemIdentifier
                 SELECT_PANE_ABOVE = MenuItemIdentifier(
@@ -777,6 +810,7 @@ class MainMenu:
                     "Next Peer", "Select Split Pane.Next Peer"
                 )
 
+            @_nonmember
             class ResizeSplitPane(enum.Enum):
                 _value_: MenuItemIdentifier
                 MOVE_DIVIDER_UP = MenuItemIdentifier(
@@ -792,6 +826,7 @@ class MainMenu:
                     "Move Divider Right", "Resize Split Pane.Move Divider Right"
                 )
 
+            @_nonmember
             class FloatingPanes(enum.Enum):
                 _value_: MenuItemIdentifier
                 BRING_TO_FRONT = MenuItemIdentifier(
@@ -824,6 +859,7 @@ class MainMenu:
                 "Lock Split Pane Width", "Lock Split Pane Width"
             )
 
+        @_nonmember
         class WindowStyle(enum.Enum):
             _value_: MenuItemIdentifier
             NORMAL = MenuItemIdentifier("Normal", "Window Style.Normal")
@@ -868,6 +904,7 @@ class MainMenu:
             "Notify on Status Change", "Notify on Status Change"
         )
 
+        @_nonmember
         class ArrangeWindows(enum.Enum):
             _value_: MenuItemIdentifier
             MERGE_ALL_WINDOWS = MenuItemIdentifier(
@@ -880,6 +917,7 @@ class MainMenu:
                 "Arrange Split Panes Evenly", "Arrange Split Panes Evenly"
             )
 
+        @_nonmember
         class ResizeWindow(enum.Enum):
             _value_: MenuItemIdentifier
             DECREASE_HEIGHT = MenuItemIdentifier(
