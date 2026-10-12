@@ -598,10 +598,11 @@ async def get_env_var(var_name):
     user_shell = os.environ.get('SHELL', '/bin/bash')
 
     # Non-POSIX shells may leave POSIX shell path in the $SHELL; perform an additional check.
+    # Keep a full path to the shell, which may not be on the framer's PATH.
     if os.environ.get('XONSHRC', ''):
-        user_shell = 'xonsh'
+        if os.path.basename(user_shell) != 'xonsh':
+            user_shell = 'xonsh'
     elif os.environ.get('NU_VENDOR_AUTOLOAD_DIR', ''):
-        # Keep a full path to nu, which may not be on the framer's PATH.
         if os.path.basename(user_shell) != 'nu':
             user_shell = 'nu'
 
