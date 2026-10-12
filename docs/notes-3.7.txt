@@ -538,6 +538,9 @@ Improvements:
 - Right-clicking a tab now offers Rename Tab,
   which opens the same dialog as double-clicking
   the tab.
+- The Python API now has type annotations, so
+  editors and type checkers such as mypy can
+  check scripts that use it.
 
 Bug Fixes:
 - On macOS 26, hiding a hotkey window when no
@@ -1274,3 +1277,9 @@ Bug Fixes:
   “Centered, No Title Bar” style returning to
   their original size each time they were shown
   after you resized them.
+- Fixed several Python API bugs. Subscribing to
+  profile change notifications always failed,
+  Color.hex failed for colors read from a
+  profile, and items in nested submenus of
+  MainMenu could not be reached on Python 3.12
+  and earlier.
