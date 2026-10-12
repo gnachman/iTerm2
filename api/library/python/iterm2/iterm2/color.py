@@ -1,5 +1,7 @@
 """Shared classes for representing color and related concepts."""
+from __future__ import annotations
 
+gAppKitAvailable: bool
 try:
     import AppKit
     gAppKitAvailable = True
@@ -8,7 +10,8 @@ except:
 import base64
 import enum
 import json
-import typing
+from collections.abc import Mapping
+from typing import Any
 
 
 class MissingDependency(ImportError):
@@ -35,11 +38,11 @@ class Color:
     # pylint: disable=too-many-arguments
     def __init__(
             self,
-            r: int = 0,
-            g: int = 0,
-            b: int = 0,
-            a: int = 255,
-            color_space: ColorSpace = ColorSpace.SRGB):
+            r: float = 0,
+            g: float = 0,
+            b: float = 0,
+            a: float = 255,
+            color_space: ColorSpace = ColorSpace.SRGB) -> None:
         """Create a color."""
         self.__red = r
         self.__green = g
@@ -48,7 +51,7 @@ class Color:
         self.__color_space = color_space
 
     @staticmethod
-    def from_trigger(s: str) -> typing.Optional['Color']:
+    def from_trigger(s: str) -> Color | None:
         """Decodes a color as encoded in a trigger."""
         color = Color.from_hex(s)
         if color is not None:
@@ -56,7 +59,7 @@ class Color:
         return Color.from_cocoa(s)
 
     @staticmethod
-    def from_hex(s: str) -> typing.Optional['Color']:
+    def from_hex(s: str) -> Color | None:
         """Decodes a hex-encoded color like #aabbcc"""
         if s.startswith("p3#"):
             temp = Color.from_hex(s[2:])
@@ -79,7 +82,7 @@ class Color:
         return Color(red, green, blue, 255)
 
     @staticmethod
-    def from_cocoa(b: str) -> typing.Optional['Color']:
+    def from_cocoa(b: str) -> Color | None:
         """Decodes a NSKeyedArchiver-encoded color."""
         if not gAppKitAvailable:
             raise MissingDependency("Colors cannot be parsed unless the pyobjc package is installed")
@@ -92,7 +95,8 @@ class Color:
              round(nscolor.alphaComponent() * 255))
 
     @staticmethod
-    def from_legacy_trigger(s: str) -> typing.Tuple[typing.Optional['Color'], typing.Optional['Color']]:
+    def from_legacy_trigger(
+            s: str) -> tuple[Color | None, Color | None]:
         i = int(s)
         if not gAppKitAvailable:
             raise MissingDependency("Colors cannot be parsed unless the pyobjc package is installed")
@@ -167,42 +171,42 @@ class Color:
             self.color_space)
 
     @property
-    def red(self) -> int:
+    def red(self) -> float:
         """The color's red component."""
         return self.__red
 
     @red.setter
-    def red(self, value: int):
+    def red(self, value: float) -> None:
         """Sets the color's red component."""
         self.__red = value
 
     @property
-    def green(self) -> int:
+    def green(self) -> float:
         """The color's green component."""
         return self.__green
 
     @green.setter
-    def green(self, value: int):
+    def green(self, value: float) -> None:
         """Sets the color's green component."""
         self.__green = value
 
     @property
-    def blue(self) -> int:
+    def blue(self) -> float:
         """The color's blue component."""
         return self.__blue
 
     @blue.setter
-    def blue(self, value: int):
+    def blue(self, value: float) -> None:
         """Sets the color's blue component."""
         self.__blue = value
 
     @property
-    def alpha(self) -> int:
+    def alpha(self) -> float:
         """The color's alpha component."""
         return self.__alpha
 
     @alpha.setter
-    def alpha(self, value: int):
+    def alpha(self, value: float) -> None:
         """Sets the color's alpha component."""
         self.__alpha = value
 
@@ -212,11 +216,11 @@ class Color:
         return self.__color_space
 
     @color_space.setter
-    def color_space(self, value: ColorSpace):
+    def color_space(self, value: ColorSpace) -> None:
         """Sets the color's scolor space."""
         self.__color_space = value
 
-    def get_dict(self):
+    def get_dict(self) -> dict[str, Any]:
         """Returns a dictionary representation of this color.
 
         Suitable for conversion to a JSON object to pass to iTerm2."""
@@ -228,7 +232,7 @@ class Color:
             "Color Space": self.color_space.value
             }
 
-    def from_dict(self, input_dict):
+    def from_dict(self, input_dict: Mapping[str, Any]) -> None:
         """Updates the color from the dictionary's contents."""
         self.red = float(input_dict["Red Component"]) * 255
         self.green = float(input_dict["Green Component"]) * 255
@@ -244,16 +248,20 @@ class Color:
             self.color_space = ColorSpace.CALIBRATED
 
     @property
-    def json(self):
+    def json(self) -> str:
         """Returns a JSON representation of this color."""
         return json.dumps(self.get_dict())
 
     @property
-    def hex(self):
+    def hex(self) -> str:
         """Returns a #rrggbb representation of this color. Assumes srgb colorspace."""
-        two_digit_hex = '02x'
-        code = "#" + format(self.red, two_digit_hex) + format(self.green, two_digit_hex) + format(self.blue, two_digit_hex)
+        def two_digit_hex(component: float) -> str:
+            # Components may be non-integral (e.g., from from_dict), and the
+            # 'x' format only accepts ints, so round and clamp to 0-255.
+            return format(min(255, max(0, round(component))), '02x')
+
+        code = ("#" + two_digit_hex(self.red) + two_digit_hex(self.green) +
+                two_digit_hex(self.blue))
         if self.color_space == ColorSpace.P3:
-            two_digit_hex = '02x'
             return "p3" + code
         return code

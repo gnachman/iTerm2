@@ -1,8 +1,25 @@
 """Defines interfaces for accessing menu items."""
+
+from __future__ import annotations
+
 import enum
-import iterm2.api_pb2
-import iterm2.rpc
-import typing
+import sys
+from typing import TYPE_CHECKING
+
+from . import api_pb2
+from .rpc import async_menu_item
+
+if TYPE_CHECKING:
+    from .connection import Connection
+
+if sys.version_info >= (3, 11):
+    from enum import nonmember as _nonmember
+else:
+    # Enum doesn't make descriptors into members, and a staticmethod returns
+    # the class it wraps when accessed.
+    def _nonmember(cls):
+        return staticmethod(cls)
+
 
 class MenuItemException(Exception):
     """A problem was encountered while selecting a menu item."""
@@ -10,50 +27,53 @@ class MenuItemException(Exception):
 
 class MenuItemState:
     """Describes the current state of a menu item."""
-    def __init__(self, checked: bool, enabled: bool):
+
+    def __init__(self, checked: bool, enabled: bool) -> None:
         self.__checked = checked
         self.__enabled = enabled
 
     @property
-    def checked(self):
+    def checked(self) -> bool:
         """Is the menu item checked? A `bool` property."""
         return self.__checked
 
     @property
-    def enabled(self):
+    def enabled(self) -> bool:
         """
         Is the menu item enabled (i.e., it can be selected)? A `bool`
         property.
         """
         return self.__enabled
 
+
 class MenuItemIdentifier:
-    def __init__(self, title, identifier):
+    def __init__(self, title: str, identifier: str | None) -> None:
         self.__title = title
         self.__identifier = identifier
 
     def __repr__(self):
-        return f'[MenuItemIdentifier title={self.title} id={self.identifier}]'
+        return f"[MenuItemIdentifier title={self.title} id={self.identifier}]"
 
     @property
     def title(self) -> str:
         return self.__title
 
     @property
-    def identifier(self) -> typing.Optional[str]:
+    def identifier(self) -> str | None:
         return self.__identifier
 
-    def _encode(self):
+    def _encode(self) -> str:
         # Encodes to a key binding parameter.
         if self.__identifier is None:
             return self.__title
         return self.__title + "\n" + self.__identifier
 
+
 class MainMenu:
     """Represents the app's main menu."""
 
     @staticmethod
-    async def async_select_menu_item(connection, identifier: str):
+    async def async_select_menu_item(connection: Connection, identifier: str) -> None:
         """Selects a menu item.
 
         :param identifier: A string. See list of identifiers in :doc:`menu_ids`
@@ -62,212 +82,428 @@ class MainMenu:
 
         .. seealso:: Example ":ref:`zoom_on_screen_example`"
         """
-        response = await iterm2.rpc.async_menu_item(
-            connection, identifier, False)
+        response = await async_menu_item(connection, identifier, False)
         status = response.menu_item_response.status
         # pylint: disable=no-member
-        if status != iterm2.api_pb2.MenuItemResponse.Status.Value("OK"):
-            raise MenuItemException(
-                iterm2.api_pb2.MenuItemResponse.Status.Name(status))
+        if status != api_pb2.MenuItemResponse.Status.Value("OK"):
+            raise MenuItemException(api_pb2.MenuItemResponse.Status.Name(status))
 
     @staticmethod
     async def async_get_menu_item_state(
-            connection, identifier: str) -> MenuItemState:
+        connection: Connection, identifier: str
+    ) -> MenuItemState:
         """Queries a menu item for its state.
 
         :param identifier: A string. See list of identifiers in :doc:`menu_ids`
 
         :throws MenuItemException: if something goes wrong.
         """
-        response = await iterm2.rpc.async_menu_item(
-            connection, identifier, True)
+        response = await async_menu_item(connection, identifier, True)
         status = response.menu_item_response.status
         # pylint: disable=no-member
-        if status != iterm2.api_pb2.MenuItemResponse.Status.Value("OK"):
-            raise MenuItemException(
-                iterm2.api_pb2.MenuItemResponse.Status.Name(status))
-        return iterm2.MenuItemState(
-            response.menu_item_response.checked,
-            response.menu_item_response.enabled)
+        if status != api_pb2.MenuItemResponse.Status.Value("OK"):
+            raise MenuItemException(api_pb2.MenuItemResponse.Status.Name(status))
+        return MenuItemState(
+            response.menu_item_response.checked, response.menu_item_response.enabled
+        )
 
     class iTerm2(enum.Enum):
+        _value_: MenuItemIdentifier
         ABOUT_ITERM2 = MenuItemIdentifier("About iTerm2", "About iTerm2")
-        SHOW_TIP_OF_THE_DAY = MenuItemIdentifier("Show Tip of the Day", "Show Tip of the Day")
-        COMPANION_DEVICE_SETTINGS = MenuItemIdentifier("Companion Device Settings", "Pair Companion Device")
-        SUPPRESSED_ALERTS = MenuItemIdentifier("Suppressed Alerts…", "Suppressed Alerts")
-        CHECK_FOR_UPDATES = MenuItemIdentifier("Check for Updates…", "Check For Updates…")
-        TOGGLE_DEBUG_LOGGING = MenuItemIdentifier("Toggle Debug Logging", "Toggle Debug Logging")
-        SAVE_RETROSPECTIVE_DEBUG_LOGS = MenuItemIdentifier("Save Retrospective Debug Logs", "Save Retrospective Debug Logs")
-        COPY_PERFORMANCE_STATS = MenuItemIdentifier("Copy Performance Stats", "Copy Performance Stats")
-        CAPTURE_GPU_FRAME = MenuItemIdentifier("Capture GPU Frame", "Capture Metal Frame")
-        CHECK_SETTINGS_CONTROL_TRUNCATION = MenuItemIdentifier("Check Settings Control Truncation", "Check Settings Control Truncation")
+        SHOW_TIP_OF_THE_DAY = MenuItemIdentifier(
+            "Show Tip of the Day", "Show Tip of the Day"
+        )
+        COMPANION_DEVICE_SETTINGS = MenuItemIdentifier(
+            "Companion Device Settings", "Pair Companion Device"
+        )
+        SUPPRESSED_ALERTS = MenuItemIdentifier(
+            "Suppressed Alerts…", "Suppressed Alerts"
+        )
+        CHECK_FOR_UPDATES = MenuItemIdentifier(
+            "Check for Updates…", "Check For Updates…"
+        )
+        TOGGLE_DEBUG_LOGGING = MenuItemIdentifier(
+            "Toggle Debug Logging", "Toggle Debug Logging"
+        )
+        SAVE_RETROSPECTIVE_DEBUG_LOGS = MenuItemIdentifier(
+            "Save Retrospective Debug Logs", "Save Retrospective Debug Logs"
+        )
+        COPY_PERFORMANCE_STATS = MenuItemIdentifier(
+            "Copy Performance Stats", "Copy Performance Stats"
+        )
+        CAPTURE_GPU_FRAME = MenuItemIdentifier(
+            "Capture GPU Frame", "Capture Metal Frame"
+        )
+        CHECK_SETTINGS_CONTROL_TRUNCATION = MenuItemIdentifier(
+            "Check Settings Control Truncation", "Check Settings Control Truncation"
+        )
         PREFERENCES = MenuItemIdentifier("Preferences…", "Preferences...")
         HIDE_ITERM2 = MenuItemIdentifier("Hide iTerm2", "Hide iTerm2")
         HIDE_OTHERS = MenuItemIdentifier("Hide Others", "Hide Others")
         SHOW_ALL = MenuItemIdentifier("Show All", "Show All")
-        SECURE_KEYBOARD_ENTRY = MenuItemIdentifier("Secure Keyboard Entry", "Secure Keyboard Entry")
-        MAKE_ITERM2_DEFAULT_TERM = MenuItemIdentifier("Make iTerm2 Default Term", "Make iTerm2 Default Term")
-        MAKE_TERMINAL_DEFAULT_TERM = MenuItemIdentifier("Make Terminal Default Term", "Make Terminal Default Term")
-        INSTALL_SHELL_INTEGRATION = MenuItemIdentifier("Install Shell Integration", "Install Shell Integration")
-        INSTALL_CLAUDE_CODE_INTEGRATION = MenuItemIdentifier("Install Claude Code Integration", "Install Claude Code Integration")
-        REINSTALL_CLAUDE_CODE_INTEGRATION = MenuItemIdentifier("Reinstall Claude Code Integration", "Reinstall Claude Code Integration")
-        UNINSTALL_CLAUDE_CODE_INTEGRATION = MenuItemIdentifier("Uninstall Claude Code Integration", "Uninstall Claude Code Integration")
-        REMOVE_RECENT_PROFILES_FROM_DOCK_MENU = MenuItemIdentifier("Remove Recent Profiles from Dock Menu", "Remove Recent Profiles from Dock Menu")
+        SECURE_KEYBOARD_ENTRY = MenuItemIdentifier(
+            "Secure Keyboard Entry", "Secure Keyboard Entry"
+        )
+        MAKE_ITERM2_DEFAULT_TERM = MenuItemIdentifier(
+            "Make iTerm2 Default Term", "Make iTerm2 Default Term"
+        )
+        MAKE_TERMINAL_DEFAULT_TERM = MenuItemIdentifier(
+            "Make Terminal Default Term", "Make Terminal Default Term"
+        )
+        INSTALL_SHELL_INTEGRATION = MenuItemIdentifier(
+            "Install Shell Integration", "Install Shell Integration"
+        )
+        INSTALL_CLAUDE_CODE_INTEGRATION = MenuItemIdentifier(
+            "Install Claude Code Integration", "Install Claude Code Integration"
+        )
+        REINSTALL_CLAUDE_CODE_INTEGRATION = MenuItemIdentifier(
+            "Reinstall Claude Code Integration", "Reinstall Claude Code Integration"
+        )
+        UNINSTALL_CLAUDE_CODE_INTEGRATION = MenuItemIdentifier(
+            "Uninstall Claude Code Integration", "Uninstall Claude Code Integration"
+        )
+        REMOVE_RECENT_PROFILES_FROM_DOCK_MENU = MenuItemIdentifier(
+            "Remove Recent Profiles from Dock Menu",
+            "Remove Recent Profiles from Dock Menu",
+        )
         QUIT_ITERM2 = MenuItemIdentifier("Quit iTerm2", "Quit iTerm2")
 
     class Shell(enum.Enum):
+        _value_: MenuItemIdentifier
         NEW_WINDOW = MenuItemIdentifier("New Window", "New Window")
-        NEW_WINDOW_WITH_CURRENT_PROFILE = MenuItemIdentifier("New Window with Current Profile", "New Window with Current Profile")
+        NEW_WINDOW_WITH_CURRENT_PROFILE = MenuItemIdentifier(
+            "New Window with Current Profile", "New Window with Current Profile"
+        )
         NEW_TAB = MenuItemIdentifier("New Tab", "New Tab")
-        NEW_TAB_NEXT_TO_CURRENT_TAB = MenuItemIdentifier("New Tab Next to Current Tab", "New Tab Next to Current Tab")
-        NEW_TAB_WITH_CURRENT_PROFILE = MenuItemIdentifier("New Tab with Current Profile", "New Tab with Current Profile")
+        NEW_TAB_NEXT_TO_CURRENT_TAB = MenuItemIdentifier(
+            "New Tab Next to Current Tab", "New Tab Next to Current Tab"
+        )
+        NEW_TAB_WITH_CURRENT_PROFILE = MenuItemIdentifier(
+            "New Tab with Current Profile", "New Tab with Current Profile"
+        )
+        NEW_FLOATING_PANE_WITH_CURRENT_PROFILE = MenuItemIdentifier(
+            "New Floating Pane with Current Profile",
+            "New Floating Pane with Current Profile",
+        )
         DUPLICATE_WINDOW = MenuItemIdentifier("Duplicate Window", "Duplicate Window")
         DUPLICATE_TAB = MenuItemIdentifier("Duplicate Tab", "Duplicate Tab")
-        SPLIT_HORIZONTALLY_WITH_CURRENT_PROFILE = MenuItemIdentifier("Split Horizontally with Current Profile", "Split Horizontally with Current Profile")
-        SPLIT_VERTICALLY_WITH_CURRENT_PROFILE = MenuItemIdentifier("Split Vertically with Current Profile", "Split Vertically with Current Profile")
-        NEW_FLOATING_PANE_WITH_CURRENT_PROFILE = MenuItemIdentifier("New Floating Pane with Current Profile", "New Floating Pane with Current Profile")
-        SPLIT_HORIZONTALLY = MenuItemIdentifier("Split Horizontally…", "Split Horizontally…")
+        SPLIT_HORIZONTALLY_WITH_CURRENT_PROFILE = MenuItemIdentifier(
+            "Split Horizontally with Current Profile",
+            "Split Horizontally with Current Profile",
+        )
+        SPLIT_VERTICALLY_WITH_CURRENT_PROFILE = MenuItemIdentifier(
+            "Split Vertically with Current Profile",
+            "Split Vertically with Current Profile",
+        )
+        SPLIT_HORIZONTALLY = MenuItemIdentifier(
+            "Split Horizontally…", "Split Horizontally…"
+        )
         SPLIT_VERTICALLY = MenuItemIdentifier("Split Vertically…", "Split Vertically…")
         SAVE_CONTENTS = MenuItemIdentifier("Save Contents…", "Log.SaveContents")
-        SAVE_SELECTED_TEXT = MenuItemIdentifier("Save Selected Text…", "Save Selected Text…")
+        SAVE_SELECTED_TEXT = MenuItemIdentifier(
+            "Save Selected Text…", "Save Selected Text…"
+        )
         CLOSE = MenuItemIdentifier("Close", "Close")
-        CLOSE_TERMINAL_WINDOW = MenuItemIdentifier("Close Terminal Window", "Close Terminal Window")
-        CLOSE_ALL_PANES_IN_TAB = MenuItemIdentifier("Close All Panes in Tab", "Close All Panes in Tab")
+        CLOSE_TERMINAL_WINDOW = MenuItemIdentifier(
+            "Close Terminal Window", "Close Terminal Window"
+        )
+        CLOSE_ALL_PANES_IN_TAB = MenuItemIdentifier(
+            "Close All Panes in Tab", "Close All Panes in Tab"
+        )
         UNDO_CLOSE = MenuItemIdentifier("Undo Close", "Undo Close")
 
+        @_nonmember
         class Archives(enum.Enum):
-            SAVE_ARCHIVE_OF_CURRENT_SESSION = MenuItemIdentifier("Save Archive of Current Session…", "Save Archive of Current Session")
+            _value_: MenuItemIdentifier
+            SAVE_ARCHIVE_OF_CURRENT_SESSION = MenuItemIdentifier(
+                "Save Archive of Current Session…", "Save Archive of Current Session"
+            )
             RESTORE_ARCHIVE = MenuItemIdentifier("Restore Archive…", "Restore Archive")
 
-
+        @_nonmember
         class Workgroups(enum.Enum):
+            _value_: MenuItemIdentifier
             EXIT_WORKGROUP = MenuItemIdentifier("Exit Workgroup", "Exit Workgroup")
 
-
+        @_nonmember
         class BroadcastInput(enum.Enum):
-            SEND_INPUT_TO_CURRENT_SESSION_ONLY = MenuItemIdentifier("Send Input to Current Session Only", "Broadcast Input.Send Input to Current Session Only")
-            BROADCAST_INPUT_TO_ALL_PANES_IN_ALL_TABS = MenuItemIdentifier("Broadcast Input to All Panes in All Tabs", "Broadcast Input.Broadcast Input to All Panes in All Tabs")
-            BROADCAST_INPUT_TO_ALL_PANES_IN_CURRENT_TAB = MenuItemIdentifier("Broadcast Input to All Panes in Current Tab", "Broadcast Input.Broadcast Input to All Panes in Current Tab")
-            TOGGLE_BROADCAST_INPUT_TO_CURRENT_SESSION = MenuItemIdentifier("Toggle Broadcast Input to Current Session", "Broadcast Input.Toggle Broadcast Input to Current Session")
-            SHOW_BACKGROUND_PATTERN_INDICATOR = MenuItemIdentifier("Show Background Pattern Indicator", "Broadcast Input.Show Background Pattern Indicator")
-            CURRENT_SESSION_IS_BROADCAST_SOURCE = MenuItemIdentifier("Current Session is Broadcast Source", "Broadcast Input.Current Session is Broadcast Source")
+            _value_: MenuItemIdentifier
+            SEND_INPUT_TO_CURRENT_SESSION_ONLY = MenuItemIdentifier(
+                "Send Input to Current Session Only",
+                "Broadcast Input.Send Input to Current Session Only",
+            )
+            BROADCAST_INPUT_TO_ALL_PANES_IN_ALL_TABS = MenuItemIdentifier(
+                "Broadcast Input to All Panes in All Tabs",
+                "Broadcast Input.Broadcast Input to All Panes in All Tabs",
+            )
+            BROADCAST_INPUT_TO_ALL_PANES_IN_CURRENT_TAB = MenuItemIdentifier(
+                "Broadcast Input to All Panes in Current Tab",
+                "Broadcast Input.Broadcast Input to All Panes in Current Tab",
+            )
+            TOGGLE_BROADCAST_INPUT_TO_CURRENT_SESSION = MenuItemIdentifier(
+                "Toggle Broadcast Input to Current Session",
+                "Broadcast Input.Toggle Broadcast Input to Current Session",
+            )
+            SHOW_BACKGROUND_PATTERN_INDICATOR = MenuItemIdentifier(
+                "Show Background Pattern Indicator",
+                "Broadcast Input.Show Background Pattern Indicator",
+            )
+            CURRENT_SESSION_IS_BROADCAST_SOURCE = MenuItemIdentifier(
+                "Current Session is Broadcast Source",
+                "Broadcast Input.Current Session is Broadcast Source",
+            )
 
-        TOGGLE_BUFFER_INPUT = MenuItemIdentifier("Toggle Buffer Input", "Toggle Buffer Input")
+        TOGGLE_BUFFER_INPUT = MenuItemIdentifier(
+            "Toggle Buffer Input", "Toggle Buffer Input"
+        )
 
+        @_nonmember
         class tmux(enum.Enum):
+            _value_: MenuItemIdentifier
             DETACH = MenuItemIdentifier("Detach", "tmux.Detach")
             FORCE_DETACH = MenuItemIdentifier("Force Detach", "tmux.Force Detach")
-            NEW_TMUX_WINDOW = MenuItemIdentifier("New Tmux Window", "tmux.New Tmux Window")
+            NEW_TMUX_WINDOW = MenuItemIdentifier(
+                "New Tmux Window", "tmux.New Tmux Window"
+            )
             NEW_TMUX_TAB = MenuItemIdentifier("New Tmux Tab", "tmux.New Tmux Tab")
             PAUSE_PANE = MenuItemIdentifier("Pause Pane", "trmux.Pause Pane")
             DASHBOARD = MenuItemIdentifier("Dashboard", "tmux.Dashboard")
 
-
+        @_nonmember
         class ssh(enum.Enum):
+            _value_: MenuItemIdentifier
             DISCONNECT = MenuItemIdentifier("Disconnect", "ssh.Disconnect")
             DOWNLOAD_FILES = MenuItemIdentifier("Download Files…", "ssh.Download Files")
-            REMOTE_HOST_CAN_CONTROL_ITERM2 = MenuItemIdentifier("Remote host can control iTerm2", "ssh.Remote host can control iTerm2")
+            REMOTE_HOST_CAN_CONTROL_ITERM2 = MenuItemIdentifier(
+                "Remote host can control iTerm2", "ssh.Remote host can control iTerm2"
+            )
 
         PAGE_SETUP = MenuItemIdentifier("Page Setup…", "Page Setup...")
 
+        @_nonmember
         class Print(enum.Enum):
+            _value_: MenuItemIdentifier
             SCREEN = MenuItemIdentifier("Screen", "Print.Screen")
             SELECTION = MenuItemIdentifier("Selection", "Print.Selection")
             BUFFER = MenuItemIdentifier("Buffer", "Print.Buffer")
 
-
     class Edit(enum.Enum):
+        _value_: MenuItemIdentifier
         UNDO = MenuItemIdentifier("Undo", "Undo")
         REDO = MenuItemIdentifier("Redo", "Redo")
         CUT = MenuItemIdentifier("Cut", "Cut")
         COPY = MenuItemIdentifier("Copy", "Copy")
         COPY_WITH_STYLES = MenuItemIdentifier("Copy with Styles", "Copy with Styles")
-        COPY_WITH_CONTROL_SEQUENCES = MenuItemIdentifier("Copy with Control Sequences", "Copy with Control Sequences")
+        COPY_WITH_CONTROL_SEQUENCES = MenuItemIdentifier(
+            "Copy with Control Sequences", "Copy with Control Sequences"
+        )
         COPY_MODE = MenuItemIdentifier("Copy Mode", "Copy Mode")
         PASTE = MenuItemIdentifier("Paste", "Paste")
 
+        @_nonmember
         class PasteSpecial(enum.Enum):
-            ADVANCED_PASTE = MenuItemIdentifier("Advanced Paste…", "Paste Special.Advanced Paste…")
-            PASTE_SELECTION = MenuItemIdentifier("Paste Selection", "Paste Special.Paste Selection")
-            PASTE_FILE_BASE64ENCODED = MenuItemIdentifier("Paste File Base64-Encoded", "Paste Special.Paste File Base64-Encoded")
-            PASTE_SLOWLY = MenuItemIdentifier("Paste Slowly", "Paste Special.Paste Slowly")
-            PASTE_FASTER = MenuItemIdentifier("Paste Faster", "Paste Special.Paste Faster")
-            PASTE_SLOWLY_FASTER = MenuItemIdentifier("Paste Slowly Faster", "Paste Special.Paste Slowly Faster")
-            PASTE_SLOWER = MenuItemIdentifier("Paste Slower", "Paste Special.Paste Slower")
-            PASTE_SLOWLY_SLOWER = MenuItemIdentifier("Paste Slowly Slower", "Paste Special.Paste Slowly Slower")
-            WARN_BEFORE_MULTILINE_PASTE = MenuItemIdentifier("Warn Before Multi-Line Paste", "Paste Special.Warn Before Multi-Line Paste")
-            LIMIT_MULTILINE_PASTE_WARNING_TO_SHELL_PROMPT = MenuItemIdentifier("Limit Multi-Line Paste Warning to Shell Prompt", "Paste Special.Limit Multi-Line Paste Warning to Shell Prompt")
-            PROMPT_TO_CONVERT_TABS_TO_SPACES_WHEN_PASTING = MenuItemIdentifier("Prompt to Convert Tabs to Spaces when Pasting", "Paste Special.Prompt to Convert Tabs to Spaces when Pasting")
-            WARN_BEFORE_PASTING_ONE_LINE_ENDING_IN_A_NEWLINE_AT_SHELL_PROMPT = MenuItemIdentifier("Warn Before Pasting One Line Ending in a Newline at Shell Prompt", "Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt")
+            _value_: MenuItemIdentifier
+            ADVANCED_PASTE = MenuItemIdentifier(
+                "Advanced Paste…", "Paste Special.Advanced Paste…"
+            )
+            PASTE_SELECTION = MenuItemIdentifier(
+                "Paste Selection", "Paste Special.Paste Selection"
+            )
+            PASTE_FILE_BASE64ENCODED = MenuItemIdentifier(
+                "Paste File Base64-Encoded", "Paste Special.Paste File Base64-Encoded"
+            )
+            PASTE_SLOWLY = MenuItemIdentifier(
+                "Paste Slowly", "Paste Special.Paste Slowly"
+            )
+            PASTE_FASTER = MenuItemIdentifier(
+                "Paste Faster", "Paste Special.Paste Faster"
+            )
+            PASTE_SLOWLY_FASTER = MenuItemIdentifier(
+                "Paste Slowly Faster", "Paste Special.Paste Slowly Faster"
+            )
+            PASTE_SLOWER = MenuItemIdentifier(
+                "Paste Slower", "Paste Special.Paste Slower"
+            )
+            PASTE_SLOWLY_SLOWER = MenuItemIdentifier(
+                "Paste Slowly Slower", "Paste Special.Paste Slowly Slower"
+            )
+            WARN_BEFORE_MULTILINE_PASTE = MenuItemIdentifier(
+                "Warn Before Multi-Line Paste",
+                "Paste Special.Warn Before Multi-Line Paste",
+            )
+            LIMIT_MULTILINE_PASTE_WARNING_TO_SHELL_PROMPT = MenuItemIdentifier(
+                "Limit Multi-Line Paste Warning to Shell Prompt",
+                "Paste Special.Limit Multi-Line Paste Warning to Shell Prompt",
+            )
+            PROMPT_TO_CONVERT_TABS_TO_SPACES_WHEN_PASTING = MenuItemIdentifier(
+                "Prompt to Convert Tabs to Spaces when Pasting",
+                "Paste Special.Prompt to Convert Tabs to Spaces when Pasting",
+            )
+            WARN_BEFORE_PASTING_ONE_LINE_ENDING_IN_A_NEWLINE_AT_SHELL_PROMPT = MenuItemIdentifier(
+                "Warn Before Pasting One Line Ending in a Newline at Shell Prompt",
+                "Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt",
+            )
 
-
+        @_nonmember
         class ReplaceSelection(enum.Enum):
-            RENDER_SELECTION_NATIVELY = MenuItemIdentifier("Render Selection Natively", "Render Selection Natively")
-            REPLACE_WITH_PRETTYPRINTED_JSON = MenuItemIdentifier("Replace with Pretty-Printed JSON", "Replace Selection.Replace with Pretty-Printed JSON")
-            REPLACE_WITH_BASE_64ENCODED_VALUE = MenuItemIdentifier("Replace with Base 64-Encoded Value", "Replace Selection.Replace with Base 64-Encoded Value")
-            REPLACE_WITH_BASE_64DECODED_VALUE = MenuItemIdentifier("Replace with Base 64-Decoded Value", "Replace Selection.Replace with Base 64-Decoded Value")
+            _value_: MenuItemIdentifier
+            RENDER_SELECTION_NATIVELY = MenuItemIdentifier(
+                "Render Selection Natively", "Render Selection Natively"
+            )
+            REPLACE_WITH_PRETTYPRINTED_JSON = MenuItemIdentifier(
+                "Replace with Pretty-Printed JSON",
+                "Replace Selection.Replace with Pretty-Printed JSON",
+            )
+            REPLACE_WITH_BASE_64ENCODED_VALUE = MenuItemIdentifier(
+                "Replace with Base 64-Encoded Value",
+                "Replace Selection.Replace with Base 64-Encoded Value",
+            )
+            REPLACE_WITH_BASE_64DECODED_VALUE = MenuItemIdentifier(
+                "Replace with Base 64-Decoded Value",
+                "Replace Selection.Replace with Base 64-Decoded Value",
+            )
 
-        ENGAGE_ARTIFICIAL_INTELLIGENCE = MenuItemIdentifier("Engage Artificial Intelligence", "Engage Artificial Intelligence")
-        EXPLAIN_OUTPUT_WITH_AI = MenuItemIdentifier("Explain Output with AI", "Explain Output with AI")
+        ENGAGE_ARTIFICIAL_INTELLIGENCE = MenuItemIdentifier(
+            "Engage Artificial Intelligence", "Engage Artificial Intelligence"
+        )
+        EXPLAIN_OUTPUT_WITH_AI = MenuItemIdentifier(
+            "Explain Output with AI", "Explain Output with AI"
+        )
         OPEN_SELECTION = MenuItemIdentifier("Open Selection", "Open Selection")
-        JUMP_TO_SELECTION = MenuItemIdentifier("Jump to Selection", "Find.Jump to Selection")
+        JUMP_TO_SELECTION = MenuItemIdentifier(
+            "Jump to Selection", "Find.Jump to Selection"
+        )
         SELECT_ALL = MenuItemIdentifier("Select All", "Select All")
-        SELECTION_RESPECTS_SOFT_BOUNDARIES = MenuItemIdentifier("Selection Respects Soft Boundaries", "Selection Respects Soft Boundaries")
-        SELECT_OUTPUT_OF_LAST_COMMAND = MenuItemIdentifier("Select Output of Last Command", "Select Output of Last Command")
-        SELECT_CURRENT_COMMAND = MenuItemIdentifier("Select Current Command", "Select Current Command")
+        SELECTION_RESPECTS_SOFT_BOUNDARIES = MenuItemIdentifier(
+            "Selection Respects Soft Boundaries", "Selection Respects Soft Boundaries"
+        )
+        SELECT_OUTPUT_OF_LAST_COMMAND = MenuItemIdentifier(
+            "Select Output of Last Command", "Select Output of Last Command"
+        )
+        SELECT_CURRENT_COMMAND = MenuItemIdentifier(
+            "Select Current Command", "Select Current Command"
+        )
 
+        @_nonmember
         class Find(enum.Enum):
+            _value_: MenuItemIdentifier
             FIND = MenuItemIdentifier("Find…", "Find.Find...")
             FIND_NEXT = MenuItemIdentifier("Find Next", "Find.Find Next")
             FIND_PREVIOUS = MenuItemIdentifier("Find Previous", "Find.Find Previous")
-            USE_SELECTION_FOR_FIND = MenuItemIdentifier("Use Selection for Find", "Find.Use Selection for Find")
+            USE_SELECTION_FOR_FIND = MenuItemIdentifier(
+                "Use Selection for Find", "Find.Use Selection for Find"
+            )
             CLEAR_FIND = MenuItemIdentifier("Clear Find", "Find.Clear Find")
-            FIND_GLOBALLY = MenuItemIdentifier("Find Globally…", "Find.Find Globally...")
-            SELECT_MATCHES = MenuItemIdentifier("Select Matches", "Find.ConvertMatchesToSelections")
+            FIND_GLOBALLY = MenuItemIdentifier(
+                "Find Globally…", "Find.Find Globally..."
+            )
+            SELECT_MATCHES = MenuItemIdentifier(
+                "Select Matches", "Find.ConvertMatchesToSelections"
+            )
             FIND_URLS = MenuItemIdentifier("Find URLs", "Find.Find URLs")
-            FIND_ALL_SMART_SELECTION_MATCHES = MenuItemIdentifier("Find All Smart Selection Matches", "Find.Find All Smart Selection  Matches")
-            PICK_RESULT_TO_OPEN = MenuItemIdentifier("Pick Result to Open", "Find.Pick Result To Open")
+            FIND_ALL_SMART_SELECTION_MATCHES = MenuItemIdentifier(
+                "Find All Smart Selection Matches",
+                "Find.Find All Smart Selection  Matches",
+            )
+            PICK_RESULT_TO_OPEN = MenuItemIdentifier(
+                "Pick Result to Open", "Find.Pick Result To Open"
+            )
             FILTER = MenuItemIdentifier("Filter", "Find.Filter")
 
-
+        @_nonmember
         class MarksandAnnotations(enum.Enum):
+            _value_: MenuItemIdentifier
             SET_MARK = MenuItemIdentifier("Set Mark", "Marks and Annotations.Set Mark")
-            JUMP_TO_MARK = MenuItemIdentifier("Jump to Mark", "Marks and Annotations.Jump to Mark")
-            NEXT_MARK = MenuItemIdentifier("Next Mark", "Marks and Annotations.Next Mark")
-            PREVIOUS_MARK = MenuItemIdentifier("Previous Mark", "Marks and Annotations.Previous Mark")
-            ADD_ANNOTATION_AT_CURSOR = MenuItemIdentifier("Add Annotation at Cursor", "Marks and Annotations.Add Annotation at Cursor")
-            ANNOTATE_SELECTION = MenuItemIdentifier("Annotate Selection", "Marks and Annotations.Annotate Selection")
-            NEXT_ANNOTATION = MenuItemIdentifier("Next Annotation", "Marks and Annotations.Next  Annotation")
-            PREVIOUS_ANNOTATION = MenuItemIdentifier("Previous Annotation", "Marks and Annotations.Previous  Annotation")
+            JUMP_TO_MARK = MenuItemIdentifier(
+                "Jump to Mark", "Marks and Annotations.Jump to Mark"
+            )
+            NEXT_MARK = MenuItemIdentifier(
+                "Next Mark", "Marks and Annotations.Next Mark"
+            )
+            PREVIOUS_MARK = MenuItemIdentifier(
+                "Previous Mark", "Marks and Annotations.Previous Mark"
+            )
+            ADD_ANNOTATION_AT_CURSOR = MenuItemIdentifier(
+                "Add Annotation at Cursor",
+                "Marks and Annotations.Add Annotation at Cursor",
+            )
+            ANNOTATE_SELECTION = MenuItemIdentifier(
+                "Annotate Selection", "Marks and Annotations.Annotate Selection"
+            )
+            NEXT_ANNOTATION = MenuItemIdentifier(
+                "Next Annotation", "Marks and Annotations.Next  Annotation"
+            )
+            PREVIOUS_ANNOTATION = MenuItemIdentifier(
+                "Previous Annotation", "Marks and Annotations.Previous  Annotation"
+            )
 
+            @_nonmember
             class Alerts(enum.Enum):
-                ALERT_ON_NEXT_MARK = MenuItemIdentifier("Alert on Next Mark", "Marks and Annotations.Alerts.Alert on Next Mark")
-                ALERT_ON_MARKS_IN_OFFSCREEN_SESSIONS = MenuItemIdentifier("Alert on Marks in Offscreen Sessions", "Marks and Alerts.Alerts.Alert on Marks in Offscreen Sessions")
-                SHOW_MODAL_ALERT_BOX = MenuItemIdentifier("Show Modal Alert Box", "Marks and Annotations.Alerts.Show Modal Alert Box")
-                POST_NOTIFICATION = MenuItemIdentifier("Post Notification", "Marks and Annotations.Alerts.Post Notification")
-                PLAY_A_SOUND = MenuItemIdentifier("Play a Sound", "Marks and Notes.Alerts.Play a Sound")
-
+                _value_: MenuItemIdentifier
+                ALERT_ON_NEXT_MARK = MenuItemIdentifier(
+                    "Alert on Next Mark",
+                    "Marks and Annotations.Alerts.Alert on Next Mark",
+                )
+                ALERT_ON_MARKS_IN_OFFSCREEN_SESSIONS = MenuItemIdentifier(
+                    "Alert on Marks in Offscreen Sessions",
+                    "Marks and Alerts.Alerts.Alert on Marks in Offscreen Sessions",
+                )
+                SHOW_MODAL_ALERT_BOX = MenuItemIdentifier(
+                    "Show Modal Alert Box",
+                    "Marks and Annotations.Alerts.Show Modal Alert Box",
+                )
+                POST_NOTIFICATION = MenuItemIdentifier(
+                    "Post Notification",
+                    "Marks and Annotations.Alerts.Post Notification",
+                )
+                PLAY_A_SOUND = MenuItemIdentifier(
+                    "Play a Sound", "Marks and Notes.Alerts.Play a Sound"
+                )
 
         SET_NAMED_MARK = MenuItemIdentifier("Set Named Mark", "Set Named Mark")
-        FOLD_SELECTED_LINES = MenuItemIdentifier("Fold Selected Lines", "Fold Selected Lines")
+        FOLD_SELECTED_LINES = MenuItemIdentifier(
+            "Fold Selected Lines", "Fold Selected Lines"
+        )
         FOLD_ALL = MenuItemIdentifier("Fold All", "Fold All Above Cursor")
         CLEAR_BUFFER = MenuItemIdentifier("Clear Buffer", "Clear Buffer")
-        CLEAR_INSTANT_REPLAY = MenuItemIdentifier("Clear Instant Replay", "Clear Instant Replay")
-        CLEAR_SCROLLBACK_BUFFER = MenuItemIdentifier("Clear Scrollback Buffer", "Clear Scrollback Buffer")
-        CLEAR_TO_START_OF_SELECTION = MenuItemIdentifier("Clear to Start of Selection", "Clear to Start of Selection")
-        CLEAR_TO_LAST_MARK = MenuItemIdentifier("Clear to Last Mark", "Clear to Last Mark")
+        CLEAR_INSTANT_REPLAY = MenuItemIdentifier(
+            "Clear Instant Replay", "Clear Instant Replay"
+        )
+        CLEAR_SCROLLBACK_BUFFER = MenuItemIdentifier(
+            "Clear Scrollback Buffer", "Clear Scrollback Buffer"
+        )
+        CLEAR_TO_START_OF_SELECTION = MenuItemIdentifier(
+            "Clear to Start of Selection", "Clear to Start of Selection"
+        )
+        CLEAR_TO_LAST_MARK = MenuItemIdentifier(
+            "Clear to Last Mark", "Clear to Last Mark"
+        )
 
     class View(enum.Enum):
-        SHOW_TABS_IN_FULLSCREEN = MenuItemIdentifier("Show Tabs in Fullscreen", "Show Tabs in Fullscreen")
-        TOGGLE_FULL_SCREEN = MenuItemIdentifier("Toggle Full Screen", "Toggle Full Screen")
+        _value_: MenuItemIdentifier
+        SHOW_TABS_IN_FULLSCREEN = MenuItemIdentifier(
+            "Show Tabs in Fullscreen", "Show Tabs in Fullscreen"
+        )
+        TOGGLE_FULL_SCREEN = MenuItemIdentifier(
+            "Toggle Full Screen", "Toggle Full Screen"
+        )
 
+        @_nonmember
         class Toolbelt(enum.Enum):
+            _value_: MenuItemIdentifier
             SHOW_TOOLBELT = MenuItemIdentifier("Show Toolbelt", "Show Toolbelt")
-            SET_DEFAULT_WIDTH = MenuItemIdentifier("Set Default Width", "Set Default Width")
+            SET_DEFAULT_WIDTH = MenuItemIdentifier(
+                "Set Default Width", "Set Default Width"
+            )
 
         USE_TRANSPARENCY = MenuItemIdentifier("Use Transparency", "Use Transparency")
-        DISABLE_TRANSPARENCY_FOR_ACTIVE_WINDOW = MenuItemIdentifier("Disable Transparency for Active Window", "Disable Transparency for Active Window")
-        ZOOM_IN_ON_SELECTION = MenuItemIdentifier("Zoom In on Selection", "Zoom In on Selection")
+        DISABLE_TRANSPARENCY_FOR_ACTIVE_WINDOW = MenuItemIdentifier(
+            "Disable Transparency for Active Window",
+            "Disable Transparency for Active Window",
+        )
+        ZOOM_IN_ON_SELECTION = MenuItemIdentifier(
+            "Zoom In on Selection", "Zoom In on Selection"
+        )
         ZOOM_OUT = MenuItemIdentifier("Zoom Out", "Zoom Out")
         FIND_CURSOR = MenuItemIdentifier("Find Cursor", "Find Cursor")
         SHOW_ANNOTATIONS = MenuItemIdentifier("Show Annotations", "Show Annotations")
@@ -277,204 +513,443 @@ class MainMenu:
         SHOW_CURSOR_GUIDE = MenuItemIdentifier("Show Cursor Guide", "Show Cursor Guide")
         SHOW_SESSION_NOTE = MenuItemIdentifier("Show Session Note", "Edit Session Note")
         SHOW_TIMESTAMPS = MenuItemIdentifier("Show Timestamps", "Show Timestamps")
-        AUTO_COMMAND_COMPLETION = MenuItemIdentifier("Auto Command Completion", "Auto Command Completion")
+        AUTO_COMMAND_COMPLETION = MenuItemIdentifier(
+            "Auto Command Completion", "Auto Command Completion"
+        )
         AUTO_COMPOSER = MenuItemIdentifier("Auto Composer", "Auto Composer")
         OPEN_QUICKLY = MenuItemIdentifier("Open Quickly", "Open Quickly")
-        MAXIMIZE_ACTIVE_PANE = MenuItemIdentifier("Maximize Active Pane", "Maximize Active Pane")
+        MAXIMIZE_ACTIVE_PANE = MenuItemIdentifier(
+            "Maximize Active Pane", "Maximize Active Pane"
+        )
         MAKE_TEXT_BIGGER = MenuItemIdentifier("Make Text Bigger", "Make Text Bigger")
-        MAKE_TEXT_NORMAL_SIZE = MenuItemIdentifier("Make Text Normal Size", "Make Text Normal Size")
-        RESTORE_TEXT_AND_SESSION_SIZE = MenuItemIdentifier("Restore Text and Session Size", "Restore Text and Session Size")
+        MAKE_TEXT_NORMAL_SIZE = MenuItemIdentifier(
+            "Make Text Normal Size", "Make Text Normal Size"
+        )
+        RESTORE_TEXT_AND_SESSION_SIZE = MenuItemIdentifier(
+            "Restore Text and Session Size", "Restore Text and Session Size"
+        )
         MAKE_TEXT_SMALLER = MenuItemIdentifier("Make Text Smaller", "Make Text Smaller")
-        SIZE_CHANGES_UPDATE_PROFILE = MenuItemIdentifier("Size Changes Update Profile", "Size Changes Update Profile")
-        START_INSTANT_REPLAY = MenuItemIdentifier("Start Instant Replay", "Start Instant Replay")
+        SIZE_CHANGES_UPDATE_PROFILE = MenuItemIdentifier(
+            "Size Changes Update Profile", "Size Changes Update Profile"
+        )
+        START_INSTANT_REPLAY = MenuItemIdentifier(
+            "Start Instant Replay", "Start Instant Replay"
+        )
 
     class Session(enum.Enum):
+        _value_: MenuItemIdentifier
         EDIT_SESSION = MenuItemIdentifier("Edit Session…", "Edit Session…")
         RUN_COPROCESS = MenuItemIdentifier("Run Coprocess…", "Run Coprocess…")
         STOP_COPROCESS = MenuItemIdentifier("Stop Coprocess", "Stop Coprocess")
         RESTART_SESSION = MenuItemIdentifier("Restart Session", "Restart Session")
         DUPLICATE_SESSION = MenuItemIdentifier("Duplicate Session", "Duplicate Session")
-        OPEN_AUTOCOMPLETE = MenuItemIdentifier("Open Autocomplete…", "Open Autocomplete…")
-        OPEN_COMMAND_HISTORY = MenuItemIdentifier("Open Command History…", "Open Command History…")
-        OPEN_RECENT_DIRECTORIES = MenuItemIdentifier("Open Recent Directories…", "Open Recent Directories…")
-        OPEN_PASTE_HISTORY = MenuItemIdentifier("Open Paste History…", "Open Paste History…")
+        OPEN_AUTOCOMPLETE = MenuItemIdentifier(
+            "Open Autocomplete…", "Open Autocomplete…"
+        )
+        OPEN_COMMAND_HISTORY = MenuItemIdentifier(
+            "Open Command History…", "Open Command History…"
+        )
+        OPEN_RECENT_DIRECTORIES = MenuItemIdentifier(
+            "Open Recent Directories…", "Open Recent Directories…"
+        )
+        OPEN_PASTE_HISTORY = MenuItemIdentifier(
+            "Open Paste History…", "Open Paste History…"
+        )
         OPEN_AI_CHAT = MenuItemIdentifier("Open AI Chat…", "Open AI Chat")
 
+        @_nonmember
         class Triggers(enum.Enum):
+            _value_: MenuItemIdentifier
             ADD_TRIGGER = MenuItemIdentifier("Add Trigger…", "Add Trigger")
             EDIT_TRIGGERS = MenuItemIdentifier("Edit Triggers", "Edit Triggers")
-            ENABLE_TRIGGERS_IN_INTERACTIVE_APPS = MenuItemIdentifier("Enable Triggers in Interactive Apps", "Enable Triggers in Interactive Apps")
+            ENABLE_TRIGGERS_IN_INTERACTIVE_APPS = MenuItemIdentifier(
+                "Enable Triggers in Interactive Apps",
+                "Enable Triggers in Interactive Apps",
+            )
             ENABLE_ALL = MenuItemIdentifier("Enable All", "Triggers.Enable All")
             DISABLE_ALL = MenuItemIdentifier("Disable All", "Triggers.Disable All")
 
         RESET = MenuItemIdentifier("Reset", "Reset")
-        RESET_CHARACTER_SET = MenuItemIdentifier("Reset Character Set", "Reset Character Set")
+        RESET_CHARACTER_SET = MenuItemIdentifier(
+            "Reset Character Set", "Reset Character Set"
+        )
 
+        @_nonmember
         class MoveSession(enum.Enum):
-            MOVE_SESSION_TO_WINDOW = MenuItemIdentifier("Move Session to Window", "Move Session to Window")
-            MOVE_SESSION_TO_TAB = MenuItemIdentifier("Move Session to Tab", "Move Session to Tab")
-            MOVE_SESSION_TO_SPLIT_PANE = MenuItemIdentifier("Move Session to Split Pane", "Move Session to Split Pane")
+            _value_: MenuItemIdentifier
+            MOVE_SESSION_TO_WINDOW = MenuItemIdentifier(
+                "Move Session to Window", "Move Session to Window"
+            )
+            MOVE_SESSION_TO_TAB = MenuItemIdentifier(
+                "Move Session to Tab", "Move Session to Tab"
+            )
+            MOVE_SESSION_TO_SPLIT_PANE = MenuItemIdentifier(
+                "Move Session to Split Pane", "Move Session to Split Pane"
+            )
 
-
+        @_nonmember
         class Log(enum.Enum):
+            _value_: MenuItemIdentifier
             LOG_TO_FILE = MenuItemIdentifier("Log to File", "Log.Toggle")
-            IMPORT_RECORDING = MenuItemIdentifier("Import Recording", "Log.ImportRecording")
-            EXPORT_RECORDING = MenuItemIdentifier("Export Recording", "Log.ExportRecording")
-            SAVE_CONTENTS = MenuItemIdentifier("Save Contents…", "Log.SaveContents")  #: Deprecated - this has moved elsewhere.
+            IMPORT_RECORDING = MenuItemIdentifier(
+                "Import Recording", "Log.ImportRecording"
+            )
+            EXPORT_RECORDING = MenuItemIdentifier(
+                "Export Recording", "Log.ExportRecording"
+            )
+            SAVE_CONTENTS = MenuItemIdentifier(
+                "Save Contents…", "Log.SaveContents"
+            )  #: Deprecated - this has moved elsewhere.
 
         MAKE_SCREENSHOT = MenuItemIdentifier("Make Screenshot…", "Make Screenshot")
 
+        @_nonmember
         class TerminalState(enum.Enum):
-            ALTERNATE_SCREEN = MenuItemIdentifier("Alternate Screen", "Alternate Screen")
+            _value_: MenuItemIdentifier
+            ALTERNATE_SCREEN = MenuItemIdentifier(
+                "Alternate Screen", "Alternate Screen"
+            )
             FOCUS_REPORTING = MenuItemIdentifier("Focus Reporting", "Focus Reporting")
             MOUSE_REPORTING = MenuItemIdentifier("Mouse Reporting", "Mouse Reporting")
-            PASTE_BRACKETING = MenuItemIdentifier("Paste Bracketing", "Paste Bracketing")
-            APPLICATION_CURSOR = MenuItemIdentifier("Application Cursor", "Application Cursor")
-            APPLICATION_KEYPAD = MenuItemIdentifier("Application Keypad", "Application Keypad")
-            STANDARD_KEY_REPORTING_MODE = MenuItemIdentifier("Standard Key Reporting Mode", "Terminal State.Standard Key Reporting")
-            MODIFYOTHERKEYS_MODE_1 = MenuItemIdentifier("modifyOtherKeys Mode 1", "Terminal State.Report Modifiers like xterm 1")
-            MODIFYOTHERKEYS_MODE_2 = MenuItemIdentifier("modifyOtherKeys Mode 2", "Terminal State.Report Modifiers like xterm 2")
-            CSI_U_MODE = MenuItemIdentifier("CSI u Mode", "Terminal State.Report Modifiers with CSI u")
-            RAW_KEY_REPORTING_MODE = MenuItemIdentifier("Raw Key Reporting Mode", "Terminal State.Raw Key Reporting")
-            DISAMBIGUATE_ESCAPE = MenuItemIdentifier("Disambiguate Escape", "Terminal State.Disambiguate Escape")
-            REPORT_ALL_EVENT_TYPES = MenuItemIdentifier("Report All Event Types", "Terminal State.Report All Event Types")
-            REPORT_ALTERNATE_KEYS = MenuItemIdentifier("Report Alternate Keys", "Terminal State.Report Alternate Keys")
-            REPORT_ALL_KEYS_AS_ESCAPE_CODES = MenuItemIdentifier("Report All Keys as Escape Codes", "Terminal State.Report All Keys as Escape Codes")
-            REPORT_ASSOCIATED_TEXT = MenuItemIdentifier("Report Associated Text", "Terminal State.Report Associated Text")
-            LITERAL_CONTROLS = MenuItemIdentifier("Literal Controls", "Terminal State.Literal Mode")
+            PASTE_BRACKETING = MenuItemIdentifier(
+                "Paste Bracketing", "Paste Bracketing"
+            )
+            APPLICATION_CURSOR = MenuItemIdentifier(
+                "Application Cursor", "Application Cursor"
+            )
+            APPLICATION_KEYPAD = MenuItemIdentifier(
+                "Application Keypad", "Application Keypad"
+            )
+            STANDARD_KEY_REPORTING_MODE = MenuItemIdentifier(
+                "Standard Key Reporting Mode", "Terminal State.Standard Key Reporting"
+            )
+            MODIFYOTHERKEYS_MODE_1 = MenuItemIdentifier(
+                "modifyOtherKeys Mode 1", "Terminal State.Report Modifiers like xterm 1"
+            )
+            MODIFYOTHERKEYS_MODE_2 = MenuItemIdentifier(
+                "modifyOtherKeys Mode 2", "Terminal State.Report Modifiers like xterm 2"
+            )
+            CSI_U_MODE = MenuItemIdentifier(
+                "CSI u Mode", "Terminal State.Report Modifiers with CSI u"
+            )
+            RAW_KEY_REPORTING_MODE = MenuItemIdentifier(
+                "Raw Key Reporting Mode", "Terminal State.Raw Key Reporting"
+            )
+            DISAMBIGUATE_ESCAPE = MenuItemIdentifier(
+                "Disambiguate Escape", "Terminal State.Disambiguate Escape"
+            )
+            REPORT_ALL_EVENT_TYPES = MenuItemIdentifier(
+                "Report All Event Types", "Terminal State.Report All Event Types"
+            )
+            REPORT_ALTERNATE_KEYS = MenuItemIdentifier(
+                "Report Alternate Keys", "Terminal State.Report Alternate Keys"
+            )
+            REPORT_ALL_KEYS_AS_ESCAPE_CODES = MenuItemIdentifier(
+                "Report All Keys as Escape Codes",
+                "Terminal State.Report All Keys as Escape Codes",
+            )
+            REPORT_ASSOCIATED_TEXT = MenuItemIdentifier(
+                "Report Associated Text", "Terminal State.Report Associated Text"
+            )
+            LITERAL_CONTROLS = MenuItemIdentifier(
+                "Literal Controls", "Terminal State.Literal Mode"
+            )
 
+            @_nonmember
             class EmulationLevel(enum.Enum):
-                VT100 = MenuItemIdentifier("VT100", "Terminal State.Emulation Level.VT100")
-                VT200 = MenuItemIdentifier("VT200", "Terminal State.Emulation Level.VT200")
-                VT300 = MenuItemIdentifier("VT300", "Terminal State.Emulation Level.VT300")
-                VT400 = MenuItemIdentifier("VT400", "Terminal State.Emulation Level.VT400")
-                VT500 = MenuItemIdentifier("VT500", "Terminal State.Emulation Level.VT500")
+                _value_: MenuItemIdentifier
+                VT100 = MenuItemIdentifier(
+                    "VT100", "Terminal State.Emulation Level.VT100"
+                )
+                VT200 = MenuItemIdentifier(
+                    "VT200", "Terminal State.Emulation Level.VT200"
+                )
+                VT300 = MenuItemIdentifier(
+                    "VT300", "Terminal State.Emulation Level.VT300"
+                )
+                VT400 = MenuItemIdentifier(
+                    "VT400", "Terminal State.Emulation Level.VT400"
+                )
+                VT500 = MenuItemIdentifier(
+                    "VT500", "Terminal State.Emulation Level.VT500"
+                )
 
             RESET = MenuItemIdentifier("Reset", "Reset Terminal State")
 
         BURY_SESSION = MenuItemIdentifier("Bury Session", "Bury Session")
 
     class Scripts(enum.Enum):
+        _value_: MenuItemIdentifier
+
+        @_nonmember
         class Manage(enum.Enum):
-            NEW_PYTHON_SCRIPT = MenuItemIdentifier("New Python Script", "New Python Script")
-            OPEN_PYTHON_REPL = MenuItemIdentifier("Open Python REPL", "Open Interactive Window")
-            MANAGE_DEPENDENCIES = MenuItemIdentifier("Manage Dependencies…", "Manage Dependencies")
-            INSTALL_PYTHON_RUNTIME = MenuItemIdentifier("Install Python Runtime", "Install Python Runtime")
-            INSTALL_ALREADYDOWNLOADED_PYTHON_RUNTIME = MenuItemIdentifier("Install Already-Downloaded Python Runtime", "Install Already-Downloaded Python Runtime")
-            REVEAL_SCRIPTS_IN_FINDER = MenuItemIdentifier("Reveal Scripts in Finder", "Reveal in Finder")
+            _value_: MenuItemIdentifier
+            NEW_PYTHON_SCRIPT = MenuItemIdentifier(
+                "New Python Script", "New Python Script"
+            )
+            OPEN_PYTHON_REPL = MenuItemIdentifier(
+                "Open Python REPL", "Open Interactive Window"
+            )
+            MANAGE_DEPENDENCIES = MenuItemIdentifier(
+                "Manage Dependencies…", "Manage Dependencies"
+            )
+            INSTALL_PYTHON_RUNTIME = MenuItemIdentifier(
+                "Install Python Runtime", "Install Python Runtime"
+            )
+            INSTALL_ALREADYDOWNLOADED_PYTHON_RUNTIME = MenuItemIdentifier(
+                "Install Already-Downloaded Python Runtime",
+                "Install Already-Downloaded Python Runtime",
+            )
+            REVEAL_SCRIPTS_IN_FINDER = MenuItemIdentifier(
+                "Reveal Scripts in Finder", "Reveal in Finder"
+            )
             IMPORT = MenuItemIdentifier("Import…", "Import Script")
             EXPORT = MenuItemIdentifier("Export…", "Export Script")
             CONSOLE = MenuItemIdentifier("Console", "Script Console")
 
-
     class Profiles(enum.Enum):
+        _value_: MenuItemIdentifier
         OPEN_PROFILES = MenuItemIdentifier("Open Profiles…", "Open Profiles…")
-        PRESS_OPTION_FOR_NEW_WINDOW = MenuItemIdentifier("Press Option for New Window", "Press Option for New Window")
-        OPEN_IN_NEW_WINDOW = MenuItemIdentifier("Open In New Window", "Open In New Window")
+        PRESS_OPTION_FOR_NEW_WINDOW = MenuItemIdentifier(
+            "Press Option for New Window", "Press Option for New Window"
+        )
+        OPEN_IN_NEW_WINDOW = MenuItemIdentifier(
+            "Open In New Window", "Open In New Window"
+        )
 
     class Window(enum.Enum):
+        _value_: MenuItemIdentifier
         MINIMIZE = MenuItemIdentifier("Minimize", "Minimize")
         ZOOM = MenuItemIdentifier("Zoom", "Zoom")
 
+        @_nonmember
         class Arrangements(enum.Enum):
-            SAVE_WINDOW_ARRANGEMENT = MenuItemIdentifier("Save Window Arrangement", "Save Window Arrangement")
-            SAVE_CURRENT_WINDOW_AS_ARRANGEMENT = MenuItemIdentifier("Save Current Window as Arrangement", "Save Current Window as Arrangement")
-            LOAD_ARRANGEMENT_FROM_FILE = MenuItemIdentifier("Load Arrangement from File…", "Load Arrangement from File…")
-            CHANGE_PROFILE_IN_ARRANGEMENT = MenuItemIdentifier("Change Profile in Arrangement…", "Change Profile in Arrangement…")
+            _value_: MenuItemIdentifier
+            SAVE_WINDOW_ARRANGEMENT = MenuItemIdentifier(
+                "Save Window Arrangement", "Save Window Arrangement"
+            )
+            SAVE_CURRENT_WINDOW_AS_ARRANGEMENT = MenuItemIdentifier(
+                "Save Current Window as Arrangement",
+                "Save Current Window as Arrangement",
+            )
+            LOAD_ARRANGEMENT_FROM_FILE = MenuItemIdentifier(
+                "Load Arrangement from File…", "Load Arrangement from File…"
+            )
+            CHANGE_PROFILE_IN_ARRANGEMENT = MenuItemIdentifier(
+                "Change Profile in Arrangement…", "Change Profile in Arrangement…"
+            )
 
         EDIT_WINDOW_TITLE = MenuItemIdentifier("Edit Window Title", "Edit Window Title")
 
+        @_nonmember
         class Tab(enum.Enum):
+            _value_: MenuItemIdentifier
             EDIT_TAB_TITLE = MenuItemIdentifier("Edit Tab Title", "Edit Tab Title")
 
+            @_nonmember
             class SelectTab(enum.Enum):
-                SELECT_NEXT_TAB = MenuItemIdentifier("Select Next Tab", "Select Next Tab")
-                SELECT_PREVIOUS_TAB = MenuItemIdentifier("Select Previous Tab", "Select Previous Tab")
-                SELECT_NEXT_TAB_GROUP = MenuItemIdentifier("Select Next Tab Group", "Select Next Tab Group")
-                SELECT_PREVIOUS_TAB_GROUP = MenuItemIdentifier("Select Previous Tab Group", "Select Previous Tab Group")
+                _value_: MenuItemIdentifier
+                SELECT_NEXT_TAB = MenuItemIdentifier(
+                    "Select Next Tab", "Select Next Tab"
+                )
+                SELECT_PREVIOUS_TAB = MenuItemIdentifier(
+                    "Select Previous Tab", "Select Previous Tab"
+                )
+                SELECT_NEXT_TAB_GROUP = MenuItemIdentifier(
+                    "Select Next Tab Group", "Select Next Tab Group"
+                )
+                SELECT_PREVIOUS_TAB_GROUP = MenuItemIdentifier(
+                    "Select Previous Tab Group", "Select Previous Tab Group"
+                )
 
-
+            @_nonmember
             class MoveTab(enum.Enum):
-                MOVE_TAB_TO_NEW_WINDOW = MenuItemIdentifier("Move Tab to New Window", "Move Tab to New Window")
+                _value_: MenuItemIdentifier
+                MOVE_TAB_TO_NEW_WINDOW = MenuItemIdentifier(
+                    "Move Tab to New Window", "Move Tab to New Window"
+                )
                 MOVE_TAB_LEFT = MenuItemIdentifier("Move Tab Left", "Move Tab Left")
                 MOVE_TAB_RIGHT = MenuItemIdentifier("Move Tab Right", "Move Tab Right")
 
-            ADD_TAB_TO_NEW_GROUP = MenuItemIdentifier("Add Tab to New Group…", "Add Tab to New Group")
-            REMOVE_TAB_FROM_GROUP = MenuItemIdentifier("Remove Tab from Group", "Remove Tab from Group")
+            ADD_TAB_TO_NEW_GROUP = MenuItemIdentifier(
+                "Add Tab to New Group…", "Add Tab to New Group"
+            )
+            REMOVE_TAB_FROM_GROUP = MenuItemIdentifier(
+                "Remove Tab from Group", "Remove Tab from Group"
+            )
 
-
+        @_nonmember
         class SplitPane(enum.Enum):
+            _value_: MenuItemIdentifier
+
+            @_nonmember
             class SelectSplitPane(enum.Enum):
-                SELECT_PANE_ABOVE = MenuItemIdentifier("Select Pane Above", "Select Split Pane.Select Pane Above")
-                SELECT_PANE_BELOW = MenuItemIdentifier("Select Pane Below", "Select Split Pane.Select Pane Below")
-                SELECT_PANE_LEFT = MenuItemIdentifier("Select Pane Left", "Select Split Pane.Select Pane Left")
-                SELECT_PANE_RIGHT = MenuItemIdentifier("Select Pane Right", "Select Split Pane.Select Pane Right")
-                NEXT_PANE = MenuItemIdentifier("Next Pane", "Select Split Pane.Next Pane")
-                PREVIOUS_PANE = MenuItemIdentifier("Previous Pane", "Select Split Pane.Previous Pane")
-                PREVIOUS_PEER = MenuItemIdentifier("Previous Peer", "Select Split Pane.Previous Peer")
-                NEXT_PEER = MenuItemIdentifier("Next Peer", "Select Split Pane.Next Peer")
+                _value_: MenuItemIdentifier
+                SELECT_PANE_ABOVE = MenuItemIdentifier(
+                    "Select Pane Above", "Select Split Pane.Select Pane Above"
+                )
+                SELECT_PANE_BELOW = MenuItemIdentifier(
+                    "Select Pane Below", "Select Split Pane.Select Pane Below"
+                )
+                SELECT_PANE_LEFT = MenuItemIdentifier(
+                    "Select Pane Left", "Select Split Pane.Select Pane Left"
+                )
+                SELECT_PANE_RIGHT = MenuItemIdentifier(
+                    "Select Pane Right", "Select Split Pane.Select Pane Right"
+                )
+                NEXT_PANE = MenuItemIdentifier(
+                    "Next Pane", "Select Split Pane.Next Pane"
+                )
+                PREVIOUS_PANE = MenuItemIdentifier(
+                    "Previous Pane", "Select Split Pane.Previous Pane"
+                )
+                PREVIOUS_PEER = MenuItemIdentifier(
+                    "Previous Peer", "Select Split Pane.Previous Peer"
+                )
+                NEXT_PEER = MenuItemIdentifier(
+                    "Next Peer", "Select Split Pane.Next Peer"
+                )
 
+            @_nonmember
             class ResizeSplitPane(enum.Enum):
-                MOVE_DIVIDER_UP = MenuItemIdentifier("Move Divider Up", "Resize Split Pane.Move Divider Up")
-                MOVE_DIVIDER_DOWN = MenuItemIdentifier("Move Divider Down", "Resize Split Pane.Move Divider Down")
-                MOVE_DIVIDER_LEFT = MenuItemIdentifier("Move Divider Left", "Resize Split Pane.Move Divider Left")
-                MOVE_DIVIDER_RIGHT = MenuItemIdentifier("Move Divider Right", "Resize Split Pane.Move Divider Right")
+                _value_: MenuItemIdentifier
+                MOVE_DIVIDER_UP = MenuItemIdentifier(
+                    "Move Divider Up", "Resize Split Pane.Move Divider Up"
+                )
+                MOVE_DIVIDER_DOWN = MenuItemIdentifier(
+                    "Move Divider Down", "Resize Split Pane.Move Divider Down"
+                )
+                MOVE_DIVIDER_LEFT = MenuItemIdentifier(
+                    "Move Divider Left", "Resize Split Pane.Move Divider Left"
+                )
+                MOVE_DIVIDER_RIGHT = MenuItemIdentifier(
+                    "Move Divider Right", "Resize Split Pane.Move Divider Right"
+                )
 
+            @_nonmember
             class FloatingPanes(enum.Enum):
-                BRING_TO_FRONT = MenuItemIdentifier("Bring to Front", "Floating Panes.Bring to Front")
-                SEND_TO_BACK = MenuItemIdentifier("Send to Back", "Floating Panes.Send to Back")
-                DOCK_FLOATING_PANE = MenuItemIdentifier("Dock Floating Pane", "Floating Panes.Dock Floating Pane")
-                HIDE_FLOATING_PANES = MenuItemIdentifier("Hide Floating Panes", "Floating Panes.Hide Floating Panes")
-                MOVE_FLOATING_PANE_UP = MenuItemIdentifier("Move Floating Pane Up", "Floating Panes.Move Floating Pane Up")
-                MOVE_FLOATING_PANE_DOWN = MenuItemIdentifier("Move Floating Pane Down", "Floating Panes.Move Floating Pane Down")
-                MOVE_FLOATING_PANE_LEFT = MenuItemIdentifier("Move Floating Pane Left", "Floating Panes.Move Floating Pane Left")
-                MOVE_FLOATING_PANE_RIGHT = MenuItemIdentifier("Move Floating Pane Right", "Floating Panes.Move Floating Pane Right")
+                _value_: MenuItemIdentifier
+                BRING_TO_FRONT = MenuItemIdentifier(
+                    "Bring to Front", "Floating Panes.Bring to Front"
+                )
+                SEND_TO_BACK = MenuItemIdentifier(
+                    "Send to Back", "Floating Panes.Send to Back"
+                )
+                DOCK_FLOATING_PANE = MenuItemIdentifier(
+                    "Dock Floating Pane", "Floating Panes.Dock Floating Pane"
+                )
+                HIDE_FLOATING_PANES = MenuItemIdentifier(
+                    "Hide Floating Panes", "Floating Panes.Hide Floating Panes"
+                )
+                MOVE_FLOATING_PANE_UP = MenuItemIdentifier(
+                    "Move Floating Pane Up", "Floating Panes.Move Floating Pane Up"
+                )
+                MOVE_FLOATING_PANE_DOWN = MenuItemIdentifier(
+                    "Move Floating Pane Down", "Floating Panes.Move Floating Pane Down"
+                )
+                MOVE_FLOATING_PANE_LEFT = MenuItemIdentifier(
+                    "Move Floating Pane Left", "Floating Panes.Move Floating Pane Left"
+                )
+                MOVE_FLOATING_PANE_RIGHT = MenuItemIdentifier(
+                    "Move Floating Pane Right",
+                    "Floating Panes.Move Floating Pane Right",
+                )
 
-            LOCK_SPLIT_PANE_WIDTH = MenuItemIdentifier("Lock Split Pane Width", "Lock Split Pane Width")
+            LOCK_SPLIT_PANE_WIDTH = MenuItemIdentifier(
+                "Lock Split Pane Width", "Lock Split Pane Width"
+            )
 
-
+        @_nonmember
         class WindowStyle(enum.Enum):
+            _value_: MenuItemIdentifier
             NORMAL = MenuItemIdentifier("Normal", "Window Style.Normal")
             FULL_SCREEN = MenuItemIdentifier("Full Screen", "Window Style.Full Screen")
             MAXIMIZED = MenuItemIdentifier("Maximized", "Window Style.Maximized")
-            NO_TITLE_BAR = MenuItemIdentifier("No Title Bar", "Window Style.No Title Bar")
+            NO_TITLE_BAR = MenuItemIdentifier(
+                "No Title Bar", "Window Style.No Title Bar"
+            )
             CENTERED = MenuItemIdentifier("Centered", "Window Style.Centered")
-            CENTERED_NO_TITLE_BAR = MenuItemIdentifier("Centered, No Title Bar", "Window Style.Centered No Title Bar")
-            FULLWIDTH_BOTTOM_OF_SCREEN = MenuItemIdentifier("Full-Width Bottom of Screen", "Window Style.FullWidth Bottom of Screen")
-            FULLWIDTH_TOP_OF_SCREEN = MenuItemIdentifier("Full-Width Top of Screen", "Window Style.FullWidth Top of Screen")
-            FULLHEIGHT_LEFT_OF_SCREEN = MenuItemIdentifier("Full-Height Left of Screen", "Window Style..FullHeight Left of Screen")
-            FULLHEIGHT_RIGHT_OF_SCREEN = MenuItemIdentifier("Full-Height Right of Screen", "Window Style.FullHeight Right of Screen")
-            BOTTOM_OF_SCREEN = MenuItemIdentifier("Bottom of Screen", "Window Style.Bottom of Screen")
-            TOP_OF_SCREEN = MenuItemIdentifier("Top of Screen", "Window Style.Top of Screen")
-            LEFT_OF_SCREEN = MenuItemIdentifier("Left of Screen", "Window Style.Left of Screen")
-            RIGHT_OF_SCREEN = MenuItemIdentifier("Right of Screen", "Window Style.Right of Screen")
+            CENTERED_NO_TITLE_BAR = MenuItemIdentifier(
+                "Centered, No Title Bar", "Window Style.Centered No Title Bar"
+            )
+            FULLWIDTH_BOTTOM_OF_SCREEN = MenuItemIdentifier(
+                "Full-Width Bottom of Screen", "Window Style.FullWidth Bottom of Screen"
+            )
+            FULLWIDTH_TOP_OF_SCREEN = MenuItemIdentifier(
+                "Full-Width Top of Screen", "Window Style.FullWidth Top of Screen"
+            )
+            FULLHEIGHT_LEFT_OF_SCREEN = MenuItemIdentifier(
+                "Full-Height Left of Screen", "Window Style..FullHeight Left of Screen"
+            )
+            FULLHEIGHT_RIGHT_OF_SCREEN = MenuItemIdentifier(
+                "Full-Height Right of Screen", "Window Style.FullHeight Right of Screen"
+            )
+            BOTTOM_OF_SCREEN = MenuItemIdentifier(
+                "Bottom of Screen", "Window Style.Bottom of Screen"
+            )
+            TOP_OF_SCREEN = MenuItemIdentifier(
+                "Top of Screen", "Window Style.Top of Screen"
+            )
+            LEFT_OF_SCREEN = MenuItemIdentifier(
+                "Left of Screen", "Window Style.Left of Screen"
+            )
+            RIGHT_OF_SCREEN = MenuItemIdentifier(
+                "Right of Screen", "Window Style.Right of Screen"
+            )
 
         LOCK_SIZE = MenuItemIdentifier("Lock Size", "Lock Size")
         LOCK_LAYOUT = MenuItemIdentifier("Lock Layout", "Lock Layout")
         LOCK_LOCATION = MenuItemIdentifier("Lock Location", "Lock Location")
-        NOTIFY_ON_STATUS_CHANGE = MenuItemIdentifier("Notify on Status Change", "Notify on Status Change")
+        NOTIFY_ON_STATUS_CHANGE = MenuItemIdentifier(
+            "Notify on Status Change", "Notify on Status Change"
+        )
 
+        @_nonmember
         class ArrangeWindows(enum.Enum):
-            MERGE_ALL_WINDOWS = MenuItemIdentifier("Merge All Windows", "Merge All Windows")
-            ARRANGE_WINDOWS_HORIZONTALLY = MenuItemIdentifier("Arrange Windows Horizontally", "Arrange Windows Horizontally")
-            ARRANGE_SPLIT_PANES_EVENLY = MenuItemIdentifier("Arrange Split Panes Evenly", "Arrange Split Panes Evenly")
+            _value_: MenuItemIdentifier
+            MERGE_ALL_WINDOWS = MenuItemIdentifier(
+                "Merge All Windows", "Merge All Windows"
+            )
+            ARRANGE_WINDOWS_HORIZONTALLY = MenuItemIdentifier(
+                "Arrange Windows Horizontally", "Arrange Windows Horizontally"
+            )
+            ARRANGE_SPLIT_PANES_EVENLY = MenuItemIdentifier(
+                "Arrange Split Panes Evenly", "Arrange Split Panes Evenly"
+            )
 
-
+        @_nonmember
         class ResizeWindow(enum.Enum):
-            DECREASE_HEIGHT = MenuItemIdentifier("Decrease Height", "Resize Window.Decrease Height")
-            INCREASE_HEIGHT = MenuItemIdentifier("Increase Height", "Resize Window.Increase Height")
-            DECREASE_WIDTH = MenuItemIdentifier("Decrease Width", "Resize Window.Decrease Width")
-            INCREASE_WIDTH = MenuItemIdentifier("Increase Width", "Resize Window.Increase Width")
+            _value_: MenuItemIdentifier
+            DECREASE_HEIGHT = MenuItemIdentifier(
+                "Decrease Height", "Resize Window.Decrease Height"
+            )
+            INCREASE_HEIGHT = MenuItemIdentifier(
+                "Increase Height", "Resize Window.Increase Height"
+            )
+            DECREASE_WIDTH = MenuItemIdentifier(
+                "Decrease Width", "Resize Window.Decrease Width"
+            )
+            INCREASE_WIDTH = MenuItemIdentifier(
+                "Increase Width", "Resize Window.Increase Width"
+            )
 
         PASSWORD_MANAGER = MenuItemIdentifier("Password Manager", "Password Manager")
         AI_CHATS = MenuItemIdentifier("AI Chats", "AI Chats")
         COCKPIT = MenuItemIdentifier("Cockpit", "Cockpit")
         PIN_HOTKEY_WINDOW = MenuItemIdentifier("Pin Hotkey Window", "Pin Hotkey Window")
-        BRING_ALL_TO_FRONT = MenuItemIdentifier("Bring All To Front", "Bring All To Front")
+        BRING_ALL_TO_FRONT = MenuItemIdentifier(
+            "Bring All To Front", "Bring All To Front"
+        )
 
     class Help(enum.Enum):
+        _value_: MenuItemIdentifier
         ITERM2_HELP = MenuItemIdentifier("iTerm2 Help", "iTerm2 Help")
-        COPY_MODE_SHORTCUTS = MenuItemIdentifier("Copy Mode Shortcuts", "Copy Mode Shortcuts")
-        OPEN_SOURCE_LICENSES = MenuItemIdentifier("Open Source Licenses", "Open Source Licenses")
-        GPU_RENDERER_AVAILABILITY = MenuItemIdentifier("GPU Renderer Availability", "GPU Renderer Availability")
-
+        COPY_MODE_SHORTCUTS = MenuItemIdentifier(
+            "Copy Mode Shortcuts", "Copy Mode Shortcuts"
+        )
+        OPEN_SOURCE_LICENSES = MenuItemIdentifier(
+            "Open Source Licenses", "Open Source Licenses"
+        )
+        GPU_RENDERER_AVAILABILITY = MenuItemIdentifier(
+            "GPU Renderer Availability", "GPU Renderer Availability"
+        )

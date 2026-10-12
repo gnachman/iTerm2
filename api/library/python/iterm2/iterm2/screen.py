@@ -1,18 +1,43 @@
 """Provides access to screen contents."""
-import asyncio
-import typing
 
-import iterm2.api_pb2
-import iterm2.notifications
-import iterm2.rpc
-import iterm2.util
+from __future__ import annotations
 
+from asyncio import Future
 from enum import Enum
-from iterm2.api_pb2 import CellStyle as ProtoCellStyle, RGBColor as ProtoRGBColor, URL as ProtoURL, AlternateColor as ProtoAlternateColor, ImagePlaceholderType as ProtoImagePlaceholderType
+from typing import TYPE_CHECKING
+
+from . import api_pb2
+from .api_pb2 import URL as ProtoURL
+from .api_pb2 import AlternateColor as ProtoAlternateColor
+from .api_pb2 import CellStyle as ProtoCellStyle
+from .api_pb2 import ImagePlaceholderType as ProtoImagePlaceholderType
+from .api_pb2 import RGBColor as ProtoRGBColor
+from .notifications import (
+    SubscriptionException,
+    async_subscribe_to_screen_update_notification,
+    async_unsubscribe,
+)
+from .rpc import RPCException, async_get_screen_contents
+from .util import CoordRange, Point, Range, WindowedCoordRange
+
+if TYPE_CHECKING:
+    import types
+    from typing import Self
+
+    from typing_extensions import deprecated as _deprecated
+
+    from .connection import Connection
+    from .notifications import NotificationToken
+else:
+    # Only type checkers report the deprecation. At runtime the decorator does
+    # nothing, so typing_extensions isn't needed to import the package.
+    def _deprecated(_message):
+        return lambda func: func
+
 
 class CellStyle:
     class RGBColor:
-        def __init__(self, color: ProtoRGBColor):
+        def __init__(self, color: ProtoRGBColor) -> None:
             """
             Initialize RGBColor, which defines a color in sRGB with 8-bit
             integer components.
@@ -49,7 +74,7 @@ class CellStyle:
             return self._color.blue
 
     class URL:
-        def __init__(self, url: ProtoURL):
+        def __init__(self, url: ProtoURL) -> None:
             """
             Initialize URL.
 
@@ -67,7 +92,7 @@ class CellStyle:
             return self._url.url
 
         @property
-        def identifier(self) -> typing.Optional[str]:
+        def identifier(self) -> str | None:
             """
             Returns the optional identifier associated with the URL, if present.
 
@@ -77,15 +102,19 @@ class CellStyle:
 
     class AlternateColor(Enum):
         DEFAULT = ProtoAlternateColor.DEFAULT  #: Default text or background color
-        REVERSED_DEFAULT = ProtoAlternateColor.REVERSED_DEFAULT  #: Default text or background color, but with roles reversed.
+        REVERSED_DEFAULT = (
+            ProtoAlternateColor.REVERSED_DEFAULT
+        )  #: Default text or background color, but with roles reversed.
         SYSTEM_MESSAGE = ProtoAlternateColor.SYSTEM_MESSAGE  #: A message from the terminal emulator itself (e.g., a "session ended" message).
 
     class Color:
-        def __init__(self,
-                     standard: typing.Optional[int] = None,
-                     alternate: typing.Optional['CellStyle.AlternateColor'] = None,
-                     rgb: typing.Optional['CellStyle.RGBColor'] = None,
-                     placement: typing.Optional[int] = None):
+        def __init__(
+            self,
+            standard: int | None = None,
+            alternate: CellStyle.AlternateColor | None = None,
+            rgb: CellStyle.RGBColor | None = None,
+            placement: int | None = None,
+        ) -> None:
             """Represents a color that can be standard, alternate, or RGB.
 
             A standard color is part of the 256-color pallete with ANSI colors
@@ -127,14 +156,14 @@ class CellStyle:
             return self._standard
 
         @property
-        def alternate(self) -> 'CellStyle.AlternateColor':
+        def alternate(self) -> CellStyle.AlternateColor:
             """Returns the alternate color if applicable, raises otherwise."""
             if self._alternate is None:
                 raise ValueError("Not an alternate color")
             return self._alternate
 
         @property
-        def rgb(self) -> 'CellStyle.RGBColor':
+        def rgb(self) -> CellStyle.RGBColor:
             """Returns the RGB color if applicable, raises otherwise."""
             if self._rgb is None:
                 raise ValueError("Not an RGB color")
@@ -154,11 +183,12 @@ class CellStyle:
         in a cell with a special placeholder. This value identifies the image
         protocol for this cell, if any.
         """
+
         NONE = ProtoImagePlaceholderType.NONE
         ITERM2 = ProtoImagePlaceholderType.ITERM2
         KITTY = ProtoImagePlaceholderType.KITTY
 
-    def __init__(self, protobuf: ProtoCellStyle):
+    def __init__(self, protobuf: ProtoCellStyle) -> None:
         """
         CellStyle describes the appearance of a cell (such as its color or text properties).
 
@@ -172,36 +202,40 @@ class CellStyle:
         return self._proto.repeats
 
     @property
-    def fg_color(self) -> typing.Optional['CellStyle.Color']:
+    def fg_color(self) -> CellStyle.Color | None:
         """
         Returns the foreground color as a CellStyle.Color object.
 
         :returns: A Color object representing the foreground color.
         """
-        if self._proto.HasField('fgStandard'):
+        if self._proto.HasField("fgStandard"):
             return CellStyle.Color(standard=self._proto.fgStandard)
-        elif self._proto.HasField('fgAlternate'):
-            return CellStyle.Color(alternate=CellStyle.AlternateColor(self._proto.fgAlternate))
-        elif self._proto.HasField('fgRgb'):
+        elif self._proto.HasField("fgAlternate"):
+            return CellStyle.Color(
+                alternate=CellStyle.AlternateColor(self._proto.fgAlternate)
+            )
+        elif self._proto.HasField("fgRgb"):
             return CellStyle.Color(rgb=CellStyle.RGBColor(self._proto.fgRgb))
-        elif self._proto.HasField('fgAlternatePlacementX'):
+        elif self._proto.HasField("fgAlternatePlacementX"):
             return CellStyle.Color(placement=self._proto.fgAlternatePlacementX)
         return None
 
     @property
-    def bg_color(self) -> typing.Optional['CellStyle.Color']:
+    def bg_color(self) -> CellStyle.Color | None:
         """
         Returns the background color as a CellStyle.Color object.
 
         :returns: A Color object representing the background color.
         """
-        if self._proto.HasField('bgStandard'):
+        if self._proto.HasField("bgStandard"):
             return CellStyle.Color(standard=self._proto.bgStandard)
-        elif self._proto.HasField('bgAlternate'):
-            return CellStyle.Color(alternate=CellStyle.AlternateColor(self._proto.bgAlternate))
-        elif self._proto.HasField('bgRgb'):
+        elif self._proto.HasField("bgAlternate"):
+            return CellStyle.Color(
+                alternate=CellStyle.AlternateColor(self._proto.bgAlternate)
+            )
+        elif self._proto.HasField("bgRgb"):
             return CellStyle.Color(rgb=CellStyle.RGBColor(self._proto.bgRgb))
-        elif self._proto.HasField('bgAlternatePlacementY'):
+        elif self._proto.HasField("bgAlternatePlacementY"):
             return CellStyle.Color(placement=self._proto.bgAlternatePlacementY)
         return None
 
@@ -288,25 +322,33 @@ class CellStyle:
         return self._proto.guarded
 
     @property
-    def image(self) -> typing.Optional['CellStyle.ImagePlaceholderType']:
+    def image(self) -> CellStyle.ImagePlaceholderType | None:
         """
         Returns the image placeholder type if set.
 
         :returns: An ImagePlaceholderType enum or None if not set.
         """
-        return CellStyle.ImagePlaceholderType(self._proto.image) if self._proto.HasField("image") else None
+        return (
+            CellStyle.ImagePlaceholderType(self._proto.image)
+            if self._proto.HasField("image")
+            else None
+        )
 
     @property
-    def underline_color(self) -> typing.Optional['CellStyle.RGBColor']:
+    def underline_color(self) -> CellStyle.RGBColor | None:
         """
         Returns the underline color if set.
 
         :returns: An RGBColor object or None if not set.
         """
-        return CellStyle.RGBColor(self._proto.underlineColor) if self._proto.HasField("underlineColor") else None
+        return (
+            CellStyle.RGBColor(self._proto.underlineColor)
+            if self._proto.HasField("underlineColor")
+            else None
+        )
 
     @property
-    def block_id(self) -> typing.Optional[str]:
+    def block_id(self) -> str | None:
         """
         Returns the block ID if set (as set by OSC 1337 ; Block).
 
@@ -315,7 +357,7 @@ class CellStyle:
         return self._proto.blockID if self._proto.HasField("blockID") else None
 
     @property
-    def url(self) -> typing.Optional['CellStyle.URL']:
+    def url(self) -> CellStyle.URL | None:
         """
         If this cell is hyperlinked by an OSC 8 URL, returns the URL.
 
@@ -323,22 +365,24 @@ class CellStyle:
         """
         return CellStyle.URL(self._proto.url) if self._proto.HasField("url") else None
 
+
 class LineContents:
     """Describes the contents of a line."""
-    def __init__(self, proto):
+
+    def __init__(self, proto: api_pb2.LineContents) -> None:
         self.__proto = proto
-        self.__offset_of_cell = [0]
-        self.__length_of_cell = []
-        self.__styles = []
+        self.__offset_of_cell: list[int] = [0]
+        self.__length_of_cell: list[int] = []
+        self.__styles: list[CellStyle] = []
         offset = 0
         for cppc in proto.code_points_per_cell:
-            for i in range(cppc.repeats):  # pylint: disable=unused-variable
+            for _ in range(cppc.repeats):  # pylint: disable=unused-variable
                 offset += cppc.num_code_points
                 self.__offset_of_cell.append(offset)
                 self.__length_of_cell.append(cppc.num_code_points)
         for style in proto.style:
             cs = CellStyle(style)
-            for i in range(style.repeats):  # pylint: disable=unused-variable
+            for _ in range(style.repeats):  # pylint: disable=unused-variable
                 self.__styles.append(cs)
 
     @property
@@ -359,7 +403,7 @@ class LineContents:
         limit = offset + self.__length_of_cell[x]
         return self.__proto.text[offset:limit]
 
-    def style_at(self, x: int) -> typing.Optional[CellStyle]:
+    def style_at(self, x: int) -> CellStyle | None:
         """Returns the style of the cell at index `x`.
 
         :param x: The index to look up.
@@ -376,30 +420,36 @@ class LineContents:
             longer line wraps onto the next line."""
         return (
             # pylint: disable=no-member
-            self.__proto.continuation ==
-            iterm2.api_pb2.LineContents.Continuation.Value(
-                "CONTINUATION_HARD_EOL"))
+            self.__proto.continuation
+            == api_pb2.LineContents.Continuation.Value("CONTINUATION_HARD_EOL")
+        )
 
 
 class ScreenContents:
     """Describes screen contents."""
-    def __init__(self, proto):
+
+    def __init__(self, proto: api_pb2.GetBufferResponse) -> None:
         self.__proto = proto
 
     @property
-    def windowed_coord_range(self) -> iterm2.util.WindowedCoordRange:
+    def windowed_coord_range(self) -> WindowedCoordRange:
         """The line number of the first line in this object."""
-        return iterm2.util.WindowedCoordRange(
-            iterm2.util.CoordRange(
-                iterm2.util.Point(
+        return WindowedCoordRange(
+            CoordRange(
+                Point(
                     self.__proto.windowed_coord_range.coord_range.start.x,
-                    self.__proto.windowed_coord_range.coord_range.start.y),
-                iterm2.util.Point(
+                    self.__proto.windowed_coord_range.coord_range.start.y,
+                ),
+                Point(
                     self.__proto.windowed_coord_range.coord_range.end.x,
-                    self.__proto.windowed_coord_range.coord_range.end.y)),
-            iterm2.util.Range(
+                    self.__proto.windowed_coord_range.coord_range.end.y,
+                ),
+            ),
+            Range(
                 self.__proto.windowed_coord_range.columns.location,
-                self.__proto.windowed_coord_range.columns.length))
+                self.__proto.windowed_coord_range.columns.length,
+            ),
+        )
 
     @property
     def number_of_lines(self) -> int:
@@ -416,13 +466,14 @@ class ScreenContents:
         return LineContents(self.__proto.contents[index])
 
     @property
-    def cursor_coord(self) -> iterm2.util.Point:
+    def cursor_coord(self) -> Point:
         """Returns the location of the cursor.
 
         :returns: A :class:`~iterm2.Point`"""
-        return iterm2.util.Point(self.__proto.cursor.x, self.__proto.cursor.y)
+        return Point(self.__proto.cursor.x, self.__proto.cursor.y)
 
     @property
+    @_deprecated("This field has been marked as deprecated using proto field options.")
     def number_of_lines_above_screen(self) -> int:
         """
         Returns the number of lines before the screen including scrollback
@@ -431,7 +482,7 @@ class ScreenContents:
         :returns: The number of lines ever received before the top line of the
             screen.
         """
-        return self.__proto.num_lines_above_screen
+        return self.__proto.num_lines_above_screen  # type: ignore
 
 
 class ScreenStreamer:
@@ -442,16 +493,21 @@ class ScreenStreamer:
 
     Don't create this yourself. Use Session.get_screen_streamer() instead. See
     its docstring for more info."""
-    def __init__(self, connection, session_id, want_contents=True):
-        assert session_id != "all"
-        self.connection = connection
-        self.session_id = session_id
-        self.want_contents = want_contents
-        self.future = None
-        self.token = None
 
-    async def __aenter__(self):
-        async def async_on_update(_connection, message):
+    def __init__(
+        self, connection: Connection, session_id: str, want_contents: bool = True
+    ) -> None:
+        assert session_id != "all"
+        self.connection: Connection = connection
+        self.session_id: str = session_id
+        self.want_contents: bool = want_contents
+        self.future: Future[api_pb2.ScreenUpdateNotification] | None = None
+        self.token: NotificationToken | None = None
+
+    async def __aenter__(self) -> Self:
+        async def async_on_update(
+            _connection: Connection, message: api_pb2.ScreenUpdateNotification
+        ):
             """Called on screen update. Saves the update message."""
             future = self.future
             if future is None:
@@ -459,25 +515,28 @@ class ScreenStreamer:
                 return
 
             self.future = None
-            if future is not None and not future.done():
+            if not future.done():
                 future.set_result(message)
 
-        self.token = (
-            await iterm2.notifications.
-            async_subscribe_to_screen_update_notification(
-                self.connection,
-                async_on_update,
-                self.session_id))
+        self.token = await async_subscribe_to_screen_update_notification(
+            self.connection, async_on_update, self.session_id
+        )
         return self
 
-    async def __aexit__(self, exc_type, exc, _tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: types.TracebackType | None,
+    ) -> None:
+        if self.token is None:
+            return
         try:
-            await iterm2.notifications.async_unsubscribe(
-                self.connection, self.token)
-        except iterm2.notifications.SubscriptionException:
+            await async_unsubscribe(self.connection, self.token)
+        except SubscriptionException:
             pass
 
-    async def async_get(self, style=False) -> typing.Union[None, ScreenContents]:
+    async def async_get(self, style: bool = False) -> ScreenContents | None:
         """
         Blocks until the screen contents change.
 
@@ -491,7 +550,7 @@ class ScreenStreamer:
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
-        future: asyncio.Future = asyncio.Future()
+        future: Future[api_pb2.ScreenUpdateNotification] = Future()
         self.future = future
         await self.future
         self.future = None
@@ -499,14 +558,13 @@ class ScreenStreamer:
         if not self.want_contents:
             return None
         # pylint: disable=no-member
-        result = await iterm2.rpc.async_get_screen_contents(
-            self.connection,
-            self.session_id,
-            None,
-            style)
-        if (result.get_buffer_response.status == iterm2.
-                api_pb2.GetBufferResponse.Status.Value("OK")):
+        result = await async_get_screen_contents(
+            self.connection, self.session_id, None, style
+        )
+        if result.get_buffer_response.status == api_pb2.GetBufferResponse.Status.Value(
+            "OK"
+        ):
             return ScreenContents(result.get_buffer_response)
-        raise iterm2.rpc.RPCException(
-            iterm2.api_pb2.GetBufferResponse.Status.Name(
-                result.get_buffer_response.status))
+        raise RPCException(
+            api_pb2.GetBufferResponse.Status.Name(result.get_buffer_response.status)
+        )

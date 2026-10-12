@@ -1,11 +1,17 @@
 """Provides a class to facilitate atomic transactions."""
 
-import typing
+from __future__ import annotations
 
-import iterm2.rpc
-import iterm2.connection
+from typing import TYPE_CHECKING
 
-CURRENT_TRANSACTION: typing.Optional['Transaction'] = None
+from .rpc import async_end_transaction, async_start_transaction
+
+if TYPE_CHECKING:
+    import types
+
+    from .connection import Connection
+
+gCURRENT_TRANSACTION: Transaction | None = None
 
 
 class Transaction:
@@ -27,26 +33,32 @@ class Transaction:
       async with iterm2.Transaction():
         do stuff
     """
-    def __init__(self, connection: iterm2.connection.Connection):
-        self.connection = connection
 
-    async def __aenter__(self):
+    def __init__(self, connection: Connection) -> None:
+        self.connection: Connection = connection
+
+    async def __aenter__(self) -> None:
         # pylint: disable=global-statement
-        global CURRENT_TRANSACTION
-        if not CURRENT_TRANSACTION:
-            CURRENT_TRANSACTION = self
+        global gCURRENT_TRANSACTION
+        if not gCURRENT_TRANSACTION:
+            gCURRENT_TRANSACTION = self
 
-        await iterm2.rpc.async_start_transaction(self.connection)
+        await async_start_transaction(self.connection)
 
-    async def __aexit__(self, exc_type, exc, _tb):
-        await iterm2.rpc.async_end_transaction(self.connection)
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: types.TracebackType | None,
+    ) -> None:
+        await async_end_transaction(self.connection)
 
         # pylint: disable=global-statement
-        global CURRENT_TRANSACTION
-        if CURRENT_TRANSACTION == self:
-            CURRENT_TRANSACTION = None
+        global gCURRENT_TRANSACTION
+        if gCURRENT_TRANSACTION == self:
+            gCURRENT_TRANSACTION = None
 
     @staticmethod
-    def current() -> typing.Optional['Transaction']:
+    def current() -> Transaction | None:
         """Returns the current transaction."""
-        return CURRENT_TRANSACTION
+        return gCURRENT_TRANSACTION

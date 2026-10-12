@@ -31,9 +31,12 @@ pylint: force
 
 iterm2/profile.py: force
 	./gen_profile.py > iterm2/profile.py
+	ruff format iterm2/profile.py
 
 iterm2/binding.py: force
 	./gen_binding.py > iterm2/binding.py
+	ruff format iterm2/binding.py
 
 iterm2/mainmenu.py: force
 	./gen_mainmenu.py > iterm2/mainmenu.py
+	ruff format iterm2/mainmenu.py

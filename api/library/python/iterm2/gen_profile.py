@@ -3,19 +3,19 @@
 # These have light/dark variants
 base_colors_schema = [
     ("foreground_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the foreground color.",
      None,
      "Foreground Color"),
 
     ("background_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the background color.",
      None,
      "Background Color"),
 
     ("bold_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the bold text color.",
      None,
      "Bold Color"),
@@ -57,127 +57,127 @@ base_colors_schema = [
      "Brighten Bold Text"),
 
     ("link_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the link color.",
      None,
      "Link Color"),
 
     ("selection_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the selection background color.",
      None,
      "Selection Color"),
 
     ("selected_text_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the selection text color.",
      None,
      "Selected Text Color"),
 
     ("cursor_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the cursor color.",
      None,
      "Cursor Color"),
 
     ("cursor_text_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the cursor text color.",
      None,
      "Cursor Text Color"),
 
     ("ansi_0_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 0 color.",
      None,
      "Ansi 0 Color"),
 
     ("ansi_1_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 1 color.",
      None,
      "Ansi 1 Color"),
 
     ("ansi_2_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 2 color.",
      None,
      "Ansi 2 Color"),
 
     ("ansi_3_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 3 color.",
      None,
      "Ansi 3 Color"),
 
     ("ansi_4_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 4 color.",
      None,
      "Ansi 4 Color"),
 
     ("ansi_5_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 5 color.",
      None,
      "Ansi 5 Color"),
 
     ("ansi_6_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 6 color.",
      None,
      "Ansi 6 Color"),
 
     ("ansi_7_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 7 color.",
      None,
      "Ansi 7 Color"),
 
     ("ansi_8_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 8 color.",
      None,
      "Ansi 8 Color"),
 
     ("ansi_9_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 9 color.",
      None,
      "Ansi 9 Color"),
 
     ("ansi_10_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 10 color.",
      None,
      "Ansi 10 Color"),
 
     ("ansi_11_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 11 color.",
      None,
      "Ansi 11 Color"),
 
     ("ansi_12_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 12 color.",
      None,
      "Ansi 12 Color"),
 
     ("ansi_13_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 13 color.",
      None,
      "Ansi 13 Color"),
 
     ("ansi_14_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 14 color.",
      None,
      "Ansi 14 Color"),
 
     ("ansi_15_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the ANSI 15 color.",
      None,
      "Ansi 15 Color"),
@@ -195,7 +195,7 @@ base_colors_schema = [
      "Minimum Contrast"),
 
     ("tab_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the tab color.",
      None,
      "Tab Color"),
@@ -207,7 +207,7 @@ base_colors_schema = [
      "Use Tab Color"),
 
     ("underline_color",
-     "typing.Optional['iterm2.color.Color']",
+     "Color | None",
      "the underline color.",
      None,
      "Underline Color"),
@@ -231,13 +231,13 @@ base_colors_schema = [
      "Use Cursor Guide"),
 
     ("cursor_guide_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the cursor guide color. The alpha value is respected.",
      None,
      "Cursor Guide Color"),
 
     ("badge_color",
-     "'iterm2.color.Color'",
+     "Color",
      "the badge color. The alpha value is respected.",
      None,
      "Badge Color"),
@@ -655,13 +655,13 @@ schema = [
      "Right Option Key Sends"),
 
     ("triggers",
-     "typing.List[typing.Dict[str, typing.Any]]",
+     "list[dict[str, Any]]",
      "the triggers.",
      "Value is an encoded trigger. Use iterm2.decode_trigger to convert from an encoded trigger to an object. Trigger objects can be encoded using the encode property.",
      "Triggers"),
 
     ("smart_selection_rules",
-     "typing.List[typing.Dict[str, typing.Any]]",
+     "list[dict[str, Any]]",
      "the smart selection rules.",
      "The value is a list of dicts of smart selection rules (currently undocumented)",
      "Smart Selection Rules"),
@@ -673,13 +673,13 @@ schema = [
      "Smart Selection Actions Use Interpolated Strings"),
 
     ("semantic_history",
-     "typing.Dict[str, typing.Any]",
+     "dict[str, Any]",
      "the semantic history prefs.",
      None,
      "Semantic History"),
 
     ("automatic_profile_switching_rules",
-     "typing.List[str]",
+     "list[str]",
      "the automatic profile switching rules.",
      "Value is a list of strings, each giving a rule.",
      "Bound Hosts"),
@@ -745,18 +745,18 @@ schema = [
     ("background_image_location",
      "str",
      "the path to the background image.",
-     "The value is a Path.",
+     None,
      "Background Image Location"),
 
 
     ("key_mappings",
-     "typing.Dict[str, typing.Any]",
+     "dict[str, Any]",
      "the keyboard shortcuts.",
      "The value is a Dictionary mapping keystroke to action. You can convert between the values in this dictionary and a :class:`~iterm2.KeyBinding` using `iterm2.decode_key_binding`",
      "Keyboard Map"),
 
     ("touchbar_mappings",
-     "typing.Dict[str, typing.Any]",
+     "dict[str, Any]",
      "the touchbar actions.",
      "The value is a Dictionary mapping touch bar item to action",
      "Touch Bar Map"),
@@ -840,7 +840,7 @@ schema = [
     # title_components and title_function are special
 
     ("custom_window_title",
-     "typing.Optional[str]",
+     "str | None",
      "the custom window title.",
      """
      This will only be used if use_custom_window_title is True.
@@ -939,30 +939,44 @@ def p(message, indent, subs):
                     candidate = " ".join(selected)
                     print(f'{prefix}{candidate}')
 
-POD = ["str", "bool", "float", "int", "BackgroundImageMode", "CursorType", "ThinStrokes", "UnicodeNormalization", "CharacterEncoding", "OptionKeySends", "InitialWorkingDirectory", "IconMode", "typing.Optional[str]"]
+# Setters whose docs differ from the getter's: name -> (first line, detailed).
+SETTER_DOCS = {
+    "background_image_location": (
+        "Sets or clears the path to a background image.",
+        """The value is a string with the path to the image file,
+     or an empty string to clear the setting.
+
+     :param value: A str"""),
+}
+
+def setter_docs(name, summary, detailed):
+    return SETTER_DOCS.get(name, (f'Sets {summary}', detailed))
+
+POD = ["str", "bool", "float", "int", "BackgroundImageMode", "CursorType", "ThinStrokes", "UnicodeNormalization", "CharacterEncoding", "OptionKeySends", "InitialWorkingDirectory", "IconMode", "str | None"]
 def generate_local_write_only_profile():
     for (name, type, summary, detailed, key) in schema:
-        if type in ["'iterm2.color.Color'", "typing.Optional['iterm2.color.Color']"]:
+        if type in ["Color", "Color | None"]:
             setter = "_color_set"
-        elif type in POD or type.startswith("typing.List[") or type.startswith("typing.Dict["):
+        elif type in POD or type.startswith("list[") or type.startswith("dict["):
             setter = "_simple_set"
         else:
             print("Unrecognized type " + type)
             assert(False)
-        print(f'    def set_{name}(self, value: {type}):')
+        print(f'    def set_{name}(self, value: {type}) -> None:')
         print(f'        """')
         subs = {"accessor": "set_"}
+        first_line, detailed = setter_docs(name, summary, detailed)
+        p(first_line, 8, subs)
         if detailed:
-            p(f'Sets {summary}', 8, subs)
             print("")
             p(f'{detailed}', 8, subs)
-        else:
-            p(f'Sets {summary}', 8, subs)
         if not detailed or ":param" not in detailed:
             print("")
             type_link = type
-            if type == "'iterm2.color.Color'":
+            if type == "Color":
                 type_link = ":class:`Color`"
+            elif type == "Color | None":
+                type_link = ":class:`Color` or `None`"
             elif type == "BackgroundImageMode":
                 type_link = "`BackgroundImageMode`"
             if type_link[0] in "AEIOUaeiou":
@@ -980,26 +994,28 @@ def generate_local_write_only_profile():
 
 def generate_write_only_profile():
     for (name, type, summary, detailed, key) in schema:
-        if type in ["'iterm2.color.Color'", "typing.Optional['iterm2.color.Color']"]:
+        if type in ["Color", "Color | None"]:
             setter = "_async_color_set"
-        elif type in POD or type.startswith("typing.List[") or type.startswith("typing.Dict["):
+        elif type in POD or type.startswith("list[") or type.startswith("dict["):
             setter = "_async_simple_set"
         else:
             print("Unrecognized type " + type)
             assert(False)
-        print(f'    async def async_set_{name}(self, value: {type}):')
+        print(f'    async def async_set_{name}(self, value: {type}) -> None:')
         subs = {"accessor": "async_set_"}
         print(f'        """')
+        first_line, detailed = setter_docs(name, summary, detailed)
+        p(first_line, 8, subs)
         if detailed:
-            p(f'Sets {summary}', 8, subs)
             print("")
             p(f'{detailed}', 8, subs)
         else:
-            p(f'Sets {summary}', 8, subs)
             print("")
             type_link = type
-            if type == "'iterm2.color.Color'":
+            if type == "Color":
                 type_link = ":class:`Color`"
+            elif type == "Color | None":
+                type_link = ":class:`Color` or `None`"
             elif type == "BackgroundImageMode":
                 type_link = "`BackgroundImageMode`"
             if type_link[0] in "AEIOUaeiou":
@@ -1018,19 +1034,30 @@ def generate_write_only_profile():
 def remove_params(string):
     return "\n".join(filter(lambda x: ":param" not in x, string.split("\n")))
 
+# The getters return the raw stored value rather than an instance of the enum.
+GETTER_RETURN_TYPES = {
+    "CharacterEncoding": "int",
+    "CursorType": "int",
+    "IconMode": "int",
+    "OptionKeySends": "int",
+    "ThinStrokes": "int",
+    "UnicodeNormalization": "int",
+    "InitialWorkingDirectory": "str",
+}
+
 def generate_profile():
     for (name, type, summary, detailed, key) in schema:
         # These keys are optional booleans but only for getters. I don't know why but I don't want
         # to change it until I understand it.
         if key in ["Initial Use Transparency", "Show Status Bar", "Use libtickit protocol", "Triggers Use Interpolated Strings", "Left Option Key Changeable", "Right Option Key Changeable", "Open Password Manager Automatically"]:
-            type = "typing.Optional[bool]"
+            type = "bool | None"
 
-        if type in ["'iterm2.color.Color'", "typing.Optional['iterm2.color.Color']"]:
+        if type in ["Color", "Color | None"]:
             getter = "get_color_with_key"
-        elif type == "typing.Optional[bool]":
+        elif type == "bool | None":
             # I don't know why this is necessary
             getter = "_get_optional_bool"
-        elif type in POD or type.startswith("typing.List[") or type.startswith("typing.Dict["):
+        elif type in POD or type.startswith("list[") or type.startswith("dict["):
             getter = "_simple_get"
         else:
             print("Unrecognized type " + type)
@@ -1041,8 +1068,15 @@ def generate_profile():
             wrapper = "bool"
         else:
             wrapper = None
+        base_type = type[:-len(" | None")] if type.endswith(" | None") else type
+        return_type = GETTER_RETURN_TYPES.get(base_type, base_type)
+        # bool(None) is False, so the Draw Powerline Glyphs getter never
+        # returns None. Every other getter returns None when the key is absent.
+        can_be_none = wrapper != "bool"
+        if can_be_none:
+            return_type += " | None"
         print(f'    @property')
-        print(f'    def {name}(self) -> {type}:')
+        print(f'    def {name}(self) -> {return_type}:')
         subs = {"accessor": ""}
         print(f'        """')
         p(f'Returns {summary}', 8, subs)
@@ -1051,19 +1085,26 @@ def generate_profile():
             p(f'{remove_params(detailed)}', 8, subs)
             print("")
 
-        type_link = type
-        if type == "'iterm2.color.Color'":
+        type_link = base_type
+        if base_type == "Color":
             type_link = ":class:`Color`"
-        elif type == "BackgroundImageMode":
+        elif base_type == "BackgroundImageMode":
             type_link = "`BackgroundImageMode`"
         if type_link[0] in "AEIOUaeiou":
             article = "An"
         else:
             article = "A"
+        if can_be_none:
+            type_link += " or `None`"
         print(f'        :returns: {article} {type_link}')
         print(f'        """')
-        if wrapper:
-            print(f'        return {wrapper}(self.{getter}("{key}"))')
+        if wrapper == "bool":
+            print(f'        return bool(self.{getter}("{key}"))')
+        elif wrapper:
+            print(f'        value = self.{getter}("{key}")')
+            print(f'        if value is None:')
+            print(f'            return None')
+            print(f'        return {wrapper}(value)')
         else:
             print(f'        return self.{getter}("{key}")')
         print("")

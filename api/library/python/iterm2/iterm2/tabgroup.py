@@ -1,10 +1,16 @@
 """Provides a class that represents an iTerm2 tab group."""
-import typing
 
-import iterm2.capabilities
-import iterm2.color
-import iterm2.rpc
-import iterm2.util
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from .capabilities import check_supports_tab_groups
+from .rpc import async_invoke_app_function
+from .util import invocation_string
+
+if TYPE_CHECKING:
+    from .color import Color
+    from .connection import Connection
 
 
 class TabGroup:
@@ -24,27 +30,28 @@ class TabGroup:
     """
 
     def __init__(
-            self,
-            connection,
-            group_id: str,
-            name: str,
-            color: typing.Optional[iterm2.color.Color],
-            collapsed: bool):
-        self.connection = connection
+        self,
+        connection: Connection,
+        group_id: str,
+        name: str,
+        color: Color | None,
+        collapsed: bool,
+    ) -> None:
+        self.connection: Connection = connection
         self.__group_id = group_id
         self.__name = name
         self.__color = color
         self.__collapsed = collapsed
 
     def __repr__(self):
-        return "<TabGroup id=%s name=%s>" % (self.__group_id, repr(self.__name))
+        return f"<TabGroup id={self.__group_id} name={self.__name!r}>"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, TabGroup):
             return NotImplemented
         return self.__group_id == other.group_id
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.__group_id)
 
     @property
@@ -67,7 +74,7 @@ class TabGroup:
         return self.__name
 
     @property
-    def color(self) -> typing.Optional[iterm2.color.Color]:
+    def color(self) -> Color | None:
         """
         :returns: The group's color, or `None` if it has none.
         """
@@ -89,13 +96,13 @@ class TabGroup:
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
-        iterm2.capabilities.check_supports_tab_groups(self.connection)
-        invocation = iterm2.util.invocation_string(
-            "iterm2.set_tab_group_name",
-            {"group_id": self.__group_id, "name": name})
-        await iterm2.rpc.async_invoke_app_function(self.connection, invocation)
+        check_supports_tab_groups(self.connection)
+        invocation = invocation_string(
+            "iterm2.set_tab_group_name", {"group_id": self.__group_id, "name": name}
+        )
+        await async_invoke_app_function(self.connection, invocation)
 
-    async def async_set_color(self, color: iterm2.color.Color) -> None:
+    async def async_set_color(self, color: Color) -> None:
         """
         Changes the group's color. The new color applies to every member tab.
 
@@ -103,11 +110,12 @@ class TabGroup:
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
-        iterm2.capabilities.check_supports_tab_groups(self.connection)
-        invocation = iterm2.util.invocation_string(
+        check_supports_tab_groups(self.connection)
+        invocation = invocation_string(
             "iterm2.set_tab_group_color",
-            {"group_id": self.__group_id, "color": color.hex})
-        await iterm2.rpc.async_invoke_app_function(self.connection, invocation)
+            {"group_id": self.__group_id, "color": color.hex},
+        )
+        await async_invoke_app_function(self.connection, invocation)
 
     async def async_set_collapsed(self, collapsed: bool) -> bool:
         """
@@ -123,9 +131,9 @@ class TabGroup:
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
-        iterm2.capabilities.check_supports_tab_groups(self.connection)
-        invocation = iterm2.util.invocation_string(
+        check_supports_tab_groups(self.connection)
+        invocation = invocation_string(
             "iterm2.set_tab_group_collapsed",
-            {"group_id": self.__group_id, "collapsed": 1 if collapsed else 0})
-        return await iterm2.rpc.async_invoke_app_function(
-            self.connection, invocation)
+            {"group_id": self.__group_id, "collapsed": 1 if collapsed else 0},
+        )
+        return await async_invoke_app_function(self.connection, invocation)

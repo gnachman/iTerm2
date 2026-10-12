@@ -1,8 +1,28 @@
 """Provides hooks for session life-cycle events."""
-import asyncio
 
-import iterm2.connection
-import iterm2.notifications
+from __future__ import annotations
+
+from asyncio import Queue, Task, create_task, gather
+from collections.abc import Callable, Coroutine
+from typing import TYPE_CHECKING, Any
+
+from . import api_pb2
+from .notifications import (
+    SubscriptionException,
+    async_subscribe_to_layout_change_notification,
+    async_subscribe_to_new_session_notification,
+    async_subscribe_to_terminate_session_notification,
+    async_unsubscribe,
+)
+from .session import Session
+
+if TYPE_CHECKING:
+    import types
+    from typing import Self
+
+    from .app import App
+    from .connection import Connection
+    from .notifications import NotificationToken
 
 
 class EachSessionOnceMonitor:
@@ -17,14 +37,17 @@ class EachSessionOnceMonitor:
     :param connection: The :class:`~iterm2.connection.Connection` to use.
     :param app: An instance of :class:`~iterm2.app.App`.
     """
-    def __init__(self, app: 'iterm2.app.App'):
+
+    def __init__(self, app: App) -> None:
         self.__connection = app.connection
         self.__app = app
-        self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue()
+        self.__token: NotificationToken | None = None
+        self.__queue: Queue[api_pb2.NewSessionNotification | Session] = Queue()
 
     @staticmethod
-    async def async_foreach_session_create_task(app, task):
+    async def async_foreach_session_create_task(
+        app: App, task: Callable[[str], Coroutine[Any, Any, Any]]
+    ) -> None:
         """
         Create a task for each session. Cancels the task when the session
         terminates.
@@ -50,13 +73,13 @@ class EachSessionOnceMonitor:
             await (iterm2.EachSessionOnceMonitor.
                 async_foreach_session_create_task(app, my_task))
         """
-        tasks = {}
+        tasks: dict[str, Task[Any]] = {}
 
         async def each_mon():
             async with EachSessionOnceMonitor(app) as mon:
                 while True:
                     session_id = await mon.async_get()
-                    tasks[session_id] = asyncio.create_task(task(session_id))
+                    tasks[session_id] = create_task(task(session_id))
 
         async def termination_mon():
             async with SessionTerminationMonitor(app.connection) as mon:
@@ -66,18 +89,19 @@ class EachSessionOnceMonitor:
                         task = tasks[session_id]
                         del tasks[session_id]
                         task.cancel()
-        await asyncio.gather(each_mon(), termination_mon())
 
-    async def __aenter__(self):
-        async def callback(_connection, message):
+        await gather(each_mon(), termination_mon())
+
+    async def __aenter__(self) -> Self:
+        async def callback(
+            _connection: Connection, message: api_pb2.NewSessionNotification
+        ):
             """Called when a new session is created."""
             await self.__queue.put(message)
 
-        self.__token = (
-            await iterm2.notifications.
-            async_subscribe_to_new_session_notification(
-                self.__connection,
-                callback))
+        self.__token = await async_subscribe_to_new_session_notification(
+            self.__connection, callback
+        )
 
         for window in self.__app.terminal_windows:
             for tab in window.tabs:
@@ -92,11 +116,17 @@ class EachSessionOnceMonitor:
         session_id = result.session_id
         return session_id
 
-    async def __aexit__(self, exc_type, exc, _tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: types.TracebackType | None,
+    ) -> None:
+        if self.__token is None:
+            return
         try:
-            await iterm2.notifications.async_unsubscribe(
-                self.__connection, self.__token)
-        except iterm2.notifications.SubscriptionException:
+            await async_unsubscribe(self.__connection, self.__token)
+        except SubscriptionException:
             pass
 
 
@@ -120,21 +150,22 @@ class SessionTerminationMonitor:
                   session_id = await mon.async_get()
                   print("Session {} closed".format(session_id))
     """
-    def __init__(self, connection: iterm2.connection.Connection):
-        self.__connection = connection
-        self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue()
 
-    async def __aenter__(self):
-        async def callback(_connection, message):
+    def __init__(self, connection: Connection) -> None:
+        self.__connection = connection
+        self.__token: NotificationToken | None = None
+        self.__queue: Queue[str] = Queue()
+
+    async def __aenter__(self) -> Self:
+        async def callback(
+            _connection: Connection, message: api_pb2.TerminateSessionNotification
+        ):
             """Called when a session terminates."""
             await self.__queue.put(message.session_id)
 
-        self.__token = (
-            await iterm2.notifications.
-            async_subscribe_to_terminate_session_notification(
-                self.__connection,
-                callback))
+        self.__token = await async_subscribe_to_terminate_session_notification(
+            self.__connection, callback
+        )
         return self
 
     async def async_get(self) -> str:
@@ -144,12 +175,17 @@ class SessionTerminationMonitor:
         session_id = await self.__queue.get()
         return session_id
 
-    async def __aexit__(self, exc_type, exc, _tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: types.TracebackType | None,
+    ) -> None:
+        if self.__token is None:
+            return
         try:
-            await iterm2.notifications.async_unsubscribe(
-                self.__connection,
-                self.__token)
-        except iterm2.notifications.SubscriptionException:
+            await async_unsubscribe(self.__connection, self.__token)
+        except SubscriptionException:
             pass
 
 
@@ -159,105 +195,118 @@ class LayoutChangeMonitor:
 
     :param connection: The :class:`~iterm2.connection.Connection` to use.
     """
-    def __init__(self, connection: iterm2.Connection):
-        self.__connection = connection
-        self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue()
 
-    async def __aenter__(self):
-        async def callback(_connection, message):
+    def __init__(self, connection: Connection) -> None:
+        self.__connection = connection
+        self.__token: NotificationToken | None = None
+        self.__queue: Queue[api_pb2.LayoutChangedNotification] = Queue()
+
+    async def __aenter__(self) -> Self:
+        async def callback(
+            _connection: Connection, message: api_pb2.LayoutChangedNotification
+        ):
             """Called when the layout changes."""
             await self.__queue.put(message)
 
-        self.__token = (
-            await iterm2.notifications.
-            async_subscribe_to_layout_change_notification(
-                self.__connection, callback))
+        self.__token = await async_subscribe_to_layout_change_notification(
+            self.__connection, callback
+        )
         return self
 
-    async def async_get(self):
+    async def async_get(self) -> None:
         """
-        Blocks until the layout changes.
+         Blocks until the layout changes.
 
-        Will block until any of the following occurs:
+         Will block until any of the following occurs:
 
-        * A session moves from one tab to another (including moving into its
-          own window).
-        * The relative position of sessions within a tab changes.
-        * A tab moves from one window to another.
-        * The order of tabs within a window changes.
-        * A session is buried or disintered.
-        * A session or window is resized.
+         * A session moves from one tab to another (including moving into its
+           own window).
+         * The relative position of sessions within a tab changes.
+         * A tab moves from one window to another.
+         * The order of tabs within a window changes.
+         * A session is buried or disintered.
+         * A session or window is resized.
 
-        Use :class:`~iterm2.App` to examine the updated application state.
+         Use :class:`~iterm2.App` to examine the updated application state.
 
-       Example:
+        Example:
 
-       .. code-block:: python
+        .. code-block:: python
 
-           async with iterm2.LayoutChangeMonitor(connection) as mon:
-               while True:
-                   await mon.async_get()
-                   print("layout changed")
+            async with iterm2.LayoutChangeMonitor(connection) as mon:
+                while True:
+                    await mon.async_get()
+                    print("layout changed")
 
         """
         await self.__queue.get()
 
-    async def __aexit__(self, exc_type, exc, _tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: types.TracebackType | None,
+    ) -> None:
+        if self.__token is None:
+            return
         try:
-            await iterm2.notifications.async_unsubscribe(
-                self.__connection, self.__token)
-        except iterm2.notifications.SubscriptionException:
+            await async_unsubscribe(self.__connection, self.__token)
+        except SubscriptionException:
             pass
 
 
 class NewSessionMonitor:
     """Watches for the creation of new sessions.
 
-      :param connection: The :class:`~iterm2.connection.Connection` to use.
+    :param connection: The :class:`~iterm2.connection.Connection` to use.
+
+    .. seealso::
+        * Example ":ref:`colorhost_example`"
+        * Example ":ref:`random_color_example`"
+
+    Example:
+
+    .. code-block:: python
+
+        async with iterm2.NewSessionMonitor(connection) as mon:
+            while True:
+                session_id = await mon.async_get()
+                print("Session ID {} created".format(session_id))
 
       .. seealso::
-          * Example ":ref:`colorhost_example`"
-          * Example ":ref:`random_color_example`"
+          * Example ":ref:`autoalert`"
+    """
 
-      Example:
-
-      .. code-block:: python
-
-          async with iterm2.NewSessionMonitor(connection) as mon:
-              while True:
-                  session_id = await mon.async_get()
-                  print("Session ID {} created".format(session_id))
-
-        .. seealso::
-            * Example ":ref:`autoalert`"
-      """
-    def __init__(self, connection: iterm2.Connection):
+    def __init__(self, connection: Connection) -> None:
         self.__connection = connection
-        self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue()
+        self.__token: NotificationToken | None = None
+        self.__queue: Queue[str] = Queue()
 
-    async def __aenter__(self):
-        async def callback(_connection, message):
+    async def __aenter__(self) -> Self:
+        async def callback(
+            _connection: Connection, message: api_pb2.NewSessionNotification
+        ):
             """Called when a new session is created."""
-            await self.__queue.put(message)
+            await self.__queue.put(message.session_id)
 
-        self.__token = (
-            await iterm2.notifications.
-            async_subscribe_to_new_session_notification(
-                self.__connection,
-                callback))
+        self.__token = await async_subscribe_to_new_session_notification(
+            self.__connection, callback
+        )
         return self
 
     async def async_get(self) -> str:
         """Returns the new session ID."""
-        result = await self.__queue.get()
-        session_id = result.session_id
-        return session_id
+        return await self.__queue.get()
 
-    async def __aexit__(self, exc_type, exc, _tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        _tb: types.TracebackType | None,
+    ) -> None:
+        if self.__token is None:
+            return
         try:
-            await iterm2.notifications.async_unsubscribe(
-                self.__connection, self.__token)
-        except iterm2.notifications.SubscriptionException:
+            await async_unsubscribe(self.__connection, self.__token)
+        except SubscriptionException:
             pass

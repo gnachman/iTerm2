@@ -3,29 +3,61 @@
 This module is the starting point for getting access to windows and other
 application-global data.
 """
+
+from __future__ import annotations
+
 import asyncio
 import base64
 import json
-import typing
+from collections.abc import Generator, Iterable, Mapping
+from typing import TYPE_CHECKING, Any
 
-import iterm2.broadcast
-import iterm2.capabilities
-import iterm2.connection
-import iterm2.notifications
-import iterm2.rpc
-import iterm2.session
-import iterm2.tab
-import iterm2.tmux
-import iterm2.window
+from . import api_pb2
+from . import tmux as _tmux
+from . import window as _window
+from .broadcast import BroadcastDomain
+from .capabilities import (
+    check_supports_apply_layout,
+    check_supports_apply_layout_new_session,
+    check_supports_move_session,
+)
+from .connection import add_disconnect_callback
+from .notifications import (
+    async_subscribe_to_broadcast_domains_change_notification,
+    async_subscribe_to_focus_change_notification,
+    async_subscribe_to_layout_change_notification,
+    async_subscribe_to_new_session_notification,
+    async_subscribe_to_terminate_session_notification,
+)
+from .rpc import (
+    ACTIVATE_IGNORING_OTHER_APPS,
+    ACTIVATE_RAISE_ALL_WINDOWS,
+    RPCException,
+    async_activate,
+    async_get_broadcast_domains,
+    async_get_focus_info,
+    async_list_sessions,
+    async_variable,
+)
+from .rpc import async_invoke_function as _rpc_async_invoke_function
+from .session import Session
+from .tab import Tab
+from .util import invocation_string
 
+# CreateWindowException is re-exported for backward compatibility. It was
+# moved to the window submodule, and is a public API.
+from .window import Window
 
-# For backward compatibility. This was moved to the window submodule, and is a
-# public API.
-CreateWindowException = iterm2.window.CreateWindowException
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from .connection import Connection
+    from .notifications import NotificationToken
+
 
 async def async_get_app(
-        connection: iterm2.connection.Connection,
-        create_if_needed: bool = True) -> typing.Union[None, 'App']:
+    connection: Connection, create_if_needed: bool = True
+) -> App | None:
     """Returns the app singleton, creating it if needed.
 
     :param connection: The connection to iTerm2.
@@ -37,44 +69,49 @@ async def async_get_app(
     if App.instance is None:
         if create_if_needed:
             App.instance = await App.async_construct(connection)
-            iterm2.connection.add_disconnect_callback(invalidate_app)
+            add_disconnect_callback(invalidate_app)
     else:
         await App.instance.async_refresh()
     return App.instance
 
-def invalidate_app():
+
+def invalidate_app() -> None:
     App.instance = None
 
 
-def _node_has_new_session(node: typing.Any) -> bool:
+def _node_has_new_session(node: Mapping[str, Any]) -> bool:
     if not isinstance(node, dict):
         return False
     if "new_session" in node:
         return True
-    return any(_node_has_new_session(child)
-               for child in node.get("children", []))
+    children: list[Any] = node.get("children", [])
+    assert isinstance(children, list)
+    return any(_node_has_new_session(child) for child in children)
 
 
-def _spec_has_new_session(spec: typing.Dict[str, typing.Any]) -> bool:
+def _spec_has_new_session(spec: dict[str, Any]) -> bool:
     """True if any node in the spec's tab layouts is a new_session leaf.
     Used to gate the capability check so existing callers that only
     reshape live sessions don't need a newer iTerm2."""
-    if not isinstance(spec, dict):
-        return False
-    return any(_node_has_new_session(tab.get("root"))
-               for tab in spec.get("tabs", []))
+    return any(_node_has_new_session(tab.get("root")) for tab in spec.get("tabs", []))
+
+
+async def _async_get_app_as_delegate(connection: Connection) -> App:
+    app = await async_get_app(connection)
+    if app is None:
+        # Unreachable: async_get_app creates the app when create_if_needed is
+        # True, which is the default.
+        raise RuntimeError("Unable to create the App instance")
+    return app
+
 
 # See note in tmux.async_get_tmux_connections()
-iterm2.tmux.DELEGATE_FACTORY = async_get_app  # type: ignore
-iterm2.window.DELEGATE_FACTORY = async_get_app  # type: ignore
+_tmux.gDELEGATE_FACTORY = _async_get_app_as_delegate
+_window.gDELEGATE_FACTORY = _async_get_app_as_delegate
 
 
 # pylint: disable=too-many-public-methods
-class App(
-        iterm2.session.Session.Delegate,
-        iterm2.tab.Tab.Delegate,
-        iterm2.tmux.Delegate,
-        iterm2.window.Window.Delegate):
+class App(Session.Delegate, Tab.Delegate, _tmux.Delegate, Window.Delegate):
     """Represents the application.
 
     Stores and provides access to app-global state. Holds a collection of
@@ -83,27 +120,29 @@ class App(
     This object keeps itself up to date by getting notifications when sessions,
     tabs, or windows change.
     """
-    instance: typing.Union[None, 'App'] = None
+
+    instance: App | None = None
 
     @staticmethod
-    async def async_construct(
-            connection: iterm2.connection.Connection) -> 'App':
+    async def async_construct(connection: Connection) -> App:
         """Don't use this directly. Use :func:`async_get_app()`.
 
         Use this to construct a new hierarchy instead of __init__.
         This exists only because __init__ can't be async.
         """
-        response = await iterm2.rpc.async_list_sessions(connection)
+        response = await async_list_sessions(connection)
         list_sessions_response = response.list_sessions_response
         windows = App._windows_from_list_sessions_response(
-            connection, list_sessions_response)
+            connection, list_sessions_response
+        )
         buried_sessions = App._buried_sessions_from_list_sessions_response(
-            connection, list_sessions_response)
+            connection, list_sessions_response
+        )
         app = App(connection, windows, buried_sessions)
-        iterm2.session.Session.delegate = app
-        iterm2.tab.Tab.delegate = app
-        iterm2.window.Window.delegate = app
-        iterm2.tmux.DELEGATE = app
+        Session.delegate = app
+        Tab.delegate = app
+        Window.delegate = app
+        _tmux.gDELEGATE = app
 
         # pylint: disable=protected-access
         await app._async_listen()
@@ -112,17 +151,22 @@ class App(
         await app.async_refresh_broadcast_domains()
         return app
 
-    def __init__(self, connection, windows, buried_sessions):
+    def __init__(
+        self,
+        connection: Connection,
+        windows: list[Window],
+        buried_sessions: list[Session],
+    ) -> None:
         """Do not call this directly. Use App.construct() instead."""
-        self.connection = connection
+        self.connection: Connection = connection
         self.__terminal_windows = windows
         self.__buried_sessions = buried_sessions
-        self.tokens = []
-        self.__broadcast_domains = []
+        self.tokens: list[NotificationToken] = []
+        self.__broadcast_domains: list[BroadcastDomain] = []
 
         # None in these fields means unknown. Notifications will update them.
-        self.app_active = None
-        self.current_terminal_window_id = None
+        self.app_active: bool | None = None
+        self.current_terminal_window_id: str | None = None
 
         # Guards against unbounded recursion in async_refresh. A focus
         # notification that references a tab or session absent from the current
@@ -133,13 +177,12 @@ class App(
         self._refreshing = False
         # The task running the refresh in flight, and an event set when it
         # finishes, so a refresh from another task can wait for it.
-        self._refresh_task: typing.Optional[asyncio.Task] = None
-        self._refresh_finished: typing.Optional[asyncio.Event] = None
+        self._refresh_task: asyncio.Task[Any] | None = None
+        self._refresh_finished: asyncio.Event | None = None
 
     async def async_activate(
-            self,
-            raise_all_windows: bool = True,
-            ignoring_other_apps: bool = False) -> None:
+        self, raise_all_windows: bool = True, ignoring_other_apps: bool = False
+    ) -> None:
         """Activate the app, giving it keyboard focus.
 
         :param raise_all_windows: Raise all windows if True, or only the key
@@ -147,37 +190,39 @@ class App(
         :param ignoring_other_apps: If True, activate even if the user
             interacts with another app after the call.
         """
-        opts = []
+        opts: list[int] = []
         if raise_all_windows:
-            opts.append(iterm2.rpc.ACTIVATE_RAISE_ALL_WINDOWS)
+            opts.append(ACTIVATE_RAISE_ALL_WINDOWS)
         if ignoring_other_apps:
-            opts.append(iterm2.rpc.ACTIVATE_IGNORING_OTHER_APPS)
-        await iterm2.rpc.async_activate(
-            self.connection,
-            False,
-            False,
-            False,
-            activate_app_opts=opts)
+            opts.append(ACTIVATE_IGNORING_OTHER_APPS)
+        await async_activate(
+            self.connection, False, False, False, activate_app_opts=opts
+        )
 
     @staticmethod
-    def _windows_from_list_sessions_response(connection, response):
-        return list(
-            filter(
-                lambda x: x,
-                map(lambda window: iterm2.window.Window.create_from_proto(
-                    connection, window),
-                    response.windows)))
+    def _windows_from_list_sessions_response(
+        connection: Connection, response: api_pb2.ListSessionsResponse
+    ) -> list[Window]:
+        return [
+            w
+            for w in [
+                Window.create_from_proto(connection, window)
+                for window in response.windows
+            ]
+            if w is not None
+        ]
 
     @staticmethod
-    def _buried_sessions_from_list_sessions_response(connection, response):
+    def _buried_sessions_from_list_sessions_response(
+        connection: Connection, response: api_pb2.ListSessionsResponse
+    ):
         """
         Create a list of Session objects representing buried sessions from a
         protobuf.
         """
-        sessions = map(
-            lambda summary: iterm2.session.Session(
-                connection, None, summary),
-            response.buried_sessions)
+        sessions = (
+            Session(connection, None, summary) for summary in response.buried_sessions
+        )
         return list(sessions)
 
     def pretty_str(self) -> str:
@@ -189,11 +234,11 @@ class App(
             session += window.pretty_str(indent="")
         return session
 
-    def _search_for_session_id(self, session_id, include_buried):
+    def _search_for_session_id(self, session_id: str, include_buried: bool):
         if session_id == "active":
-            return iterm2.session.Session.active_proxy(self.connection)
+            return Session.active_proxy(self.connection)
         if session_id == "all":
-            return iterm2.session.Session.all_proxy(self.connection)
+            return Session.all_proxy(self.connection)
 
         for window in self.terminal_windows:
             for tab in window.tabs:
@@ -207,14 +252,14 @@ class App(
                     return session
         return None
 
-    def _search_for_tab_id(self, tab_id):
+    def _search_for_tab_id(self, tab_id: str):
         for window in self.terminal_windows:
             for tab in window.tabs:
                 if tab_id == tab.tab_id:
                     return tab
         return None
 
-    def _search_for_window_id(self, window_id):
+    def _search_for_window_id(self, window_id: str):
         for window in self.terminal_windows:
             if window_id == window.window_id:
                 return window
@@ -222,7 +267,7 @@ class App(
 
     async def async_refresh_focus(self) -> None:
         """Updates state about which objects have focus."""
-        focus_info = await iterm2.rpc.async_get_focus_info(self.connection)
+        focus_info = await async_get_focus_info(self.connection)
         for notif in focus_info.focus_response.notifications:
             await self._async_focus_change(self.connection, notif)
 
@@ -230,15 +275,14 @@ class App(
         """
         Reload the list of broadcast domains.
         """
-        response = await iterm2.rpc.async_get_broadcast_domains(
-            self.connection)
+        response = await async_get_broadcast_domains(self.connection)
         self._set_broadcast_domains(
-            response.get_broadcast_domains_response.broadcast_domains)
+            response.get_broadcast_domains_response.broadcast_domains
+        )
 
     def get_session_by_id(
-            self,
-            session_id: str,
-            include_buried: bool = True) -> typing.Union[None, iterm2.session.Session]:
+        self, session_id: str | None, include_buried: bool = True
+    ) -> Session | None:
         """Finds a session exactly matching the passed-in id.
 
         Note: the behavior of this method changed in version 2.3. Earlier
@@ -249,10 +293,11 @@ class App(
 
         :returns: A :class:`Session` or `None`.
         """
-        assert session_id
+        if session_id is None:
+            return None
         return self._search_for_session_id(session_id, include_buried)
 
-    def get_tab_by_id(self, tab_id: str) -> typing.Union[iterm2.tab.Tab, None]:
+    def get_tab_by_id(self, tab_id: str) -> Tab | None:
         """Finds a tab exactly matching the passed-in id.
 
         :param tab_id: The tab ID to search for.
@@ -261,8 +306,7 @@ class App(
         """
         return self._search_for_tab_id(tab_id)
 
-    def get_window_by_id(
-            self, window_id: str) -> typing.Union[iterm2.window.Window, None]:
+    def get_window_by_id(self, window_id: str) -> Window | None:
         """Finds a window exactly matching the passed-in id.
 
         :param window_id: The window ID to search for.
@@ -271,8 +315,7 @@ class App(
         """
         return self._search_for_window_id(window_id)
 
-    def get_window_for_tab(
-            self, tab_id: str) -> typing.Union[iterm2.window.Window, None]:
+    def get_window_for_tab(self, tab_id: str) -> Window | None:
         """Finds the window that contains the passed-in tab id.
 
         :param tab_id: The tab ID to search for.
@@ -281,7 +324,7 @@ class App(
         """
         return self._search_for_window_with_tab(tab_id)
 
-    def _search_for_window_with_tab(self, tab_id):
+    def _search_for_window_with_tab(self, tab_id: str) -> Window | None:
         for window in self.terminal_windows:
             for tab in window.tabs:
                 if tab.tab_id == tab_id:
@@ -289,9 +332,8 @@ class App(
         return None
 
     async def async_refresh(
-            self,
-            _connection: typing.Optional[iterm2.connection.Connection] = None,
-            _sub_notif: typing.Any = None) -> None:
+        self, _connection: Connection | None = None, _sub_notif: Any = None
+    ) -> None:
         """Reloads the hierarchy.
 
         Note that this calls :meth:`async_refresh_focus`.
@@ -323,9 +365,8 @@ class App(
         self._refresh_task = asyncio.current_task()
         self._refresh_finished = asyncio.Event()
         try:
-            layout = await iterm2.rpc.async_list_sessions(self.connection)
-            return await self._async_handle_layout_change(
-                self.connection, layout)
+            layout = await async_list_sessions(self.connection)
+            return await self._async_handle_layout_change(self.connection, layout)
         finally:
             self._refreshing = False
             self._refresh_task = None
@@ -333,9 +374,8 @@ class App(
 
     # pylint: disable=too-many-locals
     async def _async_handle_layout_change(
-            self,
-            _connection: typing.Optional[iterm2.connection.Connection],
-            layout: typing.Any) -> None:
+        self, _connection: Connection | None, layout: Any
+    ) -> None:
         """Layout change notification handler. Also called by async_refresh.
 
         Note: Do not use the connection argument. It is only there to satisfy
@@ -344,19 +384,18 @@ class App(
         """
         list_sessions_response = layout.list_sessions_response
         new_windows = App._windows_from_list_sessions_response(
-            self.connection,
-            list_sessions_response)
+            self.connection, list_sessions_response
+        )
 
-        def all_sessions(windows):
+        def all_sessions(windows: Iterable[Window]) -> Generator[Session, None, None]:
             for window in windows:
                 for tab in window.tabs:
-                    for value in tab.all_sessions:
-                        yield value
+                    yield from tab.all_sessions
 
         old_sessions = list(all_sessions(self.terminal_windows))
 
-        windows = []
-        new_ids: typing.List[str] = []
+        windows: list[Window] = []
+        new_ids: list[str] = []
         for new_window in new_windows:
             for new_tab in new_window.tabs:
                 for new_session in new_tab.all_sessions:
@@ -390,35 +429,36 @@ class App(
 
         new_sessions = list(all_sessions(self.terminal_windows))
 
-        def find_session(id_wanted, sessions):
+        def find_session(id_wanted: str, sessions: Iterable[Session]):
             """Finds a session by ID."""
             for session in sessions:
                 if session.session_id == id_wanted:
                     return session
             return None
 
-        def get_buried_session(session_summary):
+        def get_buried_session(session_summary: api_pb2.SessionSummary):
             """
             Takes a session summary and returns an existing Session if one
             exists, or else creates a new one.
             """
-            value = find_session(
-                session_summary.unique_identifier, new_sessions)
+            value = find_session(session_summary.unique_identifier, new_sessions)
             if value is None:
-                value = find_session(
-                    session_summary.unique_identifier, old_sessions)
+                value = find_session(session_summary.unique_identifier, old_sessions)
             if value is None:
-                value = iterm2.session.Session(
-                    self.connection, None, session_summary)
+                value = Session(self.connection, None, session_summary)
             return value
 
         self.__buried_sessions = list(
-            map(get_buried_session, list_sessions_response.buried_sessions))
+            map(get_buried_session, list_sessions_response.buried_sessions)
+        )
         self.__terminal_windows = windows
         await self.async_refresh_focus()
+
     # pylint: enable=too-many-locals
 
-    async def _async_focus_change(self, _connection, sub_notif):
+    async def _async_focus_change(
+        self, _connection: Connection, sub_notif: api_pb2.FocusChangedNotification
+    ):
         """Updates the record of what is in focus."""
         if sub_notif.HasField("application_active"):
             self.app_active = sub_notif.application_active
@@ -426,10 +466,12 @@ class App(
             # Ignore window resigned key notifications because we track the
             # current terminal.
             # pylint: disable=no-member
-            if (sub_notif.window.window_status !=
-                    iterm2.api_pb2.FocusChangedNotification.Window.
-                    WindowStatus.Value(
-                        "TERMINAL_WINDOW_RESIGNED_KEY")):
+            if (
+                sub_notif.window.window_status
+                != api_pb2.FocusChangedNotification.Window.WindowStatus.Value(
+                    "TERMINAL_WINDOW_RESIGNED_KEY"
+                )
+            ):
                 self.current_terminal_window_id = sub_notif.window.window_id
         elif sub_notif.HasField("selected_tab"):
             window = self.get_window_for_tab(sub_notif.selected_tab)
@@ -445,20 +487,24 @@ class App(
             else:
                 tab.active_session_id = sub_notif.session
 
-    async def _async_broadcast_domains_change(self, _connection, sub_notif):
+    async def _async_broadcast_domains_change(
+        self,
+        _connection: Connection,
+        sub_notif: api_pb2.Notification,
+    ):
         """Updates the current set of broadcast domains."""
         self._set_broadcast_domains(
-            sub_notif.broadcast_domains_changed.broadcast_domains)
+            sub_notif.broadcast_domains_changed.broadcast_domains
+        )
 
-    def _set_broadcast_domains(self, broadcast_domains):
-        self.__broadcast_domains = self.parse_broadcast_domains(
-            broadcast_domains)
+    def _set_broadcast_domains(
+        self, broadcast_domains: Iterable[api_pb2.BroadcastDomain]
+    ):
+        self.__broadcast_domains = self.parse_broadcast_domains(broadcast_domains)
 
     def parse_broadcast_domains(
-            self,
-            list_of_broadcast_domain_protos:
-                typing.List[iterm2.api_pb2.BroadcastDomain]) -> typing.List[
-                    iterm2.broadcast.BroadcastDomain]:
+        self, list_of_broadcast_domain_protos: Iterable[api_pb2.BroadcastDomain]
+    ) -> list[BroadcastDomain]:
         """
         Converts a list of broadcast domain protobufs into a list of
         :class:`BroadcastDomain` objects.
@@ -467,18 +513,19 @@ class App(
             protos.
         :returns: A list of :class:`BroadcastDomain` objects.
         """
-        domain_list = []
+        domain_list: list[BroadcastDomain] = []
 
         # Using the loop iterator in a lambda doesn't work because all the
         # lambdas get the same (last) value of sid. Instead, we do this based
         # on https://stackoverflow.com/questions/12423614.
-        def session_lookup_callable(sid=None):
+        def session_lookup_callable(session_id: str | None = None):
             def inner():
-                return self.get_session_by_id(sid)
+                return self.get_session_by_id(session_id)
+
             return inner
 
         for broadcast_domain_proto in list_of_broadcast_domain_protos:
-            domain = iterm2.broadcast.BroadcastDomain()
+            domain = BroadcastDomain()
             for sid in broadcast_domain_proto.session_ids:
                 session = self.get_session_by_id(sid)
                 if session:
@@ -489,7 +536,7 @@ class App(
         return domain_list
 
     @property
-    def current_window(self) -> typing.Optional[iterm2.window.Window]:
+    def current_window(self) -> Window | None:
         """Gets the topmost terminal window.
 
         The current terminal window is the window that receives keyboard input
@@ -497,16 +544,17 @@ class App(
 
         :returns: A :class:`Window` or `None`.
         """
+        if self.current_terminal_window_id is None:
+            return None
         return self.get_window_by_id(self.current_terminal_window_id)
 
     @property
-    def current_terminal_window(
-            self) -> typing.Union[iterm2.window.Window, None]:
+    def current_terminal_window(self) -> Window | None:
         """Deprecated in favor of current_window."""
         return self.current_window
 
     @property
-    def windows(self) -> typing.List[iterm2.window.Window]:
+    def windows(self) -> list[Window]:
         """Returns a list of all terminal windows.
 
         :returns: A list of :class:`Window`
@@ -514,12 +562,12 @@ class App(
         return self.__terminal_windows
 
     @property
-    def terminal_windows(self) -> typing.List[iterm2.window.Window]:
+    def terminal_windows(self) -> list[Window]:
         """Deprecated in favor of `windows`"""
         return self.windows
 
     @property
-    def buried_sessions(self) -> typing.List[iterm2.session.Session]:
+    def buried_sessions(self) -> list[Session]:
         """Returns a list of buried sessions.
 
         :returns: A list of buried :class:`Session` objects.
@@ -527,8 +575,7 @@ class App(
         return self.__buried_sessions
 
     @property
-    def broadcast_domains(
-            self) -> typing.List[iterm2.broadcast.BroadcastDomain]:
+    def broadcast_domains(self) -> list[BroadcastDomain]:
         """Returns the current broadcast domains.
 
         .. seealso::
@@ -538,22 +585,19 @@ class App(
         return self.__broadcast_domains
 
     def get_tab_and_window_for_session(
-            self,
-            session: iterm2.session.Session) -> typing.Union[
-                typing.Tuple[None, None],
-                typing.Tuple[iterm2.window.Window, iterm2.tab.Tab]]:
+        self, session: Session | None
+    ) -> tuple[None, None] | tuple[Window, Tab]:
         """
         Deprecated because the name is wrong for the order of return
         arguments.
         """
+        if session is None:
+            return None, None
         return self.get_window_and_tab_for_session(session)
 
     def get_window_and_tab_for_session(
-            self,
-            session: iterm2.session.Session) -> typing.Union[
-                typing.Tuple[None, None],
-                typing.Tuple[iterm2.window.Window,
-                             iterm2.tab.Tab]]:
+        self, session: Session
+    ) -> tuple[None, None] | tuple[Window, Tab]:
         """Finds the tab and window that own a session.
 
         :param session: The session whose tab and window you wish to find.
@@ -568,23 +612,25 @@ class App(
         return None, None
 
     async def async_move_session(
-            self,
-            session: iterm2.session.Session,
-            destination: iterm2.session.Session,
-            split_vertically: bool,
-            before: bool):
+        self,
+        session: Session,
+        destination: Session,
+        split_vertically: bool,
+        before: bool,
+    ) -> None:
         """
         Move a session to be a split pane by splitting another existing session.
 
         :param split_vertically: If `True`, split the destination session vertically.
         :param before: If `True`, place `session` left of/above `destionation`.
         """
-        iterm2.capabilities.check_supports_move_session(self.connection)
+        check_supports_move_session(self.connection)
         await async_invoke_function(
             self.connection,
-            f'iterm2.move_session(session: {json.dumps(session.session_id)}, destination: {json.dumps(destination.session_id)}, vertical: {json.dumps(split_vertically)}, before: {json.dumps(before)})')
+            f"iterm2.move_session(session: {json.dumps(session.session_id)}, destination: {json.dumps(destination.session_id)}, vertical: {json.dumps(split_vertically)}, before: {json.dumps(before)})",
+        )
 
-    async def async_apply_layout(self, spec: typing.Dict[str, typing.Any]):
+    async def async_apply_layout(self, spec: dict[str, Any]) -> None:
         """
         Apply a target layout to one or more tabs.
 
@@ -691,20 +737,17 @@ class App(
             }
             await app.async_apply_layout(spec)
         """
-        iterm2.capabilities.check_supports_apply_layout(self.connection)
+        check_supports_apply_layout(self.connection)
         if _spec_has_new_session(spec):
-            iterm2.capabilities.check_supports_apply_layout_new_session(
-                self.connection)
+            check_supports_apply_layout_new_session(self.connection)
         # The spec is sent as base64 because iTerm2's expression parser does
         # not decode \" inside string literals, and a JSON spec almost always
         # contains quoted strings.
-        spec_b64 = base64.b64encode(
-            json.dumps(spec).encode("utf-8")).decode("ascii")
+        spec_b64 = base64.b64encode(json.dumps(spec).encode("utf-8")).decode("ascii")
         await async_invoke_function(
             self.connection,
-            iterm2.util.invocation_string(
-                "iterm2.apply_layout",
-                {"spec_json_b64": spec_b64}))
+            invocation_string("iterm2.apply_layout", {"spec_json_b64": spec_b64}),
+        )
 
     async def _async_listen(self):
         """
@@ -713,37 +756,32 @@ class App(
         """
         connection = self.connection
         self.tokens.append(
-            await (
-                iterm2.notifications.
-                async_subscribe_to_new_session_notification(
-                    connection,
-                    self.async_refresh)))
+            await async_subscribe_to_new_session_notification(
+                connection, self.async_refresh
+            )
+        )
         self.tokens.append(
-            await (
-                iterm2.notifications.
-                async_subscribe_to_terminate_session_notification(
-                    connection,
-                    self.async_refresh)))
+            await async_subscribe_to_terminate_session_notification(
+                connection, self.async_refresh
+            )
+        )
         self.tokens.append(
-            await (
-                iterm2.notifications.
-                async_subscribe_to_layout_change_notification(
-                    connection,
-                    self._async_handle_layout_change)))
+            await async_subscribe_to_layout_change_notification(
+                connection, self._async_handle_layout_change
+            )
+        )
         self.tokens.append(
-            await (
-                iterm2.notifications.
-                async_subscribe_to_focus_change_notification(
-                    connection,
-                    self._async_focus_change)))
+            await async_subscribe_to_focus_change_notification(
+                connection, self._async_focus_change
+            )
+        )
         self.tokens.append(
-            await (
-                iterm2.notifications.
-                async_subscribe_to_broadcast_domains_change_notification(
-                    connection,
-                    self._async_broadcast_domains_change)))
+            await async_subscribe_to_broadcast_domains_change_notification(
+                connection, self._async_broadcast_domains_change
+            )
+        )
 
-    async def async_set_variable(self, name: str, value: typing.Any) -> None:
+    async def async_set_variable(self, name: str, value: Any) -> None:
         """
         Sets a user-defined variable in the application.
 
@@ -755,16 +793,13 @@ class App(
 
         :throws: :class:`RPCException` if something goes wrong.
         """
-        result = await iterm2.rpc.async_variable(
-            self.connection,
-            sets=[(name, json.dumps(value))])
+        result = await async_variable(self.connection, sets=[(name, json.dumps(value))])
         status = result.variable_response.status
         # pylint: disable=no-member
-        if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
-            raise iterm2.rpc.RPCException(
-                iterm2.api_pb2.VariableResponse.Status.Name(status))
+        if status != api_pb2.VariableResponse.Status.Value("OK"):
+            raise RPCException(api_pb2.VariableResponse.Status.Name(status))
 
-    async def async_get_theme(self) -> typing.List[str]:
+    async def async_get_theme(self) -> list[str]:
         """
         Gets attributes the current theme.
 
@@ -779,7 +814,7 @@ class App(
         value = await self.async_get_variable("effectiveTheme")
         return value.split(" ")
 
-    async def async_get_variable(self, name: str) -> typing.Any:
+    async def async_get_variable(self, name: str) -> Any:
         """
         Fetches the value of a variable from the global context.
 
@@ -793,49 +828,42 @@ class App(
 
         :throws: :class:`RPCException` if something goes wrong.
         """
-        result = await iterm2.rpc.async_variable(
-            self.connection, gets=[name])
+        result = await async_variable(self.connection, gets=[name])
         status = result.variable_response.status
         # pylint: disable=no-member
-        if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
-            raise iterm2.rpc.RPCException(
-                iterm2.api_pb2.VariableResponse.Status.Name(status))
+        if status != api_pb2.VariableResponse.Status.Value("OK"):
+            raise RPCException(api_pb2.VariableResponse.Status.Name(status))
         return json.loads(result.variable_response.values[0])
 
     # Session.Delegate
 
-    def session_delegate_get_tab(self, session):
+    def session_delegate_get_tab(self, session: Session) -> Tab | None:
         # pylint: disable=unused-variable
-        ignore, tab_for_session = self.get_window_and_tab_for_session(
-            session)
+        _, tab_for_session = self.get_window_and_tab_for_session(session)
         return tab_for_session
 
-    def session_delegate_get_window(self, session):
+    def session_delegate_get_window(self, session: Session) -> Window | None:
         # pylint: disable=unused-variable
-        window_for_session, ignore = self.get_window_and_tab_for_session(
-            session)
+        window_for_session, _ = self.get_window_and_tab_for_session(session)
         return window_for_session
 
-    async def session_delegate_create_session(
-            self,
-            session_id: str) -> typing.Optional['iterm2.session.Session']:
+    async def session_delegate_create_session(self, session_id: str) -> Session | None:
         await self.async_refresh()
         return self.get_session_by_id(session_id)
 
     # Tab.Delegate
 
-    def tab_delegate_get_window(self, tab):
+    def tab_delegate_get_window(self, tab: Tab) -> Window | None:
         return self.get_window_for_tab(tab.tab_id)
 
-    async def tab_delegate_get_window_by_id(
-            self,
-            window_id: str) -> typing.Optional['iterm2.window.Window']:
+    async def tab_delegate_get_window_by_id(self, window_id: str) -> Window | None:
         await self.async_refresh()
         return self.get_window_by_id(window_id)
 
     # Window Delegate
     async def window_delegate_get_window_with_session_id(
-            self, session_id: str):
+        self, session_id: str
+    ) -> Window | None:
         await self.async_refresh()
         session = self.get_session_by_id(session_id)
         if session is None:
@@ -843,14 +871,13 @@ class App(
         window, _tab = self.get_tab_and_window_for_session(session)
         return window
 
-    async def window_delegate_get_tab_by_id(
-            self, tab_id: str) -> typing.Optional[iterm2.tab.Tab]:
+    async def window_delegate_get_tab_by_id(self, tab_id: str) -> Tab | None:
         await self.async_refresh()
         return self.get_tab_by_id(tab_id)
 
     async def window_delegate_get_tab_with_session_id(
-            self,
-            session_id: str) -> typing.Optional[iterm2.tab.Tab]:
+        self, session_id: str
+    ) -> Tab | None:
         await self.async_refresh()
         session = self.get_session_by_id(session_id)
         if not session:
@@ -861,19 +888,19 @@ class App(
     # tmux.Delegate
 
     async def tmux_delegate_async_get_window_for_tab_id(
-            self, tab_id: str) -> typing.Optional[iterm2.window.Window]:
+        self, tab_id: str
+    ) -> Window | None:
         await self.async_refresh()
         return self.get_window_for_tab(tab_id)
 
-    def tmux_delegate_get_session_by_id(
-            self, session_id: str) -> typing.Optional[iterm2.session.Session]:
+    def tmux_delegate_get_session_by_id(self, session_id: str) -> Session | None:
         return self.get_session_by_id(session_id)
 
-    def tmux_delegate_get_connection(self) -> iterm2.connection.Connection:
+    def tmux_delegate_get_connection(self) -> Connection:
         return self.connection
 
-async def async_get_variable(
-        connection: iterm2.connection.Connection, name: str) -> typing.Any:
+
+async def async_get_variable(connection: Connection, name: str) -> Any:
     """
     Fetches the value of a variable from the global context.
 
@@ -887,19 +914,17 @@ async def async_get_variable(
 
     :throws: :class:`RPCException` if something goes wrong.
     """
-    result = await iterm2.rpc.async_variable(connection, gets=[name])
+    result = await async_variable(connection, gets=[name])
     status = result.variable_response.status
     # pylint: disable=no-member
-    if status != iterm2.api_pb2.VariableResponse.Status.Value("OK"):
-        raise iterm2.rpc.RPCException(
-            iterm2.api_pb2.VariableResponse.Status.Name(status))
+    if status != api_pb2.VariableResponse.Status.Value("OK"):
+        raise RPCException(api_pb2.VariableResponse.Status.Name(status))
     return json.loads(result.variable_response.values[0])
 
 
 async def async_invoke_function(
-        connection: iterm2.connection.Connection,
-        invocation: str,
-        timeout: float = -1):
+    connection: Connection, invocation: str, timeout: float = -1
+) -> Any:
     """
     Invoke an RPC. Could be a registered function by this or another script of
     a built-in function.
@@ -917,18 +942,21 @@ async def async_invoke_function(
 
     :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
     """
-    response = await iterm2.rpc.async_invoke_function(
-        connection,
-        invocation,
-        timeout=timeout)
-    which = response.invoke_function_response.WhichOneof('disposition')
-    if which == 'error':
+    response = await _rpc_async_invoke_function(connection, invocation, timeout=timeout)
+    which = response.invoke_function_response.WhichOneof("disposition")
+    if which == "error":
         # pylint: disable=no-member
-        if (response.invoke_function_response.error.status ==
-                iterm2.api_pb2.InvokeFunctionResponse.Status.Value("TIMEOUT")):
-            raise iterm2.rpc.RPCException("Timeout")
-        raise iterm2.rpc.RPCException("{}: {}".format(
-            iterm2.api_pb2.InvokeFunctionResponse.Status.Name(
-                response.invoke_function_response.error.status),
-            response.invoke_function_response.error.error_reason))
+        if (
+            response.invoke_function_response.error.status
+            == api_pb2.InvokeFunctionResponse.Status.Value("TIMEOUT")
+        ):
+            raise RPCException("Timeout")
+        raise RPCException(
+            "{}: {}".format(
+                api_pb2.InvokeFunctionResponse.Status.Name(
+                    response.invoke_function_response.error.status
+                ),
+                response.invoke_function_response.error.error_reason,
+            )
+        )
     return json.loads(response.invoke_function_response.success.json_result)

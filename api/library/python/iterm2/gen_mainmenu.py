@@ -3,6 +3,7 @@
 import string
 import xml.etree.ElementTree as ET
 
+
 def search_container(path, container, f):
     if container is None:
         return
@@ -19,15 +20,17 @@ def search_container(path, container, f):
                 identifier = item.attrib["identifier"]
                 f(this_path, identifier)
             except:
-                print("Bogus item: {}".format(item.attrib), file=sys.stderr)
+                print(f"Bogus item: {item.attrib}", file=sys.stderr)
                 raise
 
 
 class RemoveNonAlphanumeric:
-  def __init__(self, keep=string.digits + string.ascii_letters + "_"):
-    self.comp = dict((ord(c),c) for c in keep)
-  def __getitem__(self, k):
-    return self.comp.get(k)
+    def __init__(self, keep=string.digits + string.ascii_letters + "_"):
+        self.comp = dict((ord(c), c) for c in keep)
+
+    def __getitem__(self, k):
+        return self.comp.get(k)
+
 
 class Emitter:
     def __init__(self):
@@ -41,14 +44,25 @@ class Emitter:
             if k in amendments:
                 del amendments[k]
         for k in amendments:
-            for line in self.emit_impl(k, amendments[k], depth, {}, "  #: Deprecated - this has moved elsewhere."):
+            for line in self.emit_impl(
+                k,
+                amendments[k],
+                depth,
+                {},
+                "  #: Deprecated - this has moved elsewhere.",
+            ):
                 yield line
 
     def emit_impl(self, k, v, depth, amendments, comment=""):
         if isinstance(v, dict):
             if self.needsNewline:
                 yield ""
-            yield f'{"    " * depth}class {k.translate(RemoveNonAlphanumeric())}(enum.Enum):'
+            if depth > 1:
+                # A submenu nested in another menu's enum is a namespace, not
+                # one of that enum's members.
+                yield f"{'    ' * depth}@_nonmember"
+            yield f"{'    ' * depth}class {k.translate(RemoveNonAlphanumeric())}(enum.Enum):"
+            yield f"{'    ' * (depth + 1)}_value_: MenuItemIdentifier"
 
             for line in Emitter().emit(v, depth + 1, amendments.get(k, {}), comment):
                 yield line
@@ -57,8 +71,10 @@ class Emitter:
             self.needsNewline = True
             yield f'{"    " * depth}{k.upper().replace(" ", "_").translate(RemoveNonAlphanumeric())} = MenuItemIdentifier("{v[0]}", "{v[1]}"){comment}'
 
+
 def gen_menu_items_impl(items):
     tree = {}
+
     def build_tree(titlepath, identifier):
         current = tree
         for child in titlepath[:-1]:
@@ -66,28 +82,49 @@ def gen_menu_items_impl(items):
                 current[child] = {}
             current = current[child]
         current[titlepath[-1]] = (titlepath[-1], identifier)
+
     search_container([], items, build_tree)
 
     result = []
-    legacy = {"Session": {"Log": {"Save Contents": ("Save Contents…", "Log.SaveContents")}}}
+    legacy = {
+        "Session": {"Log": {"Save Contents": ("Save Contents…", "Log.SaveContents")}}
+    }
     for line in Emitter().emit(tree, 1, legacy):
         result.append(line)
     return "\n".join(result)
+
 
 def items():
     tree = ET.parse("../../../../sources/MainMenu/Base.lproj/MainMenu.xib")
     items = tree.getroot().find("objects").find("menu").find("items")
     return items
 
+
 def gen_menu_items():
     return gen_menu_items_impl(items())
 
+
 print(
-"""\"\"\"Defines interfaces for accessing menu items.\"\"\"
+    """\"\"\"Defines interfaces for accessing menu items.\"\"\"
+from __future__ import annotations
+
 import enum
-import iterm2.api_pb2
-import iterm2.rpc
-import typing
+import sys
+from typing import TYPE_CHECKING
+
+from . import api_pb2
+from .rpc import async_menu_item
+
+if TYPE_CHECKING:
+    from .connection import Connection
+
+if sys.version_info >= (3, 11):
+    from enum import nonmember as _nonmember
+else:
+    # Enum doesn't make descriptors into members, and a staticmethod returns
+    # the class it wraps when accessed.
+    def _nonmember(cls):
+        return staticmethod(cls)
 
 class MenuItemException(Exception):
     \"\"\"A problem was encountered while selecting a menu item.\"\"\"
@@ -95,17 +132,17 @@ class MenuItemException(Exception):
 
 class MenuItemState:
     \"\"\"Describes the current state of a menu item.\"\"\"
-    def __init__(self, checked: bool, enabled: bool):
+    def __init__(self, checked: bool, enabled: bool) -> None:
         self.__checked = checked
         self.__enabled = enabled
 
     @property
-    def checked(self):
+    def checked(self) -> bool:
         \"\"\"Is the menu item checked? A `bool` property.\"\"\"
         return self.__checked
 
     @property
-    def enabled(self):
+    def enabled(self) -> bool:
         \"\"\"
         Is the menu item enabled (i.e., it can be selected)? A `bool`
         property.
@@ -113,7 +150,7 @@ class MenuItemState:
         return self.__enabled
 
 class MenuItemIdentifier:
-    def __init__(self, title, identifier):
+    def __init__(self, title: str, identifier: str | None) -> None:
         self.__title = title
         self.__identifier = identifier
 
@@ -125,10 +162,10 @@ class MenuItemIdentifier:
         return self.__title
 
     @property
-    def identifier(self) -> typing.Optional[str]:
+    def identifier(self) -> str | None:
         return self.__identifier
 
-    def _encode(self):
+    def _encode(self) -> str:
         # Encodes to a key binding parameter.
         if self.__identifier is None:
             return self.__title
@@ -138,7 +175,9 @@ class MainMenu:
     \"\"\"Represents the app's main menu.\"\"\"
 
     @staticmethod
-    async def async_select_menu_item(connection, identifier: str):
+    async def async_select_menu_item(
+            connection: Connection,
+            identifier: str) -> None:
         \"\"\"Selects a menu item.
 
         :param identifier: A string. See list of identifiers in :doc:`menu_ids`
@@ -147,32 +186,35 @@ class MainMenu:
 
         .. seealso:: Example ":ref:`zoom_on_screen_example`"
         \"\"\"
-        response = await iterm2.rpc.async_menu_item(
+        response = await async_menu_item(
             connection, identifier, False)
         status = response.menu_item_response.status
         # pylint: disable=no-member
-        if status != iterm2.api_pb2.MenuItemResponse.Status.Value("OK"):
+        if status != api_pb2.MenuItemResponse.Status.Value("OK"):
             raise MenuItemException(
-                iterm2.api_pb2.MenuItemResponse.Status.Name(status))
+                api_pb2.MenuItemResponse.Status.Name(status))
 
     @staticmethod
     async def async_get_menu_item_state(
-            connection, identifier: str) -> MenuItemState:
+            connection: Connection,
+            identifier: str) -> MenuItemState:
         \"\"\"Queries a menu item for its state.
 
         :param identifier: A string. See list of identifiers in :doc:`menu_ids`
 
         :throws MenuItemException: if something goes wrong.
         \"\"\"
-        response = await iterm2.rpc.async_menu_item(
+        response = await async_menu_item(
             connection, identifier, True)
         status = response.menu_item_response.status
         # pylint: disable=no-member
-        if status != iterm2.api_pb2.MenuItemResponse.Status.Value("OK"):
+        if status != api_pb2.MenuItemResponse.Status.Value("OK"):
             raise MenuItemException(
-                iterm2.api_pb2.MenuItemResponse.Status.Name(status))
-        return iterm2.MenuItemState(
+                api_pb2.MenuItemResponse.Status.Name(status))
+        return MenuItemState(
             response.menu_item_response.checked,
             response.menu_item_response.enabled)
 
-""" + gen_menu_items())
+"""
+    + gen_menu_items()
+)

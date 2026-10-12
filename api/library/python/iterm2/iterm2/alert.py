@@ -1,8 +1,15 @@
 """Enables showing modal alerts."""
+from __future__ import annotations
+
 import json
-import typing
+from collections.abc import Sequence
 from dataclasses import dataclass
-import iterm2.connection
+from typing import TYPE_CHECKING
+
+from .app import async_invoke_function
+
+if TYPE_CHECKING:
+    from .connection import Connection
 
 
 class Alert:
@@ -21,10 +28,10 @@ class Alert:
             self,
             title: str,
             subtitle: str,
-            window_id: typing.Optional[str] = None):
+            window_id: str | None = None) -> None:
         self.__title = title
         self.__subtitle = subtitle
-        self.__buttons: typing.List[str] = []
+        self.__buttons: list[str] = []
         self.__window_id = window_id
 
     @property
@@ -38,15 +45,15 @@ class Alert:
         return self.__subtitle
 
     @property
-    def window_id(self) -> typing.Optional[str]:
+    def window_id(self) -> str | None:
         """Returns the window ID"""
         return self.__window_id
 
-    def add_button(self, title: str):
+    def add_button(self, title: str) -> None:
         """Adds a button to the end of the list of buttons."""
         self.__buttons.append(title)
 
-    async def async_run(self, connection: iterm2.connection.Connection) -> int:
+    async def async_run(self, connection: Connection) -> int:
         """Shows the modal alert.
 
         :param connection: The connection to use.
@@ -60,7 +67,7 @@ class Alert:
         subtitle = json.dumps(self.subtitle)
         buttons = json.dumps(self.__buttons)
 
-        return await iterm2.async_invoke_function(
+        return await async_invoke_function(
             connection,
             (f'iterm2.alert(title: {title}, ' +
              f'subtitle: {subtitle}, ' +
@@ -88,7 +95,7 @@ class TextInputAlert:
             subtitle: str,
             placeholder: str,
             default_value: str,
-            window_id: typing.Optional[str] = None):
+            window_id: str | None = None) -> None:
         self.__title = title
         self.__subtitle = subtitle
         self.__placeholder = placeholder
@@ -126,13 +133,13 @@ class TextInputAlert:
     # pylint: enable=invalid-name
 
     @property
-    def window_id(self) -> typing.Optional[str]:
+    def window_id(self) -> str | None:
         """Returns the window ID"""
         return self.__window_id
 
     async def async_run(
             self,
-            connection: iterm2.connection.Connection) -> typing.Optional[str]:
+            connection: Connection) -> str | None:
         """Shows the modal alert.
 
         :param connection: The connection to use.
@@ -145,7 +152,7 @@ class TextInputAlert:
         placeholder = json.dumps(self.placeholder)
         default_value = json.dumps(self.default_value)
 
-        return await iterm2.async_invoke_function(
+        return await async_invoke_function(
             connection,
             (f'iterm2.get_string(title: {title}, ' +
              f'subtitle: {subtitle}, ' +
@@ -157,10 +164,10 @@ class TextInputAlert:
 @dataclass
 class PolyModalResult:
     """Dedicated object to return for PolyModalAlert """
-    button: typing.Optional[str] = None
-    tf_text: typing.Optional[str] = None
-    combo: typing.Optional[str] = None
-    checks: typing.Optional[typing.List[str]] = None
+    button: str | None = None
+    tf_text: str | None = None
+    combo: str | None = None
+    checks: list[str] | None = None
 
 
 class PolyModalAlert:
@@ -179,15 +186,15 @@ class PolyModalAlert:
             self,
             title: str,
             subtitle: str,
-            window_id: typing.Optional[str] = None):
+            window_id: str | None = None) -> None:
         self.__title: str = title
         self.__subtitle: str = subtitle
-        self.__buttons: typing.List[str] = []
-        self.__checkboxes: typing.List[str] = []
-        self.__checkbox_defaults: typing.List[int] = []
-        self.__combobox_items: typing.List[str] = []
+        self.__buttons: list[str] = []
+        self.__checkboxes: list[str] = []
+        self.__checkbox_defaults: list[int] = []
+        self.__combobox_items: list[str] = []
         self.__combobox_default: str = ""
-        self.__text_field: typing.List[str] = []
+        self.__text_field: list[str] = []
         self.__width: int = 300
         self.__window_id = window_id
 
@@ -202,22 +209,22 @@ class PolyModalAlert:
         return self.__subtitle
 
     @property
-    def text_field(self) -> typing.List[str]:
+    def text_field(self) -> list[str]:
         """Returns the text field list [placeholder, default] """
         return self.__text_field
 
     @property
-    def checkboxes(self) -> typing.List[str]:
+    def checkboxes(self) -> list[str]:
         """Returns a list of checkbox strings """
         return self.__checkboxes
 
     @property
-    def checkbox_defaults(self) -> typing.List[int]:
+    def checkbox_defaults(self) -> list[int]:
         """Returns a list of whether checkboxes are checked by default """
         return self.__checkbox_defaults
 
     @property
-    def combobox_items(self) -> typing.List[str]:
+    def combobox_items(self) -> list[str]:
         """Returns the list of strings that will populate the combobox."""
         return self.__combobox_items
 
@@ -227,7 +234,7 @@ class PolyModalAlert:
         return self.__combobox_default
 
     @property
-    def window_id(self) -> typing.Optional[str]:
+    def window_id(self) -> str | None:
         """Returns the window ID."""
         return self.__window_id
 
@@ -237,16 +244,16 @@ class PolyModalAlert:
         return self.__width
 
     @width.setter
-    def width(self, value: int):
+    def width(self, value: int) -> None:
         """Set the width of the model."""
         self.__width = value
 
-    def add_button(self, title: str):
+    def add_button(self, title: str) -> None:
         """Adds a button to the end of the list of buttons."""
         self.__buttons.append(title)
 
-    def add_checkboxes(self, items: typing.List[str],
-                       defaults: typing.List[int]):
+    def add_checkboxes(self, items: Sequence[str],
+                       defaults: Sequence[int]) -> None:
         """Adds an array of checkbox items to the end of the list of
         checkboxes.
         Parameters
@@ -269,7 +276,7 @@ class PolyModalAlert:
             self.__checkbox_defaults.append(default)
             self.__checkboxes.append(item_text)
 
-    def add_checkbox_item(self, item_text: str, item_default: int = 0):
+    def add_checkbox_item(self, item_text: str, item_default: int = 0) -> None:
         """
         Adds a single checkbox item to the end of the list of checkboxes.
 
@@ -284,7 +291,10 @@ class PolyModalAlert:
         self.__checkbox_defaults.append(item_default)
         self.__checkboxes.append(item_text)
 
-    def add_combobox(self, items: typing.List[str], default: typing.Optional[str] = None):
+    def add_combobox(
+            self,
+            items: Sequence[str],
+            default: str | None = None) -> None:
         """
         Adds multiple items to the combobox list and sets the default value.
 
@@ -306,7 +316,8 @@ class PolyModalAlert:
         for item_text in items:
             self.__combobox_items.append(item_text)
 
-    def set_combobox_items(self, items: typing.List[str], default_index: int):
+    def set_combobox_items(
+            self, items: list[str], default_index: int) -> None:
         """
         Sets (or replaces) the combobox items with a list and sets the
         default by index.
@@ -330,7 +341,8 @@ class PolyModalAlert:
         self.__combobox_default = items[default_index]
         self.__combobox_items = items
 
-    def add_combobox_item(self, item_text: str, is_default: bool = False):
+    def add_combobox_item(
+            self, item_text: str, is_default: bool = False) -> None:
         """
         Adds a single item to the combobox list and optionally sets it as
         default.
@@ -346,7 +358,7 @@ class PolyModalAlert:
         if is_default:
             self.__combobox_default = item_text
 
-    def add_text_field(self, placeholder: str, default: str):
+    def add_text_field(self, placeholder: str, default: str) -> None:
         """
         Adds a text field to the alert.
 
@@ -361,7 +373,7 @@ class PolyModalAlert:
         self.__text_field.append(default)
 
     async def async_run(self,
-                        connection: iterm2.connection.Connection) -> (
+                        connection: Connection) -> (
             PolyModalResult):
         """Shows the poly modal alert.
 
@@ -390,7 +402,7 @@ class PolyModalAlert:
         text_field = json.dumps(self.text_field)
         width = json.dumps(self.__width)
 
-        result = await iterm2.async_invoke_function(
+        result = await async_invoke_function(
             connection,
             (f'iterm2.get_poly_modal_alert(title: {title}, ' +
              f'subtitle: {subtitle}, ' +

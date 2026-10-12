@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 
-import sys
+from collections.abc import Callable
+
 
 def no_param():
     return ("None", "NoParamConstructor")
 
+
 def str_param():
     return ("str", "str")
 
+
 # String containing newline-delimited lines. If only one line then it is a menu item title. Otherwise the first line is the title and the second line is the identifier. The title is used in the UI.
 def menu_item_param():
-    return ("iterm2.mainmenu.MenuItemIdentifier", "MenuItemIdentifierConstructor")
+    return ("MenuItemIdentifier", "MenuItemIdentifierConstructor")
+
 
 def guid_param():
-    return ("ProfileIdentifier")
+    return "ProfileIdentifier"
+
 
 # JSON
 # Base64: bool
@@ -33,7 +38,8 @@ def guid_param():
 # Substitution: str
 # WaitForPrompts: bool
 def paste_param():
-    return ("PasteConfigurationConstructor")
+    return "PasteConfigurationConstructor"
+
 
 # 0: char
 # 1: word
@@ -41,329 +47,101 @@ def paste_param():
 # 3: mark
 # 4: "big" word
 def movesel_param():
-    return ("MoveSelectionUnit")
+    return "MoveSelectionUnit"
+
 
 # { "guid": "str" } OR "title"
 def snippet_param():
-    return ("SnippetIdentifier")
+    return "SnippetIdentifier"
+
 
 # Name, tag, description, parameter type
-bindings = [
-    ("next_session",
-     0,
-     "Selects the next tab.",
-     no_param),
-
-    ("next_window",
-     1,
-     "Selects the next window.",
-     no_param),
-
-    ("previous_session",
-     2,
-     "Selects the previous tab.",
-     no_param),
-
-    ("previous_window",
-     3,
-     "Selects the previous window.",
-     no_param),
-
-    ("scroll_end",
-     4,
-     "Scroll to end.",
-     no_param),
-
-    ("scroll_home",
-     5,
-     "Scroll to top.",
-     no_param),
-
-    ("scroll_line_down",
-     6,
-     "Scroll one line down.",
-     no_param),
-
-    ("scroll_line_up",
-     7,
-     "Scroll one line up.",
-     no_param),
-
-    ("scroll_page_down",
-     8,
-     "Scroll one page down.",
-     no_param),
-
-    ("scroll_page_up",
-     9,
-     "Scroll one page up.",
-     no_param),
-
-    ("escape_sequence",
-     10,
-     "Send ESC + a string.",
-     str_param),
-
-    ("hex_code",
-     11,
-     "Send string, interpreted as hex values.",
-     str_param),
-
-    ("text",
-     12,
-     "Send text.",
-     str_param),
-
-    ("ignore",
-     13,
-     "Do nothing.",
-     no_param),
-
-    ("ir_backward",
-     15,
-     "Open Instant Replay.",
-     no_param),
-
-    ("send_c_h_backspace",
-     16,
-     "Send Control-H.",
-     no_param),
-
-    ("send_c_qm_backspace",
-     17,
-     "Send Control-? (backspace).",
-     no_param),
-
-    ("select_pane_left",
-     18,
-      "Select split pane on left.",
-     no_param),
-
-    ("select_pane_right",
-     19,
-     "Select split pane on right.",
-     no_param),
-
-    ("select_pane_above",
-     20,
-     "Select split pane above.",
-     no_param),
-
-    ("select_pane_below",
-     21,
-     "Select split pane below.",
-     no_param),
-
-    ("do_not_remap_modifiers",
-     22,
-     "Do not remap modifiers.",
-     no_param),
-
-    ("toggle_fullscreen",
-     23,
-     "Toggle full screen.",
-     no_param),
-
-    ("remap_locally",
-     24,
-     "Remap modifiers in iTerm2 only",
-     no_param),
-
-    ("select_menu_item",
-     25,
-     "Select menu item.",
-     menu_item_param),
-
-    ("new_window_with_profile",
-     26,
-     "New window using specified profile.",
-     guid_param),
-
-    ("new_tab_with_profile",
-     27,
-     "New tab using specified profile.",
-     guid_param),
-
-    ("split_horizontally_with_profile",
-     28,
-     "Split pane horizontally using specified profile.",
-     guid_param),
-
-    ("split_vertically_with_profile",
-     29,
-       "Split pane vertically using specified profile.",
-     guid_param),
-
-    ("next_pane",
-     30,
-     "Next split pane.",
-     no_param),
-
-    ("previous_pane",
-     31,
-     "Previous split pane.",
-     no_param),
-
-    ("next_mru_tab",
-     32,
-     "Cycle tabs forward.",
-     no_param),
-
-    ("move_tab_left",
-     33,
-     "Move tab left.",
-     no_param),
-
-    ("move_tab_right",
-     34,
-     "Move tab right.",
-     no_param),
-
-    ("run_coprocess",
-     35,
-     "Run coprocess.",
-     str_param),
-
-    ("find_regex",
-     36,
-     "Find using regular expression.",
-     str_param),
-
-    ("set_profile",
-     37,
-     "Set session's profile.",
-     guid_param),
-
-    ("vim_text",
-     38,
-     "Send text using vim syntax.",
-     str_param),
-
-    ("previous_mru_tab",
-     39,
-     "Cycle tabs backward.",
-     no_param),
-
-    ("load_color_preset",
-     40,
-     "Load specified color preset.",
-     str_param),
-
-    ("paste_special",
-     41,
-     "Paste from clipboard.",
-     paste_param),
-
-    ("paste_special_from_selection",
-     42,
-     "Paste from selection.",
-     paste_param),
-
-    ("toggle_hotkey_window_pinning",
-     43,
-     "Toggle hotkey window pinned.",
-     no_param),
-
-    ("undo",
-     44,
-     "Undo.",
-     no_param),
-
-    ("move_end_of_selection_left",
-     45,
-     "Move end of selection left.",
-     movesel_param),
-
-    ("move_end_of_selection_right",
-     46,
-     "Move end of selection right.",
-     movesel_param),
-
-    ("move_start_of_selection_left",
-     47,
-     "Move start of selection left.",
-     movesel_param),
-
-    ("move_start_of_selection_right",
-     48,
-     "Move start of selection right.",
-     movesel_param),
-
-    ("decrease_height",
-     49,
-     "Decrease session height.",
-     no_param),
-
-    ("increase_height",
-     50,
-     "Increase session height.",
-     no_param),
-
-    ("decrease_width",
-     51,
-     "Decrease session width.",
-     no_param),
-
-    ("increase_width",
-     52,
-     "Increase session width.",
-     no_param),
-
-    ("swap_pane_left",
-     53,
-      "Swap with split pane on left.",
-     no_param),
-
-    ("swap_pane_right",
-     54,
-     "Swap with split pane on right.",
-     no_param),
-
-    ("swap_pane_above",
-     55,
-     "Swap with split pane above.",
-     no_param),
-
-    ("swap_pane_below",
-     56,
-     "Swap with split pane below.",
-     no_param),
-
-    ("find_again_down",
-     57,
-     "Search again up.",
-     no_param),
-
-    ("find_again_up",
-     58,
-     "Search again down.",
-     no_param),
-
-    ("toggle_mouse_reporting",
-     59,
-     "Toggle mouse reporting.",
-     no_param),
-
-    ("invoke_script_function",
-     60,
-     "Invoke script function..",
-     str_param),
-
-    ("duplicate_tab",
-     61,
-     "Duplicate tab.",
-     no_param),
-
-    ("move_to_split_pane",
-     62,
-     "Move session to spit pane.",
-     no_param),
-
-    ("send_snippet",
-     63,
-     "Send snippet.",
-     snippet_param),
+bindings: list[tuple[str, int, str, Callable[[], tuple[str, str] | str]]] = [
+    ("next_session", 0, "Selects the next tab.", no_param),
+    ("next_window", 1, "Selects the next window.", no_param),
+    ("previous_session", 2, "Selects the previous tab.", no_param),
+    ("previous_window", 3, "Selects the previous window.", no_param),
+    ("scroll_end", 4, "Scroll to end.", no_param),
+    ("scroll_home", 5, "Scroll to top.", no_param),
+    ("scroll_line_down", 6, "Scroll one line down.", no_param),
+    ("scroll_line_up", 7, "Scroll one line up.", no_param),
+    ("scroll_page_down", 8, "Scroll one page down.", no_param),
+    ("scroll_page_up", 9, "Scroll one page up.", no_param),
+    ("escape_sequence", 10, "Send ESC + a string.", str_param),
+    ("hex_code", 11, "Send string, interpreted as hex values.", str_param),
+    ("text", 12, "Send text.", str_param),
+    ("ignore", 13, "Do nothing.", no_param),
+    ("ir_backward", 15, "Open Instant Replay.", no_param),
+    ("send_c_h_backspace", 16, "Send Control-H.", no_param),
+    ("send_c_qm_backspace", 17, "Send Control-? (backspace).", no_param),
+    ("select_pane_left", 18, "Select split pane on left.", no_param),
+    ("select_pane_right", 19, "Select split pane on right.", no_param),
+    ("select_pane_above", 20, "Select split pane above.", no_param),
+    ("select_pane_below", 21, "Select split pane below.", no_param),
+    ("do_not_remap_modifiers", 22, "Do not remap modifiers.", no_param),
+    ("toggle_fullscreen", 23, "Toggle full screen.", no_param),
+    ("remap_locally", 24, "Remap modifiers in iTerm2 only", no_param),
+    ("select_menu_item", 25, "Select menu item.", menu_item_param),
+    ("new_window_with_profile", 26, "New window using specified profile.", guid_param),
+    ("new_tab_with_profile", 27, "New tab using specified profile.", guid_param),
+    (
+        "split_horizontally_with_profile",
+        28,
+        "Split pane horizontally using specified profile.",
+        guid_param,
+    ),
+    (
+        "split_vertically_with_profile",
+        29,
+        "Split pane vertically using specified profile.",
+        guid_param,
+    ),
+    ("next_pane", 30, "Next split pane.", no_param),
+    ("previous_pane", 31, "Previous split pane.", no_param),
+    ("next_mru_tab", 32, "Cycle tabs forward.", no_param),
+    ("move_tab_left", 33, "Move tab left.", no_param),
+    ("move_tab_right", 34, "Move tab right.", no_param),
+    ("run_coprocess", 35, "Run coprocess.", str_param),
+    ("find_regex", 36, "Find using regular expression.", str_param),
+    ("set_profile", 37, "Set session's profile.", guid_param),
+    ("vim_text", 38, "Send text using vim syntax.", str_param),
+    ("previous_mru_tab", 39, "Cycle tabs backward.", no_param),
+    ("load_color_preset", 40, "Load specified color preset.", str_param),
+    ("paste_special", 41, "Paste from clipboard.", paste_param),
+    ("paste_special_from_selection", 42, "Paste from selection.", paste_param),
+    ("toggle_hotkey_window_pinning", 43, "Toggle hotkey window pinned.", no_param),
+    ("undo", 44, "Undo.", no_param),
+    ("move_end_of_selection_left", 45, "Move end of selection left.", movesel_param),
+    ("move_end_of_selection_right", 46, "Move end of selection right.", movesel_param),
+    (
+        "move_start_of_selection_left",
+        47,
+        "Move start of selection left.",
+        movesel_param,
+    ),
+    (
+        "move_start_of_selection_right",
+        48,
+        "Move start of selection right.",
+        movesel_param,
+    ),
+    ("decrease_height", 49, "Decrease session height.", no_param),
+    ("increase_height", 50, "Increase session height.", no_param),
+    ("decrease_width", 51, "Decrease session width.", no_param),
+    ("increase_width", 52, "Increase session width.", no_param),
+    ("swap_pane_left", 53, "Swap with split pane on left.", no_param),
+    ("swap_pane_right", 54, "Swap with split pane on right.", no_param),
+    ("swap_pane_above", 55, "Swap with split pane above.", no_param),
+    ("swap_pane_below", 56, "Swap with split pane below.", no_param),
+    ("find_again_down", 57, "Search again up.", no_param),
+    ("find_again_up", 58, "Search again down.", no_param),
+    ("toggle_mouse_reporting", 59, "Toggle mouse reporting.", no_param),
+    ("invoke_script_function", 60, "Invoke script function..", str_param),
+    ("duplicate_tab", 61, "Duplicate tab.", no_param),
+    ("move_to_split_pane", 62, "Move session to spit pane.", no_param),
+    ("send_snippet", 63, "Send snippet.", snippet_param),
 ]
+
 
 def gen_get_constructor():
     return """    if action == BindingAction.NEXT_SESSION:
@@ -557,6 +335,7 @@ def gen_get_constructor():
 
     return None"""
 
+
 def gen_binding_action():
     return """    NEXT_SESSION = 0
     NEXT_WINDOW = 1
@@ -622,29 +401,41 @@ def gen_binding_action():
     MOVE_TO_SPLIT_PANE = 62
     SEND_SNIPPET = 63"""
 
-print(""""Abstractions for iTerm2 key bindings."
+
+print(
+    """"Abstractions for iTerm2 key bindings."
+
+from __future__ import annotations
 
 import enum
 import json
-import iterm2.keyboard
-import iterm2.mainmenu
-import iterm2.rpc
-import typing
+from typing import TYPE_CHECKING, Any
 
-def NoParamConstructor(param):
+from . import api_pb2
+from .keyboard import Keycode, Modifier
+from .mainmenu import MenuItemIdentifier
+from .rpc import RPCException, async_get_preference, async_set_preference
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Mapping
+    from typing import TypeAlias
+
+    from .connection import Connection
+
+def NoParamConstructor(param: object) -> str:
     return ""
 
 
-def MenuItemIdentifierConstructor(param):
+def MenuItemIdentifierConstructor(param: str) -> MenuItemIdentifier:
     lines = param.split("\\n")
     title = lines[0]
     if len(lines) > 1:
         identifier = lines[1]
     else:
         identifier = None
-    return iterm2.MenuItemIdentifier(title, identifier)
+    return MenuItemIdentifier(title, identifier)
 
-def PasteConfigurationConstructor(param):
+def PasteConfigurationConstructor(param: str | None) -> PasteConfiguration:
     if param is None:
         base64 = False
         wait_for_prompts = False
@@ -709,7 +500,7 @@ class PasteConfiguration:
          self,
          base64: bool,
          wait_for_prompts: bool,
-         tab_transform: 'TabTransform',
+         tab_transform: TabTransform,
          tab_stop_size: int,
          delay: float,
          chunk_size: int,
@@ -721,7 +512,7 @@ class PasteConfiguration:
          bracket_allowed: bool,
          use_regex_substitution: bool,
          regex: str,
-         substitution: str):
+         substitution: str) -> None:
         self.__base64 = base64
         self.__wait_for_prompts = wait_for_prompts
         self.__tab_transform = tab_transform
@@ -740,7 +531,7 @@ class PasteConfiguration:
 
 
     def _encode(self) -> str:
-        param = {
+        param: dict[str, Any] = {
             'Base64': self.__base64,
             'WaitForPrompts': self.__wait_for_prompts,
             'TabTransform': self.__tab_transform.value,
@@ -765,7 +556,7 @@ class PasteConfiguration:
         return self.__base64
 
     @base64.setter
-    def base64(self, value: bool):
+    def base64(self, value: bool) -> None:
         "Sets whether to base64-encode when pasting."
         self.__base64 = value
 
@@ -775,17 +566,17 @@ class PasteConfiguration:
         return self.__wait_for_prompts
 
     @wait_for_prompts.setter
-    def wait_for_prompts(self, value: bool):
+    def wait_for_prompts(self, value: bool) -> None:
         "Sets whether to wait for a shell prompt before pasting."
         self.__wait_for_prompts = value
 
     @property
-    def tab_transform(self) -> 'TabTransform':
+    def tab_transform(self) -> TabTransform:
         "Returns how to convert tabs to strings when pasting."
         return self.__tab_transform
 
     @tab_transform.setter
-    def tab_transform(self, value: 'TabTransform'):
+    def tab_transform(self, value: TabTransform) -> None:
         "Sets how to convert tabs to strings when pasting."
         self.__tab_transform = value
 
@@ -795,7 +586,7 @@ class PasteConfiguration:
         return self.__tab_stop_size
 
     @tab_stop_size.setter
-    def tab_stop_size(self, value: int):
+    def tab_stop_size(self, value: int) -> None:
         "When converting tabs to spaces, this gives the number of spaces per tab."
         self.__tab_stop_size = value
 
@@ -805,7 +596,7 @@ class PasteConfiguration:
         return self.__delay
 
     @delay.setter
-    def delay(self, value: float):
+    def delay(self, value: float) -> None:
         "How long to wait between chunks (seconds)."
         self.__delay = value
 
@@ -815,7 +606,7 @@ class PasteConfiguration:
         return self.__chunk_size
 
     @chunk_size.setter
-    def chunk_size(self, value: int):
+    def chunk_size(self, value: int) -> None:
         "Chunk size to send."
         self.__chunk_size = value
 
@@ -825,7 +616,7 @@ class PasteConfiguration:
         return self.__convert_newlines
 
     @convert_newlines.setter
-    def convert_newlines(self, value: bool):
+    def convert_newlines(self, value: bool) -> None:
         "Convert CRLF and LF to CR?"
         self.__convert_newlines = value
 
@@ -835,7 +626,7 @@ class PasteConfiguration:
         return self.__remove_newlines
 
     @remove_newlines.setter
-    def remove_newlines(self, value: bool):
+    def remove_newlines(self, value: bool) -> None:
         "Remove all newlines?"
         self.__remove_newlines = value
 
@@ -845,7 +636,7 @@ class PasteConfiguration:
         return self.__convert_unicode_punctuation
 
     @convert_unicode_punctuation.setter
-    def convert_unicode_punctuation(self, value: bool):
+    def convert_unicode_punctuation(self, value: bool) -> None:
         "Sets whether to convert non-ASCII punctuation to ASCII equivalents when pasting."
         self.__convert_unicode_punctuation = value
 
@@ -855,7 +646,7 @@ class PasteConfiguration:
         return self.__escape_for_shell
 
     @escape_for_shell.setter
-    def escape_for_shell(self, value: bool):
+    def escape_for_shell(self, value: bool) -> None:
         "Sets whether to escape control characters for input to a shell when pasting."
         self.__escape_for_shell = value
 
@@ -865,7 +656,7 @@ class PasteConfiguration:
         return self.__remove_controls
 
     @remove_controls.setter
-    def remove_controls(self, value: bool):
+    def remove_controls(self, value: bool) -> None:
         "Sets whether to remove control characters when pasting."
         self.__remove_controls = value
 
@@ -875,7 +666,7 @@ class PasteConfiguration:
         return self.__bracket_allowed
 
     @bracket_allowed.setter
-    def bracket_allowed(self, value: bool):
+    def bracket_allowed(self, value: bool) -> None:
         "Sets whether to allow bracketed paste."
         self.__bracket_allowed = value
 
@@ -885,7 +676,7 @@ class PasteConfiguration:
         return self.__use_regex_substitution
 
     @use_regex_substitution.setter
-    def use_regex_substitution(self, value: bool):
+    def use_regex_substitution(self, value: bool) -> None:
         "Sets whether to perform regular expression substitution. See regex and substitution."
         self.__use_regex_substitution = value
 
@@ -895,7 +686,7 @@ class PasteConfiguration:
         return self.__regex
 
     @regex.setter
-    def regex(self, value: str):
+    def regex(self, value: str) -> None:
         "The regular expression pattern to match. See use_regex_substitution."
         self.__regex = value
 
@@ -905,7 +696,7 @@ class PasteConfiguration:
         return self.__substitution
 
     @substitution.setter
-    def substitution(self, value: str):
+    def substitution(self, value: str) -> None:
         "Replaces matches found by regex. See use_regex_substitution."
         self.__substitution = value
 
@@ -922,41 +713,60 @@ class MoveSelectionUnit(enum.Enum):
         return self.value
 
 
-def MoveSelectionUnitConstructor(value: str) -> 'MoveSelectionUnit':
+def MoveSelectionUnitConstructor(value: str) -> MoveSelectionUnit:
     return MoveSelectionUnit(int(value))
 
 class SnippetIdentifier:
-    def __init__(self, value: typing.Union[str, dict]):
+    def __init__(self, value: str | dict[str, Any]) -> None:
         \"\"\"Creates a SnippetIdentifier.
 
         :param value: Legacy prefs have a snippet title here. New identifiers
             have a dictionary of {'guid': 'unique identifier'}.
         \"\"\"
-        self.__title: typing.Optional[str] = None
-        self.__guid: typing.Optional[str] = None
+        self.__title: str | None = None
+        self.__guid: str | None = None
         if isinstance(value, str):
             self.__title = value
         else:
             self.__guid = value['guid']
 
-    def _encode(self) -> typing.Union[str,dict]:
+    def _encode(self) -> str | dict[str, str | None]:
         if self.__title is None:
             return { 'guid': self.__guid }
         return self.__title
 
+if TYPE_CHECKING:
+    _BindingParam: TypeAlias = (
+        str
+        | MenuItemIdentifier
+        | PasteConfiguration
+        | MoveSelectionUnit
+        | SnippetIdentifier
+    )
 
-def parse_binding_param(action: 'BindingAction', param) -> typing.Union[None, iterm2.mainmenu.MenuItemIdentifier, PasteConfiguration, MoveSelectionUnit, SnippetIdentifier]:
+
+def parse_binding_param(action: BindingAction, param: Any) -> _BindingParam:
     constructor = get_constructor(action)
+    if constructor is None:
+        # Every BindingAction has a constructor (actions without a parameter
+        # use NoParamConstructor), so this means an action was added without
+        # teaching get_constructor about it.
+        raise ValueError(f"No parameter constructor for binding action {action}")
     return constructor(param)
 
 
-def get_constructor(action: 'BindingAction'):
-""" + gen_get_constructor() + """
+def get_constructor(
+        action: BindingAction) -> Callable[[Any], _BindingParam] | None:
+"""
+    + gen_get_constructor()
+    + """
 
 class BindingAction(enum.Enum):
-""" + gen_binding_action() + """
+"""
+    + gen_binding_action()
+    + """
 
-def decode_key_binding(key: str, obj) -> 'KeyBinding':
+def decode_key_binding(key: str, obj: Mapping[str, Any]) -> KeyBinding:
     \"\"\"Convert a key and serialized binding to a :class:`~KeyBinding` object.
 
     :param key: Binding key, such as the keys in the key_mappings dictionary from a :class:`~Profile`.
@@ -964,7 +774,7 @@ def decode_key_binding(key: str, obj) -> 'KeyBinding':
 
     :returns: A :class:`~KeyBinding` object.
     \"\"\"
-    return KeyBinding._make(key, obj)
+    return KeyBinding._make(key, obj)  # pyright: ignore[reportPrivateUsage]
 
 class KeyBinding:
     \"\"\"A keyboard shortcut along with an action to perform and any extra
@@ -981,12 +791,12 @@ class KeyBinding:
     def __init__(
           self,
           character: int,
-          modifiers: typing.List[iterm2.keyboard.Modifier],
-          keycode: typing.Optional[iterm2.keyboard.Keycode],
-          action: 'BindingAction',
-          param,
-          version: typing.Optional[int],
-          label: typing.Optional[str]):
+          modifiers: Iterable[Modifier],
+          keycode: Keycode | None,
+          action: BindingAction,
+          param: _BindingParam,
+          version: int | None,
+          label: str | None) -> None:
         self.__keycode = keycode
         # True when read from iTerm2's old three-part key with keycode 0, which can mean
         # either the A key or an unknown keycode. Such keys are written back unchanged so
@@ -998,14 +808,17 @@ class KeyBinding:
             self.__modifiers = self.__modifiers | mod.to_cocoa()
         self.__action = action
         self.__parsed_param = param
+        self.__encoded_param: str | int | dict[str, Any]
         if isinstance(param, str):
             self.__encoded_param = param
         else:
-            self.__encoded_param = param._encode()
+            self.__encoded_param = param._encode()  # pyright: ignore[reportPrivateUsage]
         self.__version = version
         self.__label = label
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, KeyBinding):
+            return NotImplemented
         return (
              self.__keycode == other.__keycode and
              self.__character == other.__character and
@@ -1019,7 +832,7 @@ class KeyBinding:
         return f'[KeyBinding keycode={self.keycode} character={self.character} modifiers={self.modifiers} action={self.action} param={self.__parsed_param}] version={self.__version} label={self.__label}]'
 
     @staticmethod
-    def _make(key: str, entry: dict):
+    def _make(key: str, entry: Mapping[str, Any]) -> KeyBinding:
         # Key can be one of:
         # 0xcharacter-0xmodifiers
         # 0xcharacter-0xmodifiers-0xkeycode (older versions; keycode 0 may mean unknown)
@@ -1029,9 +842,9 @@ class KeyBinding:
         if len(keyParts) < 3:
             keycode = None
         else:
-            keycode = iterm2.keyboard.Keycode(int(keyParts[2], 16))
+            keycode = Keycode(int(keyParts[2], 16))
         character = int(keyParts[0], 16)
-        modifiers = iterm2.keyboard.Modifier.from_cocoa(int(keyParts[1], 16))
+        modifiers = Modifier.from_cocoa(int(keyParts[1], 16))
         param = parse_binding_param(
                 action,
                 entry['Text'])
@@ -1041,12 +854,12 @@ class KeyBinding:
         return binding
 
     @property
-    def encode(self) -> dict:
+    def encode(self) -> dict[str, Any]:
         "Encode the key binding so that it can be saved in a profile."
         return self._value
 
     @property
-    def keycode(self) -> typing.Optional[iterm2.keyboard.Keycode]:
+    def keycode(self) -> Keycode | None:
         "None, or the keycode associated with the key."
         return self.__keycode
 
@@ -1055,22 +868,22 @@ class KeyBinding:
         return self.__character
 
     @property
-    def modifiers(self) -> typing.List['iterm2.keyboard.Modifier']:
+    def modifiers(self) -> list[Modifier]:
         "List of modifier keys that must be pressed to activate the binding."
-        return iterm2.keyboard.Modifier.from_cocoa(self.__modifiers)
+        return Modifier.from_cocoa(self.__modifiers)
 
     @property
-    def action(self) -> 'BindingAction':
+    def action(self) -> BindingAction:
         "The action to perform."
         return self.__action
 
     @property
-    def param(self) -> typing.Union[None, iterm2.mainmenu.MenuItemIdentifier, PasteConfiguration, MoveSelectionUnit, SnippetIdentifier]:
+    def param(self) -> _BindingParam:
         "Action-specific data that configures the behavior."
         return self.__parsed_param
 
     @property
-    def key(self):
+    def key(self) -> str:
         \"\"\"Dictionary key used when setting bindings in a profile.\"\"\"
         base = hex(self.__character) + "-" + hex(self.__modifiers)
         if self.__keycode is None:
@@ -1082,35 +895,40 @@ class KeyBinding:
         return base + "-0x1"
 
     @property
-    def _value(self) -> dict:
-        result = { 'Action': self.action.value,
-                   'Text': self.__encoded_param }
+    def _value(self) -> dict[str, Any]:
+        result: dict[str, Any] = {
+            'Action': self.action.value,
+            'Text': self.__encoded_param,
+        }
         if self.__version is not None:
             result['Version'] = self.__version
         if self.__label is not None:
             result['Label'] = self.__label
         return result
 
-GLOBAL_KEY_MAP_USER_DEFAULTS_KEY = 'GlobalKeyMap'
+GLOBAL_KEY_MAP_USER_DEFAULTS_KEY: str = 'GlobalKeyMap'
 
-async def async_get_global_key_bindings(connection: iterm2.connection.Connection) -> typing.List['KeyBinding']:
+async def async_get_global_key_bindings(
+        connection: Connection) -> list[KeyBinding]:
     \"\"\"Fetches the global key binding.
 
     :param connection: The :class:`~iterm2.Connection` to use.
 
     :returns: A list of key bindings from Preferences > Keys.
     \"\"\"
-    proto = await iterm2.rpc.async_get_preference(connection, GLOBAL_KEY_MAP_USER_DEFAULTS_KEY)
+    proto = await async_get_preference(connection, GLOBAL_KEY_MAP_USER_DEFAULTS_KEY)
     j = proto.preferences_response.results[0].get_preference_result.json_value
     raw = json.loads(j)
-    result = []
+    result: list[KeyBinding] = []
     for k in raw:
         entry = raw[k]
         binding = decode_key_binding(k, entry)
         result.append(binding)
     return result
 
-async def async_set_global_key_bindings(connection: iterm2.connection.Connection, bindings: typing.List['KeyBinding']):
+async def async_set_global_key_bindings(
+        connection: Connection,
+        bindings: Iterable[KeyBinding]) -> None:
     \"\"\"Sets the global key bindings.
 
     :param connection: The :class:`~iterm2.Connection` to use.
@@ -1118,11 +936,12 @@ async def async_set_global_key_bindings(connection: iterm2.connection.Connection
     \"\"\"
     replacement = {}
     for binding in bindings:
-        replacement[binding.key] = binding._value
-    proto = await iterm2.rpc.async_set_preference(connection, GLOBAL_KEY_MAP_USER_DEFAULTS_KEY, json.dumps(replacement))
+        replacement[binding.key] = binding._value  # pyright: ignore[reportPrivateUsage]
+    proto = await async_set_preference(connection, GLOBAL_KEY_MAP_USER_DEFAULTS_KEY, json.dumps(replacement))
     status = proto.preferences_response.results[0].set_preference_result.status
-    if status == iterm2.api_pb2.PreferencesResponse.Result.SetPreferenceResult.Status.Value("OK"):
+    if status == api_pb2.PreferencesResponse.Result.SetPreferenceResult.Status.Value("OK"):
         return
-    raise iterm2.rpc.RPCException(
-        iterm2.api_pb2.PreferencesResponse.Result.SetPreferenceResult.Status.Name(status))
-""")
+    raise RPCException(
+        api_pb2.PreferencesResponse.Result.SetPreferenceResult.Status.Name(status))
+"""
+)

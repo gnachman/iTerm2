@@ -1,8 +1,16 @@
 "Abstractions for iTerm2 triggers."
 
+from __future__ import annotations
+
 import enum
-import iterm2
-import typing
+import json
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
+
+from .color import Color
+
+if TYPE_CHECKING:
+    _T = TypeVar("_T", bound="Trigger")
 
 
 class MatchType(enum.Enum):
@@ -11,6 +19,7 @@ class MatchType(enum.Enum):
     Regex-based triggers (0-99) fire when output matches a pattern.
     Event-based triggers (100+) fire when specific events occur.
     """
+
     # Regex-based (0-99)
     REGEX = 0
     URL_REGEX = 1
@@ -32,16 +41,18 @@ class MatchType(enum.Enum):
     EVENT_PROGRESS_BAR_CHANGED = 112
 
     @staticmethod
-    def is_event(match_type: 'MatchType') -> bool:
+    def is_event(match_type: MatchType) -> bool:
         """Returns True if this is an event-based match type."""
         return match_type.value >= 100
 
-def _hex(color):
+
+def _hex(color: Color | None):
     if not color:
         return ""
     return color.hex
 
-def _futureproof(param, obj):
+
+def _futureproof(param: Any, obj: _T) -> _T:
     """Sets the unparsed parameter in a trigger.
 
     Subclasses of Trigger will initialize __param with a computed param. This
@@ -56,7 +67,8 @@ def _futureproof(param, obj):
     obj.param = param
     return obj
 
-def decode_trigger(encoded: dict) -> typing.Union['Trigger', 'EventTrigger']:
+
+def decode_trigger(encoded: dict[str, Any]) -> Trigger | EventTrigger:
     """Create a trigger.
 
     Use this to convert the dictionary representation of a trigger gotten from
@@ -69,34 +81,35 @@ def decode_trigger(encoded: dict) -> typing.Union['Trigger', 'EventTrigger']:
 
     :returns: A :class:`~Trigger`.
     """
-    classes: typing.Dict[str, typing.Type[Trigger]] = {
-        AlertTrigger._name(): AlertTrigger,
-        AnnotateTrigger._name(): AnnotateTrigger,
-        BellTrigger._name(): BellTrigger,
-        BounceTrigger._name(): BounceTrigger,
-        CaptureTrigger._name(): CaptureTrigger,
-        CoprocessTrigger._name(): CoprocessTrigger,
-        HighlightLineTrigger._name(): HighlightLineTrigger,
-        HighlightTrigger._name(): HighlightTrigger,
-        HyperlinkTrigger._name(): HyperlinkTrigger,
-        InjectTrigger._name(): InjectTrigger,
-        MarkTrigger._name(): MarkTrigger,
-        MuteCoprocessTrigger._name(): MuteCoprocessTrigger,
-        PasswordTrigger._name(): PasswordTrigger,
-        RPCTrigger._name(): RPCTrigger,
-        RunCommandTrigger._name(): RunCommandTrigger,
-        SendTextTrigger._name(): SendTextTrigger,
-        SetDirectoryTrigger._name(): SetDirectoryTrigger,
-        SetHostnameTrigger._name(): SetHostnameTrigger,
-        SetTitleTrigger._name(): SetTitleTrigger,
-        SetUserVariableTrigger._name(): SetUserVariableTrigger,
-        ShellPromptTrigger._name(): ShellPromptTrigger,
-        StopTrigger._name(): StopTrigger,
-        UserNotificationTrigger._name(): UserNotificationTrigger,
-        SetNamedMarkTrigger._name(): SetNamedMarkTrigger,
-        FoldTrigger._name(): FoldTrigger,
-        SGRTrigger._name(): SGRTrigger,
-        BufferInputTrigger._name(): BufferInputTrigger,
+
+    classes: dict[str, type[Trigger]] = {
+        AlertTrigger._name(): AlertTrigger,  # pyright: ignore[reportPrivateUsage]
+        AnnotateTrigger._name(): AnnotateTrigger,  # pyright: ignore[reportPrivateUsage]
+        BellTrigger._name(): BellTrigger,  # pyright: ignore[reportPrivateUsage]
+        BounceTrigger._name(): BounceTrigger,  # pyright: ignore[reportPrivateUsage]
+        CaptureTrigger._name(): CaptureTrigger,  # pyright: ignore[reportPrivateUsage]
+        CoprocessTrigger._name(): CoprocessTrigger,  # pyright: ignore[reportPrivateUsage]
+        HighlightLineTrigger._name(): HighlightLineTrigger,  # pyright: ignore[reportPrivateUsage]
+        HighlightTrigger._name(): HighlightTrigger,  # pyright: ignore[reportPrivateUsage]
+        HyperlinkTrigger._name(): HyperlinkTrigger,  # pyright: ignore[reportPrivateUsage]
+        InjectTrigger._name(): InjectTrigger,  # pyright: ignore[reportPrivateUsage]
+        MarkTrigger._name(): MarkTrigger,  # pyright: ignore[reportPrivateUsage]
+        MuteCoprocessTrigger._name(): MuteCoprocessTrigger,  # pyright: ignore[reportPrivateUsage]
+        PasswordTrigger._name(): PasswordTrigger,  # pyright: ignore[reportPrivateUsage]
+        RPCTrigger._name(): RPCTrigger,  # pyright: ignore[reportPrivateUsage]
+        RunCommandTrigger._name(): RunCommandTrigger,  # pyright: ignore[reportPrivateUsage]
+        SendTextTrigger._name(): SendTextTrigger,  # pyright: ignore[reportPrivateUsage]
+        SetDirectoryTrigger._name(): SetDirectoryTrigger,  # pyright: ignore[reportPrivateUsage]
+        SetHostnameTrigger._name(): SetHostnameTrigger,  # pyright: ignore[reportPrivateUsage]
+        SetTitleTrigger._name(): SetTitleTrigger,  # pyright: ignore[reportPrivateUsage]
+        SetUserVariableTrigger._name(): SetUserVariableTrigger,  # pyright: ignore[reportPrivateUsage]
+        ShellPromptTrigger._name(): ShellPromptTrigger,  # pyright: ignore[reportPrivateUsage]
+        StopTrigger._name(): StopTrigger,  # pyright: ignore[reportPrivateUsage]
+        UserNotificationTrigger._name(): UserNotificationTrigger,  # pyright: ignore[reportPrivateUsage]
+        SetNamedMarkTrigger._name(): SetNamedMarkTrigger,  # pyright: ignore[reportPrivateUsage]
+        FoldTrigger._name(): FoldTrigger,  # pyright: ignore[reportPrivateUsage]
+        SGRTrigger._name(): SGRTrigger,  # pyright: ignore[reportPrivateUsage]
+        BufferInputTrigger._name(): BufferInputTrigger,  # pyright: ignore[reportPrivateUsage]
     }
 
     name = encoded["action"]
@@ -115,7 +128,8 @@ def decode_trigger(encoded: dict) -> typing.Union['Trigger', 'EventTrigger']:
             # Unknown event type - return generic EventTrigger
             match_type = None
         return _decode_event_trigger(
-            name, match_type, match_type_value, param, enabled, event_params, classes)
+            name, match_type, match_type_value, param, enabled, event_params, classes
+        )
 
     if name not in classes:
         # Futureproof unrecognized trigger types. This allows a round-trip
@@ -126,16 +140,17 @@ def decode_trigger(encoded: dict) -> typing.Union['Trigger', 'EventTrigger']:
 
 
 def _decode_event_trigger(
-        action_name: str,
-        match_type: typing.Optional[MatchType],
-        match_type_value: int,
-        param,
-        enabled: bool,
-        event_params: typing.Optional[dict],
-        action_classes: typing.Dict[str, typing.Type['Trigger']]) -> 'EventTrigger':
+    action_name: str,
+    match_type: MatchType | None,
+    match_type_value: int,
+    param: Any,
+    enabled: bool,
+    event_params: dict[str, Any] | None,
+    action_classes: dict[str, type[Trigger]],
+) -> EventTrigger:
     """Decode an event-based trigger."""
     # Map match types to their specific event trigger classes
-    event_classes: typing.Dict[MatchType, typing.Type[EventTrigger]] = {
+    event_classes: dict[MatchType, type[EventTrigger]] = {
         MatchType.EVENT_PROMPT_DETECTED: PromptDetectedEventTrigger,
         MatchType.EVENT_COMMAND_FINISHED: CommandFinishedEventTrigger,
         MatchType.EVENT_DIRECTORY_CHANGED: DirectoryChangedEventTrigger,
@@ -153,7 +168,9 @@ def _decode_event_trigger(
 
     if match_type is not None and match_type in event_classes:
         event_class = event_classes[match_type]
-        return event_class.deserialize(action_name, param, enabled, event_params, action_classes)
+        return event_class.deserialize(
+            action_name, param, enabled, event_params, action_classes
+        )
 
     # Unknown event type - return generic EventTrigger
     return EventTrigger(
@@ -162,7 +179,9 @@ def _decode_event_trigger(
         param=param,
         enabled=enabled,
         event_params=event_params,
-        _raw_match_type=match_type_value if match_type is None else None)
+        _raw_match_type=match_type_value if match_type is None else None,
+    )
+
 
 class Trigger:
     """Base class for triggers.
@@ -172,8 +191,15 @@ class Trigger:
     You may get an instance of this object for unrecognized trigger types that
     are defined in future versions of iTerm2.
     """
-    def __init__(self, regex: str, param, instant: bool, enabled: bool,
-                 match_type: MatchType = MatchType.REGEX):
+
+    def __init__(
+        self,
+        regex: str,
+        param: Any,
+        instant: bool,
+        enabled: bool,
+        match_type: MatchType = MatchType.REGEX,
+    ) -> None:
         self.__regex = regex
         self.__param = param
         self.__instant = instant
@@ -181,22 +207,25 @@ class Trigger:
         self.__match_type = match_type
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}: regex={self.__regex} instant={self.__instant} enabled={self.__enabled} param={self._param}>'
+        return f"<{self.__class__.__name__}: regex={self.__regex} instant={self.__instant} enabled={self.__enabled} param={self._param}>"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Trigger):
+            return NotImplemented
         return (
-             self.__regex == other.__regex and
-             self.__param == other.__param and
-             self.__instant == other.__instant and
-             self.__enabled == other.__enabled and
-             self.__match_type == other.__match_type)
+            self.__regex == other.__regex
+            and self.__param == other.__param
+            and self.__instant == other.__instant
+            and self.__enabled == other.__enabled
+            and self.__match_type == other.__match_type
+        )
 
     @property
-    def param(self):
+    def param(self) -> Any:
         return self.__param
 
     @param.setter
-    def param(self, value):
+    def param(self, value: Any) -> None:
         self.__param = value
 
     @property
@@ -204,7 +233,7 @@ class Trigger:
         return self.__regex
 
     @regex.setter
-    def regex(self, value: str):
+    def regex(self, value: str) -> None:
         self.__regex = value
 
     @property
@@ -212,7 +241,7 @@ class Trigger:
         return self.__instant
 
     @instant.setter
-    def instant(self, value: bool):
+    def instant(self, value: bool) -> None:
         self.__instant = value
 
     @property
@@ -220,7 +249,7 @@ class Trigger:
         return self.__enabled
 
     @enabled.setter
-    def enabled(self, value: bool):
+    def enabled(self, value: bool) -> None:
         self.__enabled = value
 
     @property
@@ -229,35 +258,35 @@ class Trigger:
         return self.__match_type
 
     @staticmethod
-    def _name():
+    def _name() -> str:
         return "Trigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool) -> 'Trigger':
+    def deserialize(regex: str, param: str, instant: bool, enabled: bool) -> Trigger:
         return Trigger(regex, param, instant, enabled)
 
     @property
-    def encode(self) -> dict:
-        result = {
+    def encode(self) -> dict[str, Any]:
+        result: dict[str, Any] = {
             "regex": self.regex,
             "action": self._name(),
             "parameter": self.param,
             "partial": self.instant,
             "disabled": not self.enabled,
-            "matchType": self.__match_type.value
+            "matchType": self.__match_type.value,
         }
         return result
 
-    def toJSON(self):
+    def toJSON(self) -> str:
         return json.dumps(self.encode)
 
     @property
-    def _param(self):
+    def _param(self) -> str | int:
         return ""
 
 
 class AlertTrigger(Trigger):
-    def __init__(self, regex: str, message: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, message: str, instant: bool, enabled: bool) -> None:
         self.__message = message
         super().__init__(regex, self._param, instant, enabled)
 
@@ -266,7 +295,9 @@ class AlertTrigger(Trigger):
         return "AlertTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> AlertTrigger:
         return _futureproof(param, AlertTrigger(regex, param, instant, enabled))
 
     @property
@@ -274,7 +305,7 @@ class AlertTrigger(Trigger):
         return self.__message
 
     @message.setter
-    def message(self, value: str):
+    def message(self, value: str) -> None:
         self.__message = value
         self.param = self._param
 
@@ -282,8 +313,11 @@ class AlertTrigger(Trigger):
     def _param(self):
         return self.__message
 
+
 class AnnotateTrigger(Trigger):
-    def __init__(self, regex: str, annotation: str, instant: bool, enabled: bool):
+    def __init__(
+        self, regex: str, annotation: str, instant: bool, enabled: bool
+    ) -> None:
         self.__annotation = annotation
         super().__init__(regex, self._param, instant, enabled)
 
@@ -292,7 +326,9 @@ class AnnotateTrigger(Trigger):
         return "AnnotateTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> AnnotateTrigger:
         return _futureproof(param, AnnotateTrigger(regex, param, instant, enabled))
 
     @property
@@ -300,7 +336,7 @@ class AnnotateTrigger(Trigger):
         return self.__annotation
 
     @annotation.setter
-    def annotation(self, value: str):
+    def annotation(self, value: str) -> None:
         self.__annotation = value
         self.param = self._param
 
@@ -308,8 +344,9 @@ class AnnotateTrigger(Trigger):
     def _param(self):
         return self.__annotation
 
+
 class BellTrigger(Trigger):
-    def __init__(self, regex: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, instant: bool, enabled: bool) -> None:
         super().__init__(regex, self._param, instant, enabled)
 
     @staticmethod
@@ -317,19 +354,24 @@ class BellTrigger(Trigger):
         return "BellTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> BellTrigger:
         return _futureproof(param, BellTrigger(regex, instant, enabled))
 
     @property
     def _param(self) -> str:
         return ""
 
+
 class BounceTrigger(Trigger):
     class Action(enum.Enum):
         BOUNCE_UNTIL_ACTIVATED = 0
         BOUNCE_ONCE = 1
 
-    def __init__(self, regex: str, action: 'BounceTrigger.Action', instant: bool, enabled: bool):
+    def __init__(
+        self, regex: str, action: BounceTrigger.Action, instant: bool, enabled: bool
+    ) -> None:
         self.__action = action
         super().__init__(regex, self._param, instant, enabled)
 
@@ -338,15 +380,19 @@ class BounceTrigger(Trigger):
         return "BounceTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
-        return _futureproof(param, BounceTrigger(regex, BounceTrigger.Action(param), instant, enabled))
+    def deserialize(
+        regex: str, param: Any, instant: bool, enabled: bool
+    ) -> BounceTrigger:
+        return _futureproof(
+            param, BounceTrigger(regex, BounceTrigger.Action(param), instant, enabled)
+        )
 
     @property
-    def action(self) -> 'BounceTrigger.Action':
+    def action(self) -> BounceTrigger.Action:
         return self.__action
 
     @action.setter
-    def action(self, value: 'BounceTrigger.Action'):
+    def action(self, value: BounceTrigger.Action) -> None:
         self.__action = value
         self.param = self._param
 
@@ -354,12 +400,19 @@ class BounceTrigger(Trigger):
     def _param(self):
         return self.__action.value
 
+
 class BufferInputTrigger(Trigger):
     class Action(enum.Enum):
         START = 0
         STOP = 1
 
-    def __init__(self, regex: str, action: 'BufferInputTrigger.Action', instant: bool, enabled: bool):
+    def __init__(
+        self,
+        regex: str,
+        action: BufferInputTrigger.Action,
+        instant: bool,
+        enabled: bool,
+    ) -> None:
         self.__action = action
         super().__init__(regex, self._param, instant, enabled)
 
@@ -368,15 +421,22 @@ class BufferInputTrigger(Trigger):
         return "iTermBufferInputTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param, instant: bool, enabled: bool):
-        return _futureproof(param, BufferInputTrigger(regex, BufferInputTrigger.Action(param), instant, enabled))
+    def deserialize(
+        regex: str, param: Any, instant: bool, enabled: bool
+    ) -> BufferInputTrigger:
+        return _futureproof(
+            param,
+            BufferInputTrigger(
+                regex, BufferInputTrigger.Action(param), instant, enabled
+            ),
+        )
 
     @property
-    def action(self) -> 'BufferInputTrigger.Action':
+    def action(self) -> BufferInputTrigger.Action:
         return self.__action
 
     @action.setter
-    def action(self, value: 'BufferInputTrigger.Action'):
+    def action(self, value: BufferInputTrigger.Action) -> None:
         self.__action = value
         self.param = self._param
 
@@ -384,8 +444,11 @@ class BufferInputTrigger(Trigger):
     def _param(self):
         return self.__action.value
 
+
 class RPCTrigger(Trigger):
-    def __init__(self, regex: str, invocation: str, instant: bool, enabled: bool):
+    def __init__(
+        self, regex: str, invocation: str, instant: bool, enabled: bool
+    ) -> None:
         self.__invocation = invocation
         super().__init__(regex, self._param, instant, enabled)
 
@@ -394,7 +457,7 @@ class RPCTrigger(Trigger):
         return "iTermRPCTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(regex: str, param: str, instant: bool, enabled: bool) -> RPCTrigger:
         return _futureproof(param, RPCTrigger(regex, param, instant, enabled))
 
     @property
@@ -402,7 +465,7 @@ class RPCTrigger(Trigger):
         return self.__invocation
 
     @invocation.setter
-    def invocation(self, value: str):
+    def invocation(self, value: str) -> None:
         self.__invocation = value
         self.param = self._param
 
@@ -410,8 +473,9 @@ class RPCTrigger(Trigger):
     def _param(self):
         return self.__invocation
 
+
 class CaptureTrigger(Trigger):
-    def __init__(self, regex: str, command: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, command: str, instant: bool, enabled: bool) -> None:
         self.__command = command
         super().__init__(regex, self._param, instant, enabled)
 
@@ -420,7 +484,9 @@ class CaptureTrigger(Trigger):
         return "CaptureTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> CaptureTrigger:
         return _futureproof(param, CaptureTrigger(regex, param, instant, enabled))
 
     @property
@@ -428,7 +494,7 @@ class CaptureTrigger(Trigger):
         return self.__command
 
     @command.setter
-    def command(self, value: str):
+    def command(self, value: str) -> None:
         self.__command = value
         self.param = self._param
 
@@ -436,8 +502,9 @@ class CaptureTrigger(Trigger):
     def _param(self):
         return self.__command
 
+
 class SetNamedMarkTrigger(Trigger):
-    def __init__(self, regex: str, markname: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, markname: str, instant: bool, enabled: bool) -> None:
         self.__markname = markname
         super().__init__(regex, self._param, instant, enabled)
 
@@ -446,7 +513,9 @@ class SetNamedMarkTrigger(Trigger):
         return "iTermSetNamedMarkTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> SetNamedMarkTrigger:
         return _futureproof(param, SetNamedMarkTrigger(regex, param, instant, enabled))
 
     @property
@@ -454,7 +523,7 @@ class SetNamedMarkTrigger(Trigger):
         return self.__markname
 
     @markname.setter
-    def markname(self, value: str):
+    def markname(self, value: str) -> None:
         self.__markname = value
         self.param = self._param
 
@@ -462,8 +531,9 @@ class SetNamedMarkTrigger(Trigger):
     def _param(self):
         return self.__markname
 
+
 class SGRTrigger(Trigger):
-    def __init__(self, regex: str, sgr: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, sgr: str, instant: bool, enabled: bool) -> None:
         self.__sgr = sgr
         super().__init__(regex, self._param, instant, enabled)
 
@@ -472,7 +542,7 @@ class SGRTrigger(Trigger):
         return "iTermSGRTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(regex: str, param: str, instant: bool, enabled: bool) -> SGRTrigger:
         return _futureproof(param, SGRTrigger(regex, param, instant, enabled))
 
     @property
@@ -480,7 +550,7 @@ class SGRTrigger(Trigger):
         return self.__sgr
 
     @sgr.setter
-    def sgr(self, value: str):
+    def sgr(self, value: str) -> None:
         self.__sgr = value
         self.param = self._param
 
@@ -488,8 +558,9 @@ class SGRTrigger(Trigger):
     def _param(self):
         return self.__sgr
 
+
 class FoldTrigger(Trigger):
-    def __init__(self, regex: str, markname: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, markname: str, instant: bool, enabled: bool) -> None:
         self.__markname = markname
         super().__init__(regex, self._param, instant, enabled)
 
@@ -498,7 +569,9 @@ class FoldTrigger(Trigger):
         return "iTermFoldTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> FoldTrigger:
         return _futureproof(param, FoldTrigger(regex, param, instant, enabled))
 
     @property
@@ -506,7 +579,7 @@ class FoldTrigger(Trigger):
         return self.__markname
 
     @markname.setter
-    def markname(self, value: str):
+    def markname(self, value: str) -> None:
         self.__markname = value
         self.param = self._param
 
@@ -514,8 +587,11 @@ class FoldTrigger(Trigger):
     def _param(self):
         return self.__markname
 
+
 class InjectTrigger(Trigger):
-    def __init__(self, regex: str, injection: str, instant: bool, enabled: bool):
+    def __init__(
+        self, regex: str, injection: str, instant: bool, enabled: bool
+    ) -> None:
         self.__injection = injection
         super().__init__(regex, self._param, instant, enabled)
 
@@ -524,7 +600,9 @@ class InjectTrigger(Trigger):
         return "iTermInjectTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> InjectTrigger:
         return _futureproof(param, InjectTrigger(regex, param, instant, enabled))
 
     @property
@@ -532,7 +610,7 @@ class InjectTrigger(Trigger):
         return self.__injection
 
     @injection.setter
-    def injection(self, value: str):
+    def injection(self, value: str) -> None:
         self.__injection = value
         self.param = self._param
 
@@ -540,8 +618,16 @@ class InjectTrigger(Trigger):
     def _param(self):
         return self.__injection
 
+
 class HighlightLineTrigger(Trigger):
-    def __init__(self, regex: str, text_color: typing.Optional[iterm2.Color], background_color: typing.Optional[iterm2.Color], instant: bool, enabled: bool):
+    def __init__(
+        self,
+        regex: str,
+        text_color: Color | None,
+        background_color: Color | None,
+        instant: bool,
+        enabled: bool,
+    ) -> None:
         self.__text_color = text_color
         self.__background_color = background_color
         super().__init__(regex, self._param, instant, enabled)
@@ -551,27 +637,32 @@ class HighlightLineTrigger(Trigger):
         return "iTermHighlightLineTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> HighlightTrigger:
         parts = param[1:-1].split(",")
-        text_color = iterm2.Color.from_trigger(parts[0])
-        background_color = iterm2.Color.from_trigger(parts[1])
-        return _futureproof(param, HighlightTrigger(regex, text_color, background_color, instant, enabled))
+        text_color = Color.from_trigger(parts[0])
+        background_color = Color.from_trigger(parts[1])
+        return _futureproof(
+            param,
+            HighlightTrigger(regex, text_color, background_color, instant, enabled),
+        )
 
     @property
-    def text_color(self) -> typing.Optional[iterm2.Color]:
+    def text_color(self) -> Color | None:
         return self.__text_color
 
     @text_color.setter
-    def text_color(self, value: typing.Optional[iterm2.Color]):
+    def text_color(self, value: Color | None) -> None:
         self.__text_color = value
         self.param = self._param
 
     @property
-    def background_color(self) -> typing.Optional[iterm2.Color]:
+    def background_color(self) -> Color | None:
         return self.__background_color
 
     @background_color.setter
-    def background_color(self, value: typing.Optional[iterm2.Color]):
+    def background_color(self, value: Color | None) -> None:
         self.__background_color = value
         self.param = self._param
 
@@ -579,8 +670,9 @@ class HighlightLineTrigger(Trigger):
     def _param(self):
         return "{" + _hex(self.__text_color) + "," + _hex(self.__background_color) + "}"
 
+
 class UserNotificationTrigger(Trigger):
-    def __init__(self, regex: str, message: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, message: str, instant: bool, enabled: bool) -> None:
         self.__message = message
         super().__init__(regex, self._param, instant, enabled)
 
@@ -589,15 +681,19 @@ class UserNotificationTrigger(Trigger):
         return "iTermUserNotificationTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
-        return _futureproof(param, UserNotificationTrigger(regex, param, instant, enabled))
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> UserNotificationTrigger:
+        return _futureproof(
+            param, UserNotificationTrigger(regex, param, instant, enabled)
+        )
 
     @property
     def message(self) -> str:
         return self.__message
 
     @message.setter
-    def message(self, value: str):
+    def message(self, value: str) -> None:
         self.__message = value
         self.param = self._param
 
@@ -605,8 +701,11 @@ class UserNotificationTrigger(Trigger):
     def _param(self):
         return self.__message
 
+
 class SetUserVariableTrigger(Trigger):
-    def __init__(self, regex: str, name: str, json_value: str, instant: bool, enabled: bool):
+    def __init__(
+        self, regex: str, name: str, json_value: str, instant: bool, enabled: bool
+    ) -> None:
         self.__name = name
         self.__json_value = json_value
         super().__init__(regex, self._param, instant, enabled)
@@ -616,16 +715,20 @@ class SetUserVariableTrigger(Trigger):
         return "iTermSetUserVariableTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> SetUserVariableTrigger:
         parts = param.split(chr(1))
-        return _futureproof(param, SetUserVariableTrigger(regex, parts[0], parts[1], instant, enabled))
+        return _futureproof(
+            param, SetUserVariableTrigger(regex, parts[0], parts[1], instant, enabled)
+        )
 
     @property
     def name(self) -> str:
         return self.__name
 
     @name.setter
-    def name(self, value: str):
+    def name(self, value: str) -> None:
         self.__name = value
         self.param = self._param
 
@@ -634,7 +737,7 @@ class SetUserVariableTrigger(Trigger):
         return self.__json_value
 
     @json_value.setter
-    def json_value(self, value: str):
+    def json_value(self, value: str) -> None:
         self.__json_value = value
         self.param = self._param
 
@@ -642,8 +745,9 @@ class SetUserVariableTrigger(Trigger):
     def _param(self):
         return self.__name + chr(1) + self.__json_value
 
+
 class ShellPromptTrigger(Trigger):
-    def __init__(self, regex: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, instant: bool, enabled: bool) -> None:
         super().__init__(regex, self._param, instant, enabled)
 
     @staticmethod
@@ -651,15 +755,18 @@ class ShellPromptTrigger(Trigger):
         return "iTermShellPromptTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> ShellPromptTrigger:
         return _futureproof(param, ShellPromptTrigger(regex, instant, enabled))
 
     @property
     def _param(self):
         return ""
 
+
 class SetTitleTrigger(Trigger):
-    def __init__(self, regex: str, title: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, title: str, instant: bool, enabled: bool) -> None:
         self.__title = title
         super().__init__(regex, self._param, instant, enabled)
 
@@ -668,7 +775,9 @@ class SetTitleTrigger(Trigger):
         return "iTermSetTitleTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> SetTitleTrigger:
         return _futureproof(param, SetTitleTrigger(regex, param, instant, enabled))
 
     @property
@@ -676,7 +785,7 @@ class SetTitleTrigger(Trigger):
         return self.__title
 
     @title.setter
-    def title(self, value: str):
+    def title(self, value: str) -> None:
         self.__title = value
         self.param = self._param
 
@@ -684,8 +793,9 @@ class SetTitleTrigger(Trigger):
     def _param(self):
         return self.__title
 
+
 class SendTextTrigger(Trigger):
-    def __init__(self, regex: str, text: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, text: str, instant: bool, enabled: bool) -> None:
         self.__text = text
         super().__init__(regex, self._param, instant, enabled)
 
@@ -694,7 +804,9 @@ class SendTextTrigger(Trigger):
         return "SendTextTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> SendTextTrigger:
         return _futureproof(param, SendTextTrigger(regex, param, instant, enabled))
 
     @property
@@ -702,7 +814,7 @@ class SendTextTrigger(Trigger):
         return self.__text
 
     @text.setter
-    def text(self, value: str):
+    def text(self, value: str) -> None:
         self.__text = value
         self.param = self._param
 
@@ -710,8 +822,9 @@ class SendTextTrigger(Trigger):
     def _param(self):
         return self.__text
 
+
 class RunCommandTrigger(Trigger):
-    def __init__(self, regex: str, command: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, command: str, instant: bool, enabled: bool) -> None:
         self.__command = command
         super().__init__(regex, self._param, instant, enabled)
 
@@ -720,7 +833,9 @@ class RunCommandTrigger(Trigger):
         return "ScriptTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> RunCommandTrigger:
         return _futureproof(param, RunCommandTrigger(regex, param, instant, enabled))
 
     @property
@@ -728,7 +843,7 @@ class RunCommandTrigger(Trigger):
         return self.__command
 
     @command.setter
-    def command(self, value: str):
+    def command(self, value: str) -> None:
         self.__command = value
         self.param = self._param
 
@@ -736,8 +851,9 @@ class RunCommandTrigger(Trigger):
     def _param(self):
         return self.__command
 
+
 class CoprocessTrigger(Trigger):
-    def __init__(self, regex: str, command: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, command: str, instant: bool, enabled: bool) -> None:
         self.__command = command
         super().__init__(regex, self._param, instant, enabled)
 
@@ -746,7 +862,9 @@ class CoprocessTrigger(Trigger):
         return "CoprocessTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> CoprocessTrigger:
         return _futureproof(param, CoprocessTrigger(regex, param, instant, enabled))
 
     @property
@@ -754,7 +872,7 @@ class CoprocessTrigger(Trigger):
         return self.__command
 
     @command.setter
-    def command(self, value: str):
+    def command(self, value: str) -> None:
         self.__command = value
         self.param = self._param
 
@@ -762,8 +880,9 @@ class CoprocessTrigger(Trigger):
     def _param(self):
         return self.__command
 
+
 class MuteCoprocessTrigger(Trigger):
-    def __init__(self, regex: str, command: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, command: str, instant: bool, enabled: bool) -> None:
         self.__command = command
         super().__init__(regex, self._param, instant, enabled)
 
@@ -772,7 +891,9 @@ class MuteCoprocessTrigger(Trigger):
         return "MuteCoprocessTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> MuteCoprocessTrigger:
         return _futureproof(param, MuteCoprocessTrigger(regex, param, instant, enabled))
 
     @property
@@ -780,7 +901,7 @@ class MuteCoprocessTrigger(Trigger):
         return self.__command
 
     @command.setter
-    def command(self, value: str):
+    def command(self, value: str) -> None:
         self.__command = value
         self.param = self._param
 
@@ -788,8 +909,16 @@ class MuteCoprocessTrigger(Trigger):
     def _param(self):
         return self.__command
 
+
 class HighlightTrigger(Trigger):
-    def __init__(self, regex: str, text_color: typing.Optional[iterm2.Color], background_color: typing.Optional[iterm2.Color], instant: bool, enabled: bool):
+    def __init__(
+        self,
+        regex: str,
+        text_color: Color | None,
+        background_color: Color | None,
+        instant: bool,
+        enabled: bool,
+    ) -> None:
         self.__text_color = text_color
         self.__background_color = background_color
         super().__init__(regex, self._param, instant, enabled)
@@ -799,27 +928,32 @@ class HighlightTrigger(Trigger):
         return "HighlightTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> HighlightTrigger:
         parts = param[1:-1].split(",")
-        text_color = iterm2.Color.from_trigger(parts[0])
-        background_color = iterm2.Color.from_trigger(parts[1])
-        return _futureproof(param, HighlightTrigger(regex, text_color, background_color, instant, enabled))
+        text_color = Color.from_trigger(parts[0])
+        background_color = Color.from_trigger(parts[1])
+        return _futureproof(
+            param,
+            HighlightTrigger(regex, text_color, background_color, instant, enabled),
+        )
 
     @property
-    def text_color(self) -> typing.Optional[iterm2.Color]:
+    def text_color(self) -> Color | None:
         return self.__text_color
 
     @text_color.setter
-    def text_color(self, value: typing.Optional[iterm2.Color]):
+    def text_color(self, value: Color | None) -> None:
         self.__text_color = value
         self.param = self._param
 
     @property
-    def background_color(self) -> typing.Optional[iterm2.Color]:
+    def background_color(self) -> Color | None:
         return self.__background_color
 
     @background_color.setter
-    def background_color(self, value: typing.Optional[iterm2.Color]):
+    def background_color(self, value: Color | None) -> None:
         self.__background_color = value
         self.param = self._param
 
@@ -827,8 +961,11 @@ class HighlightTrigger(Trigger):
     def _param(self):
         return "{" + _hex(self.__text_color) + "," + _hex(self.__background_color) + "}"
 
+
 class MarkTrigger(Trigger):
-    def __init__(self, regex: str, stop_scrolling: bool, instant: bool, enabled: bool):
+    def __init__(
+        self, regex: str, stop_scrolling: bool, instant: bool, enabled: bool
+    ) -> None:
         self.__stop_scrolling = stop_scrolling
         super().__init__(regex, self._param, instant, enabled)
 
@@ -837,7 +974,9 @@ class MarkTrigger(Trigger):
         return "MarkTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: Any, instant: bool, enabled: bool
+    ) -> MarkTrigger:
         return _futureproof(param, MarkTrigger(regex, param == 1, instant, enabled))
 
     @property
@@ -845,7 +984,7 @@ class MarkTrigger(Trigger):
         return self.__stop_scrolling
 
     @stop_scrolling.setter
-    def stop_scrolling(self, value: bool):
+    def stop_scrolling(self, value: bool) -> None:
         self.__stop_scrolling = value
         self.param = self._param
 
@@ -853,10 +992,18 @@ class MarkTrigger(Trigger):
     def _param(self):
         return 1 if self.__stop_scrolling else 0
 
-class PasswordTrigger(Trigger):
-    SEPARATOR = "\u2002\u2014\u2002"
 
-    def __init__(self, regex: str, account_name: str, user_name: typing.Optional[str], instant: bool, enabled: bool):
+class PasswordTrigger(Trigger):
+    SEPARATOR: str = "\u2002\u2014\u2002"
+
+    def __init__(
+        self,
+        regex: str,
+        account_name: str,
+        user_name: str | None,
+        instant: bool,
+        enabled: bool,
+    ) -> None:
         self.__account_name = account_name
         self.__user_name = user_name
         super().__init__(regex, self._param, instant, enabled)
@@ -866,7 +1013,9 @@ class PasswordTrigger(Trigger):
         return "PasswordTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> PasswordTrigger:
         if PasswordTrigger.SEPARATOR in param:
             parts = param.split(PasswordTrigger.SEPARATOR)
             account_name = parts[0]
@@ -874,34 +1023,37 @@ class PasswordTrigger(Trigger):
         else:
             account_name = param
             user_name = ""
-        return _futureproof(param, PasswordTrigger(regex, account_name, user_name, instant, enabled))
+        return _futureproof(
+            param, PasswordTrigger(regex, account_name, user_name, instant, enabled)
+        )
 
     @property
     def account_name(self) -> str:
         return self.__account_name
 
     @account_name.setter
-    def account_name(self, value: str):
+    def account_name(self, value: str) -> None:
         self.__account_name = value
         self.param = self._param
 
     @property
-    def user_name(self) -> typing.Optional[str]:
+    def user_name(self) -> str | None:
         return self.__user_name
 
     @user_name.setter
-    def user_name(self, value: str):
+    def user_name(self, value: str) -> None:
         self.__user_name = value
         self.param = self._param
 
     @property
-    def _param(self):
-        if len(self.__user_name) > 0:
+    def _param(self) -> str:
+        if self.__user_name is not None and len(self.__user_name) > 0:
             return self.__account_name + PasswordTrigger.SEPARATOR + self.__user_name
         return self.__account_name
 
+
 class HyperlinkTrigger(Trigger):
-    def __init__(self, regex: str, url: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, url: str, instant: bool, enabled: bool) -> None:
         self.__url = url
         super().__init__(regex, self._param, instant, enabled)
 
@@ -910,7 +1062,9 @@ class HyperlinkTrigger(Trigger):
         return "iTermHyperlinkTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> HyperlinkTrigger:
         return _futureproof(param, HyperlinkTrigger(regex, param, instant, enabled))
 
     @property
@@ -918,7 +1072,7 @@ class HyperlinkTrigger(Trigger):
         return self.__url
 
     @url.setter
-    def url(self, value: str):
+    def url(self, value: str) -> None:
         self.__url = value
         self.param = self._param
 
@@ -926,8 +1080,11 @@ class HyperlinkTrigger(Trigger):
     def _param(self):
         return self.__url
 
+
 class SetDirectoryTrigger(Trigger):
-    def __init__(self, regex: str, directory: str, instant: bool, enabled: bool):
+    def __init__(
+        self, regex: str, directory: str, instant: bool, enabled: bool
+    ) -> None:
         self.__directory = directory
         super().__init__(regex, self._param, instant, enabled)
 
@@ -936,7 +1093,9 @@ class SetDirectoryTrigger(Trigger):
         return "SetDirectoryTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> SetDirectoryTrigger:
         return _futureproof(param, SetDirectoryTrigger(regex, param, instant, enabled))
 
     @property
@@ -944,7 +1103,7 @@ class SetDirectoryTrigger(Trigger):
         return self.__directory
 
     @directory.setter
-    def directory(self, value: str):
+    def directory(self, value: str) -> None:
         self.__directory = value
         self.param = self._param
 
@@ -952,8 +1111,9 @@ class SetDirectoryTrigger(Trigger):
     def _param(self):
         return self.__directory
 
+
 class SetHostnameTrigger(Trigger):
-    def __init__(self, regex: str, hostname: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, hostname: str, instant: bool, enabled: bool) -> None:
         self.__hostname = hostname
         super().__init__(regex, self._param, instant, enabled)
 
@@ -962,7 +1122,9 @@ class SetHostnameTrigger(Trigger):
         return "SetHostnameTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> SetHostnameTrigger:
         return _futureproof(param, SetHostnameTrigger(regex, param, instant, enabled))
 
     @property
@@ -970,7 +1132,7 @@ class SetHostnameTrigger(Trigger):
         return self.__hostname
 
     @hostname.setter
-    def hostname(self, value: str):
+    def hostname(self, value: str) -> None:
         self.__hostname = value
         self.param = self._param
 
@@ -978,8 +1140,9 @@ class SetHostnameTrigger(Trigger):
     def _param(self):
         return self.__hostname
 
+
 class StopTrigger(Trigger):
-    def __init__(self, regex: str, instant: bool, enabled: bool):
+    def __init__(self, regex: str, instant: bool, enabled: bool) -> None:
         super().__init__(regex, self._param, instant, enabled)
 
     @staticmethod
@@ -987,7 +1150,9 @@ class StopTrigger(Trigger):
         return "StopTrigger"
 
     @staticmethod
-    def deserialize(regex: str, param: str, instant: bool, enabled: bool):
+    def deserialize(
+        regex: str, param: str, instant: bool, enabled: bool
+    ) -> StopTrigger:
         return _futureproof(param, StopTrigger(regex, instant, enabled))
 
     @property
@@ -996,6 +1161,7 @@ class StopTrigger(Trigger):
 
 
 # Event-based triggers (match type >= 100)
+
 
 class EventTrigger:
     """Base class for event-based triggers.
@@ -1006,14 +1172,16 @@ class EventTrigger:
     Do not create this directly. Instead, use one of the specific event trigger
     subclasses like :class:`~CommandFinishedEventTrigger`.
     """
+
     def __init__(
-            self,
-            match_type: MatchType,
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[typing.Dict[str, typing.Any]] = None,
-            _raw_match_type: typing.Optional[int] = None):
+        self,
+        match_type: MatchType,
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None = None,
+        _raw_match_type: int | None = None,
+    ) -> None:
         self.__match_type = match_type
         self.__action_name = action_name
         self.__param = param
@@ -1023,19 +1191,22 @@ class EventTrigger:
         self.__raw_match_type = _raw_match_type
 
     def __repr__(self):
-        return (f'<{self.__class__.__name__}: match_type={self.__match_type} '
-                f'action={self.__action_name} enabled={self.__enabled} '
-                f'event_params={self.__event_params}>')
+        return (
+            f"<{self.__class__.__name__}: match_type={self.__match_type} "
+            f"action={self.__action_name} enabled={self.__enabled} "
+            f"event_params={self.__event_params}>"
+        )
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, EventTrigger):
             return False
         return (
-            self.__match_type == other.__match_type and
-            self.__action_name == other.__action_name and
-            self.__param == other.__param and
-            self.__enabled == other.__enabled and
-            self.__event_params == other.__event_params)
+            self.__match_type == other.__match_type
+            and self.__action_name == other.__action_name
+            and self.__param == other.__param
+            and self.__enabled == other.__enabled
+            and self.__event_params == other.__event_params
+        )
 
     @property
     def match_type(self) -> MatchType:
@@ -1048,16 +1219,16 @@ class EventTrigger:
         return self.__action_name
 
     @action_name.setter
-    def action_name(self, value: str):
+    def action_name(self, value: str) -> None:
         self.__action_name = value
 
     @property
-    def param(self):
+    def param(self) -> Any:
         """The parameter for the trigger action."""
         return self.__param
 
     @param.setter
-    def param(self, value):
+    def param(self, value: Any) -> None:
         self.__param = value
 
     @property
@@ -1066,25 +1237,27 @@ class EventTrigger:
         return self.__enabled
 
     @enabled.setter
-    def enabled(self, value: bool):
+    def enabled(self, value: bool) -> None:
         self.__enabled = value
 
     @property
-    def event_params(self) -> typing.Dict[str, typing.Any]:
+    def event_params(self) -> dict[str, Any]:
         """Event-specific parameters (e.g., exit_code_filter, timeout)."""
         return self.__event_params
 
     @event_params.setter
-    def event_params(self, value: typing.Dict[str, typing.Any]):
+    def event_params(self, value: dict[str, Any]) -> None:
         self.__event_params = value
 
     @property
-    def encode(self) -> dict:
+    def encode(self) -> dict[str, Any]:
         """Encode this trigger for sending to iTerm2."""
-        match_type_value = (self.__raw_match_type
-                           if self.__raw_match_type is not None
-                           else self.__match_type.value)
-        result = {
+        match_type_value = (
+            self.__raw_match_type
+            if self.__raw_match_type is not None
+            else self.__match_type.value
+        )
+        result: dict[str, Any] = {
             "regex": "",
             "action": self.__action_name,
             "parameter": self.__param if self.__param else "",
@@ -1096,23 +1269,24 @@ class EventTrigger:
             result["eventParams"] = self.__event_params
         return result
 
-    def toJSON(self):
-        import json
+    def toJSON(self) -> str:
         return json.dumps(self.encode)
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'EventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> EventTrigger:
         return EventTrigger(
             match_type=MatchType.EVENT_PROMPT_DETECTED,
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=dict(event_params) if event_params is not None else None,
+        )
 
 
 class PromptDetectedEventTrigger(EventTrigger):
@@ -1120,29 +1294,29 @@ class PromptDetectedEventTrigger(EventTrigger):
 
     Requires shell integration.
     """
-    def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool):
+
+    def __init__(self, action_name: str, param: Any, enabled: bool) -> None:
         super().__init__(
             match_type=MatchType.EVENT_PROMPT_DETECTED,
             action_name=action_name,
             param=param,
-            enabled=enabled)
+            enabled=enabled,
+        )
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'PromptDetectedEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> PromptDetectedEventTrigger:
         return PromptDetectedEventTrigger(action_name, param, enabled)
 
 
 class ExitCodeFilter(enum.Enum):
     """Filter for command exit codes."""
+
     ANY = "*"
     ZERO = "0"
     NON_ZERO = "!0"
@@ -1162,13 +1336,15 @@ class CommandFinishedEventTrigger(EventTrigger):
         - ExitCodeFilter.NON_ZERO: Match non-zero exit codes
         - A specific integer exit code
     """
+
     def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool,
-            exit_code_filter: typing.Union[ExitCodeFilter, int] = ExitCodeFilter.ANY):
-        event_params = {}
+        self,
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        exit_code_filter: ExitCodeFilter | int = ExitCodeFilter.ANY,
+    ) -> None:
+        event_params: dict[str, Any] = {}
         if isinstance(exit_code_filter, ExitCodeFilter):
             event_params["exitCodeFilter"] = exit_code_filter.value
         else:
@@ -1178,16 +1354,17 @@ class CommandFinishedEventTrigger(EventTrigger):
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=event_params,
+        )
         self.__exit_code_filter = exit_code_filter
 
     @property
-    def exit_code_filter(self) -> typing.Union[ExitCodeFilter, int]:
+    def exit_code_filter(self) -> ExitCodeFilter | int:
         """The exit code filter for this trigger."""
         return self.__exit_code_filter
 
     @exit_code_filter.setter
-    def exit_code_filter(self, value: typing.Union[ExitCodeFilter, int]):
+    def exit_code_filter(self, value: ExitCodeFilter | int) -> None:
         self.__exit_code_filter = value
         if isinstance(value, ExitCodeFilter):
             self.event_params["exitCodeFilter"] = value.value
@@ -1196,12 +1373,13 @@ class CommandFinishedEventTrigger(EventTrigger):
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'CommandFinishedEventTrigger':
-        exit_code_filter: typing.Union[ExitCodeFilter, int] = ExitCodeFilter.ANY
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> CommandFinishedEventTrigger:
+        exit_code_filter: ExitCodeFilter | int = ExitCodeFilter.ANY
         if event_params:
             filter_str = event_params.get("exitCodeFilter", "*")
             if filter_str == "*" or filter_str == "":
@@ -1215,7 +1393,9 @@ class CommandFinishedEventTrigger(EventTrigger):
                     exit_code_filter = int(filter_str)
                 except ValueError:
                     exit_code_filter = ExitCodeFilter.ANY
-        return CommandFinishedEventTrigger(action_name, param, enabled, exit_code_filter)
+        return CommandFinishedEventTrigger(
+            action_name, param, enabled, exit_code_filter
+        )
 
 
 class DirectoryChangedEventTrigger(EventTrigger):
@@ -1228,13 +1408,15 @@ class DirectoryChangedEventTrigger(EventTrigger):
     :param enabled: Whether the trigger is enabled.
     :param directory_regex: Optional regex pattern to match against the new directory.
     """
+
     def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool,
-            directory_regex: typing.Optional[str] = None):
-        event_params = {}
+        self,
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        directory_regex: str | None = None,
+    ) -> None:
+        event_params: dict[str, Any] = {}
         if directory_regex:
             event_params["directoryRegex"] = directory_regex
         super().__init__(
@@ -1242,16 +1424,17 @@ class DirectoryChangedEventTrigger(EventTrigger):
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=event_params,
+        )
         self.__directory_regex = directory_regex
 
     @property
-    def directory_regex(self) -> typing.Optional[str]:
+    def directory_regex(self) -> str | None:
         """Regex pattern to match against the new directory."""
         return self.__directory_regex
 
     @directory_regex.setter
-    def directory_regex(self, value: typing.Optional[str]):
+    def directory_regex(self, value: str | None) -> None:
         self.__directory_regex = value
         if value:
             self.event_params["directoryRegex"] = value
@@ -1260,13 +1443,16 @@ class DirectoryChangedEventTrigger(EventTrigger):
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'DirectoryChangedEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> DirectoryChangedEventTrigger:
         directory_regex = event_params.get("directoryRegex") if event_params else None
-        return DirectoryChangedEventTrigger(action_name, param, enabled, directory_regex)
+        return DirectoryChangedEventTrigger(
+            action_name, param, enabled, directory_regex
+        )
 
 
 class HostChangedEventTrigger(EventTrigger):
@@ -1279,13 +1465,11 @@ class HostChangedEventTrigger(EventTrigger):
     :param enabled: Whether the trigger is enabled.
     :param host_regex: Optional regex pattern to match against the new host.
     """
+
     def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool,
-            host_regex: typing.Optional[str] = None):
-        event_params = {}
+        self, action_name: str, param: Any, enabled: bool, host_regex: str | None = None
+    ) -> None:
+        event_params: dict[str, Any] = {}
         if host_regex:
             event_params["hostRegex"] = host_regex
         super().__init__(
@@ -1293,16 +1477,17 @@ class HostChangedEventTrigger(EventTrigger):
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=event_params,
+        )
         self.__host_regex = host_regex
 
     @property
-    def host_regex(self) -> typing.Optional[str]:
+    def host_regex(self) -> str | None:
         """Regex pattern to match against the new host."""
         return self.__host_regex
 
     @host_regex.setter
-    def host_regex(self, value: typing.Optional[str]):
+    def host_regex(self, value: str | None) -> None:
         self.__host_regex = value
         if value:
             self.event_params["hostRegex"] = value
@@ -1311,11 +1496,12 @@ class HostChangedEventTrigger(EventTrigger):
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'HostChangedEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> HostChangedEventTrigger:
         host_regex = event_params.get("hostRegex") if event_params else None
         return HostChangedEventTrigger(action_name, param, enabled, host_regex)
 
@@ -1330,13 +1516,11 @@ class UserChangedEventTrigger(EventTrigger):
     :param enabled: Whether the trigger is enabled.
     :param user_regex: Optional regex pattern to match against the new username.
     """
+
     def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool,
-            user_regex: typing.Optional[str] = None):
-        event_params = {}
+        self, action_name: str, param: Any, enabled: bool, user_regex: str | None = None
+    ) -> None:
+        event_params: dict[str, Any] = {}
         if user_regex:
             event_params["userRegex"] = user_regex
         super().__init__(
@@ -1344,16 +1528,17 @@ class UserChangedEventTrigger(EventTrigger):
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=event_params,
+        )
         self.__user_regex = user_regex
 
     @property
-    def user_regex(self) -> typing.Optional[str]:
+    def user_regex(self) -> str | None:
         """Regex pattern to match against the new username."""
         return self.__user_regex
 
     @user_regex.setter
-    def user_regex(self, value: typing.Optional[str]):
+    def user_regex(self, value: str | None) -> None:
         self.__user_regex = value
         if value:
             self.event_params["userRegex"] = value
@@ -1362,11 +1547,12 @@ class UserChangedEventTrigger(EventTrigger):
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'UserChangedEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> UserChangedEventTrigger:
         user_regex = event_params.get("userRegex") if event_params else None
         return UserChangedEventTrigger(action_name, param, enabled, user_regex)
 
@@ -1379,19 +1565,18 @@ class IdleEventTrigger(EventTrigger):
     :param enabled: Whether the trigger is enabled.
     :param timeout: Number of seconds of inactivity before firing. Default is 30.
     """
+
     def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool,
-            timeout: float = 30.0):
+        self, action_name: str, param: Any, enabled: bool, timeout: float = 30.0
+    ) -> None:
         event_params = {"timeout": timeout}
         super().__init__(
             match_type=MatchType.EVENT_IDLE,
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=event_params,
+        )
         self.__timeout = timeout
 
     @property
@@ -1400,17 +1585,18 @@ class IdleEventTrigger(EventTrigger):
         return self.__timeout
 
     @timeout.setter
-    def timeout(self, value: float):
+    def timeout(self, value: float) -> None:
         self.__timeout = value
         self.event_params["timeout"] = value
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'IdleEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> IdleEventTrigger:
         timeout = 30.0
         if event_params and "timeout" in event_params:
             timeout = float(event_params["timeout"])
@@ -1426,19 +1612,18 @@ class ActivityAfterIdleEventTrigger(EventTrigger):
     :param timeout: Number of seconds of inactivity required before activity
         will trigger. Default is 30.
     """
+
     def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool,
-            timeout: float = 30.0):
+        self, action_name: str, param: Any, enabled: bool, timeout: float = 30.0
+    ) -> None:
         event_params = {"timeout": timeout}
         super().__init__(
             match_type=MatchType.EVENT_ACTIVITY_AFTER_IDLE,
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=event_params,
+        )
         self.__timeout = timeout
 
     @property
@@ -1447,17 +1632,18 @@ class ActivityAfterIdleEventTrigger(EventTrigger):
         return self.__timeout
 
     @timeout.setter
-    def timeout(self, value: float):
+    def timeout(self, value: float) -> None:
         self.__timeout = value
         self.event_params["timeout"] = value
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'ActivityAfterIdleEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> ActivityAfterIdleEventTrigger:
         timeout = 30.0
         if event_params and "timeout" in event_params:
             timeout = float(event_params["timeout"])
@@ -1466,47 +1652,45 @@ class ActivityAfterIdleEventTrigger(EventTrigger):
 
 class SessionEndedEventTrigger(EventTrigger):
     """Trigger that fires when the session ends."""
-    def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool):
+
+    def __init__(self, action_name: str, param: Any, enabled: bool) -> None:
         super().__init__(
             match_type=MatchType.EVENT_SESSION_ENDED,
             action_name=action_name,
             param=param,
-            enabled=enabled)
+            enabled=enabled,
+        )
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'SessionEndedEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> SessionEndedEventTrigger:
         return SessionEndedEventTrigger(action_name, param, enabled)
 
 
 class BellReceivedEventTrigger(EventTrigger):
     """Trigger that fires when a bell character is received."""
-    def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool):
+
+    def __init__(self, action_name: str, param: Any, enabled: bool) -> None:
         super().__init__(
             match_type=MatchType.EVENT_BELL_RECEIVED,
             action_name=action_name,
             param=param,
-            enabled=enabled)
+            enabled=enabled,
+        )
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'BellReceivedEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> BellReceivedEventTrigger:
         return BellReceivedEventTrigger(action_name, param, enabled)
 
 
@@ -1522,14 +1706,16 @@ class LongRunningCommandEventTrigger(EventTrigger):
         Default is 60.
     :param command_regex: Optional regex pattern to match against the command.
     """
+
     def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool,
-            threshold: float = 60.0,
-            command_regex: typing.Optional[str] = None):
-        event_params: typing.Dict[str, typing.Any] = {"threshold": threshold}
+        self,
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        threshold: float = 60.0,
+        command_regex: str | None = None,
+    ) -> None:
+        event_params: dict[str, Any] = {"threshold": threshold}
         if command_regex:
             event_params["commandRegex"] = command_regex
         super().__init__(
@@ -1537,7 +1723,8 @@ class LongRunningCommandEventTrigger(EventTrigger):
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=event_params,
+        )
         self.__threshold = threshold
         self.__command_regex = command_regex
 
@@ -1547,17 +1734,17 @@ class LongRunningCommandEventTrigger(EventTrigger):
         return self.__threshold
 
     @threshold.setter
-    def threshold(self, value: float):
+    def threshold(self, value: float) -> None:
         self.__threshold = value
         self.event_params["threshold"] = value
 
     @property
-    def command_regex(self) -> typing.Optional[str]:
+    def command_regex(self) -> str | None:
         """Regex pattern to match against the command."""
         return self.__command_regex
 
     @command_regex.setter
-    def command_regex(self, value: typing.Optional[str]):
+    def command_regex(self, value: str | None) -> None:
         self.__command_regex = value
         if value:
             self.event_params["commandRegex"] = value
@@ -1566,18 +1753,21 @@ class LongRunningCommandEventTrigger(EventTrigger):
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'LongRunningCommandEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> LongRunningCommandEventTrigger:
         threshold = 60.0
         command_regex = None
         if event_params:
             if "threshold" in event_params:
                 threshold = float(event_params["threshold"])
             command_regex = event_params.get("commandRegex")
-        return LongRunningCommandEventTrigger(action_name, param, enabled, threshold, command_regex)
+        return LongRunningCommandEventTrigger(
+            action_name, param, enabled, threshold, command_regex
+        )
 
 
 class CustomEscapeSequenceEventTrigger(EventTrigger):
@@ -1591,13 +1781,15 @@ class CustomEscapeSequenceEventTrigger(EventTrigger):
     :param sequence_id: The identifier of the escape sequence to match.
         Can be a regex pattern.
     """
+
     def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool,
-            sequence_id: typing.Optional[str] = None):
-        event_params = {}
+        self,
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        sequence_id: str | None = None,
+    ) -> None:
+        event_params: dict[str, Any] = {}
         if sequence_id:
             event_params["sequenceId"] = sequence_id
         super().__init__(
@@ -1605,16 +1797,17 @@ class CustomEscapeSequenceEventTrigger(EventTrigger):
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=event_params,
+        )
         self.__sequence_id = sequence_id
 
     @property
-    def sequence_id(self) -> typing.Optional[str]:
+    def sequence_id(self) -> str | None:
         """The identifier of the escape sequence to match."""
         return self.__sequence_id
 
     @sequence_id.setter
-    def sequence_id(self, value: typing.Optional[str]):
+    def sequence_id(self, value: str | None) -> None:
         self.__sequence_id = value
         if value:
             self.event_params["sequenceId"] = value
@@ -1623,13 +1816,16 @@ class CustomEscapeSequenceEventTrigger(EventTrigger):
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'CustomEscapeSequenceEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> CustomEscapeSequenceEventTrigger:
         sequence_id = event_params.get("sequenceId") if event_params else None
-        return CustomEscapeSequenceEventTrigger(action_name, param, enabled, sequence_id)
+        return CustomEscapeSequenceEventTrigger(
+            action_name, param, enabled, sequence_id
+        )
 
 
 class NotificationPostedEventTrigger(EventTrigger):
@@ -1641,13 +1837,15 @@ class NotificationPostedEventTrigger(EventTrigger):
     :param message_regex: Optional regex pattern to match against the notification
         message.
     """
+
     def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool,
-            message_regex: typing.Optional[str] = None):
-        event_params = {}
+        self,
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        message_regex: str | None = None,
+    ) -> None:
+        event_params: dict[str, Any] = {}
         if message_regex:
             event_params["messageRegex"] = message_regex
         super().__init__(
@@ -1655,16 +1853,17 @@ class NotificationPostedEventTrigger(EventTrigger):
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=event_params,
+        )
         self.__message_regex = message_regex
 
     @property
-    def message_regex(self) -> typing.Optional[str]:
+    def message_regex(self) -> str | None:
         """Regex pattern to match against the notification message."""
         return self.__message_regex
 
     @message_regex.setter
-    def message_regex(self, value: typing.Optional[str]):
+    def message_regex(self, value: str | None) -> None:
         self.__message_regex = value
         if value:
             self.event_params["messageRegex"] = value
@@ -1673,13 +1872,16 @@ class NotificationPostedEventTrigger(EventTrigger):
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'NotificationPostedEventTrigger':
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> NotificationPostedEventTrigger:
         message_regex = event_params.get("messageRegex") if event_params else None
-        return NotificationPostedEventTrigger(action_name, param, enabled, message_regex)
+        return NotificationPostedEventTrigger(
+            action_name, param, enabled, message_regex
+        )
 
 
 class ProgressBarChangedEventTrigger(EventTrigger):
@@ -1692,13 +1894,15 @@ class ProgressBarChangedEventTrigger(EventTrigger):
         (appears or disappears), ``"appeared"``, or ``"disappeared"``.
         Defaults to ``"*"``.
     """
+
     def __init__(
-            self,
-            action_name: str,
-            param,
-            enabled: bool,
-            progress_bar_filter: str = "*"):
-        event_params = {}
+        self,
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        progress_bar_filter: str = "*",
+    ) -> None:
+        event_params: dict[str, Any] = {}
         if progress_bar_filter and progress_bar_filter != "*":
             event_params["progressBarFilter"] = progress_bar_filter
         super().__init__(
@@ -1706,7 +1910,8 @@ class ProgressBarChangedEventTrigger(EventTrigger):
             action_name=action_name,
             param=param,
             enabled=enabled,
-            event_params=event_params)
+            event_params=event_params,
+        )
         self.__progress_bar_filter = progress_bar_filter
 
     @property
@@ -1715,7 +1920,7 @@ class ProgressBarChangedEventTrigger(EventTrigger):
         return self.__progress_bar_filter
 
     @progress_bar_filter.setter
-    def progress_bar_filter(self, value: str):
+    def progress_bar_filter(self, value: str) -> None:
         self.__progress_bar_filter = value
         if value and value != "*":
             self.event_params["progressBarFilter"] = value
@@ -1724,11 +1929,15 @@ class ProgressBarChangedEventTrigger(EventTrigger):
 
     @staticmethod
     def deserialize(
-            action_name: str,
-            param,
-            enabled: bool,
-            event_params: typing.Optional[dict],
-            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'ProgressBarChangedEventTrigger':
-        progress_bar_filter = event_params.get("progressBarFilter", "*") if event_params else "*"
-        return ProgressBarChangedEventTrigger(action_name, param, enabled, progress_bar_filter)
-
+        action_name: str,
+        param: Any,
+        enabled: bool,
+        event_params: dict[str, Any] | None,
+        action_classes: Mapping[str, type[Trigger]],
+    ) -> ProgressBarChangedEventTrigger:
+        progress_bar_filter = (
+            event_params.get("progressBarFilter", "*") if event_params else "*"
+        )
+        return ProgressBarChangedEventTrigger(
+            action_name, param, enabled, progress_bar_filter
+        )
