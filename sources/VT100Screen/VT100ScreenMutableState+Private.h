@@ -102,6 +102,17 @@ iTermTriggerScopeProvider> {
 // gate's sync path.
 @property (nonatomic, readwrite) NSInteger reportSyncCount;
 
+// Absolute line number of the cursor right after contents were restored from saved state, or
+// -1. Lets -restorePreferredCursorPositionIfPossible tell a resize that slid the screen over
+// history apart from output that moved the cursor.
+@property (nonatomic) long long restoredCursorAbsLine;
+// Height of the current grid right after contents were restored from saved state.
+@property (nonatomic) int restoredGridHeight;
+// cursor.y - preferredCursorPosition.y right after contents were restored from saved state.
+// Usually 0; the restoration banner can leave it nonzero.
+@property (nonatomic) int restoredCursorOffsetFromPreferred;
+- (long long)absLineOfCursor;
+
 // Has the running command appended any output since it began executing (FTCS C)? Reset at FTCS C,
 // set whenever text is appended. Used to decide whether a program that moves the cursor above its
 // output region (without using the alternate screen) is doing a launch-time takeover that should

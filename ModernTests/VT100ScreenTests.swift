@@ -392,6 +392,209 @@ class VT100ScreenTests: XCTestCase {
         commonAnnotationRestoration(range: VT100GridCoordRangeMake(0, 1, 3, 1))
     }
 
+    // QA finding F-224: a restored session is created at the wrong size and then fit to its
+    // window, so its grid goes through a resize round trip. When the screen had been cleared
+    // with the cursor moved down, the shrink drops the blank rows below the cursor and pulls
+    // the pre-clear lines from scrollback onto the screen, and the grow does not push them
+    // back. Restoring the preferred cursor position afterwards then left the cursor pointing
+    // into the old text, above the new content. It must instead put the same content at the
+    // same rows with the cursor where it was.
+    private func clearScreenAndMoveCursorRestoration(transientSize: VT100GridSize,
+                                                     maxScrollbackLines: UInt32 = 1000) {
+        var screen = self.screen(width: 30, height: 24)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.maxScrollbackLines = maxScrollbackLines
+        })
+        feed(screen, "1\r\n2\r\n3\r\n4\r\n5\r\n6\r\n7\r\n8\r\nBEFORE2J\r\n")
+        feed(screen, "\u{1b}[2J\u{1b}[HX\u{1b}[10;20H")
+        let dumpBefore = screen.compactLineDumpWithHistory()
+        let screenDumpBefore = screen.compactLineDump()
+        XCTAssertEqual(screen.cursorX(), 20)
+        XCTAssertEqual(screen.cursorY(), 10)
+        // ED 2 pushed the pre-clear lines into history and left only X on the screen.
+        XCTAssertEqual(screenDumpBefore.components(separatedBy: "\n").first,
+                       "X" + String(repeating: ".", count: 29))
+
+        let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
+        var linesDropped = Int32(0)
+        screen.encodeContents(encoder, linesDropped: &linesDropped, unlimited: true)
+        let state = encoder.mutableDictionary
+
+        screen = self.screen(width: 30, height: 24)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.maxScrollbackLines = maxScrollbackLines
+        })
+        screen.restore(from: (state as? [AnyHashable : Any])!,
+                       includeRestorationBanner: false,
+                       reattached: true,
+                       isArchive: false,
+                       largeContentProvider: nil)
+        // What PseudoTerminal does while restoring: the session is at the wrong size for a
+        // moment, then fit to its window, then the preferred cursor position is restored.
+        screen.size = transientSize
+        screen.size = VT100GridSizeMake(30, 24)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.restorePreferredCursorPositionIfPossible()
+        })
+
+        XCTAssertEqual(screen.compactLineDump(), screenDumpBefore)
+        XCTAssertEqual(screen.compactLineDumpWithHistory(), dumpBefore)
+        XCTAssertEqual(screen.cursorX(), 20)
+        XCTAssertEqual(screen.cursorY(), 10)
+    }
+
+    func testClearScreenAndMoveCursorSurvivesRestorationWithTransientShrink() {
+        clearScreenAndMoveCursorRestoration(transientSize: VT100GridSizeMake(30, 23))
+    }
+
+    func testClearScreenAndMoveCursorSurvivesRestorationWithTransientGrow() {
+        clearScreenAndMoveCursorRestoration(transientSize: VT100GridSizeMake(30, 30))
+    }
+
+    // The transient resize drops lines from a capped scrollback buffer; the restored screen
+    // must still match.
+    func testClearScreenAndMoveCursorSurvivesRestorationWithSmallScrollback() {
+        clearScreenAndMoveCursorRestoration(transientSize: VT100GridSizeMake(30, 23),
+                                            maxScrollbackLines: 5)
+    }
+
+    func testClearScreenAndMoveCursorSurvivesRestorationWithTinyTransientSize() {
+        clearScreenAndMoveCursorRestoration(transientSize: VT100GridSizeMake(10, 2))
+    }
+
+    // With the “Session Contents Restored” banner, a resize round trip followed by the fix-up
+    // must leave the same screen as a restoration that was never resized.
+    func testClearScreenAndMoveCursorSurvivesRestorationWithBanner() {
+        let screen = self.screen(width: 30, height: 24)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.maxScrollbackLines = 1000
+        })
+        feed(screen, "1\r\n2\r\n3\r\n4\r\n5\r\n6\r\n7\r\n8\r\nBEFORE2J\r\n")
+        feed(screen, "\u{1b}[2J\u{1b}[HX\u{1b}[10;20H")
+        let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
+        var linesDropped = Int32(0)
+        screen.encodeContents(encoder, linesDropped: &linesDropped, unlimited: true)
+        let state = (encoder.mutableDictionary as? [AnyHashable : Any])!
+
+        func restored(transientSize: VT100GridSize?) -> VT100Screen {
+            let screen = self.screen(width: 30, height: 24)
+            screen.performBlock(joinedThreads: { _, mutableState, _ in
+                mutableState.maxScrollbackLines = 1000
+            })
+            screen.restore(from: state,
+                           includeRestorationBanner: true,
+                           reattached: false,
+                           isArchive: false,
+                           largeContentProvider: nil)
+            if let transientSize {
+                screen.size = transientSize
+                screen.size = VT100GridSizeMake(30, 24)
+            }
+            screen.performBlock(joinedThreads: { _, mutableState, _ in
+                mutableState.restorePreferredCursorPositionIfPossible()
+            })
+            return screen
+        }
+        let expected = restored(transientSize: nil)
+        let expectedDump = expected.compactLineDumpWithHistory()
+        let expectedX = expected.cursorX()
+        let expectedY = expected.cursorY()
+        for size in [VT100GridSizeMake(30, 23), VT100GridSizeMake(30, 30)] {
+            let actual = restored(transientSize: size)
+            XCTAssertEqual(actual.compactLineDumpWithHistory(), expectedDump)
+            XCTAssertEqual(actual.cursorX(), expectedX)
+            XCTAssertEqual(actual.cursorY(), expectedY)
+        }
+    }
+
+    // If output moved the cursor after the state was restored, the cursor is lower than its
+    // preferred row because of that output and not because a resize pulled history onto the
+    // screen, so nothing may be scrolled into history.
+    func testRestorePreferredCursorPositionAfterOutputDoesNotScroll() {
+        var screen = self.screen(width: 30, height: 24)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.maxScrollbackLines = 1000
+        })
+        feed(screen, "1\r\n2\r\n3\r\n4\r\n5\r\n6\r\n7\r\n8\r\nBEFORE2J\r\n")
+        feed(screen, "\u{1b}[2J\u{1b}[HX\u{1b}[10;1H")
+
+        let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
+        var linesDropped = Int32(0)
+        screen.encodeContents(encoder, linesDropped: &linesDropped, unlimited: true)
+        let state = encoder.mutableDictionary
+
+        screen = self.screen(width: 30, height: 24)
+        screen.restore(from: (state as? [AnyHashable : Any])!,
+                       includeRestorationBanner: false,
+                       reattached: true,
+                       isArchive: false,
+                       largeContentProvider: nil)
+        feed(screen, "out1\r\nout2\r\nout3\r\n")
+        let dumpBeforeFixUp = screen.compactLineDumpWithHistory()
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.restorePreferredCursorPositionIfPossible()
+        })
+        XCTAssertEqual(screen.compactLineDumpWithHistory(), dumpBeforeFixUp)
+    }
+
+    // A window restored taller than it was saved fills the new rows with history, as any grow
+    // does. That is not a slide to undo, so the fix-up must not scroll it back into history.
+    func testRestorePreferredCursorPositionInTallerWindowDoesNotScroll() {
+        var screen = self.screen(width: 30, height: 24)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.maxScrollbackLines = 1000
+        })
+        for i in 0..<40 {
+            feed(screen, "line\(i)\r\n")
+        }
+
+        let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
+        var linesDropped = Int32(0)
+        screen.encodeContents(encoder, linesDropped: &linesDropped, unlimited: true)
+        let state = encoder.mutableDictionary
+
+        screen = self.screen(width: 30, height: 24)
+        screen.restore(from: (state as? [AnyHashable : Any])!,
+                       includeRestorationBanner: false,
+                       reattached: true,
+                       isArchive: false,
+                       largeContentProvider: nil)
+        screen.size = VT100GridSizeMake(30, 30)
+        let dumpBeforeFixUp = screen.compactLineDumpWithHistory()
+        let screenDumpBeforeFixUp = screen.compactLineDump()
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.restorePreferredCursorPositionIfPossible()
+        })
+        XCTAssertEqual(screen.compactLineDumpWithHistory(), dumpBeforeFixUp)
+        XCTAssertEqual(screen.compactLineDump(), screenDumpBeforeFixUp)
+    }
+
+    // When nothing moved the content during restoration, restoring the preferred cursor
+    // position must not scroll anything into history.
+    func testRestorePreferredCursorPositionWithoutResizeLeavesContentAlone() {
+        var screen = self.screen(width: 30, height: 24)
+        feed(screen, "hello\r\nworld\u{1b}[10;20H")
+        let dumpBefore = screen.compactLineDumpWithHistory()
+
+        let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
+        var linesDropped = Int32(0)
+        screen.encodeContents(encoder, linesDropped: &linesDropped, unlimited: true)
+        let state = encoder.mutableDictionary
+
+        screen = self.screen(width: 30, height: 24)
+        screen.restore(from: (state as? [AnyHashable : Any])!,
+                       includeRestorationBanner: false,
+                       reattached: true,
+                       isArchive: false,
+                       largeContentProvider: nil)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.restorePreferredCursorPositionIfPossible()
+        })
+        XCTAssertEqual(screen.compactLineDumpWithHistory(), dumpBefore)
+        XCTAssertEqual(screen.cursorX(), 20)
+        XCTAssertEqual(screen.cursorY(), 10)
+    }
+
     func testResizeWithNoteSecondLine() {
         commonAnnotationRestoration(range: VT100GridCoordRangeMake(0, 1, 5, 1))
     }

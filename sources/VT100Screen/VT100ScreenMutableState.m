@@ -152,6 +152,7 @@ static BOOL sOSC7DisabledWarningShown;
     if (self) {
         _uniqueIdentifier = [[NSUUID UUID] UUIDString];
         _bottommostFoldAbsLine = -1;
+        _restoredCursorAbsLine = -1;
         // The base class's initForMutationOnQueue: already set a fresh
         // _rcGuid (main-thread pool). Don't touch it here; the override of
         // -rcGuid below returns _uniqueIdentifier so the mutation-thread
@@ -6711,6 +6712,9 @@ lengthExcludingInBandSignaling:data.length
             [self appendSessionRestoredBanner];
         }
     }
+    self.restoredCursorAbsLine = [self absLineOfCursor];
+    self.restoredGridHeight = self.currentGrid.size.height;
+    self.restoredCursorOffsetFromPreferred = self.currentGrid.cursor.y - self.currentGrid.preferredCursorPosition.y;
 
     if (screenState) {
         self.progress = [screenState[kScreenStateProgressKey] integerValue];
@@ -6816,6 +6820,10 @@ lengthExcludingInBandSignaling:data.length
             DLog(@"------------ end -----------");
         }
     }
+}
+
+- (long long)absLineOfCursor {
+    return self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + self.currentGrid.cursor.y;
 }
 
 - (void)appendArchiveRestoredBanner {
