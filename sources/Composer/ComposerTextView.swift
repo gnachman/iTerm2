@@ -42,6 +42,12 @@ class ComposerTextView: MultiCursorTextView {
     // to plain text so pasted fonts/colors can't leak in. Default off,
     // so ordinary plain-text composer usage is unaffected.
     @objc var forcePlainTextPaste = false
+    // Opt-in (cockpit only). Send each (Opt-Shift-Return) and enqueue each
+    // (Opt-Return) extract commands as plain strings and delete them from
+    // the text view, which discards @-mention attachment chips. When this
+    // is set they behave like Send (Shift-Return) instead, leaving the
+    // contents in place for the delegate to read. Default off.
+    @objc var sendEachActsAsSend = false
     @objc private(set) var isSettingSuggestion = false
     @objc private(set) var isDoingSyntaxHighlighting = false
     private let syntaxHighlightingRateLimit = iTermRateLimitedUpdate(name: "Syntax Highlighting Rate Limit",
@@ -805,6 +811,10 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private func sendEachAction() {
+        if sendEachActsAsSend {
+            sendAction()
+            return
+        }
         suggestion = nil
         for command in take() {
             composerDelegate?.composerTextViewSend(string: command)
@@ -812,6 +822,10 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private func enqueueEachAction() {
+        if sendEachActsAsSend {
+            sendAction()
+            return
+        }
         suggestion = nil
         for command in take() {
             composerDelegate?.composerTextViewEnqueue(string: command)
