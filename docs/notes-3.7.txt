@@ -1262,3 +1262,8 @@ Bug Fixes:
   AI no longer sees leftover command results
   from it, and a message you deleted while the
   AI was still replying is no longer sent.
+- Fixed Notify on Status Change reporting that a
+  session changed from “none” when its status
+  had already been set before you turned the
+  notification on, and alerting when a program
+  merely restated that status.

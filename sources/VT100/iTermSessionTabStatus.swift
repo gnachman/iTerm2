@@ -578,6 +578,31 @@ class SessionStatusController: NSObject {
         return statuses.addObserver(observer)
     }
 
+    // Sessions whose status is changing because the user acknowledged it
+    // (e.g., typing turns done into idle), counted to allow nesting.
+    private var acknowledgingCounts = [String: Int]()
+
+    /// Whether a change to this session's status happening now is the user
+    /// acknowledging a result rather than news. Observers that announce
+    /// changes consult this.
+    func isAcknowledging(sessionID: String) -> Bool {
+        return acknowledgingCounts[sessionID] != nil
+    }
+
+    /// Runs `block`, marking any change it makes to this session's status as
+    /// an acknowledgment.
+    func acknowledge(sessionID: String, _ block: () -> Void) {
+        acknowledgingCounts[sessionID, default: 0] += 1
+        defer {
+            if let count = acknowledgingCounts[sessionID], count > 1 {
+                acknowledgingCounts[sessionID] = count - 1
+            } else {
+                acknowledgingCounts.removeValue(forKey: sessionID)
+            }
+        }
+        block()
+    }
+
     @objc(tabStatusDidChange:)
     func tabStatusDidChange(_ tabStatus: iTermSessionTabStatus) {
         NotificationCenter.default.post(name: iTermSessionTabStatus.didChangeNotificationName,

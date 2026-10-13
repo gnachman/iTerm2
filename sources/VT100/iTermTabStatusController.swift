@@ -234,7 +234,9 @@ class TabStatusController: NSObject {
         defer {
             isAcknowledging = saved
         }
-        block()
+        // Observers of SessionStatusController (Notify on Status Change)
+        // must also see this as an acknowledgment rather than a change.
+        SessionStatusController.instance.acknowledge(sessionID: sessionID(), block)
     }
 
     /// The user pressed a key in the session, so they have seen a finished or
