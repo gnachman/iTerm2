@@ -554,6 +554,10 @@ Bug Fixes:
 - Fixed a crash when exiting full screen in a
   window without a title bar, such as a tmux
   integration window, on macOS 26.
+- Fixed a crash when splitting, maximizing,
+  swapping, or rearranging panes in a tmux
+  integration window that was left open after
+  detaching.
 - tmux integration no longer disconnects when a
   window has only floating panes (tmux 3.8 and
   later), and tolerates commands that fail

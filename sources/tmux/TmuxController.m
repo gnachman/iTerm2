@@ -2432,6 +2432,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         if (!strongSelf) {
             return;
         }
+        if (strongSelf->detached_ || !strongSelf->gateway_) {
+            // Windows can outlive a detach. There is no tmux to tell.
+            DLog(@"Not splitting pane %%%d because detached", wp);
+            if (completion) {
+                completion(-1);
+            }
+            return;
+        }
         TmuxGateway *gateway = strongSelf->gateway_;
         if (!completion) {
             [gateway sendCommand:command responseTarget:nil responseSelector:nil];
@@ -2522,6 +2530,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)didCreateWindowWithCommand:(NSString *)command {
+    if (detached_ || !gateway_) {
+        // Windows can outlive a detach. There is no tmux to tell.
+        DLog(@"Not creating a window with %@ because detached", command);
+        return;
+    }
     NSMutableArray *commands = [NSMutableArray array];
     if (_variableWindowSize) {
         Profile *profile = self.sharedProfile;
@@ -3384,6 +3397,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)swapPane:(int)pane1 withPane:(int)pane2 {
+    if (detached_ || !gateway_) {
+        // Windows can outlive a detach. There is no tmux to tell.
+        DLog(@"Not swapping panes %%%d and %%%d because detached", pane1, pane2);
+        return;
+    }
     NSString *swapPaneCommand = [NSString stringWithFormat:@"swap-pane -s \"%%%d\" -t \"%%%d\"",
                                  pane1, pane2];
 
@@ -3435,6 +3453,11 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
                        rows:(int)dy
             growingByColumns:(int)dw
                        rows:(int)dh {
+    if (detached_ || !gateway_) {
+        // Windows can outlive a detach. There is no tmux to tell.
+        DLog(@"Not resizing floating pane %%%d because detached", wp);
+        return;
+    }
     NSMutableArray<NSDictionary *> *commands = [NSMutableArray array];
     if (dx || dy) {
         [commands addObject:[gateway_ dictionaryForCommand:[NSString stringWithFormat:@"move-pane -t \"%%%d\" %@",
@@ -3512,6 +3535,11 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
 }
 
 - (void)toggleZoomForPane:(int)pane {
+    if (detached_ || !gateway_) {
+        // Windows can outlive a detach. There is no tmux to tell.
+        DLog(@"Not toggling zoom for pane %%%d because detached", pane);
+        return;
+    }
     NSArray *commands = @[ [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"resize-pane -Z -t \"%%%d\"", pane]
                                            responseTarget:nil
                                          responseSelector:NULL
@@ -3538,6 +3566,11 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
 }
 
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout {
+    if (detached_ || !gateway_) {
+        // Windows can outlive a detach. There is no tmux to tell.
+        DLog(@"Not setting layout of window @%d to %@ because detached", window, layout);
+        return;
+    }
     NSArray *commands = @[ [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"select-layout -t @%@ %@",
                                                            @(window), layout]
                                            responseTarget:self
