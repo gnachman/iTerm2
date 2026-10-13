@@ -285,59 +285,6 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
     return updated ?: bindings;
 }
 
-// Holds the KEY_BINDINGS values that are not plain strings (e.g., palette-owned
-// {expression, owner} dictionaries) in a saved arrangement's profile. 3.7.4 and
-// earlier ignore it; they crash if such a value is under KEY_BINDINGS.
-static NSString *const iTermDowngradeCompatibleNonStringBindingsKey = @"Owned Bindings";
-
-+ (Profile *)profileByMakingBindingsDowngradeCompatible:(Profile *)profile {
-    NSDictionary *bindings = [NSDictionary castFrom:profile[KEY_BINDINGS]];
-    NSMutableDictionary *strings = [NSMutableDictionary dictionary];
-    NSMutableDictionary *others = [NSMutableDictionary dictionary];
-    [bindings enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
-        if ([value isKindOfClass:[NSString class]]) {
-            strings[key] = value;
-        } else {
-            others[key] = value;
-        }
-    }];
-    if (others.count == 0 && !profile[iTermDowngradeCompatibleNonStringBindingsKey]) {
-        return profile;
-    }
-    NSMutableDictionary *result = [profile mutableCopy];
-    if (others.count == 0) {
-        // Never leave a stale value behind that would override KEY_BINDINGS on restore.
-        [result removeObjectForKey:iTermDowngradeCompatibleNonStringBindingsKey];
-        return result;
-    }
-    DLog(@"Moving non-string bindings %@ out of KEY_BINDINGS for downgrade compatibility", others.allKeys);
-    result[KEY_BINDINGS] = strings;
-    result[iTermDowngradeCompatibleNonStringBindingsKey] = others;
-    return result;
-}
-
-+ (Profile *)profileByRestoringDowngradeCompatibleBindings:(Profile *)profile {
-    id stashed = profile[iTermDowngradeCompatibleNonStringBindingsKey];
-    if (!stashed) {
-        return profile;
-    }
-    NSMutableDictionary *result = [profile mutableCopy];
-    [result removeObjectForKey:iTermDowngradeCompatibleNonStringBindingsKey];
-    NSDictionary *others = [NSDictionary castFrom:stashed];
-    if (others.count == 0) {
-        return result;
-    }
-    // A string under KEY_BINDINGS wins: an older version may have added a binding
-    // for the same key after this profile was written.
-    NSMutableDictionary *merged = [others mutableCopy];
-    NSDictionary *legacy = [NSDictionary castFrom:profile[KEY_BINDINGS]];
-    if (legacy) {
-        [merged addEntriesFromDictionary:legacy];
-    }
-    result[KEY_BINDINGS] = merged;
-    return result;
-}
-
 #pragma mark - Private
 
 + (iTermProfilePreferencesKeyFuncs)keyFuncs {
