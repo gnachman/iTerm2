@@ -331,6 +331,12 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 // Arrangement helpers for floating panes.
 + (NSDictionary *)arrangementWithoutFloatingPanes:(NSDictionary *)arrangement;
 + (NSDictionary *)floatingPaneRecordForSessionWithGUID:(NSString *)guid inArrangement:(NSDictionary *)arrangement;
+
+// The sessions a tmux layout change may reuse for its tiled panes, keyed by tmux pane id (a
+// filtered pane's synthetic session by its live session's pane). Non-tmux sessions and panes that
+// are floating in the new layout are left out.
++ (NSDictionary<NSNumber *, PTYSession *> *)tiledSessionsByTmuxPaneFromSessions:(NSArray<PTYSession *> *)sessions
+                                                                   floatingPanes:(NSSet<NSNumber *> *)floatingPanes;
 - (void)addRevivedFloatingSession:(PTYSession *)session fromArrangement:(NSDictionary *)arrangement;
 
 // Whether the user may resize the float or take it out of the float now.

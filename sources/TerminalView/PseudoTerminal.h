@@ -443,6 +443,11 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Floating panes
 - (BOOL)canCreateFloatingPane;
+// Whether a session iTerm2 runs itself (a shell, a command, a web page) may go into the current
+// tab as a float. A tmux tab's panes belong to tmux, so it can't take one.
+- (BOOL)canInstallNativeFloatingPane;
++ (BOOL)canInstallNativeFloatingPaneWhenFloatsAllowed:(BOOL)canCreateFloatingPane
+                                     currentTabIsTmux:(BOOL)currentTabIsTmux;
 - (IBAction)newFloatingPaneWithCurrentProfile:(id)sender;
 // Adds a floating pane to the current tab, starting in the current session's directory.
 - (void)newFloatingPaneWithProfile:(Profile *)profile;

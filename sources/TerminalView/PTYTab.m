@@ -6354,11 +6354,10 @@ typedef struct {
     // tiled pane; a tiled pane that tmux made floating is left out and adopted as a float below.
     NSSet<NSNumber *> *floatingPanes = [NSSet setWithArray:[self tmuxFloatingPanesInParseTree:parseTree]];
     NSMutableDictionary<NSNumber *, SessionView *> *idMap = [NSMutableDictionary dictionary];
-    for (PTYSession *aSession in [self sessions]) {
-        if (![floatingPanes containsObject:@([aSession tmuxPane])]) {
-            idMap[@([aSession tmuxPane])] = aSession.view;
-        }
-    }
+    [[PTYTab tiledSessionsByTmuxPaneFromSessions:[self sessions]
+                                    floatingPanes:floatingPanes] enumerateKeysAndObjectsUsingBlock:^(NSNumber *pane, PTYSession *aSession, BOOL *stop) {
+        idMap[pane] = aSession.view;
+    }];
     NSArray *preexistingPanes = [[idMap allKeys] copy];
     NSSplitView *newRoot = (NSSplitView *)[PTYTab _recursiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
                                                                    fromIdMap:idMap
@@ -6433,7 +6432,7 @@ typedef struct {
     const BOOL hasScrollbar = [realParentWindow_ scrollbarShouldBeVisible];
     const NSScrollerStyle scrollerStyle = [realParentWindow_ scrollerStyle];
     for (PTYSession *aSession in [self tiledSessions]) {
-        NSNumber *n = [NSNumber numberWithInt:[aSession tmuxPane]];
+        NSNumber *n = [NSNumber numberWithInt:[aSession.liveSession ?: aSession tmuxPane]];
         if (![preexistingPanes containsObject:n]) {
             // This is a new pane so register it.
             [tmuxController_ registerSession:aSession
@@ -6584,6 +6583,26 @@ typedef struct {
 }
 
 #pragma mark - tmux floating panes
+
+// The sessions a tmux layout change may reuse for its tiled panes, by tmux pane id. A filtered
+// pane's synthetic session is keyed by its live session's pane.
++ (NSDictionary<NSNumber *, PTYSession *> *)tiledSessionsByTmuxPaneFromSessions:(NSArray<PTYSession *> *)sessions
+                                                                   floatingPanes:(NSSet<NSNumber *> *)floatingPanes {
+    NSMutableDictionary<NSNumber *, PTYSession *> *result = [NSMutableDictionary dictionary];
+    for (PTYSession *aSession in sessions) {
+        // A filtered pane shows a synthetic session in place of its tmux session.
+        PTYSession *real = aSession.liveSession ?: aSession;
+        if (!real.isTmuxClient) {
+            // Its tmux pane id reads as 0, which would take the place of tmux's pane %0.
+            DLog(@"Not a tmux session, so not reusable by the layout: %@", aSession);
+            continue;
+        }
+        if (![floatingPanes containsObject:@([real tmuxPane])]) {
+            result[@([real tmuxPane])] = aSession;
+        }
+    }
+    return result;
+}
 
 - (NSArray<NSNumber *> *)tmuxFloatingPanesInParseTree:(NSDictionary *)parseTree {
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];

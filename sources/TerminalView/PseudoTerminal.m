@@ -11830,6 +11830,19 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             self.currentSession != nil);
 }
 
+- (BOOL)canInstallNativeFloatingPane {
+    return [PseudoTerminal canInstallNativeFloatingPaneWhenFloatsAllowed:[self canCreateFloatingPane]
+                                                        currentTabIsTmux:self.currentTab.isTmuxTab];
+}
+
+// A tmux tab's layout is rebuilt from tmux's pane ids, so a session tmux doesn't know about can't
+// live there, even as a float. Callers that are refused open the session elsewhere, such as in a
+// new tab.
++ (BOOL)canInstallNativeFloatingPaneWhenFloatsAllowed:(BOOL)canCreateFloatingPane
+                                     currentTabIsTmux:(BOOL)currentTabIsTmux {
+    return canCreateFloatingPane && !currentTabIsTmux;
+}
+
 - (IBAction)newFloatingPaneWithCurrentProfile:(id)sender {
     [self newFloatingPaneWithProfile:[self profileForSplittingCurrentSession]];
 }
@@ -15442,7 +15455,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                          target:(NSString *)target
                     baseProfile:(Profile *)base {
     PTYTab *tab = self.currentTab;
-    if (!tab || ![self canCreateFloatingPane]) {
+    if (!tab || ![self canInstallNativeFloatingPane]) {
         return;
     }
     MutableProfile *profile = [[base mutableCopy] autorelease];
