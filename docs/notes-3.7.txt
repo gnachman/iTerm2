@@ -1249,3 +1249,8 @@ Bug Fixes:
   appearance settings like colors, fonts, and
   cursor style are taken from a recording.
   Issue 13128.
+- Editing or deleting an AI chat message now
+  fully removes the later conversation, so the
+  AI no longer sees leftover command results
+  from it, and a message you deleted while the
+  AI was still replying is no longer sent.

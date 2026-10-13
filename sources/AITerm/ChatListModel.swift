@@ -242,12 +242,27 @@ class ChatListModel: ChatListDataSource {
         return nil
     }
 
-    func delete(chatID: String, messageIDs: [UUID]) {
+    // Truncate the chat from the earliest stored message among `messageIDs`
+    // through the end, and return the IDs of every row removed. Callers name only
+    // the rows they display, so this also drops undisplayed rows (hidden tool
+    // results, resolved tool requests) inside or after that range; leaving them
+    // would ship orphaned tool rows in the next turn's history. Chat-state rows
+    // (see isChatStateRow) are kept even inside the range. Returns [] when none
+    // of `messageIDs` is stored or the removal fails.
+    func truncate(chatID: String, fromEarliestOf messageIDs: [UUID]) -> [UUID] {
         guard let messages = messages(forChat: chatID, createIfNeeded: false) else {
-            return
+            return []
         }
+        let idSet = Set(messageIDs)
+        guard let start = messages.firstIndex(where: { idSet.contains($0.uniqueID) }) else {
+            return []
+        }
+        let removedIDs = messages[start..<messages.count]
+            .filter { !Self.isChatStateRow($0) }
+            .map(\.uniqueID)
+        let removedSet = Set(removedIDs)
         do {
-            try messages.removeAll(where: { messageIDs.contains($0.uniqueID) })
+            try messages.removeAll(where: { removedSet.contains($0.uniqueID) })
             // A deletion (edit/retry truncates the display log from a chosen
             // message onward) breaks the append-only assumption wire-fragment blob
             // capture relies on: it decides what is "new" by comparing the stored
@@ -259,6 +274,21 @@ class ChatListModel: ChatListDataSource {
             database.replaceBlobs(inChat: chatID, with: [])
         } catch {
             RLog("Failed to delete messages from chat \(chatID): \(error)")
+            return []
+        }
+        return removedIDs
+    }
+
+    // Hidden rows that record chat state rather than conversation. They must
+    // survive a truncation: ChatAgent.load takes the agent's permissions from
+    // the latest stored .setPermissions, so dropping one would silently restore
+    // an older permission set while the UI still shows the newer one.
+    private static func isChatStateRow(_ message: Message) -> Bool {
+        switch message.content {
+        case .setPermissions, .vectorStoreCreated, .renameChat:
+            return true
+        default:
+            return false
         }
     }
 

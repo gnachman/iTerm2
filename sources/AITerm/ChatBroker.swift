@@ -154,12 +154,19 @@ class ChatBroker {
     // rather than mutating the model directly, is what lets the local UI, the
     // agent, and a subscribed companion phone all converge - the same fan-out
     // that publish() uses for new messages.
+    //
+    // Callers pass only the IDs they display, so the store is truncated from
+    // the earliest of them onward (taking undisplayed tool rows with it), and
+    // subscribers hear about every removed row, not just the requested ones,
+    // so the agent can dequeue any removed message still waiting for a turn.
     func deleteMessages(_ messageIDs: [UUID], fromChatID chatID: String) {
         guard !messageIDs.isEmpty else {
             return
         }
-        listModel.delete(chatID: chatID, messageIDs: messageIDs)
-        fanOut(.messagesRemoved(messageIDs, chatID), toChatID: chatID)
+        let truncated = listModel.truncate(chatID: chatID, fromEarliestOf: messageIDs)
+        let truncatedSet = Set(truncated)
+        let removed = truncated + messageIDs.filter { !truncatedSet.contains($0) }
+        fanOut(.messagesRemoved(removed, chatID), toChatID: chatID)
     }
 
     // Deliver an update to every subscriber of `chatID` (and wildcard subscribers).

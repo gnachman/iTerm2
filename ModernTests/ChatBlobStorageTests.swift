@@ -67,7 +67,12 @@ final class ChatBlobStorageTests: XCTestCase {
                                payload: Data("[]".utf8)))
         XCTAssertEqual(db.blobCount(inChat: "A"), 1)
 
-        listModel.delete(chatID: "A", messageIDs: [UUID()])
+        let messageID = UUID()
+        try listModel.append(message: Message(chatID: "A", author: .user,
+                                              content: .markdown("hi"),
+                                              sentDate: Date(), uniqueID: messageID),
+                             toChatID: "A")
+        XCTAssertEqual(listModel.truncate(chatID: "A", fromEarliestOf: [messageID]), [messageID])
 
         XCTAssertEqual(db.blobCount(inChat: "A"), 0, "deleting from a chat must invalidate its blobs")
         XCTAssertEqual(db.blobCount(inChat: "B"), 1, "other chats' blobs are untouched")
