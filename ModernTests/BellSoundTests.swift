@@ -36,6 +36,30 @@ final class BellSoundTests: XCTestCase {
                        .file(URL(fileURLWithPath: expanded)))
     }
 
+    // MARK: - Reading the value out of a profile
+
+    // A hand-edited or dynamic profile can store anything under “Bell Sound”. A value
+    // that isn’t a string used to reach Swift String parameters unchecked and crash the
+    // app the first time the bell rang.
+    func test_nonStringValueInProfile_meansTheSystemAlertSound() {
+        for value: Any in [NSNumber(value: 5), NSNumber(value: true), ["Glass"], ["Glass": 1], NSNull()] {
+            let profile: [AnyHashable: Any] = [KEY_BELL_SOUND: value]
+            XCTAssertNil(iTermBellSound.profileValue(inProfile: profile), "\(value)")
+            XCTAssertNil(iTermBellSound.profileValue(fromObject: value), "\(value)")
+        }
+    }
+
+    func test_stringValueInProfile_isReturnedAsIs() {
+        let profile: [AnyHashable: Any] = [KEY_BELL_SOUND: "Glass"]
+        XCTAssertEqual(iTermBellSound.profileValue(inProfile: profile), "Glass")
+        XCTAssertEqual(iTermBellSound.profileValue(fromObject: "/tmp/chime.m4a"), "/tmp/chime.m4a")
+    }
+
+    func test_missingValueInProfile_isTheDefault() {
+        XCTAssertEqual(iTermBellSound.profileValue(inProfile: [:]), iTermBellSound.systemAlertValue)
+        XCTAssertNil(iTermBellSound.profileValue(fromObject: nil))
+    }
+
     // MARK: - Display names
 
     func test_displayName_stripsPathAndExtension() {
