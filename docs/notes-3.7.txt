@@ -582,6 +582,10 @@ Bug Fixes:
   swapping, or rearranging panes in a tmux
   integration window that was left open after
   detaching.
+- Answering “Always” to “Close tmux windows
+  after detaching?” now closes only the tmux
+  integration windows left open by the detach.
+  It used to close every session in the app.
 - tmux integration no longer disconnects when a
   window has only floating panes (tmux 3.8 and
   later), and tolerates commands that fail
