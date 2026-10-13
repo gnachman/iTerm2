@@ -222,6 +222,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 NSString *const PTYSessionCreatedNotification = @"PTYSessionCreatedNotification";
 NSString *const PTYSessionTerminatedNotification = @"PTYSessionTerminatedNotification";
 NSString *const PTYSessionRevivedNotification = @"PTYSessionRevivedNotification";
+NSString *const PTYSessionExitedDidChangeNotification = @"PTYSessionExitedDidChangeNotification";
 NSString *const iTermSessionWillTerminateNotification = @"iTermSessionDidTerminate";
 NSString *const PTYSessionDidResizeNotification = @"PTYSessionDidResizeNotification";
 NSString *const PTYSessionDidDealloc = @"PTYSessionDidDealloc";
@@ -1418,8 +1419,8 @@ ITERM_WEAKLY_REFERENCEABLE
     // PTYSessionCreated is posted from -init, before the profile is assigned, so the
     // sleep-prevention coordinator can't yet see a profile that permanently enables "Prevent
     // sleep". By this point the profile is set, so recompute to pick up the standalone-checkbox
-    // case. (Restored sessions also reach here, and revived sessions are already covered by
-    // PTYSessionRevived.)
+    // case. (Restored sessions also reach here, and revived sessions are already covered by the
+    // deferred recompute that PTYSessionRevived schedules.)
     [[iTermSleepPreventionCoordinator instance] recompute];
 }
 
@@ -4088,10 +4089,17 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // so re-firing it on every launch would spuriously repeat the trigger's
 // action.
 - (void)setExitedSilently:(BOOL)exited {
+    const BOOL changed = (_exited != exited);
     _exited = exited;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.exited = exited;
     }];
+    if (changed) {
+        // Exited sessions don't count as Prevent Sleep requesters, so the sleep-prevention
+        // coordinator must recompute when this flips (e.g., Restart Session clears it).
+        [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionExitedDidChangeNotification
+                                                            object:self];
+    }
 }
 
 - (void)makeTerminationUndoable {
@@ -4877,12 +4885,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     RLog(@"  brokenPipe: set exited = YES");
+    // This posts PTYSessionExitedDidChangeNotification, so the sleep-prevention coordinator stops
+    // counting this dead-but-open pane as a Prevent Sleep requester.
     [self cleanUpAfterBrokenPipe];
-
-    // An exited session no longer counts as a Prevent-Sleep requester. brokenPipe posts nothing the
-    // coordinator observes, so recompute now; otherwise a dead-but-open pane would hold the idle
-    // sleep assertion until it is manually closed.
-    [[iTermSleepPreventionCoordinator instance] recompute];
 
     if (_shouldRestart) {
         _modeHandler.mode = iTermSessionModeDefault;
