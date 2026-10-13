@@ -1266,3 +1266,7 @@ Bug Fixes:
   another message no longer shows the rest of
   the stopped reply as the answer to the new
   message.
+- Fixed restored sessions bringing lines that
+  had been erased by a clear screen back onto
+  the screen, above the newer output, with the
+  cursor in the wrong place.

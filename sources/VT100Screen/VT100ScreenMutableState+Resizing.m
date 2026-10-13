@@ -61,6 +61,42 @@
     }
 }
 
+- (void)restorePreferredCursorPositionIfPossible {
+    VT100Grid *grid = self.currentGrid;
+    const VT100GridCoord preferred = grid.preferredCursorPosition;
+    const long long restoredCursorAbsLine = self.restoredCursorAbsLine;
+    self.restoredCursorAbsLine = -1;
+    if (grid == self.primaryGrid &&
+        restoredCursorAbsLine >= 0 &&
+        restoredCursorAbsLine == [self absLineOfCursor] &&
+        grid.size.height <= self.restoredGridHeight &&
+        preferred.x >= 0 &&
+        preferred.y >= 0 &&
+        preferred.x <= grid.size.width &&
+        preferred.y < grid.size.height) {
+        // A restored session is created at the wrong size and then fit to its window. That
+        // resize round trip can pull lines from history onto the screen, e.g., when the blank
+        // rows below a cleared screen are trimmed on a shrink. The content keeps its absolute
+        // line numbers but it and the cursor end up lower on the screen. Scroll back up by the
+        // same amount so the content returns to the rows it had when the state was saved;
+        // moving only the cursor would point it at whatever history slid into its old row.
+        // If the cursor's absolute line changed (output arrived or lines were rewrapped), the
+        // difference is not a slide, so leave the content alone. A window that ends up taller
+        // than the saved grid fills its extra rows with history like any grow, so leave that
+        // alone too.
+        // Measure the slide relative to where the cursor was right after restoring, since the
+        // restoration banner can leave it off its preferred row.
+        const int linesToScroll = (grid.cursor.y - preferred.y) - self.restoredCursorOffsetFromPreferred;
+        DLog(@"Cursor at %@, preferred position %@. Scroll %d lines into history.",
+             VT100GridCoordDescription(grid.cursor), VT100GridCoordDescription(preferred), MAX(0, linesToScroll));
+        for (int i = 0; i < linesToScroll; i++) {
+            [self incrementOverflowBy:[grid scrollWholeScreenUpIntoLineBuffer:self.linebuffer
+                                                          unlimitedScrollback:self.unlimitedScrollback]];
+        }
+    }
+    [grid restorePreferredCursorPositionIfPossible];
+}
+
 - (void)setSize:(VT100GridSize)size delegate:(id<VT100ScreenDelegate>)delegate {
     [self setSize:size
      visibleLines:[delegate screenRangeOfVisibleLines]

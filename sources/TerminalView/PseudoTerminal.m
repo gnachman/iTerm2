@@ -66,6 +66,7 @@
 #import "VT100RemoteHost.h"
 #import "VT100Screen.h"
 #import "VT100ScreenMutableState.h"
+#import "VT100ScreenMutableState+Resizing.h"
 #import "VT100Terminal.h"
 #import "iTerm.h"
 #import "iTermAPIHelper.h"
@@ -4366,7 +4367,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     for (PTYSession *session in self.allSessions) {
         RLog(@"restore preferred cursor position for %@", session);
         [session.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-            [mutableState.currentGrid restorePreferredCursorPositionIfPossible];
+            [mutableState restorePreferredCursorPositionIfPossible];
         }];
     }
     [_contentView updateToolbeltForWindow:self.window];
