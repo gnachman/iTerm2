@@ -36,7 +36,7 @@ class PluginClient {
             DLog("HTTP append data")
             DLog("HTTPStreamDelegate \(it_addressString): append")
             for line in data.lossyString.components(separatedBy: "\n") {
-                DLog(line)
+                DLog(AIChatWireLogSanitizer.scrubbingSecrets(line))
             }
             DLog("---end---")
             receivedData.append(data)
@@ -47,9 +47,11 @@ class PluginClient {
         }
 
         func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-            RLog("HTTPStreamDelegate \(it_addressString): complete. error=\(error.d)")
+            // A URLSession error's description includes the failing URL,
+            // which carries the API key for Gemini.
+            RLog("HTTPStreamDelegate \(it_addressString): complete. error=\(AIChatWireLogSanitizer.scrubbingSecrets(error.d))")
             if let error = error {
-                RLog("URLSession error: \(error)")
+                RLog("URLSession error: \(AIChatWireLogSanitizer.scrubbingSecrets(String(describing: error)))")
                 callback(receivedData.lossyString, "HTTP request failed with \(error.localizedDescription)")
             } else if let httpResponse = task.response as? HTTPURLResponse, httpResponse.statusCode != 200 {
                 // Headers can carry Set-Cookie/auth echoes and the body can be private
@@ -58,7 +60,7 @@ class PluginClient {
                 callback(receivedData.lossyString,
                          "HTTP request failed with status \(httpResponse.statusCode).")
             } else {
-                DLog("Read \(receivedData.lossyString)")
+                DLog("Read \(AIChatWireLogSanitizer.scrubbingSecrets(receivedData.lossyString))")
                 callback(receivedData.lossyString, "")
             }
         }
@@ -109,7 +111,7 @@ class PluginClient {
                                     body: Data,
                                     streaming: Bool,
                                     callback: @escaping (String?, String?) -> Void) {
-        DLog("performHTTPRequest(\(method), \(url), \(headers), \(body.lossyString), \(streaming)")
+        DLog("performHTTPRequest(\(method), \(AIChatWireLogSanitizer.scrubbingSecrets(url)), \(AIChatWireLogSanitizer.sanitizedHeadersDescription(headers)), \(AIChatWireLogSanitizer.scrubbingSecrets(body.lossyString)), \(streaming)")
         guard let url = URL(string: url) else {
             RLog("Invalid url \(redacted: url, or: "len=\(url.count)")")
             callback(nil, "Invalid URL")
@@ -220,7 +222,7 @@ class PluginClient {
             context.setObject(streamFunction, forKeyedSubscript: "onStream" as (NSCopying & NSObjectProtocol))
         }
         let logMessage: @convention(block) (JSValue) -> Void = { message in
-            DLog("JS: \(message.toString() ?? "(nil)")")
+            DLog("JS: \(AIChatWireLogSanitizer.scrubbingSecrets(message.toString() ?? "(nil)"))")
         }
         context.setObject(logMessage, forKeyedSubscript: "log" as (NSCopying & NSObjectProtocol))
     }
@@ -292,7 +294,9 @@ class PluginClient {
         }
 
         // Call the JavaScript function which returns a Promise
-        DLog("Call with arguments: \(arguments)")
+        // The arguments are the JSON-encoded request, credentials and
+        // all. call() already logged its redacted debugDescription.
+        DLog("Call with \(arguments.count) argument(s)")
         guard let result = function.call(withArguments: arguments) else {
             throw PluginError(reason: "JavaScript function call failed")
         }
@@ -316,7 +320,7 @@ class PluginClient {
                 }
             } catch let decodeError {
                 DLog("Response is:")
-                DLog(jsonResponse)
+                DLog(AIChatWireLogSanitizer.scrubbingSecrets(jsonResponse))
                 error = PluginError(reason: "Error decoding response: \(decodeError)")
             }
             semaphore.signal()

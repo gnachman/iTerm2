@@ -9,8 +9,19 @@ import CryptoKit
 import JavaScriptCore
 
 struct WebRequest: CustomDebugStringConvertible, Codable {
+    // Goes into debug logs, which users attach to bug reports, so
+    // credentials (header values, keys in the URL or body) are scrubbed.
     var debugDescription: String {
-        return "\(method) \(url)\n\(headers.debugDescription)\n\n\(body)"
+        let bodyDescription: String
+        switch body {
+        case .string(let string):
+            bodyDescription = AIChatWireLogSanitizer.scrubbingSecrets(string)
+        case .bytes(let bytes):
+            bodyDescription = "<\(bytes.count) bytes>"
+        }
+        let url = AIChatWireLogSanitizer.scrubbingSecrets(self.url)
+        let headers = AIChatWireLogSanitizer.sanitizedHeadersDescription(self.headers)
+        return "\(method) \(url)\n\(headers)\n\(bodyDescription)"
     }
     var headers: [String: String]
     var method: String
