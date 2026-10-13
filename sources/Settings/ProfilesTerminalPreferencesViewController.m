@@ -268,9 +268,12 @@ static const NSInteger iTermBellSoundOtherTag = 1;
                           type:kPreferenceInfoTypeStringPopup];
     info.onUpdate = ^BOOL {
         // The menu has to already hold the profile’s sound for the normal path to select
-        // it, and a profile naming a file of its own gets an item made for it.
+        // it, and a profile naming a file of its own gets an item made for it. Select it
+        // here rather than in the generic path so that a value that isn’t a string selects
+        // the system alert sound instead of nothing.
         [weakSelf rebuildBellSounds];
-        return NO;
+        [weakSelf selectCurrentBellSound];
+        return YES;
     };
     info.customSettingChangedHandler = ^(id sender) {
         [weakSelf bellSoundDidChange];
@@ -500,15 +503,20 @@ static const NSInteger iTermBellSoundOtherTag = 1;
     [self selectCurrentBellSound];
 }
 
+// Nil if the profile’s value isn’t a string, as can happen in a hand-edited profile.
+- (NSString *)bellSoundProfileValue {
+    return [iTermBellSound profileValueFromObject:[self objectForKey:KEY_BELL_SOUND]];
+}
+
 - (void)selectCurrentBellSound {
-    const NSInteger index = [_bellSound indexOfItemWithRepresentedObject:[self stringForKey:KEY_BELL_SOUND] ?: @""];
+    const NSInteger index = [_bellSound indexOfItemWithRepresentedObject:[self bellSoundProfileValue] ?: @""];
     if (index >= 0) {
         [_bellSound selectItemAtIndex:index];
     }
 }
 
 - (void)rebuildBellSounds {
-    NSString *const currentValue = [self stringForKey:KEY_BELL_SOUND] ?: @"";
+    NSString *const currentValue = [self bellSoundProfileValue] ?: @"";
     NSMenu *const menu = _bellSound.menu;
     [menu removeAllItems];
 
@@ -593,7 +601,7 @@ static const NSInteger iTermBellSoundOtherTag = 1;
 
 - (void)previewBellSound {
     // Play it so the sounds can be told apart without leaving Settings.
-    [[iTermBellSoundPlayer sharedInstance] playProfileValue:[self stringForKey:KEY_BELL_SOUND]];
+    [[iTermBellSoundPlayer sharedInstance] playProfileValue:[self bellSoundProfileValue]];
 }
 
 #pragma mark - Character Encoding
