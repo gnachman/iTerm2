@@ -4264,6 +4264,11 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
         DLog(@"Not sending select-window -t %%%d because activity changes are suppressed", windowId);
         return;
     }
+    if (detached_ || !gateway_) {
+        // Windows can outlive a detach and still become key. There is no tmux to tell.
+        DLog(@"Not sending select-window -t %%%d because detached", windowId);
+        return;
+    }
     // tmux sends no %session-window-changed when the window is already current, so only expect
     // an echo if it wasn't. Another client can change the current window at any time, so read it
     // in the same command list as the select-window: tmux runs a client's command list without
