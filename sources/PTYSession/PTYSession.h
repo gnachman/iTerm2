@@ -1206,6 +1206,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (void)tmuxDetach;
 // Returns YES if this session is a browser session.
 - (BOOL)isBrowserSession;
+// The profile type the live session actually has. This can differ from
+// self.profile.profileType because changing the profile type in Settings
+// mutates the profile while leaving existing sessions as they were.
+@property (nonatomic, readonly) ProfileType sessionProfileType;
 // Two sessions are compatible if they may share the same tab. Tmux clients
 // impose this restriction because they must belong to the same controller.
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession;

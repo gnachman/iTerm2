@@ -616,7 +616,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
 - (void)addChangeColorPresetToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                         withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
-    if ([[[[[iTermController sharedInstance] currentTerminal] currentSession] profile] profileIsBrowser]) {
+    if ([[[[iTermController sharedInstance] currentTerminal] currentSession] isBrowserSession]) {
         // Browser does not support color presets.
         return;
     }
@@ -649,8 +649,10 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
 - (void)addChangeProfileToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                     withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    const ProfileType currentProfileType =
+        iTermController.sharedInstance.currentTerminal.currentSession.sessionProfileType;
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
-        if (profile.profileType != iTermController.sharedInstance.currentTerminal.currentSession.profile.profileType) {
+        if (profile.profileType != currentProfileType) {
             // Prevent selecting a type that will fail
             continue;
         }
