@@ -8134,8 +8134,10 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)triggerSession:(Trigger *)trigger
     setSessionSpecificProfileBool:(BOOL)value
                            forKey:(NSString *)profileKey {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    // This updates the profile, which joins threads, so it must be paused.
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate triggerSideEffectSetSessionSpecificProfileBool:value forKey:profileKey];
+        [unpauser unpause];
     } name:@"trigger set profile bool"];
 }
 

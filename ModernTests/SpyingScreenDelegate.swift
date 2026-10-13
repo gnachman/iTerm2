@@ -55,8 +55,14 @@ class SpyingScreenDelegate: FakeSession {
     }
     private(set) var setSessionSpecificProfileBoolCalls: [SetSessionSpecificProfileBoolCall] = []
 
+    /// Fired after each triggerSideEffectSetSessionSpecificProfileBool. The real
+    /// implementation (PTYSession) reloads the profile, which joins threads, so
+    /// a test can use this to check that joining is legal at that point.
+    var onSetSessionSpecificProfileBool: ((Bool, String) -> Void)?
+
     override func triggerSideEffectSetSessionSpecificProfileBool(_ value: Bool, forKey profileKey: String) {
         setSessionSpecificProfileBoolCalls.append(SetSessionSpecificProfileBoolCall(value: value, key: profileKey))
+        onSetSessionSpecificProfileBool?(value, profileKey)
     }
 
     /// Number of times screenMouseModeDidChange fired (one per drained
