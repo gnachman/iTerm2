@@ -104,6 +104,16 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
     if ([attributes isEqualToDictionary:_attributes]) {
         return;
     }
+    if (self.length > 0) {
+        // Attributes are changing on a non-empty builder (a color-only merge on a
+        // bidi line, or adjacent image cells), so the string will carry more than
+        // one attribute run. A cheap string holds a single attributes dictionary,
+        // and -build's cheap snapshot shares _characterData, so characters
+        // appended after this change would take the earlier run's attributes
+        // (e.g., a mid-word SGR color change drew the whole word in the first
+        // color). Build a real attributed string instead.
+        _canUseFastPath = NO;
+    }
     [self build];
     _attributes = [attributes copy];
 }
