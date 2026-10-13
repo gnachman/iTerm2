@@ -188,6 +188,17 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
     // is still running (a slow claude invocation must not pile up).
     private var runInFlight = false
 
+    /// Supplies the environment for the usage command. Calls its completion exactly once, on
+    /// the main thread.
+    typealias EnvironmentProvider = (_ completion: @escaping ([String: String]) -> Void) -> Void
+    /// Runs the usage command synchronously off the main thread and returns its stdout.
+    typealias CommandRunner = (_ launchPath: String,
+                               _ arguments: [String],
+                               _ environment: [String: String],
+                               _ timeout: TimeInterval) -> Data?
+    private let environmentProvider: EnvironmentProvider
+    private let commandRunner: CommandRunner
+
     // iTerm2's convention for flagging an error in the UI.
     private static let errorPrefix = "🐞 "
     // New-issue page for reportable usage errors. GitLab pre-fills the
@@ -215,8 +226,12 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
          priority: Int,
          provider: WorkgroupUsageProvider,
          command: String,
-         intervalSeconds: Double) {
+         intervalSeconds: Double,
+         environmentProvider: @escaping EnvironmentProvider = WorkgroupUsageToolbarItem.shellEnvironment,
+         commandRunner: @escaping CommandRunner = WorkgroupUsageToolbarItem.runCommand) {
         self.provider = provider
+        self.environmentProvider = environmentProvider
+        self.commandRunner = commandRunner
         self.command = command
         self.intervalSeconds = max(5, intervalSeconds)
         self.container = WorkgroupUsageContainerView(frame: .zero)
@@ -316,7 +331,8 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
         timer = nil
     }
 
-    private func tick() {
+    // Internal rather than private so tests can trigger a run without a window or timer.
+    func tick() {
         guard !runInFlight else {
             DLog("WorkgroupUsage: skipping tick, previous run still in flight")
             return
@@ -336,18 +352,52 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
             return
         }
         runInFlight = true
-        queue.async { [weak self] in
-            let data = WorkgroupUsageToolbarItem.runCommand(
-                launchPath: invocation.launchPath,
-                arguments: invocation.arguments,
-                timeout: 20)
-            let report = WorkgroupUsageToolbarItem.decode(data: data)
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.runInFlight = false
-                self.apply(report: report)
+        // The environment may take a while the first time (it reads PATH from the user's
+        // shell), but it arrives asynchronously so the main thread never waits.
+        environmentProvider { [weak self] environment in
+            guard let self else { return }
+            let runner = self.commandRunner
+            self.queue.async { [weak self] in
+                let data = runner(invocation.launchPath, invocation.arguments, environment, 20)
+                let report = WorkgroupUsageToolbarItem.decode(data: data)
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.runInFlight = false
+                    self.apply(report: report)
+                }
             }
         }
+    }
+
+    // MARK: - Environment
+
+    // iTerm2's own environment, with PATH replaced by the user's shell PATH. Launched from
+    // the Dock, iTerm2's PATH is only /usr/bin:/bin:/usr/sbin:/sbin, so `claude` installed
+    // in ~/.local/bin or /opt/homebrew/bin would not be found. Uses the same cached shell
+    // PATH lookup as the password manager adapters. It doesn't call prefetch(), so it never
+    // starts a refresh of a cached PATH (that would run the user's login shell periodically).
+    static func shellEnvironment(_ completion: @escaping ([String: String]) -> Void) {
+        AdapterShellEnvironment.shared.environment { environment in
+            completion(Self.usageEnvironment(base: ProcessInfo.processInfo.environment,
+                                             shellEnvironment: environment))
+        }
+    }
+
+    // ~/.local/bin is where Claude Code's native installer puts claude. It's appended when
+    // missing because the shell PATH fallback (used when the shell can't report PATH) lacks it.
+    static func usageEnvironment(base: [String: String],
+                                 shellEnvironment: [String: String]) -> [String: String] {
+        var result = base
+        if let path = shellEnvironment["PATH"] {
+            let home = base["HOME"] ?? NSHomeDirectory()
+            let localBin = (home as NSString).appendingPathComponent(".local/bin")
+            var directories = path.components(separatedBy: ":").filter { !$0.isEmpty }
+            if !directories.contains(localBin) {
+                directories.append(localBin)
+            }
+            result["PATH"] = directories.joined(separator: ":")
+        }
+        return result
     }
 
     // MARK: - Command
@@ -377,21 +427,31 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
     // filling and deadlocking the read, and keeps a stray warning from
     // corrupting the JSON on stdout; the bundled script already folds
     // claude's stderr into its own diagnostic field.
-    private static func runCommand(launchPath: String,
-                                   arguments: [String],
-                                   timeout: TimeInterval) -> Data? {
-        let runner = iTermBufferedCommandRunner(command: launchPath,
-                                                withArguments: arguments,
-                                                path: "/")
-        runner.discardStandardError = true
-        // Bound captured output so a runaway custom command can't grow
-        // memory unbounded (1 MiB dwarfs any real usage JSON).
-        runner.maximumOutputSize = NSNumber(value: 1024 * 1024)
-
+    static func runCommand(launchPath: String,
+                           arguments: [String],
+                           environment: [String: String],
+                           timeout: TimeInterval) -> Data? {
+        let runner = makeRunner(launchPath: launchPath,
+                                arguments: arguments,
+                                environment: environment)
         registerActiveRunner(runner)
         defer { unregisterActiveRunner(runner) }
         _ = runner.blockingRun(withTimeout: timeout)
         return runner.output
+    }
+
+    private static func makeRunner(launchPath: String,
+                                   arguments: [String],
+                                   environment: [String: String]) -> iTermBufferedCommandRunner {
+        let runner = iTermBufferedCommandRunner(command: launchPath,
+                                                withArguments: arguments,
+                                                path: "/")
+        runner.environment = environment
+        runner.discardStandardError = true
+        // Bound captured output so a runaway custom command can't grow
+        // memory unbounded (1 MiB dwarfs any real usage JSON).
+        runner.maximumOutputSize = NSNumber(value: 1024 * 1024)
+        return runner
     }
 
     // MARK: - In-flight process registry
