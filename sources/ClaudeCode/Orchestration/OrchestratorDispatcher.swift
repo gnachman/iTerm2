@@ -436,6 +436,9 @@ final class OrchestratorDispatcher {
         // The notification fires for every session in the app (object: nil),
         // not just sessions we watch; with no watchers there is nothing to do.
         guard !watchers.isEmpty else { return }
+        // Under the administrator lockout a fire would wake the agent (an LLM
+        // request). Ignore transitions so matching watchers stay persisted.
+        guard Self.generativeAIAllowed else { return }
         let guid = status.sessionID
         let session = sessionByGUID(guid)
         let stableID = session?.stableID
@@ -624,6 +627,13 @@ final class OrchestratorDispatcher {
         return state == .unknown ? .idle : state
     }
 
+    // The administrator lockout (GenerativeAIAllowed). Every watcher event
+    // starts an agent turn that sends the chat to the LLM, so nothing that
+    // fires a watcher may wake the agent while it is off.
+    private static var generativeAIAllowed: Bool {
+        iTermAdvancedSettingsModel.generativeAIAllowed()
+    }
+
     @MainActor
     private func publishStatusUpdate(watcher: WorkgroupWatcher,
                                      reason: StatusUpdate.Reason,
@@ -656,6 +666,16 @@ final class OrchestratorDispatcher {
             } else {
                 pushed = false
             }
+        }
+        // Under the administrator lockout nothing may wake the agent. Callers
+        // whose fire could happen later (timers, tab-status and screen-poll
+        // results) keep their watcher dormant and never get here, so no push
+        // goes out for them either; it is sent when the watcher fires once AI
+        // is allowed again. Events that end a watch for good (a session
+        // ending, a watch dropped at restart) are lost.
+        guard Self.generativeAIAllowed else {
+            RLog("[Orchestrator \(chatID)] status_update \(reason) for watcher \(watcher.watcherID) not published: generative AI is disallowed by the administrator")
+            return
         }
         // Screen age at fire time: lets the agent distinguish a fresh
         // transition (screen changed seconds ago, likely mid-workflow)
@@ -698,6 +718,11 @@ final class OrchestratorDispatcher {
         // the permission may since have been revoked. Fail closed: don't read.
         guard watcherReadsPermitted(watcher) else {
             RLog("[Orchestrator \(chatID)] screen-poll watcher \(watcher.watcherID) not started: a required read is not permitted for this chat")
+            return
+        }
+        // The poller judges the screen with an LLM.
+        guard Self.generativeAIAllowed else {
+            RLog("[Orchestrator \(chatID)] screen-poll watcher \(watcher.watcherID) not started: generative AI is disallowed by the administrator")
             return
         }
         let id = watcher.watcherID
@@ -817,6 +842,13 @@ final class OrchestratorDispatcher {
                 try? await Task.sleep(nanoseconds: interval)
                 continue
             }
+            // The check asks an LLM. Under the administrator lockout, wait
+            // without recording this screen as judged, so it is checked once
+            // AI is allowed again.
+            guard Self.generativeAIAllowed else {
+                try? await Task.sleep(nanoseconds: interval)
+                continue
+            }
             DLog("Orchestrator dispatcher: tab-status watcher \(id) "
                  + "(\(watcher.roleName) in \(watcher.workgroupName)) has had a "
                  + "quiet screen for \(Int(quiet))s without a status transition; "
@@ -849,6 +881,10 @@ final class OrchestratorDispatcher {
     // watch fires or is dropped mid-check.
     @MainActor
     private func runSingleScreenCheck(for watcher: WorkgroupWatcher) async -> Bool {
+        // The check asks an LLM to judge the screen.
+        guard Self.generativeAIAllowed else {
+            return false
+        }
         let id = watcher.watcherID
         let guid = watcher.sessionGUID
         let poller = ScreenWatchPoller(
@@ -929,11 +965,27 @@ final class OrchestratorDispatcher {
         }
     }
 
+    // Test seam: the fire task armed for a timer, so a test can await it
+    // instead of waiting on a clock.
+    @MainActor
+    func timerTaskForTesting(watcherID: String) -> Task<Void, Never>? {
+        timerTasks[watcherID]
+    }
+
     // A timer reached its fire time: drop it, persist, and publish the
     // timerFired status_update that wakes an agent turn.
     @MainActor
     private func fireTimer(watcherID id: String) {
         guard let watcher = watchers.first(where: { $0.watcherID == id }) else { return }
+        // An administrator disabled generative AI (GenerativeAIAllowed) after
+        // the timer was registered. Firing would send the chat to the LLM, so
+        // leave the timer persisted but dormant instead of deleting it; the
+        // next launch re-arms it and it fires then if AI is allowed again.
+        guard Self.generativeAIAllowed else {
+            RLog("[Orchestrator \(chatID)] timer \(id) not fired: generative AI is disallowed by the administrator")
+            timerTasks.removeValue(forKey: id)
+            return
+        }
         watchers.removeAll { $0.watcherID == id }
         persistWatchers()
         removeWatcherAuxiliaries(watcherID: id)
@@ -1028,6 +1080,16 @@ final class OrchestratorDispatcher {
     @MainActor
     private func screenPollFinished(watcherID: String, timedOut: Bool) {
         screenPollers.removeValue(forKey: watcherID)
+        // Reporting the result would wake the agent (an LLM request). Keep the
+        // watcher persisted but dormant; the next launch restarts its poller.
+        guard Self.generativeAIAllowed else {
+            RLog("[Orchestrator \(chatID)] screen-poll watcher \(watcherID) result not reported: generative AI is disallowed by the administrator")
+            // An escalation task that called us is ending; clear its slot so
+            // the backstop can be armed again. Not cancelled: it may be the
+            // caller.
+            escalationTimers.removeValue(forKey: watcherID)
+            return
+        }
         guard let watcher = watchers.first(where: { $0.watcherID == watcherID }) else {
             return
         }

@@ -243,11 +243,15 @@ class iTermAIClient {
 
     private let requiredVersion = "1.1"
 
+    private static var notAllowedError: PluginError {
+        PluginError(reason: String(localized: "AIPluginClient.NotAllowed", defaultValue: "Plugin not allowed by administator.", comment: "Error message when the AI plugin is disallowed by administrator policy"))
+    }
+
     // Runs on any queue. Throws a PluginError or does nothing.
     func validate() throws {
         DLog("validate")
         if (!iTermAdvancedSettingsModel.generativeAIAllowed()) {
-            throw PluginError(reason: String(localized: "AIPluginClient.NotAllowed", defaultValue: "Plugin not allowed by administator.", comment: "Error message when the AI plugin is disallowed by administrator policy"))
+            throw Self.notAllowedError
         }
         switch Plugin.instance() {
         case .success(let plugin):
@@ -375,6 +379,17 @@ class iTermAIClient {
                  stream: ((String) -> ())?,
                  completion: @escaping (Result<WebResponse, PluginError>) -> ()) -> Cancellation {
         let cancellation = Cancellation()
+        // Backstop for the administrator lockout (GenerativeAIAllowed): every
+        // request to a remote LLM goes through here, so refuse it even if some caller
+        // (for example a timer or watch registered before the lockout) did not
+        // check first.
+        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
+            RLog("Refusing LLM request: generative AI is disallowed by the administrator")
+            DispatchQueue.main.async {
+                completion(.failure(cancellation.canceled ? .cancelled : Self.notAllowedError))
+            }
+            return cancellation
+        }
         let observer = Self.liveObserver
         let recorder = Self.responseRecorder
         // Build the capture if anything wants it: the observer (AILiveDriver
