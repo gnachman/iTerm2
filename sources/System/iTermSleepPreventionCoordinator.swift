@@ -31,11 +31,42 @@ class SleepPreventionCoordinator: NSObject {
     // The NSProcessInfo activity token. Non-nil exactly while we are holding the assertion.
     private var activity: NSObjectProtocol?
 
-    private override init() {
+    /// External state and side effects, injectable so tests can drive the coordinator without live
+    /// sessions, a real power assertion, or real run loop turns.
+    struct Environment {
+        /// GUIDs of sessions that currently want the assertion held (may contain duplicates).
+        var requesterGUIDs: () -> [String]
+        var connectedToPower: () -> Bool
+        var allowedOnBattery: () -> Bool
+        /// Runs a block on a later main-queue turn.
+        var scheduleOnNextTurn: (@escaping () -> Void) -> Void
+        var beginAssertion: () -> NSObjectProtocol
+        var endAssertion: (NSObjectProtocol) -> Void
+    }
+
+    private let environment: Environment
+    private let notificationCenter: NotificationCenter
+
+    private override convenience init() {
+        self.init(environment: Environment(
+            requesterGUIDs: { SleepPreventionCoordinator.liveRequesterGUIDs() },
+            connectedToPower: { iTermPowerManager.sharedInstance().connectedToPower },
+            allowedOnBattery: { iTermAdvancedSettingsModel.preventSleepOnBatteryToo() },
+            scheduleOnNextTurn: { block in DispatchQueue.main.async(execute: block) },
+            beginAssertion: {
+                ProcessInfo.processInfo.beginActivity(options: .idleSystemSleepDisabled,
+                                                      reason: "iTerm2: profile prevents sleep")
+            },
+            endAssertion: { ProcessInfo.processInfo.endActivity($0) }),
+                  notificationCenter: .default)
+    }
+
+    init(environment: Environment, notificationCenter center: NotificationCenter) {
+        self.environment = environment
+        self.notificationCenter = center
         super.init()
         DLog("SleepPreventionCoordinator initializing")
 
-        let center = NotificationCenter.default
         // Session lifecycle: a session appearing/disappearing changes the set we fold over.
         center.addObserver(self, selector: #selector(recomputeFromNotification(_:)),
                            name: .PTYSessionCreated, object: nil)
@@ -43,6 +74,10 @@ class SleepPreventionCoordinator: NSObject {
                            name: .PTYSessionRevived, object: nil)
         center.addObserver(self, selector: #selector(recomputeFromNotification(_:)),
                            name: .iTermSessionWillTerminate, object: nil)
+        // A session's process died or a new one was started in its place (Restart Session, on a
+        // live or an exited shell). Exited sessions are not requesters, so this changes the fold.
+        center.addObserver(self, selector: #selector(recomputeFromNotification(_:)),
+                           name: .PTYSessionExitedDidChange, object: nil)
         // A session's profile changed (including a trigger toggling KEY_PREVENT_SLEEP via a
         // session-specific override). kSessionProfileDidChange is only posted on the divorced
         // (session-specific) path, so also observe the general profile reload that drives the
@@ -73,6 +108,12 @@ class SleepPreventionCoordinator: NSObject {
             // is synchronous). Exclude it explicitly; otherwise, when it is the last requester,
             // want would stay true and the assertion would be held until some unrelated recompute.
             recompute(excluding: session)
+        } else if notification.name == .PTYSessionRevived {
+            // -revive posts this before its caller puts the session back in a window (every Undo
+            // Close path calls -revive first and only then -addRevivedSession: or rebuilds the
+            // tab, all in the same main-queue turn). allSessions() would not yet enumerate it, so
+            // defer to the next turn, when it is back in its window.
+            scheduleDeferredRecompute()
         } else if notification.name == NSNotification.Name(kReloadAllProfiles) {
             // kReloadAllProfiles is ALSO observed by each PseudoTerminal, which is what actually
             // updates a session's _profile (reloadBookmarks -> sharedProfileDidChange -> setProfile:).
@@ -93,7 +134,7 @@ class SleepPreventionCoordinator: NSObject {
             return
         }
         deferredRecomputeScheduled = true
-        DispatchQueue.main.async { [weak self] in
+        environment.scheduleOnNextTurn { [weak self] in
             guard let self else { return }
             self.deferredRecomputeScheduled = false
             self.recompute()
@@ -103,7 +144,7 @@ class SleepPreventionCoordinator: NSObject {
     /// The GUIDs of sessions that currently want the assertion held. Includes buried sessions:
     /// they still exist (the profile doc says the assertion is held "while a session with this
     /// setting enabled exists"), but allSessions() only enumerates sessions in a window.
-    private func requestingSessionGUIDs() -> [String] {
+    private static func liveRequesterGUIDs() -> [String] {
         // During app termination +[iTermController releaseSharedInstance] nils the shared
         // controller while session-teardown notifications still fire (Sparkle's Install and
         // Relaunch, or an ordinary quit, closes windows, which posts iTermSessionWillTerminate).
@@ -115,8 +156,8 @@ class SleepPreventionCoordinator: NSObject {
         let buried = iTermBuriedSessions.sharedInstance()?.buriedSessions() ?? []
         return (live + buried).compactMap { session -> String? in
             // A session whose process has died but whose pane is still open (endAction "Do
-            // nothing") is not doing work; it must not keep the Mac awake. brokenPipe posts nothing
-            // this coordinator observes, so exclude exited sessions here and recompute on brokenPipe.
+            // nothing") is not doing work; it must not keep the Mac awake. Exclude exited sessions
+            // here; PTYSessionExitedDidChange triggers a recompute when that state flips.
             guard !session.exited,
                   let profile = session.profile,
                   iTermProfilePreferences.bool(forKey: KEY_PREVENT_SLEEP, inProfile: profile) else {
@@ -154,9 +195,9 @@ class SleepPreventionCoordinator: NSObject {
 
     private func recompute(excluding excludedSession: PTYSession?) {
         iTermGCD.assertMainQueueSafe()
-        let requesterGUIDs = requestingSessionGUIDs()
-        let onPower = iTermPowerManager.sharedInstance().connectedToPower
-        let allowedOnBattery = iTermAdvancedSettingsModel.preventSleepOnBatteryToo()
+        let requesterGUIDs = environment.requesterGUIDs()
+        let onPower = environment.connectedToPower()
+        let allowedOnBattery = environment.allowedOnBattery()
         let count = Self.numberOfSessionsPreventingSleep(requesterGUIDs: requesterGUIDs,
                                                          excludingGUID: excludedSession?.guid,
                                                          connectedToPower: onPower,
@@ -169,11 +210,10 @@ class SleepPreventionCoordinator: NSObject {
 
         if want && activity == nil {
             RLog("SleepPreventionCoordinator: taking system idle sleep assertion (\(count) session(s))")
-            activity = ProcessInfo.processInfo.beginActivity(options: .idleSystemSleepDisabled,
-                                                             reason: "iTerm2: profile prevents sleep")
+            activity = environment.beginAssertion()
         } else if !want, let activity {
             RLog("SleepPreventionCoordinator: releasing system idle sleep assertion")
-            ProcessInfo.processInfo.endActivity(activity)
+            environment.endAssertion(activity)
             self.activity = nil
         }
 
@@ -183,7 +223,7 @@ class SleepPreventionCoordinator: NSObject {
         numberOfSessionsPreventingSleep = count
         numberOfSessionsRequestingPreventSleep = requesters
         if changed {
-            NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
+            notificationCenter.post(name: Self.didChangeNotification, object: self)
         }
     }
 }
