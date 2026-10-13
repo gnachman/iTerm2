@@ -148,6 +148,7 @@
 #import "iTermSetupCfgParser.h"
 #import "iTermSharedImageStore.h"
 #import "iTermShellHistoryController.h"
+#import "iTermShellIntegrationWindowController.h"
 #import "iTermSlider.h"
 #import "iTermSlowOperationGateway.h"
 #import "iTermSocket.h"

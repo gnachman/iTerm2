@@ -41,7 +41,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     iTermShellIntegrationInstallationStateConfirmation
 };
 
-@interface iTermShellIntegrationWindowController ()<iTermShellIntegrationInstallerDelegate>
+@interface iTermShellIntegrationWindowController ()
 @property (nonatomic, strong) IBOutlet NSView *containerView;
 
 @property (nonatomic, strong) IBOutlet NSView *header;
@@ -154,6 +154,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 #pragma mark - Accessors
+
+- (int)sendShellCommandsStage {
+    return self.sendShellCommandsViewController.stage;
+}
 
 - (void)setShell:(iTermShellIntegrationShell)shell {
     _shell = shell;
@@ -367,14 +371,18 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         completion:^(NSArray<NSString *> *captures) {
         NSString *shell = [captures[1] lastPathComponent];
         if ([shell isEqualToString:@"zsh"]) {
-            [self sendText:@"echo My dotfiles go in ${ZDOTDIR:-$HOME}\n" reallySend:reallySend];
+            // Send the command only once the expectation is in place. Sending it first loses a
+            // race with a fast shell: its output gets checked before the expectation exists.
+            // The regex has no space before the capture because an empty value leaves no
+            // trailing space on the line.
             iTermExpectation *expectation = nil;
-            [self sendText:nil
+            [self sendText:@"echo My dotfiles go in ${ZDOTDIR:-$HOME}\n"
                 reallySend:reallySend
-                afterRegex:@"^My dotfiles go in (.*)"
+                afterRegex:@"^My dotfiles go in(.*)"
                expectation:&expectation
                 completion:^(NSArray<NSString *> *dotdirCaptures) {
-                completion(shell, dotdirCaptures[1]);
+                NSString *dotdir = [dotdirCaptures[1] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+                completion(shell, dotdir.length > 0 ? dotdir : @"$HOME");
             }];
         } else if ([shell isEqualToString:@"fish"]) {
             completion(shell, @"$HOME");
@@ -792,7 +800,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (void)shellIntegrationInstallerSkipStage {
     const int stage = self.sendShellCommandsViewController.stage;
-    
+    if (stage < 1) {
+        // Every later stage needs the shell and dotfile directory that discovery finds.
+        return;
+    }
     const int lastStage = self.installUtilities ? 4 : 3;
     if (stage + 1 > lastStage) {
         return;

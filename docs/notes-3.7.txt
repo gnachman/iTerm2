@@ -1278,3 +1278,7 @@ Bug Fixes:
   had been erased by a clear screen back onto
   the screen, above the newer output, with the
   cursor in the wrong place.
+- The Internet-Free Install of shell integration
+  no longer gets stuck at its first step for zsh
+  users, and that step can no longer be skipped,
+  which made later steps write to an invalid path.
