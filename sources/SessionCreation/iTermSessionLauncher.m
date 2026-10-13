@@ -28,6 +28,10 @@
     BOOL _haveSetSession;
     BOOL _launched;
     id _keepAlive;  // reference to self so I don't get released before completion.
+    // The style used to place the session, once decided. Placing it can change the window's
+    // current tab, so it isn't recomputed afterwards.
+    BOOL _haveResolvedStyle;
+    iTermOpenStyle _resolvedStyle;
 }
 
 + (BOOL)profileIsWellFormed:(Profile *)profile {
@@ -288,6 +292,23 @@
     }
 }
 
+// A floating pane that can't go into the current tab opens in a new tab instead. That includes a
+// tmux tab: this session isn't a tmux pane, so it must not go into one.
+- (iTermOpenStyle)styleForWindowController:(PseudoTerminal *)windowController {
+    if (_style == iTermOpenStyleFloatingPane && ![windowController canInstallNativeFloatingPane]) {
+        DLog(@"Can't add a floating pane to the current tab; open a tab instead");
+        return iTermOpenStyleTab;
+    }
+    return _style;
+}
+
+// Decides where the session goes and remembers it for -objectType.
+- (iTermOpenStyle)resolveStyleForWindowController:(PseudoTerminal *)windowController {
+    _resolvedStyle = [self styleForWindowController:windowController];
+    _haveResolvedStyle = YES;
+    return _resolvedStyle;
+}
+
 - (void)makeSessionByBlockWithProfile:(Profile *)profile
                      windowController:(PseudoTerminal *)windowController
                            completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
@@ -307,20 +328,18 @@
                                                                           parent:nil];
     session.browserTarget = self.browserTarget;
     const BOOL saved = windowController.automaticallySelectNewTabs;
-    switch (_style) {
+    const iTermOpenStyle style = [self resolveStyleForWindowController:windowController];
+    switch (style) {
         case iTermOpenStyleFloatingPane:
-            if (windowController.numberOfTabs > 0 && windowController.canCreateFloatingPane) {
-                [windowController installNewFloatingSession:session
-                                                      inTab:windowController.currentTab
-                                              parentSession:nil];
-                break;
-            }
-            // FALL THROUGH - create a new tab
+            [windowController installNewFloatingSession:session
+                                                  inTab:windowController.currentTab
+                                          parentSession:nil];
+            break;
 
         case iTermOpenStyleVerticalSplit:
         case iTermOpenStyleHorizontalSplit:
             if (windowController.numberOfTabs > 0) {
-                [windowController splitVertically:_style == iTermOpenStyleVerticalSplit
+                [windowController splitVertically:style == iTermOpenStyleVerticalSplit
                                            before:NO
                                     addingSession:session
                                     targetSession:windowController.currentSession
@@ -382,22 +401,20 @@
 - (void)makeSessionByDefaultWithProfile:(Profile *)profile
                        windowController:(PseudoTerminal *)windowController
                              completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
-    switch (_style) {
+    const iTermOpenStyle style = [self resolveStyleForWindowController:windowController];
+    switch (style) {
         case iTermOpenStyleFloatingPane:
-            if (windowController.numberOfTabs > 0 && windowController.canCreateFloatingPane) {
-                [self makeSessionByCreatingPaneWithProfile:profile
-                                                     style:_style
-                                          windowController:windowController
-                                                completion:completion];
-                break;
-            }
-            // FALL THROUGH - create a new tab
+            [self makeSessionByCreatingPaneWithProfile:profile
+                                                 style:style
+                                      windowController:windowController
+                                            completion:completion];
+            break;
 
         case iTermOpenStyleVerticalSplit:
         case iTermOpenStyleHorizontalSplit:
             if (windowController.numberOfTabs > 0) {
                 [self makeSessionByCreatingPaneWithProfile:profile
-                                                     style:_style
+                                                     style:style
                                           windowController:windowController
                                                 completion:completion];
                 break;
@@ -721,9 +738,10 @@
 
 - (iTermObjectType)objectType {
     if (_windowController) {
-        if (_style == iTermOpenStyleVerticalSplit ||
-            _style == iTermOpenStyleHorizontalSplit ||
-            _style == iTermOpenStyleFloatingPane) {
+        const iTermOpenStyle style = _haveResolvedStyle ? _resolvedStyle : [self styleForWindowController:_windowController];
+        if (style == iTermOpenStyleVerticalSplit ||
+            style == iTermOpenStyleHorizontalSplit ||
+            style == iTermOpenStyleFloatingPane) {
             return iTermPaneObject;
         }
         return iTermTabObject;

@@ -87,8 +87,15 @@ class FloatingPaneBuiltInFunctions: NSObject {
                     return
                 }
                 let parent = tab.activeSession
-                if tab.isTmuxTab, let controller = tab.tmuxController(), let parent {
-                    // tmux makes the pane; profiles do not apply.
+                if tab.isTmuxTab {
+                    // tmux makes the pane; profiles do not apply. A session tmux doesn't know about
+                    // must never go into a tmux tab.
+                    guard let controller = tab.tmuxController(), let parent else {
+                        completion(nil, error(String(localized: "FloatingPane.CreateFailed",
+                                                     defaultValue: "Failed to create the floating pane",
+                                                     comment: "Error from create_floating_pane when the session could not be created")))
+                        return
+                    }
                     controller.newFloatingPaneNearPane(parent.tmuxPane, completion: { session in
                         if let guid = session?.guid {
                             completion(guid, nil)

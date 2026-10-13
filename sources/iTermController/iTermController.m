@@ -2122,7 +2122,7 @@ static const NSUInteger iTermUndoCloseStateMaximumCount = 20;
             break;
         case iTermOpenStyleFloatingPane:
             term = [self currentTerminal];
-            if (term.canCreateFloatingPane) {
+            if (term.canInstallNativeFloatingPane) {
                 PTYSession *previous = term.currentSession;
                 [term openFloatingPaneWithURL:url target:target baseProfile:profile];
                 if (!select && previous) {
