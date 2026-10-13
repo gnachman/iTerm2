@@ -75,4 +75,50 @@ final class PasswordManagerReauthGateTests: XCTestCase {
         XCTAssertFalse(PasswordManagerDataSourceProvider.requiresAuthenticationAfterScreenLock(mode: .oncePerLaunch))
         XCTAssertFalse(PasswordManagerDataSourceProvider.requiresAuthenticationAfterScreenLock(mode: .never))
     }
+
+    // F-098: a screen lock must revoke the cached authentication even when it was
+    // obtained without ever opening the password manager window (for example, by
+    // saving a browser basic-auth credential). The provider observes the lock itself,
+    // so no window or view controller has to exist. A private notification center
+    // stands in for the distributed one so the test doesn't post a real system-wide
+    // screen-lock notification.
+    private static let screenIsLocked = Notification.Name("com.apple.screenIsLocked")
+
+    private func makeProvider(center: NotificationCenter,
+                              mode: PasswordManagerAuthenticationMode) -> PasswordManagerDataSourceProvider {
+        return PasswordManagerDataSourceProvider(browser: true,
+                                                 screenLockNotificationCenter: center,
+                                                 authenticationMode: { mode })
+    }
+
+    func testScreenLockRevokesAuthenticationWithoutAWindow() {
+        let center = NotificationCenter()
+        let provider = makeProvider(center: center, mode: .oncePerLaunchAndAfterScreenLocks)
+        provider.markAuthenticatedForTesting()
+        XCTAssertTrue(provider.authenticated)
+
+        center.post(name: Self.screenIsLocked, object: nil)
+
+        XCTAssertFalse(provider.authenticated)
+    }
+
+    func testScreenLockRevokesAuthenticationInEveryOpenMode() {
+        let center = NotificationCenter()
+        let provider = makeProvider(center: center, mode: .everyOpen)
+        provider.markAuthenticatedForTesting()
+
+        center.post(name: Self.screenIsLocked, object: nil)
+
+        XCTAssertFalse(provider.authenticated)
+    }
+
+    func testScreenLockKeepsAuthenticationInOncePerLaunchMode() {
+        let center = NotificationCenter()
+        let provider = makeProvider(center: center, mode: .oncePerLaunch)
+        provider.markAuthenticatedForTesting()
+
+        center.post(name: Self.screenIsLocked, object: nil)
+
+        XCTAssertTrue(provider.authenticated)
+    }
 }
