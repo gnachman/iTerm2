@@ -1252,6 +1252,158 @@ extension AILiveHarness {
                        uniqueID: UUID())
     }
 
+    /// QA finding F-086: deleting a user message whose turn is still running
+    /// must cancel that turn and drop its reply. Before the fix the turn ran on,
+    /// and its reply was appended (and persisted) after the cut, answering a
+    /// message that no longer existed.
+    ///
+    /// Test: send A (a long answer, so it is still streaming), wait for the
+    /// first chunk, then delete A the way the chat view does. Expect the turn to
+    /// end with no agent content published after the deletion and nothing but
+    /// chat-state rows left in the store. Then send B and expect a normal reply,
+    /// proving the queue is not wedged and the next turn is unaffected.
+    func test_chat_deleteInFlightMessage_discardsLateReply() throws {
+        let providerName = AITermController.provider?.displayName ?? ""
+        let envKey: String?
+        switch providerName {
+        case "OpenAI":     envKey = Self.configValue("OPENAI_API_KEY")
+        case "Anthropic":  envKey = Self.configValue("ANTHROPIC_API_KEY")
+        case "Google":     envKey = Self.configValue("GEMINI_API_KEY")
+        case "Deep Seek":  envKey = Self.configValue("DEEPSEEK_API_KEY")
+        default:           envKey = nil
+        }
+        guard let apiKey = envKey, !apiKey.isEmpty else {
+            throw XCTSkip("No live API key for current provider \(providerName)")
+        }
+        guard let broker = ChatBroker.instance else {
+            throw XCTSkip("ChatBroker.instance unavailable")
+        }
+        suspendBrokerProcessors(broker)
+
+        let recorder = BrokerEventRecorder()
+        let listenAll = broker.subscribe(chatID: nil, registrationProvider: nil) { update in
+            recorder.record(update)
+        }
+        defer { listenAll.unsubscribe() }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live delete-in-flight test \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "queue-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+
+        let registrationProvider = TestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID,
+                                               registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        let sawAgentStreaming = expectation(description: "agent emitted first streaming chunk")
+        let sawATurnEnd = expectation(description: "A's turn ends (turnLifecycle .ended)")
+        let sawBTurnEnd = expectation(description: "B's turn ends (turnLifecycle .ended)")
+        var sawStream = false
+        var turnEnds = 0
+        recorder.onEntry = { entry, _ in
+            switch entry {
+            case .delivery(let message, _):
+                if message.author == .agent, !sawStream {
+                    switch message.content {
+                    case .markdown, .plainText, .append:
+                        sawStream = true
+                        sawAgentStreaming.fulfill()
+                    default:
+                        return
+                    }
+                }
+            case .typing:
+                return
+            case .turnLifecycle(let event):
+                guard event == .ended else { return }
+                turnEnds += 1
+                if turnEnds == 1 {
+                    sawATurnEnd.fulfill()
+                } else if turnEnds == 2 {
+                    sawBTurnEnd.fulfill()
+                }
+            }
+        }
+
+        // (1) Send A and wait until its reply is streaming.
+        let messageA = userText(
+            chatID: chatID,
+            body: "Write five paragraphs about the history of OpenSSL. Take your time and be thorough.")
+        try broker.publish(message: messageA, toChatID: chatID, partial: false)
+        wait(for: [sawAgentStreaming], timeout: 30)
+        XCTAssertEqual(turnEnds, 0, "A finished before it could be deleted mid-turn, so this run tests nothing")
+
+        // (2) Delete A while its turn is running, exactly as
+        //     ChatViewController.delete does (A plus every displayed row after it).
+        let storedAfterA = broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+            .map { Array($0) } ?? []
+        guard let indexOfA = storedAfterA.firstIndex(where: { $0.uniqueID == messageA.uniqueID }) else {
+            XCTFail("A was not persisted")
+            return
+        }
+        let deletionIndex = recorder.entries.count
+        broker.deleteMessages(storedAfterA[indexOfA...].map(\.uniqueID), fromChatID: chatID)
+
+        // (3) A's turn must end, and nothing the agent says about A may land
+        //     after the cut.
+        wait(for: [sawATurnEnd], timeout: 90)
+        let lateAgentDelivery = recorder.firstDelivery(after: deletionIndex) { message in
+            guard message.author == .agent else { return false }
+            switch message.content {
+            case .clientLocal:
+                return false
+            default:
+                return true
+            }
+        }
+        XCTAssertNil(lateAgentDelivery,
+                     "the deleted message's reply was published after the cut:\n\(recorder.summary(formatContent: short))")
+        let conversationRows = (broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+            .map { Array($0) } ?? [])
+            .filter { message in
+                switch message.content {
+                case .setPermissions, .vectorStoreCreated, .renameChat, .clientLocal:
+                    return false
+                default:
+                    return true
+                }
+            }
+        XCTAssertTrue(conversationRows.isEmpty,
+                      "rows after the deletion were persisted: \(conversationRows.map { short($0.content) })")
+
+        // (4) The next message runs normally and gets its reply.
+        let bIndex = recorder.entries.count
+        let messageB = userText(chatID: chatID,
+                                body: "Reply with the single digit 7, nothing else.")
+        try broker.publish(message: messageB, toChatID: chatID, partial: false)
+        wait(for: [sawBTurnEnd], timeout: 90)
+        print("[delete-in-flight-test] broker log:\n\(recorder.summary(formatContent: short))")
+        XCTAssertNotNil(recorder.firstDelivery(after: bIndex) { $0.author == .agent },
+                        "B got no reply after an in-flight deletion")
+        // The cancelled request's stream can outlive the cancel. Its late words
+        // must not be parsed as B's reply (they were: B "answered" with the rest
+        // of A's essay).
+        let agentReplies = (broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+            .map { Array($0) } ?? [])
+            .filter { $0.author == .agent }
+            .compactMap { message -> String? in
+                switch message.content {
+                case .markdown(let text), .plainText(let text, _):
+                    return text
+                default:
+                    return nil
+                }
+            }
+        XCTAssertEqual(agentReplies.count, 1, "expected exactly B's reply: \(agentReplies)")
+        let bText = agentReplies.first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        XCTAssertTrue(bText.contains("7") && bText.count < 40,
+                      "B's reply carries another request's text: \(bText.prefix(200))")
+    }
+
     /// A standalone RemoteCommand for constructing a synthetic .executingCommand
     /// signal (no live PTYSession needed). Used to drive ChatService's execution
     /// count without a real command running. (GitLab #12984)

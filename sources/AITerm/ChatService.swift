@@ -62,6 +62,13 @@ class ChatService {
     // (GitLab #12984)
     private var executingCommandCounts: [String: Int] = [:]
 
+    // In-flight turns cancelled because the user deleted their message (or
+    // something before it) mid-turn. Their reply, whenever it arrives, answers
+    // a message that is gone, so it is dropped rather than appended after the
+    // cut. Keyed by the turn's head message ID, not by chat, so a late
+    // completion can never be confused with the next turn's.
+    private var abandonedTurns = AbandonedTurns()
+
     init?() {
         guard let listModel = ChatListModel.instance, let broker = ChatBroker.instance else {
             return nil
@@ -115,7 +122,12 @@ class ChatService {
             // history picks up the removal on the next turn. A removed message
             // still waiting in the queue must be dropped here, though, or it is
             // dispatched as a future turn's userMessage anyway.
-            dequeue(messageIDs: Set(ids), inChat: chatID)
+            // If the in-flight turn's own message went too, cancel that turn and
+            // drop its reply: it would otherwise land after the cut, answering a
+            // message that no longer exists.
+            let removed = Set(ids)
+            dequeue(messageIDs: removed, inChat: chatID)
+            abandonInFlightTurnIfRemoved(removed, inChat: chatID)
         case let .delivery(message, chatID, _):
             switch message.author {
             case .agent:
@@ -423,8 +435,30 @@ class ChatService {
         return [head] + queue.dropFirst().filter { !ids.contains($0.uniqueID) }
     }
 
+    // Cancel the running turn when a truncation removed its head message.
+    // Truncation removes everything from the earliest deleted row onward, so the
+    // head is in `ids` whenever the cut is at or before it. Mirrors Stop: the
+    // cancel walks back through finishTurn, which pops the head, so nothing more
+    // is needed here when it does. When the cancel cannot reach the completion
+    // (for example, the turn is still waiting on registration), the turn ends
+    // on its own later and finishTurn discards its reply then.
+    private func abandonInFlightTurnIfRemoved(_ ids: Set<UUID>, inChat chatID: String) {
+        guard let queue = pendingMessages[chatID],
+              abandonedTurns.abandonHead(of: queue, ifRemoved: ids) else {
+            return
+        }
+        // As with Stop, a command the abandoned turn was executing publishes no
+        // response once the turn is cancelled, so its mark would never clear.
+        executingCommandCounts.removeValue(forKey: chatID)
+        agents[chatID]?.stop()
+        if pendingMessages[chatID]?.first?.uniqueID == queue.first?.uniqueID {
+            DLog("Cancel did not end abandoned turn \(queue.first?.uniqueID.uuidString ?? "") in \(chatID); its reply will be dropped when it ends")
+        }
+    }
+
     private func startNextTurn(forChatID chatID: String) {
         guard let message = pendingMessages[chatID]?.first else { return }
+        let turnID = message.uniqueID
         agentWorking(chatID: chatID) { [weak self] stopTyping in
             guard let self else { return }
             let history = self.historyExcluding(message, inChat: chatID)
@@ -434,7 +468,10 @@ class ChatService {
                 messages: ArraySlice(history))
             let streaming: ((StreamingUpdate) -> ())? = agent.supportsStreaming
                 ? { [weak self] update in
-                    self?.publishStreamingUpdate(update, toChatID: chatID)
+                    guard let self, !self.abandonedTurns.contains(turnID) else {
+                        return
+                    }
+                    self.publishStreamingUpdate(update, toChatID: chatID)
                   }
                 : nil
             do {
@@ -444,18 +481,20 @@ class ChatService {
                     streaming: streaming,
                     completion: { [weak self] reply in
                         stopTyping()
-                        self?.finishTurn(chatID: chatID, reply: reply)
+                        self?.finishTurn(chatID: chatID, turnID: turnID, reply: reply)
                     })
             } catch {
                 RLog("ChatService fetchCompletion failed: \(error)")
                 stopTyping()
-                self.finishTurn(chatID: chatID, reply: nil)
+                self.finishTurn(chatID: chatID, turnID: turnID, reply: nil)
             }
         }
     }
 
-    private func finishTurn(chatID: String, reply: Message?) {
-        if let reply {
+    private func finishTurn(chatID: String, turnID: UUID, reply: Message?) {
+        if abandonedTurns.contains(turnID) {
+            DLog("Discarding reply to deleted message \(turnID) in chat \(chatID)")
+        } else if let reply {
             try? broker.publish(message: reply, toChatID: chatID, partial: false)
         }
         // The genuine turn-end boundary, emitted AFTER the reply so a
@@ -591,6 +630,31 @@ class ChatService {
         agents[chatID]?.stop()
         agents.removeValue(forKey: chatID)
         registrationContexts.removeValue(forKey: chatID)
+    }
+
+    // The set of in-flight turns abandoned because their message was deleted.
+    // A value type so the bookkeeping is unit-testable without a live
+    // ChatService or agent.
+    struct AbandonedTurns {
+        private var turnIDs = Set<UUID>()
+
+        // Marks the in-flight head of `queue` abandoned when `removedIDs`
+        // includes it. Returns true if it did, so the caller cancels the turn.
+        mutating func abandonHead(of queue: [Message], ifRemoved removedIDs: Set<UUID>) -> Bool {
+            guard let head = queue.first, removedIDs.contains(head.uniqueID) else {
+                return false
+            }
+            turnIDs.insert(head.uniqueID)
+            return true
+        }
+
+        // True for a turn whose streaming chunks and reply must be discarded.
+        // IDs are kept after the turn ends (one per deletion of a running
+        // message, so the set stays tiny): a chunk or completion that straggles
+        // in after the cancel must still be recognized as belonging to it.
+        func contains(_ turnID: UUID) -> Bool {
+            return turnIDs.contains(turnID)
+        }
     }
 
     private class RegistrationContext: AIRegistrationProvider {

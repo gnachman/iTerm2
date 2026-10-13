@@ -216,6 +216,9 @@ private extension MessagePrepPipeline {
             }
             try delegate?.publishNotice(chatID: chatID, message: message)
             try completion(.success(.fileUploaded(id: id, name: fileName)))
+        case .failure(let error) where error is PendingCommandCanceled:
+            // Stopped or deleted mid-upload: the user knows; no notice.
+            try completion(.failure(error))
         case .failure(let error):
             try delegate?.publishNotice(
                 chatID: chatID,
@@ -243,6 +246,10 @@ private extension MessagePrepPipeline {
                                                     partial: false)
                         try? completion(.success(.vectorStoreCreated(id: id)))
                     } failure: { error in
+                        if error is PendingCommandCanceled {
+                            try? completion(.failure(error))
+                            return
+                        }
                         try self?.delegate?.publishNotice(
                             chatID: chatID,
                             message: String(localized: "MessagePrepPipeline.VectorStoreCreateFailed", defaultValue: "There was a problem creating a vector store database: \(error.localizedDescription)", comment: "Notice shown when creating a vector store database fails"))
@@ -280,7 +287,7 @@ private extension MessagePrepPipeline {
         delegate?.addFilesToVectorStore(fileIDs: fileIDs,
                                         vectorStoreID: justVectorStoreID,
                                         completion: { [weak self, chatID] error in
-            if let error, error as? PluginError == .cancelled {
+            if let error, error as? PluginError == .cancelled || error is PendingCommandCanceled {
                 try? completion(.failure(error))
                 return
             }

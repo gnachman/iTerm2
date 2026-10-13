@@ -179,4 +179,47 @@ final class ChatMessageDeletionTests: XCTestCase {
                                               removingMessageIDs: [head.uniqueID, queued.uniqueID])
         XCTAssertEqual(result.map(\.uniqueID), [head.uniqueID])
     }
+    // MARK: - In-flight turn (F-086)
+
+    // Deleting the message whose turn is running abandons that turn: its reply
+    // answers a message that is gone, so it must be discarded, not appended
+    // after the cut.
+    func testDeletingInFlightHeadAbandonsTurnAndDiscardsItsReply() {
+        let head = userText("head", chatID: "c")
+        var abandoned = ChatService.AbandonedTurns()
+        XCTAssertTrue(abandoned.abandonHead(of: [head], ifRemoved: [head.uniqueID]),
+                      "removing the in-flight head must cancel its turn")
+        XCTAssertTrue(abandoned.contains(head.uniqueID),
+                      "the abandoned turn's streaming chunks and reply must be discarded")
+    }
+
+    // Removing only queued messages leaves the running turn alone: its message
+    // still exists, so its reply is still wanted.
+    func testDeletingOnlyQueuedMessagesKeepsInFlightTurn() {
+        let head = userText("head", chatID: "c")
+        let queued = userText("b", chatID: "c")
+        var abandoned = ChatService.AbandonedTurns()
+        XCTAssertFalse(abandoned.abandonHead(of: [head, queued], ifRemoved: [queued.uniqueID]))
+        XCTAssertFalse(abandoned.contains(head.uniqueID),
+                       "a turn whose message survives must publish its reply")
+    }
+
+    // An idle chat has no turn to cancel.
+    func testDeletingWithEmptyQueueAbandonsNothing() {
+        var abandoned = ChatService.AbandonedTurns()
+        XCTAssertFalse(abandoned.abandonHead(of: [], ifRemoved: [UUID()]))
+    }
+
+    // Abandonment is per turn: the message the user sends next is a new turn
+    // whose reply is published normally, while a straggling chunk or completion
+    // of the abandoned turn is still recognized after the next turn starts.
+    func testAbandonmentIsPerTurn() {
+        let deleted = userText("deleted", chatID: "c")
+        let next = userText("next", chatID: "c")
+        var abandoned = ChatService.AbandonedTurns()
+        XCTAssertTrue(abandoned.abandonHead(of: [deleted], ifRemoved: [deleted.uniqueID]))
+        XCTAssertFalse(abandoned.abandonHead(of: [next], ifRemoved: [deleted.uniqueID]))
+        XCTAssertFalse(abandoned.contains(next.uniqueID))
+        XCTAssertTrue(abandoned.contains(deleted.uniqueID))
+    }
 }
