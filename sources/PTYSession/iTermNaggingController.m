@@ -64,6 +64,10 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
     // sudo offer for the current sudo invocation. Cleared when sudo is no longer
     // the foreground job.
     BOOL _touchIDForSudoDismissed;
+    // YES once this session has asked whether to close tmux windows after
+    // detaching. Only a detached tmux window asks, so this tells it apart from
+    // the gateway and unrelated sessions when the answer is broadcast to all.
+    BOOL _askedWhetherTmuxWindowsShouldCloseAfterDetach;
 }
 
 - (instancetype)init {
@@ -361,6 +365,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 }
 
 - (void)willRecycleSession {
+    _askedWhetherTmuxWindowsShouldCloseAfterDetach = NO;
     NSArray<NSString *> *identifiers = @[
         iTermNaggingControllerOrphanIdentifier,
         iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier,
@@ -882,10 +887,19 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
                                                                 object:@(value)];
         }
     }];
+    _askedWhetherTmuxWindowsShouldCloseAfterDetach = YES;
     return NO;
 }
 
 - (void)didChangeTmuxWindowsShouldCloseAfterDetach:(NSNotification *)notification {
+    // Every session observes this, but only the detached tmux windows that
+    // asked should act on the answer.
+    const BOOL asked = _askedWhetherTmuxWindowsShouldCloseAfterDetach;
+    DLog(@"didChangeTmuxWindowsShouldCloseAfterDetach: %@ asked=%@", notification.object, @(asked));
+    if (!asked) {
+        return;
+    }
+    _askedWhetherTmuxWindowsShouldCloseAfterDetach = NO;
     [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach];
     if ([notification.object boolValue]) {
         [self.delegate naggingControllerCloseSession];
