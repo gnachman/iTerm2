@@ -155,6 +155,17 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 // Single home for the "drop the i:N binding for this color" rule.
 + (NSDictionary *)bindings:(NSDictionary *)bindings
     byRemovingPaletteBindingsForBaseKey:(NSString *)baseKey;
+
+// Downgrade compatibility for KEY_BINDINGS in saved arrangements and window
+// state. iTerm2 3.7.4 and earlier require every KEY_BINDINGS value to be an
+// expression string and crash on the dictionary form. When writing a profile
+// into an arrangement, the first method keeps only string values under
+// KEY_BINDINGS and moves every other value to a separate key older versions
+// ignore. The second method reverses that when reading the arrangement back,
+// and leaves a profile that lacks the separate key unchanged (including one
+// whose KEY_BINDINGS still holds dictionary values).
++ (Profile *)profileByMakingBindingsDowngradeCompatible:(Profile *)profile;
++ (Profile *)profileByRestoringDowngradeCompatibleBindings:(Profile *)profile;
 + (BOOL)valueIsExplicitlySetForKey:(NSString *)key inProfile:(Profile *)profile;
 
 @end

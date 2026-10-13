@@ -91,7 +91,7 @@ embedded in arrangements under Bookmark / Initial Profile)
   Profile Filename, Custom Locale, Bound Hosts, Jobs to Ignore, Snippets
   Filter, tmux Pane Title
   Nested: Triggers, Smart Selection Rules, Keyboard Map, Touch Bar Map,
-          SSH, Semantic History, Status Bar Layout, Bindings
+          SSH, Semantic History, Status Bar Layout, Bindings, Owned Bindings
   Kept (NOT sensitive): Custom Command / Custom Directory / AWDS *Option
           (enums), colors, fonts, sizes, GUIDs, hotkey codes.
   Labels (aggressive only): Name, Description, Tags, Title Function.
@@ -273,6 +273,7 @@ CONTENT_KEYS = {
     "NoSyncRecordedVariables": REDACT_V,
     "NoSyncVariablesToReport": REDACT_V,
     "Bindings": REDACT_V,
+    "Owned Bindings": REDACT_V,
     "Server Dict": REDACT_V,
     "Name Controller State": REDACT_V,
     "eventParams": REDACT_V,

@@ -2097,6 +2097,9 @@ ITERM_WEAKLY_REFERENCEABLE
             theBookmark = [[ProfileModel sharedInstance] defaultBookmark];
         }
     }
+    // Undo -profileByMakingBindingsDowngradeCompatible: before anything (such as
+    // the overridden-fields merge below) reads KEY_BINDINGS.
+    theBookmark = [iTermProfilePreferences profileByRestoringDowngradeCompatibleBindings:theBookmark];
     PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.foundingArrangement = [arrangement dictionaryByRemovingObjectForKey:SESSION_ARRANGEMENT_CONTENTS];
     aSession.view = sessionView;
@@ -7378,7 +7381,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
-    result[SESSION_ARRANGEMENT_BOOKMARK] = replacementProfile ?: _profile;
+    // 3.7.4 and earlier crash on non-string KEY_BINDINGS values, so keep this
+    // arrangement restorable after a downgrade.
+    result[SESSION_ARRANGEMENT_BOOKMARK] =
+        [iTermProfilePreferences profileByMakingBindingsDowngradeCompatible:replacementProfile ?: _profile];
 
     if (_substitutions) {
         result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
