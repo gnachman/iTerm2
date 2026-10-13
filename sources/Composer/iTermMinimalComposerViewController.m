@@ -461,6 +461,9 @@ workingDirectory:(NSString *)pwd
     textView.importsGraphics = NO;
     textView.usesFontPanel = NO;
     textView.forcePlainTextPaste = enabled;
+    // Send each and enqueue each would strip the chips (see
+    // ComposerTextView.sendEachActsAsSend), so they act as a plain send.
+    textView.sendEachActsAsSend = enabled;
 }
 
 - (void)setString:(NSString *)stringValue includingPrefix:(BOOL)includingPrefix {
