@@ -1504,7 +1504,7 @@ class ChatAgent {
             // into a PRIOR round can do neither -- it silently no-ops and the frozen
             // history past the edit point still replays. Unreachable today: a non-tail
             // anchor comes only from an edit/resume, which clears the chat's blobs
-            // (ChatListModel.delete -> replaceBlobs) and forces a NON-reduced turn; a
+            // (ChatListModel.truncate -> replaceBlobs) and forces a NON-reduced turn; a
             // normal send's anchor is the tail (a no-op anyway). Trip loudly if that
             // coupling ever breaks rather than send stale history silently.
             if blobsCoverHistoryThisTurn,

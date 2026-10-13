@@ -1286,3 +1286,8 @@ Bug Fixes:
 - Fixed Selection.async_get_string in the Python
   API adding line breaks that copying the same
   selection in iTerm2 leaves out.
+- Editing or deleting an AI chat message now
+  fully removes the later conversation, so the
+  AI no longer sees leftover command results
+  from it, and a message you deleted while the
+  AI was still replying is no longer sent.

@@ -109,11 +109,13 @@ class ChatService {
             break
         case .turnLifecycle:
             break
-        case .messagesRemoved:
+        case let .messagesRemoved(ids, chatID):
             // The store was truncated (edit/delete). The agent rebuilds its
             // request thread from the persisted messages each turn, so the
-            // removal is picked up on the next turn with no action here.
-            break
+            // history picks up the removal on the next turn. A removed message
+            // still waiting in the queue must be dropped here, though, or it is
+            // dispatched as a future turn's userMessage anyway.
+            dequeue(messageIDs: Set(ids), inChat: chatID)
         case let .delivery(message, chatID, _):
             switch message.author {
             case .agent:
@@ -399,6 +401,26 @@ class ChatService {
             }
         }
         return queue.count
+    }
+
+    private func dequeue(messageIDs ids: Set<UUID>, inChat chatID: String) {
+        guard let queue = pendingMessages[chatID] else {
+            return
+        }
+        pendingMessages[chatID] = Self.pendingQueue(queue, removingMessageIDs: ids)
+    }
+
+    // The pending queue with `ids` removed from its not-yet-dispatched tail.
+    // The in-flight head (index 0) always stays: the running turn owns it and
+    // its finishTurn pops index 0, so removing it here would make that pop
+    // discard the next message instead. Pure and static so it is unit-testable
+    // without a live ChatService.
+    nonisolated static func pendingQueue(_ queue: [Message],
+                                         removingMessageIDs ids: Set<UUID>) -> [Message] {
+        guard let head = queue.first else {
+            return queue
+        }
+        return [head] + queue.dropFirst().filter { !ids.contains($0.uniqueID) }
     }
 
     private func startNextTurn(forChatID chatID: String) {
