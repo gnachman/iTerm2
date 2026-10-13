@@ -283,6 +283,12 @@ final class OrchestratorClient {
     // double-arming. Called once at launch (see iTermChatTimerLaunch).
     @MainActor
     static func rearmPersistedTimersAtLaunch() {
+        // Under the administrator lockout a timer must not wake its chat (that
+        // sends the chat to the LLM), so leave persisted timers dormant.
+        guard iTermAdvancedSettingsModel.generativeAIAllowed() else {
+            RLog("Not re-arming persisted AI chat timers: generative AI is disallowed by the administrator")
+            return
+        }
         guard let broker = ChatBroker.instance else { return }
         let model = broker.listModel
         var timerChatIDs = [String]()
