@@ -121,6 +121,110 @@ final class AdapterShellEnvironmentTests: XCTestCase {
         XCTAssertEqual(shell.fetchCount, 1, "environment() never starts a fetch on its own once cached")
     }
 
+    // MARK: - CLAUDE_CONFIG_DIR (QA finding F-244)
+
+    func testParseSplitsPathAndClaudeConfigDir() {
+        let both = AdapterShellEnvironment.parse(shellOutput: "/usr/bin:/bin\n/Users/me/cfg")
+        XCTAssertEqual(both.path, "/usr/bin:/bin")
+        XCTAssertEqual(both.claudeConfigDir, "/Users/me/cfg")
+
+        // The gateway trims trailing newlines, so an unset variable leaves only PATH.
+        let pathOnly = AdapterShellEnvironment.parse(shellOutput: "/usr/bin:/bin")
+        XCTAssertEqual(pathOnly.path, "/usr/bin:/bin")
+        XCTAssertNil(pathOnly.claudeConfigDir)
+
+        XCTAssertNil(AdapterShellEnvironment.parse(shellOutput: "").path)
+    }
+
+    // The real fetch command, run by a shell the way the gateway runs it, must print what
+    // parse(shellOutput:) expects, both with the variable set and unset, and exit 0 either way
+    // (the gateway reports a nonzero exit as nil, which would lose PATH too).
+    func testFetchCommandOutputParses() throws {
+        func run(_ environment: [String: String]) throws -> (status: Int32, output: String) {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+            process.arguments = ["-f", "-c", AdapterShellEnvironment.fetchCommand]
+            process.environment = environment
+            let pipe = Pipe()
+            process.standardOutput = pipe
+            try process.run()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            let text = String(decoding: data, as: UTF8.self)
+            return (process.terminationStatus,
+                    text.trimmingCharacters(in: .newlines))
+        }
+        let set = try run(["PATH": "/a/bin:/usr/bin:/bin", "CLAUDE_CONFIG_DIR": "/Users/me/my cfg"])
+        XCTAssertEqual(set.status, 0)
+        let parsedSet = AdapterShellEnvironment.parse(shellOutput: set.output)
+        XCTAssertEqual(parsedSet.path, "/a/bin:/usr/bin:/bin")
+        XCTAssertEqual(parsedSet.claudeConfigDir, "/Users/me/my cfg")
+
+        let unset = try run(["PATH": "/a/bin:/usr/bin:/bin"])
+        XCTAssertEqual(unset.status, 0)
+        let parsedUnset = AdapterShellEnvironment.parse(shellOutput: unset.output)
+        XCTAssertEqual(parsedUnset.path, "/a/bin:/usr/bin:/bin")
+        XCTAssertNil(parsedUnset.claudeConfigDir)
+    }
+
+    func testShellValuesCarryClaudeConfigDirButAdapterEnvironmentDoesNot() {
+        let shell = FakeShell()
+        let environment = makeEnvironment(shell: shell)
+        var values: AdapterShellEnvironment.ShellValues?
+        var adapterEnvironment: [String: String]?
+        environment.shellValues { values = $0 }
+        environment.environment { adapterEnvironment = $0 }
+        XCTAssertEqual(shell.fetchCount, 1)
+        shell.completions[0]("/usr/bin\n/Users/me/cfg")
+
+        XCTAssertEqual(values, AdapterShellEnvironment.ShellValues(path: merged("/usr/bin"),
+                                                                   claudeConfigDir: "/Users/me/cfg",
+                                                                   reportedByShell: true))
+        XCTAssertEqual(adapterEnvironment?["PATH"], merged("/usr/bin"))
+        XCTAssertNil(adapterEnvironment?["CLAUDE_CONFIG_DIR"])
+        XCTAssertEqual(adapterEnvironment?.count, 2)
+
+        // Cached: no new shell run.
+        var cached: AdapterShellEnvironment.ShellValues?
+        environment.shellValues { cached = $0 }
+        XCTAssertEqual(cached, values)
+        XCTAssertEqual(shell.fetchCount, 1)
+    }
+
+    func testFailedFetchShellValuesAreNotReportedByShell() {
+        let shell = FakeShell()
+        let environment = makeEnvironment(shell: shell)
+        var values: AdapterShellEnvironment.ShellValues?
+        environment.shellValues { values = $0 }
+        shell.completions[0](nil)
+        XCTAssertEqual(values, AdapterShellEnvironment.ShellValues(path: fallback,
+                                                                   claudeConfigDir: nil,
+                                                                   reportedByShell: false))
+    }
+
+    func testRefreshReplacesClaudeConfigDirAndFailedRefreshKeepsIt() {
+        let shell = FakeShell()
+        let environment = makeEnvironment(shell: shell, refreshInterval: 0)
+        environment.shellValues { _ in }
+        shell.completions[0]("/usr/bin\n/old")
+
+        environment.prefetch()
+        shell.completions[1]("/usr/bin")
+        var afterUnset: AdapterShellEnvironment.ShellValues?
+        environment.shellValues { afterUnset = $0 }
+        XCTAssertNil(afterUnset?.claudeConfigDir, "The shell no longer sets it")
+        XCTAssertEqual(afterUnset?.reportedByShell, true)
+
+        environment.prefetch()
+        shell.completions[2]("/usr/bin\n/new")
+        environment.prefetch()
+        shell.completions[3](nil)
+        var afterFailure: AdapterShellEnvironment.ShellValues?
+        environment.shellValues { afterFailure = $0 }
+        XCTAssertEqual(afterFailure?.claudeConfigDir, "/new")
+        XCTAssertEqual(afterFailure?.reportedByShell, true)
+    }
+
     // MARK: - Slow shell
 
     func testTimeoutGivesWaitersFallbackButKeepsFetchAlive() {

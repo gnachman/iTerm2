@@ -376,27 +376,61 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
     // in ~/.local/bin or /opt/homebrew/bin would not be found. Uses the same cached shell
     // PATH lookup as the password manager adapters. It doesn't call prefetch(), so it never
     // starts a refresh of a cached PATH (that would run the user's login shell periodically).
+    // The same lookup reports CLAUDE_CONFIG_DIR; see usageEnvironment.
     static func shellEnvironment(_ completion: @escaping ([String: String]) -> Void) {
-        AdapterShellEnvironment.shared.environment { environment in
-            completion(Self.usageEnvironment(base: ProcessInfo.processInfo.environment,
-                                             shellEnvironment: environment))
+        shellEnvironment(from: AdapterShellEnvironment.shared,
+                         base: ProcessInfo.processInfo.environment,
+                         recordedClaudeConfigDir: iTermUserDefaults.claudeCodeConfigDirPath,
+                         completion: completion)
+    }
+
+    static func shellEnvironment(from shell: AdapterShellEnvironment,
+                                 base: [String: String],
+                                 recordedClaudeConfigDir: String?,
+                                 completion: @escaping ([String: String]) -> Void) {
+        shell.shellValues { values in
+            completion(Self.usageEnvironment(base: base,
+                                             shellValues: values,
+                                             recordedClaudeConfigDir: recordedClaudeConfigDir))
         }
     }
 
     // ~/.local/bin is where Claude Code's native installer puts claude. It's appended when
     // missing because the shell PATH fallback (used when the shell can't report PATH) lacks it.
+    //
+    // CLAUDE_CONFIG_DIR selects the Claude Code account, so it must match what `claude` in a
+    // terminal session would use. In order of precedence:
+    // 1. The value the user's shell startup files export. They run after the environment a
+    //    session inherits from iTerm2, so in a terminal this one wins. (The lookup's shell
+    //    doesn't inherit iTerm2's environment, so a profile that only sets a default when the
+    //    variable is unset can differ from a session here; that case is rare.)
+    // 2. A value in iTerm2's own environment, which sessions inherit when the startup files
+    //    don't set one.
+    // 3. Only when the shell couldn't be read: the directory recorded when the Claude Code
+    //    integration was installed, which came from the same shell lookup. When the shell was
+    //    read and doesn't set it, the recorded value is stale and is not used.
     static func usageEnvironment(base: [String: String],
-                                 shellEnvironment: [String: String]) -> [String: String] {
+                                 shellValues: AdapterShellEnvironment.ShellValues,
+                                 recordedClaudeConfigDir: String?) -> [String: String] {
         var result = base
-        if let path = shellEnvironment["PATH"] {
-            let home = base["HOME"] ?? NSHomeDirectory()
-            let localBin = (home as NSString).appendingPathComponent(".local/bin")
-            var directories = path.components(separatedBy: ":").filter { !$0.isEmpty }
-            if !directories.contains(localBin) {
-                directories.append(localBin)
-            }
-            result["PATH"] = directories.joined(separator: ":")
+        let home = base["HOME"] ?? NSHomeDirectory()
+        let localBin = (home as NSString).appendingPathComponent(".local/bin")
+        var directories = shellValues.path.components(separatedBy: ":").filter { !$0.isEmpty }
+        if !directories.contains(localBin) {
+            directories.append(localBin)
         }
+        result["PATH"] = directories.joined(separator: ":")
+
+        let configDirKey = "CLAUDE_CONFIG_DIR"
+        if let shellConfigDir = shellValues.claudeConfigDir, !shellConfigDir.isEmpty {
+            result[configDirKey] = shellConfigDir
+        } else if base[configDirKey]?.isEmpty ?? true,
+                  !shellValues.reportedByShell,
+                  let recordedClaudeConfigDir,
+                  !recordedClaudeConfigDir.isEmpty {
+            result[configDirKey] = recordedClaudeConfigDir
+        }
+        DLog("WorkgroupUsage: CLAUDE_CONFIG_DIR=\(result[configDirKey] ?? "(unset)")")
         return result
     }
 
