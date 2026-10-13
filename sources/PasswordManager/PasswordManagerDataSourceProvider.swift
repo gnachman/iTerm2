@@ -25,6 +25,7 @@ class PasswordManagerDataSourceProvider: NSObject {
     private var _testAdapter: AdapterPasswordDataSource
     #endif
     private let browser: Bool
+    private let authenticationMode: () -> PasswordManagerAuthenticationMode
     private var dataSourceNameUserDefaultsKey: String {
         "NoSyncPasswordManagerDataSourceName" + (browser ? "Browser" : "")
     }
@@ -43,7 +44,14 @@ class PasswordManagerDataSourceProvider: NSObject {
         static let defaultValue = DataSource.keychain
     }
 
-    init(browser: Bool) {
+    // A screen lock revokes the cached authentication here, on the provider, rather than
+    // in the password manager window. Authentication can be obtained without that window
+    // ever being opened (for example, saving a browser basic-auth credential), and it
+    // must still be revoked. The parameters let tests use a private notification center
+    // and a fixed authentication mode.
+    init(browser: Bool,
+         screenLockNotificationCenter: NotificationCenter = DistributedNotificationCenter.default(),
+         authenticationMode: @escaping () -> PasswordManagerAuthenticationMode = { PasswordManagerDataSourceProvider.currentAuthenticationMode }) {
         _keychain = KeychainPasswordDataSource(browser: browser)
         _onePassword = OnePasswordDataSource(browser: browser)
         _lastPass = LastPassDataSource(browser: browser)
@@ -70,10 +78,28 @@ class PasswordManagerDataSourceProvider: NSObject {
         #endif
 
         self.browser = browser
+        self.authenticationMode = authenticationMode
 
         super.init()
 
         dataSourceType = preferredDataSource
+        screenLockNotificationCenter.addObserver(self,
+                                                 selector: #selector(screenDidLock(_:)),
+                                                 name: NSNotification.Name("com.apple.screenIsLocked"),
+                                                 object: nil)
+    }
+
+    @objc private func screenDidLock(_ notification: Notification) {
+        guard Self.requiresAuthenticationAfterScreenLock(mode: authenticationMode()) else {
+            return
+        }
+        DLog("Screen locked. Revoke password manager authentication (browser=\(browser))")
+        revokeAuthentication()
+    }
+
+    // For unit tests only: stands in for a successful LocalAuthentication prompt.
+    func markAuthenticatedForTesting() {
+        authenticated = true
     }
 
     var preferredDataSource: DataSource {

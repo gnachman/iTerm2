@@ -254,10 +254,6 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (void)awakeFromNib {
-    [[NSDistributedNotificationCenter defaultCenter] addObserver:[self class]
-                                                        selector:@selector(staticScreenDidLock:)
-                                                            name:@"com.apple.screenIsLocked"
-                                                          object:nil];
     [[NSDistributedNotificationCenter defaultCenter] addObserver:self
                                                         selector:@selector(instanceScreenDidLock:)
                                                             name:@"com.apple.screenIsLocked"
@@ -1825,12 +1821,8 @@ static NSInteger const kDynamicMenuItemTag = 9999;
 
 #pragma mark - Notifications
 
-+ (void)staticScreenDidLock:(NSNotification *)notification {
-    if ([iTermPasswordManagerDataSourceProvider requiresAuthenticationAfterScreenLock]) {
-        [self.dataSourceProvider revokeAuthentication];
-    }
-}
-
+// The data source provider revokes its cached authentication on screen lock itself, since
+// authentication can be obtained without this window ever being opened.
 - (void)instanceScreenDidLock:(NSNotification *)notification {
     if ([iTermPasswordManagerDataSourceProvider requiresAuthenticationAfterScreenLock]) {
         for (NSWindow *sheet in [self.window.sheets copy]) {
