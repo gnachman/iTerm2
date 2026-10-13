@@ -6,6 +6,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermShellIntegrationInstaller.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,8 +17,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermExpect *)shellIntegrationExpect;
 @end
 
-@interface iTermShellIntegrationWindowController : NSWindowController
+@interface iTermShellIntegrationWindowController : NSWindowController<iTermShellIntegrationInstallerDelegate>
 @property (nonatomic, weak) id<iTermShellIntegrationWindowControllerDelegate> delegate;
+
+// Exposed for testing.
+@property (nonatomic, readonly) iTermShellIntegrationShell shell;
+@property (nullable, nonatomic, readonly, copy) NSString *dotdir;
+@property (nonatomic, readonly) int sendShellCommandsStage;
 @end
 
 NS_ASSUME_NONNULL_END
