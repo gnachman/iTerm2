@@ -1257,3 +1257,8 @@ Bug Fixes:
   “Centered, No Title Bar” style returning to
   their original size each time they were shown
   after you resized them.
+- Editing or deleting an AI chat message now
+  fully removes the later conversation, so the
+  AI no longer sees leftover command results
+  from it, and a message you deleted while the
+  AI was still replying is no longer sent.
