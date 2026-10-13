@@ -276,7 +276,8 @@ final class OrchestratorClient {
     //
     // Scans the (already in-memory) chat list for timer-bearing chats; only if
     // one exists does it boot the chat service and instantiate that chat's
-    // dispatcher, whose init runs reconcilePersistedWatchers -- re-arming each
+    // dispatcher, which runs reconcilePersistedWatchers once launch-time session
+    // restoration finishes (see SessionRestorationGate) -- re-arming each
     // timer and firing any whose time already passed. Idempotent: a chat whose
     // dispatcher already exists is left as-is, and armTimer self-guards against
     // double-arming. Called once at launch (see iTermChatTimerLaunch).
@@ -324,6 +325,52 @@ final class iTermChatTimerLaunch: NSObject {
         // in the MainActor's execution context; assert that rather than hop.
         MainActor.assumeIsolated {
             OrchestratorClient.rearmPersistedTimersAtLaunch()
+        }
+    }
+
+    // Called by the app delegate once window restoration (and the buried and
+    // orphaned session adoption that follows it) has created the sessions it
+    // is going to create. Dispatchers built earlier reconcile their persisted
+    // watchers now.
+    @objc static func sessionsDidFinishRestoring() {
+        MainActor.assumeIsolated {
+            SessionRestorationGate.shared.markReady()
+        }
+    }
+}
+
+// One-shot latch for “launch-time session restoration is done.” Until it
+// opens, an OrchestratorDispatcher defers reconciling its persisted watchers,
+// because a watched session that hasn't been restored yet is indistinguishable
+// from one that is gone for good. Tests construct their own instance.
+@MainActor
+final class SessionRestorationGate {
+    static let shared = SessionRestorationGate()
+
+    private(set) var isReady = false
+    private var waiters = [() -> Void]()
+
+    init(ready: Bool = false) {
+        isReady = ready
+    }
+
+    // Runs block now if the gate is open, otherwise once it opens.
+    func whenReady(_ block: @escaping () -> Void) {
+        if isReady {
+            block()
+        } else {
+            waiters.append(block)
+        }
+    }
+
+    func markReady() {
+        guard !isReady else { return }
+        RLog("Session restoration complete; releasing \(waiters.count) deferred watcher reconciliations")
+        isReady = true
+        let pending = waiters
+        waiters.removeAll()
+        for block in pending {
+            block()
         }
     }
 }
