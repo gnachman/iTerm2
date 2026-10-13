@@ -18,7 +18,13 @@ import AppKit
 
 @objc(iTermNotifyOnStatusChangeController)
 class NotifyOnStatusChangeController: NSObject {
-    @objc static let instance = NotifyOnStatusChangeController()
+    @objc static let instance = NotifyOnStatusChangeController(
+        windowGuidForSession: { sessionGuid in
+            iTermController.sharedInstance()?.windowForSession(withGUID: sessionGuid)?.terminalGuid
+        },
+        presentAlert: { sessionGuid, from, to in
+            NotifyOnStatusChangeController.presentAlert(sessionGuid: sessionGuid, from: from, to: to)
+        })
 
     // Posted whenever the set of armed windows or sessions changes, so
     // UIs (toolbelt bell, Window menu, Cockpit) can refresh. Broadcast
@@ -52,12 +58,44 @@ class NotifyOnStatusChangeController: NSObject {
     // never fires.
     private static let debounceInterval: TimeInterval = 0.05
     private var pendingKeys = Set<String>()
+    // Pending keys with at least one change to the status text in the current
+    // burst that was not the user acknowledging a result (see
+    // SessionStatusController.acknowledge). A key whose text changes were all
+    // acknowledgments is absorbed into the baselines without alerting or
+    // disarming. Changes to other fields (detail, background tasks, color) do
+    // not count, so one landing next to an acknowledgment cannot turn it into
+    // news.
+    private var pendingUnacknowledgedKeys = Set<String>()
+    // Each session's status text as of the last observer callback, to tell
+    // which callbacks changed the text.
+    private var lastObservedStatusText = [String: String]()
     private var pendingFlush: DispatchWorkItem?
 
-    override init() {
+    // Resolves the guid of the window containing a session.
+    private let windowGuidForSession: (String) -> String?
+    // Shows the alert for a session whose status changed from one value to another.
+    private let presentAlert: (_ sessionGuid: String, _ from: String?, _ to: String?) -> Void
+
+    // Internal so tests can supply their own window lookup and alert.
+    init(windowGuidForSession: @escaping (String) -> String?,
+         presentAlert: @escaping (_ sessionGuid: String, _ from: String?, _ to: String?) -> Void) {
+        self.windowGuidForSession = windowGuidForSession
+        self.presentAlert = presentAlert
         super.init()
-        token = SessionStatusController.instance.addObserver { [weak self] key, _, _ in
-            self?.enqueue(key: key)
+        let statusController = SessionStatusController.instance
+        // Statuses set before this controller was created (it is created
+        // lazily) are the baseline for the window scope, just like ones that
+        // arrive later.
+        for key in statusController.statuses.keys {
+            if let text = statusController.statuses[key]?.statusText {
+                lastSeenStatusText[key] = text
+                lastObservedStatusText[key] = text
+            }
+        }
+        token = statusController.addObserver { [weak self] key, _, _ in
+            self?.enqueue(key: key,
+                          text: statusController.statuses[key]?.statusText,
+                          acknowledged: statusController.isAcknowledging(sessionID: key))
         }
         let nc = NotificationCenter.default
         nc.addObserver(self,
@@ -94,8 +132,7 @@ class NotifyOnStatusChangeController: NSObject {
         // relative to the controller; everything else is already current in
         // lastSeenStatusText. Restricting to this window's sessions leaves other
         // armed windows' pending changes untouched.
-        let controller = iTermController.sharedInstance()
-        for key in pendingKeys where controller?.windowForSession(withGUID: key)?.terminalGuid == guid {
+        for key in pendingKeys where windowGuidForSession(key) == guid {
             advanceBaseline(forKey: key)
         }
         postArmedDidChange()
@@ -148,8 +185,12 @@ class NotifyOnStatusChangeController: NSObject {
     // armed later measures the next change against the value from just before it,
     // rather than a stale one. The debounce coalesces bursts, so the steady-state
     // cost is one flush per 50ms window of activity.
-    private func enqueue(key: String) {
+    private func enqueue(key: String, text: String?, acknowledged: Bool) {
         pendingKeys.insert(key)
+        if !acknowledged && text != lastObservedStatusText[key] {
+            pendingUnacknowledgedKeys.insert(key)
+        }
+        lastObservedStatusText[key] = text
         if pendingFlush != nil {
             return
         }
@@ -169,14 +210,17 @@ class NotifyOnStatusChangeController: NSObject {
         }
     }
 
-    private func flush() {
+    // Internal so tests can flush without waiting out the debounce.
+    func flush() {
+        pendingFlush?.cancel()
         pendingFlush = nil
         let keys = pendingKeys
+        let unacknowledgedKeys = pendingUnacknowledgedKeys
         pendingKeys.removeAll()
+        pendingUnacknowledgedKeys.removeAll()
         if keys.isEmpty {
             return
         }
-        let controller = iTermController.sharedInstance()
         var didChange = false
         for key in keys {
             let current = SessionStatusController.instance.statuses[key]?.statusText
@@ -189,8 +233,16 @@ class NotifyOnStatusChangeController: NSObject {
                 // Nothing armed: we only keep the baseline current.
                 continue
             }
-            let name = controller?.anySession(withGUID: key)?.name
-            let terminal = controller?.windowForSession(withGUID: key)
+            if !unacknowledgedKeys.contains(key) {
+                // The user acknowledged a result they have now seen (e.g., by
+                // typing, which turns done into idle). That is not news: it
+                // neither alerts nor disarms, and the next real change is
+                // measured from the acknowledged value.
+                if armedSessions.contains(key) {
+                    sessionArmBaseline[key] = current
+                }
+                continue
+            }
             // A single change can satisfy both the session watch and its
             // window watch (the two scopes are armed independently). Both
             // should consume the change, but the user should see only one
@@ -203,21 +255,19 @@ class NotifyOnStatusChangeController: NSObject {
                 armedSessions.remove(key)
                 let from = sessionArmBaseline.removeValue(forKey: key)
                 didChange = true
-                presentAlert(sessionName: name, sessionGuid: key,
-                             from: from, to: current, window: terminal?.window())
+                presentAlert(key, from, current)
                 alerted = true
             }
 
             // Window scope: the changed session's window, if armed. Measured
             // from the running baseline, so it covers sessions created after the
             // window was armed (membership is resolved live here).
-            if let terminal, let windowGuid = terminal.terminalGuid,
+            if let windowGuid = windowGuidForSession(key),
                armedWindows.contains(windowGuid), current != windowBaseline {
                 armedWindows.remove(windowGuid)
                 didChange = true
                 if !alerted {
-                    presentAlert(sessionName: name, sessionGuid: key,
-                                 from: windowBaseline, to: current, window: terminal.window())
+                    presentAlert(key, windowBaseline, current)
                 }
             }
         }
@@ -228,11 +278,12 @@ class NotifyOnStatusChangeController: NSObject {
 
     // MARK: - Alert
 
-    private func presentAlert(sessionName: String?,
-                              sessionGuid: String?,
-                              from: String?,
-                              to: String?,
-                              window: NSWindow?) {
+    private static func presentAlert(sessionGuid: String,
+                                     from: String?,
+                                     to: String?) {
+        let controller = iTermController.sharedInstance()
+        let sessionName = controller?.anySession(withGUID: sessionGuid)?.name
+        let window = controller?.windowForSession(withGUID: sessionGuid)?.window()
         let name = sessionName ?? String(localized: "StatusChange.DefaultSessionName", defaultValue: "A session", comment: "Fallback name used when a session has no name")
         // Change detection above compares raw stored values; only the display
         // strings are localized so a canonical wire status reads in the user's
@@ -249,9 +300,7 @@ class NotifyOnStatusChangeController: NSObject {
             var actions = [iTermLocalizedOK()]
             // Offer Reveal only when the session can still be resolved; it may
             // have gone away between the change and the alert being shown.
-            let canReveal = sessionGuid.flatMap {
-                iTermController.sharedInstance()?.anySession(withGUID: $0)
-            } != nil
+            let canReveal = iTermController.sharedInstance()?.anySession(withGUID: sessionGuid) != nil
             var localOnlyLabels = [String]()
             if canReveal {
                 let reveal = String(localized: "StatusChange.Reveal", defaultValue: "Reveal", comment: "Button to reveal the session whose status changed")
@@ -264,7 +313,7 @@ class NotifyOnStatusChangeController: NSObject {
             // A sheet if there is a window, otherwise app-modal.
             warning.window = window
             warning.runModalAsync { selection, _ in
-                if selection == .kiTermWarningSelection1, let sessionGuid {
+                if selection == .kiTermWarningSelection1 {
                     iTermController.sharedInstance()?.anySession(withGUID: sessionGuid)?.reveal()
                 }
             }
