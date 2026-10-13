@@ -129,7 +129,7 @@ final class AIModelCatalogTest: XCTestCase {
         XCTAssertEqual(opus.economyModelName, "claude-haiku-4-5")
         let economy = AIMetadata.economyModel(for: opus, in: models)
         XCTAssertEqual(economy?.name, "claude-haiku-4-5")
-        // Transport is preserved from the caller's model.
+        // Transport (and auth) is preserved from the caller's model.
         XCTAssertEqual(economy?.url, opus.url)
         XCTAssertEqual(economy?.api, opus.api)
     }
@@ -151,6 +151,76 @@ final class AIModelCatalogTest: XCTestCase {
         XCTAssertEqual(economy?.url, "https://proxy.internal.example/v1/messages",
                        "economy model must not bypass the user's custom base URL")
         XCTAssertEqual(economy?.api, .anthropic)
+    }
+
+    // QA finding F-006: a manual model at a gateway that authenticates with a
+    // custom header or a chosen key must keep that auth on its economy variant,
+    // or the safety check and screen-watch poller get a 401.
+    func testEconomyModelPreservesManualModelAuth() throws {
+        let models = try bundledModels()
+        let headers = [["name": "X-Gateway-Token", "value": "secret"]]
+        var gateway = AIMetadata.Model(name: "claude-opus-4-8",
+                                       contextWindowTokens: 200_000,
+                                       maxResponseTokens: 128_000,
+                                       url: "https://gateway.internal.example/v1/messages",
+                                       api: .anthropic,
+                                       features: [],
+                                       vendor: .anthropic)
+        gateway.customHeaders = headers
+        gateway.credential = .modelKey
+        gateway.manualConfigurationID = "manual-config-1"
+
+        let economy = try XCTUnwrap(AIMetadata.economyModel(for: gateway, in: models))
+        XCTAssertEqual(economy.name, "claude-haiku-4-5")
+        XCTAssertEqual(economy.customHeaders, headers)
+        XCTAssertEqual(economy.credential, .modelKey)
+        XCTAssertEqual(economy.manualConfigurationID, "manual-config-1")
+        XCTAssertEqual(economy.vendor, gateway.vendor)
+    }
+
+    func testEconomyModelPreservesChosenVendorKeyAndNoKey() throws {
+        let models = try bundledModels()
+        var gateway = AIMetadata.Model(name: "claude-opus-4-8",
+                                       contextWindowTokens: 200_000,
+                                       maxResponseTokens: 128_000,
+                                       url: "http://localhost:4000/v1/messages",
+                                       api: .anthropic,
+                                       features: [],
+                                       vendor: .anthropic)
+        gateway.credential = .vendorKey(.openAI)
+        let chosen = try XCTUnwrap(AIMetadata.economyModel(for: gateway, in: models))
+        XCTAssertEqual(chosen.credential, .vendorKey(.openAI))
+        XCTAssertEqual(chosen.keyVendor, .openAI)
+
+        // Resolve the key the way AITermController.registration does: the
+        // stored registration is offered only for a vendor it is valid for.
+        // The user chose to send the OpenAI key to this local endpoint, so the
+        // economy request must carry it rather than the local placeholder.
+        let stored = AITermController.Registration(apiKey: "openai-key", vendor: .openAI)
+        let registration = AITermController.resolvedRegistration(
+            model: chosen,
+            fallbackVendor: .anthropic,
+            vendorRegistration: { vendor in
+                guard let stored, stored.isValid(for: vendor) else {
+                    return nil
+                }
+                return stored
+            },
+            modelKey: { _ in nil })
+        XCTAssertEqual(registration?.apiKey, "openai-key")
+
+        gateway.credential = .none
+        XCTAssertEqual(AIMetadata.economyModel(for: gateway, in: models)?.credential, AIModelCredential.none)
+
+        // With automatic credentials the vendor picks the key, so it must match
+        // the configured model's, even when that differs from the catalog's
+        // (e.g. a chat-completions gateway whose vendor fell back to OpenAI).
+        gateway.credential = .automatic
+        gateway.api = .chatCompletions
+        gateway.vendor = .openAI
+        let economy = AIMetadata.economyModel(for: gateway, in: models)
+        XCTAssertEqual(economy?.vendor, .openAI)
+        XCTAssertEqual(economy?.keyVendor, .openAI)
     }
 
     func testEveryEconomyPointerIsValid() throws {

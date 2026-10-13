@@ -283,13 +283,15 @@ class AIMetadata: NSObject {
     // economy variant. Returns nil if the pointer names a model absent from the
     // catalog.
     //
-    // The returned model PRESERVES `model`'s transport (url and api, and hence
-    // which host the API key is sent to); only the model identity and its size
-    // limits change. This is load-bearing for security: a manual-mode user may
-    // point a catalog-named model at a custom base URL (corporate proxy /
-    // gateway), and resolving to the economy entry's own public endpoint would
-    // bypass that proxy and leak the configured API key to the public vendor
-    // host. Same-vendor guarantees the economy model speaks the same protocol.
+    // The returned model PRESERVES `model`'s transport and auth (url, api,
+    // vendor, custom headers, credential choice and manual configuration ID, and
+    // hence which host the API key is sent to and which key it is); only the
+    // model identity and its size limits change. This is load-bearing for
+    // security: a manual-mode user may point a catalog-named model at a custom
+    // base URL (corporate proxy / gateway), and resolving to the economy
+    // entry's own public endpoint would bypass that proxy and leak the
+    // configured API key to the public vendor host. Same-vendor guarantees the
+    // economy model speaks the same protocol.
     static func economyModel(for model: Model) -> Model? {
         return economyModel(for: model, in: instance.models)
     }
@@ -306,6 +308,15 @@ class AIMetadata: NSObject {
         }
         economy.url = model.url
         economy.api = model.api
+        // Carry the configured model's auth too. A manual model at a gateway
+        // may authenticate with custom headers or a key it chose explicitly;
+        // dropping those would send the economy request unauthenticated (or
+        // with the wrong key). The vendor comes along because, for automatic
+        // credentials, it decides which vendor's key is sent.
+        economy.vendor = model.vendor
+        economy.customHeaders = model.customHeaders
+        economy.credential = model.credential
+        economy.manualConfigurationID = model.manualConfigurationID
         return economy
     }
 
