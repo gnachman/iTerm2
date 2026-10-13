@@ -417,14 +417,24 @@ class AITermController {
     }
 
     func cancel() {
+        requestGeneration += 1
         cancellation?.cancel()
         cancellation = nil
         state = .ground
     }
 
     func cancelOutstandingOperation() {
+        requestGeneration += 1
         handle(event: .cancel)
     }
+
+    // Bumped on every cancel. A request captures it when it begins, and its
+    // deferred send, streamed words, and final response are dropped once it has
+    // changed. Cancelling does not always stop the transfer (or words already
+    // queued for the main thread), and the controller is reused for the next
+    // turn, so without this a cancelled request's late words and response would
+    // be parsed as the NEXT request's reply. Main thread only.
+    private var requestGeneration = 0
 
     // The user-visible error for a provider that answered with one, for every
     // path that makes such a request (chat and the vector-store/file-upload
@@ -477,7 +487,13 @@ class AITermController {
 
         case .creatingVectorStore:
             switch event {
-            case .begin, .pluginError, .cancel, .word:
+            case .cancel:
+                // Stop, or deleting the message whose turn is preparing it.
+                cancellation?.cancel()
+                cancellation = nil
+                state = .ground
+                delegate?.aitermController(self, didFailToCreateVectorStoreWithError: PendingCommandCanceled())
+            case .begin, .pluginError, .word:
                 it_fatalError()
             case .webResponse:
                 state = .ground
@@ -489,7 +505,13 @@ class AITermController {
 
         case .uploadingFile:
             switch event {
-            case .begin, .pluginError, .cancel, .word:
+            case .cancel:
+                // Stop, or deleting the message whose attachment is uploading.
+                cancellation?.cancel()
+                cancellation = nil
+                state = .ground
+                delegate?.aitermController(self, didFailToUploadFileWithError: PendingCommandCanceled())
+            case .begin, .pluginError, .word:
                 it_fatalError()
             case .webResponse:
                 state = .ground
@@ -501,7 +523,12 @@ class AITermController {
 
         case .addingFileToVectorStore:
             switch event {
-            case .begin, .pluginError, .cancel, .word:
+            case .cancel:
+                cancellation?.cancel()
+                cancellation = nil
+                state = .ground
+                delegate?.aitermControllerDidFailToAddFilesToVectorStore(self, error: PendingCommandCanceled())
+            case .begin, .pluginError, .word:
                 it_fatalError()
             case .webResponse:
                 state = .ground
@@ -516,7 +543,12 @@ class AITermController {
                     requestRegistration(continuation: state)
                     return
                 }
+                let generation = requestGeneration
                 DispatchQueue.main.async { [self] in
+                    guard requestGeneration == generation else {
+                        DLog("Request was cancelled before it was sent")
+                        return
+                    }
                     switch query {
                     case .completion(let prompt):
                         requestCompletion(query: prompt,
@@ -527,7 +559,12 @@ class AITermController {
                             // @MainActor chat stack (ChatService -> ChatBroker
                             // -> SQLite), which must run on main; hop there
                             // like the begin path above does.
-                            DispatchQueue.main.async { self?.handle(event: .word(word)) }
+                            DispatchQueue.main.async {
+                                guard let self, self.requestGeneration == generation else {
+                                    return
+                                }
+                                self.handle(event: .word(word))
+                            }
                         } : nil)
 
                     case .createVectorStore(name: let name):
@@ -568,6 +605,19 @@ class AITermController {
             case .cancel:
                 DLog("Cancel")
                 state = .ground
+                // The deferred send is dropped (see requestGeneration), so fail
+                // non-chat requests here or their callers wait forever. A chat
+                // completion is ended by AIConversation's cancel fallback.
+                switch query {
+                case .completion:
+                    break
+                case .createVectorStore:
+                    delegate?.aitermController(self, didFailToCreateVectorStoreWithError: PendingCommandCanceled())
+                case .fileUpload:
+                    delegate?.aitermController(self, didFailToUploadFileWithError: PendingCommandCanceled())
+                case .addFilesToVectorStore:
+                    delegate?.aitermControllerDidFailToAddFilesToVectorStore(self, error: PendingCommandCanceled())
+                }
             case .word:
                 DLog("Ignore unexpected word")
                 break
@@ -580,13 +630,23 @@ class AITermController {
                     requestRegistration(continuation: state)
                     return
                 }
+                let generation = requestGeneration
                 DispatchQueue.main.async { [self] in
+                    guard requestGeneration == generation else {
+                        DLog("Request was cancelled before it was sent")
+                        return
+                    }
                     requestCompletion(messages: messages,
                                 registration: registration,
                                 stream: stream ? { [weak self] word in
                         // See note above: hop to main so the streaming path
                         // drives the @MainActor chat stack on the main thread.
-                        DispatchQueue.main.async { self?.handle(event: .word(word)) }
+                        DispatchQueue.main.async {
+                            guard let self, self.requestGeneration == generation else {
+                                return
+                            }
+                            self.handle(event: .word(word))
+                        }
                     } : nil)
                 }
                 delegate?.aitermControllerWillSendRequest(self)
@@ -767,12 +827,17 @@ class AITermController {
             handle(event: .error(error))
             return
         }
+        let generation = requestGeneration
         cancellation = client.request(webRequest: request, stream: stream) { [weak self] result in
+            guard let self, self.requestGeneration == generation else {
+                DLog("Dropping the response to a cancelled request")
+                return
+            }
             switch result {
             case .success(let response):
-                self?.handle(event: .webResponse(response))
+                self.handle(event: .webResponse(response))
             case .failure(let error):
-                self?.handle(event: .pluginError(error))
+                self.handle(event: .pluginError(error))
             }
         }
         state = .querySent(messages: messages,
@@ -797,8 +862,13 @@ class AITermController {
             return
         }
         state = .creatingVectorStore
+        let generation = requestGeneration
         cancellation = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
             guard let self else { return }
+            guard requestGeneration == generation else {
+                DLog("Dropping the response to a cancelled request")
+                return
+            }
             do {
                 switch result {
                 case .success(let webResponse):
@@ -846,8 +916,13 @@ class AITermController {
             return
         }
         state = .addingFileToVectorStore
+        let generation = requestGeneration
         cancellation = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
             guard let self else { return }
+            guard requestGeneration == generation else {
+                DLog("Dropping the response to a cancelled request")
+                return
+            }
             do {
                 switch result {
                 case .success(let webResponse):
@@ -970,8 +1045,13 @@ class AITermController {
             return
         }
         state = .uploadingFile
+        let generation = requestGeneration
         cancellation = client.request(webRequest: request, stream: nil, completion: { [weak self] result in
             guard let self else { return }
+            guard requestGeneration == generation else {
+                DLog("Dropping the response to a cancelled request")
+                return
+            }
             do {
                 switch result {
                 case .success(let webResponse):
@@ -1450,6 +1530,7 @@ class AITermController {
                 // of the ring while the opt-in debug log still gets them.
                 RLog("Invoke function \(functionName) with arguments \(redacted: functionCall.arguments ?? "")")
                 delegate?.aitermController(self, willInvokeFunction: impl)
+                let generation = requestGeneration
                 impl.invoke(message: messageForCall,
                             json: (functionCall.arguments ?? "").data(using: .utf8)!) { [weak self] result in
                     // The result is terminal content fed back to the model; keep it out
@@ -1462,6 +1543,13 @@ class AITermController {
                     RLog("function call \(functionName) completed: \(outcome). Result: \(redacted: result)")
                     guard let self else {
                         DLog("I have been released")
+                        return
+                    }
+                    // A tool that finishes after its turn was cancelled must not
+                    // send a follow-up request: it would take over whatever
+                    // request is now outstanding.
+                    guard requestGeneration == generation else {
+                        DLog("Dropping the result of \(functionName): its request was cancelled")
                         return
                     }
                     switch result {
