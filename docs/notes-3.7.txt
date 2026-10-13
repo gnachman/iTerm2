@@ -1267,3 +1267,7 @@ Bug Fixes:
   had already been set before you turned the
   notification on, and alerting when a program
   merely restated that status.
+- Stopping an AI chat reply and then sending
+  another message no longer shows the rest of
+  the stopped reply as the answer to the new
+  message.
