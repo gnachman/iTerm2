@@ -21,6 +21,9 @@ import Foundation
 /// command. The usual CLI install directories are appended as a safety net for shells that
 /// don’t honor the login flag, or when the shell can’t be run at all.
 ///
+/// The AI Usage workgroup toolbar item also takes its PATH from here, without calling
+/// `prefetch()`.
+///
 /// Main thread only, like the adapter data sources that use it.
 final class AdapterShellEnvironment {
     /// Asks the shell for PATH. Must call its completion exactly once, on the main thread, with
@@ -120,7 +123,7 @@ final class AdapterShellEnvironment {
         lastFetchStart = ProcessInfo.processInfo.systemUptime
         generation += 1
         let fetchGeneration = generation
-        DLog("Reading PATH from the user’s shell for password manager adapters")
+        DLog("Reading PATH from the user’s shell for password manager adapters and AI Usage")
 
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
             guard let self, self.fetching, self.generation == fetchGeneration else {

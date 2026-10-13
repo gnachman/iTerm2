@@ -228,4 +228,138 @@ final class WorkgroupUsageTests: XCTestCase {
         }
         XCTAssertEqual(provider, .anthropicClaudeCode)
     }
+
+    // MARK: - Command environment (QA finding F-011)
+
+    // Launched from the Dock, iTerm2's PATH is /usr/bin:/bin:/usr/sbin:/sbin, so the
+    // usage command must get the user's shell PATH or `claude` is not found.
+    func test_tick_runsCommandWithProvidedShellPath() {
+        let ran = expectation(description: "command ran")
+        var capturedEnvironment: [String: String]?
+        var capturedArguments: [String]?
+        let item = WorkgroupUsageToolbarItem(
+            identifier: "usage",
+            priority: 0,
+            provider: .anthropicClaudeCode,
+            command: "echo hi",
+            intervalSeconds: 60,
+            environmentProvider: { completion in
+                completion(["PATH": "/shell/bin:/usr/bin", "HOME": "/home/test"])
+            },
+            commandRunner: { _, arguments, environment, _ in
+                capturedArguments = arguments
+                capturedEnvironment = environment
+                ran.fulfill()
+                return nil
+            })
+        item.tick()
+        wait(for: [ran], timeout: 10)
+        XCTAssertEqual(capturedArguments, ["-c", "echo hi"])
+        XCTAssertEqual(capturedEnvironment?["PATH"], "/shell/bin:/usr/bin")
+        XCTAssertEqual(capturedEnvironment?["HOME"], "/home/test")
+    }
+
+    func test_tick_waitsForEnvironmentBeforeRunning() {
+        var pending: (([String: String]) -> Void)?
+        let ran = expectation(description: "command ran")
+        let item = WorkgroupUsageToolbarItem(
+            identifier: "usage",
+            priority: 0,
+            provider: .anthropicClaudeCode,
+            command: "echo hi",
+            intervalSeconds: 60,
+            environmentProvider: { completion in pending = completion },
+            commandRunner: { _, _, environment, _ in
+                XCTAssertEqual(environment["PATH"], "/late/bin")
+                ran.fulfill()
+                return nil
+            })
+        item.tick()
+        XCTAssertNotNil(pending)
+        pending?(["PATH": "/late/bin"])
+        wait(for: [ran], timeout: 10)
+    }
+
+    func test_usageEnvironment_replacesOnlyPath() {
+        let merged = WorkgroupUsageToolbarItem.usageEnvironment(
+            base: ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": "/Users/me", "LANG": "en_US.UTF-8"],
+            shellEnvironment: ["PATH": "/Users/me/.local/bin:/opt/homebrew/bin:/usr/bin", "HOME": "/other"])
+        // ~/.local/bin is already present, so the shell PATH is used verbatim.
+        XCTAssertEqual(merged["PATH"], "/Users/me/.local/bin:/opt/homebrew/bin:/usr/bin")
+        XCTAssertEqual(merged["HOME"], "/Users/me")
+        XCTAssertEqual(merged["LANG"], "en_US.UTF-8")
+    }
+
+    // The native Claude Code installer puts claude in ~/.local/bin, which the shell PATH
+    // fallback (used when the shell can't report PATH) lacks.
+    func test_usageEnvironment_appendsLocalBinWhenMissing() {
+        let merged = WorkgroupUsageToolbarItem.usageEnvironment(
+            base: ["HOME": "/Users/me"],
+            shellEnvironment: ["PATH": "/opt/homebrew/bin:/usr/bin"])
+        XCTAssertEqual(merged["PATH"], "/opt/homebrew/bin:/usr/bin:/Users/me/.local/bin")
+    }
+
+    func test_usageEnvironment_doesNotDuplicateLocalBin() {
+        let merged = WorkgroupUsageToolbarItem.usageEnvironment(
+            base: ["HOME": "/Users/me"],
+            shellEnvironment: ["PATH": "/Users/me/.local/bin:/usr/bin"])
+        XCTAssertEqual(merged["PATH"], "/Users/me/.local/bin:/usr/bin")
+    }
+
+    func test_tick_whileWaitingForEnvironmentIsSkipped() {
+        var providerCalls = 0
+        var pending: (([String: String]) -> Void)?
+        let ran = expectation(description: "command ran")
+        ran.expectedFulfillmentCount = 1
+        ran.assertForOverFulfill = true
+        let item = WorkgroupUsageToolbarItem(
+            identifier: "usage",
+            priority: 0,
+            provider: .anthropicClaudeCode,
+            command: "echo hi",
+            intervalSeconds: 60,
+            environmentProvider: { completion in
+                providerCalls += 1
+                pending = completion
+            },
+            commandRunner: { _, _, _, _ in
+                ran.fulfill()
+                return nil
+            })
+        item.tick()
+        item.tick()
+        XCTAssertEqual(providerCalls, 1)
+        pending?(["PATH": "/late/bin"])
+        wait(for: [ran], timeout: 10)
+    }
+
+    // End to end through the real runner and the shipped script: a `claude` that exists
+    // only in a directory on the supplied PATH must be found.
+    func test_runCommand_findsClaudeOnSuppliedPath() throws {
+        let script = scriptURL()
+        try XCTSkipUnless(FileManager.default.fileExists(atPath: script.path),
+                          "claude_usage.sh not found at \(script.path)")
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("claude_usage_path_\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let claude = dir.appendingPathComponent("claude")
+        try """
+        #!/bin/sh
+        echo 'Current session: 42% used · resets soon'
+        """.write(to: claude, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: claude.path)
+
+        var environment = ProcessInfo.processInfo.environment
+        environment.removeValue(forKey: "ITERM2_AI_USAGE_FIXTURE")
+        environment["PATH"] = dir.path + ":/usr/bin:/bin:/usr/sbin:/sbin"
+        let data = WorkgroupUsageToolbarItem.runCommand(launchPath: "/bin/sh",
+                                                        arguments: [script.path],
+                                                        environment: environment,
+                                                        timeout: 20)
+        let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: try XCTUnwrap(data))
+        XCTAssertNil(report.error)
+        XCTAssertEqual(report.bars.count, 1)
+        XCTAssertEqual(try XCTUnwrap(report.bars.first).fraction, 0.42, accuracy: 1e-6)
+    }
 }
