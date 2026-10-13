@@ -251,6 +251,12 @@ static BOOL hasBecomeActive = NO;
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
 
     BOOL _orphansAdopted;  // Have orphan servers been adopted?
+    // Launch-time session restoration bookkeeping for AI chat watchers. See
+    // -maybeReportSessionRestorationComplete.
+    BOOL _windowRestorationFinished;  // restoreWindowsWithCompletion: completed
+    BOOL _postRestorationStepsFinished;  // buried/orphan/workgroup steps ran
+    BOOL _sessionRestorationReported;  // AI chat has been told
+    id _sessionRestorationDecodeObserver;
 
     NSArray<NSDictionary *> *_buriedSessionsState;
 
@@ -1515,6 +1521,8 @@ void TurnOnDebugLoggingAutomatically(void) {
         [_untitledWindowStateMachine didFinishRestoringWindows];
         ScreenCharGarbageCollectImages();
         [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
+        _windowRestorationFinished = YES;
+        [self maybeReportSessionRestorationComplete];
     }];
 }
 
@@ -1734,6 +1742,8 @@ void TurnOnDebugLoggingAutomatically(void) {
             if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
                 _orphansAdopted = YES;
                 [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
+                _postRestorationStepsFinished = YES;
+                [self maybeReportSessionRestorationComplete];
             } else {
                 [[NSNotificationCenter defaultCenter] addObserver:self
                                                          selector:@selector(itermDidDecodeWindowRestorableState:)
@@ -1744,6 +1754,20 @@ void TurnOnDebugLoggingAutomatically(void) {
     } else {
         [self restoreBuriedSessionsState];
         [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
+        if (_restorableStateController) {
+            [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
+                _postRestorationStepsFinished = YES;
+                [self maybeReportSessionRestorationComplete];
+            }];
+        }
+    }
+    if (!_restorableStateController) {
+        // Without our restorable state controller (unit tests, or the advanced
+        // setting that uses system window restoration) there is no completion
+        // signal to wait for, so don't hold up AI chat watchers. With system
+        // restoration a watch whose session is restored later can still be
+        // dropped; that mode is not otherwise supported here.
+        [self reportSessionRestorationComplete];
     }
     if ([iTermAPIHelper isEnabled]) {
         [iTermAPIHelper sharedInstance];  // starts the server. Won't ask the user since it's enabled.
@@ -1949,7 +1973,56 @@ static iTermKeyEventReplayer *gReplayer;
     if (!_orphansAdopted && [[iTermController sharedInstance] numberOfDecodesPending] == 0) {
         _orphansAdopted = YES;
         [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
+        _postRestorationStepsFinished = YES;
+        [self maybeReportSessionRestorationComplete];
     }
+}
+
+// AI chat reconciles its persisted session watchers once this reports, so it
+// must not report while a restored session might still be missing. That needs
+// all of: every restored window's completion handler has run (this includes
+// native full screen windows, whose restoration is deferred past the
+// post-restoration block); the post-restoration steps (buried sessions,
+// workgroup reconstruction, orphan adoption kickoff) have run; and no window
+// is still decoding its restorable state.
+- (void)maybeReportSessionRestorationComplete {
+    if (_sessionRestorationReported || !_windowRestorationFinished || !_postRestorationStepsFinished) {
+        return;
+    }
+    if ([[iTermController sharedInstance] numberOfDecodesPending] > 0) {
+        if (!_sessionRestorationDecodeObserver) {
+            __weak __typeof(self) weakSelf = self;
+            _sessionRestorationDecodeObserver =
+                [[[NSNotificationCenter defaultCenter] addObserverForName:iTermDidDecodeWindowRestorableStateNotification
+                                                                   object:nil
+                                                                    queue:nil
+                                                               usingBlock:^(NSNotification *notification) {
+                    [weakSelf maybeReportSessionRestorationComplete];
+                }] retain];
+        }
+        return;
+    }
+    if (_sessionRestorationDecodeObserver) {
+        [[NSNotificationCenter defaultCenter] removeObserver:_sessionRestorationDecodeObserver];
+        [_sessionRestorationDecodeObserver release];
+        _sessionRestorationDecodeObserver = nil;
+    }
+    // Rebuild any workgroups whose windows are now in place before declaring
+    // their peer sessions present. This is idempotent.
+    [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
+    [self reportSessionRestorationComplete];
+}
+
+// Restored and adopted sessions now exist, so AI chat can tell a watched
+// session that is gone for good from one that just hasn't been restored yet.
+// Orphan adoption is still finishing asynchronously at this point, but an
+// adopted orphan gets a fresh stableID and so can never be a watcher's target.
+- (void)reportSessionRestorationComplete {
+    if (_sessionRestorationReported) {
+        return;
+    }
+    _sessionRestorationReported = YES;
+    [iTermChatTimerLaunch sessionsDidFinishRestoring];
 }
 
 - (void)dynamicToolsDidChange:(NSNotification *)notification {

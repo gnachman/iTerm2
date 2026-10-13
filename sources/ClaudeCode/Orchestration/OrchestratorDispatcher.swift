@@ -171,11 +171,26 @@ final class OrchestratorDispatcher {
     // escalating to the screen-observation backstop.
     private static let tabStatusEscalationDelay: TimeInterval = 300  // 5 minutes
 
+    // Resolves a watcher's session reference. Injectable so tests can stand in
+    // for the app's session registry.
+    private let sessionLookup: (String) -> PTYSession?
+
+    // False until reconcilePersistedWatchers has run. Restoration is still
+    // creating sessions until then, so tab-status changes for sessions with no
+    // seeded history are ignored: a persisted watcher would otherwise treat a
+    // restoration-time status as a real transition.
+    private var reconciled = false
+
     init(chatID: String, broker: ChatBroker,
-         typedInput: OrchestratorTypedInputStore) {
+         typedInput: OrchestratorTypedInputStore,
+         restorationGate: SessionRestorationGate? = nil,
+         sessionLookup: ((String) -> PTYSession?)? = nil) {
         self.chatID = chatID
         self.broker = broker
         self.typedInput = typedInput
+        self.sessionLookup = sessionLookup ?? { reference in
+            iTermController.sharedInstance()?.anySession(forReference: reference)
+        }
         let listModel = broker.listModel
         self.claimedScopes = listModel.claimedScopes(forChatID: chatID)
         self.watchers = listModel.watchers(forChatID: chatID)
@@ -222,9 +237,17 @@ final class OrchestratorDispatcher {
         // Restart reconciliation: if any persisted watchers target
         // a session GUID that no longer exists (restoration off,
         // partial restore, etc.), surface that to the agent and
-        // drop the watcher.
-        MainActor.assumeIsolated {
-            self.reconcilePersistedWatchers()
+        // drop the watcher. Deferred until window restoration has
+        // finished creating sessions: at launch a dispatcher can be built
+        // before then (the timer re-arm runs in applicationDidFinishLaunching),
+        // and reconciling early would drop every watch whose session simply
+        // hasn't been restored yet. Only the watchers persisted at init are
+        // reconciled; one registered while waiting was armed and seeded by
+        // its register path.
+        let persistedWatcherIDs = Set(watchers.map { $0.watcherID })
+        (restorationGate ?? .shared).whenReady { [weak self] in
+            guard let self, !self.tornDown else { return }
+            self.reconcilePersistedWatchers(ids: persistedWatcherIDs)
         }
     }
 
@@ -414,7 +437,7 @@ final class OrchestratorDispatcher {
         // not just sessions we watch; with no watchers there is nothing to do.
         guard !watchers.isEmpty else { return }
         let guid = status.sessionID
-        let session = iTermController.sharedInstance()?.anySession(forReference: guid)
+        let session = sessionByGUID(guid)
         let stableID = session?.stableID
         // Key history by the session's stableID (fall back to the raw guid only
         // when the session can't be resolved) so transition detection also
@@ -423,6 +446,7 @@ final class OrchestratorDispatcher {
         // doStartCodeReview seed history before appending a watcher, so a
         // watcher's first matching notification always finds a non-nil previous.
         let historyKey = stableID ?? guid
+        guard reconciled || sessionStateHistory[historyKey] != nil else { return }
         guard watchers.contains(where: { $0.targets(stableID: stableID, guid: guid) }) else {
             return
         }
@@ -512,7 +536,8 @@ final class OrchestratorDispatcher {
         }
     }
 
-    // Re-check every persisted watcher at init: if the session GUID
+    // Re-check every watcher persisted at init, once launch-time session
+    // restoration is done (see SessionRestorationGate): if the session GUID
     // still resolves, leave it in place (the live tab-status
     // subscription will fire it normally). If not, the session is
     // gone (restoration off, partial restore, terminated mid-quit)
@@ -526,10 +551,12 @@ final class OrchestratorDispatcher {
     // previous always counts as a transition, which would fire every
     // surviving watcher on the first tabStatus event after launch.
     @MainActor
-    private func reconcilePersistedWatchers() {
+    private func reconcilePersistedWatchers(ids: Set<String>) {
+        reconciled = true
         // Timers target no session, so the missing-session drop never applies to
         // them -- they are re-armed below regardless of any session state.
         let dropped = watchers.filter {
+            ids.contains($0.watcherID) &&
             $0.effectiveMode != .timer && sessionByGUID($0.sessionGUID) == nil
         }
         let droppedIDs = Set(dropped.map { $0.watcherID })
@@ -550,7 +577,8 @@ final class OrchestratorDispatcher {
         // matching that prevents a spurious .unknown → .idle transition).
         // Seed history keyed by each surviving watcher's session stableID (the
         // same key the tab-status handler uses), skipping already-seeded ones.
-        for watcher in watchers {
+        let persisted = watchers.filter { ids.contains($0.watcherID) }
+        for watcher in persisted {
             guard let session = sessionByGUID(watcher.sessionGUID) else { continue }
             if sessionStateHistory[session.stableID] == nil {
                 sessionStateHistory[session.stableID] = Self.seedState(for: session)
@@ -564,7 +592,7 @@ final class OrchestratorDispatcher {
         // (armScreenEscalation self-guards on screen permission, so a chat without
         // View Contents keeps only its screen-free tab-status trigger).
         var revoked = [WorkgroupWatcher]()
-        for watcher in watchers {
+        for watcher in persisted {
             if watcherReadDenial(watcher) != nil {
                 revoked.append(watcher)
                 continue
@@ -1080,7 +1108,7 @@ final class OrchestratorDispatcher {
         // roles in seedState (firing every idle watcher on first tabStatus).
         // Because watchers persist the session's stableID (see watcherKey),
         // resolving by reference is what lets a watcher survive a shell reload.
-        return iTermController.sharedInstance()?.anySession(forReference: reference)
+        return sessionLookup(reference)
     }
 
     // The reload-durable key a watcher is registered under: the session's
