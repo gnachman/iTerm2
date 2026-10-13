@@ -5874,6 +5874,9 @@ CA
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="TG6-06-mq9" id="pSl-cH-nG1"/>
+                    </connections>
                 </button>
                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Flm-P4-Ca9">
                     <rect key="frame" x="14" y="35" width="204" height="16"/>
