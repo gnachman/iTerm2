@@ -608,8 +608,11 @@ it2cli: force
 	cd it2cli/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
 	cp it2cli/.build/release/it2 it2cli/bin
 
+# Limit PATH to system directories so SwiftPM clones dependencies with
+# /usr/bin/git. The PATH set at the top of this file puts Homebrew first, and
+# the sandbox blocks Homebrew's git, which fails a build with no cached checkouts.
 paranoid-it2cli: force
-	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" it2cli
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" PATH=/usr/bin:/bin:/usr/sbin:/sbin it2cli
 
 cc-status: force
 	cd cc-status/ && ./build.sh
