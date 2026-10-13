@@ -31,6 +31,9 @@
     BOOL _sideEffectsAllowed;
     iTermIdempotentOperationJoiner *_reevaluationJoiner;
     BOOL _invalidated;
+    // Incremented each time an evaluation starts. Only the newest
+    // evaluation may install its dependencies as _refs.
+    NSInteger _refsGeneration;
 }
 
 - (instancetype)initWithString:(NSString *)stringToEvaluate
@@ -190,14 +193,24 @@
                    completion:(void (^)(id, NSError *))completion {
     iTermVariableRecordingScope *scope = [self.scope recordingCopy];
     __weak __typeof(self) weakSelf = self;
+    const NSInteger generation = ++_refsGeneration;
+    __block BOOL completed = NO;
     [self evaluateSynchronously:synchronously
              sideEffectsAllowed:sideEffectsAllowed
                       withScope:scope
                      completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
+        completed = YES;
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
         }
+        // An asynchronous evaluation can read variables after it starts
+        // (for example, a built-in function's default arguments are read
+        // only once its explicit arguments have been evaluated), so the
+        // dependencies are complete only now.
+        [strongSelf installReferencesFromScope:scope
+                                    generation:generation
+                                  keepExisting:NO];
         [strongSelf->_missingFunctions unionSet:missing];
         if (error) {
             NSString *message =
@@ -216,8 +229,43 @@
         }
         completion(result, error);
     }];
-    _refs = [scope recordedReferences];
-    for (iTermVariableReference *ref in _refs) {
+    if (!completed) {
+        // Observe what has been read so far while the evaluation is in
+        // flight, without dropping dependencies an earlier evaluation
+        // established: this one may not have read them yet, and a change
+        // to one of them before it does would otherwise go unnoticed.
+        // The completion block replaces these with the full set.
+        [self installReferencesFromScope:scope
+                              generation:generation
+                            keepExisting:YES];
+    }
+}
+
+- (void)installReferencesFromScope:(iTermVariableRecordingScope *)scope
+                        generation:(NSInteger)generation
+                      keepExisting:(BOOL)keepExisting {
+    if (_invalidated || generation != _refsGeneration) {
+        // Either nothing should be observed any more, or a newer
+        // evaluation started (possibly of a different string), so these
+        // dependencies are stale.
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    NSArray<iTermVariableReference *> *added = [scope recordedReferences];
+    // Merging by path alone assumes the scope does not change while an
+    // evaluation is in flight; a stale ref only costs a reevaluation.
+    if (keepExisting && _refs.count > 0) {
+        NSSet<NSString *> *existingPaths = [NSSet setWithArray:[_refs mapWithBlock:^id(iTermVariableReference *ref) {
+            return ref.path;
+        }]];
+        added = [added filteredArrayUsingBlock:^BOOL(iTermVariableReference *ref) {
+            return ![existingPaths containsObject:ref.path];
+        }];
+        _refs = [_refs arrayByAddingObjectsFromArray:added];
+    } else {
+        _refs = added;
+    }
+    for (iTermVariableReference *ref in added) {
         ref.onChangeBlock = ^{
             [weakSelf dependencyDidChange];
         };
