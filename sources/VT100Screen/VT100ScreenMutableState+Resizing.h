@@ -21,6 +21,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)restoreInitialSizeWithDelegate:(id<VT100ScreenDelegate>)delegate;
 
+// Called once a restored session has been fit to its window. Moves the cursor back to the
+// position it had when the state was saved (see -[VT100Grid preferredCursorPosition]).
+- (void)restorePreferredCursorPositionIfPossible;
+
 - (void)setSize:(VT100GridSize)size delegate:(id<VT100ScreenDelegate>)delegate;
 
 - (void)destructivelySetScreenWidth:(int)width height:(int)height;
