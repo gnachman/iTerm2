@@ -22,11 +22,14 @@ import Foundation
 //
 // SECURITY: the log captures the full prompt + response content; users
 // opt in explicitly via the advanced setting. Credentials, however, are
-// scrubbed on the write path: known credential headers (Authorization,
-// x-api-key, api-key, x-goog-api-key) are reduced to fingerprints, and
+// scrubbed on the write path: every header value except a short list of
+// known-harmless ones (Content-Type, Accept, anthropic-version, ...) is
+// reduced to a fingerprint, since user-configured custom headers can
+// carry credentials under any name, and
 // the request URL, string bodies, responses, and stream chunks are
 // regex-scrubbed for key-shaped tokens (sk-* for OpenAI/Anthropic/
-// DeepSeek, AIza* for Gemini, whose keys ride in the URL query).
+// DeepSeek, AIza* for Gemini, whose keys ride in the URL query) and
+// for the value of a key-like URL query parameter (key=, api_key=, ...).
 // Fingerprints keep enough of each key to
 // tell WHICH key was used (wrong-vendor-key bugs stay debuggable)
 // while making the log safe to attach to a bug report. Redacting only
@@ -63,16 +66,17 @@ final class AIChatWireLogger: NSObject {
     func logRequest(callID: UUID, request: WebRequest) {
         guard Self.isEnabled else { return }
         let stamp = Self.iso8601.string(from: Date())
+        append(Self.requestRecord(callID: callID, stamp: stamp, request: request))
+    }
+
+    // The text logRequest writes for one request, credentials scrubbed.
+    static func requestRecord(callID: UUID, stamp: String, request: WebRequest) -> String {
         let id = callID.uuidString
         var text = ""
         text += "=== call \(id) request \(stamp) ===\n"
         text += "\(request.method) \(AIChatWireLogSanitizer.scrubbingSecrets(request.url))\n"
         text += "Headers (\(request.headers.count)):\n"
-        // Stable order so diffs across calls read cleanly.
-        for key in request.headers.keys.sorted() {
-            let value = request.headers[key] ?? ""
-            text += "\(key): \(AIChatWireLogSanitizer.sanitizedHeaderValue(value, forHeader: key))\n"
-        }
+        text += AIChatWireLogSanitizer.sanitizedHeadersDescription(request.headers)
         // The binary case is base64 (attachment bytes); a key inside it
         // is not recoverable by grep, and decoding megabytes to scan
         // them isn't worth it.
@@ -89,7 +93,7 @@ final class AIChatWireLogger: NSObject {
             text += "\n"
         }
         text += "--- end request \(id) ---\n\n"
-        append(text)
+        return text
     }
 
     // Responses and stream chunks are scrubbed too, even though
@@ -224,20 +228,39 @@ final class AIChatWireLogger: NSObject {
 // from the logger's I/O so they're unit-testable.
 //
 // Two layers:
-//  1. sanitizedHeaderValue: headers that exist to carry credentials
-//     are fingerprinted wholesale, no pattern needed. This is the
-//     layer that catches keys whose format we don't know about.
-//  2. scrubbingSecrets: key-shaped tokens are fingerprinted wherever
-//     they appear (URL query for Gemini, bodies, unusual headers).
+//  1. sanitizedHeaderValue: every header that isn't known to be
+//     harmless is fingerprinted wholesale, no pattern needed. Users
+//     can configure custom headers per model (Proxy-Authorization,
+//     X-Auth-Token, anything), so any unknown header may carry a
+//     credential. This is the layer that catches keys whose format
+//     we don't know about.
+//  2. scrubbingSecrets: key-shaped tokens and key-like URL query
+//     parameter values are fingerprinted wherever they appear (URL
+//     query for Gemini, bodies, error text that echoes a URL).
+//
+// The debug log (WebRequest.debugDescription, PluginClient) uses the
+// same functions, so a debug log is as safe to attach as the wire log.
 //
 // A fingerprint keeps a short prefix and suffix, e.g.
 // "sk-ant-a…BkXm [redacted 108 chars]", so the log still shows which
 // key was used (a wrong-vendor-key 401 stays diagnosable) without
 // disclosing it.
 enum AIChatWireLogSanitizer {
-    // Lowercased names of headers whose entire value is a credential.
-    private static let credentialHeaders: Set<String> = [
-        "authorization", "x-api-key", "api-key", "x-goog-api-key",
+    // Lowercased names of headers whose values are logged as-is
+    // (pattern-scrubbed only). Every other header's value is treated
+    // as a credential. Keep this list to headers that never carry
+    // secrets.
+    private static let harmlessHeaders: Set<String> = [
+        "accept", "accept-encoding", "accept-language",
+        "anthropic-beta", "anthropic-version", "cache-control",
+        "connection", "content-length", "content-type", "openai-beta",
+        "user-agent",
+    ]
+
+    // Lowercased names of headers whose value starts with an auth
+    // scheme ("Bearer ", "Basic ") that is safe to keep visible.
+    private static let schemeHeaders: Set<String> = [
+        "authorization", "proxy-authorization",
     ]
 
     // Key-shaped tokens:
@@ -252,6 +275,10 @@ enum AIChatWireLogSanitizer {
     // the embedded "sk-" and get mangled.
     private static let secretPatterns: [NSRegularExpression] = {
         let patterns = [
+            // Value of a key-like URL query parameter. Listed first so
+            // a Gemini key is fingerprinted as a whole here rather than
+            // first by the AIza pattern and then again by this one.
+            "(?<=[?&](?i:key|api_key|apikey|api-key|access_token|access-token|token|auth|secret|client_secret|password|sig|signature)=)[^&#\\s\"'}]+",
             "(?<![A-Za-z0-9_-])sk-[A-Za-z0-9_-]{16,}",
             "(?<![A-Za-z0-9_-])AIza[0-9A-Za-z_-]{35}",
         ]
@@ -261,18 +288,33 @@ enum AIChatWireLogSanitizer {
     }()
 
     static func sanitizedHeaderValue(_ value: String, forHeader header: String) -> String {
-        if credentialHeaders.contains(header.lowercased()) {
-            // Preserve an auth-scheme prefix ("Bearer ") so the scheme
-            // stays visible; fingerprint the credential part.
-            if let spaceIndex = value.firstIndex(of: " "),
-               value.distance(from: value.startIndex, to: spaceIndex) <= 16 {
-                let scheme = value[..<spaceIndex]
-                let credential = String(value[value.index(after: spaceIndex)...])
-                return "\(scheme) \(fingerprint(credential))"
-            }
-            return fingerprint(value)
+        let lowercased = header.lowercased()
+        if harmlessHeaders.contains(lowercased) {
+            return scrubbingSecrets(value)
         }
-        return scrubbingSecrets(value)
+        // Preserve an auth-scheme prefix ("Bearer ") so the scheme
+        // stays visible; fingerprint the credential part. Only for
+        // auth headers: in an arbitrary custom header the text before
+        // the first space could be part of the secret.
+        if schemeHeaders.contains(lowercased),
+           let spaceIndex = value.firstIndex(of: " "),
+           value.distance(from: value.startIndex, to: spaceIndex) <= 16 {
+            let scheme = value[..<spaceIndex]
+            let credential = String(value[value.index(after: spaceIndex)...])
+            return "\(scheme) \(fingerprint(credential))"
+        }
+        return fingerprint(value)
+    }
+
+    // One "Name: value" line per header, each terminated by a newline,
+    // in stable (sorted) order so diffs across calls read cleanly.
+    static func sanitizedHeadersDescription(_ headers: [String: String]) -> String {
+        var text = ""
+        for key in headers.keys.sorted() {
+            let value = headers[key] ?? ""
+            text += "\(key): \(sanitizedHeaderValue(value, forHeader: key))\n"
+        }
+        return text
     }
 
     static func scrubbingSecrets(_ text: String) -> String {
