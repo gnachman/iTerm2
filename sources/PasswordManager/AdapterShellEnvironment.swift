@@ -22,19 +22,38 @@ import Foundation
 /// don’t honor the login flag, or when the shell can’t be run at all.
 ///
 /// The AI Usage workgroup toolbar item also takes its PATH from here, without calling
-/// `prefetch()`.
+/// `prefetch()`. The same shell run also reports CLAUDE_CONFIG_DIR, which only that item uses
+/// (through `shellValues(_:)`); adapters never get it.
 ///
 /// Main thread only, like the adapter data sources that use it.
 final class AdapterShellEnvironment {
-    /// Asks the shell for PATH. Must call its completion exactly once, on the main thread, with
-    /// nil when the shell could not be run.
+    /// Asks the shell for PATH and CLAUDE_CONFIG_DIR. Must call its completion exactly once, on
+    /// the main thread, with the output of `fetchCommand` (see `parse(shellOutput:)`), or nil
+    /// when the shell could not be run.
     typealias PathFetcher = (_ completion: @escaping (String?) -> Void) -> Void
+
+    /// What the shell reported, or the fallback when it could not be read.
+    struct ShellValues: Equatable {
+        /// The merged PATH (see `mergedPath(shellPath:)`).
+        var path: String
+        /// The shell's exported CLAUDE_CONFIG_DIR. nil when unset, empty, or not reported.
+        var claudeConfigDir: String?
+        /// False when these are the fallback because the shell could not be read, so an unset
+        /// `claudeConfigDir` means “unknown” rather than “unset”.
+        var reportedByShell: Bool
+    }
+
+    /// Prints PATH, a newline, then CLAUDE_CONFIG_DIR (nothing when unset). One command, as
+    /// the gateway requires, and it exits 0 even when CLAUDE_CONFIG_DIR is unset (a nonzero
+    /// status would lose PATH too). It is /bin/sh that expands the variables, from the
+    /// exported environment the user's startup files produced, so the result doesn't depend on
+    /// the user's shell syntax (fish's own `echo $PATH` would separate entries with spaces).
+    static let fetchCommand = #"/bin/sh -c 'printf "%s\n%s" "$PATH" "$CLAUDE_CONFIG_DIR"'"#
 
     static let shared = AdapterShellEnvironment(
         fetchPath: { completion in
-            // printenv rather than `echo $PATH` because fish prints its PATH list separated by
-            // spaces. The gateway guarantees delivery: it calls back with nil if the service dies.
-            iTermSlowOperationGateway.sharedInstance().runCommand(inUserShell: "/usr/bin/printenv PATH",
+            // The gateway guarantees delivery: it calls back with nil if the service dies.
+            iTermSlowOperationGateway.sharedInstance().runCommand(inUserShell: fetchCommand,
                                                                   mode: .loginInteractive,
                                                                   completion: completion)
         },
@@ -61,10 +80,12 @@ final class AdapterShellEnvironment {
     private let refreshInterval: TimeInterval
 
     private var cachedPath: String?
+    /// The CLAUDE_CONFIG_DIR that came with `cachedPath`; nil when unset or `cacheIsFallback`.
+    private var cachedClaudeConfigDir: String?
     /// True while `cachedPath` holds the fallback rather than a value the shell reported, so a
     /// late reply may still replace it.
     private var cacheIsFallback = false
-    private var pending: [([String: String]) -> Void] = []
+    private var pending: [(ShellValues) -> Void] = []
     private var fetching = false
     /// The in-flight fetch passed `timeout`; new callers get the fallback rather than waiting.
     private var fetchTimedOut = false
@@ -102,13 +123,23 @@ final class AdapterShellEnvironment {
     /// is cached this is immediate and never starts a shell launch; before that it waits for the
     /// shell or the timeout, whichever comes first.
     func environment(_ completion: @escaping ([String: String]) -> Void) {
+        shellValues { values in
+            completion(Self.environment(path: values.path))
+        }
+    }
+
+    /// Like `environment(_:)`, with the same waiting and caching, but delivers what the shell
+    /// reported, including CLAUDE_CONFIG_DIR, rather than an adapter environment.
+    func shellValues(_ completion: @escaping (ShellValues) -> Void) {
         it_assert(Thread.isMainThread, "AdapterShellEnvironment is main thread only")
         if let cachedPath {
-            completion(Self.environment(path: cachedPath))
+            completion(ShellValues(path: cachedPath,
+                                   claudeConfigDir: cachedClaudeConfigDir,
+                                   reportedByShell: !cacheIsFallback))
             return
         }
         if fetching && fetchTimedOut {
-            completion(Self.environment(path: Self.mergedPath(shellPath: nil)))
+            completion(Self.fallbackValues)
             return
         }
         pending.append(completion)
@@ -132,9 +163,8 @@ final class AdapterShellEnvironment {
             // Stop making callers wait, but keep the fetch: its reply still lands in the cache.
             self.fetchTimedOut = true
             if self.cachedPath == nil {
-                let fallback = Self.mergedPath(shellPath: nil)
-                DLog("Still waiting for the shell’s PATH; giving waiters \(fallback)")
-                self.flushPending(path: fallback)
+                DLog("Still waiting for the shell’s PATH; giving waiters \(Self.fallbackValues.path)")
+                self.flushPending(Self.fallbackValues)
             }
         }
 
@@ -146,10 +176,7 @@ final class AdapterShellEnvironment {
             self.fetching = false
             self.fetchTimedOut = false
             if self.cachedPath == nil {
-                let fallback = Self.mergedPath(shellPath: nil)
-                self.cachedPath = fallback
-                self.cacheIsFallback = true
-                self.flushPending(path: fallback)
+                self.cacheFallback()
             }
         }
 
@@ -162,15 +189,12 @@ final class AdapterShellEnvironment {
                 self.fetching = false
                 self.fetchTimedOut = false
             }
-            let shellPath = value.flatMap { $0.isEmpty ? nil : $0 }
-            guard let shellPath else {
+            let parsed = value.map { Self.parse(shellOutput: $0) }
+            guard let parsed, let shellPath = parsed.path else {
                 if self.cachedPath == nil {
                     // Nothing better is coming; cache the fallback so callers stop waiting.
-                    let fallback = Self.mergedPath(shellPath: nil)
-                    DLog("Shell did not report PATH; using \(fallback)")
-                    self.cachedPath = fallback
-                    self.cacheIsFallback = true
-                    self.flushPending(path: fallback)
+                    DLog("Shell did not report PATH; using \(Self.fallbackValues.path)")
+                    self.cacheFallback()
                 } else {
                     // A failed refresh must not replace a good value.
                     DLog("Shell did not report PATH; keeping \(self.cachedPath!)")
@@ -182,20 +206,43 @@ final class AdapterShellEnvironment {
                 return
             }
             let merged = Self.mergedPath(shellPath: shellPath)
-            DLog("Shell PATH=\(shellPath); adapter PATH=\(merged)")
+            DLog("Shell PATH=\(shellPath); adapter PATH=\(merged); CLAUDE_CONFIG_DIR=\(parsed.claudeConfigDir ?? "(unset)")")
             self.cachedPath = merged
+            self.cachedClaudeConfigDir = parsed.claudeConfigDir
             self.cacheIsFallback = false
-            self.flushPending(path: merged)
+            self.flushPending(ShellValues(path: merged,
+                                          claudeConfigDir: parsed.claudeConfigDir,
+                                          reportedByShell: true))
         }
     }
 
-    private func flushPending(path: String) {
+    private func cacheFallback() {
+        cachedPath = Self.fallbackValues.path
+        cachedClaudeConfigDir = nil
+        cacheIsFallback = true
+        flushPending(Self.fallbackValues)
+    }
+
+    private func flushPending(_ values: ShellValues) {
         let completions = pending
         pending = []
-        let environment = Self.environment(path: path)
         for completion in completions {
-            completion(environment)
+            completion(values)
         }
+    }
+
+    private static var fallbackValues: ShellValues {
+        return ShellValues(path: mergedPath(shellPath: nil), claudeConfigDir: nil, reportedByShell: false)
+    }
+
+    /// Splits `fetchCommand`'s output at the first newline into PATH and CLAUDE_CONFIG_DIR.
+    /// The gateway trims trailing newlines, so an unset CLAUDE_CONFIG_DIR leaves no newline at
+    /// all. Empty values are nil.
+    static func parse(shellOutput: String) -> (path: String?, claudeConfigDir: String?) {
+        let parts = shellOutput.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
+        let path = parts.first.map(String.init).flatMap { $0.isEmpty ? nil : $0 }
+        let claudeConfigDir = parts.count > 1 ? String(parts[1]) : nil
+        return (path, claudeConfigDir.flatMap { $0.isEmpty ? nil : $0 })
     }
 
     /// The shell’s PATH entries in order, followed by any fallback directories it lacks.

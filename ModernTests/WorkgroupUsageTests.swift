@@ -283,7 +283,8 @@ final class WorkgroupUsageTests: XCTestCase {
     func test_usageEnvironment_replacesOnlyPath() {
         let merged = WorkgroupUsageToolbarItem.usageEnvironment(
             base: ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": "/Users/me", "LANG": "en_US.UTF-8"],
-            shellEnvironment: ["PATH": "/Users/me/.local/bin:/opt/homebrew/bin:/usr/bin", "HOME": "/other"])
+            shellValues: shellValues(path: "/Users/me/.local/bin:/opt/homebrew/bin:/usr/bin"),
+            recordedClaudeConfigDir: nil)
         // ~/.local/bin is already present, so the shell PATH is used verbatim.
         XCTAssertEqual(merged["PATH"], "/Users/me/.local/bin:/opt/homebrew/bin:/usr/bin")
         XCTAssertEqual(merged["HOME"], "/Users/me")
@@ -295,15 +296,106 @@ final class WorkgroupUsageTests: XCTestCase {
     func test_usageEnvironment_appendsLocalBinWhenMissing() {
         let merged = WorkgroupUsageToolbarItem.usageEnvironment(
             base: ["HOME": "/Users/me"],
-            shellEnvironment: ["PATH": "/opt/homebrew/bin:/usr/bin"])
+            shellValues: shellValues(path: "/opt/homebrew/bin:/usr/bin"),
+            recordedClaudeConfigDir: nil)
         XCTAssertEqual(merged["PATH"], "/opt/homebrew/bin:/usr/bin:/Users/me/.local/bin")
     }
 
     func test_usageEnvironment_doesNotDuplicateLocalBin() {
         let merged = WorkgroupUsageToolbarItem.usageEnvironment(
             base: ["HOME": "/Users/me"],
-            shellEnvironment: ["PATH": "/Users/me/.local/bin:/usr/bin"])
+            shellValues: shellValues(path: "/Users/me/.local/bin:/usr/bin"),
+            recordedClaudeConfigDir: nil)
         XCTAssertEqual(merged["PATH"], "/Users/me/.local/bin:/usr/bin")
+    }
+
+    // MARK: - CLAUDE_CONFIG_DIR (QA finding F-244)
+
+    private func shellValues(path: String = "/usr/bin",
+                             claudeConfigDir: String? = nil,
+                             reportedByShell: Bool = true) -> AdapterShellEnvironment.ShellValues {
+        return AdapterShellEnvironment.ShellValues(path: path,
+                                                   claudeConfigDir: claudeConfigDir,
+                                                   reportedByShell: reportedByShell)
+    }
+
+    // A CLAUDE_CONFIG_DIR exported by the user's shell startup files is what `claude` in a
+    // terminal uses, so it reaches the usage command.
+    func test_usageEnvironment_passesShellClaudeConfigDir() {
+        let merged = WorkgroupUsageToolbarItem.usageEnvironment(
+            base: ["HOME": "/Users/me"],
+            shellValues: shellValues(claudeConfigDir: "/Users/me/work-claude"),
+            recordedClaudeConfigDir: "/Users/me/recorded")
+        XCTAssertEqual(merged["CLAUDE_CONFIG_DIR"], "/Users/me/work-claude")
+    }
+
+    // The startup files run after the inherited environment, so in a terminal the shell's
+    // value wins over one iTerm2 itself was launched with.
+    func test_usageEnvironment_shellClaudeConfigDirBeatsInheritedOne() {
+        let merged = WorkgroupUsageToolbarItem.usageEnvironment(
+            base: ["HOME": "/Users/me", "CLAUDE_CONFIG_DIR": "/inherited"],
+            shellValues: shellValues(claudeConfigDir: "/Users/me/work-claude"),
+            recordedClaudeConfigDir: nil)
+        XCTAssertEqual(merged["CLAUDE_CONFIG_DIR"], "/Users/me/work-claude")
+    }
+
+    // The shell ran and doesn't set it: an inherited value is what a terminal session would
+    // see, and the recorded value is stale, so neither is replaced by it.
+    func test_usageEnvironment_shellWithoutClaudeConfigDirKeepsInheritedAndIgnoresRecorded() {
+        let inherited = WorkgroupUsageToolbarItem.usageEnvironment(
+            base: ["HOME": "/Users/me", "CLAUDE_CONFIG_DIR": "/inherited"],
+            shellValues: shellValues(),
+            recordedClaudeConfigDir: "/Users/me/recorded")
+        XCTAssertEqual(inherited["CLAUDE_CONFIG_DIR"], "/inherited")
+
+        let none = WorkgroupUsageToolbarItem.usageEnvironment(
+            base: ["HOME": "/Users/me"],
+            shellValues: shellValues(),
+            recordedClaudeConfigDir: "/Users/me/recorded")
+        XCTAssertNil(none["CLAUDE_CONFIG_DIR"])
+    }
+
+    // The shell couldn't be read: fall back to the directory recorded when the Claude Code
+    // integration was installed, which came from the same shell lookup.
+    func test_usageEnvironment_unreadableShellUsesRecordedClaudeConfigDir() {
+        let merged = WorkgroupUsageToolbarItem.usageEnvironment(
+            base: ["HOME": "/Users/me"],
+            shellValues: shellValues(reportedByShell: false),
+            recordedClaudeConfigDir: "/Users/me/recorded")
+        XCTAssertEqual(merged["CLAUDE_CONFIG_DIR"], "/Users/me/recorded")
+    }
+
+    func test_usageEnvironment_unreadableShellKeepsInheritedOverRecorded() {
+        let merged = WorkgroupUsageToolbarItem.usageEnvironment(
+            base: ["HOME": "/Users/me", "CLAUDE_CONFIG_DIR": "/inherited"],
+            shellValues: shellValues(reportedByShell: false),
+            recordedClaudeConfigDir: "/Users/me/recorded")
+        XCTAssertEqual(merged["CLAUDE_CONFIG_DIR"], "/inherited")
+    }
+
+    func test_usageEnvironment_emptyRecordedClaudeConfigDirIsIgnored() {
+        let merged = WorkgroupUsageToolbarItem.usageEnvironment(
+            base: ["HOME": "/Users/me"],
+            shellValues: shellValues(reportedByShell: false),
+            recordedClaudeConfigDir: "")
+        XCTAssertNil(merged["CLAUDE_CONFIG_DIR"])
+    }
+
+    // End to end from the shell lookup's output through to the environment given to the
+    // runner: what AdapterShellEnvironment parses must arrive as CLAUDE_CONFIG_DIR.
+    func test_shellEnvironment_deliversClaudeConfigDirFromShellOutput() {
+        let shell = AdapterShellEnvironment(fetchPath: { completion in
+                                                completion("/Users/me/bin:/usr/bin\n/Users/me/work-claude")
+                                            },
+                                            timeout: 10,
+                                            dropDeadline: 20,
+                                            refreshInterval: .infinity)
+        var delivered: [String: String]?
+        WorkgroupUsageToolbarItem.shellEnvironment(from: shell,
+                                                   base: ["HOME": "/Users/me"],
+                                                   recordedClaudeConfigDir: nil) { delivered = $0 }
+        XCTAssertEqual(delivered?["CLAUDE_CONFIG_DIR"], "/Users/me/work-claude")
+        XCTAssertTrue(delivered?["PATH"]?.hasPrefix("/Users/me/bin:/usr/bin") ?? false)
     }
 
     func test_tick_whileWaitingForEnvironmentIsSkipped() {
