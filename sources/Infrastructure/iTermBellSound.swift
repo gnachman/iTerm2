@@ -52,6 +52,28 @@ class iTermBellSound: NSObject {
         return .named(profileValue)
     }
 
+    // The stored value as a string, or nil if it isn’t one. A hand-edited or dynamic
+    // profile can store anything under KEY_BELL_SOUND, and nil means the system alert
+    // sound to everything that takes a stored value.
+    @objc(profileValueFromObject:)
+    static func profileValue(fromObject object: Any?) -> String? {
+        guard let object else {
+            return nil
+        }
+        guard let string = object as? NSString else {
+            DLog("Bell sound value \(object) is not a string; using the system alert sound")
+            return nil
+        }
+        return string as String
+    }
+
+    // The profile’s bell sound value, or nil if it isn’t a string.
+    @objc(profileValueInProfile:)
+    static func profileValue(inProfile profile: [AnyHashable: Any]) -> String? {
+        return profileValue(fromObject: iTermProfilePreferences.object(forKey: KEY_BELL_SOUND,
+                                                                       inProfile: profile))
+    }
+
     // What to show for a stored value in a menu. Empty for the system alert sound, whose
     // menu item is titled by the caller because that title is localized.
     @objc(displayNameForProfileValue:)
