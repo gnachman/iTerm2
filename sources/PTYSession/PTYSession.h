@@ -40,6 +40,8 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 extern NSString *const PTYSessionCreatedNotification;
 extern NSString *const PTYSessionTerminatedNotification;
 extern NSString *const PTYSessionRevivedNotification;
+// Posted when a session's exited state changes (its process died, or Restart Session started a new one).
+extern NSString *const PTYSessionExitedDidChangeNotification;
 extern NSString *const iTermSessionWillTerminateNotification;
 extern NSString *const PTYSessionDidResizeNotification;
 extern NSString *const PTYSessionDidDealloc;
