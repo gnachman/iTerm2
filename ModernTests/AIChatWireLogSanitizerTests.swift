@@ -113,9 +113,8 @@ final class AIChatWireLogSanitizerTests: XCTestCase {
         XCTAssertFalse(scrubbed.contains(openAIKey))
     }
 
-    func testNonCredentialHeaderStillPatternScrubbed() {
-        // A key that leaks into an unexpected header is still caught by
-        // the pattern layer.
+    func testUnknownHeaderIsFingerprintedWholesale() {
+        // A header not on the harmless list is treated as a credential.
         let scrubbed = AIChatWireLogSanitizer.sanitizedHeaderValue(anthropicKey,
                                                                    forHeader: "x-custom-debug")
         XCTAssertFalse(scrubbed.contains(anthropicKey))
@@ -125,6 +124,131 @@ final class AIChatWireLogSanitizerTests: XCTestCase {
         XCTAssertEqual(AIChatWireLogSanitizer.sanitizedHeaderValue("application/json",
                                                                    forHeader: "Content-Type"),
                        "application/json")
+    }
+
+    // MARK: - Custom headers (QA finding F-085)
+
+    // The exact headers from the QA repro: a manual model with three
+    // user-configured custom headers.
+    private let qaHeaders = [
+        "Authorization": "Bearer tok",
+        "Proxy-Authorization": "secret123",
+        "X-Auth-Token": "xauth777",
+        "Content-Type": "application/json",
+    ]
+    private let qaSecrets = ["tok", "secret123", "xauth777"]
+
+    private func assertNoSecretValues(_ text: String,
+                                      file: StaticString = #filePath,
+                                      line: UInt = #line) {
+        // Header names like "X-Auth-Token" contain "Tok", so check the
+        // value part of each "Name: value" line rather than the whole
+        // text.
+        for textLine in text.components(separatedBy: "\n") {
+            guard let colon = textLine.range(of: ": ") else { continue }
+            let value = textLine[colon.upperBound...]
+            for secret in qaSecrets {
+                XCTAssertFalse(value.contains(secret),
+                               "Secret \(secret) leaked in line: \(textLine)",
+                               file: file, line: line)
+            }
+        }
+    }
+
+    func testEveryNonAllowlistedHeaderValueIsRedacted() {
+        for (name, value) in qaHeaders where name != "Content-Type" {
+            let scrubbed = AIChatWireLogSanitizer.sanitizedHeaderValue(value, forHeader: name)
+            XCTAssertFalse(scrubbed.contains(value.replacingOccurrences(of: "Bearer ", with: "")),
+                           "\(name) leaked: \(scrubbed)")
+            XCTAssertTrue(scrubbed.contains("[redacted"), "\(name): \(scrubbed)")
+        }
+    }
+
+    func testArbitraryCustomHeaderDoesNotLeakFirstWord() {
+        // Only real auth headers keep a scheme prefix; a custom header
+        // whose value happens to contain a space must not expose its
+        // first word.
+        let scrubbed = AIChatWireLogSanitizer.sanitizedHeaderValue("hunter2 more",
+                                                                   forHeader: "X-Custom-Secret")
+        XCTAssertFalse(scrubbed.contains("hunter2"))
+    }
+
+    func testProxyAuthorizationKeepsScheme() {
+        let scrubbed = AIChatWireLogSanitizer.sanitizedHeaderValue("Basic dXNlcjpwYXNz",
+                                                                   forHeader: "Proxy-Authorization")
+        XCTAssertTrue(scrubbed.hasPrefix("Basic "))
+        XCTAssertFalse(scrubbed.contains("dXNlcjpwYXNz"))
+    }
+
+    func testWireLogRequestRecordRedactsCustomHeaders() {
+        let request = WebRequest(headers: qaHeaders,
+                                 method: "POST",
+                                 body: .string("{}"),
+                                 url: "https://example.com/v1/chat")
+        let record = AIChatWireLogger.requestRecord(callID: UUID(),
+                                                    stamp: "now",
+                                                    request: request)
+        assertNoSecretValues(record)
+        XCTAssertTrue(record.contains("Proxy-Authorization: "))
+        XCTAssertTrue(record.contains("X-Auth-Token: "))
+        XCTAssertTrue(record.contains("Content-Type: application/json"))
+    }
+
+    func testWebRequestDebugDescriptionRedactsHeaders() {
+        let request = WebRequest(headers: qaHeaders,
+                                 method: "POST",
+                                 body: .string("{\"prompt\":\"hello\"}"),
+                                 url: "https://example.com/v1/chat")
+        let description = request.debugDescription
+        assertNoSecretValues(description)
+        XCTAssertTrue(description.contains("Proxy-Authorization"))
+        XCTAssertTrue(description.contains("X-Auth-Token"))
+        XCTAssertTrue(description.contains("application/json"))
+        XCTAssertTrue(description.contains("POST https://example.com/v1/chat"))
+        XCTAssertTrue(description.contains("hello"))
+        // String interpolation (as DLog("load \(webRequest)") does) must
+        // also go through the redacting description.
+        assertNoSecretValues("\(request)")
+    }
+
+    func testWebRequestDebugDescriptionRedactsKeyInURLQuery() {
+        // A Gemini-API model pointed at a custom endpoint whose key does
+        // not have Google's AIza shape.
+        let request = WebRequest(headers: [:],
+                                 method: "POST",
+                                 body: .string(""),
+                                 url: "https://proxy.example.com/v1/models/m:generateContent?key=customKey12345&alt=sse")
+        let description = request.debugDescription
+        XCTAssertFalse(description.contains("customKey12345"))
+        XCTAssertTrue(description.contains("alt=sse"))
+    }
+
+    func testScrubsKeyQueryParameterInErrorText() {
+        // URLSession errors print the failing URL, Gemini key included.
+        let text = "Error Domain=NSURLErrorDomain Code=-1004 UserInfo={NSErrorFailingURLStringKey=https://h/x?key=customKey12345&alt=sse}"
+        let scrubbed = AIChatWireLogSanitizer.scrubbingSecrets(text)
+        XCTAssertFalse(scrubbed.contains("customKey12345"))
+        XCTAssertTrue(scrubbed.contains("&alt=sse}"))
+    }
+
+    func testScrubsOtherCredentialQueryParameters() {
+        for name in ["api_key", "access_token", "client_secret", "Token"] {
+            let scrubbed = AIChatWireLogSanitizer.scrubbingSecrets("https://h/x?a=1&\(name)=hunter2&b=2")
+            XCTAssertFalse(scrubbed.contains("hunter2"), name)
+            XCTAssertTrue(scrubbed.hasSuffix("&b=2"), name)
+        }
+        // A parameter whose name merely ends in "key" is left alone.
+        XCTAssertEqual(AIChatWireLogSanitizer.scrubbingSecrets("https://h/x?monkey=banana"),
+                       "https://h/x?monkey=banana")
+    }
+
+    func testSanitizedHeadersDescriptionIsSortedAndRedacted() {
+        let description = AIChatWireLogSanitizer.sanitizedHeadersDescription(qaHeaders)
+        assertNoSecretValues(description)
+        let names = description.components(separatedBy: "\n").filter { !$0.isEmpty }.compactMap {
+            $0.components(separatedBy: ": ").first
+        }
+        XCTAssertEqual(names, ["Authorization", "Content-Type", "Proxy-Authorization", "X-Auth-Token"])
     }
 
     // MARK: - Fingerprint

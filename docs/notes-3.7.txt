@@ -1167,6 +1167,9 @@ Bug Fixes:
 - Debug logs no longer include passwords sent
   to or received from password manager
   integrations.
+- Debug logs no longer include AI API keys or
+  the values of custom HTTP headers configured
+  for AI models.
 - Password manager integrations that use a
   command-line tool, like Bitwarden’s “bw”, now
   find it on your shell’s search path instead
