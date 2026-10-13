@@ -157,7 +157,8 @@
             [lines addObject:NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.Done", nil, [NSBundle mainBundle], @"Done! Select “Continue” to proceed.", @"Message shown when shell integration install is complete")];
             self.skipButton.enabled = NO;
         } else {
-            self.skipButton.enabled = !_busy;
+            // Discovery can't be skipped because every later stage depends on what it finds.
+            self.skipButton.enabled = !_busy && stage > 0;
         }
     }
 
