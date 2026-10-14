@@ -26,6 +26,18 @@ enum WatchMode: String, Codable {
     case timer
 }
 
+// Names a tmux -CC pane in a way that survives an iTerm2 relaunch. A tmux
+// client session is not restored by window restoration: when the restored
+// gateway reattaches, a new session with a new stableID is made for each pane.
+// The tmux session's @iterm2_id user option and the pane number are both kept
+// by the tmux server, so together they find the pane's new session.
+struct TmuxPaneIdentity: Codable, Equatable {
+    // The tmux session's @iterm2_id (TmuxController.sessionGuid).
+    var tmuxSessionGUID: String
+    // The tmux pane number (the N in %N).
+    var pane: Int32
+}
+
 // A registered async watcher. Fires once when sessionGUID's role
 // satisfies the watcher's goal: either a transition into targetState,
 // or (for condition watchers) a plain-English condition judged true by
@@ -83,6 +95,12 @@ struct WorkgroupWatcher: Codable, Equatable {
     // must stop if View Contents is later downgraded to Ask. Absent in watchers
     // persisted before the consent prompt existed (treated as no consent).
     var screenReadConsented: Bool? = nil
+
+    // Set when the watched session is a tmux -CC pane. After a relaunch the
+    // pane comes back as a new session with a new stableID, so sessionGUID no
+    // longer resolves; this re-binds the watcher to it. nil for any other
+    // session, and absent in watchers persisted before it existed.
+    var tmuxPane: TmuxPaneIdentity? = nil
 
     var effectiveMode: WatchMode { mode ?? .tabStatus }
 
