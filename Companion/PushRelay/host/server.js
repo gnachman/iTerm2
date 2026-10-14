@@ -13,7 +13,7 @@ import http from "node:http";
 import worker from "../src/worker.js";
 import { SqliteKV } from "./kv.js";
 import { createApnsClient } from "./apns.js";
-import { Metrics, COUNTER_NAMES } from "./metrics.js";
+import { Metrics, COUNTER_NAMES, apnsEventSink } from "./metrics.js";
 
 // Read at most this many bytes before rejecting: the worker enforces the real
 // 4 KiB payload cap, this is just a coarse guard so a huge upload can't buffer.
@@ -79,7 +79,16 @@ function isLocalScrape(req) {
 // plus the response body for the two 403 reasons and the register skip flag. The
 // worker stays metrics-free (it also runs on Cloudflare); classification lives
 // here in the host, mirroring how the companion relay counts in host/server.js.
-function countRequest(metrics, path, status, text) {
+// The worker reports an APNs rejection as {"error":"APNs <status>: <body>"} where
+// <body> is Apple's JSON, e.g. {"reason":"BadDeviceToken"}. Pull out just the
+// reason string (never a token); anything unparseable yields undefined -> "other".
+function apnsReason(body) {
+  const m = /^APNs \d+: (.*)$/s.exec(String(body?.error ?? ""));
+  if (!m) return undefined;
+  try { return JSON.parse(m[1])?.reason; } catch { return undefined; }
+}
+
+function countRequest(metrics, path, status, text, onDelivered) {
   metrics.inc("http_requests_total");
   if (status >= 500 && status !== 502) metrics.inc("http_errors_total");
   let body = null;
@@ -94,9 +103,13 @@ function countRequest(metrics, path, status, text) {
   }
   if (path === "/push" || path === "/push/mutable") {
     metrics.inc("push_total");
-    if (status === 200) metrics.inc("push_delivered_total");
+    if (status >= 500) metrics.inc("push_failed_total");
+    if (status === 200) { metrics.inc("push_delivered_total"); onDelivered?.(); }
     else if (status === 429) metrics.inc("rate_limited_total");
-    else if (status === 502) metrics.inc("push_apns_error_total");
+    else if (status === 502) {
+      metrics.inc("push_apns_error_total");
+      metrics.incReject(apnsReason(body));
+    }
     else if (status === 403 && body && body.error === "bad secret") metrics.inc("push_bad_secret_total");
     else if (status === 403 && body && body.error === "unknown device token") metrics.inc("push_unknown_token_total");
     return;
@@ -108,7 +121,7 @@ export function createPushRelay(options = {}) {
     dbPath = ":memory:",
     env: sourceEnv = process.env,
     // Injectable for tests (a stub APNs sender / clock).
-    apnsFetch = createApnsClient(),
+    apnsFetch: injectedApnsFetch,
     now = () => Date.now(),
     // Register abuse cap (per client IP). Set registerLimit to 0/undefined to
     // disable, matching a deployment without the Cloudflare binding.
@@ -119,6 +132,20 @@ export function createPushRelay(options = {}) {
   const kv = new SqliteKV(dbPath, { now });
   const metrics = new Metrics();
   metrics.preregister(COUNTER_NAMES); // every line present from the first scrape
+  let lastDeliveryMs = 0;
+  const apnsFetch = injectedApnsFetch ?? createApnsClient({ onEvent: apnsEventSink(metrics) });
+
+  // Point-in-time values read at scrape time. APNs connection state only exists
+  // for the real transport (an injected test stub has no stats()).
+  const gauges = () => {
+    const st = apnsFetch.stats?.();
+    return {
+      devices: kv.countPrefix("device:"),
+      ...(st && { apns_sessions: st.sessions, apns_oldest_session_age_seconds: st.oldestSessionAgeSeconds }),
+      last_delivery_timestamp_seconds: Math.floor(lastDeliveryMs / 1000),
+    };
+  };
+
 
   // The `env` object worker.js reads: KV binding, APNs transport, and the vars
   // that were wrangler [vars]/secrets, now plain environment variables.
@@ -152,7 +179,7 @@ export function createPushRelay(options = {}) {
         return;
       }
       res.writeHead(200, { "content-type": "text/plain; version=0.0.4" });
-      res.end(metrics.render({ devices: kv.countPrefix("device:") }));
+      res.end(metrics.render(gauges()));
       return;
     }
 
@@ -194,15 +221,17 @@ export function createPushRelay(options = {}) {
     const headers = {};
     for (const [k, v] of response.headers) headers[k] = v;
     const text = await response.text();
-    countRequest(metrics, path, response.status, text);
+    countRequest(metrics, path, response.status, text, () => { lastDeliveryMs = now(); });
     // Surface push delivery failures in the process log. When APNs returns a
     // non-2xx the worker maps it to a 502 whose body carries Apple's status and
     // reason (e.g. `APNs 400: {"reason":"BadDeviceToken"}`) — but that body is
     // the ONLY record of the reason, and Cloudflare replaces an origin 502 with
     // its own page before the client ever sees it. The body holds Apple's error,
     // never a device token or secret, so it is safe to log verbatim.
-    if ((path === "/push" || path === "/push/mutable") && response.status === 502) {
-      console.error(`push-relay: APNs delivery failed: ${path} -> ${text}`);
+    // Also log other 5xx: the worker converts a transport throw (e.g. "APNs
+    // request timed out") into a 500 itself, so it never reaches the catch above.
+    if ((path === "/push" || path === "/push/mutable") && response.status >= 500) {
+      console.error(`push-relay: push failed: ${path} -> ${response.status} ${text}`);
     }
     res.writeHead(response.status, headers);
     res.end(text);

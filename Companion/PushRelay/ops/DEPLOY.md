@@ -158,18 +158,39 @@ Counters mirror the worker's decisions — `pushrelay_register_written_total` vs
 (live registrations). The Cloudflare Worker does not expose this (observability is
 off there); it's a host-only feature for the on-box dashboard.
 
-Counters tell you a push failed but not *why*. The host also logs each APNs
-failure (the `_apns_error_total` case) with Apple's status and reason, e.g.
-`push-relay: APNs delivery failed: /push -> {"error":"APNs 410: {\"reason\":\"Unregistered\"}"}`,
-and any pre-response transport error (APNs timeout / dead h2 session) — visible in
-`journalctl -u iterm2-push-relay`. This is the only record of the reason: the
-worker folds it into a 502 body, which Cloudflare replaces with its own error page
-before the client sees it.
+**Delivery outcome and APNs health** (what to look at when pushes fail):
 
-The **relay dashboard** (`mcnachman.cloud/relay-dashboard`) scrapes this endpoint
-and renders a "Push relay" section; see that service's `ops/DASHBOARD.md`. It
-defaults to `http://127.0.0.1:8790/metrics`, so no config is needed once both run
-on the same box.
+| Series | Meaning |
+|---|---|
+| `pushrelay_push_failed_total` | Pushes that failed on our side or Apple's (502 reject + 500 transport error). Client faults (bad secret, unknown token) are excluded. |
+| `pushrelay_apns_rejected_total{reason}` | Apple's rejections by reason (`BadDeviceToken`, `Unregistered`, `TooManyRequests`, …; unknown reasons fold into `other`). Bounded, non-identifying. |
+| `pushrelay_apns_latency_seconds` | Histogram of the round trip to Apple, incl. connect and any reconnect-throttle wait. |
+| `pushrelay_apns_request_timeouts_total` | Requests Apple never answered (10 s). The signature of a dead connection. |
+| `pushrelay_apns_connects_total`, `_connect_throttled_total`, `_session_errors_total`, `_discarded_idle_total`, `_discarded_timeout_total` | Connection churn: how often we reconnect, are held to the 1/sec floor, or throw a session away. |
+| `pushrelay_apns_sessions`, `_apns_oldest_session_age_seconds` | Open HTTP/2 sessions to Apple and how old the oldest is (gauges). |
+| `pushrelay_last_delivery_timestamp_seconds` | Unix time of the last accepted push; `0` until one succeeds after a restart (gauge). |
+
+The host also logs failures. Each failed push (any 5xx on `/push` or
+`/push/mutable`) writes `push-relay: push failed: <path> -> <status> <body>`, which
+for an APNs reject carries Apple's status and reason, e.g.
+`push-relay: push failed: /push -> 502 {"error":"APNs 410: {\"reason\":\"Unregistered\"}"}`,
+and a transport failure reads `-> 500 {"error":"APNs request timed out"}`. APNs
+session events (a session discarded after a timeout or idle, a session error) are
+logged too. All of it is visible in `journalctl -u iterm2-push-relay`. The body is
+the only record of the reason: Cloudflare replaces an origin 502 with its own error
+page before the client sees it.
+
+The **relay dashboard** scrapes this endpoint and renders a "Push relay" section
+(success vs failure per minute, APNs latency p50/p95, timeouts, reconnects, open
+sessions, rejections by reason, time since last delivery); see that service's
+`ops/DASHBOARD.md`. It defaults to `http://127.0.0.1:8790/metrics`, so no config
+is needed once both run on the same box. On a host that runs only the push relay,
+set `DASHBOARD_METRICS_URL=` (empty) to drop the companion-relay half.
+
+APNs connections are kept open and reused. A session is replaced after 5 minutes
+idle and thrown away when a request gets no answer, and a new connection to the
+same Apple host is opened at most once per second, so an outage cannot turn every
+incoming push into a fresh connect attempt (`host/apns.js`).
 
 ## Troubleshooting
 
