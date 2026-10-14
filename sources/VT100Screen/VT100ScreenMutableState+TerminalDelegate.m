@@ -4327,11 +4327,43 @@ willExecuteToken:(VT100Token *)token
     } name:@"remove program status records"];
 }
 
+// A program can report as fast as it can write. Reports with no other side
+// effect between them share one batch and one side effect, so a flood of them
+// costs the main thread one update per side-effect pass rather than one per
+// report. A report never joins a batch that has another side effect behind
+// it, which would move it ahead of that side effect.
+//
+// A report may join a batch after its side effect started running, so the
+// main thread can see it before syncing state the mutation thread changed
+// just before it. That is safe only because whatever handling a report reads
+// from the screen changes through a side effect, which closes the batch.
+// Anything new it comes to read must keep that true.
 - (void)terminalReportProgramStatus:(iTermProgramStatusReport *)report {
     DLog(@"begin %@", report);
-    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenReportProgramStatus:report];
-    } name:@"report program status"];
+    if (_programStatusBatch &&
+        self.tokenExecutor.sideEffectSerial == _programStatusBatchSideEffectSerial &&
+        [_programStatusBatch addReport:report]) {
+        // This changes state the main thread reads, like adding a side
+        // effect would.
+        [self.tokenExecutor noteStateSideEffectScheduled];
+        return;
+    }
+    iTermProgramStatusReportBatch *batch = [[iTermProgramStatusReportBatch alloc] initWithReport:report];
+    const int64_t serialBefore = self.tokenExecutor.sideEffectSerial;
+    __weak __typeof(self) weakSelf = self;
+    [self.tokenExecutor addDeferredSideEffect:^{
+        // Take the reports even without a delegate so the batch closes and
+        // stops collecting them.
+        NSArray<iTermProgramStatusReport *> *reports = [batch take];
+        [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenReportProgramStatusReports:reports];
+        } name:@"report program status"];
+    }];
+    const int64_t serialAfter = self.tokenExecutor.sideEffectSerial;
+    // If another side effect was added at the same moment, this one may not
+    // be the last, so the next report starts a new batch.
+    _programStatusBatch = (serialAfter == serialBefore + 1) ? batch : nil;
+    _programStatusBatchSideEffectSerial = serialAfter;
 }
 
 - (void)terminalSetTabStatus:(VT100TabStatusUpdate *)status {

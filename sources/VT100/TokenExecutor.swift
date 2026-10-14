@@ -244,6 +244,15 @@ class TokenExecutor: NSObject {
         impl.addDeferredSideEffect(task)
     }
 
+    // Any queue. Goes up by one each time a side effect is added. Comparing it
+    // just before and just after adding a side effect tells whether that side
+    // effect was the only one added in between; comparing it later tells
+    // whether it is still the last one in the queue.
+    @objc
+    var sideEffectSerial: Int64 {
+        return impl.sideEffectSerial
+    }
+
     // Any queue. True if a report may be sent without first pausing+syncing.
     @objc
     var reportsMaySkipSync: Bool {
@@ -354,6 +363,9 @@ private class TokenExecutorImpl {
     private let semaphore: DispatchSemaphore
     private var taskQueue = iTermTaskQueue()
     private var sideEffects = iTermTaskQueue()
+    // Counts side effects ever added. See TokenExecutor.sideEffectSerial.
+    private let sideEffectSerialCounter = iTermAtomicInt64Create()
+    private let sideEffectAppendMutex = Mutex()
     private let tokenQueue = TwoTierTokenQueue()
     private var pauseCount = iTermAtomicInt64Create()
     // Nonzero means a report may be sent without first pausing+syncing, because a
@@ -443,6 +455,7 @@ private class TokenExecutorImpl {
         Self.activeSessionsWithTokens.mutableAccess { set in
             set.remove(ObjectIdentifier(self))
         }
+        iTermAtomicInt64Free(sideEffectSerialCounter)
     }
 
     func pause() -> Unpauser {
@@ -545,9 +558,23 @@ private class TokenExecutorImpl {
     }
 
     // Any queue
+    var sideEffectSerial: Int64 {
+        return iTermAtomicInt64Get(sideEffectSerialCounter)
+    }
+
+    // Any queue. Every side effect is added through here. The lock makes the
+    // serial go up in the same order the side effects join the queue.
+    private func appendSideEffect(_ task: @escaping TokenExecutorTask) {
+        sideEffectAppendMutex.sync {
+            sideEffects.append(task)
+            iTermAtomicInt64Add(sideEffectSerialCounter, 1)
+        }
+    }
+
+    // Any queue
     func addSideEffect(_ task: @escaping TokenExecutorTask) {
         noteStateSideEffectScheduled()
-        sideEffects.append(task)
+        appendSideEffect(task)
         if gDebugLogging.boolValue { DLog("addSideEffect()") }
         sideEffectScheduler.markNeedsUpdate()
     }
@@ -570,7 +597,7 @@ private class TokenExecutorImpl {
     // Issue 13013.
     func addUrgentSideEffect(_ task: @escaping TokenExecutorTask) {
         noteStateSideEffectScheduled()
-        sideEffects.append(task)
+        appendSideEffect(task)
         if gDebugLogging.boolValue { DLog("addUrgentSideEffect()") }
         sideEffectScheduler.markNeedsUpdate(within: Self.urgentSideEffectMaximumDelay)
     }
@@ -579,14 +606,14 @@ private class TokenExecutorImpl {
     // for purely outbound report-send side effects, which never mutate state a
     // later report reads.
     func addReportSideEffect(_ task: @escaping TokenExecutorTask) {
-        sideEffects.append(task)
+        appendSideEffect(task)
         if gDebugLogging.boolValue { DLog("addReportSideEffect()") }
         sideEffectScheduler.markNeedsUpdate()
     }
 
     func addDeferredSideEffect(_ task: @escaping TokenExecutorTask) {
         noteStateSideEffectScheduled()
-        sideEffects.append(task)
+        appendSideEffect(task)
         sideEffectScheduler.markNeedsUpdateDeferredByHalfPeriod()
     }
 

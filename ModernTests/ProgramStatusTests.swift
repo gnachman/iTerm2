@@ -619,6 +619,15 @@ final class ProgramStatusControllerTests: XCTestCase {
         XCTAssertEqual(progressSets.last, .stopped)
     }
 
+    // QA finding F-307: a batch sets the tab status once, for where the
+    // records ended up.
+    func testBatchSetsStatusOnce() {
+        controller.handle((0..<5000).flatMap { _ in
+            [ProgramStatusReport.parse("state=working:id=a")!, ProgramStatusReport.parse("state=blocked:id=a")!]
+        })
+        XCTAssertEqual(updates.map(\.status), ["waiting"])
+    }
+
     func testUnchangedProgressIsNotResent() {
         send("state=working:progress=10")
         send("state=working:progress=10:msg=\(b64("still"))")
@@ -638,6 +647,94 @@ final class ProgramStatusTerminalTests: XCTestCase {
         feed(harness, "\u{1b}]7501;state=done\u{07}")
         XCTAssertEqual(harness.delegate.programStatusReports.map(\.state), [.working, .done])
         XCTAssertEqual(harness.delegate.programStatusReports.first?.app, "brew")
+    }
+
+    private func flood(_ reports: [String], times: Int) -> String {
+        let iteration = reports.map { "\u{1b}]7501;\($0)\u{07}" }.joined()
+        return String(repeating: iteration, count: times)
+    }
+
+    /// Calls the terminal delegate method for each report inside one joined
+    /// block, the way the parser would with nothing else in between, then
+    /// lets the side effects run.
+    private func report(_ harness: TerminalTestHarness, _ bodies: [String]) {
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            for body in bodies {
+                mutableState.terminalReportProgramStatus(ProgramStatusReport.parse(body)!)
+            }
+        })
+        harness.sync()
+    }
+
+    // QA finding F-307: a program flipping one record between two states as
+    // fast as it can write must not cost the main thread a side effect per
+    // report. Reports for the same record with nothing else in between
+    // collapse to the latest.
+    func testReportsForOneRecordCollapseIntoOneDelivery() {
+        let harness = TerminalTestHarness()
+        report(harness, Array(repeating: ["state=working:id=a", "state=blocked:id=a"], count: 5000).flatMap { $0 })
+        XCTAssertEqual(harness.delegate.programStatusDeliveries, 1)
+        XCTAssertEqual(harness.delegate.programStatusReports.map(\.description),
+                       ["<ProgramStatusReport state=blocked id=a>"])
+    }
+
+    // Reports for several records are delivered together, and each record's
+    // reports collapse to its latest, so the batch stays as small as the
+    // number of records however long the flood.
+    func testReportsForSeveralRecordsAreDeliveredTogether() {
+        let harness = TerminalTestHarness()
+        report(harness, Array(repeating: ["state=working:id=a", "state=blocked:id=b"], count: 5000).flatMap { $0 })
+        XCTAssertEqual(harness.delegate.programStatusDeliveries, 1)
+        XCTAssertEqual(harness.delegate.programStatusReports.map(\.description),
+                       ["<ProgramStatusReport state=working id=a>",
+                        "<ProgramStatusReport state=blocked id=b>"])
+    }
+
+    // A clear is never folded into a report for the same record, or the other
+    // way round, since a clear also removes the record's children.
+    func testClearIsNotCollapsed() {
+        let harness = TerminalTestHarness()
+        report(harness, ["state=working:id=a",
+                         "state=clear:id=a",
+                         "state=working:id=a",
+                         "state=blocked:id=a"])
+        XCTAssertEqual(harness.delegate.programStatusEvents,
+                       ["report working", "report clear", "report blocked"])
+    }
+
+    // Coalescing must not move a report past a side effect that came after
+    // it, such as a full reset.
+    func testCoalescedReportsKeepTheirPlaceAroundOtherSideEffects() {
+        let harness = TerminalTestHarness()
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalReportProgramStatus(ProgramStatusReport.parse("state=working:id=a")!)
+            mutableState.terminalReportProgramStatus(ProgramStatusReport.parse("state=blocked:id=a")!)
+            mutableState.terminalRemoveProgramStatusRecords()
+            mutableState.terminalReportProgramStatus(ProgramStatusReport.parse("state=done:id=a")!)
+        })
+        harness.sync()
+        XCTAssertEqual(harness.delegate.programStatusEvents,
+                       ["report blocked", "remove", "report done"])
+    }
+
+    // End to end through the parser, run synchronously in one joined block.
+    func testFloodThroughParserIsCoalesced() {
+        let harness = TerminalTestHarness()
+        harness.feedEscapeSequence(Array(flood(["state=working:id=a", "state=blocked:id=a"], times: 5000).utf8))
+        harness.sync()
+        XCTAssertEqual(harness.delegate.programStatusDeliveries, 1)
+        XCTAssertEqual(harness.delegate.programStatusReports.map(\.description),
+                       ["<ProgramStatusReport state=blocked id=a>"])
+    }
+
+    // A report that arrives after its batch went to the main thread starts a
+    // new one rather than being lost.
+    func testReportAfterBatchWasTakenStartsANewBatch() {
+        let harness = TerminalTestHarness()
+        report(harness, ["state=working:id=a"])
+        report(harness, ["state=blocked:id=a"])
+        XCTAssertEqual(harness.delegate.programStatusDeliveries, 2)
+        XCTAssertEqual(harness.delegate.programStatusEvents, ["report working", "report blocked"])
     }
 
     func testInvalidReportIsNotDelivered() {
@@ -668,6 +765,180 @@ final class ProgramStatusTerminalTests: XCTestCase {
         }
         XCTAssertEqual(harness.delegate.sentReports, [Data("\u{1b}]7501;?\u{1b}\\".utf8)])
         XCTAssertTrue(harness.delegate.programStatusReports.isEmpty)
+    }
+}
+
+private struct SplitMix64 {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        state = seed
+    }
+
+    mutating func next() -> UInt64 {
+        state &+= 0x9E3779B97F4A7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+        z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+        return z ^ (z >> 31)
+    }
+}
+
+final class ProgramStatusReportBatchTests: XCTestCase {
+    private func report(_ body: String) -> ProgramStatusReport {
+        return ProgramStatusReport.parse(body)!
+    }
+
+    private func contents(_ batch: ProgramStatusReportBatch) -> [String] {
+        return batch.take().map(\.description)
+    }
+
+    func testTakenBatchAcceptsNothingMore() {
+        let batch = ProgramStatusReportBatch(report: report("state=working"))
+        XCTAssertEqual(batch.take().count, 1)
+        XCTAssertFalse(batch.add(report("state=done")))
+        XCTAssertEqual(batch.take(), [])
+    }
+
+    // A rewritten record moves to the end, where its last write was, so the
+    // records come out written in the same order as without coalescing.
+    func testLatestReportPerRecordWinsInOrderOfLastWrite() {
+        let batch = ProgramStatusReportBatch(report: report("state=working:id=a"))
+        XCTAssertTrue(batch.add(report("state=working:id=b")))
+        XCTAssertTrue(batch.add(report("state=blocked:id=a")))
+        XCTAssertTrue(batch.add(report("state=working:id=c")))
+        XCTAssertEqual(contents(batch), ["<ProgramStatusReport state=working id=b>",
+                                         "<ProgramStatusReport state=blocked id=a>",
+                                         "<ProgramStatusReport state=working id=c>"])
+    }
+
+    // A clear may remove other records too, so nothing is moved across it.
+    func testClearIsABarrier() {
+        let batch = ProgramStatusReportBatch(report: report("state=working:id=a/b"))
+        XCTAssertTrue(batch.add(report("state=clear:id=a")))
+        XCTAssertTrue(batch.add(report("state=working:id=a/b")))
+        XCTAssertTrue(batch.add(report("state=blocked:id=a/b")))
+        XCTAssertTrue(batch.add(report("state=clear:id=a")))
+        XCTAssertEqual(contents(batch), ["<ProgramStatusReport state=working id=a/b>",
+                                         "<ProgramStatusReport state=clear id=a>",
+                                         "<ProgramStatusReport state=blocked id=a/b>",
+                                         "<ProgramStatusReport state=clear id=a>"])
+    }
+
+    func testRepeatedClearsFold() {
+        let batch = ProgramStatusReportBatch(report: report("state=clear:id=a"))
+        for _ in 0..<10000 {
+            XCTAssertTrue(batch.add(report("state=clear:id=a")))
+        }
+        XCTAssertEqual(batch.storageCount, 1)
+    }
+
+    func testRootClearDropsEverythingBefore() {
+        let batch = ProgramStatusReportBatch(report: report("state=working:id=a"))
+        XCTAssertTrue(batch.add(report("state=clear:id=b")))
+        XCTAssertTrue(batch.add(report("state=working:id=b")))
+        XCTAssertTrue(batch.add(report("state=clear")))
+        XCTAssertTrue(batch.add(report("state=working:id=c")))
+        XCTAssertEqual(contents(batch), ["<ProgramStatusReport state=clear>",
+                                         "<ProgramStatusReport state=working id=c>"])
+    }
+
+    // Applying what the batch hands over must leave the records exactly as
+    // applying every report would, for any mix of reports, clears and
+    // evictions.
+    func testBatchMatchesApplyingEveryReport() {
+        var rng = SplitMix64(seed: 7501)
+        let keys = ["", "a", "b", "a/x", "a/y", "c"]
+        let states = ["idle", "working", "done", "blocked", "error", "clear", "clear"]
+        func randomReport() -> ProgramStatusReport {
+            let key = keys[Int(rng.next() % UInt64(keys.count))]
+            let state = states[Int(rng.next() % UInt64(states.count))]
+            let msg = "m\(rng.next() % 4)"
+            return report("state=\(state)" + (key.isEmpty ? "" : ":id=\(key)") + ":msg=\(Data(msg.utf8).base64EncodedString())")
+        }
+        struct Snapshot: Equatable {
+            var key: String
+            var state: ProgramStatusReport.State
+            var msg: String?
+        }
+        func snapshot(_ records: ProgramStatusRecords) -> [Snapshot] {
+            return records.records.values
+                .sorted { $0.serial < $1.serial }
+                .map { Snapshot(key: $0.id.joined(separator: "/"), state: $0.state, msg: $0.msg) }
+        }
+        for iteration in 0..<2000 {
+            var base = ProgramStatusRecords(capacity: 3)
+            for _ in 0..<Int(rng.next() % 6) {
+                base.apply(randomReport())
+            }
+            let reports = (0..<(1 + Int(rng.next() % 60))).map { _ in randomReport() }
+
+            var sequential = base
+            reports.forEach { sequential.apply($0) }
+
+            let batch = ProgramStatusReportBatch(report: reports[0])
+            for report in reports.dropFirst() {
+                XCTAssertTrue(batch.add(report))
+            }
+            var batched = base
+            batch.take().forEach { batched.apply($0) }
+
+            XCTAssertEqual(snapshot(sequential), snapshot(batched), "iteration \(iteration): \(reports)")
+        }
+    }
+
+    // A controller handed the coalesced batch announces the same records, in
+    // the same states, as one handed every report, including when records
+    // are evicted.
+    func testBatchAnnouncesTheSameAsEveryReport() {
+        var rng = SplitMix64(seed: 21337)
+        let keys = ["", "a", "b", "a/x", "c", "d"]
+        let states = ["idle", "working", "done", "blocked", "error", "clear"]
+        func randomReport() -> ProgramStatusReport {
+            let key = keys[Int(rng.next() % UInt64(keys.count))]
+            let state = states[Int(rng.next() % UInt64(states.count))]
+            return report("state=\(state)" + (key.isEmpty ? "" : ":id=\(key)"))
+        }
+        func makeController(_ announced: @escaping (ProgramStatusDisplayRecord) -> Void) -> ProgramStatusController {
+            return ProgramStatusController(applyStatus: { _ in },
+                                           currentProgress: { .stopped },
+                                           setProgress: { _ in },
+                                           recordsDidChange: {},
+                                           recordDidChangeState: announced,
+                                           capacity: 3)
+        }
+        for iteration in 0..<2000 {
+            let prefix = (0..<Int(rng.next() % 6)).map { _ in randomReport() }
+            let reports = (0..<(1 + Int(rng.next() % 40))).map { _ in randomReport() }
+            var announcedRaw = [String]()
+            var announcedBatched = [String]()
+            let raw = makeController { announcedRaw.append("\($0.key)=\($0.statusText)") }
+            let batched = makeController { announcedBatched.append("\($0.key)=\($0.statusText)") }
+            raw.handle(prefix)
+            batched.handle(prefix)
+            announcedRaw = []
+            announcedBatched = []
+
+            raw.handle(reports)
+            let batch = ProgramStatusReportBatch(report: reports[0])
+            for report in reports.dropFirst() {
+                XCTAssertTrue(batch.add(report))
+            }
+            batched.handle(batch.take())
+            XCTAssertEqual(Set(announcedRaw), Set(announcedBatched), "iteration \(iteration): \(prefix) then \(reports)")
+        }
+    }
+
+    // However long a flood across a few records, the batch holds one report
+    // per record.
+    func testFloodAcrossRecordsStaysSmall() {
+        let batch = ProgramStatusReportBatch(report: report("state=working:id=a"))
+        for i in 0..<10000 {
+            XCTAssertTrue(batch.add(report("state=\(i % 2 == 0 ? "blocked" : "working"):id=\(["a", "b", "c"][i % 3])")))
+        }
+        // Slots of replaced reports are reclaimed as they pile up.
+        XCTAssertLessThanOrEqual(batch.storageCount, 2 * 3 + 1)
+        XCTAssertEqual(batch.take().count, 3)
     }
 }
 
@@ -797,6 +1068,57 @@ final class ProgramStatusDisplayRecordTests: XCTestCase {
 
     private func send(_ body: String) {
         controller.handle(ProgramStatusReport.parse(body)!)
+    }
+
+    private func send(_ bodies: [String]) {
+        controller.handle(bodies.map { ProgramStatusReport.parse($0)! })
+    }
+
+    // QA finding F-307: many reports handled together change the records once
+    // and announce each record that changed once, in its final state.
+    func testBatchAnnouncesOncePerRecord() {
+        send((0..<5000).flatMap { _ in ["state=working:id=a", "state=blocked:id=b"] })
+        XCTAssertEqual(changes, 1)
+        XCTAssertEqual(entered.map(\.key), ["a", "b"])
+        XCTAssertEqual(entered.map(\.statusText), ["working", "waiting"])
+    }
+
+    // New records interleaved with clears of another must not make handling
+    // a batch quadratic. Correctness only; a quadratic version would take
+    // minutes here.
+    func testBatchOfNewRecordsAndClearsIsHandled() {
+        send((0..<50000).flatMap { ["state=working:id=n\($0)", "state=clear:id=z"] })
+        XCTAssertEqual(changes, 1)
+        XCTAssertEqual(controller.displayRecords.count, ProgramStatusRecords.defaultCapacity)
+        XCTAssertEqual(entered.count, ProgramStatusRecords.defaultCapacity)
+    }
+
+    func testStatePassedThroughWithinBatchIsNotAnnounced() {
+        send("state=working")
+        entered = []
+        send(["state=blocked", "state=working"])
+        XCTAssertEqual(entered, [])
+        XCTAssertEqual(controller.displayRecords.map(\.statusText), ["working"])
+    }
+
+    func testFinalStateOfBatchIsAnnounced() {
+        send("state=working")
+        entered = []
+        send(["state=blocked", "state=working", "state=done"])
+        XCTAssertEqual(entered.map(\.statusText), ["done"])
+    }
+
+    func testRecordRecreatedWithinBatchIsAnnounced() {
+        send("state=blocked:id=a")
+        entered = []
+        send(["state=clear:id=a", "state=blocked:id=a"])
+        XCTAssertEqual(entered.map(\.statusText), ["waiting"])
+    }
+
+    func testRecordRemovedWithinBatchIsNotAnnounced() {
+        send(["state=blocked:id=a", "state=clear:id=a"])
+        XCTAssertEqual(entered, [])
+        XCTAssertEqual(changes, 0)
     }
 
     func testStateChangesAreReportedButMessageChangesAreNot() {

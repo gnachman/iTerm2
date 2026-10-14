@@ -496,7 +496,7 @@ final class ProgramStatusDisplayRecord: NSObject {
 /// Main thread only.
 @objc(iTermProgramStatusController)
 final class ProgramStatusController: NSObject {
-    private var records = ProgramStatusRecords()
+    private var records: ProgramStatusRecords
     private let applyStatus: (VT100TabStatusUpdate) -> Void
     private let currentProgress: () -> VT100ScreenProgress
     private let setProgress: (VT100ScreenProgress) -> Void
@@ -527,7 +527,6 @@ final class ProgramStatusController: NSObject {
     private let recordsDidChange: () -> Void
     private let recordDidChangeState: (ProgramStatusDisplayRecord) -> Void
 
-    @objc
     /// - Parameters:
     ///   - applyStatus: Sets the session's tab status.
     ///   - currentProgress: The progress the screen is showing, which may lag
@@ -541,11 +540,14 @@ final class ProgramStatusController: NSObject {
     ///     state it was not in before (including a new record), for
     ///     notifications. Not called for changes the program did not report,
     ///     such as a keypress marking a result seen.
+    ///   - capacity: How many records to keep. Tests make it small.
     init(applyStatus: @escaping (VT100TabStatusUpdate) -> Void,
          currentProgress: @escaping () -> VT100ScreenProgress,
          setProgress: @escaping (VT100ScreenProgress) -> Void,
          recordsDidChange: @escaping () -> Void = {},
-         recordDidChangeState: @escaping (ProgramStatusDisplayRecord) -> Void = { _ in }) {
+         recordDidChangeState: @escaping (ProgramStatusDisplayRecord) -> Void,
+         capacity: Int) {
+        self.records = ProgramStatusRecords(capacity: capacity)
         self.applyStatus = applyStatus
         self.currentProgress = currentProgress
         self.setProgress = setProgress
@@ -554,26 +556,108 @@ final class ProgramStatusController: NSObject {
         super.init()
     }
 
+    /// Keeps the usual number of records. See the designated initializer.
+    @objc
+    convenience init(applyStatus: @escaping (VT100TabStatusUpdate) -> Void,
+                     currentProgress: @escaping () -> VT100ScreenProgress,
+                     setProgress: @escaping (VT100ScreenProgress) -> Void,
+                     recordsDidChange: @escaping () -> Void = {},
+                     recordDidChangeState: @escaping (ProgramStatusDisplayRecord) -> Void = { _ in }) {
+        self.init(applyStatus: applyStatus,
+                  currentProgress: currentProgress,
+                  setProgress: setProgress,
+                  recordsDidChange: recordsDidChange,
+                  recordDidChangeState: recordDidChangeState,
+                  capacity: ProgramStatusRecords.defaultCapacity)
+    }
+
     /// Every record, as the UI shows it.
     @objc var displayRecords: [ProgramStatusDisplayRecord] {
         return records.records.values.map { displayRecord(for: $0) }
     }
 
     /// The program sent a report.
-    @objc(handleReport:)
     func handle(_ report: ProgramStatusReport) {
-        DLog("Handle \(report)")
-        let key = report.id.joined(separator: "/")
-        let previousState = records.records[key]?.state
-        mutatingRecords {
-            records.apply(report)
+        handle([report])
+    }
+
+    /// The program sent some reports, in this order. A program can report as
+    /// fast as it can write, so the reports that arrived since the last batch
+    /// are applied together and what they add up to is announced once: the
+    /// records change once, the tab status is set once, and a record whose
+    /// state changed is announced once, in the state it ended up in. A state
+    /// a record passed through within the batch was never on screen, so it is
+    /// not news.
+    @objc(handleReports:)
+    func handle(_ reports: [ProgramStatusReport]) {
+        guard !reports.isEmpty else {
+            return
         }
-        if report.state != .clear,
-           report.state != previousState,
-           let record = records.records[key] {
-            recordDidChangeState(displayRecord(for: record))
+        DLog("Handle \(reports.count) reports, the last being \(reports.last!)")
+        // The state each record was in before the batch. Read up front, not
+        // at a key's first report, because which records an earlier report
+        // in the batch evicted depends on how the batch was coalesced.
+        let before = records.records
+        // Each reported key, in the order first reported.
+        var reportedKeys = [String]()
+        var reportedKeySet = Set<String>()
+        mutatingRecords {
+            for report in reports {
+                let key = report.id.joined(separator: "/")
+                if !reportedKeySet.contains(key) {
+                    reportedKeySet.insert(key)
+                    reportedKeys.append(key)
+                }
+                records.apply(report)
+            }
+        }
+        let clearOrder = ClearOrder(reports)
+        for key in reportedKeys {
+            // A later report in the batch may have removed the record.
+            guard let record = records.records[key] else {
+                continue
+            }
+            if record.state != before[key]?.state || clearOrder.wasWrittenAfterAClear(record.id) {
+                recordDidChangeState(displayRecord(for: record))
+            }
         }
         render()
+    }
+
+    /// Tells which records were written after a clear of themselves or an
+    /// ancestor within a batch. Such a record is new even if it is in the
+    /// same state the old one was. This depends only on the order of writes
+    /// and clears, not on what eviction did along the way, so it comes out
+    /// the same for a coalesced batch.
+    private struct ClearOrder {
+        private var firstClear = [String: Int]()
+        private var lastWrite = [String: Int]()
+
+        init(_ reports: [ProgramStatusReport]) {
+            for (i, report) in reports.enumerated() {
+                let key = report.id.joined(separator: "/")
+                if report.state == .clear {
+                    if firstClear[key] == nil {
+                        firstClear[key] = i
+                    }
+                } else {
+                    lastWrite[key] = i
+                }
+            }
+        }
+
+        func wasWrittenAfterAClear(_ id: [String]) -> Bool {
+            guard let write = lastWrite[id.joined(separator: "/")] else {
+                return false
+            }
+            // The root, each ancestor, and the record itself.
+            for depth in 0...id.count {
+                if let clear = firstClear[id.prefix(depth).joined(separator: "/")], clear < write {
+                    return true
+                }
+            }
+            return false
+        }
     }
 
     /// Runs `block`, then reports whether it changed the records.
@@ -1029,5 +1113,124 @@ final class ProgramStatusNotifier: NSObject {
         }
         lastPost = now()
         post(descriptions.joined(separator: "\n"))
+    }
+}
+
+/// Reports the mutation thread has parsed but the main thread has not yet
+/// handled. A program can report as fast as it can write, and one side effect
+/// per report would leave the main thread minutes behind and hold every report
+/// in memory until it caught up, so reports with no other side effect between
+/// them share one batch and one side effect.
+///
+/// Each report replaces its record whole, so only a record's latest report
+/// matters, and it is kept where it arrived: a rewritten record's earlier
+/// report is dropped and the new one goes at the end. The records then come
+/// out as if every report had been applied, written in the same order. A
+/// clear may remove records other than its own, so nothing is moved across
+/// one, except that a clear of every record makes everything before it moot
+/// and a clear repeated with nothing between is a no-op. A flood that cycles
+/// among a few records therefore holds one report per record however long it
+/// runs; one that keeps naming new records, or alternates writes and clears,
+/// still grows with the reports until the side effect runs, as any other
+/// escape sequence's side effects do.
+///
+/// The mutation thread adds; the main thread (or the mutation thread, while
+/// joined) takes, once, after which the batch accepts nothing more.
+@objc(iTermProgramStatusReportBatch)
+final class ProgramStatusReportBatch: NSObject {
+    private let mutex = Mutex()
+    // In arrival order. nil marks a report a later one for its record
+    // replaced.
+    private var slots: [ProgramStatusReport?]
+    private var liveCount: Int
+    // Where each record's latest report is, for the reports since the last
+    // clear.
+    private var slotByKey = [String: Int]()
+    private var taken = false
+
+    @objc(initWithReport:)
+    init(report: ProgramStatusReport) {
+        slots = []
+        liveCount = 0
+        super.init()
+        append(report)
+    }
+
+    /// How many slots the batch is using, including those of replaced
+    /// reports not yet reclaimed. For tests.
+    var storageCount: Int {
+        return mutex.sync { slots.count }
+    }
+
+    /// Adds a report that came after every report already in the batch.
+    /// Returns false, adding nothing, if the batch was already taken.
+    @objc(addReport:)
+    func add(_ report: ProgramStatusReport) -> Bool {
+        return mutex.sync {
+            guard !taken else {
+                return false
+            }
+            append(report)
+            return true
+        }
+    }
+
+    /// Returns the reports in the order they arrived and closes the batch.
+    @objc
+    func take() -> [ProgramStatusReport] {
+        return mutex.sync {
+            taken = true
+            let result = slots.compactMap { $0 }
+            slots = []
+            slotByKey = [:]
+            liveCount = 0
+            return result
+        }
+    }
+
+    // Caller holds the mutex, or is the initializer.
+    private func append(_ report: ProgramStatusReport) {
+        let key = report.id.joined(separator: "/")
+        if report.state == .clear {
+            if let last = slots.last, let last, last.state == .clear, last.id == report.id {
+                // Nothing was written since the same clear.
+                return
+            }
+            slotByKey.removeAll()
+            if report.id.isEmpty {
+                // Clears every record, so nothing earlier in the batch can
+                // matter.
+                slots.removeAll()
+                liveCount = 0
+            }
+            slots.append(report)
+            liveCount += 1
+            return
+        }
+        if let previous = slotByKey[key] {
+            slots[previous] = nil
+            liveCount -= 1
+        }
+        slotByKey[key] = slots.count
+        slots.append(report)
+        liveCount += 1
+        if slots.count > 2 * liveCount {
+            compact()
+        }
+    }
+
+    private func compact() {
+        slots = slots.filter { $0 != nil }
+        slotByKey.removeAll()
+        // Only reports after the last clear may be replaced.
+        for (i, report) in slots.enumerated().reversed() {
+            guard let report, report.state != .clear else {
+                break
+            }
+            let key = report.id.joined(separator: "/")
+            if slotByKey[key] == nil {
+                slotByKey[key] = i
+            }
+        }
     }
 }
