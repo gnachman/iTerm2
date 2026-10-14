@@ -88,7 +88,7 @@ final class AISelfHostedProbeTests: XCTestCase {
     func testOnDevice_getsNoHeaderAdvice() {
         XCTAssertEqual(AITermController.apiKeyPolicy(url: "", api: .appleIntelligence),
                        .placeholder(.onDevice))
-        XCTAssertNil(AIWithheldKeyAdvice.hint(url: "", api: .appleIntelligence, customHeaders: []))
+        XCTAssertNil(AIWithheldKeyAdvice.hint(url: "", api: .appleIntelligence, credential: .automatic, keyVendor: .openAI, customHeaders: []))
         XCTAssertFalse(AITermControllerObjC.modelWithholdsAPIKeyForLocalEndpoint(
                         url: "", api: .appleIntelligence))
         // Even with a local URL attached, which a migrated config could carry.
@@ -100,13 +100,13 @@ final class AISelfHostedProbeTests: XCTestCase {
 
     func testProbeKey_selfHostedSendsPlaceholderWithoutPrompting() {
         XCTAssertEqual(AIConnectionTester.unpromptedAPIKey(url: "http://osaurus.local:1337/v1",
-                                                           api: .chatCompletions),
+                                                           api: .chatCompletions, credential: .automatic, keyVendor: .openAI),
                        AITermController.selfHostedPlaceholderAPIKey)
     }
 
     func testProbeKey_publicHostFallsBackToStoredKey() {
         XCTAssertNil(AIConnectionTester.unpromptedAPIKey(url: "https://api.openai.com/v1",
-                                                         api: .chatCompletions))
+                                                         api: .chatCompletions, credential: .automatic, keyVendor: .openAI))
     }
 
     // MARK: - credential header names
@@ -146,6 +146,8 @@ final class AISelfHostedProbeTests: XCTestCase {
     func testHint_explainsPlaceholderWhenSelfHostedAndUnauthenticated() {
         let hint = AIWithheldKeyAdvice.hint(url: "http://osaurus.local:1337/v1",
                                                          api: .chatCompletions,
+                                                         credential: .automatic,
+                                                         keyVendor: .openAI,
                                                          customHeaders: [])
         XCTAssertNotNil(hint)
         // It must name the header this lane authenticates with.
@@ -157,6 +159,8 @@ final class AISelfHostedProbeTests: XCTestCase {
     func testHint_namesTheLaneSOwnCredentialHeader() {
         let hint = AIWithheldKeyAdvice.hint(url: "http://osaurus.local:1337/v1",
                                                          api: .anthropic,
+                                                         credential: .automatic,
+                                                         keyVendor: .openAI,
                                                          customHeaders: [])
         XCTAssertTrue(hint?.contains("x-api-key") ?? false, "\(hint ?? "nil")")
         XCTAssertFalse(hint?.contains("Authorization") ?? true, "\(hint ?? "nil")")
@@ -170,6 +174,8 @@ final class AISelfHostedProbeTests: XCTestCase {
         for api in [iTermAIAPI.llama, .gemini] {
             XCTAssertNotNil(AIWithheldKeyAdvice.hint(url: "http://localhost:11434/v1",
                                                                   api: api,
+                                                                  credential: .automatic,
+                                                                  keyVendor: .openAI,
                                                                   customHeaders: []),
                             "\(api) should still get advice")
         }
@@ -185,6 +191,8 @@ final class AISelfHostedProbeTests: XCTestCase {
         for api in [iTermAIAPI.llama, .gemini] {
             XCTAssertNil(AIWithheldKeyAdvice.hint(url: "http://localhost:11434/v1",
                                                                api: api,
+                                                               credential: .automatic,
+                                                               keyVendor: .openAI,
                                                                customHeaders: headers),
                          "\(api) already authenticates itself")
         }
@@ -198,6 +206,8 @@ final class AISelfHostedProbeTests: XCTestCase {
         for api in [iTermAIAPI.llama, .gemini] {
             XCTAssertNotNil(AIWithheldKeyAdvice.hint(url: "http://localhost:11434/v1",
                                                      api: api,
+                                                     credential: .automatic,
+                                                     keyVendor: .openAI,
                                                      customHeaders: headers),
                             "\(api): an unrelated header is not authentication")
         }
@@ -211,6 +221,8 @@ final class AISelfHostedProbeTests: XCTestCase {
         let headers = [["name": "X-Api-Key", "value": "secret"]]
         XCTAssertNil(AIWithheldKeyAdvice.hint(url: "http://osaurus.local:1337/v1",
                                               api: .chatCompletions,
+                                              credential: .automatic,
+                                              keyVendor: .openAI,
                                               customHeaders: headers))
     }
 
@@ -221,6 +233,8 @@ final class AISelfHostedProbeTests: XCTestCase {
             let headers = [["name": name, "value": "secret"]]
             XCTAssertNil(AIWithheldKeyAdvice.hint(url: "http://localhost:11434/v1",
                                                   api: .llama,
+                                                  credential: .automatic,
+                                                  keyVendor: .openAI,
                                                   customHeaders: headers),
                          "\(name) should count as authentication")
         }
@@ -230,6 +244,8 @@ final class AISelfHostedProbeTests: XCTestCase {
         let headers = [["name": "Bad Name", "value": "x"]]
         XCTAssertNotNil(AIWithheldKeyAdvice.hint(url: "http://localhost:11434/v1",
                                                               api: .llama,
+                                                              credential: .automatic,
+                                                              keyVendor: .openAI,
                                                               customHeaders: headers))
     }
 
@@ -240,6 +256,8 @@ final class AISelfHostedProbeTests: XCTestCase {
                             (iTermAIAPI.anthropic, "x-api-key")] {
             let hint = AIWithheldKeyAdvice.hint(url: "http://osaurus.local:1337/v1",
                                                              api: api,
+                                                             credential: .automatic,
+                                                             keyVendor: .openAI,
                                                              customHeaders: [])
             XCTAssertNotNil(hint)
             XCTAssertFalse(hint?.contains("a \(name)") ?? true,
@@ -255,6 +273,8 @@ final class AISelfHostedProbeTests: XCTestCase {
         for api in [iTermAIAPI.chatCompletions, .llama] {
             let hint = AIWithheldKeyAdvice.hint(url: "http://osaurus.local:1337/v1",
                                                              api: api,
+                                                             credential: .automatic,
+                                                             keyVendor: .openAI,
                                                              customHeaders: [])
             XCTAssertTrue(hint?.contains("\u{201c}Custom headers\u{201d}") ?? false, "\(hint ?? "nil")")
         }
@@ -268,6 +288,8 @@ final class AISelfHostedProbeTests: XCTestCase {
             let headers = [["name": name, "value": "Bearer abc"]]
             XCTAssertNil(AIWithheldKeyAdvice.hint(url: "http://osaurus.local:1337/v1",
                                                                api: .chatCompletions,
+                                                               credential: .automatic,
+                                                               keyVendor: .openAI,
                                                                customHeaders: headers),
                          "\(name) should count as authenticated")
         }
@@ -277,6 +299,8 @@ final class AISelfHostedProbeTests: XCTestCase {
         let headers = [["name": "X-Api-Key", "value": "secret"]]
         XCTAssertNil(AIWithheldKeyAdvice.hint(url: "http://osaurus.local:1337/v1",
                                                            api: .anthropic,
+                                                           credential: .automatic,
+                                                           keyVendor: .openAI,
                                                            customHeaders: headers))
     }
 
@@ -285,6 +309,8 @@ final class AISelfHostedProbeTests: XCTestCase {
         let headers = [["name": "X-Route", "value": "alpha"]]
         XCTAssertNotNil(AIWithheldKeyAdvice.hint(url: "http://osaurus.local:1337/v1",
                                                               api: .chatCompletions,
+                                                              credential: .automatic,
+                                                              keyVendor: .openAI,
                                                               customHeaders: headers))
     }
 
@@ -296,6 +322,8 @@ final class AISelfHostedProbeTests: XCTestCase {
         let headers = [["name": "Authorization", "value": ""]]
         XCTAssertNil(AIWithheldKeyAdvice.hint(url: "http://osaurus.local:1337/v1",
                                                            api: .chatCompletions,
+                                                           credential: .automatic,
+                                                           keyVendor: .openAI,
                                                            customHeaders: headers))
     }
 
@@ -304,6 +332,8 @@ final class AISelfHostedProbeTests: XCTestCase {
         let headers = [["name": "Authorization", "value": "Bearer bad\r\nX-Smuggled: yes"]]
         XCTAssertNotNil(AIWithheldKeyAdvice.hint(url: "http://osaurus.local:1337/v1",
                                                               api: .chatCompletions,
+                                                              credential: .automatic,
+                                                              keyVendor: .openAI,
                                                               customHeaders: headers))
     }
 
@@ -342,6 +372,8 @@ final class AISelfHostedProbeTests: XCTestCase {
     func testHint_absentForPublicHost() {
         XCTAssertNil(AIWithheldKeyAdvice.hint(url: "https://api.openai.com/v1",
                                                            api: .chatCompletions,
+                                                           credential: .automatic,
+                                                           keyVendor: .openAI,
                                                            customHeaders: []))
     }
 }

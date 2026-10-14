@@ -65,6 +65,19 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         return AITermController.apiKeyPolicy(url: url, api: api) == .placeholder(.localEndpoint)
     }
 
+    // Exposes Automatic's host rule to the Settings UI: whether Automatic sends
+    // no key to `url` because it is not `keyVendor`'s own host, so the hints and
+    // the popup's Automatic title can't promise a key that won't be sent.
+    @objc(automaticWithholdsAPIKeyFromUnrecognizedHostURL:api:keyVendor:)
+    static func automaticWithholdsAPIKeyFromUnrecognizedHost(url: String,
+                                                             api: iTermAIAPI,
+                                                             keyVendor: iTermAIVendor) -> Bool {
+        return AITermController.apiKeyPolicy(url: url,
+                                             api: api,
+                                             credential: .automatic,
+                                             keyVendor: keyVendor) == .placeholder(.unrecognizedHost)
+    }
+
     @objc static var apiKey: String? {
         get {
             apiKey(for: LLMMetadata.effectiveVendor)

@@ -13,9 +13,10 @@
 // The vendor (AIMetadata.Model.vendor) still decides the request dialect and
 // provider binding. This only decides which key is sent.
 enum AIModelCredential: Equatable {
-    // Today's inference: the stored key of the vendor resolved from the API,
-    // model name, and URL, withheld from local endpoints. The default, and the
-    // value of every configuration saved before this setting existed.
+    // The stored key of the vendor resolved from the API, model name, and URL,
+    // sent only to that vendor's own host (LLMMetadata.endpoint(_:isOwnHostOf:)).
+    // The default. A configuration saved before this setting existed has no
+    // stored value and is read by LLMMetadata.credential(configuration:...).
     case automatic
     // The stored key of this vendor, sent even to a local endpoint, since the
     // user chose it.
@@ -28,18 +29,22 @@ enum AIModelCredential: Equatable {
 
     // Persisted in the manual model configuration under ManualModelKey.credential.
     // Localization unneeded: stored identifiers.
+    private static let automaticValue = "automatic"
     private static let modelKeyValue = "model"
     private static let noneValue = "none"
     private static let vendorPrefix = "vendor:"
 
     // Anything unrecognized (absent, hand-edited, or written by a newer build)
-    // reads as automatic, which is how the model behaved before.
+    // reads as automatic. Callers reading a stored configuration go through
+    // LLMMetadata.credential(configuration:...), which treats absent specially.
     init(storedValue: Any?) {
         guard let string = storedValue as? String else {
             self = .automatic
             return
         }
         switch string {
+        case Self.automaticValue:
+            self = .automatic
         case Self.modelKeyValue:
             self = .modelKey
         case Self.noneValue:
@@ -56,11 +61,12 @@ enum AIModelCredential: Equatable {
         }
     }
 
-    // nil for automatic, so the key is simply left out of the configuration.
-    var storedValue: String? {
+    // Always stored, even for automatic: an absent value marks a configuration
+    // saved before Automatic became host-bound.
+    var storedValue: String {
         switch self {
         case .automatic:
-            return nil
+            return Self.automaticValue
         case .vendorKey(let vendor):
             return Self.vendorPrefix + String(vendor.rawValue)
         case .modelKey:
@@ -121,7 +127,7 @@ class AIModelCredentialObjC: NSObject {
     }
 
     @objc(storedValueForKind:vendor:)
-    static func storedValue(kind: AICredentialKind, vendor: iTermAIVendor) -> String? {
+    static func storedValue(kind: AICredentialKind, vendor: iTermAIVendor) -> String {
         return credential(kind: kind, vendor: vendor).storedValue
     }
 

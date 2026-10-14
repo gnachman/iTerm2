@@ -170,6 +170,10 @@ class AITermController {
     //   Such an endpoint carries its own auth via the model's custom headers
     //   instead, which the user opts into explicitly.
     // - .noKeySelected: the user chose to send no key (AIModelCredential.none).
+    // - .unrecognizedHost: Automatic sends a vendor's stored key only to that
+    //   vendor's own host (LLMMetadata.endpoint(_:isOwnHostOf:)). A gateway
+    //   such as OpenRouter speaking OpenAI's protocol must not receive the
+    //   user's OpenAI key; the user chooses which key to send it instead.
     //
     // .modelKey is a key stored for one manual model (AIModelCredential.modelKey).
     enum APIKeyPolicy: Equatable {
@@ -181,6 +185,7 @@ class AITermController {
             case onDevice
             case localEndpoint
             case noKeySelected
+            case unrecognizedHost
         }
     }
 
@@ -200,15 +205,31 @@ class AITermController {
 
     // An explicit credential overrides the inference above. Choosing a vendor's
     // key sends it even to a local endpoint, because the user asked for that.
+    // `keyVendor` is the vendor whose stored key Automatic would send
+    // (AIMetadata.Model.keyVendor, or the fallback vendor when there is no
+    // model); Automatic sends it only to that vendor's own host. Which vendor's
+    // protocol the request speaks is decided elsewhere and is unaffected.
     static func apiKeyPolicy(url: String,
                              api: iTermAIAPI,
-                             credential: AIModelCredential) -> APIKeyPolicy {
+                             credential: AIModelCredential,
+                             keyVendor: iTermAIVendor) -> APIKeyPolicy {
         if api == .appleIntelligence {
             return .placeholder(.onDevice)
         }
         switch credential {
         case .automatic:
-            return apiKeyPolicy(url: url, api: api)
+            let inferred = apiKeyPolicy(url: url, api: api)
+            guard inferred == .vendorKey else {
+                return inferred
+            }
+            // Ollama's key is a self-hosted server's own token with no public
+            // host to bind it to, so it still goes to a remote Ollama server.
+            // But a model merely named like Llama on another protocol (say,
+            // “meta-llama/…” at OpenRouter) is at a gateway, not Ollama.
+            let onOwnHost = (keyVendor == .llama && api != .llama)
+                ? false
+                : LLMMetadata.endpoint(url, isOwnHostOf: keyVendor)
+            return onOwnHost == false ? .placeholder(.unrecognizedHost) : .vendorKey
         case .vendorKey:
             return .vendorKey
         case .modelKey:
@@ -219,13 +240,17 @@ class AITermController {
     }
 
     static func usesPlaceholderAPIKey(url: String, api: iTermAIAPI) -> Bool {
-        return usesPlaceholderAPIKey(url: url, api: api, credential: .automatic)
+        if case .placeholder = apiKeyPolicy(url: url, api: api) {
+            return true
+        }
+        return false
     }
 
     static func usesPlaceholderAPIKey(url: String,
                                       api: iTermAIAPI,
-                                      credential: AIModelCredential) -> Bool {
-        if case .placeholder = apiKeyPolicy(url: url, api: api, credential: credential) {
+                                      credential: AIModelCredential,
+                                      keyVendor: iTermAIVendor) -> Bool {
+        if case .placeholder = apiKeyPolicy(url: url, api: api, credential: credential, keyVendor: keyVendor) {
             return true
         }
         return false
@@ -244,7 +269,8 @@ class AITermController {
         fallbackVendor: iTermAIVendor,
         vendorRegistration: (iTermAIVendor) -> Registration?,
         modelKey: (String) -> String? = { AITermControllerObjC.modelAPIKey(forConfigurationID: $0) }) -> Registration? {
-        let stored = vendorRegistration(model?.keyVendor ?? fallbackVendor)
+        let keyVendor = model?.keyVendor ?? fallbackVendor
+        let stored = vendorRegistration(keyVendor)
         // The App Review key contacts no service at all, so it has to win over
         // every other rule: requestCompletion short-circuits on it and answers
         // locally. Substituting the self-hosted placeholder first would send a
@@ -256,7 +282,7 @@ class AITermController {
         guard let model else {
             return stored
         }
-        switch apiKeyPolicy(url: model.url, api: model.api, credential: model.credential) {
+        switch apiKeyPolicy(url: model.url, api: model.api, credential: model.credential, keyVendor: keyVendor) {
         case .placeholder:
             return Registration(apiKey: selfHostedPlaceholderAPIKey)
         case .modelKey:
@@ -464,6 +490,7 @@ class AITermController {
                                                    url: requestURL,
                                                    api: model.api,
                                                    credential: model.credential,
+                                                   keyVendor: requiredRegistrationVendor,
                                                    customHeaders: model.customHeaders))
     }
 
@@ -471,7 +498,10 @@ class AITermController {
         guard let model = llmProvider?.model else {
             return .vendorKey
         }
-        return Self.apiKeyPolicy(url: model.url, api: model.api, credential: model.credential)
+        return Self.apiKeyPolicy(url: model.url,
+                                 api: model.api,
+                                 credential: model.credential,
+                                 keyVendor: requiredRegistrationVendor)
     }
 
     var requiredRegistrationVendor: iTermAIVendor {
