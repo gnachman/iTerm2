@@ -11354,10 +11354,26 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             [tab addRevivedFloatingSession:session fromArrangement:fullArrangement];
         }
     };
-    if (tiledRevived.count == 0 && floatingRevived.count > 0) {
+    // Floats whose undo window ran out are gone. Each comes back as a float made from the archive
+    // in its record.
+    NSMutableArray<NSString *> *archivedFloatGUIDs = [NSMutableArray array];
+    for (NSString *guid in archives.sessionGUIDs) {
+        if ([PTYTab floatingPaneRecordForSessionWithGUID:guid inArrangement:fullArrangement]) {
+            [archivedFloatGUIDs addObject:guid];
+        }
+    }
+    if (tiledRevived.count == 0 && (floatingRevived.count > 0 || archivedFloatGUIDs.count > 0)) {
         RLog(@"Only floating panes come back; the tiled layout is unchanged");
         restoreFloats();
-        [self addTabsForArchives:archives];
+        NSMutableSet<NSString *> *restoredGUIDs = [NSMutableSet set];
+        for (NSString *guid in archivedFloatGUIDs) {
+            RLog(@"Restore archived float %@", guid);
+            if ([tab addArchivedFloatingSessionWithGUID:guid fromArrangement:fullArrangement]) {
+                [restoredGUIDs addObject:guid];
+            }
+        }
+        // Other archives, and floats that could not be restored, get tabs of their own.
+        [self addTabsForArchives:archives excludingSessionGUIDs:restoredGUIDs];
         return;
     }
     NSMutableArray *allSessions = [NSMutableArray array];
@@ -11473,7 +11489,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)addTabsForArchives:(iTermUndoCloseArchives *)archives {
-    for (NSDictionary *arrangement in archives.standaloneTabArrangements) {
+    [self addTabsForArchives:archives excludingSessionGUIDs:[NSSet set]];
+}
+
+- (void)addTabsForArchives:(iTermUndoCloseArchives *)archives
+     excludingSessionGUIDs:(NSSet<NSString *> *)excludedGUIDs {
+    for (NSDictionary *arrangement in [archives standaloneTabArrangementsExcludingSessionGUIDs:excludedGUIDs]) {
         RLog(@"Add a tab for an archived session");
         PTYTab *tab = [PTYTab tabWithArrangement:arrangement
                                            named:nil
