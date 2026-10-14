@@ -24,6 +24,7 @@ class MockDirectoryTrackerDelegate: NSObject, @preconcurrency iTermSessionDirect
     var escapeSequencesDisabled = false
     var workingDirectoryProvider: MockWorkingDirectoryProvider?
     var sshIdentityProvider: (any SSHIdentityProvider)?
+    var foregroundJob: SessionDirectoryTrackerForegroundJob = .unknown
 
     func directoryTrackerDidChangeDirectory(_ tracker: iTermSessionDirectoryTracker) {
         didChangeDirectoryCalled = true
@@ -73,6 +74,10 @@ class MockDirectoryTrackerDelegate: NSObject, @preconcurrency iTermSessionDirect
 
     func directoryTrackerSSHIdentityProvider(_ tracker: iTermSessionDirectoryTracker) -> (any SSHIdentityProvider)? {
         return sshIdentityProvider
+    }
+
+    func directoryTrackerForegroundJob(_ tracker: iTermSessionDirectoryTracker) -> SessionDirectoryTrackerForegroundJob {
+        return foregroundJob
     }
 
     func reset() {
@@ -512,6 +517,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     }
 
     func testPollerResult_AfterRemotePush_DoesNotChangeSessionPath() {
+        mockDelegate.foregroundJob = .other
         pushRemoteDirectory("/tmp/qa125")
 
         // The poller reports the local ssh process's cwd (e.g. after a key press
@@ -645,6 +651,165 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
 
         tracker.workingDirectoryPollerDidFindWorkingDirectory("/usr", invalidated: false)
         XCTAssertEqual(sessionPath, "/usr")
+    }
+
+    // MARK: - 5d. Exit from plain ssh without a local cd (QA F-138)
+
+    // `ssh qaremote`, `cd /tmp/qa125`, `exit`, Return: the local shell is back in
+    // the foreground in the directory it ssh'ed from, so the poll result equals
+    // the one seen while ssh ran. It must still become the current directory.
+    func testPollerResult_ExitWithoutCd_UpdatesSessionPath() {
+        mockDelegate.foregroundJob = .other
+        pushRemoteDirectory("/tmp/qa125")
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+
+        // ssh exits.
+        mockDelegate.foregroundJob = .shell
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/Users/local")
+        XCTAssertEqual(tracker.lastDirectory, "/Users/local")
+    }
+
+    // ssh exits before the first poll after the last remote push.
+    func testPollerResult_ExitBeforeFirstPollAfterRemotePush_UpdatesSessionPath() {
+        mockDelegate.foregroundJob = .other
+        pushRemoteDirectory("/tmp/qa125")
+
+        mockDelegate.foregroundJob = .shell
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/Users/local")
+    }
+
+    func testPollerResult_WhileSSHRuns_DoesNotChangeSessionPath() {
+        mockDelegate.foregroundJob = .other
+        pushRemoteDirectory("/tmp/qa125")
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+    }
+
+    func testInvalidatedPollerResult_AfterExit_DoesNotChangeSessionPath() {
+        mockDelegate.foregroundJob = .other
+        pushRemoteDirectory("/tmp/qa125")
+        mockDelegate.foregroundJob = .shell
+
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: true)
+
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+    }
+
+    // When the profile's command is ssh itself, the polled process is ssh and is
+    // always in the foreground. It never was another job, so it is not a local shell
+    // that came back.
+    func testPollerResult_PolledProcessAlwaysForeground_DoesNotChangeSessionPath() {
+        mockDelegate.foregroundJob = .shell
+        pushRemoteDirectory("/tmp/qa125")
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+    }
+
+    // Seeing another job in the foreground during an earlier ssh does not carry
+    // over once the local directory has become current again.
+    func testPollerResult_EarlierSSH_DoesNotCountForNextRemoteDirectory() {
+        mockDelegate.foregroundJob = .other
+        pushRemoteDirectory("/tmp/qa125")
+        mockDelegate.foregroundJob = .shell
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        XCTAssertEqual(sessionPath, "/Users/local")
+
+        pushRemoteDirectory("/tmp/qb")
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/tmp/qb")
+    }
+
+    // Without foreground job information (e.g. a tmux integration pane) the poll
+    // result keeps the F-134 behavior.
+    func testPollerResult_UnknownForegroundJob_DoesNotChangeSessionPath() {
+        mockDelegate.foregroundJob = .unknown
+        pushRemoteDirectory("/tmp/qa125")
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+    }
+
+    // An OSC 7 processed after ssh already gave the terminal back must not forget
+    // that ssh was in the foreground.
+    func testPollerResult_LateRemotePushAfterExit_UpdatesSessionPath() {
+        mockDelegate.foregroundJob = .other
+        pushRemoteDirectory("/tmp/qa125")
+        mockDelegate.foregroundJob = .shell
+        pushRemoteDirectory("/tmp/qa125")
+
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/Users/local")
+    }
+
+    // Right after ssh exits its process group may be gone, which reads as unknown.
+    func testPollerResult_UnknownBetweenOtherAndShell_UpdatesSessionPath() {
+        mockDelegate.foregroundJob = .other
+        pushRemoteDirectory("/tmp/qa125")
+        mockDelegate.foregroundJob = .unknown
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+
+        mockDelegate.foregroundJob = .shell
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/Users/local")
+    }
+
+    // The foreground job may only be seen as ssh by a poll, not at push time.
+    func testPollerResult_OtherSeenOnlyByPoll_UpdatesSessionPathAfterExit() {
+        mockDelegate.foregroundJob = .shell
+        pushRemoteDirectory("/tmp/qa125")
+        mockDelegate.foregroundJob = .other
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+
+        mockDelegate.foregroundJob = .shell
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/Users/local")
+    }
+
+    func testClassifyForegroundJob() {
+        typealias T = iTermSessionDirectoryTracker
+        XCTAssertEqual(T.classifyForegroundJob(foregroundGroup: 100, rootPid: 100, leaderParent: 0, rootIsLogin: false), .shell)
+        XCTAssertEqual(T.classifyForegroundJob(foregroundGroup: 101, rootPid: 100, leaderParent: 100, rootIsLogin: true), .shell)
+        XCTAssertEqual(T.classifyForegroundJob(foregroundGroup: 101, rootPid: 100, leaderParent: 100, rootIsLogin: false), .other)
+        XCTAssertEqual(T.classifyForegroundJob(foregroundGroup: 102, rootPid: 100, leaderParent: 101, rootIsLogin: true), .other)
+        XCTAssertEqual(T.classifyForegroundJob(foregroundGroup: -1, rootPid: 100, leaderParent: 0, rootIsLogin: true), .unknown)
+        XCTAssertEqual(T.classifyForegroundJob(foregroundGroup: 102, rootPid: 100, leaderParent: 0, rootIsLogin: true), .unknown)
+    }
+
+    // A session restored while its ssh job still runs: the poll sees ssh in the
+    // foreground, then the local shell after exit.
+    func testRestoredRemoteDirectory_ExitWithoutCd_UpdatesSessionPath() {
+        pushRemoteDirectory("/tmp/qa125")
+        let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
+        tracker.encodeArrangement(with: encoder)
+
+        let restored = iTermSessionDirectoryTracker(variablesScope: mockScope)
+        restored.delegate = mockDelegate
+        restored.restoreFromArrangement(encoder.mutableDictionary as! [String: Any])
+        mockScope.setValue("/tmp/qa125", forVariableNamed: iTermVariableKeySessionPath)
+
+        mockDelegate.foregroundJob = .other
+        restored.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+
+        mockDelegate.foregroundJob = .shell
+        restored.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        XCTAssertEqual(sessionPath, "/Users/local")
     }
 
     func testPollerResult_AfterLocalPush_DoesNotChangeSessionPath() {

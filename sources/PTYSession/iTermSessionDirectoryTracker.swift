@@ -15,6 +15,17 @@ protocol SSHIdentityProvider: AnyObject {
     var sshIdentity: SSHIdentity { get }
 }
 
+/// What is in the foreground of the session's local terminal.
+@objc(iTermSessionDirectoryTrackerForegroundJob)
+enum SessionDirectoryTrackerForegroundJob: Int {
+    /// Not known, e.g. a tmux integration pane.
+    case unknown
+    /// The process whose cwd the poller reads (the session's shell) is in the foreground.
+    case shell
+    /// Some other job, such as ssh, is in the foreground.
+    case other
+}
+
 /// Protocol for the directory tracker's delegate.
 @objc(iTermSessionDirectoryTrackerDelegate)
 protocol iTermSessionDirectoryTrackerDelegate: AnyObject {
@@ -59,6 +70,9 @@ protocol iTermSessionDirectoryTrackerDelegate: AnyObject {
 
     /// Returns the SSH identity provider (e.g., Conductor) for SSH directory tracking.
     func directoryTrackerSSHIdentityProvider(_ tracker: iTermSessionDirectoryTracker) -> (any SSHIdentityProvider)?
+
+    /// Returns what is in the foreground of the local terminal right now.
+    func directoryTrackerForegroundJob(_ tracker: iTermSessionDirectoryTracker) -> SessionDirectoryTrackerForegroundJob
 }
 
 /// Arrangement keys for serialization (must match existing PTYSession keys for compatibility).
@@ -119,6 +133,12 @@ class iTermSessionDirectoryTracker: NSObject {
     /// differs means the local shell is back in the foreground and changed directory,
     /// so the remote directory is no longer current.
     private var polledDirectoryWhileRemote: String?
+
+    /// Whether another job (such as ssh) has been seen in the foreground of the
+    /// local terminal since lastDirectory became (or was again reported as) remote.
+    /// Once the polled process is back in the foreground after that, the remote
+    /// session has ended even if the local directory did not change.
+    private var sawOtherForegroundJobWhileRemote = false
 
     /// The last remote host at the time of setting the current directory.
     @objc private(set) var lastRemoteHost: (any VT100RemoteHostReading)?
@@ -209,6 +229,37 @@ class iTermSessionDirectoryTracker: NSObject {
         }
     }
 
+    // MARK: - Foreground Job
+
+    /// Classifies the terminal's foreground process group. The poller reads the cwd
+    /// of rootPid or, when that is login (whose cwd can't be read), of its eldest
+    /// child, the shell. That process is in the foreground when it leads the
+    /// foreground process group.
+    /// - Parameters:
+    ///   - foregroundGroup: The terminal's foreground process group, or <= 0 if unknown.
+    ///   - rootPid: The session's root process.
+    ///   - leaderParent: The parent of the foreground group's leader, or <= 0 if unknown.
+    ///   - rootIsLogin: Whether rootPid is /usr/bin/login.
+    @objc(classifyForegroundGroup:rootPid:leaderParent:rootIsLogin:)
+    static func classifyForegroundJob(foregroundGroup: pid_t,
+                                      rootPid: pid_t,
+                                      leaderParent: pid_t,
+                                      rootIsLogin: Bool) -> SessionDirectoryTrackerForegroundJob {
+        if foregroundGroup <= 0 || rootPid <= 0 {
+            return .unknown
+        }
+        if foregroundGroup == rootPid {
+            return .shell
+        }
+        if leaderParent <= 0 {
+            return .unknown
+        }
+        if leaderParent == rootPid && rootIsLogin {
+            return .shell
+        }
+        return .other
+    }
+
     // MARK: - Arrangement Serialization
 
     /// Encode arrangement to the encoder.
@@ -258,8 +309,16 @@ class iTermSessionDirectoryTracker: NSObject {
         }
 
         lastDirectory = directory
+        let wasRemote = lastDirectoryIsRemote
         lastDirectoryIsRemote = remote
         polledDirectoryWhileRemote = nil
+        // A remote shell is talking, so ssh or the like is usually in the foreground
+        // now. It reads as .shell when the profile's command is ssh itself, which is
+        // why .other must be seen before .shell counts as the local shell coming back.
+        // Keep what was seen during this remote stretch in case the push was processed
+        // after ssh already gave the terminal back.
+        sawOtherForegroundJobWhileRemote = remote &&
+            ((wasRemote && sawOtherForegroundJobWhileRemote) || delegate?.directoryTrackerForegroundJob(self) == .other)
 
         if !remote {
             if pushed || !lastLocalDirectoryWasPushed {
@@ -571,6 +630,19 @@ class iTermSessionDirectoryTracker: NSObject {
     private func polledDirectoryShouldBecomeCurrent(_ pwd: String) -> Bool {
         guard lastDirectoryIsRemote else {
             return pwd != lastDirectory
+        }
+        switch delegate?.directoryTrackerForegroundJob(self) ?? .unknown {
+        case .other:
+            sawOtherForegroundJobWhileRemote = true
+        case .shell:
+            if sawOtherForegroundJobWhileRemote {
+                DLog("\(d(delegate)): The polled process is back in the foreground, so the remote session ended")
+                return true
+            }
+        case .unknown:
+            break
+        @unknown default:
+            break
         }
         guard let baseline = polledDirectoryWhileRemote else {
             DLog("\(d(delegate)): Recording \(pwd) as the local directory while remote")

@@ -521,6 +521,20 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
     }
 }
 
++ (pid_t)foregroundProcessGroupOfControllingTerminalOfProcess:(pid_t)pid {
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, pid };
+    struct kinfo_proc kp;
+    memset(&kp, 0, sizeof(kp));
+    size_t bufSize = sizeof(kp);
+    if (sysctl(mib, 4, &kp, &bufSize, NULL, 0) < 0 || bufSize == 0) {
+        return -1;
+    }
+    if (!(kp.kp_proc.p_flag & P_CONTROLT) || kp.kp_eproc.e_tpgid <= 0) {
+        return -1;
+    }
+    return kp.kp_eproc.e_tpgid;
+}
+
 + (NSString *)nameFailureDiagnosisForPid:(pid_t)pid {
     int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, pid };
     struct kinfo_proc kp;
