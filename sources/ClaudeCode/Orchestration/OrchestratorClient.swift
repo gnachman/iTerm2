@@ -152,6 +152,26 @@ final class OrchestratorClient {
         }
     }
 
+    // Turn orchestration off for a chat (ChatViewController's Disable
+    // Orchestration, after it drops the agent). Tears down the dispatcher
+    // BEFORE the list-model write, for the reason given in
+    // ChatViewController.setOrchestrationEnabled, then clears the
+    // orchestration-only state, which includes every watcher. Publishes
+    // `disabledNotice` and then, if that clear cancelled any pending timers or
+    // watches, a notice counting them so the user doesn't keep waiting on
+    // them. Both are client-local notices: nothing reaches the model.
+    func disableOrchestration(forChatID chatID: String,
+                              disabledNotice: String) throws {
+        dropDispatcher(forChatID: chatID)
+        let cancelled = broker.listModel.watchers(forChatID: chatID)
+        try broker.listModel.setOrchestrationEnabled(false, forChatID: chatID)
+        try? broker.publishNotice(chatID: chatID, notice: disabledNotice)
+        OrchestratorDispatcher.publishCancelledWatchersNotice(broker: broker,
+                                                              chatID: chatID,
+                                                              cancelled: cancelled,
+                                                              cause: .disableOrchestration)
+    }
+
     // MARK: - Broker handler
 
     private func handle(update: ChatBroker.Update) {

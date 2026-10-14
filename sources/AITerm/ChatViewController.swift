@@ -4092,25 +4092,33 @@ extension ChatViewController {
             stopStreaming()
         }
         ChatService.instance?.dropAgent(forChatID: chatID)
-        // Also drop the client-side orchestrator dispatcher (and its
-        // persisted-watcher and broker-subscription state) so it
-        // rebuilds fresh on the next orchestration tool call. Mirrors
-        // dropAgent: order matters, dispatcher tear-down before the
-        // listModel write so a tab-status notification that fires
-        // between the two doesn't get the dispatcher persisting stale
-        // claim / watcher state back to disk after the model clear.
-        OrchestratorClient.instance?.dropDispatcher(forChatID: chatID)
+        let notice = enabled
+            ? String(localized: "ChatViewController.OrchestrationEnabledNotice", defaultValue: "Orchestration enabled. Agent can see content of all sessions.", comment: "Notice shown when orchestration is enabled")
+            : String(localized: "ChatViewController.OrchestrationDisabledNotice", defaultValue: "Orchestration disabled.", comment: "Notice shown when orchestration is disabled")
         do {
-            try listModel.setOrchestrationEnabled(enabled, forChatID: chatID)
+            if !enabled {
+                // Same drop-then-write sequence as below, plus a notice
+                // counting the pending timers and watches the disable
+                // cancelled.
+                try OrchestratorClient.instance?.disableOrchestration(forChatID: chatID,
+                                                                      disabledNotice: notice)
+            } else {
+                // Also drop the client-side orchestrator dispatcher (and its
+                // persisted-watcher and broker-subscription state) so it
+                // rebuilds fresh on the next orchestration tool call. Mirrors
+                // dropAgent: order matters, dispatcher tear-down before the
+                // listModel write so a tab-status notification that fires
+                // between the two doesn't get the dispatcher persisting stale
+                // claim / watcher state back to disk after the model clear.
+                OrchestratorClient.instance?.dropDispatcher(forChatID: chatID)
+                try listModel.setOrchestrationEnabled(enabled, forChatID: chatID)
+                try? client.publishNotice(chatID: chatID, notice: notice)
+            }
         } catch {
             RLog("Failed to toggle orchestration: \(error)")
             return
         }
         inputView.refreshPlaceholder()
-        let notice = enabled
-            ? String(localized: "ChatViewController.OrchestrationEnabledNotice", defaultValue: "Orchestration enabled. Agent can see content of all sessions.", comment: "Notice shown when orchestration is enabled")
-            : String(localized: "ChatViewController.OrchestrationDisabledNotice", defaultValue: "Orchestration disabled.", comment: "Notice shown when orchestration is disabled")
-        try? client.publishNotice(chatID: chatID, notice: notice)
     }
 
 }
