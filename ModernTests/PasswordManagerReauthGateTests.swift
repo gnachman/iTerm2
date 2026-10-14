@@ -156,3 +156,83 @@ final class BrowserBasicAuthSilentLookupGateTests: XCTestCase {
         XCTAssertFalse(readable(authenticated: true, authRequired: true, requireEveryOpen: true))
     }
 }
+
+// F-147: in “Require Authentication on Every Open” mode the provider stays authenticated
+// after the first unlock of the launch, but each new password manager window prompts
+// again. The window must not show any accounts behind that prompt. Each window owns a
+// gate that says whether it may show account data; it opens only once this window’s
+// own authentication has succeeded, or when an earlier unlock may be reused.
+final class PasswordManagerOpenGateTests: XCTestCase {
+    private func makeProvider(center: NotificationCenter = NotificationCenter(),
+                              mode: PasswordManagerAuthenticationMode = .everyOpen) -> PasswordManagerDataSourceProvider {
+        return PasswordManagerDataSourceProvider(browser: true,
+                                                 screenLockNotificationCenter: center,
+                                                 authenticationMode: { mode })
+    }
+
+    func testEveryOpenAfterEarlierUnlockHidesAccountsUntilThisOpenAuthenticates() {
+        let provider = makeProvider()
+        provider.markAuthenticatedForTesting()  // unlocked earlier in this launch
+
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: false)
+
+        XCTAssertTrue(gate.needsAuthentication)
+        XCTAssertFalse(gate.unlocked, "accounts must not be shown behind the every-open prompt")
+
+        gate.authenticationDidComplete(true)
+
+        XCTAssertFalse(gate.needsAuthentication)
+        XCTAssertTrue(gate.unlocked)
+    }
+
+    func testEveryOpenFailedAuthenticationStaysLocked() {
+        let provider = makeProvider()
+        provider.markAuthenticatedForTesting()
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: false)
+
+        gate.authenticationDidComplete(false)
+
+        XCTAssertFalse(gate.unlocked)
+    }
+
+    func testReusableEarlierUnlockShowsAccountsImmediately() {
+        // Once per launch (with or without after-screen-locks), or authentication off:
+        // an earlier unlock is reused, so there is no prompt and nothing to hide.
+        let provider = makeProvider(mode: .oncePerLaunch)
+        provider.markAuthenticatedForTesting()
+
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: true)
+
+        XCTAssertFalse(gate.needsAuthentication)
+        XCTAssertTrue(gate.unlocked)
+    }
+
+    func testFirstOpenOfLaunchIsLockedUntilAuthenticated() {
+        let provider = makeProvider()
+
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: true)
+
+        XCTAssertTrue(gate.needsAuthentication)
+        XCTAssertFalse(gate.unlocked)
+
+        provider.markAuthenticatedForTesting()  // what a successful prompt does
+        gate.authenticationDidComplete(true)
+
+        XCTAssertTrue(gate.unlocked)
+    }
+
+    func testScreenLockLocksAnAuthenticatedWindow() {
+        // A screen lock revokes the provider's authentication; the window must not keep
+        // showing accounts on the strength of its own earlier success.
+        let center = NotificationCenter()
+        let provider = makeProvider(center: center)
+        provider.markAuthenticatedForTesting()
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: false)
+        gate.authenticationDidComplete(true)
+        XCTAssertTrue(gate.unlocked)
+
+        center.post(name: Notification.Name("com.apple.screenIsLocked"), object: nil)
+
+        XCTAssertFalse(gate.unlocked)
+    }
+}
