@@ -1321,3 +1321,8 @@ Bug Fixes:
   trigger written by hand in a Dynamic Profile,
   no longer makes iTerm2 crash when a session
   is created.
+- Stopping an AI chat reply while another chat
+  is also replying no longer cancels the other
+  chat’s reply, and the stopped reply now really
+  stops downloading instead of running (and
+  using up tokens) until it finishes.

@@ -8,10 +8,24 @@
 import Foundation
 import JavaScriptCore
 
+// Runs one plugin call. Make a new instance per call: cancel() stops only the
+// HTTP transfer this instance started, so concurrent requests (for example two
+// chats streaming at once) can be cancelled independently.
 class PluginClient {
-    static let instance = PluginClient()
     private var session: URLSession?
-    private let task = MutableAtomicObject<URLSessionDataTask?>(nil)
+    private struct State {
+        var task: URLSessionDataTask?
+        var cancelled = false
+    }
+    private let state = MutableAtomicObject(State())
+
+    // Test seam: URLProtocol classes to install on each request's session so
+    // unit tests can stand in for the network. Nothing in the app sets it.
+    private static let _protocolClassesForTesting = MutableAtomicObject<[AnyClass]?>(nil)
+    static var protocolClassesForTesting: [AnyClass]? {
+        get { _protocolClassesForTesting.value }
+        set { _protocolClassesForTesting.set(newValue) }
+    }
 
     private class HTTPStreamDelegate: NSObject, URLSessionDataDelegate {
         var receivedData = Data()
@@ -66,10 +80,12 @@ class PluginClient {
         }
     }
 
+    // Cancels this call's in-flight HTTP transfer, and any it would start later.
     func cancel() {
-        task.mutableAccess { currentTask in
-            currentTask?.cancel()
-            currentTask = nil
+        state.mutableAccess { state in
+            state.cancelled = true
+            state.task?.cancel()
+            state.task = nil
         }
     }
 
@@ -140,10 +156,13 @@ class PluginClient {
         // because using the pref there would kill long-but-healthy requests. See
         // issue #12995.
         config.timeoutIntervalForRequest = iTermPreferences.double(forKey: kPreferenceKeyAITimeout)
+        if let protocolClasses = Self.protocolClassesForTesting {
+            config.protocolClasses = protocolClasses
+        }
         let delegate = HTTPStreamDelegate { [weak self] first, second in
             if second != nil {
-                self?.task.mutableAccess { currentTask in
-                    currentTask = nil
+                self?.state.mutableAccess { state in
+                    state.task = nil
                 }
             }
             callback(first, second)
@@ -167,11 +186,20 @@ class PluginClient {
                              delegate: delegate,
                              delegateQueue: nil)
         let newTask = session?.dataTask(with: request)
-        task.mutableAccess { currentTask in
-            currentTask = newTask
+        let cancelled = state.mutableAccess { state in
+            if !state.cancelled {
+                state.task = newTask
+            }
+            return state.cancelled
         }
-        DLog("resume session")
-        newTask?.resume()
+        if cancelled {
+            // Cancelling reports the error to the delegate, which completes the call.
+            DLog("Not starting HTTP request: the call was cancelled")
+            newTask?.cancel()
+        } else {
+            DLog("resume session")
+            newTask?.resume()
+        }
     }
 
     private func registerFunctions(context: JSContext, stream: ((String) -> ())?) {
