@@ -224,6 +224,7 @@ NSString *const PTYSessionTerminatedNotification = @"PTYSessionTerminatedNotific
 NSString *const PTYSessionRevivedNotification = @"PTYSessionRevivedNotification";
 NSString *const PTYSessionExitedDidChangeNotification = @"PTYSessionExitedDidChangeNotification";
 NSString *const iTermSessionWillTerminateNotification = @"iTermSessionDidTerminate";
+NSString *const iTermSessionWillTerminateWasTmuxClientKey = @"wasTmuxClient";
 NSString *const PTYSessionDidResizeNotification = @"PTYSessionDidResizeNotification";
 NSString *const PTYSessionDidDealloc = @"PTYSessionDidDealloc";
 NSNotificationName const PTYCommandDidExitNotification = @"PTYCommandDidExitNotification";
@@ -3968,6 +3969,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
     RLog(@"terminate called from %@", [NSThread callStackSymbols]);
+    // tmuxMode is cleared below, before observers are notified.
+    const BOOL wasTmuxClient = (self.tmuxMode == TMUX_CLIENT);
     [self forgetAITitleState];
     if (self.isBrowserSession) {
         [self terminateBrowser];
@@ -4053,7 +4056,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self clearTabStatus];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionWillTerminateNotification
-                                                        object:self];
+                                                        object:self
+                                                      userInfo:@{ iTermSessionWillTerminateWasTmuxClientKey: @(wasTmuxClient) }];
     [_delegate removeSession:self];
 
     _screen.delegate = nil;
