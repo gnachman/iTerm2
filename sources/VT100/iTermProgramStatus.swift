@@ -1041,6 +1041,10 @@ final class ProgramStatusNotifier: NSObject {
     // Held descriptions, in the order their records first changed.
     private var pendingKeys = [String]()
     private var pending = [String: String]()
+    // Whether a postPending timer is outstanding. Tracked apart from pending
+    // because retainPending can empty pending while the timer is still due,
+    // and a second timer for the same deadline would post twice at once.
+    private var timerScheduled = false
 
     /// - Parameters:
     ///   - schedule: Runs a block after a delay in seconds.
@@ -1072,19 +1076,19 @@ final class ProgramStatusNotifier: NSObject {
     @objc(notifyForKey:description:)
     func notify(key: String, description: String) {
         let time = now()
-        if pending.isEmpty, lastPost.map({ time - $0 >= interval }) ?? true {
+        if !timerScheduled, lastPost.map({ time - $0 >= interval }) ?? true {
             lastPost = time
             post(description)
             return
         }
-        let alreadyScheduled = !pending.isEmpty
         if pending[key] == nil {
             pendingKeys.append(key)
         }
         pending[key] = description
-        guard !alreadyScheduled else {
+        guard !timerScheduled else {
             return
         }
+        timerScheduled = true
         let delay = max(0, (lastPost ?? time) + interval - time)
         schedule(delay) { [weak self] in
             self?.postPending()
@@ -1105,6 +1109,7 @@ final class ProgramStatusNotifier: NSObject {
     }
 
     private func postPending() {
+        timerScheduled = false
         let descriptions = pendingKeys.compactMap { pending[$0] }
         pendingKeys.removeAll()
         pending.removeAll()
