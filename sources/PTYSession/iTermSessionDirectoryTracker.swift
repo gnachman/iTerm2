@@ -66,7 +66,7 @@ private enum ArrangementKeys {
     static let lastDirectory = "Last Directory"
     static let lastLocalDirectory = "Last Local Directory"
     static let lastLocalDirectoryWasPushed = "Last Local Directory Was Pushed"
-    static let lastDirectoryIsRemote = "Last Directory Is Remote"  // Deprecated key for backward compat
+    static let lastDirectoryIsRemote = "Last Directory Is Remote"
     static let directories = "Directories"
     static let hosts = "Hosts"
     static let workingDirectoryPollerDisabled = "Working Directory Poller Disabled"
@@ -108,6 +108,17 @@ class iTermSessionDirectoryTracker: NSObject {
     /// Used when creating new local sessions to avoid using a remote path that was pushed
     /// via OSC 7 without a hostname (which looks local but isn't).
     @objc private(set) var polledLocalDirectory: String?
+
+    /// Whether lastDirectory is on a remote host (e.g., OSC 7 from a shell on the
+    /// other side of a plain ssh).
+    private var lastDirectoryIsRemote = false
+
+    /// The first valid poller result after lastDirectory became (or was again
+    /// reported as) remote. The poller reports the local login shell's cwd, which
+    /// cannot change while a foreground job like ssh runs. A later valid result that
+    /// differs means the local shell is back in the foreground and changed directory,
+    /// so the remote directory is no longer current.
+    private var polledDirectoryWhileRemote: String?
 
     /// The last remote host at the time of setting the current directory.
     @objc private(set) var lastRemoteHost: (any VT100RemoteHostReading)?
@@ -154,7 +165,7 @@ class iTermSessionDirectoryTracker: NSObject {
     func restoreFromArrangement(_ arrangement: [String: Any]) {
         lastDirectory = arrangement[ArrangementKeys.lastDirectory] as? String
 
-        // Handle backward compatibility with deprecated "Last Directory Is Remote" key
+        // Arrangements from before "Last Local Directory" existed rely on this key to tell whether lastDirectory is local.
         let isRemote = arrangement[ArrangementKeys.lastDirectoryIsRemote] as? Bool ?? false
         if !isRemote, let dir = lastDirectory {
             lastLocalDirectory = dir
@@ -163,6 +174,16 @@ class iTermSessionDirectoryTracker: NSObject {
         if let localDir = arrangement[ArrangementKeys.lastLocalDirectory] as? String {
             lastLocalDirectory = localDir
             lastLocalDirectoryWasPushed = arrangement[ArrangementKeys.lastLocalDirectoryWasPushed] as? Bool ?? false
+        }
+        if arrangement[ArrangementKeys.lastDirectoryIsRemote] != nil {
+            lastDirectoryIsRemote = isRemote && lastDirectory != nil
+        } else {
+            // Older builds did not save this. lastDirectory differing from an unpushed
+            // lastLocalDirectory almost always means it is remote.
+            lastDirectoryIsRemote = lastDirectory != nil &&
+                                    lastLocalDirectory != nil &&
+                                    !lastLocalDirectoryWasPushed &&
+                                    lastDirectory != lastLocalDirectory
         }
 
         shouldExpectCurrentDirUpdates = arrangement[ArrangementKeys.shouldExpectCurrentDirUpdates] as? Bool ?? false
@@ -196,6 +217,9 @@ class iTermSessionDirectoryTracker: NSObject {
         RLog("\(d(delegate)): Saving arrangement with lastDirectory of \(d(lastDirectory))");
         if let dir = lastDirectory {
             encoder.setObject(dir, forKey: ArrangementKeys.lastDirectory)
+            // Lets a restored session whose ssh job is still running keep its remote
+            // directory when the local cwd is polled.
+            encoder.setObject(NSNumber(value: lastDirectoryIsRemote), forKey: ArrangementKeys.lastDirectoryIsRemote)
         }
 
         if let localDir = lastLocalDirectory {
@@ -234,6 +258,8 @@ class iTermSessionDirectoryTracker: NSObject {
         }
 
         lastDirectory = directory
+        lastDirectoryIsRemote = remote
+        polledDirectoryWhileRemote = nil
 
         if !remote {
             if pushed || !lastLocalDirectoryWasPushed {
@@ -539,6 +565,25 @@ class iTermSessionDirectoryTracker: NSObject {
         delegate?.directoryTrackerDidUpdateCurrentDirectory(self, path: newPath)
     }
 
+    /// Decides whether a valid poller result that will not create a mark should
+    /// become the current directory. It must not replace a current remote directory
+    /// while the session is still ssh'ed somewhere.
+    private func polledDirectoryShouldBecomeCurrent(_ pwd: String) -> Bool {
+        guard lastDirectoryIsRemote else {
+            return pwd != lastDirectory
+        }
+        guard let baseline = polledDirectoryWhileRemote else {
+            DLog("\(d(delegate)): Recording \(pwd) as the local directory while remote")
+            polledDirectoryWhileRemote = pwd
+            return false
+        }
+        if baseline == pwd {
+            return false
+        }
+        DLog("\(d(delegate)): Local directory changed from \(baseline) to \(pwd) while remote, so the local shell is in the foreground")
+        return true
+    }
+
     private func useLocalDirectoryPollerResult() -> Bool {
         if workingDirectoryPollerDisabled {
             DLog("\(d(delegate)): Working directory poller disabled")
@@ -610,6 +655,12 @@ extension iTermSessionDirectoryTracker: iTermWorkingDirectoryPollerDelegate {
             // of session restoration.
             lastLocalDirectory = pwd
             lastLocalDirectoryWasPushed = false
+            if !invalidated, let pwd, polledDirectoryShouldBecomeCurrent(pwd) {
+                // The local shell, which has no shell integration, is in the foreground.
+                // Its directory is the current one. This updates the path variable.
+                setLastDirectory(pwd, remote: false, pushed: false)
+                return
+            }
             // Do not call setLastDirectory:remote:pushed: because there's no sense updating the path
             // variable for an invalidated update when we might have a better remote working directory.
             //
