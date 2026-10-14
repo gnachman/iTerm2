@@ -26,13 +26,18 @@ private final class FakeCockpitComposerDelegate: NSObject, @MainActor iTermMinim
         var command: String
         // What the cockpit would read from the composer when handling the send.
         var contents: NSAttributedString
+        var addNewline: Bool
+        var dismiss: Bool
     }
     weak var composer: iTermMinimalComposerViewController?
     var sends: [Send] = []
     var enqueues: [String] = []
 
     func minimalComposer(_ composer: iTermMinimalComposerViewController, sendCommand command: String, addNewline: Bool, dismiss: Bool) {
-        sends.append(Send(command: command, contents: composer.attributedStringValue))
+        sends.append(Send(command: command,
+                          contents: composer.attributedStringValue,
+                          addNewline: addNewline,
+                          dismiss: dismiss))
     }
     func minimalComposer(_ composer: iTermMinimalComposerViewController, enqueueCommand command: String, dismiss: Bool) {
         enqueues.append(command)
@@ -107,7 +112,7 @@ final class CockpitComposerSendEachTests: XCTestCase {
     }
 
     // Configure as the cockpit does and fill in "<chip> echo X".
-    private func fillLikeCockpit() {
+    private func fillLikeCockpit(command: String = " echo X") {
         composer.setComposerRichTextEnabled(true)
         let font = NSFont.systemFont(ofSize: 12)
         let contents = NSMutableAttributedString(
@@ -115,7 +120,7 @@ final class CockpitComposerSendEachTests: XCTestCase {
                                                                             displayName: "Target",
                                                                             font: font,
                                                                             color: .linkColor))
-        contents.append(NSAttributedString(string: " echo X", attributes: [.font: font]))
+        contents.append(NSAttributedString(string: command, attributes: [.font: font]))
         composer.replace(NSRange(location: 0, length: composer.attributedStringValue.length),
                          with: contents)
         textView.setSelectedRange(NSRange(location: (textView.string as NSString).length, length: 0))
@@ -197,5 +202,121 @@ final class CockpitComposerSendEachTests: XCTestCase {
         XCTAssertEqual(fakeDelegate.enqueues, ["echo X"])
         XCTAssertEqual(fakeDelegate.sends.count, 0)
         XCTAssertEqual(textView.string, "")
+    }
+
+    // MARK: - Sending a selection (QA finding F-239)
+
+    // With text selected, every send key sends just the selection. Two
+    // selections are one send, in document order, one per line. The
+    // composer contents (chip and unselected text) stay in place so the
+    // cockpit can read its targets and the user keeps the rest.
+    private func assertSendsSelections(_ modifiers: NSEvent.ModifierFlags,
+                                       file: StaticString = #filePath,
+                                       line: UInt = #line) throws {
+        fillLikeCockpit(command: " echo one; echo two; echo three")
+        let ns = textView.string as NSString
+        let one = ns.range(of: "echo one")
+        let three = ns.range(of: "echo three")
+        // Out of order on purpose: the send must still be in document order.
+        textView.setSelectedRanges([NSValue(range: three), NSValue(range: one)],
+                                   affinity: .downstream,
+                                   stillSelecting: false)
+        let before = composer.attributedStringValue
+
+        try pressReturn(modifiers)
+
+        XCTAssertEqual(fakeDelegate.enqueues, [], file: file, line: line)
+        XCTAssertEqual(fakeDelegate.sends.map(\.command), ["echo one\necho three"], file: file, line: line)
+        guard let send = fakeDelegate.sends.first else {
+            return
+        }
+        // A selection send: no newline, no dismissal.
+        XCTAssertFalse(send.addNewline, file: file, line: line)
+        XCTAssertFalse(send.dismiss, file: file, line: line)
+        XCTAssertEqual(chipGUIDs(in: send.contents), [guid], file: file, line: line)
+        XCTAssertEqual(composer.attributedStringValue.string, before.string, file: file, line: line)
+    }
+
+    func testShiftReturnSendsSelectionsAsOneCommand() throws {
+        try assertSendsSelections([.shift])
+    }
+
+    func testOptionShiftReturnSendsSelectionsAsOneCommand() throws {
+        try assertSendsSelections([.option, .shift])
+    }
+
+    func testOptionReturnSendsSelectionsAsOneCommand() throws {
+        try assertSendsSelections([.option])
+    }
+
+    // Outside the cockpit, Shift-Return with several selections still sends
+    // each selection separately.
+    func testShiftReturnSendsEachSelectionInPlainComposer() throws {
+        textView.string = "aa bb cc"
+        textView.setSelectedRanges([NSValue(range: NSRange(location: 0, length: 2)),
+                                    NSValue(range: NSRange(location: 6, length: 2))],
+                                   affinity: .downstream,
+                                   stillSelecting: false)
+        try pressReturn([.shift])
+        XCTAssertEqual(fakeDelegate.sends.map(\.command), ["aa\n", "cc"])
+    }
+
+    private func chipAndText(_ text: String) -> NSAttributedString {
+        let font = NSFont.systemFont(ofSize: 12)
+        let result = NSMutableAttributedString(
+            attributedString: ChatSessionMentionAttachment.attributedString(guid: guid,
+                                                                            displayName: "Target",
+                                                                            font: font,
+                                                                            color: .linkColor))
+        result.append(NSAttributedString(string: text, attributes: [.font: font]))
+        return result
+    }
+
+    // The cockpit's split of the composer into targets and command.
+    func testCockpitCommandIsWholeTypedTextWithoutSelection() {
+        let (chips, command) = CockpitWindowController.chipTokensAndCommand(in: chipAndText(" echo a; echo b "),
+                                                                            selectedText: nil)
+        XCTAssertEqual(chips, ["@" + guid])
+        XCTAssertEqual(command, "echo a; echo b")
+    }
+
+    func testCockpitCommandIsSelectionWithChipsFromWholeField() {
+        let (chips, command) = CockpitWindowController.chipTokensAndCommand(in: chipAndText(" echo a; echo b"),
+                                                                            selectedText: "echo b")
+        XCTAssertEqual(chips, ["@" + guid])
+        XCTAssertEqual(command, "echo b")
+    }
+
+    func testCockpitCommandDropsChipInsideSelection() {
+        let attributed = chipAndText(" echo a")
+        let (chips, command) = CockpitWindowController.chipTokensAndCommand(in: attributed,
+                                                                            selectedText: attributed.string)
+        XCTAssertEqual(chips, ["@" + guid])
+        XCTAssertEqual(command, "echo a")
+    }
+
+    func testCockpitSendRequestForSelection() {
+        XCTAssertEqual(CockpitWindowController.composerSendRequest(command: "echo b", addNewline: false, dismiss: false),
+                       .selection("echo b"))
+    }
+
+    func testCockpitSendRequestForWholeFieldAndCancel() {
+        XCTAssertEqual(CockpitWindowController.composerSendRequest(command: "echo b", addNewline: true, dismiss: true),
+                       .wholeField)
+        XCTAssertEqual(CockpitWindowController.composerSendRequest(command: "", addNewline: true, dismiss: true),
+                       .cancel)
+    }
+
+    func testCockpitKeepsFieldAfterSelectionSend() {
+        XCTAssertFalse(CockpitWindowController.clearsComposerAfterSend(selectedText: "echo b"))
+        XCTAssertTrue(CockpitWindowController.clearsComposerAfterSend(selectedText: nil))
+    }
+
+    // A combining mark right after a chip must not keep the chip's
+    // attachment character in the command.
+    func testCockpitCommandDropsChipFollowedByCombiningMark() {
+        let (_, command) = CockpitWindowController.chipTokensAndCommand(in: chipAndText("\u{301}echo a"),
+                                                                        selectedText: "\u{FFFC}\u{301}echo a")
+        XCTAssertFalse(command.unicodeScalars.contains("\u{FFFC}"))
     }
 }
