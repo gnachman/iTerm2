@@ -220,9 +220,11 @@ struct Plugin {
               cancellation: Cancellation) throws -> WebResponse {
         DLog("load \(webRequest)")
         let client = PluginClient()
-        // Runs at once if the request was already cancelled.
-        cancellation.impl = {
-            client.cancel()
+        // Runs at once if the request was already cancelled. The caller may
+        // keep the cancellation long after the request finishes, so it must not
+        // keep the client alive.
+        cancellation.impl = { [weak client] in
+            client?.cancel()
         }
         return try client.call(code: code,
                                functionName: "request",
