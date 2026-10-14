@@ -78,6 +78,10 @@ class CockpitWindowController: NSWindowController {
     // The targets each selected row contributed as of the last selection
     // change the user made, keyed by row identity.
     private var lastSelection: [CockpitRow.Identity: [String]] = [:]
+    // Tokens of composer chips that are there because the user selected
+    // their rows in the outline (as opposed to typing them). A click on
+    // another row replaces these even after their rows become hidden.
+    private var selectionChips: Set<String> = []
 
     // The AI chat's @-mention session picker, reused: a window > tab >
     // pane > peer outline with a live session preview, driven from the
@@ -1015,7 +1019,7 @@ class CockpitWindowController: NSWindowController {
     private func clearCommandView() {
         let chips = mentionChips(for: Self.composerTargets(existing: composerChipTargets(),
                                                            selected: selectedTargets(),
-                                                           releasable: releasableTokens()))
+                                                           releasable: releasableTokens(includingSelectionChips: false)))
         let length = composerVC.attributedStringValue.length
         isSyncingTargets = true
         composerVC.replace(NSRange(location: 0, length: length), with: chips)
@@ -1181,8 +1185,9 @@ class CockpitWindowController: NSWindowController {
         return out
     }
 
-    // Tokens whose chips a selection change may replace.
-    private func releasableTokens() -> Set<String> {
+    // Tokens whose chips a selection change may replace. Pass
+    // includingSelectionChips only for a selection change the user made.
+    private func releasableTokens(includingSelectionChips: Bool) -> Set<String> {
         var visibleRows: [(identity: CockpitRow.Identity, ownTokens: [String])] = []
         for index in 0..<outlineView.numberOfRows {
             guard let row = outlineView.item(atRow: index) as? CockpitRow else { continue }
@@ -1195,7 +1200,8 @@ class CockpitWindowController: NSWindowController {
         }
         return Self.releasableTokens(visibleRows: visibleRows,
                                      selected: capturedSelectedIdentities(),
-                                     lastSelection: lastSelection)
+                                     lastSelection: lastSelection,
+                                     selectionChips: includingSelectionChips ? selectionChips : [])
     }
 
     // Every target with its own row on screen (the user can see it and
@@ -1203,10 +1209,19 @@ class CockpitWindowController: NSWindowController {
     // rows that are still on screen but no longer selected (clicking away
     // from a collapsed workgroup releases its hidden sessions). A
     // previously selected row that is now hidden releases nothing: the
-    // user didn't deselect it, so its chip stays like any hidden chip.
+    // user didn't deselect it, so its chip stays like any hidden chip,
+    // unless it's in `selectionChips` (the chip came from a row the user
+    // selected) and the user replaced the selection: a click retargets.
+    // A replacement selects a row that wasn't selected before and either
+    // starts from nothing or drops a visible row that was. Removing rows
+    // (collapsing a group that holds selected rows) or adding to the
+    // selection (Cmd-click) replaces nothing. lastSelection can include
+    // rows a refresh hid since, which the user didn't drop, so only
+    // visible ones count.
     static func releasableTokens<ID: Hashable>(visibleRows: [(identity: ID, ownTokens: [String])],
                                                selected: Set<ID>,
-                                               lastSelection: [ID: [String]]) -> Set<String> {
+                                               lastSelection: [ID: [String]],
+                                               selectionChips: Set<String> = []) -> Set<String> {
         var result = Set<String>()
         var visible = Set<ID>()
         for row in visibleRows {
@@ -1217,7 +1232,22 @@ class CockpitWindowController: NSWindowController {
         where visible.contains(identity) && !selected.contains(identity) {
             result.formUnion(tokens)
         }
+        let previous = Set(lastSelection.keys).intersection(visible)
+        let gainedRow = !selected.isSubset(of: previous)
+        let isAddition = !previous.isEmpty && previous.isSubset(of: selected)
+        if gainedRow && !isAddition {
+            result.formUnion(selectionChips)
+        }
         return result
+    }
+
+    // The chips that came from the outline selection after a selection
+    // change the user made: earlier ones still in the composer plus the
+    // newly selected rows' chips. Typed chips never join.
+    static func selectionChipTokens(previous: Set<String>,
+                                    chips: [String],
+                                    selected: [String]) -> Set<String> {
+        return previous.intersection(chips).union(Set(selected).intersection(chips))
     }
 
     // Remember what each selected row contributed, so the next selection
@@ -1241,7 +1271,7 @@ class CockpitWindowController: NSWindowController {
         let chips = Set(existing.map { $0.token })
         let consistent = Self.composerTargets(existing: existing,
                                               selected: selectedTargets(),
-                                              releasable: releasableTokens())
+                                              releasable: releasableTokens(includingSelectionChips: false))
         guard chips != Set(consistent.map { $0.token }) else { return }
         let controller = iTermController.sharedInstance()
         var desired = IndexSet()
@@ -1278,7 +1308,7 @@ class CockpitWindowController: NSWindowController {
         let existing = composerChipTargets()
         let desired = Self.composerTargets(existing: existing,
                                            selected: selectedTargets(),
-                                           releasable: releasableTokens())
+                                           releasable: releasableTokens(includingSelectionChips: true))
         guard Set(desired.map { $0.token }) != Set(existing.map { $0.token }) else { return }
         isSyncingTargets = true
         setComposerMentions(desired)
@@ -1958,7 +1988,15 @@ extension CockpitWindowController: NSOutlineViewDataSource, NSOutlineViewDelegat
     func outlineViewSelectionDidChange(_ notification: Notification) {
         updateNotifyToolbarItem()
         guard !isRefreshingOutline else { return }
+        // isSyncingTargets is set when typing a chip selected the row;
+        // only a selection the user made marks chips as selection chips.
+        let userChangedSelection = !isSyncingTargets
         syncComposerFromSelection()
+        if userChangedSelection {
+            selectionChips = Self.selectionChipTokens(previous: selectionChips,
+                                                      chips: composerChipTargets().map { $0.token },
+                                                      selected: selectedTargets().map { $0.token })
+        }
         rememberSelection()
     }
 
@@ -2958,6 +2996,9 @@ extension CockpitWindowController: iTermMinimalComposerViewControllerDelegate {
     // routed to the first at-mentioned run.
     func minimalComposerTextDidChange(_ composer: iTermMinimalComposerViewController) {
         updateMentionPicker()
+        // A chip the user deleted is no longer a selection chip, so typing
+        // it again later makes it a typed chip.
+        selectionChips.formIntersection(composerChipTargets().map { $0.token })
         syncSelectionFromComposer()
     }
 
