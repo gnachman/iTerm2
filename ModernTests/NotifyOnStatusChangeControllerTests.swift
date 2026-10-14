@@ -202,7 +202,7 @@ final class NotifyOnStatusChangeControllerTests: XCTestCase {
             session.screenSetTabStatus(VT100TabStatusUpdate.clear)
             XCTAssertNil(SessionStatusController.instance.statuses[guid])
         }
-        session.screenReportProgramStatus(ProgramStatusReport.parse("state=done")!)
+        session.screenReportProgramStatusReports([ProgramStatusReport.parse("state=done")!])
         XCTAssertEqual(SessionStatusController.instance.statuses[guid]?.statusText, "done")
 
         let window = windowGuid
@@ -232,7 +232,7 @@ final class NotifyOnStatusChangeControllerTests: XCTestCase {
         XCTAssertTrue(controller.isWindowArmed(forGuid: windowGuid))
         XCTAssertTrue(controller.isSessionArmed(forGuid: guid))
 
-        session.screenReportProgramStatus(ProgramStatusReport.parse("state=working")!)
+        session.screenReportProgramStatusReports([ProgramStatusReport.parse("state=working")!])
         controller.flush()
         XCTAssertEqual(alerts, [Alert(session: guid, from: "idle", to: "working")])
         XCTAssertFalse(controller.isWindowArmed(forGuid: windowGuid))

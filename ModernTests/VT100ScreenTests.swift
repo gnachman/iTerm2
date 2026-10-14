@@ -1989,8 +1989,14 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     /// gate test can assert the warning path was taken.
     var didWarnOSC7Disabled = false
 
-    /// OSC 7501 reports delivered via screenReportProgramStatus, in order.
+    /// OSC 7501 reports delivered via screenReportProgramStatusReports, in order.
     var programStatusReports = [ProgramStatusReport]()
+
+    /// Times OSC 7501 reports were delivered, however many each delivery held.
+    var programStatusDeliveries = 0
+
+    /// OSC 7501 reports and record removals, in the order they arrived.
+    var programStatusEvents = [String]()
 
     /// Times screenRemoveProgramStatusRecords fired (a full reset).
     var removeProgramStatusRecordsCount = 0
@@ -2124,8 +2130,10 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
-    func screenReportProgramStatus(_ report: ProgramStatusReport) {
-        programStatusReports.append(report)
+    func screenReportProgramStatusReports(_ reports: [ProgramStatusReport]) {
+        programStatusDeliveries += 1
+        programStatusReports.append(contentsOf: reports)
+        programStatusEvents.append(contentsOf: reports.map { "report \($0.state.rawValue)" })
     }
 
     func screenDidClearTabStatusForReset() {
@@ -2134,6 +2142,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     func screenRemoveProgramStatusRecords() {
         removeProgramStatusRecordsCount += 1
+        programStatusEvents.append("remove")
     }
 
     func screenProgressWasReset(withGeneration generation: Int) {

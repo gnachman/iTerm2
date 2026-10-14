@@ -564,8 +564,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 - (void)screenSetTabStatus:(VT100TabStatusUpdate * _Nonnull)status;
 
-// The program reported its status through OSC 7501.
-- (void)screenReportProgramStatus:(iTermProgramStatusReport * _Nonnull)report;
+// The program reported its status through OSC 7501. Reports that arrived
+// together are delivered together, in order, already coalesced (see
+// iTermProgramStatusReportBatch).
+- (void)screenReportProgramStatusReports:(NSArray<iTermProgramStatusReport *> * _Nonnull)reports
+    NS_SWIFT_NAME(screenReportProgramStatusReports(_:));
 
 // A reset cleared the tab status. OSC 7501 records survive every reset but RIS
 // (see screenRemoveProgramStatusRecords), so they are shown again.
