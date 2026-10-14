@@ -43,6 +43,9 @@ extern NSString *const PTYSessionRevivedNotification;
 // Posted when a session's exited state changes (its process died, or Restart Session started a new one).
 extern NSString *const PTYSessionExitedDidChangeNotification;
 extern NSString *const iTermSessionWillTerminateNotification;
+// userInfo key of iTermSessionWillTerminateNotification: NSNumber BOOL, whether
+// the session was a tmux client. -terminate clears tmuxMode before posting.
+extern NSString *const iTermSessionWillTerminateWasTmuxClientKey;
 extern NSString *const PTYSessionDidResizeNotification;
 extern NSString *const PTYSessionDidDealloc;
 extern NSNotificationName const PTYCommandDidExitNotification;

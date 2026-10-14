@@ -839,6 +839,11 @@ Bug Fixes:
   did not update its label after you changed
   the setting, and re-clicking it appeared to
   do nothing.
+- Fixed a bug where quitting iTerm2 unlinked
+  each AI chat from its terminal session and
+  canceled what the chat was watching, even
+  when window restoration brought the session
+  back at the next launch.
 - Fixed a bug where a subparameter written
   after a full CSI parameter list was
   dropped even though it belonged to a

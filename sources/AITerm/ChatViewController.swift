@@ -249,6 +249,14 @@ class ChatViewController: NSViewController {
         guard let session = notif.object as? PTYSession else {
             return
         }
+        // Quitting with window restoration on closes every window, but the
+        // session comes back at the next launch with the same stableID, so
+        // keep the terminal or browser link (and the watches and timers this
+        // chat registered).
+        if SessionQuitRestoration.sessionWillBeRestoredAfterQuit(notif) {
+            DLog("Session \(session.stableID) terminating for a restorable quit; keeping chat link")
+            return
+        }
         // The binding may be stored as either the session's stableID (new or
         // backfilled) or its legacy guid; match on either.
         let ids: Set<String> = [session.stableID, session.guid]
