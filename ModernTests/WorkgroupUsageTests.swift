@@ -454,4 +454,39 @@ final class WorkgroupUsageTests: XCTestCase {
         XCTAssertEqual(report.bars.count, 1)
         XCTAssertEqual(try XCTUnwrap(report.bars.first).fraction, 0.42, accuracy: 1e-6)
     }
+
+    // MARK: - Runaway commands (QA findings F-116, F-117)
+
+    private func runCommandOffMain(arguments: [String],
+                                   timeout: TimeInterval,
+                                   deadline: TimeInterval) -> Data? {
+        let done = expectation(description: "runCommand returned")
+        var result: Data?
+        DispatchQueue.global().async {
+            result = WorkgroupUsageToolbarItem.runCommand(launchPath: "/bin/sh",
+                                                          arguments: arguments,
+                                                          environment: ProcessInfo.processInfo.environment,
+                                                          timeout: timeout)
+            done.fulfill()
+        }
+        wait(for: [done], timeout: deadline)
+        return result
+    }
+
+    // A command that floods stdout stops at the 1 MiB cap instead of
+    // running until the timeout.
+    func test_runCommand_floodingCommandStopsAtCap() {
+        let data = runCommandOffMain(arguments: ["-c", "/usr/bin/yes"],
+                                     timeout: 35,
+                                     deadline: 30)
+        XCTAssertEqual(data?.count, 1024 * 1024)
+    }
+
+    // The timeout kills the whole command, including a child that keeps
+    // stdout open after its parent dies.
+    func test_runCommand_timeoutKillsChildHoldingStdout() {
+        _ = runCommandOffMain(arguments: ["-c", "/bin/sleep 600; true"],
+                              timeout: 1,
+                              deadline: 30)
+    }
 }
