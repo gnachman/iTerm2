@@ -14,9 +14,19 @@ the literal Info.plist key names** (not symbolic keys). Xcode recognizes the
 `InfoPlist.xcstrings` filename and treats it as the Info.plist localization
 source - it's the String Catalog successor to `InfoPlist.strings`.
 
-Brand/version/license values (`CFBundleName` = "iTerm2", `CFBundleGetInfoString`,
-`NSHumanReadableCopyright` = "GPL v2") are intentionally left untranslated in the
-catalog; the OS falls back to the base plist value for those.
+Brand/license values (`CFBundleName` = "iTerm2", `NSHumanReadableCopyright` =
+"GPL v2") are constants, so every language carries the same value as the base
+plist.
+
+Version keys (`CFBundleGetInfoString`, and `CFBundleShortVersionString` /
+`CFBundleVersion` should they ever be extracted) must have **no** non-English
+localizations and must be marked `shouldTranslate: false`. The base plist's
+version is stamped in at build time, but a localized value is a frozen literal:
+it compiles into `<lang>.lproj/InfoPlist.strings` and overrides the real version
+(a release once showed "3.7.dev" in Get Info for every non-English UI). Without
+a localized value the OS falls back to the base plist. Note that
+`shouldTranslate: false` alone does not stop existing translations from being
+compiled; they must be removed too. `LocalizationHygieneTests` enforces this.
 
 ## How it works (no Info.plist edit required)
 
