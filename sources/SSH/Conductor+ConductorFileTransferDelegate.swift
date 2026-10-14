@@ -389,20 +389,18 @@ extension Conductor: ConductorFileTransferDelegate {
             } didTransfer: { count in
                 fileTransfer.didTransferBytes(UInt(count))
             }
-            // Find a good name
-            var proposedName = fileTransfer.path.path!
-            var remoteName: String?
-            for i in 0..<100 {
-                let info = try? await stat(proposedName)
+            // Find a good name. The claim keeps a concurrent upload of a file with the same name
+            // from choosing it too; it is released once the rename has put the file there.
+            let remoteName = try await uploadNameReservations.reserve(base: fileTransfer.path.path!) { proposedName in
+                let info = try? await self.stat(proposedName)
                 try checkCancellation()
-                if info == nil {
-                    remoteName = proposedName
-                    break
-                }
-                proposedName = fileTransfer.path.path + " (\(i + 2))"
+                return info != nil
             }
             guard let remoteName else {
                 throw ConductorFileTransfer.ConductorFileTransferError("Too many iterations to find a valid file name on remote host for upload")
+            }
+            defer {
+                uploadNameReservations.release(remoteName)
             }
             fileTransfer.remoteName = remoteName
             // Rename the tempfile to the proper name
