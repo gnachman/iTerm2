@@ -65,6 +65,8 @@ TOP-LEVEL keys
   AICustomHeaders ........................ auth headers (name/value, deep)
   AIManualModelConfigurations ............ custom endpoint "url" (+ name)
   AitermURL, AiProxy, AiModel, AIEconomyModelName  AI endpoint/model
+  AIOllamaRegularModel, AIOllamaEconomyModel  user-chosen Ollama model names
+                                           (may be custom/namespaced)
   AI Prompt* (11 keys), CodeciergeGhostRidingPrompt, CodeciergeRegularPrompt
                                            user-authored AI prompt templates
   PrefsCustomFolder, CustomScriptsFolder, DownloadsDirectory,
@@ -78,6 +80,7 @@ TOP-LEVEL keys
                                            (key removed, with its
                                            _selection/_SilenceUntil kin)
   NoSyncLoadURLAllowed_* ................. host in the key name (likewise)
+  PathToExecutable_* ..................... password-manager adapter path
   OnePasswordAccount, LastpassGroups ..... password-manager identifiers
   FakeFullyQualifiedDomainName, FakeBootSessionUUID, AlternateSSHIntegrationScript, SshSchemePath
   PasteSpecialRegex, PasteSpecialSubstitution
@@ -102,7 +105,8 @@ embedded in arrangements under Bookmark / Initial Profile)
 
 TRIGGERS (profile "Triggers")
   regex, contentregex, parameter (skipped for Highlight triggers whose
-  parameter encodes colors), eventParams.* (deep). Kept: action (class),
+  parameter encodes colors, and for Set Profile Setting triggers whose
+  parameter is a profile key plus 0/1), eventParams.* (deep). Kept: action (class),
   matchType, partial, disabled, performance, provenance.
 
 SMART SELECTION (profile "Smart Selection Rules")
@@ -156,6 +160,19 @@ JSON_V = "json"     # value is JSON (bytes/str): decode, recurse, re-encode
 
 # Trigger subclasses whose "parameter" encodes colors, not private text.
 HIGHLIGHT_ACTIONS = {"HighlightTrigger", "iTermHighlightLineTrigger"}
+
+# Set Profile Setting trigger: "parameter" is "<profile key>\x01<0|1>", which
+# names a built-in profile setting and holds no private text. Only kept when it
+# has exactly that shape; anything else is redacted as usual.
+SET_PROFILE_BOOLEAN_ACTION = "iTermSetProfileBooleanTrigger"
+
+
+def is_profile_boolean_parameter(value):
+    if not isinstance(value, str):
+        return False
+    parts = value.split("\x01")
+    return len(parts) == 2 and parts[0] != "" and parts[1] in ("0", "1")
+
 
 # Keys whose *values* are always private content. Matched by exact key name
 # anywhere in the tree (values only; dict keys are never matched), so nested
@@ -266,6 +283,9 @@ CONTENT_KEYS = {
     "Browser Target": REDACT_V,
     "Browser State": REMOVE,
     "AitermURL": REDACT_V,
+    # User-chosen Ollama model names (locally created/namespaced models).
+    "AIOllamaRegularModel": REDACT_V,
+    "AIOllamaEconomyModel": REDACT_V,
     "AiProxy": REDACT_V,
     "FakeFullyQualifiedDomainName": REDACT_V,
     "FakeBootSessionUUID": REDACT_V,
@@ -355,6 +375,7 @@ LABEL_KEYS = {
 # scrubs the string-valued push token / paired id / relay origin.
 PREFIX_CONTENT = [
     ("PathToDatabase_", REDACT_V),
+    ("PathToExecutable_", REDACT_V),   # adapter path; contains the user name
     ("NoSyncCompanion", REDACT_V),
     ("NoSyncSavePanelSavedSettings_", None),  # None => recurse (hits InitialDirectory)
     # The key name itself holds the site, so the whole key goes.
@@ -440,6 +461,12 @@ def scrub(obj, aggressive, report, path):
             if (key == "parameter" and action == REDACT_V and
                     isinstance(obj.get("action"), str) and
                     obj["action"] in HIGHLIGHT_ACTIONS):
+                continue
+
+            # Preserve Set Profile Setting params (profile key + 0/1).
+            if (key == "parameter" and action == REDACT_V and
+                    obj.get("action") == SET_PROFILE_BOOLEAN_ACTION and
+                    is_profile_boolean_parameter(value)):
                 continue
 
             if action == REMOVE:
