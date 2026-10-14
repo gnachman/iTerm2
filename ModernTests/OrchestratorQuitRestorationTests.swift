@@ -74,9 +74,31 @@ final class OrchestratorQuitRestorationTests: XCTestCase {
         return dispatcher
     }
 
-    private func postWillTerminate(_ session: PTYSession) {
+    private func makeTmuxDispatcher(chatID: String,
+                                    session: PTYSession,
+                                    quitMayReattachTmuxSession: @escaping (Notification) -> Bool) -> OrchestratorDispatcher {
+        let ref = session.stableID
+        let dispatcher = OrchestratorDispatcher(chatID: chatID,
+                                                broker: broker,
+                                                typedInput: OrchestratorTypedInputStore(),
+                                                restorationGate: SessionRestorationGate(ready: true),
+                                                sessionLookup: { $0 == ref ? session : nil },
+                                                quitWillRestoreSessions: { _ in false },
+                                                quitMayReattachTmuxSession: quitMayReattachTmuxSession)
+        addTeardownBlock { @MainActor in dispatcher.tearDown() }
+        return dispatcher
+    }
+
+    private func tmuxWatcher(id: String, sessionRef: String, tmuxPane: TmuxPaneIdentity?) -> WorkgroupWatcher {
+        var w = watcher(id: id, sessionRef: sessionRef)
+        w.tmuxPane = tmuxPane
+        return w
+    }
+
+    private func postWillTerminate(_ session: PTYSession, wasTmuxClient: Bool = false) {
         NotificationCenter.default.post(name: NSNotification.Name.iTermSessionWillTerminate,
-                                        object: session)
+                                        object: session,
+                                        userInfo: [iTermSessionWillTerminateWasTmuxClientKey: NSNumber(value: wasTmuxClient)])
         // The observer uses queue: .main. Posting on main delivers inline
         // today; draining the run loop once (no wall-clock wait) keeps the test
         // correct if delivery is ever queued instead.
@@ -134,6 +156,91 @@ final class OrchestratorQuitRestorationTests: XCTestCase {
         XCTAssertFalse(check(tmux: true, quitting: true, restore: true),
                        "tmux client sessions are not restored, so they unlink at quit")
         XCTAssertFalse(check(tmux: false, quitting: false, restore: false))
+    }
+
+    // A tmux client session is not restored, but after a quit that restores
+    // windows the restored gateway reattaches tmux and the pane comes back as
+    // a new session. An orchestration chat's watch that recorded the pane's
+    // tmux identity is re-bound to it at the next launch (F-126), so the quit
+    // must keep it rather than drop it and wake the agent. A watch on the same
+    // pane with no tmux identity can't be re-bound, so it is still dropped.
+    func testRestoringQuitKeepsOrchestrationWatchWithTmuxIdentity() throws {
+        let session = try XCTUnwrap(PTYSession(synthetic: false))
+        let pane = TmuxPaneIdentity(tmuxSessionGUID: "tmux-session-A", pane: 3)
+        try listModel.setWatchers([tmuxWatcher(id: "tmux", sessionRef: session.stableID, tmuxPane: pane),
+                                   tmuxWatcher(id: "plain", sessionRef: session.stableID, tmuxPane: nil)],
+                                  forChatID: chatID)
+        _ = makeTmuxDispatcher(chatID: chatID, session: session) { ($0.object as? PTYSession) === session }
+
+        postWillTerminate(session, wasTmuxClient: true)
+
+        XCTAssertEqual(persistedWatcherIDs(), ["tmux"],
+                       "a watch with a tmux identity must survive a restoring quit so it can be re-bound at launch")
+        XCTAssertEqual(listModel.watchers(forChatID: chatID).first?.tmuxPane, pane)
+        XCTAssertEqual(watcherEvents.map(\.watcherID), ["plain"],
+                       "only the watch that can't be re-bound is reported dropped")
+    }
+
+    // Control: closing a tmux pane while the app keeps running is a real
+    // close, so even a watch with a tmux identity is dropped and reported.
+    func testTmuxPaneCloseWithoutQuitStillDropsWatchWithTmuxIdentity() throws {
+        let session = try XCTUnwrap(PTYSession(synthetic: false))
+        let pane = TmuxPaneIdentity(tmuxSessionGUID: "tmux-session-A", pane: 3)
+        try listModel.setWatchers([tmuxWatcher(id: "tmux", sessionRef: session.stableID, tmuxPane: pane)],
+                                  forChatID: chatID)
+        _ = makeTmuxDispatcher(chatID: chatID, session: session) { _ in false }
+
+        postWillTerminate(session, wasTmuxClient: true)
+
+        XCTAssertEqual(persistedWatcherIDs(), [])
+        XCTAssertEqual(watcherEvents.map(\.watcherID), ["tmux"])
+        XCTAssertEqual(watcherEvents.first?.reason, .watcherDropped)
+    }
+
+    // A session-bound chat's watches are never re-bound to a reattached pane
+    // (its link still names the old pane session), so a restoring quit drops
+    // them as before, even one that somehow carries a tmux identity.
+    func testRestoringQuitStillDropsSessionBoundChatsTmuxWatch() throws {
+        let boundChat = Chat(title: "bound", permissions: "")
+        try listModel.add(chat: boundChat)
+        var boundEvents = [StatusUpdate]()
+        let boundSubscription = broker.subscribe(chatID: boundChat.id, registrationProvider: nil) { update in
+            guard case let .delivery(message, _, _) = update,
+                  case let .watcherEvent(payload) = message.content else {
+                return
+            }
+            MainActor.assumeIsolated {
+                boundEvents.append(payload)
+            }
+        }
+        defer { boundSubscription.unsubscribe() }
+        let session = try XCTUnwrap(PTYSession(synthetic: false))
+        let pane = TmuxPaneIdentity(tmuxSessionGUID: "tmux-session-A", pane: 3)
+        try listModel.setWatchers([tmuxWatcher(id: "tmux", sessionRef: session.stableID, tmuxPane: pane)],
+                                  forChatID: boundChat.id)
+        _ = makeTmuxDispatcher(chatID: boundChat.id, session: session) { ($0.object as? PTYSession) === session }
+
+        postWillTerminate(session, wasTmuxClient: true)
+
+        XCTAssertEqual(listModel.watchers(forChatID: boundChat.id).map(\.watcherID), [])
+        XCTAssertEqual(boundEvents.map(\.watcherID), ["tmux"])
+    }
+
+    // The predicate behind quitMayReattachTmuxSession: only a tmux client
+    // session terminating for a quit after which windows will be restored.
+    func testTmuxReattachPredicate() {
+        func check(tmux: Bool, quitting: Bool, restore: Bool) -> Bool {
+            SessionQuitRestoration.tmuxSessionMayReattach(isTmuxClient: tmux,
+                                                          applicationIsQuitting: quitting,
+                                                          willRestoreWindowsAtNextLaunch: restore)
+        }
+        XCTAssertTrue(check(tmux: true, quitting: true, restore: true))
+        XCTAssertFalse(check(tmux: true, quitting: false, restore: true),
+                       "closing a pane while the app keeps running is a real close")
+        XCTAssertFalse(check(tmux: true, quitting: true, restore: false),
+                       "a quit without restoration (including Option-Quit) is a real close")
+        XCTAssertFalse(check(tmux: false, quitting: true, restore: true),
+                       "a non-tmux session is covered by sessionWillBeRestored")
     }
 
     // -[PTYSession terminate] clears tmuxMode before it posts

@@ -413,7 +413,9 @@ final class SessionRestorationGate {
 // Windows” (Option-Quit) discards the saved state, which turns off
 // willRestoreWindowsAtNextLaunch, so it unlinks like a real close. tmux client
 // sessions are not saved for restoration (reattaching creates new sessions),
-// so their termination is always treated as a real close.
+// so a chat link to one is treated as a real close; only an orchestration
+// chat's watch that recorded the pane's tmux identity is kept (see
+// tmuxSessionMayReattachAfterQuit).
 enum SessionQuitRestoration {
     // Takes an iTermSessionWillTerminate notification.
     @MainActor
@@ -440,5 +442,27 @@ enum SessionQuitRestoration {
                                       applicationIsQuitting: Bool,
                                       willRestoreWindowsAtNextLaunch: Bool) -> Bool {
         return !isTmuxClient && applicationIsQuitting && willRestoreWindowsAtNextLaunch
+    }
+
+    // Whether a tmux client session is terminating for a quit after which
+    // windows will be restored. The session itself is not restored, but the
+    // restored gateway may reattach tmux, and then the pane comes back as a
+    // new session that a watch can be re-bound to by its tmux identity (see
+    // OrchestratorDispatcher.holdForTmuxReattach). Takes an
+    // iTermSessionWillTerminate notification.
+    @MainActor
+    static func tmuxSessionMayReattachAfterQuit(_ notification: Notification) -> Bool {
+        guard let controller = iTermController.sharedInstance() else {
+            return false
+        }
+        return tmuxSessionMayReattach(isTmuxClient: wasTmuxClient(notification),
+                                      applicationIsQuitting: controller.applicationIsQuitting,
+                                      willRestoreWindowsAtNextLaunch: controller.willRestoreWindowsAtNextLaunch)
+    }
+
+    static func tmuxSessionMayReattach(isTmuxClient: Bool,
+                                       applicationIsQuitting: Bool,
+                                       willRestoreWindowsAtNextLaunch: Bool) -> Bool {
+        return isTmuxClient && applicationIsQuitting && willRestoreWindowsAtNextLaunch
     }
 }
