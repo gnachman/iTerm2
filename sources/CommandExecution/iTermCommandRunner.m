@@ -197,6 +197,12 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
         self.terminateAfterLaunch = YES;
         int pid = _task.processIdentifier;
         if (pid) {
+            if (self.terminatesProcessGroup) {
+                // NSTask makes the command the leader of its own process group, so this
+                // also kills children it forked, which may be holding the output pipe open.
+                const int pgrc = killpg(pid, SIGKILL);
+                RLog(@"killpg -%@ %@ returned %@", @(SIGKILL), @(pid), @(pgrc));
+            }
             int rc = kill(pid, SIGKILL);
             RLog(@"kill -%@ %@ returned %@", @(SIGKILL), @(_task.processIdentifier), @(rc));
         } else {
@@ -301,11 +307,14 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
                      [[NSString alloc] initWithData:inData encoding:NSUTF8StringEncoding]);
             }
             DLog(@"runCommand: Reading");
-        }
-        @try {
-            inData = [readHandle availableData];
-        } @catch (NSException *e) {
-            inData = nil;
+            // Read inside the pool. -availableData returns an autoreleased object, and
+            // outside the pool every chunk would live until reading finished, so a command
+            // that floods output would grow memory without bound.
+            @try {
+                inData = [readHandle availableData];
+            } @catch (NSException *e) {
+                inData = nil;
+            }
         }
     }
 
@@ -449,6 +458,10 @@ static NSMutableArray<iTermBufferedCommandRunner *> *gCommandRunners;
     if (_maximumOutputSize && _output.length > _maximumOutputSize.unsignedIntegerValue) {
         _output.length = _maximumOutputSize.unsignedIntegerValue;
         _truncated = YES;
+        if (self.terminateWhenOutputExceedsMaximum) {
+            RLog(@"%@ exceeded maximum output size %@; terminating", self, _maximumOutputSize);
+            [self terminate];
+        }
     }
 }
 

@@ -485,6 +485,12 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
         // Bound captured output so a runaway custom command can't grow
         // memory unbounded (1 MiB dwarfs any real usage JSON).
         runner.maximumOutputSize = NSNumber(value: 1024 * 1024)
+        // Output past the cap can't be valid JSON, so stop the command there instead of
+        // reading until the timeout.
+        runner.terminateWhenOutputExceedsMaximum = true
+        // A timeout (or the cap) kills the command's children too, so one left holding
+        // stdout open can't keep the run going until it exits on its own.
+        runner.terminatesProcessGroup = true
         return runner
     }
 
