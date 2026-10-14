@@ -70,6 +70,14 @@ class CockpitWindowController: NSWindowController {
     // Guards the two-way binding between composer @-mention chips and
     // outline row selection so an update in one doesn't bounce back.
     private var isSyncingTargets = false
+    // True while refresh() rebuilds the outline. Moving a selected row
+    // between groups clears and restores its selection; those transient
+    // selection changes must not rewrite the composer (that moved the
+    // caret to the end while the user typed).
+    private var isRefreshingOutline = false
+    // The targets each selected row contributed as of the last selection
+    // change the user made, keyed by row identity.
+    private var lastSelection: [CockpitRow.Identity: [String]] = [:]
 
     // The AI chat's @-mention session picker, reused: a window > tab >
     // pane > peer outline with a live session preview, driven from the
@@ -1002,9 +1010,12 @@ class CockpitWindowController: NSWindowController {
 
     // After a send, drop the command text but keep the mention chips
     // (the row selection persists, so the two stay in sync and you can
-    // fire again at the same targets without re-picking them).
+    // fire again at the same targets without re-picking them). Chips for
+    // rows that are hidden stay too, like they do on a click.
     private func clearCommandView() {
-        let chips = mentionChips(for: selectedTargets())
+        let chips = mentionChips(for: Self.composerTargets(existing: composerChipTargets(),
+                                                           selected: selectedTargets(),
+                                                           releasable: releasableTokens()))
         let length = composerVC.attributedStringValue.length
         isSyncingTargets = true
         composerVC.replace(NSRange(location: 0, length: length), with: chips)
@@ -1114,68 +1125,124 @@ class CockpitWindowController: NSWindowController {
 
     // MARK: - Two-way binding: composer @-mentions <-> row selection
 
-    // The sessions currently @-mentioned as chips in the composer, in
-    // document order, deduped.
-    // The target tokens currently @-mentioned as chips (the chip guid,
-    // e.g. a session stableID, "tab:<uid>", or "win:<guid>"), in
-    // document order, deduped.
-    private func composerTokens() -> [String] {
-        let attr = composerVC.attributedStringValue
-        var tokens: [String] = []
-        var seen = Set<String>()
-        attr.enumerateAttribute(.attachment,
-                                in: NSRange(location: 0, length: attr.length)) { value, _, _ in
-            if let mention = value as? ChatSessionMentionAttachment, seen.insert(mention.guid).inserted {
-                tokens.append(mention.guid)
-            }
-        }
-        return tokens
-    }
-
     // The (token, display name) targets for the current row selection. A
     // window or tab row is a single container target; a session row is a
     // session target; a status/workgroup group expands to its sessions.
     private func selectedTargets() -> [(token: String, name: String)] {
-        let controller = iTermController.sharedInstance()
         var out: [(token: String, name: String)] = []
         var seen = Set<String>()
-        func add(_ token: String, _ name: String) {
-            if seen.insert(token).inserted {
-                out.append((token, name))
-            }
-        }
         for index in outlineView.selectedRowIndexes {
             guard let row = outlineView.item(atRow: index) as? CockpitRow else { continue }
-            switch row.kind {
-            case .window(let guid):
-                add("win:\(guid)", row.title)
-            case .tab(let uniqueId):
-                add("tab:\(uniqueId)", row.title)
-            case .session(let guid):
-                if let session = controller?.anySession(withGUID: guid) {
-                    add(session.stableID, ChatMentionDisplay.displayName(for: session))
-                }
-            case .group, .buriedRoot, .workgroup:
-                var guids: [String] = []
-                var innerSeen = Set<String>()
-                collectSessionGuids(row, into: &guids, seen: &innerSeen)
-                for guid in guids {
-                    if let session = controller?.anySession(withGUID: guid) {
-                        add(session.stableID, ChatMentionDisplay.displayName(for: session))
-                    }
-                }
+            for target in targets(for: row) where seen.insert(target.token).inserted {
+                out.append(target)
             }
         }
         return out
     }
 
+    // The (token, display name) targets one row stands for when selected.
+    private func targets(for row: CockpitRow) -> [(token: String, name: String)] {
+        let controller = iTermController.sharedInstance()
+        switch row.kind {
+        case .window(let guid):
+            return [("win:\(guid)", row.title)]
+        case .tab(let uniqueId):
+            return [("tab:\(uniqueId)", row.title)]
+        case .session(let guid):
+            guard let session = controller?.anySession(withGUID: guid) else {
+                return []
+            }
+            return [(session.stableID, ChatMentionDisplay.displayName(for: session))]
+        case .group, .buriedRoot, .workgroup:
+            var guids: [String] = []
+            var innerSeen = Set<String>()
+            collectSessionGuids(row, into: &guids, seen: &innerSeen)
+            return guids.compactMap { guid in
+                controller?.anySession(withGUID: guid).map {
+                    ($0.stableID, ChatMentionDisplay.displayName(for: $0))
+                }
+            }
+        }
+    }
+
+    // The composer's chips as (token, display name), in document order,
+    // deduped. The token is the chip guid, e.g. a session stableID,
+    // "tab:<uid>", or "win:<guid>".
+    private func composerChipTargets() -> [(token: String, name: String)] {
+        let attr = composerVC.attributedStringValue
+        var out: [(token: String, name: String)] = []
+        var seen = Set<String>()
+        attr.enumerateAttribute(.attachment,
+                                in: NSRange(location: 0, length: attr.length)) { value, _, _ in
+            if let mention = value as? ChatSessionMentionAttachment, seen.insert(mention.guid).inserted {
+                out.append((mention.guid, mention.displayName))
+            }
+        }
+        return out
+    }
+
+    // Tokens whose chips a selection change may replace.
+    private func releasableTokens() -> Set<String> {
+        var visibleRows: [(identity: CockpitRow.Identity, ownTokens: [String])] = []
+        for index in 0..<outlineView.numberOfRows {
+            guard let row = outlineView.item(atRow: index) as? CockpitRow else { continue }
+            switch row.kind {
+            case .window, .tab, .session:
+                visibleRows.append((row.identity, targets(for: row).map { $0.token }))
+            case .group, .buriedRoot, .workgroup:
+                visibleRows.append((row.identity, []))
+            }
+        }
+        return Self.releasableTokens(visibleRows: visibleRows,
+                                     selected: capturedSelectedIdentities(),
+                                     lastSelection: lastSelection)
+    }
+
+    // Every target with its own row on screen (the user can see it and
+    // chose not to select it), plus the targets of previously selected
+    // rows that are still on screen but no longer selected (clicking away
+    // from a collapsed workgroup releases its hidden sessions). A
+    // previously selected row that is now hidden releases nothing: the
+    // user didn't deselect it, so its chip stays like any hidden chip.
+    static func releasableTokens<ID: Hashable>(visibleRows: [(identity: ID, ownTokens: [String])],
+                                               selected: Set<ID>,
+                                               lastSelection: [ID: [String]]) -> Set<String> {
+        var result = Set<String>()
+        var visible = Set<ID>()
+        for row in visibleRows {
+            visible.insert(row.identity)
+            result.formUnion(row.ownTokens)
+        }
+        for (identity, tokens) in lastSelection
+        where visible.contains(identity) && !selected.contains(identity) {
+            result.formUnion(tokens)
+        }
+        return result
+    }
+
+    // Remember what each selected row contributed, so the next selection
+    // change knows which hidden chips came from a row the user deselected.
+    private func rememberSelection() {
+        var remembered: [CockpitRow.Identity: [String]] = [:]
+        for index in outlineView.selectedRowIndexes {
+            guard let row = outlineView.item(atRow: index) as? CockpitRow else { continue }
+            remembered[row.identity] = targets(for: row).map { $0.token }
+        }
+        lastSelection = remembered
+    }
+
     // Composer chips changed -> select the rows those targets name. Only
-    // acts when the target set actually differs, so a container-row
-    // selection whose expansion matches isn't needlessly rewritten.
+    // acts when the chips and the selection disagree, so a container-row
+    // selection whose expansion matches isn't needlessly rewritten, and a
+    // chip whose row is hidden doesn't count as a disagreement.
     fileprivate func syncSelectionFromComposer() {
         guard !isSyncingTargets else { return }
-        let chips = Set(composerTokens())
-        guard chips != Set(selectedTargets().map { $0.token }) else { return }
+        let existing = composerChipTargets()
+        let chips = Set(existing.map { $0.token })
+        let consistent = Self.composerTargets(existing: existing,
+                                              selected: selectedTargets(),
+                                              releasable: releasableTokens())
+        guard chips != Set(consistent.map { $0.token }) else { return }
         let controller = iTermController.sharedInstance()
         var desired = IndexSet()
         for row in 0..<outlineView.numberOfRows {
@@ -1201,16 +1268,62 @@ class CockpitWindowController: NSWindowController {
     }
 
     // Row selection changed -> rewrite the composer's chips to match,
-    // preserving the typed command. Only fires when the target set
-    // actually differs, so it never clobbers the command or caret on a
-    // no-op reselection.
+    // preserving the typed command. Chips the user couldn't have
+    // deselected (their rows are collapsed, filtered out, or not shown in
+    // this grouping) are kept. Only fires when the chip set actually
+    // differs, so it never clobbers the command or caret on a no-op
+    // reselection.
     fileprivate func syncComposerFromSelection() {
         guard !isSyncingTargets else { return }
-        let targets = selectedTargets()
-        guard Set(targets.map { $0.token }) != Set(composerTokens()) else { return }
+        let existing = composerChipTargets()
+        let desired = Self.composerTargets(existing: existing,
+                                           selected: selectedTargets(),
+                                           releasable: releasableTokens())
+        guard Set(desired.map { $0.token }) != Set(existing.map { $0.token }) else { return }
         isSyncingTargets = true
-        setComposerMentions(targets)
+        setComposerMentions(desired)
         isSyncingTargets = false
+    }
+
+    // After a refresh: the composer's chips minus any whose target no
+    // longer exists, or nil if every chip still resolves (the common
+    // case, which leaves the composer and its caret alone).
+    static func composerTargetsDroppingUnresolvable(
+        existing: [(token: String, name: String)],
+        isResolvable: (String) -> Bool) -> [(token: String, name: String)]? {
+        let kept = existing.filter { isResolvable($0.token) }
+        return kept.count == existing.count ? nil : kept
+    }
+
+    // A refresh doesn't rewrite the composer from the selection (rows
+    // moving between groups transiently lose it), but a chip for a
+    // session, tab, or window that went away is dropped so the next send
+    // doesn't fail on an unknown target.
+    fileprivate func dropComposerChipsForVanishedTargets() {
+        guard let desired = Self.composerTargetsDroppingUnresolvable(
+            existing: composerChipTargets(),
+            isResolvable: { token in
+                !sessions(forToken: "@" + token).isEmpty
+            }) else {
+            return
+        }
+        isSyncingTargets = true
+        setComposerMentions(desired)
+        isSyncingTargets = false
+    }
+
+    // The chips the composer should hold after the row selection changes.
+    // A click retargets: the selected rows' targets replace any chip in
+    // `releasable` (targets the user could see and didn't select). Other
+    // chips stay, ahead of the selection, in their original order.
+    static func composerTargets(existing: [(token: String, name: String)],
+                                selected: [(token: String, name: String)],
+                                releasable: Set<String>) -> [(token: String, name: String)] {
+        let selectedTokens = Set(selected.map { $0.token })
+        let kept = existing.filter {
+            !releasable.contains($0.token) && !selectedTokens.contains($0.token)
+        }
+        return kept + selected
     }
 
     // Replace the composer's contents with chips for `targets` (in
@@ -1844,7 +1957,9 @@ extension CockpitWindowController: NSOutlineViewDataSource, NSOutlineViewDelegat
 
     func outlineViewSelectionDidChange(_ notification: Notification) {
         updateNotifyToolbarItem()
+        guard !isRefreshingOutline else { return }
         syncComposerFromSelection()
+        rememberSelection()
     }
 
     func outlineView(_ outlineView: NSOutlineView,
@@ -1968,6 +2083,10 @@ extension CockpitWindowController {
         let oldRowCache = rowCache
         let previouslySelected = capturedSelectedIdentities()
         let previouslyExpanded = capturedExpandedIdentities()
+        isRefreshingOutline = true
+        defer {
+            isRefreshingOutline = false
+        }
         rebuildRows()
         let newShape = snapshotTreeShape(of: rootRows)
         applyDiff(from: oldShape,
@@ -1978,6 +2097,7 @@ extension CockpitWindowController {
                                        newShape: newShape,
                                        previouslyExpanded: previouslyExpanded)
         restoreSelection(previouslySelected: previouslySelected)
+        dropComposerChipsForVanishedTargets()
         updateStatusFilter()
         // With a filter active the surviving matches must be visible, so
         // expand every container (otherwise a collapsed window hides the
@@ -2362,7 +2482,8 @@ extension CockpitWindowController {
     // Backstop after diffable updates: covers the edge case where a
     // selected session row changes parent (state transition) within a
     // single refresh. NSOutlineView preserves selection for items that
-    // don't move, but a moveItem clears the row's selection state.
+    // don't move, but removing a row from one parent and inserting it
+    // under another (how applyDiff moves it) clears its selection.
     private func capturedSelectedIdentities() -> Set<CockpitRow.Identity> {
         var selected: Set<CockpitRow.Identity> = []
         for rowIndex in outlineView.selectedRowIndexes {
