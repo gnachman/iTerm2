@@ -126,6 +126,7 @@
 #import "iTermKeyLabels.h"
 #import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
+#import "iTermLSOF.h"
 #import "iTermLoggingHelper.h"
 #import "iTermMalloc.h"
 #import "iTermMetaFrustrationDetector.h"
@@ -23326,6 +23327,31 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (id<iTermSSHIdentityProvider>)directoryTrackerSSHIdentityProvider:(iTermSessionDirectoryTracker *)tracker {
     return _conductor;
+}
+
+// Reads the terminal's foreground process group fresh from the kernel (not the
+// rate-limited process cache) so it reflects ssh exiting right away.
+- (iTermSessionDirectoryTrackerForegroundJob)directoryTrackerForegroundJob:(iTermSessionDirectoryTracker *)tracker {
+    if (self.isTmuxClient || _exited) {
+        return iTermSessionDirectoryTrackerForegroundJobUnknown;
+    }
+    const pid_t rootPid = _shell.pid;
+    if (rootPid <= 0) {
+        return iTermSessionDirectoryTrackerForegroundJobUnknown;
+    }
+    const pid_t foregroundGroup = [iTermLSOF foregroundProcessGroupOfControllingTerminalOfProcess:rootPid];
+    if (foregroundGroup <= 0 || foregroundGroup == rootPid) {
+        return [iTermSessionDirectoryTracker classifyForegroundGroup:foregroundGroup rootPid:rootPid leaderParent:0 rootIsLogin:NO];
+    }
+    const pid_t leaderParent = [iTermLSOF ppidForPid:foregroundGroup];
+    const BOOL rootIsLogin = (leaderParent == rootPid &&
+                              [[iTermLSOF nameOfProcessWithPid:rootPid isForeground:NULL] isEqualToString:@"login"]);
+    DLog(@"Foreground process group of %@'s terminal is %@ with leader's parent %@, rootIsLogin=%@",
+         @(rootPid), @(foregroundGroup), @(leaderParent), @(rootIsLogin));
+    return [iTermSessionDirectoryTracker classifyForegroundGroup:foregroundGroup
+                                                         rootPid:rootPid
+                                                    leaderParent:leaderParent
+                                                     rootIsLogin:rootIsLogin];
 }
 
 - (void)directoryTracker:(iTermSessionDirectoryTracker *)tracker
