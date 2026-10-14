@@ -28,6 +28,9 @@ extern NSString *const kTmuxControllerSessionsWillChange;
 extern NSString *const kTmuxControllerSessionsDidChange;
 // Posted after detaching
 extern NSString *const kTmuxControllerDetachedNotification;
+// userInfo key in kTmuxControllerDetachedNotification: the detached tmux
+// session's @iterm2_id. Absent if it was never learned.
+extern NSString *const kTmuxControllerDetachedSessionGuidKey;
 // Posted when a window changes.
 extern NSString *const kTmuxControllerWindowsChangeNotification;
 // Posted when a window changes name

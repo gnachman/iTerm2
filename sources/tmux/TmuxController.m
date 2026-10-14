@@ -45,6 +45,7 @@
 NSString *const kTmuxControllerSessionsWillChange = @"kTmuxControllerSessionsWillChange";
 NSString *const kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
 NSString *const kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
+NSString *const kTmuxControllerDetachedSessionGuidKey = @"sessionGuid";
 NSString *const kTmuxControllerWindowsChangeNotification = @"kTmuxControllerWindowsChangeNotification";
 NSString *const kTmuxControllerWindowWasRenamed = @"kTmuxControllerWindowWasRenamed";
 NSString *const kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
@@ -1062,6 +1063,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)detach {
     RLog(@"%@: detach", self);
     _phonyCommandOutstanding = NO;
+    NSString *detachedSessionGuid = [_sessionGuid copy];
     self.sessionGuid = nil;
     [listSessionsTimer_ invalidate];
     listSessionsTimer_ = nil;
@@ -1079,7 +1081,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_when removeAllObjects];
     [_droppedOutputTracker reset];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDetachedNotification
-                                                        object:self];
+                                                        object:self
+                                                      userInfo:detachedSessionGuid ? @{ kTmuxControllerDetachedSessionGuidKey: detachedSessionGuid } : nil];
     [[TmuxControllerRegistry sharedInstance] setController:nil
                                                  forClient:self.clientName];
 }
