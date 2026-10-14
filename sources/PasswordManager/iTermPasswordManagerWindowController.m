@@ -121,6 +121,7 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     NSMenuItemValidation,
     NSMenuDelegate>
 @property (nonatomic, class, strong) NSArray<NSString *> *cachedCombinedAccountNames;
+@property (nonatomic, readonly) BOOL isUnlocked;
 @end
 
 @implementation iTermPasswordManagerWindowController {
@@ -174,6 +175,8 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     NSInteger _cancelCount;
     BOOL _awakeFromNibAvailabilityCheckFailed;
     iTermPasswordManagerReload _reloadPolicy;
+    // Whether this window may show account data, given its own authentication.
+    iTermPasswordManagerOpenGate *_openGate;
 
     @protected
     NSString *_accountNameToSelectAfterAuthentication;
@@ -323,7 +326,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 // so checkAvailability does not block the main thread. dataSource is the instance that was
 // warmed; the check runs against it rather than a possibly-changed currentDataSource.
 - (void)performInitialAvailabilityCheckForDataSource:(id<PasswordManagerDataSource>)dataSource {
-    if ([[self.class dataSourceProvider] authenticated] &&
+    if (self.isUnlocked &&
         ![dataSource checkAvailability]) {
         _awakeFromNibAvailabilityCheckFailed = YES;
         [self dataSourceDidBecomeUnavailable];
@@ -437,7 +440,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
-    if (self.dataSourceProvider.authenticated) {
+    if (self.isUnlocked) {
         [[self window] makeFirstResponder:_searchField];
     }
 }
@@ -510,7 +513,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
                 byExtendingSelection:NO];
         [_tableView scrollRowToVisible:index];
-    } else if (!self.dataSourceProvider.authenticated) {
+    } else if (!self.isUnlocked) {
         RLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
         _accountNameToSelectAfterAuthentication = [name copy];
     } else {
@@ -523,7 +526,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 #pragma mark - Keychain
 
 - (void)updateConfiguration {
-    if (self.dataSourceProvider.authenticated) {
+    if (self.isUnlocked) {
         [self reloadAccounts:^{}];
     }
 }
@@ -564,7 +567,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (IBAction)reloadItems:(id)sender {
-    if (!self.dataSourceProvider.authenticated) {
+    if (!self.isUnlocked) {
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -578,7 +581,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (IBAction)reloadItemsWithCompletion:(void (^)(void))completion {
-    if (!self.dataSourceProvider.authenticated) {
+    if (!self.isUnlocked) {
         completion();
         return;
     }
@@ -787,7 +790,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (IBAction)add:(id)sender {
-    if (!self.dataSourceProvider.authenticated) {
+    if (!self.isUnlocked) {
         return;
     }
     [self ensureNewAccountPanel];
@@ -1047,7 +1050,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (IBAction)remove:(id)sender {
-    if (self.dataSourceProvider.authenticated) {
+    if (self.isUnlocked) {
         NSInteger selectedRow = [_tableView selectedRow];
         if (selectedRow < 0 || selectedRow >= _entries.count) {
             return;
@@ -1304,7 +1307,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
 - (void)enterUsername {
     DLog(@"enterUserName");
-    if (!self.dataSourceProvider.authenticated) {
+    if (!self.isUnlocked) {
         return;
     }
     NSString *userName = [self selectedUserName];
@@ -1560,7 +1563,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (IBAction)appendOTP:(id)sender {
-    if (!self.dataSourceProvider.authenticated) {
+    if (!self.isUnlocked) {
         return;
     }
     id<PasswordManagerAccount> account = [self clickedAccount];
@@ -1749,7 +1752,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
-    if (!self.dataSourceProvider.authenticated) {
+    if (!self.isUnlocked) {
         return NO;
     }
     if (menuItem.action == @selector(selectAuthenticationMode:)) {
@@ -1801,7 +1804,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
         menuItem.state = [iTermUserDefaults shouldSendReturnAfterPassword] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     } else if (menuItem.action == @selector(switchAccount:)) {
-        return self.dataSourceProvider.authenticated && [[self currentDataSource] supportsMultipleAccounts];
+        return self.isUnlocked && [[self currentDataSource] supportsMultipleAccounts];
     }
     return YES;
 }
@@ -1838,17 +1841,29 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     return self.class.dataSource;
 }
 
+// The provider's authentication outlives this window, but in every-open mode it does not
+// count until this window's own prompt succeeds. Until then the window shows no accounts.
+- (BOOL)isUnlocked {
+    return _openGate.unlocked;
+}
+
 - (void)authenticate {
     DLog(@"Request auth if possible");
-    if (self.dataSourceProvider.authenticated && self.dataSourceProvider.mayReuseAuthenticationOnOpen) {
+    _openGate = [[iTermPasswordManagerOpenGate alloc] initWithProvider:self.dataSourceProvider];
+    if (!_openGate.needsAuthentication) {
         DLog(@"Already authenticated");
         return;
     }
 
     __weak __typeof(self) weakSelf = self;
     [self.dataSourceProvider requestAuthenticationIfNeeded:^(BOOL authenticated) {
-        [weakSelf authenticationDidComplete:authenticated];
+        [weakSelf openAuthenticationDidComplete:authenticated];
     }];
+}
+
+- (void)openAuthenticationDidComplete:(BOOL)success {
+    [_openGate authenticationDidComplete:success];
+    [self authenticationDidComplete:success];
 }
 
 - (void)authenticationDidComplete:(BOOL)success {
@@ -1901,7 +1916,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
 
 - (void)fetchPasswordForRow:(NSInteger)index completion:(void (^)(NSString *password, NSString *otp))completion {
     DLog(@"row=%@", @(index));
-    if (!self.dataSourceProvider.authenticated) {
+    if (!self.isUnlocked) {
         DLog(@"passwordForRow: return nil, not authenticated");
         completion(nil, nil);
         return;
@@ -1961,7 +1976,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
 
 - (NSString *)selectedUserName {
     DLog(@"selectedUserName");
-    if (!self.dataSourceProvider.authenticated) {
+    if (!self.isUnlocked) {
         DLog(@"selectedUserName: return nil, not authenticated");
         return nil;
     }
@@ -2055,7 +2070,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     }
 
     NSString *filter = [_searchField stringValue];
-    if (self.dataSourceProvider.authenticated) {
+    if (self.isUnlocked) {
         __weak __typeof(self) weakSelf = self;
         const NSInteger cancelCount = [self incrBusy];
         [self.class fetchAccountsWithWindow:self.window
@@ -2396,7 +2411,7 @@ static NSArray<NSString *> *gBrowserCachedCombinedAccountNames;
 }
 
 - (void)reallySelectAccountName:(NSString *)name {
-    if (!self.dataSourceProvider.authenticated) {
+    if (!self.isUnlocked) {
         RLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
         _accountNameToSelectAfterAuthentication = [name copy];
         return;
