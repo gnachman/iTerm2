@@ -2558,15 +2558,35 @@ final class OrchestratorDispatcher {
         RLog("[Orchestrator \(chatID)] Stop: cancelled \(ids.count) watcher(s)")
     }
 
-    // Cancel all of this chat's watchers without publishing status_updates.
+    // The watchers a chat keeps when it is unlinked from its terminal session.
+    // A timer targets no session (the register_timer contract), so it survives
+    // the unlink; every other watcher observed the now-detached session and is
+    // orphaned. Shared with OrchestratorClient's no-dispatcher unlink path.
+    static func watchersKeptOnUnlink(_ watchers: [WorkgroupWatcher]) -> [WorkgroupWatcher] {
+        return watchers.filter { $0.effectiveMode == .timer }
+    }
+
+    // Cancel this chat's session watchers without publishing status_updates.
     // Called when the chat is unlinked from its terminal session while staying
-    // session-bound: the watchers observed the now-detached session, so they're
-    // orphaned. Same teardown as Stop's cancel (pollers/timers dropped, the
-    // persisted set cleared). Public so OrchestratorClient can drive it from the
-    // unlink action.
+    // session-bound (including when the linked session closes): the watches
+    // observed the now-detached session, so they're orphaned. Timers target no
+    // session and stay armed. Public so OrchestratorClient can drive it from
+    // the unlink action.
     @MainActor
     func cancelWatchersOnUnlink() {
-        cancelAllWatchers()
+        let keptIDs = Set(Self.watchersKeptOnUnlink(watchers).map { $0.watcherID })
+        let ids = watchers.map { $0.watcherID }.filter { !keptIDs.contains($0) }
+        if !ids.isEmpty {
+            watchers.removeAll { !keptIDs.contains($0.watcherID) }
+            for id in ids {
+                removeWatcherAuxiliaries(watcherID: id)
+            }
+            // Transition history serves only session watches; timers never
+            // read it, and none of those remain.
+            sessionStateHistory.removeAll()
+            persistWatchers()
+            RLog("[Orchestrator \(chatID)] Unlink: cancelled \(ids.count) watcher(s), kept \(keptIDs.count) timer(s)")
+        }
         // An in-flight register_watch may be suspended on the "Allow repeated
         // screen reads?" consent prompt for the session we just unlinked. Its
         // Approve/Deny buttons grey out once the unlink notice becomes the last
