@@ -794,6 +794,12 @@ Bug Fixes:
   alongside the built-in header instead of
   replacing it, leaving it to chance which
   value the server saw.
+- Fixed a bug where turning on “Use AI to
+  check safety of commands before running
+  them” on a Mac without Apple Intelligence
+  was turned back off the first time you used
+  AI chat, which then asked whether to enable
+  it again.
 - Fixed Kitty keyboard protocol base-layout
   reporting for non-US keyboard layouts, so
   shortcuts such as Ctrl-C work without
