@@ -991,6 +991,12 @@ Bug Fixes:
   the link with a plain file that other users
   could read, and Claude Code stopped seeing
   edits to the original file. Issue 13098.
+- Installing or reinstalling the Claude Code
+  Integration no longer replaces a Claude Code
+  settings.json that has a syntax error, which
+  erased all your other Claude Code settings.
+  It now leaves the file alone and asks you to
+  fix it and try again.
 - Fixed a crash when a program wrote a hyperlink
   whose web address contained an emoji or other
   character outside the Basic Multilingual
