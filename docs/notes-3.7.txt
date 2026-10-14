@@ -366,6 +366,11 @@ Improvements:
   without an AI plugin or API key. Chat features
   appear disabled with an explanation until you
   turn AI on.
+- The Companion setup wizard no longer asks for
+  an API key when AI already works, or when you
+  chose a model manually in Settings > General >
+  AI. If that model isn’t set up yet, the wizard
+  says so and lets you finish setup anyway.
 - Reduced idle CPU usage that previously grew
   with the number of open windows.
 - AI command safety checks now prefer the cheaper
