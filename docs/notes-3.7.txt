@@ -925,6 +925,12 @@ Bug Fixes:
   in the popup, so choosing a provider
   other than the current default no longer
   stores the key under the wrong service.
+- Closing the Companion setup wizard while it
+  is installing now cancels setup. Before, it
+  kept going, asked for an administrator
+  password with no explanation, and reopened
+  the wizard if you declined. Cmd-W now closes
+  the wizard instead of a terminal session.
 - Pairing a companion iPhone no longer fails on
   networks that can’t reach iterm2.com. iTerm2
   now falls back to a second copy of its list

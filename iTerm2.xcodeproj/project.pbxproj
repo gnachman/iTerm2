@@ -4636,6 +4636,7 @@
 		C74DEE2C4422D9EDBB63D33C /* WorkgroupSessionSpawner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B21F806A265725167FCCDFC1 /* WorkgroupSessionSpawner.swift */; };
 		C7A0BDF06AF4B83133A0C70C /* WorkgroupAnimalNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67233FA25C3C82AA22B62E01 /* WorkgroupAnimalNames.swift */; };
 		C7CC0998A4F2C329BE664BE7 /* KittyDnDMachineID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B08D45562253462496DEB98 /* KittyDnDMachineID.swift */; };
+		C82D25B322F076F4733D63A3 /* CompanionWizardSetupRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A3BD454D03673DBD104FEA /* CompanionWizardSetupRunner.swift */; };
 		C830C051D65A5F7AD589177D /* AIModelCatalogUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6AA187B9B6E8DFF2E4B36AD /* AIModelCatalogUpdater.swift */; };
 		C8DAB5348C3301280CD32A94 /* AdapterShellEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB8A1FD1AA63330D3CF79D89 /* AdapterShellEnvironment.swift */; };
 		C959D018A0A3F0DE2FFFA2CF /* PasswordManagerOpenGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA093880EA513E77B6E0EAA7 /* PasswordManagerOpenGate.swift */; };
@@ -8740,6 +8741,7 @@
 		C4CF48AED76F97C523B1A9E6 /* StableSessionID.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StableSessionID.swift; sourceTree = "<group>"; };
 		C4DBA2DBB474781E178210D3 /* BuiltInFunctionSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BuiltInFunctionSession.swift; sourceTree = "<group>"; };
 		C553F420E05CA5C507043774 /* SessionNoteView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionNoteView.swift; sourceTree = "<group>"; };
+		C5A3BD454D03673DBD104FEA /* CompanionWizardSetupRunner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionWizardSetupRunner.swift; sourceTree = "<group>"; };
 		C5E1A0E13FB6B39D3EE2F02D /* iTermCorruptApplicationAlert.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermCorruptApplicationAlert.m; sourceTree = "<group>"; };
 		C606E59CAE46211246F7B63D /* ChatAgentConsoleLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatAgentConsoleLogger.swift; sourceTree = "<group>"; };
 		C6675EBA1C4FE96B0041173B /* iTermSelectorSwizzler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelectorSwizzler.h; sourceTree = "<group>"; };
@@ -9919,6 +9921,7 @@
 				3146990FC110717D81229DF3 /* CompanionLink.swift */,
 				137DB49C4B426A987FAB687D /* CompanionParkSupervisor.swift */,
 				F9D310EFB5D2480613883B7A /* CompanionMainThreadMonitor.swift */,
+				C5A3BD454D03673DBD104FEA /* CompanionWizardSetupRunner.swift */,
 			);
 			path = Companion;
 			sourceTree = "<group>";
@@ -20069,6 +20072,7 @@
 				0502659F6CBB57AA8D29AD3B /* PaneFocusFollowsMouse.swift in Sources */,
 				F148F6D5482B21DB6E8171C2 /* PaneFocusFollowsMouseAppEnvironment.swift in Sources */,
 				C959D018A0A3F0DE2FFFA2CF /* PasswordManagerOpenGate.swift in Sources */,
+				C82D25B322F076F4733D63A3 /* CompanionWizardSetupRunner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
