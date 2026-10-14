@@ -312,6 +312,15 @@
 }
 
 - (IBAction)performNaturalLanguageQuery:(id)sender {
+    // The Engage AI button is hidden when AI is unavailable, but Edit > Engage Artificial
+    // Intelligence and its key equivalent still come here. Explain why nothing happens and send
+    // nothing. A manually configured model can resolve a registration without ever consulting
+    // the gatekeeper, so this check can't be left to the request path. The menu item is left
+    // enabled on purpose so the user gets this explanation, as in 3.7.4.
+    if (![iTermAITermGatekeeper checkSilently:NO]) {
+        DLog(@"Engage AI in composer refused by the gatekeeper");
+        return;
+    }
     __weak __typeof(self) weakSelf = self;
 
     _aitermController = [[AITermControllerObjC alloc] initWithQuery:self.aiPrompt
