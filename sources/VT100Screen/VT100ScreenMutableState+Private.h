@@ -23,6 +23,8 @@ extern const int64_t VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed;
 
 @class iTermKittyImageDraw;
 @class iTermProgramStatusReportBatch;
+@class iTermTitleBatch;
+@class iTermTitleDirectoryFetch;
 
 @interface VT100ScreenMutableState()<
 PTYAnnotationDelegate,
@@ -51,6 +53,15 @@ iTermTriggerScopeProvider> {
     // The token executor's side effect serial just after the batch's side
     // effect was added.
     int64_t _programStatusBatchSideEffectSerial;
+    // The batch the next title change may join, if its side effect is still
+    // the last one added. Mutation thread only.
+    iTermTitleBatch *_titleBatch;
+    // The token executor's side effect serial just after the title batch's
+    // side effect was added.
+    int64_t _titleBatchSideEffectSerial;
+    // Whether the title batch's side effect was added with addSideEffect
+    // rather than deferred. A working directory request needs that.
+    BOOL _titleBatchIsImmediate;
     dispatch_queue_t _queue;
     PTYTriggerEvaluator *_triggerEvaluator;
     dispatch_group_t _tmuxGroup;
@@ -164,6 +175,17 @@ iTermTriggerScopeProvider> {
 
 - (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
                          name:(NSString *)name;
+
+// Main thread, in a side effect. Fetches the working directory once and
+// records it at each fetch's line, in order, as
+// setWorkingDirectory:onAbsLine:pushed:token: would for a nil directory.
+- (void)fetchWorkingDirectoryWithDelegate:(id<VT100ScreenDelegate>)delegate
+                                  fetches:(NSArray<iTermTitleDirectoryFetch *> *)fetches
+                                   pushed:(BOOL)pushed;
+
+// The screen line for an absolute line where setWorkingDirectory:onAbsLine:pushed:token:
+// may record a directory, or -1 if it may not.
+- (int)workingDirectoryLineForAbsLine:(long long)absLine;
 
 // Runs a side effect's block now, if there is a delegate. For a side effect
 // added straight to the token executor.

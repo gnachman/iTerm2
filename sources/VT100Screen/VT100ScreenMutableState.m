@@ -3923,6 +3923,41 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.hadCommand = haveCommand;
 }
 
+// Main thread, in a side effect. Asks the delegate for the working directory
+// once and then records it on the mutation queue, in order, at each fetch's
+// line, as if it had been passed to setWorkingDirectory:onAbsLine:pushed:token:.
+- (void)fetchWorkingDirectoryWithDelegate:(id<VT100ScreenDelegate>)delegate
+                                  fetches:(NSArray<iTermTitleDirectoryFetch *> *)fetches
+                                   pushed:(BOOL)pushed {
+    if (fetches.count == 0) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    DLog(@"%p: Performing async working directory fetch for %@", self, fetches);
+    dispatch_queue_t queue = _queue;
+    [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
+        DLog(@"%p: Async update got %@ for %@", weakSelf, path, fetches);
+        if (path) {
+            dispatch_async(queue, ^{
+                for (iTermTitleDirectoryFetch *fetch in fetches) {
+                    [weakSelf setWorkingDirectory:path onAbsLine:fetch.absLine pushed:pushed token:fetch.token];
+                }
+            });
+        }
+    }];
+}
+
+// The screen line for an absolute line where setWorkingDirectory:onAbsLine:pushed:token:
+// may record a directory, or -1 if it may not.
+- (int)workingDirectoryLineForAbsLine:(long long)absLine {
+    const long long bigLine = MAX(0, absLine - self.cumulativeScrollbackOverflow);
+    if (bigLine >= INT_MAX) {
+        DLog(@"suspiciously large line %@ from absLine %@ cumulative %@", @(bigLine), @(absLine), @(self.cumulativeScrollbackOverflow));
+        return -1;
+    }
+    return (int)bigLine;
+}
+
 // Adds a working directory mark at the given line.
 //
 // nil token means it was "strongly" pushed (e.g., CurrentDir=) and you oughtn't poll.
@@ -3940,25 +3975,17 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                      pushed:(BOOL)pushed
                       token:(id<iTermOrderedToken>)token {
     DLog(@"%p: setWorkingDirectory:%@ onLine:%lld token:%@", self, workingDirectory, absLine, token);
-    const long long bigLine = MAX(0, absLine - self.cumulativeScrollbackOverflow);
-    if (bigLine >= INT_MAX) {
-        DLog(@"suspiciously large line %@ from absLine %@ cumulative %@", @(bigLine), @(absLine), @(self.cumulativeScrollbackOverflow));
+    const int line = [self workingDirectoryLineForAbsLine:absLine];
+    if (line < 0) {
         return;
     }
-    const int line = bigLine;
     if (token && !workingDirectory) {
         __weak __typeof(self) weakSelf = self;
-        DLog(@"%p: Performing async working directory fetch for token %@", self, token);
-        dispatch_queue_t queue = _queue;
         [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-            [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
-                DLog(@"%p: Async update got %@ for token %@", weakSelf, path, token);
-                if (path) {
-                    dispatch_async(queue, ^{
-                        [weakSelf setWorkingDirectory:path onAbsLine:absLine pushed:pushed token:token];
-                    });
-                }
-            }];
+            [weakSelf fetchWorkingDirectoryWithDelegate:delegate
+                                                fetches:@[ [[iTermTitleDirectoryFetch alloc] initWithAbsLine:absLine
+                                                                                                       token:token] ]
+                                                 pushed:pushed];
         } name:@"set pwd 1"];
         return;
     }

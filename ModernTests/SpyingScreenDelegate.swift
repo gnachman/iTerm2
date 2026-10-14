@@ -117,9 +117,51 @@ class SpyingScreenDelegate: FakeSession {
         onCurrentHostDidChange?(host)
     }
 
+    /// Whether a program may set the window and icon titles. FakeSession
+    /// says no; the spy says yes so title tests can see them.
+    var allowTitleSetting = true
+
+    /// Window titles, icon names, subtitles, bells and title-driven working
+    /// directory requests, in the order they reached the delegate.
+    private(set) var titleEvents: [String] = []
+
+    /// Times screenSetWindowTitle fired.
+    var windowTitleCount: Int {
+        titleEvents.filter { $0.hasPrefix("window ") }.count
+    }
+
+    /// Times screenSetIconName fired.
+    var iconNameCount: Int {
+        titleEvents.filter { $0.hasPrefix("icon ") }.count
+    }
+
+    override func screenAllowTitleSetting() -> Bool {
+        allowTitleSetting
+    }
+
+    override func screenSetWindowTitle(_ title: String) {
+        titleEvents.append("window \(title)")
+    }
+
+    override func screenSetIconName(_ name: String) {
+        titleEvents.append("icon \(name)")
+    }
+
+    override func screenSetSubtitle(_ subtitle: String) {
+        titleEvents.append("subtitle \(subtitle)")
+    }
+
+    override func screenActivateBellAudibly(_ audibleBell: Bool,
+                                            visibly flashBell: Bool,
+                                            showIndicator showBellIndicator: Bool,
+                                            quell: Bool) {
+        titleEvents.append("bell")
+    }
+
     func reset() {
         getWorkingDirectoryCalls.removeAll()
         pollLocalDirectoryOnlyCalls.removeAll()
+        titleEvents.removeAll()
         logWorkingDirectoryCalls.removeAll()
         currentDirectoryDidChangeCalls.removeAll()
         promptDidStartCalls.removeAll()
@@ -135,11 +177,13 @@ class SpyingScreenDelegate: FakeSession {
 
     override func screenGetWorkingDirectory(completion: @escaping (String?) -> Void) {
         getWorkingDirectoryCalls.append(GetWorkingDirectoryCall())
+        titleEvents.append("pwd")
         completion(polledWorkingDirectory)
     }
 
     override func screenPollLocalDirectoryOnly() {
         pollLocalDirectoryOnlyCalls.append(PollLocalDirectoryOnlyCall())
+        titleEvents.append("poll local")
     }
 
     override func screenLogWorkingDirectory(onAbsoluteLine line: Int64,
