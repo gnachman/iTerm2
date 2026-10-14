@@ -546,6 +546,122 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         XCTAssertEqual(sessionPath, "/tmp/qa125")
     }
 
+    // MARK: - 5c. Exit from plain ssh to a local shell without shell integration (QA F-134)
+
+    // The poller reports the local login shell's cwd. It cannot change while ssh
+    // runs in the foreground, so a later different value means the local shell is
+    // back and has changed directory.
+    func testPollerResult_ChangesAfterRemotePush_UpdatesSessionPath() {
+        pushRemoteDirectory("/tmp/qa125")
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+
+        // `exit` from ssh, then `cd /usr` in the local shell.
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/usr", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/usr")
+        XCTAssertEqual(tracker.lastDirectory, "/usr")
+        XCTAssertEqual(tracker.lastLocalDirectory, "/usr")
+
+        // Later local cds keep updating the path.
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/etc", invalidated: false)
+        XCTAssertEqual(sessionPath, "/etc")
+        XCTAssertEqual(tracker.lastDirectory, "/etc")
+    }
+
+    func testPollerResult_RepeatedSameValueAfterRemotePush_DoesNotChangeSessionPath() {
+        pushRemoteDirectory("/tmp/qa125")
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+        XCTAssertEqual(tracker.lastDirectory, "/tmp/qa125")
+    }
+
+    // `cd /a && ssh host`: a poll result from before the cd is the last one seen
+    // before the remote push. The first poll after the push reports /a, which must
+    // not be mistaken for the local shell having changed directory.
+    func testPollerResult_FromBeforeRemotePush_IsNotTheBaseline() {
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/old", invalidated: false)
+        pushRemoteDirectory("/tmp/qa125")
+
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/a", invalidated: false)
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+
+        // A later remote push also resets the baseline.
+        pushRemoteDirectory("/tmp/qb")
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/b", invalidated: false)
+        XCTAssertEqual(sessionPath, "/tmp/qb")
+    }
+
+    func testInvalidatedPollerResult_ChangesAfterRemotePush_DoesNotChangeSessionPath() {
+        pushRemoteDirectory("/tmp/qa125")
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/usr", invalidated: true)
+
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+        XCTAssertEqual(tracker.lastDirectory, "/tmp/qa125")
+    }
+
+    // A session whose ssh job survives a relaunch (restored from a running server)
+    // must keep its remote path when the local cwd is polled.
+    func testRestoredRemoteDirectory_PollerResult_DoesNotChangeSessionPath() {
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        pushRemoteDirectory("/tmp/qa125")
+        let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
+        tracker.encodeArrangement(with: encoder)
+
+        let restored = iTermSessionDirectoryTracker(variablesScope: mockScope)
+        restored.delegate = mockDelegate
+        restored.restoreFromArrangement(encoder.mutableDictionary as! [String: Any])
+        mockScope.setValue("/tmp/qa125", forVariableNamed: iTermVariableKeySessionPath)
+
+        restored.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+        XCTAssertEqual(restored.lastDirectory, "/tmp/qa125")
+        XCTAssertEqual(restored.lastLocalDirectory, "/Users/local")
+
+        // The local shell changing directory still takes over.
+        restored.workingDirectoryPollerDidFindWorkingDirectory("/usr", invalidated: false)
+        XCTAssertEqual(sessionPath, "/usr")
+    }
+
+    // Arrangements from builds that did not write "Last Directory Is Remote".
+    func testRestoredLegacyRemoteDirectory_PollerResult_DoesNotChangeSessionPath() {
+        let arrangement: [String: Any] = [
+            "Last Directory": "/tmp/qa125",
+            "Last Local Directory": "/Users/local",
+            "Last Local Directory Was Pushed": false,
+            "Should Expect Current Dir Updates": true,
+            "Working Directory Poller Disabled": true,
+        ]
+        tracker.restoreFromArrangement(arrangement)
+        mockScope.setValue("/tmp/qa125", forVariableNamed: iTermVariableKeySessionPath)
+
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/usr", invalidated: false)
+        XCTAssertEqual(sessionPath, "/usr")
+    }
+
+    func testPollerResult_AfterLocalPush_DoesNotChangeSessionPath() {
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 1,
+                                          remoteHost: nil,
+                                          withDirectory: "/pushed",
+                                          pushType: .strongPush,
+                                          accepted: true)
+        tracker.screenDidChangeCurrentDirectory()
+
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/usr", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/pushed")
+        XCTAssertEqual(tracker.lastDirectory, "/pushed")
+    }
+
     // MARK: - 6. Screen Delegate Method Tests
 
     func testScreenLogWorkingDirectory_Pushed_RecordsHistory() {
