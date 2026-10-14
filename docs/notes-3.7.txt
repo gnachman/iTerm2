@@ -1355,3 +1355,10 @@ Bug Fixes:
   nothing you typed afterward appeared. It now
   ends the connection and returns to the local
   shell.
+- In an alert with a text field, such as the
+  one asking how many spaces to use when you
+  paste text with tabs, Cmd-A, Cmd-C, Cmd-V,
+  Cmd-X, and Cmd-Z now edit the text instead of
+  pressing a button. Also, two buttons in an
+  alert no longer share the same Cmd-key
+  shortcut.

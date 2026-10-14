@@ -590,14 +590,43 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
     }
 }
 
+// YES if `view` or a subview holds text the user can select or edit, such as a text field.
+static BOOL iTermWarningViewHasSelectableText(NSView *view) {
+    NSTextField *textField = [NSTextField castFrom:view];
+    if (textField.isSelectable) {
+        return YES;
+    }
+    NSTextView *textView = [NSTextView castFrom:view];
+    if (textView.isSelectable) {
+        return YES;
+    }
+    for (NSView *subview in view.subviews) {
+        if (iTermWarningViewHasSelectableText(subview)) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+// Gives each action that has no key equivalent yet a Cmd-<letter> shortcut taken from its label.
+// Letters already taken are skipped. When the accessory holds selectable or editable text, the
+// letters of the standard text editing commands (select all, copy, paste, cut, undo) are skipped
+// too, so those keys reach the text instead of pressing a button. An action's explicit key
+// equivalent is always kept.
 - (void)assignKeyEquivalents {
-    NSSet<NSString *> *assignedValues = [NSSet set];
+    NSMutableSet<NSString *> *assignedValues = [NSMutableSet set];
+    if (_accessory && iTermWarningViewHasSelectableText(_accessory)) {
+        [assignedValues addObjectsFromArray:@[ @"a", @"c", @"v", @"x", @"z" ]];
+    }
     for (iTermWarningAction *action in _warningActions) {
-        if (action.keyEquivalent) {
-            [assignedValues setByAddingObject:action.keyEquivalent];
+        if (action.keyEquivalent.length) {
+            [assignedValues addObject:action.keyEquivalent.lowercaseString];
         }
     }
     for (iTermWarningAction *action in _warningActions) {
+        if (action.keyEquivalent.length) {
+            continue;
+        }
         [action.label enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
             if (complexString.length > 1) {
                 return;
@@ -615,7 +644,7 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
                 return;
             }
             action.keyEquivalent = string;
-            [assignedValues setByAddingObject:string];
+            [assignedValues addObject:string];
             action.shortcutRange = range;
             *stop = YES;
         }];
