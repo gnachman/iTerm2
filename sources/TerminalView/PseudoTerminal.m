@@ -12736,7 +12736,9 @@ typedef struct {
 // tab belongs to a group the group is NOT moved as a unit: the tab slides within
 // the group until it reaches an edge, then a further move in that direction pops
 // it out of the group (membership -> nil) in place. Conversely an ungrouped tab
-// that would cross into an adjacent group joins that group in place. With no
+// that would cross into an adjacent group joins that group in place, unless the
+// group is across the pinned boundary (joining would change the tab's pinned
+// state), in which case the tab stays where it is. With no
 // groups this behaves exactly like the old single-tab swap (including wrap at the
 // ends). The membership decision and target order come from
 // iTermTabGroupOrdering.singleTabMove; -applyTabOrder: then canonicalizes so the
@@ -12757,10 +12759,13 @@ typedef struct {
     }
 
     NSMutableArray *groupIDs = [NSMutableArray arrayWithCapacity:tabs.count];
+    NSMutableArray<NSNumber *> *pinned = [NSMutableArray arrayWithCapacity:tabs.count];
     for (PTYTab *tab in tabs) {
         [groupIDs addObject:(tab.tabGroupID ?: (id)[NSNull null])];
+        [pinned addObject:@(tab.isPinned)];
     }
     iTermSingleTabMove *move = [iTermTabGroupOrdering singleTabMoveForGroupIDs:groupIDs
+                                                                       pinned:pinned
                                                                 selectedIndex:sel
                                                                        offset:offset];
 
