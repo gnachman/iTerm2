@@ -563,6 +563,10 @@ Bug Fixes:
   swapping, or rearranging panes in a tmux
   integration window that was left open after
   detaching.
+- In tmux integration, a layout change made by
+  tmux while Find > Filter was open on a pane no
+  longer hides pane %0 or moves keyboard focus
+  away from the filtered pane.
 - Answering “Always” to “Close tmux windows
   after detaching?” now closes only the tmux
   integration windows left open by the detach.
