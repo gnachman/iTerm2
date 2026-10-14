@@ -165,6 +165,62 @@ final class OrchestratorTmuxWatchReattachTests: XCTestCase {
         XCTAssertEqual(persisted(), [])
     }
 
+    // F-145: a watch on a standalone tmux pane names the pane's synthetic
+    // workgroup, “session:<stableID>”. The pane comes back with a new stableID,
+    // so the per-turn snapshot lists it under a new workgroup ID. The re-bound
+    // watch must name that one (and the pane's current workgroup and role
+    // names) in list_watches, its status_update, and the persisted copy;
+    // otherwise the model can't match the watch to anything it can see.
+    func testReboundWatchNamesTheReattachedPanesWorkgroup() async throws {
+        let reattached = try XCTUnwrap(PTYSession(synthetic: false))
+        var held = watcher(id: "w", sessionRef: "old-stable-id", tmuxPane: paneIdentity)
+        held.workgroupID = WorkgroupIntrospection.syntheticWorkgroupIDPrefix + "old-stable-id"
+        held.workgroupName = "old pane name"
+        held.roleID = "old role"
+        held.roleName = "old pane name"
+        try listModel.setWatchers([held], forChatID: chatID)
+        var tmuxAttached = false
+        let dispatcher = makeDispatcher(lookup: { ref in
+            tmuxAttached && ref == reattached.stableID ? reattached : nil
+        }, tmuxLookup: { _ in tmuxAttached ? reattached : nil })
+
+        tmuxAttached = true
+        postTmuxWindowDidOpen()
+
+        // The ID list_workgroups gives the pane now.
+        let context = try XCTUnwrap(WorkgroupIntrospection.context(for: reattached))
+        XCTAssertEqual(context.workgroupID,
+                       WorkgroupIntrospection.syntheticWorkgroupIDPrefix + reattached.stableID)
+
+        let rebound = try XCTUnwrap(persisted().first)
+        XCTAssertEqual(rebound.sessionGUID, reattached.stableID)
+        XCTAssertEqual(rebound.workgroupID, context.workgroupID,
+                       "the persisted watch names the workgroup the snapshot lists the pane under")
+        XCTAssertEqual(rebound.workgroupName, context.workgroupName)
+        XCTAssertEqual(rebound.roleID, context.roleID)
+        XCTAssertEqual(rebound.roleName, context.roleName)
+
+        let data = await dispatcher.handleToolCall(name: "list_watches",
+                                                   jsonArgs: Data("{}".utf8),
+                                                   llmMessage: LLM.Message(role: .assistant, body: .text("")))
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let list = try XCTUnwrap(json["watcher_list"] as? [[String: Any]], "\(json)")
+        XCTAssertEqual(list.count, 1)
+        XCTAssertEqual(list.first?["workgroup_id"] as? String, context.workgroupID)
+        XCTAssertEqual(list.first?["workgroup_name"] as? String, context.workgroupName)
+
+        postTabStatus(iTermSessionTabStatus(sessionID: reattached.stableID))
+        XCTAssertTrue(watcherEvents.isEmpty)
+        let working = iTermSessionTabStatus(sessionID: reattached.stableID)
+        working.hasIndicator = true
+        postTabStatus(working)
+        XCTAssertEqual(watcherEvents.map(\.watcherID), ["w"])
+        let fired = try XCTUnwrap(watcherEvents.first)
+        XCTAssertEqual(fired.workgroupID, context.workgroupID,
+                       "the status_update names the workgroup the snapshot lists the pane under")
+        XCTAssertEqual(fired.roleName, context.roleName)
+    }
+
     // A held .idle watcher must not get a screen-escalation backstop while it
     // has no session: that task would exit at once but keep its slot, and the
     // re-arm after rebind would be refused. After rebind the backstop is armed,
