@@ -134,6 +134,9 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
 static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
 
 @implementation TmuxController {
+    // The client size to set once the initial list-windows has told us the windows' sizes, or nil.
+    // See -openWindowsOfSize:.
+    NSValue *_deferredInitialClientSize;
     // Backs the serverIsLocal property, which has a hand-written getter below.
     BOOL _serverIsLocal;
     // Whether the serverIsLocal lookup has ever produced an answer, as opposed to failing. See
@@ -637,6 +640,57 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     return [affinities_ valuesEqualTo:value];
 }
 
+// Whether to give each window its own size before setting the client size on attach. Needs
+// refresh-client -C @window:size (3.4) and only matters where floating panes exist (3.8).
+- (BOOL)canPinWindowSizes {
+    return _variableWindowSize && [self versionAtLeastDecimalNumberWithString:@"3.8"];
+}
+
+// Sends the client size deferred by -openWindowsOfSize:, after giving every listed window (hidden
+// ones too) its current size for this client, so the client size only sizes windows made later.
+// tmux recalculates window sizes after each refresh-client. Once this client has sized any window,
+// the windows it has not sized yet take its client size, which until now is tmux's default. So the
+// client size is first set to the largest window size, which can only grow a window and never
+// clamps a floating pane, then each window is pinned at its own size. Windows iTerm2 does not open
+// (hidden ones, for example) stay pinned, so they keep their size instead of following this client's.
+- (void)pinWindowSizesThenSetDeferredClientSizeForInitialListing:(TSVDocument *)doc {
+    if (!_deferredInitialClientSize) {
+        return;
+    }
+    const NSSize clientSize = _deferredInitialClientSize.sizeValue;
+    _deferredInitialClientSize = nil;
+    NSMutableArray<iTermTuple<NSString *, NSValue *> *> *windowSizes = [NSMutableArray array];
+    NSSize largest = NSZeroSize;
+    for (NSArray *record in doc.records) {
+        const int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
+        const NSSize size = NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
+                                       [[doc valueInRecord:record forField:@"window_height"] intValue]);
+        if (wid < 0 || size.width < 1 || size.height < 1) {
+            continue;
+        }
+        largest.width = MAX(largest.width, size.width);
+        largest.height = MAX(largest.height, size.height);
+        [windowSizes addObject:[iTermTuple tupleWithObject:[NSString stringWithInt:wid]
+                                                 andObject:[NSValue valueWithSize:size]]];
+    }
+    DLog(@"Pin window sizes %@ then set client size to %@", windowSizes, NSStringFromSize(clientSize));
+    NSMutableArray<NSDictionary *> *commands = [NSMutableArray array];
+    NSDictionary *(^setClientSize)(NSSize) = ^NSDictionary *(NSSize size) {
+        return [self->gateway_ dictionaryForCommand:[NSString stringWithFormat:@"refresh-client -C %d,%d",
+                                                     (int)size.width, (int)size.height]
+                                     responseTarget:nil
+                                   responseSelector:nil
+                                     responseObject:nil
+                                              flags:kTmuxGatewayCommandShouldTolerateErrors];
+    };
+    if (windowSizes.count > 0) {
+        [commands addObject:setClientSize(largest)];
+        [commands addObjectsFromArray:[self commandListToSetWindowSizes:windowSizes]];
+    }
+    [commands addObject:setClientSize(clientSize)];
+    [gateway_ sendCommandList:commands];
+}
+
 - (void)initialListWindowsResponse:(NSString *)response {
     RLog(@"initialListWindowsResponse called");
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields] workAroundTabBug:_shouldWorkAroundTabBug];
@@ -645,6 +699,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TmuxController.BadInitialListWindowsResponse", nil, [NSBundle mainBundle], @"Bad response for initial list windows request: %@", @"Error shown when tmux returns an unparseable response to the initial list-windows request; %@ is the raw response"), response]];
         return;
     }
+    [self pinWindowSizesThenSetDeferredClientSizeForInitialListing:doc];
     NSMutableArray<NSArray *> *windowsToOpen = [NSMutableArray array];
     BOOL haveHidden = NO;
     NSNumber *newWindowAffinity = nil;
@@ -778,6 +833,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     // Set the size so that newly created windows will take the size of the profile.
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
                                 size.width, size.height];
+    // With per-window sizes, the client size also sizes every existing window this client has not
+    // given a size of its own. Setting it now would shrink the windows being attached to, and tmux
+    // clamps floating panes into the shrunken window, where they stay when it grows back. Instead,
+    // wait for the initial list-windows and pin each window at its current size first.
+    const BOOL deferSetSize = [self canPinWindowSizes];
+    _deferredInitialClientSize = deferSetSize ? [NSValue valueWithSize:NSMakeSize(size.width, size.height)] : nil;
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", [self listWindowsDetailedFormat]];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_id} #{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
@@ -794,11 +855,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                          responseSelector:@selector(getSessionGuidResponse:)
                                            responseObject:nil
                                                     flags:0],
-                           [gateway_ dictionaryForCommand:setSizeCommand
-                                           responseTarget:nil
-                                         responseSelector:nil
-                                           responseObject:nil
-                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           deferSetSize ? [NSNull null] : [gateway_ dictionaryForCommand:setSizeCommand
+                                                                          responseTarget:nil
+                                                                        responseSelector:nil
+                                                                          responseObject:nil
+                                                                                   flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:getHiddenWindowsCommand
                                            responseTarget:self
                                          responseSelector:@selector(getHiddenWindowsResponse:)
