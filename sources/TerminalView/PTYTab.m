@@ -4939,52 +4939,91 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
     }
     PTYSession *active = nil;
     for (NSDictionary *record in [NSArray castFrom:arrangement[TAB_ARRANGEMENT_FLOATING_PANES]]) {
-        NSDictionary *node = [NSDictionary castFrom:record[FLOATING_PANE_NODE]];
-        if (![node[TAB_ARRANGEMENT_VIEW_TYPE] isEqual:VIEW_TYPE_SESSIONVIEW]) {
-            // Splits inside a float are not supported yet.
-            DLog(@"Skip floating pane record without a session node: %@", record);
-            continue;
-        }
-        NSMutableArray<PTYSession *> *revived = [NSMutableArray array];
-        NSView *view = [PTYTab _recursiveRestoreSplitters:node
-                                                fromIdMap:nil
-                                               sessionMap:sessionMap
-                                          revivedSessions:revived];
-        if (![view isKindOfClass:[SessionView class]]) {
-            continue;
-        }
-        for (PTYSession *session in revived) {
-            [self.viewToSessionMap setObject:session forKey:session.view];
-        }
-        PTYSession *maybeActive = [self _recursiveRestoreSessions:node
-                                                            named:nil
-                                                           atNode:view
-                                                            inTab:self
-                                                    forObjectType:iTermPaneObject
-                                               partialAttachments:partialAttachments
-                                                          options:options];
-        PTYSession *session = [self sessionForSessionView:(SessionView *)view];
-        if (!session) {
-            continue;
-        }
-        const NSRect frame = [PTYTab dictToFrame:record[FLOATING_PANE_FRAME]];
-        const NSSize containerSize = [PTYTab dictToFrame:record[FLOATING_PANE_CONTAINER_SIZE]].size;
-        iTermFloatingPaneView *pane = [self installFloatingSession:session outlineFrame:frame];
-        [iTermFloatingPaneLayout setRestoredPlacementOfFloatingPane:pane
-                                                        visualFrame:frame
-                                                      containerSize:containerSize
-                                                               grid:[PTYSession gridSizeInArrangement:node[TAB_ARRANGEMENT_SESSION]]
-                                                        desiredGrid:[NSDictionary castFrom:record[FLOATING_PANE_DESIRED_GRID_SIZE]]
-                                        visualFrameBeforeMaximizing:record[FLOATING_PANE_SAVED_FRAME] ? [PTYTab dictToFrame:record[FLOATING_PANE_SAVED_FRAME]] : NSZeroRect];
-        // Applies the restored placement now if the tab has a size, else when it gets one.
-        [iTermFloatingPaneLayout refitFloatingPane:pane session:session];
-        [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
+        PTYSession *maybeActive = nil;
+        [self restoreFloatingPaneFromRecord:record
+                                 sessionMap:sessionMap
+                         partialAttachments:partialAttachments
+                                    options:options
+                                     active:&maybeActive];
         if (maybeActive) {
             active = maybeActive;
         }
     }
     self.floatingPanesHidden = [arrangement[TAB_ARRANGEMENT_FLOATING_PANES_HIDDEN] boolValue];
     return active;
+}
+
+// Restores one float from its record. Sessions in `sessionMap` are reused; any other session is
+// created from its arrangement. Returns the float's session, or nil if it could not be restored.
+// Sets *activeOut to the session the arrangement marks active, if any.
+- (PTYSession *)restoreFloatingPaneFromRecord:(NSDictionary *)record
+                                   sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
+                           partialAttachments:(NSDictionary *)partialAttachments
+                                      options:(NSDictionary *)options
+                                       active:(PTYSession **)activeOut {
+    NSDictionary *node = [NSDictionary castFrom:record[FLOATING_PANE_NODE]];
+    if (![node[TAB_ARRANGEMENT_VIEW_TYPE] isEqual:VIEW_TYPE_SESSIONVIEW]) {
+        // Splits inside a float are not supported yet.
+        DLog(@"Skip floating pane record without a session node: %@", record);
+        return nil;
+    }
+    NSMutableArray<PTYSession *> *revived = [NSMutableArray array];
+    NSView *view = [PTYTab _recursiveRestoreSplitters:node
+                                            fromIdMap:nil
+                                           sessionMap:sessionMap
+                                      revivedSessions:revived];
+    if (![view isKindOfClass:[SessionView class]]) {
+        return nil;
+    }
+    for (PTYSession *session in revived) {
+        [self.viewToSessionMap setObject:session forKey:session.view];
+    }
+    PTYSession *maybeActive = [self _recursiveRestoreSessions:node
+                                                        named:nil
+                                                       atNode:view
+                                                        inTab:self
+                                                forObjectType:iTermPaneObject
+                                           partialAttachments:partialAttachments
+                                                      options:options];
+    PTYSession *session = [self sessionForSessionView:(SessionView *)view];
+    if (!session) {
+        return nil;
+    }
+    const NSRect frame = [PTYTab dictToFrame:record[FLOATING_PANE_FRAME]];
+    const NSSize containerSize = [PTYTab dictToFrame:record[FLOATING_PANE_CONTAINER_SIZE]].size;
+    iTermFloatingPaneView *pane = [self installFloatingSession:session outlineFrame:frame];
+    [iTermFloatingPaneLayout setRestoredPlacementOfFloatingPane:pane
+                                                    visualFrame:frame
+                                                  containerSize:containerSize
+                                                           grid:[PTYSession gridSizeInArrangement:node[TAB_ARRANGEMENT_SESSION]]
+                                                    desiredGrid:[NSDictionary castFrom:record[FLOATING_PANE_DESIRED_GRID_SIZE]]
+                                    visualFrameBeforeMaximizing:record[FLOATING_PANE_SAVED_FRAME] ? [PTYTab dictToFrame:record[FLOATING_PANE_SAVED_FRAME]] : NSZeroRect];
+    // Applies the restored placement now if the tab has a size, else when it gets one.
+    [iTermFloatingPaneLayout refitFloatingPane:pane session:session];
+    [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
+    if (activeOut) {
+        *activeOut = maybeActive;
+    }
+    return session;
+}
+
+- (PTYSession *)addArchivedFloatingSessionWithGUID:(NSString *)guid fromArrangement:(NSDictionary *)arrangement {
+    NSDictionary *record = [PTYTab floatingPaneRecordForSessionWithGUID:guid inArrangement:arrangement];
+    if (!record || self.isTmuxTab) {
+        return nil;
+    }
+    PTYSession *session = [self restoreFloatingPaneFromRecord:record
+                                                   sessionMap:nil
+                                           partialAttachments:nil
+                                                      options:nil
+                                                       active:NULL];
+    if (!session) {
+        RLog(@"Could not restore the archived float %@", guid);
+        return nil;
+    }
+    [session didFinishRestoration];
+    [self setActiveSession:session];
+    return session;
 }
 
 
