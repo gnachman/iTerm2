@@ -235,4 +235,121 @@ final class PasswordManagerOpenGateTests: XCTestCase {
 
         XCTAssertFalse(gate.unlocked)
     }
+
+    // A failed or cancelled prompt from any window (or a screen lock) revokes the
+    // provider's authentication, which locks every open window. A window that already
+    // loaded rows must clear them right away rather than keep showing account names and
+    // user names until it next reloads, so the gate tells it when it locks.
+    func testRevokingAuthenticationTellsAnUnlockedWindowToClearItsRows() {
+        let provider = makeProvider()
+        provider.markAuthenticatedForTesting()
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: false)
+        gate.authenticationDidComplete(true)
+        var lockCount = 0
+        gate.didLock = { lockCount += 1 }
+
+        provider.revokeAuthentication()
+
+        XCTAssertFalse(gate.unlocked)
+        XCTAssertEqual(lockCount, 1)
+    }
+
+    func testScreenLockTellsAnUnlockedWindowToClearItsRows() {
+        let center = NotificationCenter()
+        let provider = makeProvider(center: center, mode: .oncePerLaunchAndAfterScreenLocks)
+        provider.markAuthenticatedForTesting()
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: true)
+        XCTAssertTrue(gate.unlocked)
+        var lockCount = 0
+        gate.didLock = { lockCount += 1 }
+
+        center.post(name: Notification.Name("com.apple.screenIsLocked"), object: nil)
+
+        XCTAssertEqual(lockCount, 1)
+    }
+
+    func testOtherProvidersRevocationDoesNotLockThisWindow() {
+        // The terminal and browser password managers authenticate separately.
+        let provider = makeProvider()
+        provider.markAuthenticatedForTesting()
+        let other = makeProvider()
+        other.markAuthenticatedForTesting()
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: true)
+        var lockCount = 0
+        gate.didLock = { lockCount += 1 }
+
+        other.revokeAuthentication()
+
+        XCTAssertTrue(gate.unlocked)
+        XCTAssertEqual(lockCount, 0)
+    }
+
+    func testWindowAwaitingItsOwnPromptIsNotToldToLock() {
+        // It shows nothing yet, and its own prompt's result decides what happens to it.
+        let provider = makeProvider()
+        provider.markAuthenticatedForTesting()
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: false)
+        var lockCount = 0
+        gate.didLock = { lockCount += 1 }
+
+        provider.revokeAuthentication()
+
+        XCTAssertEqual(lockCount, 0)
+
+        // Its own prompt then succeeds, which authenticates the provider again.
+        provider.markAuthenticatedForTesting()
+        gate.authenticationDidComplete(true)
+
+        XCTAssertTrue(gate.unlocked)
+    }
+
+    func testRevokedWindowStaysLockedWhenAnotherCallerAuthenticates() {
+        // Once revoked, this open is over. Another window's successful prompt must not
+        // unlock it without its own authentication.
+        let provider = makeProvider()
+        provider.markAuthenticatedForTesting()
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: false)
+        gate.authenticationDidComplete(true)
+
+        provider.revokeAuthentication()
+        provider.markAuthenticatedForTesting()
+
+        XCTAssertFalse(gate.unlocked)
+    }
+
+    func testRevokingWhileAlreadyUnauthenticatedDoesNotNotify() {
+        let provider = makeProvider()
+        let gate = PasswordManagerOpenGate(provider: provider, mayReuseAuthentication: true)
+        var lockCount = 0
+        gate.didLock = { lockCount += 1 }
+
+        provider.revokeAuthentication()
+
+        XCTAssertEqual(lockCount, 0)
+    }
+}
+
+// The standalone password manager window (used when no terminal window exists) is kept
+// and reused across opens. Each open after it was closed must go through the open gate
+// again, exactly like a fresh window, so every-open mode prompts every time and the
+// screen-lock modes prompt after a lock instead of showing the old window.
+final class PasswordManagerStandaloneOpenTests: XCTestCase {
+    func testFirstOpenCreatesAWindow() {
+        XCTAssertEqual(PasswordManagerStandaloneOpen.action(hasWindowController: false,
+                                                            windowIsOpen: false),
+                       .create)
+    }
+
+    func testReopeningAClosedWindowAuthenticatesAgain() {
+        XCTAssertEqual(PasswordManagerStandaloneOpen.action(hasWindowController: true,
+                                                            windowIsOpen: false),
+                       .reopen)
+    }
+
+    func testOpeningAWindowThatIsStillOpenJustBringsItForward() {
+        // Still the same open: its own prompt (if any) is already up or has succeeded.
+        XCTAssertEqual(PasswordManagerStandaloneOpen.action(hasWindowController: true,
+                                                            windowIsOpen: true),
+                       .bringToFront)
+    }
 }
