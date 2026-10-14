@@ -19,7 +19,7 @@ import CompanionProtocol
 
 @MainActor
 @objc(iTermCompanionWizardWindowController)
-final class CompanionWizardWindowController: NSWindowController, NSWindowDelegate, NSTextFieldDelegate {
+final class CompanionWizardWindowController: NSWindowController, NSWindowDelegate, NSTextFieldDelegate, NSMenuItemValidation {
     @objc static let shared = CompanionWizardWindowController()
 
     /// The wizard's steps. The router picks the starting step from how much setup
@@ -62,7 +62,9 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     private var relayStatusTimer: Timer?
     // The in-flight install (download + consent + persist). Held so it can be
     // cancelled if the user closes the wizard mid-install.
-    private var installTask: Task<Void, Never>?
+    private(set) var installTask: Task<Void, Never>?
+    // Install's side effects. Tests replace this with fakes.
+    var setupSteps = CompanionWizardSetupSteps.live
 
     @objc init() {
         let panel = NSPanel(contentRect: NSRect(x: 0, y: 0,
@@ -509,99 +511,68 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         // the old default vendor's secret there.
         let priorSelectedVendorKey = storesKey ? AITermControllerObjC.apiKey(for: selectedVendor) : nil
         let priorVendor = storesKey ? iTermPreferences.int(forKey: kPreferenceKeyAIVendor) : 0
-        let priorEnableAI = SecureUserDefaults.instance.enableAI.value
-        let priorEnableCompanion = SecureUserDefaults.instance.enableCompanionPairing.value
+        let plan = CompanionWizardSetupRunner.Plan(
+            full: full,
+            keyCommit: storesKey
+                ? CompanionWizardAIKeyPlan.commit(selectedVendor: selectedVendor, pastedKey: apiKey)
+                : nil,
+            keyRollback: storesKey
+                ? CompanionWizardAIKeyPlan.rollback(selectedVendor: selectedVendor,
+                                                    priorSelectedVendorKey: priorSelectedVendorKey,
+                                                    priorVendorRaw: Int(priorVendor))
+                : nil,
+            priorEnableAI: SecureUserDefaults.instance.enableAI.value,
+            priorEnableCompanion: SecureUserDefaults.instance.enableCompanionPairing.value)
+        let installScreen = currentScreen
         setInstalling(true)
         installTask = Task { [weak self] in
             guard let self else { return }
-            // Bail out with no side effects if the window was dismissed (and this
-            // Task cancelled by windowWillClose) during the multi-second install:
-            // do not navigate, raise the admin prompt, or write defaults on a gone
-            // window.
-            let active: () -> Bool = { [weak self] in
-                guard let self, !Task.isCancelled else { return false }
-                return self.window?.isVisible == true
-                    && (self.currentScreen == .fullSetup || self.currentScreen == .companionOnly)
-            }
-            var wroteAIDefaults = false
-            var grantedConsent = false
-            do {
-                if full {
-                    self.setStatus(String(localized: "Companion.Status.DownloadingAIPlugin",
-                                          defaultValue: "Downloading the AI plugin…",
-                                          comment: "Progress status while the AI plugin downloads"),
-                                   color: .secondaryLabelColor)
-                    try await CompanionPluginInstaller.installAIPlugin()
-                }
-                self.setStatus(String(localized: "Companion.Status.DownloadingCompanionPlugin",
-                                      defaultValue: "Downloading the companion plugin…",
-                                      comment: "Progress status while the companion plugin downloads"),
-                               color: .secondaryLabelColor)
-                try await CompanionPluginInstaller.installCompanionPlugin()
-                // The next step raises an admin password prompt and writes
-                // defaults, so stop here if the user already closed the wizard.
-                guard active() else { return }
-                self.setStatus(String(localized: "Companion.Status.GrantingConsent",
-                                      defaultValue: "Granting consent…",
-                                      comment: "Progress status while consent is granted"),
-                               color: .secondaryLabelColor)
-                try SecureUserDefaults.grantConsent(ai: full, companion: true)
-                grantedConsent = true
-                if storesKey {
-                    // Persist the key/vendor only now that the plugins installed
-                    // and consent was granted, so an earlier failure leaves the
-                    // saved defaults untouched. The pasted key goes in the
-                    // Provider popup's slot, not LLMMetadata.effectiveVendor.
-                    let write = CompanionWizardAIKeyPlan.commit(selectedVendor: selectedVendor,
-                                                                pastedKey: apiKey)
-                    DLog("Companion wizard: storing API key for vendor \(write.vendor.rawValue)")
-                    AITermControllerObjC.setAPIKey(write.key, for: write.vendor)
-                    iTermPreferences.setInt(Int32(write.vendorPreference), forKey: kPreferenceKeyAIVendor)
-                    wroteAIDefaults = true
-                }
-                self.setStatus(String(localized: "Companion.Status.Verifying",
-                                      defaultValue: "Verifying…",
-                                      comment: "Progress status while the install is verified"),
-                               color: .secondaryLabelColor)
-                switch self.verifyReady(full: full, aiMode: aiMode) {
-                case .ready:
-                    break
-                case .pluginsNotLoaded:
-                    throw CompanionPluginInstallerError.verificationFailed(
-                        full
-                        ? String(localized: "Companion.VerifyFailed.Both",
-                                 defaultValue: "AI and companion plugins",
-                                 comment: "Names the components that failed to verify, inserted into a verification-failed error")
-                        : String(localized: "Companion.VerifyFailed.Companion",
-                                 defaultValue: "companion plugin",
-                                 comment: "Names the component that failed to verify, inserted into a verification-failed error"))
-                case .aiModelCannotAuthenticate:
-                    throw CompanionWizardSetupError.aiModelCannotAuthenticate
-                }
-                guard active() else { return }
+            // windowWillClose cancels this Task. Once it has, the runner does
+            // nothing more, undoes what it wrote, and nothing is shown: no admin
+            // prompt, no failure sheet, no reopened window.
+            let outcome = await CompanionWizardSetupRunner.run(
+                plan: plan,
+                steps: self.setupSteps,
+                isCancelled: { [weak self] in
+                    guard let self, !Task.isCancelled else { return true }
+                    return self.currentScreen != installScreen
+                },
+                progress: { [weak self] stage in
+                    self?.setStatus(Self.statusText(for: stage), color: .secondaryLabelColor)
+                },
+                verify: { [weak self] in
+                    self?.verifyReady(full: full, aiMode: aiMode) ?? .pluginsNotLoaded
+                })
+            switch outcome {
+            case .completed:
                 self.goTo(.phoneApp)
-            } catch {
-                // Roll back everything this attempt changed so a failed setup does
-                // not leave consent on, a switched vendor, or a replaced key.
-                // Reverting a secure default to its prior value needs no
-                // authorization (it is fail-safe), so this is a silent cleanup.
-                if grantedConsent {
-                    if full, !priorEnableAI { try? SecureUserDefaults.instance.enableAI.reset() }
-                    if !priorEnableCompanion { try? SecureUserDefaults.instance.enableCompanionPairing.reset() }
-                }
-                if wroteAIDefaults {
-                    let write = CompanionWizardAIKeyPlan.rollback(
-                        selectedVendor: selectedVendor,
-                        priorSelectedVendorKey: priorSelectedVendorKey,
-                        priorVendorRaw: Int(priorVendor))
-                    DLog("Companion wizard: rolling back API key for vendor \(write.vendor.rawValue)")
-                    AITermControllerObjC.setAPIKey(write.key, for: write.vendor)
-                    iTermPreferences.setInt(Int32(write.vendorPreference), forKey: kPreferenceKeyAIVendor)
-                }
-                guard active() else { return }
+            case .failed(let error):
                 self.setInstalling(false)
                 self.failAndFallBackToPlainWindow(error)
+            case .cancelled:
+                DLog("Companion wizard: install cancelled")
             }
+        }
+    }
+
+    private static func statusText(for stage: CompanionWizardSetupRunner.Stage) -> String {
+        switch stage {
+        case .downloadingAIPlugin:
+            return String(localized: "Companion.Status.DownloadingAIPlugin",
+                          defaultValue: "Downloading the AI plugin…",
+                          comment: "Progress status while the AI plugin downloads")
+        case .downloadingCompanionPlugin:
+            return String(localized: "Companion.Status.DownloadingCompanionPlugin",
+                          defaultValue: "Downloading the companion plugin…",
+                          comment: "Progress status while the companion plugin downloads")
+        case .grantingConsent:
+            return String(localized: "Companion.Status.GrantingConsent",
+                          defaultValue: "Granting consent…",
+                          comment: "Progress status while consent is granted")
+        case .verifying:
+            return String(localized: "Companion.Status.Verifying",
+                          defaultValue: "Verifying…",
+                          comment: "Progress status while the install is verified")
         }
     }
 
@@ -1026,6 +997,23 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     }
 
     // MARK: Window lifecycle
+
+    // The Close menu item (Cmd-W) is wired to closeCurrentSession: rather than
+    // performClose:. Without these, Cmd-W in the wizard went to the main
+    // terminal window (or beeped) and the wizard kept installing.
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        guard let action = menuItem.action else {
+            return false
+        }
+        // Leave every other action enabled exactly as AppKit would without
+        // this method.
+        return action == #selector(closeCurrentSession(_:)) || responds(to: action)
+    }
+
+    @objc(closeCurrentSession:)
+    func closeCurrentSession(_ sender: Any?) {
+        window?.performClose(sender)
+    }
 
     func windowWillClose(_ notification: Notification) {
         relayStatusTimer?.invalidate()
