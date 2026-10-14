@@ -113,6 +113,9 @@ enum CompanionPluginInstaller {
             throw CompanionPluginInstallerError.unzipFailed(error.localizedDescription)
         }
         try await unzip(zipDest, to: unzipDir)
+        // Unzipping can't be interrupted, so if the wizard was closed meanwhile
+        // stop here, before anything is installed.
+        try Task.checkCancellation()
 
         guard let appURL = findApp(in: unzipDir, fileManager: fm) else {
             throw CompanionPluginInstallerError.bundleNotFound
@@ -193,6 +196,9 @@ enum CompanionPluginInstaller {
     /// detection caches a success, so reload() is needed each time to re-probe.
     private static func waitForSuccess(reload: () -> Void, check: () -> Bool) async -> Bool {
         for _ in 0..<10 {
+            if Task.isCancelled {
+                return false
+            }
             reload()
             if check() {
                 return true
