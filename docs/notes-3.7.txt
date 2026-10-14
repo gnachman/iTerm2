@@ -1334,3 +1334,7 @@ Bug Fixes:
   chat’s reply, and the stopped reply now really
   stops downloading instead of running (and
   using up tokens) until it finishes.
+- A program that sets the window or tab title
+  over and over no longer makes iTerm2 fall far
+  behind, run at full CPU for minutes, and grow
+  to gigabytes of memory.

@@ -1190,24 +1190,99 @@ typedef struct {
     _collectInputForPrinting = YES;
 }
 
+// A program can set the title as fast as it can write. Title changes with no
+// other side effect between them share one batch and one side effect, so a
+// flood of them costs the main thread one title update (and at most one
+// working directory fetch) per side-effect pass rather than one per
+// sequence. A change never joins a batch that has another side effect behind
+// it, which would move it ahead of that side effect.
+//
+// A change may join a batch after its side effect started running, so the
+// main thread can see it before syncing state the mutation thread changed
+// just before it. That is safe because applying a title update reads nothing
+// from the screen.
+//
+// `immediate` means the change must not wait for a deferred side-effect pass,
+// as with a working directory request, which used to be its own immediate
+// side effect.
+- (void)updateTitles:(void (^)(iTermTitleUpdate *update))block
+           immediate:(BOOL)immediate {
+    if (_titleBatch &&
+        (_titleBatchIsImmediate || !immediate) &&
+        self.tokenExecutor.sideEffectSerial == _titleBatchSideEffectSerial &&
+        [_titleBatch addUpdate:block]) {
+        // This changes state the main thread reads, like adding a side
+        // effect would.
+        [self.tokenExecutor noteStateSideEffectScheduled];
+        return;
+    }
+    iTermTitleBatch *batch = [[iTermTitleBatch alloc] init];
+    // A new batch is never taken yet.
+    const BOOL added = [batch addUpdate:block];
+    assert(added);
+    const int64_t serialBefore = self.tokenExecutor.sideEffectSerial;
+    __weak __typeof(self) weakSelf = self;
+    void (^task)(void) = ^{
+        // Take the update even without a delegate so the batch closes and
+        // stops collecting changes.
+        iTermTitleUpdate *update = [batch take];
+        [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [weakSelf applyTitleUpdate:update delegate:delegate];
+        } name:@"update titles"];
+    };
+    if (immediate) {
+        [self.tokenExecutor addSideEffect:task];
+    } else {
+        // Deferred because we don't want to redraw at this moment. It is
+        // often while/just after drawing a prompt and users hate when it
+        // draws twice either during the prompt or just after entering a
+        // command at the prompt.
+        [self.tokenExecutor addDeferredSideEffect:task];
+    }
+    const int64_t serialAfter = self.tokenExecutor.sideEffectSerial;
+    // If another side effect was added at the same moment, this one may not
+    // be the last, so the next change starts a new batch.
+    _titleBatch = (serialAfter == serialBefore + 1) ? batch : nil;
+    _titleBatchSideEffectSerial = serialAfter;
+    _titleBatchIsImmediate = immediate;
+}
+
+// Main thread, in a side effect.
+- (void)applyTitleUpdate:(iTermTitleUpdate *)update
+                delegate:(id<VT100ScreenDelegate>)delegate {
+    DLog(@"begin side-effect");
+    if (update.setsWindowTitle || update.setsIconTitle || update.setsSubtitle) {
+        if ([delegate screenAllowTitleSetting]) {
+            if (update.setsWindowTitle) {
+                DLog(@"calling screenSetWindowTitle:%@", update.windowTitle);
+                [delegate screenSetWindowTitle:update.windowTitle];
+            }
+            if (update.setsIconTitle) {
+                [delegate screenSetIconName:update.iconTitle];
+            }
+            if (update.setsSubtitle) {
+                [delegate screenSetSubtitle:update.subtitle];
+            }
+        }
+    }
+    if (update.pollsLocalDirectoryOnly) {
+        [delegate screenPollLocalDirectoryOnly];
+    }
+    [self fetchWorkingDirectoryWithDelegate:delegate
+                                    fetches:update.directoryFetches
+                                     pushed:YES];
+}
+
 - (void)terminalSetWindowTitle:(NSString *)title {
     DLog(@"begin %@", title);
-
-    // Use a deferred side effect because we don't want to redraw at this moment.
-    // It is often while/just after drawing a prompt and users hate when it draws
-    // twice either during the prompt or just after entering a command at th eprompt.
-    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        DLog(@"begin side-effect");
-        if ([delegate screenAllowTitleSetting]) {
-            DLog(@"calling screenSetWindowTitle:%@", title);
-            [delegate screenSetWindowTitle:title];
-        }
-    } name:@"set window title"];
 
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
     if ([self remoteHostOnLine:self.numberOfScrollbackLines + self.height]) {
         DLog(@"Already have a remote host so not updating working directory because of title change");
+        [self updateTitles:^(iTermTitleUpdate *update) {
+            [update changeWindowTitle:title];
+        } immediate:NO];
         return;
     }
     // If OSC 7 or shell integration has provided working directory updates, don't update the
@@ -1217,9 +1292,10 @@ typedef struct {
     // new sessions that reuse the previous pwd.
     if (self.shouldExpectWorkingDirectoryUpdates) {
         DLog(@"Shell integration/OSC 7 is providing working directory updates, polling local directory only");
-        [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-            [delegate screenPollLocalDirectoryOnly];
-        } name:@"poll local directory only"];
+        [self updateTitles:^(iTermTitleUpdate *update) {
+            [update changeWindowTitle:title];
+            [update pollLocalDirectoryOnly];
+        } immediate:YES];
         return;
     }
     DLog(@"Don't have a remote host, so changing working directory");
@@ -1230,36 +1306,32 @@ typedef struct {
     // enough rate (not too common, not too rare when part of a prompt)
     // that I'm comfortable calling it a push. I want it to do things like
     // update the list of recently used directories.
-    [self setWorkingDirectory:nil
-                    onAbsLine:self.lineNumberOfCursor + self.cumulativeScrollbackOverflow
-                       pushed:YES
-                        token:[self.setWorkingDirectoryOrderEnforcer newToken]];
+    const long long absLine = self.lineNumberOfCursor + self.cumulativeScrollbackOverflow;
+    if ([self workingDirectoryLineForAbsLine:absLine] < 0) {
+        [self updateTitles:^(iTermTitleUpdate *update) {
+            [update changeWindowTitle:title];
+        } immediate:NO];
+        return;
+    }
+    id<iTermOrderedToken> token = [self.setWorkingDirectoryOrderEnforcer newToken];
+    [self updateTitles:^(iTermTitleUpdate *update) {
+        [update changeWindowTitle:title];
+        [update fetchWorkingDirectoryOnAbsLine:absLine token:token];
+    } immediate:YES];
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {
     DLog(@"begin %@", title);
-    // Use a deferred side effect because we don't want to redraw at this moment.
-    // It is often while/just after drawing a prompt and users hate when it draws
-    // twice either during the prompt or just after entering a command at th eprompt.
-    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        DLog(@"begin side-effect");
-        if ([delegate screenAllowTitleSetting]) {
-            [delegate screenSetIconName:title];
-        }
-    } name:@"set icon title"];
+    [self updateTitles:^(iTermTitleUpdate *update) {
+        [update changeIconTitle:title];
+    } immediate:NO];
 }
 
 - (void)terminalSetSubtitle:(NSString *)subtitle {
     DLog(@"begin %@", subtitle);
-    // Use a deferred side effect because we don't want to redraw at this moment.
-    // It is often while/just after drawing a prompt and users hate when it draws
-    // twice either during the prompt or just after entering a command at th eprompt.
-    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        DLog(@"begin side-effect");
-        if ([delegate screenAllowTitleSetting]) {
-            [delegate screenSetSubtitle:subtitle];
-        }
-    } name:@"set subtitle"];
+    [self updateTitles:^(iTermTitleUpdate *update) {
+        [update changeSubtitle:subtitle];
+    } immediate:NO];
 }
 
 - (void)terminalCopyStringToPasteboard:(NSString *)string {
