@@ -75,7 +75,19 @@ class iTermUndoCloseArchives: NSObject {
     // One single-pane tab arrangement per archive, for when archived sessions
     // can't go back into their original layout.
     @objc var standaloneTabArrangements: [[AnyHashable: Any]] {
-        return guids.compactMap { tabArrangements[$0] }
+        return standaloneTabArrangements(excludingSessionGUIDs: [])
+    }
+
+    // Like standaloneTabArrangements, leaving out the archives of sessions that
+    // were restored some other way.
+    @objc(standaloneTabArrangementsExcludingSessionGUIDs:)
+    func standaloneTabArrangements(excludingSessionGUIDs excluded: Set<String>) -> [[AnyHashable: Any]] {
+        return guids.filter { !excluded.contains($0) }.compactMap { tabArrangements[$0] }
+    }
+
+    // The GUIDs of the sessions whose undo window ran out.
+    @objc var sessionGUIDs: [String] {
+        return guids
     }
 
     private static func tabArrangement(forSessionWithGUID guid: String,

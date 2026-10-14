@@ -345,6 +345,10 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 + (NSArray<PTYSession *> *)sessionsBecomingTmuxFloatsAmong:(NSArray<PTYSession *> *)sessions
                                              floatingPanes:(NSSet<NSNumber *> *)floatingPanes;
 - (void)addRevivedFloatingSession:(PTYSession *)session fromArrangement:(NSDictionary *)arrangement;
+// Undo close of a float whose undo window ran out: create a session from the archived session
+// arrangement in the float's record and put it back where the record says it was. Returns the new
+// session, or nil if the record could not be restored.
+- (PTYSession *)addArchivedFloatingSessionWithGUID:(NSString *)guid fromArrangement:(NSDictionary *)arrangement;
 
 // Whether the user may resize the float or take it out of the float now.
 - (BOOL)floatingPaneCanResize:(iTermFloatingPaneView *)pane;

@@ -340,4 +340,107 @@ final class FloatingPanePersistenceTests: XCTestCase {
         XCTAssertEqual(tab.floatingSessions(), [float])
         XCTAssertTrue(tab.floatingPane(for: float) === pane, "the live float was not rebuilt")
     }
+
+    // MARK: - Undo close from an archive
+
+    // Writes the archive Archive On Closure writes for `session`, which has already left its tab,
+    // and returns its path.
+    private func writeArchive(of session: PTYSession) throws -> String {
+        let archive = try XCTUnwrap(fixture.terminal.arrangement(with: session) as NSDictionary?)
+        let path = NSTemporaryDirectory() + UUID().uuidString + ".itermarchive"
+        XCTAssertTrue(archive.write(toFile: path, atomically: true))
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: path) }
+        return path
+    }
+
+    // Closes `float` and lets its undo window run out: only its archive is left.
+    private func closeAndArchive(_ float: PTYSession, in tab: PTYTab) throws -> iTermUndoCloseArchives {
+        tab.remove(float)
+        return iTermUndoCloseArchives(pathsBySessionGUID: [float.guid: try writeArchive(of: float)])
+    }
+
+    /// QA finding F-004: a float closed with Archive On Closure on, whose undo window ran out, is
+    /// restored from its archive as a float in its tab, where it was.
+    func testUndoClosingAnArchivedFloatPutsItBackAsAFloat() throws {
+        let target = tab
+        let tiled = try XCTUnwrap(target.tiledSessions()?.first)
+        let float = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        let frame = target.floatingPane(for: float)?.outlineFrame
+        let arrangement = try XCTUnwrap(target.arrangement())
+        let archives = try closeAndArchive(float, in: target)
+        let numberOfTabs = fixture.terminal.numberOfTabs()
+
+        fixture.terminal.recreateTab(target, withArrangement: arrangement, sessions: [], archives: archives, revive: true)
+
+        XCTAssertEqual(fixture.terminal.numberOfTabs(), numberOfTabs, "no tab is added for the archive")
+        XCTAssertEqual(target.tiledSessions(), [tiled], "the tiled layout is untouched")
+        XCTAssertEqual(target.floatingSessions()?.count, 1, "the archive comes back as a float")
+        let restored = try XCTUnwrap(target.floatingSessions()?.first)
+        XCTAssertTrue(restored.isArchive)
+        XCTAssertEqual(target.floatingPane(for: restored)?.outlineFrame, frame)
+        XCTAssertTrue(target.activeSession === restored)
+    }
+
+    /// Tiled panes added after the float closed are left alone, and the archive is not also given a
+    /// tab of its own.
+    func testUndoClosingAnArchivedFloatLeavesTiledPanesAddedSinceAlone() throws {
+        let target = tab
+        let tiled = try XCTUnwrap(target.tiledSessions()?.first)
+        let float = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        let arrangement = try XCTUnwrap(target.arrangement())
+        let archives = try closeAndArchive(float, in: target)
+        let added = fixture.split(tiled, vertically: true)
+        let numberOfTabs = fixture.terminal.numberOfTabs()
+
+        fixture.terminal.recreateTab(target, withArrangement: arrangement, sessions: [], archives: archives, revive: true)
+
+        XCTAssertEqual(target.tiledSessions(), [tiled, added])
+        XCTAssertEqual(target.floatingSessions()?.count, 1, "the archive comes back as a float")
+        XCTAssertEqual(fixture.terminal.numberOfTabs(), numberOfTabs, "no tab is added for the archive")
+    }
+
+    /// An archived float that can't be put back as a float gets a tab of its own rather than being
+    /// lost.
+    func testAnArchivedFloatThatCannotBeRestoredAsAFloatGetsItsOwnTab() throws {
+        let target = tab
+        let tiled = target.tiledSessions()
+        let float = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        var arrangement = try XCTUnwrap(target.arrangement())
+        // A float record whose node is not a session view can't be restored as a float. The record
+        // still matches the float's GUID because its session arrangement is kept.
+        var records = try XCTUnwrap(arrangement["Floating Panes"] as? [[AnyHashable: Any]])
+        var node = try XCTUnwrap(records[0]["Node"] as? [AnyHashable: Any])
+        node[TAB_ARRANGEMENT_VIEW_TYPE] = VIEW_TYPE_SPLITTER
+        records[0]["Node"] = node
+        arrangement["Floating Panes"] = records
+        let archives = try closeAndArchive(float, in: target)
+        let numberOfTabs = fixture.terminal.numberOfTabs()
+
+        fixture.terminal.recreateTab(target, withArrangement: arrangement, sessions: [], archives: archives, revive: true)
+
+        XCTAssertEqual(target.floatingSessions()?.count, 0)
+        XCTAssertEqual(target.tiledSessions(), tiled, "the tiled layout is untouched")
+        XCTAssertEqual(fixture.terminal.numberOfTabs(), numberOfTabs + 1)
+        let added = try XCTUnwrap(fixture.terminal.tabs().last)
+        XCTAssertEqual(added.sessions()?.count, 1)
+        XCTAssertTrue(added.sessions()?.first?.isArchive ?? false)
+    }
+
+    /// When the float's tab is gone, the archive gets a tab of its own, as a tiled pane's does.
+    func testAnArchivedFloatWhoseTabIsGoneGetsItsOwnTab() throws {
+        let float = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        let closing = tab
+        let arrangement = try XCTUnwrap(closing.arrangement())
+        let archives = try closeAndArchive(float, in: closing)
+        _ = fixture.addTab()
+        fixture.terminal.perform(NSSelectorFromString("removeTab:"), with: closing)
+        let numberOfTabs = fixture.terminal.numberOfTabs()
+
+        fixture.terminal.recreateTab(closing, withArrangement: arrangement, sessions: [], archives: archives, revive: true)
+
+        XCTAssertEqual(fixture.terminal.numberOfTabs(), numberOfTabs + 1)
+        let added = try XCTUnwrap(fixture.terminal.tabs().last)
+        XCTAssertEqual(added.sessions()?.count, 1)
+        XCTAssertTrue(added.sessions()?.first?.isArchive ?? false)
+    }
 }
