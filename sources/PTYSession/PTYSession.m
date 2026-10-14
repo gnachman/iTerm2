@@ -26453,9 +26453,9 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         viewIndex:[self screenViewIndex]];
 }
 
-- (void)screenReportProgramStatus:(iTermProgramStatusReport *)report {
-    DLog(@"%@ screenReportProgramStatus: %@", self, report);
-    [self.programStatusController handleReport:report];
+- (void)screenReportProgramStatusReports:(NSArray<iTermProgramStatusReport *> *)reports {
+    DLog(@"%@ screenReportProgramStatusReports: %@ reports, the last being %@", self, @(reports.count), reports.lastObject);
+    [self.programStatusController handleReports:reports];
 }
 
 // OSC 9;4 and resets set the progress on the mutation thread as soon as they

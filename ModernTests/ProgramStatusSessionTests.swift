@@ -59,7 +59,7 @@ final class ProgramStatusSessionTests: XCTestCase {
 
     func testReportNotifiesOnceThroughRecordPath() {
         let session = NotificationSpySession(synthetic: false)!
-        session.screenReportProgramStatus(report("state=done"))
+        session.screenReportProgramStatusReports([report("state=done")])
         XCTAssertEqual(session.recordNotifications.count, 1)
         // Not also through the session-level path.
         XCTAssertEqual(session.notified, [])
@@ -67,16 +67,16 @@ final class ProgramStatusSessionTests: XCTestCase {
 
     func testChildRecordNotificationNamesIt() {
         let session = NotificationSpySession(synthetic: false)!
-        session.screenReportProgramStatus(report("state=blocked:id=eu:title=\(Data("EU West".utf8).base64EncodedString())"))
+        session.screenReportProgramStatusReports([report("state=blocked:id=eu:title=\(Data("EU West".utf8).base64EncodedString())")])
         XCTAssertEqual(session.recordNotifications.count, 1)
         XCTAssertTrue(session.recordNotifications[0].contains("EU West"), session.recordNotifications[0])
     }
 
     func testMessageOnlyChangeDoesNotNotify() {
         let session = NotificationSpySession(synthetic: false)!
-        session.screenReportProgramStatus(report("state=working"))
+        session.screenReportProgramStatusReports([report("state=working")])
         session.recordNotifications = []
-        session.screenReportProgramStatus(report("state=working:msg=\(Data("step 2".utf8).base64EncodedString())"))
+        session.screenReportProgramStatusReports([report("state=working:msg=\(Data("step 2".utf8).base64EncodedString())")])
         XCTAssertEqual(session.recordNotifications, [])
     }
 
@@ -84,17 +84,44 @@ final class ProgramStatusSessionTests: XCTestCase {
         // The tab already says waiting, so the session-level path would see
         // no change; the record path still has news.
         let session = NotificationSpySession(synthetic: false)!
-        session.screenReportProgramStatus(report("state=blocked:id=a"))
+        session.screenReportProgramStatusReports([report("state=blocked:id=a")])
         XCTAssertEqual(session.recordNotifications.count, 1)
-        session.screenReportProgramStatus(report("state=blocked:id=b"))
+        session.screenReportProgramStatusReports([report("state=blocked:id=b")])
         // Rate-limited: held rather than dropped (see ProgramStatusNotifierTests).
         XCTAssertEqual(session.recordNotifications.count, 1)
         XCTAssertEqual(session.notified, [])
     }
 
+    // QA finding F-307: a flood of reports delivered together tells views
+    // about the records once and notifies once per record that changed, not
+    // once per report.
+    func testFloodOfReportsUpdatesViewsOnceAndNotifiesOnce() {
+        let session = NotificationSpySession(synthetic: false)!
+        var recordsDidChangeCount = 0
+        let observer = NotificationCenter.default.addObserver(
+            forName: ProgramStatusController.recordsDidChangeNotificationName,
+            object: session.guid,
+            queue: nil) { _ in
+                recordsDidChangeCount += 1
+            }
+        defer {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        let reports = (0..<5000).flatMap { _ in
+            [report("state=working:id=a"), report("state=blocked:id=b")]
+        }
+        session.screenReportProgramStatusReports(reports)
+        XCTAssertEqual(recordsDidChangeCount, 1)
+        // The first goes out at once; the second is held by the rate limit.
+        XCTAssertEqual(session.recordNotifications.count, 1)
+        XCTAssertEqual(session.tabStatus?.statusText, "waiting")
+        XCTAssertEqual(Set(session.programStatusControllerIfPresent?.displayRecords.map(\.statusText) ?? []),
+                       ["working", "waiting"])
+    }
+
     func testDoneShownAgainAfterPromptDoesNotNotify() {
         let session = NotificationSpySession(synthetic: false)!
-        session.screenReportProgramStatus(report("state=done"))
+        session.screenReportProgramStatusReports([report("state=done")])
         session.notified = []
         session.recordNotifications = []
 
@@ -108,7 +135,7 @@ final class ProgramStatusSessionTests: XCTestCase {
 
     func testDoneShownAgainAfterResetDoesNotNotify() {
         let session = NotificationSpySession(synthetic: false)!
-        session.screenReportProgramStatus(report("state=done"))
+        session.screenReportProgramStatusReports([report("state=done")])
         session.recordNotifications = []
 
         // What a reset other than RIS does: clear the status, then let the
@@ -126,7 +153,7 @@ final class ProgramStatusSessionTests: XCTestCase {
         let session = NotificationSpySession(synthetic: false)!
         session.screenPromptDidStart(atLine: 0)
         // A background job reports before the prompt's cleanup runs.
-        session.screenReportProgramStatus(report("state=done:id=job"))
+        session.screenReportProgramStatusReports([report("state=done:id=job")])
         drainMainQueue()
 
         XCTAssertEqual(session.tabStatus?.statusText, "done")
@@ -150,9 +177,9 @@ final class ProgramStatusSessionTests: XCTestCase {
         let session = sessionInCopyMode()
         try XCTSkipUnless(session.copyMode, "Copy mode is unavailable in this session")
 
-        session.screenReportProgramStatus(report("state=working:progress=40"))
-        session.screenReportProgramStatus(report("state=blocked"))
-        session.screenReportProgramStatus(report("state=clear"))
+        session.screenReportProgramStatusReports([report("state=working:progress=40")])
+        session.screenReportProgramStatusReports([report("state=blocked")])
+        session.screenReportProgramStatusReports([report("state=clear")])
 
         XCTAssertTrue(session.copyMode)
     }
@@ -189,7 +216,7 @@ final class ProgramStatusSessionTests: XCTestCase {
         }
 
         // A blocked record pauses what it believes is showing.
-        session.screenReportProgramStatus(ProgramStatusReport.parse("state=blocked")!)
+        session.screenReportProgramStatusReports([ProgramStatusReport.parse("state=blocked")!])
 
         var after: VT100ScreenProgress?
         screen.performBlock(joinedThreads: { _, mutableState, _ in

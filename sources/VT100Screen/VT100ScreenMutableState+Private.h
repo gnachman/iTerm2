@@ -22,6 +22,7 @@
 extern const int64_t VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed;
 
 @class iTermKittyImageDraw;
+@class iTermProgramStatusReportBatch;
 
 @interface VT100ScreenMutableState()<
 PTYAnnotationDelegate,
@@ -44,6 +45,12 @@ iTermTriggerSession,
 iTermTriggerScopeProvider> {
     VT100GridCoordRange _previousCommandRange;
     iTermIdempotentOperationJoiner *_commandRangeChangeJoiner;
+    // The batch the next OSC 7501 report may join, if its side effect is
+    // still the last one added. Mutation thread only.
+    iTermProgramStatusReportBatch *_programStatusBatch;
+    // The token executor's side effect serial just after the batch's side
+    // effect was added.
+    int64_t _programStatusBatchSideEffectSerial;
     dispatch_queue_t _queue;
     PTYTriggerEvaluator *_triggerEvaluator;
     dispatch_group_t _tmuxGroup;
@@ -157,6 +164,11 @@ iTermTriggerScopeProvider> {
 
 - (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
                          name:(NSString *)name;
+
+// Runs a side effect's block now, if there is a delegate. For a side effect
+// added straight to the token executor.
+- (void)performSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))block
+                     name:(NSString *)name;
 
 // Runs even if there is no delegate yet.
 - (void)addNoDelegateSideEffect:(void (^)(void))sideEffect
