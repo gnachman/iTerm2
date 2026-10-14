@@ -144,7 +144,8 @@ class SleepPreventionCoordinator: NSObject {
     /// The GUIDs of sessions that currently want the assertion held. Includes buried sessions:
     /// they still exist (the profile doc says the assertion is held "while a session with this
     /// setting enabled exists"), but allSessions() only enumerates sessions in a window.
-    private static func liveRequesterGUIDs() -> [String] {
+    /// Internal (not private) only so tests can use it; it does not apply the WillTerminate exclusion.
+    static func liveRequesterGUIDs() -> [String] {
         // During app termination +[iTermController releaseSharedInstance] nils the shared
         // controller while session-teardown notifications still fire (Sparkle's Install and
         // Relaunch, or an ordinary quit, closes windows, which posts iTermSessionWillTerminate).
