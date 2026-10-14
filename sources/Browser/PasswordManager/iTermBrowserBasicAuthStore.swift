@@ -12,8 +12,9 @@
 //  An entry's accountName encodes the protection space (host, plus realm when present)
 //  and its userName/password are the credential. Silent auto-fill only happens when the
 //  password manager can be read WITHOUT an interactive auth prompt (auth-on-open is off,
-//  or it's already unlocked this session); saving a new credential may prompt, which is
-//  acceptable because the user just clicked OK. /dev/null sessions never remember, since
+//  or it's already unlocked this session and the mode lets that unlock be reused);
+//  saving a new credential may prompt, which is acceptable because the user just
+//  clicked OK. /dev/null sessions never remember, since
 //  the shared password manager would outlive the tab.
 //
 //  The challenge decision (auto-try vs prompt) and the accountName derivation are pure
@@ -81,10 +82,28 @@ class iTermBrowserBasicAuthStore {
     private var provider: PasswordManagerDataSourceProvider { .forBrowser }
 
     // True when the password manager can be read without showing an interactive auth
-    // prompt: either it's already unlocked this session, or authentication isn't required
-    // to open it.
+    // prompt: either it's already unlocked this session (and that unlock may be reused), or
+    // authentication isn't required to open it.
     var isUnlockedWithoutPrompt: Bool {
-        provider.authenticated || !SecureUserDefaults.instance.requireAuthToOpenPasswordmanager.value
+        Self.isReadableWithoutPrompt(
+            authenticated: provider.authenticated,
+            authRequired: SecureUserDefaults.instance.requireAuthToOpenPasswordmanager.value,
+            requireEveryOpen: SecureUserDefaults.instance.requireAuthEveryOpenPasswordmanager.value)
+    }
+
+    // Pure so it can be unit tested. An earlier unlock only counts if it may be reused: in
+    // “Require Authentication on Every Open” mode requestAuthenticationIfNeeded prompts again
+    // even when already authenticated, and a basic-auth challenge is not the user opening the
+    // password manager, so it must show the plain sheet instead of raising that prompt.
+    nonisolated static func isReadableWithoutPrompt(authenticated: Bool,
+                                                    authRequired: Bool,
+                                                    requireEveryOpen: Bool) -> Bool {
+        guard authRequired else {
+            return true
+        }
+        return authenticated &&
+            PasswordManagerDataSourceProvider.mayReuseAuthentication(authRequired: authRequired,
+                                                                     requireEveryOpen: requireEveryOpen)
     }
 
     // Look up a remembered credential without prompting. Calls completion(nil) if
