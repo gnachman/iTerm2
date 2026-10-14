@@ -253,6 +253,48 @@
         }
       }
     },
+    "AIConnectionTester.GatewayKeyWithheldHint" : {
+      "comment" : "Advice shown when a request to a third-party AI gateway fails because iTerm2 did not send an API key; “Manage AI Models” is the name of a settings window, and “API key” and “Custom headers” are labels in its model editor",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 hat mit dieser Anfrage keinen API-Schlüssel gesendet, weil „Automatisch“ den Schlüssel eines Anbieters nur an dessen eigene Server sendet. Um einen Schlüssel an diesen Endpunkt zu senden, bearbeiten Sie das Modell unter „KI-Modelle verwalten“ und wählen Sie unter „API-Schlüssel“ den benötigten Schlüssel aus, oder fügen Sie den von ihm erwarteten Header unter „Benutzerdefinierte Header“ hinzu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 did not send an API key with this request because “Automatic” sends a provider’s key only to that provider’s own servers. To send one to this endpoint, edit the model in “Manage AI Models” and choose the key it needs under “API key”, or add the header it expects under “Custom headers”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「自動」ではプロバイダーのキーはそのプロバイダー自身のサーバーにのみ送信されるため、iTerm2はこのリクエストでAPIキーを送信しませんでした。このエンドポイントにキーを送信するには、「AIモデルを管理」でモデルを編集して「APIキー」で必要なキーを選択するか、「カスタムヘッダー」に必要なヘッダーを追加してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não enviou uma chave de API com esta solicitação porque “Automático” envia a chave de um provedor somente aos servidores do próprio provedor. Para enviar uma chave a este endpoint, edite o modelo em “Gerenciar modelos de IA” e escolha a chave necessária em “Chave de API”, ou adicione o cabeçalho que ele espera em “Cabeçalhos personalizados”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не отправил ключ API с этим запросом, потому что режим «Автоматически» отправляет ключ поставщика только на собственные серверы этого поставщика. Чтобы отправить ключ на эту конечную точку, измените модель в окне «Управление моделями ИИ» и выберите нужный ключ в поле «Ключ API» или добавьте ожидаемый ею заголовок в разделе «Пользовательские заголовки»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 未随此请求发送 API 密钥，因为“自动”只会将提供商的密钥发送到该提供商自己的服务器。要向此端点发送密钥，请在“管理 AI 模型”中编辑此模型，并在“API 密钥”中选择所需的密钥，或在“自定义头信息”中添加它所需的头信息。"
+          }
+        }
+      }
+    },
     "AIConnectionTester.InvalidURL" : {
       "comment" : "Result of the AI connection test when the configured URL cannot be parsed",
       "extractionState" : "extracted_with_value",
@@ -879,6 +921,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不会向本地端点发送 API 密钥。如果它需要身份验证，请使用自定义头信息。"
+          }
+        }
+      }
+    },
+    "AIKeyHint.UnrecognizedHost" : {
+      "comment" : "Hint shown when a manual AI model’s endpoint is not its provider’s own server (for example a third-party gateway), where the automatic API key choice sends no key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es wird nicht automatisch ein API-Schlüssel gesendet, da dieser Endpunkt nicht vom Anbieter des Modells betrieben wird. Wählen Sie den benötigten Schlüssel aus oder verwenden Sie einen benutzerdefinierten Header."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No API key is sent automatically, since this endpoint is not run by the model’s provider. Choose the key it needs, or use a custom header."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このエンドポイントはモデルのプロバイダーが運営していないため、APIキーは自動では送信されません。必要なキーを選択するか、カスタムヘッダーを使用してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma chave de API é enviada automaticamente, pois este endpoint não é operado pelo provedor do modelo. Escolha a chave necessária ou use um cabeçalho personalizado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключ API не отправляется автоматически, так как эта конечная точка не обслуживается поставщиком модели. Выберите нужный ключ или используйте пользовательский заголовок."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "由于此端点并非由模型的提供商运营，因此不会自动发送 API 密钥。请选择它所需的密钥，或使用自定义头信息。"
           }
         }
       }
@@ -1803,6 +1887,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自动（本地端点不使用）"
+          }
+        }
+      }
+    },
+    "AIModelEditor.AutomaticNoKeyUnrecognizedHost" : {
+      "comment" : "API key popup option that infers the key; shown when the endpoint is not the model’s provider’s own server (for example a third-party gateway), so no key is sent",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch (keiner bei diesem Endpunkt)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Automatic (none for this endpoint)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動（このエンドポイントではなし）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático (nenhuma para este endpoint)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматически (нет для этой конечной точки)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动（此端点不使用）"
           }
         }
       }
@@ -60690,7 +60816,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "此操作将安装 Companion 插件并开启伴侣设备配对功能。之后，iTerm2 可以在获得您明确同意的情况下将数据发送至此 Mac。"
+            "value" : "此操作将安装 Companion 插件并开启伴侣设备配对功能。之后，iTerm2 可以将数据发送到此 Mac 之外，但仅限在获得您明确同意的情况下。"
           }
         }
       }
@@ -60732,7 +60858,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "窥视孔 (Porthole); tmux; macOS; iTerm2; API; URL; JSON; CLI; LLM; FPS; HDR; path; hostname."
+            "value" : "此操作将安装 AI 插件和 Companion 插件并开启这两项功能。之后，iTerm2 可以将数据发送到此 Mac 之外，但仅限在获得您明确同意的情况下。"
           }
         }
       }
