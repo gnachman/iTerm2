@@ -1338,3 +1338,7 @@ Bug Fixes:
   (and paths used by Upload and Paste Path) no
   longer switches to the local Mac's directory
   after you run a command.
+- A trigger with no regex, such as an event
+  trigger written by hand in a Dynamic Profile,
+  no longer makes iTerm2 crash when a session
+  is created.
