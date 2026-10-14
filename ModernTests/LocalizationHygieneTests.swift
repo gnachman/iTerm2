@@ -286,4 +286,36 @@ final class LocalizationHygieneTests: XCTestCase {
                       "SmartSelection notesLocalizationKey values with no entry in Localizable.xcstrings (they will display in English in every non-English UI). Add the catalog entries:\n"
                         + missingCatalogEntry.sorted().joined(separator: "\n"))
     }
+
+    // MARK: - Version keys must not be localized in InfoPlist.xcstrings
+    //
+    // The version is stamped into the base Info.plist at build time. Any
+    // non-English localization of a version key compiles into
+    // <lang>.lproj/InfoPlist.strings and overrides the real version with
+    // whatever literal was extracted (it was "3.7.dev"), so a release build
+    // showed “3.7.dev” in Finder Get Info for every non-English UI. Version
+    // keys must have no non-English localizations and be marked
+    // shouldTranslate=false so they are never translated again.
+    func testInfoPlistVersionKeysAreNotLocalized() throws {
+        let json = try loadCatalog("sources/InfoPlist.xcstrings")
+        let source = json["sourceLanguage"] as? String ?? "en"
+        let strings = json["strings"] as! [String: Any]
+        let versionKeys = ["CFBundleGetInfoString",
+                           "CFBundleShortVersionString",
+                           "CFBundleVersion"]
+        var offenders: [String] = []
+        for key in versionKeys {
+            guard let entry = strings[key] as? [String: Any] else { continue }
+            let locs = entry["localizations"] as? [String: Any] ?? [:]
+            for lang in locs.keys where lang != source {
+                offenders.append("\(key) is localized for \(lang)")
+            }
+            if entry["shouldTranslate"] as? Bool != false {
+                offenders.append("\(key) is not marked shouldTranslate=false")
+            }
+        }
+        XCTAssertTrue(offenders.isEmpty,
+                      "Version keys in InfoPlist.xcstrings override the real version in localized Info.plist overlays:\n"
+                        + offenders.sorted().joined(separator: "\n"))
+    }
 }
