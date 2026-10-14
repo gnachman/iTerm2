@@ -47,6 +47,10 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 + (pid_t)ppidForPid:(pid_t)childPid;
 + (NSString *)nameOfProcessWithPid:(pid_t)thePid isForeground:(BOOL *)isForeground;
 
+// The foreground process group of the controlling terminal of pid, read fresh from
+// the kernel. Returns -1 if pid has no controlling terminal or cannot be read.
++ (pid_t)foregroundProcessGroupOfControllingTerminalOfProcess:(pid_t)pid;
+
 // Best-effort human-readable explanation of why nameOfProcessWithPid: would return
 // nil for this pid, obtained by re-reading. Intended for a cold diagnostic path (an
 // ancestry name that unexpectedly came back empty), not routine use, since it does
