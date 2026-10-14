@@ -398,6 +398,8 @@ class Conductor: NSObject, SSHIdentityProvider {
     // The proxy state lives in RestorableState (it2Proxy) so it survives state
     // restoration, and is carried in process across SSH recovery (adoptIT2RecoveryState).
     var it2Demux: ConductorIT2Demux?
+    // Remote names claimed by uploads in progress, so concurrent uploads never pick the same one.
+    let uploadNameReservations = ConductorUploadNameReservations()
     // Whether framer's most recent it2Listen actually bound the socket. Stored in it2Proxy so
     // it is carried by value across an in-process SSH recovery (a recovered framer keeps its
     // socket bound but never re-runs it2Listen, so without this the menu would go permanently
