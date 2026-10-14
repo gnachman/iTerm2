@@ -669,9 +669,22 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
                                       didSendUserName:didSendUserName];
     } else {
         DLog(@"Open password manager as standalone window");
-        if (!_passwordManagerWindowController) {
-            _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
-            _passwordManagerWindowController.delegate = self;
+        NSWindow *existingWindow = _passwordManagerWindowController.isWindowLoaded ? _passwordManagerWindowController.window : nil;
+        // A minimized window counts as closed, so it errs toward authenticating again. So
+        // does a window whose open ended (for example, a lock) while it stayed on screen.
+        const BOOL windowIsOpen = existingWindow.isVisible && _passwordManagerWindowController.isOpen;
+        switch ([iTermPasswordManagerStandaloneOpen actionWithHasWindowController:_passwordManagerWindowController != nil
+                                                                     windowIsOpen:windowIsOpen]) {
+            case iTermPasswordManagerStandaloneOpenActionCreate:
+                _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+                _passwordManagerWindowController.delegate = self;
+                break;
+            case iTermPasswordManagerStandaloneOpenActionReopen:
+                // Each open authenticates as the mode requires, as a new window would.
+                [_passwordManagerWindowController reopen];
+                break;
+            case iTermPasswordManagerStandaloneOpenActionBringToFront:
+                break;
         }
         _passwordManagerWindowController.sendUserByDefault = forUser;
         _passwordManagerWindowController.didSendUserName = didSendUserName;

@@ -12,7 +12,17 @@ import LocalAuthentication
 class PasswordManagerDataSourceProvider: NSObject {
     @objc static let forTerminal = PasswordManagerDataSourceProvider(browser: false)
     @objc static let forBrowser = PasswordManagerDataSourceProvider(browser: true)
-    @objc private(set) var authenticated = false
+    // Posted with the provider as the object when `authenticated` goes from true to false:
+    // a failed or cancelled prompt, or a screen lock. Every open window locks then.
+    static let didRevokeAuthenticationNotification = Notification.Name("iTermPasswordManagerDidRevokeAuthentication")
+    @objc private(set) var authenticated = false {
+        didSet {
+            if oldValue && !authenticated {
+                NotificationCenter.default.post(name: Self.didRevokeAuthenticationNotification,
+                                                object: self)
+            }
+        }
+    }
     private var _dataSource: PasswordManagerDataSource? = nil
     private var dataSourceType: DataSource!
     private let _keychain: KeychainPasswordDataSource

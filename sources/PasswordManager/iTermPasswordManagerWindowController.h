@@ -44,6 +44,14 @@ extern NSString *const iTermPasswordManagerDidLoadAccounts;
 
 - (void)selectAccountName:(NSString *)name;
 
+// Call before showing this window again after it was closed. The new open goes through
+// the same authentication as a fresh window, and rows from the previous open are cleared.
+- (void)reopen;
+
+// NO once the current open has closed or ended (for example, because authentication was
+// revoked), even if the window is still on screen.
+@property(nonatomic, readonly) BOOL isOpen;
+
 @end
 
 @interface iTermPasswordManagerPanel : NSPanel

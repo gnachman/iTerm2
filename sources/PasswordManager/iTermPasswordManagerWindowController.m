@@ -177,6 +177,8 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     iTermPasswordManagerReload _reloadPolicy;
     // Whether this window may show account data, given its own authentication.
     iTermPasswordManagerOpenGate *_openGate;
+    // Whether this open has already closed, so a lock doesn't close it a second time.
+    BOOL _closedThisOpen;
 
     @protected
     NSString *_accountNameToSelectAfterAuthentication;
@@ -682,6 +684,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (void)orderOutOrEndSheet {
+    _closedThisOpen = YES;
     [self sendWillClose];
     if (self.window.isSheet) {
         [self.window.sheetParent endSheet:self.window];
@@ -1322,6 +1325,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 }
 
 - (void)closeOrEndSheet {
+    _closedThisOpen = YES;
     [self sendWillClose];
     if (self.window.isSheet) {
         DLog(@"Ask parent to end sheet");
@@ -1828,11 +1832,21 @@ static NSInteger const kDynamicMenuItemTag = 9999;
 // authentication can be obtained without this window ever being opened.
 - (void)instanceScreenDidLock:(NSNotification *)notification {
     if ([iTermPasswordManagerDataSourceProvider requiresAuthenticationAfterScreenLock]) {
-        for (NSWindow *sheet in [self.window.sheets copy]) {
-            [self.window endSheet:sheet];
-        }
-        [self closeCurrentSession:nil];
+        [self closeIfOpen];
     }
+}
+
+// Ends any sheets on this window (such as an account editor) and closes it. Does nothing
+// if this open already closed, since a screen lock may also have closed it through its gate.
+// This tracks the open rather than window state, which is also hidden while the app is.
+- (void)closeIfOpen {
+    if (!self.isWindowLoaded || _closedThisOpen) {
+        return;
+    }
+    for (NSWindow *sheet in [self.window.sheets copy]) {
+        [self.window endSheet:sheet];
+    }
+    [self closeCurrentSession:nil];
 }
 
 #pragma mark - Private
@@ -1847,23 +1861,80 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     return _openGate.unlocked;
 }
 
-- (void)authenticate {
+// Starts a new open: replaces the gate and requests authentication if this open needs it.
+// Returns YES if authentication was requested; its completion loads the accounts.
+- (BOOL)authenticate {
     DLog(@"Request auth if possible");
-    _openGate = [[iTermPasswordManagerOpenGate alloc] initWithProvider:self.dataSourceProvider];
-    if (!_openGate.needsAuthentication) {
+    _closedThisOpen = NO;
+    iTermPasswordManagerOpenGate *gate = [[iTermPasswordManagerOpenGate alloc] initWithProvider:self.dataSourceProvider];
+    _openGate = gate;
+    __weak __typeof(self) weakSelf = self;
+    __weak iTermPasswordManagerOpenGate *weakGate = gate;
+    gate.didLock = ^{
+        [weakSelf openGateDidLock:weakGate];
+    };
+    if (!gate.needsAuthentication) {
         DLog(@"Already authenticated");
-        return;
+        return NO;
     }
 
-    __weak __typeof(self) weakSelf = self;
+    // Rows, and the search text (which may be an account name), from an earlier open must
+    // not show while this open authenticates.
+    [self clearAccounts];
+    if (self.isWindowLoaded) {
+        _searchField.stringValue = @"";
+        _twoFactorCode.stringValue = @"";
+    }
     [self.dataSourceProvider requestAuthenticationIfNeeded:^(BOOL authenticated) {
-        [weakSelf openAuthenticationDidComplete:authenticated];
+        [weakSelf openAuthenticationDidComplete:authenticated gate:gate];
     }];
+    return YES;
 }
 
-- (void)openAuthenticationDidComplete:(BOOL)success {
+- (void)openAuthenticationDidComplete:(BOOL)success gate:(iTermPasswordManagerOpenGate *)gate {
+    if (gate != _openGate) {
+        // A prompt from an earlier open of this window finished after it was reopened.
+        // The current open has its own prompt; this result does not count for it.
+        DLog(@"Ignore authentication result for a stale open");
+        return;
+    }
     [_openGate authenticationDidComplete:success];
     [self authenticationDidComplete:success];
+}
+
+// Authentication was revoked (a failed or cancelled prompt from any window, or a screen
+// lock) while this window was unlocked. Stop showing the rows it already loaded and close
+// it, as a screen lock does, so the next open authenticates again.
+- (void)openGateDidLock:(iTermPasswordManagerOpenGate *)gate {
+    if (gate != _openGate) {
+        return;
+    }
+    DLog(@"Open gate locked. Clear accounts and close.");
+    [self clearAccounts];
+    [self closeIfOpen];
+}
+
+- (void)clearAccounts {
+    if (!self.isWindowLoaded) {
+        return;
+    }
+    // A fetch still in flight checks isUnlocked when it finishes, so it can't refill the table.
+    [self setAccounts:@[] filtered:@[]];
+}
+
+- (BOOL)isOpen {
+    return !_closedThisOpen;
+}
+
+- (void)reopen {
+    DLog(@"Reopen");
+    // A name saved by an earlier open that never authenticated must not be selected now.
+    _accountNameToSelectAfterAuthentication = nil;
+    // authenticate clears the rows if this open must prompt. Otherwise the mode lets the
+    // earlier unlock be reused, so keep showing them while they reload.
+    if (![self authenticate]) {
+        [self reloadAccounts:^{}];
+    }
 }
 
 - (void)authenticationDidComplete:(BOOL)success {
@@ -2077,8 +2148,13 @@ static NSInteger const kDynamicMenuItemTag = 9999;
                                  completion:^(NSArray<id<PasswordManagerAccount>> *accounts) {
             [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
                 [weakSelf decrBusy];
-                [weakSelf setAccounts:accounts
-                             filtered:[weakSelf accounts:accounts filteredBy:filter]];
+                if (!weakSelf.isUnlocked) {
+                    // Locked while the fetch was in flight.
+                    [weakSelf setAccounts:@[] filtered:@[]];
+                } else {
+                    [weakSelf setAccounts:accounts
+                                 filtered:[weakSelf accounts:accounts filteredBy:filter]];
+                }
                 completion();
             }];
         }];
@@ -2339,6 +2415,7 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
 #pragma mark - NSWindowDelegate
 
 - (void)windowWillClose:(NSNotification *)notification {
+    _closedThisOpen = YES;
     _twoFactorCode.stringValue = @"";
     [_tableView reloadData];
     [self sendWillClose];
