@@ -318,7 +318,16 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     }
 
     DLog(@"PTYTextView insertText:%@", aString);
-    if (replacementRange.length > 0 && replacementRange.location != NSNotFound) {
+    if ([self isPeriodSubstitution:aString replacementRange:replacementRange]) {
+        // macOS’s “Add period with double-space” asks to replace the space before the cursor
+        // with “. ” when you press space again. In vim the period repeats the last command. The
+        // app sets NSAutomaticPeriodSubstitutionEnabled to NO, but that doesn't always reach
+        // NSSpellChecker (for example, with a custom user defaults suite), so type the space the
+        // user pressed instead. Issue 13123.
+        DLog(@"Ignoring period substitution; inserting a space");
+        aString = @" ";
+        replacementRange = NSMakeRange(NSNotFound, 0);
+    } else if (replacementRange.length > 0 && replacementRange.location != NSNotFound) {
         DLog(@"Replacement range has length %@", @(replacementRange.length));
         const NSInteger count = [self.delegate keyboardHandler:self
                             numberOfCharactersToReplaceInRange:replacementRange];
@@ -344,6 +353,18 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 
 - (BOOL)hasMarkedText {
     return [self.delegate keyboardHandlerMarkedTextRange:self].length > 0;
+}
+
+// Double-space period substitution replaces the one space before the cursor with “. ” while the
+// text input system handles a press of the space bar. Text inserted outside a keypress, such as by
+// dictation, and an input method committing marked text are not doing that.
+- (BOOL)isPeriodSubstitution:(NSString *)string replacementRange:(NSRange)replacementRange {
+    return (_eventBeingHandled.type == NSEventTypeKeyDown &&
+            [_eventBeingHandled.characters isEqualToString:@" "] &&
+            [string isEqualToString:@". "] &&
+            replacementRange.location != NSNotFound &&
+            replacementRange.length == 1 &&
+            ![self hasMarkedText]);
 }
 
 // Deletes text that was already sent so that the text being inserted replaces it. The backspaces

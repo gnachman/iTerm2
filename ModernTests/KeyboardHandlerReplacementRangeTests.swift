@@ -23,6 +23,9 @@ private final class FakeKeyboardHandlerDelegate: NSObject, iTermKeyboardHandlerD
     var shouldInsert = true
     var charactersToReplace = 0
     var charactersInReplacementRange = 0
+    var markedTextLength = 0
+    // Stands in for the text input system handling a keypress that went to Cocoa.
+    var interpretKeyEvents: ((iTermKeyboardHandler, [NSEvent]) -> Void)?
 
     func keyboardHandler(_ keyboardhandler: iTermKeyboardHandler, shouldHandleKeyDown event: NSEvent) -> Bool {
         return true
@@ -31,9 +34,13 @@ private final class FakeKeyboardHandlerDelegate: NSObject, iTermKeyboardHandlerD
     func keyboardHandler(_ keyboardhandler: iTermKeyboardHandler,
                          load context: UnsafeMutablePointer<iTermKeyboardHandlerContext>,
                          for event: NSEvent) {
+        var value = iTermKeyboardHandlerContext()
+        value.autorepeatMode = true
+        context.pointee = value
     }
 
     func keyboardHandler(_ keyboardhandler: iTermKeyboardHandler, interpretKeyEvents events: [NSEvent]) {
+        interpretKeyEvents?(keyboardhandler, events)
     }
 
     func keyboardHandler(_ keyboardhandler: iTermKeyboardHandler, sendEventToController event: NSEvent) {
@@ -41,7 +48,7 @@ private final class FakeKeyboardHandlerDelegate: NSObject, iTermKeyboardHandlerD
     }
 
     func keyboardHandlerMarkedTextRange(_ keyboardhandler: iTermKeyboardHandler) -> NSRange {
-        return NSRange(location: cursorLocation, length: 0)
+        return NSRange(location: cursorLocation, length: markedTextLength)
     }
 
     func keyboardHandler(_ keyboardhandler: iTermKeyboardHandler, insertText aString: String) {
@@ -133,5 +140,141 @@ final class KeyboardHandlerReplacementRangeTests: XCTestCase {
         handler.insertText("good", replacementRange: NSRange(location: 10, length: 2))
 
         XCTAssertEqual(delegate.actions, [delete, .insert("good")])
+    }
+}
+
+// macOS’s “Add period with double-space” reads the text before the cursor through
+// -attributedSubstringForProposedRange:actualRange: and, when you press space after a space, asks
+// the client (synchronously, while it handles the keypress) to replace that space with “. ”. The
+// terminal must type a plain space instead. In vim the period repeats the last command. Issue
+// 13123 and QA finding F-217: the app's NSAutomaticPeriodSubstitutionEnabled=NO default didn't
+// reach NSSpellChecker when running with a custom user defaults suite.
+final class KeyboardHandlerPeriodSubstitutionTests: XCTestCase {
+    private var handler: iTermKeyboardHandler!
+    private var delegate: FakeKeyboardHandlerDelegate!
+    private var inputContext: NSTextInputContext!
+
+    override func setUp() {
+        super.setUp()
+        delegate = FakeKeyboardHandlerDelegate()
+        handler = iTermKeyboardHandler()
+        handler.keyMapper = iTermStandardKeyMapper()
+        handler.delegate = delegate
+        inputContext = NSTextInputContext(client: NSTextView())
+        // With either of these on, keypresses go to the real -[NSTextInputContext handleEvent:]
+        // instead of the delegate's interpretKeyEvents.
+        pinAdvancedSetting("ExperimentalKeyHandling", to: false)
+        pinAdvancedSetting("EnableCharacterAccentMenu", to: false)
+    }
+
+    private var delete: FakeKeyboardHandlerDelegate.Action {
+        return .sendEvent(keyCode: UInt16(kVK_Delete), characters: "\u{7f}")
+    }
+
+    private func keyEvent(_ characters: String, keyCode: Int) -> NSEvent {
+        return NSEvent.keyEvent(with: .keyDown,
+                                location: .zero,
+                                modifierFlags: [],
+                                timestamp: 0,
+                                windowNumber: 0,
+                                context: nil,
+                                characters: characters,
+                                charactersIgnoringModifiers: characters,
+                                isARepeat: false,
+                                keyCode: UInt16(keyCode))!
+    }
+
+    // Presses a key while the text input system inserts `text` with `replacementRange`.
+    private func press(_ characters: String = " ",
+                       keyCode: Int = kVK_Space,
+                       inserting text: Any,
+                       replacementRange: NSRange) {
+        delegate.interpretKeyEvents = { handler, _ in
+            handler.insertText(text, replacementRange: replacementRange)
+        }
+        handler.keyDown(keyEvent(characters, keyCode: keyCode), inputContext: inputContext)
+    }
+
+    func testDoubleSpacePeriodSubstitutionInsertsPlainSpace() {
+        delegate.cursorLocation = 13
+        delegate.charactersInReplacementRange = 1
+
+        press(inserting: ". ", replacementRange: NSRange(location: 12, length: 1))
+
+        XCTAssertEqual(delegate.actions, [.insert(" ")])
+    }
+
+    // In vim the space before the cursor isn't backspaced over, so “. ” would run the repeat
+    // command.
+    func testDoubleSpacePeriodSubstitutionInsertsPlainSpaceWhenNotBackspacing() {
+        delegate.cursorLocation = 13
+        delegate.charactersInReplacementRange = 0
+
+        press(inserting: ". ", replacementRange: NSRange(location: 12, length: 1))
+
+        XCTAssertEqual(delegate.actions, [.insert(" ")])
+    }
+
+    func testAttributedPeriodSubstitutionInsertsPlainSpace() {
+        delegate.cursorLocation = 13
+        delegate.charactersInReplacementRange = 1
+
+        press(inserting: NSAttributedString(string: ". "),
+              replacementRange: NSRange(location: 12, length: 1))
+
+        XCTAssertEqual(delegate.actions, [.insert(" ")])
+    }
+
+    // Dictation or Voice Control can replace the space before the cursor with “. ” outside of a
+    // keypress. That's what the user asked for.
+    func testPeriodSpaceReplacementWithoutKeypressStillReplaces() {
+        delegate.cursorLocation = 13
+        delegate.charactersInReplacementRange = 1
+
+        handler.insertText(". ", replacementRange: NSRange(location: 12, length: 1))
+
+        XCTAssertEqual(delegate.actions, [delete, .insert(". ")])
+    }
+
+    // Only pressing space triggers the substitution.
+    func testPeriodSpaceReplacementDuringOtherKeypressStillReplaces() {
+        delegate.cursorLocation = 13
+        delegate.charactersInReplacementRange = 1
+
+        press("a",
+              keyCode: kVK_ANSI_A,
+              inserting: ". ",
+              replacementRange: NSRange(location: 12, length: 1))
+
+        XCTAssertEqual(delegate.actions, [delete, .insert(". ")])
+    }
+
+    func testPeriodSpaceWithoutReplacementRangeIsInsertedUnchanged() {
+        delegate.cursorLocation = 13
+
+        press(inserting: ". ", replacementRange: NSRange(location: NSNotFound, length: 0))
+
+        XCTAssertEqual(delegate.actions, [.insert(". ")])
+    }
+
+    // Replacing more than the one character before the cursor is something else, like a
+    // correction.
+    func testPeriodSpaceReplacingMoreThanOneCharacterStillReplaces() {
+        delegate.cursorLocation = 13
+        delegate.charactersInReplacementRange = 2
+
+        press(inserting: ". ", replacementRange: NSRange(location: 11, length: 2))
+
+        XCTAssertEqual(delegate.actions, [delete, delete, .insert(". ")])
+    }
+
+    // An input method committing marked text on space owns the replacement.
+    func testPeriodSpaceReplacingMarkedTextIsNotTreatedAsSubstitution() {
+        delegate.cursorLocation = 13
+        delegate.markedTextLength = 1
+
+        press(inserting: ". ", replacementRange: NSRange(location: 12, length: 1))
+
+        XCTAssertEqual(delegate.actions, [.insert(". ")])
     }
 }
