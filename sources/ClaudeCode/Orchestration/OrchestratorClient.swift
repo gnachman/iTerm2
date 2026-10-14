@@ -380,3 +380,42 @@ final class SessionRestorationGate {
         }
     }
 }
+
+// Whether a session terminating right now is being torn down by an app quit
+// that window restoration will undo. An ordinary quit closes every window,
+// which terminates every session and posts iTermSessionWillTerminate, but
+// when windows will be restored at the next launch each session comes back
+// with the same stableID. A chat's link to such a session, and the watches and
+// timers it registered, must outlive that teardown. “Quit and Close All
+// Windows” (Option-Quit) discards the saved state, which turns off
+// willRestoreWindowsAtNextLaunch, so it unlinks like a real close. tmux client
+// sessions are not saved for restoration (reattaching creates new sessions),
+// so their termination is always treated as a real close.
+enum SessionQuitRestoration {
+    // Takes an iTermSessionWillTerminate notification.
+    @MainActor
+    static func sessionWillBeRestoredAfterQuit(_ notification: Notification) -> Bool {
+        // Sessions are terminated by -[iTermController cleanUpIfNeeded] while
+        // the shared instance still exists. Once it is gone nothing can say
+        // whether windows will be restored, so behave like a real close.
+        guard let controller = iTermController.sharedInstance() else {
+            return false
+        }
+        return sessionWillBeRestored(isTmuxClient: wasTmuxClient(notification),
+                                     applicationIsQuitting: controller.applicationIsQuitting,
+                                     willRestoreWindowsAtNextLaunch: controller.willRestoreWindowsAtNextLaunch)
+    }
+
+    // -[PTYSession terminate] clears tmuxMode before posting, so the
+    // session's isTmuxClient is always false by now; read the value it
+    // captured beforehand.
+    static func wasTmuxClient(_ notification: Notification) -> Bool {
+        (notification.userInfo?[iTermSessionWillTerminateWasTmuxClientKey] as? NSNumber)?.boolValue ?? false
+    }
+
+    static func sessionWillBeRestored(isTmuxClient: Bool,
+                                      applicationIsQuitting: Bool,
+                                      willRestoreWindowsAtNextLaunch: Bool) -> Bool {
+        return !isTmuxClient && applicationIsQuitting && willRestoreWindowsAtNextLaunch
+    }
+}

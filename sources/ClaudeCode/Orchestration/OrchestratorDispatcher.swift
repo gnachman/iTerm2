@@ -181,13 +181,21 @@ final class OrchestratorDispatcher {
     // restoration-time status as a real transition.
     private var reconciled = false
 
+    // Whether a terminating session is going away for a quit that window
+    // restoration will undo (see SessionQuitRestoration). Injectable for tests.
+    private let quitWillRestoreSessions: (Notification) -> Bool
+
     init(chatID: String, broker: ChatBroker,
          typedInput: OrchestratorTypedInputStore,
          restorationGate: SessionRestorationGate? = nil,
-         sessionLookup: ((String) -> PTYSession?)? = nil) {
+         sessionLookup: ((String) -> PTYSession?)? = nil,
+         quitWillRestoreSessions: ((Notification) -> Bool)? = nil) {
         self.chatID = chatID
         self.broker = broker
         self.typedInput = typedInput
+        self.quitWillRestoreSessions = quitWillRestoreSessions ?? { notification in
+            SessionQuitRestoration.sessionWillBeRestoredAfterQuit(notification)
+        }
         self.sessionLookup = sessionLookup ?? { reference in
             iTermController.sharedInstance()?.anySession(forReference: reference)
         }
@@ -501,6 +509,13 @@ final class OrchestratorDispatcher {
     private func handleSessionWillTerminate(_ notification: Notification) {
         if tornDown { return }
         guard let session = notification.object as? PTYSession else { return }
+        // A quit that window restoration will undo is not a real close: the
+        // session comes back at the next launch with the same stableID, and
+        // its watches are reconciled against it then. Leave everything as is.
+        if quitWillRestoreSessions(notification) {
+            DLog("Session \(session.stableID) terminating for a restorable quit; keeping watchers for chat \(chatID)")
+            return
+        }
         let guid = session.guid
         // If a session-bound chat's LINKED session is terminating while its watch
         // consent prompt is up, that continuation would strand the same way an
