@@ -191,4 +191,77 @@ final class SleepPreventionCoordinatorLifecycleTests: XCTestCase {
         XCTAssertFalse(session.exited)
         XCTAssertEqual(posts, 2)
     }
+
+    // F-212: detaching from tmux leaves each tmux window's pane open but marks its session exited
+    // ("tmux detached"). Call the real tmux detach handler on real sessions in a real window, with
+    // the coordinator using the real session enumeration and exited filter, and keep the windows
+    // open after detach (the QA repro; if they closed, termination would release the assertion and
+    // mask the bug): both detached panes must stop counting and the assertion must be released
+    // without any unrelated event. A reattach needs no test here: closeAllPanes forgets the old
+    // panes, so reattaching builds new sessions, which PTYSessionCreated already covers.
+    //
+    // The app's own SleepPreventionCoordinator.instance also observes these notifications, so it
+    // briefly holds a real idle-sleep assertion between the two detaches; the second detach releases
+    // it (window.close() covers a mid-test failure).
+    func testTmuxDisconnectHandlerReleasesAssertion() throws {
+        func setCloseAfterDetach(_ value: Bool?) {
+            guard let value else {
+                iTermAdvancedSettingsModel.setTmuxWindowsShouldCloseAfterDetach(nil)
+                return
+            }
+            withUnsafePointer(to: ObjCBool(value)) {
+                iTermAdvancedSettingsModel.setTmuxWindowsShouldCloseAfterDetach($0)
+            }
+        }
+        let savedCloseAfterDetach = iTermAdvancedSettingsModel.tmuxWindowsShouldCloseAfterDetach()?.pointee.boolValue
+        setCloseAfterDetach(false)
+        defer { setCloseAfterDetach(savedCloseAfterDetach) }
+
+        let window = TerminalWindowTestFixture()
+        defer { window.close() }
+        let first = try XCTUnwrap(window.terminal.currentSession())
+        let second = window.addTab()
+        for session in [first, second] {
+            var profile = session.profile ?? [:]
+            profile[KEY_PREVENT_SLEEP] = true
+            // “After a session ends: No Action”, as in the repro; Close would close the pane.
+            profile[KEY_SESSION_END_ACTION] = iTermSessionEndAction.default.rawValue
+            session.profile = profile
+            session.endAction = .default
+            // Closing the window terminates these exited, seconds-old panes, which would otherwise
+            // put up the modal short-lived-session warning (real tmux panes skip it).
+            session.shortLivedSingleUse = true
+        }
+
+        // Only count this test's sessions so other windows in the test host can't affect it.
+        let mine: Set<String> = [first.guid, second.guid]
+        var heldAssertions = 0
+        let coordinator = SleepPreventionCoordinator(
+            environment: SleepPreventionCoordinator.Environment(
+                requesterGUIDs: {
+                    SleepPreventionCoordinator.liveRequesterGUIDs().filter { mine.contains($0) }
+                },
+                connectedToPower: { true },
+                allowedOnBattery: { false },
+                scheduleOnNextTurn: { _ in },
+                beginAssertion: {
+                    heldAssertions += 1
+                    return NSObject()
+                },
+                endAssertion: { _ in heldAssertions -= 1 }),
+            notificationCenter: .default)
+        XCTAssertEqual(coordinator.numberOfSessionsPreventingSleep, 2)
+        XCTAssertEqual(heldAssertions, 1)
+
+        first.tmuxDidDisconnect()
+        XCTAssertTrue(first.exited)
+        XCTAssertEqual(coordinator.numberOfSessionsPreventingSleep, 1)
+        XCTAssertEqual(heldAssertions, 1)
+
+        second.tmuxDidDisconnect()
+        XCTAssertTrue(second.exited)
+        XCTAssertEqual(coordinator.numberOfSessionsPreventingSleep, 0)
+        XCTAssertEqual(coordinator.numberOfSessionsRequestingPreventSleep, 0)
+        XCTAssertEqual(heldAssertions, 0)
+    }
 }
