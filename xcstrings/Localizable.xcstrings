@@ -61031,6 +61031,48 @@
         }
       }
     },
+    "Companion.ChooseMode.WithAIConfiguredDetail" : {
+      "comment" : "Detail under the with-AI button on the choose-mode screen when the user’s AI model already works",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chatten Sie mit dem Orchestrator und sitzungsbezogenen Agenten über das KI-Modell, das Sie bereits eingerichtet haben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Chat with the orchestrator and per-session agents using the AI model you already set up."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すでに設定済みのAIモデルを使って、オーケストレーターやセッションごとのエージェントとチャットできます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Converse com o orquestrador e com os agentes de cada sessão usando o modelo de IA que você já configurou."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Общайтесь с оркестратором и агентами отдельных сессий с помощью уже настроенной модели ИИ."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用您已设置好的 AI 模型与协调器和各会话专属代理聊天。"
+          }
+        }
+      }
+    },
     "Companion.ChooseMode.WithAIDetail" : {
       "comment" : "Detail under the with-AI button on the choose-mode screen",
       "extractionState" : "extracted_with_value",
@@ -61111,6 +61153,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "您的管理员已禁用 AI 功能，因此此选项不可用。"
+          }
+        }
+      }
+    },
+    "Companion.ChooseMode.WithAIManualModelDetail" : {
+      "comment" : "Detail under the with-AI button on the choose-mode screen when the user’s manually chosen AI model is not yet usable",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chatten Sie mit dem Orchestrator und sitzungsbezogenen Agenten. Erfordert, dass das unter Einstellungen > Allgemein > KI ausgewählte KI-Modell konfiguriert ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Chat with the orchestrator and per-session agents. Requires the AI model selected in Settings > General > AI to be configured."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オーケストレーターやセッションごとのエージェントとチャットできます。設定 > 一般 > AIで選択したAIモデルの設定が必要です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Converse com o orquestrador e com os agentes de cada sessão. Requer que o modelo de IA selecionado em Ajustes > Geral > IA esteja configurado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Общайтесь с оркестратором и агентами отдельных сессий. Требуется настроить модель ИИ, выбранную в Настройки > Общие > ИИ."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与协调器和各会话专属代理聊天。需要先配置在“设置 > 通用 > AI”中选择的 AI 模型。"
           }
         }
       }
@@ -61237,6 +61321,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "获取 API 密钥"
+          }
+        }
+      }
+    },
+    "Companion.InstallAIConfigured" : {
+      "comment" : "Shown on the full setup screen instead of the API key field when the user’s AI model already works",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "KI-Funktionen verwenden das Modell, das Sie bereits unter Einstellungen > Allgemein > KI eingerichtet haben, daher ist hier kein API-Schlüssel erforderlich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI features will use the model you already set up in Settings > General > AI, so no API key is needed here."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI機能では、設定 > 一般 > AIですでに設定したモデルが使用されるため、ここでAPIキーを入力する必要はありません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os recursos de IA usarão o modelo que você já configurou em Ajustes > Geral > IA, portanto não é necessária uma chave de API aqui."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Функции ИИ будут использовать модель, уже настроенную в Настройки > Общие > ИИ, поэтому ключ API здесь не нужен."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 功能将使用您已在“设置 > 通用 > AI”中设置好的模型，因此无需在此输入 API 密钥。"
+          }
+        }
+      }
+    },
+    "Companion.InstallAIManualModelNeedsConfiguration" : {
+      "comment" : "Shown on the full setup screen instead of the API key field when the user’s manually chosen AI model cannot authenticate",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das unter Einstellungen > Allgemein > KI ausgewählte KI-Modell benötigt einen API-Schlüssel oder eine gültige Konfiguration, bevor KI-Funktionen funktionieren. Sie können jetzt installieren und die Einrichtung des Modells später abschließen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The AI model selected in Settings > General > AI needs an API key or a valid configuration before AI features will work. You can install now and finish setting up the model later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI機能を使用するには、設定 > 一般 > AIで選択したAIモデルにAPIキーまたは有効な設定が必要です。今すぐインストールして、モデルの設定は後で完了することもできます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O modelo de IA selecionado em Ajustes > Geral > IA precisa de uma chave de API ou de uma configuração válida para que os recursos de IA funcionem. Você pode instalar agora e concluir a configuração do modelo mais tarde."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Модели ИИ, выбранной в Настройки > Общие > ИИ, нужен ключ API или корректная конфигурация, чтобы функции ИИ заработали. Вы можете установить сейчас и завершить настройку модели позже."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在“设置 > 通用 > AI”中选择的 AI 模型需要 API 密钥或有效配置，AI 功能才能正常工作。您可以现在安装，稍后再完成模型设置。"
           }
         }
       }
@@ -62165,6 +62333,48 @@
         }
       }
     },
+    "Companion.SetupFailed.AIModelCannotAuthenticate" : {
+      "comment" : "Error shown when the companion setup wizard installed its plugins but the AI model still cannot authenticate with the entered API key",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die KI- und Begleit-Plugins wurden installiert, aber das KI-Modell ist nicht für die Verwendung des eingegebenen API-Schlüssels konfiguriert. Überprüfen Sie den Anbieter und das KI-Modell unter Einstellungen > Allgemein > KI und versuchen Sie es dann erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The AI and companion plugins were installed, but the AI model is not configured to use the API key you entered. Check the provider and the AI model in Settings > General > AI, then try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIプラグインとコンパニオンプラグインはインストールされましたが、AIモデルが入力したAPIキーを使用するように設定されていません。設定 > 一般 > AIでプロバイダーとAIモデルを確認してから、もう一度お試しください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os plugins de IA e do Companion foram instalados, mas o modelo de IA não está configurado para usar a chave de API que você digitou. Verifique o provedor e o modelo de IA em Ajustes > Geral > IA e tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Плагины ИИ и Компаньон установлены, но модель ИИ не настроена на использование введённого вами ключа API. Проверьте поставщика и модель ИИ в Настройки > Общие > ИИ, затем повторите попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 插件和 Companion 插件已安装，但 AI 模型未配置为使用您输入的 API 密钥。请在“设置 > 通用 > AI”中检查提供商和 AI 模型，然后重试。"
+          }
+        }
+      }
+    },
     "Companion.SetupFailed.Suffix" : {
       "comment" : "Text appended after the error message in the setup-failed alert",
       "extractionState" : "extracted_with_value",
@@ -62371,6 +62581,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示配对代码"
+          }
+        }
+      }
+    },
+    "Companion.Status.AISettingsChanged" : {
+      "comment" : "Status shown on the companion setup screen when it was rebuilt because AI settings changed while it was open",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre KI-Einstellungen haben sich geändert. Überprüfen Sie diese Seite und klicken Sie erneut auf „Installieren“."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your AI settings changed. Review this screen and click Install again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIの設定が変更されました。この画面を確認し、もう一度「インストール」をクリックしてください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suas configurações de IA foram alteradas. Revise esta tela e clique em Instalar novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваши настройки ИИ изменились. Проверьте этот экран и снова нажмите «Установить»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您的 AI 设置已更改。请检查此页面，然后再次点击“安装”。"
           }
         }
       }
