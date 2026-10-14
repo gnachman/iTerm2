@@ -1417,8 +1417,25 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         preset.supportsTemperature ? NSControlStateValueOn : NSControlStateValueOff;
     // A catalog model names a specific model, so it is never auto-discovering.
     _dynamicModelsButton.state = NSControlStateValueOff;
+    [self resetAuthorizationForPreset];
     [self updateEditorAPIKeyHint];
     [self updateDynamicModelsEditorState];
+}
+
+// A preset points the model at a new endpoint, so the custom headers and API key
+// choice made for the old one must not follow it there: a local gateway's bearer
+// token or another vendor's key would otherwise be sent to the preset's host.
+// Reset them to what a new model made from the preset would get: no headers and
+// Automatic, which picks the key of the vendor the preset resolves to.
+- (void)resetAuthorizationForPreset {
+    // End any in-progress header cell edit first, so it can't commit into a row
+    // that no longer exists once the headers are cleared.
+    [_window makeFirstResponder:nil];
+    [_headers removeAllObjects];
+    [_headersTable reloadData];
+    [_credentialPopup selectItemWithTag:kAICredentialTagAutomatic];
+    // Don't let the old endpoint's own key reappear if the user picks it again.
+    _modelAPIKeyField.stringValue = @"";
 }
 
 // A provider preset configures an OpenAI-compatible gateway: it fills in the
@@ -1451,6 +1468,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _dynamicModelsButton.state =
         preset.dynamicModels ? NSControlStateValueOn : NSControlStateValueOff;
     _supportsTemperatureButton.state = NSControlStateValueOn;
+    [self resetAuthorizationForPreset];
     [self updateEditorAPIKeyHint];
     [self updateDynamicModelsEditorState];
     // The model name is required to save; nudge the user straight to it (unless
