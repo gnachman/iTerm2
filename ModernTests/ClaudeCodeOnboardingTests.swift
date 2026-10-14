@@ -14,6 +14,9 @@
 //    cleanup, so its result codes and pruning behavior matter. It also covers
 //    the settings write that Install shares: a symlinked settings.json (a
 //    dotfiles manager's link) must stay a link, with the change in its target.
+//  - mergeCCStatusHooks(intoSettingsURL:...) is Install's merge. It must never
+//    rewrite a settings.json it can't read or parse as a JSON object, since
+//    that would throw away the user's other settings.
 //
 
 import XCTest
@@ -246,5 +249,107 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
 
     func testStripThroughRelativeSymlinkKeepsLink() {
         assertStripWritesThroughSymlink(relative: true)
+    }
+
+    // MARK: - mergeCCStatusHooks (Install / Reinstall)
+
+    private func makeTempSettingsBytes(_ text: String) -> URL {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("cc-merge-\(UUID().uuidString)")
+        addTeardownBlock { try? FileManager.default.removeItem(at: dir) }
+        try! FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let url = dir.appendingPathComponent("settings.json")
+        try! text.data(using: .utf8)!.write(to: url)
+        return url
+    }
+
+    private let mergeCCStatusPath = "/Users/test/.config/iterm2/cc-status"
+
+    private func merge(_ url: URL) -> ClaudeCodeInstallHooksResult {
+        return ClaudeCodeOnboarding.mergeCCStatusHooks(intoSettingsURL: url,
+                                                       ccStatusPath: mergeCCStatusPath,
+                                                       environment: [:])
+    }
+
+    // A settings.json with a syntax error holds the user's other settings
+    // (permissions, env, model). Install must refuse to touch it rather than
+    // replace it with a file holding only our hooks.
+    func testMergeLeavesUnparseableFileByteIdentical() {
+        let original = "{ not json,\n  \"model\": \"opus\"\n"
+        let url = makeTempSettingsBytes(original)
+        XCTAssertEqual(merge(url), .malformed)
+        XCTAssertEqual(try? String(contentsOf: url, encoding: .utf8), original)
+    }
+
+    func testMergeLeavesNonObjectJSONByteIdentical() {
+        let original = "[ {\"model\": \"opus\"} ]\n"
+        let url = makeTempSettingsBytes(original)
+        XCTAssertEqual(merge(url), .malformed)
+        XCTAssertEqual(try? String(contentsOf: url, encoding: .utf8), original)
+    }
+
+    // An empty settings.json (say, from `touch`) holds nothing to lose, so
+    // Install treats it like a missing file rather than refusing.
+    func testMergeIntoEmptyFileSucceeds() {
+        let url = makeTempSettingsBytes(" \n")
+        XCTAssertEqual(merge(url), .success)
+        let commands = readJSON(url).map(ClaudeCodeOnboarding.ccStatusCommands(inSettings:)) ?? []
+        XCTAssertEqual(commands.count, ClaudeCodeOnboarding.hookEventNames.count)
+    }
+
+    func testMergeLeavesUnreadableFileUntouched() throws {
+        try XCTSkipIf(geteuid() == 0, "root can read a mode 000 file")
+        let original = "{\"model\": \"opus\"}"
+        let url = makeTempSettingsBytes(original)
+        try! FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: url.path)
+        addTeardownBlock {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        }
+        XCTAssertEqual(merge(url), .unreadable)
+        try! FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        XCTAssertEqual(try? String(contentsOf: url, encoding: .utf8), original)
+    }
+
+    func testMergeIntoValidFileKeepsOtherSettings() {
+        let url = makeTempSettingsBytes("""
+            {"model": "opus", "permissions": {"allow": ["Bash(ls)"]},
+             "hooks": {"Stop": [{"hooks": [{"type": "command", "command": "/usr/local/bin/mine"}]}]}}
+            """)
+        XCTAssertEqual(merge(url), .success)
+        let result = readJSON(url)
+        XCTAssertEqual(result?["model"] as? String, "opus")
+        XCTAssertEqual((result?["permissions"] as? [String: Any])?["allow"] as? [String], ["Bash(ls)"])
+        let commands = result.map(ClaudeCodeOnboarding.ccStatusCommands(inSettings:)) ?? []
+        XCTAssertEqual(commands.count, ClaudeCodeOnboarding.hookEventNames.count)
+        XCTAssertTrue(commands.allSatisfy { $0 == mergeCCStatusPath })
+        // The user's own Stop hook survives alongside ours.
+        let stopGroups = (result?["hooks"] as? [String: Any])?["Stop"] as? [[String: Any]] ?? []
+        let stopCommands = stopGroups.flatMap { ($0["hooks"] as? [[String: Any]] ?? []).compactMap { $0["command"] as? String } }
+        XCTAssertEqual(Set(stopCommands), Set(["/usr/local/bin/mine", mergeCCStatusPath]))
+    }
+
+    func testMergeCreatesMissingFile() {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("cc-merge-missing-\(UUID().uuidString)")
+        addTeardownBlock { try? FileManager.default.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("settings.json")
+        XCTAssertEqual(merge(url), .success)
+        let commands = readJSON(url).map(ClaudeCodeOnboarding.ccStatusCommands(inSettings:)) ?? []
+        XCTAssertEqual(commands.count, ClaudeCodeOnboarding.hookEventNames.count)
+    }
+
+    // Uninstall's strip must likewise never rewrite a file it can't parse.
+    func testStripLeavesNonObjectJSONByteIdentical() {
+        let original = "[ {\"hooks\": {}} ]\n"
+        let url = makeTempSettingsBytes(original)
+        XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: url), .malformed)
+        XCTAssertEqual(try? String(contentsOf: url, encoding: .utf8), original)
+    }
+
+    func testStripLeavesUnparseableFileByteIdentical() {
+        let original = "{ not json,\n"
+        let url = makeTempSettingsBytes(original)
+        XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: url), .malformed)
+        XCTAssertEqual(try? String(contentsOf: url, encoding: .utf8), original)
     }
 }

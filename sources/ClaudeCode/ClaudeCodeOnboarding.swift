@@ -19,6 +19,15 @@ enum ClaudeCodeUninstallHooksResult: Int {
     case writeFailed
 }
 
+// Outcome of merging our hooks into settings.json during Install. An existing
+// file that can't be read or parsed is left alone (.unreadable / .malformed).
+enum ClaudeCodeInstallHooksResult: Equatable {
+    case success
+    case unreadable
+    case malformed
+    case writeFailed(description: String)
+}
+
 @objc(iTermClaudeCodeOnboarding)
 class ClaudeCodeOnboarding: NSObject {
     private static var instance: ClaudeCodeOnboarding?
@@ -1728,29 +1737,63 @@ class ClaudeCodeOnboarding: NSObject {
         }
     }
 
-    private static func installHookFilesOnBackgroundQueue(configDirectory: URL,
-                                                          environment: [String: String],
-                                                          completion: @escaping (Bool) -> Void) {
-        guard let ccStatusPath = Self.ensureCCStatusSymlink() else {
-            RLog("Onboarding: couldn't prepare cc-status symlink")
-            DispatchQueue.main.async {
-                completion(false)
-            }
-            return
+    // The alert body for a failed merge, or nil on success.
+    private static func installFailureDetail(_ result: ClaudeCodeInstallHooksResult,
+                                             settingsPath: String) -> String? {
+        switch result {
+        case .success:
+            return nil
+        case .unreadable:
+            return String(localized: "ClaudeCodeOnboarding.SettingsUnreadable", defaultValue: "iTerm2 couldn\u{2019}t read \(settingsPath), so it left the file unchanged. Check the file\u{2019}s permissions and try again.", comment: "Body of the alert shown when installing the Claude Code hook fails because settings.json exists but could not be read; the interpolated value is the absolute path to settings.json")
+        case .malformed:
+            return String(localized: "ClaudeCodeOnboarding.SettingsMalformed", defaultValue: "\(settingsPath) has a syntax error or isn\u{2019}t a JSON object, so iTerm2 left it unchanged to avoid losing your other Claude Code settings. Fix the file in a text editor, or remove it, and then try again.", comment: "Body of the alert shown when installing the Claude Code hook fails because settings.json is not valid JSON or is not a JSON object; the interpolated value is the absolute path to settings.json")
+        case .writeFailed(let description):
+            return String(localized: "ClaudeCodeOnboarding.FailedToWriteSettings", defaultValue: "Could not write to \(settingsPath): \(description)", comment: "Body of the alert shown when settings.json could not be written; first interpolation is a file path, second is an error description")
         }
-        DLog("Onboarding: cc-status hook will point at \(ccStatusPath)")
+    }
 
-        let settingsURL = configDirectory.appendingPathComponent("settings.json")
-
-        // Read existing settings, or start with an empty object.
+    // Merge a cc-status hook for every event in hookEventNames into the
+    // settings.json at settingsURL, creating the file (and its directory) when
+    // it doesn't exist. An existing file that can't be read, or doesn't parse
+    // as a JSON object, is never written: replacing it would throw away every
+    // other setting the user has in it.
+    // internal (not private) for unit testing via @testable import.
+    static func mergeCCStatusHooks(intoSettingsURL settingsURL: URL,
+                                   ccStatusPath: String,
+                                   environment: [String: String]) -> ClaudeCodeInstallHooksResult {
+        // Read existing settings, or start with an empty object when there is
+        // no file. A dangling symlink counts as no file, as in
+        // stripCCStatusHooks.
         var settings: [String: Any]
-        if let data = try? Data(contentsOf: settingsURL),
-           let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            settings = parsed
+        if FileManager.default.fileExists(atPath: settingsURL.path) {
+            let data: Data
+            do {
+                data = try Data(contentsOf: settingsURL)
+            } catch {
+                RLog("Onboarding: couldn't read settings.json, leaving it alone: \(error)")
+                return .unreadable
+            }
+            let parsed: Any
+            do {
+                // An empty or whitespace-only file holds nothing to lose, but
+                // JSONSerialization rejects it, so treat it as an empty object.
+                let blank = String(data: data, encoding: .utf8)?
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .isEmpty ?? false
+                parsed = blank ? [String: Any]() : try JSONSerialization.jsonObject(with: data)
+            } catch {
+                RLog("Onboarding: settings.json isn't valid JSON, leaving it alone: \(error)")
+                return .malformed
+            }
+            guard let object = parsed as? [String: Any] else {
+                RLog("Onboarding: settings.json root isn't a JSON object, leaving it alone")
+                return .malformed
+            }
+            settings = object
             DLog("Onboarding: loaded existing settings.json")
         } else {
             settings = [:]
-            DLog("Onboarding: starting with empty settings")
+            DLog("Onboarding: no settings.json; starting with empty settings")
         }
 
         // Build or update the "hooks" dictionary.
@@ -1822,12 +1865,34 @@ class ClaudeCodeOnboarding: NSObject {
                                                   options: [.prettyPrinted, .sortedKeys])
             try writeSettings(data, to: settingsURL)
             DLog("Onboarding: wrote settings.json")
+            return .success
         } catch {
             RLog("Onboarding: failed to write settings.json: \(error)")
+            return .writeFailed(description: error.localizedDescription)
+        }
+    }
+
+    private static func installHookFilesOnBackgroundQueue(configDirectory: URL,
+                                                          environment: [String: String],
+                                                          completion: @escaping (Bool) -> Void) {
+        guard let ccStatusPath = Self.ensureCCStatusSymlink() else {
+            RLog("Onboarding: couldn't prepare cc-status symlink")
+            DispatchQueue.main.async {
+                completion(false)
+            }
+            return
+        }
+        DLog("Onboarding: cc-status hook will point at \(ccStatusPath)")
+
+        let settingsURL = configDirectory.appendingPathComponent("settings.json")
+        let mergeResult = mergeCCStatusHooks(intoSettingsURL: settingsURL,
+                                             ccStatusPath: ccStatusPath,
+                                             environment: environment)
+        if let detail = installFailureDetail(mergeResult, settingsPath: settingsURL.path) {
             DispatchQueue.main.async {
                 let warning = iTermWarning()
                 warning.heading = String(localized: "ClaudeCodeOnboarding.FailedToInstallHook", defaultValue: "Failed to install hook", comment: "Title of the alert shown when the Claude Code hook could not be installed")
-                warning.title = String(localized: "ClaudeCodeOnboarding.FailedToWriteSettings", defaultValue: "Could not write to \(settingsURL.path): \(error.localizedDescription)", comment: "Body of the alert shown when settings.json could not be written; first interpolation is a file path, second is an error description")
+                warning.title = detail
                 warning.actionLabels = [iTermLocalizedOK()]
                 warning.warningType = .kiTermWarningTypePersistent
                 warning.runModal()
