@@ -410,11 +410,18 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
     return mappings != nil;
 }
 
-// 3.5.14 and earlier had a lot fewer settings. This code is meant to migrate
-// them to the modern equivalent. It should be idempotent because once user
-// defaults has values for these settings they will not be changed by this
-// function.
-+ (void)migrateAISettings {
++ (void)migrateAISafetyCheckProviderIfNeeded {
+    [self migrateAISafetyCheckProviderIfNeededWithAvailabilityProbe:^BOOL{
+        return [iTermAIAvailabilityProbe check];
+    }];
+}
+
+// This must first run at launch, before the user can touch Settings. Otherwise
+// a user who enables the safety check in a fresh 3.7 install (where this has
+// never run) would be mistaken for a 3.6 on-device user the first time an AI
+// controller is created, and their new choice would be undone. Once it has run,
+// the flag ensures it never runs again, so later choices are left alone.
++ (void)migrateAISafetyCheckProviderIfNeededWithAvailabilityProbe:(BOOL (^NS_NOESCAPE)(void))probe {
     // One-time: the AI command safety check used to run on-device via Apple
     // Intelligence (free); it can now use the configured AI model instead
     // (more accurate, but may incur provider charges). Runs regardless of
@@ -433,7 +440,7 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
     if (![safetyDefaults boolForKey:kPreferenceKeyAISafetyCheckProviderMigrationDone]) {
         [safetyDefaults setBool:YES forKey:kPreferenceKeyAISafetyCheckProviderMigrationDone];
         if ([iTermPreferences boolForKey:kPreferenceKeyAISafetyCheck]) {
-            if ([iTermAIAvailabilityProbe check]) {
+            if (probe()) {
                 // Genuine on-device user: keep using Apple Intelligence and ask
                 // before the next checked command whether to switch to the paid
                 // model (see RemoteCommand.isSafe).
@@ -445,6 +452,20 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
             }
         }
     }
+}
+
++ (void)noteAISafetyCheckChosenByUser {
+    [[iTermUserDefaults userDefaults] setBool:YES
+                                       forKey:kPreferenceKeyAISafetyCheckProviderMigrationDone];
+}
+
+// 3.5.14 and earlier had a lot fewer settings. This code is meant to migrate
+// them to the modern equivalent. It should be idempotent because once user
+// defaults has values for these settings they will not be changed by this
+// function.
++ (void)migrateAISettings {
+    // Normally already done at launch; this is a no-op after the first run.
+    [self migrateAISafetyCheckProviderIfNeeded];
 
     // One-time: custom HTTP headers used to be a single global setting
     // (kPreferenceKeyAICustomHeaders, shipped in 3.7.0beta3). They are now

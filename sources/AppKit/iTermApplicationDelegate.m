@@ -1432,6 +1432,10 @@ void TurnOnDebugLoggingAutomatically(void) {
     [iTermPreferences initializeUserDefaults];
     DLog(@"performMigrations");
     [iTermUserDefaults performMigrations];
+    // Must run before the user can change the AI safety check setting, or a
+    // fresh choice would be mistaken for a 3.6 setting and undone.
+    DLog(@"migrateAISafetyCheckProviderIfNeeded");
+    [iTermMigrationHelper migrateAISafetyCheckProviderIfNeeded];
 
     // Enable restoring windows to their original Spaces if needed.
     // This has to happen after -initializeUserDefaults and before this method returns.

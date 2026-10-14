@@ -7,6 +7,8 @@
 //
 
 #import "GeneralPreferencesViewController.h"
+
+#import "iTermMigrationHelper.h"
 #import "SFSymbolEnum/SFSymbolEnum.h"
 #import "NSBundle+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -2746,10 +2748,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.AITimeout", nil, [NSBundle mainBundle], @"AI timeout", @"Label for the AI request timeout setting")
                    type:kPreferenceInfoTypeIntegerTextField];
 
-    [self defineControl:_aiSafetyCheck
-                    key:kPreferenceKeyAISafetyCheck
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_aiSafetyCheck
+                           key:kPreferenceKeyAISafetyCheck
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^{
+        // A choice made here is never a 3.6 setting to migrate.
+        [iTermMigrationHelper noteAISafetyCheckChosenByUser];
+    };
 
     [self defineControl:_aiZeroDataRetention
                     key:kPreferenceKeyAIZeroDataRetention
