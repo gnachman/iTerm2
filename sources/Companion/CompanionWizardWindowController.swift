@@ -158,13 +158,20 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         view.addSubview(title)
     }
 
-    private func addBodyLabel(_ text: String, to view: NSView, y: CGFloat, height: CGFloat) {
+    static let bodyLabelWidth = contentWidth - 80
+
+    static func makeBodyLabel(_ text: String) -> NSTextField {
         let label = NSTextField(wrappingLabelWithString: text)
         label.alignment = .center
         label.isSelectable = false
         label.font = .systemFont(ofSize: 13)
         label.textColor = .secondaryLabelColor
-        label.frame = NSRect(x: 40, y: y, width: Self.contentWidth - 80, height: height)
+        return label
+    }
+
+    private func addBodyLabel(_ text: String, to view: NSView, y: CGFloat, height: CGFloat) {
+        let label = Self.makeBodyLabel(text)
+        label.frame = NSRect(x: 40, y: y, width: Self.bodyLabelWidth, height: height)
         view.addSubview(label)
     }
 
@@ -251,20 +258,41 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                                        comment: "Button that starts the full AI + companion setup"),
                                 action: #selector(chooseWithAI), isDefault: aiAllowed)
         withAI.isEnabled = aiAllowed
-        place(withAI, centeredAtY: Self.contentHeight - 230, minWidth: 260)
+        let terminalOnlyDetail = String(localized: "Companion.ChooseMode.TerminalOnlyDetail",
+                                        defaultValue: "Browse sessions, watch live output, and type from your iPhone. No AI or API key needed.",
+                                        comment: "Detail under the terminal-only button on the choose-mode screen")
+        // Size each detail to its text (long strings and translations can need
+        // more than two lines) and push the controls below it down to match.
+        let layout = Self.chooseModeLayout(withAIDetail: withAIDetail,
+                                           terminalOnlyDetail: terminalOnlyDetail)
+        place(withAI, centeredAtY: layout.withAIButtonY, minWidth: 260)
         view.addSubview(withAI)
-        addBodyLabel(withAIDetail, to: view, y: Self.contentHeight - 268, height: 34)
+        addBodyLabel(withAIDetail, to: view, y: layout.withAIDetailY, height: layout.withAIDetailHeight)
 
         let terminalOnly = makeButton(String(localized: "Companion.ChooseMode.TerminalOnlyButton",
                                              defaultValue: "Terminal Viewing & Control Only",
                                              comment: "Button that starts companion-only (no AI) setup"),
                                       action: #selector(chooseTerminalOnly), isDefault: !aiAllowed)
-        place(terminalOnly, centeredAtY: Self.contentHeight - 320, minWidth: 260)
+        place(terminalOnly, centeredAtY: layout.terminalOnlyButtonY, minWidth: 260)
         view.addSubview(terminalOnly)
-        addBodyLabel(String(localized: "Companion.ChooseMode.TerminalOnlyDetail",
-                            defaultValue: "Browse sessions, watch live output, and type from your iPhone. No AI or API key needed.",
-                            comment: "Detail under the terminal-only button on the choose-mode screen"),
-                     to: view, y: Self.contentHeight - 358, height: 34)
+        addBodyLabel(terminalOnlyDetail, to: view, y: layout.terminalOnlyDetailY, height: layout.terminalOnlyDetailHeight)
+    }
+
+    /// Positions for the choose-mode screen with each detail label sized to fit
+    /// its text.
+    static func chooseModeLayout(withAIDetail: String,
+                                 terminalOnlyDetail: String) -> CompanionWizardChooseModeLayout {
+        return CompanionWizardChooseModeLayout(contentHeight: contentHeight,
+                                               withAIDetailHeight: bodyLabelHeight(withAIDetail),
+                                               terminalOnlyDetailHeight: bodyLabelHeight(terminalOnlyDetail))
+    }
+
+    /// The height a body label needs to show all of `text`, but never less than
+    /// the two lines the choose-mode screen was designed around.
+    static func bodyLabelHeight(_ text: String) -> CGFloat {
+        return max(CompanionWizardChooseModeLayout.minimumDetailHeight,
+                   CompanionWizardChooseModeLayout.fittingHeight(of: makeBodyLabel(text),
+                                                                 width: bodyLabelWidth))
     }
 
     @objc private func chooseWithAI(_ sender: Any) {
@@ -1046,6 +1074,52 @@ enum CompanionWizardAIKeyPlan {
         Write(vendor: selectedVendor,
               key: priorSelectedVendorKey,
               vendorPreference: priorVendorRaw)
+    }
+}
+
+// MARK: - Choose-mode screen layout
+
+/// Vertical positions on the choose-mode screen, stacked top-down so a detail
+/// label taller than two lines pushes the controls below it down instead of
+/// being clipped. Each value is a frame origin y in the screen's (flipped =
+/// false) coordinates.
+struct CompanionWizardChooseModeLayout {
+    /// Two lines of 13 pt text: what the screen was designed around.
+    static let minimumDetailHeight: CGFloat = 34
+    static let buttonHeight: CGFloat = 32
+    /// Gap between a button and the detail label under it.
+    static let buttonToDetailGap: CGFloat = 4
+    /// Gap between a detail label and the next button.
+    static let detailToButtonGap: CGFloat = 20
+    /// Distance from the top of the screen to the top of the first button.
+    static let firstButtonTopInset: CGFloat = 198
+
+    let withAIButtonY: CGFloat
+    let withAIDetailY: CGFloat
+    let withAIDetailHeight: CGFloat
+    let terminalOnlyButtonY: CGFloat
+    let terminalOnlyDetailY: CGFloat
+    let terminalOnlyDetailHeight: CGFloat
+
+    init(contentHeight: CGFloat,
+         withAIDetailHeight: CGFloat,
+         terminalOnlyDetailHeight: CGFloat) {
+        self.withAIDetailHeight = withAIDetailHeight
+        self.terminalOnlyDetailHeight = terminalOnlyDetailHeight
+        withAIButtonY = contentHeight - Self.firstButtonTopInset - Self.buttonHeight
+        withAIDetailY = withAIButtonY - Self.buttonToDetailGap - withAIDetailHeight
+        terminalOnlyButtonY = withAIDetailY - Self.detailToButtonGap - Self.buttonHeight
+        terminalOnlyDetailY = terminalOnlyButtonY - Self.buttonToDetailGap - terminalOnlyDetailHeight
+    }
+
+    /// The height `label` needs to show all of its text when wrapped to `width`.
+    @MainActor
+    static func fittingHeight(of label: NSTextField, width: CGFloat) -> CGFloat {
+        guard let cell = label.cell else {
+            return label.frame.height
+        }
+        let bounds = NSRect(x: 0, y: 0, width: width, height: .greatestFiniteMagnitude)
+        return ceil(cell.cellSize(forBounds: bounds).height)
     }
 }
 
