@@ -122,3 +122,37 @@ final class PasswordManagerReauthGateTests: XCTestCase {
         XCTAssertTrue(provider.authenticated)
     }
 }
+
+// Remembered basic-auth credentials are filled in silently only when the browser password
+// manager can be read without an authentication prompt. A challenge is not the user opening the
+// password manager, so it must never raise one; when a prompt would be needed the plain
+// basic-auth sheet is shown instead, and the user can ask for the password manager from it.
+final class BrowserBasicAuthSilentLookupGateTests: XCTestCase {
+    private func readable(authenticated: Bool,
+                          authRequired: Bool,
+                          requireEveryOpen: Bool) -> Bool {
+        return iTermBrowserBasicAuthStore.isReadableWithoutPrompt(authenticated: authenticated,
+                                                                 authRequired: authRequired,
+                                                                 requireEveryOpen: requireEveryOpen)
+    }
+
+    func testReadableWhenAuthenticationNotRequired() {
+        XCTAssertTrue(readable(authenticated: false, authRequired: false, requireEveryOpen: false))
+        XCTAssertTrue(readable(authenticated: false, authRequired: false, requireEveryOpen: true))
+    }
+
+    func testReadableWhenUnlockedOncePerLaunch() {
+        XCTAssertTrue(readable(authenticated: true, authRequired: true, requireEveryOpen: false))
+    }
+
+    func testNotReadableWhenLocked() {
+        XCTAssertFalse(readable(authenticated: false, authRequired: true, requireEveryOpen: false))
+        XCTAssertFalse(readable(authenticated: false, authRequired: true, requireEveryOpen: true))
+    }
+
+    func testNotReadableInEveryOpenModeEvenAfterAnEarlierUnlock() {
+        // Every open authenticates afresh, so an earlier unlock cannot be reused and reading
+        // would prompt. A basic-auth challenge must show the plain sheet rather than prompt.
+        XCTAssertFalse(readable(authenticated: true, authRequired: true, requireEveryOpen: true))
+    }
+}
