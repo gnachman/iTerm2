@@ -24,9 +24,35 @@ class iTermLocalePrompt: NSObject {
         self.encoding = .init(rawValue: encoding)
     }
 
+    // A sheet is only usable on a window the user can actually see. A hotkey window is ordered
+    // in with an alpha of 0 while its first session launches, and a sheet on it is invisible:
+    // the user sees nothing, keyboard focus is trapped in the sheet, and the hotkey window
+    // cannot appear until the sheet is answered blind. Use an app-modal alert in that case.
+    static func shouldPresentAsSheet(isVisible: Bool,
+                                     alphaValue: CGFloat,
+                                     isMiniaturized: Bool) -> Bool {
+        return isVisible && alphaValue > 0 && !isMiniaturized
+    }
+
+    // Returns `window` if a locale-related alert can be shown as a sheet on it, or nil if it
+    // must be app-modal instead.
+    @objc(sheetParentForWindow:)
+    static func sheetParent(for window: NSWindow?) -> NSWindow? {
+        guard let window else {
+            return nil
+        }
+        if shouldPresentAsSheet(isVisible: window.isVisible,
+                                alphaValue: window.alphaValue,
+                                isMiniaturized: window.isMiniaturized) {
+            return window
+        }
+        DLog("Not using a sheet on \(window): visible=\(window.isVisible) alpha=\(window.alphaValue) miniaturized=\(window.isMiniaturized)")
+        return nil
+    }
+
     @objc(requestLocaleFromUserForProfile:inWindow:cancelUsesC:)
     @discardableResult
-    func requestLocaleFromUser(profileName: String?, window: NSWindow, cancelUsesC: Bool) -> [String: String]? {
+    func requestLocaleFromUser(profileName: String?, window: NSWindow?, cancelUsesC: Bool) -> [String: String]? {
         let alert = iTermLocalePromptAlert(languages: NSLocale.preferredLanguages,
                                            profileName: profileName,
                                            encoding: encoding)
@@ -128,6 +154,15 @@ class iTermLocalePromptAlert {
     @objc var allowRemember = true
     private let profileName: String?
     var arrangementName: String?
+    // Shows the alert as a sheet on the given window, or app-modal if it is nil. Replaceable
+    // for testing.
+    var presenter: (NSAlert, NSWindow?) -> NSApplication.ModalResponse = { alert, sheetParent in
+        if let sheetParent {
+            return alert.runSheetModal(for: sheetParent)
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        return alert.runModal()
+    }
 
     init(languages: [String], profileName: String?, encoding: String.Encoding) {
         self.languages = languages
@@ -178,13 +213,7 @@ class iTermLocalePromptAlert {
         }
         RunLoop.main.add(timer, forMode: .common)
 
-        let result = { () -> NSApplication.ModalResponse in
-            if let window = window, window.isVisible {
-                return alert.runSheetModal(for: window)
-            } else {
-                return alert.runModal()
-            }
-        }()
+        let result = presenter(alert, iTermLocalePrompt.sheetParent(for: window))
         let remember = alert.suppressionButton?.state == .on
         if result == .alertFirstButtonReturn {
             let locale = popup.selectedItem?.representedObject as? String
