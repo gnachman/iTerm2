@@ -53,19 +53,9 @@ class AICompletion {
                     }.flatMap { (completion: CompletionItem) -> [CompletionItem] in
                         if completion.value.contains(filePlaceholder) {
                             expandedFiles = true
-                            return files
-                                .sorted {
-                                    $0.value < $1.value
-                                }.map { (file: CompletionItem) -> CompletionItem in
-                                    // Substitute the filename into the surrounding text rather than
-                                    // replacing the whole value with the bare filename. For a
-                                    // replacement (`rm {{FILE}}`) the verb must be preserved so the
-                                    // accepted command is `rm error.log`, not just `error.log`.
-                                    CompletionItem(value: completion.value.replacingOccurrences(of: filePlaceholder,
-                                                                                                with: file.value),
-                                                   detail: completion.detail,
-                                                   kind: completion.kind)
-                                }
+                            return AICompletion.expandingFilePlaceholder(in: completion,
+                                                                         files: files,
+                                                                         wordPrefix: request.prefix)
                         } else if completion.value.contains("{{") {
                             // ChatGPT 4o likes to use {{DIRECTORY}} and {{MESSAGE}} even though I told it not to
                             let pattern = "\\{\\{([A-Z0-9_]+)\\}\\}"
@@ -92,6 +82,47 @@ class AICompletion {
                 completion(files)
             }
         }
+    }
+
+    // Expand {{FILE}} in an AI suggestion once per file completion.
+    //
+    // A file completion item's value is only the text to insert after the word
+    // being typed (`wordPrefix`, unescaped): typing `er` with error.log present
+    // yields `ror.log`. The suggestion needs the whole filename (`rm error.log`),
+    // so the name is rebuilt as wordPrefix + suffix and shell-escaped, since AI
+    // suggestions are inserted without further escaping.
+    //
+    // The one exception is an append whose remainder begins with {{FILE}}: it is
+    // inserted directly after the partially-typed word, so only the suffix
+    // belongs there.
+    static func expandingFilePlaceholder(in completion: CompletionItem,
+                                         files: [CompletionItem],
+                                         wordPrefix: String) -> [CompletionItem] {
+        let continuesTypedWord = completion.kind == .aiSuggestion && completion.value.hasPrefix(filePlaceholder)
+        return files
+            .sorted {
+                $0.value < $1.value
+            }.map { (file: CompletionItem) -> CompletionItem in
+                let fullName = shellEscapedFilename(wordPrefix + file.value)
+                var value = completion.value
+                if continuesTypedWord {
+                    value = shellEscapedFilename(file.value) + String(value.dropFirst(filePlaceholder.count))
+                }
+                // Substitute the filename into the surrounding text rather than
+                // replacing the whole value with the bare filename. For a
+                // replacement (`rm {{FILE}}`) the verb must be preserved so the
+                // accepted command is `rm error.log`, not just `error.log`.
+                value = value.replacingOccurrences(of: filePlaceholder, with: fullName)
+                return CompletionItem(value: value,
+                                      detail: completion.detail,
+                                      kind: completion.kind)
+            }
+    }
+
+    private static func shellEscapedFilename(_ name: String) -> String {
+        // The completion backends do not expand `~`, so a leading tilde is part of
+        // a literal name and is escaped like any other special character.
+        return (name as NSString).withBackslashEscapedShellCharacters(includingNewlines: true)
     }
 
     // Parse one line of the model's response into a completion item. The model is

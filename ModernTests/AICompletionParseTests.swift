@@ -175,4 +175,85 @@ final class AICompletionParseTests: XCTestCase {
             AICompletion.completionItem(fromLine: "git status",
                                         prefix: "git "))
     }
+
+    // MARK: - {{FILE}} expansion
+
+    // File completion items carry only the text to insert after the word being
+    // typed (typing `er` with error.log present yields `ror.log`). Expanding
+    // {{FILE}} into a full command must use the whole filename.
+    private func fileItems(_ suffixes: [String], wordPrefix: String) -> [CompletionItem] {
+        suffixes.map {
+            CompletionItem(value: $0, detail: wordPrefix + $0, kind: .file)
+        }
+    }
+
+    func test_fileExpansion_replacementUsesWholeFilenameNotSuffix() {
+        let item = CompletionItem(value: "rm {{FILE}}", detail: "Remove the log", kind: .aiReplacement)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["ror.log"], wordPrefix: "er"),
+            wordPrefix: "er")
+        XCTAssertEqual(expanded.map(\.value), ["rm error.log"])
+        XCTAssertEqual(expanded.map(\.kind), [.aiReplacement])
+        XCTAssertEqual(expanded.map(\.detail), ["Remove the log"])
+    }
+
+    func test_fileExpansion_noWordPrefix() {
+        let item = CompletionItem(value: "cat {{FILE}}", detail: "Show", kind: .aiReplacement)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["b.txt", "a.txt"], wordPrefix: ""),
+            wordPrefix: "")
+        XCTAssertEqual(expanded.map(\.value), ["cat a.txt", "cat b.txt"])
+    }
+
+    func test_fileExpansion_wordPrefixWithDirectory() {
+        let item = CompletionItem(value: "cc {{FILE}}", detail: "Compile", kind: .aiReplacement)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["in.c"], wordPrefix: "src/ma"),
+            wordPrefix: "src/ma")
+        XCTAssertEqual(expanded.map(\.value), ["cc src/main.c"])
+    }
+
+    func test_fileExpansion_escapesSpacesInFilename() {
+        // The word prefix is the unescaped shell word (`my fi` for `my\ fi`).
+        let item = CompletionItem(value: "rm {{FILE}}", detail: "Remove", kind: .aiReplacement)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["le.txt"], wordPrefix: "my fi"),
+            wordPrefix: "my fi")
+        XCTAssertEqual(expanded.map(\.value), ["rm my\\ file.txt"])
+    }
+
+    func test_fileExpansion_appendContinuingTypedWordUsesSuffix() {
+        // An append whose remainder starts with {{FILE}} is inserted directly after
+        // the partially-typed word, so only the rest of the name belongs there.
+        let item = CompletionItem(value: "{{FILE}} | head", detail: "First lines", kind: .aiSuggestion)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["ror.log"], wordPrefix: "er"),
+            wordPrefix: "er")
+        XCTAssertEqual(expanded.map(\.value), ["ror.log | head"])
+    }
+
+    func test_fileExpansion_appendAfterSpaceUsesWholeFilename() {
+        let item = CompletionItem(value: " > {{FILE}}", detail: "Redirect", kind: .aiSuggestion)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["ror.log"], wordPrefix: "er"),
+            wordPrefix: "er")
+        XCTAssertEqual(expanded.map(\.value), [" > error.log"])
+    }
+
+    func test_fileExpansion_escapesLeadingTilde() {
+        // The completion backends do not expand `~`, so a name starting with it is
+        // a literal entry in the working directory and must not become $HOME.
+        let item = CompletionItem(value: "open {{FILE}}", detail: "Open", kind: .aiReplacement)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["ents"], wordPrefix: "~/Docum"),
+            wordPrefix: "~/Docum")
+        XCTAssertEqual(expanded.map(\.value), ["open \\~/Documents"])
+    }
 }
