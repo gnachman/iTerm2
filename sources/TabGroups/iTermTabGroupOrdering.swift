@@ -137,7 +137,9 @@ class iTermTabGroupOrdering: NSObject {
     // (+1 = right, -1 = left), with group membership changing at boundaries so
     // the tab enters or exits a group instead of the whole group moving as a
     // unit. Pure logic; the pinned-prefix and contiguity invariants are enforced
-    // afterward by canonicalOrder, so this ignores pinning. Rules for the tab at
+    // afterward by canonicalOrder, so reorders ignore pinning. `pinned` is
+    // parallel to `groupIDs` (empty means nothing is pinned) and only gates the
+    // join rule below. Rules for the tab at
     // `selectedIndex` (group id `g`), looking at the neighbor it would cross:
     //   - g is set with other members, neighbor is the same group: swap within
     //     the group (a move).
@@ -149,14 +151,18 @@ class iTermTabGroupOrdering: NSObject {
     //     tab moves as a one-tab unit, keeping its group. It jumps the adjacent
     //     unit -- an ungrouped tab (a swap) or a whole group (leaping the block to
     //     keep both groups contiguous) -- or wraps at the end.
-    //   - g is nil, neighbor is in a group: join that group (no move).
+    //   - g is nil, neighbor is in a group: join that group (no move), unless
+    //     the neighbor is on the other side of the pinned boundary, in which
+    //     case nothing happens (joining would change the tab's pinned state).
     //   - g is nil, neighbor is ungrouped: swap (a move).
     //   - g is nil and there is no neighbor (tab at the end): wrap to the far end,
     //     matching the pre-group Move Tab behavior.
     static func singleTabMove(groupIDs: [String?],
+                              pinned: [Bool] = [],
                               selectedIndex s: Int,
                               offset: Int) -> SingleTabMove {
         let n = groupIDs.count
+        it_assert(pinned.isEmpty || pinned.count == n, "parallel arrays required")
         guard n >= 2, s >= 0, s < n, offset != 0 else {
             return SingleTabMove(order: Array(0..<n), newGroupID: nil, changesMembership: false)
         }
@@ -166,6 +172,9 @@ class iTermTabGroupOrdering: NSObject {
         let neighbor = s + dir
         let inGroup = (g != nil && !g!.isEmpty)
         let soleMember = inGroup && groupIDs.filter { $0 == g }.count == 1
+        func isPinned(_ i: Int) -> Bool {
+            return i < pinned.count && pinned[i]
+        }
 
         // Wrap an end tab (any kind) to the opposite end, keeping its membership.
         func wrapped() -> SingleTabMove {
@@ -218,6 +227,13 @@ class iTermTabGroupOrdering: NSObject {
         }
         let ng = groupIDs[neighbor]
         if let ng, !ng.isEmpty {
+            if isPinned(s) != isPinned(neighbor) {
+                // The group is across the pinned boundary. Joining it would
+                // silently change this tab's pinned state (a group's members
+                // share one pinned state), so stay put, just as a pure reorder
+                // across the boundary is clamped back into the tab's own zone.
+                return SingleTabMove(order: identity, newGroupID: nil, changesMembership: false)
+            }
             // Ungrouped tab crossing into a group: join it, in place.
             return SingleTabMove(order: identity, newGroupID: ng, changesMembership: true)
         }
@@ -228,12 +244,15 @@ class iTermTabGroupOrdering: NSObject {
     }
 
     // ObjC bridge for -[PseudoTerminal moveCurrentTabByOffset:]. `groupIDs`
-    // elements are NSString group ids or NSNull for ungrouped tabs.
-    @objc(singleTabMoveForGroupIDs:selectedIndex:offset:)
+    // elements are NSString group ids or NSNull for ungrouped tabs; `pinned` is
+    // a parallel array of NSNumber booleans.
+    @objc(singleTabMoveForGroupIDs:pinned:selectedIndex:offset:)
     static func singleTabMove(groupIDs: [Any],
+                              pinned: [NSNumber],
                               selectedIndex: Int,
                               offset: Int) -> SingleTabMove {
         return singleTabMove(groupIDs: groupIDs.map { $0 as? String },
+                             pinned: pinned.map { $0.boolValue },
                              selectedIndex: selectedIndex,
                              offset: offset)
     }

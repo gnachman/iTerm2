@@ -377,13 +377,59 @@ final class iTermTabGroupOrderingTests: XCTestCase {
     // ObjC bridge: NSNull for ungrouped, returns the same decisions.
     func testMoveObjCBridgeReorder() {
         let m = iTermTabGroupOrdering.singleTabMove(groupIDs: [NSNull(), NSNull()] as [Any],
+                                                    pinned: [false, false].map { NSNumber(value: $0) },
                                                     selectedIndex: 0, offset: 1)
         XCTAssertFalse(m.changesMembership)
         XCTAssertEqual(m.order.map { $0.intValue }, [1, 0])
     }
 
+    // MARK: Pinned boundary (QA finding F-256)
+
+    private func move(_ groupIDs: [String?], pinned: [Bool], _ selectedIndex: Int, _ offset: Int) -> SingleTabMove {
+        return iTermTabGroupOrdering.singleTabMove(groupIDs: groupIDs,
+                                                   pinned: pinned,
+                                                   selectedIndex: selectedIndex,
+                                                   offset: offset)
+    }
+
+    // A pinned ungrouped tab whose right neighbor is an unpinned group stays put
+    // instead of joining (and being unpinned into) that group.
+    func testMovePinnedTabRightDoesNotJoinUnpinnedGroup() {
+        assertReorder(move([nil, "G", nil], pinned: [true, false, false], 0, 1), [0, 1, 2])
+    }
+
+    // Symmetric: an unpinned ungrouped tab whose left neighbor is a pinned group
+    // does not join (and get pinned into) that group.
+    func testMoveUnpinnedTabLeftDoesNotJoinPinnedGroup() {
+        assertReorder(move(["G", nil], pinned: [true, false], 1, -1), [0, 1])
+    }
+
+    // Joining a group on the same side of the boundary is unchanged.
+    func testMovePinnedTabRightJoinsPinnedGroup() {
+        assertMembership(move([nil, "G", nil], pinned: [true, true, false], 0, 1), "G")
+    }
+
+    func testMoveUnpinnedTabRightJoinsUnpinnedGroup() {
+        assertMembership(move([nil, nil, "G"], pinned: [true, false, false], 1, 1), "G")
+    }
+
+    // A pinned tab next to an ungrouped unpinned tab still produces the plain
+    // swap; the caller's canonicalization clamps it into the pinned zone.
+    func testMovePinnedTabRightPastUngroupedIsPlainSwap() {
+        assertReorder(move([nil, nil], pinned: [true, false], 0, 1), [1, 0])
+    }
+
+    func testMoveObjCBridgePinnedDoesNotJoinUnpinnedGroup() {
+        let m = iTermTabGroupOrdering.singleTabMove(groupIDs: [NSNull(), "G", "G"] as [Any],
+                                                    pinned: [true, false, false].map { NSNumber(value: $0) },
+                                                    selectedIndex: 0, offset: 1)
+        XCTAssertFalse(m.changesMembership)
+        XCTAssertEqual(m.order.map { $0.intValue }, [0, 1, 2])
+    }
+
     func testMoveObjCBridgeMembership() {
         let m = iTermTabGroupOrdering.singleTabMove(groupIDs: [NSNull(), "G", "G"] as [Any],
+                                                    pinned: [false, false, false].map { NSNumber(value: $0) },
                                                     selectedIndex: 0, offset: 1)
         XCTAssertTrue(m.changesMembership)
         XCTAssertEqual(m.newGroupID, "G")
