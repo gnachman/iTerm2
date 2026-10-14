@@ -1333,3 +1333,8 @@ Bug Fixes:
   no longer gets stuck at its first step for zsh
   users, and that step can no longer be skipped,
   which made later steps write to an invalid path.
+- In a session that ssh'ed to another machine
+  without ssh integration, the current directory
+  (and paths used by Upload and Paste Path) no
+  longer switches to the local Mac's directory
+  after you run a command.
