@@ -1338,3 +1338,8 @@ Bug Fixes:
   over and over no longer makes iTerm2 fall far
   behind, run at full CPU for minutes, and grow
   to gigabytes of memory.
+- When no valid UNIX locale matches your
+  language and region, the prompt to pick one
+  now appears as a normal dialog the first
+  time a hotkey window opens, instead of as a
+  sheet on the not-yet-visible window.

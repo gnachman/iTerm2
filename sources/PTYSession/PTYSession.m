@@ -3446,6 +3446,11 @@ ITERM_WEAKLY_REFERENCEABLE
 // Return YES to accept it.
 - (BOOL)checkForSusLocale:(NSString *)lang guid:(NSString *)guid {
     if (lang && self.encoding == NSUTF8StringEncoding && ![lang containsString:@"UTF-8"]) {
+        NSWindow *sheetParent = [iTermLocalePrompt sheetParentForWindow:self.view.window];
+        if (!sheetParent) {
+            // App-modal, so make sure it isn't hidden behind another app.
+            [NSApp activateIgnoringOtherApps:YES];
+        }
         const iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.SusLocaleWarning", nil, [NSBundle mainBundle], @"Warning! This profile uses a custom locale that doesn't use UTF-8 as its character encoding, but your profile *is* using UTF-8. This can cause error messages and non-ASCII text to appear wrong.", @"Warning that a profile’s locale does not use UTF-8 while the profile does")
                                    actions:@[ [iTermWarningAction localOnlyActionWithLabel:NSLocalizedStringWithDefaultValue(@"PTYSession.ChangeLocale", nil, [NSBundle mainBundle], @"Change Locale", @"Button that changes the locale")], NSLocalizedStringWithDefaultValue(@"PTYSession.KeepThisLocale", nil, [NSBundle mainBundle], @"Keep This Locale", @"Button that keeps the current locale")]
@@ -3453,7 +3458,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                 identifier:[@"NoSyncUTF8Mismatch_" stringByAppendingString:guid ?: @""]
                                silenceable:kiTermWarningTypePermanentlySilenceable
                                    heading:NSLocalizedStringWithDefaultValue(@"PTYSession.WrongEncodingDetected", nil, [NSBundle mainBundle], @"Wrong Encoding Detected", @"Heading for a warning that the wrong character encoding was detected")
-                                    window:self.view.window];
+                                    window:sheetParent];
         if (selection == kiTermWarningSelection1) {
             return YES;
         }
