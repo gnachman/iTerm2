@@ -60,7 +60,10 @@ class AITermControllerRegistrationHelper {
         // The registration sheet stores a vendor's key, which a model that uses
         // its own key would never send. Point the user at the model editor.
         if let model = LLMMetadata.model(),
-           AITermController.apiKeyPolicy(url: model.url, api: model.api, credential: model.credential) == .modelKey,
+           AITermController.apiKeyPolicy(url: model.url,
+                                         api: model.api,
+                                         credential: model.credential,
+                                         keyVendor: defaultKeyVendor) == .modelKey,
            iTermAITermGatekeeper.check() {
             let warning = iTermWarning()
             warning.heading = String(localized: "AITermRegistration.NoModelAPIKeyHeading", defaultValue: "No API Key for This Model", comment: "Heading of an alert shown when the default manual AI model is set to use its own API key but none is stored")

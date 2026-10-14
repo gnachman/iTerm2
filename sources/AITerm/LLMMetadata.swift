@@ -24,7 +24,8 @@ class LLMMetadata: NSObject {
         static let configurableThinking = "configurableThinking"
         static let vision = "vision"
         static let customHeaders = "customHeaders"
-        // AIModelCredential.storedValue; absent means automatic.
+        // AIModelCredential.storedValue. Absent means the configuration
+        // predates host-bound Automatic; see credential(configuration:...).
         static let credential = "credential"
         // A dynamic Ollama provider: the entry stores only the endpoint (+ auth
         // headers), and its models are discovered live from /api/tags rather than
@@ -75,6 +76,32 @@ class LLMMetadata: NSObject {
     @objc(hostIsAnthropicAIAPIForURL:)
     static func hostIsAnthropicAIAPI(url: URL?) -> Bool {
         return (url?.it_normalizedHost ?? "").hasSuffix(".anthropic.com")
+    }
+
+    // Whether `url` is the vendor's own API host, which is the only place
+    // Automatic sends that vendor's stored key. A gateway (OpenRouter, a company
+    // proxy) speaking the vendor's protocol is not, since the key is a secret
+    // shared with the vendor alone. nil for a vendor whose key is not tied to a
+    // host: Ollama's is a self-hosted server's own token, and Apple Intelligence
+    // has none.
+    static func endpoint(_ url: String, isOwnHostOf vendor: iTermAIVendor) -> Bool? {
+        // The Gemini URL carries a {{MODEL}} template, which is not a legal URL
+        // character on every OS version. Only the host matters here.
+        let parsedURL = URL(string: url) ?? URL(string: url.replacingOccurrences(of: "{{MODEL}}", with: "model"))
+        switch vendor {
+        case .openAI:
+            return hostIsOpenAIAPI(url: parsedURL) || hostIsAzureAIAPI(url: parsedURL)
+        case .anthropic:
+            return hostIsAnthropicAIAPI(url: parsedURL)
+        case .gemini:
+            return hostIsGoogleAIAPI(url: parsedURL)
+        case .deepSeek:
+            return hostIsDeepSeekAIAPI(url: parsedURL)
+        case .llama, .apple:
+            return nil
+        @unknown default:
+            return nil
+        }
     }
 
     static var effectiveVendor: iTermAIVendor {
@@ -534,7 +561,57 @@ class LLMMetadata: NSObject {
            let headers = iTermPreferences.object(forKey: kPreferenceKeyAICustomHeaders) as? [[String: String]] {
             model.customHeaders = headers
         }
+        // Only an older build can have set up this model, back when Automatic
+        // sent the inferred vendor's key to any host, so it keeps doing that.
+        if let credential = grandfatheredCredential(api: api, url: url, modelName: name) {
+            model.credential = credential
+        }
         return model
+    }
+
+    // The explicit credential that keeps a model configured before Automatic
+    // became host-bound sending the key it used to send, or nil when Automatic
+    // still sends that key (or none was sent).
+    static func grandfatheredCredential(api: iTermAIAPI, url: String, modelName: String) -> AIModelCredential? {
+        let vendor = objcManualVendor(api: api, url: url, modelName: modelName)
+        guard AITermController.apiKeyPolicy(url: url, api: api) == .vendorKey,
+              AITermController.apiKeyPolicy(url: url,
+                                            api: api,
+                                            credential: .automatic,
+                                            keyVendor: vendor) == .placeholder(.unrecognizedHost),
+              AIModelCredential.selectableVendors.contains(vendor) else {
+            return nil
+        }
+        return .vendorKey(vendor)
+    }
+
+    // A configuration's credential. Builds since Automatic became host-bound
+    // always store one (Automatic as AIModelCredential.automatic.storedValue),
+    // so an absent value means the configuration was saved by an older build,
+    // where Automatic sent the inferred vendor's key to any non-local host. A
+    // gateway set up that way (say, an OpenRouter key saved as the OpenAI key)
+    // relied on that, so it keeps the key it sent. This is decided on every
+    // read rather than by a one-time migration so that configurations synced
+    // in from a custom prefs folder or another Mac's older build are covered.
+    static func credential(configuration: [String: Any],
+                           api: iTermAIAPI,
+                           url: String,
+                           modelName: String) -> AIModelCredential {
+        guard let stored = configuration[ManualModelKey.credential] else {
+            return grandfatheredCredential(api: api, url: url, modelName: modelName) ?? .automatic
+        }
+        return AIModelCredential(storedValue: stored)
+    }
+
+    // The Settings UI's view of `credential(configuration:api:url:modelName:)`,
+    // so the editor shows (and then saves) the key an older configuration
+    // actually sends.
+    @objc(effectiveCredentialStoredValueForConfiguration:)
+    static func effectiveCredentialStoredValue(configuration: [String: Any]) -> String? {
+        guard let model = manualModel(configuration: configuration) else {
+            return configuration[ManualModelKey.credential] as? String
+        }
+        return model.credential.storedValue
     }
 
     private static func manualModel(configuration: [String: Any]) -> AIMetadata.Model? {
@@ -612,7 +689,7 @@ class LLMMetadata: NSObject {
         if let headers = configuration[ManualModelKey.customHeaders] as? [[String: String]] {
             model.customHeaders = headers
         }
-        model.credential = AIModelCredential(storedValue: configuration[ManualModelKey.credential])
+        model.credential = credential(configuration: configuration, api: api, url: url, modelName: name)
         model.manualConfigurationID = configuration[ManualModelKey.identifier] as? String
         return model
     }

@@ -19,13 +19,17 @@ enum AIWithheldKeyAdvice {
     // model runs on-device and has no endpoint to authenticate to.
     static func hint(url: String,
                      api: iTermAIAPI,
-                     credential: AIModelCredential = .automatic,
+                     credential: AIModelCredential,
+                     keyVendor: iTermAIVendor,
                      customHeaders: [[String: String]]) -> String? {
-        switch AITermController.apiKeyPolicy(url: url, api: api, credential: credential) {
+        let withheldFromGateway: Bool
+        switch AITermController.apiKeyPolicy(url: url, api: api, credential: credential, keyVendor: keyVendor) {
         case .vendorKey, .modelKey, .placeholder(.onDevice):
             return nil
         case .placeholder(.localEndpoint), .placeholder(.noKeySelected):
-            break
+            withheldFromGateway = false
+        case .placeholder(.unrecognizedHost):
+            withheldFromGateway = true
         }
         let credentialHeaders = LLMAuthorizationProvider.credentialHeaderNames(url: url, api: api)
         // A header the request will actually carry is the user's own
@@ -56,6 +60,14 @@ enum AIWithheldKeyAdvice {
         }
         guard !authenticated else {
             return nil
+        }
+        if withheldFromGateway {
+            // Automatic sends a vendor's key only to that vendor's own host, so
+            // a gateway gets nothing until the user picks the key it takes.
+            // “API key” is the model editor's label for that popup.
+            return String(localized: "AIConnectionTester.GatewayKeyWithheldHint",
+                          defaultValue: "iTerm2 did not send an API key with this request because “Automatic” sends a provider’s key only to that provider’s own servers. To send one to this endpoint, edit the model in “Manage AI Models” and choose the key it needs under “API key”, or add the header it expects under “Custom headers”.",
+                          comment: "Advice shown when a request to a third-party AI gateway fails because iTerm2 did not send an API key; “Manage AI Models” is the name of a settings window, and “API key” and “Custom headers” are labels in its model editor")
         }
         // “Custom headers” below is the model editor's own label for the
         // section. The header name is quoted rather than dropped into a frame
@@ -123,10 +135,15 @@ enum AIWithheldKeyAdvice {
                         statusText: String,
                         url: String,
                         api: iTermAIAPI,
-                        credential: AIModelCredential = .automatic,
+                        credential: AIModelCredential,
+                        keyVendor: iTermAIVendor,
                         customHeaders: [[String: String]]) -> String {
         guard looksLikeAuthFailure(message) || looksLikeAuthFailure(statusText),
-              let hint = hint(url: url, api: api, credential: credential, customHeaders: customHeaders) else {
+              let hint = hint(url: url,
+                              api: api,
+                              credential: credential,
+                              keyVendor: keyVendor,
+                              customHeaders: customHeaders) else {
             return message
         }
         return message.isEmpty ? hint : message + "\n\n" + hint
