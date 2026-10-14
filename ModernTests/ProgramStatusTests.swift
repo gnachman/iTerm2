@@ -1047,6 +1047,68 @@ final class ProgramStatusNotifierTests: XCTestCase {
         advance(to: 106)
         XCTAssertEqual(posted, ["a1", "b1", "c1"])
     }
+
+    // QA finding F-326: emptying the held notifications must not leave a
+    // second timer for the same deadline once something is held again, or
+    // both timers post within moments of each other.
+    func testDroppingHeldThenHoldingAgainKeepsOneTimer() {
+        notify("a", "a waiting 1")
+        advance(to: 101)
+        notify("a", "a waiting 2")
+        notifier.retainPending(forKeys: [])
+        advance(to: 101.5)
+        notify("a", "a waiting 3")
+        XCTAssertEqual(scheduled.count, 1)
+
+        // Run the due timers one at a time with a notify between, as the
+        // main queue interleaves them with batches of reports.
+        time = 103
+        while let index = scheduled.firstIndex(where: { $0.at <= time }) {
+            let entry = scheduled.remove(at: index)
+            entry.block()
+            notify("a", "a waiting again")
+        }
+        XCTAssertEqual(posted, ["a waiting 1", "a waiting 3"])
+    }
+
+    // QA finding F-326: a flood that repeatedly holds and drops a record's
+    // notification never posts twice within the interval.
+    func testFloodOfHoldAndDropRespectsTheInterval() {
+        var postTimes = [TimeInterval]()
+        notifier = ProgramStatusNotifier(
+            interval: 3,
+            now: { [unowned self] in time },
+            schedule: { [unowned self] delay, block in
+                scheduled.append((time + delay, block))
+            },
+            post: { [unowned self] _ in
+                postTimes.append(time)
+            })
+        var step = 0
+        while time < 110 {
+            time += 0.01
+            // Timers come due between batches, one at a time.
+            while let index = scheduled.firstIndex(where: { $0.at <= time }) {
+                let entry = scheduled.remove(at: index)
+                entry.block()
+                notify("a", "a changed to waiting")
+            }
+            // Each batch leaves a waiting (notify) or working
+            // (its held notification is dropped).
+            if step % 2 == 0 {
+                notify("a", "a changed to waiting")
+            } else {
+                notifier.retainPending(forKeys: [])
+            }
+            step += 1
+        }
+        // Notifications keep coming about every interval through the flood.
+        XCTAssertGreaterThanOrEqual(postTimes.count, 3)
+        XCTAssertGreaterThanOrEqual(postTimes.last ?? 0, 106)
+        for (earlier, later) in zip(postTimes, postTimes.dropFirst()) {
+            XCTAssertGreaterThanOrEqual(later - earlier, 3 - 1e-9)
+        }
+    }
 }
 
 final class ProgramStatusDisplayRecordTests: XCTestCase {
