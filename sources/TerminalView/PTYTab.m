@@ -6151,7 +6151,7 @@ typedef struct {
     NSDictionary *arrangement = [PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                               bookmark:bookmark
                                                                                 origin:NSZeroPoint
-                                                                      activeWindowPane:[activeSession_ tmuxPane]
+                                                                      activeWindowPane:[PTYTab tmuxLayoutPaneForSession:activeSession_]
                                                                         tmuxController:nil
                                                                                 window:self.tmuxWindow];
     ++tmuxOriginatedResizeInProgress_;
@@ -6345,7 +6345,7 @@ typedef struct {
     [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                          bookmark:[self.tmuxController profileForWindow:self.tmuxWindow]
                                                                            origin:NSZeroPoint
-                                                                 activeWindowPane:[activeSession_ tmuxPane]
+                                                                 activeWindowPane:[PTYTab tmuxLayoutPaneForSession:activeSession_]
                                                                    tmuxController:tmuxController
                                                                            window:self.tmuxWindow]
                     forKey:TAB_ARRANGEMENT_ROOT];
@@ -6385,15 +6385,15 @@ typedef struct {
     // All sessions that remain in this tab have had their parentage changed so
     // -[sessions] returns only the ones that are to be terminated, except tiled panes that became
     // floats, which are kept for -reconcileTmuxFloatingPanes.
-    NSMutableArray<PTYSession *> *sessionsToTerminate = [NSMutableArray array];
-    for (PTYSession *aSession in [self tiledSessions]) {
-        if ([floatingPanes containsObject:@([aSession tmuxPane])]) {
-            DLog(@"tmux made %@ a float", aSession);
-            [_tmuxSessionsBecomingFloats addObject:aSession];
-        } else {
-            [sessionsToTerminate addObject:aSession];
-        }
+    NSArray<PTYSession *> *leftoverSessions = [self tiledSessions];
+    NSArray<PTYSession *> *becomingFloats = [PTYTab sessionsBecomingTmuxFloatsAmong:leftoverSessions
+                                                                      floatingPanes:floatingPanes];
+    if (becomingFloats.count) {
+        DLog(@"tmux made %@ floats", becomingFloats);
     }
+    [_tmuxSessionsBecomingFloats addObjectsFromArray:becomingFloats];
+    NSMutableArray<PTYSession *> *sessionsToTerminate = [leftoverSessions mutableCopy];
+    [sessionsToTerminate removeObjectsInArray:becomingFloats];
     // Floats whose session tmux made tiled were emptied by the restore.
     for (iTermFloatingPaneView *pane in [_floatingPanes copy]) {
         if (!pane.sessionView) {
@@ -6584,24 +6584,40 @@ typedef struct {
 
 #pragma mark - tmux floating panes
 
++ (int)tmuxLayoutPaneForSession:(PTYSession *)session {
+    // A filtered pane shows a synthetic session in place of its tmux session.
+    PTYSession *real = session.liveSession ?: session;
+    if (!real.isTmuxClient) {
+        // Its tmux pane id reads as 0, which would take the place of tmux's pane %0.
+        return -1;
+    }
+    return real.tmuxPane;
+}
+
 // The sessions a tmux layout change may reuse for its tiled panes, by tmux pane id. A filtered
 // pane's synthetic session is keyed by its live session's pane.
 + (NSDictionary<NSNumber *, PTYSession *> *)tiledSessionsByTmuxPaneFromSessions:(NSArray<PTYSession *> *)sessions
                                                                    floatingPanes:(NSSet<NSNumber *> *)floatingPanes {
     NSMutableDictionary<NSNumber *, PTYSession *> *result = [NSMutableDictionary dictionary];
     for (PTYSession *aSession in sessions) {
-        // A filtered pane shows a synthetic session in place of its tmux session.
-        PTYSession *real = aSession.liveSession ?: aSession;
-        if (!real.isTmuxClient) {
-            // Its tmux pane id reads as 0, which would take the place of tmux's pane %0.
+        const int pane = [PTYTab tmuxLayoutPaneForSession:aSession];
+        if (pane < 0) {
             DLog(@"Not a tmux session, so not reusable by the layout: %@", aSession);
             continue;
         }
-        if (![floatingPanes containsObject:@([real tmuxPane])]) {
-            result[@([real tmuxPane])] = aSession;
+        if (![floatingPanes containsObject:@(pane)]) {
+            result[@(pane)] = aSession;
         }
     }
     return result;
+}
+
++ (NSArray<PTYSession *> *)sessionsBecomingTmuxFloatsAmong:(NSArray<PTYSession *> *)sessions
+                                             floatingPanes:(NSSet<NSNumber *> *)floatingPanes {
+    return [sessions filteredArrayUsingBlock:^BOOL(PTYSession *aSession) {
+        const int pane = [PTYTab tmuxLayoutPaneForSession:aSession];
+        return pane >= 0 && [floatingPanes containsObject:@(pane)];
+    }];
 }
 
 - (NSArray<NSNumber *> *)tmuxFloatingPanesInParseTree:(NSDictionary *)parseTree {
@@ -6657,7 +6673,7 @@ typedef struct {
     NSSet<NSNumber *> *shown = [NSSet setWithArray:[self tmuxFloatingPanesInParseTree:placementTree]];
     BOOL visibilityChanged = NO;
     for (iTermFloatingPaneView *pane in _floatingPanes) {
-        const BOOL hidden = ![shown containsObject:@([self sessionForSessionView:pane.sessionView].tmuxPane)];
+        const BOOL hidden = ![shown containsObject:@([PTYTab tmuxLayoutPaneForSession:[self sessionForSessionView:pane.sessionView]])];
         if (pane.isHiddenByTmux != hidden) {
             pane.isHiddenByTmux = hidden;
             visibilityChanged = YES;
@@ -6668,7 +6684,7 @@ typedef struct {
     }
     BOOL bordersChanged = NO;
     for (iTermFloatingPaneView *pane in _floatingPanes) {
-        const BOOL borderless = [tmuxController_ paneIsBorderless:[self sessionForSessionView:pane.sessionView].tmuxPane];
+        const BOOL borderless = [tmuxController_ paneIsBorderless:[PTYTab tmuxLayoutPaneForSession:[self sessionForSessionView:pane.sessionView]]];
         if (pane.isBorderless != borderless) {
             pane.isBorderless = borderless;
             bordersChanged = YES;
@@ -6681,7 +6697,7 @@ typedef struct {
     for (NSDictionary *leaf in placementTree[kLayoutDictFloatingPanesKey]) {
         const int wp = [leaf[kLayoutDictWindowPaneKey] intValue];
         PTYSession *session = [[self floatingSessions] objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
-            return candidate.tmuxPane == wp;
+            return [PTYTab tmuxLayoutPaneForSession:candidate] == wp;
         }];
         iTermFloatingPaneView *pane = [self floatingPaneForSession:session];
         if (!pane) {
@@ -6787,7 +6803,7 @@ typedef struct {
     for (NSDictionary *leaf in leaves) {
         const int wp = [leaf[kLayoutDictWindowPaneKey] intValue];
         BOOL (^isPane)(PTYSession *, NSUInteger, BOOL *) = ^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
-            return candidate.tmuxPane == wp;
+            return [PTYTab tmuxLayoutPaneForSession:candidate] == wp;
         };
         PTYSession *session = [[self floatingSessions] objectPassingTest:isPane];
         if (!session) {
