@@ -1423,7 +1423,8 @@ extension ChatViewController {
                 try listModel.setTerminalGuid(for: chatID, to: nil)
                 // The chat no longer has a linked session, so any session-bound
                 // watchers it registered (which observed that session) are
-                // orphaned. Drop them. This does NOT run when a chat leaves its
+                // orphaned. Drop them. Timers target no session, so they are
+                // kept and still fire. This does NOT run when a chat leaves its
                 // link by becoming an orchestration chat: that goes through
                 // setOrchestrationEnabled, which deliberately keeps watchers.
                 OrchestratorClient.instance?.cancelWatchers(forChatID: chatID)
