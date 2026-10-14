@@ -352,4 +352,102 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: url), .malformed)
         XCTAssertEqual(try? String(contentsOf: url, encoding: .utf8), original)
     }
+
+    // MARK: - stripStaleCCStatusHooks (Install into a changed directory)
+
+    // A real directory with Install's hooks already merged into its
+    // settings.json, as installHookFilesOnBackgroundQueue leaves it right
+    // before the stale-hook strip.
+    private func makeInstalledConfigDirectory() -> (root: URL, configDir: URL) {
+        let root = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("cc-stale-\(UUID().uuidString)")
+        addTeardownBlock { try? FileManager.default.removeItem(at: root) }
+        let configDir = root.appendingPathComponent("claude")
+        try! FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
+        let settings = configDir.appendingPathComponent("settings.json")
+        try! "{\"model\": \"x\"}".data(using: .utf8)!.write(to: settings)
+        XCTAssertEqual(merge(settings), .success)
+        return (root, configDir)
+    }
+
+    private func ccStatusCount(inConfigDirectory dir: URL) -> Int {
+        let url = dir.appendingPathComponent("settings.json")
+        return readJSON(url).map(ClaudeCodeOnboarding.ccStatusCommands(inSettings:))?.count ?? 0
+    }
+
+    private func volumeIsCaseSensitive(_ url: URL) -> Bool {
+        let values = try? url.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey])
+        return values?.volumeSupportsCaseSensitiveNames ?? true
+    }
+
+    // F-274: ~/.claude -> ~/dotfiles/claude and CLAUDE_CONFIG_DIR names
+    // ~/dotfiles/claude. Both paths are the same directory, so the strip must
+    // not remove the hooks Install just wrote, whichever way round they are.
+    func testStaleStripSkipsSymlinkedAliasOfNewDirectory() throws {
+        let (root, configDir) = makeInstalledConfigDirectory()
+        let alias = root.appendingPathComponent("dot-claude")
+        try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: configDir)
+
+        XCTAssertFalse(ClaudeCodeOnboarding.stripStaleCCStatusHooks(previousDirectory: alias,
+                                                                     newConfigDirectory: configDir))
+        XCTAssertEqual(ccStatusCount(inConfigDirectory: configDir), ClaudeCodeOnboarding.hookEventNames.count)
+
+        XCTAssertFalse(ClaudeCodeOnboarding.stripStaleCCStatusHooks(previousDirectory: configDir,
+                                                                     newConfigDirectory: alias))
+        XCTAssertEqual(ccStatusCount(inConfigDirectory: configDir), ClaudeCodeOnboarding.hookEventNames.count)
+    }
+
+    // F-274: real ~/.claude and CLAUDE_CONFIG_DIR=$HOME/.Claude on a
+    // case-insensitive volume name the same directory.
+    func testStaleStripSkipsCaseVariantOfNewDirectory() throws {
+        let (root, configDir) = makeInstalledConfigDirectory()
+        try XCTSkipIf(volumeIsCaseSensitive(root), "test volume is case-sensitive")
+        let variant = root.appendingPathComponent("Claude")
+
+        XCTAssertFalse(ClaudeCodeOnboarding.stripStaleCCStatusHooks(previousDirectory: configDir,
+                                                                     newConfigDirectory: variant))
+        XCTAssertEqual(ccStatusCount(inConfigDirectory: configDir), ClaudeCodeOnboarding.hookEventNames.count)
+
+        XCTAssertFalse(ClaudeCodeOnboarding.stripStaleCCStatusHooks(previousDirectory: variant,
+                                                                     newConfigDirectory: configDir))
+        XCTAssertEqual(ccStatusCount(inConfigDirectory: configDir), ClaudeCodeOnboarding.hookEventNames.count)
+    }
+
+    // Two distinct directories whose settings.json files are links to one
+    // file (a dotfiles manager linking the same settings into both). Stripping
+    // the old one would strip the file Install just wrote.
+    func testStaleStripSkipsOldSettingsThatIsTheNewFile() throws {
+        let (root, configDir) = makeInstalledConfigDirectory()
+        let otherDir = root.appendingPathComponent("other")
+        try FileManager.default.createDirectory(at: otherDir, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: otherDir.appendingPathComponent("settings.json"),
+                                                   withDestinationURL: configDir.appendingPathComponent("settings.json"))
+
+        XCTAssertFalse(ClaudeCodeOnboarding.stripStaleCCStatusHooks(previousDirectory: otherDir,
+                                                                     newConfigDirectory: configDir))
+        XCTAssertEqual(ccStatusCount(inConfigDirectory: configDir), ClaudeCodeOnboarding.hookEventNames.count)
+    }
+
+    // A genuinely different previous directory still loses its stale hook.
+    func testStaleStripRemovesHookFromDifferentDirectory() throws {
+        let (root, configDir) = makeInstalledConfigDirectory()
+        let newDir = root.appendingPathComponent("work-claude")
+        try FileManager.default.createDirectory(at: newDir, withIntermediateDirectories: true)
+        XCTAssertEqual(merge(newDir.appendingPathComponent("settings.json")), .success)
+
+        XCTAssertTrue(ClaudeCodeOnboarding.stripStaleCCStatusHooks(previousDirectory: configDir,
+                                                                    newConfigDirectory: newDir))
+        XCTAssertEqual(ccStatusCount(inConfigDirectory: configDir), 0)
+        XCTAssertEqual(ccStatusCount(inConfigDirectory: newDir), ClaudeCodeOnboarding.hookEventNames.count)
+    }
+
+    // The same directory spelled with and without a trailing slash or a
+    // redundant component is not a change.
+    func testStaleStripSkipsSameDirectorySpelledDifferently() {
+        let (root, configDir) = makeInstalledConfigDirectory()
+        let spelled = URL(fileURLWithPath: root.path + "/./claude/")
+        XCTAssertFalse(ClaudeCodeOnboarding.stripStaleCCStatusHooks(previousDirectory: spelled,
+                                                                     newConfigDirectory: configDir))
+        XCTAssertEqual(ccStatusCount(inConfigDirectory: configDir), ClaudeCodeOnboarding.hookEventNames.count)
+    }
 }
