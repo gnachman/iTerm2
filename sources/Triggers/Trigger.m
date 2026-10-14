@@ -77,7 +77,10 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
         return nil;
     }
     Trigger *trigger = [[class alloc] init];
-    trigger.regex = [NSString castFrom:dict[kTriggerRegexKey]];
+    // Event triggers don't use a regex, so hand-written ones (e.g., in Dynamic Profiles) often
+    // omit it. A nil pattern would make NSRegularExpression throw. Settings stores an empty
+    // regex as "", so treat a missing or non-string value the same way.
+    trigger.regex = [NSString castFrom:dict[kTriggerRegexKey]] ?: @"";
     trigger.contentRegex = [NSString castFrom:dict[kTriggerContentRegexKey]];
     trigger.param = dict[kTriggerParameterKey];
     trigger.partialLine = [[NSNumber coerceFrom:dict[kTriggerPartialLineKey]] boolValue];
