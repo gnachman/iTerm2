@@ -148380,6 +148380,18 @@
         }
       }
     },
+    "ProfilesTextPreferences.SmoothSlideUnavailableOnBatteryToolTip" : {
+      "comment" : "Tooltip for the Smooth-typing animation checkbox in Edit Session > Text, shown when the box cursor is selected and GPU rendering would be disabled on battery power",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When enabled, small horizontal cursor movements are animated. Because “Disable GPU renderer when disconnected from power” is turned on in General settings, this won’t animate while running on battery power."
+          }
+        }
+      }
+    },
     "ProfilesWindow.CollapseTags" : {
       "comment" : "Button title to hide the tags sidebar",
       "extractionState" : "extracted_with_value",
