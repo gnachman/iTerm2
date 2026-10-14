@@ -136,7 +136,8 @@ final class AIModelCatalogTest: XCTestCase {
 
     func testEconomyModelPreservesCustomEndpoint() throws {
         let models = try bundledModels()
-        // A manual-mode user who points claude-opus-4-8 at a corporate proxy: the
+        // A pointer-carrying model at a corporate proxy (production never builds
+        // one, since manual models carry no pointer; this guards the copy): the
         // economy swap must keep that endpoint/api so the API key is not sent to
         // the public vendor host.
         let proxied = AIMetadata.Model(name: "claude-opus-4-8",
@@ -146,14 +147,17 @@ final class AIModelCatalogTest: XCTestCase {
                                        api: .anthropic,
                                        features: [],
                                        vendor: .anthropic)
-        let economy = AIMetadata.economyModel(for: proxied, in: models)
+        var pointed = proxied
+        pointed.economyModelName = "claude-haiku-4-5"
+        let economy = AIMetadata.economyModel(for: pointed, in: models)
         XCTAssertEqual(economy?.name, "claude-haiku-4-5")
         XCTAssertEqual(economy?.url, "https://proxy.internal.example/v1/messages",
                        "economy model must not bypass the user's custom base URL")
         XCTAssertEqual(economy?.api, .anthropic)
     }
 
-    // QA finding F-006: a manual model at a gateway that authenticates with a
+    // QA finding F-006: a pointer-carrying model (built by hand here; manual
+    // models carry no pointer since F-125) at a gateway that authenticates with a
     // custom header or a chosen key must keep that auth on its economy variant,
     // or the safety check and screen-watch poller get a 401.
     func testEconomyModelPreservesManualModelAuth() throws {
@@ -169,6 +173,7 @@ final class AIModelCatalogTest: XCTestCase {
         gateway.customHeaders = headers
         gateway.credential = .modelKey
         gateway.manualConfigurationID = "manual-config-1"
+        gateway.economyModelName = "claude-haiku-4-5"
 
         let economy = try XCTUnwrap(AIMetadata.economyModel(for: gateway, in: models))
         XCTAssertEqual(economy.name, "claude-haiku-4-5")
@@ -187,6 +192,7 @@ final class AIModelCatalogTest: XCTestCase {
                                        api: .anthropic,
                                        features: [],
                                        vendor: .anthropic)
+        gateway.economyModelName = "claude-haiku-4-5"
         gateway.credential = .vendorKey(.openAI)
         let chosen = try XCTUnwrap(AIMetadata.economyModel(for: gateway, in: models))
         XCTAssertEqual(chosen.credential, .vendorKey(.openAI))
@@ -238,20 +244,47 @@ final class AIModelCatalogTest: XCTestCase {
         }
     }
 
-    func testEconomyModelFallsBackToCatalogEntryByName() throws {
+    // QA finding F-125: a manual model carries no economy pointer, and its
+    // endpoint may serve only the configured model. Asking it for the catalog
+    // twin's economy model (gpt-6-luna) gets rejected, so the safety check
+    // fails closed on every command. With no designated economy model the
+    // economy request must stay on the manual model itself, which a nil
+    // result does (callers fall back to the configured chat model).
+    func testManualModelSharingCatalogNameHasNoEconomyModel() throws {
         let models = try bundledModels()
-        // A model built without the pointer (as settings/manual mode produces)
-        // still resolves via the same-name catalog entry.
-        let manualLikeOpus = AIMetadata.Model(name: "claude-opus-4-8",
-                                              contextWindowTokens: 200_000,
-                                              maxResponseTokens: 128_000,
-                                              url: "https://example.com",
-                                              api: .anthropic,
-                                              features: [],
-                                              vendor: .anthropic)
-        XCTAssertNil(manualLikeOpus.economyModelName)
-        XCTAssertEqual(AIMetadata.economyModel(for: manualLikeOpus, in: models)?.name,
-                       "claude-haiku-4-5")
+        let twin = try XCTUnwrap(models.first(where: { $0.name == "gpt-5.4-mini" }))
+        XCTAssertEqual(twin.economyModelName, "gpt-6-luna")
+        var manual = AIMetadata.Model(name: "gpt-5.4-mini",
+                                      contextWindowTokens: 8_192,
+                                      maxResponseTokens: 8_192,
+                                      url: "http://127.0.0.1:8080/v1/chat/completions",
+                                      api: .chatCompletions,
+                                      features: [],
+                                      vendor: .openAI)
+        manual.customHeaders = [["name": "Authorization", "value": "Bearer tok"]]
+        manual.credential = .none
+        manual.manualConfigurationID = "manual-config-1"
+        XCTAssertNil(manual.economyModelName)
+        XCTAssertNil(AIMetadata.economyModel(for: manual, in: models))
+
+        // Same for a manual model at the vendor's own endpoint with no
+        // configuration ID (as the legacy single manual model is built).
+        let legacyLike = AIMetadata.Model(name: "claude-opus-4-8",
+                                          contextWindowTokens: 200_000,
+                                          maxResponseTokens: 128_000,
+                                          url: "https://api.anthropic.com/v1/messages",
+                                          api: .anthropic,
+                                          features: [],
+                                          vendor: .anthropic)
+        XCTAssertNil(AIMetadata.economyModel(for: legacyLike, in: models))
+    }
+
+    func testCatalogModelStillGetsEconomyModel() throws {
+        let models = try bundledModels()
+        let mini = try XCTUnwrap(models.first(where: { $0.name == "gpt-5.4-mini" }))
+        let economy = try XCTUnwrap(AIMetadata.economyModel(for: mini, in: models))
+        XCTAssertEqual(economy.name, "gpt-6-luna")
+        XCTAssertEqual(economy.url, mini.url)
     }
 
     func testModelWithoutEconomyReturnsNil() throws {
