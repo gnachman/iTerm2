@@ -228,18 +228,27 @@ final class OrchestratorDispatcher {
     // restoration will undo (see SessionQuitRestoration). Injectable for tests.
     private let quitWillRestoreSessions: (Notification) -> Bool
 
+    // Whether a terminating tmux client session is going away for a quit after
+    // which windows will be restored, so its pane may reattach at the next
+    // launch (see SessionQuitRestoration). Injectable for tests.
+    private let quitMayReattachTmuxSession: (Notification) -> Bool
+
     init(chatID: String, broker: ChatBroker,
          typedInput: OrchestratorTypedInputStore,
          restorationGate: SessionRestorationGate? = nil,
          sessionLookup: ((String) -> PTYSession?)? = nil,
          tmuxPaneLookup: ((TmuxPaneIdentity) -> PTYSession?)? = nil,
          scheduleTmuxReattachDeadline: ((TimeInterval, @escaping @MainActor @Sendable () -> Void) -> Void)? = nil,
-         quitWillRestoreSessions: ((Notification) -> Bool)? = nil) {
+         quitWillRestoreSessions: ((Notification) -> Bool)? = nil,
+         quitMayReattachTmuxSession: ((Notification) -> Bool)? = nil) {
         self.chatID = chatID
         self.broker = broker
         self.typedInput = typedInput
         self.quitWillRestoreSessions = quitWillRestoreSessions ?? { notification in
             SessionQuitRestoration.sessionWillBeRestoredAfterQuit(notification)
+        }
+        self.quitMayReattachTmuxSession = quitMayReattachTmuxSession ?? { notification in
+            SessionQuitRestoration.tmuxSessionMayReattachAfterQuit(notification)
         }
         self.sessionLookup = sessionLookup ?? { reference in
             iTermController.sharedInstance()?.anySession(forReference: reference)
@@ -601,7 +610,22 @@ final class OrchestratorDispatcher {
         // A shell reload posts PTYSessionTerminated (not this notification) and
         // keeps the stableID, so this fires only on a genuine teardown. Drop
         // watchers on the gone session, matched by stableID or legacy guid.
-        let dropped = watchers.filter { $0.targets(stableID: session.stableID, guid: guid) }
+        var dropped = watchers.filter { $0.targets(stableID: session.stableID, guid: guid) }
+        // A tmux pane closing for a quit that restores windows may come back
+        // when the restored gateway reattaches tmux. An orchestration chat's
+        // watch that recorded the pane's tmux identity is held for that and
+        // re-bound at the next launch (see holdForTmuxReattach), so keep it.
+        // A session-bound chat's watches are never re-bound (its link still
+        // names the old pane session), so they are dropped as before.
+        if !dropped.isEmpty,
+           broker?.listModel.chat(id: chatID)?.orchestrationEnabled ?? false,
+           quitMayReattachTmuxSession(notification) {
+            let kept = dropped.filter { $0.tmuxPane != nil }
+            if !kept.isEmpty {
+                DLog("tmux session \(session.stableID) terminating for a restorable quit; keeping \(kept.count) watcher(s) with a tmux identity for chat \(chatID)")
+                dropped.removeAll { $0.tmuxPane != nil }
+            }
+        }
         guard !dropped.isEmpty else { return }
         let droppedIDs = Set(dropped.map { $0.watcherID })
         watchers.removeAll { droppedIDs.contains($0.watcherID) }
