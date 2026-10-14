@@ -30,6 +30,12 @@ NS_ASSUME_NONNULL_BEGIN
 // parsed (e.g. JSON or a version string) and a stray warning on stderr would corrupt
 // the parse.
 @property (nonatomic) BOOL discardStandardError;
+// When set, -terminate (and so a blockingRunWithTimeout: timeout) SIGKILLs the command's
+// whole process group, not just the command. NSTask starts the command as the leader of
+// its own process group, so this reaches children it forked, such as one that keeps
+// stdout open after the command dies and would otherwise keep the runner reading until
+// it exits. A descendant that moved to another process group escapes it.
+@property (nonatomic) BOOL terminatesProcessGroup;
 
 + (void)unzipURL:(NSURL *)zipURL
    withArguments:(NSArray<NSString *> *)arguments
@@ -68,6 +74,10 @@ callbackQueue:(dispatch_queue_t)callbackQueue
 @property (nonatomic, readonly, nullable) NSData *output;
 @property (nonatomic, strong, nullable) NSNumber *maximumOutputSize;
 @property (nonatomic, readonly) BOOL truncated;
+// When set, exceeding maximumOutputSize terminates the command (see
+// terminatesProcessGroup) so a command that floods output ends at the cap instead of
+// being read and discarded until it exits or times out.
+@property (nonatomic) BOOL terminateWhenOutputExceedsMaximum;
 
 + (void)runCommandWithPath:(NSString *)path
                  arguments:(NSArray<NSString *> *)arguments
