@@ -261,10 +261,11 @@ class LLMMetadata: NSObject {
     // (the screen-watch poller, command safety checks): a cheaper same-vendor
     // model where the primary chat model would be overkill and too expensive to
     // run repeatedly. A user-designated economy model (toggled in Manual AI
-    // Models) wins; otherwise the configured model's catalog economy variant
+    // Models) wins; otherwise the configured catalog model's economy variant
     // (AIMetadata.economyModel(for:)), which preserves the configured model's
     // url/api so a custom base URL is honored and the API key is not leaked to
-    // the public vendor host. nil when there is no economy alternative (or AI is
+    // the public vendor host. nil when there is no economy alternative (including
+    // any manual model without a designated economy model, or AI
     // unconfigured/unknown), leaving the caller on the configured chat model.
     static func economyModel() -> AIMetadata.Model? {
         // When the built-in Ollama vendor is the default, its own Budget picker wins.
