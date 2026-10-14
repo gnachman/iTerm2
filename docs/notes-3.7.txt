@@ -1059,7 +1059,7 @@ Bug Fixes:
   of a Select Menu Item or Toggle Setting key
   binding erased the menu item or setting it
   was bound to.
-- Session status is now avilable in the
+- Session status is now available in the
   session-scoped variable "status".
 - Fixed a bug where blank space rendered as a
   stray “~” with the GPU renderer in profiles

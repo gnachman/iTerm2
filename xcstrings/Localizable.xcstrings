@@ -4495,7 +4495,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Plugin not allowed by administator."
+            "value" : "Plugin not allowed by administrator."
           }
         },
         "ja" : {
@@ -63731,37 +63731,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2-SSH-Integrationsprotokoll\nBenutzername: %1$@\")\nHost: %2$@\nDatei: %3$@\""
+            "value" : "iTerm2-SSH-Integrationsprotokoll\nBenutzername: %1$@\nHost: %2$@\nDatei: %3$@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "iTerm2 SSH Integration Protocol\nUser name: %1$@\")\nHost: %2$@\nFile: %3$@\""
+            "value" : "iTerm2 SSH Integration Protocol\nUser name: %1$@\nHost: %2$@\nFile: %3$@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2 SSH連携プロトコル\nユーザー名: %1$@\")\nホスト: %2$@\nファイル: %3$@\""
+            "value" : "iTerm2 SSH連携プロトコル\nユーザー名: %1$@\nホスト: %2$@\nファイル: %3$@"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2 SSH Integration Protocol\nNome de usuário: %1$@\")\nHost: %2$@\nArquivo: %3$@\""
+            "value" : "iTerm2 SSH Integration Protocol\nNome de usuário: %1$@\nHost: %2$@\nArquivo: %3$@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Протокол SSH-интеграции iTerm2\nИмя пользователя: %1$@\")\nХост: %2$@\nФайл: %3$@\""
+            "value" : "Протокол SSH-интеграции iTerm2\nИмя пользователя: %1$@\nХост: %2$@\nФайл: %3$@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2 SSH集成协议\n用户名: %1$@\")\n主机: %2$@\n文件: %3$@\""
+            "value" : "iTerm2 SSH集成协议\n用户名: %1$@\n主机: %2$@\n文件: %3$@"
           }
         }
       }
@@ -134836,6 +134836,48 @@
         }
       }
     },
+    "Profiles.Window.BackgroundImageFolderLabel" : {
+      "comment" : "Label for the background image row when it shows a folder of images to rotate through.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordner:"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Folder:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォルダ:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasta:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Папка:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件夹："
+          }
+        }
+      }
+    },
     "Profiles.Window.BackgroundImageFolderPath" : {
       "comment" : "Display name for the background-image folder path field.",
       "extractionState" : "extracted_with_value",
@@ -134874,6 +134916,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "背景图像文件夹路径"
+          }
+        }
+      }
+    },
+    "Profiles.Window.BackgroundImageLabel" : {
+      "comment" : "Label for the background image row when it shows a single image file.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bild:"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Image:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imagem:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изображение:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图像："
           }
         }
       }
@@ -139073,7 +139157,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Job+Args"
+            "value" : "任务+参数"
           }
         }
       }
@@ -139199,7 +139283,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Job"
+            "value" : "任务"
           }
         }
       }
@@ -139325,7 +139409,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "User"
+            "value" : "用户"
           }
         }
       }

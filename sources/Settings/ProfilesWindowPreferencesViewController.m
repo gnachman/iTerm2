@@ -923,7 +923,11 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 
 - (void)updateBackgroundImageUI {
     const BOOL usesFolderRotation = [self backgroundImageUsesFolderRotation];
-    _backgroundImageLabel.stringValue = usesFolderRotation ? @"Folder:" : @"Image:";
+    if (usesFolderRotation) {
+        _backgroundImageLabel.stringValue = NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImageFolderLabel", nil, [NSBundle mainBundle], @"Folder:", @"Label for the background image row when it shows a folder of images to rotate through.");
+    } else {
+        _backgroundImageLabel.stringValue = NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImageLabel", nil, [NSBundle mainBundle], @"Image:", @"Label for the background image row when it shows a single image file.");
+    }
     // The image and folder text fields share the same xib rect, so hide the
     // inactive one. Disabled NSControls still consume hit-testing and would
     // block clicks to the field underneath.

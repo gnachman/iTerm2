@@ -45,9 +45,9 @@ class ConductorFileTransfer: TransferrableFile {
     override func displayName() -> String? {
         return String(localized: "ConductorFileTransfer.DisplayName", defaultValue: """
         iTerm2 SSH Integration Protocol
-        User name: \(path.username ?? "(unknown)")")
+        User name: \(path.username ?? "(unknown)")
         Host: \(path.hostname!)
-        File: \(path.path!)"
+        File: \(path.path!)
         """, comment: "Multi-line description of an SSH Integration file transfer")
     }
 
