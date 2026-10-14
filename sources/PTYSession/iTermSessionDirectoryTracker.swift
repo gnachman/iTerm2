@@ -92,11 +92,11 @@ class iTermSessionDirectoryTracker: NSObject {
     @objc private(set) var lastDirectory: String?
 
     /// The last local directory (for new tab initial directory).
+    /// This must not update the path variable: it is also set from the local
+    /// process's cwd while the session is ssh'ed somewhere, and the path must keep
+    /// showing the remote directory. setLastDirectory(_:remote:pushed:) owns it.
     @objc private(set) var lastLocalDirectory: String? {
         didSet {
-            if let dir = lastLocalDirectory {
-                variablesScope.setValue(dir, forVariableNamed: iTermVariableKeySessionPath)
-            }
             delegate?.directoryTracker(self, didChangeLocalDirectory: lastLocalDirectory)
         }
     }

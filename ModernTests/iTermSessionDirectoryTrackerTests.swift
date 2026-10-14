@@ -491,6 +491,61 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         XCTAssertNil(mockDelegate.createMarkDirectory)
     }
 
+    // MARK: - 5b. Plain ssh: local poll must not clobber the remote path (QA F-103)
+
+    // Mirrors what PTYSession does when OSC 7 from a remote shell (plain `ssh`,
+    // no ssh integration) reports a directory on a remote host.
+    private func pushRemoteDirectory(_ dir: String) {
+        let remoteHost = VT100RemoteHost(username: "qauser", hostname: "qaremote")
+        tracker.screenWillChangeCurrentDirectory(to: dir, remoteHost: remoteHost)
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 10,
+                                          remoteHost: remoteHost,
+                                          withDirectory: dir,
+                                          pushType: .strongPush,
+                                          accepted: true)
+        mockScope.setValue(dir, forVariableNamed: iTermVariableKeySessionPath)
+        tracker.screenDidChangeCurrentDirectory()
+    }
+
+    private var sessionPath: String? {
+        mockScope.value(forVariableName: iTermVariableKeySessionPath) as? String
+    }
+
+    func testPollerResult_AfterRemotePush_DoesNotChangeSessionPath() {
+        pushRemoteDirectory("/tmp/qa125")
+
+        // The poller reports the local ssh process's cwd (e.g. after a key press
+        // and a line feed), arriving after the remote push.
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+        XCTAssertEqual(tracker.lastDirectory, "/tmp/qa125")
+        // The local directory is still tracked for session restoration.
+        XCTAssertEqual(tracker.lastLocalDirectory, "/Users/local")
+    }
+
+    func testInvalidatedPollerResult_AfterRemotePush_DoesNotChangeSessionPath() {
+        pushRemoteDirectory("/tmp/qa125")
+
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: true)
+
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+        XCTAssertEqual(tracker.lastLocalDirectory, "/Users/local")
+    }
+
+    func testPollLocalDirectoryOnly_AfterRemotePush_DoesNotChangeSessionPath() {
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/Users/local"
+        mockDelegate.workingDirectoryProvider = provider
+        pushRemoteDirectory("/tmp/qa125")
+
+        tracker.pollLocalDirectoryOnly()
+
+        XCTAssertTrue(provider.getWorkingDirectoryAsyncCalled)
+        XCTAssertEqual(tracker.lastLocalDirectory, "/Users/local")
+        XCTAssertEqual(sessionPath, "/tmp/qa125")
+    }
+
     // MARK: - 6. Screen Delegate Method Tests
 
     func testScreenLogWorkingDirectory_Pushed_RecordsHistory() {
