@@ -41,6 +41,9 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     private let controller = CompanionPairingController.shared
     private var currentScreen: Screen = .fullSetup
     private var screenView: NSView?
+    // How the full-setup screen handles AI credentials, decided when that
+    // screen is built so Install acts on what the user was shown.
+    private var aiMode: CompanionWizardAIMode = .keyEntry
 
     // Controls whose state outlives a single action, rebuilt with each screen.
     private weak var activeStatusLabel: NSTextField?
@@ -222,6 +225,27 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         // disable it and steer the user to terminal-only rather than let them set up
         // an AI that is silently unavailable.
         let aiAllowed = iTermAdvancedSettingsModel.generativeAIAllowed()
+        let withAIDetail: String
+        if !aiAllowed {
+            withAIDetail = String(localized: "Companion.ChooseMode.WithAIDisabledDetail",
+                                  defaultValue: "Your administrator has disabled AI features, so this option is unavailable.",
+                                  comment: "Detail shown under the disabled with-AI button when an administrator has forbidden AI")
+        } else {
+            switch Self.currentAIMode() {
+            case .keyEntry:
+                withAIDetail = String(localized: "Companion.ChooseMode.WithAIDetail",
+                                      defaultValue: "Chat with the orchestrator and per-session agents. Requires an AI API key.",
+                                      comment: "Detail under the with-AI button on the choose-mode screen")
+            case .alreadyConfigured:
+                withAIDetail = String(localized: "Companion.ChooseMode.WithAIConfiguredDetail",
+                                      defaultValue: "Chat with the orchestrator and per-session agents using the AI model you already set up.",
+                                      comment: "Detail under the with-AI button on the choose-mode screen when the user’s AI model already works")
+            case .manualModelNeedsConfiguration:
+                withAIDetail = String(localized: "Companion.ChooseMode.WithAIManualModelDetail",
+                                      defaultValue: "Chat with the orchestrator and per-session agents. Requires the AI model selected in Settings > General > AI to be configured.",
+                                      comment: "Detail under the with-AI button on the choose-mode screen when the user’s manually chosen AI model is not yet usable")
+            }
+        }
         let withAI = makeButton(String(localized: "Companion.ChooseMode.WithAIButton",
                                        defaultValue: "Set Up with AI Features",
                                        comment: "Button that starts the full AI + companion setup"),
@@ -229,14 +253,7 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         withAI.isEnabled = aiAllowed
         place(withAI, centeredAtY: Self.contentHeight - 230, minWidth: 260)
         view.addSubview(withAI)
-        addBodyLabel(aiAllowed
-                     ? String(localized: "Companion.ChooseMode.WithAIDetail",
-                              defaultValue: "Chat with the orchestrator and per-session agents. Requires an AI API key.",
-                              comment: "Detail under the with-AI button on the choose-mode screen")
-                     : String(localized: "Companion.ChooseMode.WithAIDisabledDetail",
-                              defaultValue: "Your administrator has disabled AI features, so this option is unavailable.",
-                              comment: "Detail shown under the disabled with-AI button when an administrator has forbidden AI"),
-                     to: view, y: Self.contentHeight - 268, height: 34)
+        addBodyLabel(withAIDetail, to: view, y: Self.contentHeight - 268, height: 34)
 
         let terminalOnly = makeButton(String(localized: "Companion.ChooseMode.TerminalOnlyButton",
                                              defaultValue: "Terminal Viewing & Control Only",
@@ -293,6 +310,21 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
 
         var nextY = Self.contentHeight - 250
         if full {
+            aiMode = Self.currentAIMode()
+        }
+        if full && aiMode != .keyEntry {
+            // A vendor key entered here would either be unnecessary (AI already
+            // works) or might not be the key a manual model uses (the wizard
+            // can't tell which one it uses), so explain instead of asking.
+            addBodyLabel(aiMode == .alreadyConfigured
+                         ? String(localized: "Companion.InstallAIConfigured",
+                                  defaultValue: "AI features will use the model you already set up in Settings > General > AI, so no API key is needed here.",
+                                  comment: "Shown on the full setup screen instead of the API key field when the user’s AI model already works")
+                         : String(localized: "Companion.InstallAIManualModelNeedsConfiguration",
+                                  defaultValue: "The AI model selected in Settings > General > AI needs an API key or a valid configuration before AI features will work. You can install now and finish setting up the model later.",
+                                  comment: "Shown on the full setup screen instead of the API key field when the user’s manually chosen AI model cannot authenticate"),
+                         to: view, y: nextY - 80, height: 80)
+        } else if full {
             let keyLabel = NSTextField(labelWithString: String(localized: "Companion.APIKeyLabel",
                                                                defaultValue: "API key:",
                                                                comment: "Label for the API key text field"))
@@ -376,8 +408,14 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         place(install, centeredAtY: 40, minWidth: 160)
         view.addSubview(install)
         installButton = install
-        // Screen 1.1 requires an API key; 1.2 has no key field and stays enabled.
+        // Screen 1.1 requires an API key when it shows the key field; 1.2 has no
+        // key field and stays enabled.
         updateInstallEnabled()
+    }
+
+    private static func currentAIMode() -> CompanionWizardAIMode {
+        return .mode(usingRecommendedModel: iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel),
+                     defaultModelRegistrationAvailable: AITermControllerRegistrationHelper.instance.defaultModelRegistration != nil)
     }
 
     /// The iTermAIVendor raw value currently selected in the provider popup,
@@ -388,6 +426,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
 
     private func updateInstallEnabled() {
         guard currentScreen == .fullSetup else { return }
+        guard aiMode == .keyEntry else {
+            installButton?.isEnabled = true
+            return
+        }
         let hasKey = !(apiKeyField?.stringValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         installButton?.isEnabled = hasKey
     }
@@ -405,8 +447,25 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
 
     @objc private func installPressed(_ sender: Any) {
         let full = (currentScreen == .fullSetup)
+        // If the AI settings changed since this screen was built, what it shows
+        // (key field or not) is stale. Rebuild it rather than act on it.
+        if full {
+            let latestAIMode = Self.currentAIMode()
+            if latestAIMode != aiMode {
+                DLog("Companion wizard: AI mode changed from \(aiMode) to \(latestAIMode); rebuilding the setup screen")
+                goTo(.fullSetup)
+                setStatus(String(localized: "Companion.Status.AISettingsChanged",
+                                 defaultValue: "Your AI settings changed. Review this screen and click Install again.",
+                                 comment: "Status shown on the companion setup screen when it was rebuilt because AI settings changed while it was open"),
+                          color: .secondaryLabelColor)
+                return
+            }
+        }
+        let aiMode = self.aiMode
+        // Only the key-entry path stores a key and vendor.
+        let storesKey = full && aiMode == .keyEntry
         let apiKey = (apiKeyField?.stringValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        if full && apiKey.isEmpty {
+        if storesKey && apiKey.isEmpty {
             setStatus(String(localized: "Companion.Status.EnterAPIKey",
                              defaultValue: "Enter your API key to continue.",
                              comment: "Error status when Install is pressed with no API key"),
@@ -420,8 +479,8 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         // install never completes. Snapshot the popup vendor's existing key (not
         // effectiveVendor's) so rollback restores that slot instead of parking
         // the old default vendor's secret there.
-        let priorSelectedVendorKey = full ? AITermControllerObjC.apiKey(for: selectedVendor) : nil
-        let priorVendor = full ? iTermPreferences.int(forKey: kPreferenceKeyAIVendor) : 0
+        let priorSelectedVendorKey = storesKey ? AITermControllerObjC.apiKey(for: selectedVendor) : nil
+        let priorVendor = storesKey ? iTermPreferences.int(forKey: kPreferenceKeyAIVendor) : 0
         let priorEnableAI = SecureUserDefaults.instance.enableAI.value
         let priorEnableCompanion = SecureUserDefaults.instance.enableCompanionPairing.value
         setInstalling(true)
@@ -460,7 +519,7 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                                color: .secondaryLabelColor)
                 try SecureUserDefaults.grantConsent(ai: full, companion: true)
                 grantedConsent = true
-                if full {
+                if storesKey {
                     // Persist the key/vendor only now that the plugins installed
                     // and consent was granted, so an earlier failure leaves the
                     // saved defaults untouched. The pasted key goes in the
@@ -476,7 +535,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                                       defaultValue: "Verifying…",
                                       comment: "Progress status while the install is verified"),
                                color: .secondaryLabelColor)
-                guard self.verifyReady(full: full) else {
+                switch self.verifyReady(full: full, aiMode: aiMode) {
+                case .ready:
+                    break
+                case .pluginsNotLoaded:
                     throw CompanionPluginInstallerError.verificationFailed(
                         full
                         ? String(localized: "Companion.VerifyFailed.Both",
@@ -485,6 +547,8 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                         : String(localized: "Companion.VerifyFailed.Companion",
                                  defaultValue: "companion plugin",
                                  comment: "Names the component that failed to verify, inserted into a verification-failed error"))
+                case .aiModelCannotAuthenticate:
+                    throw CompanionWizardSetupError.aiModelCannotAuthenticate
                 }
                 guard active() else { return }
                 self.goTo(.phoneApp)
@@ -513,9 +577,13 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         }
     }
 
-    private func verifyReady(full: Bool) -> Bool {
-        return CompanionSetupState.companionConfigured
-            && (!full || CompanionSetupState.aiConfigured)
+    private func verifyReady(full: Bool, aiMode: CompanionWizardAIMode) -> CompanionWizardVerification {
+        return .verify(full: full,
+                       aiMode: aiMode,
+                       companionConfigured: CompanionSetupState.companionConfigured,
+                       aiPluginInstalled: iTermAITermGatekeeper.pluginInstalled(),
+                       aiEnabled: SecureUserDefaults.instance.enableAI.value,
+                       defaultModelRegistrationAvailable: AITermControllerRegistrationHelper.instance.defaultModelRegistration != nil)
     }
 
     /// On any setup failure, explain it and hand the user to the plain settings
@@ -978,5 +1046,90 @@ enum CompanionWizardAIKeyPlan {
         Write(vendor: selectedVendor,
               key: priorSelectedVendorKey,
               vendorPreference: priorVendorRaw)
+    }
+}
+
+// MARK: - AI setup state (pure decisions for the full-setup screen)
+
+/// How the full-setup screen treats AI credentials. The wizard can only store a
+/// vendor key for the recommended model, so it asks for one only when that is
+/// what would make AI work.
+enum CompanionWizardAIMode: Equatable {
+    /// The recommended model is selected and cannot authorize: show the API
+    /// key field and Provider popup, and require a key to install.
+    case keyEntry
+    /// The default model already has what it authorizes with (a key, or none
+    /// needed): install without asking for a key or touching the saved key or vendor.
+    case alreadyConfigured
+    /// A manual model is selected and cannot authenticate. The wizard can't
+    /// tell which key (if any) that model uses, so hide the key controls, point
+    /// the user at Settings, and let them install anyway.
+    case manualModelNeedsConfiguration
+
+    static func mode(usingRecommendedModel: Bool,
+                     defaultModelRegistrationAvailable: Bool) -> CompanionWizardAIMode {
+        // AI consent is not considered: Install grants it. Only whether the
+        // default model can authorize matters, which also covers vendors that
+        // need no key (Apple Intelligence is not in the Provider popup, so key
+        // entry would force a vendor switch).
+        if defaultModelRegistrationAvailable {
+            return .alreadyConfigured
+        }
+        // A manual model's key settings live in its model configuration, which
+        // the wizard can't edit, so send the user to Settings instead.
+        return usingRecommendedModel ? .keyEntry : .manualModelNeedsConfiguration
+    }
+}
+
+/// A setup failure that is not a plugin install problem.
+enum CompanionWizardSetupError: LocalizedError {
+    case aiModelCannotAuthenticate
+
+    var errorDescription: String? {
+        switch self {
+        case .aiModelCannotAuthenticate:
+            return String(localized: "Companion.SetupFailed.AIModelCannotAuthenticate",
+                          defaultValue: "The AI and companion plugins were installed, but the AI model is not configured to use the API key you entered. Check the provider and the AI model in Settings > General > AI, then try again.",
+                          comment: "Error shown when the companion setup wizard installed its plugins but the AI model still cannot authenticate with the entered API key")
+        }
+    }
+}
+
+/// The result of checking the install, so a failure says what actually failed.
+enum CompanionWizardVerification: Equatable {
+    case ready
+    /// A plugin is missing, did not load, or its consent is off.
+    case pluginsNotLoaded
+    /// The plugins loaded, but the default model still has no usable key after
+    /// the user entered one. Normally unreachable, since the key is stored for
+    /// the recommended model's vendor; it guards against settings changing
+    /// underneath the wizard or a failed keychain write.
+    case aiModelCannotAuthenticate
+
+    static func verify(full: Bool,
+                       aiMode: CompanionWizardAIMode,
+                       companionConfigured: Bool,
+                       aiPluginInstalled: Bool,
+                       aiEnabled: Bool,
+                       defaultModelRegistrationAvailable: Bool) -> CompanionWizardVerification {
+        if !companionConfigured {
+            return .pluginsNotLoaded
+        }
+        if !full {
+            return .ready
+        }
+        // Mirrors CompanionSetupState.aiConfigured, split so a model that
+        // can't authorize is reported separately from a plugin problem.
+        if !aiPluginInstalled || !aiEnabled {
+            return .pluginsNotLoaded
+        }
+        // Only the key-entry path promises a working model, since it just stored
+        // the key. Otherwise the model was either working already or the screen
+        // told the user it needs configuring in Settings, so a model that can't
+        // authenticate does not fail (or roll back) the install.
+        if aiMode == .keyEntry && !defaultModelRegistrationAvailable {
+            return .aiModelCannotAuthenticate
+        }
+        return .ready
     }
 }
