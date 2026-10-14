@@ -112,6 +112,200 @@ final class CockpitComposerSelectionSyncTests: XCTestCase {
         XCTAssertEqual(tokens(result), ["two", "one"])
     }
 
+    // F-264: the user clicked TWO's row (its chip came from the selection),
+    // then collapsed TWO's group, then clicked ONE. The click retargets:
+    // TWO's chip goes even though its row is hidden.
+    func testClickedChipWhoseRowIsNowHiddenIsReplacedByNextClick() {
+        let releasable = CockpitWindowController.releasableTokens(
+            visibleRows: [(identity: "ONE", ownTokens: ["one"])],
+            selected: ["ONE"],
+            lastSelection: [:],
+            selectionChips: ["two"])
+        let result = CockpitWindowController.composerTargets(
+            existing: [("two", "TWO")],
+            selected: [("one", "ONE")],
+            releasable: releasable)
+        XCTAssertEqual(tokens(result), ["one"])
+    }
+
+    // Collapsing the group that holds the selected row empties the
+    // selection. That isn't a click on another row, so the chip stays.
+    func testCollapseThatEmptiesSelectionKeepsClickedChip() {
+        let releasable = CockpitWindowController.releasableTokens(
+            visibleRows: [(identity: "ONE", ownTokens: ["one"])],
+            selected: [],
+            lastSelection: ["TWO": ["two"]],
+            selectionChips: ["two"])
+        XCTAssertFalse(releasable.contains("two"))
+        let result = CockpitWindowController.composerTargets(
+            existing: [("two", "TWO")],
+            selected: [],
+            releasable: releasable)
+        XCTAssertEqual(tokens(result), ["two"])
+    }
+
+    // With A and B both clicked, collapsing A's group deselects only A.
+    // The selection isn't empty, but nothing new was selected, so this
+    // isn't a click elsewhere and A's chip stays.
+    func testCollapsingOneOfSeveralSelectedRowsKeepsItsChip() {
+        let releasable = CockpitWindowController.releasableTokens(
+            visibleRows: [(identity: "B", ownTokens: ["b"])],
+            selected: ["B"],
+            lastSelection: ["A": ["a"], "B": ["b"]],
+            selectionChips: ["a", "b"])
+        let result = CockpitWindowController.composerTargets(
+            existing: [("a", "A"), ("b", "B")],
+            selected: [("b", "B")],
+            releasable: releasable)
+        XCTAssertEqual(tokens(result), ["a", "b"])
+    }
+
+    // Click A, Cmd-click B, collapse A's group, Cmd-click C: adding to the
+    // selection isn't a retarget, so A's hidden chip stays.
+    func testAddingToSelectionKeepsClickedHiddenChip() {
+        let releasable = CockpitWindowController.releasableTokens(
+            visibleRows: [(identity: "B", ownTokens: ["b"]), (identity: "C", ownTokens: ["c"])],
+            selected: ["B", "C"],
+            lastSelection: ["B": ["b"]],
+            selectionChips: ["a", "b"])
+        let result = CockpitWindowController.composerTargets(
+            existing: [("a", "A"), ("b", "B")],
+            selected: [("b", "B"), ("c", "C")],
+            releasable: releasable)
+        XCTAssertEqual(tokens(result), ["a", "b", "c"])
+    }
+
+    // Click A, Cmd-click B, then a filter hides A (a refresh, so the
+    // remembered selection still has A), then Cmd-click C. That's still
+    // an addition, so A's hidden chip stays.
+    func testAddingToSelectionAfterRefreshHidRowKeepsClickedHiddenChip() {
+        let releasable = CockpitWindowController.releasableTokens(
+            visibleRows: [(identity: "B", ownTokens: ["b"]), (identity: "C", ownTokens: ["c"])],
+            selected: ["B", "C"],
+            lastSelection: ["A": ["a"], "B": ["b"]],
+            selectionChips: ["a", "b"])
+        let result = CockpitWindowController.composerTargets(
+            existing: [("a", "A"), ("b", "B")],
+            selected: [("b", "B"), ("c", "C")],
+            releasable: releasable)
+        XCTAssertEqual(tokens(result), ["a", "b", "c"])
+    }
+
+    // A refresh hid the only selected row (TWO), then the user clicks
+    // ONE: a retarget, so TWO's chip goes.
+    func testClickAfterRefreshHidSelectedRowReleasesItsChip() {
+        let releasable = CockpitWindowController.releasableTokens(
+            visibleRows: [(identity: "ONE", ownTokens: ["one"])],
+            selected: ["ONE"],
+            lastSelection: ["TWO": ["two"]],
+            selectionChips: ["two"])
+        let result = CockpitWindowController.composerTargets(
+            existing: [("two", "TWO")],
+            selected: [("one", "ONE")],
+            releasable: releasable)
+        XCTAssertEqual(tokens(result), ["one"])
+    }
+
+    // Same, but a plain click on C replaces the selection: A's hidden
+    // chip goes along with B's.
+    func testReplacingSelectionReleasesClickedHiddenChip() {
+        let releasable = CockpitWindowController.releasableTokens(
+            visibleRows: [(identity: "B", ownTokens: ["b"]), (identity: "C", ownTokens: ["c"])],
+            selected: ["C"],
+            lastSelection: ["B": ["b"]],
+            selectionChips: ["a", "b"])
+        let result = CockpitWindowController.composerTargets(
+            existing: [("a", "A"), ("b", "B")],
+            selected: [("c", "C")],
+            releasable: releasable)
+        XCTAssertEqual(tokens(result), ["c"])
+    }
+
+    // A chip the user typed for a hidden session (F-241) still survives
+    // a click, while a clicked chip whose row is hidden is replaced.
+    func testTypedHiddenChipSurvivesWhileClickedHiddenChipIsReplaced() {
+        let releasable = CockpitWindowController.releasableTokens(
+            visibleRows: [(identity: "ONE", ownTokens: ["one"])],
+            selected: ["ONE"],
+            lastSelection: [:],
+            selectionChips: ["two"])
+        let result = CockpitWindowController.composerTargets(
+            existing: [("typed", "TYPED"), ("two", "TWO")],
+            selected: [("one", "ONE")],
+            releasable: releasable)
+        XCTAssertEqual(tokens(result), ["typed", "one"])
+    }
+
+    // Bookkeeping after a click: the selected rows' chips join the set,
+    // chips that left the composer drop out, and a typed chip never
+    // joins.
+    func testSelectionChipTokensBookkeeping() {
+        let owned = CockpitWindowController.selectionChipTokens(
+            previous: ["two", "gone"],
+            chips: ["typed", "two", "one"],
+            selected: ["one"])
+        XCTAssertEqual(owned, ["two", "one"])
+    }
+
+    // The whole F-264 sequence: click TWO, collapse its group, click ONE,
+    // send. The composer ends with only ONE's chip, and the clear after
+    // the send keeps it that way.
+    func testClickCollapseClickSendRetargets() {
+        var owned = Set<String>()
+        var chips: [Target] = []
+
+        // Click TWO's row.
+        chips = CockpitWindowController.composerTargets(
+            existing: chips,
+            selected: [("two", "TWO")],
+            releasable: CockpitWindowController.releasableTokens(
+                visibleRows: [(identity: "ONE", ownTokens: ["one"]),
+                              (identity: "TWO", ownTokens: ["two"])],
+                selected: ["TWO"],
+                lastSelection: [:],
+                selectionChips: owned))
+        owned = CockpitWindowController.selectionChipTokens(
+            previous: owned, chips: tokens(chips), selected: ["two"])
+        XCTAssertEqual(tokens(chips), ["two"])
+
+        // Collapse TWO's group: TWO's row hides and the selection empties.
+        chips = CockpitWindowController.composerTargets(
+            existing: chips,
+            selected: [],
+            releasable: CockpitWindowController.releasableTokens(
+                visibleRows: [(identity: "ONE", ownTokens: ["one"])],
+                selected: [],
+                lastSelection: ["TWO": ["two"]],
+                selectionChips: owned))
+        owned = CockpitWindowController.selectionChipTokens(
+            previous: owned, chips: tokens(chips), selected: [])
+        XCTAssertEqual(tokens(chips), ["two"])
+
+        // Click ONE's row.
+        chips = CockpitWindowController.composerTargets(
+            existing: chips,
+            selected: [("one", "ONE")],
+            releasable: CockpitWindowController.releasableTokens(
+                visibleRows: [(identity: "ONE", ownTokens: ["one"])],
+                selected: ["ONE"],
+                lastSelection: [:],
+                selectionChips: owned))
+        owned = CockpitWindowController.selectionChipTokens(
+            previous: owned, chips: tokens(chips), selected: ["one"])
+        XCTAssertEqual(tokens(chips), ["one"])
+        XCTAssertEqual(owned, ["one"])
+
+        // Clear after the send (not a click, so no selection chips).
+        chips = CockpitWindowController.composerTargets(
+            existing: chips,
+            selected: [("one", "ONE")],
+            releasable: CockpitWindowController.releasableTokens(
+                visibleRows: [(identity: "ONE", ownTokens: ["one"])],
+                selected: ["ONE"],
+                lastSelection: ["ONE": ["one"]]))
+        XCTAssertEqual(tokens(chips), ["one"])
+    }
+
     // A refresh leaves the composer alone, except that chips whose target
     // went away (session, tab, or window closed) are dropped so the next
     // send doesn't fail on an unknown target.
