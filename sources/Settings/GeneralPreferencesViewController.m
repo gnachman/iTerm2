@@ -251,6 +251,36 @@ static NSString *iTermAIKeyHint(iTermAICredentialKind kind,
             iTermAIVendorProviderName(vendor)];
 }
 
+// Every hint the manual model editor can show (it never reports a missing key),
+// in the running language, so it can reserve room for the longest.
+static NSArray<NSString *> *iTermAIKeyHintEditorVariants(void) {
+    NSMutableOrderedSet<NSString *> *result = [NSMutableOrderedSet orderedSet];
+    const iTermAICredentialKind kinds[] = {
+        iTermAICredentialKindAutomatic,
+        iTermAICredentialKindVendorKey,
+        iTermAICredentialKindModelKey,
+        iTermAICredentialKindNone
+    };
+    const iTermAIVendor vendors[] = {
+        iTermAIVendorDeepSeek,
+        iTermAIVendorGemini,
+        iTermAIVendorOpenAI,
+        iTermAIVendorLlama,
+        iTermAIVendorAnthropic,
+        iTermAIVendorApple
+    };
+    for (size_t k = 0; k < sizeof(kinds) / sizeof(*kinds); k++) {
+        for (size_t v = 0; v < sizeof(vendors) / sizeof(*vendors); v++) {
+            for (int withheld = 0; withheld < 2; withheld++) {
+                for (int withheldFromHost = 0; withheldFromHost < 2; withheldFromHost++) {
+                    [result addObject:iTermAIKeyHint(kinds[k], vendors[v], withheld, withheldFromHost, NO, YES)];
+                }
+            }
+        }
+    }
+    return result.array;
+}
+
 static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
     NSString *url = configuration[kAIManualModelURLKey] ?: @"";
     if (url.length == 0) {
@@ -683,12 +713,22 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (instancetype)initWithConfiguration:(NSDictionary *)configuration
                             isEditing:(BOOL)isEditing {
+    return [self initWithConfiguration:configuration
+                             isEditing:isEditing
+                     apiKeyHintStrings:iTermAIKeyHintEditorVariants()];
+}
+
+// apiKeyHintStrings are the hints the API key hint must have room for. Tests
+// pass a translation's hints to check the layout in that language.
+- (instancetype)initWithConfiguration:(NSDictionary *)configuration
+                            isEditing:(BOOL)isEditing
+                    apiKeyHintStrings:(NSArray<NSString *> *)apiKeyHintStrings {
     self = [super init];
     if (self) {
         _base = [configuration copy] ?: @{};
         _isEditing = isEditing;
         _featureButtons = [NSMutableDictionary dictionary];
-        [self buildWindow];
+        [self buildWindowWithAPIKeyHintStrings:apiKeyHintStrings];
     }
     return self;
 }
@@ -719,22 +759,57 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     return button;
 }
 
-- (void)buildWindow {
+// The API key hint label, before it is given a frame.
++ (NSTextField *)makeAPIKeyHintLabel {
+    NSTextField *label = [NSTextField labelWithString:@""];
+    label.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+    label.textColor = [NSColor secondaryLabelColor];
+    // Wrapped, with as many lines as the text needs. The self-hosted variant
+    // is an instruction, not a label, and does not fit the 388pt column on one
+    // line in English, and the gateway variant takes four lines in German;
+    // truncating either would hide the actionable half.
+    label.usesSingleLineMode = NO;
+    label.lineBreakMode = NSLineBreakByWordWrapping;
+    label.maximumNumberOfLines = 0;
+    return label;
+}
+
+// The height of the API key hint label: enough for the longest of `strings` at
+// `width`, and never less than the two lines it was designed with.
++ (CGFloat)apiKeyHintHeightForStrings:(NSArray<NSString *> *)strings width:(CGFloat)width {
+    const CGFloat minimumHeight = 30;
+    NSTextField *label = [self makeAPIKeyHintLabel];
+    const NSRect bounds = NSMakeRect(0, 0, width, CGFLOAT_MAX);
+    CGFloat height = minimumHeight;
+    for (NSString *string in strings) {
+        label.stringValue = string;
+        // The 2 points over the text are the slack the two-line height had.
+        height = MAX(height, ceil([label.cell cellSizeForBounds:bounds].height) + 2);
+    }
+    return height;
+}
+
+- (void)buildWindowWithAPIKeyHintStrings:(NSArray<NSString *> *)apiKeyHintStrings {
     // Wide enough for the API-key hint line under the API popup to fit longer
     // localizations (e.g. Russian) without truncating.
     const CGFloat width = 590;
-    // Height must clear the fixed button row (Save/Cancel/Test) at y=16..46: the
-    // content flows downward from height-66 and the custom-headers add/remove
-    // control lands at height-708, so the window has to be tall enough to keep
-    // that (and the headers table above it) above the buttons with a small gap.
-    // The 14 over the old 756 is the second line the API-key hint can now use,
-    // and the 30 after that is the API key row.
-    const CGFloat height = 800;
     const CGFloat margin = 20;
     const CGFloat labelWidth = 150;
     const CGFloat fieldX = margin + labelWidth + 12;
     const CGFloat fieldWidth = width - margin - fieldX;
     const CGFloat rowHeight = 30;
+    // The hint under the API key row is as tall as the longest hint it can show
+    // in this language needs (QA finding F-140).
+    const CGFloat hintHeight = [iTermManualAIModelEditorController apiKeyHintHeightForStrings:apiKeyHintStrings
+                                                                                        width:fieldWidth];
+    // Height must clear the fixed button row (Save/Cancel/Test) at y=16..46: the
+    // content flows downward from height-66 and the custom-headers add/remove
+    // control lands at height-708 (with a two-line hint), so the window has to
+    // be tall enough to keep that (and the headers table above it) above the
+    // buttons with a small gap. The 14 over the old 756 is the second line the
+    // API-key hint uses, the 30 after that is the API key row, and a hint
+    // taller than two lines grows the window by the difference.
+    const CGFloat height = 800 + (hintHeight - 30);
 
     _window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, width, height)
                                           styleMask:NSWindowStyleMaskTitled
@@ -917,18 +992,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // The API key sent is the stored key for the vendor inferred from the API,
     // URL, and model name, which is not obvious to users (see issue 12975). Spell
     // it out here, updated live as those fields change.
-    _apiKeyHintLabel = [NSTextField labelWithString:@""];
-    _apiKeyHintLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
-    _apiKeyHintLabel.textColor = [NSColor secondaryLabelColor];
-    // Two lines, wrapped. The self-hosted variant is an instruction, not a
-    // label, and does not fit the 388pt column on one line in English, let
-    // alone once translated; truncating it would hide the actionable half.
+    _apiKeyHintLabel = [iTermManualAIModelEditorController makeAPIKeyHintLabel];
     // A wrapping field draws from the top of its frame, so keeping the top
     // edge where the one-line version sat leaves short hints in place.
-    const CGFloat hintHeight = 30;
-    _apiKeyHintLabel.usesSingleLineMode = NO;
-    _apiKeyHintLabel.lineBreakMode = NSLineBreakByWordWrapping;
-    _apiKeyHintLabel.maximumNumberOfLines = 2;
     _apiKeyHintLabel.frame = NSMakeRect(fieldX, y + 20 - hintHeight, fieldWidth, hintHeight);
     [content addSubview:_apiKeyHintLabel];
     y -= 22 + (hintHeight - 16);
@@ -1134,9 +1200,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         : inferredVendor;
     _modelAPIKeyField.hidden = (kind != iTermAICredentialKindModelKey);
     _apiKeyHintLabel.stringValue = iTermAIKeyHint(kind, vendor, withheld, withheldFromHost, NO, YES);
-    // The field wraps to at most two lines in a fixed-height window, which the
-    // English text clears with room to spare but a long enough translation
-    // would not. The tooltip keeps the whole sentence reachable either way.
+    // The field is sized for the longest hint, but keep the whole sentence
+    // reachable on hover anyway.
     _apiKeyHintLabel.toolTip = _apiKeyHintLabel.stringValue;
 }
 
@@ -3604,10 +3669,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             break;
     }
     _mainAIAPIKeyHint.stringValue = iTermAIKeyHint(kind, vendor, withheld, withheldFromHost, YES, keyIsSet);
-    // This label is a fixed-height single line in the xib, so a long enough
-    // translation would be cut off. Truncate visibly rather than clipping
-    // mid-glyph, and keep the whole sentence reachable on hover.
-    _mainAIAPIKeyHint.lineBreakMode = NSLineBreakByTruncatingTail;
+    // This label has room for two wrapped lines in the xib, which every
+    // shipped translation fits (QA finding F-140). Should a future one need
+    // more, truncate the second line visibly rather than clipping mid-glyph,
+    // and keep the whole sentence reachable on hover.
+    _mainAIAPIKeyHint.usesSingleLineMode = NO;
+    _mainAIAPIKeyHint.lineBreakMode = NSLineBreakByWordWrapping;
+    _mainAIAPIKeyHint.cell.truncatesLastVisibleLine = YES;
+    _mainAIAPIKeyHint.maximumNumberOfLines = 2;
     _mainAIAPIKeyHint.toolTip = _mainAIAPIKeyHint.stringValue;
 }
 
