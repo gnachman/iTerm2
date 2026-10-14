@@ -781,6 +781,17 @@ final class OrchestratorDispatcher {
                 continue
             }
             watchers[i].sessionGUID = Self.watcherKey(for: session)
+            // A standalone pane's workgroup ID ("session:<stableID>") and its
+            // workgroup and role names derive from the old session, so they
+            // name a workgroup the snapshot no longer lists. Take them from the
+            // new session, as list_workgroups does, so list_watches and
+            // status_update match what the model sees.
+            if let context = WorkgroupIntrospection.context(for: session) {
+                watchers[i].workgroupID = context.workgroupID
+                watchers[i].workgroupName = context.workgroupName
+                watchers[i].roleID = context.roleID
+                watchers[i].roleName = context.roleName
+            }
             // Seed from the session itself rather than a lookup by its new
             // stableID, so the first status it posts is never a transition. A
             // reattached pane has no tab status until its program reports
