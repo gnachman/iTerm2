@@ -53426,6 +53426,90 @@
         }
       }
     },
+    "ClaudeCodeOnboarding.SettingsMalformed" : {
+      "comment" : "Body of the alert shown when installing the Claude Code hook fails because settings.json is not valid JSON or is not a JSON object; the interpolated value is the absolute path to settings.json",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ enthält einen Syntaxfehler oder ist kein JSON-Objekt. iTerm2 hat die Datei daher nicht verändert, damit Ihre übrigen Claude Code-Einstellungen nicht verloren gehen. Korrigieren Sie die Datei in einem Texteditor oder entfernen Sie sie und versuchen Sie es dann erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ has a syntax error or isn’t a JSON object, so iTerm2 left it unchanged to avoid losing your other Claude Code settings. Fix the file in a text editor, or remove it, and then try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ に構文エラーがあるか、JSON オブジェクトではありません。Claude Code のほかの設定が失われないよう、iTerm2 はこのファイルを変更しませんでした。テキストエディタでファイルを修正するか削除してから、もう一度お試しください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tem um erro de sintaxe ou não é um objeto JSON, então o iTerm2 o deixou inalterado para não perder suas outras configurações do Claude Code. Corrija o arquivo em um editor de texto, ou remova-o, e tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ содержит синтаксическую ошибку или не является объектом JSON, поэтому iTerm2 не стал его изменять, чтобы не потерять остальные настройки Claude Code. Исправьте файл в текстовом редакторе или удалите его, а затем повторите попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 存在语法错误或不是 JSON 对象，因此 iTerm2 未对其进行更改，以免丢失你的其他 Claude Code 设置。请在文本编辑器中修复该文件或将其删除，然后重试。"
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.SettingsUnreadable" : {
+      "comment" : "Body of the alert shown when installing the Claude Code hook fails because settings.json exists but could not be read; the interpolated value is the absolute path to settings.json",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 konnte %@ nicht lesen und hat die Datei daher nicht verändert. Prüfen Sie die Dateiberechtigungen und versuchen Sie es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t read %@, so it left the file unchanged. Check the file’s permissions and try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 は %@ を読み込めなかったため、ファイルを変更しませんでした。ファイルのアクセス権を確認してから、もう一度お試しください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não conseguiu ler %@, então deixou o arquivo inalterado. Verifique as permissões do arquivo e tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не удалось прочитать %@, поэтому файл не был изменён. Проверьте права доступа к файлу и повторите попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 无法读取 %@，因此未更改该文件。请检查文件的权限，然后重试。"
+          }
+        }
+      }
+    },
     "ClaudeCodeOnboarding.Show" : {
       "comment" : "Button that shows the toolbelt onboarding step",
       "extractionState" : "extracted_with_value",
