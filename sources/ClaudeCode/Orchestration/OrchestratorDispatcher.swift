@@ -464,8 +464,7 @@ final class OrchestratorDispatcher {
             // everything to stop. Also resume any parked permission prompt (e.g. a
             // watch consent bubble) so a suspended awaitPermission doesn't outlive
             // the stopped turn.
-            cancelAllWatchers()
-            resumePendingPermissionPrompts()
+            userDidStop()
         case .enableOrchestrationResponse, .revokeOrchestrationPermission:
             // Consumed elsewhere (ChatAgent / OrchestratorClient via their own
             // broker subscriptions). Not the dispatcher's concern.
@@ -2755,16 +2754,80 @@ final class OrchestratorDispatcher {
         return .ack
     }
 
-    // Cancel and forget every watcher on this chat, tearing down each one's
-    // escalation timer and screen poller. Called when the user presses Stop:
-    // combined with ChatService cancelling the in-flight turn and clearing the
-    // queued backlog, dropping the watchers means a later status transition
-    // can't fire a watcherEvent that restarts the loop. No status_update is
-    // published (the user asked to stop, not to be notified); watches they
-    // still want can be re-registered by asking the agent again.
+    // The user pressed Stop. Internal (not private) so tests can drive it
+    // without the broker's asynchronous main-actor hop.
     @MainActor
-    private func cancelAllWatchers() {
-        guard !watchers.isEmpty else { return }
+    func userDidStop() {
+        if tornDown { return }
+        let cancelled = cancelAllWatchers()
+        // The model isn't told (Stop means no later event should wake it), but
+        // the user is, so they don't keep waiting on a timer or watch that
+        // will never fire.
+        Self.publishCancelledWatchersNotice(broker: broker,
+                                            chatID: chatID,
+                                            cancelled: cancelled,
+                                            cause: .stop)
+        resumePendingPermissionPrompts()
+    }
+
+    enum WatcherCancellationCause {
+        case stop
+        case disableOrchestration
+    }
+
+    // The chat notice telling the user which pending timers and watches were
+    // cancelled, or nil when nothing was. User-facing only: it is published as
+    // a client-local notice, which never reaches the model or starts a turn.
+    static func cancelledWatchersNotice(_ cancelled: [WorkgroupWatcher],
+                                        cause: WatcherCancellationCause) -> String? {
+        let timers = cancelled.filter { $0.effectiveMode == .timer }.count
+        let watches = cancelled.count - timers
+        switch (cause, timers > 0, watches > 0) {
+        case (_, false, false):
+            return nil
+        case (.stop, true, false):
+            return String(localized: "OrchestratorDispatcher.StopCancelledTimers", defaultValue: "Stop cancelled \(timers) pending timers.", comment: "Chat notice shown after the user presses Stop in an AI chat. The placeholder is the number of pending timers (scheduled agent wake-ups) that were cancelled.")
+        case (.stop, false, true):
+            return String(localized: "OrchestratorDispatcher.StopCancelledWatches", defaultValue: "Stop cancelled \(watches) pending watches.", comment: "Chat notice shown after the user presses Stop in an AI chat. The placeholder is the number of pending watches (requests to wake the agent when a terminal session changes) that were cancelled.")
+        case (.stop, true, true):
+            return String(localized: "OrchestratorDispatcher.StopCancelledTimersAndWatches", defaultValue: "Stop cancelled \(timers) pending timers and \(watches) watches.", comment: "Chat notice shown after the user presses Stop in an AI chat. The first placeholder is the number of pending timers (scheduled agent wake-ups) that were cancelled; the second is the number of pending watches (requests to wake the agent when a terminal session changes) that were cancelled.")
+        case (.disableOrchestration, true, false):
+            return String(localized: "OrchestratorDispatcher.DisableCancelledTimers", defaultValue: "Disabling orchestration cancelled \(timers) pending timers.", comment: "Chat notice shown after the user turns off orchestration mode in an AI chat. The placeholder is the number of pending timers (scheduled agent wake-ups) that were cancelled.")
+        case (.disableOrchestration, false, true):
+            return String(localized: "OrchestratorDispatcher.DisableCancelledWatches", defaultValue: "Disabling orchestration cancelled \(watches) pending watches.", comment: "Chat notice shown after the user turns off orchestration mode in an AI chat. The placeholder is the number of pending watches (requests to wake the agent when a terminal session changes) that were cancelled.")
+        case (.disableOrchestration, true, true):
+            return String(localized: "OrchestratorDispatcher.DisableCancelledTimersAndWatches", defaultValue: "Disabling orchestration cancelled \(timers) pending timers and \(watches) watches.", comment: "Chat notice shown after the user turns off orchestration mode in an AI chat. The first placeholder is the number of pending timers (scheduled agent wake-ups) that were cancelled; the second is the number of pending watches (requests to wake the agent when a terminal session changes) that were cancelled.")
+        }
+    }
+
+    // Publish cancelledWatchersNotice as a chat notice, if there is one.
+    @MainActor
+    static func publishCancelledWatchersNotice(broker: ChatBroker?,
+                                               chatID: String,
+                                               cancelled: [WorkgroupWatcher],
+                                               cause: WatcherCancellationCause) {
+        guard let notice = cancelledWatchersNotice(cancelled, cause: cause) else {
+            return
+        }
+        do {
+            try broker?.publishNotice(chatID: chatID, notice: notice)
+        } catch {
+            RLog("Orchestrator dispatcher: failed to publish cancelled-watchers notice: \(error)")
+        }
+    }
+
+    // Cancel and forget every watcher on this chat, tearing down each one's
+    // escalation timer and screen poller, and return what was cancelled.
+    // Called when the user presses Stop: combined with ChatService cancelling
+    // the in-flight turn and clearing the queued backlog, dropping the watchers
+    // means a later status transition can't fire a watcherEvent that restarts
+    // the loop. No status_update is published (the user asked to stop, not to
+    // be notified); watches they still want can be re-registered by asking the
+    // agent again.
+    @MainActor
+    private func cancelAllWatchers() -> [WorkgroupWatcher] {
+        guard !watchers.isEmpty else { return [] }
+        let cancelled = watchers
         let ids = watchers.map { $0.watcherID }
         watchers.removeAll()
         for id in ids {
@@ -2776,6 +2839,7 @@ final class OrchestratorDispatcher {
         sessionStateHistory.removeAll()
         persistWatchers()
         RLog("[Orchestrator \(chatID)] Stop: cancelled \(ids.count) watcher(s)")
+        return cancelled
     }
 
     // The watchers a chat keeps when it is unlinked from its terminal session.
