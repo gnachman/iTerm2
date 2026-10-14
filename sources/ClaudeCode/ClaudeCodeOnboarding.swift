@@ -1872,6 +1872,85 @@ class ClaudeCodeOnboarding: NSObject {
         }
     }
 
+    // Strip our hook from previousDirectory's settings.json, unless that is
+    // the settings.json Install just wrote into newConfigDirectory. Returns
+    // whether it stripped.
+    //
+    // "Same" is decided by file identity, not by path: ~/.claude and a
+    // $CLAUDE_CONFIG_DIR of ~/dotfiles/claude are one directory when ~/.claude
+    // is a link to it, as are ~/.claude and ~/.Claude on a case-insensitive
+    // volume. Stripping the "old" file in those cases removes the hook Install
+    // just wrote (QA F-274). The settings.json files are compared too, since
+    // two distinct directories can hold links to one settings file.
+    // internal (not private) for unit testing via @testable import.
+    @discardableResult
+    static func stripStaleCCStatusHooks(previousDirectory: URL,
+                                        newConfigDirectory: URL) -> Bool {
+        if pathsNameSameItem(previousDirectory, newConfigDirectory) {
+            return false
+        }
+        let oldSettingsURL = previousDirectory.appendingPathComponent("settings.json")
+        let newSettingsURL = newConfigDirectory.appendingPathComponent("settings.json")
+        if pathsNameSameItem(oldSettingsURL, newSettingsURL) {
+            DLog("Onboarding: \(oldSettingsURL.path) is the settings.json just written; not stripping")
+            return false
+        }
+        DLog("Onboarding: install dir changed; stripping stale hook from \(oldSettingsURL.path)")
+        stripCCStatusHooks(fromSettingsURL: oldSettingsURL)
+        return true
+    }
+
+    // Whether two paths name the same file or directory. When both exist this
+    // compares device and inode (stat follows links), which handles symlinks,
+    // case variants, and spelling differences such as a trailing slash. When
+    // either can't be stat-ed, fall back to comparing the paths with links
+    // resolved, ignoring case only if the volume is case-insensitive.
+    private static func pathsNameSameItem(_ a: URL, _ b: URL) -> Bool {
+        if let idA = fileIdentity(a), let idB = fileIdentity(b) {
+            return idA == idB
+        }
+        let pathA = a.standardizedFileURL.resolvingSymlinksInPath().path
+        let pathB = b.standardizedFileURL.resolvingSymlinksInPath().path
+        if pathA == pathB {
+            return true
+        }
+        guard pathA.caseInsensitiveCompare(pathB) == .orderedSame else {
+            return false
+        }
+        return !volumeIsCaseSensitive(containing: URL(fileURLWithPath: pathA))
+    }
+
+    private struct FileIdentity: Equatable {
+        var device: dev_t
+        var inode: ino_t
+    }
+
+    private static func fileIdentity(_ url: URL) -> FileIdentity? {
+        var info = stat()
+        guard stat(url.path, &info) == 0 else {
+            return nil
+        }
+        return FileIdentity(device: info.st_dev, inode: info.st_ino)
+    }
+
+    // Case sensitivity of the volume holding url, judged from its nearest
+    // existing ancestor. Assumes case-sensitive when unknown, so an unknown
+    // volume never makes two differently cased paths look the same.
+    private static func volumeIsCaseSensitive(containing url: URL) -> Bool {
+        var candidate = url
+        while true {
+            if let values = try? candidate.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey]),
+               let caseSensitive = values.volumeSupportsCaseSensitiveNames {
+                return caseSensitive
+            }
+            let parent = candidate.deletingLastPathComponent()
+            if parent.path == candidate.path {
+                return true
+            }
+            candidate = parent
+        }
+    }
+
     private static func installHookFilesOnBackgroundQueue(configDirectory: URL,
                                                           environment: [String: String],
                                                           completion: @escaping (Bool) -> Void) {
@@ -1917,19 +1996,8 @@ class ClaudeCodeOnboarding: NSObject {
         } else {
             previousDirectory = defaultClaudeConfigDirectory
         }
-        // Compare normalized path STRINGS, not URLs. URL equality is string
-        // equality including the trailing slash, and URL(fileURLWithPath:) /
-        // appendingPathComponent decide that slash by stat-ing the filesystem.
-        // configDirectory was resolved before the write (directory may not have
-        // existed → no slash) and previousDirectory is built after it (directory
-        // now exists → slash), so comparing URLs here would spuriously report
-        // "changed" for a first-ever install into the default dir and strip the
-        // settings.json we just wrote. Paths don't depend on filesystem state.
-        if previousDirectory.standardizedFileURL.path != configDirectory.standardizedFileURL.path {
-            let oldSettingsURL = previousDirectory.appendingPathComponent("settings.json")
-            DLog("Onboarding: install dir changed; stripping stale hook from \(oldSettingsURL.path)")
-            stripCCStatusHooks(fromSettingsURL: oldSettingsURL)
-        }
+        stripStaleCCStatusHooks(previousDirectory: previousDirectory,
+                                newConfigDirectory: configDirectory)
 
         DispatchQueue.main.async {
             // Record where we installed so all later reads (uninstall, health
