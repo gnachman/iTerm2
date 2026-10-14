@@ -126,7 +126,6 @@
 #import "iTermKeyLabels.h"
 #import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
-#import "iTermLSOF.h"
 #import "iTermLoggingHelper.h"
 #import "iTermMalloc.h"
 #import "iTermMetaFrustrationDetector.h"
@@ -23327,22 +23326,6 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (id<iTermSSHIdentityProvider>)directoryTrackerSSHIdentityProvider:(iTermSessionDirectoryTracker *)tracker {
     return _conductor;
-}
-
-// Reads the terminal's foreground process group fresh from the kernel (not the
-// rate-limited process cache) so it reflects ssh exiting right away. A tmux
-// integration pane has no local terminal to read.
-- (pid_t)directoryTrackerForegroundProcessGroup:(iTermSessionDirectoryTracker *)tracker {
-    if (self.isTmuxClient || _exited) {
-        return -1;
-    }
-    const pid_t rootPid = _shell.pid;
-    if (rootPid <= 0) {
-        return -1;
-    }
-    const pid_t foregroundGroup = [iTermLSOF foregroundProcessGroupOfControllingTerminalOfProcess:rootPid];
-    DLog(@"Foreground process group of %@'s terminal is %@", @(rootPid), @(foregroundGroup));
-    return foregroundGroup;
 }
 
 - (void)directoryTracker:(iTermSessionDirectoryTracker *)tracker

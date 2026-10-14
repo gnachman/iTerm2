@@ -59,10 +59,6 @@ protocol iTermSessionDirectoryTrackerDelegate: AnyObject {
 
     /// Returns the SSH identity provider (e.g., Conductor) for SSH directory tracking.
     func directoryTrackerSSHIdentityProvider(_ tracker: iTermSessionDirectoryTracker) -> (any SSHIdentityProvider)?
-
-    /// Returns the foreground process group of the session's local terminal right
-    /// now, or a value <= 0 if it can't be known (e.g. a tmux integration pane).
-    func directoryTrackerForegroundProcessGroup(_ tracker: iTermSessionDirectoryTracker) -> pid_t
 }
 
 /// Arrangement keys for serialization (must match existing PTYSession keys for compatibility).
@@ -70,8 +66,7 @@ private enum ArrangementKeys {
     static let lastDirectory = "Last Directory"
     static let lastLocalDirectory = "Last Local Directory"
     static let lastLocalDirectoryWasPushed = "Last Local Directory Was Pushed"
-    static let lastDirectoryIsRemote = "Last Directory Is Remote"
-    static let remoteDirectoryForegroundProcessGroup = "Remote Directory Foreground Process Group"
+    static let lastDirectoryIsRemote = "Last Directory Is Remote"  // Deprecated key for backward compat
     static let directories = "Directories"
     static let hosts = "Hosts"
     static let workingDirectoryPollerDisabled = "Working Directory Poller Disabled"
@@ -113,19 +108,6 @@ class iTermSessionDirectoryTracker: NSObject {
     /// Used when creating new local sessions to avoid using a remote path that was pushed
     /// via OSC 7 without a hostname (which looks local but isn't).
     @objc private(set) var polledLocalDirectory: String?
-
-    /// Whether lastDirectory is on a remote host (e.g., OSC 7 from a shell on the
-    /// other side of a plain ssh).
-    private var lastDirectoryIsRemote = false
-
-    /// The local terminal's foreground process group when lastDirectory became
-    /// remote: the job (usually ssh) that the remote shell talks through. The remote
-    /// directory stays current only while this group is still in the foreground.
-    /// Once a valid poll finds anything else there (the local shell, a subshell it
-    /// was started from) or can't tell (a tmux integration pane), the polled local
-    /// directory becomes current. nil when lastDirectory is not remote or the
-    /// foreground group was unknown.
-    private var remoteDirectoryForegroundProcessGroup: pid_t?
 
     /// The last remote host at the time of setting the current directory.
     @objc private(set) var lastRemoteHost: (any VT100RemoteHostReading)?
@@ -172,7 +154,7 @@ class iTermSessionDirectoryTracker: NSObject {
     func restoreFromArrangement(_ arrangement: [String: Any]) {
         lastDirectory = arrangement[ArrangementKeys.lastDirectory] as? String
 
-        // Arrangements from before "Last Local Directory" existed rely on this key to tell whether lastDirectory is local.
+        // Handle backward compatibility with deprecated "Last Directory Is Remote" key
         let isRemote = arrangement[ArrangementKeys.lastDirectoryIsRemote] as? Bool ?? false
         if !isRemote, let dir = lastDirectory {
             lastLocalDirectory = dir
@@ -181,14 +163,6 @@ class iTermSessionDirectoryTracker: NSObject {
         if let localDir = arrangement[ArrangementKeys.lastLocalDirectory] as? String {
             lastLocalDirectory = localDir
             lastLocalDirectoryWasPushed = arrangement[ArrangementKeys.lastLocalDirectoryWasPushed] as? Bool ?? false
-        }
-        lastDirectoryIsRemote = isRemote && lastDirectory != nil
-        // Process IDs survive a relaunch only when the job does (session restoration).
-        // Otherwise the group is not in the foreground, so a poll replaces the path.
-        if lastDirectoryIsRemote,
-           let group = (arrangement[ArrangementKeys.remoteDirectoryForegroundProcessGroup] as? NSNumber)?.int32Value,
-           group > 0 {
-            remoteDirectoryForegroundProcessGroup = group
         }
 
         shouldExpectCurrentDirUpdates = arrangement[ArrangementKeys.shouldExpectCurrentDirUpdates] as? Bool ?? false
@@ -222,12 +196,6 @@ class iTermSessionDirectoryTracker: NSObject {
         RLog("\(d(delegate)): Saving arrangement with lastDirectory of \(d(lastDirectory))");
         if let dir = lastDirectory {
             encoder.setObject(dir, forKey: ArrangementKeys.lastDirectory)
-            // Lets a restored session whose ssh job is still running keep its remote
-            // directory when the local cwd is polled.
-            encoder.setObject(NSNumber(value: lastDirectoryIsRemote), forKey: ArrangementKeys.lastDirectoryIsRemote)
-            if let group = remoteDirectoryForegroundProcessGroup {
-                encoder.setObject(NSNumber(value: group), forKey: ArrangementKeys.remoteDirectoryForegroundProcessGroup)
-            }
         }
 
         if let localDir = lastLocalDirectory {
@@ -266,17 +234,6 @@ class iTermSessionDirectoryTracker: NSObject {
         }
 
         lastDirectory = directory
-        if !remote {
-            remoteDirectoryForegroundProcessGroup = nil
-        } else if !lastDirectoryIsRemote || remoteDirectoryForegroundProcessGroup == nil {
-            // The remote shell talks through whatever is in the foreground now (ssh,
-            // or the session's root process when the profile's command is ssh). A
-            // later push in the same remote stretch keeps the group recorded when it
-            // started, in case it is processed after ssh gave the terminal back.
-            let group = delegate?.directoryTrackerForegroundProcessGroup(self) ?? -1
-            remoteDirectoryForegroundProcessGroup = group > 0 ? group : nil
-        }
-        lastDirectoryIsRemote = remote
 
         if !remote {
             if pushed || !lastLocalDirectoryWasPushed {
@@ -582,28 +539,6 @@ class iTermSessionDirectoryTracker: NSObject {
         delegate?.directoryTrackerDidUpdateCurrentDirectory(self, path: newPath)
     }
 
-    /// Decides whether a valid poller result that will not create a mark should
-    /// become the current directory. A remote directory stays current only while
-    /// the job it was reported through is still in the local terminal's foreground.
-    private func polledDirectoryShouldBecomeCurrent(_ pwd: String) -> Bool {
-        guard lastDirectoryIsRemote else {
-            return pwd != lastDirectory
-        }
-        guard let remoteGroup = remoteDirectoryForegroundProcessGroup else {
-            DLog("\(d(delegate)): No foreground process group for the remote directory, so the local directory replaces it")
-            return true
-        }
-        // This reads the foreground now, not when the cwd was sampled. That's fine:
-        // the polled cwd is the session's shell's, which ssh can't change.
-        let group = delegate?.directoryTrackerForegroundProcessGroup(self) ?? -1
-        if group == remoteGroup {
-            DLog("\(d(delegate)): Foreground process group \(group) for the remote directory is still in the foreground")
-            return false
-        }
-        DLog("\(d(delegate)): Foreground process group is \(group), not \(remoteGroup), so the remote session ended")
-        return true
-    }
-
     private func useLocalDirectoryPollerResult() -> Bool {
         if workingDirectoryPollerDisabled {
             DLog("\(d(delegate)): Working directory poller disabled")
@@ -675,12 +610,6 @@ extension iTermSessionDirectoryTracker: iTermWorkingDirectoryPollerDelegate {
             // of session restoration.
             lastLocalDirectory = pwd
             lastLocalDirectoryWasPushed = false
-            if !invalidated, let pwd, polledDirectoryShouldBecomeCurrent(pwd) {
-                // The local shell, which has no shell integration, is in the foreground.
-                // Its directory is the current one. This updates the path variable.
-                setLastDirectory(pwd, remote: false, pushed: false)
-                return
-            }
             // Do not call setLastDirectory:remote:pushed: because there's no sense updating the path
             // variable for an invalidated update when we might have a better remote working directory.
             //
