@@ -812,7 +812,7 @@
       }
     },
     "2cn-gz-86d.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Edit > Engage Artifical Intelligence\"; ObjectID = \"2cn-gz-86d\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"Edit > Engage Artificial Intelligence\"; ObjectID = \"2cn-gz-86d\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -824,7 +824,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Edit > Engage Artifical Intelligence"
+            "value" : "Edit > Engage Artificial Intelligence"
           }
         },
         "ja" : {

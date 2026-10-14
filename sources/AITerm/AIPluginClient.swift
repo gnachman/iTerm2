@@ -254,7 +254,7 @@ class iTermAIClient {
     private let requiredVersion = "1.1"
 
     private static var notAllowedError: PluginError {
-        PluginError(reason: String(localized: "AIPluginClient.NotAllowed", defaultValue: "Plugin not allowed by administator.", comment: "Error message when the AI plugin is disallowed by administrator policy"))
+        PluginError(reason: String(localized: "AIPluginClient.NotAllowed", defaultValue: "Plugin not allowed by administrator.", comment: "Error message when the AI plugin is disallowed by administrator policy"))
     }
 
     // Runs on any queue. Throws a PluginError or does nothing.
