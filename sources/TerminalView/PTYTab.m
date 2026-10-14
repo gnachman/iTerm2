@@ -7652,6 +7652,30 @@ typedef struct {
     return [before arrayByAddingObjectsFromArray:after];
 }
 
+// Returns a leaf session view under |view| for which the nearest enclosing split that has the
+// given orientation is the one that contains |view|, or nil if every leaf is under another split
+// of that orientation. Used to choose the pane that tmux's resize-pane should be sent to so that
+// it moves the divider the user dragged and not an inner one.
++ (SessionView *)tmuxResizeTargetInView:(NSView *)view sameOrientationAs:(BOOL)isVertical {
+    if ([view isKindOfClass:[SessionView class]]) {
+        return (SessionView *)view;
+    }
+    if (![view isKindOfClass:[NSSplitView class]]) {
+        return nil;
+    }
+    NSSplitView *split = (NSSplitView *)view;
+    if (split.isVertical == isVertical) {
+        return nil;
+    }
+    for (NSView *child in split.subviews) {
+        SessionView *candidate = [self tmuxResizeTargetInView:child sameOrientationAs:isVertical];
+        if (candidate) {
+            return candidate;
+        }
+    }
+    return nil;
+}
+
 - (void)splitView:(PTYSplitView *)splitView
   draggingDidEndOfSplit:(int)splitterIndex
            pixels:(NSSize)pxMoved {
@@ -7672,13 +7696,23 @@ typedef struct {
     [self updateUseMetal];
     // Find a session view adjacent to the moved splitter.
     NSArray *subviews = [splitView subviews];
-    NSView *theView = [subviews uncheckedObjectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
+    NSView *theView = [subviews uncheckedObjectAtIndex:splitterIndex];  // the view left of or above the dragged splitter.
     if (theView) {
-        while ([theView isKindOfClass:[NSSplitView class]]) {
-            NSSplitView *subSplitView = (NSSplitView *)theView;
-            theView = [[subSplitView subviews] objectAtIndex:0];
+        // tmux's resize-pane -L/-R/-U/-D moves the divider that belongs to the nearest enclosing
+        // split *in the same direction* as seen from the pane it is sent to. Picking the first
+        // leaf of the subview is wrong when that leaf sits inside a nested split of the same
+        // direction (for example three columns where the first column is itself divided into
+        // left/right panes): tmux then moves the inner divider and the dragged one snaps back.
+        // Only a pane that is not under another split of the dragged splitter's direction is
+        // addressed by the divider the user dragged.
+        SessionView *sessionView = [PTYTab tmuxResizeTargetInView:theView
+                                                sameOrientationAs:[splitView isVertical]];
+        if (!sessionView) {
+            DLog(@"No pane can address the dragged splitter via resize-pane; re-syncing layout from tmux");
+            [tmuxController_ refreshLayoutsFromTmux];
+            [self updateUseMetal];
+            return;
         }
-        SessionView *sessionView = (SessionView *)theView;
         PTYSession *session = [self sessionForSessionView:sessionView];
         
         // Determine the number of characters moved
