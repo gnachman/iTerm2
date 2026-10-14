@@ -59,6 +59,7 @@ class AIConnectionTester: NSObject {
                       apiKey: apiKey,
                       vendor: vendor,
                       credential: credential,
+                      keyVendor: keyVendor,
                       completion: completion)
         }
         // The App Review key wins over the placeholder policy, exactly as it
@@ -72,7 +73,7 @@ class AIConnectionTester: NSObject {
             // pass against an authenticated local server that every real request then
             // 401'd (issue 13021). There is also nothing to prompt for: a key the user
             // typed would never be sent.
-            if let apiKey = unpromptedAPIKey(url: url, api: api, credential: credential) {
+            if let apiKey = unpromptedAPIKey(url: url, api: api, credential: credential, keyVendor: keyVendor) {
                 send(apiKey)
                 return
             }
@@ -104,8 +105,9 @@ class AIConnectionTester: NSObject {
     // stored key applies (which may mean prompting for one).
     static func unpromptedAPIKey(url: String,
                                  api: iTermAIAPI,
-                                 credential: AIModelCredential = .automatic) -> String? {
-        guard AITermController.usesPlaceholderAPIKey(url: url, api: api, credential: credential) else {
+                                 credential: AIModelCredential,
+                                 keyVendor: iTermAIVendor) -> String? {
+        guard AITermController.usesPlaceholderAPIKey(url: url, api: api, credential: credential, keyVendor: keyVendor) else {
             return nil
         }
         return AITermController.selfHostedPlaceholderAPIKey
@@ -120,6 +122,7 @@ class AIConnectionTester: NSObject {
                              apiKey: String,
                              vendor: iTermAIVendor,
                              credential: AIModelCredential,
+                             keyVendor: iTermAIVendor,
                              completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
         // The reviewer placeholder key contacts no service, so a live probe would
         // fail. Report success and explain, matching the runtime short-circuit.
@@ -196,6 +199,7 @@ class AIConnectionTester: NSObject {
                                                        url: url,
                                                        api: api,
                                                        credential: credential,
+                                                       keyVendor: keyVendor,
                                                        customHeaders: customHeaders))
             case .failure(let error):
                 // Same treatment as a WebResponse failure: if the plugin ever
@@ -207,6 +211,7 @@ class AIConnectionTester: NSObject {
                                                        url: url,
                                                        api: api,
                                                        credential: credential,
+                                                       keyVendor: keyVendor,
                                                        customHeaders: customHeaders))
             }
         }

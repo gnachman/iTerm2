@@ -5,7 +5,8 @@
 //  A manual model used to authorize with whichever vendor key its name and URL
 //  suggested, so a model named “gemini/gemma-4-31b-it” on an Open WebUI server
 //  asked for a Gemini key (issue 13105). The model's credential now lets the
-//  user choose. Automatic must keep behaving exactly as before.
+//  user choose. Automatic sends a vendor's key only to that vendor's own host
+//  (see AIAutomaticCredentialHostTests).
 //
 
 import XCTest
@@ -18,7 +19,8 @@ final class AIModelCredentialTests: XCTestCase {
     // MARK: - Storage
 
     func testStoredValueRoundTrips() {
-        let credentials: [AIModelCredential] = [.vendorKey(.openAI),
+        let credentials: [AIModelCredential] = [.automatic,
+                                                .vendorKey(.openAI),
                                                 .vendorKey(.anthropic),
                                                 .vendorKey(.gemini),
                                                 .vendorKey(.deepSeek),
@@ -29,9 +31,10 @@ final class AIModelCredentialTests: XCTestCase {
         }
     }
 
-    // Absent is how every configuration saved before this setting looks.
-    func testAutomaticIsNotStored() {
-        XCTAssertNil(AIModelCredential.automatic.storedValue)
+    // Automatic is stored explicitly: absent marks a configuration saved
+    // before Automatic became host-bound (see AIAutomaticCredentialHostTests).
+    func testAutomaticIsStored() {
+        XCTAssertEqual(AIModelCredential.automatic.storedValue, "automatic")
         XCTAssertEqual(AIModelCredential(storedValue: nil), .automatic)
     }
 
@@ -51,34 +54,32 @@ final class AIModelCredentialTests: XCTestCase {
 
     // MARK: - Key policy
 
-    func testAutomaticMatchesTheInference() {
-        for url in [gatewayURL, localURL] {
-            XCTAssertEqual(AITermController.apiKeyPolicy(url: url, api: .chatCompletions, credential: .automatic),
-                           AITermController.apiKeyPolicy(url: url, api: .chatCompletions))
-        }
+    func testAutomaticMatchesTheInferenceForLocalEndpoint() {
+        XCTAssertEqual(AITermController.apiKeyPolicy(url: localURL, api: .chatCompletions, credential: .automatic, keyVendor: .openAI),
+                       AITermController.apiKeyPolicy(url: localURL, api: .chatCompletions))
     }
 
     // The user asked for the key, so a local endpoint gets it too.
     func testChosenVendorKeyIsSentToLocalEndpoint() {
-        XCTAssertEqual(AITermController.apiKeyPolicy(url: localURL, api: .chatCompletions, credential: .vendorKey(.openAI)),
+        XCTAssertEqual(AITermController.apiKeyPolicy(url: localURL, api: .chatCompletions, credential: .vendorKey(.openAI), keyVendor: .openAI),
                        .vendorKey)
     }
 
     func testNoneWithholdsKeyFromPublicEndpoint() {
-        XCTAssertEqual(AITermController.apiKeyPolicy(url: gatewayURL, api: .chatCompletions, credential: .none),
+        XCTAssertEqual(AITermController.apiKeyPolicy(url: gatewayURL, api: .chatCompletions, credential: .none, keyVendor: .openAI),
                        .placeholder(.noKeySelected))
-        XCTAssertTrue(AITermController.usesPlaceholderAPIKey(url: gatewayURL, api: .chatCompletions, credential: .none))
+        XCTAssertTrue(AITermController.usesPlaceholderAPIKey(url: gatewayURL, api: .chatCompletions, credential: .none, keyVendor: .openAI))
     }
 
     func testModelKeyIsNotAPlaceholder() {
-        XCTAssertEqual(AITermController.apiKeyPolicy(url: gatewayURL, api: .chatCompletions, credential: .modelKey),
+        XCTAssertEqual(AITermController.apiKeyPolicy(url: gatewayURL, api: .chatCompletions, credential: .modelKey, keyVendor: .openAI),
                        .modelKey)
-        XCTAssertFalse(AITermController.usesPlaceholderAPIKey(url: gatewayURL, api: .chatCompletions, credential: .modelKey))
+        XCTAssertFalse(AITermController.usesPlaceholderAPIKey(url: gatewayURL, api: .chatCompletions, credential: .modelKey, keyVendor: .openAI))
     }
 
     func testAppleIntelligenceIgnoresCredential() {
         for credential: AIModelCredential in [.automatic, .vendorKey(.openAI), .modelKey, .none] {
-            XCTAssertEqual(AITermController.apiKeyPolicy(url: "", api: .appleIntelligence, credential: credential),
+            XCTAssertEqual(AITermController.apiKeyPolicy(url: "", api: .appleIntelligence, credential: credential, keyVendor: .openAI),
                            .placeholder(.onDevice))
         }
     }
@@ -96,13 +97,12 @@ final class AIModelCredentialTests: XCTestCase {
 
     // MARK: - Registration
 
-    // The issue's scenario: only an OpenAI key, model named gemini/... Automatic
-    // still wants the Gemini key, as before.
-    func testAutomaticStillRequiresInferredVendorKey() {
+    // The issue's scenario: only an OpenAI key, model named gemini/... at a
+    // gateway. Automatic sends neither key, since the gateway is not Google's.
+    func testAutomaticSendsNoKeyToGateway() {
         let controller = AITermController(registration: AITermController.Registration(apiKey: "sk-openai", vendor: .openAI))
         controller.providerOverride = LLMProvider(model: gatewayModel(credential: .automatic))
-        XCTAssertNil(controller.registration)
-        XCTAssertEqual(controller.requiredRegistrationVendor, .gemini)
+        XCTAssertEqual(controller.registration?.apiKey, AITermController.selfHostedPlaceholderAPIKey)
     }
 
     func testChosenVendorKeyIsUsed() {
@@ -142,11 +142,12 @@ final class AIModelCredentialTests: XCTestCase {
         XCTAssertEqual(registration?.apiKey, "sk-openai")
     }
 
-    func testResolverAutomaticStillNeedsInferredKey() {
-        XCTAssertNil(AITermController.resolvedRegistration(model: gatewayModel(credential: .automatic),
-                                                           fallbackVendor: .gemini,
-                                                           vendorRegistration: openAIOnly,
-                                                           modelKey: { _ in nil }))
+    func testResolverAutomaticSendsNoKeyToGateway() {
+        XCTAssertEqual(AITermController.resolvedRegistration(model: gatewayModel(credential: .automatic),
+                                                             fallbackVendor: .gemini,
+                                                             vendorRegistration: openAIOnly,
+                                                             modelKey: { _ in nil })?.apiKey,
+                       AITermController.selfHostedPlaceholderAPIKey)
     }
 
     func testResolverNoneIsPlaceholder() {
@@ -202,7 +203,7 @@ final class AIModelCredentialTests: XCTestCase {
             iTermPreferences.setObject([
                 ["id": "A", "name": name, "url": gatewayURL,
                  "api": Int(iTermAIAPI.chatCompletions.rawValue),
-                 "credential": credential.storedValue!],
+                 "credential": credential.storedValue],
             ], forKey: configurationsKey)
             let model = LLMMetadata.model()
             XCTAssertEqual(model?.credential, credential)
@@ -215,7 +216,7 @@ final class AIModelCredentialTests: XCTestCase {
         iTermPreferences.setObject([
             ["id": "A", "name": name, "url": gatewayURL,
              "api": Int(iTermAIAPI.chatCompletions.rawValue),
-             "credential": AIModelCredential.vendorKey(.openAI).storedValue!],
+             "credential": AIModelCredential.vendorKey(.openAI).storedValue],
         ], forKey: configurationsKey)
         XCTAssertEqual(AITermControllerRegistrationHelper.instance.defaultKeyVendor, .openAI,
                        "a missing key must be prompted for as the chosen vendor's")
@@ -230,9 +231,10 @@ final class AIModelCredentialTests: XCTestCase {
         iTermPreferences.setObject([
             ["id": "A", "name": "gemini/gemma-4-31b-it", "url": gatewayURL,
              "api": Int(iTermAIAPI.chatCompletions.rawValue),
-             "credential": AIModelCredential.vendorKey(.openAI).storedValue!],
+             "credential": AIModelCredential.vendorKey(.openAI).storedValue],
             ["id": "B", "name": "plain", "url": gatewayURL,
-             "api": Int(iTermAIAPI.chatCompletions.rawValue)],
+             "api": Int(iTermAIAPI.chatCompletions.rawValue),
+             "credential": AIModelCredential.automatic.storedValue],
         ], forKey: key)
         let models = LLMMetadata.manualModels()
         let chosen = models.first { $0.name == "gemini/gemma-4-31b-it" }
@@ -245,16 +247,16 @@ final class AIModelCredentialTests: XCTestCase {
     // MARK: - Test Connection and advice
 
     func testProbeUsesPlaceholderOnlyWhenCredentialWithholdsKey() {
-        XCTAssertEqual(AIConnectionTester.unpromptedAPIKey(url: gatewayURL, api: .chatCompletions, credential: .none),
+        XCTAssertEqual(AIConnectionTester.unpromptedAPIKey(url: gatewayURL, api: .chatCompletions, credential: .none, keyVendor: .openAI),
                        AITermController.selfHostedPlaceholderAPIKey)
-        XCTAssertNil(AIConnectionTester.unpromptedAPIKey(url: localURL, api: .chatCompletions, credential: .vendorKey(.openAI)))
-        XCTAssertNil(AIConnectionTester.unpromptedAPIKey(url: gatewayURL, api: .chatCompletions, credential: .modelKey))
+        XCTAssertNil(AIConnectionTester.unpromptedAPIKey(url: localURL, api: .chatCompletions, credential: .vendorKey(.openAI), keyVendor: .openAI))
+        XCTAssertNil(AIConnectionTester.unpromptedAPIKey(url: gatewayURL, api: .chatCompletions, credential: .modelKey, keyVendor: .openAI))
     }
 
     func testAdviceFollowsCredential() {
-        XCTAssertNotNil(AIWithheldKeyAdvice.hint(url: gatewayURL, api: .chatCompletions, credential: .none, customHeaders: []))
-        XCTAssertNil(AIWithheldKeyAdvice.hint(url: localURL, api: .chatCompletions, credential: .vendorKey(.openAI), customHeaders: []))
-        XCTAssertNil(AIWithheldKeyAdvice.hint(url: gatewayURL, api: .chatCompletions, credential: .modelKey, customHeaders: []))
+        XCTAssertNotNil(AIWithheldKeyAdvice.hint(url: gatewayURL, api: .chatCompletions, credential: .none, keyVendor: .openAI, customHeaders: []))
+        XCTAssertNil(AIWithheldKeyAdvice.hint(url: localURL, api: .chatCompletions, credential: .vendorKey(.openAI), keyVendor: .openAI, customHeaders: []))
+        XCTAssertNil(AIWithheldKeyAdvice.hint(url: gatewayURL, api: .chatCompletions, credential: .modelKey, keyVendor: .openAI, customHeaders: []))
     }
 
     private func gatewayModel(credential: AIModelCredential) -> AIMetadata.Model {

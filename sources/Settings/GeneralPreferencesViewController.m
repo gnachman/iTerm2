@@ -64,8 +64,10 @@ static NSString *const kAIManualModelDynamicModelsKey = @"dynamicModels";
 static NSString *const kAIManualModelDynamicSelectedModelKey = @"dynamicSelectedModel";
 // Array of {"name","value"} dictionaries. Must match LLMMetadata.ManualModelKey.customHeaders.
 static NSString *const kAIManualModelCustomHeadersKey = @"customHeaders";
-// Which key authorizes the model: an AIModelCredential.storedValue, absent for
-// automatic. Must match LLMMetadata.ManualModelKey.credential.
+// Which key authorizes the model: an AIModelCredential.storedValue. Absent only
+// in configurations saved before Automatic became host-bound, which
+// LLMMetadata.credential(configuration:...) reads specially. Must match
+// LLMMetadata.ManualModelKey.credential.
 static NSString *const kAIManualModelCredentialKey = @"credential";
 // Never persisted. A duplicated configuration gets a new ID, so this carries the
 // original's ID into the editor so it can offer the original's own key.
@@ -207,12 +209,14 @@ static BOOL iTermAIVendorHasEnterableKey(iTermAIVendor vendor) {
 // and the manual model editor so the two never describe the same model
 // differently. `vendor` is the vendor whose stored key would be used (the chosen
 // one for iTermAICredentialKindVendorKey, else the inferred one).
-// `withheldForLocalEndpoint` applies only to automatic, which is the only kind
-// that withholds a key from a local endpoint. When `reportMissingKey` is set, a
+// `withheldForLocalEndpoint` and `withheldForUnrecognizedHost` apply only to
+// automatic, which is the only kind that withholds a key from a local endpoint
+// or from a host that is not the vendor's own. When `reportMissingKey` is set, a
 // key that has not been entered is called out using `keyIsSet`.
 static NSString *iTermAIKeyHint(iTermAICredentialKind kind,
                                 iTermAIVendor vendor,
                                 BOOL withheldForLocalEndpoint,
+                                BOOL withheldForUnrecognizedHost,
                                 BOOL reportMissingKey,
                                 BOOL keyIsSet) {
     switch (kind) {
@@ -226,6 +230,9 @@ static NSString *iTermAIKeyHint(iTermAICredentialKind kind,
         case iTermAICredentialKindAutomatic:
             if (withheldForLocalEndpoint) {
                 return iTermAIKeyHintSelfHosted();
+            }
+            if (withheldForUnrecognizedHost) {
+                return NSLocalizedStringWithDefaultValue(@"AIKeyHint.UnrecognizedHost", nil, [NSBundle mainBundle], @"No API key is sent automatically, since this endpoint is not run by the model’s provider. Choose the key it needs, or use a custom header.", @"Hint shown when a manual AI model’s endpoint is not its provider’s own server (for example a third-party gateway), where the automatic API key choice sends no key");
             }
             break;
         case iTermAICredentialKindVendorKey:
@@ -859,7 +866,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _credentialPopup.lastItem.tag = kAICredentialTagModelKey;
     [_credentialPopup addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.NoAPIKey", nil, [NSBundle mainBundle], @"None", @"API key popup option meaning no API key is sent")];
     _credentialPopup.lastItem.tag = kAICredentialTagNone;
-    id storedCredential = _base[kAIManualModelCredentialKey];
+    // A configuration saved by an older build has no stored choice; show the
+    // key it actually sends so that saving it keeps sending that key.
+    id storedCredential = [iTermLLMMetadata effectiveCredentialStoredValueForConfiguration:_base];
     switch ([iTermAIModelCredential kindForStoredValue:storedCredential]) {
         case iTermAICredentialKindAutomatic:
             [_credentialPopup selectItemWithTag:kAICredentialTagAutomatic];
@@ -1115,13 +1124,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // the vendor classification says, so automatic must not promise one (issue
     // 13021).
     const BOOL withheld = [AITermControllerObjC modelWithholdsAPIKeyForLocalEndpointURL:url api:api];
-    [self updateAutomaticCredentialTitleWithVendor:inferredVendor withheld:withheld];
+    // Nor does a host that isn't the inferred vendor's own, like a gateway.
+    const BOOL withheldFromHost =
+        [AITermControllerObjC automaticWithholdsAPIKeyFromUnrecognizedHostURL:url api:api keyVendor:inferredVendor];
+    [self updateAutomaticCredentialTitleWithVendor:inferredVendor withheld:withheld withheldFromHost:withheldFromHost];
     const iTermAICredentialKind kind = [self selectedCredentialKind];
     const iTermAIVendor vendor = (kind == iTermAICredentialKindVendorKey)
         ? (iTermAIVendor)_credentialPopup.selectedTag
         : inferredVendor;
     _modelAPIKeyField.hidden = (kind != iTermAICredentialKindModelKey);
-    _apiKeyHintLabel.stringValue = iTermAIKeyHint(kind, vendor, withheld, NO, YES);
+    _apiKeyHintLabel.stringValue = iTermAIKeyHint(kind, vendor, withheld, withheldFromHost, NO, YES);
     // The field wraps to at most two lines in a fixed-height window, which the
     // English text clears with room to spare but a long enough translation
     // would not. The tooltip keeps the whole sentence reachable either way.
@@ -1130,10 +1142,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 // Automatic shows what it currently resolves to, so a wrong guess is visible
 // before the first request.
-- (void)updateAutomaticCredentialTitleWithVendor:(iTermAIVendor)vendor withheld:(BOOL)withheld {
+- (void)updateAutomaticCredentialTitleWithVendor:(iTermAIVendor)vendor
+                                        withheld:(BOOL)withheld
+                                withheldFromHost:(BOOL)withheldFromHost {
     NSString *title;
     if (withheld) {
         title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.AutomaticNoKeyLocal", nil, [NSBundle mainBundle], @"Automatic (none for a local endpoint)", @"API key popup option that infers the key; shown when the endpoint is local, so no key is sent");
+    } else if (withheldFromHost) {
+        title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.AutomaticNoKeyUnrecognizedHost", nil, [NSBundle mainBundle], @"Automatic (none for this endpoint)", @"API key popup option that infers the key; shown when the endpoint is not the model’s provider’s own server (for example a third-party gateway), so no key is sent");
     } else if (!iTermAIVendorHasEnterableKey(vendor)) {
         title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.AutomaticNoKey", nil, [NSBundle mainBundle], @"Automatic (none)", @"API key popup option that infers the key; shown when the inferred provider uses no key");
     } else {
@@ -1162,7 +1178,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
 }
 
-// The value persisted under kAIManualModelCredentialKey, or nil for automatic.
+// The value persisted under kAIManualModelCredentialKey.
 - (NSString *)selectedCredentialStoredValue {
     const iTermAICredentialKind kind = [self selectedCredentialKind];
     const iTermAIVendor vendor = (kind == iTermAICredentialKindVendorKey)
@@ -1419,7 +1435,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         preset.supportsTemperature ? NSControlStateValueOn : NSControlStateValueOff;
     // A catalog model names a specific model, so it is never auto-discovering.
     _dynamicModelsButton.state = NSControlStateValueOff;
-    [self resetAuthorizationForPreset];
+    // A catalog preset lives on its vendor's own host, where Automatic sends
+    // that vendor's key.
+    [self resetAuthorizationForPresetWithCredentialTag:kAICredentialTagAutomatic];
     [self updateEditorAPIKeyHint];
     [self updateDynamicModelsEditorState];
 }
@@ -1427,15 +1445,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 // A preset points the model at a new endpoint, so the custom headers and API key
 // choice made for the old one must not follow it there: a local gateway's bearer
 // token or another vendor's key would otherwise be sent to the preset's host.
-// Reset them to what a new model made from the preset would get: no headers and
-// Automatic, which picks the key of the vendor the preset resolves to.
-- (void)resetAuthorizationForPreset {
+// Reset them to no headers and the given key choice.
+- (void)resetAuthorizationForPresetWithCredentialTag:(NSInteger)credentialTag {
     // End any in-progress header cell edit first, so it can't commit into a row
     // that no longer exists once the headers are cleared.
     [_window makeFirstResponder:nil];
     [_headers removeAllObjects];
     [_headersTable reloadData];
-    [_credentialPopup selectItemWithTag:kAICredentialTagAutomatic];
+    [_credentialPopup selectItemWithTag:credentialTag];
     // Don't let the old endpoint's own key reappear if the user picks it again.
     _modelAPIKeyField.stringValue = @"";
 }
@@ -1470,7 +1487,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _dynamicModelsButton.state =
         preset.dynamicModels ? NSControlStateValueOn : NSControlStateValueOff;
     _supportsTemperatureButton.state = NSControlStateValueOn;
-    [self resetAuthorizationForPreset];
+    // A provider preset is a third-party gateway or a local server, which no
+    // vendor's stored key belongs to. Select None so the user explicitly picks
+    // the key it takes. (Auto-discovery, which disables the popup, still
+    // authorizes the automatic way.)
+    [self resetAuthorizationForPresetWithCredentialTag:kAICredentialTagNone];
     [self updateEditorAPIKeyHint];
     [self updateDynamicModelsEditorState];
     // The model name is required to save; nudge the user straight to it (unless
@@ -1822,12 +1843,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     NSString *configurationID = _base[kAIManualModelIDKey] ?: NSUUID.UUID.UUIDString;
     result[kAIManualModelIDKey] = configurationID;
-    // Absent means automatic, which is how configurations saved before this
-    // setting existed behave.
-    NSString *credential = [self selectedCredentialStoredValue];
-    if (credential) {
-        result[kAIManualModelCredentialKey] = credential;
-    }
+    // Always stored, Automatic included: an absent value marks a configuration
+    // saved before Automatic became host-bound (LLMMetadata.credential).
+    result[kAIManualModelCredentialKey] = [self selectedCredentialStoredValue];
     // The model's own key lives in the keychain under its configuration ID, never
     // in user defaults. Don't leave a key behind when the model stops using it.
     if ([self selectedCredentialKind] == iTermAICredentialKindModelKey) {
@@ -3552,6 +3570,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     const BOOL isManual = [self selectedDefaultAIModelEndpoint:&modelURL api:&modelAPI];
     const BOOL withheld = isManual && [AITermControllerObjC modelWithholdsAPIKeyForLocalEndpointURL:modelURL
                                                                                                api:modelAPI];
+    // Automatic also sends nothing to a host that isn't the vendor's own.
+    const BOOL withheldFromHost = isManual && [AITermControllerObjC automaticWithholdsAPIKeyFromUnrecognizedHostURL:modelURL
+                                                                                                             api:modelAPI
+                                                                                                       keyVendor:inferredVendor];
     // A manual model may name its key explicitly (issue 13105).
     NSDictionary *configuration = nil;
     if (isManual) {
@@ -3559,7 +3581,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         configuration = [self manualAIModelConfigurationNamed:[self manualModelNameFromDefaultAIModelIdentifier:identifier]
                                              inConfigurations:[self mutableManualAIModelConfigurations]];
     }
-    id storedCredential = configuration[kAIManualModelCredentialKey];
+    id storedCredential = configuration ? [iTermLLMMetadata effectiveCredentialStoredValueForConfiguration:configuration] : nil;
     const iTermAICredentialKind kind = [iTermAIModelCredential kindForStoredValue:storedCredential];
     BOOL keyIsSet;
     iTermAIVendor vendor = inferredVendor;
@@ -3575,13 +3597,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             keyIsSet = [AITermControllerObjC apiKeyIsConfiguredForVendor:vendor];
             break;
         case iTermAICredentialKindAutomatic:
-            keyIsSet = withheld || [AITermControllerObjC apiKeyIsConfiguredForVendor:vendor];
+            keyIsSet = withheld || withheldFromHost || [AITermControllerObjC apiKeyIsConfiguredForVendor:vendor];
             break;
         case iTermAICredentialKindNone:
             keyIsSet = YES;
             break;
     }
-    _mainAIAPIKeyHint.stringValue = iTermAIKeyHint(kind, vendor, withheld, YES, keyIsSet);
+    _mainAIAPIKeyHint.stringValue = iTermAIKeyHint(kind, vendor, withheld, withheldFromHost, YES, keyIsSet);
     // This label is a fixed-height single line in the xib, so a long enough
     // translation would be cut off. Truncate visibly rather than clipping
     // mid-glyph, and keep the whole sentence reachable on hover.
@@ -3929,7 +3951,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         kAIManualModelHostedWebSearchKey: @([self boolForKey:kPreferenceKeyAIFeatureHostedWebSearch]),
         kAIManualModelFunctionCallingKey: @([self boolForKey:kPreferenceKeyAIFeatureFunctionCalling]),
         kAIManualModelStreamingKey: @([self boolForKey:kPreferenceKeyAIFeatureStreamingResponses]),
-        kAIManualModelVectorStoreKey: @([self integerForKey:kPreferenceKeyAIVectorStore])
+        kAIManualModelVectorStoreKey: @([self integerForKey:kPreferenceKeyAIVectorStore]),
+        // A new model, so not one an older build saved (see
+        // kAIManualModelCredentialKey).
+        kAIManualModelCredentialKey: [iTermAIModelCredential storedValueForKind:iTermAICredentialKindAutomatic
+                                                                         vendor:iTermAIVendorOpenAI]
     };
 }
 
