@@ -15,17 +15,6 @@ protocol SSHIdentityProvider: AnyObject {
     var sshIdentity: SSHIdentity { get }
 }
 
-/// What is in the foreground of the session's local terminal.
-@objc(iTermSessionDirectoryTrackerForegroundJob)
-enum SessionDirectoryTrackerForegroundJob: Int {
-    /// Not known, e.g. a tmux integration pane.
-    case unknown
-    /// The process whose cwd the poller reads (the session's shell) is in the foreground.
-    case shell
-    /// Some other job, such as ssh, is in the foreground.
-    case other
-}
-
 /// Protocol for the directory tracker's delegate.
 @objc(iTermSessionDirectoryTrackerDelegate)
 protocol iTermSessionDirectoryTrackerDelegate: AnyObject {
@@ -71,8 +60,9 @@ protocol iTermSessionDirectoryTrackerDelegate: AnyObject {
     /// Returns the SSH identity provider (e.g., Conductor) for SSH directory tracking.
     func directoryTrackerSSHIdentityProvider(_ tracker: iTermSessionDirectoryTracker) -> (any SSHIdentityProvider)?
 
-    /// Returns what is in the foreground of the local terminal right now.
-    func directoryTrackerForegroundJob(_ tracker: iTermSessionDirectoryTracker) -> SessionDirectoryTrackerForegroundJob
+    /// Returns the foreground process group of the session's local terminal right
+    /// now, or a value <= 0 if it can't be known (e.g. a tmux integration pane).
+    func directoryTrackerForegroundProcessGroup(_ tracker: iTermSessionDirectoryTracker) -> pid_t
 }
 
 /// Arrangement keys for serialization (must match existing PTYSession keys for compatibility).
@@ -81,6 +71,7 @@ private enum ArrangementKeys {
     static let lastLocalDirectory = "Last Local Directory"
     static let lastLocalDirectoryWasPushed = "Last Local Directory Was Pushed"
     static let lastDirectoryIsRemote = "Last Directory Is Remote"
+    static let remoteDirectoryForegroundProcessGroup = "Remote Directory Foreground Process Group"
     static let directories = "Directories"
     static let hosts = "Hosts"
     static let workingDirectoryPollerDisabled = "Working Directory Poller Disabled"
@@ -127,18 +118,14 @@ class iTermSessionDirectoryTracker: NSObject {
     /// other side of a plain ssh).
     private var lastDirectoryIsRemote = false
 
-    /// The first valid poller result after lastDirectory became (or was again
-    /// reported as) remote. The poller reports the local login shell's cwd, which
-    /// cannot change while a foreground job like ssh runs. A later valid result that
-    /// differs means the local shell is back in the foreground and changed directory,
-    /// so the remote directory is no longer current.
-    private var polledDirectoryWhileRemote: String?
-
-    /// Whether another job (such as ssh) has been seen in the foreground of the
-    /// local terminal since lastDirectory became (or was again reported as) remote.
-    /// Once the polled process is back in the foreground after that, the remote
-    /// session has ended even if the local directory did not change.
-    private var sawOtherForegroundJobWhileRemote = false
+    /// The local terminal's foreground process group when lastDirectory became
+    /// remote: the job (usually ssh) that the remote shell talks through. The remote
+    /// directory stays current only while this group is still in the foreground.
+    /// Once a valid poll finds anything else there (the local shell, a subshell it
+    /// was started from) or can't tell (a tmux integration pane), the polled local
+    /// directory becomes current. nil when lastDirectory is not remote or the
+    /// foreground group was unknown.
+    private var remoteDirectoryForegroundProcessGroup: pid_t?
 
     /// The last remote host at the time of setting the current directory.
     @objc private(set) var lastRemoteHost: (any VT100RemoteHostReading)?
@@ -195,15 +182,13 @@ class iTermSessionDirectoryTracker: NSObject {
             lastLocalDirectory = localDir
             lastLocalDirectoryWasPushed = arrangement[ArrangementKeys.lastLocalDirectoryWasPushed] as? Bool ?? false
         }
-        if arrangement[ArrangementKeys.lastDirectoryIsRemote] != nil {
-            lastDirectoryIsRemote = isRemote && lastDirectory != nil
-        } else {
-            // Older builds did not save this. lastDirectory differing from an unpushed
-            // lastLocalDirectory almost always means it is remote.
-            lastDirectoryIsRemote = lastDirectory != nil &&
-                                    lastLocalDirectory != nil &&
-                                    !lastLocalDirectoryWasPushed &&
-                                    lastDirectory != lastLocalDirectory
+        lastDirectoryIsRemote = isRemote && lastDirectory != nil
+        // Process IDs survive a relaunch only when the job does (session restoration).
+        // Otherwise the group is not in the foreground, so a poll replaces the path.
+        if lastDirectoryIsRemote,
+           let group = (arrangement[ArrangementKeys.remoteDirectoryForegroundProcessGroup] as? NSNumber)?.int32Value,
+           group > 0 {
+            remoteDirectoryForegroundProcessGroup = group
         }
 
         shouldExpectCurrentDirUpdates = arrangement[ArrangementKeys.shouldExpectCurrentDirUpdates] as? Bool ?? false
@@ -229,37 +214,6 @@ class iTermSessionDirectoryTracker: NSObject {
         }
     }
 
-    // MARK: - Foreground Job
-
-    /// Classifies the terminal's foreground process group. The poller reads the cwd
-    /// of rootPid or, when that is login (whose cwd can't be read), of its eldest
-    /// child, the shell. That process is in the foreground when it leads the
-    /// foreground process group.
-    /// - Parameters:
-    ///   - foregroundGroup: The terminal's foreground process group, or <= 0 if unknown.
-    ///   - rootPid: The session's root process.
-    ///   - leaderParent: The parent of the foreground group's leader, or <= 0 if unknown.
-    ///   - rootIsLogin: Whether rootPid is /usr/bin/login.
-    @objc(classifyForegroundGroup:rootPid:leaderParent:rootIsLogin:)
-    static func classifyForegroundJob(foregroundGroup: pid_t,
-                                      rootPid: pid_t,
-                                      leaderParent: pid_t,
-                                      rootIsLogin: Bool) -> SessionDirectoryTrackerForegroundJob {
-        if foregroundGroup <= 0 || rootPid <= 0 {
-            return .unknown
-        }
-        if foregroundGroup == rootPid {
-            return .shell
-        }
-        if leaderParent <= 0 {
-            return .unknown
-        }
-        if leaderParent == rootPid && rootIsLogin {
-            return .shell
-        }
-        return .other
-    }
-
     // MARK: - Arrangement Serialization
 
     /// Encode arrangement to the encoder.
@@ -271,6 +225,9 @@ class iTermSessionDirectoryTracker: NSObject {
             // Lets a restored session whose ssh job is still running keep its remote
             // directory when the local cwd is polled.
             encoder.setObject(NSNumber(value: lastDirectoryIsRemote), forKey: ArrangementKeys.lastDirectoryIsRemote)
+            if let group = remoteDirectoryForegroundProcessGroup {
+                encoder.setObject(NSNumber(value: group), forKey: ArrangementKeys.remoteDirectoryForegroundProcessGroup)
+            }
         }
 
         if let localDir = lastLocalDirectory {
@@ -309,16 +266,17 @@ class iTermSessionDirectoryTracker: NSObject {
         }
 
         lastDirectory = directory
-        let wasRemote = lastDirectoryIsRemote
+        if !remote {
+            remoteDirectoryForegroundProcessGroup = nil
+        } else if !lastDirectoryIsRemote || remoteDirectoryForegroundProcessGroup == nil {
+            // The remote shell talks through whatever is in the foreground now (ssh,
+            // or the session's root process when the profile's command is ssh). A
+            // later push in the same remote stretch keeps the group recorded when it
+            // started, in case it is processed after ssh gave the terminal back.
+            let group = delegate?.directoryTrackerForegroundProcessGroup(self) ?? -1
+            remoteDirectoryForegroundProcessGroup = group > 0 ? group : nil
+        }
         lastDirectoryIsRemote = remote
-        polledDirectoryWhileRemote = nil
-        // A remote shell is talking, so ssh or the like is usually in the foreground
-        // now. It reads as .shell when the profile's command is ssh itself, which is
-        // why .other must be seen before .shell counts as the local shell coming back.
-        // Keep what was seen during this remote stretch in case the push was processed
-        // after ssh already gave the terminal back.
-        sawOtherForegroundJobWhileRemote = remote &&
-            ((wasRemote && sawOtherForegroundJobWhileRemote) || delegate?.directoryTrackerForegroundJob(self) == .other)
 
         if !remote {
             if pushed || !lastLocalDirectoryWasPushed {
@@ -625,34 +583,24 @@ class iTermSessionDirectoryTracker: NSObject {
     }
 
     /// Decides whether a valid poller result that will not create a mark should
-    /// become the current directory. It must not replace a current remote directory
-    /// while the session is still ssh'ed somewhere.
+    /// become the current directory. A remote directory stays current only while
+    /// the job it was reported through is still in the local terminal's foreground.
     private func polledDirectoryShouldBecomeCurrent(_ pwd: String) -> Bool {
         guard lastDirectoryIsRemote else {
             return pwd != lastDirectory
         }
-        switch delegate?.directoryTrackerForegroundJob(self) ?? .unknown {
-        case .other:
-            sawOtherForegroundJobWhileRemote = true
-        case .shell:
-            if sawOtherForegroundJobWhileRemote {
-                DLog("\(d(delegate)): The polled process is back in the foreground, so the remote session ended")
-                return true
-            }
-        case .unknown:
-            break
-        @unknown default:
-            break
+        guard let remoteGroup = remoteDirectoryForegroundProcessGroup else {
+            DLog("\(d(delegate)): No foreground process group for the remote directory, so the local directory replaces it")
+            return true
         }
-        guard let baseline = polledDirectoryWhileRemote else {
-            DLog("\(d(delegate)): Recording \(pwd) as the local directory while remote")
-            polledDirectoryWhileRemote = pwd
+        // This reads the foreground now, not when the cwd was sampled. That's fine:
+        // the polled cwd is the session's shell's, which ssh can't change.
+        let group = delegate?.directoryTrackerForegroundProcessGroup(self) ?? -1
+        if group == remoteGroup {
+            DLog("\(d(delegate)): Foreground process group \(group) for the remote directory is still in the foreground")
             return false
         }
-        if baseline == pwd {
-            return false
-        }
-        DLog("\(d(delegate)): Local directory changed from \(baseline) to \(pwd) while remote, so the local shell is in the foreground")
+        DLog("\(d(delegate)): Foreground process group is \(group), not \(remoteGroup), so the remote session ended")
         return true
     }
 
