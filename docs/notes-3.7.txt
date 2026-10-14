@@ -1326,3 +1326,8 @@ Bug Fixes:
   chat’s reply, and the stopped reply now really
   stops downloading instead of running (and
   using up tokens) until it finishes.
+- When no valid UNIX locale matches your
+  language and region, the prompt to pick one
+  now appears as a normal dialog the first
+  time a hotkey window opens, instead of as a
+  sheet on the not-yet-visible window.
