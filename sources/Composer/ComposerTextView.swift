@@ -46,7 +46,8 @@ class ComposerTextView: MultiCursorTextView {
     // (Opt-Return) extract commands as plain strings and delete them from
     // the text view, which discards @-mention attachment chips. When this
     // is set they behave like Send (Shift-Return) instead, leaving the
-    // contents in place for the delegate to read. Default off.
+    // contents in place for the delegate to read. With a selection, Send
+    // delivers all selected text as one substring. Default off.
     @objc var sendEachActsAsSend = false
     @objc private(set) var isSettingSuggestion = false
     @objc private(set) var isDoingSyntaxHighlighting = false
@@ -798,7 +799,19 @@ class ComposerTextView: MultiCursorTextView {
         suggestion = nil
         if hasSelection {
             let content = string as NSString
-            let strings = multiCursorSelectedRanges.filter { $0.length > 0}.map { content.substring(with: $0) }
+            let ranges = multiCursorSelectedRanges.filter { $0.length > 0 }
+            if sendEachActsAsSend {
+                // The cockpit sends one command per keypress (it re-reads
+                // the composer for its target chips), so deliver every
+                // selection as a single command, one per line, in
+                // document order.
+                let joined = ranges.sorted { $0.location < $1.location }
+                    .map { content.substring(with: $0) }
+                    .joined(separator: "\n")
+                composerDelegate?.composerTextViewSendSubstring(joined)
+                return
+            }
+            let strings = ranges.map { content.substring(with: $0) }
             for s in strings.dropLast() {
                 composerDelegate?.composerTextViewSendSubstring(s + "\n")
             }

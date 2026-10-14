@@ -888,29 +888,16 @@ class CockpitWindowController: NSWindowController {
     // chips, the command goes to the selected rows. On success the view
     // clears (chips repopulated from the selection). Anything that would
     // send to nowhere reports a status and leaves the text in place.
-    fileprivate func sendCommandFieldContents() {
+    //
+    // selectedText is the composer's selected text when the user sent a
+    // selection. Then only the selection is sent (to the chips anywhere in
+    // the field) and the field is left as it is.
+    fileprivate func sendCommandFieldContents(selectedText: String? = nil) {
         mentionPicker.hide()
 
-        // Split the composer into chip targets (anywhere) and the typed
-        // text, so a chip embedded mid-text never leaks into the command.
-        let attributed = composerVC.attributedStringValue
-        let ns = attributed.string as NSString
-        var chipTokens: [String] = []
-        var typed = ""
-        attributed.enumerateAttribute(.attachment,
-                                      in: NSRange(location: 0, length: attributed.length),
-                                      options: []) { value, range, _ in
-            if let mention = value as? ChatSessionMentionAttachment {
-                chipTokens.append("@" + mention.guid)
-            } else if value == nil {
-                typed += ns.substring(with: range)
-            }
-        }
-
-        // Only chips are targets; every typed character (including any
-        // literal '@x' that never became a chip) is sent verbatim.
-        let command = typed.trimmingCharacters(in: .whitespacesAndNewlines)
-        DLog("Cockpit send: chips=\(chipTokens) command=\(command)")
+        let (chipTokens, command) = Self.chipTokensAndCommand(in: composerVC.attributedStringValue,
+                                                              selectedText: selectedText)
+        DLog("Cockpit send: chips=\(chipTokens) command=\(command) selection=\(selectedText != nil)")
 
         let sessions: [PTYSession]
         if chipTokens.isEmpty {
@@ -948,8 +935,69 @@ class CockpitWindowController: NSWindowController {
             return
         }
         DLog("Cockpit sent command to \(sent) session(s)")
-        clearCommandView()
+        if Self.clearsComposerAfterSend(selectedText: selectedText) {
+            clearCommandView()
+        }
         setCockpitStatus(String(localized: "Cockpit.SentToSessions", defaultValue: "Sent to \(sent) sessions", comment: "Cockpit status; %lld is the number of sessions a command was sent to"), isError: false)
+    }
+
+    // Split the composer into chip targets (anywhere) and the typed text,
+    // so a chip embedded mid-text never leaks into the command. Only chips
+    // are targets; every typed character (including any literal '@x' that
+    // never became a chip) is sent verbatim. When selectedText is given it
+    // is the command instead of the whole field's typed text, minus any
+    // chips inside the selection.
+    static func chipTokensAndCommand(in attributed: NSAttributedString,
+                                     selectedText: String?) -> (chipTokens: [String], command: String) {
+        let ns = attributed.string as NSString
+        var chipTokens: [String] = []
+        var typed = ""
+        attributed.enumerateAttribute(.attachment,
+                                      in: NSRange(location: 0, length: attributed.length),
+                                      options: []) { value, range, _ in
+            if let mention = value as? ChatSessionMentionAttachment {
+                chipTokens.append("@" + mention.guid)
+            } else if value == nil {
+                typed += ns.substring(with: range)
+            }
+        }
+        if let selectedText {
+            let attachment = Unicode.Scalar(UInt32(NSTextAttachment.character))
+            var scalars = String.UnicodeScalarView()
+            scalars.append(contentsOf: selectedText.unicodeScalars.filter { $0 != attachment })
+            typed = String(scalars)
+        }
+        return (chipTokens, typed.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
+    enum ComposerSendRequest: Equatable {
+        // Esc or close: just hide the picker.
+        case cancel
+        case wholeField
+        // A send key (Return variants) with text selected; carries the
+        // selected text.
+        case selection(String)
+    }
+
+    // A selection send arrives with neither a newline nor dismissal (see
+    // composerTextViewSendSubstring). Esc arrives as an empty command with
+    // dismiss=YES.
+    static func composerSendRequest(command: String,
+                                    addNewline: Bool,
+                                    dismiss: Bool) -> ComposerSendRequest {
+        if !addNewline && !dismiss {
+            return .selection(command)
+        }
+        if command.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .cancel
+        }
+        return .wholeField
+    }
+
+    // Sending a selection leaves the field alone, like the regular
+    // composer; sending the whole field clears the command text.
+    static func clearsComposerAfterSend(selectedText: String?) -> Bool {
+        return selectedText == nil
     }
 
     // After a send, drop the command text but keep the mention chips
@@ -2799,11 +2847,14 @@ extension CockpitWindowController: iTermMinimalComposerViewControllerDelegate {
                          sendCommand command: String,
                          addNewline: Bool,
                          dismiss: Bool) {
-        if command.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        switch Self.composerSendRequest(command: command, addNewline: addNewline, dismiss: dismiss) {
+        case .cancel:
             mentionPicker.hide()
-            return
+        case .wholeField:
+            sendCommandFieldContents()
+        case .selection(let selectedText):
+            sendCommandFieldContents(selectedText: selectedText)
         }
-        sendCommandFieldContents()
     }
 
     func minimalComposer(_ composer: iTermMinimalComposerViewController,
