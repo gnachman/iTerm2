@@ -75,6 +75,49 @@ final class AIAutomaticCredentialHostTests: XCTestCase {
         }
     }
 
+    // Any Azure customer chooses the label of a VM's public DNS
+    // name (<label>.<region>.cloudapp.azure.com), so a gateway there is a third
+    // party. Only Azure's AI service endpoints are OpenAI's own host.
+    func testGenericAzureHostIsNotOpenAIsHost() {
+        for url in ["https://qagw.eastus.cloudapp.azure.com/v1/chat/completions",
+                    "https://gw.westeurope.cloudapp.azure.com/v1/chat/completions",
+                    "https://evil.azure.com/v1/chat/completions",
+                    "https://myco.openai.azure.com.evil.example/v1/chat/completions",
+                    "https://openai.azure.com.cloudapp.azure.com/v1/chat/completions",
+                    "https://myco-openai.azure.com/v1/chat/completions",
+                    "https://myco.notopenai.azure.com/v1/chat/completions"] {
+            for vendor in AIModelCredential.selectableVendors {
+                XCTAssertEqual(AITermController.apiKeyPolicy(url: url,
+                                                             api: .chatCompletions,
+                                                             credential: .automatic,
+                                                             keyVendor: vendor),
+                               .placeholder(.unrecognizedHost), "\(vendor) at \(url)")
+            }
+        }
+    }
+
+    // Only the key binding is stricter: a gateway on an Azure VM still speaks
+    // Azure's request format (api-key header) when the user chooses a key.
+    func testGenericAzureHostKeepsAzureRequestFormat() {
+        let url = "https://qagw.eastus.cloudapp.azure.com/v1/chat/completions"
+        XCTAssertTrue(LLMMetadata.hostIsAzureAIAPI(url: URL(string: url)))
+        XCTAssertEqual(LLMAuthorizationProvider.credentialHeaderNames(url: url, api: .chatCompletions),
+                       ["api-key"])
+    }
+
+    func testAzureAIServiceEndpointsAreOpenAIsHost() {
+        for url in ["https://myco.openai.azure.com/openai/deployments/x/chat/completions",
+                    "https://MyCo.OpenAI.Azure.com./openai/deployments/x/chat/completions",
+                    "https://myco.cognitiveservices.azure.com/openai/deployments/x/chat/completions",
+                    "https://myco.services.ai.azure.com/models/chat/completions"] {
+            XCTAssertEqual(AITermController.apiKeyPolicy(url: url,
+                                                         api: .chatCompletions,
+                                                         credential: .automatic,
+                                                         keyVendor: .openAI),
+                           .vendorKey, url)
+        }
+    }
+
     // An explicit choice is honored on any host.
     func testExplicitVendorKeyIsSentAnywhere() {
         for vendor in AIModelCredential.selectableVendors {
