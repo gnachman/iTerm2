@@ -1391,3 +1391,6 @@ Bug Fixes:
   pressing a button. Also, two buttons in an
   alert no longer share the same Cmd-key
   shortcut.
+- Fixed a memory leak where each AI request,
+  such as each AI chat message, left memory in
+  use until iTerm2 quit.

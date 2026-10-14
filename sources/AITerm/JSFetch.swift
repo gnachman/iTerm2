@@ -12,7 +12,6 @@ import JavaScriptCore
 // HTTP transfer this instance started, so concurrent requests (for example two
 // chats streaming at once) can be cancelled independently.
 class PluginClient {
-    private var session: URLSession?
     private struct State {
         var task: URLSessionDataTask?
         var cancelled = false
@@ -25,6 +24,19 @@ class PluginClient {
     static var protocolClassesForTesting: [AnyClass]? {
         get { _protocolClassesForTesting.value }
         set { _protocolClassesForTesting.set(newValue) }
+    }
+
+    // Test seam: called with a label and each object a call creates (the
+    // client, its JSContext and its URLSession's delegate) so unit tests can
+    // check that they are freed. Nothing in the app sets it.
+    private static let _objectCreatedForTesting = MutableAtomicObject<((String, AnyObject) -> Void)?>(nil)
+    static var objectCreatedForTesting: ((String, AnyObject) -> Void)? {
+        get { _objectCreatedForTesting.value }
+        set { _objectCreatedForTesting.set(newValue) }
+    }
+
+    private static func noteCreated(_ label: String, _ object: AnyObject) {
+        objectCreatedForTesting?(label, object)
     }
 
     private class HTTPStreamDelegate: NSObject, URLSessionDataDelegate {
@@ -77,6 +89,11 @@ class PluginClient {
                 DLog("Read \(AIChatWireLogSanitizer.scrubbingSecrets(receivedData.lossyString))")
                 callback(receivedData.lossyString, "")
             }
+            // A session retains its delegate (and through the callback, the
+            // JSContext) until it is invalidated. Each session runs exactly one
+            // task, so invalidate it now that the task is done, whether it
+            // finished, failed or was cancelled.
+            session.finishTasksAndInvalidate()
         }
     }
 
@@ -95,6 +112,7 @@ class PluginClient {
                                      request: RequestType?,
                                      async: Bool,
                                      stream: ((String) -> ())?) throws -> ResponseType {
+        Self.noteCreated("client", self)
         DLog("Call \(functionName) with \(request?.debugDescription ?? "(nil)"), async=\(async)")
         let args: [String]
         if let request {
@@ -182,10 +200,13 @@ class PluginClient {
 
         delegate.streaming = streaming
         DLog("Request with delegate \(delegate.it_addressString):\n\(body)")
-        session = URLSession(configuration: config,
-                             delegate: delegate,
-                             delegateQueue: nil)
-        let newTask = session?.dataTask(with: request)
+        // One session per request. The delegate invalidates it when the task
+        // completes, which releases the session and the delegate.
+        let session = URLSession(configuration: config,
+                                 delegate: delegate,
+                                 delegateQueue: nil)
+        Self.noteCreated("delegate", delegate)
+        let newTask = session.dataTask(with: request)
         let cancelled = state.mutableAccess { state in
             if !state.cancelled {
                 state.task = newTask
@@ -195,16 +216,18 @@ class PluginClient {
         if cancelled {
             // Cancelling reports the error to the delegate, which completes the call.
             DLog("Not starting HTTP request: the call was cancelled")
-            newTask?.cancel()
+            newTask.cancel()
         } else {
             DLog("resume session")
-            newTask?.resume()
+            newTask.resume()
         }
     }
 
+    // The blocks registered here are owned by the context, so they must not
+    // retain it or the context is never freed.
     private func registerFunctions(context: JSContext, stream: ((String) -> ())?) {
         DLog("registerFunctions")
-        let performRequest: @convention(block) (String, String, [String: String], Any, JSValue) -> Void = { [weak self]
+        let performRequest: @convention(block) (String, String, [String: String], Any, JSValue) -> Void = { [weak self, weak context]
             method, url, headers, body, callback in
             guard let self else {
                 let noError: String? = nil
@@ -230,7 +253,7 @@ class PluginClient {
                                     body: bodyData,
                                     streaming: stream != nil) { string, error in
                 if error == nil, let string, stream != nil {
-                    if let streamCallback = context.objectForKeyedSubscript("onStream"), !streamCallback.isUndefined {
+                    if let streamCallback = context?.objectForKeyedSubscript("onStream"), !streamCallback.isUndefined {
                         streamCallback.call(withArguments: [string as Any])
                     }
                     return
@@ -264,6 +287,7 @@ class PluginClient {
         guard let context = JSContext() else {
             throw PluginError(reason: "Could not create context for plugin")
         }
+        Self.noteCreated("context", context)
         registerFunctions(context: context, stream: stream)
         context.evaluateScript(code)
         var exc: String?
@@ -304,6 +328,7 @@ class PluginClient {
         guard let context = JSContext() else {
             throw PluginError(reason: "Could not create context for plugin")
         }
+        Self.noteCreated("context", context)
 
         // Register performHTTPRequest or any other required function
         registerFunctions(context: context, stream: stream)
@@ -334,8 +359,11 @@ class PluginClient {
         var response: ResponseType?
         var error: Error?
 
-        let handleWebResponse = { responseBody in
-            guard let jsonResponse = JSValue(object: responseBody, in: context).toString() else {
+        // The promise callbacks below are owned by the context, so capture it
+        // weakly. withExtendedLifetime keeps it alive until the call is done.
+        let handleWebResponse = { [weak context] responseBody in
+            guard let context,
+                  let jsonResponse = JSValue(object: responseBody, in: context).toString() else {
                 error = PluginError(reason: "Unexpected output from plugin")
                 semaphore.signal()
                 return
@@ -368,7 +396,9 @@ class PluginClient {
 
         DLog("wait for completion")
         // Wait for the semaphore
-        semaphore.wait()
+        withExtendedLifetime(context) {
+            semaphore.wait()
+        }
 
         DLog("API call complete")
         // Return the response or throw the captured error
