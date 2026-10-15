@@ -136487,13 +136487,13 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "< Etiquetas"
+            "value" : "< Tags"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "< Метки"
+            "value" : "< Теги"
           }
         },
         "zh-Hans" : {
@@ -136949,13 +136949,13 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Etiquetas >"
+            "value" : "Tags >"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Метки >"
+            "value" : "Теги >"
           }
         },
         "zh-Hans" : {
