@@ -1465,3 +1465,7 @@ Bug Fixes:
   Open Command History, which did nothing there,
   are now disabled, and its help no longer lists
   them or AI lookup.
+- Clicking the icon of the Current Directory,
+  Hostname, or Username status bar component
+  opens its menu again, as clicking its text
+  does.

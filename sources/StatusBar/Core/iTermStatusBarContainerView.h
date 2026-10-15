@@ -25,7 +25,8 @@ const CGFloat iTermGetStatusBarHeight(void);
 - (BOOL)statusBarContainerViewCanDragWindow:(iTermStatusBarContainerView *)sender;
 @end
 
-@interface iTermStatusBarContainerView : NSView
+// Acts as the delegate of its own click gesture recognizer.
+@interface iTermStatusBarContainerView : NSView<NSGestureRecognizerDelegate>
 
 @property (nonatomic, weak) id<iTermStatusBarContainerViewDelegate> delegate;
 @property (nonatomic, readonly) id<iTermStatusBarComponent> component;

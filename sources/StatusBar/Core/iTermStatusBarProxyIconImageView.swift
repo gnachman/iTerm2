@@ -25,6 +25,12 @@ class iTermStatusBarProxyIconImageView: NSImageView, NSDraggingSource {
 
     private static let dragThreshold: CGFloat = 4
 
+    // Whether the mouse has moved far enough from where it went down to count as a drag rather
+    // than a click.
+    static func movementIsDrag(from start: NSPoint, to end: NSPoint) -> Bool {
+        return hypot(end.x - start.x, end.y - start.y) >= dragThreshold
+    }
+
     override func mouseDown(with event: NSEvent) {
         isMouseDown = true
         didDrag = false
@@ -36,8 +42,7 @@ class iTermStatusBarProxyIconImageView: NSImageView, NSDraggingSource {
             return
         }
         let point = convert(event.locationInWindow, from: nil)
-        let distance = hypot(point.x - mouseDownPoint.x, point.y - mouseDownPoint.y)
-        guard distance >= Self.dragThreshold else {
+        guard Self.movementIsDrag(from: mouseDownPoint, to: point) else {
             return
         }
         didDrag = true
