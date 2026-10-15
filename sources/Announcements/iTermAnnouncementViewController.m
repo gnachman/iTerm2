@@ -92,6 +92,11 @@
 }
 
 - (BOOL)handleKeyDown:(NSEvent *)event {
+    if (_dismissing) {
+        // The view stays current while it animates away. Keys typed then belong to the
+        // session; only the key that dismissed the announcement is consumed.
+        return NO;
+    }
     const BOOL handled = [self reallyHandleKeyDown:event];
     if (!handled && self.dismissOnKeyDown) {
         [self dismiss];
