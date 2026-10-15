@@ -87,6 +87,15 @@ class ChatFindBarView: NSView {
         it_fatalError("init(coder:) not implemented")
     }
 
+    // True while the search field (via its field editor) or another control
+    // in the bar has keyboard focus.
+    var containsFirstResponder: Bool {
+        guard let responder = window?.firstResponder as? NSView else {
+            return false
+        }
+        return responder.isDescendant(of: self)
+    }
+
     var query: String {
         get { searchField.stringValue }
         set { searchField.stringValue = newValue }

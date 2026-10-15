@@ -3110,11 +3110,17 @@ extension ChatViewController: ChatFindBarViewDelegate {
         guard findBar != nil else {
             return
         }
+        // Removing the bar while its search field is focused would leave the
+        // window with no first responder, so typing afterwards would go nowhere.
+        let barHadFocus = findBar?.containsFirstResponder ?? false
         findController.clear()
         refreshVisibleHighlights()
         findBar?.removeFromSuperview()
         findBar = nil
         setNeedsLayoutNow()
+        if barHadFocus {
+            inputView.makeTextViewFirstResponder()
+        }
     }
 
     private func runFind(query: String, mode: iTermFindMode) {
