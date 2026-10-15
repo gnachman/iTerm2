@@ -1793,6 +1793,11 @@ Bug Fixes:
 - Undo Close of a maximized floating pane now
   brings it back maximized, and unmaximizing it
   returns it to where it was before.
+- Docking a floating pane by dragging it onto a
+  pane with Control held now keeps keyboard focus
+  in the docked pane when other floating panes
+  are open.
+
 
 
 

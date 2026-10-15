@@ -159,6 +159,31 @@ final class FloatingPaneDropTests: XCTestCase {
         XCTAssertEqual(tab(source).tiledSessions(), [first, second])
     }
 
+    /// QA finding F-050: docking the active float by dragging it onto a tiled pane (Control held)
+    /// keeps focus on it, even when another float would otherwise take over as active.
+    func testDockingAFloatByDragKeepsItActiveWhenAnotherFloatExists() {
+        guard let first = tab(source).tiledSessions()?.first,
+              let controller = MovePaneController.sharedInstance() else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = source.split(first, vertically: true)
+        _ = source.addFloat(frame: floatFrame)
+        let front = source.addFloat(frame: NSRect(x: 200, y: 150, width: 300, height: 200))
+        tab(source).setActiveSession(first)
+        tab(source).setActiveSession(front)
+        XCTAssertTrue(tab(source).activeSession === front, "test setup: the front float is active")
+
+        controller.movePane(front)
+        defer {
+            controller.exitMovePaneMode()
+        }
+        XCTAssertTrue(controller.drop(in: second, half: .eastHalf, at: .zero))
+
+        XCTAssertEqual(tab(source).tiledSessions()?.count, 3, "the float was docked")
+        XCTAssertTrue(tab(source).activeSession === front, "the docked pane keeps focus")
+    }
+
     func testDropIsRefusedWhenTheDestinationLayoutIsLocked() {
         let float = source.addFloat(frame: floatFrame)
         destination.terminal.perform(NSSelectorFromString("toggleLayoutLocked:"), with: nil)
