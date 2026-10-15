@@ -68,11 +68,14 @@
             <connections>
                 <outlet property="_actionsButton" destination="bzi-NH-hcw" id="0w9-oX-Df7"/>
                 <outlet property="_detailView" destination="G9P-jc-glM" id="P0C-ae-UB2"/>
+                <outlet property="_helpButton" destination="5897" id="Hb7-sS-Lp2"/>
+                <outlet property="_loadDefaultsButton" destination="5879" id="Ld5-sS-Df3"/>
                 <outlet property="_nameTextField" destination="DZV-rX-uAC" id="BFS-aT-HDa"/>
                 <outlet property="_noRuleSelected" destination="ZJJ-tz-ZSD" id="bUH-yh-XuN"/>
                 <outlet property="_playgroundResultLabel" destination="1GZ-y9-knl" id="r1v-Je-Vei"/>
                 <outlet property="_playgroundTextView" destination="ucv-8U-BE7" id="Rm9-gh-XiQ"/>
                 <outlet property="_precisionButton" destination="zlM-gv-CSO" id="3GS-gF-Dt4"/>
+                <outlet property="_regexLabel" destination="uKX-eX-rFi" id="Rx6-sS-Lb4"/>
                 <outlet property="_regexTextView" destination="235-ob-yuB" id="yUz-EO-VuK"/>
                 <outlet property="_removeButton" destination="5841" id="cLm-dc-Jt6"/>
                 <outlet property="_syntaxHelpButton" destination="GPd-jU-wd3" id="D06-lm-IG5"/>
@@ -837,7 +840,7 @@ DQ
                         </connections>
                     </button>
                     <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5924">
-                        <rect key="frame" x="17" y="418" width="147" height="16"/>
+                        <rect key="frame" x="17" y="418" width="378" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Smart Selection Rules" id="5925">
                             <font key="font" metaFont="systemBold"/>
@@ -857,9 +860,9 @@ DQ
                         </connections>
                     </button>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZJJ-tz-ZSD">
-                        <rect key="frame" x="550" y="302" width="104" height="16"/>
+                        <rect key="frame" x="403" y="302" width="382" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" lineBreakMode="clipping" title="No rule selected" id="Qbk-nR-LNI">
+                        <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="No rule selected" id="Qbk-nR-LNI">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -893,7 +896,7 @@ DQ
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uKX-eX-rFi">
                                 <rect key="frame" x="-2" y="201" width="120" height="16"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Regular expression" id="yyK-z1-ogF">
+                                <textFieldCell key="cell" lineBreakMode="wordWrapping" alignment="right" title="Regular expression" id="yyK-z1-ogF">
                                     <font key="font" usesAppearanceFont="YES"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
