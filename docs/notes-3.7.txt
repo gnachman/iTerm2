@@ -1564,3 +1564,7 @@ Bug Fixes:
   from a website’s sign-in prompt in a browser
   session, “Remember this password” is no
   longer ticked unless you ticked it.
+- Session.async_move_to_new_tab() and
+  async_move_to_new_window() in the Python API
+  now return None for a tmux session instead of
+  raising a JSON decoding error.

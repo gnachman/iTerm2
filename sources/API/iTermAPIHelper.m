@@ -4522,9 +4522,17 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         return;
     }
 
-    NSString *json = [NSJSONSerialization it_jsonStringForObject:object];
-    response.success.jsonResult = json;
+    response.success.jsonResult = [iTermAPIHelper jsonResultForFunctionValue:object];
     completion(response);
+}
+
++ (NSString *)jsonResultForFunctionValue:(id)object {
+    // it_jsonStringForObject returns nil for a top-level NSNull, which would leave the result
+    // empty and make the Python client's json.loads raise. Functions return NSNull to mean None.
+    if ([object isKindOfClass:[NSNull class]]) {
+        return @"null";
+    }
+    return [NSJSONSerialization it_jsonStringForObject:object];
 }
 
 @end

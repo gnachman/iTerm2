@@ -60,6 +60,9 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 // Whether a client advertising `libraryVersion` (the x-iterm2-library-version header) knows about
 // floating panes. Older Python libraries loop forever on a focus change to one.
 + (BOOL)libraryVersionUnderstandsFloatingPanes:(NSString *)libraryVersion;
+
+// The JSON sent back for a function's return value. NSNull (a function returning None) is "null".
++ (NSString *)jsonResultForFunctionValue:(id)object;
 + (instancetype)sharedInstanceFromExplicitUserAction;
 + (instancetype)sharedInstanceIfEnabled;
 
