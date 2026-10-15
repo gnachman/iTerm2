@@ -1710,3 +1710,6 @@ Bug Fixes:
 - A pane in a Workgroup can no longer be turned
   into a floating pane by dragging it onto a
   floating pane in another tab.
+- In tmux integration, the ReportCellSize,
+  ReportWindowFrame, and ReportScreenFrames
+  escape sequences now get a reply.

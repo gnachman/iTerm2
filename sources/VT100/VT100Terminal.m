@@ -4513,7 +4513,7 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
             NSString *scale = [[NSString stringWithFormat:@"%0.2f", floatScale] stringByCompactingFloatingPointString];
             NSString *s = [NSString stringWithFormat:@"\033]1337;ReportCellSize=%@;%@;%@\033\\",
                            height, width, scale];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [_delegate terminalSendReportAllowedInTmux:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"SetWindowFrame"]) {
         // Malformed or non-finite payloads are ignored rather than collapsing
@@ -4530,7 +4530,7 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
                            VT100TerminalCompactFloat(NSMinY(f)),
                            VT100TerminalCompactFloat(NSWidth(f)),
                            VT100TerminalCompactFloat(NSHeight(f))];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [_delegate terminalSendReportAllowedInTmux:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"ReportScreenFrames"]) {
         if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport:YES]) {
@@ -4545,7 +4545,7 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
             }
             NSString *s = [NSString stringWithFormat:@"\033]1337;ScreenFrames=%@\033\\",
                            [frames componentsJoinedByString:@";"]];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [_delegate terminalSendReportAllowedInTmux:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"UnicodeVersion"]) {
         if ([value hasPrefix:@"push"]) {
