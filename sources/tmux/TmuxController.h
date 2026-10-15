@@ -199,6 +199,9 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
 
+// Fetch layouts from tmux and apply them (re-sync the UI with tmux).
+- (void)refreshLayoutsFromTmux;
+
 // If completion is nonnull it will be called with the new window pane or -1 on error.
 - (void)splitWindowPane:(int)wp
              vertically:(BOOL)splitVertically

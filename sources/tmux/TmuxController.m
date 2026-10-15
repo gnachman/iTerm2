@@ -2414,6 +2414,18 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommandList:commands];
 }
 
+// Ask tmux for the current layouts and apply them. Used when a resize could not be expressed as a
+// resize-pane command and the UI must be put back to what tmux actually has.
+- (void)refreshLayoutsFromTmux {
+    NSArray *commands = @[ [gateway_ dictionaryForCommand:[self commandToListWindows]
+                                           responseTarget:self
+                                         responseSelector:@selector(listWindowsResponse:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors] ];
+    ++numOutstandingWindowResizes_;
+    [gateway_ sendCommandList:commands];
+}
+
 // The splitVertically parameter uses the iTerm2 conventions.
 - (void)splitWindowPane:(int)wp
              vertically:(BOOL)splitVertically
