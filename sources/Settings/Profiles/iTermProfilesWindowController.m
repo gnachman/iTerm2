@@ -194,6 +194,31 @@ typedef enum {
     _verticalSplitIcon = verticalPaneButton_.image;
     [horizontalPaneButton_ setImagePosition:NSImageOnly];
     [verticalPaneButton_ setImagePosition:NSImageOnly];
+    [self updateSplitButtonLabelsForOptionPressed:NO];
+}
+
+// The split buttons are icon-only, so give them a tooltip and an accessibility
+// label saying what a click does (otherwise VoiceOver reads the symbol name).
++ (NSString *)splitButtonLabelForVertical:(BOOL)vertical optionPressed:(BOOL)optionPressed {
+    if (optionPressed) {
+        if (vertical) {
+            return NSLocalizedStringWithDefaultValue(@"ProfilesWindow.SplitVerticallyInNewWindow", nil, [NSBundle mainBundle], @"Open in a New Window, Split Vertically", @"Tooltip and accessibility label of the Profiles window’s split button while Option is held: opens the selected profiles in a new window, side by side in vertical splits");
+        }
+        return NSLocalizedStringWithDefaultValue(@"ProfilesWindow.SplitHorizontallyInNewWindow", nil, [NSBundle mainBundle], @"Open in a New Window, Split Horizontally", @"Tooltip and accessibility label of the Profiles window’s split button while Option is held: opens the selected profiles in a new window, stacked in horizontal splits");
+    }
+    if (vertical) {
+        return NSLocalizedStringWithDefaultValue(@"ProfilesWindow.SplitVertically", nil, [NSBundle mainBundle], @"Split Vertically", @"Tooltip and accessibility label of the icon-only Profiles window button that opens the selected profile in a vertical split pane");
+    }
+    return NSLocalizedStringWithDefaultValue(@"ProfilesWindow.SplitHorizontally", nil, [NSBundle mainBundle], @"Split Horizontally", @"Tooltip and accessibility label of the icon-only Profiles window button that opens the selected profile in a horizontal split pane");
+}
+
+- (void)updateSplitButtonLabelsForOptionPressed:(BOOL)optionPressed {
+    NSString *horizontal = [iTermProfilesWindowController splitButtonLabelForVertical:NO optionPressed:optionPressed];
+    NSString *vertical = [iTermProfilesWindowController splitButtonLabelForVertical:YES optionPressed:optionPressed];
+    horizontalPaneButton_.toolTip = horizontal;
+    horizontalPaneButton_.accessibilityLabel = horizontal;
+    verticalPaneButton_.toolTip = vertical;
+    verticalPaneButton_.accessibilityLabel = vertical;
 }
 
 - (void)updateButtonImagesForModifiers:(NSEventModifierFlags)modifiers {
@@ -202,6 +227,7 @@ typedef enum {
     // button's split-direction symbol from the xib.
     horizontalPaneButton_.image = optionPressed ? _newWindowIcon : _horizontalSplitIcon;
     verticalPaneButton_.image = optionPressed ? _newWindowIcon : _verticalSplitIcon;
+    [self updateSplitButtonLabelsForOptionPressed:optionPressed];
 }
 
 - (IBAction)closeCurrentSession:(id)sender
