@@ -1709,6 +1709,10 @@ Bug Fixes:
   behind arrows in the toolbar’s text color
   instead of black on a dark terminal
   background.
+- In Low Power Mode, status bar graphs such as
+  CPU Utilization move once a second instead of
+  animating continuously.
+
 
 
 
