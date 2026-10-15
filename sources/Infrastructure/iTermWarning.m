@@ -24,6 +24,9 @@ BOOL gShowRememberedAlerts = NO;
 
 @interface iTermWarningAction()
 @property (nonatomic) NSRange shortcutRange;
+// The Cmd-<letter> shortcut makeAlert chose from the label, or nil. Recomputed each time the alert
+// is built, and kept apart from keyEquivalent so the caller's choice is never overwritten.
+@property (nonatomic, copy, nullable) NSString *automaticKeyEquivalent;
 @end
 
 @implementation iTermWarningAction
@@ -608,26 +611,30 @@ static BOOL iTermWarningViewHasSelectableText(NSView *view) {
     return NO;
 }
 
-// Gives each action that has no key equivalent yet a Cmd-<letter> shortcut taken from its label.
-// Letters already taken are skipped. When the accessory holds selectable or editable text, the
-// letters of the standard text editing commands (select all, copy, paste, cut, undo) are skipped
-// too, so those keys reach the text instead of pressing a button. An action's explicit key
-// equivalent is always kept.
-- (void)assignKeyEquivalents {
+// Gives each button that has no key equivalent yet a Cmd-<letter> shortcut taken from its action's
+// label, and stores it in the action's automaticKeyEquivalent. Letters already taken are skipped.
+// When the accessory holds selectable or editable text, the letters of the standard text editing
+// commands (select all, copy, paste, cut, undo) are skipped too, so those keys reach the text
+// instead of pressing a button. An action's own keyEquivalent is never changed, so building the
+// alert again (for example, to show it a second time) gives the same result.
+- (void)assignAutomaticKeyEquivalentsForButtons:(NSArray<NSButton *> *)buttons {
     NSMutableSet<NSString *> *assignedValues = [NSMutableSet set];
     if (_accessory && iTermWarningViewHasSelectableText(_accessory)) {
         [assignedValues addObjectsFromArray:@[ @"a", @"c", @"v", @"x", @"z" ]];
     }
-    for (iTermWarningAction *action in _warningActions) {
-        if (action.keyEquivalent.length) {
-            [assignedValues addObject:action.keyEquivalent.lowercaseString];
+    [_warningActions enumerateObjectsUsingBlock:^(iTermWarningAction *action, NSUInteger idx, BOOL *stop) {
+        action.automaticKeyEquivalent = nil;
+        action.shortcutRange = NSMakeRange(NSNotFound, 0);
+        NSString *existing = buttons[idx].keyEquivalent;
+        if (existing.length) {
+            [assignedValues addObject:existing.lowercaseString];
         }
-    }
-    for (iTermWarningAction *action in _warningActions) {
-        if (action.keyEquivalent.length) {
-            continue;
+    }];
+    [_warningActions enumerateObjectsUsingBlock:^(iTermWarningAction *action, NSUInteger idx, BOOL *stop) {
+        if (buttons[idx].keyEquivalent.length) {
+            return;
         }
-        [action.label enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stop) {
+        [action.label enumerateComposedCharacters:^(NSRange range, unichar simple, NSString *complexString, BOOL *stopLetters) {
             if (complexString.length > 1) {
                 return;
             }
@@ -643,12 +650,12 @@ static BOOL iTermWarningViewHasSelectableText(NSView *view) {
             if ([assignedValues containsObject:string]) {
                 return;
             }
-            action.keyEquivalent = string;
+            action.automaticKeyEquivalent = string;
             [assignedValues addObject:string];
             action.shortcutRange = range;
-            *stop = YES;
+            *stopLetters = YES;
         }];
-    }
+    }];
 }
 
 - (NSAlert *)makeAlert {
@@ -669,15 +676,13 @@ static BOOL iTermWarningViewHasSelectableText(NSView *view) {
         button.hasDestructiveAction = action.destructive;
         if (action.keyEquivalent) {
             button.keyEquivalent = action.keyEquivalent;
-        } else {
-            action.keyEquivalent = button.keyEquivalent;
         }
     }
-    [self assignKeyEquivalents];
+    [self assignAutomaticKeyEquivalentsForButtons:alert.buttons];
     [_warningActions enumerateObjectsUsingBlock:^(iTermWarningAction * _Nonnull action, NSUInteger idx, BOOL * _Nonnull stop) {
         NSButton *button = alert.buttons[idx];
-        if (!button.keyEquivalent.length) {
-            button.keyEquivalent = action.keyEquivalent;
+        if (!button.keyEquivalent.length && action.automaticKeyEquivalent.length) {
+            button.keyEquivalent = action.automaticKeyEquivalent;
             button.keyEquivalentModifierMask = NSEventModifierFlagCommand;
             if ([iTermAdvancedSettingsModel alertsIndicateShortcuts] && action.shortcutRange.length == 1) {
                 dispatch_async(dispatch_get_main_queue(),
