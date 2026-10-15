@@ -78,6 +78,9 @@ static NSString *const kAIManualModelKeySourceIDKey = @"keySourceID";
 static const NSInteger kAICredentialTagAutomatic = -1;
 static const NSInteger kAICredentialTagModelKey = -2;
 static const NSInteger kAICredentialTagNone = -3;
+// The API key popup's width when its title is short, which leaves room for the
+// key field beside it.
+static const CGFloat kAICredentialPopupMinimumWidth = 210;
 
 // Shows a non-blocking sheet on `window` with just an OK button.
 static void iTermGeneralPreferencesShowSheet(NSString *heading, NSString *body, NSWindow *window) {
@@ -992,7 +995,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // model name, which guesses wrong for a gateway whose model names mention
     // another vendor (issue 13105), so the user can pick one explicitly.
     addLabel(NSLocalizedStringWithDefaultValue(@"AIModelEditor.APIKeyLabel", nil, [NSBundle mainBundle], @"API key:", @"Label for the popup that chooses which API key a manual AI model sends"));
-    const CGFloat credentialPopupWidth = 210;
+    const CGFloat credentialPopupWidth = kAICredentialPopupMinimumWidth;
     _credentialPopup = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(fieldX, y, credentialPopupWidth, 24)];
     [_credentialPopup addItemWithTitle:@""];  // Titled by updateAutomaticCredentialTitle.
     _credentialPopup.lastItem.tag = kAICredentialTagAutomatic;
@@ -1281,10 +1284,30 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         ? (iTermAIVendor)_credentialPopup.selectedTag
         : inferredVendor;
     _modelAPIKeyField.hidden = (kind != iTermAICredentialKindModelKey);
+    [self sizeCredentialPopupToFit];
     _apiKeyHintLabel.stringValue = iTermAIKeyHint(kind, vendor, withheld, withheldFromHost, NO, YES);
     // The field is sized for the longest hint, but keep the whole sentence
     // reachable on hover anyway.
     _apiKeyHintLabel.toolTip = _apiKeyHintLabel.stringValue;
+}
+
+// The selected API key choice can be longer than the popup's usual width
+// (“Automatic (none for a local endpoint)”, and more so translated), so widen
+// the popup to show it, up to the end of its row. The key field beside it,
+// hidden unless “This model’s own key” is chosen, follows the popup.
+- (void)sizeCredentialPopupToFit {
+    const CGFloat rowEnd = NSMaxX(_modelAPIKeyField.frame);
+    NSPopUpButton *measure = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
+    measure.font = _credentialPopup.font;
+    [measure addItemWithTitle:_credentialPopup.titleOfSelectedItem ?: @""];
+    NSRect frame = _credentialPopup.frame;
+    frame.size.width = MIN(rowEnd - NSMinX(frame),
+                           MAX(kAICredentialPopupMinimumWidth, ceil(measure.cell.cellSize.width)));
+    _credentialPopup.frame = frame;
+    NSRect keyFrame = _modelAPIKeyField.frame;
+    keyFrame.origin.x = NSMaxX(frame) + 6;
+    keyFrame.size.width = MAX(0, rowEnd - keyFrame.origin.x);
+    _modelAPIKeyField.frame = keyFrame;
 }
 
 // Automatic shows what it currently resolves to, so a wrong guess is visible

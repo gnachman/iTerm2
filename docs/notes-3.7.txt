@@ -557,6 +557,9 @@ Bug Fixes:
   website’s sign-in dialog now saves the
   password instead of failing with “Could not
   save the password”.
+- In the Add/Edit Manual AI Model sheet, the
+  API key menu is no longer too narrow to show
+  “Automatic (none for a local endpoint)”.
 - On macOS 26, hiding a hotkey window when no
   other iTerm2 windows are open once again
   returns focus to the previous app right away,
