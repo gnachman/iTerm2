@@ -292,12 +292,26 @@
     }
 }
 
-// A floating pane that can't go into the current tab opens in a new tab instead. That includes a
-// tmux tab: this session isn't a tmux pane, so it must not go into one.
+// A floating or split pane that can't go into the current tab opens in a new tab instead. That
+// includes a tmux tab: this session isn't a tmux pane, so it must not go into one.
 - (iTermOpenStyle)styleForWindowController:(PseudoTerminal *)windowController {
-    if (_style == iTermOpenStyleFloatingPane && ![windowController canInstallNativeFloatingPane]) {
-        DLog(@"Can't add a floating pane to the current tab; open a tab instead");
-        return iTermOpenStyleTab;
+    switch (_style) {
+        case iTermOpenStyleFloatingPane:
+            if (![windowController canInstallNativeFloatingPane]) {
+                DLog(@"Can't add a floating pane to the current tab; open a tab instead");
+                return iTermOpenStyleTab;
+            }
+            break;
+        case iTermOpenStyleVerticalSplit:
+        case iTermOpenStyleHorizontalSplit:
+            if (windowController && ![windowController canInstallNativeSplitPane]) {
+                DLog(@"Can't add a split pane to the current tab; open a tab instead");
+                return iTermOpenStyleTab;
+            }
+            break;
+        case iTermOpenStyleTab:
+        case iTermOpenStyleWindow:
+            break;
     }
     return _style;
 }

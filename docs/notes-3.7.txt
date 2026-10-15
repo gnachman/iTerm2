@@ -1394,3 +1394,9 @@ Bug Fixes:
 - Fixed a memory leak where each AI request,
   such as each AI chat message, left memory in
   use until iTerm2 quit.
+- Opening a file or link in a split pane while
+  a tmux integration tab is current now opens
+  it in a new tab. Before, it could take over
+  the tmux pane’s place, vanish without
+  running, or open a tmux shell pane without
+  the link.

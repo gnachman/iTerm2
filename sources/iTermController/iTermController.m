@@ -2110,7 +2110,7 @@ static const NSUInteger iTermUndoCloseStateMaximumCount = 20;
         case iTermOpenStyleVerticalSplit:
         case iTermOpenStyleHorizontalSplit:
             term = [self currentTerminal];
-            if (term && !(term.layoutLocked && term.numberOfTabs > 0)) {
+            if ([iTermController canOpenURLInSplitPaneOfTerminal:term]) {
                 return [self openURLInSplitPane:url
                                          target:target
                                          window:term
@@ -2178,6 +2178,12 @@ static const NSUInteger iTermUndoCloseStateMaximumCount = 20;
     }
     [session openURL:url];
     return YES;
+}
+
+// A web page is a session iTerm2 runs itself, so it can't go into a tmux tab, and a locked layout
+// can't be split.
++ (BOOL)canOpenURLInSplitPaneOfTerminal:(PseudoTerminal *)term {
+    return term && !(term.layoutLocked && term.numberOfTabs > 0) && term.canInstallNativeSplitPane;
 }
 
 - (BOOL)openURLInSplitPane:(NSURL *)url

@@ -329,6 +329,9 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                             completion:(void (^)(void))completion;
 - (NSWindow *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion;
 
+// Whether -openURL:target:openStyle:select: may open a web page in a split pane of term. If not,
+// it opens a tab or window instead.
++ (BOOL)canOpenURLInSplitPaneOfTerminal:(PseudoTerminal *)term;
 - (BOOL)openURL:(NSURL *)url
          target:(NSString *)target
       openStyle:(iTermOpenStyle)openStyle

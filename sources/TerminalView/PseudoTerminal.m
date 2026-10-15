@@ -11865,6 +11865,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     return canCreateFloatingPane && !currentTabIsTmux;
 }
 
+// The next tmux layout change would remove a session tmux doesn't know about from a tmux tab.
+// Callers that are refused open the session elsewhere, such as in a new tab.
+- (BOOL)canInstallNativeSplitPane {
+    return !self.currentTab.isTmuxTab;
+}
+
 - (IBAction)newFloatingPaneWithCurrentProfile:(id)sender {
     [self newFloatingPaneWithProfile:[self profileForSplittingCurrentSession]];
 }

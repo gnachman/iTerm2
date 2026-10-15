@@ -12,6 +12,7 @@
 #import "ITAddressBookMgr.h"
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
+#import "iTermController.h"
 #import "iTermSessionLauncher.h"
 
 // Declared in iTermSessionLauncher.m.
@@ -34,6 +35,8 @@
 @interface NativeFloatSpyTerminal : PseudoTerminal
 @property (nonatomic) BOOL floatsAllowed;
 @property (nonatomic, strong) NativeFloatFakeTab *fakeTab;
+@property (nonatomic) BOOL fakeLayoutLocked;
+@property (nonatomic) NSInteger fakeNumberOfTabs;
 @end
 
 @implementation NativeFloatSpyTerminal
@@ -42,6 +45,12 @@
 }
 - (PTYTab *)currentTab {
     return (PTYTab *)self.fakeTab;
+}
+- (BOOL)layoutLocked {
+    return self.fakeLayoutLocked;
+}
+- (int)numberOfTabs {
+    return (int)self.fakeNumberOfTabs;
 }
 @end
 
@@ -126,10 +135,82 @@
 - (void)testLauncherLeavesOtherStylesAlone {
     NativeFloatSpyTerminal *term = [self terminalWithFloatsAllowed:YES tmux:YES];
     iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:nil windowController:term];
-    launcher.style = iTermOpenStyleVerticalSplit;
-    XCTAssertEqual([launcher styleForWindowController:term], iTermOpenStyleVerticalSplit);
     launcher.style = iTermOpenStyleWindow;
     XCTAssertEqual([launcher styleForWindowController:term], iTermOpenStyleWindow);
+    launcher.style = iTermOpenStyleTab;
+    XCTAssertEqual([launcher styleForWindowController:term], iTermOpenStyleTab);
+}
+
+#pragma mark - Splits
+
+// F-122: The split open styles (NewInstanceOpenStyle 2 and 3) must not put a native session into
+// a tmux tab either. The next %layout-change would terminate it.
+
+- (void)testWindowAllowsNativeSplitInNonTmuxTab {
+    XCTAssertTrue([[self terminalWithFloatsAllowed:YES tmux:NO] canInstallNativeSplitPane]);
+}
+
+- (void)testWindowRefusesNativeSplitInTmuxTab {
+    XCTAssertFalse([[self terminalWithFloatsAllowed:YES tmux:YES] canInstallNativeSplitPane]);
+}
+
+- (void)testLauncherSplitsNonTmuxTab {
+    NativeFloatSpyTerminal *term = [self terminalWithFloatsAllowed:YES tmux:NO];
+    iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:nil windowController:term];
+    launcher.style = iTermOpenStyleVerticalSplit;
+    XCTAssertEqual([launcher styleForWindowController:term], iTermOpenStyleVerticalSplit);
+    XCTAssertEqual(launcher.objectType, iTermPaneObject);
+    launcher.style = iTermOpenStyleHorizontalSplit;
+    XCTAssertEqual([launcher styleForWindowController:term], iTermOpenStyleHorizontalSplit);
+    XCTAssertEqual(launcher.objectType, iTermPaneObject);
+}
+
+- (void)testLauncherOpensTabInsteadOfVerticalSplitInTmuxTab {
+    NativeFloatSpyTerminal *term = [self terminalWithFloatsAllowed:YES tmux:YES];
+    iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:nil windowController:term];
+    launcher.style = iTermOpenStyleVerticalSplit;
+    XCTAssertEqual([launcher styleForWindowController:term], iTermOpenStyleTab);
+    XCTAssertEqual(launcher.objectType, iTermTabObject);
+}
+
+- (void)testLauncherOpensTabInsteadOfHorizontalSplitInTmuxTab {
+    NativeFloatSpyTerminal *term = [self terminalWithFloatsAllowed:NO tmux:YES];
+    iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:nil windowController:term];
+    launcher.style = iTermOpenStyleHorizontalSplit;
+    XCTAssertEqual([launcher styleForWindowController:term], iTermOpenStyleTab);
+    XCTAssertEqual(launcher.objectType, iTermTabObject);
+}
+
+- (void)testLauncherSplitObjectTypeStaysTabAfterNewTabBecomesCurrent {
+    NativeFloatSpyTerminal *term = [self terminalWithFloatsAllowed:YES tmux:YES];
+    iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:nil windowController:term];
+    launcher.style = iTermOpenStyleVerticalSplit;
+    XCTAssertEqual([launcher resolveStyleForWindowController:term], iTermOpenStyleTab);
+    term.fakeTab.isTmuxTab = NO;
+    XCTAssertEqual(launcher.objectType, iTermTabObject);
+}
+
+#pragma mark - Open URL in a split pane
+
+- (void)testOpenURLSplitsNonTmuxTab {
+    XCTAssertTrue([iTermController canOpenURLInSplitPaneOfTerminal:[self terminalWithFloatsAllowed:YES tmux:NO]]);
+}
+
+// A web page is a native session too, so it can't go into a tmux tab.
+- (void)testOpenURLDoesNotSplitTmuxTab {
+    XCTAssertFalse([iTermController canOpenURLInSplitPaneOfTerminal:[self terminalWithFloatsAllowed:YES tmux:YES]]);
+}
+
+// The layout lock already sends the URL to a new window.
+- (void)testOpenURLDoesNotSplitLayoutLockedWindow {
+    NativeFloatSpyTerminal *term = [self terminalWithFloatsAllowed:YES tmux:NO];
+    term.fakeNumberOfTabs = 1;
+    term.fakeLayoutLocked = YES;
+    XCTAssertFalse([iTermController canOpenURLInSplitPaneOfTerminal:term]);
+}
+
+- (void)testOpenURLDoesNotSplitWithoutWindow {
+    XCTAssertFalse([iTermController canOpenURLInSplitPaneOfTerminal:nil]);
 }
 
 @end
