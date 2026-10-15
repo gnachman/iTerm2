@@ -268,16 +268,120 @@ class LLMMetadata: NSObject {
             return nil
         }
         if name == pendingOllamaModelName {
-            return AIError(String(localized: "LLMMetadata.NoOllamaModel",
-                                  defaultValue: "No Ollama model was found. Start Ollama, or start a new chat with a different AI provider.",
-                                  comment: "Error shown in an AI chat set to a local Ollama model when no Ollama model is available, instead of sending the message to a different AI provider"))
+            return noOllamaModelError()
         }
         guard vendor(forModelName: name) == .llama else {
             return nil
         }
+        return modelUnavailableError(name: name)
+    }
+
+    private static func noOllamaModelError() -> AIError {
+        return AIError(String(localized: "LLMMetadata.NoOllamaModel",
+                              defaultValue: "No Ollama model was found. Start Ollama, or start a new chat with a different AI provider.",
+                              comment: "Error shown in an AI chat set to a local Ollama model when no Ollama model is available, instead of sending the message to a different AI provider"))
+    }
+
+    private static func modelUnavailableError(name: String) -> AIError {
         return AIError(String(localized: "LLMMetadata.ModelUnavailable",
                               defaultValue: "The model “\(name)” is not available. If it is an Ollama model, start Ollama. Otherwise, start a new chat with a different model.",
                               comment: "Error shown in an AI chat whose Llama-family model is no longer available, instead of sending the message to a different AI provider. The placeholder is the model's name."))
+    }
+
+    // The vendor a chat pinned to `name` belongs to, as far as can be told now: the
+    // vendor of the model the name resolves to, else the built-in Ollama vendor for
+    // the discovery placeholder, a Llama-family name, or a name in Ollama's
+    // "model:tag" form (cloud vendors' model names have no colon, so an unresolved
+    // one is an Ollama tag that is gone; that includes a deleted OpenAI fine-tune
+    // "ft:..." name, which then fails closed). nil when the name resolves to nothing
+    // and does not look like an Ollama model, and for a manual model on a
+    // non-Ollama API: those are classified by host, and an unrecognized host (such
+    // as a local OpenAI-compatible server) counts as OpenAI, so stamping it would
+    // send the chat to OpenAI's cloud once the manual model is removed. Such pins
+    // keep the legacy behavior. Used to stamp a chat's pin
+    // with its vendor (Chat.modelVendor) and to backfill chats pinned before the
+    // vendor was stored.
+    static func inferredVendor(forPinnedModelNamed name: String?) -> iTermAIVendor? {
+        guard let name, !name.isEmpty else {
+            return nil
+        }
+        if let resolved = model(named: name) {
+            if resolved.vendor != .llama, manualModels().contains(where: { $0.name == name }) {
+                return nil
+            }
+            return resolved.vendor
+        }
+        if name == pendingOllamaModelName || vendor(forModelName: name) == .llama || name.contains(":") {
+            return .llama
+        }
+        return nil
+    }
+
+    // Resolves a chat's pinned model within the vendor the chat is pinned to, so a
+    // pin that no longer resolves never falls through to a different vendor (the
+    // global default may be a cloud vendor). Success(nil) means "use the global
+    // default" and is only possible for a legacy pin with no known vendor.
+    //
+    // - Ollama (`.llama`): the name must resolve to an Ollama model. A local model
+    //   that is gone (removed from Ollama, or a server that is down) fails the
+    //   turn, as does a same-named model of another vendor. Messages for a local
+    //   model are never sent anywhere else, not even to a different local model.
+    // - Any other vendor: the model the name resolves to, whatever its vendor, so
+    //   an edit to a manual model's API or URL is honored. A name that resolves to
+    //   nothing gets the vendor's recommended model, the same rule the chat UI
+    //   applies to a model retired from the catalog.
+    static func resolvePinnedModel(named name: String,
+                                   vendor: iTermAIVendor?) -> Result<AIMetadata.Model?, AIError> {
+        guard let vendor else {
+            if let error = unavailableLocalModelError(forPinnedModelNamed: name) {
+                return .failure(error)
+            }
+            return .success(model(named: name))
+        }
+        if vendor == .llama {
+            if let local = ollamaModel(named: name) {
+                return .success(local)
+            }
+            return .failure(unavailablePinnedOllamaModelError(name: name))
+        }
+        if let resolved = model(named: name) {
+            return .success(resolved)
+        }
+        if let fallback = recommendedModel(for: vendor) ?? alternateModels(for: vendor).first {
+            return .success(fallback)
+        }
+        return .failure(modelUnavailableError(name: name))
+    }
+
+    // `name` resolved among Ollama models only (manual Ollama entries and the
+    // built-in server's discovered tags), so a same-named model of another vendor
+    // neither shadows a tag that is still installed nor stands in for one that is
+    // gone.
+    private static func ollamaModel(named name: String) -> AIMetadata.Model? {
+        if name == pendingOllamaModelName {
+            return realOllamaModel(recommendedModel(for: .llama))
+        }
+        return manualModels().first { $0.name == name && $0.vendor == .llama }
+            ?? discoveredOllamaModels().first { $0.name == name }
+    }
+
+    private static func unavailablePinnedOllamaModelError(name: String) -> AIError {
+        if name == pendingOllamaModelName {
+            return noOllamaModelError()
+        }
+        return AIError(String(localized: "LLMMetadata.OllamaModelUnavailable",
+                              defaultValue: "The Ollama model “\(name)” is not available. Make sure Ollama is running and the model is installed, or choose a different model for this chat.",
+                              comment: "Error shown in an AI chat pinned to a local Ollama model that Ollama no longer lists (for example, it was removed), instead of sending the message to a different AI provider. The placeholder is the model's name."))
+    }
+
+    // What the chat UI shows for a chat pinned to an Ollama model that no longer
+    // resolves: the pinned name on the Ollama vendor, so the chat stays on Ollama
+    // and a turn sent with it fails (resolvePinnedModel) instead of the UI
+    // substituting a model from a different vendor or a different local model.
+    static func unavailablePinnedOllamaModel(named name: String) -> AIMetadata.Model {
+        var model = pendingOllamaModel()
+        model.name = name
+        return model
     }
 
     static func model() -> AIMetadata.Model? {

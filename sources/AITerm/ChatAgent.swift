@@ -834,6 +834,16 @@ class ChatAgent {
         return LLMMetadata.model(named: name)
     }
 
+    /// As resolvedModel(named:), but within the chat's pinned vendor the way request
+    /// routing resolves it (LLMMetadata.resolvePinnedModel). nil when the turn will
+    /// not be sent (an unavailable local model) or the name is absent or unknown.
+    static func resolvedModel(named name: String?, vendor: iTermAIVendor?) -> AIMetadata.Model? {
+        guard let name else {
+            return nil
+        }
+        return LLMMetadata.resolvePinnedModel(named: name, vendor: vendor).successValue ?? nil
+    }
+
     /// Hosted-tool enablement for a turn, pure over the effective model's
     /// features and the turn's configuration so it can never silently read
     /// the global default model.
@@ -1450,11 +1460,14 @@ class ChatAgent {
         // so the binding is enforced here on every turn, BEFORE any
         // conversation state is touched. A rejected turn becomes an ordinary
         // agent reply and never reaches the API.
+        let boundModelName = ChatListModel.instance?.modelName(forChatID: chatID)
         let verdict = ChatProviderBinding.evaluate(
-            boundModelName: ChatListModel.instance?.modelName(forChatID: chatID),
+            boundModelName: boundModelName,
             turnModelName: userMessage.configuration?.model,
             defaultModelName: LLMMetadata.model()?.name,
-            vendor: ChatProviderBinding.vendor(forModelName:))
+            vendor: ChatProviderBinding.vendorResolver(
+                boundModelName: boundModelName,
+                boundVendor: ChatListModel.instance?.modelVendor(forChatID: chatID)))
         let turnModelName: String?
         switch verdict {
         case .reject(let reason):
@@ -1471,6 +1484,9 @@ class ChatAgent {
                 try? ChatListModel.instance?.setModel(chatID: chatID, modelName: bindChatTo)
             }
         }
+        // Read after any binding above so a first turn sees the vendor it was just
+        // bound to. The turn's model resolves only within this vendor.
+        let turnModelVendor = ChatListModel.instance?.modelVendor(forChatID: chatID)
 
         cancelPendingCommands()
 
@@ -1487,7 +1503,10 @@ class ChatAgent {
         // With the provider lock, a configuration-less turn runs on the
         // chat's bound model, which can differ from the default; gating on
         // the default could attach code_interpreter to a model that 400s it.
-        let effectiveModel = Self.resolvedModel(named: turnModelName) ?? LLMMetadata.model()
+        // A turn for an Ollama model that is gone resolves to nothing and will fail
+        // without being sent; don't size it for the (possibly cloud) global default.
+        let effectiveModel = Self.resolvedModel(named: turnModelName, vendor: turnModelVendor)
+            ?? (turnModelVendor == .llama && turnModelName != nil ? nil : LLMMetadata.model())
         conversation.hostedTools = Self.hostedTools(features: effectiveModel?.features ?? [],
                                                     configuration: userMessage.configuration)
         // Snapshot the turn's protocol / model / hosted-tools for blob capture at
@@ -1495,6 +1514,7 @@ class ChatAgent {
         // completion, so read these now while they reflect this turn.
         let captureAPI = effectiveModel?.api
         let captureModelName = turnModelName
+        let captureModelVendor = turnModelVendor
         let captureHostedTools = conversation.hostedTools
 
         if let responseID = userMessage.inResponseTo {
@@ -1600,6 +1620,7 @@ class ChatAgent {
         // The binding's verdict, not the raw configuration: a turn with no
         // configuration runs on the chat's bound model.
         conversation.model = turnModelName
+        conversation.modelVendor = turnModelVendor
         conversation.shouldThink = userMessage.configuration?.shouldThink
         conversation.reasoningEffort = userMessage.configuration?.reasoningEffort
         conversation.serviceTier = userMessage.configuration?.serviceTier
@@ -1658,6 +1679,7 @@ class ChatAgent {
                                    needsRenaming: needsRenaming,
                                    captureAPI: captureAPI,
                                    captureModelName: captureModelName,
+                                   captureModelVendor: captureModelVendor,
                                    captureHostedTools: captureHostedTools,
                                    streaming: streamingCallback,
                                    didRetryExpiry: false,
@@ -1678,6 +1700,7 @@ class ChatAgent {
                                   needsRenaming: Bool,
                                   captureAPI: iTermAIAPI?,
                                   captureModelName: String?,
+                                  captureModelVendor: iTermAIVendor?,
                                   captureHostedTools: HostedTools,
                                   streaming streamingCallback: ((LLM.StreamingUpdate, String?) -> ())?,
                                   didRetryExpiry: Bool,
@@ -1698,6 +1721,7 @@ class ChatAgent {
                                        needsRenaming: needsRenaming,
                                        captureAPI: captureAPI,
                                        captureModelName: captureModelName,
+                                       captureModelVendor: captureModelVendor,
                                        captureHostedTools: captureHostedTools,
                                        streaming: streamingCallback,
                                        didRetryExpiry: true,
@@ -1741,7 +1765,7 @@ class ChatAgent {
         if let updated = result.successValue {
             self.conversation = updated
             if needsRenaming {
-                self.requestRenaming(modelName: captureModelName)
+                self.requestRenaming(modelName: captureModelName, modelVendor: captureModelVendor)
             }
         }
         switch result {
@@ -1874,7 +1898,8 @@ class ChatAgent {
     // sends the chat's content: a chat on a local model must not have its
     // content sent to a (possibly cloud) global default to be titled.
     static func renamingConversation(messages: [AITermController.Message],
-                                     modelName: String?) -> AIConversation {
+                                     modelName: String?,
+                                     modelVendor: iTermAIVendor?) -> AIConversation {
         // Localization unneeded
         let prompt = "Please assign a short, specific name to this chat, less than 30 characters in length, but descriptive. It will be shown in a chat list UI. Respond with only the name of the chat."
         var history = messages + [AITermController.Message(role: .user, content: prompt)]
@@ -1888,13 +1913,15 @@ class ChatAgent {
             registrationProvider: nil,
             messages: history)
         newConversation.model = modelName
+        newConversation.modelVendor = modelVendor
         newConversation.shouldThink = false
         return newConversation
     }
 
-    private func requestRenaming(modelName: String?) {
+    private func requestRenaming(modelName: String?, modelVendor: iTermAIVendor?) {
         let newConversation = Self.renamingConversation(messages: conversation.messages,
-                                                        modelName: modelName)
+                                                        modelName: modelName,
+                                                        modelVendor: modelVendor)
         AIConversation.completeOneShot(newConversation) { [weak self] (result: Result<AIConversation, Error>) in
             // Sanitize the model's reply here, at the single point where
             // titles are minted, so every .renameChat consumer (the chat
@@ -1909,7 +1936,8 @@ class ChatAgent {
                     // rename means the chat keeps its old title, and an
                     // icon for the never-applied title would both bill a
                     // model call and display next to the wrong title.
-                    self?.requestIconGeneration(title: newName, modelName: modelName)
+                    self?.requestIconGeneration(title: newName, modelName: modelName,
+                                                modelVendor: modelVendor)
                 } catch {
                     RLog("renameChat failed: \(error)")
                 }
@@ -1930,11 +1958,12 @@ class ChatAgent {
     // retry, and pre-existing chats are deliberately not backfilled,
     // since that would bill one model call per chat without the user
     // asking for anything.
-    private func requestIconGeneration(title: String, modelName: String?) {
+    private func requestIconGeneration(title: String, modelName: String?, modelVendor: iTermAIVendor?) {
         let chatID = self.chatID
         ChatIconGenerator.instance.requestIcon(forChatID: chatID,
                                                title: title,
-                                               modelName: modelName) { data in
+                                               modelName: modelName,
+                                               modelVendor: modelVendor) { data in
             do {
                 try ChatListModel.instance?.setIcon(data, forChatID: chatID)
             } catch {

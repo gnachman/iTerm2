@@ -141,14 +141,14 @@ final class OllamaLocalModelRoutingTests: XCTestCase {
     @MainActor
     func test_renamingConversation_usesChatModel() {
         let messages = [AITermController.Message(role: .user, content: "private question")]
-        XCTAssertEqual(ChatAgent.renamingConversation(messages: messages, modelName: "qwen3.5:4b").model,
+        XCTAssertEqual(ChatAgent.renamingConversation(messages: messages, modelName: "qwen3.5:4b", modelVendor: .llama).model,
                        "qwen3.5:4b")
-        XCTAssertNil(ChatAgent.renamingConversation(messages: messages, modelName: nil).model)
+        XCTAssertNil(ChatAgent.renamingConversation(messages: messages, modelName: nil, modelVendor: nil).model)
     }
 
     // The icon prompt carries the chat's title, so it goes to the chat's model.
     func test_iconConversation_usesChatModel() {
-        XCTAssertEqual(ChatIconGenerator.svgConversation(prompt: "draw", modelName: "qwen3.5:4b").model,
+        XCTAssertEqual(ChatIconGenerator.svgConversation(prompt: "draw", modelName: "qwen3.5:4b", modelVendor: .llama).model,
                        "qwen3.5:4b")
     }
 }

@@ -604,16 +604,45 @@ extension ChatViewController {
         return LLMMetadata.model(named: name)
     }
 
+    // The vendor the chat's model pin belongs to (Chat.modelVendor), nil when
+    // unknown (a legacy pin whose vendor could not be inferred).
+    private var storedChatVendor: iTermAIVendor? {
+        guard let chatID else {
+            return nil
+        }
+        return listModel.modelVendor(forChatID: chatID)
+    }
+
+    // Resolves `name` for a chat pinned to `vendor` the way request routing does
+    // (LLMMetadata.resolvePinnedModel): a chat on a local (Ollama) model never
+    // resolves to a same-named model of another vendor.
+    private func pinnedModel(named name: String?, vendor: iTermAIVendor?) -> AIMetadata.Model? {
+        guard let name else {
+            return nil
+        }
+        if vendor == .llama {
+            return LLMMetadata.resolvePinnedModel(named: name, vendor: .llama).successValue ?? nil
+        }
+        return model(named: name)
+    }
+
     private var storedChatModel: AIMetadata.Model? {
         guard let chatID else {
             return nil
         }
-        return model(named: listModel.chat(id: chatID)?.modelName)
+        return pinnedModel(named: listModel.chat(id: chatID)?.modelName, vendor: storedChatVendor)
     }
 
     private var latestConfiguredMessageModel: AIMetadata.Model? {
         guard let chatID,
               let messages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return nil
+        }
+        let vendor = storedChatVendor
+        if vendor == .llama, listModel.chat(id: chatID)?.modelName != nil {
+            // The chat's Ollama pin didn't resolve (else storedChatModel would have
+            // answered). It fails clearly (see fallbackModel) rather than quietly
+            // moving to a different model an older message used.
             return nil
         }
         // Walk from the newest message backward, stopping at the first one that
@@ -622,7 +651,7 @@ extension ChatViewController {
         // row-event access, which is a hot path during a streamed response.
         var i = messages.count - 1
         while i >= 0 {
-            if let result = model(named: messages[i].configuration?.model) {
+            if let result = pinnedModel(named: messages[i].configuration?.model, vendor: vendor) {
                 return result
             }
             i -= 1
@@ -656,17 +685,32 @@ extension ChatViewController {
     // provider picker is locked once a chat has messages.
     private var retiredModelFallback: AIMetadata.Model? {
         guard let name = pinnedChatModelName,
-              model(named: name) == nil else {
+              pinnedModel(named: name, vendor: storedChatVendor) == nil else {
             return nil
         }
-        // vendor(forModelName:) returns nil for OpenAI names (gpt-*, o3, o4-mini,
-        // codex, ...) because its nil is meaningful for manual-model
-        // classification. Here nil just means "unrecognized", and OpenAI is the
-        // right default (matching LLMMetadata.manualVendor), so a retired OpenAI
-        // model stays on OpenAI instead of falling through to the global default
-        // vendor - which the locked provider picker won't let the user change.
-        let vendor = LLMMetadata.vendor(forModelName: name) ?? .openAI
-        return recommendedModel(for: vendor)
+        return Self.fallbackModel(forUnresolvedPinNamed: name, vendor: storedChatVendor)
+    }
+
+    // The model a chat whose pin no longer resolves runs on. It always stays on
+    // the pin's vendor: the stored vendor when known, else one inferred from the
+    // name. vendor(forModelName:) returns nil for OpenAI names (gpt-*, o3,
+    // o4-mini, codex, ...) because its nil is meaningful for manual-model
+    // classification. Here nil just means "unrecognized", and OpenAI is the right
+    // default (matching LLMMetadata.manualVendor), so a retired OpenAI model stays
+    // on OpenAI instead of falling through to the global default vendor - which
+    // the locked provider picker won't let the user change.
+    //
+    // A chat pinned to an Ollama model that is gone keeps showing that model on
+    // Ollama, so a turn sent with it fails with an error (see
+    // LLMMetadata.resolvePinnedModel) instead of quietly going to a different
+    // model, local or not.
+    static func fallbackModel(forUnresolvedPinNamed name: String,
+                              vendor storedVendor: iTermAIVendor?) -> AIMetadata.Model? {
+        if storedVendor == .llama {
+            return LLMMetadata.unavailablePinnedOllamaModel(named: name)
+        }
+        let vendor = storedVendor ?? LLMMetadata.vendor(forModelName: name) ?? .openAI
+        return LLMMetadata.recommendedModel(for: vendor) ?? LLMMetadata.alternateModels(for: vendor).first
     }
 
     private var effectiveChatModel: AIMetadata.Model? {
@@ -3337,7 +3381,14 @@ extension ChatViewController: ChatToolbarDataSource {
         guard let vendor = effectiveChatProvider else {
             return [model]
         }
-        return LLMMetadata.alternateModels(for: vendor)
+        let alternates = LLMMetadata.alternateModels(for: vendor)
+        if vendor == .llama, !alternates.contains(where: { $0.name == model.name }) {
+            // The chat's Ollama model is gone (see fallbackModel). List it so the
+            // popup keeps it selected and a send uses it (and fails clearly)
+            // rather than whichever discovered model the popup would select.
+            return alternates + [model]
+        }
+        return alternates
     }
 
     var webSearchEnabled: Bool {

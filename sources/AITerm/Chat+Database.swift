@@ -24,6 +24,7 @@ extension Chat: iTermDatabaseElement {
         case watchers
         case icon
         case blobProtocol
+        case modelVendor
     }
     static func schema() -> String {
         """
@@ -41,7 +42,8 @@ extension Chat: iTermDatabaseElement {
              \(Columns.claimedScopes.rawValue) text,
              \(Columns.watchers.rawValue) text,
              \(Columns.icon.rawValue) blob,
-             \(Columns.blobProtocol.rawValue) text)
+             \(Columns.blobProtocol.rawValue) text,
+             \(Columns.modelVendor.rawValue) text)
         """
     }
     static func migrations(existingColumns: [String]) -> [Migration] {
@@ -77,6 +79,12 @@ extension Chat: iTermDatabaseElement {
         if !existingColumns.contains(Columns.blobProtocol.rawValue) {
             result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.blobProtocol.rawValue) text", args: []))
         }
+        // TEXT for the same reason as blobProtocol: NULL (vendor unknown) must be
+        // distinguishable from vendor 0. Existing rows start NULL; ChatListModel
+        // backfills the vendor where it can be inferred.
+        if !existingColumns.contains(Columns.modelVendor.rawValue) {
+            result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.modelVendor.rawValue) text", args: []))
+        }
         return result
     }
 
@@ -108,8 +116,9 @@ extension Chat: iTermDatabaseElement {
              \(Columns.claimedScopes.rawValue),
              \(Columns.watchers.rawValue),
              \(Columns.icon.rawValue),
-             \(Columns.blobProtocol.rawValue))
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             \(Columns.blobProtocol.rawValue),
+             \(Columns.modelVendor.rawValue))
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
          [
             id,
@@ -126,6 +135,7 @@ extension Chat: iTermDatabaseElement {
             Self.encodeWatchers(watchers),
             icon ?? NSNull(),
             blobProtocol.map { String($0) } ?? NSNull(),
+            modelVendor.map { String($0) } ?? NSNull(),
          ])
     }
 
@@ -143,7 +153,8 @@ extension Chat: iTermDatabaseElement {
                         \(Columns.claimedScopes.rawValue) = ?,
                         \(Columns.watchers.rawValue) = ?,
                         \(Columns.icon.rawValue) = ?,
-                        \(Columns.blobProtocol.rawValue) = ?
+                        \(Columns.blobProtocol.rawValue) = ?,
+                        \(Columns.modelVendor.rawValue) = ?
         where \(Columns.uuid.rawValue) = ?
         """,
         [
@@ -160,6 +171,7 @@ extension Chat: iTermDatabaseElement {
             Self.encodeWatchers(watchers),
             icon ?? NSNull(),
             blobProtocol.map { String($0) } ?? NSNull(),
+            modelVendor.map { String($0) } ?? NSNull(),
 
             // where clause
             id
@@ -193,6 +205,8 @@ extension Chat: iTermDatabaseElement {
         // TEXT column: nil string => not yet blob-migrated; a decimal string =>
         // the frozen protocol's iTermAIAPI raw value.
         self.blobProtocol = result.string(forColumn: Columns.blobProtocol.rawValue)
+            .flatMap { Int($0) }
+        self.modelVendor = result.string(forColumn: Columns.modelVendor.rawValue)
             .flatMap { Int($0) }
     }
 

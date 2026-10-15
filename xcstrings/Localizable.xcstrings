@@ -98574,6 +98574,48 @@
         }
       }
     },
+    "LLMMetadata.OllamaModelUnavailable" : {
+      "comment" : "Error shown in an AI chat pinned to a local Ollama model that Ollama no longer lists (for example, it was removed), instead of sending the message to a different AI provider. The placeholder is the model's name.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Ollama-Modell „%@“ ist nicht verfügbar. Stellen Sie sicher, dass Ollama läuft und das Modell installiert ist, oder wählen Sie ein anderes Modell für diesen Chat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The Ollama model “%@” is not available. Make sure Ollama is running and the model is installed, or choose a different model for this chat."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollamaのモデル「%@」は利用できません。Ollamaが起動していてモデルがインストールされていることを確認するか、このチャットで別のモデルを選択してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O modelo do Ollama “%@” não está disponível. Verifique se o Ollama está em execução e se o modelo está instalado, ou escolha outro modelo para este chat."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Модель Ollama «%@» недоступна. Убедитесь, что Ollama запущена и модель установлена, или выберите для этого чата другую модель."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama 模型“%@”不可用。请确保 Ollama 正在运行且已安装该模型，或为此聊天选择其他模型。"
+          }
+        }
+      }
+    },
     "LLMProvider.UnknownPlatform" : {
       "comment" : "Display name for an unrecognized AI provider",
       "extractionState" : "extracted_with_value",
