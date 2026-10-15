@@ -1117,6 +1117,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             [self.gateway forceDetach];
         }
     } else {
+        // Before the detach goes out, as -[PTYSession tmuxDetach] does, so the record leaves with us.
+        [self withdrawIT2ClientRecord];
         [self.gateway detach];
     }
 }
