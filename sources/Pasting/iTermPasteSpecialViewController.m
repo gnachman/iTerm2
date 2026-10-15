@@ -72,6 +72,8 @@ static NSString *const kSubstitution = @"Substitution";
     IBOutlet NSSlider *_delayBetweenChunksSlider;
     IBOutlet NSTextField *_chunkSizeLabel;
     IBOutlet NSTextField *_delayBetweenChunksLabel;
+    IBOutlet NSTextField *_chunkSizeTitle;
+    IBOutlet NSTextField *_delayBetweenChunksTitle;
     IBOutlet NSStepper *_stepper;
     IBOutlet NSTextField *_icuRegexHelpLabel;  // Warning: this gets removed from superview in awakeFromNib.
 }
@@ -91,8 +93,17 @@ static NSString *const kSubstitution = @"Substitution";
     self.delayBetweenChunks = kDelayRange.visualCenter;
     self.chunkSize = kChunkSizeRange.visualCenter;
 
+    [self layoutSpeedLabels];
+
     [_icuRegexHelpLabel replaceWithHyperlinkTo:[NSURL URLWithString:@"https://iterm2.com/regex"]];
     _icuRegexHelpLabel = nil;
+}
+
+// Translated titles can be wider than the room the nib leaves before the
+// value next to them.
+- (void)layoutSpeedLabels {
+    [_chunkSizeLabel it_moveToFollowTitle:_chunkSizeTitle gap:4];
+    [_delayBetweenChunksLabel it_moveToFollowTitle:_delayBetweenChunksTitle gap:4];
 }
 
 - (void)setProfileType:(ProfileType)profileType {

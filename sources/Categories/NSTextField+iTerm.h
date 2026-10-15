@@ -37,6 +37,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSTextField *)replaceWithHyperlinkTo:(NSURL *)url;
 
 - (CGFloat)it_heightForWidth:(CGFloat)width;
+
+// For a value label that sits to the right of `title` on the same line: if
+// `title`'s text is too wide to end `gap` points before the receiver,
+// shrink-wrap `title` to its text and move the receiver to `gap` points after
+// it. Otherwise leave both where they are.
+- (void)it_moveToFollowTitle:(NSTextField *)title gap:(CGFloat)gap;
 @end
 
 NS_ASSUME_NONNULL_END
