@@ -109,6 +109,9 @@ static NSString *iTermLocalizedSmartSelectionNote(NSString *note) {
     IBOutlet NSButton *_syntaxHelpButton;
     IBOutlet NSButton *_visualizationButton;
     IBOutlet NSButton *_actionsButton;
+    IBOutlet NSButton *_loadDefaultsButton;
+    IBOutlet NSButton *_helpButton;
+    IBOutlet NSTextField *_regexLabel;
     NSUndoManager *_undoManager;
     iTermRegexVisualizationViewController *_visualizationViewController;
     NSPopover *_popover;
@@ -142,6 +145,50 @@ static NSString *iTermLocalizedSmartSelectionNote(NSString *note) {
     return YES;
 }
 
+// The nib's frames fit English. Make room for longer translations without
+// changing the English layout.
+- (void)layoutForTranslations {
+    // The Load Defaults button grows to fit its title, and the checkbox
+    // after it moves over and grows to fit too, stopping before the help
+    // button.
+    NSRect buttonFrame = _loadDefaultsButton.frame;
+    const CGFloat originalButtonMaxX = NSMaxX(buttonFrame);
+    buttonFrame.size.width = MAX(NSWidth(buttonFrame), ceil(_loadDefaultsButton.cell.cellSize.width));
+    _loadDefaultsButton.frame = buttonFrame;
+
+    NSRect checkboxFrame = logDebugInfo_.frame;
+    checkboxFrame.origin.x += NSMaxX(buttonFrame) - originalButtonMaxX;
+    const CGFloat maxWidth = NSMinX(_helpButton.frame) - 8 - NSMinX(checkboxFrame);
+    checkboxFrame.size.width = MIN(maxWidth, MAX(NSWidth(checkboxFrame), ceil(logDebugInfo_.cell.cellSize.width)));
+    logDebugInfo_.frame = checkboxFrame;
+
+    // The regular expression label wraps when it doesn't fit its column,
+    // pushing the Syntax Help link below it down.
+    NSRect labelFrame = _regexLabel.frame;
+    const CGFloat delta = [_regexLabel it_heightForWidth:NSWidth(labelFrame)] - NSHeight(labelFrame);
+    if (delta > 0) {
+        labelFrame.origin.y -= delta;
+        labelFrame.size.height += delta;
+        _regexLabel.frame = labelFrame;
+        NSRect linkFrame = _syntaxHelpButton.frame;
+        linkFrame.origin.y -= delta;
+        _syntaxHelpButton.frame = linkFrame;
+    }
+
+    [self growLinkToFit:_syntaxHelpButton];
+    [self growLinkToFit:_visualizationButton];
+}
+
+// Widens a link to show its whole title, keeping its right edge where it is,
+// since both links line up on their right.
+- (void)growLinkToFit:(NSButton *)link {
+    NSRect frame = link.frame;
+    const CGFloat width = MAX(NSWidth(frame), ceil(link.cell.cellSize.width));
+    frame.origin.x = NSMaxX(frame) - width;
+    frame.size.width = width;
+    link.frame = frame;
+}
+
 - (void)awakeFromNib {
     _undoManager = [[NSUndoManager alloc] init];
 
@@ -166,6 +213,7 @@ static NSString *iTermLocalizedSmartSelectionNote(NSString *note) {
     _playgroundTextView.richText = NO;
 
     _removeButton.enabled = NO;
+    [self layoutForTranslations];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(regexDidChange:)
@@ -291,6 +339,7 @@ static NSString *iTermLocalizedSmartSelectionNote(NSString *note) {
         _popover = nil;
         _visualizationButton.title = NSLocalizedStringWithDefaultValue(@"SmartSelection.OpenVisualization", nil, [NSBundle mainBundle], @"Open Regular Expression Visualization", @"Button title to open the regular expression visualization popover");
     }
+    [self growLinkToFit:_visualizationButton];
 }
 
 - (IBAction)syntaxHelp:(id)sender {
