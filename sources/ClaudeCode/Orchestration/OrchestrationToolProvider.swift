@@ -433,11 +433,8 @@ final class OrchestrationToolProvider: ToolProvider {
             let state = (dict["target_state"] as? String) ?? "?"
             return "Will notify when " + target + " becomes **\(state)**"
         case "register_timer":
-            let when = Self.timerWhenPhrase(dict: dict)
-            if let note = dict["note"] as? String, !note.isEmpty {
-                return "Setting a timer to fire " + when + ": " + previewQuote(note)
-            }
-            return "Setting a timer to fire " + when
+            let note = (dict["note"] as? String).flatMap { $0.isEmpty ? nil : previewQuote($0) }
+            return Self.timerDescription(when: Self.timerWhen(dict: dict), quotedNote: note)
         case "unregister_watch":
             return "Cancelling a watch"
         case "list_watches":
@@ -502,24 +499,63 @@ final class OrchestrationToolProvider: ToolProvider {
         return "\u{201C}\(snippet)\u{201D}"
     }
 
-    // When phrasing for the register_timer bubble, e.g. "in 2 hrs" or, when the
-    // model gave an absolute fire_at that can't be read as a future delta, "at
-    // <fire_at>". The duration uses the shared localized formatter
-    // (DateFormatter.compactDateDifferenceString) rather than a hand-rolled one.
-    private static func timerWhenPhrase(dict: [String: Any]) -> String {
+    // When the register_timer bubble says the timer fires: after a duration
+    // (e.g. "2 hrs"), or, when the model gave an absolute fire_at that can't be
+    // read as a future delta, at <fire_at>. The duration uses the shared
+    // localized formatter (DateFormatter.compactDateDifferenceString) rather
+    // than a hand-rolled one.
+    enum TimerWhen: Equatable {
+        case after(String)
+        case at(String)
+        case later
+    }
+
+    private static func timerWhen(dict: [String: Any]) -> TimerWhen {
         if let delay = (dict["delay_seconds"] as? NSNumber)?.doubleValue, delay > 0 {
-            return "in " + DateFormatter.compactDateDifferenceString(fromTimeDelta: delay)
+            return .after(DateFormatter.compactDateDifferenceString(fromTimeDelta: delay))
         }
         if let fireAt = dict["fire_at"] as? String, !fireAt.isEmpty {
             if let date = parseISO8601(fireAt) {
                 let delta = date.timeIntervalSinceNow
                 if delta > 0 {
-                    return "in " + DateFormatter.compactDateDifferenceString(fromTimeDelta: delta)
+                    return .after(DateFormatter.compactDateDifferenceString(fromTimeDelta: delta))
                 }
             }
-            return "at \(fireAt)"
+            return .at(fireAt)
         }
-        return "later"
+        return .later
+    }
+
+    // The register_timer bubble text. Each case is a complete localized
+    // sentence so translators control word order; quotedNote is the already
+    // quoted note preview, if any.
+    static func timerDescription(when: TimerWhen, quotedNote: String?) -> String {
+        switch (when, quotedNote) {
+        case let (.after(duration), nil):
+            return String(localized: "OrchestrationTool.TimerAfter",
+                          defaultValue: "Setting a timer to fire in \(duration)",
+                          comment: "AI chat bubble shown when the AI sets a timer. The placeholder is a short duration, such as 5min.")
+        case let (.after(duration), note?):
+            return String(localized: "OrchestrationTool.TimerAfterWithNote",
+                          defaultValue: "Setting a timer to fire in \(duration): \(note)",
+                          comment: "AI chat bubble shown when the AI sets a timer. The first placeholder is a short duration, such as 5min; the second is the timer’s note, already in quotation marks.")
+        case let (.at(time), nil):
+            return String(localized: "OrchestrationTool.TimerAt",
+                          defaultValue: "Setting a timer to fire at \(time)",
+                          comment: "AI chat bubble shown when the AI sets a timer. The placeholder is the time the AI asked for, as an ISO 8601 timestamp.")
+        case let (.at(time), note?):
+            return String(localized: "OrchestrationTool.TimerAtWithNote",
+                          defaultValue: "Setting a timer to fire at \(time): \(note)",
+                          comment: "AI chat bubble shown when the AI sets a timer. The first placeholder is the time the AI asked for, as an ISO 8601 timestamp; the second is the timer’s note, already in quotation marks.")
+        case (.later, nil):
+            return String(localized: "OrchestrationTool.TimerLater",
+                          defaultValue: "Setting a timer to fire later",
+                          comment: "AI chat bubble shown when the AI sets a timer without a recognizable time.")
+        case let (.later, note?):
+            return String(localized: "OrchestrationTool.TimerLaterWithNote",
+                          defaultValue: "Setting a timer to fire later: \(note)",
+                          comment: "AI chat bubble shown when the AI sets a timer without a recognizable time. The placeholder is the timer’s note, already in quotation marks.")
+        }
     }
 
     // Parse an ISO-8601 date-time, tolerating both fractional and whole seconds.
