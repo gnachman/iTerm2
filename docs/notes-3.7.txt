@@ -1727,6 +1727,9 @@ Bug Fixes:
 - The donation link in the Settings and Edit
   Session title bars no longer truncates the
   window title.
+- In the Add/Edit Manual AI Model sheet, the
+  API key menu is no longer too narrow to show
+  “Automatic (none for a local endpoint)”.
 
 
 
