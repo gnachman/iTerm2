@@ -1,0 +1,1009 @@
+Version 3.7.5 was built on October 14, 2026.
+
+Credit to Nimanou (nuved) for the right-to-left
+rendering, selection, and copy improvements in
+this release.
+
+Major New Features:
+- Floating Panes: a pane that floats over a tab’s
+  split panes. Create one with Shell > New
+  Floating Pane with Current Profile, or with a
+  key binding or pointer action. Drag its title
+  bar to move it and its edges to resize it. Hold
+  Control while dragging to dock it into the split
+  panes or move it to another tab or window.
+  Window > Floating Panes can raise, dock, move
+  and hide them. They are saved with window
+  arrangements. tmux integration shows tmux’s own
+  floating panes (tmux 3.7 and later; moving,
+  resizing, raising and docking them needs tmux
+  3.8).
+- iTerm2 is now localized: the interface follows
+  your Mac’s language and is available in
+  Brazilian Portuguese, German, Japanese, Russian,
+  and Simplified Chinese.
+- Support for the Program Status Protocol (OSC
+  7501), which lets a program report that it is
+  working, waiting on you, done, or failed. The
+  tab shows the most urgent status the program
+  reported, along with its message and progress. A
+  program reporting on several tasks at once gets
+  them listed under its session in the Session
+  Status tool, and each task that needs you can
+  post its own notification.
+- Session Status has new “done” and “error”
+  statuses for work that finished or failed while
+  you were away. They sort just below “waiting”,
+  above “working”, and “idle” now sorts last.
+  Pressing a key in the session marks the result
+  as seen and turns it idle. Claude Code now
+  reports a finished turn as “done” and an API
+  error as “error”. Customized priority lists get
+  the two new statuses added below “waiting”,
+  notifying if “idle” did.
+
+New Features:
+- Ollama is now a first-class AI provider
+  alongside OpenAI, Anthropic, Gemini, and
+  DeepSeek. Choose it in Settings > General > AI
+  and iTerm2 lists the models installed on your
+  local Ollama server, reading each model’s
+  context window and capabilities (thinking,
+  tools, vision) from the server, so there is
+  nothing to configure. You can pick one model for
+  chats and a smaller one for quick background
+  tasks. For a server on another machine, use the
+  new “Ollama (auto-discover)” or “Ollama
+  (native)” presets, or the manual model editor’s
+  new Fetch Models button and Vision checkbox. The
+  native API type, formerly named “Llama”, is now
+  named “Ollama”; it sizes the context window to
+  your prompt so long prompts are no longer
+  silently truncated, and the chat’s Think toggle
+  now controls whether a reasoning model thinks.
+- ⌘Z now undoes text editing in the field you’re
+  editing (the composer, browser address bar,
+  annotations, notes, and AI chat), and ⌘⇧Z
+  redoes. Undo Close is now solely Shell ▸ Undo
+  Close (⌘⇧T). The first time you press ⌘Z with a
+  recently closed session still restorable, a
+  one-time notice explains the change and lets you
+  choose Undo Close or a regular undo.
+- The Session Status tool can now follow Codex CLI
+  as well as Claude Code. There is no installer
+  for Codex yet: in ~/.codex/hooks.json, point
+  each hook event at a script that runs the
+  cc-status tool from the utilities folder inside
+  iTerm2.app’s Resources with --agent codex, and
+  set timeout to 3 on the Interrupt and SessionEnd
+  hooks. The tab then shows Codex’s status and a
+  progress indicator through each turn. Codex also
+  reports a finished turn as “done” and an API
+  error as “error”.
+- The Cockpit can now send a command to many
+  sessions at once from a composer docked along
+  its bottom. Type @ to pick a session, tab, or
+  window (selecting rows in the list does the
+  same), then type the command and press
+  Shift-Return to send it to every chosen pane.
+  The Cockpit also now shows each session’s live
+  status and detail line in every grouping, and a
+  filter bar along the top narrows the list to one
+  status.
+- A new “Set Profile Setting” trigger action turns
+  a profile checkbox on or off for the session.
+  Paired with Job Started and Job Ended matches it
+  gives declarative “while this job runs” logic.
+- A new “Prevent sleep” profile setting keeps the
+  Mac from idle-sleeping while a session with the
+  setting enabled exists. Combine it with the new
+  “Set Profile Setting” trigger action to keep the
+  Mac awake only while a long-running job, like an
+  AI coding agent, runs. It applies only while the
+  Mac is on AC power.
+- AI chat can now set a timer to act after a delay
+  or at a set time (for example, “in two hours,
+  run this command”). The timer survives restarts,
+  fires immediately if its time already passed,
+  and can push your phone when it fires.
+- You can now press Cmd-F in an AI chat to search
+  the current conversation. A find bar appears at
+  the top with match counts and next/previous
+  navigation; matches are highlighted in place.
+  Supports smart-case, case-sensitive, and regular
+  expression modes.
+- Right-clicking your own message in AI chat now
+  offers Delete, which removes that message and
+  everything after it. Edit, Fork, and Delete are
+  also available when right-clicking inside the
+  message text. Editing or deleting a message now
+  also syncs to a paired iPhone viewing the same
+  chat (and the phone can delete messages too).
+- New OSC 1337 codes let a program move and resize
+  its window across monitors using global
+  coordinates: SetWindowFrame=x;y;w;h sets the
+  frame, while ReportWindowFrame and
+  ReportScreenFrames report the current frame and
+  the layout of all displays. Unlike the older CSI
+  3;x;y t sequence, these are not limited to the
+  monitor the window is already on.
+- The OSC 1337 SetColors escape sequence now
+  accepts a palette index as the value, written
+  i:N where N is 0-255. Indices 0-15 follow the
+  loaded color preset and light or dark mode, so a
+  program can set the badge or tab color to track
+  the preset instead of hardcoding an RGB value.
+  For example, SetColors=badge=i:3 uses ANSI
+  yellow. Issue 12991.
+- iTerm2 now answers CSI 16 t (report character
+  cell size), which was previously ignored.
+- Each profile can now choose what its bell sounds
+  like, in Settings > Profiles > Terminal > Bell
+  sound. Pick one of the sounds installed on your
+  Mac or choose “Other…” for any audio file of
+  your own, and give noisy sessions a bell you can
+  tell apart from the rest.
+- There is a new “Centered, No Title Bar” window
+  style, in Settings > Profiles > Window > Style
+  and in the Window > Window Style menu. It stays
+  centered on the screen like the Centered style
+  but has no title bar or window controls, which
+  is how Centered windows looked before 3.7.0.
+- Window > Lock Location pins a window to its
+  current display and position. If anything moves
+  the window it goes right back, and if its
+  display is disconnected, as happens while a
+  laptop sleeps, the window returns when the
+  display comes back. Dragging the window turns
+  the lock off.
+- The built-in web browser can now remember HTTP
+  basic-auth user names and passwords. Check
+  “Remember this password” in the sign-in dialog
+  and it is saved in the browser password manager
+  (Keychain, 1Password, and the other supported
+  back ends) and offered automatically next time.
+  The dialog also has a Password Manager button to
+  pick an existing login. View or remove saved
+  passwords from the password manager.
+- The Compact and Minimal themes, which have no
+  title bar, can now show the window name beside
+  the tabs. It appears once you name a window with
+  Window > Edit Window Title, so windows you
+  haven’t named look the same as before.
+  Double-click the name to rename the window.
+- The workgroup toolbar can show an AI Usage gauge
+  with your Claude subscription’s session and
+  weekly usage as progress bars. Add it to a
+  session’s toolbar in the workgroup settings and
+  choose how often it refreshes; it reads the
+  numbers by running the Claude Code command-line
+  tool. You can point it at your own command
+  instead.
+- New variables iterm2.workingSessionCount and
+  iterm2.waitingSessionCount count the sessions
+  whose status reads “working” or “waiting”. Use
+  them anywhere interpolated strings work, such as
+  badges, tab titles, and the status bar.
+- New setting in Settings > Appearance > General
+  shows an iTerm2 icon in the menu bar, optionally
+  followed by an interpolated string such as
+  \(iterm2.workingSessionCount).
+- New per-profile setting “Use HDR cursor when
+  available” in Settings > Profiles > Colors. When
+  on, a white cursor renders brighter than white
+  on an HDR-capable display, with either the GPU
+  or the legacy renderer, and a slider sets how
+  bright it gets.
+- Apps can now control right-to-left text
+  reordering with the BDSM and SCP escape
+  sequences. CSI 8 l enters explicit mode, in
+  which text is drawn exactly as written, and CSI
+  8 h returns to implicit mode. This keeps
+  full-screen apps that lay out their own text
+  from being scrambled. CSI 1 SP k and CSI 2 SP k
+  make reordered lines left-to-right or
+  right-to-left, and CSI 0 SP k restores the
+  default.
+- it2 can now target the session showing a
+  particular tmux pane. From inside a tmux
+  Integration pane, pass --tmux "$TMUX"
+  --tmux-pane "$TMUX_PANE" to session set-status,
+  get-status, set-var or get-var. This also works
+  on a host reached through SSH Integration.
+  Claude Code’s status is no longer reported from
+  a pane of a plain tmux session (one not using
+  tmux Integration), since iTerm2 can’t tell which
+  tab, if any, is showing that pane.
+- New `it2 session get-status` prints a session’s
+  status indicator as JSON. `set-status` no longer
+  requires --session and defaults to the active
+  session.
+- A session status can now say when it stops being
+  true. With it2 set-status --expires-on, a
+  program gives the status to switch to once the
+  work it describes is over, so a status doesn’t
+  outlive a program that was stopped partway
+  through.
+- The it2 command-line tool can now send a push
+  notification to your paired companion device
+  with “it2 notify «title» «body»”.
+
+Improvements:
+- A warning that iTerm2 shows while you are away
+  from your Mac no longer cuts off your paired
+  iPhone. The iTerm2 Buddy app stays connected,
+  shows the warning, and lets you answer it,
+  including “don’t ask again” and password prompts
+  (a password manager’s master password, an scp
+  password). Other kinds of dialogs can’t be
+  answered from the phone, but it now says the Mac
+  is waiting instead of appearing disconnected.
+  Requires an up-to-date iTerm2 Buddy.
+- Pairing a companion iPhone no longer requires
+  AI. The setup wizard (iTerm2 > Companion Device
+  Settings) now lets you choose “Terminal viewing
+  & control only”, so you can browse sessions,
+  watch live output, and type from your phone
+  without an AI plugin or API key. Chat features
+  appear disabled with an explanation until you
+  turn AI on.
+- If a profile archives sessions when they close
+  (Settings > Profiles > Session), Undo Close
+  keeps working after its time limit runs out.
+  Archived sessions come back from their archives
+  in their original split panes, tabs, and
+  windows. The last 20 can be undone even after
+  restarting iTerm2.
+- iTerm2 now recognizes when a terminal is running
+  on your own Mac by machine identity rather than
+  by hostname, so features that only work locally
+  keep working over a VPN or Tailscale connection
+  where the hostname no longer matches. Reinstall
+  shell integration (iTerm2 > Install Shell
+  Integration) to enable this.
+- The AI timeout is now an idle timeout (the
+  maximum gap between bytes received) rather than
+  a cap on the total time a request may take. A
+  slow but healthy generation, such as a reasoning
+  model that is still thinking or a cold local
+  model, keeps running as long as it makes
+  progress, while a dead connection still fails.
+  The default was also raised to 20 minutes. This
+  fixes spurious timeouts against local Ollama
+  servers.
+- The manual AI model editor can now set custom
+  HTTP headers and an API key for each model, so
+  an authenticated self-hosted or gateway endpoint
+  gets its own Authorization header and key.
+  Existing global headers are copied to your saved
+  models. The new API key setting can send a
+  provider’s stored key, a key entered just for
+  that model, or no key. The default, Automatic,
+  shows which key it picked and sends a provider’s
+  key only to that provider’s own servers, so a
+  gateway such as OpenRouter no longer receives
+  your OpenAI key unless you choose it. Models you
+  already set up keep sending the key they sent
+  before. Issues 12975 and 13105.
+- Hidden hotkey windows no longer redraw at the
+  full active cadence. Sessions with continuous
+  output (builds, tails, agents) in a hidden
+  hotkey window used to burn CPU and GPU rendering
+  frames nobody could see, spinning fans on
+  laptops. Hidden windows now drop to the
+  background refresh rate and repaint the instant
+  they are revealed.
+- iTerm2 no longer gradually slows down when left
+  running for days. The Snippets and Jobs tools no
+  longer rebuild their lists every time you switch
+  tabs, and the Script Console now keeps only the
+  200 most recent finished scripts and API
+  connections; tools that connect once per
+  command, like it2, had piled up thousands of
+  them.
+- Reduced idle CPU usage that previously grew with
+  the number of open windows.
+- Typing in a session connected with SSH
+  Integration is more responsive on slow or
+  distant connections. When you typed faster than
+  the network round trip, each keystroke waited
+  for the previous one to be acknowledged before
+  it was sent. Issue 13013.
+- The session list in iTerm2 Buddy now updates
+  live as sessions are opened, closed, or renamed
+  on the Mac. It used to change only when you
+  reopened it or pulled to refresh. Requires an
+  up-to-date iTerm2 Buddy.
+- The built-in AI model list is up to date. It
+  adds GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol, GPT-6
+  Luna, GPT-5.4 Pro, GPT-5.4 mini, Gemini 3.8
+  Flash, DeepSeek Flash (V4.1), Claude Opus 5.5,
+  Claude Sonnet 5.5, Claude Fable 5.1, Claude Opus
+  5, and Claude Fable 5, and the recommended model
+  for each provider is now its newest flagship.
+  Newer Claude models also get their full 1
+  million token context window. o4-mini, which
+  OpenAI is shutting down, has been removed.
+- The Move Tab Left and Move Tab Right shortcuts
+  now move just the current tab instead of its
+  whole tab group. Moving a tab past the edge of
+  its group pops it out of the group, and moving
+  an ungrouped tab into a neighboring group adds
+  it to that group.
+- Dragging a tab into a collapsed tab group now
+  adds it to that group. The group stays collapsed
+  unless you dragged the active tab, in which case
+  it expands. While you drag, the group's pill
+  highlights to show the tab will drop inside it.
+- Duplicate Tab now opens the copy immediately to
+  the right of the original tab instead of at the
+  end of the tab bar.
+- The password manager’s settings menu now offers
+  a single choice of how often to ask for Touch ID
+  or your password: never, once per launch, once
+  per launch and after the screen locks, or every
+  time it opens. The new “every time it opens”
+  option also closes the password manager when the
+  screen locks.
+- Focus Follows Mouse no longer takes focus away
+  from the find bar, composer, or other fields in
+  a pane by accident. To have focus follow the
+  pointer onto those views and back onto the
+  terminal, turn on “…even to views like Search or
+  Composer” under Settings > Pointer.
+- Uploads over SSH Integration are about three
+  times faster.
+- “Upload and Paste Path” now works in tmux
+  integration windows reached through SSH
+  Integration, and before shell integration has
+  reported a directory (the file goes to your home
+  directory). Pasted screenshots are converted
+  from TIFF to PNG and each gets a unique name.
+- Dropping files into a session connected to a
+  remote host now offers Paste as Text for a text
+  file, which types its contents, and “Upload and
+  Paste Paths” for several files, which uploads
+  them all and types their remote paths. Local
+  paths are no longer offered there, since they
+  name nothing on that host.
+- AI command suggestions can now recognize when
+  you have typed a plain-English request instead
+  of the start of a command. In that case the
+  suggested command replaces what you typed rather
+  than being appended to it.
+- Right-clicking a tab now offers Rename Tab,
+  which opens the same dialog as double-clicking
+  the tab.
+- “it2 session list” takes a --format option: an
+  interpolated string evaluated in each session,
+  such as '\(session.path)'. It prints one line
+  per session, or with --json adds the result to
+  each session as “formatted”. This lists every
+  session’s directory or job in one command.
+- Pausing a spinning progress indicator with OSC
+  9;4;4 now shows a paused spinner: a still yellow
+  band in the session and a pause symbol in the
+  tab, instead of a yellow bar at 10%.
+- The git branch shown in the session toolbar can
+  now be right-clicked to copy its name, or
+  dragged into a text field to paste it (or
+  dropped on the Finder as a text clipping).
+  Available only while a branch name is showing,
+  not during a rebase or similar.
+- The Current Directory status bar component’s
+  folder icon is now a proxy icon: drag it to
+  another app to drag the session’s working
+  directory, like the proxy icon in a window title
+  bar.
+- The Interpolated String status bar component now
+  shows [undef: x] for a reference to an undefined
+  variable instead of silently rendering an empty
+  string, making typos and unavailable variables
+  obvious. Use \(x?) to treat a missing value as
+  empty.
+- The session’s status is now available in the
+  session variable “status”, so you can show it in
+  a badge, title, or status bar component.
+- AI chat asks for approval less often when it
+  types a message you dictated into another
+  session, such as telling a coding agent to
+  re-run its tests once a watched session
+  finishes.
+- The Session Status toolbelt tool now lists
+  Claude Code sessions running inside tmux
+  Integration panes on this Mac. They never
+  appeared before, and their status went
+  unreported to the rest of the app. Issue 13049.
+- If you launch a second copy of iTerm2 while one
+  using the same settings is already running,
+  iTerm2 now warns you that the two could
+  overwrite each other’s preferences and saved
+  windows, and offers to quit and switch to the
+  running copy or launch anyway.
+- Browser tabs now show a title (page title, or
+  the host, or the profile name) instead of a
+  blank tab and window title.
+- In the minimal theme, a browser tab's light or
+  dark appearance and tint now follow the page's
+  background color instead of the profile's
+  terminal background color.
+- The Session Status toolbelt tool has a snooze
+  button next to the notify button that toggles
+  snooze on the selected session.
+- The Companion setup wizard no longer asks for an
+  API key when AI already works, or when you chose
+  a model manually in Settings > General > AI. If
+  that model isn’t set up yet, the wizard says so
+  and lets you finish setup anyway.
+- AI command safety checks now use your provider’s
+  smaller, cheaper model when one is available, so
+  they cost less.
+- Settings search now reveals controls that live
+  on an inner sub-tab (such as AI > Features). It
+  switches to the correct nested tab before
+  highlighting, instead of dimming a bogus area.
+- With the tab bar on the left or right, the tab
+  and tab group context menus now say “New Tab
+  Below” and “Close Tabs Below” instead of “to the
+  Right”, matching the direction the tabs actually
+  run. The confirmation for closing the tabs after
+  a group follows suit.
+- The About window now follows the current theme,
+  updating live when you switch between light and
+  dark. On macOS 26 the backer list sits in a
+  rounded container matching the sponsor cards;
+  before that, dark themes get a frosted-glass
+  look.
+
+Bug Fixes:
+- Opening an Instant Replay recording no longer
+  applies settings embedded in the file that could
+  run commands, such as triggers. Only appearance
+  settings like colors, fonts, and cursor style
+  are taken from a recording. Issue 13128.
+- Answering “Always” to “Close tmux windows after
+  detaching?” now closes only the tmux integration
+  windows left open by the detach. It used to
+  close every session in the app.
+- Restarting or logging out of macOS while Claude
+  Code was running in iTerm2 could cause your
+  windows not to be restored at the next login.
+  Claude Code’s status updates could relaunch
+  iTerm2 just as it was quitting, and that brief
+  launch replaced the saved windows.
+- After iTerm2 restarted with your sessions
+  restored, which happens after an update, a
+  crash, or a force quit, commands in newly opened
+  sessions could fail to reach devices on your
+  local network with “No route to host” until you
+  quit and reopened iTerm2. New sessions now get
+  local network access right away. Sessions
+  restored from before the restart still need to
+  be restarted to regain it. Issue 12106.
+- When an SSH Integration connection dropped, for
+  example because the ssh process or the remote
+  server was killed, the session hung: nothing you
+  typed afterward appeared. It now ends the
+  connection and returns to the local shell.
+- Stopping an AI chat reply while another chat is
+  also replying no longer cancels the other chat’s
+  reply, and the stopped reply now really stops
+  downloading instead of running (and using up
+  tokens) until it finishes.
+- Fixed various crashes, including ones when
+  splitting, maximizing, swapping, or rearranging
+  panes in a tmux integration window left open
+  after detaching; when a maximized split pane was
+  torn down, such as when a tmux connection
+  dropped; at every launch when a profile’s name
+  began with a combining character; when a trigger
+  had no regex, such as an event trigger written
+  by hand in a Dynamic Profile; when opening a tab
+  while a paired iPhone was connected; and when
+  saving a debug log that captured malformed text.
+- Pressing space twice in a terminal no longer
+  types a period when macOS’s “Add period with
+  double-space” setting is on. In vim this could
+  repeat your last command. Issue 13123.
+- iTerm2 no longer applies macOS’s automatic
+  spelling correction, capitalization, or smart
+  quotes and dashes. They could change what you
+  type in a terminal. Text replacements still
+  work.
+- A tab name you set yourself with Edit Tab Title
+  is no longer replaced by the session’s name
+  whenever the tab’s subtitle changes or its label
+  is otherwise refreshed. Issue 13072.
+- Make Text Bigger works again when you type it as
+  ⌘⇧= (the way you type ⌘+). Since 3.7.0, that
+  keystroke opened the Clippings panel instead,
+  because Show Clippings had claimed it. Show
+  Clippings is now ⌘⇧⌥G. Issue 13022.
+- In a session that ssh'ed to another machine
+  without ssh integration, the current directory
+  (and paths used by Upload and Paste Path) no
+  longer switches to the local Mac's directory
+  after you run a command.
+- Fixed restored sessions bringing lines that had
+  been erased by a clear screen back onto the
+  screen, above the newer output, with the cursor
+  in the wrong place.
+- On macOS 26, hiding a hotkey window when no
+  other iTerm2 windows are open once again returns
+  focus to the previous app right away, so text
+  you type immediately afterward no longer goes to
+  the terminal.
+- A hotkey window set to appear on all spaces no
+  longer switches you to a different space when
+  revealed after reopening the laptop lid. It is
+  now revealed on the current space and rejoins
+  all spaces afterward. Issue 12968.
+- Fixed a bug on macOS 26 where pressing Cmd-Tab
+  to leave a full screen window would flash the
+  other app and immediately switch back to iTerm2,
+  sometimes leaving you unable to change apps
+  without the mouse. This affected windows using
+  the older full screen style with menu bar hiding
+  turned on.
+- Fixed dark triangles that could appear over a
+  background image near the edges of the window
+  with the GPU renderer. Issues 12604, 12642,
+  12653, and 12791.
+- Fixed “Remember my choice” applying the wrong
+  choice in the dialog that appears when you paste
+  a file, folder, or image. The answer was
+  remembered by button position, so a choice saved
+  for a local file could turn into a different
+  button in a session connected to a remote host,
+  silently uploading the file. Each set of choices
+  the dialog can offer now remembers its own
+  answer, so silencing it for a local file no
+  longer silences it for a folder or for a remote
+  host. Any answer you had saved for these dialogs
+  is cleared, so you will be asked once more.
+- Fixed a beachball with a large file, or a file
+  on a slow disk, copied from the Finder. Opening
+  Edit > Paste Special read the whole file just to
+  decide whether to enable Paste File
+  Base64-Encoded, and pasting read it again before
+  offering the paste options. Opening the menu no
+  longer reads the file at all, and pasting looks
+  at only the first 50 KB.
+- Fixed a lag when switching or closing tabs with
+  the Session Status tool open in the toolbelt.
+- Fixed a rare race where a new session could
+  silently lose some of the first output it
+  received.
+- Attaching with tmux Integration no longer fails
+  when a pane’s scrollback contains raw tmux
+  control-mode text (for example, from an earlier
+  tmux -CC run in a terminal without tmux
+  Integration). iTerm2 mistook a %exit line in
+  that text for tmux quitting, dropped the
+  connection, and printed the rest of the protocol
+  stream into the window.
+- In a tmux Integration session, keys such as
+  Shift-Enter are now encoded the same way before
+  and after a detach and reattach. Previously a
+  pane could encode them one way before a detach
+  and another way after, until the app was
+  restarted. With tmux 3.9 or later, iTerm2 lets
+  tmux encode each key for the app in the pane,
+  including with the Kitty keyboard protocol.
+  Issue 13076.
+- In tmux integration, a layout change made by
+  tmux while Find > Filter was open on a pane no
+  longer hides pane %0 or moves keyboard focus
+  away from the filtered pane.
+- In tmux integration, a new pane now picks up
+  user variables, the host name, the current
+  directory, and the shell integration version
+  that its shell reported while the pane was
+  opening. Before, a badge such as
+  \(user.host_name) stayed empty until the shell
+  showed its second prompt. Issue 13006.
+- In tmux integration, a window created with “tmux
+  new-window -d” now opens as a background tab
+  instead of taking focus. Issue 13112.
+- In tmux integration, iTerm2 could miss a window
+  switch made by another tmux client or a script
+  and keep showing the old tab.
+- Fixed tmux integration sessions not resizing
+  when the tab bar hides or shows in full screen
+  with “Hide tab bar when there is only one tab”
+  enabled, which left an unused strip at the
+  bottom of the window.
+- When a tmux integration window first loads, its
+  tab now shows the finished title right away. It
+  used to briefly show a bare session name, with
+  neither the “↣” marker that flags a tmux tab nor
+  the second line under the title.
+- Stopped falsely offering to reset the key
+  reporting mode after every command when your
+  shell turns the keyboard protocol on and off
+  itself, as Fish 4 does. 3.7.2 fixed this only
+  for Fish with oh-my-posh.
+- Fixed slow replies to cursor-position and other
+  status queries. Programs that send many of them
+  at once, such as during capability detection,
+  waited seconds instead of milliseconds. Issue
+  13035.
+- Fixed Kitty keyboard protocol base-layout
+  reporting for non-US keyboard layouts, so
+  shortcuts such as Ctrl-C work without switching
+  layouts.
+- With “Report keys using CSI u” turned on and
+  Option set to Meta, pressing Option with a
+  letter sent nothing at all. It now sends the
+  meta byte, as it does without CSI u.
+- Fixed a bug in the Kitty graphics protocol where
+  transmitting a new image under an image id
+  already in use kept drawing the old image in
+  places that already showed it. The newest image
+  is now used, so one program no longer shows a
+  stale picture left behind by another.
+- Fixed double-width and double-height lines (ESC
+  #3, #4, and #6) staying double-sized after the
+  line was erased, scrolled, or reset. A
+  full-screen program that drew a large title and
+  then repainted could show giant, clipped text
+  where ordinary text belonged; entering the
+  alternate screen, Reset, and Clear Buffer left
+  the same stale lines behind.
+- Fixed a bug where a subparameter written after a
+  full CSI parameter list was dropped even though
+  it belonged to a parameter that had been stored,
+  such as the 16th.
+- Parentheses, brackets, and other mirrored
+  punctuation now draw correctly in right-to-left
+  text, so a bracket around an English phrase
+  inside Persian is handled the same way as in
+  other Mac apps.
+- Fixed misplaced letters in right-to-left words
+  that combine a lam-alef ligature with a
+  diacritic, such as the Persian کاملاً and لطفاً.
+- Selecting part of an Arabic or Persian word no
+  longer breaks its cursive joining. Previously a
+  selection or a mid-word color change split the
+  word (for example کامل) into isolated letter
+  forms. Arabic and Persian text could also
+  sometimes be drawn with each letter in its
+  isolated form.
+- Selecting text on right-to-left lines now
+  selects exactly the columns you drag over.
+  Previously dragging over a line with embedded
+  English or digits could highlight a different,
+  broken-up span, and the first or last character
+  of a right-justified line could be impossible to
+  select. Copied text stays in reading order, and
+  extending a selection across several lines
+  follows each line’s direction.
+- Fixed a bug where a skin-toned emoji like 👍🏻 was
+  drawn as the plain emoji followed by a separate
+  color swatch, taking four columns. It is now a
+  single emoji two columns wide, matching other
+  modern terminals.
+- Fixed text written over the right half of an
+  emoji or other wide character landing two
+  columns too far to the right, a bug introduced
+  in 3.7.3.
+- Find now matches text that spans a blank the
+  program created by moving the cursor instead of
+  printing a space. Before, searching for more
+  than one word could fail on output from programs
+  like Claude Code even though the words appeared
+  separated by a space.
+- Resizing a window while only blank space was
+  selected left behind an empty selection, so Copy
+  and other selection-based actions acted on
+  nothing.
+- Fixed a bug where a smooth-blinking cursor
+  passed through light gray while fading in the
+  GPU renderer instead of fading directly to the
+  background color. Issue 12990.
+- The “Animate large movements” cursor option no
+  longer streaks a cursor-colored trail across the
+  screen when a program such as top redraws the
+  screen on its own. The animation now plays only
+  for cursor jumps that follow your own keyboard
+  or mouse input.
+- Fixed a bug where pressing Backspace while
+  composing text with an input method such as the
+  Korean 2-Set IME could leave a stray character
+  behind that needed an extra press to remove.
+  Pressing Return while composing now submits the
+  line in one press.
+- Voice Control corrections, like “replace world
+  with there”, now replace the text when it ends
+  at the cursor. Before, the new text was typed
+  after the original. Corrections elsewhere, or in
+  full-screen apps like vim, are ignored.
+- Key bindings saved by older versions of iTerm2
+  no longer fire when you press A while “Interpret
+  key bindings based on physical key” is on, which
+  could make the A key stop typing. iTerm2 also no
+  longer mistakenly offers to turn that setting on
+  when you press a shortcut like ^A. Issue 13110.
+- Pasting or dropping a file or image into a local
+  tab no longer offers only to upload it when
+  another tool in your shell (such as oh-my-zsh)
+  reports an outdated host name. When iTerm2 can’t
+  be sure a session is on another machine, the
+  paste dialog now also offers to paste a local
+  path. Issue 13117.
+- Dragging a file into a local terminal now
+  inserts its path on VPN or Tailscale networks,
+  where it had instead been offering to upload the
+  file. Requires the updated shell integration
+  scripts.
+- The file paste options (Paste Path, Paste Paths,
+  and Upload and Paste Path) now honor the “When
+  pasting a dropped filename, wrap it in double
+  quotes” setting in Settings > General, as
+  dragging a file into a local session already
+  did. They previously always used double quotes,
+  ignoring the setting.
+- Uploading several files at once to a host you
+  connected to with an SSH profile now uploads all
+  of them instead of only the first, and “Upload
+  and Paste Path” now pastes the path the file
+  actually landed on, such as “name (2)” when the
+  name was taken.
+- Cancelling an upload over SSH Integration no
+  longer leaves a temporary file on the remote
+  host or gets stuck at “Cancelling…”.
+- Archive Sessions on Closure failed with “The
+  file doesn’t exist” whenever the session’s name
+  contained a slash, such as a title that shows
+  the tty or the current directory. Slashes and
+  other characters that can’t appear in a filename
+  are now replaced with underscores, the time in
+  the archive name uses periods instead of colons
+  so Finder shows it correctly, and very long
+  names are shortened to fit. The same cleanup now
+  applies to automatic session log filenames,
+  which used to handle only slashes. Issue 13094.
+- Archive Sessions on Closure failed with “the
+  volume is read only” when no archive folder was
+  chosen. Turning it on with an empty folder now
+  fills in ~/Library/Application Support/
+  iTerm2/Archives, and profiles that already have
+  it on with no folder archive there. Issue 12980.
+- Fixed several bugs archiving sessions on close:
+  sessions closed shortly before quitting are now
+  always archived, split panes with the same name
+  are all saved instead of only one, and closing
+  an archived session soon after opening it no
+  longer warns that it ended very soon after
+  starting.
+- Duplicate Session no longer stamps a permanent
+  working-directory override on the new session.
+  Previously that override was inherited by split
+  panes and could go stale, dropping the shell in
+  the wrong directory. Issue 12981.
+- The SCP-download menu animation no longer leaves
+  an invisible window behind. That stray window
+  could make clicking the Dock icon fail to open a
+  new terminal after the last window was closed.
+  Issue 12996.
+- Fixed a bug where auto-update failed with a
+  message about running from the download location
+  when iTerm2 was unzipped or moved to an
+  Applications folder from the command line rather
+  than dragged in the Finder. iTerm2 now fixes
+  this automatically on launch, and no longer
+  offers to move a copy that is already installed.
+- Semantic History can once again open files in
+  Xcode when the active developer directory is set
+  to the Command Line Tools rather than Xcode. It
+  used to show a “Semantic History Command Failed”
+  alert instead. Issue 13091.
+- Semantic History could open the wrong file in
+  TextMate, BBEdit or MacVim when the path
+  contained a space, an ampersand, or another
+  character with special meaning in a URL.
+- “Open Selection as URL” now works on links
+  without a scheme, like example.com/path, and is
+  hidden when the selection isn’t a URL. Issue
+  13092.
+- Opening a link from a browser tab in a tab group
+  (with “Open in New Tab” or a link that wants a
+  new window) now puts the new tab in that group
+  instead of leaving it ungrouped in the middle of
+  the group. Issue 13029.
+- The control sequence that resets a tab color to
+  the profile’s now restores it correctly when the
+  profile has separate light and dark mode colors
+  but its Tab Color predates them. It could leave
+  the tab with a color you never chose, often red,
+  or with no color at all. Issue 13058.
+- On macOS Tahoe, the progress ring around a tab
+  is no longer missing from the first and last
+  tabs. A tab that is partly scrolled under the
+  window controls now keeps the visible part of
+  its ring, and its activity indicator, instead of
+  losing them entirely, and the ring stays within
+  the tab bar’s rounded ends rather than drawing
+  past them.
+- Fixed the git ahead/behind arrows in the session
+  toolbar and the git status bar component staying
+  black in dark mode instead of matching the text
+  color.
+- On macOS 26, Maximized and Centered windows, and
+  windows opened for a single command, now show
+  the tab bar in the title bar like ordinary
+  windows. Before, their tab bar background didn’t
+  match the title bar and a dark line separated
+  the two.
+- With the Minimal or Compact theme and no tab bar
+  at the top, the window buttons that appear when
+  you point at the window’s top-left corner no
+  longer cover a status bar or Workgroup toolbar
+  there, which made its leftmost item impossible
+  to click. A small arrow appears in the corner
+  instead; click it to show or hide the window
+  buttons. Issue 13100.
+- Fixed a bug where dismissing a confirmation in
+  certain Settings sheets (such as the hotkey
+  configuration or special exceptions panels)
+  would bring a terminal window to the front.
+- Help popovers, such as the ones shown by the ?
+  buttons in Settings, no longer cut off the last
+  line of text, and no longer scroll when all of
+  their text fits.
+- Choosing Show Session Note from Open Quickly no
+  longer makes an empty note appear briefly and
+  then disappear.
+- When no valid UNIX locale matches your language
+  and region, the prompt to pick one now appears
+  as a normal dialog the first time a hotkey
+  window opens, instead of as a sheet on the
+  not-yet-visible window.
+- Pairing a companion iPhone no longer fails on
+  networks that can’t reach iterm2.com. iTerm2 now
+  falls back to a second copy of its list of relay
+  servers. If neither can be reached, the pairing
+  window says so and suggests another network;
+  hover over the message to see what went wrong
+  with each server.
+- Installing the Claude Code Integration now
+  honors $CLAUDE_CONFIG_DIR, so per-tab status
+  indicators work for people who keep Claude
+  Code’s settings outside ~/.claude. It used to
+  always install into ~/.claude, where Claude Code
+  never looked.
+- The Claude Code Integration no longer warns that
+  it looks broken when you edit its hook commands
+  in Claude Code’s settings.json to use $HOME, ~,
+  or a wrapper script. Reinstalling also keeps
+  such commands instead of adding a second copy of
+  each hook. Uninstalling and reinstalling leave a
+  hook command alone if it runs other programs
+  besides the integration’s, and Uninstall lists
+  any it left in place.
+- Installing, reinstalling, or uninstalling the
+  Claude Code Integration now updates the file
+  that a symlinked settings.json points to (as
+  with GNU Stow or chezmoi). It used to replace
+  the link with a plain file that other users
+  could read, and Claude Code stopped seeing edits
+  to the original file. Issue 13098.
+- Installing or reinstalling the Claude Code
+  Integration no longer replaces a Claude Code
+  settings.json that has a syntax error, which
+  erased all your other Claude Code settings. It
+  now leaves the file alone and asks you to fix it
+  and try again.
+- Interrupting Claude Code with Esc now returns
+  its Session Status to idle. The tab kept reading
+  “working”, or “waiting” if a permission prompt
+  was open, until the next thing you asked it to
+  do.
+- Fixed Notify on Status Change reporting that a
+  session changed from “none” when its status had
+  already been set before you turned the
+  notification on, and alerting when a program
+  merely restated that status.
+- Debug logs no longer include passwords sent to
+  or received from password manager integrations,
+  AI API keys, or the values of custom HTTP
+  headers configured for AI models.
+- The Bitwarden, KeePassXC, and Keeper password
+  manager integrations now find command-line tools
+  installed by Homebrew or npm on your shell’s
+  search path instead of asking you to locate
+  them. Homebrew’s “bw” is a script that needs
+  “node”, which the integration could not find, so
+  Bitwarden showed an empty list.
+- If you choose a password manager’s command-line
+  tool by hand, iTerm2 now keeps the path you
+  chose, so it keeps working after the tool is
+  upgraded.
+- The Bitwarden integration now reports the
+  Bitwarden CLI’s own error message instead of
+  showing an empty list or a vague error. It lists
+  only items in a Bitwarden folder named “iTerm2”,
+  and now says so when your vault has no such
+  folder.
+- Fixed a bug where the manual AI model editor’s
+  Test Connection button ignored the “Supports
+  temperature” toggle and always sent the
+  temperature parameter, failing against endpoints
+  that reject it.
+- Fixed a bug where the manual AI model editor’s
+  Test Connection button sent your API key to an
+  AI endpoint on your local network, even though
+  real requests never do. An authenticated local
+  server could report a successful test and then
+  reject every chat message. The test now behaves
+  like a real request, and names the header to add
+  under Custom headers when the endpoint wants a
+  credential.
+- Fixed a bug where the host in an AI model’s URL
+  was compared letter for letter, so its
+  capitalization, or a trailing dot, changed which
+  API key was sent. A local address written that
+  way (http://LOCALHOST:11434) was not recognized
+  as self-hosted and received your provider key,
+  and a provider address written that way
+  (https://API.DEEPSEEK.COM) was attributed to
+  OpenAI, so the wrong key was sent.
+- Fixed a bug where a custom HTTP header for AI
+  requests whose name differed only in
+  capitalization from one iTerm2 sets itself (such
+  as “authorization”) was sent alongside the
+  built-in header instead of replacing it, leaving
+  it to chance which value the server saw.
+- Fixed a bug where turning on “Use AI to check
+  safety of commands before running them” on a Mac
+  without Apple Intelligence was turned back off
+  the first time you used AI chat, which then
+  asked whether to enable it again.
+- Fixed a bug where, if the AI asked for
+  permission in a chat and you ignored the request
+  and sent a new message instead, the chat would
+  stop responding.
+- Fixed a bug where an AI chat permission button
+  (such as “Check terminal state”) did not update
+  its label after you changed the setting, and
+  re-clicking it appeared to do nothing.
+- Fixed a bug where quitting iTerm2 unlinked each
+  AI chat from its terminal session and canceled
+  what the chat was watching, even when window
+  restoration brought the session back at the next
+  launch.
+- Editing an AI chat message now fully removes the
+  later conversation, so the AI no longer sees
+  leftover command results from it.
+- Stopping an AI chat reply and then sending
+  another message no longer shows the rest of the
+  stopped reply as the answer to the new message.
+- The API key field shown when AI features ask for
+  a key now hides what you type instead of showing
+  the key in plain text.
+- In AI chat, a reply that mentions two or more
+  sessions now shows each one as a clickable link.
+  Before, the session names could turn into plain,
+  unclickable text.
+- Fixed Tab.async_update_layout in the Python API
+  making a browser pane many times too big,
+  squeezing the panes beside it, and sometimes
+  crashing iTerm2.
+- Fixed the Python API reporting an underline
+  color, block ID, or hyperlink on cells that did
+  not have one. The first plain cell after a run
+  that had one was described as part of that run,
+  so scripts reading screen contents saw the
+  attribute spill past where it ended.
+- iTerm2 writes to disk less often while it saves
+  window state for restoration. A setting meant to
+  reduce this had been silently turned off.
+- Installing shell integration without internet
+  access now works on systems that don’t have
+  bash, such as FreeBSD and OpenBSD. Before, the
+  installer could hang partway through writing the
+  script when your shell was tcsh.
+- The Internet-Free Install of shell integration
+  no longer gets stuck at its first step for zsh
+  users, and that step can no longer be skipped,
+  which made later steps write to an invalid path.
