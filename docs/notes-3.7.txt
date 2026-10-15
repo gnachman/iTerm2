@@ -1603,3 +1603,6 @@ Bug Fixes:
   pointer to a pane whose find field had focus
   no longer selects the whole query, so the next
   key you type doesn’t replace it.
+- The donation link in the Settings and Edit
+  Session title bars no longer truncates the
+  window title.
