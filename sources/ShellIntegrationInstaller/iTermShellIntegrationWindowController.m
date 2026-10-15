@@ -452,12 +452,13 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         if ([shell isEqualToString:@"zsh"]) {
             // Send the command only once the expectation is in place. Sending it first loses a
             // race with a fast shell: its output gets checked before the expectation exists.
-            // The regex has no space before the capture because an empty value leaves no
-            // trailing space on the line.
+            // The regex has no space before the capture because an empty value leaves none.
+            // The line ends in a marker so one received only up to “go in” (on a slow link)
+            // isn't taken for an empty directory.
             iTermExpectation *expectation = nil;
-            [self sendText:@"echo My dotfiles go in ${ZDOTDIR:-$HOME}\n"
+            [self sendText:@"echo My dotfiles go in ${ZDOTDIR:-$HOME}, end\n"
                 reallySend:reallySend
-                afterRegex:@"^My dotfiles go in(.*)"
+                afterRegex:@"^My dotfiles go in(.*), end$"
                expectation:&expectation
                 completion:^(NSArray<NSString *> *dotdirCaptures) {
                 NSString *dotdir = [dotdirCaptures[1] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
