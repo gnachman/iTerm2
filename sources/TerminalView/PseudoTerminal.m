@@ -10928,8 +10928,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     const NSSize internalDecorationSize = self.currentSession.view.internalDecorationSize;
     minSize.width += decorationSize.width + internalDecorationSize.width;
     minSize.height += decorationSize.height + internalDecorationSize.height;
-    minSize.width = MAX(minSize.width, self.window.minSize.width);
-    minSize.height = MAX(minSize.height, self.window.minSize.height);
+    minSize = [iTermSetWindowFrameRequest minimumFrameSizeForContentMinimum:minSize
+                                                              windowMinSize:self.window.minSize
+                                                                  styleMask:self.window.styleMask];
 
     NSArray<NSValue *> *screenFrames = [[NSScreen screens] mapWithBlock:^id _Nullable(NSScreen *screen) {
         return [NSValue valueWithRect:screen.visibleFrame];
