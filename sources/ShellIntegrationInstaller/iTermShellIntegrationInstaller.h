@@ -24,6 +24,8 @@
 - (void)shellIntegrationInstallerSkipStage;
 - (NSString *)shellIntegrationInstallerNextCommandForSendShellCommands;
 - (void)shellIntegrationInstallerCancelExpectations;
+// The current page changed its height to fit its contents.
+- (void)shellIntegrationInstallerContentSizeDidChange;
 @end
 
 typedef NS_ENUM(NSUInteger, iTermShellIntegrationShell) {

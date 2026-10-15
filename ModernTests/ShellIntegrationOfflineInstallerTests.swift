@@ -552,6 +552,47 @@ class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
         XCTAssertEqual(terminal.sentTexts.last, "exit\n")
     }
 
+    // QA finding F-381: the write-failed message wraps, and the step list had a fixed height, so
+    // the steps after it were cut off.
+    func testStepListGrowsToFitTheWriteFailedMessage() {
+        controller.shellIntegrationInstallerSetInstallUtilities(true)
+        let field = controller.sendShellCommandsStepListField
+        let originalFieldHeight = field.frame.height
+        let originalFieldMinY = field.frame.minY
+        let originalContentHeight = controller.window?.contentView?.frame.height ?? 0
+
+        terminal.canCreateAutoloadDir = false
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        XCTAssertTrue(controller.sendShellCommandsWriteFailed)
+
+        let bounds = NSRect(x: 0, y: 0, width: field.frame.width, height: .greatestFiniteMagnitude)
+        let fittingHeight = ceil(field.cell?.cellSize(forBounds: bounds).height ?? 0)
+        XCTAssertGreaterThan(fittingHeight, originalFieldHeight)
+        XCTAssertGreaterThanOrEqual(field.frame.height, fittingHeight)
+        // The list grows upward; the buttons below it keep their places.
+        XCTAssertEqual(field.frame.minY, originalFieldMinY)
+        let growth = field.frame.height - originalFieldHeight
+        guard let view = field.superview, let contentView = controller.window?.contentView else {
+            XCTFail("Step list is not in the window")
+            return
+        }
+        XCTAssertLessThanOrEqual(field.frame.maxY, view.bounds.height)
+        XCTAssertEqual(contentView.frame.height, originalContentHeight + growth, accuracy: 0.5)
+        let frameInContent = view.convert(view.bounds, to: contentView)
+        XCTAssertGreaterThanOrEqual(frameInContent.minY, 0)
+        XCTAssertLessThanOrEqual(frameInContent.maxY, contentView.bounds.height)
+
+        // Back to shorter text: the list shrinks again but still fits.
+        let grownHeight = field.frame.height
+        controller.shellIntegrationInstallerSkipStage()
+        XCTAssertFalse(controller.sendShellCommandsWriteFailed)
+        let shorterFit = ceil(field.cell?.cellSize(forBounds: bounds).height ?? 0)
+        XCTAssertLessThan(field.frame.height, grownHeight)
+        XCTAssertGreaterThanOrEqual(field.frame.height, shorterFit)
+        XCTAssertEqual(field.frame.minY, originalFieldMinY)
+    }
+
     func testWriteScriptWaitsForTheHelperToStart() {
         // The helper sh never prompts. Nothing more may be typed, since nushell would read it,
         // and the echo of the typed command must not count as progress.
