@@ -1486,3 +1486,6 @@ Bug Fixes:
   English.
 - The “AI-generated name” choice in Settings >
   Profiles > General > Title is now translated.
+- it2 session list no longer shows a session’s
+  tty as \/dev\/ttys000 or its name with
+  backslash escapes. It prints the plain values.

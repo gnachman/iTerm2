@@ -97,6 +97,32 @@ final class SessionListTests: XCTestCase {
         XCTAssertTrue(channel.disconnected, "run() should disconnect the client")
     }
 
+    // Variable values arrive JSON-encoded, and iTerm2 escapes "/" as "\/". The
+    // name and tty must be decoded, not just stripped of their quotes, or the
+    // escapes leak into the output.
+    func testSessionListDecodesJSONEscapes() throws {
+        let vr = ITMVariableResponse()
+        vr.status = .ok
+        vr.valuesArray.add(#""say \"hi\" \\ there""#)
+        vr.valuesArray.add(#""\/dev\/ttys001""#)
+        let varMessage = ITMServerOriginatedMessage()
+        varMessage.id_p = 2
+        varMessage.variableResponse = vr
+
+        let channel = FakeChannel()
+        channel.responses = [
+            listResponse(id: 1, sessionId: "sess-1", title: "My Title"),
+            varMessage,
+        ]
+        let capture = OutputCapture()
+
+        var command = try Session.List.parse([])
+        try command.run(capture.context(channel: channel))
+
+        let columns = ["sess-1", #"say "hi" \ there"#, "My Title", "0x0", "/dev/ttys001"]
+        XCTAssertEqual(capture.out, [columns.joined(separator: "\t")])
+    }
+
     // --format replaces the columns with the interpolated string, evaluated in the
     // session's context, and skips the variable request the columns need. A probe
     // in the app context first checks that iterm2.interpolate exists.
