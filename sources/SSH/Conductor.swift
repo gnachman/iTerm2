@@ -2871,12 +2871,29 @@ extension Conductor {
     }
 
     private func encode(_ pending: Conductor.ExecutionContext) -> String {
-        let prefix = pending.command.isFramer ? "" : linePrefix
-        return pending.command.stringValue.components(separatedBy: "\n")
-            .map(\.base64Encoded)
+        return Self.encodeForWire(pending.command, linePrefix: linePrefix)
+    }
+
+    // Produces the bytes written to the remote for `command`. Internal for testing.
+    nonisolated static func encodeForWire(_ command: Command, linePrefix: String) -> String {
+        let encodedArgs = command.stringValue.components(separatedBy: "\n").map(\.base64Encoded)
+        if command.isFramer {
+            // framer.py reads one line per argument, joining a line that ends in a backslash
+            // with the next, and an empty line ends the command. Split each argument on its
+            // own so a split never lands next to the newline between two arguments, which
+            // would put an empty line on the wire and cut the command in two.
+            return encodedArgs
+                .flatMap { arg -> [String] in
+                    // chunk() returns nothing for an empty argument; keep its (empty) line.
+                    let lines = arg.chunk(128, continuation: "\\")
+                    return lines.isEmpty ? [""] : lines
+                }
+                .joined(separator: "\n") + "\n"
+        }
+        return encodedArgs
             .joined(separator: "\n")
-            .chunk(128, continuation: pending.command.isFramer ? "\\" : "")
-            .map { prefix + $0 }
+            .chunk(128)
+            .map { linePrefix + $0 }
             .joined(separator: "\n") + "\n"
     }
 

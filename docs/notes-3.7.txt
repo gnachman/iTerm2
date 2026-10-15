@@ -1435,3 +1435,8 @@ Bug Fixes:
   Intelligence) in the Cockpit’s composer no
   longer crashes iTerm2. The menu item is now
   disabled there.
+- With SSH integration, starting the remote
+  shell, completing paths, and other requests
+  with several long arguments no longer
+  occasionally fail because the request was
+  split in two on the way to the remote host.
