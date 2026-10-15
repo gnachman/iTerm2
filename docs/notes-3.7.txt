@@ -1671,3 +1671,7 @@ Bug Fixes:
   other scripts with vowel signs written before
   their consonant draw the sign in the right
   place again: क्षत्रिय no longer shows ि after त्र.
+- In Copy Mode, the cursor on a right-to-left
+  line is now drawn on the character it is on,
+  instead of in the blank area on the other side
+  of the line.
