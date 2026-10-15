@@ -1626,3 +1626,7 @@ Bug Fixes:
 - Test Connection in the AI model editor can now
   be stopped while it runs. Before, a test of an
   unreachable server could take many minutes.
+- AI network errors now read “HTTP request
+  failed: …” instead of a broken sentence, and
+  errors from a self-hosted model name its
+  server instead of “Unknown Platform”.
