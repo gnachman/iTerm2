@@ -134,6 +134,98 @@ final class FloatingPaneOcclusionTests: XCTestCase {
         XCTAssertTrue(entered(), "out from under it")
     }
 
+    /// QA finding F-051: with Swap With Session picking a target, a tiled pane under a float is not
+    /// highlighted while the pointer is over the float; only the float is.
+    func testSwapPickerHighlightsOnlyTheFloatWhereItCoversATiledPane() {
+        guard let first = tab.tiledSessions()?.first, let controller = MovePaneController.sharedInstance() else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = fixture.split(first, vertically: true)
+        let float = fixture.addFloat(frame: NSRect(x: 200, y: 150, width: 400, height: 300))
+        guard let pane = tab.floatingPane(for: float), let secondView = second.view, let floatView = float.view else {
+            XCTFail("No views")
+            return
+        }
+        let overSecond = pane.convert(NSPoint(x: pane.bounds.maxX - 40, y: pane.bounds.midY), to: nil)
+        XCTAssertTrue(secondView.bounds.contains(secondView.convert(overSecond, from: nil)),
+                      "test setup: the point is over the float where it covers the second tiled pane")
+        let uncovered = secondView.convert(NSPoint(x: secondView.bounds.maxX - 20, y: 20), to: nil)
+
+        controller.swapPane(first)
+        defer {
+            controller.exitMovePaneMode()
+        }
+        let tiledPicker = picker(secondView)
+        let floatPicker = picker(floatView)
+        move(tiledPicker, to: uncovered)
+        XCTAssertEqual(tiledPicker.half(), .fullPane, "test setup: the tiled pane starts highlighted")
+        move(floatPicker, to: overSecond)
+        move(tiledPicker, to: overSecond)
+        XCTAssertEqual(floatPicker.half(), .fullPane, "the float is the target")
+        XCTAssertEqual(tiledPicker.half(), .noHalf, "the pane under the float is not")
+
+        move(tiledPicker, to: uncovered)
+        XCTAssertEqual(tiledPicker.half(), .fullPane, "the tiled pane is a target where nothing covers it")
+    }
+
+    /// Only a float hides a pane from the picker. Another view over the pane leaves it a target.
+    func testSwapPickerIgnoresViewsOtherThanFloats() {
+        guard let first = tab.tiledSessions()?.first, let controller = MovePaneController.sharedInstance() else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = fixture.split(first, vertically: true)
+        guard let secondView = second.view else {
+            XCTFail("No view")
+            return
+        }
+        controller.swapPane(first)
+        defer {
+            controller.exitMovePaneMode()
+        }
+        let point = secondView.convert(NSPoint(x: 50, y: 50), to: nil)
+        guard let contentView = fixture.window.contentView else {
+            XCTFail("No content view")
+            return
+        }
+        let center = contentView.convert(point, from: nil)
+        let cover = NSView(frame: NSRect(x: center.x - 20, y: center.y - 20, width: 40, height: 40))
+        contentView.addSubview(cover, positioned: .above, relativeTo: nil)
+        defer {
+            cover.removeFromSuperview()
+        }
+        guard contentView.hitTest(contentView.superview?.convert(point, from: nil) ?? point) === cover else {
+            XCTFail("test setup: the view covers the picker")
+            return
+        }
+        let tiledPicker = picker(secondView)
+        move(tiledPicker, to: point)
+        XCTAssertEqual(tiledPicker.half(), .fullPane)
+    }
+
+    private func picker(_ view: SessionView) -> SplitSelectionView {
+        guard let picker = view.subviews.compactMap({ $0 as? SplitSelectionView }).first else {
+            it_fatalError("No picker")
+        }
+        return picker
+    }
+
+    private func move(_ picker: SplitSelectionView, to point: NSPoint) {
+        guard let event = NSEvent.mouseEvent(with: .mouseMoved,
+                                             location: point,
+                                             modifierFlags: [],
+                                             timestamp: 0,
+                                             windowNumber: fixture.window.windowNumber,
+                                             context: nil,
+                                             eventNumber: 0,
+                                             clickCount: 0,
+                                             pressure: 0) else {
+            it_fatalError("No event")
+        }
+        picker.mouseMoved(with: event)
+    }
+
     func testHiddenFloatsDoNotCover() {
         let (tiled, _, covered, _) = setUpCoveredPane()
         guard let tiledView = tiled.view else {

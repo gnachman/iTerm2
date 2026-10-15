@@ -1690,3 +1690,6 @@ Bug Fixes:
   pane with Control held now keeps keyboard focus
   in the docked pane when other floating panes
   are open.
+- In Swap With Session, pointing at a floating
+  pane no longer also highlights the pane under
+  it as a swap target.
