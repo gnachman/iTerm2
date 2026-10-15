@@ -1885,6 +1885,11 @@ Bug Fixes:
   special characters can no longer inject script
   or markup into the browser’s page-load error
   page.
+- When several Dynamic Profiles files have
+  errors, the alert now gives the right number
+  of additional errors in the log. It counted
+  each bad file twice.
+
 
 
 

@@ -72,6 +72,11 @@
     SCEvents *_events;
     NSMutableDictionary<NSString *, NSString *> *_guidToPathMap;
     NSInteger _pendingErrors;
+    // How many of _pendingErrors the most recent reload reported. The next reload finds them
+    // again, so it replaces them rather than adding to them.
+    NSInteger _pendingErrorsFromLastReload;
+    // An alert for _pendingErrors has been dispatched but not shown yet.
+    BOOL _errorAlertScheduled;
     iTermFilesAndFolders *_paths;
     NSArray *_tokens;
     BOOL _loading;
@@ -163,21 +168,36 @@
     return [[iTermFilesAndFolders alloc] initWithFiles:files folders:folders];
 }
 
-- (void)reportError:(NSString *)error file:(NSString *)file {
+// Adds a line to the Dynamic Profiles log in the Script Console.
+- (void)log:(NSString *)line {
     [[iTermScriptHistory sharedInstance] addDynamicProfilesLoggingEntryIfNeeded];
-    [[iTermScriptHistoryEntry dynamicProfilesEntry] addOutput:[error stringByAppendingString:@"\n"]
+    [[iTermScriptHistoryEntry dynamicProfilesEntry] addOutput:[line stringByAppendingString:@"\n"]
                                                    completion:^{}];
+}
+
+- (void)reportError:(NSString *)error file:(NSString *)file {
+    [self log:error];
 
     _pendingErrors += 1;
-    if (_pendingErrors > 1) {
+    if (_loading) {
+        _pendingErrorsFromLastReload += 1;
+    }
+    if (_errorAlertScheduled) {
         return;
     }
+    _errorAlertScheduled = YES;
     dispatch_async(dispatch_get_main_queue(), ^{
         [self reallyReportError:error file:file];
     });
 }
 
 - (void)reallyReportError:(NSString *)error file:(NSString *)file {
+    _errorAlertScheduled = NO;
+    if (_pendingErrors == 0) {
+        // A later reload found nothing wrong.
+        DLog(@"No pending errors remain; not showing %@", error);
+        return;
+    }
     NSString *message =
     [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DynamicProfiles.ProblemWithProfile", nil, [NSBundle mainBundle], @"There was a problem with one of your Dynamic Profiles:\n\n%@", @"Error shown when there is a problem with a dynamic profile"), error];
     if (_pendingErrors > 1) {
@@ -185,6 +205,7 @@
         message = [message stringByAppendingFormat:@"\n\n%@", [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"DynamicProfiles.AdditionalErrors", nil, [NSBundle mainBundle], @"%ld additional errors may be seen in the log.", @"Note appended after a dynamic-profile error; %ld is the number of additional errors"), (long)count]];
     }
     _pendingErrors = 0;
+    _pendingErrorsFromLastReload = 0;
     iTermAlertAccessoryButtonUnfucker *container = nil;
     if (file && [[NSFileManager defaultManager] fileExistsAtPath:file]) {
         NSButton *button = [[NSButton alloc] init];
@@ -273,13 +294,23 @@
 }
 
 - (void)reloadDynamicProfiles {
-    assert(!_loading);
-    _loading = YES;
-    [[ProfileModel sharedInstance] performBlockWithCoalescedNotifications:^{
-        [ITAddressBookMgr performBlockWithCoalescedNotifications:^{
-            [self reallyReloadDynamicProfiles];
+    [self performReloadPass:^{
+        [[ProfileModel sharedInstance] performBlockWithCoalescedNotifications:^{
+            [ITAddressBookMgr performBlockWithCoalescedNotifications:^{
+                [self reallyReloadDynamicProfiles];
+            }];
         }];
     }];
+}
+
+- (void)performReloadPass:(void (^)(void))block {
+    assert(!_loading);
+    // This reload examines every file again, so errors that an earlier reload reported and that
+    // have not been shown yet will be reported again if they still apply.
+    _pendingErrors -= _pendingErrorsFromLastReload;
+    _pendingErrorsFromLastReload = 0;
+    _loading = YES;
+    block();
     _loading = NO;
 }
 
@@ -308,10 +339,7 @@
             continue;
         }
         NSString *fullName = [path stringByAppendingPathComponent:file];
-        if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
-            [self reportError:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DynamicProfiles.IgnoringProfiles", nil, [NSBundle mainBundle], @"Ignoring dynamic profiles in “%@” because of an error.", @"Error shown when dynamic profiles in a file are ignored due to an error"), fullName]
-                         file:fullName];
-        }
+        [self loadDynamicProfilesFromFileLoggingFailure:fullName intoArray:newProfiles guids:guids];
     }
 
     DLog(@"Begin add/update phase");
@@ -507,6 +535,16 @@ static id iTermDynamicProfileByRemovingNulls(id object) {
 
 - (NSDictionary *)dictionaryForProfiles:(NSArray<Profile *> *)profiles {
     return @{ @"Profiles": profiles };
+}
+
+- (void)loadDynamicProfilesFromFileLoggingFailure:(NSString *)filename
+                                        intoArray:(NSMutableArray *)profiles
+                                            guids:(NSMutableSet *)guids {
+    if (![self loadDynamicProfilesFromFile:filename intoArray:profiles guids:guids]) {
+        // The error that caused this was already reported, so this follow-up is only logged. It
+        // must not count toward the alert's number of additional errors.
+        [self log:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DynamicProfiles.IgnoringProfiles", nil, [NSBundle mainBundle], @"Ignoring dynamic profiles in “%@” because of an error.", @"Error shown when dynamic profiles in a file are ignored due to an error"), filename]];
+    }
 }
 
 - (BOOL)loadDynamicProfilesFromFile:(NSString *)filename
