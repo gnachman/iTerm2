@@ -1047,7 +1047,21 @@ extension CCGitSessionToolbarItem: iTermGitStringMakerDelegate {
         // NSTextField(labelWithString:) and gets NSColor.labelColor.
         // labelColor is the right semantic for static text anyway —
         // textColor is for editable/selectable fields.
-        NSColor.labelColor
+        //
+        // Resolve it against the toolbar's own appearance. The arrow
+        // glyphs are tinted bitmaps, and the tinting would otherwise
+        // resolve labelColor against the app's theme, which can differ
+        // from the toolbar's (e.g., the Minimal theme follows the
+        // terminal background).
+        Self.resolvedLabelColor(for: view.effectiveAppearance)
+    }
+
+    static func resolvedLabelColor(for appearance: NSAppearance) -> NSColor {
+        var color = NSColor.labelColor
+        appearance.performAsCurrentDrawingAppearance {
+            color = NSColor.labelColor.usingColorSpace(.sRGB) ?? NSColor.labelColor
+        }
+        return color
     }
 }
 
