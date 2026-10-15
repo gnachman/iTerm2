@@ -106,7 +106,7 @@ class PluginClient {
             RLog("HTTPStreamDelegate \(it_addressString): complete. error=\(AIChatWireLogSanitizer.scrubbingSecrets(error.d))")
             if let error = error {
                 RLog("URLSession error: \(AIChatWireLogSanitizer.scrubbingSecrets(String(describing: error)))")
-                callback(receivedData.lossyString, "HTTP request failed with \(error.localizedDescription)")
+                callback(receivedData.lossyString, "HTTP request failed: \(error.localizedDescription)")
             } else if let httpResponse = task.response as? HTTPURLResponse, httpResponse.statusCode != 200 {
                 // Headers can carry Set-Cookie/auth echoes and the body can be private
                 // content; keep both out of the ring (header keys and byte count only).
