@@ -99,7 +99,7 @@ final class FloatingPanePersistenceTests: XCTestCase {
     /// Builds a new tab from this tab's arrangement and puts it in the window. With `revive`, the
     /// tab's own sessions are matched up as undo close does; without, new sessions are made from the
     /// arrangement as Duplicate Tab and restoring an arrangement do.
-    private func roundTrip(revive: Bool = true) -> PTYTab {
+    private func roundTrip(revive: Bool = true, named arrangementName: String? = nil) -> PTYTab {
         guard let arrangement = tab.arrangement(), let sessions = tab.sessions() else {
             it_fatalError("No arrangement")
         }
@@ -113,7 +113,7 @@ final class FloatingPanePersistenceTests: XCTestCase {
             sessionMap = nil
         }
         guard let restored = PTYTab(arrangement: arrangement,
-                                    named: nil,
+                                    named: arrangementName,
                                     inTerminal: fixture.terminal,
                                     hasFlexibleView: false,
                                     viewMap: nil,
@@ -191,6 +191,33 @@ final class FloatingPanePersistenceTests: XCTestCase {
         XCTAssertEqual(copy.columns, 30)
         XCTAssertEqual(copy.rows, 8)
         XCTAssertEqual(copyPane.outlineFrame, frame)
+    }
+
+    /// QA finding F-053: a float restored from a saved arrangement knows which arrangement it came
+    /// from, as a tiled pane does, so Change Profile in Arrangement works for it.
+    func testFloatsFromASavedArrangementKnowItsName() {
+        _ = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        let restored = roundTrip(revive: false, named: "Saved")
+        guard let copy = restored.floatingSessions()?.first, let tiled = restored.tiledSessions()?.first else {
+            XCTFail("No restored sessions")
+            return
+        }
+        // Each session records the name once its job has launched.
+        func name(_ session: PTYSession) -> String? {
+            return session.value(forKey: "_originatingArrangementName") as? String
+        }
+        let launched = expectation(description: "both sessions launched")
+        func check() {
+            if name(tiled) != nil && name(copy) != nil {
+                launched.fulfill()
+            } else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: check)
+            }
+        }
+        check()
+        wait(for: [launched], timeout: 30)
+        XCTAssertEqual(name(tiled), "Saved", "test setup: the tiled pane knows")
+        XCTAssertEqual(name(copy), "Saved")
     }
 
     /// Undo close of a tab: the window removes the tab, then adds one made from its arrangement with

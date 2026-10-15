@@ -4450,6 +4450,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                             partialAttachments:partialAttachments
                                                        options:options]];
     PTYSession *activeFloat = [theTab restoreFloatingPanesFromArrangement:arrangement
+                                                                    named:arrangementName
                                                                sessionMap:sessionMap
                                                        partialAttachments:partialAttachments
                                                                   options:options];
@@ -4950,8 +4951,9 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
 }
 
 // Restores the floats recorded in a tab arrangement. Returns the active session if it is one of
-// them.
+// them. arrangementName is the saved arrangement's name, or nil if it doesn't come from one.
 - (PTYSession *)restoreFloatingPanesFromArrangement:(NSDictionary *)arrangement
+                                              named:(NSString *)arrangementName
                                          sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
                                  partialAttachments:(NSDictionary *)partialAttachments
                                             options:(NSDictionary *)options {
@@ -4962,6 +4964,7 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
     for (NSDictionary *record in [NSArray castFrom:arrangement[TAB_ARRANGEMENT_FLOATING_PANES]]) {
         PTYSession *maybeActive = nil;
         [self restoreFloatingPaneFromRecord:record
+                                      named:arrangementName
                                  sessionMap:sessionMap
                          partialAttachments:partialAttachments
                                     options:options
@@ -4978,6 +4981,7 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
 // created from its arrangement. Returns the float's session, or nil if it could not be restored.
 // Sets *activeOut to the session the arrangement marks active, if any.
 - (PTYSession *)restoreFloatingPaneFromRecord:(NSDictionary *)record
+                                        named:(NSString *)arrangementName
                                    sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
                            partialAttachments:(NSDictionary *)partialAttachments
                                       options:(NSDictionary *)options
@@ -5000,7 +5004,7 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
         [self.viewToSessionMap setObject:session forKey:session.view];
     }
     PTYSession *maybeActive = [self _recursiveRestoreSessions:node
-                                                        named:nil
+                                                        named:arrangementName
                                                        atNode:view
                                                         inTab:self
                                                 forObjectType:iTermPaneObject
@@ -5034,6 +5038,7 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
         return nil;
     }
     PTYSession *session = [self restoreFloatingPaneFromRecord:record
+                                                        named:nil
                                                    sessionMap:nil
                                            partialAttachments:nil
                                                       options:nil

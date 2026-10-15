@@ -1698,3 +1698,6 @@ Bug Fixes:
   the Python API now resizes it in tmux too. It
   used to leave the pane blank or out of sync
   with tmux.
+- Window > Arrangements > Change Profile in
+  Arrangement now works for a floating pane
+  restored from a saved arrangement.
