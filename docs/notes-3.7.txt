@@ -1673,6 +1673,10 @@ Bug Fixes:
   offers to convert them to spaces now puts the
   cursor in its number-of-spaces field, so you
   can type a tab width without clicking first.
+- Shell > Close (⌘W) now closes the Cockpit when
+  it is the key window. Before, the menu item
+  was disabled there.
+
 
 
 
