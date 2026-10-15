@@ -27,6 +27,12 @@ void PFMoveToApplicationsFolderIfNecessary(void);
  See https://github.com/potionfactory/LetsMove/issues/64 for details. */
 BOOL PFMoveIsInProgress(void);
 
+/**
+ iTerm2: shell-quoted arguments appended to `open <app>` when relaunching, so a copy started with
+ -suite NAME comes back with the same settings suite. Returns an empty string when there is no
+ -suite argument. Takes the process arguments, including argv[0]. */
+NSString *PFMoveRelaunchOpenArgumentsSuffix(NSArray<NSString *> *processArguments);
+
 #ifdef __cplusplus
 }
 #endif
