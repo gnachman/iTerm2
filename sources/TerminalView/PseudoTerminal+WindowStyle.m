@@ -18,6 +18,7 @@
 #import "iTermTabBarControlView.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "NSDate+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "SessionView.h"
@@ -488,19 +489,53 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     _windowType = self.windowType;
 }
 
+// The view in the content view that has keyboard focus, or nil. For a text field being edited
+// this is the field, not the window's shared field editor, which does not move with it.
+- (NSView *)focusedViewInContentView {
+    NSResponder *responder = self.window.firstResponder;
+    NSTextView *textView = [NSTextView castFrom:responder];
+    if (textView.isFieldEditor) {
+        responder = [NSView castFrom:textView.delegate];
+    }
+    NSView *view = [NSView castFrom:responder];
+    if (view && [view isDescendantOf:self.contentView]) {
+        return view;
+    }
+    return nil;
+}
+
 - (void)updateWindowForWindowType:(iTermWindowType)windowType {
     if (_willClose) {
         return;
     }
     NSRect frame = self.window.frame;
     NSString *title = [self.window.title copy];
+    // A new window replaces the old one when the title bar comes or goes. Closing the old window
+    // leaves no key window, so the replacement must take over as key or typing goes nowhere and
+    // menu items that act on the current window (including Window Style itself) are disabled.
+    const BOOL wasKey = self.window.isKeyWindow;
+    // The content view moves to the new window, so a view inside it that had focus (the find bar,
+    // the composer, a tool) can keep it.
+    NSView *previousFocus = [self focusedViewInContentView];
     const BOOL changed = [self replaceWindowWithWindowOfType:windowType];
     [self.window setFrame:frame display:YES];
-    [self.window orderFront:nil];
+    if (changed && wasKey) {
+        DLog(@"Make the replacement window key");
+        [self.window makeKeyAndOrderFront:nil];
+    } else {
+        [self.window orderFront:nil];
+    }
     [self.contentView layoutSubviews];
     self.window.title = title;
 
     if (changed) {
+        // The new window's first responder is the window itself, so keys would not reach the
+        // session even once it is key.
+        if (previousFocus && previousFocus.window == self.window) {
+            [self.window makeFirstResponder:previousFocus];
+        } else {
+            [self.window makeFirstResponder:self.currentSession.mainResponder];
+        }
         [self forceFrame:frame];
         // Title bar visibility may have changed, so update active pane borders
         // to recalculate which corners should be rounded.
