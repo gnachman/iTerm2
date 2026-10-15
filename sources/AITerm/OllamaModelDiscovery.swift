@@ -231,12 +231,12 @@ class OllamaModelDiscovery: NSObject {
         let host = request.url?.host ?? String(localized: "Ollama.Discovery.GenericServer",
                                                defaultValue: "the server",
                                                comment: "Fallback name for the Ollama server when its hostname is unknown, inserted into a “Could not reach …” error")
-        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+        let task = proxiedDataTask(with: request) { data, _, error in
             let (names, message): ([String], String?) = {
                 if let error {
-                    return ([], String(localized: "Ollama.Discovery.Unreachable",
-                                       defaultValue: "Could not reach Ollama at \(host): \(error.localizedDescription)",
-                                       comment: "Error shown when the Ollama server can't be reached; first %@ is the host, second %@ is the underlying network error"))
+                    return ([], String(localized: "Ollama.Discovery.UnreachableServer",
+                                       defaultValue: "Could not reach the server at \(host) to list its models: \(error.localizedDescription)",
+                                       comment: "Error shown when Fetch Models in the AI model editor can't reach the server (which may or may not be Ollama); first %@ is the host, second %@ is the underlying network error"))
                 }
                 guard let data else {
                     return ([], String(localized: "Ollama.Discovery.NoResponse",
@@ -272,7 +272,7 @@ class OllamaModelDiscovery: NSObject {
             DispatchQueue.main.async { completion(nil) }
             return
         }
-        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+        let task = proxiedDataTask(with: request) { data, _, error in
             if let error {
                 DLog("Ollama /api/tags fetch for \(endpoint) failed: \(error)")
                 DispatchQueue.main.async { completion(nil) }
@@ -411,7 +411,7 @@ class OllamaModelDiscovery: NSObject {
             completion(nil, nil)
             return
         }
-        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+        let task = proxiedDataTask(with: request) { data, _, error in
             if let error {
                 DLog("Ollama /api/show for \(model) at \(endpoint) failed: \(error)")
                 completion(nil, nil)
@@ -425,5 +425,22 @@ class OllamaModelDiscovery: NSObject {
             completion(parsed.capabilities, parsed.contextWindow)
         }
         task.resume()
+    }
+
+    // A data task that goes through the aiProxy advanced setting, like chat
+    // requests and Test Connection do. Each task gets its own session, which is
+    // released once the task finishes.
+    private static func proxiedDataTask(with request: URLRequest,
+                                        completionHandler: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
+        guard let proxy = AIProxySetting.connectionProxyDictionary() else {
+            return URLSession.shared.dataTask(with: request, completionHandler: completionHandler)
+        }
+        let config = URLSessionConfiguration.default
+        config.connectionProxyDictionary = proxy
+        let session = URLSession(configuration: config)
+        return session.dataTask(with: request) { data, response, error in
+            completionHandler(data, response, error)
+            session.finishTasksAndInvalidate()
+        }
     }
 }
