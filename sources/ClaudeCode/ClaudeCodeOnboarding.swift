@@ -289,13 +289,32 @@ class ClaudeCodeOnboarding: NSObject {
     // link survives, and the atomic write carries the real file's mode over
     // to its replacement (the symlink tests check both).
     // resolvingSymlinksInPath() returns a dangling link's path unchanged, so
-    // writing through one replaces the link, as before.
+    // writing through one replaces the link, as before. An atomic write over
+    // the link would carry the link's own mode (0755) to the new file, so
+    // that case writes a new file beside it and renames it over the link,
+    // giving it the mode any new file gets.
     private static func writeSettings(_ data: Data, to settingsURL: URL) throws {
         let writeURL = settingsURL.resolvingSymlinksInPath()
         if writeURL.path != settingsURL.path {
             DLog("Onboarding: \(settingsURL.path) resolves to \(writeURL.path); writing there")
         }
-        try data.write(to: writeURL, options: .atomic)
+        let type = (try? FileManager.default.attributesOfItem(atPath: writeURL.path))?[.type] as? FileAttributeType
+        guard type == .typeSymbolicLink else {
+            try data.write(to: writeURL, options: .atomic)
+            return
+        }
+        DLog("Onboarding: \(writeURL.path) is a dangling symlink; replacing it with a new file")
+        let tempURL = writeURL.deletingLastPathComponent()
+            .appendingPathComponent(".\(writeURL.lastPathComponent).\(UUID().uuidString)")
+        do {
+            try data.write(to: tempURL, options: .withoutOverwriting)
+            if rename(tempURL.path, writeURL.path) != 0 {
+                throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+            }
+        } catch {
+            try? FileManager.default.removeItem(at: tempURL)
+            throw error
+        }
     }
 
     // True iff the Claude Code workgroup (identified by the stable

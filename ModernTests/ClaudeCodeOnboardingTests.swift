@@ -297,6 +297,37 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         XCTAssertEqual(commands.count, ClaudeCodeOnboarding.hookEventNames.count)
     }
 
+    // Writing through a dangling symlink replaces the link with a regular
+    // file. An atomic write over the link used to carry the link's own mode
+    // (0755) to the new file, making settings.json executable. It must get
+    // the mode any newly created file gets.
+    func testMergeThroughDanglingSymlinkCreatesFileWithDefaultMode() throws {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("cc-merge-dangling-\(UUID().uuidString)")
+        addTeardownBlock { try? FileManager.default.removeItem(at: dir) }
+        let claudeDir = dir.appendingPathComponent(".claude")
+        try FileManager.default.createDirectory(at: claudeDir, withIntermediateDirectories: true)
+        let link = claudeDir.appendingPathComponent("settings.json")
+        try FileManager.default.createSymbolicLink(atPath: link.path,
+                                                   withDestinationPath: "../dotfiles/settings.json")
+        let reference = claudeDir.appendingPathComponent("reference")
+        try Data("{}".utf8).write(to: reference)
+
+        XCTAssertEqual(merge(link), .success)
+
+        let attributes = try FileManager.default.attributesOfItem(atPath: link.path)
+        XCTAssertEqual(attributes[.type] as? FileAttributeType, .typeRegular)
+        let mode = (attributes[.posixPermissions] as? NSNumber)?.intValue
+        let expected = (try FileManager.default.attributesOfItem(atPath: reference.path)[.posixPermissions] as? NSNumber)?.intValue
+        XCTAssertEqual(mode, expected)
+        XCTAssertEqual((mode ?? 0) & 0o111, 0, "settings.json is executable")
+        let commands = readJSON(link).map(ClaudeCodeOnboarding.ccStatusCommands(inSettings:)) ?? []
+        XCTAssertEqual(commands.count, ClaudeCodeOnboarding.hookEventNames.count)
+        // No temporary file left behind.
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: claudeDir.path).sorted(),
+                       ["reference", "settings.json"])
+    }
+
     func testMergeLeavesUnreadableFileUntouched() throws {
         try XCTSkipIf(geteuid() == 0, "root can read a mode 000 file")
         let original = "{\"model\": \"opus\"}"
