@@ -1663,3 +1663,7 @@ Bug Fixes:
   right-to-left lines that run up to a pane
   divider, such as in a tmux split without tmux
   integration.
+- With the GPU renderer off, underlines and
+  strikethroughs on right-to-left text are now
+  drawn under the text they belong to instead
+  of a few cells to the right.

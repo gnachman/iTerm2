@@ -91,6 +91,17 @@ BOOL iTermScreenCharCanHostSpacingMark(const screen_char_t *base, BOOL useNative
     return ![boxSet longCharacterIsMember:code];
 }
 
+CGFloat iTermLeftmostStringPosition(const CGFloat *positions, NSRange range) {
+    if (range.length == 0) {
+        return positions[range.location];
+    }
+    CGFloat result = positions[range.location];
+    for (NSUInteger i = range.location + 1; i < NSMaxRange(range); i++) {
+        result = MIN(result, positions[i]);
+    }
+    return result;
+}
+
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index) {
     int theIndex = index / 8;
     int mask = 1 << (index & 7);
@@ -2420,7 +2431,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     const NSRange range = NSMakeRange(0, cheapString.length);
     const NSSize size = NSMakeSize([attributes[iTermUnderlineLengthAttribute] intValue] * _cellSize.width,
                                    _cellSize.height * 2);
-    const CGFloat xOrigin = origin.x + stringPositions[range.location];
+    const CGFloat xOrigin = origin.x + iTermLeftmostStringPosition(stringPositions, range);
     const NSRect rect = NSMakeRect(xOrigin,
                                    origin.y,
                                    size.width,
@@ -2450,7 +2461,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
 
         iTermCheapAttributedString *blackCopy = [cheapString copyWithAttributes:attrs];
         [self drawFastPathStringWithoutUnderlineOrStrikethrough:blackCopy
-                                                        atPoint:NSMakePoint(-stringPositions[0], 0)
+                                                        atPoint:NSMakePoint(origin.x - xOrigin, 0)
                                                          origin:VT100GridCoordMake(-1, -1)  // only needed by images
                                                       positions:stringPositions
                                                       inContext:[[NSGraphicsContext currentContext] CGContext]
@@ -2756,7 +2767,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
         }
         NSDictionary *const attributes = [attributedString attributesAtIndex:range.location
                                                               effectiveRange:nil];
-        const CGFloat minX = stringPositions[range.location];
+        const CGFloat minX = iTermLeftmostStringPosition(stringPositions, range);
         // Use iTermUnderlineLengthAttribute (cell count) to compute the right edge.
         // This correctly handles double-width characters which occupy two cells
         // per character in the attributed string.
@@ -2787,7 +2798,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                 return;
             }
             [self drawAttributedStringForMask:attributedString
-                                       origin:NSMakePoint(-stringPositions[range.location], 0)
+                                       origin:NSMakePoint(-minX, 0)
                               stringPositions:stringPositions];
         }];
     }];
