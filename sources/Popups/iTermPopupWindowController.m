@@ -265,6 +265,7 @@
     [tableView_ reloadData];
     [self setPosition:canChangeSide];
     [tableView_ sizeToFit];
+    [self sizeDateColumnToFit];
     [[tableView_ enclosingScrollView] setHasHorizontalScroller:NO];
 
     if (!haveChangedSelection_ && [tableView_ numberOfRows] > 0) {
@@ -278,6 +279,35 @@
         }
     }
     reloading_ = oldReloading;
+}
+
+- (void)sizeDateColumnToFit {
+    NSTableColumn *dateColumn = [tableView_ tableColumnWithIdentifier:@"date"];
+    NSTableColumn *valueColumn = [tableView_ tableColumnWithIdentifier:@"value"];
+    if (!dateColumn || !valueColumn) {
+        return;
+    }
+    // Relative dates are longer in some languages (“Vor 12 Sekunden”).
+    NSCell *cell = [[dateColumn.dataCell copy] autorelease];
+    CGFloat needed = 0;
+    // Only the rows that can be seen, since there can be thousands and this
+    // runs on every keystroke. The popup shows at most 20 rows.
+    NSRange rows = [tableView_ rowsInRect:tableView_.visibleRect];
+    if (rows.length == 0) {
+        rows = NSMakeRange(0, MIN(20, [self numberOfRowsInTableView:tableView_]));
+    }
+    for (NSInteger row = rows.location; row < NSMaxRange(rows); row++) {
+        cell.objectValue = [self tableView:tableView_ objectValueForTableColumn:dateColumn row:row];
+        needed = MAX(needed, ceil(cell.cellSize.width));
+    }
+    // Take the room from the value column so the table's width doesn't
+    // change.
+    const CGFloat delta = MIN(needed - dateColumn.width, valueColumn.width - valueColumn.minWidth);
+    if (delta <= 0) {
+        return;
+    }
+    valueColumn.width -= delta;
+    dateColumn.width += delta;
 }
 
 - (int)convertIndex:(int)i

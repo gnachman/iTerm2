@@ -92,6 +92,10 @@
 - (PopupModel*)model;
 - (void)setPosition:(BOOL)canChangeSide;
 - (void)reloadData:(BOOL)canChangeSide;
+
+// Widens the column with identifier "date", if there is one, so every row's
+// text fits, taking the room from the column with identifier "value".
+- (void)sizeDateColumnToFit;
 - (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
 - (int)convertIndex:(int)i;
 - (NSAttributedString*)attributedStringForEntry:(PopupEntry*)entry isSelected:(BOOL)isSelected;
