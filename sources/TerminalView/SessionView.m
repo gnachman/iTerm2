@@ -422,12 +422,17 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_showBottomStatusBar && _genericStatusBarContainer) {
         [decorations addObject:_genericStatusBarContainer];
     }
+    [decorations addObjectsFromArray:self.browserClickableDecorationViews];
     return [decorations anyWithBlock:^BOOL(NSView *view) {
         if (!view.window || view.isHiddenOrHasHiddenAncestor) {
             return NO;
         }
         return NSIntersectsRect([view convertRect:view.bounds toView:nil], rect);
     }];
+}
+
+- (NSArray<NSView *> *)browserClickableDecorationViews {
+    return _browserViewController.clickableDecorationViews ?: @[];
 }
 
 - (void)updateToolbarFrame {

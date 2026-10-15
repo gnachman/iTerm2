@@ -1256,8 +1256,9 @@ Bug Fixes:
 - With the Minimal or Compact theme and no tab
   bar at the top, the window buttons that appear
   when you point at the window’s top-left corner
-  no longer cover a status bar or Workgroup
-  toolbar there, which made its leftmost item
+  no longer cover a status bar, Workgroup
+  toolbar, or a web browser’s back, forward, and
+  reload buttons there, which made them
   impossible to click. A small arrow appears in
   the corner instead; click it to show or hide
   the window buttons. Issue 13100.

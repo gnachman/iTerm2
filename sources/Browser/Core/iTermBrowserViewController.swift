@@ -162,6 +162,15 @@ class iTermBrowserViewController: NSViewController {
         }
     }
 
+    // Views holding clickable controls (the navigation buttons and URL bar) that
+    // the window's stoplight hotbox must not cover.
+    @objc var clickableDecorationViews: [NSView] {
+        guard isViewLoaded, let toolbar, !toolbarHidden else {
+            return []
+        }
+        return [toolbar]
+    }
+
     // 100.0 = 100%
     @objc var zoom: CGFloat {
         get {

@@ -225,8 +225,12 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // the top, or 0 when there is no toolbar. Parallel to -titleReservedHeight.
 @property(nonatomic, readonly) CGFloat toolbarReservedHeight;
 // Whether a decoration holding clickable controls (the toolbar, the title bar,
-// or the status bar) overlaps `rect`, which is in window coordinates.
+// the status bar, or a browser's navigation bar) overlaps `rect`, which is in
+// window coordinates.
 - (BOOL)clickableDecorationIntersectsWindowRect:(NSRect)rect;
+// Clickable decorations that belong to the browser, if this is a browser session.
+// Overridable for testing.
+@property(nonatomic, readonly) NSArray<NSView *> *browserClickableDecorationViews;
 @property(nonatomic, readonly) iTermSessionViewFindDriver findDriverType;
 @property(nonatomic, weak, nullable) id<iTermSearchResultsMinimapViewDelegate> searchResultsMinimapViewDelegate;
 @property(nonatomic, strong, nullable) iTermImageWrapper *image;
