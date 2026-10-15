@@ -321,6 +321,33 @@ final class FloatingPanePersistenceTests: XCTestCase {
         XCTAssertTrue(tab.activeSession === float)
     }
 
+    /// QA finding F-148: undo close of a live maximized float brings it back maximized, and
+    /// unmaximizing returns it to where it was before it was maximized.
+    func testUndoClosingAMaximizedFloatKeepsItsFrameFromBeforeMaximizing() {
+        let float = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        guard let frame = tab.floatingPane(for: float)?.outlineFrame else {
+            XCTFail("No pane")
+            return
+        }
+        tab.setActiveSession(float)
+        fixture.terminal.toggleMaximizeActivePane()
+        guard let arrangement = tab.arrangement() else {
+            XCTFail("No arrangement")
+            return
+        }
+        tab.remove(float)
+
+        fixture.terminal.recreateTab(tab, withArrangement: arrangement, sessions: [float], archives: nil, revive: false)
+
+        guard let pane = tab.floatingPane(for: float) else {
+            XCTFail("No revived pane")
+            return
+        }
+        XCTAssertTrue(pane.isMaximized, "the float comes back maximized")
+        tab.toggleMaximizeSession(float)
+        XCTAssertEqual(pane.outlineFrame, frame, "unmaximizing goes back to the frame from before maximizing")
+    }
+
     func testUndoClosingATiledPaneLeavesLiveFloatsAlone() {
         guard let tiled = tab.tiledSessions()?.first else {
             XCTFail("No tiled session")

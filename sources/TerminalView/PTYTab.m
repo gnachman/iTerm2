@@ -4909,6 +4909,12 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
     return YES;
 }
 
+// A maximized float's record holds its frame from before it was maximized. NSZeroRect if it was
+// not maximized.
++ (NSRect)floatingPaneFrameBeforeMaximizingInRecord:(NSDictionary *)record {
+    return record[FLOATING_PANE_SAVED_FRAME] ? [PTYTab dictToFrame:record[FLOATING_PANE_SAVED_FRAME]] : NSZeroRect;
+}
+
 // Undo close or disinter of a float: put it back where the arrangement says it was, in front, with
 // no rebuild of the tiled layout.
 - (void)addRevivedFloatingSession:(PTYSession *)session fromArrangement:(NSDictionary *)arrangement {
@@ -4922,7 +4928,7 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                                                   containerSize:containerSize
                                                            grid:[PTYSession gridSizeInArrangement:node[TAB_ARRANGEMENT_SESSION]]
                                                     desiredGrid:[NSDictionary castFrom:record[FLOATING_PANE_DESIRED_GRID_SIZE]]
-                                    visualFrameBeforeMaximizing:NSZeroRect];
+                                    visualFrameBeforeMaximizing:[PTYTab floatingPaneFrameBeforeMaximizingInRecord:record]];
     [iTermFloatingPaneLayout refitFloatingPane:pane session:session];
     [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
     [self setActiveSession:session];
@@ -4997,7 +5003,7 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                                                   containerSize:containerSize
                                                            grid:[PTYSession gridSizeInArrangement:node[TAB_ARRANGEMENT_SESSION]]
                                                     desiredGrid:[NSDictionary castFrom:record[FLOATING_PANE_DESIRED_GRID_SIZE]]
-                                    visualFrameBeforeMaximizing:record[FLOATING_PANE_SAVED_FRAME] ? [PTYTab dictToFrame:record[FLOATING_PANE_SAVED_FRAME]] : NSZeroRect];
+                                    visualFrameBeforeMaximizing:[PTYTab floatingPaneFrameBeforeMaximizingInRecord:record]];
     // Applies the restored placement now if the tab has a size, else when it gets one.
     [iTermFloatingPaneLayout refitFloatingPane:pane session:session];
     [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
