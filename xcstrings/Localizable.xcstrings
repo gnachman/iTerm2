@@ -136529,7 +136529,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Etiquetas"
+            "value" : "Tags"
           }
         },
         "ru" : {
@@ -137537,7 +137537,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nome da etiqueta"
+            "value" : "Nome da tag"
           }
         },
         "ru" : {
