@@ -1501,3 +1501,6 @@ Bug Fixes:
   no longer forgets its state when the profile
   reloads, so an Instant trigger no longer fires
   a second time on the same line.
+- Uninstalling the Claude Code integration no
+  longer says an empty settings.json couldn’t be
+  parsed.
