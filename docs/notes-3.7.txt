@@ -1696,6 +1696,10 @@ Bug Fixes:
 - The banner shown when several nested SSH
   integration sessions end at once no longer
   ends with two periods.
+- The warning shown before opening an untrusted
+  arrangement no longer counts a session’s
+  command twice.
+
 
 
 
