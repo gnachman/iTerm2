@@ -1762,6 +1762,11 @@ Bug Fixes:
 - In an orchestration chat, the notice shown
   when mentioning a session now shows names with
   underscores correctly.
+- AI command suggestions no longer repeat a
+  directory you already typed in the filename
+  they insert (for example, “rm logs/logs/
+  error.log”).
+
 
 
 

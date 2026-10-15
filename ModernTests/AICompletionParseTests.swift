@@ -256,4 +256,61 @@ final class AICompletionParseTests: XCTestCase {
             wordPrefix: "~/Docum")
         XCTAssertEqual(expanded.map(\.value), ["open \\~/Documents"])
     }
+
+    // The model may write the directory the user typed before {{FILE}}
+    // (`rm logs/{{FILE}}`). The directory must not be doubled. QA finding F-372.
+    func test_fileExpansion_directoryAlreadyBeforePlaceholderIsNotDoubled() {
+        let item = CompletionItem(value: "rm logs/{{FILE}}", detail: "Remove", kind: .aiReplacement)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["ror.log"], wordPrefix: "logs/er"),
+            wordPrefix: "logs/er")
+        XCTAssertEqual(expanded.map(\.value), ["rm logs/error.log"])
+    }
+
+    func test_fileExpansion_nestedDirectoryAlreadyBeforePlaceholder() {
+        let item = CompletionItem(value: "cat ./a/b/{{FILE}} | wc -l", detail: "Count", kind: .aiReplacement)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems([".txt"], wordPrefix: "a/b/c"),
+            wordPrefix: "a/b/c")
+        XCTAssertEqual(expanded.map(\.value), ["cat ./a/b/c.txt | wc -l"])
+    }
+
+    func test_fileExpansion_directoryInsideAnotherPathIsNotDropped() {
+        let item = CompletionItem(value: "cp x backup/logs/{{FILE}}", detail: "Copy", kind: .aiReplacement)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["ror.log"], wordPrefix: "logs/er"),
+            wordPrefix: "logs/er")
+        XCTAssertEqual(expanded.map(\.value), ["cp x backup/logs/logs/error.log"])
+    }
+
+    func test_fileExpansion_differentDirectoryBeforePlaceholderKeepsTypedPath() {
+        // Only a matching directory is dropped; anything else is left alone.
+        let item = CompletionItem(value: "cp {{FILE}} backup/{{FILE}}", detail: "Copy", kind: .aiReplacement)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["ror.log"], wordPrefix: "logs/er"),
+            wordPrefix: "logs/er")
+        XCTAssertEqual(expanded.map(\.value), ["cp logs/error.log backup/logs/error.log"])
+    }
+
+    func test_fileExpansion_escapedDirectoryAlreadyBeforePlaceholder() {
+        let item = CompletionItem(value: "rm my\\ logs/{{FILE}}", detail: "Remove", kind: .aiReplacement)
+        let expanded = AICompletion.expandingFilePlaceholder(
+            in: item,
+            files: fileItems(["ror.log"], wordPrefix: "my logs/er"),
+            wordPrefix: "my logs/er")
+        XCTAssertEqual(expanded.map(\.value), ["rm my\\ logs/error.log"])
+    }
+
+    // The prompt's “longest common prefix of valid filename completions” must
+    // be a filename, not the suffix left to type.
+    func test_promptFilenamesIncludeTypedWord() {
+        let names = AICompletion.promptFilenames(files: fileItems(["ror.log", "ror.txt"], wordPrefix: "logs/er"),
+                                                 wordPrefix: "logs/er")
+        XCTAssertEqual(names, ["logs/error.log", "logs/error.txt"])
+        XCTAssertEqual(String(names.longestCommonPrefix), "logs/error.")
+    }
 }
