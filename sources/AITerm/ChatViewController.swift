@@ -1266,6 +1266,33 @@ extension ChatViewController {
         } catch {
             DLog("\(error)")
         }
+        // The permission buttons in the transcript show each category's
+        // state, so refresh them whether the change came from one of them or
+        // from the info menu.
+        reloadPermissionsCells()
+    }
+
+    private func reloadPermissionsCells() {
+        guard let model else {
+            return
+        }
+        let items = model.items
+        let rows = Self.permissionsRowIndexes(in: (0..<items.count).map { items[$0] })
+        guard !rows.isEmpty else {
+            return
+        }
+        tableView.reloadData(forRowIndexes: rows, columnIndexes: IndexSet(integer: 0))
+        tableView.invalidateIntrinsicContentSize()
+    }
+
+    // Rows holding a permissions bubble, whose button titles show the state.
+    static func permissionsRowIndexes(in items: [ChatViewControllerModel.Item]) -> IndexSet {
+        return IndexSet(items.indices.filter { i in
+            if case .message(let message) = items[i] {
+                return message.message.isPermissionsClientLocal
+            }
+            return false
+        })
     }
 
     private func publishUpdatedPermissions() throws {
@@ -1780,11 +1807,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     guard let category = RemoteCommand.Content.PermissionCategory(rawValue: identifier) else {
                         return
                     }
+                    // Reloads every permissions bubble, this one included.
                     toggle(permissionCategory: category)
-                    // Button titles encode the current permission state
-                    // ("Category: Allow"/"Ask"/"Never"), so reload the
-                    // cell after a toggle to refresh them.
-                    reloadCell(forMessageID: messageID)
                 }
             case .workgroupPermissionRequest:
                 let capturedChatID = self.chatID

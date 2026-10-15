@@ -1756,6 +1756,10 @@ Bug Fixes:
   “Unreadable usage data” when Claude Code’s
   output contains color codes or other control
   characters.
+- Changing an AI chat permission from the info
+  menu now updates the permission buttons shown
+  in the chat right away.
+
 
 
 
