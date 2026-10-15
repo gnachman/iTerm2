@@ -1657,6 +1657,12 @@ Bug Fixes:
 - After Swap With Session between a tab with
   one pane and a split tab, each pane now shows
   or hides its title bar to match its new tab.
+- When tmux windows open as tabs in the
+  attaching window, attaching from a hotkey
+  window no longer moves the hotkey window to
+  where tmux last had a window, often mostly off
+  screen.
+
 
 
 
