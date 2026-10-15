@@ -1699,6 +1699,12 @@ Bug Fixes:
 - The warning shown before opening an untrusted
   arrangement no longer counts a session’s
   command twice.
+- Typing quickly after a “Press any key to
+  dismiss” message, such as the one shown when
+  a program tries to clear scrollback, no
+  longer loses the keys typed while the message
+  slides away. Only the first key dismisses it.
+
 
 
 
