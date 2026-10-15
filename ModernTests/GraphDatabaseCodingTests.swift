@@ -368,6 +368,59 @@ final class GraphDatabaseCodingTests: XCTestCase {
         XCTAssertEqual(try journalMode(), "wal")
     }
 
+    // MARK: - WAL size
+
+    private var walURL: URL {
+        return URL(fileURLWithPath: databaseURL.path + "-wal")
+    }
+
+    private func walSize() throws -> UInt64 {
+        let attributes = try FileManager.default.attributesOfItem(atPath: walURL.path)
+        return (attributes[.size] as? NSNumber)?.uint64Value ?? 0
+    }
+
+    // Waits for everything already queued on the graph database's thread to run.
+    private func drain(_ graph: iTermGraphDatabase) {
+        graph.thread.dispatchSync { _ in }
+    }
+
+    // Writes a large value so the WAL holds far more than a few pages.
+    private func writeLargeValue(_ graph: iTermGraphDatabase) {
+        let payload = String(repeating: "x", count: 2 * 1024 * 1024)
+        update(graph) { encoder in
+            encoder.encode(payload, forKey: "big")
+        }
+    }
+
+    // Regression for QA F-221: housekeeping vacuumed through the WAL and only ran a passive
+    // checkpoint, so the -wal file stayed at one to two times the database size for the rest
+    // of the session and was left on disk at quit.
+    func testHousekeepingTruncatesWAL() throws {
+        let graph = openGraphDatabase()
+        writeLargeValue(graph)
+        XCTAssertGreaterThan(try walSize(), 1024 * 1024)
+
+        graph.doHousekeeping()
+        drain(graph)
+
+        XCTAssertEqual(try walSize(), 0)
+        let reopened = openGraphDatabase()
+        let plist = try XCTUnwrap(reopened.record.propertyListValue as? NSDictionary)
+        XCTAssertEqual((plist["big"] as? String)?.count, 2 * 1024 * 1024)
+    }
+
+    // The final save at quit runs truncateWAL so a clean quit does not leave the WAL behind.
+    func testTruncateWALEmptiesWAL() throws {
+        let graph = openGraphDatabase()
+        writeLargeValue(graph)
+        XCTAssertGreaterThan(try walSize(), 1024 * 1024)
+
+        graph.truncateWAL()
+        drain(graph)
+
+        XCTAssertEqual(try walSize(), 0)
+    }
+
     // MARK: - iTermGraphEncoderAdapter
 
     func testAdapterArraysRoundTripThroughSQLite() throws {

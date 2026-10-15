@@ -1422,3 +1422,8 @@ Bug Fixes:
   longer drops the space between a
   left-to-right word and the right-to-left
   text after it, which fused the two words.
+- The file iTerm2 keeps next to its saved
+  window state (restorable-state.sqlite-wal)
+  no longer stays as large as the saved state
+  itself. With long scrollback it could use a
+  lot of disk.

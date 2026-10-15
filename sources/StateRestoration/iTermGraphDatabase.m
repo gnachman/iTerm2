@@ -92,7 +92,36 @@
         [rs next];
         [rs close];
         [state.db executeUpdate:@"vacuum"];
+        // In WAL mode vacuum writes a full copy of the database into the WAL. A passive
+        // checkpoint copies it back but leaves the WAL file at that size, so truncate it.
+        [self truncateWAL:state];
     }];
+}
+
+- (void)truncateWAL {
+    [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
+        [self truncateWAL:state];
+    }];
+}
+
+// Checkpoints every frame in the WAL into the database and truncates the WAL to zero bytes.
+- (void)truncateWAL:(iTermGraphDatabaseState *)state {
+    if (!state.db) {
+        return;
+    }
+    // PRAGMA returns a result set, so we must use executeQuery. The statement only runs when
+    // the result set is stepped, so call next before closing it.
+    FMResultSet *rs = [state.db executeQuery:@"pragma wal_checkpoint(TRUNCATE)"];
+    if ([rs next]) {
+        // Columns are busy, log frames, checkpointed frames.
+        DLogCyclic(_log, @"wal_checkpoint(TRUNCATE) busy=%@ log=%@ checkpointed=%@",
+                   @([rs longLongIntForColumnIndex:0]),
+                   @([rs longLongIntForColumnIndex:1]),
+                   @([rs longLongIntForColumnIndex:2]));
+    } else {
+        DLogCyclic(_log, @"wal_checkpoint(TRUNCATE) failed: %@", state.db.lastError);
+    }
+    [rs close];
 }
 
 - (void)finishInitialization:(iTermGraphDatabaseState *)state {

@@ -314,7 +314,15 @@
         completion();
     }];
 
-    return [_db updateSynchronously:sync block:update completion:callback];
+    const BOOL result = [_db updateSynchronously:sync block:update completion:callback];
+    if (sync) {
+        // A synchronous save is the final save at quit. The connection is never closed, so
+        // without this the WAL (as large as the biggest recent transaction) stays on disk.
+        // This runs asynchronously on the database thread to avoid blocking the main thread.
+        // If the app exits before it finishes, the checkpoint is safely abandoned.
+        [_db truncateWAL];
+    }
+    return result;
 }
 
 @end

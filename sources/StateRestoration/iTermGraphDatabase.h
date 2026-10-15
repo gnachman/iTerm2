@@ -39,6 +39,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)waitUntilReady;
 - (void)doHousekeeping;
 
+// Asynchronously checkpoints the WAL into the database on the database thread and truncates
+// the WAL to zero bytes. Called after the final save at quit so a clean quit doesn't leave a
+// WAL as large as the database behind.
+- (void)truncateWAL;
+
 // Lazy load large data for a specific row. Called during restoration (e.g., unfolding).
 - (NSDictionary<NSString *, id> * _Nullable)loadLargeDataForRowID:(NSNumber *)rowid;
 
