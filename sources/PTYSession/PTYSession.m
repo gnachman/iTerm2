@@ -2574,9 +2574,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 // This is the normal case; the else clause is for legacy saved arrangements.
                 environmentArg = aSession.environment ?: @{};
                 commandArg = aSession.program;
-                if (oldCWD &&
-                    ([aSession.program isEqualToString:[ITAddressBookMgr standardLoginCommand]] ||
-                     [aSession.program isEqualToString:[ITAddressBookMgr legacyStandardLoginCommand]])) {
+                if ([PTYSession shouldRestoreWorkingDirectory:oldCWD withShellLauncherInsteadOfProgram:aSession.program]) {
                     // Create a login session that drops you in the old directory instead of
                     // using login -fp "$USER". This lets saved arrangements properly restore
                     // the working directory when the profile specifies the home directory.
@@ -7696,6 +7694,19 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 + (NSDictionary *)arrangement:(NSDictionary *)arrangement markedAsArchiveAtPath:(NSString *)path {
     return [arrangement dictionaryBySettingObject:path forKey:SESSION_ARRANGEMENT_RESTORE_AS_ARCHIVE];
+}
+
++ (BOOL)shouldRestoreWorkingDirectory:(NSString *)oldCWD
+    withShellLauncherInsteadOfProgram:(NSString *)program {
+    // An arrangement saved when the working directory was unknown (for example
+    // a session restored from an archive, which runs no process) records an
+    // empty one. The shell launcher would then start in the app's directory,
+    // “/”, so keep the login command, which honors the profile's directory.
+    if (oldCWD.length == 0) {
+        return NO;
+    }
+    return ([program isEqualToString:[ITAddressBookMgr standardLoginCommand]] ||
+            [program isEqualToString:[ITAddressBookMgr legacyStandardLoginCommand]]);
 }
 
 + (BOOL)arrangementIsMarkedAsArchive:(NSDictionary *)arrangement {

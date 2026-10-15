@@ -935,6 +935,11 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // arrangement containing it can be restored without a live session for it.
 + (NSDictionary *)arrangement:(NSDictionary *)arrangement markedAsArchiveAtPath:(NSString *)path;
 + (BOOL)arrangementIsMarkedAsArchive:(NSDictionary *)arrangement;
+// When restoring a login-shell session, its saved working directory is
+// restored by running the shell launcher in place of the login command. That
+// only makes sense when a directory was saved.
++ (BOOL)shouldRestoreWorkingDirectory:(nullable NSString *)oldCWD
+    withShellLauncherInsteadOfProgram:(nullable NSString *)program;
 
 // The canonicalized stableID stored in an arrangement, or nil if the
 // arrangement predates the stableID (or carries a malformed one).

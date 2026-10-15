@@ -1675,3 +1675,6 @@ Bug Fixes:
   line is now drawn on the character it is on,
   instead of in the blank area on the other side
   of the line.
+- A pane brought back by Undo Close from its
+  archive now starts in your home directory
+  after the next relaunch, instead of in “/”.
