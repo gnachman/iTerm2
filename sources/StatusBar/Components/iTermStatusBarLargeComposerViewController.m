@@ -76,7 +76,7 @@
 
 @end
 
-@interface iTermStatusBarLargeComposerViewController ()<PopupDelegate, iTermPopupWindowPresenter, NSTextViewDelegate>
+@interface iTermStatusBarLargeComposerViewController ()<NSMenuItemValidation, PopupDelegate, iTermPopupWindowPresenter, NSTextViewDelegate>
 
 @end
 
@@ -122,6 +122,18 @@
 - (void)setForceHideAIAccessories:(BOOL)forceHideAIAccessories {
     _forceHideAIAccessories = forceHideAIAccessories;
     [self updateAIAccessoryVisibility];
+}
+
+// Edit > Engage Artificial Intelligence reaches this controller even where the AI controls are
+// force-hidden (the Cockpit, which has no session to run AI for). Disable it there. Everywhere
+// else it stays enabled even when AI is disallowed, so performNaturalLanguageQuery: can explain why.
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.action == @selector(performNaturalLanguageQuery:)) {
+        return !_forceHideAIAccessories;
+    }
+    // This controller didn't implement validation before, which left every action it handles
+    // enabled. Keep that for the others.
+    return YES;
 }
 
 - (void)updateAIAccessoryVisibility {
@@ -312,6 +324,11 @@
 }
 
 - (IBAction)performNaturalLanguageQuery:(id)sender {
+    if (_forceHideAIAccessories) {
+        // Menu validation disables this, but don't rely on it.
+        DLog(@"Engage AI ignored in a composer whose AI controls are force-hidden");
+        return;
+    }
     // The Engage AI button is hidden when AI is unavailable, but Edit > Engage Artificial
     // Intelligence and its key equivalent still come here. Explain why nothing happens and send
     // nothing. A manually configured model can resolve a registration without ever consulting

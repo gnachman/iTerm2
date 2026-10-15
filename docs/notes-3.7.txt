@@ -1431,3 +1431,7 @@ Bug Fixes:
   quitting no longer asks to copy settings to
   the folder every time just because iTerm2
   updated an older setting saved there.
+- Pressing Cmd-Y (Edit > Engage Artificial
+  Intelligence) in the Cockpit’s composer no
+  longer crashes iTerm2. The menu item is now
+  disabled there.

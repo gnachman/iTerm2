@@ -32,7 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) IBOutlet iTermComposerTextView *textView;
 @property (nonatomic, strong, nullable) id<VT100RemoteHostReading> host;
 @property (nonatomic, strong, nullable) NSString *workingDirectory;
-@property (nonatomic, copy) iTermVariableScope *scope;
+// Nil when the composer belongs to no session (the Cockpit).
+@property (nonatomic, copy, nullable) iTermVariableScope *scope;
 @property (nonatomic, weak, nullable) TmuxController *tmuxController;
 @property (nonatomic) BOOL hideAccessories;
 // Force the AI-completion warning and Engage-AI control hidden even

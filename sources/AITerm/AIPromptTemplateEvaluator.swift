@@ -23,10 +23,12 @@ enum AIPromptTemplateEvaluator {
 
     // Evaluates `template`, exposing each entry of `variables` as
     // \(ai.<key>). Additional variables (e.g. \(shell)) resolve against
-    // `scope` when one is provided. Pass synchronous: false to support
-    // templates that call registered functions; the completion then may
-    // run after a runloop turn instead of before this returns. A nil
-    // result reaches the completion when evaluation fails.
+    // `scope` when one is provided; with no scope (e.g. the Cockpit's
+    // composer, which belongs to no session) they resolve to nothing.
+    // Pass synchronous: false to support templates that call registered
+    // functions; the completion then may run after a runloop turn instead
+    // of before this returns. A nil result reaches the completion when
+    // evaluation fails.
     //
     // Built on iTermExpressionEvaluator, the one-shot primitive, rather
     // than iTermSwiftyString: the latter is the observed live-updating
@@ -34,7 +36,7 @@ enum AIPromptTemplateEvaluator {
     // template (and run any side effects) more than once per call.
     static func evaluate(_ template: String,
                          variables: [String: String],
-                         scope callerScope: iTermVariableScope = iTermVariableScope(),
+                         scope callerScope: iTermVariableScope? = nil,
                          sideEffectsAllowed: Bool = false,
                          synchronous: Bool,
                          completion: @escaping (String?) -> Void) {
@@ -42,8 +44,9 @@ enum AIPromptTemplateEvaluator {
         // frame with no same-name check, so mutating the caller's scope
         // would stack a stale "ai" frame onto it per call. Copying here
         // means no call site (e.g. one passing a session's live scope)
-        // can get that wrong.
-        let scope = callerScope.copy() as! iTermVariableScope
+        // can get that wrong. Objective-C callers can pass nil, so never
+        // force-cast the copy.
+        let scope = (callerScope?.copy() as? iTermVariableScope) ?? iTermVariableScope()
         let owner = ScopeOwner()
         let frame = iTermVariables(context: [], owner: owner)
         scope.add(frame, toScopeNamed: "ai")

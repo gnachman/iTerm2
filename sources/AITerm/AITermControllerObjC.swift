@@ -398,7 +398,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     // handler(nil, nil): User canceled
     @objc(initWithQuery:scope:inWindow:completion:)
     init(query: String,
-         scope: iTermVariableScope,
+         scope: iTermVariableScope?,
          window: NSWindow,
          handler: @escaping (iTermOr<NSString, NSError>) -> ()) {
         let pleaseWait = PleaseWaitWindow(owningWindow: window,
