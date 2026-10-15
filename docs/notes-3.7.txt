@@ -1720,6 +1720,11 @@ Bug Fixes:
 - Turning on generative AI while Companion
   Device Settings shows a failed pairing no
   longer erases the error and the QR code.
+- With Focus Follows Mouse, returning the
+  pointer to a pane whose find field had focus
+  no longer selects the whole query, so the next
+  key you type doesn’t replace it.
+
 
 
 
