@@ -733,7 +733,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     if ([ProfilesGeneralPreferencesViewController shouldOfferAITitleComponentWithSettingEnabled:[iTermAdvancedSettingsModel aiGeneratedTabTitles]
                                                                               profileComponents:selectedComponents]) {
         NSMenuItem *aiItem = [[NSMenuItem alloc] init];
-        aiItem.title = @"AI-generated name";
+        aiItem.title = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitleComponentAIGeneratedName", nil, [NSBundle mainBundle], @"AI-generated name", @"Title component menu item in Settings > Profiles > General > Title: the short name on-device AI generates for the work on screen. Keep consistent with the “AI-generated name” wording in the aiGeneratedTabTitles advanced setting.");
         aiItem.tag = iTermTitleComponentsAI;
         [titleSettings.menu addItem:aiItem];
     }
@@ -1536,7 +1536,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                                                           tty:@"TTY"
                                                                                          user:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewUser", nil, [NSBundle mainBundle], @"User", @"Sample user name shown in the title-format preview")
                                                                                          host:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewHost", nil, [NSBundle mainBundle], @"Host", @"Sample host name shown in the title-format preview")
-                                                                                      aiTitle:@"AI"
+                                                                                      aiTitle:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewAI", nil, [NSBundle mainBundle], @"AI", @"Sample AI-generated name shown in the title-format preview; an abbreviation for artificial intelligence")
                                                                                 homeDirectory:nil
                                                                                      tmuxPane:nil
                                                                                      iconName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewIconName", nil, [NSBundle mainBundle], @"“Shell”", @"Sample icon name shown in the title-format preview")

@@ -1484,3 +1484,5 @@ Bug Fixes:
   Rename Tab… item and “Tab Color:” label are
   now translated instead of always appearing in
   English.
+- The “AI-generated name” choice in Settings >
+  Profiles > General > Title is now translated.
