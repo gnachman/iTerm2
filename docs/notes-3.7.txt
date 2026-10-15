@@ -543,6 +543,10 @@ Improvements:
   check scripts that use it.
 
 Bug Fixes:
+- Dragging a split divider in a tmux window
+  no longer moves a different divider when
+  the panes beside it are split further in
+  the same direction.
 - On macOS 26, hiding a hotkey window when no
   other iTerm2 windows are open once again
   returns focus to the previous app right away,
