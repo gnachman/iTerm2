@@ -1027,11 +1027,14 @@ class CockpitWindowController: NSWindowController {
             }
         }
         if let selectedText {
-            let attachment = Unicode.Scalar(UInt32(NSTextAttachment.character))
-            var scalars = String.UnicodeScalarView()
-            scalars.append(contentsOf: selectedText.unicodeScalars.filter { $0 != attachment })
-            typed = String(scalars)
+            typed = selectedText
         }
+        // An attachment character with no chip behind it (pasted text
+        // copied from a chip) is invisible; never send it to a shell.
+        let attachment = Unicode.Scalar(UInt32(NSTextAttachment.character))
+        var scalars = String.UnicodeScalarView()
+        scalars.append(contentsOf: typed.unicodeScalars.filter { $0 != attachment })
+        typed = String(scalars)
         return (chipTokens, typed.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 

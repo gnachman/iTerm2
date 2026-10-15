@@ -280,10 +280,69 @@ class ComposerTextView: MultiCursorTextView {
         if forcePlainTextPaste {
             // Strip pasted fonts/colors/attachments; insert plain text
             // only. Keeps a rich-text-enabled cockpit composer safe.
-            pasteAsPlainText(sender)
+            if !pasteStrippingAttachmentCharacters(from: NSPasteboard.general) {
+                pasteAsPlainText(sender)
+            }
             return
         }
         super.paste(sender)
+    }
+
+    // Plain text with any attachment characters (U+FFFC, what an
+    // @-mention chip becomes as text) removed: pasted without its chip it
+    // would be an invisible character in the command.
+    static func removingAttachmentCharacters(_ string: String) -> String {
+        let attachment: Unicode.Scalar = "\u{FFFC}"  // NSTextAttachment.character
+        guard string.unicodeScalars.contains(attachment) else {
+            return string
+        }
+        var scalars = String.UnicodeScalarView()
+        scalars.append(contentsOf: string.unicodeScalars.filter { $0 != attachment })
+        return String(scalars)
+    }
+
+    // If the pasteboard's text holds attachment characters, insert it
+    // without them and return true. Otherwise leave the paste to the
+    // caller. Internal for testing.
+    func pasteStrippingAttachmentCharacters(from pasteboard: NSPasteboard) -> Bool {
+        guard let string = pasteboard.string(forType: .string) else {
+            return false
+        }
+        let cleaned = Self.removingAttachmentCharacters(string)
+        guard cleaned != string else {
+            return false
+        }
+        guard !cleaned.isEmpty else {
+            // Only chips were copied; there's no text to paste, so leave
+            // the selection alone rather than deleting it.
+            return true
+        }
+        // Its own undo step, like any paste, not merged into typing.
+        breakUndoCoalescing()
+        insertText(cleaned, replacementRange: NSRange(location: NSNotFound, length: 0))
+        breakUndoCoalescing()
+        return true
+    }
+
+    // With plain-text paste forced (the cockpit), copy the chips' text
+    // form without their attachment characters, so pasting it anywhere
+    // doesn't carry an invisible character along.
+    open override func writeSelection(to pboard: NSPasteboard, types: [NSPasteboard.PasteboardType]) -> Bool {
+        let wrote = super.writeSelection(to: pboard, types: types)
+        if wrote {
+            removeAttachmentCharactersIfPlainTextOnly(in: pboard)
+        }
+        return wrote
+    }
+
+    private func removeAttachmentCharactersIfPlainTextOnly(in pboard: NSPasteboard) {
+        guard forcePlainTextPaste, let string = pboard.string(forType: .string) else {
+            return
+        }
+        let cleaned = Self.removingAttachmentCharacters(string)
+        if cleaned != string {
+            pboard.setString(cleaned, forType: .string)
+        }
     }
 
     // Opt-in (cockpit only). Placeholder text drawn when there is no
@@ -397,12 +456,24 @@ class ComposerTextView: MultiCursorTextView {
     @objc override func copy(_ sender: Any?) {
         if let menuItem = sender as? NSMenuItem {
             if super.validateMenuItem(menuItem) {
-                super.copy(sender)
+                copyRemovingAttachmentCharacters(sender)
             } else {
                 composerDelegate?.composerForwardMenuItem(menuItem)
             }
         } else if sender as? ComposerTextView === self || sender == nil {
-            super.copy(sender)
+            copyRemovingAttachmentCharacters(sender)
+        }
+    }
+
+    // A copy with several cursors writes the pasteboard directly, not
+    // through writeSelection(to:types:), so clean up after it too. Only
+    // when this copy wrote the pasteboard, never another app's contents.
+    private func copyRemovingAttachmentCharacters(_ sender: Any?) {
+        let pasteboard = NSPasteboard.general
+        let changeCount = pasteboard.changeCount
+        super.copy(sender)
+        if pasteboard.changeCount != changeCount {
+            removeAttachmentCharactersIfPlainTextOnly(in: pasteboard)
         }
     }
 
