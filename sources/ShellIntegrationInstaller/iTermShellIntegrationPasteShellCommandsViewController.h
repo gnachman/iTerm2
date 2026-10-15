@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 // The last attempt to write the shell integration script reported that the file was not
 // written. Cleared when the stage changes.
 @property (nonatomic) BOOL writeFailed;
+// Exposed for testing.
+@property (nonatomic, readonly) NSTextField *stepListField;
 
 - (void)update;
 

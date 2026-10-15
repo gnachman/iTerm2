@@ -27,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL sendShellCommandsWriteFailed;
 @property (nonatomic, readonly) BOOL showingDownloadAndRunPage;
 @property (nonatomic, readonly) BOOL showingSendShellCommandsPage;
+@property (nonatomic, readonly) NSTextField *sendShellCommandsStepListField;
 @end
 
 NS_ASSUME_NONNULL_END

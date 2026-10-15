@@ -7,6 +7,8 @@
 
 #import "iTermShellIntegrationPasteShellCommandsViewController.h"
 
+#import "DebugLogging.h"
+
 @interface iTermShellIntegrationPasteShellCommandsViewController ()
 
 @property (nonatomic, strong) IBOutlet NSTextField *textField;
@@ -24,6 +26,8 @@
 
 @implementation iTermShellIntegrationPasteShellCommandsViewController {
     BOOL _busy;
+    // The step list's height in the nib, which is the least it ever gets.
+    CGFloat _minimumStepListHeight;
 }
 
 - (void)setShell:(iTermShellIntegrationShell)shell {
@@ -44,6 +48,10 @@
 - (void)setWriteFailed:(BOOL)writeFailed {
     _writeFailed = writeFailed;
     [self update];
+}
+
+- (NSTextField *)stepListField {
+    return self.textField;
 }
 
 - (NSString *)waitingText {
@@ -189,6 +197,7 @@
         [attributedString appendAttributedString:as];
     }];
     self.textField.attributedStringValue = attributedString;
+    [self sizeStepListToFit];
     NSString *preview = [self.shellInstallerDelegate shellIntegrationInstallerNextCommandForSendShellCommands];
     NSArray<NSButton *> *buttons = self.previewCommandButtons;
     for (NSInteger i = 0; i < self.previewCommandButtons.count; i++){
@@ -200,6 +209,50 @@
         }
     }
     self.previewTextView.string = preview ?: @"";
+}
+
+// A step can wrap (a long message, or a translation), so grow the step list to fit its text instead
+// of clipping the steps after it. The controls above the list's bottom edge move up with its top
+// and the view grows by the same amount, so the buttons at the bottom stay where they are.
+- (void)sizeStepListToFit {
+    NSTextField *field = self.textField;
+    NSView *view = field.superview;
+    if (!field || !view) {
+        return;
+    }
+    if (_minimumStepListHeight == 0) {
+        _minimumStepListHeight = NSHeight(field.frame);
+    }
+    const NSRect fieldFrame = field.frame;
+    const NSRect measureBounds = NSMakeRect(0, 0, NSWidth(fieldFrame), CGFLOAT_MAX);
+    const CGFloat fittingHeight = ceil([field.cell cellSizeForBounds:measureBounds].height);
+    const CGFloat delta = MAX(_minimumStepListHeight, fittingHeight) - NSHeight(fieldFrame);
+    if (delta == 0) {
+        return;
+    }
+    DLog(@"Resize step list by %@ to fit text needing %@", @(delta), @(fittingHeight));
+    const BOOL autoresizes = view.autoresizesSubviews;
+    view.autoresizesSubviews = NO;
+    NSRect viewFrame = view.frame;
+    viewFrame.size.height += delta;
+    // Keep the view's top edge where it is.
+    viewFrame.origin.y -= delta;
+    view.frame = viewFrame;
+    view.autoresizesSubviews = autoresizes;
+    for (NSView *subview in view.subviews) {
+        if (subview == field) {
+            continue;
+        }
+        if (NSMinY(subview.frame) >= NSMinY(fieldFrame)) {
+            NSRect frame = subview.frame;
+            frame.origin.y += delta;
+            subview.frame = frame;
+        }
+    }
+    NSRect newFieldFrame = fieldFrame;
+    newFieldFrame.size.height += delta;
+    field.frame = newFieldFrame;
+    [self.shellInstallerDelegate shellIntegrationInstallerContentSizeDidChange];
 }
 
 - (NSArray<NSButton *> *)previewCommandButtons {

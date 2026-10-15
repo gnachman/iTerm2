@@ -179,6 +179,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     frame.origin.y = self.containerView.bounds.size.height - frame.size.height;
     self.currentViewController.view.frame = frame;
     self.downloadAndRunViewController.installUtilities = self.installUtilities;
+    [self fitWindowToCurrentView];
+}
+
+- (void)fitWindowToCurrentView {
     NSRect rect = self.window.frame;
     const CGFloat originalMaxY = NSMaxY(rect);
     rect.size = self.currentViewController.view.bounds.size;
@@ -192,6 +196,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (int)sendShellCommandsStage {
     return self.sendShellCommandsViewController.stage;
+}
+
+- (NSTextField *)sendShellCommandsStepListField {
+    return self.sendShellCommandsViewController.stepListField;
 }
 
 - (BOOL)sendShellCommandsWriteFailed {
@@ -979,6 +987,13 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (void)shellIntegrationInstallerCancelExpectations {
     [self cancelAllExpectations];
+}
+
+- (void)shellIntegrationInstallerContentSizeDidChange {
+    if (!self.currentViewController || self.currentViewController.view.superview != self.containerView) {
+        return;
+    }
+    [self fitWindowToCurrentView];
 }
 
 @end
