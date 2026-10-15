@@ -140830,6 +140830,90 @@
         }
       }
     },
+    "ProfilesGeneral.TitleComponentAIGeneratedName" : {
+      "comment" : "Title component menu item in Settings > Profiles > General > Title: the short name on-device AI generates for the work on screen. Keep consistent with the “AI-generated name” wording in the aiGeneratedTabTitles advanced setting.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "KI-generierter Name"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI-generated name"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI生成名"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nome gerado por IA"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Имя, сгенерированное ИИ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI生成的名称"
+          }
+        }
+      }
+    },
+    "ProfilesGeneral.TitlePreviewAI" : {
+      "comment" : "Sample AI-generated name shown in the title-format preview; an abbreviation for artificial intelligence",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "KI"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IA"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ИИ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        }
+      }
+    },
     "ProfilesGeneral.TitlePreviewCommandLine" : {
       "comment" : "Sample command line shown in the title-format preview",
       "extractionState" : "extracted_with_value",
