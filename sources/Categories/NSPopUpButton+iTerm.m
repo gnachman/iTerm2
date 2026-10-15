@@ -94,6 +94,21 @@
     [self selectItemAtIndex:selectedIndex];
 }
 
+- (void)it_selectItemWithRepresentedObject:(id)object fallback:(id)fallback {
+    if (!object || [object isKindOfClass:[NSNull class]]) {
+        // No value: leave the popup as the caller set it up.
+        return;
+    }
+    // -indexOfItemWithRepresentedObject: returns -1, not NSNotFound, when nothing matches.
+    NSInteger index = [self indexOfItemWithRepresentedObject:object];
+    if (index < 0 && fallback && ![fallback isKindOfClass:[NSNull class]]) {
+        index = [self indexOfItemWithRepresentedObject:fallback];
+    }
+    // When neither is in the menu, -selectItemAtIndex:-1 shows no selection rather than an item
+    // the setting doesn't hold.
+    [self selectItemAtIndex:index];
+}
+
 - (void)it_addItemWithTitle:(NSString *)title tag:(NSUInteger)tag {
     NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title action:nil keyEquivalent:@""];
     item.tag = tag;

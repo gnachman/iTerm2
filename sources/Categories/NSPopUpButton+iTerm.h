@@ -22,4 +22,9 @@
 - (void)populateWithSnippetsSelectingActionKey:(id)actionKey;
 - (void)it_addItemWithTitle:(NSString *)title tag:(NSUInteger)tag;
 
+// Selects the item whose represented object equals `object`. If there is none, selects the one for
+// `fallback`, and if that is missing too, shows no selection. A nil or NSNull `object` changes
+// nothing.
+- (void)it_selectItemWithRepresentedObject:(id)object fallback:(id)fallback;
+
 @end
