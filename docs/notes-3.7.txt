@@ -1513,3 +1513,8 @@ Bug Fixes:
   your login shell (for example, tcsh started
   from zsh). It installs for the shell you’re
   using.
+- An AI chat using a local Ollama model no
+  longer sends its messages to your cloud AI
+  provider after that model is removed from
+  Ollama. It now shows an error, and you can
+  pick another local model for the chat.

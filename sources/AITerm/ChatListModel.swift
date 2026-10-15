@@ -38,6 +38,7 @@ class ChatListModel: ChatListDataSource {
         }
         self.database = database
         self.chatStorage = chats
+        backfillModelVendors()
     }
 
     // MARK: - Chat-level operations
@@ -490,9 +491,82 @@ class ChatListModel: ChatListDataSource {
             return
         }
         var temp = chatStorage[i]
+        temp.modelVendor = Self.vendorForNewPin(modelName: modelName,
+                                                previousName: temp.modelName,
+                                                previousVendor: temp.modelVendor)
         temp.modelName = modelName
         try chatStorage.set(at: i, temp)
         postMetadataChange()
+    }
+
+    // The vendor to store with a chat's new model pin. Re-pinning the same name
+    // keeps a local (Ollama) vendor, so a local pin whose tag is gone, or whose
+    // name a cloud model now shares, stays local. Otherwise the new name's vendor
+    // when it can be told (which also picks up an edit to a manual model's API or
+    // URL). A name that resolves but is deliberately left unstamped (a manual model
+    // on a non-Ollama API, see LLMMetadata.inferredVendor) gets no vendor rather
+    // than inheriting the previous pin's. A name that doesn't resolve right now
+    // keeps the previous vendor when it is the same pin or the chat was local.
+    static func vendorForNewPin(modelName: String?,
+                                previousName: String?,
+                                previousVendor: Int?) -> Int? {
+        guard let modelName else {
+            return nil
+        }
+        let llama = Int(iTermAIVendor.llama.rawValue)
+        if modelName == previousName, previousVendor == llama {
+            return llama
+        }
+        if let vendor = LLMMetadata.inferredVendor(forPinnedModelNamed: modelName) {
+            return Int(vendor.rawValue)
+        }
+        if LLMMetadata.model(named: modelName) != nil {
+            return nil
+        }
+        return modelName == previousName || previousVendor == llama ? previousVendor : nil
+    }
+
+    /// Side-effect-free lookup of the vendor the chat's model pin belongs to
+    /// (Chat.modelVendor), nil when unknown.
+    func modelVendor(forChatID chatID: String) -> iTermAIVendor? {
+        return (chatStorage.first { $0.id == chatID }?.modelVendor)
+            .flatMap { iTermAIVendor(rawValue: UInt($0)) }
+    }
+
+    // Chats pinned before Chat.modelVendor existed have a model name but no
+    // vendor. Stamp the vendor wherever the name still says which vendor it is
+    // (see LLMMetadata.inferredVendor), so the pin keeps routing to that vendor if
+    // the name stops resolving later. Names that say nothing are left alone and
+    // keep the legacy behavior. A stored cloud vendor that disagrees with what the
+    // name now says (an older build changed the chat's model without updating the
+    // vendor) is corrected, or cleared when the name now resolves to a model that
+    // is deliberately left unstamped; a stored Ollama vendor is never moved off
+    // Ollama.
+    private func backfillModelVendors() {
+        let llama = Int(iTermAIVendor.llama.rawValue)
+        for i in 0..<chatStorage.count {
+            var chat = chatStorage[i]
+            guard chat.modelVendor != llama, let name = chat.modelName else {
+                continue
+            }
+            let newVendor: Int?
+            if let vendor = LLMMetadata.inferredVendor(forPinnedModelNamed: name) {
+                newVendor = Int(vendor.rawValue)
+            } else if chat.modelVendor != nil, LLMMetadata.model(named: name) != nil {
+                newVendor = nil
+            } else {
+                continue
+            }
+            guard newVendor != chat.modelVendor else {
+                continue
+            }
+            chat.modelVendor = newVendor
+            do {
+                try chatStorage.set(at: i, chat)
+            } catch {
+                DLog("Failed to backfill the model vendor of chat \(chat.id): \(error)")
+            }
+        }
     }
 
     /// Stamp the protocol a chat's wire-fragment blobs are frozen to (the iTermAIAPI
