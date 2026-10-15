@@ -1596,3 +1596,6 @@ Bug Fixes:
   Password Manager…” action no longer lists
   saved account names until you authenticate
   again.
+- Turning on generative AI while Companion
+  Device Settings shows a failed pairing no
+  longer erases the error and the QR code.
