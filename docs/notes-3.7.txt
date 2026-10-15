@@ -1612,3 +1612,6 @@ Bug Fixes:
 - In Settings > Keys > Hotkey, the “App
   Hotkey:” and “Open Quickly Hotkey:” labels no
   longer run under the controls beside them.
+- AI custom headers you remove from a model no
+  longer come back after launching iTerm2 on
+  another Mac that shares your settings.

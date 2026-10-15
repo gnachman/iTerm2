@@ -40,6 +40,8 @@ typedef NS_ENUM(NSUInteger, iTermMigrationHelperShouldRemoveDeprecatedKeyMapping
 + (iTermMigrationHelperShouldRemoveDeprecatedKeyMappings)shouldRemoveDeprecatedKeyMappings;
 
 + (void)migrateAISettings;
++ (void)migrateCustomHeadersToPerModelIfNeeded;
++ (void)retireLegacyGlobalCustomHeadersIfModelsAreConfigured;
 
 // One-time migration of the AI command safety check from on-device Apple
 // Intelligence to the configured model. Called at launch so it runs before the

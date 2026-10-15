@@ -4181,6 +4181,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [clean addObject:[configuration copy]];
     }
     [iTermPreferences setObject:clean forKey:kPreferenceKeyAIManualModelConfigurations];
+    // The models now carry their own headers. Retire the legacy global list so
+    // another Mac sharing these prefs does not copy it back into them.
+    [iTermMigrationHelper retireLegacyGlobalCustomHeadersIfModelsAreConfigured];
 }
 
 - (void)clearLegacyManualAIModelConfiguration {
