@@ -96,6 +96,9 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
 // already exist. Existing connections are unaffected. Called when the app begins to quit.
 + (void)stopAcceptingConnections;
 
+// Whether two isomorphic split trees give every session the same grid size.
++ (BOOL)splitTree:(ITMSplitTreeNode *)node1 hasSameGridSizesAs:(ITMSplitTreeNode *)node2;
+
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 
 // In-process API dispatch for the embedded it2 command tree (SSH integration).
