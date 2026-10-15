@@ -41137,7 +41137,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gib eine Website ein, zum Beispiel https://example.com. Skripte können dies dann dort ohne Nachfrage tun."
+            "value" : "Geben Sie eine Website ein, zum Beispiel https://example.com. Skripte können dies dann dort ohne Nachfrage tun."
           }
         },
         "en" : {
@@ -41305,7 +41305,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bevor ein Skript URLs lädt oder JavaScript auf einer Website in einer Browser-Sitzung ausführt, fragt iTerm2 dich. Gespeicherte Antworten werden hier aufgeführt und gelten für alle Skripte."
+            "value" : "Bevor ein Skript URLs lädt oder JavaScript auf einer Website in einer Browser-Sitzung ausführt, fragt iTerm2 Sie. Gespeicherte Antworten werden hier aufgeführt und gelten für alle Skripte."
           }
         },
         "en" : {
@@ -41347,7 +41347,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„%@“ ist keine Website-Adresse. Gib eine wie https://example.com ein."
+            "value" : "„%@“ ist keine Website-Adresse. Geben Sie eine wie https://example.com ein."
           }
         },
         "en" : {
