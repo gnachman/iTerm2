@@ -1472,3 +1472,6 @@ Bug Fixes:
 - The folder icon in the Current Directory
   status bar component can no longer be dragged
   after its directory has been deleted.
+- With debug logging on, a password typed into
+  a password field (for example, in the password
+  manager) no longer appears in the debug log.

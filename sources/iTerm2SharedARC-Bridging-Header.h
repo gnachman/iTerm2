@@ -9,6 +9,7 @@
 #import "NSBundle+iTerm.h"
 #import "NSHost+iTerm.h"
 #import "NSSavePanel+iTerm.h"
+#import "NSTextView+iTermUndoSafety.h"
 #import "ObjCExceptions.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"

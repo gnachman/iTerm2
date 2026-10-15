@@ -3,6 +3,20 @@
 #import "DebugLogging.h"
 #import <objc/runtime.h>
 
+NSString *iTermUndoSafetyScrubLogMessage(NSTextStorage *textStorage,
+                                         NSUndoManager *undoManager,
+                                         NSTextView *textView,
+                                         NSWindow *window) {
+    // Describe the text storage and text view by class, address, and length
+    // only. -[NSTextStorage description] is the full text, and a text view
+    // subclass may include its text in its description.
+    return [NSString stringWithFormat:@"iTermUndoSafety: scrub textStorage <%@: %p> length=%lu from %@ as <%@: %p> leaves window %@",
+            NSStringFromClass(textStorage.class), textStorage, (unsigned long)textStorage.length,
+            undoManager,
+            NSStringFromClass(textView.class), textView,
+            window];
+}
+
 @implementation NSTextView (iTermUndoSafety)
 
 + (void)load {
@@ -51,8 +65,7 @@
         NSTextStorage *textStorage = self.textStorage;
         NSUndoManager *undoManager = currentWindow.undoManager;
         if (undoManager != nil && textStorage != nil) {
-            DLog(@"iTermUndoSafety: scrub textStorage %@ from %@ as %@ leaves window %@",
-                 textStorage, undoManager, self, currentWindow);
+            DLog(@"%@", iTermUndoSafetyScrubLogMessage(textStorage, undoManager, self, currentWindow));
             [undoManager removeAllActionsWithTarget:textStorage];
         }
     }

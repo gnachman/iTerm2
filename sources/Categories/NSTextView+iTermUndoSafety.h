@@ -41,3 +41,15 @@
 // keeps this scrub a no-op for it.
 @interface NSTextView (iTermUndoSafety)
 @end
+
+NS_ASSUME_NONNULL_BEGIN
+
+// The debug log line written when a text view's text-storage undo actions are
+// scrubbed. Never includes the text: the text view may be the field editor of a
+// secure text field holding a password. Exposed for tests.
+FOUNDATION_EXPORT NSString *iTermUndoSafetyScrubLogMessage(NSTextStorage *textStorage,
+                                                           NSUndoManager *undoManager,
+                                                           NSTextView *textView,
+                                                           NSWindow * _Nullable window);
+
+NS_ASSUME_NONNULL_END
