@@ -73,6 +73,18 @@ final class iTermBrowserScriptingPermissionsWindowController: NSWindowController
 
     private static let permissionColumnWidth: CGFloat = 130
     private static let allowedColumnWidth: CGFloat = 60
+    // Room around the text in a row beyond the text itself.
+    private static let cellPadding: CGFloat = 12
+
+    // The width `column` needs to show its header and each of `cellTexts` in
+    // full, and at least `minimum`. Translations of the header and of the
+    // permission names can be much longer than English.
+    static func width(toFit column: NSTableColumn, cellTexts: [String], minimum: CGFloat) -> CGFloat {
+        let font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let textWidths = cellTexts.map { ($0 as NSString).size(withAttributes: [.font: font]).width + cellPadding }
+        let widest = ([column.headerCell.cellSize.width] + textWidths).max() ?? 0
+        return max(minimum, ceil(widest))
+    }
 
     private let dataProvider = BrowserScriptingPermissionsDataProvider()
     private var crudController: CRUDTableViewController<iTermBrowserScriptingPermissionsWindowController>?
@@ -214,7 +226,6 @@ final class iTermBrowserScriptingPermissionsWindowController: NSWindowController
         siteColumn.title = String(localized: "BrowserScriptingPermissions.WebsiteColumn",
                                   defaultValue: "Website",
                                   comment: "Column header for the website a permission applies to")
-        siteColumn.width = scrollView.contentSize.width - Self.permissionColumnWidth - Self.allowedColumnWidth - 3 * tableView.intercellSpacing.width
         tableView.addTableColumn(siteColumn)
 
         // Localization unneeded
@@ -222,8 +233,11 @@ final class iTermBrowserScriptingPermissionsWindowController: NSWindowController
         permissionColumn.title = String(localized: "BrowserScriptingPermissions.PermissionColumn",
                                         defaultValue: "Permission",
                                         comment: "Column header for what scripts may do on a website, such as Run JavaScript")
-        permissionColumn.width = Self.permissionColumnWidth
-        permissionColumn.minWidth = Self.permissionColumnWidth
+        let permissionWidth = Self.width(toFit: permissionColumn,
+                                         cellTexts: iTermBrowserScriptingPermissions.Kind.allCases.map { $0.localizedName },
+                                         minimum: Self.permissionColumnWidth)
+        permissionColumn.width = permissionWidth
+        permissionColumn.minWidth = permissionWidth
         tableView.addTableColumn(permissionColumn)
 
         // Localization unneeded
@@ -231,10 +245,13 @@ final class iTermBrowserScriptingPermissionsWindowController: NSWindowController
         allowedColumn.title = String(localized: "BrowserScriptingPermissions.AllowedColumn",
                                      defaultValue: "Allowed",
                                      comment: "Column header for a checkbox saying whether scripts may do something on a website; unchecked means always denied")
-        allowedColumn.width = Self.allowedColumnWidth
-        allowedColumn.minWidth = Self.allowedColumnWidth
-        allowedColumn.maxWidth = Self.allowedColumnWidth
+        let allowedWidth = Self.width(toFit: allowedColumn, cellTexts: [], minimum: Self.allowedColumnWidth)
+        allowedColumn.width = allowedWidth
+        allowedColumn.minWidth = allowedWidth
+        allowedColumn.maxWidth = allowedWidth
         tableView.addTableColumn(allowedColumn)
+
+        siteColumn.width = scrollView.contentSize.width - permissionWidth - allowedWidth - 3 * tableView.intercellSpacing.width
 
         scrollView.documentView = tableView
         container.addSubview(scrollView)
