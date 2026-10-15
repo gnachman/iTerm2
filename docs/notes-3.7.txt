@@ -1638,3 +1638,7 @@ Bug Fixes:
   “Unreadable usage data” when Claude Code’s
   output contains color codes or other control
   characters.
+- The AI Usage toolbar item’s problem report no
+  longer fills the screen with the output of a
+  usage command that printed too much, which
+  left its buttons out of reach.

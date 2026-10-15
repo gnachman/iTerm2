@@ -57,6 +57,28 @@ final class WorkgroupUsageTests: XCTestCase {
         XCTAssertEqual(report.bars[1].clampedFraction, 0.0, accuracy: 1e-9)
     }
 
+    // A command whose output hit the 1 MiB cap must say so, and the report
+    // alert must not try to show a megabyte of text. QA finding F-375.
+    func test_decode_outputAtCapSaysItWasCutOff() throws {
+        let data = Data(repeating: UInt8(ascii: "y"), count: WorkgroupUsageToolbarItem.maximumOutputSize)
+        let report = WorkgroupUsageToolbarItem.decode(data: data)
+        XCTAssertEqual(report.reportable, true)
+        XCTAssertTrue(report.diagnostic?.hasPrefix("(The command’s output was cut off at") ?? false)
+    }
+
+    func test_decode_shortGarbageIsNotCalledCutOff() throws {
+        let report = WorkgroupUsageToolbarItem.decode(data: Data("y\ny\n".utf8))
+        XCTAssertEqual(report.diagnostic, "y\ny\n")
+    }
+
+    func test_displayedReport_capsHugeReports() {
+        let huge = String(repeating: "y\n", count: 500_000)
+        let shown = WorkgroupUsageToolbarItem.displayedReport(huge)
+        XCTAssertLessThan(shown.count, WorkgroupUsageToolbarItem.maximumDisplayedReportLength + 200)
+        XCTAssertTrue(shown.hasPrefix(String(huge.prefix(100))))
+        XCTAssertEqual(WorkgroupUsageToolbarItem.displayedReport("short"), "short")
+    }
+
     // MARK: - Bundled parser script
 
     // Resolve the shipped parser from the source tree so the test

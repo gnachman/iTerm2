@@ -216057,6 +216057,48 @@
         }
       }
     },
+    "WorkgroupUsage.AlertReportTruncated" : {
+      "comment" : "Appended to the AI usage problem report shown in an alert when it was shortened to fit; “Report a Bug” is the title of a button in the same alert",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…(gekürzt; klicken Sie auf „Einen Fehler melden“, um den vollständigen Bericht zu kopieren)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "…(truncated; click “Report a Bug” to copy the full report)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…(省略されています。完全なレポートをコピーするには「バグを報告」をクリックしてください)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…(truncado; clique em “Reportar um bug” para copiar o relatório completo)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…(сокращено; нажмите «Сообщить об ошибке», чтобы скопировать полный отчет)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…（已截断；点按“报告错误”以复制完整报告）"
+          }
+        }
+      }
+    },
     "WorkgroupUsage.BadOutput" : {
       "comment" : "AI usage toolbar item message when the command output could not be parsed",
       "extractionState" : "extracted_with_value",
