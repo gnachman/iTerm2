@@ -383,6 +383,10 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (NSDictionary *)arrangementWithSession:(PTYSession *)session;
 + (NSDictionary *)arrangementWithSession:(PTYSession *)session;
 
+// The arrangement Window > Duplicate Window opens. Unlike -arrangement, it leaves out state that
+// belongs to this window alone, such as Lock Location.
+- (NSDictionary *)arrangementForDuplicateWindow;
+
 // All tabs in this window.
 - (NSArray<PTYTab *> *)tabs;
 
