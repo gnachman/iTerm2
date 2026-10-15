@@ -704,6 +704,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSArray<NSButton *> *_columnCheckboxes;
     NSArray<NSButton *> *_rightAnchoredButtons;
     CGFloat _fieldX;
+    // The running connection test, if any. While set, the test button stops it.
+    iTermAIConnectionTest *_connectionTest;
+    NSString *_testButtonIdleTitle;
     NSDictionary *_result;
     BOOL (^_nameIsTaken)(NSString *name);
     // The Model name typed before auto-discovery was toggled on. Stashed so
@@ -1848,6 +1851,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (void)testClicked:(id)sender {
+    if (_connectionTest) {
+        // The button reads “Stop Test” while a test runs.
+        [_connectionTest cancel];
+        return;
+    }
     // Commit any in-progress header cell edit so the probe uses what's on screen.
     [_window makeFirstResponder:nil];
     NSString *url =
@@ -1892,11 +1900,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     const BOOL supportsTemperature =
         _supportsTemperatureButton.state == NSControlStateValueOn;
 
-    NSString *savedTitle = _testButton.title;
-    _testButton.enabled = NO;
-    _testButton.title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.Testing", nil, [NSBundle mainBundle], @"Testing…", @"Title of the test button while an AI connection test is running");
+    _testButtonIdleTitle = _testButton.title;
+    // A test against an unresponsive server lasts as long as the AI timeout,
+    // so let the user stop it rather than disabling the button.
+    _testButton.title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.StopTest", nil, [NSBundle mainBundle], @"Stop Test", @"Title of the test button while an AI connection test is running; clicking it stops the test");
     [_testSpinner startAnimation:nil];
     __weak __typeof(self) weakSelf = self;
+    __block BOOL finished = NO;
+    iTermAIConnectionTest *test =
     [iTermAIConnectionTester testModelName:name
                                        url:url
                                        api:api
@@ -1907,13 +1918,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                              customHeaders:[self nonEmptyHeaders]
                                   inWindow:_window
                                 completion:^(iTermAIConnectionTestOutcome outcome, NSString *message) {
+        finished = YES;
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
         }
         [strongSelf->_testSpinner stopAnimation:nil];
-        strongSelf->_testButton.enabled = YES;
-        strongSelf->_testButton.title = savedTitle;
+        strongSelf->_testButton.title = strongSelf->_testButtonIdleTitle;
+        strongSelf->_connectionTest = nil;
         if (outcome == iTermAIConnectionTestOutcomeCancelled) {
             return;
         }
@@ -1925,9 +1937,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }
         iTermGeneralPreferencesShowSheet(heading, message ?: @"", strongSelf->_window);
     }];
+    // The completion may already have run (for example, a URL that isn't valid).
+    if (!finished) {
+        _connectionTest = test;
+    }
 }
 
 - (void)cancelClicked:(id)sender {
+    [_connectionTest cancel];
     [_window.sheetParent endSheet:_window returnCode:NSModalResponseCancel];
 }
 
@@ -2045,6 +2062,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     result[kAIManualModelCustomHeadersKey] = [self nonEmptyHeaders];
     _result = result;
+    [_connectionTest cancel];
     [_window.sheetParent endSheet:_window returnCode:NSModalResponseOK];
 }
 
