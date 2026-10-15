@@ -1650,6 +1650,11 @@ Bug Fixes:
 - Cmd-H, Cmd-Q, Cmd-W, and Cmd-M no longer press
   a button in an alert whose button happens to
   start with that letter, such as Help.
+- After you change a window’s style in Window >
+  Window Style, for example to No Title Bar, the
+  window keeps keyboard focus, so you can keep
+  typing without clicking it first.
+
 
 
 
