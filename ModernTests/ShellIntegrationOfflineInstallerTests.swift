@@ -579,6 +579,64 @@ class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
     }
 }
 
+// The online (download and run) installer types `curl … | bash`; the script iterm2.com serves
+// decides which shell it supports. Until it supports nushell, the installer must switch to the
+// Internet-free installer, which does, instead of reporting nushell as unsupported.
+final class ShellIntegrationOnlineInstallerTests: XCTestCase {
+    private static let curlCommand = "\ncurl -L https://iterm2.com/shell_integration/install_shell_integration.sh | bash\n"
+    private static let oldScriptNuError = "Your shell, nu, is not supported yet. Only tcsh, zsh, bash, and fish are supported. Sorry!"
+
+    private var controller: iTermShellIntegrationWindowController!
+    private var terminal: FakeShellIntegrationTerminal!
+
+    override func setUp() {
+        super.setUp()
+        terminal = FakeShellIntegrationTerminal(testCase: self)
+        controller = iTermShellIntegrationWindowController(windowNibName: "iTermShellIntegrationWindowController")
+        controller.delegate = terminal
+        XCTAssertNotNil(controller.window)
+        controller.shellIntegrationInstallerConfirmDownloadAndRun()
+        XCTAssertTrue(controller.showingDownloadAndRunPage)
+    }
+
+    override func tearDown() {
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.window?.orderOut(nil)
+        controller = nil
+        terminal = nil
+        super.tearDown()
+    }
+
+    private func downloadAndRun(output: String) {
+        terminal.responses[Self.curlCommand] = output
+        controller.shellIntegrationInstallerReallyDownloadAndRun()
+        terminal.run()
+        XCTAssertEqual(terminal.sentTexts, [Self.curlCommand])
+    }
+
+    func testNushellRejectedByWebsiteScriptSwitchesToInternetFreeInstall() {
+        downloadAndRun(output: Self.oldScriptNuError)
+
+        XCTAssertFalse(controller.showingDownloadAndRunPage)
+        XCTAssertTrue(controller.showingSendShellCommandsPage)
+        XCTAssertEqual(controller.sendShellCommandsStage, 0)
+    }
+
+    func testOtherUnsupportedShellStaysOnDownloadPage() {
+        downloadAndRun(output: "Your shell, elvish, is not supported yet. Only bash, fish, nu, tcsh, xonsh and zsh are supported. Sorry!")
+
+        XCTAssertTrue(controller.showingDownloadAndRunPage)
+        XCTAssertFalse(controller.showingSendShellCommandsPage)
+    }
+
+    func testSuccessfulInstallAdvances() {
+        downloadAndRun(output: "Done.")
+
+        XCTAssertFalse(controller.showingDownloadAndRunPage)
+        XCTAssertFalse(controller.showingSendShellCommandsPage)
+    }
+}
+
 // nu started from a zsh login shell: $SHELL is zsh, but the commands go to nu, so every step
 // must work without asking $SHELL for nu's autoload directory.
 final class ShellIntegrationOfflineNushellFromZshInstallerTests: ShellIntegrationOfflineNushellInstallerTests {
