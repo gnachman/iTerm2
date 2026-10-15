@@ -1,0 +1,171 @@
+Version 3.7.6
+
+Version 3.7.5 was accidentally built without the
+bug fixes below. This release includes them.
+
+Improvements:
+- The Companion setup wizard no longer asks for an
+  API key when AI already works, or when you chose
+  a model manually in Settings > General > AI. If
+  that model isn’t set up yet, the wizard says so
+  and lets you finish setup anyway.
+- AI API keys are now sent automatically only to
+  their own provider’s servers. Before, the
+  Automatic API key choice could send your OpenAI
+  key to a gateway such as OpenRouter or a company
+  gateway hosted on Azure. Models you already set
+  up keep sending the key they sent before.
+
+Bug Fixes:
+- Fixed crashes when a Set Profile Setting trigger
+  fired, when a trigger had no regex (such as an
+  event trigger written by hand in a Dynamic
+  Profile), when the bell rang in a profile whose
+  Bell Sound wasn’t a sound name, and when using a
+  tmux integration window that was left open after
+  detaching.
+- Answering “Always” to “Close tmux windows after
+  detaching?” now closes only the tmux integration
+  windows left open by the detach. It used to
+  close every session in the app.
+- When an administrator turns off generative AI,
+  AI chat timers and watches no longer send
+  anything to the AI model, and Edit > Engage
+  Artificial Intelligence in the Composer shows
+  the lockout alert instead of sending your text.
+- Debug logs no longer include AI API keys or the
+  values of custom HTTP headers configured for AI
+  models.
+- Command safety checks that use a cheaper model
+  now keep a manually configured model’s custom
+  headers, API key choice, and model name. Before,
+  they could send the request with a different key
+  or ask for a model your endpoint doesn’t have.
+- Choosing a Preset in the manual AI model editor
+  now also resets its custom headers and API key
+  choice.
+- Stopping an AI chat reply while another chat is
+  also replying no longer cancels the other chat’s
+  reply, and the stopped reply now really stops
+  downloading instead of running (and using up
+  tokens) until it finishes.
+- Stopping an AI chat reply and then sending
+  another message no longer shows the rest of the
+  stopped reply as the answer to the new message.
+- AI chats now keep their session links, watches,
+  and timers across a quit when window restoration
+  brings the sessions back, including watches on
+  tmux integration panes. Timers no longer fire
+  before windows are restored, and unlinking a
+  chat from its session no longer cancels its
+  timers.
+- Editing or deleting an AI chat message now fully
+  removes the later conversation, so the AI no
+  longer sees leftover command results from it,
+  and a message you deleted while the AI was still
+  replying is no longer sent.
+- Fixed Notify on Status Change reporting that a
+  session changed from “none” when its status had
+  already been set before you turned the
+  notification on, and alerting when a program
+  merely restated that status.
+- The Prevent Sleep setting in Settings > Profiles
+  > Session now takes effect when you click it,
+  and keeps preventing sleep after Session >
+  Restart Session or Undo Close.
+- A program that sends a flood of status reports
+  (OSC 7501) no longer makes iTerm2 fall far
+  behind and use a lot of memory.
+- The AI Usage toolbar item now finds the claude
+  command when iTerm2 was opened from the Dock,
+  uses the CLAUDE_CONFIG_DIR set in your shell,
+  and no longer uses gigabytes of memory when a
+  custom usage command prints too much.
+- Installing or reinstalling the Claude Code
+  Integration no longer replaces a Claude Code
+  settings.json that has a syntax error, which
+  erased all your other Claude Code settings. It
+  now leaves the file alone and asks you to fix it
+  and try again. The integration’s hook is also no
+  longer removed when CLAUDE_CONFIG_DIR names
+  ~/.claude in a different way.
+- Fixed restored sessions bringing lines that had
+  been erased by a clear screen back onto the
+  screen, above the newer output, with the cursor
+  in the wrong place.
+- When an SSH Integration connection dropped, for
+  example because the ssh process or the remote
+  server was killed, the session hung: nothing you
+  typed afterward appeared. It now ends the
+  connection and returns to the local shell.
+- In a session that ssh’ed to another machine
+  without SSH Integration, the current directory
+  (and paths used by Upload and Paste Path) no
+  longer switches to the local Mac’s directory
+  after you run a command.
+- Uploading several files that have the same name
+  in one SSH Integration paste now keeps all of
+  them instead of overwriting one with another.
+- The Internet-Free Install of shell integration
+  no longer gets stuck at its first step for zsh
+  users, and that step can no longer be skipped,
+  which made later steps write to an invalid path.
+- Cockpit fixes: Opt-Return and Opt-Shift-Return
+  now send instead of erasing what you typed, only
+  the selected text is sent when there is a
+  selection, the caret and chips no longer jump or
+  change when a session’s status changes, and text
+  on a line with an @-mention chip is no longer
+  misaligned.
+- Floating pane fixes: Undo Close now restores a
+  floating pane even after its undo timeout,
+  reattaching to a tmux session no longer moves
+  floats that sit beyond column 80, and a native
+  session is never put into a tmux integration tab
+  as a floating pane.
+- In tmux integration, a layout change made by
+  tmux while Find > Filter was open on a pane no
+  longer hides pane %0 or moves keyboard focus
+  away from the filtered pane.
+- Password manager fixes: in “Require
+  Authentication on Every Open” mode it now asks
+  every time it opens, including the standalone
+  window, shows no accounts until you
+  authenticate, and shows the website login sheet
+  instead of a system prompt for each login. In
+  “Once per Launch and after Screen Locks” mode,
+  locking the screen now locks it again even when
+  it was only unlocked to save a website password.
+- Fixed a bug where turning on “Use AI to check
+  safety of commands before running them” on a Mac
+  without Apple Intelligence was turned back off
+  the first time you used AI chat, which then
+  asked whether to enable it again.
+- With macOS’s “Add period with double-space” on,
+  typing two spaces in the terminal after using
+  the Composer no longer types “. ”.
+- Move Tab Left and Move Tab Right no longer unpin
+  a pinned tab and put it into a neighboring tab
+  group.
+- Session Status now follows a session rename.
+- `it2 session list --format` now works. The
+  bundled it2 was out of date.
+- {{FILE}} in an AI command suggestion now expands
+  to the whole filename instead of the part you
+  hadn’t typed yet.
+- With the GPU renderer off, a color change in the
+  middle of a right-to-left word no longer paints
+  the whole word in one color.
+- When no valid UNIX locale matches your language
+  and region, the prompt to pick one now appears
+  as a normal dialog the first time a hotkey
+  window opens, instead of as a sheet on the
+  not-yet-visible window.
+- Closing the Companion setup wizard while it is
+  installing now cancels setup. Before, it kept
+  going, asked for an administrator password with
+  no explanation, and reopened the wizard if you
+  declined. Cmd-W now closes the wizard instead of
+  a terminal session.
+- Finder’s Get Info now shows iTerm2’s real
+  version in every language instead of “3.7.dev”.
