@@ -92,7 +92,9 @@ class SettingPopupView: NSView {
         let identifier = selectedIdentifier
         comboView?.removeFromSuperview()
         let newComboView = SearchableComboView(SearchableComboViewGroup.fromSettings(),
-                                               defaultTitle: "Select Setting…")
+                                               defaultTitle: String(localized: "SettingPopup.SelectSetting",
+                                                                    defaultValue: "Select Setting…",
+                                                                    comment: "Placeholder of the setting picker in the key binding editor’s Toggle Setting action before a setting is chosen"))
         newComboView.frame = self.bounds
         newComboView.delegate = comboView?.delegate
         addSubview(newComboView)
