@@ -396,12 +396,15 @@
             (long)byteCount, (long)lineCount];
 }
 
++ (NSString *)statsLabelStringForPreviewString:(NSString *)string {
+    return [self statsLabelStringForByteCount:string.length lineCount:string.it_lineCount];
+}
+
 - (void)updatePreview {
     PasteEvent *pasteEvent = [self pasteEventWithString:_rawString forPreview:YES];
     [iTermPasteHelper sanitizePasteEvent:pasteEvent encoding:_encoding];
     _preview.string = pasteEvent.string;
-    _statsLabel.stringValue = [iTermPasteSpecialWindowController statsLabelStringForByteCount:_preview.string.length
-                                                                                   lineCount:_preview.string.numberOfLines];
+    _statsLabel.stringValue = [iTermPasteSpecialWindowController statsLabelStringForPreviewString:_preview.string];
     [self updateDuration];
 }
 
