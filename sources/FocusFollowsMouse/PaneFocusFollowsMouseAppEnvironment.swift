@@ -178,16 +178,77 @@ final class PaneFocusFollowsMouseAppEnvironment: PaneFocusFollowsMouseEnvironmen
             DLog("\(window) is not key")
             return
         }
-        if window.firstResponder === responder {
+        if window.firstResponder === responder || Self.textField(editedIn: window) === responder {
+            if let textField = responder as? NSTextField {
+                Self.forgetSelection(of: textField)
+            }
             sessionView.delegate?.sessionViewFocusFollowsMouseActivateSession()
             return
         }
+        Self.rememberSelection(in: window)
         if responder !== sessionView.focusFollowsMouseMainResponder {
             // An overlay only becomes first responder; it doesn't make its session active the
             // way the terminal does. Activate first, because activating focuses the terminal.
             sessionView.delegate?.sessionViewFocusFollowsMouseActivateSession()
         }
         window.makeFirstResponder(responder)
+        if let textField = responder as? NSTextField {
+            Self.restoreSelection(of: textField)
+        }
+    }
+
+    // MARK: - Text field selection
+
+    // Making a text field first responder selects all of its text, so a find query
+    // would be replaced by the next key typed after the pointer moved away and back.
+    // Remember where the caret was when focus moves away from a text field, and put
+    // it back when focus follows the pointer back to it.
+    // The selection and the text it was made in, so a selection is restored only if the
+    // text hasn't changed since (e.g., the user clicked back in and typed).
+    private class SavedSelection {
+        let range: NSRange
+        let text: String
+
+        init(range: NSRange, text: String) {
+            self.range = range
+            self.text = text
+        }
+    }
+    private static let savedSelections = NSMapTable<NSTextField, SavedSelection>.weakToStrongObjects()
+
+    // The text field whose field editor is the window's first responder, if any.
+    static func textField(editedIn window: NSWindow) -> NSTextField? {
+        guard let editor = window.firstResponder as? NSTextView, editor.isFieldEditor else {
+            return nil
+        }
+        return editor.delegate as? NSTextField
+    }
+
+    static func rememberSelection(in window: NSWindow) {
+        guard let textField = textField(editedIn: window),
+              let editor = window.firstResponder as? NSTextView else {
+            return
+        }
+        savedSelections.setObject(SavedSelection(range: editor.selectedRange(), text: editor.string),
+                                  forKey: textField)
+    }
+
+    static func forgetSelection(of textField: NSTextField) {
+        savedSelections.removeObject(forKey: textField)
+    }
+
+    static func restoreSelection(of textField: NSTextField) {
+        guard let saved = savedSelections.object(forKey: textField),
+              let editor = textField.currentEditor() else {
+            return
+        }
+        savedSelections.removeObject(forKey: textField)
+        guard editor.string == saved.text,
+              NSMaxRange(saved.range) <= (editor.string as NSString).length else {
+            DLog("Text changed since the selection was saved; leave the default selection")
+            return
+        }
+        editor.selectedRange = saved.range
     }
 
     // Uses an undocumented API to receive key presses while another app is active.
