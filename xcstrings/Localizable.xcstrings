@@ -117320,6 +117320,762 @@
         }
       }
     },
+    "OrchestrationTool.AddClipping" : {
+      "comment" : "AI chat bubble shown when the AI posts a clipping to a workgroup. The first placeholder is the clipping’s title; the second is a link to the workgroup.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausschnitt „%1$@“ wird in %2$@ veröffentlicht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Posting clipping “%1$@” to %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クリッピング「%1$@」を%2$@に投稿しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publicando o recorte “%1$@” em %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Публикация фрагмента «%1$@» в %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在将剪贴“%1$@”发布到 %2$@"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.AddUntitledClipping" : {
+      "comment" : "AI chat bubble shown when the AI posts a clipping with no title to a workgroup. The placeholder is a link to the workgroup.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Ausschnitt ohne Titel wird in %@ veröffentlicht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Posting an untitled clipping to %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無題のクリッピングを%@に投稿しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publicando um recorte sem título em %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Публикация фрагмента без названия в %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在将无标题的剪贴发布到 %@"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.CodeReviewCustomPrompt" : {
+      "comment" : "AI chat bubble shown when the AI starts a Code Review with its own prompt. The first placeholder is a link to the session; the second is the start of the prompt, already in quotation marks.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code-Review für %1$@ wird gestartet mit %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Kicking off Code Review on %1$@ with %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@のコードレビューを%2$@で開始しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando a revisão de código em %1$@ com %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запуск проверки кода в %1$@ с промптом %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在使用 %2$@ 对 %1$@ 启动代码审查"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.CodeReviewDefaultPrompt" : {
+      "comment" : "AI chat bubble shown when the AI starts a Code Review with the default prompt. The placeholder is a link to the session.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code-Review für %@ wird mit dem Standard-Prompt gestartet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Kicking off Code Review on %@ with the default prompt"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のコードレビューをデフォルトのプロンプトで開始しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando a revisão de código em %@ com o prompt padrão"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запуск проверки кода в %@ с промптом по умолчанию"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在使用默认提示对 %@ 启动代码审查"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.CodeReviewSavedPrompt" : {
+      "comment" : "AI chat bubble shown when the AI starts a Code Review. The first placeholder is a link to the session; the second is the name of a saved review prompt.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code-Review für %1$@ wird mit dem gespeicherten Prompt „%2$@“ gestartet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Kicking off Code Review on %1$@ with saved prompt “%2$@”"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@のコードレビューを保存済みプロンプト「%2$@」で開始しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando a revisão de código em %1$@ com o prompt salvo “%2$@”"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запуск проверки кода в %1$@ с сохранённым промптом «%2$@»"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在使用已保存的提示“%2$@”对 %1$@ 启动代码审查"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.ExecuteCommand" : {
+      "comment" : "AI chat bubble shown when the AI runs a command in a session. The placeholder is the command, shown as code.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "`%@` wird ausgeführt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Executing `%@`"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "`%@`を実行しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executando `%@`"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выполнение `%@`"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在执行 `%@`"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.GetScreenContents" : {
+      "comment" : "AI chat bubble shown when the AI reads a session’s screen. The placeholder is a link to the session.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildschirm von %@ wird gelesen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reading screen of %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の画面を読み取っています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lendo a tela de %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чтение экрана %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在读取 %@ 的屏幕"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.GetState" : {
+      "comment" : "AI chat bubble shown when the AI checks a session’s state. The placeholder is a link to the session.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status von %@ wird geprüft"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Checking state of %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の状態を確認しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificando o estado de %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проверка состояния %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在检查 %@ 的状态"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.Interrupt" : {
+      "comment" : "AI chat bubble shown when the AI interrupts a session. The placeholder is a link to the session.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ wird unterbrochen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Interrupting %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@を中断しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrompendo %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прерывание %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在中断 %@"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.ListClippings" : {
+      "comment" : "AI chat bubble shown when the AI lists a workgroup’s clippings. The placeholder is a link to the workgroup.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausschnitte in %@ werden aufgelistet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Listing clippings in %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のクリッピングを一覧表示しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listando os recortes em %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Получение списка фрагментов в %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在列出 %@ 中的剪贴"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.ListWatches" : {
+      "comment" : "AI chat bubble shown when the AI lists the watches it set up.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktive Überwachungen werden aufgelistet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Listing active watches"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有効な監視を一覧表示しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listando as observações ativas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Получение списка активных наблюдений"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在列出活动的监视"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.ListWorkgroups" : {
+      "comment" : "AI chat bubble shown when the AI lists the workgroups.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbeitsgruppen werden abgerufen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Looking up workgroups"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ワークグループを検索しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consultando os grupos de trabalho"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поиск рабочих групп"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在查找工作组"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.ScrollDown" : {
+      "comment" : "AI chat bubble shown when the AI scrolls a session down. The placeholder is a link to the session.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ wird gescrollt, um neuere Inhalte anzuzeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scrolling %@ to show newer content"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しい内容を表示するために%@をスクロールしています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rolando %@ para mostrar conteúdo mais recente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прокрутка %@ к более новому содержимому"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在滚动 %@ 以显示较新的内容"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.ScrollUp" : {
+      "comment" : "AI chat bubble shown when the AI scrolls a session up. The placeholder is a link to the session.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ wird gescrollt, um ältere Inhalte anzuzeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scrolling %@ to show older content"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "古い内容を表示するために%@をスクロールしています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rolando %@ para mostrar conteúdo mais antigo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прокрутка %@ к более старому содержимому"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在滚动 %@ 以显示较早的内容"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.SendText" : {
+      "comment" : "AI chat bubble shown when the AI types into a session. The first placeholder is a link to the session; the second is the typed text, already in quotation marks.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingabe in %1$@: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Typing into %1$@: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@に入力しています: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digitando em %1$@: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ввод в %1$@: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在向 %1$@ 输入：%2$@"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.SessionTool" : {
+      "comment" : "AI chat bubble shown when the AI uses a tool on a session. The first placeholder is the tool’s name in English, such as Get selection; the second is a link to the session.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ in %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ in %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@で%1$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ em %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ в %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 %2$@ 中%1$@"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.StartSession" : {
+      "comment" : "AI chat bubble shown when the AI starts a new session.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neue Sitzung wird gestartet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Starting new session"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいセッションを開始しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando nova sessão"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запуск нового сеанса"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在启动新会话"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.StartSessionWithCommand" : {
+      "comment" : "AI chat bubble shown when the AI starts a new session that runs a command. The placeholder is the command, shown as code.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neue Sitzung wird gestartet: `%@`"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Starting new session: `%@`"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいセッションを開始しています: `%@`"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando nova sessão: `%@`"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запуск нового сеанса: `%@`"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在启动新会话：`%@`"
+          }
+        }
+      }
+    },
     "OrchestrationTool.TimerAfter" : {
       "comment" : "AI chat bubble shown when the AI sets a timer. The placeholder is a short duration, such as 5min.",
       "extractionState" : "extracted_with_value",
@@ -117568,6 +118324,300 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在设置稍后触发的计时器：%@"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.UnknownSession" : {
+      "comment" : "Shown in an AI chat bubble in place of a session the AI did not identify. Keep the _ markers, which make it italic.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "_(unbekannte Sitzung)_"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "_(unknown session)_"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "_(不明なセッション)_"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "_(sessão desconhecida)_"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "_(неизвестный сеанс)_"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "_(未知会话)_"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.UnknownWorkgroup" : {
+      "comment" : "Shown in an AI chat bubble in place of a workgroup the AI did not identify. Keep the _ markers, which make it italic.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "_unbekannte Arbeitsgruppe_"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "_unknown workgroup_"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "_不明なワークグループ_"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "_grupo de trabalho desconhecido_"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "_неизвестная рабочая группа_"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "_未知工作组_"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.UnregisterWatch" : {
+      "comment" : "AI chat bubble shown when the AI cancels a watch it set up.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Überwachung wird beendet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancelling a watch"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "監視をキャンセルしています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelando uma observação"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отмена наблюдения"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在取消监视"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.WatchCondition" : {
+      "comment" : "AI chat bubble shown when the AI sets up a watch on a session. The first placeholder is a link to the session; the second is the condition, already in quotation marks.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigt, wenn %1$@ erfüllt: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Will notify when %1$@ satisfies: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@が次の条件を満たしたら通知します: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificará quando %1$@ satisfizer: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уведомит, когда %1$@ будет соответствовать условию: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将在 %1$@ 满足以下条件时通知：%2$@"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.WatchLinkedCondition" : {
+      "comment" : "AI chat bubble shown when the AI sets up a watch on the chat’s linked session. The placeholder is the condition, already in quotation marks.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigt, wenn die verknüpfte Sitzung erfüllt: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Will notify when the linked session satisfies: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リンクされたセッションが次の条件を満たしたら通知します: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificará quando a sessão vinculada satisfizer: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уведомит, когда связанный сеанс будет соответствовать условию: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将在关联的会话满足以下条件时通知：%@"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.WatchLinkedState" : {
+      "comment" : "AI chat bubble shown when the AI sets up a watch on the chat’s linked session. The placeholder is a session state name such as idle, which stays in English. Keep the ** markers, which make it bold.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigt, wenn die verknüpfte Sitzung **%@** wird"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Will notify when the linked session becomes **%@**"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リンクされたセッションが **%@** になったら通知します"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificará quando a sessão vinculada ficar **%@**"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уведомит, когда связанный сеанс перейдёт в состояние **%@**"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将在关联的会话变为 **%@** 时通知"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.WatchState" : {
+      "comment" : "AI chat bubble shown when the AI sets up a watch on a session. The first placeholder is a link to the session; the second is a session state name such as idle, which stays in English. Keep the ** markers, which make it bold.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigt, wenn %1$@ **%2$@** wird"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Will notify when %1$@ becomes **%2$@**"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@が **%2$@** になったら通知します"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificará quando %1$@ ficar **%2$@**"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уведомит, когда %1$@ перейдёт в состояние **%2$@**"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将在 %1$@ 变为 **%2$@** 时通知"
           }
         }
       }
@@ -171957,6 +173007,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "变量的值"
+          }
+        }
+      }
+    },
+    "SettingPopup.SelectSetting" : {
+      "comment" : "Placeholder of the setting picker in the key binding editor’s Toggle Setting action before a setting is chosen",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellung auswählen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Select Setting…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定を選択…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecionar ajuste…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выберите параметр…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择设置…"
           }
         }
       }
