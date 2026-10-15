@@ -1568,3 +1568,7 @@ Bug Fixes:
   async_move_to_new_window() in the Python API
   now return None for a tmux session instead of
   raising a JSON decoding error.
+- Calling Tab.async_update_layout() from the
+  Python API without changing any sizes no
+  longer shrinks the tab’s panes and window by
+  a cell each time.

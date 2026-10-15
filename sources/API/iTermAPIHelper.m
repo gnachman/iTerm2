@@ -3706,6 +3706,36 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     return YES;
 }
 
+// Whether two isomorphic split trees give every session the same grid size.
++ (BOOL)splitTree:(ITMSplitTreeNode *)node1 hasSameGridSizesAs:(ITMSplitTreeNode *)node2 {
+    if (node1.linksArray_Count != node2.linksArray_Count) {
+        return NO;
+    }
+    for (NSInteger i = 0; i < node1.linksArray_Count; i++) {
+        ITMSplitTreeNode_SplitTreeLink *link1 = node1.linksArray[i];
+        ITMSplitTreeNode_SplitTreeLink *link2 = node2.linksArray[i];
+        if (link1.childOneOfCase != link2.childOneOfCase) {
+            return NO;
+        }
+        switch (link1.childOneOfCase) {
+            case ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_Node:
+                if (![self splitTree:link1.node hasSameGridSizesAs:link2.node]) {
+                    return NO;
+                }
+                break;
+            case ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_Session:
+                if (link1.session.gridSize.width != link2.session.gridSize.width ||
+                    link1.session.gridSize.height != link2.session.gridSize.height) {
+                    return NO;
+                }
+                break;
+            default:
+                return NO;
+        }
+    }
+    return YES;
+}
+
 - (void)apiServerSetTabLayout:(ITMSetTabLayoutRequest *)request handler:(void (^)(ITMSetTabLayoutResponse *))handler {
     ITMSetTabLayoutResponse *response = [[ITMSetTabLayoutResponse alloc] init];
     PTYTab *tab = [self tabWithID:request.tabId];
@@ -3720,6 +3750,14 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
 
     if (!iTermCheckSplitTreesIsomorphic(before, requested)) {
         response.status = ITMSetTabLayoutResponse_Status_WrongTree;
+        handler(response);
+        return;
+    }
+    if ([iTermAPIHelper splitTree:before hasSameGridSizesAs:requested]) {
+        // Converting grid sizes to view sizes and back can lose a cell, so applying an
+        // unchanged layout would shrink the panes (and the window) on every call.
+        DLog(@"Requested layout matches the current one; leaving it alone");
+        response.status = ITMSetTabLayoutResponse_Status_Ok;
         handler(response);
         return;
     }
