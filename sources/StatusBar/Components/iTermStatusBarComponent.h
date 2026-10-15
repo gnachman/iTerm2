@@ -178,7 +178,8 @@ forInvocation:(NSString *)invocation
 // If implemented, the component's icon becomes a proxy icon: a drag source that vends this file
 // URL (like the proxy icon in a window title bar). Return nil to leave the icon non-draggable
 // (for example when the directory isn't local or doesn't exist). The icon's appearance is
-// unchanged; only its drag behavior is affected.
+// unchanged; only its drag behavior is affected. Called each time a drag begins, so it should
+// reflect the file system at that moment.
 - (nullable NSURL *)statusBarComponentProxyIconURL;
 
 @end

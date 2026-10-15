@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarVariableBaseComponent.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermController.h"
 #import "iTermSessionLauncher.h"
 #import "iTermShellHistoryController.h"
@@ -316,20 +317,9 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (nullable NSURL *)statusBarComponentProxyIconURL {
-    NSString *path = self.fullString;
-    if (path.length == 0) {
-        return nil;
-    }
-    // A proxy icon drag hands a real file to another app, so it only makes sense for a local
-    // directory that actually exists on this machine.
-    if (![[self remoteHost] isLocalhost]) {
-        return nil;
-    }
-    BOOL isDirectory = NO;
-    if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory] || !isDirectory) {
-        return nil;
-    }
-    return [NSURL fileURLWithPath:path isDirectory:YES];
+    // Called when a drag begins, so this checks that the directory exists at that moment.
+    return [iTermStatusBarProxyIconImageView directoryURLForPath:self.fullString
+                                                         isLocal:[[self remoteHost] isLocalhost]];
 }
 
 - (BOOL)statusBarComponentHandlesClicks {

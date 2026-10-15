@@ -104,8 +104,6 @@ const CGFloat iTermGetStatusBarHeight(void) {
 - (void)updateIconIfNeeded {
     NSImage *icon = _component.statusBarComponentIcon;
     [_component statusBarComponentUpdateColors];
-    // Keep the proxy icon's target directory current even when the glyph itself is unchanged.
-    [self updateProxyIconURL];
     if (icon == _iconImageView.image) {
         return;
     }
@@ -124,6 +122,10 @@ const CGFloat iTermGetStatusBarHeight(void) {
             proxyIconView.onClick = ^{
                 [weakSelf proxyIconClicked];
             };
+            // Asked when a drag begins, so the component re-checks that the directory exists.
+            proxyIconView.urlProvider = ^NSURL * _Nullable {
+                return [weakSelf proxyIconURL];
+            };
             _iconImageView = proxyIconView;
         } else {
             _iconImageView = [NSImageView imageViewWithImage:icon];
@@ -138,22 +140,15 @@ const CGFloat iTermGetStatusBarHeight(void) {
         frame.origin.x = 0;
         frame.origin.y = (area.size.height - frame.size.height) / 2.0;
         _iconImageView.frame = frame;
-        [self updateProxyIconURL];
     }
 }
 
-// Pushes the component's current proxy icon URL (if any) to the draggable icon view so a drag
-// vends the up-to-date directory.
-- (void)updateProxyIconURL {
-    iTermStatusBarProxyIconImageView *proxyIconView = [iTermStatusBarProxyIconImageView castFrom:_iconImageView];
-    if (!proxyIconView) {
-        return;
+// The file a drag of the proxy icon should vend right now, or nil if it shouldn't be draggable.
+- (nullable NSURL *)proxyIconURL {
+    if (![_component respondsToSelector:@selector(statusBarComponentProxyIconURL)]) {
+        return nil;
     }
-    NSURL *url = nil;
-    if ([_component respondsToSelector:@selector(statusBarComponentProxyIconURL)]) {
-        url = [_component statusBarComponentProxyIconURL];
-    }
-    proxyIconView.url = url;
+    return [_component statusBarComponentProxyIconURL];
 }
 
 // Invoked when the proxy icon is clicked without dragging. Behaves like clicking the component.

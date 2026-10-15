@@ -1469,3 +1469,6 @@ Bug Fixes:
   Hostname, or Username status bar component
   opens its menu again, as clicking its text
   does.
+- The folder icon in the Current Directory
+  status bar component can no longer be dragged
+  after its directory has been deleted.

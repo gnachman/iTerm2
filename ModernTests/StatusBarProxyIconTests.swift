@@ -39,10 +39,11 @@ final class StatusBarProxyIconTests: XCTestCase, iTermObject {
     private var window: NSWindow!
     private var component: RecordingWorkingDirectoryComponent!
     private var container: iTermStatusBarContainerView!
+    private var scope: iTermVariableScope!
 
     override func setUp() {
         super.setUp()
-        let scope = iTermVariableScope()
+        scope = iTermVariableScope()
         scope.add(iTermVariables(context: [], owner: self), toScopeNamed: nil)
         component = RecordingWorkingDirectoryComponent(configuration: [:], scope: scope)
         container = iTermStatusBarContainerView(component: component)
@@ -61,6 +62,7 @@ final class StatusBarProxyIconTests: XCTestCase, iTermObject {
         window = nil
         container = nil
         component = nil
+        scope = nil
         super.tearDown()
     }
 
@@ -182,5 +184,71 @@ final class StatusBarProxyIconTests: XCTestCase, iTermObject {
                                                                       to: NSPoint(x: 8, y: 8)))
         XCTAssertTrue(iTermStatusBarProxyIconImageView.movementIsDrag(from: .zero,
                                                                       to: NSPoint(x: 0, y: -10)))
+    }
+
+    // MARK: - Whether a directory is offered for dragging (F-214)
+
+    private func makeTemporaryDirectory() throws -> String {
+        let path = (NSTemporaryDirectory() as NSString).appendingPathComponent("ProxyIcon-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: false)
+        addTeardownBlock {
+            try? FileManager.default.removeItem(atPath: path)
+        }
+        return path
+    }
+
+    func testExistingLocalDirectoryIsDraggable() throws {
+        let path = try makeTemporaryDirectory()
+        let url = iTermStatusBarProxyIconImageView.directoryURL(forPath: path, isLocal: true)
+        XCTAssertEqual(url, URL(fileURLWithPath: path, isDirectory: true))
+    }
+
+    func testDeletedDirectoryIsNotDraggable() throws {
+        let path = try makeTemporaryDirectory()
+        try FileManager.default.removeItem(atPath: path)
+        XCTAssertNil(iTermStatusBarProxyIconImageView.directoryURL(forPath: path, isLocal: true))
+    }
+
+    func testRemoteDirectoryIsNotDraggable() throws {
+        let path = try makeTemporaryDirectory()
+        XCTAssertNil(iTermStatusBarProxyIconImageView.directoryURL(forPath: path, isLocal: false))
+    }
+
+    func testRegularFileIsNotDraggable() throws {
+        let dir = try makeTemporaryDirectory()
+        let file = (dir as NSString).appendingPathComponent("file.txt")
+        XCTAssertTrue(FileManager.default.createFile(atPath: file, contents: Data()))
+        XCTAssertNil(iTermStatusBarProxyIconImageView.directoryURL(forPath: file, isLocal: true))
+    }
+
+    func testEmptyOrMissingPathIsNotDraggable() {
+        XCTAssertNil(iTermStatusBarProxyIconImageView.directoryURL(forPath: nil, isLocal: true))
+        XCTAssertNil(iTermStatusBarProxyIconImageView.directoryURL(forPath: "", isLocal: true))
+    }
+
+    // The bug: the icon cached its URL when the path changed, so after the current directory was
+    // deleted (with no cd since) it could still be dragged. The check must happen when the drag
+    // starts.
+    func testProxyIconRechecksExistenceWhenDragStarts() throws {
+        let path = try makeTemporaryDirectory()
+        scope.setValue(NSNumber(value: true), forVariableNamed: iTermVariableKeySessionIsLocalhost)
+        scope.setValue(path, forVariableNamed: iTermVariableKeySessionPath)
+        container.layoutSubviews()
+        let icon = try XCTUnwrap(container.iconImageView as? iTermStatusBarProxyIconImageView)
+
+        XCTAssertEqual(icon.urlForDrag(), URL(fileURLWithPath: path, isDirectory: true))
+
+        // Nothing else happens between the deletion and the drag: no cd, no relayout.
+        try FileManager.default.removeItem(atPath: path)
+
+        XCTAssertNil(icon.urlForDrag(), "A deleted directory must not be offered for dragging")
+    }
+
+    func testProxyIconIsNotDraggableForRemoteSession() throws {
+        let path = try makeTemporaryDirectory()
+        scope.setValue(NSNumber(value: false), forVariableNamed: iTermVariableKeySessionIsLocalhost)
+        scope.setValue(path, forVariableNamed: iTermVariableKeySessionPath)
+        let icon = try XCTUnwrap(container.iconImageView as? iTermStatusBarProxyIconImageView)
+        XCTAssertNil(icon.urlForDrag())
     }
 }
