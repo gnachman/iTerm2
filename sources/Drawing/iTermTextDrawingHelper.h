@@ -507,6 +507,9 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 - (NSArray<iTermButtonPillInfo *> *)buttonPillInfos;
 - (NSRange)rangeOfVisibleRows;
 - (VT100GridCoord)coordinateByTransformingScreenCoordinateForRTL:(VT100GridCoord)nominal;
+// copyModeCursorCoord is logical. This is where it is drawn: the same line,
+// with the column mapped through the line's bidi table.
+- (VT100GridCoord)visualCopyModeCursorCoord;
 - (void)didFinishSetup;
 
 // Configure cached metrics for offscreen rendering without calling delegate methods.

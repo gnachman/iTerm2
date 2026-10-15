@@ -3901,9 +3901,10 @@ typedef struct {
     iTermCursor *cursor = [iTermCursor itermCopyModeCursorInSelectionState:self.copyModeSelecting];
     cursor.delegate = self;
 
+    const VT100GridCoord visualCoord = [self visualCopyModeCursorCoord];
     [self reallyDrawCursor:cursor
            backgroundColor:cursorBackgroundColor
-                        at:VT100GridCoordMake(_copyModeCursorCoord.x, _copyModeCursorCoord.y - _numberOfScrollbackLines)
+                        at:VT100GridCoordMake(visualCoord.x, visualCoord.y - _numberOfScrollbackLines)
             coordIsLogical:NO
                    outline:NO
              virtualOffset:virtualOffset];
@@ -4008,6 +4009,13 @@ typedef struct {
     } else {
         return self.backgroundColorForCursor;
     }
+}
+
+- (VT100GridCoord)visualCopyModeCursorCoord {
+    const VT100GridCoord screenCoord = VT100GridCoordMake(_copyModeCursorCoord.x,
+                                                          _copyModeCursorCoord.y - _numberOfScrollbackLines);
+    const VT100GridCoord visual = [self coordinateByTransformingScreenCoordinateForRTL:screenCoord];
+    return VT100GridCoordMake(visual.x, visual.y + _numberOfScrollbackLines);
 }
 
 // This is intended to transform the cursor coordinate for bidi lines.
