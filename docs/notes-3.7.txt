@@ -1518,3 +1518,7 @@ Bug Fixes:
   provider after that model is removed from
   Ollama. It now shows an error, and you can
   pick another local model for the chat.
+- An alert shown again by “Permanently Forget
+  Saved Selection” no longer presses a button
+  when you type a plain letter. Its shortcuts
+  need Cmd, as they did the first time.
