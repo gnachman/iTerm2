@@ -1693,3 +1693,8 @@ Bug Fixes:
 - In Swap With Session, pointing at a floating
   pane no longer also highlights the pane under
   it as a swap target.
+- In tmux integration, resizing a floating pane
+  with View > Restore Text and Session Size or
+  the Python API now resizes it in tmux too. It
+  used to leave the pane blank or out of sync
+  with tmux.
