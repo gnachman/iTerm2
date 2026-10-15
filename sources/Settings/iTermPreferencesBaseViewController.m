@@ -18,6 +18,7 @@
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSPopUpButton+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
@@ -814,13 +815,10 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
         case kPreferenceInfoTypeStringPopup: {
             assert([info.control isKindOfClass:[NSPopUpButton class]]);
             NSPopUpButton *popup = (NSPopUpButton *)info.control;
-            id obj = [self objectForKey:info.key];
-            if (obj) {
-                const NSInteger i = [popup indexOfItemWithRepresentedObject:[self objectForKey:info.key]];
-                if (i != NSNotFound) {
-                    [popup selectItemAtIndex:i];
-                }
-            }
+            // A value that isn't in the menu, as a hand-edited or dynamic profile can hold, shows
+            // the default rather than a blank popup.
+            [popup it_selectItemWithRepresentedObject:[self objectForKey:info.key]
+                                             fallback:[self defaultValueForKey:info.key]];
             break;
         }
 

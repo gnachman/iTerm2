@@ -1541,3 +1541,7 @@ Bug Fixes:
   window no longer moves the hotkey window to
   where tmux last had a window, often mostly off
   screen.
+- A profile setting chosen from a pop-up menu,
+  such as the progress bar color scheme, now
+  shows its default instead of a blank menu when
+  the profile holds a value the menu lacks.
