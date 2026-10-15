@@ -260,7 +260,7 @@ final class iTermBrowserBasicAuthManager {
             case .passwordManager(let typedPassword):
                 let typed = BrowserBasicAuthCoordinator.Credential(user: alert.username ?? "",
                                                                    password: typedPassword)
-                mapped = .openPasswordManager(typed: typed)
+                mapped = .openPasswordManager(typed: typed, remember: alert.rememberChecked)
             }
             self.run(self.coordinator.reduce(.promptResult(id: id, outcome: mapped)))
         }
