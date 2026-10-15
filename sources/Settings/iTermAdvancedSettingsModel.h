@@ -206,8 +206,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disableTopRightIndicators;
 + (BOOL)disableTmuxWindowPositionRestoration;
 + (BOOL)disableTmuxWindowResizing;
-+ (BOOL)disableWindowShadowWhenTransparencyOnMojave;
-+ (BOOL)disableWindowShadowWhenTransparencyPreMojave;
 + (BOOL)disableWindowSizeSnap;
 + (BOOL)disallowCopyEmptyString;
 + (BOOL)disclaimChildren;
