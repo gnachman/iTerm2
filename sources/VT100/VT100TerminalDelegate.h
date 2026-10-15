@@ -131,8 +131,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)terminalReportVariableNamed:(NSString *)variable;
 
-// Sends a report.
+// Sends a report. Not sent for a tmux integration client, since tmux answers most reports itself.
 - (void)terminalSendReport:(nullable NSData *)report;
+
+// Sends a report that tmux doesn't answer, for a tmux integration client too. The caller must have
+// checked terminalShouldSendReport:YES (or the coalescible variant).
+- (void)terminalSendReportAllowedInTmux:(nullable NSData *)report;
 
 // Sends an OSC 4 color query report (tmux-aware).
 // For tmux clients running 3.6+, this routes through the tmux controller.

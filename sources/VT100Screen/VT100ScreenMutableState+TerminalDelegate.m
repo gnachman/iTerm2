@@ -728,16 +728,30 @@ typedef struct {
 
 - (void)terminalSendReport:(NSData *)report {
     DLog(@"begin %@", report);
-    if (!self.config.isTmuxClient && report) {
-        DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
-        [self willSendReport];
-        __weak __typeof(self) weakSelf = self;
-        [self addReportSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            DLog(@"begin side-effect");
-            [delegate screenSendReportData:report];
-            [weakSelf didSendReport:delegate];
-        } name:@"send report"];
+    if (self.config.isTmuxClient) {
+        DLog(@"Not sending report for tmux client");
+        return;
     }
+    [self sendReport:report];
+}
+
+- (void)terminalSendReportAllowedInTmux:(NSData *)report {
+    DLog(@"begin %@", report);
+    [self sendReport:report];
+}
+
+- (void)sendReport:(NSData *)report {
+    if (!report) {
+        return;
+    }
+    DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
+    [self willSendReport];
+    __weak __typeof(self) weakSelf = self;
+    [self addReportSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        DLog(@"begin side-effect");
+        [delegate screenSendReportData:report];
+        [weakSelf didSendReport:delegate];
+    } name:@"send report"];
 }
 
 - (void)terminalSendOSC4Report:(NSData *)report {
