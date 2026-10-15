@@ -3936,6 +3936,48 @@
         }
       }
     },
+    "AIModelEditor.StopTest" : {
+      "comment" : "Title of the test button while an AI connection test is running; clicking it stops the test",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test stoppen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Test"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テストを停止"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar teste"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Остановить проверку"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止测试"
+          }
+        }
+      }
+    },
     "AIModelEditor.SupportsTemperature" : {
       "comment" : "Checkbox label for whether a model supports a temperature parameter",
       "extractionState" : "extracted_with_value",
@@ -4058,48 +4100,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "测试连接"
-          }
-        }
-      }
-    },
-    "AIModelEditor.Testing" : {
-      "comment" : "Title of the test button while an AI connection test is running",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wird getestet …"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Testing…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "テスト中…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Testando…"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Проверка…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在测试…"
           }
         }
       }

@@ -16,6 +16,48 @@ enum AIConnectionTestOutcome: Int {
     case cancelled
 }
 
+// A running connection test. The editor keeps it so the user can stop a test
+// that is waiting on an unresponsive server, which otherwise lasts as long as
+// the AI timeout (20 minutes by default). Main thread only.
+@objc(iTermAIConnectionTest)
+class AIConnectionTest: NSObject {
+    private var completion: ((AIConnectionTestOutcome, String) -> Void)?
+    private var requestCancellation: Cancellation?
+
+    init(completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
+        self.completion = completion
+    }
+
+    var isFinished: Bool {
+        completion == nil
+    }
+
+    // Stops the test and reports `.cancelled`. Later results are ignored.
+    @objc func cancel() {
+        requestCancellation?.cancel()
+        requestCancellation = nil
+        finish(.cancelled, "")
+    }
+
+    func attach(_ cancellation: Cancellation) {
+        if isFinished {
+            cancellation.cancel()
+        } else {
+            requestCancellation = cancellation
+        }
+    }
+
+    // Reports the outcome, at most once.
+    func finish(_ outcome: AIConnectionTestOutcome, _ message: String) {
+        guard let completion else {
+            return
+        }
+        self.completion = nil
+        requestCancellation = nil
+        completion(outcome, message)
+    }
+}
+
 // Drives a one-shot "does this configuration actually work?" probe for the
 // manual AI model editor's Test button. Given the in-progress form values, it
 // resolves the vendor exactly as request time would, obtains the API key that
@@ -27,9 +69,11 @@ enum AIConnectionTestOutcome: Int {
 // outcome into a success/failure message the caller shows in an alert.
 @objc(iTermAIConnectionTester)
 class AIConnectionTester: NSObject {
-    // Sends the probe. `completion` is always called on the main thread.
+    // Sends the probe. `completion` is always called on the main thread, once,
+    // and with `.cancelled` if the returned test is cancelled.
     // `credential` is the editor's AIModelCredential.storedValue and
     // `modelAPIKey` the key typed for this model, which may not be saved yet.
+    @discardableResult
     @objc(testModelName:url:api:credential:modelAPIKey:functionCalling:supportsTemperature:customHeaders:inWindow:completion:)
     static func test(modelName: String,
                      url: String,
@@ -40,7 +84,12 @@ class AIConnectionTester: NSObject {
                      supportsTemperature: Bool,
                      customHeaders: [[String: String]],
                      inWindow window: NSWindow,
-                     completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
+                     completion: @escaping (AIConnectionTestOutcome, String) -> Void) -> AIConnectionTest {
+        let test = AIConnectionTest(completion: completion)
+        // Holds the test strongly so it reports even if the caller drops it.
+        let completion = { (outcome: AIConnectionTestOutcome, message: String) in
+            test.finish(outcome, message)
+        }
         let credential = AIModelCredential(storedValue: storedCredential)
         let vendor = LLMMetadata.objcManualVendor(api: api, url: url, modelName: modelName)
         let keyVendor: iTermAIVendor
@@ -50,7 +99,7 @@ class AIConnectionTester: NSObject {
             keyVendor = vendor
         }
         let send = { (apiKey: String) in
-            Self.send(modelName: modelName,
+            let cancellation = Self.send(modelName: modelName,
                       url: url,
                       api: api,
                       functionCalling: functionCalling,
@@ -61,6 +110,9 @@ class AIConnectionTester: NSObject {
                       credential: credential,
                       keyVendor: keyVendor,
                       completion: completion)
+            if let cancellation {
+                test.attach(cancellation)
+            }
         }
         // The App Review key wins over the placeholder policy, exactly as it
         // does in AITermController.registration: send() answers locally for it
@@ -75,7 +127,7 @@ class AIConnectionTester: NSObject {
             // typed would never be sent.
             if let apiKey = unpromptedAPIKey(url: url, api: api, credential: credential, keyVendor: keyVendor) {
                 send(apiKey)
-                return
+                return test
             }
             if credential == .modelKey {
                 guard let modelAPIKey,
@@ -83,10 +135,10 @@ class AIConnectionTester: NSObject {
                     completion(.failure, String(localized: "AIConnectionTester.MissingModelAPIKey",
                                                 defaultValue: "Enter this model’s API key before testing the connection.",
                                                 comment: "Result of the AI connection test when the model is set to use its own API key but the key field is empty"))
-                    return
+                    return test
                 }
                 send(modelAPIKey.trimmingCharacters(in: .whitespacesAndNewlines))
-                return
+                return test
             }
         }
         // requestRegistration returns the stored key immediately when present,
@@ -99,6 +151,7 @@ class AIConnectionTester: NSObject {
             }
             send(registration.apiKey)
         }
+        return test
     }
 
     // The key to probe with when it needs no input from the user, or nil when a
@@ -123,14 +176,14 @@ class AIConnectionTester: NSObject {
                              vendor: iTermAIVendor,
                              credential: AIModelCredential,
                              keyVendor: iTermAIVendor,
-                             completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
+                             completion: @escaping (AIConnectionTestOutcome, String) -> Void) -> Cancellation? {
         // The reviewer placeholder key contacts no service, so a live probe would
         // fail. Report success and explain, matching the runtime short-circuit.
         if apiKey == AITermController.reviewPlaceholderAPIKey {
             completion(.success, String(localized: "AIConnectionTester.ReviewPlaceholder",
                                         defaultValue: "Placeholder key in use: AI responses are simulated for App Review and no external service is contacted.",
                                         comment: "Result of the AI connection test when the App Review placeholder key is configured"))
-            return
+            return nil
         }
         var features = Set<AIMetadata.Model.Feature>()
         if functionCalling {
@@ -160,7 +213,7 @@ class AIConnectionTester: NSObject {
             completion(.failure, String(localized: "AIConnectionTester.InvalidURL",
                                         defaultValue: "The URL is not valid.",
                                         comment: "Result of the AI connection test when the configured URL cannot be parsed"))
-            return
+            return nil
         }
         let builder = LLMRequestBuilder(provider: provider,
                                         apiKey: apiKey,
@@ -174,9 +227,9 @@ class AIConnectionTester: NSObject {
             completion(.failure, String(localized: "AIConnectionTester.CouldNotBuildRequest",
                                         defaultValue: "Could not build a request: \(error.localizedDescription)",
                                         comment: "Result of the AI connection test when the request could not be constructed; the placeholder is an error description"))
-            return
+            return nil
         }
-        _ = iTermAIClient.instance.request(webRequest: request, stream: nil) { result in
+        return iTermAIClient.instance.request(webRequest: request, stream: nil) { result in
             switch result {
             case .success(let response):
                 let (result, message) = outcome(for: response, provider: provider)

@@ -1741,6 +1741,10 @@ Bug Fixes:
 - Closing the AI chat’s find bar with Escape now
   returns focus to the message field, so what
   you type next is no longer lost.
+- Test Connection in the AI model editor can now
+  be stopped while it runs. Before, a test of an
+  unreachable server could take many minutes.
+
 
 
 
