@@ -1733,6 +1733,12 @@ Bug Fixes:
 - In Settings > Keys > Hotkey, the “App
   Hotkey:” and “Open Quickly Hotkey:” labels no
   longer run under the controls beside them.
+- The AI chat’s find bar no longer squeezes its
+  search field to nothing in the inline chat or
+  a narrow chat window. When space is short it
+  hides the search mode menu and the match count
+  instead.
+
 
 
 

@@ -56,6 +56,9 @@ class ChatFindBarView: NSView {
     ]
 
     private static let controlSpacing: CGFloat = 8
+    // Narrower than this and the query is unreadable.
+    static let minimumSearchFieldWidth: CGFloat = 120
+    private static let maximumCounterWidth: CGFloat = 120
 
     // Wide enough for the longest mode title, which in some languages is
     // much longer than in English (“Ignorar maiúsculas/minúsculas”).
@@ -103,6 +106,23 @@ class ChatFindBarView: NSView {
         if let index = Self.modeOrder.firstIndex(of: normalized) {
             modeButton.selectItem(at: index)
         }
+        updateSearchMenu()
+    }
+
+    // The search field's magnifier menu also offers the modes, so they stay
+    // reachable when the bar is too narrow for the mode popup.
+    private func updateSearchMenu() {
+        let menu = NSMenu()
+        for (index, title) in Self.modeTitles.enumerated() {
+            let item = NSMenuItem(title: title,
+                                  action: #selector(searchMenuModeSelected(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            item.tag = index
+            item.state = index == modeButton.indexOfSelectedItem ? .on : .off
+            menu.addItem(item)
+        }
+        searchField.searchMenuTemplate = menu
     }
 
     func focusSearchField() {
@@ -166,6 +186,7 @@ class ChatFindBarView: NSView {
         modeButton.bezelStyle = .roundRect
         modeButton.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
         addSubview(modeButton)
+        updateSearchMenu()
 
         closeButton.image = NSImage.it_image(forSymbolName: SFSymbol.xmark.rawValue,
                                              accessibilityDescription: String(localized: "ChatFindBarView.CloseAccessibility", defaultValue: "Close find bar", comment: "Accessibility description for the button that closes the find bar"),
@@ -213,12 +234,34 @@ class ChatFindBarView: NSView {
                                    width: closeSize, height: controlHeight)
         rightEdge = closeButton.frame.minX - Self.controlSpacing
 
-        let modeWidth = Self.modeWidth
-        modeButton.frame = NSRect(x: rightEdge - modeWidth, y: centeredY,
-                                  width: modeWidth, height: controlHeight)
-        rightEdge = modeButton.frame.minX - Self.controlSpacing
-
         let chevronSize = controlHeight
+        let searchX = Self.horizontalPadding
+        counterLabel.sizeToFit()
+        let counterWidth = min(Self.maximumCounterWidth, max(0, counterLabel.frame.width))
+        let counterHeight = counterLabel.frame.height
+        let modeWidth = Self.modeWidth
+
+        // The search field is the one thing the bar can't do without, so when
+        // the bar is narrow (the inline chat, or a small chat window with its
+        // sidebar shown) drop the mode popup first and then the counter rather
+        // than squeezing the field to nothing.
+        let fixedWidth = chevronSize * 2 + Self.controlSpacing
+        let widthForOptionalControlsAndSearch = rightEdge - searchX - fixedWidth
+        let counterCost = counterWidth > 0 ? counterWidth + Self.controlSpacing : 0
+        let modeCost = modeWidth + Self.controlSpacing
+        // Decide on the popup with room for the widest counter whether or not
+        // one is showing, so the popup doesn't come and go as the user types.
+        let counterReserve = Self.maximumCounterWidth + Self.controlSpacing
+        let showMode = widthForOptionalControlsAndSearch - counterReserve - modeCost >= Self.minimumSearchFieldWidth
+        let showCounter = widthForOptionalControlsAndSearch - counterCost - (showMode ? modeCost : 0) >= Self.minimumSearchFieldWidth
+
+        modeButton.isHidden = !showMode
+        if showMode {
+            modeButton.frame = NSRect(x: rightEdge - modeWidth, y: centeredY,
+                                      width: modeWidth, height: controlHeight)
+            rightEdge = modeButton.frame.minX - Self.controlSpacing
+        }
+
         nextButton.frame = NSRect(x: rightEdge - chevronSize, y: centeredY,
                                   width: chevronSize, height: controlHeight)
         rightEdge = nextButton.frame.minX
@@ -226,16 +269,15 @@ class ChatFindBarView: NSView {
                                       width: chevronSize, height: controlHeight)
         rightEdge = previousButton.frame.minX - Self.controlSpacing
 
-        counterLabel.sizeToFit()
-        let counterWidth = min(120, max(0, counterLabel.frame.width))
-        let counterHeight = counterLabel.frame.height
-        counterLabel.frame = NSRect(x: rightEdge - counterWidth,
-                                    y: lineCenterY - counterHeight / 2,
-                                    width: counterWidth,
-                                    height: counterHeight)
-        rightEdge = counterLabel.frame.minX - Self.controlSpacing
+        counterLabel.isHidden = !showCounter
+        if showCounter {
+            counterLabel.frame = NSRect(x: rightEdge - counterWidth,
+                                        y: lineCenterY - counterHeight / 2,
+                                        width: counterWidth,
+                                        height: counterHeight)
+            rightEdge = counterLabel.frame.minX - Self.controlSpacing
+        }
 
-        let searchX = Self.horizontalPadding
         let searchWidth = max(0, rightEdge - searchX)
         searchField.frame = NSRect(x: searchX, y: centeredY,
                                    width: searchWidth, height: controlHeight)
@@ -257,7 +299,13 @@ class ChatFindBarView: NSView {
     }
 
     @objc private func modeChanged(_ sender: Any) {
+        updateSearchMenu()
         delegate?.chatFindBar(self, didChangeQuery: searchField.stringValue, mode: mode)
+    }
+
+    @objc private func searchMenuModeSelected(_ sender: NSMenuItem) {
+        modeButton.selectItem(at: sender.tag)
+        modeChanged(sender)
     }
 
     @objc private func closeButtonClicked(_ sender: Any) {
