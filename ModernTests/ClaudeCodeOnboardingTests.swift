@@ -353,6 +353,18 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         XCTAssertEqual(try? String(contentsOf: url, encoding: .utf8), original)
     }
 
+    // An empty or whitespace-only settings.json has no hooks to remove, and
+    // Install accepts it, so Uninstall must not call it unparseable. Nothing
+    // to change means the file is left as it was.
+    func testStripEmptyFileIsSuccessAndUntouched() {
+        for original in ["", "  \n\t\n"] {
+            let url = makeTempSettingsBytes(original)
+            XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: url), .success,
+                           "for \(original.debugDescription)")
+            XCTAssertEqual(try? String(contentsOf: url, encoding: .utf8), original)
+        }
+    }
+
     // MARK: - stripStaleCCStatusHooks (Install into a changed directory)
 
     // A real directory with Install's hooks already merged into its

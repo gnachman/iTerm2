@@ -192,6 +192,14 @@ class ClaudeCodeOnboarding: NSObject {
             RLog("Onboarding: couldn't read settings.json: \(error)")
             return .unreadable
         }
+        // An empty or whitespace-only file has no hooks to remove (and Install
+        // accepts it), but JSONSerialization rejects it.
+        let blank = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty ?? false
+        if blank {
+            return .success
+        }
         let parsed: Any
         do {
             parsed = try JSONSerialization.jsonObject(with: data)
