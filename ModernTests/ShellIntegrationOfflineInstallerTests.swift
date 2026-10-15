@@ -20,6 +20,9 @@ private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindo
     private let testCase: XCTestCase
     // Maps a command the installer types to the line the shell prints in response.
     var responses = [String: String]()
+    // Like responses, for a command answered with several lines. A line may also stand for
+    // part of a line that has arrived so far, since partial lines are matched too.
+    var responseLines = [String: [String]]()
     // Things that happen only after the shell has dealt with everything typed so far, such as a
     // newly launched shell printing its first prompt.
     var laterEvents = [() -> Void]()
@@ -54,6 +57,9 @@ private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindo
 
     // The lines the shell prints in response to typed text.
     func respond(to text: String) -> [String] {
+        if let lines = responseLines[text] {
+            return lines
+        }
         if let response = responses[text] {
             return [response]
         }
@@ -135,6 +141,8 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
     private var lastStatus: Int32 = 0
     private var autoloadDirVariable = ""
 
+    // The value of $SHELL in the session, which need not be nu.
+    var shellVariable = FakeNushellTerminal.nuPath
     var canCreateAutoloadDir = true
     var helperStarts = true
     private(set) var createdDirectories = Set<String>()
@@ -181,8 +189,8 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
 
     private func handleInNushell(_ line: String) -> [String] {
         let echo = "~> " + line
-        if line == "sh -c 'echo My shell is $SHELL'" {
-            return [echo, "My shell is \(Self.nuPath)", "~> "]
+        if line == ShellIntegrationOfflineInstallerTests.shellCommand.trimmingCharacters(in: .newlines) {
+            return [echo, "My shell is \(Self.nuPath) or \(shellVariable), end", "~> "]
         }
         if line.hasPrefix("sh -c 'ENV=/dev/null") {
             state = .helperStarting
@@ -243,8 +251,12 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
 
         var result = [">> " + line]
         let prompt: String
-        if line.hasPrefix("IT2_NU_AUTOLOAD_DIR=$(\"$SHELL\" --no-config-file") {
-            autoloadDirVariable = Self.autoloadDir
+        if line.hasPrefix("IT2_NU_AUTOLOAD_DIR=$(") {
+            // Asking $SHELL only works when $SHELL is nu; command -v finds nu in PATH.
+            let asksSHELL = line.hasPrefix("IT2_NU_AUTOLOAD_DIR=$(\"$SHELL\" --no-config-file")
+            let findsNu = line.contains("command -v nu")
+            let found = asksSHELL ? shellVariable == Self.nuPath : findsNu
+            autoloadDirVariable = found ? Self.autoloadDir : ""
             if line.contains("mkdir -p \"$IT2_NU_AUTOLOAD_DIR\"") {
                 result.append(contentsOf: makeAutoloadDir())
             }
@@ -298,7 +310,7 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
 }
 
 final class ShellIntegrationOfflineInstallerTests: XCTestCase {
-    private static let shellCommand = "sh -c 'echo My shell is $SHELL'\n"
+    static let shellCommand = "sh -c 'echo My shell is $(ps -o comm= -p $PPID 2>/dev/null) or $SHELL, end'\n"
     private static let zshDotdirCommand = "echo My dotfiles go in ${ZDOTDIR:-$HOME}\n"
 
     private var controller: iTermShellIntegrationWindowController!
@@ -323,8 +335,11 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         super.tearDown()
     }
 
-    private func discover(shellPath: String, dotdirOutput: String?) {
-        terminal.responses[Self.shellCommand] = "My shell is \(shellPath)"
+    // parentProcess is what ps prints for the shell the commands are typed into: by default the
+    // same shell as $SHELL, as a login shell (macOS ps prints its argv[0]).
+    private func discover(shellPath: String, parentProcess: String? = nil, dotdirOutput: String?) {
+        let parentProcess = parentProcess ?? "-" + (shellPath as NSString).lastPathComponent
+        terminal.responses[Self.shellCommand] = "My shell is \(parentProcess) or \(shellPath), end"
         if let dotdirOutput {
             terminal.responses[Self.zshDotdirCommand] = dotdirOutput
         }
@@ -371,6 +386,50 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         XCTAssertEqual(controller.dotdir, "~")
     }
 
+    // F-260: tcsh started from a zsh login shell. The commands are typed into tcsh, so the
+    // installer must target tcsh and must not type zsh-only syntax.
+    func testDiscoveryUsesTheShellReadingTheCommandsOverSHELL() {
+        discover(shellPath: "/bin/zsh", parentProcess: "/bin/tcsh", dotdirOutput: nil)
+
+        XCTAssertEqual(terminal.sentTexts, [Self.shellCommand])
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .tcsh)
+        XCTAssertEqual(controller.dotdir, "~")
+    }
+
+    func testDiscoveryUsesALoginShellParent() {
+        discover(shellPath: "/bin/zsh", parentProcess: "-fish", dotdirOutput: nil)
+
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .fish)
+    }
+
+    // xonsh runs under python, and ps may be missing on a remote host: an unknown or empty
+    // parent falls back to $SHELL.
+    func testDiscoveryFallsBackToSHELLForAnUnknownParent() {
+        discover(shellPath: "/Users/someone/venv/bin/xonsh", parentProcess: "/usr/bin/python3", dotdirOutput: nil)
+
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .xonsh)
+    }
+
+    func testDiscoveryFallsBackToSHELLWithoutPs() {
+        discover(shellPath: "/bin/bash", parentProcess: "", dotdirOutput: nil)
+
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .bash)
+    }
+
+    // A line that has arrived only in part must not be taken for the answer.
+    func testDiscoveryIgnoresAPartialLine() {
+        terminal.responseLines[Self.shellCommand] = ["My shell is /bin/tc", "My shell is /bin/tcsh or /bin/zsh, end"]
+        controller.shellIntegrationInstallerSendShellCommands(0)
+        terminal.run()
+
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .tcsh)
+    }
+
     func testSkipDoesNotBypassDiscovery() {
         controller.shellIntegrationInstallerSkipStage()
 
@@ -393,13 +452,17 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     }
 }
 
-final class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
+class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
+    // $SHELL in the session.
+    class var shellVariable: String { FakeNushellTerminal.nuPath }
+
     private var controller: iTermShellIntegrationWindowController!
     private var terminal: FakeNushellTerminal!
 
     override func setUp() {
         super.setUp()
         terminal = FakeNushellTerminal(testCase: self)
+        terminal.shellVariable = Self.shellVariable
         controller = iTermShellIntegrationWindowController(windowNibName: "iTermShellIntegrationWindowController")
         controller.delegate = terminal
         XCTAssertNotNil(controller.window)
@@ -497,4 +560,10 @@ final class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
         XCTAssertFalse(terminal.helperIsRunning)
         XCTAssertEqual(controller.sendShellCommandsStage, 3)
     }
+}
+
+// nu started from a zsh login shell: $SHELL is zsh, but the commands go to nu, so every step
+// must work without asking $SHELL for nu's autoload directory.
+final class ShellIntegrationOfflineNushellFromZshInstallerTests: ShellIntegrationOfflineNushellInstallerTests {
+    override class var shellVariable: String { "/bin/zsh" }
 }

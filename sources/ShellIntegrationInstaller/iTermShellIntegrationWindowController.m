@@ -55,9 +55,10 @@ BOOL iTermShellIntegrationShellLoadsScriptAutomatically(iTermShellIntegrationShe
 // only read the vendor directories, so there the per-user one under the data directory is used,
 // which later versions read too. The website installers run the same query. The command ends by
 // printing a line that iTermShellIntegrationNuAutoloadDirReadyRegex matches. The empty quotes
-// keep the echo of the typed command from matching it.
+// keep the echo of the typed command from matching it. nu need not be $SHELL (discovery goes by
+// the shell reading the commands), so it is looked up in PATH unless $SHELL is nu.
 static NSString *const iTermShellIntegrationNuAutoloadDirCommand =
-    @"IT2_NU_AUTOLOAD_DIR=$(\"$SHELL\" --no-config-file -c 'print ($nu.user-autoload-dirs? | default [($nu.data-dir | path join vendor autoload)] | first)'); mkdir -p \"$IT2_NU_AUTOLOAD_DIR\"; echo iTerm2-nu-autoload-dir-\"\"ready\n";
+    @"IT2_NU_AUTOLOAD_DIR=$(case \"${SHELL##*/}\" in (nu) IT2_NU=\"$SHELL\";; (*) IT2_NU=$(command -v nu);; esac; \"$IT2_NU\" --no-config-file -c 'print ($nu.user-autoload-dirs? | default [($nu.data-dir | path join vendor autoload)] | first)'); mkdir -p \"$IT2_NU_AUTOLOAD_DIR\"; echo iTerm2-nu-autoload-dir-\"\"ready\n";
 static NSString *const iTermShellIntegrationNuAutoloadDirReadyRegex = @"^iTerm2-nu-autoload-dir-ready$";
 
 // Sent right after the heredoc that writes the script, so $? is cat's exit status. Prints
@@ -409,18 +410,45 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 #pragma mark - Text Sending
 
++ (NSDictionary<NSString *, NSNumber *> *)shellsByName {
+    return @{ @"tcsh": @(iTermShellIntegrationShellTcsh),
+              @"bash": @(iTermShellIntegrationShellBash),
+              @"zsh": @(iTermShellIntegrationShellZsh),
+              @"fish": @(iTermShellIntegrationShellFish),
+              @"xonsh": @(iTermShellIntegrationShellXonsh),
+              @"nu": @(iTermShellIntegrationShellNu) };
+}
+
+// The parent process is the shell actually reading the installer's commands, so it wins when
+// it is one the installer supports. Otherwise (ps is unavailable, or the shell runs under an
+// interpreter, as xonsh does under python) fall back to $SHELL.
++ (NSString *)shellNameForParentProcess:(NSString *)parentProcess shell:(NSString *)shell {
+    NSString *parent = [[parentProcess stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lastPathComponent];
+    if ([parent hasPrefix:@"-"]) {
+        parent = [parent substringFromIndex:1];
+    }
+    if (parent.length > 0 && self.shellsByName[parent]) {
+        return parent;
+    }
+    return [[shell stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lastPathComponent];
+}
+
 - (NSString *)discoverShell:(BOOL)reallySend completion:(void (^)(NSString *shell, NSString *dotdir))completion {
     iTermExpectation *expectation = nil;
     // Through sh rather than a bare echo: nushell keeps the environment under $env and has no
     // $SHELL, so echo would be a parse error there, while sh is what the rest of the installer
     // runs its commands in anyway.
-    NSString *result = @"sh -c 'echo My shell is $SHELL'\n";
+    // The shell the commands are typed into is sh's parent, which need not be $SHELL (say, tcsh
+    // started from a zsh login shell), so report its name too. A login shell's name starts with
+    // "-". The line ends in a marker so a partially received line can't match.
+    NSString *result = @"sh -c 'echo My shell is $(ps -o comm= -p $PPID 2>/dev/null) or $SHELL, end'\n";
     [self sendText:result
         reallySend:reallySend
-        afterRegex:@"^My shell is (.+)"
+        afterRegex:@"^My shell is (.*) or (.*), end$"
        expectation:&expectation
         completion:^(NSArray<NSString *> *captures) {
-        NSString *shell = [captures[1] lastPathComponent];
+        NSString *shell = [iTermShellIntegrationWindowController shellNameForParentProcess:captures[1]
+                                                                                     shell:captures[2]];
         if ([shell isEqualToString:@"zsh"]) {
             // Send the command only once the expectation is in place. Sending it first loses a
             // race with a fast shell: its output gets checked before the expectation exists.
@@ -730,13 +758,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 - (void)didDiscoverShell:(NSString *)shell dotdir:(NSString *)dotdir {
-    NSDictionary<NSString *, NSNumber *> *map = @{ @"tcsh": @(iTermShellIntegrationShellTcsh),
-                                                   @"bash": @(iTermShellIntegrationShellBash),
-                                                   @"zsh": @(iTermShellIntegrationShellZsh),
-                                                   @"fish": @(iTermShellIntegrationShellFish),
-                                                   @"xonsh": @(iTermShellIntegrationShellXonsh),
-                                                   @"nu": @(iTermShellIntegrationShellNu) };
-    NSNumber *number = map[shell ?: @""];
+    NSNumber *number = [iTermShellIntegrationWindowController shellsByName][shell ?: @""];
     self.dotdir = dotdir;
     if (number) {
         self.shell = number.integerValue;

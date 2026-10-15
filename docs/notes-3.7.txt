@@ -1508,3 +1508,8 @@ Bug Fixes:
   ~/.claude/settings.json is a broken symlink no
   longer leaves the new settings.json marked
   executable.
+- The Internet-Free shell integration install no
+  longer hangs when the shell you’re using isn’t
+  your login shell (for example, tcsh started
+  from zsh). It installs for the shell you’re
+  using.
