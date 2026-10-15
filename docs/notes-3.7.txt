@@ -1766,6 +1766,10 @@ Bug Fixes:
   directory you already typed in the filename
   they insert (for example, “rm logs/logs/
   error.log”).
+- AI models on Azure OpenAI in Azure Government
+  (.azure.us) and Azure China (.azure.cn) now
+  send their API key the way Azure expects.
+
 
 
 
