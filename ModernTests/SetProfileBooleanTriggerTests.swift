@@ -38,6 +38,58 @@ final class SetProfileBooleanTriggerTests: XCTestCase {
         wait(for: [exp], timeout: 5)
     }
 
+    // F-270: the trigger list row of an unconfigured trigger showed the English literal
+    // “Set Profile Setting” after the (localized) action title. With no setting chosen the row
+    // should show just the title, so there must be no parameter text.
+    func testUnconfiguredTriggerHasNoParameterText() {
+        let dict: [String: Any] = [
+            "action": "iTermSetProfileBooleanTrigger",
+            "parameter": "",
+            "regex": "",
+            "matchType": NSNumber(value: iTermTriggerMatchType.regex.rawValue)
+        ]
+        guard let trigger = Trigger(fromUntrustedDict: dict) else {
+            XCTFail("could not create trigger")
+            return
+        }
+        XCTAssertNil(trigger.paramAttributedString())
+    }
+
+    func testConfiguredTriggerParameterTextNamesOnOrOff() {
+        guard let on = makeTrigger(key: "Prevent Sleep", on: true),
+              let off = makeTrigger(key: "Prevent Sleep", on: false) else {
+            XCTFail("could not create trigger")
+            return
+        }
+        let onText = on.paramAttributedString()?.string ?? ""
+        let offText = off.paramAttributedString()?.string ?? ""
+        XCTAssertTrue(onText.hasSuffix(" to On"), onText)
+        XCTAssertTrue(offText.hasSuffix(" to Off"), offText)
+    }
+
+    // F-270: the picker placeholder, the On/Off popup and the row description were English
+    // literals in every language.
+    func testSetProfileSettingStringsAreTranslated() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let data = try Data(contentsOf: root.appendingPathComponent("xcstrings/Localizable.xcstrings"))
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let strings = json["strings"] as! [String: Any]
+        let keys = ["ProfileBoolSettingPicker.SelectSetting",
+                    "ProfileBoolSettingPicker.On",
+                    "ProfileBoolSettingPicker.Off",
+                    "Trigger.SetProfileBoolean.SetToOn",
+                    "Trigger.SetProfileBoolean.SetToOff"]
+        for key in keys {
+            let localizations = (strings[key] as? [String: Any])?["localizations"] as? [String: Any]
+            for language in ["de", "ja", "pt-BR", "ru", "zh-Hans"] {
+                let unit = (localizations?[language] as? [String: Any])?["stringUnit"] as? [String: Any]
+                XCTAssertEqual(unit?["state"] as? String, "translated", "\(key) \(language)")
+            }
+        }
+    }
+
     // F-201: firing the trigger used to crash. Its side effect reaches
     // PTYSession.setSessionSpecificProfileValues, which reloads the profile and
     // joins threads. Joining from inside an ordinary (non-paused) side effect

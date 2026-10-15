@@ -22,8 +22,8 @@ class SetProfileBooleanTrigger: Trigger {
         return (key, raw == "1")
     }
 
-    // Cache the key->label map once per trigger instance. `description` (via paramAttributedString)
-    // runs per trigger row on every trigger-table reload, and ProfileBoolSettingCatalog.entries()
+    // Cache the key->label map once per trigger instance. `localizedParamDescription` (via
+    // paramAttributedString) runs per trigger row on every trigger-table reload, and ProfileBoolSettingCatalog.entries()
     // does a full allSettings() scan; caching avoids rescanning on each row render.
     private let labelsLock = NSLock()
     private var cachedLabelsByKey: [String: String]?
@@ -66,6 +66,7 @@ class SetProfileBooleanTrigger: Trigger {
     }
 
     override var description: String {
+        // Localization unneeded: debug description; the trigger list uses localizedParamDescription.
         if let (key, value) = keyAndValue(param as? String) {
             return "Set “\(label(forKey: key))” to \(value ? "On" : "Off")"
         }
@@ -97,7 +98,28 @@ class SetProfileBooleanTrigger: Trigger {
     // MARK: - Display
 
     override func paramAttributedString() -> NSAttributedString? {
-        return NSAttributedString(string: description, attributes: regularAttributes())
+        guard let text = localizedParamDescription else {
+            // No setting chosen yet: the row shows just the action title.
+            return nil
+        }
+        return NSAttributedString(string: text, attributes: regularAttributes())
+    }
+
+    // The user-visible parameter text for the trigger list. `description` stays English because
+    // it is also used for debug logging.
+    var localizedParamDescription: String? {
+        guard let (key, value) = keyAndValue(param as? String) else {
+            return nil
+        }
+        let setting = label(forKey: key)
+        if value {
+            return String(localized: "Trigger.SetProfileBoolean.SetToOn",
+                          defaultValue: "Set “\(setting)” to On",
+                          comment: "Trigger list description of a Set Profile Setting trigger that turns a setting on. The placeholder is the name of a profile setting, such as Prevent Sleep.")
+        }
+        return String(localized: "Trigger.SetProfileBoolean.SetToOff",
+                      defaultValue: "Set “\(setting)” to Off",
+                      comment: "Trigger list description of a Set Profile Setting trigger that turns a setting off. The placeholder is the name of a profile setting, such as Prevent Sleep.")
     }
 
     // MARK: - Action
