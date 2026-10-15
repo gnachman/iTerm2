@@ -1659,3 +1659,7 @@ Bug Fixes:
   now highlights the word where it is drawn and
   shows its definition next to it, instead of
   over blank cells at the far side of the line.
+- Cmd-hover and Cmd-click now find URLs on
+  right-to-left lines that run up to a pane
+  divider, such as in a tmux split without tmux
+  integration.
