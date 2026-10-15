@@ -1769,6 +1769,11 @@ Bug Fixes:
 - AI models on Azure OpenAI in Azure Government
   (.azure.us) and Azure China (.azure.cn) now
   send their API key the way Azure expects.
+- Look Up (Ctrl-Cmd-D) on a right-to-left line
+  now highlights the word where it is drawn and
+  shows its definition next to it, instead of
+  over blank cells at the far side of the line.
+
 
 
 
