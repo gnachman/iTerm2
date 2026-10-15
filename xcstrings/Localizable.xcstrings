@@ -131190,25 +131190,25 @@
                   "few" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg строки"
+                      "value" : "%arg строках"
                     }
                   },
                   "many" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg строк"
+                      "value" : "%arg строках"
                     }
                   },
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg строка"
+                      "value" : "%arg строке"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg строки"
+                      "value" : "%arg строках"
                     }
                   }
                 }

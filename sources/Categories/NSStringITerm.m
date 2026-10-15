@@ -1630,7 +1630,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return result;
 }
 
-- (NSUInteger)numberOfLines {
+- (NSUInteger)it_lineCount {
     NSUInteger stringLength = [self length];
     NSUInteger numberOfLines = 0;
     for (NSUInteger index = 0; index < stringLength; numberOfLines++) {

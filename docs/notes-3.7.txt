@@ -1676,6 +1676,12 @@ Bug Fixes:
 - Shell > Close (⌘W) now closes the Cockpit when
   it is the key window. Before, the menu item
   was disabled there.
+- Advanced Paste now counts lines correctly.
+  Before, text whose newlines were converted to
+  carriage returns was reported as one line, and
+  a trailing newline was counted as an extra
+  line.
+
 
 
 

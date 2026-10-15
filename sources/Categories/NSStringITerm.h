@@ -81,8 +81,10 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Returns the set of characters that should be backslash-escaped.
 + (NSString *)shellEscapableCharacters;
 
-// Returns the number of lines in a string.
-- (NSUInteger)numberOfLines;
+// Returns the number of lines in a string. CR, LF and CRLF each end a line, and a
+// trailing line ending does not start another line, so "a\nb\n" has 2 lines. Not named
+// numberOfLines because NSString(iTermTextDataSource) defines that with different semantics.
+- (NSUInteger)it_lineCount;
 // May use single quotes by user preference. Only safe to use with user's default shell.
 - (NSString *)stringWithEscapedShellCharactersIncludingNewlines:(BOOL)includingNewlines;
 
