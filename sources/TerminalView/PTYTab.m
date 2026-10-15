@@ -9243,7 +9243,10 @@ backgroundColor:(NSColor *)backgroundColor {
 - (void)sessionTabStatusDidChange:(PTYSession *)session {
     DLog(@"sessionTabStatusDidChange: %@", session);
     if ([[iTermStatusPrioritySettings shared] isHighestPriorityFor:session.tabStatus.statusText]) {
-        [[iTermDockBadgeController sharedInstance] sessionDidEnterWaiting:session.guid];
+        // A restored status isn't news, so it doesn't count toward the Dock badge.
+        if (!session.tabStatusIsBeingRestored) {
+            [[iTermDockBadgeController sharedInstance] sessionDidEnterWaiting:session.guid];
+        }
     } else {
         [[iTermDockBadgeController sharedInstance] sessionDidLeaveWaiting:session.guid];
     }

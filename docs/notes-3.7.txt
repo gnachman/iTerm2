@@ -1493,3 +1493,7 @@ Bug Fixes:
   such as hello. Before, it reported success
   but set nothing unless the value was quoted
   JSON.
+- After window restoration, a tab whose session
+  had a status (for example, one set with OSC
+  21337) shows it again in the tab bar, not
+  only in the Session Status tool.

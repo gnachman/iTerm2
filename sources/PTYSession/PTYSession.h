@@ -649,6 +649,9 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly, nullable) NSString *badgeLabel;
 @property(nonatomic, readonly, nullable) NSString *subtitle;
 @property(nonatomic, readonly, nullable) iTermSessionTabStatus *tabStatus;
+// True while a status from a saved arrangement is being adopted, so the change is a
+// restoration rather than news.
+@property(nonatomic, readonly) BOOL tabStatusIsBeingRestored;
 // The session's OSC 7501 records, or nil if the program never reported any.
 // Never creates one, so views can ask about every session cheaply.
 @property(nonatomic, readonly, nullable) iTermProgramStatusController *programStatusControllerIfPresent;

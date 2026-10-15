@@ -26492,6 +26492,10 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     return self.tabStatusController.status;
 }
 
+- (BOOL)tabStatusIsBeingRestored {
+    return _tabStatusController.isRestoring;
+}
+
 // Created lazily, since PTYSession has several init paths and a session may
 // never have a status at all.
 - (iTermTabStatusController *)tabStatusController {
@@ -26508,7 +26512,9 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 }
 
 - (void)tabStatusDidChangeFromStatusText:(NSString *)previousStatusText {
-    if (!_tabStatusController.isAcknowledging && !_applyingProgramStatus) {
+    if (!_tabStatusController.isAcknowledging &&
+        !_tabStatusController.isRestoring &&
+        !_applyingProgramStatus) {
         [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
     }
     // Read from the status rather than from whatever update caused the change:
