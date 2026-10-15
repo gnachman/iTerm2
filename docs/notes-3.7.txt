@@ -1773,6 +1773,11 @@ Bug Fixes:
   now highlights the word where it is drawn and
   shows its definition next to it, instead of
   over blank cells at the far side of the line.
+- With the GPU renderer off, underlines and
+  strikethroughs on right-to-left text are now
+  drawn under the text they belong to instead
+  of a few cells to the right.
+
 
 
 

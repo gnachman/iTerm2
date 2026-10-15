@@ -93,6 +93,11 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 // check, and the Metal glyph keys must all agree on this or the Metal renderer shapes a
 // box-drawing or image string (issue 13073).
 BOOL iTermScreenCharCanHostSpacingMark(const screen_char_t *base, BOOL useNativePowerlineGlyphs);
+
+// The smallest x position among the characters in `range`. Underlines and
+// strikethroughs start here. On a bidi line positions are visual, so for a
+// right-to-left run the range's first character is drawn rightmost.
+CGFloat iTermLeftmostStringPosition(const CGFloat *positions, NSRange range);
 NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor);
 
 extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
