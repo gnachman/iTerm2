@@ -1975,9 +1975,24 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (BOOL)sessionResizeFloatingPane:(PTYSession *)session columns:(int)columns rows:(int)rows {
-    iTermFloatingPaneView *pane = self.isTmuxTab ? nil : [self floatingPaneForSession:session];
+    iTermFloatingPaneView *pane = [self floatingPaneForSession:session];
     if (!pane) {
         return NO;
+    }
+    if (self.isTmuxTab) {
+        // tmux owns the float: ask it for the new size. The layout change it sends back resizes
+        // the float. Resizing the session here would leave it out of sync with tmux.
+        const int dw = MAX(1, columns) - session.columns;
+        const int dh = MAX(1, rows) - session.rows;
+        DLog(@"Ask tmux to resize float %%%d by %d,%d", session.tmuxPane, dw, dh);
+        if (dw || dh) {
+            [self.tmuxController resizeFloatingPane:session.tmuxPane
+                                      moveByColumns:0
+                                               rows:0
+                                   growingByColumns:dw
+                                               rows:dh];
+        }
+        return YES;
     }
     [iTermFloatingPaneLayout setGridOfFloatingPane:pane session:session columns:columns rows:rows];
     return YES;
