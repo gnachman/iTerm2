@@ -577,6 +577,14 @@ class CockpitWindowController: NSWindowController {
         composerVC.makeFirstResponder()
     }
 
+    // Shell > Close (Cmd-W) is wired to closeCurrentSession: rather than
+    // performClose:, so without this the menu item is disabled while the
+    // cockpit is key and Cmd-W can't close it.
+    @objc(closeCurrentSession:)
+    func closeCurrentSession(_ sender: Any?) {
+        window?.performClose(sender)
+    }
+
     // MARK: - Toolbar actions
 
     // Give the settings item a real bordered button (so the popover has
