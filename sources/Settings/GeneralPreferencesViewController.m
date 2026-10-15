@@ -1894,6 +1894,15 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                          _window);
         return;
     }
+    // The request leaves out headers that aren't valid, so a test that
+    // succeeded without them would mislead. Refuse them as Save does.
+    NSString *headerFailure = [AICustomHeaders validationFailureForHeaders:_headers];
+    if (headerFailure) {
+        iTermGeneralPreferencesShowSheet(NSLocalizedStringWithDefaultValue(@"AIModelEditor.InvalidModelTitle", nil, [NSBundle mainBundle], @"Invalid Manual AI Model", @"Title of alert shown when a manual AI model fails validation"),
+                                         headerFailure,
+                                         _window);
+        return;
+    }
     const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedItem.tag;
     const BOOL functionCalling =
         _featureButtons[kAIManualModelFunctionCallingKey].state == NSControlStateValueOn;
@@ -1999,26 +2008,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // button click ends the active cell edit, so a per-cell alert would race the
     // sheet teardown. Blank-name rows are dropped on save, so skip them.
     if (!failure) {
-        for (NSDictionary *entry in _headers) {
-            NSString *headerName = [entry[@"name"] isKindOfClass:NSString.class] ? entry[@"name"] : @"";
-            headerName = [headerName stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-            if (headerName.length == 0) {
-                continue;
-            }
-            NSString *headerValue = [entry[@"value"] isKindOfClass:NSString.class] ? entry[@"value"] : @"";
-            if (![AICustomHeaders isValidName:headerName]) {
-                failure = [NSString stringWithFormat:
-                           NSLocalizedStringWithDefaultValue(@"AIModelEditor.InvalidHeaderName", nil, [NSBundle mainBundle], @"Custom header name “%@” is not valid. Use only RFC 7230 token "
-                           @"characters (letters, digits, and any of !#$%%&'*+-.^_`|~).", @"Validation error for an invalid custom HTTP header name; %@ is the name"), headerName];
-                break;
-            }
-            if (![AICustomHeaders isValidValue:headerValue]) {
-                failure = [NSString stringWithFormat:
-                           NSLocalizedStringWithDefaultValue(@"AIModelEditor.InvalidHeaderValue", nil, [NSBundle mainBundle], @"The value for custom header “%@” must not contain newline or "
-                           @"null characters.", @"Validation error for an invalid custom HTTP header value; %@ is the header name"), headerName];
-                break;
-            }
-        }
+        failure = [AICustomHeaders validationFailureForHeaders:_headers];
     }
     if (failure) {
         iTermGeneralPreferencesShowSheet(NSLocalizedStringWithDefaultValue(@"AIModelEditor.InvalidModelTitle", nil, [NSBundle mainBundle], @"Invalid Manual AI Model", @"Title of alert shown when a manual AI model fails validation"),

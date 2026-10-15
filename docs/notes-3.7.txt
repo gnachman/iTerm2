@@ -1748,6 +1748,11 @@ Bug Fixes:
   failed: …” instead of a broken sentence, and
   errors from a self-hosted model name its
   server instead of “Unknown Platform”.
+- Test Connection in the AI model editor now
+  rejects custom headers that are not valid, as
+  Save does, instead of leaving them out and
+  reporting success.
+
 
 
 
