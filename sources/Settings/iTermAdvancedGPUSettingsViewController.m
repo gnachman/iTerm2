@@ -15,22 +15,31 @@
 
 @implementation iTermAdvancedGPUSettingsViewController
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
++ (BOOL)canPreferIntegratedGPU {
+    NSMutableArray<NSNumber *> *flags = [NSMutableArray array];
+    for (id<MTLDevice> device in MTLCopyAllDevices()) {
+        [flags addObject:@(device.isLowPower)];
+    }
+    return [self canPreferIntegratedGPUWithLowPowerFlags:flags];
+}
 
-    NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
-
++ (BOOL)canPreferIntegratedGPUWithLowPowerFlags:(NSArray<NSNumber *> *)lowPowerFlags {
     BOOL foundLowPower = NO;
     BOOL foundHighPower = NO;
-    for (id<MTLDevice> device in devices) {
-        if (device.isLowPower) {
+    for (NSNumber *lowPower in lowPowerFlags) {
+        if (lowPower.boolValue) {
             foundLowPower = YES;
         } else {
             foundHighPower = YES;
         }
     }
+    return foundLowPower && foundHighPower;
+}
 
-    self.preferIntegratedGPU.enabled = (foundLowPower && foundHighPower);
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    self.preferIntegratedGPU.enabled = [iTermAdvancedGPUSettingsViewController canPreferIntegratedGPU];
     self.disableInLowPowerMode.enabled = YES;
 }
 

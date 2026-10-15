@@ -1666,6 +1666,10 @@ Bug Fixes:
   such as the progress bar color scheme, now
   shows its default instead of a blank menu when
   the profile holds a value the menu lacks.
+- “Prefer integrated to discrete GPU” in
+  Advanced GPU Settings is now disabled on a Mac
+  with only one GPU, where it has no effect.
+
 
 
 
