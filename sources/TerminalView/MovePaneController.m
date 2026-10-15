@@ -292,6 +292,9 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
         [[oldView retain] autorelease];
         [[movingSession retain] autorelease];
         PTYTab *theTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
+        // Removing a float activates another float, if there is one, and the split below only
+        // activates the moved session if its target is active. Docking a float keeps its focus.
+        const BOOL docking = (theTab == destinationTab && [theTab sessionIsFloating:movingSession]);
         [theTab removeSession:movingSession];
         const NSUInteger sourceCount = theTab.sessions.count;
         if (sourceCount == 0) {
@@ -307,6 +310,9 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
         [destinationTab fitSessionToCurrentViewSize:movingSession];
         [destinationTab checkInvariants:@"After move"];
         [destinationTab updateSessionOrdinals];
+        if (docking) {
+            [destinationTab setActiveSession:movingSession];
+        }
         if (sourceCount) {
             [theTab updateSessionOrdinals];
         }
