@@ -1777,6 +1777,11 @@ Bug Fixes:
   strikethroughs on right-to-left text are now
   drawn under the text they belong to instead
   of a few cells to the right.
+- With the GPU renderer off, Devanagari and
+  other scripts with vowel signs written before
+  their consonant draw the sign in the right
+  place again: क्षत्रिय no longer shows ि after त्र.
+
 
 
 
