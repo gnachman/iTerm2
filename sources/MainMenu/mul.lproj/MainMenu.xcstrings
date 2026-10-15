@@ -10963,6 +10963,48 @@
         }
       }
     },
+    "Lk3-Ly-Lt2.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Lock Location\"; ObjectID = \"Lk3-Ly-Lt2\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position sperren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Lock Location"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置をロック"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear localização"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заблокировать положение"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁定位置"
+          }
+        }
+      }
+    },
     "LR1-f6-Fa9.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"New Window with Current Profile\"; ObjectID = \"LR1-f6-Fa9\";",
       "extractionState" : "extracted_with_value",

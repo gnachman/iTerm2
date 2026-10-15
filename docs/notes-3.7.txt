@@ -1480,3 +1480,7 @@ Bug Fixes:
 - With debug logging on, a password typed into
   a password field (for example, in the password
   manager) no longer appears in the debug log.
+- Window > Lock Location and the tab menu’s
+  Rename Tab… item and “Tab Color:” label are
+  now translated instead of always appearing in
+  English.
