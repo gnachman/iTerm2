@@ -1759,6 +1759,10 @@ Bug Fixes:
 - Changing an AI chat permission from the info
   menu now updates the permission buttons shown
   in the chat right away.
+- In an orchestration chat, the notice shown
+  when mentioning a session now shows names with
+  underscores correctly.
+
 
 
 

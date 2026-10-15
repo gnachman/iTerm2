@@ -2835,8 +2835,7 @@ extension Message.Content {
                 """, comment: "Body of the prompt asking the user to enable orchestration mode")
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case let .orchestrationPermissionGranted(_, name):
-                let body = String(localized: "ChatViewController.PermissionGrantedBody", defaultValue: "**Granted this chat permission to control \u{201C}\(name)\u{201D}.**\n\nYou @-mentioned it, so the agent can act there without asking. Revoke to require approval again.", comment: "Notice shown when the chat is granted permission to control a mentioned entity")
-                return AttributedStringForSystemMessageMarkdown(body) {}
+                return AttributedStringForSystemMessageMarkdown(Message.orchestrationPermissionGrantedMarkdown(name: name)) {}
             }
 
         case .selectSessionRequest(_, terminal: let terminal):
@@ -2860,6 +2859,13 @@ extension Message {
     }
     var textColor: NSColor {
         return author == .user ? .white : .textColor
+    }
+
+    // The name is escaped so a session name like “my_dev_box” isn't read
+    // as emphasis markup.
+    static func orchestrationPermissionGrantedMarkdown(name: String) -> String {
+        let escapedName = name.escapedForMarkdown
+        return String(localized: "ChatViewController.PermissionGrantedBody", defaultValue: "**Granted this chat permission to control \u{201C}\(escapedName)\u{201D}.**\n\nYou @-mentioned it, so the agent can act there without asking. Revoke to require approval again.", comment: "Notice shown when the chat is granted permission to control a mentioned entity")
     }
 
     // True when this is the permissions toggle bubble. Its buttons are
