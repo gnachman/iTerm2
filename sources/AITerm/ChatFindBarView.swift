@@ -57,6 +57,24 @@ class ChatFindBarView: NSView {
 
     private static let controlSpacing: CGFloat = 8
 
+    // Wide enough for the longest mode title, which in some languages is
+    // much longer than in English (“Ignorar maiúsculas/minúsculas”).
+    private static let modeWidth = modeWidth(forTitles: modeTitles)
+
+    static func modeWidth(forTitles titles: [String]) -> CGFloat {
+        let popup = NSPopUpButton(frame: .zero, pullsDown: false)
+        popup.controlSize = .regular
+        popup.bezelStyle = .roundRect
+        popup.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        var widest: CGFloat = 0
+        for title in titles {
+            popup.removeAllItems()
+            popup.addItem(withTitle: title)
+            widest = max(widest, popup.cell?.cellSize.width ?? 0)
+        }
+        return max(150, ceil(widest))
+    }
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         setup()
@@ -195,7 +213,7 @@ class ChatFindBarView: NSView {
                                    width: closeSize, height: controlHeight)
         rightEdge = closeButton.frame.minX - Self.controlSpacing
 
-        let modeWidth: CGFloat = 150
+        let modeWidth = Self.modeWidth
         modeButton.frame = NSRect(x: rightEdge - modeWidth, y: centeredY,
                                   width: modeWidth, height: controlHeight)
         rightEdge = modeButton.frame.minX - Self.controlSpacing
