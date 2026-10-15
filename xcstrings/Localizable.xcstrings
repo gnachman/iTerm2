@@ -878,7 +878,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "不发送 API 密钥。如果端点需要身份验证，请使用自定义标头。"
+            "value" : "不发送 API 密钥。如果端点需要身份验证，请使用自定义头信息。"
           }
         }
       }
