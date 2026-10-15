@@ -42,6 +42,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermStatusBarSparklinesComponent : iTermStatusBarGraphicComponent<iTermStatusBarTimeSeries *>
 
+// Whether the graph should animate as it scrolls. It doesn't in Low Power Mode.
++ (BOOL)shouldAnimateWithSetting:(BOOL)animateSetting lowPowerMode:(BOOL)lowPowerMode;
+
 @property (nonatomic, readonly) iTermStatusBarSparklinesModel *sparklinesModel;
 @property (nonatomic, readonly) NSColor *lineColor;
 @property (nonatomic, readonly) double ceiling;
