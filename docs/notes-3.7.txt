@@ -1620,3 +1620,6 @@ Bug Fixes:
   a narrow chat window. When space is short it
   hides the search mode menu and the match count
   instead.
+- Closing the AI chat’s find bar with Escape now
+  returns focus to the message field, so what
+  you type next is no longer lost.
