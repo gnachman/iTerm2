@@ -1614,6 +1614,11 @@ Bug Fixes:
 - it2 session list no longer shows a session’s
   tty as \/dev\/ttys000 or its name with
   backslash escapes. It prints the plain values.
+- it2 session set-var now sets a plain value
+  such as hello. Before, it reported success
+  but set nothing unless the value was quoted
+  JSON.
+
 
 
 

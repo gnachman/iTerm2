@@ -1009,7 +1009,7 @@ extension Session {
         @Argument(help: "Variable name.")
         var variable: String
 
-        @Argument(help: "Value to set.")
+        @Argument(help: "Value to set: JSON, or else a plain string.")
         var value: String
 
         @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
@@ -1032,7 +1032,7 @@ extension Session {
 
             let setEntry = ITMVariableRequest_Set()
             setEntry.name = variable
-            setEntry.value = value
+            setEntry.value = Self.jsonValue(value)
             varReq.setArray.add(setEntry)
 
             let request = ITMClientOriginatedMessage()
@@ -1048,6 +1048,17 @@ extension Session {
                 throw IT2Error.apiError("Set variable failed with status \(varResp.status.rawValue)")
             }
             ctx.out("Set \(variable) = \(value)")
+        }
+
+        /// The API takes the value as JSON and ignores one that doesn't parse, so a
+        /// value that is already JSON (a quoted string, number, object, ...) goes as
+        /// is and anything else is sent as a JSON string.
+        static func jsonValue(_ value: String) -> String {
+            if let data = value.data(using: .utf8),
+               (try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)) != nil {
+                return value
+            }
+            return jsonString(value)
         }
     }
 }
