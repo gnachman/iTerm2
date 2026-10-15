@@ -1400,3 +1400,9 @@ Bug Fixes:
   the tmux pane’s place, vanish without
   running, or open a tmux shell pane without
   the link.
+- The SetWindowFrame escape sequence no longer
+  shrinks a window to nothing or moves it far
+  off screen when given bad values. Malformed
+  values are ignored, and the window now stays
+  between its minimum size and the size of your
+  displays, with part of it on a display.

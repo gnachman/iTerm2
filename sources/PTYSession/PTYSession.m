@@ -16721,7 +16721,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     // frame is already in global AppKit coordinates (points), so no conversion
-    // is needed. AppKit constrains it to something sensible.
+    // is needed. The window controller clamps it to something sensible.
     [[_delegate parentWindow] windowSetFrame:frame];
 }
 

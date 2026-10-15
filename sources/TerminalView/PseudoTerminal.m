@@ -10910,9 +10910,32 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [[self window] setFrameTopLeftPoint:point];
 }
 
-- (void)windowSetFrame:(NSRect)frame
-{
-    [[self window] setFrame:frame display:YES];
+// Used by OSC 1337 SetWindowFrame, whose frame comes from terminal output, so
+// keep the window at least its minimum size, no bigger than the screens, and
+// reachable on a screen.
+- (void)windowSetFrame:(NSRect)frame {
+    NSSize minSize = NSZeroSize;
+    for (PTYTab *tab in self.tabs) {
+        const NSSize minTabSize = [tab minSize];
+        minSize.width = MAX(minSize.width, minTabSize.width);
+        minSize.height = MAX(minSize.height, minTabSize.height);
+    }
+    const NSSize decorationSize = [self windowDecorationSize];
+    const NSSize internalDecorationSize = self.currentSession.view.internalDecorationSize;
+    minSize.width += decorationSize.width + internalDecorationSize.width;
+    minSize.height += decorationSize.height + internalDecorationSize.height;
+    minSize.width = MAX(minSize.width, self.window.minSize.width);
+    minSize.height = MAX(minSize.height, self.window.minSize.height);
+
+    NSArray<NSValue *> *screenFrames = [[NSScreen screens] mapWithBlock:^id _Nullable(NSScreen *screen) {
+        return [NSValue valueWithRect:screen.visibleFrame];
+    }];
+    const NSRect clamped = [iTermSetWindowFrameRequest clampedFrame:frame
+                                                            minSize:minSize
+                                                       screenFrames:screenFrames];
+    DLog(@"Requested %@, min size %@, setting %@",
+         NSStringFromRect(frame), NSStringFromSize(minSize), NSStringFromRect(clamped));
+    [[self window] setFrame:clamped display:YES];
 }
 
 - (void)windowPerformMiniaturize:(id)sender {

@@ -4516,13 +4516,11 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
             [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"SetWindowFrame"]) {
-        NSArray<NSString *> *parts = [value componentsSeparatedByString:@";"];
-        if (parts.count == 4) {
-            const NSRect frame = NSMakeRect([parts[0] doubleValue],
-                                            [parts[1] doubleValue],
-                                            [parts[2] doubleValue],
-                                            [parts[3] doubleValue]);
-            [_delegate terminalSetWindowFrame:frame];
+        // Malformed or non-finite payloads are ignored rather than collapsing
+        // the window to a garbage frame.
+        NSValue *frame = [iTermSetWindowFrameRequest parse:value];
+        if (frame) {
+            [_delegate terminalSetWindowFrame:frame.rectValue];
         }
     } else if ([key isEqualToString:@"ReportWindowFrame"]) {
         if ([_delegate terminalShouldSendReport:YES]) {
