@@ -1622,6 +1622,11 @@ Bug Fixes:
   had a status (for example, one set with OSC
   21337) shows it again in the tab bar, not
   only in the Session Status tool.
+- A trigger written by hand in a Dynamic Profile
+  no longer forgets its state when the profile
+  reloads, so an Instant trigger no longer fires
+  a second time on the same line.
+
 
 
 

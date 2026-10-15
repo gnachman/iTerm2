@@ -270,12 +270,18 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     }] mutableCopy];
     _triggers = [[array mapWithBlock:^Trigger *(NSDictionary *profileDict) {
         DLog(@"loadFromProfileArray: profileDict=%@, job key=%@", profileDict, profileDict[kTriggerJobKey]);
-        NSDictionary *dict = [Trigger triggerNormalizedDictionary:profileDict];
-        NSArray<Trigger *> *triggers = table[dict];
+        // Match on the dictionary the trigger itself would produce, as the
+        // cached ones are keyed. A hand-written trigger (in a Dynamic
+        // Profile, say) can omit keys dictionaryValue always writes, and
+        // its raw dictionary would never match, rebuilding it and losing
+        // its state on every profile reload.
+        NSDictionary *clean = [profileDict dictionaryByRemovingObjectForKey:kTriggerPerformanceKey];
+        Trigger *candidate = [Trigger triggerFromUntrustedDict:clean];
+        NSDictionary *dict = [candidate dictionaryValue];
+        NSArray<Trigger *> *triggers = dict ? table[dict] : nil;
         if (!triggers.count) {
             DLog(@"This is a new trigger");
-            NSDictionary *clean = [profileDict dictionaryByRemovingObjectForKey:kTriggerPerformanceKey];
-            return [Trigger triggerFromUntrustedDict:clean];
+            return candidate;
         }
         DLog(@"Use second trigger from %@", triggers);
         table[dict] = [triggers arrayByRemovingFirstObject];
