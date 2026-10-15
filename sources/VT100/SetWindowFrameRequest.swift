@@ -40,6 +40,23 @@ class SetWindowFrameRequest: NSObject {
                                     height: numbers[3]))
     }
 
+    /// The smallest frame size a user could drag the window to. `contentMinimum`
+    /// is the largest tab minimum plus window decorations. A titled window
+    /// also can't be dragged narrower than AppKit's minimum width for its
+    /// title bar buttons, so a programmatic frame shouldn't be either.
+    @objc(minimumFrameSizeForContentMinimum:windowMinSize:styleMask:)
+    static func minimumFrameSize(contentMinimum: NSSize,
+                                 windowMinSize: NSSize,
+                                 styleMask: NSWindow.StyleMask) -> NSSize {
+        var result = NSSize(width: max(contentMinimum.width, windowMinSize.width),
+                            height: max(contentMinimum.height, windowMinSize.height))
+        if styleMask.contains(.titled) {
+            result.width = max(result.width,
+                               NSWindow.minFrameWidth(withTitle: "", styleMask: styleMask))
+        }
+        return result
+    }
+
     /// Clamps a requested frame (global AppKit coordinates) so its size is
     /// between `minSize` and the union of `screenFrames`, and its top edge plus
     /// at least `minimumVisibleExtent` points of it lie on one of the screens.
