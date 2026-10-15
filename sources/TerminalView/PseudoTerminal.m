@@ -15082,8 +15082,17 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)reallyDuplicateWindow {
-    NSDictionary *arrangement = [self arrangementExcludingTmuxTabs:NO includingContents:NO];
-    [[iTermController sharedInstance] tryOpenArrangement:arrangement named:nil asTabsInWindow:nil];
+    [[iTermController sharedInstance] tryOpenArrangement:[self arrangementForDuplicateWindow]
+                                                   named:nil
+                                          asTabsInWindow:nil];
+}
+
+- (NSDictionary *)arrangementForDuplicateWindow {
+    // The copy is a different window, so it must not take this one's Lock Location. Locked to
+    // this window's frame, it would open on top of it and snap back there when moved.
+    return [self arrangementWithTabs:[self tabsToEncodeExcludingTmux:NO]
+                   includingContents:NO
+                representsThisWindow:NO];
 }
 
 - (void)createDuplicateOfTab:(PTYTab *)theTab {
