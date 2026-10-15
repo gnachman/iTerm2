@@ -31,6 +31,12 @@ typedef NS_ENUM(NSUInteger, iTermDynamicProfileFileType) {
                           intoArray:(NSMutableArray *)profiles
                               guids:(NSMutableSet *)guids;
 
+// Like -loadDynamicProfilesFromFile:intoArray:guids:, but if the file's profiles can't be used,
+// notes in the log that they are being ignored.
+- (void)loadDynamicProfilesFromFileLoggingFailure:(NSString *)filename
+                                        intoArray:(NSMutableArray *)profiles
+                                            guids:(NSMutableSet *)guids;
+
 // Immediately examine the dynamic profiles files to see if they've changed and update the model
 // if needed.
 - (void)reloadDynamicProfiles;

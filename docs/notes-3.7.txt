@@ -1525,3 +1525,7 @@ Bug Fixes:
 - Cmd-H, Cmd-Q, Cmd-W, and Cmd-M no longer press
   a button in an alert whose button happens to
   start with that letter, such as Help.
+- When several Dynamic Profiles files have
+  errors, the alert now gives the right number
+  of additional errors in the log. It counted
+  each bad file twice.

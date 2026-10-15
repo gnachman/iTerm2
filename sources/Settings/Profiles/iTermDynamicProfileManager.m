@@ -163,10 +163,15 @@
     return [[iTermFilesAndFolders alloc] initWithFiles:files folders:folders];
 }
 
-- (void)reportError:(NSString *)error file:(NSString *)file {
+// Adds a line to the Dynamic Profiles log in the Script Console.
+- (void)log:(NSString *)line {
     [[iTermScriptHistory sharedInstance] addDynamicProfilesLoggingEntryIfNeeded];
-    [[iTermScriptHistoryEntry dynamicProfilesEntry] addOutput:[error stringByAppendingString:@"\n"]
+    [[iTermScriptHistoryEntry dynamicProfilesEntry] addOutput:[line stringByAppendingString:@"\n"]
                                                    completion:^{}];
+}
+
+- (void)reportError:(NSString *)error file:(NSString *)file {
+    [self log:error];
 
     _pendingErrors += 1;
     if (_pendingErrors > 1) {
@@ -308,10 +313,7 @@
             continue;
         }
         NSString *fullName = [path stringByAppendingPathComponent:file];
-        if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
-            [self reportError:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DynamicProfiles.IgnoringProfiles", nil, [NSBundle mainBundle], @"Ignoring dynamic profiles in “%@” because of an error.", @"Error shown when dynamic profiles in a file are ignored due to an error"), fullName]
-                         file:fullName];
-        }
+        [self loadDynamicProfilesFromFileLoggingFailure:fullName intoArray:newProfiles guids:guids];
     }
 
     DLog(@"Begin add/update phase");
@@ -507,6 +509,16 @@ static id iTermDynamicProfileByRemovingNulls(id object) {
 
 - (NSDictionary *)dictionaryForProfiles:(NSArray<Profile *> *)profiles {
     return @{ @"Profiles": profiles };
+}
+
+- (void)loadDynamicProfilesFromFileLoggingFailure:(NSString *)filename
+                                        intoArray:(NSMutableArray *)profiles
+                                            guids:(NSMutableSet *)guids {
+    if (![self loadDynamicProfilesFromFile:filename intoArray:profiles guids:guids]) {
+        // The error that caused this was already reported, so this follow-up is only logged. It
+        // must not count toward the alert's number of additional errors.
+        [self log:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DynamicProfiles.IgnoringProfiles", nil, [NSBundle mainBundle], @"Ignoring dynamic profiles in “%@” because of an error.", @"Error shown when dynamic profiles in a file are ignored due to an error"), filename]];
+    }
 }
 
 - (BOOL)loadDynamicProfilesFromFile:(NSString *)filename
