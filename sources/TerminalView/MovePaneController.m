@@ -406,6 +406,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
     if (!_isDragInProgress || !session_) {
         return NO;
     }
+    if (session_.workgroupInstance) {
+        // A workgroup member must not become a float.
+        return NO;
+    }
     return overFloat || (_draggingFloatingPane && ![self controlIsHeld]);
 }
 
@@ -454,6 +458,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
     }
     if (destinationTab.realParentWindow.layoutLocked || movingSession.liveSession) {
         DLog(@"Layout locked or showing a synthetic session");
+        return NO;
+    }
+    if (movingSession.workgroupInstance) {
+        DLog(@"A workgroup member must not become a float");
         return NO;
     }
     const BOOL wasFloating = [sourceTab sessionIsFloating:movingSession];

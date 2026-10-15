@@ -1707,3 +1707,6 @@ Bug Fixes:
 - In tmux integration, a floating pane over pane
   %0 is no longer drawn over a different pane
   while Find > Filter is open.
+- A pane in a Workgroup can no longer be turned
+  into a floating pane by dragging it onto a
+  floating pane in another tab.
