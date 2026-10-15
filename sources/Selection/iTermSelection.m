@@ -104,6 +104,7 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
     theCopy.absRange = self.absRange;
     theCopy.selectionMode = self.selectionMode;
     theCopy.connected = self.connected;
+    theCopy.precedesSameLineBidiPiece = self.precedesSameLineBidiPiece;
     theCopy.originatedFromBoxSelection = self.originatedFromBoxSelection;
     theCopy.boxColumnBounds = self.boxColumnBounds;
 
@@ -155,6 +156,7 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
     return (VT100GridAbsWindowsRangeEqualsAbsWindowedRange(self.absRange, other.absRange) &&
             self.selectionMode == other.selectionMode &&
             self.connected == other.connected &&
+            self.precedesSameLineBidiPiece == other.precedesSameLineBidiPiece &&
             self.originatedFromBoxSelection == other.originatedFromBoxSelection &&
             VT100GridRangeEqualsRange(self.boxColumnBounds, other.boxColumnBounds));
 }
@@ -820,13 +822,12 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
     return range;
 }
 
-// Converts the visual live range into logical character-mode subselections,
-// one per contiguous logical run per line, merging runs that meet at a line
-// boundary. Returns YES if anything was added.
 // Converts the visual live range into logical character-mode subselections, one
 // per contiguous logical run per line, merging runs that meet at a line boundary
 // and marking same-line splits connected (so copy concatenates them without a
-// newline). Returns the subselections in order.
+// newline) and precedesSameLineBidiPiece (so copy keeps the trailing
+// whitespace of every run but the last on its line). Returns the
+// subselections in order.
 - (NSArray<iTermSubSelection *> *)decomposedLogicalSubSelectionsForVisualLiveRange {
     const VT100GridAbsWindowedRange live = [self unflippedLiveAbsRange];
     const int width = [self width];
@@ -859,8 +860,11 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
                     // (part of an embedded LTR run was not swept). Copy must
                     // concatenate the pieces in reading order, not stack them
                     // on separate lines, so mark the boundary as connected
-                    // (no newline after it).
+                    // (no newline after it). Its trailing whitespace (e.g.
+                    // the space between an LTR word and an RTL run) is
+                    // interior to the selection, so copy must keep it.
                     previousSub.connected = YES;
+                    previousSub.precedesSameLineBidiPiece = YES;
                 }
                 iTermSubSelection *sub = [[[iTermSubSelection alloc] init] autorelease];
                 sub.absRange = VT100GridAbsWindowedRangeMake(

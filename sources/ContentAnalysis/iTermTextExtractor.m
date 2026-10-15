@@ -1542,7 +1542,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         [locatedString dropFirst:locatedString.length - maxBytes];
     }
 
-    if (trimSelectionTrailingSpaces) {
+    if (trimSelectionTrailingSpaces && !self.keepsFinalTrailingWhitespace) {
         [locatedString trimTrailingWhitespace];
     }
     return locatedString;

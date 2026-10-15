@@ -84,6 +84,10 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 @property(nonatomic, assign) VT100GridAbsWindowedRange absRange;
 @property(nonatomic, assign) iTermSelectionMode selectionMode;
 @property(nonatomic, assign) BOOL connected;  // If connected, no newline occurs before the next sub
+// One logical piece of a single visual sweep across a bidi line, followed by
+// another piece of the same sweep on the same line. Its trailing whitespace is
+// inside the selection, not at its end, so copying must not trim it.
+@property(nonatomic, assign) BOOL precedesSameLineBidiPiece;
 @property(nonatomic, assign) BOOL originatedFromBoxSelection;  // Decomposed from a box selection
 @property(nonatomic, assign) VT100GridRange boxColumnBounds;  // Original column bounds when originatedFromBoxSelection
 

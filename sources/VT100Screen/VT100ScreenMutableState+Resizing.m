@@ -686,6 +686,7 @@ static void SwapInt(int *a, int *b) {
                                                        mode:sub.selectionMode
                                                       width:newWidth];
                 theSub.connected = sub.connected;
+                theSub.precedesSameLineBidiPiece = sub.precedesSameLineBidiPiece;
                 [newSubSelections addObject:theSub];
             }
         });
@@ -1094,6 +1095,7 @@ static void SwapInt(int *a, int *b) {
                                                                                mode:originalSub.selectionMode
                                                                               width:self.width];
             theSub.connected = originalSub.connected;
+            theSub.precedesSameLineBidiPiece = originalSub.precedesSameLineBidiPiece;
             [newSubSelections addObject:theSub];
         }
     }

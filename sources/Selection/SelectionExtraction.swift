@@ -96,6 +96,7 @@ class SelectionExtractorDelegate: NSObject, iTermSelectionDelegate {
         return realDelegate!.selectionParagraphIsRTL(onAbsoluteLine: line)
     }
 }
+
 @objc(iTermSelectionExtractor)
 class SelectionExtractor: NSObject {
     fileprivate let selection: iTermSelection
@@ -171,6 +172,19 @@ class SelectionExtractor: NSObject {
         // when it duplicates the top half. This handles box selections
         // where each line is a separate sub-selection.
         var prevSCA: ScreenCharArray?
+        // Ends of ranges whose trailing whitespace lies inside the selection: a
+        // visual sweep across a bidi line is copied as several logical pieces,
+        // and the space between an LTR word and an RTL run can end a piece
+        // that is not the last one on its line. Trimming it would fuse the
+        // words. Keyed by linear index, the way enumerateSelectedAbsoluteRanges
+        // identifies range ends.
+        let selectionWidth = Int64(selectionDelegate.selectionViewportWidth())
+        func linearIndex(_ coord: VT100GridAbsCoord) -> Int64 {
+            return Int64(coord.x) + coord.y * selectionWidth
+        }
+        let interiorEnds = Set(selection.allSubSelections
+            .filter { $0.precedesSameLineBidiPiece }
+            .map { linearIndex($0.absRange.coordRange.end) })
         selection.enumerateSelectedAbsoluteRanges { [unowned self] absRange, stopPtr, eol in
             let subselectionWeight = weight(absRange) / totalWeight
             if _canceled.value {
@@ -220,6 +234,10 @@ class SelectionExtractor: NSObject {
                     }
                 }
 
+                // Still trim before each hard newline inside the range; only
+                // the whitespace at its very end is kept.
+                extractor.keepsFinalTrailingWhitespace =
+                    interiorEnds.contains(linearIndex(absRange.coordRange.end))
                 let content = content(in: range,
                                       attributeProvider: attributeProvider,
                                       options: options,

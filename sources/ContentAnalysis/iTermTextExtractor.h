@@ -45,6 +45,11 @@ extern const NSInteger kLongMaximumWordLength;
 @property(nonatomic, strong) iTermProgress *progress;
 @property(nonatomic) BOOL addTimestamps;
 @property(nonatomic) BOOL supportBidi;
+// When trimming trailing whitespace, still trim it before each hard newline
+// but keep it at the very end of the extracted range. Used when the range is
+// followed by more selected text on the same line, so its trailing whitespace
+// is inside the selection.
+@property(nonatomic) BOOL keepsFinalTrailingWhitespace;
 
 // Characters that divide words.
 + (NSCharacterSet *)wordSeparatorCharacterSet;

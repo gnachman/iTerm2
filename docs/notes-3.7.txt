@@ -1417,3 +1417,8 @@ Bug Fixes:
   error asking you to start Ollama. Naming the
   chat and drawing its icon now also use the
   chat’s own model instead of the default one.
+- Copying part of a line that mixes
+  left-to-right and right-to-left text no
+  longer drops the space between a
+  left-to-right word and the right-to-left
+  text after it, which fused the two words.

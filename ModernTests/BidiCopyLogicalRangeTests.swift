@@ -34,9 +34,19 @@ private final class BidiLinesDataSource: NSObject, iTermTextDataSource {
 
 class BidiCopyLogicalRangeTests: XCTestCase {
     private var savedDetect: Any?
+    // bidiEnabled is a cache updated by KVO dispatched to the main queue;
+    // visual character selection keys off it, so wait for it to land.
+    private func setBidiPreference(_ enabled: Bool) {
+        iTermPreferences.setBool(enabled, forKey: kPreferenceKeyBidi)
+        let deadline = Date().addingTimeInterval(5)
+        while iTermPreferences.bidiEnabled() != enabled && Date() < deadline {
+            RunLoop.main.run(mode: .default, before: Date(timeIntervalSinceNow: 0.005))
+        }
+    }
     override func setUp() {
         super.setUp()
-        iTermPreferences.setBool(true, forKey: kPreferenceKeyBidi)
+        setBidiPreference(true)
+        XCTAssertTrue(iTermPreferences.bidiEnabled(), "bidi preference cache did not update")
         savedDetect = iTermUserDefaults.userDefaults().object(forKey: "DetectParagraphDirection")
         iTermUserDefaults.userDefaults().set(true, forKey: "DetectParagraphDirection")
         iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
@@ -45,7 +55,7 @@ class BidiCopyLogicalRangeTests: XCTestCase {
         if let v = savedDetect { iTermUserDefaults.userDefaults().set(v, forKey: "DetectParagraphDirection") }
         else { iTermUserDefaults.userDefaults().removeObject(forKey: "DetectParagraphDirection") }
         iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
-        iTermPreferences.setBool(false, forKey: kPreferenceKeyBidi)
+        setBidiPreference(false)
         super.tearDown()
     }
 
@@ -243,5 +253,181 @@ extension BidiCopyLogicalRangeTests {
                        "a full-line visual sweep of a pure-RTL line is one logical run")
         XCTAssertEqual(joined, content,
                        "copied text must be the logical sentence with the period attached")
+    }
+}
+
+// Maps visual columns to logical cells per screen row, the way PTYTextView
+// does: through the row's reorder map, or identity for a row without one.
+private final class ScreenRowsVisualDelegate: NSObject, iTermSelectionDelegate {
+    let width: Int32
+    let infos: [BidiDisplayInfoObjc?]
+    init(width: Int32, infos: [BidiDisplayInfoObjc?]) { self.width = width; self.infos = infos }
+    private func info(_ line: Int64) -> BidiDisplayInfoObjc? {
+        (line >= 0 && line < Int64(infos.count)) ? infos[Int(line)] : nil
+    }
+    func selectionDidChange(_ selection: iTermSelection) {}
+    func liveSelectionDidEnd() {}
+    func selectionAbsRangeForParenthetical(at coord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0) }
+    func selectionAbsRangeForWord(at coord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0) }
+    func selectionAbsRangeForSmartSelection(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0) }
+    func selectionAbsRangeForWrappedLine(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, absCoord.y, width, absCoord.y), 0, 0) }
+    func selectionAbsRangeForLine(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, absCoord.y, width, absCoord.y), 0, 0) }
+    // PTYTextView reports (width, 0) for a line that has bidi info.
+    func selectionRangeOfTerminalNulls(onAbsoluteLine absLineNumber: Int64) -> VT100GridRange { VT100GridRangeMake(width, 0) }
+    func selectionPredecessor(of absCoord: VT100GridAbsCoord) -> VT100GridAbsCoord { VT100GridAbsCoordMake(0, 0) }
+    func selectionViewportWidth() -> Int32 { width }
+    func selectionTotalScrollbackOverflow() -> Int64 { 0 }
+    func selectionIndexes(onAbsoluteLine line: Int64, containingCharacter c: unichar, in range: NSRange) -> IndexSet? { IndexSet() }
+    func selectionParagraphIsRTL(onAbsoluteLine line: Int64) -> Bool { info(line)?.paragraphIsRTL ?? false }
+    func selectionLogicalIndexes(forVisualRange visualRange: NSRange, onAbsoluteLine line: Int64) -> IndexSet {
+        guard let range = Range(visualRange) else { return IndexSet() }
+        guard let bidi = info(line) else { return IndexSet(integersIn: range) }
+        var result = IndexSet()
+        for v in range {
+            if v < Int(bidi.numberOfCells) { result.insert(Int(bidi.logicalForVisual(Int32(v)))) }
+            else { result.insert(v) }
+        }
+        return result
+    }
+}
+
+extension BidiCopyLogicalRangeTests {
+    // Writes `lines` to a real screen (hard newline between them; a line wider
+    // than the screen soft-wraps), drags from visual column v1 on row r1 to
+    // visual column v2 on row r2, and copies the result through the real
+    // SelectionExtractor with the default “trim whitespace on copy” option.
+    // The column closures receive the row's reorder map (nil for a row that
+    // has none).
+    private func copyVisualDragOnScreen(lines: [String],
+                                        width: Int32,
+                                        options: iTermSelectionExtractorOptions = [.trimWhitespace],
+                                        from r1: Int64, _ v1: (BidiDisplayInfoObjc?) -> Int32,
+                                        to r2: Int64, _ v2: (BidiDisplayInfoObjc?) -> Int32,
+                                        file: StaticString = #filePath,
+                                        line: UInt = #line) -> String? {
+        let session = FakeSession()
+        let screen = VT100Screen()
+        session.screen = screen
+        screen.delegate = session
+        var copied: String?
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalEnabled = true
+            mutableState.terminal!.termType = "xterm"
+            screen.destructivelySetScreenWidth(width, height: 6, mutableState: mutableState)
+            for (i, text) in lines.enumerated() {
+                if i > 0 {
+                    mutableState.appendCarriageReturnLineFeed()
+                }
+                mutableState.appendString(atCursor: text)
+            }
+            mutableState.populateRTLStateIfNeeded()
+            let snapshot = TerminalContentSnapshot(lineBuffer: mutableState.linebuffer,
+                                                   grid: mutableState.currentGrid,
+                                                   cumulativeOverflow: mutableState.cumulativeScrollbackOverflow)
+            let infos = (0..<6).map { snapshot.screenCharArray(forLine: Int32($0)).bidiInfo }
+            guard infos[Int(r2)] != nil else {
+                XCTFail("row \(r2) has no bidi info", file: file, line: line)
+                return
+            }
+            let delegate = ScreenRowsVisualDelegate(width: width, infos: infos)
+            let selection = iTermSelection()
+            selection.delegate = delegate
+            selection.begin(at: VT100GridAbsCoordMake(v1(infos[Int(r1)]), r1),
+                            mode: .kiTermSelectionModeCharacter,
+                            resume: false, append: false)
+            selection.moveEndpoint(to: VT100GridAbsCoordMake(v2(infos[Int(r2)]), r2))
+            selection.endLive()
+            guard let extractor = StringSelectionExtractor(selection: selection,
+                                                           snapshot: snapshot,
+                                                           options: options,
+                                                           maxBytes: -1,
+                                                           minimumLineNumber: 0) else {
+                XCTFail("no extractor", file: file, line: line)
+                return
+            }
+            copied = extractor.extract() as String
+        })
+        withExtendedLifetime(session) {}
+        return copied
+    }
+
+    // Single-row form: drags [v1, v2) on row 0 holding `content`.
+    private func copyVisualDragOnScreen(_ content: String,
+                                        width: Int32,
+                                        fromVisual v1: @escaping (BidiDisplayInfoObjc) -> Int32,
+                                        toVisual v2: @escaping (BidiDisplayInfoObjc) -> Int32,
+                                        file: StaticString = #filePath,
+                                        line: UInt = #line) -> String? {
+        return copyVisualDragOnScreen(lines: [content], width: width,
+                                      from: 0, { $0.map(v1) ?? 0 },
+                                      to: 0, { $0.map(v2) ?? 0 },
+                                      file: file, line: line)
+    }
+
+
+    // QA finding F-321. In the LTR paragraph «L4 שלום עולם טוב end4» (drawn
+    // «L4 טוב עולם שלום end4») a drag from the left edge to just past ם, the
+    // leftmost glyph of the rightmost Hebrew word, selects «L4 » plus the
+    // logical tail «ם עולם טוב». The sweep is copied as two logical pieces;
+    // the first ends with the space after «L4», which is inside the selection
+    // and must not be trimmed.
+    func testPartialDragAcrossLTRToRTLBoundaryKeepsBoundarySpace() {
+        let content = "L4 שלום עולם טוב end4"
+        // Logical 6 is ם, the last letter of שלום.
+        let copied = copyVisualDragOnScreen(content, width: 40,
+                                            fromVisual: { _ in 0 },
+                                            toVisual: { $0.visualForLogical(6) + 1 })
+        XCTAssertEqual(copied, "L4 ם עולם טוב")
+    }
+
+    // The same sweep dragged right-to-left (anchor past ם, pointer at the left
+    // edge) copies the same text.
+    func testReversePartialDragAcrossLTRToRTLBoundaryKeepsBoundarySpace() {
+        let content = "L4 שלום עולם טוב end4"
+        let copied = copyVisualDragOnScreen(content, width: 40,
+                                            fromVisual: { $0.visualForLogical(6) + 1 },
+                                            toVisual: { _ in 0 })
+        XCTAssertEqual(copied, "L4 ם עולם טוב")
+    }
+
+    // Trailing whitespace at the true end of the selection is still trimmed:
+    // sweeping «L4 » alone (no RTL piece follows) copies «L4».
+    func testTrailingSpaceAtEndOfSelectionIsStillTrimmed() {
+        let content = "L4 שלום עולם טוב end4"
+        let copied = copyVisualDragOnScreen(content, width: 40,
+                                            fromVisual: { _ in 0 },
+                                            toVisual: { _ in 3 })
+        XCTAssertEqual(copied, "L4")
+    }
+
+    // A sweep that ends on the space before «end4» copies the whole Hebrew run;
+    // that space ends the last piece on the line, so it is trimmed.
+    func testSweepEndingOnSpaceAfterRTLRunTrimsIt() {
+        let content = "L4 שלום עולם טוב end4"
+        let copied = copyVisualDragOnScreen(content, width: 40,
+                                            fromVisual: { _ in 0 },
+                                            toVisual: { $0.visualForLogical(16) + 1 })
+        XCTAssertEqual(copied, "L4 שלום עולם טוב")
+    }
+
+    // A multi-line drag that ends on the split row still trims trailing
+    // whitespace before each hard newline; only the whitespace inside the
+    // last row's selection is kept.
+    func testMultilineDragEndingOnSplitRowStillTrimsEarlierLines() {
+        let copied = copyVisualDragOnScreen(lines: ["hello   ", "L4 שלום עולם טוב end4"],
+                                            width: 40,
+                                            from: 0, { _ in 0 },
+                                            to: 1, { $0!.visualForLogical(6) + 1 })
+        XCTAssertEqual(copied, "hello\nL4 ם עולם טוב")
+    }
+
+    // The same with no trimming option keeps everything that was selected.
+    func testMultilineDragWithoutTrimKeepsWhitespace() {
+        let copied = copyVisualDragOnScreen(lines: ["hello   ", "L4 שלום עולם טוב end4"],
+                                            width: 40,
+                                            options: [],
+                                            from: 0, { _ in 0 },
+                                            to: 1, { $0!.visualForLogical(6) + 1 })
+        XCTAssertEqual(copied, "hello   \nL4 ם עולם טוב")
     }
 }
