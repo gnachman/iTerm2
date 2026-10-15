@@ -131,6 +131,14 @@
     if (menuItem.action == @selector(performNaturalLanguageQuery:)) {
         return !_forceHideAIAccessories;
     }
+    // Advanced Paste and command history need a terminal session; a
+    // sessionless composer (the Cockpit) has none, so their menu items and
+    // key equivalents are disabled rather than doing nothing.
+    if (_sessionless &&
+        (menuItem.action == @selector(pasteOptions:) ||
+         menuItem.action == @selector(openCommandHistory:))) {
+        return NO;
+    }
     // This controller didn't implement validation before, which left every action it handles
     // enabled. Keep that for the others.
     return YES;
@@ -384,30 +392,38 @@
     style.defaultTabInterval = tabStop;
     _popoverVC.textView.defaultParagraphStyle = style;
 
+    [_popoverVC appendString:[[self helpLines] componentsJoinedByString:@"\n"]];
+    [_popoverVC.textView.textStorage addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, _popoverVC.textView.textStorage.string.length)];
+    [_popoverVC sizeToFit];
+    [_popoverVC.popover showRelativeToRect:_help.bounds
+                                    ofView:_help
+                             preferredEdge:NSRectEdgeMaxY];
+}
+
+- (NSArray<NSString *> *)helpLines {
     NSArray<NSString*> *lines = @[
         NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAddCursorAbove", nil, [NSBundle mainBundle], @"^⇧↑\tAdd cursor above", @"Help line: keystroke followed by a tab then the description for adding a cursor above"),
         NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAddCursorBelow", nil, [NSBundle mainBundle], @"^⇧↓\tAdd cursor below", @"Help line: keystroke followed by a tab then the description for adding a cursor below"),
         NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAddCursor", nil, [NSBundle mainBundle], @"^⇧-click\tAdd cursor", @"Help line: keystroke followed by a tab then the description for adding a cursor"),
         NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAddCursors", nil, [NSBundle mainBundle], @"⌥-drag\tAdd cursors", @"Help line: keystroke followed by a tab then the description for adding cursors")
     ];
-    if ([iTermAdvancedSettingsModel generativeAIAllowed]) {
+    if ([iTermAdvancedSettingsModel generativeAIAllowed] && !_sessionless) {
         lines = [lines arrayByAddingObject:NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAILookup", nil, [NSBundle mainBundle], @"⌘Y\tNatural language AI lookup", @"Help line: keystroke followed by a tab then the description for natural language AI lookup")];
     }
+    lines = [lines arrayByAddingObject:NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpOpenFindBar", nil, [NSBundle mainBundle], @"⌘F\tOpen Find bar", @"Help line: keystroke followed by a tab then the description for opening the find bar")];
+    if (!_sessionless) {
+        lines = [lines arrayByAddingObject:NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAdvancedPaste", nil, [NSBundle mainBundle], @"⌥⌘V\tOpen in Advanced Paste", @"Help line: keystroke followed by a tab then the description for opening in Advanced Paste")];
+    }
     lines = [lines arrayByAddingObjectsFromArray:@[
-        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpOpenFindBar", nil, [NSBundle mainBundle], @"⌘F\tOpen Find bar", @"Help line: keystroke followed by a tab then the description for opening the find bar"),
-        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpAdvancedPaste", nil, [NSBundle mainBundle], @"⌥⌘V\tOpen in Advanced Paste", @"Help line: keystroke followed by a tab then the description for opening in Advanced Paste"),
         NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpExplainShell", nil, [NSBundle mainBundle], @"⌘-click\tOpen in explainshell.com", @"Help line: keystroke followed by a tab then the description for opening in explainshell.com"),
         NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpSendContents", nil, [NSBundle mainBundle], @"⇧↩\tSend contents or selection", @"Help line: keystroke followed by a tab then the description for sending contents or selection"),
         NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpSendCommandAtCursor", nil, [NSBundle mainBundle], @"⌥⇧↩\tSend command at cursor", @"Help line: keystroke followed by a tab then the description for sending the command at the cursor"),
-        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpEnqueueCommandAtCursor", nil, [NSBundle mainBundle], @"⌥↩\tEnqueue command at cursor", @"Help line: keystroke followed by a tab then the description for enqueuing the command at the cursor"),
-        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpViewCommandHistory", nil, [NSBundle mainBundle], @"⇧⌘;\tView command history", @"Help line: keystroke followed by a tab then the description for viewing command history")
+        NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpEnqueueCommandAtCursor", nil, [NSBundle mainBundle], @"⌥↩\tEnqueue command at cursor", @"Help line: keystroke followed by a tab then the description for enqueuing the command at the cursor")
     ]];
-    [_popoverVC appendString:[lines componentsJoinedByString:@"\n"]];
-    [_popoverVC.textView.textStorage addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, _popoverVC.textView.textStorage.string.length)];
-    [_popoverVC sizeToFit];
-    [_popoverVC.popover showRelativeToRect:_help.bounds
-                                    ofView:_help
-                             preferredEdge:NSRectEdgeMaxY];
+    if (!_sessionless) {
+        lines = [lines arrayByAddingObject:NSLocalizedStringWithDefaultValue(@"LargeComposer.HelpViewCommandHistory", nil, [NSBundle mainBundle], @"⇧⌘;\tView command history", @"Help line: keystroke followed by a tab then the description for viewing command history")];
+    }
+    return lines;
 }
 
 #pragma mark - PopupDelegate

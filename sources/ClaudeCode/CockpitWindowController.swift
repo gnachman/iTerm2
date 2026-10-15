@@ -500,6 +500,8 @@ class CockpitWindowController: NSWindowController {
         _ = composerVC.view  // force the nib to load before configuring
         composerVC.setFont(font)
         composerVC.setDockedChromeHidden(true)
+        // No session behind it: no Advanced Paste or command history.
+        composerVC.setSessionless(true)
         composerVC.setTextColor(.labelColor, cursorColor: .labelColor)
         // Let @-mention chips (NSTextAttachments) survive editing; the
         // composer is plain-text by default and would strip them.

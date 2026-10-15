@@ -1461,3 +1461,7 @@ Bug Fixes:
 - The Cockpit composer’s placeholder text is no
   longer drawn twice when the panel is too
   narrow to fit it on one line.
+- In the Cockpit’s composer, Advanced Paste and
+  Open Command History, which did nothing there,
+  are now disabled, and its help no longer lists
+  them or AI lookup.

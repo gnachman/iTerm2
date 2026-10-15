@@ -105,6 +105,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setComposerPlaceholder:(nullable NSString *)placeholder;
 // Empty the field.
 - (void)clearComposer;
+// No terminal session is behind this composer (the Cockpit): disable the
+// menu items that need one and leave them out of the help popover.
+- (void)setSessionless:(BOOL)sessionless;
 
 - (void)updateFrame;
 - (void)makeFirstResponder;

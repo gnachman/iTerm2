@@ -441,6 +441,11 @@ workingDirectory:(NSString *)pwd
     ((iTermMinimalComposerView *)self.view).draggable = NO;
 }
 
+- (void)setSessionless:(BOOL)sessionless {
+    [self view];
+    _largeComposerViewController.sessionless = sessionless;
+}
+
 - (void)clearComposer {
     [_largeComposerViewController.textView setStringExcludingPrefix:@""];
 }
