@@ -6427,9 +6427,22 @@ lengthExcludingInBandSignaling:data.length
 
 - (BOOL)shouldPopulateRTLState {
     if (self.terminal.softAlternateScreenMode && iTermAdvancedSettingsModel.disableBidiInAlternateScreen) {
-        return NO;
+        // The setting may have been turned on while the alternate grid already
+        // had bidi tables. Run the pass once more so populateRTLState drops them;
+        // otherwise rows keep drawing reordered while selection treats them as
+        // unreordered.
+        return self.currentGrid == self.altGrid && [self gridHasBidiInfo:self.currentGrid];
     }
     return self.linebuffer.lastRawLine.metadata.rtlFound || self.currentGrid.mayContainRTL;
+}
+
+- (BOOL)gridHasBidiInfo:(VT100Grid *)grid {
+    for (int i = 0; i < grid.size.height; i++) {
+        if ([grid bidiInfoForLine:i] != nil) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 // Set the RTL status for all cells in the primary grid. This may require modifying the last line
