@@ -915,6 +915,9 @@ class CockpitWindowController: NSWindowController {
         DLog("Cockpit send: chips=\(chipTokens) command=\(command) selection=\(selectedText != nil)")
 
         let sessions: [PTYSession]
+        // Display names of chips whose targets no longer exist (their
+        // tab or window was closed). They're skipped, not fatal.
+        var skippedNames: [String] = []
         if chipTokens.isEmpty {
             guard !command.isEmpty else { return }
             sessions = selectedRowSessions()
@@ -924,17 +927,22 @@ class CockpitWindowController: NSWindowController {
             }
         } else {
             let (resolved, unknown) = resolveTargets(chipTokens)
-            guard unknown.isEmpty else {
-                setCockpitStatus(String(localized: "Cockpit.UnknownTargetStatus", defaultValue: "Unknown target \(unknown.joined(separator: " "))", comment: "Cockpit status listing unrecognized @mention targets"), isError: true)
-                return
-            }
-            guard !command.isEmpty else {
+            switch Self.chipSendPlan(command: command,
+                                     resolvedCount: resolved.count,
+                                     unknownTokens: unknown,
+                                     chips: composerChipTargets()) {
+            case .needsCommand:
                 setCockpitStatus(String(localized: "Cockpit.AddCommandStatus", defaultValue: "Add a command after the @mention", comment: "Cockpit status prompting the user to type a command after the @mention"), isError: true)
                 return
-            }
-            guard !resolved.isEmpty else {
+            case .noMatches:
                 setCockpitStatus(String(localized: "Cockpit.NoMatchingSessions", defaultValue: "No matching sessions", comment: "Cockpit status shown when the targets resolve to no sessions"), isError: true)
                 return
+            case .allGone(let names):
+                let list = names.joined(separator: ", ")
+                setCockpitStatus(String(localized: "Cockpit.TargetsGoneStatus", defaultValue: "Nothing was sent. These targets no longer exist: \(list)", comment: "Cockpit status shown when every @mention target was closed; the placeholder is a comma-separated list of session, tab, or window names"), isError: true)
+                return
+            case .send(let skipped):
+                skippedNames = skipped
             }
             sessions = resolved
         }
@@ -953,7 +961,45 @@ class CockpitWindowController: NSWindowController {
         if Self.clearsComposerAfterSend(selectedText: selectedText) {
             clearCommandView()
         }
-        setCockpitStatus(String(localized: "Cockpit.SentToSessions", defaultValue: "Sent to \(sent) sessions", comment: "Cockpit status; %lld is the number of sessions a command was sent to"), isError: false)
+        let sentMessage = String(localized: "Cockpit.SentToSessions", defaultValue: "Sent to \(sent) sessions", comment: "Cockpit status; %lld is the number of sessions a command was sent to")
+        guard !skippedNames.isEmpty else {
+            setCockpitStatus(sentMessage, isError: false)
+            return
+        }
+        let list = skippedNames.joined(separator: ", ")
+        let skippedMessage = String(localized: "Cockpit.SkippedGoneTargets", defaultValue: "Skipped targets that no longer exist: \(list)", comment: "Cockpit status appended after the sent count when some @mention targets were closed; the placeholder is a comma-separated list of session, tab, or window names")
+        setCockpitStatus(sentMessage + " " + skippedMessage, isError: true)
+    }
+
+    enum ChipSendPlan: Equatable {
+        case needsCommand
+        case noMatches
+        // Every chip's target is gone; carries their display names.
+        case allGone([String])
+        // Send to the resolved sessions, skipping the named gone targets.
+        case send(skipped: [String])
+    }
+
+    // What a send with chips should do. A chip whose session, tab, or
+    // window was closed doesn't block the targets that are still there;
+    // it's skipped and named by its display name (not its internal id).
+    static func chipSendPlan(command: String,
+                             resolvedCount: Int,
+                             unknownTokens: [String],
+                             chips: [(token: String, name: String)]) -> ChipSendPlan {
+        guard !command.isEmpty else {
+            return .needsCommand
+        }
+        var names: [String] = []
+        var seen = Set<String>()
+        for token in unknownTokens where seen.insert(token).inserted {
+            let bare = token.hasPrefix("@") ? String(token.dropFirst()) : token
+            names.append(chips.first { $0.token == bare }?.name ?? bare)
+        }
+        if resolvedCount == 0 {
+            return names.isEmpty ? .noMatches : .allGone(names)
+        }
+        return .send(skipped: names)
     }
 
     // Split the composer into chip targets (anywhere) and the typed text,

@@ -56592,6 +56592,48 @@
         }
       }
     },
+    "Cockpit.SkippedGoneTargets" : {
+      "comment" : "Cockpit status appended after the sent count when some @mention targets were closed; the placeholder is a comma-separated list of session, tab, or window names",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übersprungene Ziele, die nicht mehr existieren: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Skipped targets that no longer exist: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存在しなくなったターゲットをスキップしました: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Destinos que não existem mais foram ignorados: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пропущены цели, которых больше нет: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已跳过不再存在的目标：%@"
+          }
+        }
+      }
+    },
     "Cockpit.TabTitle" : {
       "comment" : "Default title for a tab row in the cockpit; the number is the tab position in the window",
       "extractionState" : "extracted_with_value",
@@ -56634,9 +56676,51 @@
         }
       }
     },
+    "Cockpit.TargetsGoneStatus" : {
+      "comment" : "Cockpit status shown when every @mention target was closed; the placeholder is a comma-separated list of session, tab, or window names",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts wurde gesendet. Diese Ziele existieren nicht mehr: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nothing was sent. These targets no longer exist: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "何も送信されませんでした。これらのターゲットはもう存在しません: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada foi enviado. Estes destinos não existem mais: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ничего не отправлено. Этих целей больше нет: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未发送任何内容。这些目标已不存在：%@"
+          }
+        }
+      }
+    },
     "Cockpit.UnknownTargetStatus" : {
       "comment" : "Cockpit status listing unrecognized @mention targets",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
