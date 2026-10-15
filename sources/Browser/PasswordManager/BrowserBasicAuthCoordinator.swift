@@ -354,7 +354,7 @@ final class BrowserBasicAuthCoordinator {
                 spaces[space, default: .init()].savedRejectedThisSession = false
                 return []
             }
-            return [.toast("Could not save the password for \(host)")]
+            return [.toast(String(localized: "BrowserBasicAuth.SavePasswordFailed", defaultValue: "Could not save the password for \(host)", comment: "Toast shown when a password entered in a browser HTTP authentication prompt could not be saved to the password manager. The placeholder is the host name."))]
         }
     }
 

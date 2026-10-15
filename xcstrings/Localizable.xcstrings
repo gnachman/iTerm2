@@ -36355,6 +36355,132 @@
         }
       }
     },
+    "BrowserBasicAuth.Prompt" : {
+      "comment" : "Heading of the browser HTTP authentication prompt. The placeholder is the host name.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Website „%@“ erfordert einen Benutzernamen und ein Passwort."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The website “%@” requires a user name and password."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webサイト「%@」でユーザー名とパスワードが必要です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O site “%@” requer um nome de usuário e uma senha."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Веб-сайт «%@» запрашивает имя пользователя и пароль."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网站“%@”要求提供用户名和密码。"
+          }
+        }
+      }
+    },
+    "BrowserBasicAuth.PromptWithRealm" : {
+      "comment" : "Heading of the browser HTTP authentication prompt. The first placeholder is the host name; the second is the realm, a label the website gives the protected area.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Website „%1$@“ erfordert einen Benutzernamen und ein Passwort für „%2$@“."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The website “%1$@” requires a user name and password for “%2$@”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webサイト「%1$@」で「%2$@」のユーザー名とパスワードが必要です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O site “%1$@” requer um nome de usuário e uma senha para “%2$@”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Веб-сайт «%1$@» запрашивает имя пользователя и пароль для «%2$@»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网站“%1$@”要求提供“%2$@”的用户名和密码。"
+          }
+        }
+      }
+    },
+    "BrowserBasicAuth.SavePasswordFailed" : {
+      "comment" : "Toast shown when a password entered in a browser HTTP authentication prompt could not be saved to the password manager. The placeholder is the host name.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Passwort für %@ konnte nicht gespeichert werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not save the password for %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ のパスワードを保存できませんでした"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível salvar a senha de %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить пароль для %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法存储 %@ 的密码"
+          }
+        }
+      }
+    },
     "BrowserContextMenu.AddNamedMark" : {
       "comment" : "Context menu item to add a named mark at the clicked location",
       "extractionState" : "extracted_with_value",
