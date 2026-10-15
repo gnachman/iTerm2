@@ -3205,6 +3205,8 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (void)hideSessionNoteIfEmpty {
     if (_sessionNoteView && !_sessionNoteView.hasContent) {
+        // This runs when the emptied note loses focus, which is already on its way to wherever
+        // the user put it, so unlike -hideSessionNote it must not move focus.
         _sessionNoteView.model.isVisible = NO;
         [_sessionNoteView removeFromSuperview];
         _sessionNoteView = nil;
@@ -3212,11 +3214,26 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 }
 
 - (void)hideSessionNote {
-    if (_sessionNoteView) {
-        _sessionNoteView.model.isVisible = NO;
-        [_sessionNoteView syncModelFrame];
-        [_sessionNoteView removeFromSuperview];
-        _sessionNoteView = nil;
+    if (!_sessionNoteView) {
+        return;
+    }
+    _sessionNoteView.model.isVisible = NO;
+    [_sessionNoteView syncModelFrame];
+
+    // Removing the note while it has keyboard focus would leave the window with no first
+    // responder, silently dropping keystrokes until the user clicks somewhere. Give focus back to
+    // the terminal, as collapsing a focused note does.
+    NSResponder *firstResponder = self.window.firstResponder;
+    iTermSessionNoteView *noteView = _sessionNoteView;
+    const BOOL noteHadFocus = ([firstResponder isKindOfClass:[NSView class]] &&
+                               [(NSView *)firstResponder isDescendantOf:noteView]);
+    // Clear the ivar first: removing a focused text view ends editing, which can call back into
+    // -hideSessionNoteIfEmpty.
+    _sessionNoteView = nil;
+    [noteView removeFromSuperview];
+    if (noteHadFocus) {
+        DLog(@"Session note had keyboard focus when hidden; returning it to the session");
+        [self.delegate sessionViewBecomeFirstResponder];
     }
 }
 
