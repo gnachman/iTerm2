@@ -326,7 +326,7 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
         const CGFloat alpha = self.effectiveAppearance.it_isDark ? 0.30 : 0.25;
         attributes[NSForegroundColorAttributeName] = [attributes[NSForegroundColorAttributeName] colorWithAlphaComponent:alpha];
     }
-    NSString *labelTitle = @"Tab Color:";
+    NSString *labelTitle = NSLocalizedStringWithDefaultValue(@"ColorsMenuItemView.TabColorLabel", nil, [NSBundle mainBundle], @"Tab Color:", @"Label drawn above the row of color swatches in the tab color menu item");
     const CGFloat x = [self colorXOffset];
     [labelTitle drawAtPoint:NSMakePoint(x, [ColorsMenuItemView preferredSize].height - kMenuLabelOffsetY) withAttributes:attributes];
     [NSBezierPath setDefaultLineWidth:savedWidth];

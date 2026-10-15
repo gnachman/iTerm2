@@ -1605,3 +1605,8 @@ Bug Fixes:
   in the linked session, the chat now reports
   the error and continues instead of waiting
   forever.
+- Window > Lock Location and the tab menu’s
+  Rename Tab… item and “Tab Color:” label are
+  now translated instead of always appearing in
+  English.
+
