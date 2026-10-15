@@ -1591,3 +1591,8 @@ Bug Fixes:
 - In Low Power Mode, status bar graphs such as
   CPU Utilization move once a second instead of
   animating continuously.
+- After a screen lock ends password manager
+  authentication, the trigger editor’s “Open
+  Password Manager…” action no longer lists
+  saved account names until you authenticate
+  again.
