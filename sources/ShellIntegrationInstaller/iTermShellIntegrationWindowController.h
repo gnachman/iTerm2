@@ -25,6 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, readonly, copy) NSString *dotdir;
 @property (nonatomic, readonly) int sendShellCommandsStage;
 @property (nonatomic, readonly) BOOL sendShellCommandsWriteFailed;
+@property (nonatomic, readonly) BOOL showingDownloadAndRunPage;
+@property (nonatomic, readonly) BOOL showingSendShellCommandsPage;
 @end
 
 NS_ASSUME_NONNULL_END

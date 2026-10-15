@@ -7,6 +7,7 @@
 
 #import "iTermShellIntegrationWindowController.h"
 
+#import "DebugLogging.h"
 #import "iTermClickableTextField.h"
 #import "iTermExpect.h"
 #import "NSArray+iTerm.h"
@@ -195,6 +196,14 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (BOOL)sendShellCommandsWriteFailed {
     return self.sendShellCommandsViewController.writeFailed;
+}
+
+- (BOOL)showingDownloadAndRunPage {
+    return self.state == iTermShellIntegrationInstallationStateDownloadAndRunConfirm;
+}
+
+- (BOOL)showingSendShellCommandsPage {
+    return self.state == iTermShellIntegrationInstallationStateSendShellCommandsConfirm;
 }
 
 - (void)setShell:(iTermShellIntegrationShell)shell {
@@ -830,16 +839,31 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [self setState:iTermShellIntegrationInstallationStateDownloadAndRunConfirm];
 }
 
+// The install script served by iterm2.com is deployed separately from the app and may not yet
+// support every shell the app's bundled scripts do. nushell support was added to the app before
+// the website's installer, so when the website rejects nu, use the Internet-free installer.
++ (BOOL)internetFreeInstallerSupportsShellRejectedByWebsite:(NSString *)shell {
+    return [shell isEqualToString:iTermShellIntegrationShellString(iTermShellIntegrationShellNu)];
+}
+
 - (void)shellIntegrationInstallerReallyDownloadAndRun {
     [self.delegate shellIntegrationWindowControllerSendText:[self curlPipeBashCommand]];
     __weak __typeof(self) weakSelf = self;
 
-    [self expectRegularExpression:@"(^Done.$)|(^Your shell, .*, is not supported yet)"
+    [self expectRegularExpression:@"(^Done.$)|(^Your shell, (.*), is not supported yet)"
                             after:nil
                        willExpect:nil
                        completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
         if ([captureGroups[0] hasPrefix:@"Your shell"]) {
-            [self.downloadAndRunViewController showShellUnsupportedError];
+            NSString *unsupportedShell = captureGroups.count > 3 ? captureGroups[3] : @"";
+            DLog(@"Online installer says %@ is unsupported", unsupportedShell);
+            if ([iTermShellIntegrationWindowController internetFreeInstallerSupportsShellRejectedByWebsite:unsupportedShell]) {
+                // The Internet-free installer bundles the script, so it works regardless of
+                // what the website's installer supports.
+                [weakSelf shellIntegrationInstallerSendShellCommands:-1];
+                return;
+            }
+            [weakSelf.downloadAndRunViewController showShellUnsupportedError];
         } else {
             [weakSelf next:nil];
         }
