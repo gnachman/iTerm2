@@ -1410,3 +1410,10 @@ Bug Fixes:
   browser session gave up waiting while you
   read the permission prompt, approving it
   afterward no longer loads the URL.
+- An AI chat set to Llama (Local) no longer
+  sends its messages to your cloud AI provider
+  when no Ollama model is available, for example
+  because Ollama isn’t running. It now shows an
+  error asking you to start Ollama. Naming the
+  chat and drawing its icon now also use the
+  chat’s own model instead of the default one.

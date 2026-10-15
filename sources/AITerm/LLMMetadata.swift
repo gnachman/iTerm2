@@ -236,9 +236,48 @@ class LLMMetadata: NSObject {
         guard let name, !name.isEmpty else {
             return nil
         }
+        if name == pendingOllamaModelName {
+            // A chat that picked the built-in Ollama vendor before discovery landed
+            // is pinned to the placeholder. Once a local model is available, the
+            // placeholder means "the Ollama vendor's recommended model". Until then
+            // it resolves to nothing (see unavailableLocalModelError), never to a
+            // model the request path could send anywhere.
+            return realOllamaModel(recommendedModel(for: .llama))
+        }
         return manualModels().first { $0.name == name }
             ?? AIMetadata.instance.models.first { $0.name == name }
             ?? discoveredOllamaModels().first { $0.name == name }
+    }
+
+    private static func realOllamaModel(_ model: AIMetadata.Model?) -> AIMetadata.Model? {
+        guard let model, model.name != pendingOllamaModelName else {
+            return nil
+        }
+        return model
+    }
+
+    // A pinned model name that belongs to Ollama but resolves to no model (the
+    // discovery placeholder while no local model is available, or an Ollama tag
+    // that is no longer installed) must not fall through to the global default,
+    // which may be a cloud vendor: a user who picked a local model for privacy
+    // would otherwise have their messages sent to that vendor. Returns the error
+    // to show instead of sending, or nil when the name resolves or is not an
+    // Ollama model.
+    static func unavailableLocalModelError(forPinnedModelNamed name: String?) -> AIError? {
+        guard let name, !name.isEmpty, model(named: name) == nil else {
+            return nil
+        }
+        if name == pendingOllamaModelName {
+            return AIError(String(localized: "LLMMetadata.NoOllamaModel",
+                                  defaultValue: "No Ollama model was found. Start Ollama, or start a new chat with a different AI provider.",
+                                  comment: "Error shown in an AI chat set to a local Ollama model when no Ollama model is available, instead of sending the message to a different AI provider"))
+        }
+        guard vendor(forModelName: name) == .llama else {
+            return nil
+        }
+        return AIError(String(localized: "LLMMetadata.ModelUnavailable",
+                              defaultValue: "The model “\(name)” is not available. If it is an Ollama model, start Ollama. Otherwise, start a new chat with a different model.",
+                              comment: "Error shown in an AI chat whose Llama-family model is no longer available, instead of sending the message to a different AI provider. The placeholder is the model's name."))
     }
 
     static func model() -> AIMetadata.Model? {
@@ -435,9 +474,10 @@ class LLMMetadata: NSObject {
     // so the built-in Ollama vendor keeps its OWN vendor instead of the resolution
     // falling through to a cloud vendor (which would silently route a message meant
     // for local Ollama to, say, OpenAI). Replaced by a real model once /api/tags
-    // lands (the change notification rebuilds the pickers). Its name is used as the
-    // wire model only if a turn is sent during that window, where the local server
-    // rejects it clearly rather than a cloud vendor accepting it.
+    // lands (the change notification rebuilds the pickers). A chat pinned to it
+    // resolves to the Ollama vendor's recommended model once one is discovered (see
+    // model(named:)); until then a turn fails with unavailableLocalModelError and is
+    // sent nowhere.
     @objc static let pendingOllamaModelName = "Ollama (discovering models…)"
     static func pendingOllamaModel() -> AIMetadata.Model {
         return AIMetadata.Model(name: pendingOllamaModelName,

@@ -303,6 +303,17 @@ struct AIConversation {
         delegate.addFilesToVectorStoreCompletion = nil
     }
 
+    // The provider override for a turn pinned to `modelName`. Success(nil) means
+    // the name did not resolve and the global default applies. A pinned Ollama
+    // model with no local model available is a failure rather than nil, so a
+    // local-model chat never falls through to a (possibly cloud) global default.
+    static func pinnedProviderOverride(modelName: String) -> Result<LLMProvider?, AIError> {
+        if let error = LLMMetadata.unavailableLocalModelError(forPinnedModelNamed: modelName) {
+            return .failure(error)
+        }
+        return .success(LLMMetadata.model(named: modelName).map { LLMProvider(model: $0) })
+    }
+
     func prepare(completion: @escaping (Error?) -> ()) {
         if delegate.busy {
             cancel()
@@ -410,8 +421,22 @@ struct AIConversation {
             // Ollama tags, not just the built-in catalog. Without the discovered set,
             // a chat pinned to a local Ollama tag would fall through to the global
             // (possibly cloud) default and be sent there instead of the local server.
-            let pinnedModel = LLMMetadata.model(named: modelName)
-            controller.providerOverride = pinnedModel.map { LLMProvider(model: $0) }
+            switch Self.pinnedProviderOverride(modelName: modelName) {
+            case .success(let provider):
+                controller.providerOverride = provider
+            case .failure(let error):
+                // Fail the turn before prepare() so no request is made and no
+                // vendor's key sheet is opened.
+                RLog("AIConversation: not sending a turn pinned to unavailable model \(modelName): \(error)")
+                if delegate.busy {
+                    cancel()
+                }
+                controller.providerOverride = nil
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+                return
+            }
         } else {
             controller.providerOverride = nil
         }

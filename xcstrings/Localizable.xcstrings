@@ -98184,6 +98184,90 @@
         }
       }
     },
+    "LLMMetadata.ModelUnavailable" : {
+      "comment" : "Error shown in an AI chat whose Llama-family model is no longer available, instead of sending the message to a different AI provider. The placeholder is the model's name.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Modell „%@“ ist nicht verfügbar. Wenn es ein Ollama-Modell ist, starten Sie Ollama. Beginnen Sie andernfalls einen neuen Chat mit einem anderen Modell."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The model “%@” is not available. If it is an Ollama model, start Ollama. Otherwise, start a new chat with a different model."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデル「%@」は利用できません。Ollamaのモデルの場合は、Ollamaを起動してください。それ以外の場合は、別のモデルで新しいチャットを開始してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O modelo “%@” não está disponível. Se for um modelo do Ollama, inicie o Ollama. Caso contrário, comece um novo chat com outro modelo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Модель «%@» недоступна. Если это модель Ollama, запустите Ollama. В противном случае начните новый чат с другой моделью."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型“%@”不可用。如果它是 Ollama 模型，请启动 Ollama；否则，请使用其他模型开始新的聊天。"
+          }
+        }
+      }
+    },
+    "LLMMetadata.NoOllamaModel" : {
+      "comment" : "Error shown in an AI chat set to a local Ollama model when no Ollama model is available, instead of sending the message to a different AI provider",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es wurde kein Ollama-Modell gefunden. Starten Sie Ollama oder beginnen Sie einen neuen Chat mit einem anderen KI-Anbieter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No Ollama model was found. Start Ollama, or start a new chat with a different AI provider."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollamaのモデルが見つかりませんでした。Ollamaを起動するか、別のAIプロバイダで新しいチャットを開始してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum modelo do Ollama foi encontrado. Inicie o Ollama ou comece um novo chat com outro provedor de IA."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Модель Ollama не найдена. Запустите Ollama или начните новый чат с другим поставщиком ИИ."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到 Ollama 模型。请启动 Ollama，或使用其他 AI 提供商开始新的聊天。"
+          }
+        }
+      }
+    },
     "LLMProvider.UnknownPlatform" : {
       "comment" : "Display name for an unrecognized AI provider",
       "extractionState" : "extracted_with_value",

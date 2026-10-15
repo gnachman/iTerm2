@@ -1741,7 +1741,7 @@ class ChatAgent {
         if let updated = result.successValue {
             self.conversation = updated
             if needsRenaming {
-                self.requestRenaming()
+                self.requestRenaming(modelName: captureModelName)
             }
         }
         switch result {
@@ -1869,10 +1869,15 @@ class ChatAgent {
                                            database: database)
     }
 
-    private func requestRenaming() {
+    // The one-shot conversation that names a chat. It runs on the model the
+    // chat's turn ran on (`modelName`, nil for the global default), because it
+    // sends the chat's content: a chat on a local model must not have its
+    // content sent to a (possibly cloud) global default to be titled.
+    static func renamingConversation(messages: [AITermController.Message],
+                                     modelName: String?) -> AIConversation {
         // Localization unneeded
         let prompt = "Please assign a short, specific name to this chat, less than 30 characters in length, but descriptive. It will be shown in a chat list UI. Respond with only the name of the chat."
-        var history = conversation.messages + [AITermController.Message(role: .user, content: prompt)]
+        var history = messages + [AITermController.Message(role: .user, content: prompt)]
         // Remove response IDs so we don't pollute the conversation's history
         history = history.map { value in
             var temp = value
@@ -1882,7 +1887,14 @@ class ChatAgent {
         var newConversation = AIConversation(
             registrationProvider: nil,
             messages: history)
+        newConversation.model = modelName
         newConversation.shouldThink = false
+        return newConversation
+    }
+
+    private func requestRenaming(modelName: String?) {
+        let newConversation = Self.renamingConversation(messages: conversation.messages,
+                                                        modelName: modelName)
         AIConversation.completeOneShot(newConversation) { [weak self] (result: Result<AIConversation, Error>) in
             // Sanitize the model's reply here, at the single point where
             // titles are minted, so every .renameChat consumer (the chat
@@ -1897,7 +1909,7 @@ class ChatAgent {
                     // rename means the chat keeps its old title, and an
                     // icon for the never-applied title would both bill a
                     // model call and display next to the wrong title.
-                    self?.requestIconGeneration(title: newName)
+                    self?.requestIconGeneration(title: newName, modelName: modelName)
                 } catch {
                     RLog("renameChat failed: \(error)")
                 }
@@ -1918,10 +1930,11 @@ class ChatAgent {
     // retry, and pre-existing chats are deliberately not backfilled,
     // since that would bill one model call per chat without the user
     // asking for anything.
-    private func requestIconGeneration(title: String) {
+    private func requestIconGeneration(title: String, modelName: String?) {
         let chatID = self.chatID
         ChatIconGenerator.instance.requestIcon(forChatID: chatID,
-                                               title: title) { data in
+                                               title: title,
+                                               modelName: modelName) { data in
             do {
                 try ChatListModel.instance?.setIcon(data, forChatID: chatID)
             } catch {

@@ -66,6 +66,9 @@ class OllamaModelCache: NSObject {
     // They still expect to run when that fetch resolves (a caller may re-enable a
     // control in its completion), so they're delivered instead of dropped.
     private var pendingCompletions: [String: [(Int, Bool) -> Void]] = [:]
+    // Buckets whose entry a test replaced (see replaceModelsForTesting). Always
+    // empty outside tests.
+    private var frozenForTesting = Set<String>()
 
     // The key every per-endpoint dictionary above is stored under. Headers are
     // part of the identity because they change what /api/tags returns: an
@@ -313,6 +316,16 @@ class OllamaModelCache: NSObject {
             // fetch's inFlightCount/batchHadSuccess.
             lastOfBatch = (inFlightCount[bucket] ?? 0) == 0
         }
+        if frozenForTesting.contains(bucket) {
+            // A test replaced this entry; a fetch that was already in flight must
+            // not overwrite it.
+            if countsAgainstInFlight && lastOfBatch {
+                batchHadSuccess[bucket] = nil
+            }
+            let count = cache[bucket]?.models.count ?? 0
+            lock.unlock()
+            return BatchOutcome(lastOfBatch: lastOfBatch, succeeded: result != nil, count: count)
+        }
 
         var entry = cache[bucket] ?? Entry()
         entry.endpoint = endpoint
@@ -392,6 +405,30 @@ class OllamaModelCache: NSObject {
     // not participate in the in-flight/batch accounting of a concurrent live fetch.
     func update(endpoint: String, models: [AIMetadata.Model]) {
         update(endpoint: endpoint, result: models, countsAgainstInFlight: false)
+    }
+
+    // Test support: make `endpoint` (header-less) look freshly and successfully
+    // fetched with exactly `models`, without fetching, persisting, applying the
+    // suspicious-empty rule, or posting a change. Fetch results for the endpoint
+    // are ignored until the returned closure runs, which puts back the entry that
+    // was there before. Calls must be nested, not interleaved.
+    func replaceModelsForTesting(_ models: [AIMetadata.Model], endpoint: String) -> () -> Void {
+        lock.lock()
+        let saved = cache[endpoint]
+        let wasFrozen = frozenForTesting.contains(endpoint)
+        frozenForTesting.insert(endpoint)
+        cache[endpoint] = Entry(endpoint: endpoint, models: models, haveSucceeded: true,
+                                lastAttempt: nowProvider())
+        lock.unlock()
+        return { [weak self] in
+            guard let self else { return }
+            lock.lock()
+            cache[endpoint] = saved
+            if !wasFrozen {
+                frozenForTesting.remove(endpoint)
+            }
+            lock.unlock()
+        }
     }
 
     // Posts the CHANGED endpoint as the notification `object` so observers can
