@@ -1455,3 +1455,6 @@ Bug Fixes:
   sessions that remain and names the closed one,
   instead of sending nothing and showing an
   internal identifier.
+- The Cockpit no longer covers alerts attached
+  to a terminal window, such as the Broadcast
+  Input confirmation, hiding their buttons.

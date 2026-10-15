@@ -66,6 +66,7 @@ class CockpitWindowController: NSWindowController {
     // The document range of the @-run the picker is currently editing,
     // so a chosen session replaces exactly that text with a token.
     private var activeMentionRange: NSRange?
+    private var sheetLevelGuard: CockpitSheetLevelGuard?
     // The start of the @-run whose picker the user dismissed with Esc, so
     // typing more of that run doesn't bring the picker straight back.
     private var dismissedMentionLocation: Int?
@@ -188,6 +189,9 @@ class CockpitWindowController: NSWindowController {
         // selected a row without ever making the panel key/active.
         panel.becomesKeyOnlyIfNeeded = false
         panel.hidesOnDeactivate = true
+        // A floating panel would cover a sheet on a terminal window (an
+        // alert's buttons included), so step aside while one is up.
+        sheetLevelGuard = CockpitSheetLevelGuard(panel: panel)
     }
 
     private func configureToolbar() {
@@ -3194,6 +3198,94 @@ extension CockpitWindowController: iTermMinimalComposerViewControllerDelegate {
     func minimalComposer(_ composer: iTermMinimalComposerViewController,
                          fetchSuggestions request: SuggestionRequest,
                          byUserRequest: Bool) {}
+}
+
+// The Cockpit panel floats above iTerm2's windows, so it would cover a
+// sheet on a terminal window (an alert asking to confirm Broadcast Input,
+// say), hiding its buttons. While another window has a sheet up, drop the
+// panel to the normal level just behind that window; put it back when no
+// other window has a sheet. App-modal alerts already sit above floating
+// panels, so only sheets need this.
+final class CockpitSheetLevelGuard {
+    private weak var panel: NSWindow?
+    private let floatingLevel: NSWindow.Level
+    private let notificationCenter: NotificationCenter
+    // Windows other than `excluding` that currently show a sheet.
+    private let windowsWithSheets: (_ excluding: NSWindow) -> [NSWindow]
+    private var observers: [NSObjectProtocol] = []
+
+    init(panel: NSWindow,
+         notificationCenter: NotificationCenter = .default,
+         windowsWithSheets: @escaping (_ excluding: NSWindow) -> [NSWindow] = CockpitSheetLevelGuard.visibleWindowsWithSheets) {
+        self.panel = panel
+        self.floatingLevel = panel.level
+        self.notificationCenter = notificationCenter
+        self.windowsWithSheets = windowsWithSheets
+        observers.append(notificationCenter.addObserver(forName: NSWindow.willBeginSheetNotification,
+                                                        object: nil,
+                                                        queue: nil) { [weak self] notification in
+            self?.sheetWillBegin(on: notification.object as? NSWindow)
+        })
+        observers.append(notificationCenter.addObserver(forName: NSWindow.didEndSheetNotification,
+                                                        object: nil,
+                                                        queue: nil) { [weak self] notification in
+            self?.sheetDidEnd(on: notification.object as? NSWindow)
+        })
+        // A window that closes with its sheet up may never report the
+        // sheet ending, so check again once it's gone.
+        observers.append(notificationCenter.addObserver(forName: NSWindow.willCloseNotification,
+                                                        object: nil,
+                                                        queue: nil) { [weak self] notification in
+            guard let closing = notification.object as? NSWindow else {
+                return
+            }
+            DispatchQueue.main.async {
+                self?.restoreLevelIfNoSheets(excluding: closing)
+            }
+        })
+    }
+
+    deinit {
+        for observer in observers {
+            notificationCenter.removeObserver(observer)
+        }
+    }
+
+    static func visibleWindowsWithSheets(excluding window: NSWindow) -> [NSWindow] {
+        return NSApp.windows.filter { $0 !== window && $0.attachedSheet != nil && $0.isVisible }
+    }
+
+    private func sheetWillBegin(on parent: NSWindow?) {
+        guard let panel, let parent, parent !== panel, parent.sheetParent !== panel else {
+            return
+        }
+        DLog("Cockpit: a sheet is beginning on \(parent); lowering the panel")
+        panel.level = .normal
+        if panel.isVisible && parent.isVisible {
+            panel.order(.below, relativeTo: parent.windowNumber)
+        }
+    }
+
+    private func sheetDidEnd(on parent: NSWindow?) {
+        guard let panel, let parent, parent !== panel, parent.sheetParent !== panel else {
+            return
+        }
+        restoreLevelIfNoSheets(excluding: parent)
+    }
+
+    // Float again unless a window other than `window` (whose sheet ended,
+    // or which closed) still shows a sheet.
+    func restoreLevelIfNoSheets(excluding window: NSWindow) {
+        guard let panel, panel.level != floatingLevel else {
+            return
+        }
+        let remaining = windowsWithSheets(window).filter { $0 !== panel && $0.sheetParent !== panel }
+        guard remaining.isEmpty else {
+            return
+        }
+        DLog("Cockpit: no sheets remain; restoring the panel's level")
+        panel.level = floatingLevel
+    }
 }
 
 // A do-nothing syntax highlighter for the cockpit composer, which has
