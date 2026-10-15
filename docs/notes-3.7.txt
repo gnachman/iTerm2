@@ -1790,6 +1790,10 @@ Bug Fixes:
   is kept when the session is restored, so the
   program’s output no longer scrolls the whole
   screen.
+- Undo Close of a maximized floating pane now
+  brings it back maximized, and unmaximizing it
+  returns it to where it was before.
+
 
 
 
