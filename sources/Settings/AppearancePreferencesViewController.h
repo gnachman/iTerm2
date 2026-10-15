@@ -13,4 +13,10 @@ extern NSString *const iTermProcessTypeDidChangeNotification;
 
 @interface AppearancePreferencesViewController : iTermPreferencesBaseViewController
 
+// Whether “Show menu bar icon” is forced on (shown checked and disabled) for these settings: the
+// icon is the only way back to Settings while iTerm2 is always excluded from the Dock.
++ (BOOL)menuBarItemIsForcedWhenExcludedFromDock:(BOOL)excludedFromDock
+               onlyIfAllWindowsAreHotkeyWindows:(BOOL)onlyIfAllWindowsAreHotkeyWindows
+                                  statusBarIcon:(BOOL)statusBarIcon;
+
 @end

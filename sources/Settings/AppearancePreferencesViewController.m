@@ -313,6 +313,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         return [weakSelf menuBarItemIsForced] || [weakSelf valueOfKeyEqualsDefaultValue:kPreferenceKeyShowMenuBarItem];
     };
     [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyUIElement controller:self];
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyUIElementRequiresHotkeys controller:self];
     [self updateValueForInfo:info];
 
     info = [self defineControl:_menuBarItemString
@@ -323,6 +324,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
         return [weakSelf menuBarItemIsForced] || [weakSelf boolForKey:kPreferenceKeyShowMenuBarItem];
     };
     [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyUIElement controller:self];
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyUIElementRequiresHotkeys controller:self];
     [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyShowMenuBarItem controller:self];
     _menuBarItemStringDelegate =
         [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextApp]
@@ -340,6 +342,8 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     info.observer = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessTypeDidChangeNotification
                                                             object:nil];
+        // Whether the menu bar icon checkbox is forced on depends on this setting.
+        [weakSelf updateControlForKey:kPreferenceKeyShowMenuBarItem];
         [weakSelf updateHiddenAndEnabled];
     };
 
@@ -467,10 +471,21 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-// Uses the preference, not the effective UI-element state, so the checkbox doesn't
+// Uses the preferences, not the effective UI-element state, so the checkbox doesn't
 // change as windows open and close when UIElementRequiresHotkeys is on.
 - (BOOL)menuBarItemIsForced {
-    return [self boolForKey:kPreferenceKeyUIElement] && [iTermAdvancedSettingsModel statusBarIcon];
+    return [AppearancePreferencesViewController menuBarItemIsForcedWhenExcludedFromDock:[self boolForKey:kPreferenceKeyUIElement]
+                                                       onlyIfAllWindowsAreHotkeyWindows:[self boolForKey:kPreferenceKeyUIElementRequiresHotkeys]
+                                                                          statusBarIcon:[iTermAdvancedSettingsModel statusBarIcon]];
+}
+
++ (BOOL)menuBarItemIsForcedWhenExcludedFromDock:(BOOL)excludedFromDock
+               onlyIfAllWindowsAreHotkeyWindows:(BOOL)onlyIfAllWindowsAreHotkeyWindows
+                                  statusBarIcon:(BOOL)statusBarIcon {
+    // When exclusion applies only while every window is a hotkey window, iTerm2 is in the Dock
+    // whenever an ordinary window is open, and then the saved setting decides whether there is a
+    // menu bar icon. It must stay visible and changeable.
+    return excludedFromDock && !onlyIfAllWindowsAreHotkeyWindows && statusBarIcon;
 }
 
 - (void)postUpdateLabelsNotification {
