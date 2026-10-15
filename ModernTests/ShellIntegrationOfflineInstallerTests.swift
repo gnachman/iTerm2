@@ -311,7 +311,7 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
 
 final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     static let shellCommand = "sh -c 'echo My shell is $(ps -o comm= -p $PPID 2>/dev/null) or $SHELL, end'\n"
-    private static let zshDotdirCommand = "echo My dotfiles go in ${ZDOTDIR:-$HOME}\n"
+    private static let zshDotdirCommand = "echo My dotfiles go in ${ZDOTDIR:-$HOME}, end\n"
 
     private var controller: iTermShellIntegrationWindowController!
     private var terminal: FakeShellIntegrationTerminal!
@@ -348,7 +348,7 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     }
 
     func testZshDiscoveryCompletesWithoutZDOTDIR() {
-        discover(shellPath: "/bin/zsh", dotdirOutput: "My dotfiles go in /Users/someone")
+        discover(shellPath: "/bin/zsh", dotdirOutput: "My dotfiles go in /Users/someone, end")
 
         XCTAssertEqual(terminal.sentTexts, [Self.shellCommand, Self.zshDotdirCommand])
         XCTAssertEqual(controller.sendShellCommandsStage, 1)
@@ -357,7 +357,7 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     }
 
     func testZshDiscoveryCompletesWithZDOTDIR() {
-        discover(shellPath: "/usr/local/bin/zsh", dotdirOutput: "My dotfiles go in /Users/someone/.config/zsh")
+        discover(shellPath: "/usr/local/bin/zsh", dotdirOutput: "My dotfiles go in /Users/someone/.config/zsh, end")
 
         XCTAssertEqual(controller.sendShellCommandsStage, 1)
         XCTAssertEqual(controller.shell, .zsh)
@@ -367,7 +367,7 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     }
 
     func testZshDiscoveryWithEmptyDotdirFallsBackToHome() {
-        discover(shellPath: "/bin/zsh", dotdirOutput: "My dotfiles go in")
+        discover(shellPath: "/bin/zsh", dotdirOutput: "My dotfiles go in, end")
 
         XCTAssertEqual(controller.sendShellCommandsStage, 1)
         XCTAssertEqual(controller.shell, .zsh)
@@ -375,6 +375,23 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         let next = controller.shellIntegrationInstallerNextCommandForSendShellCommands() ?? ""
         XCTAssertTrue(next.contains("$HOME/.iterm2_shell_integration.zsh"), next)
         XCTAssertFalse(next.contains("(null)"), next)
+    }
+
+    // F-325: on a slow link “My dotfiles go in” can arrive before the path. That partial line
+    // must not be read as an empty ZDOTDIR, which would fall back to $HOME.
+    func testZshDiscoveryIgnoresAPartialDotdirLine() {
+        terminal.responses[Self.shellCommand] = "My shell is -zsh or /bin/zsh, end"
+        terminal.responseLines[Self.zshDotdirCommand] = [
+            "My dotfiles go in",
+            "My dotfiles go in /Users/qa/qa-zd",
+            "My dotfiles go in /Users/qa/qa-zdot, end"
+        ]
+        controller.shellIntegrationInstallerSendShellCommands(0)
+        terminal.run()
+
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .zsh)
+        XCTAssertEqual(controller.dotdir, "/Users/qa/qa-zdot")
     }
 
     func testBashDiscoveryCompletes() {
@@ -440,7 +457,7 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     }
 
     func testSkipAfterDiscoveryUsesDiscoveredDotdir() {
-        discover(shellPath: "/bin/zsh", dotdirOutput: "My dotfiles go in /Users/someone")
+        discover(shellPath: "/bin/zsh", dotdirOutput: "My dotfiles go in /Users/someone, end")
         XCTAssertEqual(controller.sendShellCommandsStage, 1)
 
         controller.shellIntegrationInstallerSkipStage()
