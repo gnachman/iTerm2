@@ -1967,6 +1967,16 @@ Bug Fixes:
 - Help > GPU Renderer Availability now explains
   why GPU rendering is off in a complete
   sentence.
+- Cmd-hover and Cmd-click now find URLs on
+  right-to-left lines that run up to a pane
+  divider, such as in a tmux split without tmux
+  integration.
+- Cmd-hover now underlines a URL that ends in
+  right-to-left text wherever the pointer is on
+  it, instead of leaving the previous URL
+  underlined.
+
+
 
 
 

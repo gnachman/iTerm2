@@ -85,7 +85,8 @@
         completion(nil);
         return nil;
     }
-    [extractor restrictToLogicalWindowIncludingCoord:visualCoord];
+    // Divider columns are logical, so pick the window with the logical coord.
+    [extractor restrictToLogicalWindowIncludingCoord:logicalCoord];
 
     __block id<iTermCancelable> urlActionFactoryCanceler = nil;
     iTermBlockCanceller *canceller = [[iTermBlockCanceller alloc] initWithBlock:^{
@@ -124,7 +125,8 @@
     if ([extractor characterAt:logicalCoord].code == 0) {
         return nil;
     }
-    [extractor restrictToLogicalWindowIncludingCoord:visualCoord];
+    // Divider columns are logical, so pick the window with the logical coord.
+    [extractor restrictToLogicalWindowIncludingCoord:logicalCoord];
     return [iTermURLActionFactory openableURLAtCoord:logicalCoord
                                 respectHardNewlines:![self ignoreHardNewlinesInURLs]
                                           extractor:extractor];
