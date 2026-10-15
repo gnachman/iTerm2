@@ -86123,37 +86123,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ihre benutzerdefinierten HTTP-Header für KI waren früher eine einzige globale Einstellung. Sie gelten weiterhin für Ihr aktuelles Modell, werden aber beim Hinzufügen oder Bearbeiten von Modellen hier nicht übernommen. Fügen Sie die benötigten Header im Abschnitt „Benutzerdefinierte Header“ jedes Modells erneut hinzu."
+            "value" : "Ihre benutzerdefinierten HTTP-Header für KI waren früher eine einzige globale Einstellung. Ihr aktuelles Modell behält sie, aber Modelle, die Sie hier hinzufügen, haben sie zunächst nicht. Fügen Sie die benötigten Header im Abschnitt „Benutzerdefinierte Header“ jedes neuen Modells hinzu."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Your AI custom HTTP headers used to be a single global setting. They still apply to your current model, but adding or editing models here does not carry them over. Re-add the headers you need in each model’s “Custom headers” section."
+            "value" : "Your AI custom HTTP headers used to be a single global setting. Your current model keeps them, but models you add here start without them. Add the headers you need in each new model’s “Custom headers” section."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "以前は、AI 用のカスタム HTTP ヘッダーは1つのグローバル設定でした。現在のモデルには引き続き適用されますが、ここでモデルを追加または編集してもヘッダーは引き継がれません。必要なヘッダーは、各モデルの「カスタムヘッダー」セクションで再度追加してください。"
+            "value" : "以前は、AI 用のカスタム HTTP ヘッダーは1つのグローバル設定でした。現在のモデルでは引き続き保持されますが、ここで追加したモデルにはヘッダーが設定されていません。必要なヘッダーは、新しい各モデルの「カスタムヘッダー」セクションで追加してください。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Seus cabeçalhos HTTP personalizados de IA costumavam ser um único ajuste global. Eles ainda se aplicam ao seu modelo atual, mas adicionar ou editar modelos aqui não os transfere. Adicione novamente os cabeçalhos de que precisa na seção “Custom headers” de cada modelo."
+            "value" : "Seus cabeçalhos HTTP personalizados de IA costumavam ser um único ajuste global. Seu modelo atual os mantém, mas os modelos que você adicionar aqui começam sem eles. Adicione os cabeçalhos de que precisa na seção “Custom headers” de cada novo modelo."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ваши пользовательские HTTP-заголовки ИИ раньше были единой глобальной настройкой. Они по-прежнему применяются к текущей модели, но при добавлении или редактировании моделей здесь они не переносятся. Добавьте нужные заголовки заново в разделе «Пользовательские заголовки» каждой модели."
+            "value" : "Ваши пользовательские HTTP-заголовки ИИ раньше были единой глобальной настройкой. Текущая модель сохраняет их, но модели, добавленные здесь, создаются без них. Добавьте нужные заголовки в разделе «Пользовательские заголовки» каждой новой модели."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "您使用的 AI 自定义 HTTP 头曾是单一的全局设置。它们仍然适用于当前模型，但在此处添加或编辑模型不会将其继承。请在每个模型的“自定义头”部分重新添加所需的头。"
+            "value" : "您使用的 AI 自定义 HTTP 头曾是单一的全局设置。当前模型会保留它们，但在此处添加的模型不会包含这些头。请在每个新模型的“自定义头”部分添加所需的头。"
           }
         }
       }

@@ -1895,6 +1895,14 @@ Bug Fixes:
   gets focus when the sheet closes. Before, it
   stayed with the original pane until the
   pointer left and came back.
+- AI custom headers you remove from a model no
+  longer come back after launching iTerm2 on
+  another Mac that shares your settings.
+- Changing your AI models in Settings when you
+  used a single custom AI model no longer drops
+  the custom headers you set up for it.
+
+
 
 
 

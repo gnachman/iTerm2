@@ -459,14 +459,7 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
                                        forKey:kPreferenceKeyAISafetyCheckProviderMigrationDone];
 }
 
-// 3.5.14 and earlier had a lot fewer settings. This code is meant to migrate
-// them to the modern equivalent. It should be idempotent because once user
-// defaults has values for these settings they will not be changed by this
-// function.
-+ (void)migrateAISettings {
-    // Normally already done at launch; this is a no-op after the first run.
-    [self migrateAISafetyCheckProviderIfNeeded];
-
++ (void)migrateCustomHeadersToPerModelIfNeeded {
     // One-time: custom HTTP headers used to be a single global setting
     // (kPreferenceKeyAICustomHeaders, shipped in 3.7.0beta3). They are now
     // per-model. Copy the former global list into every existing manual model
@@ -474,30 +467,14 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
     // relied on e.g. a proxy auth header keeps sending it to those models. The
     // legacy single model (when there are no configurations) inherits the global
     // pref directly in LLMMetadata.legacyManualModel(), so it needs nothing here.
-    // The global pref is left in place for that legacy path; the request builder
-    // no longer reads it (it uses the per-model headers).
+    // The global pref is left in place for that legacy path, and retired once
+    // configured models exist; the request builder no longer reads it (it uses
+    // the per-model headers).
     NSUserDefaults *headersDefaults = [iTermUserDefaults userDefaults];
     if (![headersDefaults boolForKey:@"NoSyncAICustomHeadersPerModelMigrationDone"]) {
         if ([iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled]) {
-            id rawHeaders = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
             id rawConfigs = [iTermPreferences objectForKey:kPreferenceKeyAIManualModelConfigurations];
-            // The header pref is non-NoSync and can round-trip through synced or
-            // hand-edited plists, so keep only well-formed {name,value} string
-            // entries. A malformed value would otherwise be stamped verbatim and
-            // then silently dropped at request time.
-            NSMutableArray *sanitizedHeaders = [NSMutableArray array];
-            if ([rawHeaders isKindOfClass:[NSArray class]]) {
-                for (id header in (NSArray *)rawHeaders) {
-                    if ([header isKindOfClass:[NSDictionary class]] &&
-                        [((NSDictionary *)header)[@"name"] isKindOfClass:[NSString class]]) {
-                        id value = ((NSDictionary *)header)[@"value"];
-                        [sanitizedHeaders addObject:@{
-                            @"name": ((NSDictionary *)header)[@"name"],
-                            @"value": [value isKindOfClass:[NSString class]] ? value : @"",
-                        }];
-                    }
-                }
-            }
+            NSArray<NSDictionary *> *sanitizedHeaders = [self legacyGlobalCustomHeaders];
             if (sanitizedHeaders.count > 0 &&
                 [rawConfigs isKindOfClass:[NSArray class]] &&
                 [(NSArray *)rawConfigs count] > 0) {
@@ -505,13 +482,14 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
                 for (id entry in (NSArray *)rawConfigs) {
                     id existing = [entry isKindOfClass:[NSDictionary class]]
                         ? ((NSDictionary *)entry)[@"customHeaders"] : nil;
-                    // Treat missing OR empty headers as not-yet-migrated: opening
-                    // the editor before this migration runs stamps an empty array
-                    // into a config, which must not shadow the global headers the
-                    // user was relying on.
-                    const BOOL needsHeaders =
-                        (existing == nil) ||
-                        ([existing isKindOfClass:[NSArray class]] && [(NSArray *)existing count] == 0);
+                    // Only a config with no header list at all predates per-model
+                    // headers. An empty list is one the user saved in the model
+                    // editor, possibly after removing every header on another Mac
+                    // sharing these prefs, so it must not get the global list back.
+                    // The models panel runs this migration before it reads the
+                    // configs, so its editor never stamps an empty list over an
+                    // unmigrated model.
+                    const BOOL needsHeaders = (existing == nil);
                     if ([entry isKindOfClass:[NSDictionary class]] && needsHeaders) {
                         NSMutableDictionary *updated = [entry mutableCopy];
                         updated[@"customHeaders"] = sanitizedHeaders;
@@ -529,6 +507,63 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
         // re-runs, rather than being marked complete with nothing copied.
         [headersDefaults setBool:YES forKey:@"NoSyncAICustomHeadersPerModelMigrationDone"];
     }
+    // Once configured models carry their own headers, the global list must stop
+    // being a source of headers. Otherwise another Mac sharing these prefs (whose
+    // NoSync done flag is unset) would copy it back into a model whose headers
+    // the user has since removed. This runs even when the flag was already set,
+    // since an earlier build ran the migration without retiring the list.
+    [self retireLegacyGlobalCustomHeadersIfModelsAreConfigured];
+}
+
++ (NSArray<NSDictionary<NSString *, NSString *> *> *)legacyGlobalCustomHeaders {
+    if (![iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled]) {
+        return @[];
+    }
+    // The header pref is non-NoSync and can round-trip through synced or
+    // hand-edited plists, so keep only well-formed {name,value} string
+    // entries. A malformed value would otherwise be stamped verbatim and
+    // then silently dropped at request time.
+    id rawHeaders = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
+    NSMutableArray<NSDictionary<NSString *, NSString *> *> *sanitizedHeaders = [NSMutableArray array];
+    if ([rawHeaders isKindOfClass:[NSArray class]]) {
+        for (id header in (NSArray *)rawHeaders) {
+            if ([header isKindOfClass:[NSDictionary class]] &&
+                [((NSDictionary *)header)[@"name"] isKindOfClass:[NSString class]]) {
+                id value = ((NSDictionary *)header)[@"value"];
+                [sanitizedHeaders addObject:@{
+                    @"name": ((NSDictionary *)header)[@"name"],
+                    @"value": [value isKindOfClass:[NSString class]] ? value : @"",
+                }];
+            }
+        }
+    }
+    return sanitizedHeaders;
+}
+
++ (void)retireLegacyGlobalCustomHeadersIfModelsAreConfigured {
+    id rawConfigs = [iTermPreferences objectForKey:kPreferenceKeyAIManualModelConfigurations];
+    if (![rawConfigs isKindOfClass:[NSArray class]] || [(NSArray *)rawConfigs count] == 0) {
+        // The legacy single model still inherits the global headers.
+        return;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled]) {
+        return;
+    }
+    // Only the enabled flag is cleared; the list is kept so it is not lost if
+    // the user turns it back on in an older build.
+    RLog(@"Turning off the legacy global AI custom headers now that manual models carry their own");
+    [iTermPreferences setBool:NO forKey:kPreferenceKeyAICustomHeadersEnabled];
+}
+
+// 3.5.14 and earlier had a lot fewer settings. This code is meant to migrate
+// them to the modern equivalent. It should be idempotent because once user
+// defaults has values for these settings they will not be changed by this
+// function.
++ (void)migrateAISettings {
+    // Normally already done at launch; this is a no-op after the first run.
+    [self migrateAISafetyCheckProviderIfNeeded];
+
+    [self migrateCustomHeadersToPerModelIfNeeded];
 
     if ([iTermSecureUserDefaults.instance enableAI]) {
         // A default configuration has no model or URL set.
