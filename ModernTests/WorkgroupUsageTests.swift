@@ -155,6 +155,25 @@ final class WorkgroupUsageTests: XCTestCase {
         XCTAssertTrue(report.diagnostic?.contains("\"weird\"") ?? false)
     }
 
+    // Control bytes such as ESC and BS (claude's colored stderr) must be
+    // escaped too, or the item shows “Unreadable usage data” instead of the
+    // script's message. QA finding F-245.
+    func test_script_controlBytesInDiagnosticStayValidJSON() throws {
+        let data = try runScript(
+            fixture: "weird output line \u{1b}[31mboom\u{08}\u{1b}[0m \u{01}\u{7f}\n")
+        let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
+        XCTAssertEqual(report.reportable, true)
+        XCTAssertTrue(report.diagnostic?.contains("\u{1b}[31mboom\u{08}") ?? false)
+    }
+
+    func test_script_controlBytesInUsageLineStayValidJSON() throws {
+        let data = try runScript(
+            fixture: "Current session: 5% used \u{00b7} resets \u{1b}[1msoon\u{1b}[0m\n")
+        let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
+        XCTAssertEqual(report.bars.count, 1)
+        XCTAssertEqual(report.bars.first?.detail, "resets \u{1b}[1msoon\u{1b}[0m")
+    }
+
     // Expected environment states must NOT be reportable (otherwise users
     // file issues about their own setup) and carry no diagnostic.
     func test_script_subscriptionNoticeIsNotReportable() throws {

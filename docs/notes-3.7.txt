@@ -1752,6 +1752,11 @@ Bug Fixes:
   rejects custom headers that are not valid, as
   Save does, instead of leaving them out and
   reporting success.
+- The AI Usage toolbar item no longer shows
+  “Unreadable usage data” when Claude Code’s
+  output contains color codes or other control
+  characters.
+
 
 
 
