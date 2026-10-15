@@ -552,6 +552,29 @@ final class TabStatusControllerTests: XCTestCase {
         XCTAssertFalse(controller.isAcknowledging)
     }
 
+    // A status restored from a saved arrangement must reach the session's
+    // listeners (the tab, which caches it for its subtitle and dot), but as a
+    // restoration rather than news, so no notification is posted for it.
+    func testAdoptingRestoredStatusReportsAChangeMarkedAsRestoring() throws {
+        var restoringDuringChange: [Bool] = []
+        controller = TabStatusController(
+            sessionID: { "s" },
+            didChange: { [unowned self] _ in
+                restoringDuringChange.append(controller.isRestoring)
+            },
+            progressEndDelay: 1)
+        let saved = TabStatusController(sessionID: { "s" }, didChange: { _ in }, progressEndDelay: 1)
+        saved.apply(status("custom21337"))
+        let dict = try XCTUnwrap(saved.status.arrangementDictionary())
+        let restored = iTermSessionTabStatus.fromArrangementDictionary(dict, sessionID: "s")
+
+        controller.adoptRestoredStatus(restored)
+
+        XCTAssertEqual(restoringDuringChange, [true])
+        XCTAssertFalse(controller.isRestoring)
+        XCTAssertEqual(controller.status.statusText, "custom21337")
+    }
+
     func testKeypressWithNoStatusCreatesNone() {
         controller.userDidPressKey()
         XCTAssertNil(controller.statusIfPresent)
