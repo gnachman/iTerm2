@@ -65,7 +65,9 @@ class LLMMetadata: NSObject {
 
     @objc(hostIsAzureAPIForURL:)
     static func hostIsAzureAIAPI(url: URL?) -> Bool {
-        return (url?.it_normalizedHost ?? "").hasSuffix(".azure.com")
+        // The sovereign clouds' AI service hosts speak Azure's request format
+        // too (an api-key header).
+        return (url?.it_normalizedHost ?? "").hasSuffix(".azure.com") || hostIsAzureAIServiceAPI(url: url)
     }
 
     // Azure's own AI service endpoints, the only Azure hosts that are OpenAI's
@@ -73,11 +75,19 @@ class LLMMetadata: NSObject {
     // choose Azure's request format, but any Azure customer picks the label of
     // a VM's public DNS name (<label>.<region>.cloudapp.azure.com), so a
     // gateway there is a third party and must not get the OpenAI key.
+    // Microsoft runs every host listed here: the global cloud's, Azure
+    // Government's (.azure.us), Azure China's (.azure.cn), and the serverless
+    // model deployments' (*.models.ai.azure.com).
     static func hostIsAzureAIServiceAPI(url: URL?) -> Bool {
         let host = url?.it_normalizedHost ?? ""
         return [".openai.azure.com",
                 ".cognitiveservices.azure.com",
-                ".services.ai.azure.com"].contains { host.hasSuffix($0) }
+                ".services.ai.azure.com",
+                ".models.ai.azure.com",
+                ".openai.azure.us",
+                ".cognitiveservices.azure.us",
+                ".openai.azure.cn",
+                ".cognitiveservices.azure.cn"].contains { host.hasSuffix($0) }
     }
 
     @objc(hostIsDeepSeekAIAPIForURL:)
