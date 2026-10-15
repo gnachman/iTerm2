@@ -113642,44 +113642,44 @@
         }
       }
     },
-    "Ollama.Discovery.Unreachable" : {
-      "comment" : "Error shown when the Ollama server can't be reached; first %@ is the host, second %@ is the underlying network error",
+    "Ollama.Discovery.UnreachableServer" : {
+      "comment" : "Error shown when Fetch Models in the AI model editor can't reach the server (which may or may not be Ollama); first %@ is the host, second %@ is the underlying network error",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ollama konnte unter %1$@ nicht erreicht werden: %2$@"
+            "value" : "Der Server unter %1$@ konnte nicht erreicht werden, um seine Modelle aufzulisten: %2$@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Could not reach Ollama at %1$@: %2$@"
+            "value" : "Could not reach the server at %1$@ to list its models: %2$@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ のOllamaに接続できませんでした: %2$@"
+            "value" : "モデルを一覧表示するために %1$@ のサーバーに接続できませんでした: %2$@"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não foi possível conectar ao Ollama em %1$@: %2$@"
+            "value" : "Não foi possível conectar ao servidor em %1$@ para listar seus modelos: %2$@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось подключиться к Ollama по адресу %1$@: %2$@"
+            "value" : "Не удалось подключиться к серверу по адресу %1$@, чтобы получить список моделей: %2$@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法连接到位于 %1$@ 的 Ollama：%2$@"
+            "value" : "无法连接到位于 %1$@ 的服务器以列出其模型：%2$@"
           }
         }
       }

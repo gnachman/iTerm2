@@ -8,6 +8,34 @@
 import Foundation
 import JavaScriptCore
 
+// The aiProxy advanced setting ("host:port"), applied to every AI HTTP request.
+enum AIProxySetting {
+    // Overrides the advanced setting in tests.
+    private static let _settingForTesting = MutableAtomicObject<String?>(nil)
+    static var settingForTesting: String? {
+        get { _settingForTesting.value }
+        set { _settingForTesting.set(newValue) }
+    }
+
+    // A URLSession proxy dictionary for the setting, or nil when no proxy is
+    // configured or the setting is malformed.
+    static func connectionProxyDictionary() -> [AnyHashable: Any]? {
+        guard let proxyString = settingForTesting ?? iTermAdvancedSettingsModel.aiProxy(),
+              !proxyString.isEmpty else {
+            return nil
+        }
+        let parts = proxyString.split(separator: ":", maxSplits: 1)
+        guard parts.count == 2, let port = Int(parts[1]) else {
+            return nil
+        }
+        return [
+            kCFNetworkProxiesHTTPSEnable as String: true,
+            kCFNetworkProxiesHTTPSProxy as String: String(parts[0]),
+            kCFNetworkProxiesHTTPSPort as String: port
+        ]
+    }
+}
+
 // Runs one plugin call. Make a new instance per call: cancel() stops only the
 // HTTP transfer this instance started, so concurrent requests (for example two
 // chats streaming at once) can be cancelled independently.
@@ -185,17 +213,8 @@ class PluginClient {
             }
             callback(first, second)
         }
-        let proxyString = iTermAdvancedSettingsModel.aiProxy()
-        if let proxyString, !proxyString.isEmpty {
-            let parts = proxyString.split(separator: ":", maxSplits: 1)
-            if parts.count == 2, let port = Int(parts[1]) {
-                let host = String(parts[0])
-                config.connectionProxyDictionary = [
-                    kCFNetworkProxiesHTTPSEnable as String: true,
-                    kCFNetworkProxiesHTTPSProxy as String: host,
-                    kCFNetworkProxiesHTTPSPort as String: port
-                ]
-            }
+        if let proxy = AIProxySetting.connectionProxyDictionary() {
+            config.connectionProxyDictionary = proxy
         }
 
         delegate.streaming = streaming
