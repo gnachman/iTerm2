@@ -40747,6 +40747,48 @@
         }
       }
     },
+    "tXe-jL-3Kg.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"…even to views like Search or Composer\"; ObjectID = \"tXe-jL-3Kg\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…auch zu Ansichten wie Suche oder Composer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "…even to views like Search or Composer"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…検索やコンポーザーなどのビューにも"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…mesmo para visualizações como Busca ou Compositor"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…даже к таким элементам, как поиск или Композитор"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…包括搜索或 Composer 等视图"
+          }
+        }
+      }
+    },
     "tyx-QN-l9J.ibShadowedToolTip" : {
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"If this is on then transparency can be toggled window-by-window under View>Use Transparency\"; ObjectID = \"tyx-QN-l9J\";",
       "extractionState" : "extracted_with_value",
