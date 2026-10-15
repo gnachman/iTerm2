@@ -6679,6 +6679,15 @@ typedef struct {
     return real.tmuxPane;
 }
 
++ (PTYSession *)sessionShowingTmuxPane:(int)wp amongSessions:(NSArray<PTYSession *> *)sessions {
+    if (wp < 0) {
+        return nil;
+    }
+    return [sessions objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
+        return [PTYTab tmuxLayoutPaneForSession:candidate] == wp;
+    }];
+}
+
 // The sessions a tmux layout change may reuse for its tiled panes, by tmux pane id. A filtered
 // pane's synthetic session is keyed by its live session's pane.
 + (NSDictionary<NSNumber *, PTYSession *> *)tiledSessionsByTmuxPaneFromSessions:(NSArray<PTYSession *> *)sessions
@@ -6730,9 +6739,8 @@ typedef struct {
     NSMutableArray<iTermTmuxFloatAnchor *> *anchors = [NSMutableArray array];
     for (NSDictionary *leaf in leaves) {
         const int wp = [leaf[kLayoutDictWindowPaneKey] intValue];
-        PTYSession *session = [[self tiledSessions] objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
-            return candidate.tmuxPane == wp;
-        }];
+        // A filtered pane's stand-in reads as pane 0, so match by the pane it shows.
+        PTYSession *session = [PTYTab sessionShowingTmuxPane:wp amongSessions:[self tiledSessions]];
         if (!session || session.view.window == nil || session.view.isHiddenOrHasHiddenAncestor) {
             continue;
         }

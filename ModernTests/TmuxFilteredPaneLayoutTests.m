@@ -118,6 +118,26 @@
     XCTAssertEqual([PTYTab tmuxLayoutPaneForSession:nil], -1);
 }
 
+#pragma mark - Anchoring floats
+
+// QA finding F-131: floats are placed over the tiled pane that contains them. A filter's stand-in
+// listed before the real %0 must not be taken for %0.
+- (void)testFloatAnchorLookupDoesNotTakeAStandInForPaneZero {
+    PTYSession *pane0 = [self tmuxSessionForPane:0];
+    PTYSession *pane1 = [self tmuxSessionForPane:1];
+    PTYSession *standIn = [self standInForSession:pane1];
+    NSArray<PTYSession *> *tiled = @[ standIn, pane0 ];
+    XCTAssertEqual([PTYTab sessionShowingTmuxPane:0 amongSessions:tiled], pane0);
+    XCTAssertEqual([PTYTab sessionShowingTmuxPane:1 amongSessions:tiled], standIn);
+    XCTAssertNil([PTYTab sessionShowingTmuxPane:2 amongSessions:tiled]);
+}
+
+- (void)testFloatAnchorLookupIgnoresNativeSessions {
+    PTYSession *native = [self nativeSession];
+    XCTAssertNil([PTYTab sessionShowingTmuxPane:0 amongSessions:@[ native ]]);
+    XCTAssertNil([PTYTab sessionShowingTmuxPane:-1 amongSessions:@[ native ]]);
+}
+
 #pragma mark - Which sessions become floats
 
 - (void)testFilteredPaneThatBecomesFloatIsKeptAsAFloat {

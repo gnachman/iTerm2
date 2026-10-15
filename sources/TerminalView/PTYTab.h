@@ -341,6 +341,8 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 // session, its live session's. -1 if it is not a tmux pane (a native session's id reads as 0,
 // which is tmux's pane %0).
 + (int)tmuxLayoutPaneForSession:(PTYSession *)session;
+// The session among `sessions` that shows tmux pane `wp`, by +tmuxLayoutPaneForSession:, or nil.
++ (PTYSession *)sessionShowingTmuxPane:(int)wp amongSessions:(NSArray<PTYSession *> *)sessions;
 // The sessions left over from a tmux layout change that tmux made floating rather than closed.
 + (NSArray<PTYSession *> *)sessionsBecomingTmuxFloatsAmong:(NSArray<PTYSession *> *)sessions
                                              floatingPanes:(NSSet<NSNumber *> *)floatingPanes;

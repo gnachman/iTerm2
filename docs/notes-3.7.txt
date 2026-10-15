@@ -1811,6 +1811,10 @@ Bug Fixes:
 - Hidden floating panes no longer count toward
   the number of panes that turns off the GPU
   renderer in a tab.
+- In tmux integration, a floating pane over pane
+  %0 is no longer drawn over a different pane
+  while Find > Filter is open.
+
 
 
 
