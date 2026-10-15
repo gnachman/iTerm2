@@ -69,6 +69,11 @@ static const NSInteger iTermNumberOfSpacesMaximum = 100;
     }];
 }
 
+- (NSTextField *)textField {
+    [self view];
+    return _textField;
+}
+
 #pragma mark - Actions
 
 - (IBAction)stepperDidChange:(id)sender {

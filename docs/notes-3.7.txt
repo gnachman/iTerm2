@@ -1669,6 +1669,11 @@ Bug Fixes:
 - “Prefer integrated to discrete GPU” in
   Advanced GPU Settings is now disabled on a Mac
   with only one GPU, where it has no effect.
+- When pasting text with tabs, the prompt that
+  offers to convert them to spaces now puts the
+  cursor in its number-of-spaces field, so you
+  can type a tab width without clicking first.
+
 
 
 

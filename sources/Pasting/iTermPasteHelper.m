@@ -913,25 +913,32 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                                 }];
 }
 
++ (iTermWarning *)pasteWithTabsWarningWithAccessoryController:(iTermNumberOfSpacesAccessoryViewController *)accessoryController {
+    NSString *const advanced = NSLocalizedStringWithDefaultValue(@"PasteHelper.Advanced", nil, [NSBundle mainBundle], @"Advanced…", @"Button that opens the advanced paste dialog");
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.title = NSLocalizedStringWithDefaultValue(@"PasteHelper.PasteWithTabsTitle", nil, [NSBundle mainBundle], @"You're about to paste a string with tabs.", @"Title of the warning shown before pasting text containing tabs");
+    warning.actionLabels = @[ iTermLocalizedOK(),
+                              iTermLocalizedCancel(),
+                              NSLocalizedStringWithDefaultValue(@"PasteHelper.ConvertTabsToSpaces", nil, [NSBundle mainBundle], @"Convert tabs to spaces", @"Button that converts tabs to spaces when pasting"),
+                              advanced ];
+    // The advanced paste panel opens on this Mac, where the companion app cannot use it.
+    warning.notOfferedRemotelyLabels = @[ advanced ];
+    warning.cancelLabel = iTermLocalizedCancel();
+    warning.accessory = accessoryController.view;
+    warning.remoteInputs = @[ accessoryController.remoteInput ];
+    // Typing a number right away should reach the field without a click.
+    warning.initialFirstResponder = accessoryController.textField;
+    warning.identifier = @"AboutToPasteTabsWithCancel";
+    warning.warningType = kiTermWarningTypePermanentlySilenceable;
+    return warning;
+}
+
 - (int)numberOfSpacesToConvertTabsTo:(NSString *)source {
     if ([source rangeOfString:@"\t"].location != NSNotFound) {
         iTermNumberOfSpacesAccessoryViewController *accessoryController =
             [[iTermNumberOfSpacesAccessoryViewController alloc] init];
 
-        NSString *const advanced = NSLocalizedStringWithDefaultValue(@"PasteHelper.Advanced", nil, [NSBundle mainBundle], @"Advanced…", @"Button that opens the advanced paste dialog");
-        iTermWarning *warning = [[iTermWarning alloc] init];
-        warning.title = NSLocalizedStringWithDefaultValue(@"PasteHelper.PasteWithTabsTitle", nil, [NSBundle mainBundle], @"You're about to paste a string with tabs.", @"Title of the warning shown before pasting text containing tabs");
-        warning.actionLabels = @[ iTermLocalizedOK(),
-                                  iTermLocalizedCancel(),
-                                  NSLocalizedStringWithDefaultValue(@"PasteHelper.ConvertTabsToSpaces", nil, [NSBundle mainBundle], @"Convert tabs to spaces", @"Button that converts tabs to spaces when pasting"),
-                                  advanced ];
-        // The advanced paste panel opens on this Mac, where the companion app cannot use it.
-        warning.notOfferedRemotelyLabels = @[ advanced ];
-        warning.cancelLabel = iTermLocalizedCancel();
-        warning.accessory = accessoryController.view;
-        warning.remoteInputs = @[ accessoryController.remoteInput ];
-        warning.identifier = @"AboutToPasteTabsWithCancel";
-        warning.warningType = kiTermWarningTypePermanentlySilenceable;
+        iTermWarning *warning = [iTermPasteHelper pasteWithTabsWarningWithAccessoryController:accessoryController];
         warning.window = [self deepestSheetOfWindow:self.delegate.pasteHelperViewForIndicator.window];
         const iTermWarningSelection selection = [warning runModal];
         switch (selection) {

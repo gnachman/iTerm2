@@ -17,6 +17,8 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 @class iTermStatusBarViewController;
 @class iTermVariableScope;
 @class PasteContext;
+@class iTermNumberOfSpacesAccessoryViewController;
+@class iTermWarning;
 
 @protocol iTermPasteHelperDelegate <NSObject>
 
@@ -146,5 +148,8 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
                         spacesPerTab:(int)spacesPerTab
                             progress:(void (^)(NSInteger))progress;
 - (void)tryToPasteEvent:(PasteEvent *)pasteEvent;
+
+// The warning shown before pasting text that contains tabs. Visible for testing.
++ (iTermWarning *)pasteWithTabsWarningWithAccessoryController:(iTermNumberOfSpacesAccessoryViewController *)accessoryController;
 
 @end
