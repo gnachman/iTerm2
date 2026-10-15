@@ -1681,6 +1681,11 @@ Bug Fixes:
   carriage returns was reported as one line, and
   a trailing newline was counted as an extra
   line.
+- After you back out of the password manager
+  from a website’s sign-in prompt in a browser
+  session, “Remember this password” is no
+  longer ticked unless you ticked it.
+
 
 
 

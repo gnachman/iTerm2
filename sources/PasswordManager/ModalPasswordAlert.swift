@@ -113,6 +113,7 @@ class ModalPasswordAlert {
             // Preserve anything the user already typed so it can pre-fill the dialog if they
             // back out of the password manager.
             username = views.usernameField?.stringValue
+            rememberChecked = (views.rememberCheckbox?.state == .on)
             completion(.passwordManager(typedPassword: views.newPassword.stringValue))
         default:
             completion(.cancel)

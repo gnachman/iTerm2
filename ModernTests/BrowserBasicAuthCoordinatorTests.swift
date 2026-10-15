@@ -336,7 +336,7 @@ final class BrowserBasicAuthCoordinatorTests: XCTestCase {
         let id = Coord.ChallengeID(1)
         _ = coord.reduce(.challenge(id: id, space: space, isBasic: true, proposedUser: nil,
                                     savedLookupPossible: false, storeCanRemember: true))
-        _ = coord.reduce(.promptResult(id: id, outcome: .openPasswordManager(typed: Cred(user: "typeduser", password: ""))))
+        _ = coord.reduce(.promptResult(id: id, outcome: .openPasswordManager(typed: Cred(user: "typeduser", password: ""), remember: false)))
         // Picker returns a password but no username.
         let e = coord.reduce(.pickerResult(id: id,
                                            chosen: Cred(user: "", password: "pickedpw"),
@@ -353,10 +353,39 @@ final class BrowserBasicAuthCoordinatorTests: XCTestCase {
         let id = Coord.ChallengeID(1)
         _ = coord.reduce(.challenge(id: id, space: space, isBasic: true, proposedUser: nil,
                                     savedLookupPossible: false, storeCanRemember: true))
-        _ = coord.reduce(.promptResult(id: id, outcome: .openPasswordManager(typed: nil)))
+        _ = coord.reduce(.promptResult(id: id, outcome: .openPasswordManager(typed: nil, remember: false)))
         let picked = Cred(user: "picked", password: "pw")
         let e = coord.reduce(.pickerResult(id: id, chosen: picked, typedFallback: nil))
         XCTAssertEqual(e, [.supply(id: id, picked)])
+    }
+
+    // F-033: backing out of the picker re-prompts with Remember as the user left it, not ticked.
+    func testRePromptAfterPickerKeepsRememberOff() {
+        let coord = Coord()
+        let space = mainSpace()
+        startMainNav(coord, to: space)
+        let id = Coord.ChallengeID(1)
+        _ = coord.reduce(.challenge(id: id, space: space, isBasic: true, proposedUser: nil,
+                                    savedLookupPossible: false, storeCanRemember: true))
+        let typed = Cred(user: "a", password: "b")
+        _ = coord.reduce(.promptResult(id: id, outcome: .openPasswordManager(typed: typed, remember: false)))
+        let e = coord.reduce(.pickerResult(id: id, chosen: nil, typedFallback: typed))
+        guard case .prompt(_, let req)? = e.first else { return XCTFail("expected re-prompt, got \(e)") }
+        XCTAssertTrue(req.offerRemember)
+        XCTAssertFalse(req.rememberByDefault)
+    }
+
+    func testRePromptAfterPickerKeepsRememberOn() {
+        let coord = Coord()
+        let space = mainSpace()
+        startMainNav(coord, to: space)
+        let id = Coord.ChallengeID(1)
+        _ = coord.reduce(.challenge(id: id, space: space, isBasic: true, proposedUser: nil,
+                                    savedLookupPossible: false, storeCanRemember: true))
+        _ = coord.reduce(.promptResult(id: id, outcome: .openPasswordManager(typed: nil, remember: true)))
+        let e = coord.reduce(.pickerResult(id: id, chosen: nil, typedFallback: nil))
+        guard case .prompt(_, let req)? = e.first else { return XCTFail("expected re-prompt, got \(e)") }
+        XCTAssertTrue(req.rememberByDefault)
     }
 
     // MARK: - Save failure surfaces a toast; success clears rejection (finding 5)
