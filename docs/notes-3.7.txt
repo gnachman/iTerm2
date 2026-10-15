@@ -1427,3 +1427,7 @@ Bug Fixes:
   no longer stays as large as the saved state
   itself. With long scrollback it could use a
   lot of disk.
+- When settings load from a custom folder,
+  quitting no longer asks to copy settings to
+  the folder every time just because iTerm2
+  updated an older setting saved there.

@@ -98,11 +98,22 @@ class StatusPrioritySettings: NSObject {
             // didSet does not run during init. Write the list directly rather
             // than through save(), whose notification could reach an observer
             // that reads `shared` while it is still being created.
+            Self.writeMigratedEntries(entries, to: userDefaults)
+        }
+    }
+
+    /// Saves a list that has been given done and error, and records that it
+    /// was. Reports the change as a migration so a custom settings folder that
+    /// still holds the unmigrated list does not count it as an unsaved edit at
+    /// quit. Internal for testing.
+    static func writeMigratedEntries(_ entries: [StatusPriorityEntry], to userDefaults: UserDefaults) {
+        iTermUserDefaults.migrateKeys([entriesDefaultsKey, defaultsKey, addedDoneAndErrorDefaultsKey],
+                                      in: userDefaults) {
             if let data = try? JSONEncoder().encode(entries) {
-                userDefaults.set(data, forKey: Self.entriesDefaultsKey)
-                userDefaults.removeObject(forKey: Self.defaultsKey)
+                userDefaults.set(data, forKey: entriesDefaultsKey)
+                userDefaults.removeObject(forKey: defaultsKey)
             }
-            userDefaults.set(true, forKey: Self.addedDoneAndErrorDefaultsKey)
+            userDefaults.set(true, forKey: addedDoneAndErrorDefaultsKey)
         }
     }
 

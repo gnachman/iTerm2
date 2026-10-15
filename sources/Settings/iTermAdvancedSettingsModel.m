@@ -999,11 +999,17 @@ DEFINE_SETTABLE_BOOL(setIT2AppPath, SetIT2AppPath, NO, SECTION_SCRIPTING, NSLoca
     if (oldValue == nil) {
         return;
     }
-    if (![oldValue boolValue] &&
-        [userDefaults objectForKey:@"DisableBidiInAlternateScreen"] == nil) {
-        [userDefaults setObject:@YES forKey:@"DisableBidiInAlternateScreen"];
-    }
-    [userDefaults removeObjectForKey:@"AlternateScreenBidi"];
+    // Report the change so a custom settings folder that still holds the old key does not count
+    // it as an unsaved edit at quit.
+    [iTermUserDefaults migrateKeys:@[ @"AlternateScreenBidi", @"DisableBidiInAlternateScreen" ]
+                    inUserDefaults:userDefaults
+                             block:^{
+        if (![oldValue boolValue] &&
+            [userDefaults objectForKey:@"DisableBidiInAlternateScreen"] == nil) {
+            [userDefaults setObject:@YES forKey:@"DisableBidiInAlternateScreen"];
+        }
+        [userDefaults removeObjectForKey:@"AlternateScreenBidi"];
+    }];
 }
 
 + (void)initialize {

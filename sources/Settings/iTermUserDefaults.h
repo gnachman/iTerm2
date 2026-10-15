@@ -12,6 +12,15 @@ NS_ASSUME_NONNULL_BEGIN
 extern NSString *const kSelectionRespectsSoftBoundariesKey;
 extern NSString *const iTermShowSessionStatusInTabSubtitleDidChange;
 
+// Posted (synchronously, on the migrating thread) by +migrateKeys:inUserDefaults:block: when a
+// one-time migration changed at least one of its keys. The object is the NSUserDefaults that was
+// migrated. userInfo holds iTermUserDefaultsMigrationValuesBeforeKey and
+// iTermUserDefaultsMigrationValuesAfterKey, each a dictionary mapping a changed key to its value
+// before or after the migration; a key absent from one of them had no value at that time.
+extern NSString *const iTermUserDefaultsDidMigrateKeysNotification;
+extern NSString *const iTermUserDefaultsMigrationValuesBeforeKey;
+extern NSString *const iTermUserDefaultsMigrationValuesAfterKey;
+
 @interface iTermUserDefaults : NSObject
 
 // Call this before any access to +userDefaults to use a custom suite instead of standardUserDefaults.
@@ -27,6 +36,14 @@ extern NSString *const iTermShowSessionStatusInTabSubtitleDidChange;
 
 // Exposed for testing. performMigrations forwards to this with self.userDefaults.
 + (void)performMigrationsInUserDefaults:(NSUserDefaults *)userDefaults;
+
+// Runs a one-time migration that may change `keys` in `userDefaults`, then posts
+// iTermUserDefaultsDidMigrateKeysNotification describing any of those keys it changed. Migrations
+// of synced settings must go through this so that a change they make on their own is not
+// mistaken for a user edit that needs to be copied to a custom settings folder.
++ (void)migrateKeys:(NSArray<NSString *> *)keys
+     inUserDefaults:(NSUserDefaults *)userDefaults
+              block:(void (^ NS_NOESCAPE)(void))block;
 
 @property (class, nonatomic, copy) NSArray<NSString *> *searchHistory;
 @property (class, nonatomic) BOOL secureKeyboardEntry;

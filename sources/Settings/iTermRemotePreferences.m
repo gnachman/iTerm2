@@ -54,6 +54,8 @@ static NSString *const iTermRemoteDataFileSyncLastPushedLocalKey = @"NoSyncRemot
 static const NSTimeInterval iTermRemoteDataFileSyncRemoteReadTimeout = 5.0;
 
 @interface iTermRemotePreferences ()
+// The contents of the folder's plist as last loaded or saved. Assigning it discards any migrations
+// recorded against the previous value.
 @property(atomic, copy) NSDictionary *savedRemotePrefs;
 @property(nonatomic, copy) NSArray<NSString *> *preservedKeys;
 // interactive is YES only for genuinely user-driven saves (a settings button, the unsaved-changes
@@ -63,6 +65,14 @@ static const NSTimeInterval iTermRemoteDataFileSyncRemoteReadTimeout = 5.0;
 @end
 
 @implementation iTermRemotePreferences {
+    // Guarded by @synchronized(self): the background save assigns savedRemotePrefs.
+    NSDictionary *_savedRemotePrefs;
+    // savedRemotePrefs with this launch's one-time migrations applied, or nil if no migration has
+    // changed a key since it was assigned. Local prefs are compared against this rather than the raw
+    // folder plist, so a change a migration made on its own (the folder still holding the old value)
+    // does not count as an edit that needs copying to the folder. The folder is not rewritten for
+    // it: the migration simply runs again on the next launch. Guarded by @synchronized(self).
+    NSDictionary *_savedRemotePrefsAfterMigrations;
     BOOL _haveTriedToLoadRemotePrefs;
     iTermUserDefaultsObserver *_userDefaultsObserver;
     BOOL _needsSave;
@@ -95,6 +105,64 @@ static const NSTimeInterval iTermRemoteDataFileSyncRemoteReadTimeout = 5.0;
         instance = [[self alloc] init];
     });
     return instance;
+}
+
+- (NSDictionary *)savedRemotePrefs {
+    @synchronized (self) {
+        return _savedRemotePrefs;
+    }
+}
+
+- (void)setSavedRemotePrefs:(NSDictionary *)savedRemotePrefs {
+    @synchronized (self) {
+        _savedRemotePrefs = [savedRemotePrefs copy];
+        _savedRemotePrefsAfterMigrations = nil;
+    }
+}
+
+// What local prefs are compared against to decide whether they need copying to the folder.
+- (NSDictionary *)savedRemotePrefsAfterMigrations {
+    @synchronized (self) {
+        return _savedRemotePrefsAfterMigrations ?: _savedRemotePrefs;
+    }
+}
+
+- (void)userDefaultsDidMigrateKeys:(NSNotification *)notification {
+    if (notification.object != [iTermUserDefaults userDefaults]) {
+        return;
+    }
+    NSDictionary *before = [NSDictionary castFrom:notification.userInfo[iTermUserDefaultsMigrationValuesBeforeKey]] ?: @{};
+    NSDictionary *after = [NSDictionary castFrom:notification.userInfo[iTermUserDefaultsMigrationValuesAfterKey]] ?: @{};
+    @synchronized (self) {
+        if (_savedRemotePrefs.count == 0) {
+            // No folder prefs (missing, unreadable, or empty) means nothing to compare against;
+            // keep it that way rather than inventing a baseline from the migrated keys.
+            return;
+        }
+        NSDictionary *base = _savedRemotePrefsAfterMigrations ?: _savedRemotePrefs;
+        DLog(@"Apply migration %@ -> %@ to the remote prefs baseline", before, after);
+        _savedRemotePrefsAfterMigrations = [iTermRemotePreferences remotePrefs:base
+                                                 byApplyingMigrationFromValues:before
+                                                                      toValues:after];
+    }
+}
+
++ (NSDictionary *)remotePrefs:(NSDictionary *)remotePrefs
+    byApplyingMigrationFromValues:(NSDictionary<NSString *, id> *)before
+                         toValues:(NSDictionary<NSString *, id> *)after {
+    NSMutableDictionary *result = [remotePrefs mutableCopy];
+    NSSet<NSString *> *keys = [NSSet setWithArray:[before.allKeys arrayByAddingObjectsFromArray:after.allKeys]];
+    for (NSString *key in keys) {
+        id remoteValue = remotePrefs[key];
+        id oldValue = before[key];
+        if (remoteValue != oldValue && ![remoteValue isEqual:oldValue]) {
+            // The local value had already diverged from the folder before the migration ran, so
+            // the migrated local value is still a real difference. Leave the folder's value.
+            continue;
+        }
+        result[key] = after[key];
+    }
+    return result;
 }
 
 - (BOOL)shouldLoadRemotePrefs {
@@ -1482,6 +1550,12 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
 
     DLog(@"Add observers");
     _haveTriedToLoadRemotePrefs = YES;
+    // One-time migrations run after this copies the folder's prefs into local defaults. Record what
+    // they change so it is not mistaken for an edit to copy back to the folder.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(userDefaultsDidMigrateKeys:)
+                                                 name:iTermUserDefaultsDidMigrateKeysNotification
+                                               object:nil];
     _userDefaultsObserver = [[iTermUserDefaultsObserver alloc] init];
     __weak __typeof(self) weakSelf = self;
     [_userDefaultsObserver observeAllKeysWithBlock:^{
@@ -1593,31 +1667,46 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
     if (!self.shouldLoadRemotePrefs) {
         return NO;
     }
-    NSDictionary *saved = [self removeDynamicProfiles:self.savedRemotePrefs];
+    // In manual-save mode, compare against the folder's prefs as this launch's migrations would
+    // have left them, so a migration's own change is not reported as a local edit that prompts at
+    // every quit. Automatic saving keeps comparing against the raw folder prefs, so it still writes
+    // a migration to the folder once, as it always has.
+    NSDictionary *baseline = [self shouldSaveAutomatically] ? self.savedRemotePrefs : self.savedRemotePrefsAfterMigrations;
+    NSDictionary *saved = [self removeDynamicProfiles:baseline];
     if (saved && [saved count]) {
         // Grab all prefs from our bundle only (no globals, etc.).
         NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         NSDictionary *localPrefs =
             [userDefaults persistentDomainForName:[iTermUserDefaults customSuiteName] ?: [[NSBundle mainBundle] bundleIdentifier]];
         localPrefs = [self removeDynamicProfiles:localPrefs];
+        return [iTermRemotePreferences localPrefs:localPrefs
+                            differFromRemotePrefs:saved
+                                    preservedKeys:self.preservedKeys
+                               respectingDefaults:respectDefaults];
+    }
+    return NO;
+}
 
-        // Iterate over each set of prefs and validate that the other has the same value for each
-        // key.
-        NSSet<NSString *> *allKeys = [NSSet setWithArray:[localPrefs.allKeys arrayByAddingObjectsFromArray:saved.allKeys]];
-        for (NSString *key in allKeys) {
-            id savedValue = [self valueInDictionary:saved forKey:key respectingDefaults:respectDefaults];
-            id localValue = [self valueInDictionary:localPrefs forKey:key respectingDefaults:respectDefaults];
++ (BOOL)localPrefs:(NSDictionary *)localPrefs
+    differFromRemotePrefs:(NSDictionary *)remotePrefs
+            preservedKeys:(NSArray<NSString *> *)preservedKeys
+       respectingDefaults:(BOOL)respectDefaults {
+    // Iterate over each set of prefs and validate that the other has the same value for each
+    // key.
+    NSSet<NSString *> *allKeys = [NSSet setWithArray:[localPrefs.allKeys arrayByAddingObjectsFromArray:remotePrefs.allKeys]];
+    for (NSString *key in allKeys) {
+        id savedValue = [self valueInDictionary:remotePrefs forKey:key respectingDefaults:respectDefaults];
+        id localValue = [self valueInDictionary:localPrefs forKey:key respectingDefaults:respectDefaults];
 
-            if ([self preferenceKeyIsSyncable:key] &&
-                ![savedValue isEqual:localValue]) {
-                return YES;
-            }
+        if (iTermRemotePreferencesKeyIsSyncable(key, preservedKeys) &&
+            ![savedValue isEqual:localValue]) {
+            return YES;
         }
     }
     return NO;
 }
 
-- (id)valueInDictionary:(NSDictionary *)dict
++ (id)valueInDictionary:(NSDictionary *)dict
                  forKey:(NSString *)key
      respectingDefaults:(BOOL)respectDefaults {
     if (!respectDefaults) {
@@ -1635,7 +1724,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
     }
 }
 
-- (NSArray<NSDictionary *> *)saturatedBookmarkValueInDictionary:(NSDictionary *)settings {
++ (NSArray<NSDictionary *> *)saturatedBookmarkValueInDictionary:(NSDictionary *)settings {
     NSDictionary *defaults = [iTermProfilePreferences defaultValueMap];
     NSMutableArray *bookmarks = [[NSArray castFrom:settings[KEY_NEW_BOOKMARKS]] ?: @[] mutableCopy];
     for (NSInteger i = 0; i < bookmarks.count; i++) {
