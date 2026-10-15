@@ -1629,6 +1629,11 @@ Bug Fixes:
 - Uninstalling the Claude Code integration no
   longer says an empty settings.json couldn’t be
   parsed.
+- Installing the Claude Code integration when
+  ~/.claude/settings.json is a broken symlink no
+  longer leaves the new settings.json marked
+  executable.
+
 
 
 
